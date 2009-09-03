@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.120 2009/06/26 19:30:45 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.121 2009/09/03 15:20:08 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -416,8 +416,6 @@ int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
 void	drvctl_init(void);
-void	configure(void);
-void	configure2(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
@@ -459,9 +457,13 @@ void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
 void	config_pending_incr(void);
 void	config_pending_decr(void);
+void	config_create_interruptthreads(void);
 
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
+
+void	config_twiddle_init(void);
+void	config_twiddle_fn(void *);
 
 device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);

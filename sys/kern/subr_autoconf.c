@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.179 2009/07/14 13:24:00 tsutsui Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.180 2009/09/03 15:20:08 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,10 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.179 2009/07/14 13:24:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.180 2009/09/03 15:20:08 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "drvctl.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,12 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.179 2009/07/14 13:24:00 tsutsui 
 
 #include <machine/limits.h>
 
-#include "opt_userconf.h"
-#ifdef USERCONF
-#include <sys/userconf.h>
-#endif
-
-#ifdef __i386__
+#if defined(__i386__) && defined(_KERNEL_OPT)
 #include "opt_splash.h"
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 #include <dev/splash/splash.h>
@@ -173,7 +170,6 @@ static void config_devdealloc(device_t);
 static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
-static void config_twiddle_fn(void *);
 
 static void pmflock_debug(device_t, const char *, int);
 static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
@@ -402,94 +398,15 @@ config_interrupts_thread(void *cookie)
 	kthread_exit(0);
 }
 
-/*
- * Configure the system's hardware.
- */
 void
-configure(void)
+config_create_interruptthreads()
 {
-	/* Initialize data structures. */
-	config_init();
-	/*
-	 * XXX
-	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
-	 * on amiga and atari which use config_init() and autoconf(9) fucntions
-	 * to initialize console devices.
-	 */
-	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
+	int i;
 
-	pmf_init();
-#if NDRVCTL > 0
-	drvctl_init();
-#endif
-
-#ifdef USERCONF
-	if (boothowto & RB_USERCONF)
-		user_config();
-#endif
-
-	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
-		config_do_twiddle = 1;
-		printf_nolog("Detecting hardware...");
-	}
-
-	/*
-	 * Do the machine-dependent portion of autoconfiguration.  This
-	 * sets the configuration machinery here in motion by "finding"
-	 * the root bus.  When this function returns, we expect interrupts
-	 * to be enabled.
-	 */
-	cpu_configure();
-}
-
-void
-configure2(void)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	int i, s;
-
-	/*
-	 * Now that we've found all the hardware, start the real time
-	 * and statistics clocks.
-	 */
-	initclocks();
-
-	cold = 0;	/* clocks are running, we're warm now! */
-	s = splsched();
-	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
-	splx(s);
-
-	/* Boot the secondary processors. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		uvm_cpu_attach(ci);
-	}
-	mp_online = true;
-#if defined(MULTIPROCESSOR)
-	cpu_boot_secondary_processors();
-#endif
-
-	/* Setup the runqueues and scheduler. */
-	runq_init();
-	sched_init();
-
-	/*
-	 * Bus scans can make it appear as if the system has paused, so
-	 * twiddle constantly while config_interrupts() jobs are running.
-	 */
-	config_twiddle_fn(NULL);
-
-	/*
-	 * Create threads to call back and finish configuration for
-	 * devices that want interrupts enabled.
-	 */
 	for (i = 0; i < interrupt_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
 		    config_interrupts_thread, NULL, NULL, "config");
 	}
-
-	/* Get the threads going and into any sleeps before continuing. */
-	yield();
 }
 
 /*
@@ -1914,6 +1831,16 @@ config_finalize(void)
 			    errcnt == 1 ? "" : "s");
 		}
 	}
+}
+
+void
+config_twiddle_init()
+{
+
+	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
+		config_do_twiddle = 1;
+	}
+	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
 }
 
 void
