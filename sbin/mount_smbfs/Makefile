@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/11 07:58:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2009/09/03 12:04:50 pooka Exp $
 
 WARNS?=	3	# XXX: sign-compare issues
 
@@ -12,7 +12,7 @@ MAN=	mount_smbfs.8
 
 SMBDIST=${NETBSDSRCDIR}/dist/smbfs
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${SMBDIST}/include
+CPPFLAGS+= -I${SMBDIST}/include
 
 .PATH:	${SMBDIST}/mount_smbfs ${SMBDIST}/lib/smb
 
