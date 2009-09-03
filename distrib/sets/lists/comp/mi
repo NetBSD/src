@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1295 2009/09/03 01:17:29 joerg Exp $
+#	$NetBSD: mi,v 1.1296 2009/09/03 12:04:50 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -635,6 +635,7 @@
 ./usr/include/fs/nilfs/nilfs_fs.h		comp-c-include
 ./usr/include/fs/nilfs/nilfs_mount.h		comp-c-include
 ./usr/include/fs/puffs/puffs_msgif.h		comp-puffs-include
+./usr/include/fs/smbfs/smbfs.h			comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/sysvbfs/sysvbfs_args.h		comp-c-include
 ./usr/include/fs/tmpfs/tmpfs_args.h		comp-c-include
@@ -1631,6 +1632,11 @@
 ./usr/include/netns/spp_debug.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_timer.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_var.h			comp-obsolete		obsolete
+./usr/include/netsmb/iconv.h			comp-c-include
+./usr/include/netsmb/netbios.h			comp-c-include
+./usr/include/netsmb/smb.h			comp-c-include
+./usr/include/netsmb/smb_conn.h			comp-c-include
+./usr/include/netsmb/smb_dev.h			comp-c-include
 ./usr/include/netpgp.h				comp-c-include		crypto
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
