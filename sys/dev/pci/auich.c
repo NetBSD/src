@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.129 2009/03/17 19:38:34 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.130 2009/09/03 14:29:42 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.129 2009/03/17 19:38:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.130 2009/09/03 14:29:42 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,12 @@ struct auich_softc {
 	int sc_codectype;
 	enum ac97_host_flags sc_codecflags;
 	bool sc_spdif;
+
+	/* multi-channel control bits */
+	int sc_pcm246_mask;
+	int sc_pcm2;
+	int sc_pcm4;
+	int sc_pcm6;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -551,6 +557,10 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (d->id == PCIID_SIS7012) {
 		sc->sc_sts_reg = ICH_PICB;
 		sc->sc_sample_shift = 0;
+		sc->sc_pcm246_mask = ICH_SIS_PCM246_MASK;
+		sc->sc_pcm2 = ICH_SIS_PCM2;
+		sc->sc_pcm4 = ICH_SIS_PCM4;
+		sc->sc_pcm6 = ICH_SIS_PCM6;
 		/* Un-mute output. From Linux. */
 		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL,
 		    bus_space_read_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL) |
@@ -558,6 +568,10 @@ auich_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_sts_reg = ICH_STS;
 		sc->sc_sample_shift = 1;
+		sc->sc_pcm246_mask = ICH_PCM246_MASK;
+		sc->sc_pcm2 = ICH_PCM2;
+		sc->sc_pcm4 = ICH_PCM4;
+		sc->sc_pcm6 = ICH_PCM6;
 	}
 
 	/* Workaround for a 440MX B-stepping erratum */
@@ -859,7 +873,7 @@ auich_reset_codec(void *v)
 	control = bus_space_read_4(sc->iot, sc->aud_ioh,
 	    ICH_GCTRL + sc->sc_modem_offset);
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
-		control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
+		control &= ~(ICH_ACLSO | sc->sc_pcm246_mask);
 	} else {
 		control &= ~ICH_ACLSO;
 		control |= ICH_GIE;
@@ -1021,11 +1035,11 @@ auich_set_params(void *v, int setmode, int usemode,
 		    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh,
 			    ICH_GCTRL + sc->sc_modem_offset);
-				control &= ~ICH_PCM246_MASK;
+				control &= ~sc->sc_pcm246_mask;
 			if (p->channels == 4) {
-				control |= ICH_PCM4;
+				control |= sc->sc_pcm4;
 			} else if (p->channels == 6) {
-				control |= ICH_PCM6;
+				control |= sc->sc_pcm6;
 			}
 			bus_space_write_4(sc->iot, sc->aud_ioh,
 			    ICH_GCTRL + sc->sc_modem_offset, control);
