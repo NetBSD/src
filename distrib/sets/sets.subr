@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.71.2.5 2009/04/08 00:09:27 snj Exp $
+#	$NetBSD: sets.subr,v 1.71.2.5.4.1 2009/09/03 00:22:48 matt Exp $
 #
 
 #
@@ -22,6 +22,7 @@
 # as well as:
 #
 MKVARS="\
+	MKATF		\
 	MKBFD		\
 	MKCATPAGES	\
 	MKCOMPAT	\
@@ -30,6 +31,7 @@ MKVARS="\
 	MKCRYPTO_MDC2	\
 	MKCRYPTO_RC5	\
 	MKCVS		\
+	MKCXX		\
 	MKDEBUG		\
 	MKDEBUGLIB	\
 	MKDOC		\
@@ -37,6 +39,7 @@ MKVARS="\
 	MKGCC		\
 	MKGCCCMDS	\
 	MKGDB		\
+	MKGROFF		\
 	MKHESIOD	\
 	MKHTML		\
 	MKINET6		\
@@ -228,7 +231,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.71.2.5 2009/04/08 00:09:27 snj Exp $
+# 	# $NetBSD: sets.subr,v 1.71.2.5.4.1 2009/09/03 00:22:48 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
