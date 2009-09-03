@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.46 2009/09/03 12:33:54 pooka Exp $
+# $NetBSD: md.sparc64,v 1.47 2009/09/03 15:35:59 pooka Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -508,6 +508,10 @@
 ./usr/lib/sparc/librumpcrypto.so		base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpcrypto_p.a		comp-c-proflib		compat,profile
 ./usr/lib/sparc/librumpcrypto_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/librumpdev.a			comp-c-lib		compat
+./usr/lib/sparc/librumpdev.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/librumpdev_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/librumpdev_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/librumpnet.a			comp-c-lib		compat
 ./usr/lib/sparc/librumpnet.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpnet_p.a			comp-c-proflib		compat,profile
