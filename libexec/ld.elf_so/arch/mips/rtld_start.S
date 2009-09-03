@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9.44.4 2009/09/03 00:04:27 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9.44.5 2009/09/03 07:25:45 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -73,7 +73,7 @@ LEAF(rtld_start)
 
 END(rtld_start)
 
-#define	XCALLFRAME_SIZ		(11*SZREG)
+#define	XCALLFRAME_SIZ		(12*SZREG)
 #define	XCALLFRAME_RA		(10*SZREG)
 #define	XCALLFRAME_GP		(9*SZREG)
 #define	XCALLFRAME_S0		(8*SZREG)
