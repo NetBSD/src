@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.129 2009/09/03 14:37:58 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.129 2009/09/03 14:37:58 tsutsui Exp $
+ * $Id: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.129 2009/09/03 14:37:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -991,7 +991,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 	if (status == 0 && status0 == 0) {
 		if ((ahc->features & AHC_TWIN) != 0) {
 			/* Try the other channel */
-		 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
+			ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
 			status = ahc_inb(ahc, SSTAT1)
 			       & (SELTO|SCSIRSTI|BUSFREE|SCSIPERR);
 			intr_channel = (cur_channel == 'A') ? 'B' : 'A';
@@ -1037,7 +1037,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		printf("%s: Someone reset channel %c\n",
 			ahc_name(ahc), intr_channel);
 		if (intr_channel != cur_channel)
-		 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
+			ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
 		ahc_reset_channel(ahc, intr_channel, /*Initiate Reset*/FALSE);
 	} else if ((status & SCSIPERR) != 0) {
 		/*
@@ -1509,7 +1509,7 @@ ahc_clear_intstat(struct ahc_softc *ahc)
 				CLRREQINIT);
 	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRSINT0, CLRSELDO|CLRSELDI|CLRSELINGO);
- 	ahc_flush_device_writes(ahc);
+	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRINT, CLRSCSIINT);
 	ahc_flush_device_writes(ahc);
 }
@@ -1733,7 +1733,7 @@ ahc_find_syncrate(struct ahc_softc *ahc, u_int *period,
 			 * At some speeds, we only support
 			 * ST transfers.
 			 */
-		 	if ((syncrate->sxfr_u2 & ST_SXFR) != 0)
+			if ((syncrate->sxfr_u2 & ST_SXFR) != 0)
 				*ppr_options &= ~MSG_EXT_PPR_DT_REQ;
 			break;
 		}
@@ -2077,7 +2077,7 @@ void
 ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 	     ahc_queue_alg alg)
 {
- 	ahc_platform_set_tags(ahc, devinfo, alg);
+	ahc_platform_set_tags(ahc, devinfo, alg);
 }
 
 /*
@@ -2178,7 +2178,7 @@ ahc_fetch_devinfo(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 	if (role == ROLE_TARGET
 	 && (ahc->features & AHC_MULTI_TID) != 0
 	 && (ahc_inb(ahc, SEQ_FLAGS)
- 	   & (CMDPHASE_PENDING|TARG_CMD_PENDING|NO_DISCONNECT)) != 0) {
+	   & (CMDPHASE_PENDING|TARG_CMD_PENDING|NO_DISCONNECT)) != 0) {
 		/* We were selected, so pull our id from TARGIDIN */
 		our_id = ahc_inb(ahc, TARGIDIN) & OID;
 	} else if ((ahc->features & AHC_ULTRA2) != 0)
@@ -3514,7 +3514,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		 */
 		ahc_outb(ahc, SCB_CONTROL,
 			 ahc_inb(ahc, SCB_CONTROL) & mask);
-	 	scb->hscb->control &= mask;
+		scb->hscb->control &= mask;
 		ahc_set_transaction_tag(scb, /*enabled*/FALSE,
 					/*type*/MSG_SIMPLE_TASK);
 		ahc_outb(ahc, MSG_OUT, MSG_IDENTIFYFLAG);
@@ -4399,7 +4399,7 @@ ahc_controller_info(struct ahc_softc *ahc, char *tbuf, size_t l)
 	    ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
 	tbuf += len;
 	if ((ahc->features & AHC_TWIN) != 0)
- 		len = snprintf(tbuf, ep - tbuf, "Twin Channel, A SCSI Id=%d, "
+		len = snprintf(tbuf, ep - tbuf, "Twin Channel, A SCSI Id=%d, "
 			      "B SCSI Id=%d, primary %c, ",
 			      ahc->our_id, ahc->our_id_b,
 			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
@@ -4740,7 +4740,7 @@ ahc_init(struct ahc_softc *ahc)
 				 && (ultraenb & mask) != 0) {
 					/* Treat 10MHz as a non-ultra speed */
 					scsirate &= ~SXFR;
-				 	ultraenb &= ~mask;
+					ultraenb &= ~mask;
 				}
 				tinfo->user.period =
 				    ahc_find_period(ahc, scsirate,
@@ -6346,7 +6346,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 				if (begin_set[cs_count] == TRUE
 				 && end_set[cs_count] == FALSE) {
 					cs_table[cs_count].end = downloaded;
-				 	end_set[cs_count] = TRUE;
+					end_set[cs_count] = TRUE;
 					cs_count++;
 				}
 				continue;
@@ -6874,7 +6874,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 		if ((ahc->features & AHC_MULTIROLE) != 0) {
 
 			if ((ahc->features & AHC_MULTI_TID) != 0
-		   	 && (ahc->flags & AHC_INITIATORROLE) != 0) {
+			 && (ahc->flags & AHC_INITIATORROLE) != 0) {
 				/*
 				 * Only allow additional targets if
 				 * the initiator role is disabled.
@@ -7131,7 +7131,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 					targid_mask &= ~target_mask;
 					ahc_outb(ahc, TARGID, targid_mask);
 					ahc_outb(ahc, TARGID+1,
-					 	 (targid_mask >> 8));
+						 (targid_mask >> 8));
 					ahc_update_scsiid(ahc, targid_mask);
 				}
 			}
