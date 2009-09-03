@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.62 2009/08/10 20:22:06 plunky Exp $ */
+/* $NetBSD: kauth.h,v 1.63 2009/09/03 04:45:27 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -67,6 +67,7 @@ typedef	struct kauth_key       *kauth_key_t;
 #define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
 #define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
 #define	KAUTH_SCOPE_CRED	"org.netbsd.kauth.cred"
+#define	KAUTH_SCOPE_VNODE	"org.netbsd.kauth.vnode"
 
 /*
  * Generic scope - actions.
@@ -285,6 +286,43 @@ enum {
 };
 
 /*
+ * Vnode scope - action bits.
+ */
+#define	KAUTH_VNODE_READ_DATA		(1U << 0)
+#define	KAUTH_VNODE_LIST_DIRECTORY	KAUTH_VNODE_READ_DATA
+#define	KAUTH_VNODE_WRITE_DATA		(1U << 1)
+#define	KAUTH_VNODE_ADD_FILE		KAUTH_VNODE_WRITE_DATA
+#define	KAUTH_VNODE_EXECUTE		(1U << 2)
+#define	KAUTH_VNODE_SEARCH		KAUTH_VNODE_EXECUTE
+#define	KAUTH_VNODE_DELETE		(1U << 3)
+#define	KAUTH_VNODE_APPEND_DATA		(1U << 4)
+#define	KAUTH_VNODE_ADD_SUBDIRECTORY	KAUTH_VNODE_APPEND_DATA
+#define	KAUTH_VNODE_READ_TIMES		(1U << 5)
+#define	KAUTH_VNODE_WRITE_TIMES		(1U << 6)
+#define	KAUTH_VNODE_READ_FLAGS		(1U << 7)
+#define	KAUTH_VNODE_WRITE_FLAGS		(1U << 8)
+#define	KAUTH_VNODE_READ_SYSFLAGS	(1U << 9)
+#define	KAUTH_VNODE_WRITE_SYSFLAGS	(1U << 10)
+#define	KAUTH_VNODE_RENAME		(1U << 11)
+#define	KAUTH_VNODE_CHANGE_OWNERSHIP	(1U << 12)
+#define	KAUTH_VNODE_READ_SECURITY	(1U << 13)
+#define	KAUTH_VNODE_WRITE_SECURITY	(1U << 14)
+#define	KAUTH_VNODE_READ_ATTRIBUTES	(1U << 15)
+#define	KAUTH_VNODE_WRITE_ATTRIBUTES	(1U << 16)
+#define	KAUTH_VNODE_READ_EXTATTRIBUTES	(1U << 17)
+#define	KAUTH_VNODE_WRITE_EXTATTRIBUTES	(1U << 18)
+
+#define	KAUTH_VNODE_HAS_SYSFLAGS	(1U << 30)
+#define	KAUTH_VNODE_ACCESS		(1U << 31)
+
+/*
+ * This is a special fs_decision indication that can be used by file-systems
+ * that don't support decision-before-action to tell kauth(9) it can only
+ * short-circuit the operation beforehand.
+ */
+#define	KAUTH_VNODE_REMOTEFS		(-1)
+
+/*
  * Device scope, passthru request - identifiers.
  */
 #define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ		0x00000001
@@ -326,6 +364,8 @@ int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
     struct vnode *);
 int kauth_authorize_device_passthru(kauth_cred_t, dev_t, u_long, void *);
+int kauth_authorize_vnode(kauth_cred_t, kauth_action_t, struct vnode *,
+    struct vnode *, int);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);
@@ -372,6 +412,8 @@ void kauth_cred_to_uucred(struct uucred *, const kauth_cred_t);
 int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ki_ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct ki_pcred *);
+
+kauth_action_t kauth_mode_to_action(mode_t mode);
 
 kauth_cred_t kauth_cred_get(void);
 

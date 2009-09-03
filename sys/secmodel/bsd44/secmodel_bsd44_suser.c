@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.70 2009/08/10 20:22:06 plunky Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.71 2009/09/03 04:45:28 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.70 2009/08/10 20:22:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.71 2009/09/03 04:45:28 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.70 2009/08/10 20:22:06 pl
 extern int dovfsusermount;
 
 static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
-    l_device;
+    l_device, l_vnode;
 
 void
 secmodel_bsd44_suser_start(void)
@@ -82,6 +82,8 @@ secmodel_bsd44_suser_start(void)
 	    secmodel_bsd44_suser_machdep_cb, NULL);
 	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_bsd44_suser_device_cb, NULL);
+	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
+	    secmodel_bsd44_suser_vnode_cb, NULL);
 }
 
 #if defined(_LKM)
@@ -94,6 +96,7 @@ secmodel_bsd44_suser_stop(void)
 	kauth_unlisten_scope(l_network);
 	kauth_unlisten_scope(l_machdep);
 	kauth_unlisten_scope(l_device);
+	kauth_unlisten_scope(l_vnode);
 }
 #endif /* _LKM */
 
@@ -1151,6 +1154,7 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
+
 	case KAUTH_DEVICE_GPIO_PINSET:
 		/*
 		 * root can access gpio pins, secmodel_securlevel can veto
@@ -1159,6 +1163,7 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
+
 	default:
 		result = KAUTH_RESULT_DEFER;
 		break;
@@ -1166,3 +1171,20 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 
 	return (result);
 }
+
+int
+secmodel_bsd44_suser_vnode_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	bool isroot;
+	int result;
+
+	isroot = (kauth_cred_geteuid(cred) == 0);
+	result = KAUTH_RESULT_DEFER;
+
+	if (isroot)
+		result = KAUTH_RESULT_ALLOW;
+
+	return (result);
+}
+
