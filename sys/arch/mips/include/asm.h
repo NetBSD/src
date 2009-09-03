@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.6 2009/08/21 17:33:17 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.7 2009/09/03 00:02:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -542,29 +542,32 @@ _C_LABEL(x):
 #endif
 
 #define	SETUP_GP	\
+			.set push;				\
 			.set noreorder;				\
 			.cpload	t9;				\
-			.set reorder
+			.set pop
 #define	SETUP_GPX(r)	\
+			.set push;				\
 			.set noreorder;				\
 			move	r,ra;	/* save old ra */	\
 			bal	7f;				\
 			nop;					\
 		7:	.cpload	ra;				\
 			move	ra,r;				\
-			.set reorder
+			.set pop
 #define	SETUP_GPX_L(r,lbl)	\
+			.set push;				\
 			.set noreorder;				\
 			move	r,ra;	/* save old ra */	\
 			bal	lbl;				\
 			nop;					\
 		lbl:	.cpload	ra;				\
 			move	ra,r;				\
-			.set reorder
+			.set pop
 #define	SAVE_GP(x)	.cprestore x
 
 #define	SETUP_GP64(a,b)		/* n32/n64 specific */
-#define	SETUP_GP64_R(a,b)		/* n32/n64 specific */
+#define	SETUP_GP64_R(a,b)	/* n32/n64 specific */
 #define	SETUP_GPX64(a,b)	/* n32/n64 specific */
 #define	SETUP_GPX64_L(a,b,c)	/* n32/n64 specific */
 #define	RESTORE_GP64		/* n32/n64 specific */
@@ -587,19 +590,21 @@ _C_LABEL(x):
 #define	SAVE_GP(x)		/* o32 specific */
 #define	SETUP_GP64(a,b)		.cpsetup $25, a, b
 #define	SETUP_GPX64(a,b)	\
+				.set push;			\
 				move	b,ra;			\
 				.set noreorder;			\
 				bal	7f;			\
 				nop;				\
-			7:	.set reorder;			\
+			7:	.set pop;			\
 				.cpsetup ra, a, 7b;		\
 				move	ra,b
 #define	SETUP_GPX64_L(a,b,c)	\
+				.set push;			\
 				move	b,ra;			\
 				.set noreorder;			\
 				bal	c;			\
 				nop;				\
-			c:	.set reorder;			\
+			c:	.set pop;			\
 				.cpsetup ra, a, c;		\
 				move	ra,b
 #define	RESTORE_GP64		.cpreturn
