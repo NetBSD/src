@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2009/08/18 06:57:52 matt Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2009/09/03 06:57:11 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ define _OFFSETOF_SC_FPUSED	offsetof(struct sigcontext, sc_fpused)
 
 define SIGINFO_SIZE		sizeof(siginfo_t)
 
-define STACK_T_SIZE		sizeof(stack_t)
+define STACK_T_SIZE		((sizeof(stack_t) + 2 * sizeof(register_t) - 1) & -(2 * sizeof(register_t)))
 define _OFFSETOF_STACK_T_SP	offsetof(stack_t, ss_sp)
 define _OFFSETOF_STACK_T_SIZE	offsetof(stack_t, ss_size)
 define _OFFSETOF_STACK_T_FLAGS	offsetof(stack_t, ss_flags)
