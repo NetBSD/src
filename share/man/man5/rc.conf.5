@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.131 2009/07/25 21:21:20 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.132 2009/09/03 20:06:39 apb Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 25, 2009
+.Dd September 3, 2009
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -85,25 +85,6 @@ variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
 relevant manual pages.
 Third party packages may test for additional variables.
-.Pp
-Most variables are one of two types: enabling variables or flags
-variables.
-Enabling variables, such as
-.Sy inetd ,
-are generally named after the program or the system they enable,
-and are set to
-.Sq YES
-or
-.Sq NO .
-Flags variables, such as
-.Sy inetd_flags
-have the same name with "_flags" appended, and determine what
-arguments are passed to the program if it is enabled.
-.Pp
-If a variable that
-.Xr rc 8
-expects to be set is not set, or the value is not one of the allowed
-values, a warning will be printed.
 .Pp
 By default,
 .Nm
@@ -135,14 +116,39 @@ to override various
 .Xr rc.d 8
 control variables, and thus changing the operation of the script
 without requiring editing of the script.
+.Ss Variable naming conventions and data types
+Most variables are one of two types: enabling variables or flags
+variables.
+Enabling variables, such as
+.Sy inetd ,
+are generally named after the program or the system they enable,
+and have boolean values (specified using
+.Sq Ic YES ,
+.Sq Ic TRUE ,
+.Sq Ic ON
+or
+.Sq Ic 1
+for true, and
+.Sq Ic NO ,
+.Sq Ic FALSE ,
+.Sq Ic OFF
+or
+.Sq Ic 0
+for false, with the values being case insensitive).
+Flags variables, such as
+.Sy inetd_flags
+have the same name with "_flags" appended, and determine what
+arguments are passed to the program if it is enabled.
+.Pp
+If a variable that
+.Xr rc 8
+expects to be set is not set, or the value is not one of the allowed
+values, a warning will be printed.
 .Ss Overall control
 .Bl -tag -width net_interfaces
 .It Sy do_rcshutdown
-.Sq YES
-or
-.Sq NO .
-If set to
-.Sq NO ,
+Boolean value.
+If false,
 .Xr shutdown 8
 will not run
 .Pa /etc/rc.shutdown .
@@ -159,12 +165,8 @@ which will terminate
 .Pa /etc/rc.shutdown
 if the timer expires before the shutdown script completes.
 .It Sy rc_configured
-.Sq YES
-or
-.Sq NO .
-If not set to
-.Sq YES
-then the system will drop into single-user mode during boot.
+Boolean value.
+If false then the system will drop into single-user mode during boot.
 .It Sy rc_fast_and_loose
 If set to a non-empty string,
 each script in
@@ -273,45 +275,28 @@ This might be important with hosts where the administrator does not have
 access to the console and an unsuccessful shutdown must not make the host
 unbootable even if the file system checks would fail in preen mode.
 .It Sy no_swap
-.Sq YES
-or
-.Sq NO .
-Set the
-.Sy no_swap
-variable to
-.Sq YES
-if you have configured your system with no swap on purpose.
-If not set to
-.Sq YES ,
-and no swap devices
-are configured, the system will warn you.
+Boolean value.
+Should be true if you have deliberately configured your system with no swap.
+If false and no swap devices are configured, the system will warn you.
 .It Sy swapoff
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Remove block-type swap devices at shutdown time.
 Useful if swapping onto RAIDframe devices.
 .El
 .Ss One-time actions to perform or programs to run on boot-up
 .Bl -tag -width net_interfaces
 .It Sy accounting
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Enables process accounting with
 .Xr accton 8 .
 Requires
 .Pa /var/account/acct
 to exist.
 .It Sy clear_tmp
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Clear /tmp after reboot.
 .It Sy dmesg
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Create
 .Pa /var/run/dmesg.boot
 from the output of
@@ -319,18 +304,14 @@ from the output of
 Passes
 .Sy dmesg_flags .
 .It Sy gpio
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Configure
 .Xr gpio 4
 devices .
 See
 .Xr gpio.conf 5 .
 .It Sy mixerctl
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Read
 .Xr mixerctl.conf 5
 for how to set mixer values.
@@ -339,9 +320,7 @@ List in
 the devices whose settings are to be saved at shutdown and
 restored at start-up.
 .It Sy newsyslog
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Nm newsyslog
 to trim logfiles before syslogd starts.
@@ -349,9 +328,7 @@ Intended for laptop users.
 Passes
 .Sy newsyslog_flags .
 .It Sy per_user_tmp
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Enables a per-user
 .Pa /tmp
 directory.
@@ -361,9 +338,7 @@ can be used to override the default location of the
 temporary directories,
 .Dq Pa /private/tmp .
 .It Sy rndctl
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr rndctl 8
 utility one or more times according to the specification in
@@ -410,9 +385,7 @@ the following commands will be executed:
 .Li "rndctl -c -e -t tty" ;
 .Li "rndctl -c -t net" .
 .It Sy savecore
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr savecore 8
 utility.
@@ -423,18 +396,14 @@ The directory where crash dumps are stored is specified by
 The default setting is
 .Dq Pa /var/crash .
 .It Sy tpctl
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Xr tpctl 8
 to calibrate touch panel device.
 Passes
 .Sy tpctl_flags .
 .It Sy update_motd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Updates the
 .Nx
 version string in the
@@ -443,17 +412,13 @@ file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
 .It Sy veriexec
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Load Veriexec fingerprints during startup.
 Read
 .Xr veriexecctl 8
 for more information.
 .It Sy virecover
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Send notification mail to users if any recoverable files exist in
 .Pa /var/tmp/vi.recover .
 Read
@@ -511,16 +476,12 @@ command.
 .Ss Networking startup
 .Bl -tag -width net_interfaces
 .It Sy altqd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 ALTQ configuration/monitoring daemon.
 Passes
 .Sy altqd_flags .
 .It Sy auto_ifconfig
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Sets the
 .Sy net_interfaces
 variable (see below) to the output of
@@ -530,27 +491,22 @@ with the
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy dhclient
-.Sq YES
-or
-.Sq NO .
-Set to
-.Sq YES
-to configure some or all network interfaces using
+Boolean value.
+Set true to configure some or all network interfaces using
 the ISC DHCP client.
 If you set
 .Sy dhclient
-to
-.Sq YES ,
-you must either have
+true, then
 .Pa /var
-in
+must be in
 .Sy critical_filesystems_local ,
-as part of
-.Pa / ,
-or direct the DHCP client to store the leases file on the root
-file system by modifying the
+or
+.Pa /var
+must be on the root file system,
+or you must modify the
 .Sy dhclient_flags
-variable.
+variable to direct the DHCP client to store the leases file
+in some other directory on the root file system.
 You must not provide ifconfig information or ifaliases
 information for any interface that is to be configured using the DHCP client.
 Interface aliases can be set up in the DHCP client configuration
@@ -582,16 +538,12 @@ when requesting configuration via
 or
 .Pa /etc/ifconfig.xxN .
 .It Sy flushroutes
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Flushes the route table on networking startup.
 Useful when coming up to multiuser mode after going down to
 single-user mode.
 .It Sy hostapd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr hostapd 8 ,
 the authenticator for IEEE 802.11 networks.
@@ -618,9 +570,7 @@ variables or
 .Pa /etc/ifconfig.xxN
 files with multiple lines instead.
 .It Sy ifwatchd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Monitor dynamic interfaces and perform actions upon address changes.
 Passes
 .Sy ifwatchd_flags .
@@ -650,26 +600,21 @@ and
 as well, if you set the variable to
 .Dq Li autohost .
 .It Sy ip6uniquelocal
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 If
 .Sy ip6mode
 is equal to
-.Dq Li router
+.Dq Li router ,
 and
 .Sy ip6uniquelocal
-is set to
-.Sq NO
+is false,
 a reject route will be installed on boot to avoid misconfiguration relating
 to unique-local addresses.
-If set to
-.Sq YES
-the reject route won't be installed.
+If
+.Sy ip6uniquelocal
+is true, the reject route won't be installed.
 .It Sy ipfilter
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ipf 8
 to load in packet filter specifications from
@@ -680,9 +625,7 @@ Passes
 See
 .Xr ipf.conf 5 .
 .It Sy ipfs
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ipfs 8
 to save and restore information for ipnat and ipfilter state tables.
@@ -693,9 +636,7 @@ and
 Passes
 .Sy ipfs_flags .
 .It Sy ipmon
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ipmon 8
 to read
@@ -724,9 +665,7 @@ accordingly; for example:
 /var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
 .Ed
 .It Sy ipnat
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ipnat 8
 to load in the IP network address translation (NAT) rules from
@@ -735,9 +674,7 @@ at network boot time, before any interfaces are configured.
 See
 .Xr ipnat.conf 5 .
 .It Sy ipsec
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr setkey 8
 to load in IPsec manual keys and policies from
@@ -753,7 +690,7 @@ and then in the file
 .Pa /etc/ifconfig.xxN .
 If
 .Sy auto_ifconfig
-is set to "NO" and neither the file nor the variable is found,
+is false, and neither the variable nor the file is found,
 a warning is printed.
 Information in either the variable or the file is parsed identically,
 except that, if an
@@ -779,9 +716,7 @@ files, and note that the information there also applies to
 .Sy ifconfig_xxN
 variables (after the variables are split into lines).
 .It Sy ntpdate
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ntpdate 8
 to set the system time from one of the hosts in
@@ -793,9 +728,7 @@ is empty, it will attempt to find a list of hosts in
 Passes
 .Sy ntpdate_flags .
 .It Sy pf
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Enable
 .Xr pf 4
 at network boot time:
@@ -810,9 +743,7 @@ The path of the
 .Xr pf.conf 5
 ruleset that will be used when loading the final ruleset.
 .It Sy pflogd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Xr pflogd 8
 for dumping packet filter logging information to a file.
@@ -832,16 +763,12 @@ with the
 .Dq call Sy peer
 option.
 .It Sy racoon
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr racoon 8 ,
 the IKE (ISAKMP/Oakley) key management daemon.
 .It Sy rtsol
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Xr rtsol 8 ,
 router solicitation command for IPv6 hosts.
@@ -856,9 +783,7 @@ to
 .Dq Li autohost
 if you use it.
 .It Sy wpa_supplicant
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Xr wpa_supplicant 8 ,
 WPA/802.11i Supplicant for wireless network devices.
@@ -866,9 +791,7 @@ WPA/802.11i Supplicant for wireless network devices.
 .Ss Daemons required by other daemons
 .Bl -tag -width net_interfaces
 .It Sy inetd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr inetd 8
 daemon to start network server processes (as listed in
@@ -880,9 +803,7 @@ The
 .Dq Li -l
 flag turns on libwrap connection logging.
 .It Sy rpcbind
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 The
 .Xr rpcbind 8
 daemon is required for any
@@ -901,15 +822,11 @@ Passes
 .Ss Commonly used daemons
 .Bl -tag -width net_interfaces
 .It Sy cron
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Run
 .Xr cron 8 .
 .It Sy httpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr httpd 8
 daemon and passes
@@ -921,17 +838,14 @@ The
 WWW root directory.
 Used only if
 .Sy httpd
-is set to
-.Sq YES .
+is true.
 The default setting is
 .Dq Pa /var/www .
 .It Sy httpd_wwwuser
 A string.
 If non-blank and
 .Sy httpd
-is
-.Sq YES ,
-run
+is true, run
 .Xr httpd 8
 and cause it to switch to the specified user after initialization.
 It is preferred to
@@ -942,9 +856,7 @@ is requiring extra privileges to start listening on default port 80.
 The default setting is
 .Dq Dv _httpd .
 .It Sy lpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr lpd 8
 and passes
@@ -953,9 +865,7 @@ The
 .Dq Li -l
 flag will turn on extra logging.
 .It Sy named
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr named 8
 and passes
@@ -964,9 +874,7 @@ and passes
 A string.
 If non-blank and
 .Sy named
-is
-.Sq YES ,
-run
+is true, run
 .Xr named 8
 as the unprivileged user and group
 .Sq named ,
@@ -978,9 +886,7 @@ will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
 .It Sy ntpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ntpd 8
 and passes
@@ -989,9 +895,7 @@ and passes
 A string.
 If non-blank and
 .Sy ntpd
-is
-.Sq YES ,
-run
+is true, run
 .Xr ntpd 8
 as the unprivileged user and group
 .Sq ntpd ,
@@ -1008,32 +912,24 @@ compiled in, and that
 .Pa /dev/clockctl
 is present.
 .It Sy postfix
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Starts
 .Xr postfix 1
 mail system.
 .It Sy sshd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr sshd 8
 and passes
 .Sy sshd_flags .
 .It Sy syslogd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr syslogd 8
 and passes
 .Sy syslogd_flags .
 .It Sy timed
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr timed 8
 and passes
@@ -1053,42 +949,32 @@ flag given to
 .Ss Routing daemons
 .Bl -tag -width net_interfaces
 .It Sy mrouted
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr mrouted 8 ,
 the DVMRP multicast routing protocol daemon.
 Passes
 .Sy mrouted_flags .
 .It Sy route6d
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr route6d 8 ,
 the RIPng routing protocol daemon for IPv6.
 Passes
 .Sy route6d_flags .
 .It Sy routed
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr routed 8 ,
 the RIP routing protocol daemon.
 Passes
 .Sy routed_flags .
-.\" This should be
-.\" .Sq NO
+.\" This should be false
 .\" if
 .\" .Sy gated
-.\" is
-.\" .Sq YES .
+.\" is true.
 .It Sy rtsold
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rtsold 8 ,
 the IPv6 router solicitation daemon.
@@ -1109,9 +995,7 @@ if you use it.
 .Ss Daemons used to boot other hosts over a network
 .Bl -tag -width net_interfaces
 .It Sy bootparamd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr bootparamd 8 ,
 the boot parameter server, with
@@ -1123,9 +1007,7 @@ and
 .Tn "SunOS 4.x"
 systems.
 .It Sy dhcpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr dhcpd 8 ,
 the Dynamic Host Configuration Protocol (DHCP) daemon,
@@ -1133,17 +1015,13 @@ for assigning IP addresses to hosts and passing boot information.
 Passes
 .Sy dhcpd_flags .
 .It Sy dhcrelay
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr dhcrelay 8 .
 Passes
 .Sy dhcrelay_flags .
 .It Sy mopd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr mopd 8 ,
 the
@@ -1157,18 +1035,14 @@ machines.
 Passes
 .Sy mopd_flags .
 .It Sy ndbootd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ndbootd 8 ,
 the Sun Network Disk (ND) Protocol server.
 Passes
 .Sy ndbootd_flags .
 .It Sy rarpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rarpd 8 ,
 the reverse ARP daemon, often used to boot
@@ -1177,9 +1051,7 @@ and Sun workstations.
 Passes
 .Sy rarpd_flags .
 .It Sy rbootd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rbootd 8 ,
 the
@@ -1190,9 +1062,7 @@ workstations.
 Passes
 .Sy rbootd_flags .
 .It Sy rtadvd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rtadvd 8 ,
 the IPv6 router advertisement daemon, which is used to advertise
@@ -1208,18 +1078,14 @@ if you use it.
 .Ss X Window System daemons
 .Bl -tag -width net_interfaces
 .It Sy xdm
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr xdm 1
 X display manager.
 These X daemons are available only with the optional X distribution of
 .Nx .
 .It Sy xfs
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr xfs 1
 X11 font server, which supplies local X font files to X terminals.
@@ -1227,9 +1093,7 @@ X11 font server, which supplies local X font files to X terminals.
 .Ss NIS (YP) daemons
 .Bl -tag -width net_interfaces
 .It Sy ypbind
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ypbind 8 ,
 which lets
@@ -1240,9 +1104,7 @@ server.
 Passes
 .Sy ypbind_flags .
 .It Sy yppasswdd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr yppasswdd 8 ,
 which allows remote
@@ -1251,9 +1113,7 @@ users to update password on master server.
 Passes
 .Sy yppasswdd_flags .
 .It Sy ypserv
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr ypserv 8 ,
 the
@@ -1271,9 +1131,7 @@ that fail.
 .Ss NFS daemons and parameters
 .Bl -tag -width net_interfaces
 .It Sy amd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr amd 8 ,
 the automounter daemon, which automatically mounts NFS file systems
@@ -1287,48 +1145,36 @@ The
 mount directory.
 Used only if
 .Sy amd
-is set to
-.Sq YES .
+is true.
 .It Sy lockd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rpc.lockd 8
 if
 .Sy nfs_server
 and/or
 .Sy nfs_client
-are set to
-.Sq YES .
+are true.
 Passes
 .Sy lockd_flags .
 .It Sy mountd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr mountd 8
 and passes
 .Sy mountd_flags .
 .It Sy nfs_client
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 The number of local NFS asynchronous I/O server is now controlled via
 .Xr sysctl 8 .
 .It Sy nfs_server
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Sets up a host to be a NFS server by running
 .Xr nfsd 8
 and passing
 .Sy nfsd_flags .
 .It Sy statd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rpc.statd 8 ,
 a status monitoring daemon used when
@@ -1337,23 +1183,18 @@ is running, if
 .Sy nfs_server
 and/or
 .Sy nfs_client
-are set to
-.Sq YES .
+are true.
 Passes
 .Sy statd_flags .
 .El
 .Ss Bluetooth configuration and daemons
 .Bl -tag -width net_interfaces
 .It Sy btattach
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Attach serial bluetooth interfaces as listed in the configuration file
 .Pa /etc/bluetooth/btdevctl.conf .
 .It Sy btconfig
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Configure bluetooth devices.
 If the
 .Sy btconfig_devices
@@ -1373,15 +1214,11 @@ boot time.
 An optional string, containing default arguments for bluetooth devices to
 be configured.
 .It Sy btdevctl
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Configure Bluetooth devices as listed in the configuration file
 .Pa /etc/bluetooth/btdevctl.conf .
 .It Sy bthcid
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr bthcid 8 ,
 the Bluetooth HCI daemon, which manages link keys and PIN codes for
@@ -1389,9 +1226,7 @@ Bluetooth links.
 Passes
 .Sy bthcid_flags .
 .It Sy sdpd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the Service Discovery Profile daemon,
 .Xr sdpd 8 .
 Passes
@@ -1400,18 +1235,14 @@ Passes
 .Ss Other daemons
 .Bl -tag -width net_interfaces
 .It Sy isdnd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr isdnd 8 ,
 the isdn4bsd ISDN connection management daemon.
 Passes
 .Sy isdnd_flags .
 .It Sy isdn_autoupdown
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Set all configured ISDN interfaces to
 .Dq up .
 If
@@ -1419,20 +1250,15 @@ If
 is not blank, only the listed interfaces will be modified.
 Used only if
 .Sy isdnd
-is set to
-.Sq YES .
+is true.
 .It Sy kdc
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs the
 .Xr kdc 8
 Kerberos v4 and v5 server.
 This should be run on Kerberos master and slave servers.
 .It Sy rwhod
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr rwhod 8
 to support the
@@ -1444,50 +1270,38 @@ commands.
 .Ss Hardware daemons
 .Bl -tag -width net_interfaces
 .It Sy apmd
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr apmd 8
 and passes
 .Sy apmd_flags .
 .It Sy irdaattach
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr irdaattach 8
 and passes
 .Sy irdaattach_flags .
 .It Sy moused
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr moused 8 ,
 to pass serial mouse data to the wscons mouse mux.
 Passes
 .Sy moused_flags .
 .It Sy screenblank
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr screenblank 1
 and passes
 .Sy screenblank_flags .
 .It Sy wscons
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Configures the
 .Xr wscons 4
 console driver, from the configuration file
 .Pa /etc/wscons.conf .
 .It Sy wsmoused
-.Sq YES
-or
-.Sq NO .
+Boolean value.
 Runs
 .Xr wsmoused 8 ,
 to provide copy and paste text support in wscons displays.
