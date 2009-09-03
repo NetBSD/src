@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.43 2009/09/02 17:08:12 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.44 2009/09/03 14:52:22 tsutsui Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.43 2009/09/02 17:08:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.44 2009/09/03 14:52:22 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1672,7 +1672,8 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 				       ahd_name(ahd), scbid1, mode);
 				packetized = 0;
 			} else
-				packetized = (scb1->flags & SCB_PACKETIZED) != 0;
+				packetized =
+				    (scb1->flags & SCB_PACKETIZED) != 0;
 			clear_fifo = 1;
 			break;
 		}
@@ -5167,10 +5168,14 @@ ahd_free(struct ahd_softc *ahd)
 		TAILQ_REMOVE(&ahd_tailq, ahd, links);
 		/* FALLTHROUGH */
 	case 1:
-		bus_dmamap_unload(ahd->parent_dmat, ahd->shared_data_map.dmamap);
-		bus_dmamap_destroy(ahd->parent_dmat, ahd->shared_data_map.dmamap);
-		bus_dmamem_unmap(ahd->parent_dmat, (void *)ahd->qoutfifo, ahd->shared_data_size);
-		bus_dmamem_free(ahd->parent_dmat, &ahd->shared_data_map.dmasegs, ahd->shared_data_map.nseg);
+		bus_dmamap_unload(ahd->parent_dmat,
+		    ahd->shared_data_map.dmamap);
+		bus_dmamap_destroy(ahd->parent_dmat,
+		    ahd->shared_data_map.dmamap);
+		bus_dmamem_unmap(ahd->parent_dmat, (void *)ahd->qoutfifo,
+		    ahd->shared_data_size);
+		bus_dmamem_free(ahd->parent_dmat,
+		    &ahd->shared_data_map.dmasegs, ahd->shared_data_map.nseg);
 		break;
 	case 0:
 		break;
@@ -5220,7 +5225,7 @@ ahd_shutdown(void *arg)
 {
 	struct	ahd_softc *ahd;
 
-	ahd = (struct ahd_softc *)arg;
+	ahd = arg;
 
 #ifdef AHD_DEBUG
 	printf("%s: ahd_shutdown\n", ahd_name(ahd));
@@ -5276,8 +5281,10 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * spurious SERR or PERR assertion.  Disble
 		 * PERR and SERR responses during the CHIPRST.
 		 */
-		mod_cmd = cmd & ~(PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
-		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, mod_cmd);
+		mod_cmd = cmd &
+		    ~(PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
+		pci_conf_write(bd->pc, bd->tag,
+		    PCI_COMMAND_STATUS_REG, mod_cmd);
 	}
 	ahd_outb(ahd, HCNTRL, CHIPRST | ahd->pause);
 
@@ -5366,13 +5373,15 @@ ahd_probe_scbs(struct ahd_softc *ahd) {
 		ahd_outb(ahd, SCB_CONTROL, MK_MESSAGE);
 		ret = ahd_inw_scbram(ahd, SCB_BASE);
 		if (ret != i) {
-			printf("%s: ahd_probe_scbs (!=%d): returned 0x%x\n", ahd_name(ahd), i, ret);
+			printf("%s: ahd_probe_scbs (!=%d): returned 0x%x\n",
+			    ahd_name(ahd), i, ret);
 			break;
 		}
 		ahd_set_scbptr(ahd, 0);
 		ret = ahd_inw_scbram(ahd, SCB_BASE);
 		if (ret != 0) {
-			printf("ahd_probe_scbs (non zero): returned 0x%x\n", ret);
+			printf("ahd_probe_scbs (non zero): returned 0x%x\n",
+			    ret);
 			break;
 		}
 	}
@@ -5516,7 +5525,8 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 
 		while ((sg_map = SLIST_FIRST(&scb_data->sg_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sg_maps, links);
-			ahd_freedmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd),
+			ahd_freedmamem(ahd->parent_dmat,
+				       ahd_sglist_allocsize(ahd),
 				       sg_map->dmamap, (void *)sg_map->vaddr,
 				       &sg_map->dmasegs, sg_map->nseg);
 			free(sg_map, M_DEVBUF);
@@ -5530,7 +5540,8 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 		while ((hscb_map = SLIST_FIRST(&scb_data->hscb_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->hscb_maps, links);
 			ahd_freedmamem(ahd->parent_dmat, PAGE_SIZE,
-				       hscb_map->dmamap, (void *)hscb_map->vaddr,
+				       hscb_map->dmamap,
+				       (void *)hscb_map->vaddr,
 				       &hscb_map->dmasegs, hscb_map->nseg);
 			free(hscb_map, M_DEVBUF);
 		}
@@ -5767,8 +5778,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		memset(hscb_map, 0, sizeof(*hscb_map));
 
 		/* Allocate the next batch of hardware SCBs */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
-				     &hscb_map->dmamap, (void **)&hscb_map->vaddr,
+		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE,
+				     ahd->sc_dmaflags,
+				     &hscb_map->dmamap,
+				     (void **)&hscb_map->vaddr,
 				     &hscb_map->physaddr, &hscb_map->dmasegs,
 				     &hscb_map->nseg, ahd_name(ahd),
 				     "hardware SCB structures") < 0) {
@@ -5802,7 +5815,9 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		memset(sg_map, 0, sizeof(*sg_map));
 
 		/* Allocate the next batch of S/G lists */
-		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
+		if (ahd_createdmamem(ahd->parent_dmat,
+				     ahd_sglist_allocsize(ahd),
+				     ahd->sc_dmaflags,
 				     &sg_map->dmamap, (void **)&sg_map->vaddr,
 				     &sg_map->physaddr, &sg_map->dmasegs,
 				     &sg_map->nseg, ahd_name(ahd),
@@ -5819,7 +5834,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		    ahd_sglist_allocsize(ahd) / ahd_sglist_size(ahd);
 #ifdef AHD_DEBUG
 		if (ahd_debug & AHD_SHOW_MEMORY)
-			printf("%s: ahd_alloc_scbs - Mapped SG data\n", ahd_name(ahd));
+			printf("%s: ahd_alloc_scbs - Mapped SG data\n",
+			    ahd_name(ahd));
 #endif
 	}
 
@@ -5842,8 +5858,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		memset(sense_map, 0, sizeof(*sense_map));
 
 		/* Allocate the next batch of sense buffers */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
-				     &sense_map->dmamap, (void **)&sense_map->vaddr,
+		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE,
+				     ahd->sc_dmaflags,
+				     &sense_map->dmamap,
+				     (void **)&sense_map->vaddr,
 				     &sense_map->physaddr, &sense_map->dmasegs,
 				     &sense_map->nseg, ahd_name(ahd),
 				     "Sense Data structures") < 0) {
@@ -5858,7 +5876,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		scb_data->sense_left = PAGE_SIZE / AHD_SENSE_BUFSIZE;
 #ifdef AHD_DEBUG
 		if (ahd_debug & AHD_SHOW_MEMORY)
-			printf("%s: ahd_alloc_scbs - Mapped sense data\n", ahd_name(ahd));
+			printf("%s: ahd_alloc_scbs - Mapped sense data\n",
+			    ahd_name(ahd));
 #endif
 	}
 
@@ -5878,13 +5897,11 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 #ifndef __linux__
 		int error;
 #endif
-		next_scb = (struct scb *)malloc(sizeof(*next_scb),
-						M_DEVBUF, M_WAITOK);
+		next_scb = malloc(sizeof(*next_scb), M_DEVBUF, M_WAITOK);
 		if (next_scb == NULL)
 			break;
 
-		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_WAITOK);
+		pdata = malloc(sizeof(*pdata), M_DEVBUF, M_WAITOK);
 		if (pdata == NULL) {
 			free(next_scb, M_DEVBUF);
 			break;
@@ -5916,8 +5933,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->flags = SCB_FLAG_NONE;
 
 		error = bus_dmamap_create(ahd->parent_dmat,
-					  AHD_MAXTRANSFER_SIZE, AHD_NSEG, MAXBSIZE, 0,
-					  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|ahd->sc_dmaflags,
+					  AHD_MAXTRANSFER_SIZE, AHD_NSEG,
+					  MAXBSIZE, 0,
+					  BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW|
+					  ahd->sc_dmaflags,
 					  &next_scb->dmamap);
 		if (error != 0) {
 			free(next_scb, M_DEVBUF);
@@ -6051,16 +6070,20 @@ ahd_init(struct ahd_softc *ahd)
 
 	if (ahd_createdmamem(ahd->parent_dmat, ahd->shared_data_size,
 			     ahd->sc_dmaflags,
-			     &ahd->shared_data_map.dmamap, (void **)&ahd->shared_data_map.vaddr,
-			     &ahd->shared_data_map.physaddr, &ahd->shared_data_map.dmasegs,
-			     &ahd->shared_data_map.nseg, ahd_name(ahd), "shared data") < 0)
+			     &ahd->shared_data_map.dmamap,
+			     (void **)&ahd->shared_data_map.vaddr,
+			     &ahd->shared_data_map.physaddr,
+			     &ahd->shared_data_map.dmasegs,
+			     &ahd->shared_data_map.nseg, ahd_name(ahd),
+			     "shared data") < 0)
 		return (ENOMEM);
 	ahd->qoutfifo = (void *) ahd->shared_data_map.vaddr;
 
 	ahd->init_level++;
 
 	next_vaddr = (uint8_t *)&ahd->qoutfifo[AHD_QOUT_SIZE];
-	next_baddr = ahd->shared_data_map.physaddr + AHD_QOUT_SIZE*sizeof(uint16_t);
+	next_baddr = ahd->shared_data_map.physaddr +
+	    AHD_QOUT_SIZE * sizeof(uint16_t);
 	if ((ahd->features & AHD_TARGETMODE) != 0) {
 		ahd->targetcmds = (struct target_cmd *)next_vaddr;
 		next_vaddr += AHD_TMODE_CMDS * sizeof(struct target_cmd);
@@ -7176,8 +7199,11 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 				if ((scb->flags & SCB_ACTIVE) == 0)
 					printf("Inactive SCB in qinfifo\n");
 				if (scb->xs->error != CAM_REQ_CMP)
-					printf("SEARCH_COMPLETE(0x%x): ostat 0x%x, cstat 0x%x, xs_error 0x%x\n",
-					       SCB_GET_TAG(scb), ostat, cstat, scb->xs->error);
+					printf("SEARCH_COMPLETE(0x%x):"
+					       " ostat 0x%x, cstat 0x%x, "
+					       "xs_error 0x%x\n",
+					       SCB_GET_TAG(scb), ostat, cstat,
+					       scb->xs->error);
 				ahd_done(ahd, scb);
 
 				/* FALLTHROUGH */
@@ -7724,7 +7750,7 @@ ahd_reset_poll(void *arg)
 	int	s;
 
 	ahd_list_lock(&l);
-	ahd = (void*)arg;
+	ahd = arg;
 	if (ahd == NULL) {
 		printf("ahd_reset_poll: Instance %p no longer exists\n", arg);
 		ahd_list_unlock(&l);
@@ -7765,7 +7791,7 @@ ahd_stat_timer(void *arg)
 	int	enint_coal;
 
 	ahd_list_lock(&l);
-	ahd = (void *)arg;
+	ahd = arg;
 	if (ahd == NULL) {
 		printf("ahd_stat_timer: Instance %p no longer exists\n", arg);
 		ahd_list_unlock(&l);
@@ -7897,17 +7923,22 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 				}
 			}
 			if (siu->status == SCSI_STATUS_OK)
-				ahd_set_transaction_status(scb, CAM_REQ_CMP_ERR);
+				ahd_set_transaction_status(scb,
+				    CAM_REQ_CMP_ERR);
 		}
 		if ((siu->flags & SIU_SNSVALID) != 0) {
 			scb->flags |= SCB_PKT_SENSE;
 #ifdef AHD_DEBUG
 			if ((ahd_debug & AHD_SHOW_SENSE) != 0) {
-				printf("Sense data available (%d)\n", siu->sense_length[0]);
+				printf("Sense data available (%d)\n",
+				       siu->sense_length[0]);
 				printf("SK 0x%x ASC 0x%x ASCQ 0x%x\n",
-				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+2]) & 0x0F,
-				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+12]),
-				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+13]));
+				       ((uint8_t)scb->sense_data[
+				        SIU_SENSE_OFFSET(siu)+2]) & 0x0F,
+				       ((uint8_t)scb->sense_data[
+				        SIU_SENSE_OFFSET(siu)+12]),
+				       ((uint8_t)scb->sense_data[
+				        SIU_SENSE_OFFSET(siu)+13]));
 			}
 #endif
 		}
@@ -8914,7 +8945,8 @@ ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *tbuf,
 
 		error = ahd_wait_seeprom(ahd);
 		if (error) {
-			printf("%s: ahd_wait_seeprom timed out\n", ahd_name(ahd));
+			printf("%s: ahd_wait_seeprom timed out\n",
+			    ahd_name(ahd));
 			break;
 		}
 		if (bytestream != 0) {
@@ -9708,7 +9740,9 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 #endif
 
 static int
-ahd_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg, const char *myname, const char *what)
+ahd_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp,
+    void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg,
+    const char *myname, const char *what)
 {
 	int error, level = 0;
 
@@ -9767,7 +9801,8 @@ out:
 }
 
 static void
-ahd_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr, bus_dma_segment_t *seg, int nseg)
+ahd_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr,
+    bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);
