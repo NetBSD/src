@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9.44.3 2009/09/02 17:46:48 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9.44.4 2009/09/03 00:04:27 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -50,11 +50,11 @@ LEAF(rtld_start)
 
 	PTR_LA	a1, 1f
 	bal	1f
-	 PTR_LA	t9, _C_LABEL(_rtld_relocate_nonplt_self)
+	 PTR_LA	t0, _C_LABEL(_rtld_relocate_nonplt_self)
 1:	PTR_SUBU a1, ra, a1		# relocbase
 	move	s2, a1			# save for _rtld
-	PTR_LA	a0,_DYNAMIC
-	PTR_ADDU t9, a1, t9
+	PTR_LA	a0, _DYNAMIC
+	PTR_ADDU t9, a1, t0
 	jalr	t9			# _rtld_relocate_nonplt_self(dynp, relocabase)
 	 PTR_ADDU a0, a1, a0		# &_DYNAMIC
 
