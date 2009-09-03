@@ -1,11 +1,11 @@
-/*	$NetBSD: handler.h,v 1.21 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.22 2009/09/03 09:29:07 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -214,7 +214,7 @@ struct ph1handle {
 	LIST_ENTRY(ph1handle) chain;
 #ifdef ENABLE_HYBRID
 	struct isakmp_cfg_state *mode_cfg;	/* ISAKMP mode config state */
-#endif       
+#endif
 	EVT_LISTENER_LIST(evt_listeners);
 };
 
@@ -449,7 +449,7 @@ struct ph1dump {
 	struct sockaddr_storage remote;
 	struct sockaddr_storage local;
 	u_int8_t version;
-	u_int8_t etype;	
+	u_int8_t etype;
 	time_t created;
 	int ph2cnt;
 };
@@ -468,7 +468,7 @@ extern int enumph1 __P((struct ph1selector *ph1sel,
 
 #define GETPH1_F_ESTABLISHED		0x0001
 
-extern struct ph1handle *getph1 __P((struct remoteconf *rmconf,
+extern struct ph1handle *getph1 __P((struct ph1handle *ph1hint,
 				     struct sockaddr *local,
 				     struct sockaddr *remote,
 				     int flags));
