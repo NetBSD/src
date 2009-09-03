@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.27 2009/08/18 02:44:37 yamt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.28 2009/09/03 11:42:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.27 2009/08/18 02:44:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.28 2009/09/03 11:42:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -733,8 +733,12 @@ bdev_strategy(struct buf *bp)
 	const struct bdevsw *d;
 	int mpflag;
 
-	if ((d = bdevsw_lookup(bp->b_dev)) == NULL)
-		panic("bdev_strategy");
+	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
+		bp->b_error = ENXIO;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
 
 	DEV_LOCK(d);
 	(*d->d_strategy)(bp);
