@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.63 2009/08/16 11:01:12 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.64 2009/09/03 04:45:27 elad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.63 2009/08/16 11:01:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.64 2009/09/03 04:45:27 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.63 2009/08/16 11:01:12 yamt Exp $");
 #include <sys/sysctl.h>		/* for pi_[p]cread */
 #include <sys/atomic.h>
 #include <sys/specificdata.h>
+#include <sys/vnode.h>
 
 /*
  * Secmodel-specific credentials.
@@ -142,6 +143,7 @@ static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
 static kauth_scope_t kauth_builtin_scope_device;
 static kauth_scope_t kauth_builtin_scope_cred;
+static kauth_scope_t kauth_builtin_scope_vnode;
 
 static unsigned int nsecmodels = 0;
 
@@ -831,6 +833,10 @@ kauth_init(void)
 	/* Register device scope. */
 	kauth_builtin_scope_device = kauth_register_scope(KAUTH_SCOPE_DEVICE,
 	    NULL, NULL);
+
+	/* Register vnode scope. */
+	kauth_builtin_scope_vnode = kauth_register_scope(KAUTH_SCOPE_VNODE,
+	    NULL, NULL);
 }
 
 /*
@@ -924,11 +930,16 @@ kauth_unlisten_scope(kauth_listener_t listener)
  * credential - credentials of the user ("actor") making the request.
  * action - request identifier.
  * arg[0-3] - passed unmodified to listener(s).
+ *
+ * Returns the aggregated result:
+ *     - KAUTH_RESULT_ALLOW if there is at least one KAUTH_RESULT_ALLOW and
+ *       zero KAUTH_DESULT_DENY
+ *     - KAUTH_RESULT_DENY if there is at least one KAUTH_RESULT_DENY
+ *     - KAUTH_RESULT_DEFER if there is nothing but KAUTH_RESULT_DEFER
  */
-int
-kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
-		       kauth_action_t action, void *arg0, void *arg1,
-		       void *arg2, void *arg3)
+static int
+kauth_authorize_action_internal(kauth_scope_t scope, kauth_cred_t cred,
+    kauth_action_t action, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	kauth_listener_t listener;
 	int error, allow, fail;
@@ -958,16 +969,34 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	/* rw_exit(&kauth_lock); */
 
 	if (fail)
-		return (EPERM);
+		return (KAUTH_RESULT_DENY);
 
 	if (allow)
+		return (KAUTH_RESULT_ALLOW);
+
+	return (KAUTH_RESULT_DEFER);
+};
+
+int
+kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
+    kauth_action_t action, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int r;
+
+	r = kauth_authorize_action_internal(scope, cred, action, arg0, arg1,
+	    arg2, arg3);
+
+	if (r == KAUTH_RESULT_DENY)
+		return (EPERM);
+
+	if (r == KAUTH_RESULT_ALLOW)
 		return (0);
 
 	if (!nsecmodels)
 		return (0);
 
 	return (EPERM);
-};
+}
 
 /*
  * Generic scope authorization wrapper.
@@ -1051,6 +1080,48 @@ kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
 	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
 	    KAUTH_DEVICE_RAWIO_PASSTHRU, (void *)bits, (void *)(u_long)dev,
 	    data, NULL));
+}
+
+kauth_action_t
+kauth_mode_to_action(mode_t mode)
+{
+	kauth_action_t action = 0;
+
+	if (mode & VREAD)
+		action |= KAUTH_VNODE_READ_DATA;
+	if (mode & VWRITE)
+		action |= KAUTH_VNODE_WRITE_DATA;
+	if (mode & VEXEC)
+		action |= KAUTH_VNODE_EXECUTE;
+
+	return action;
+}
+
+int
+kauth_authorize_vnode(kauth_cred_t cred, kauth_action_t action,
+    struct vnode *vp, struct vnode *dvp, int fs_decision)
+{
+	int error;
+
+	error = kauth_authorize_action_internal(kauth_builtin_scope_vnode, cred,
+	    action, vp, dvp, NULL, NULL);
+
+	if (error == KAUTH_RESULT_DENY)
+		return (EACCES);
+
+	if (error == KAUTH_RESULT_ALLOW)
+		return (0);
+
+	/*
+	 * If the file-system does not support decision-before-action, we can
+	 * only short-circuit the operation (deny). If we're here, it means no
+	 * listener denied it, so our only alternative is to supposedly-allow
+	 * it and let the file-system have the last word.
+	 */
+	if (fs_decision == KAUTH_VNODE_REMOTEFS)
+		return (0);
+
+	return (fs_decision);
 }
 
 static int
