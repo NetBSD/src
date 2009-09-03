@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.54 2009/09/03 04:45:28 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.55 2009/09/03 11:22:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.54 2009/09/03 04:45:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.55 2009/09/03 11:22:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -964,7 +964,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
-	kauth_action_t = KAUTH_VNODE_WRITE_FLAGS;
+	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
 	int fs_decision = 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
