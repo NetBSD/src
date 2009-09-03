@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.104 2009/04/07 18:15:45 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.105 2009/09/03 20:54:03 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.104 2009/04/07 18:15:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.105 2009/09/03 20:54:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 
-USB_MATCH(uhub)
+int
+uhub_match(device_t parent, cfdata_t match, void *aux)
 {
 	USB_MATCH_START(uhub, uaa);
 
@@ -120,7 +121,8 @@ USB_MATCH(uhub)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(uhub)
+void
+uhub_attach(device_t parent, device_t self, void *aux)
 {
 	USB_ATTACH_START(uhub, sc, uaa);
 	usbd_device_handle dev = uaa->device;
@@ -155,7 +157,7 @@ USB_ATTACH(uhub)
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
 		DPRINTF(("%s: configuration failed, error=%s\n",
-			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		    device_xname(sc->sc_dev), usbd_errstr(err)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -181,7 +183,7 @@ USB_ATTACH(uhub)
 	}
 	if (err) {
 		DPRINTF(("%s: getting hub descriptor failed, error=%s\n",
-			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		    device_xname(sc->sc_dev), usbd_errstr(err)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -254,7 +256,7 @@ USB_ATTACH(uhub)
 	/* Wait with power off for a while. */
 	usbd_delay_ms(dev, USB_POWER_DOWN_TIME);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, sc->sc_dev);
 
 	/*
 	 * To have the best chance of success we do things in the exact same
@@ -467,7 +469,7 @@ uhub_explore(usbd_device_handle dev)
 			/* Disconnected */
 			DPRINTF(("uhub_explore: device addr=%d disappeared "
 				 "on port %d\n", up->device->address, port));
-			usb_disconnect_port(up, USBDEV(sc->sc_dev));
+			usb_disconnect_port(up, sc->sc_dev);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
 		}
@@ -519,7 +521,7 @@ uhub_explore(usbd_device_handle dev)
 		else
 			speed = USB_SPEED_FULL;
 		/* Get device info and set its address. */
-		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus,
+		err = usbd_new_device(sc->sc_dev, dev->bus,
 			  dev->depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
@@ -584,7 +586,8 @@ uhub_activate(device_t self, enum devact act)
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
  */
-USB_DETACH(uhub)
+int
+uhub_detach(device_t self, int flags)
 {
 	USB_DETACH_START(uhub, sc);
 	struct usbd_hub *hub = sc->sc_hub->hub;
@@ -607,8 +610,7 @@ USB_DETACH(uhub)
 			usb_disconnect_port(rup, self);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
-			   USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub, sc->sc_dev);
 
 #if 0
 	if (hub->ports[0].tt)
@@ -636,8 +638,7 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 		dev = hub->ports[port].device;
 		if (dev == NULL)
 			continue;
-		err = usbd_reattach_device(USBDEV(sc->sc_dev), dev,
-					   port, locators);
+		err = usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
 	return 0;
 }
@@ -679,8 +680,7 @@ uhub_childdet(device_t self, device_t child)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
-    usbd_status status)
+uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 
