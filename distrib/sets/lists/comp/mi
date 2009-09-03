@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1298 2009/09/03 12:55:10 pooka Exp $
+#	$NetBSD: mi,v 1.1299 2009/09/03 15:35:59 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2530,6 +2530,9 @@
 ./usr/lib/librumpcrypto.a			comp-c-lib
 ./usr/lib/librumpcrypto_g.a			-unknown-		debuglib
 ./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev.a				comp-c-lib
+./usr/lib/librumpdev_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib
 ./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile

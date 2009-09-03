@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.53 2009/09/03 12:33:54 pooka Exp $
+# $NetBSD: md.amd64,v 1.54 2009/09/03 15:35:59 pooka Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -609,6 +609,10 @@
 ./usr/lib/i386/librumpcrypto.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpcrypto_p.a		comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpcrypto_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/librumpdev.a			comp-c-lib		compat
+./usr/lib/i386/librumpdev.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librumpdev_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/librumpdev_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpnet.a			comp-c-lib		compat
 ./usr/lib/i386/librumpnet.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpnet_p.a			comp-c-proflib		compat,profile
