@@ -1,11 +1,11 @@
-/*	$NetBSD: pfkey.c,v 1.50 2009/08/10 08:22:13 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.51 2009/09/03 09:29:07 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.50 2009/08/10 08:22:13 tteras Exp $ */
+/* $Id: pfkey.c,v 1.51 2009/09/03 09:29:07 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -173,7 +173,7 @@ static int addnewsp __P((caddr_t *, struct sockaddr *, struct sockaddr *));
 
 /* cope with old kame headers - ugly */
 #ifndef SADB_X_AALG_MD5
-#define SADB_X_AALG_MD5		SADB_AALG_MD5	
+#define SADB_X_AALG_MD5		SADB_AALG_MD5
 #endif
 #ifndef SADB_X_AALG_SHA
 #define SADB_X_AALG_SHA		SADB_AALG_SHA
@@ -353,7 +353,7 @@ pfkey_dump_sadb(satype)
 			 "type %i, pid %i\n", msg->sadb_msg_type, msg->sadb_msg_pid);
 		    continue;
 		}
-		
+
 
 		ml = msg->sadb_msg_len << 3;
 		bl = buf ? buf->l : 0;
@@ -839,7 +839,7 @@ pfkey_convertfromipsecdoi(proto_id, t_id, hashtype,
 			goto bad;
 		*a_keylen >>= 3;
 
-		if (t_id == IPSECDOI_ATTR_AUTH_HMAC_MD5 
+		if (t_id == IPSECDOI_ATTR_AUTH_HMAC_MD5
 		 && hashtype == IPSECDOI_ATTR_AUTH_KPDK) {
 			/* AH_MD5 + Auth(KPDK) = RFC1826 keyed-MD5 */
 			*a_type = SADB_X_AALG_MD5;
@@ -919,7 +919,7 @@ pk_sendgetspi(iph2)
 		racoon_free(dst);
 		return -1;
 	}
-	
+
 	for (pr = pp->head; pr != NULL; pr = pr->next) {
 
 		/* validity check */
@@ -991,7 +991,7 @@ pk_sendgetspi(iph2)
  * receive GETSPI from kernel.
  */
 static int
-pk_recvgetspi(mhp) 
+pk_recvgetspi(mhp)
 	caddr_t *mhp;
 {
 	struct sadb_msg *msg;
@@ -1111,7 +1111,7 @@ pk_sendupdate(iph2)
 		sa_args.l_addtime = iph2->lifetime_secs;
 	else
 		sa_args.l_addtime = iph2->approval->lifetime;
-	sa_args.seq = iph2->seq; 
+	sa_args.seq = iph2->seq;
 	sa_args.wsize = 4;
 
 	if (iph2->sa_src && iph2->sa_dst) {
@@ -1163,7 +1163,7 @@ pk_sendupdate(iph2)
 				pr->head->trns_id,
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
-				&sa_args.a_type, &sa_args.a_keylen, 
+				&sa_args.a_type, &sa_args.a_keylen,
 				&sa_args.flags) < 0){
 			racoon_free(sa_args.src);
 			racoon_free(sa_args.dst);
@@ -1221,11 +1221,11 @@ pk_sendupdate(iph2)
 		 * But it is impossible because there is not key in the
 		 * information from the kernel.
 		 */
-		
+
 		/* change some things before backing up */
 		sa_args.wsize = 4;
 		sa_args.l_bytes = iph2->approval->lifebyte * 1024;
-		
+
 		if (backupsa_to_file(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"backuped SA failed: %s\n",
@@ -1447,7 +1447,7 @@ pk_sendadd(iph2)
 				pr->head->trns_id,
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
-				&sa_args.a_type, &sa_args.a_keylen, 
+				&sa_args.a_type, &sa_args.a_keylen,
 				&sa_args.flags) < 0){
 			racoon_free(sa_args.src);
 			racoon_free(sa_args.dst);
@@ -1668,11 +1668,12 @@ pk_recvexpire(mhp)
 		     " being negotiated. Stopping negotiation.\n");
 	}
 
-	/* turn off the timer for calling isakmp_ph2expire() */ 
+	/* turn off the timer for calling isakmp_ph2expire() */
 	sched_cancel(&iph2->sce);
 
 	if (iph2->status == PHASE2ST_ESTABLISHED &&
 	    iph2->side == INITIATOR) {
+		struct ph1handle *iph1hint;
 		/*
 		 * Active phase 2 expired and we were initiator.
 		 * Begin new phase 2 exchange, so we can keep on sending
@@ -1680,11 +1681,12 @@ pk_recvexpire(mhp)
 		 */
 
 		/* update status for re-use */
+		iph1hint = iph2->ph1;
 		initph2(iph2);
 		iph2->status = PHASE2ST_STATUS2;
 
 		/* start quick exchange */
-		if (isakmp_post_acquire(iph2) < 0) {
+		if (isakmp_post_acquire(iph2, iph1hint) < 0) {
 			plog(LLV_ERROR, LOCATION, iph2->dst,
 				"failed to begin ipsec sa "
 				"re-negotication.\n");
@@ -1750,7 +1752,7 @@ pk_recvacquire(mhp)
 	if (m_sec_ctx != NULL) {
 		plog(LLV_INFO, LOCATION, NULL, "security context doi: %u\n",
 		     m_sec_ctx->sadb_x_ctx_doi);
-		plog(LLV_INFO, LOCATION, NULL, 
+		plog(LLV_INFO, LOCATION, NULL,
 		     "security context algorithm: %u\n",
 		     m_sec_ctx->sadb_x_ctx_alg);
 		plog(LLV_INFO, LOCATION, NULL, "security context length: %u\n",
@@ -1960,7 +1962,7 @@ pk_recvacquire(mhp)
 
 	/* start isakmp initiation by using ident exchange */
 	/* XXX should be looped if there are multiple phase 2 handler. */
-	if (isakmp_post_acquire(iph2) < 0) {
+	if (isakmp_post_acquire(iph2, NULL) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to begin ipsec sa negotication.\n");
 		remph2(iph2);
@@ -2145,7 +2147,7 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 		p->sadb_x_ctx_len = spidx->sec_ctx.ctx_strlen;
 		p->sadb_x_ctx_doi = spidx->sec_ctx.ctx_doi;
 		p->sadb_x_ctx_alg = spidx->sec_ctx.ctx_alg;
- 
+
 		memcpy(p + 1,spidx->sec_ctx.ctx_str,spidx->sec_ctx.ctx_strlen);
 		len += ctxlen;
 	}
@@ -2184,7 +2186,7 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 			goto err;
 		}
 
-		/* 
+		/*
 		 * the policy level cannot be unique because the policy
 		 * is defined later than SA, so req_id cannot be bound to SA.
 		 */
@@ -2217,7 +2219,7 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 
 		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(xisrlen);
 		xisr = (struct sadb_x_ipsecrequest *)p;
-		
+
 	}
 	racoon_free(pr_rlist);
 
@@ -3070,6 +3072,8 @@ migrate_ph2_sa_addresses(iph2, args)
 			rmconf = getrmconf(iph2->dst, 0);
 
 		if (rmconf && !rmconf->passive) {
+			struct ph1handle *iph1hint;
+
 			plog(LLV_WARNING, LOCATION, iph2->dst, "MIGRATE received "
 			     "*during* IPsec SA negotiation. As initiator, "
 			     "restarting it.\n");
@@ -3079,11 +3083,12 @@ migrate_ph2_sa_addresses(iph2, args)
 			iph2->status = PHASE2ST_EXPIRED;
 
 			/* ... clean Phase 2 handle ... */
+			iph1hint = iph2->ph1;
 			initph2(iph2);
 			iph2->status = PHASE2ST_STATUS2;
 
 			/* and start a new negotiation */
-			if (isakmp_post_acquire(iph2) < 0) {
+			if (isakmp_post_acquire(iph2, iph1hint) < 0) {
 				plog(LLV_ERROR, LOCATION, iph2->dst, "failed "
 				     "to begin IPsec SA renegotiation after "
 				     "MIGRATE reception.\n");

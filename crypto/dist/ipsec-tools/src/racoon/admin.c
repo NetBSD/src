@@ -1,11 +1,11 @@
-/*	$NetBSD: admin.c,v 1.31 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.32 2009/09/03 09:29:07 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -341,7 +341,7 @@ admin_process(so2, combuf)
 		user[len] = 0;
 
 		found = purgeph1bylogin(user);
-		plog(LLV_INFO, LOCATION, NULL, 
+		plog(LLV_INFO, LOCATION, NULL,
 		    "deleted %d SA for user \"%s\"\n", found, user);
 
 		break;
@@ -360,7 +360,7 @@ admin_process(so2, combuf)
 		rem = racoon_strdup(saddrwop2str(dst));
 		STRDUP_FATAL(rem);
 
-		plog(LLV_INFO, LOCATION, NULL, 
+		plog(LLV_INFO, LOCATION, NULL,
 		    "Flushing all SAs for peer %s\n", rem);
 
 		while ((iph1 = getph1bydstaddr(dst)) != NULL) {
@@ -373,7 +373,7 @@ admin_process(so2, combuf)
 
 			racoon_free(loc);
 		}
-		
+
 		racoon_free(rem);
 		break;
 	}
@@ -383,14 +383,14 @@ admin_process(so2, combuf)
 		char *data;
 
 		acp = (struct admin_com_psk *)
-		    ((char *)com + sizeof(*com) + 
+		    ((char *)com + sizeof(*com) +
 		    sizeof(struct admin_com_indexes));
 
 		idtype = acp->id_type;
 
 		if ((id = vmalloc(acp->id_len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
-			    "cannot allocate memory: %s\n", 
+			    "cannot allocate memory: %s\n",
 			    strerror(errno));
 			break;
 		}
@@ -399,7 +399,7 @@ admin_process(so2, combuf)
 
 		if ((key = vmalloc(acp->key_len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
-			    "cannot allocate memory: %s\n", 
+			    "cannot allocate memory: %s\n",
 			    strerror(errno));
 			vfree(id);
 			id = NULL;
@@ -474,7 +474,7 @@ admin_process(so2, combuf)
 				rmconf->xauth->pass = key;
 			}
 #endif
- 
+
 			plog(LLV_INFO, LOCATION, NULL,
 				"accept a request to establish IKE-SA: "
 				"%s\n", saddrwop2str(dst));
@@ -577,7 +577,7 @@ admin_process(so2, combuf)
 			}
 
 			insph2(iph2);
-			if (isakmp_post_acquire(iph2) < 0) {
+			if (isakmp_post_acquire(iph2, NULL) < 0) {
 				remph2(iph2);
 				delph2(iph2);
 				break;
@@ -710,17 +710,17 @@ admin_init()
 	}
 
 	if (chown(sunaddr.sun_path, adminsock_owner, adminsock_group) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-		    "chown(%s, %d, %d): %s\n", 
-		    sunaddr.sun_path, adminsock_owner, 
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "chown(%s, %d, %d): %s\n",
+		    sunaddr.sun_path, adminsock_owner,
 		    adminsock_group, strerror(errno));
 		(void)close(lcconf->sock_admin);
 		return -1;
 	}
 
 	if (chmod(sunaddr.sun_path, adminsock_mode) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-		    "chmod(%s, 0%03o): %s\n", 
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "chmod(%s, 0%03o): %s\n",
 		    sunaddr.sun_path, adminsock_mode, strerror(errno));
 		(void)close(lcconf->sock_admin);
 		return -1;

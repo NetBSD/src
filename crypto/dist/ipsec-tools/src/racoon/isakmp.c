@@ -1,11 +1,11 @@
-/*	$NetBSD: isakmp.c,v 1.59 2009/09/01 09:24:21 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.60 2009/09/03 09:29:07 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -176,7 +176,7 @@ static int (*ph2exchange[][2][PHASE2ST_MAX])
 };
 
 static u_char r_ck0[] = { 0,0,0,0,0,0,0,0 }; /* used to verify the r_ck. */
- 
+
 static int isakmp_main __P((vchar_t *, struct sockaddr *, struct sockaddr *));
 static int ph1_main __P((struct ph1handle *, vchar_t *));
 static int quick_main __P((struct ph2handle *, vchar_t *));
@@ -190,7 +190,7 @@ static int isakmp_ph1resend __P((struct ph1handle *));
 static int isakmp_ph2resend __P((struct ph2handle *));
 
 #ifdef ENABLE_FRAG
-static int frag_handler(struct ph1handle *, 
+static int frag_handler(struct ph1handle *,
     vchar_t *, struct sockaddr *, struct sockaddr *);
 #endif
 
@@ -259,16 +259,16 @@ isakmp_handler(ctx, so_isakmp)
 			extralen += sizeof(x.lbuf.udp) + x.lbuf.ip.ip_hl;
 		}
 #endif
-	}	
+	}
 
 #ifdef ENABLE_NATT
-	/* we don't know about portchange yet, 
+	/* we don't know about portchange yet,
 	   look for non-esp marker instead */
 	if (x.non_esp[0] == 0 && x.non_esp[1] != 0)
 		extralen = NON_ESP_MARKER_LEN;
 #endif
 
-	/* now we know if there is an extra non-esp 
+	/* now we know if there is an extra non-esp
 	   marker at the beginning or not */
 	memcpy ((char *)&isakmp, x.buf + extralen, sizeof (isakmp));
 
@@ -309,7 +309,7 @@ isakmp_handler(ctx, so_isakmp)
 		if ((len = recvfrom(so_isakmp, (char *)&isakmp, sizeof(isakmp),
 			    0, (struct sockaddr *)&remote, &remote_len)) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to receive isakmp packet: %s\n", 
+				"failed to receive isakmp packet: %s\n",
 				strerror (errno));
 		}
 		goto end;
@@ -332,11 +332,11 @@ isakmp_handler(ctx, so_isakmp)
 			(len - extralen));
 		goto end;
 	}
-	
+
 	memcpy (buf->v, tmpbuf->v + extralen, buf->l);
 
 	len -= extralen;
-	
+
 	if (len != buf->l) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
 			"received invalid length (%d != %zu), why ?\n",
@@ -347,7 +347,7 @@ isakmp_handler(ctx, so_isakmp)
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"%d bytes message received %s\n",
-		len, saddr2str_fromto("from %s to %s", 
+		len, saddr2str_fromto("from %s to %s",
 			(struct sockaddr *)&remote,
 			(struct sockaddr *)&local));
 	plogdump(LLV_DEBUG, buf->v, buf->l);
@@ -496,12 +496,12 @@ isakmp_main(msg, remote, local)
 			}
 
 			/* set the flag to prevent further port floating
-			   (FIXME: should we allow it? E.g. when the NAT gw 
+			   (FIXME: should we allow it? E.g. when the NAT gw
 			    is rebooted?) */
 			iph1->natt_flags |= NAT_PORTS_CHANGED | NAT_ADD_NON_ESP_MARKER;
-			
+
 			/* print some neat info */
-			plog (LLV_INFO, LOCATION, NULL, 
+			plog (LLV_INFO, LOCATION, NULL,
 			      "NAT-T: ports changed to: %s\n",
 			      saddr2str_fromto ("%s<->%s", iph1->remote, iph1->local));
 
@@ -668,7 +668,7 @@ isakmp_main(msg, remote, local)
 			return -1;
 		}
 #ifdef ENABLE_HYBRID
-		/* Reinit the IVM if it's still there */		
+		/* Reinit the IVM if it's still there */
 		if (iph1->mode_cfg && iph1->mode_cfg->ivm) {
 			oakley_delivm(iph1->mode_cfg->ivm);
 			iph1->mode_cfg->ivm = NULL;
@@ -753,7 +753,7 @@ isakmp_main(msg, remote, local)
 
 		isakmp_cfg_r(iph1, msg);
 		break;
-#endif	 
+#endif
 
 	case ISAKMP_ETYPE_NONE:
 	default:
@@ -822,7 +822,7 @@ ph1_main(iph1, msg)
 	/* free resend buffer */
 	if (iph1->sendbuf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"no buffer found as sendbuf\n"); 
+			"no buffer found as sendbuf\n");
 		return -1;
 	}
 #endif
@@ -925,13 +925,13 @@ ph1_main(iph1, msg)
 		log_ph1established(iph1);
 		plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 
-		/* 
+		/*
 		 * SA up shell script hook: do it now,except if
 		 * ISAKMP mode config was requested. In the later
 		 * case it is done when we receive the configuration.
 		 */
 		if ((iph1->status == PHASE1ST_ESTABLISHED) &&
-		    !iph1->rmconf->mode_cfg) { 
+		    !iph1->rmconf->mode_cfg) {
 			switch (iph1->approval->authmethod) {
 #ifdef ENABLE_HYBRID
 			case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
@@ -1004,7 +1004,7 @@ quick_main(iph2, msg)
 	/* free resend buffer */
 	if (iph2->sendbuf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"no buffer found as sendbuf\n"); 
+			"no buffer found as sendbuf\n");
 		return -1;
 	}
 	VPTRINIT(iph2->sendbuf);
@@ -1754,23 +1754,23 @@ isakmp_send(iph1, sbuf)
 		extralen = 0;
 
 #ifdef ENABLE_FRAG
-	/* 
+	/*
 	 * Do not add the non ESP marker for a packet that will
-	 * be fragmented. The non ESP marker should appear in 
+	 * be fragmented. The non ESP marker should appear in
 	 * all fragment's packets, but not in the fragmented packet
 	 */
-	if (iph1->frag && sbuf->l > ISAKMP_FRAG_MAXLEN) 
+	if (iph1->frag && sbuf->l > ISAKMP_FRAG_MAXLEN)
 		extralen = 0;
 #endif
 	if (extralen)
 		plog (LLV_DEBUG, LOCATION, NULL, "Adding NON-ESP marker\n");
 
-	/* If NAT-T port floating is in use, 4 zero bytes (non-ESP marker) 
-	   must added just before the packet itself. For this we must 
+	/* If NAT-T port floating is in use, 4 zero bytes (non-ESP marker)
+	   must added just before the packet itself. For this we must
 	   allocate a new buffer and release it at the end. */
 	if (extralen) {
 		if ((vbuf = vmalloc (sbuf->l + extralen)) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL, 
+			plog(LLV_ERROR, LOCATION, NULL,
 			    "vbuf allocation failed\n");
 			return -1;
 		}
@@ -1791,17 +1791,17 @@ isakmp_send(iph1, sbuf)
 	if (s == -1)
 		return -1;
 
-	plog (LLV_DEBUG, LOCATION, NULL, "%zu bytes %s\n", sbuf->l, 
+	plog (LLV_DEBUG, LOCATION, NULL, "%zu bytes %s\n", sbuf->l,
 	      saddr2str_fromto("from %s to %s", iph1->local, iph1->remote));
 
 #ifdef ENABLE_FRAG
 	if (iph1->frag && sbuf->l > ISAKMP_FRAG_MAXLEN) {
 		if (isakmp_sendfrags(iph1, sbuf) == -1) {
-			plog(LLV_ERROR, LOCATION, NULL, 
+			plog(LLV_ERROR, LOCATION, NULL,
 			    "isakmp_sendfrags failed\n");
 			return -1;
 		}
-	} else 
+	} else
 #endif
 	{
 		len = sendfromto(s, sbuf->v, sbuf->l,
@@ -1812,7 +1812,7 @@ isakmp_send(iph1, sbuf)
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -1959,7 +1959,7 @@ isakmp_ph1dying(iph1)
 	iph1->status = PHASE1ST_DYING;
 
 	/* Any fresh phase1s? */
-	new_iph1 = getph1(iph1->rmconf, iph1->local, iph1->remote, 1);
+	new_iph1 = getph1(iph1, iph1->local, iph1->remote, 1);
 	if (new_iph1 == NULL) {
 		LIST_FOREACH(p, &iph1->ph2tree, ph1bind) {
 			if (p->status != PHASE2ST_ESTABLISHED)
@@ -2036,7 +2036,7 @@ isakmp_ph1delete(iph1)
 	char *src, *dst;
 
 	/* Migrate established phase2s. Any fresh phase1s? */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
+	new_iph1 = getph1(iph1, iph1->local, iph1->remote, 1);
 	if (new_iph1 != NULL)
 		migrate_ph12(iph1, new_iph1);
 
@@ -2143,12 +2143,13 @@ isakmp_ph2delete(iph2)
  * if phase1 has been finished, begin phase2.
  */
 int
-isakmp_post_acquire(iph2)
+isakmp_post_acquire(iph2, iph1hint)
 	struct ph2handle *iph2;
+	struct ph1handle *iph1hint;
 {
 	struct remoteconf *rmconf;
 	struct ph1handle *iph1 = NULL;
-	
+
 	plog(LLV_DEBUG, LOCATION, NULL, "in post_acquire\n");
 
 	/* Search appropriate configuration with masking port. Note that
@@ -2159,12 +2160,17 @@ isakmp_post_acquire(iph2)
 	 * address of a mobile node (not a CoA provided by MIGRATE/KMADDRESS
 	 * as iph2->dst hint). This scenario would require additional changes,
 	 * so no need to bother yet. --arno */
-	rmconf = getrmconf(iph2->dst, GETRMCONF_F_NO_PASSIVE);
-	if (rmconf == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"no configuration found for %s.\n",
-			saddrwop2str(iph2->dst));
-		return -1;
+
+	if (iph1hint == NULL || iph1hint->rmconf == NULL) {
+		rmconf = getrmconf(iph2->dst, GETRMCONF_F_NO_PASSIVE);
+		if (rmconf == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"no configuration found for %s.\n",
+				saddrwop2str(iph2->dst));
+			return -1;
+		}
+	} else {
+		rmconf = iph1hint->rmconf;
 	}
 
 	/* if passive mode, ignore the acquire message */
@@ -2181,7 +2187,7 @@ isakmp_post_acquire(iph2)
 	 * some cases, we should use the ISAKMP identity to search
 	 * matching ISAKMP.
 	 */
-	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
+	iph1 = getph1(iph1hint, iph2->src, iph2->dst, 0);
 
 	/* no ISAKMP-SA found. */
 	if (iph1 == NULL) {
@@ -2978,7 +2984,7 @@ log_ph1established(iph1)
 		"ISAKMP-SA established %s-%s spi:%s\n",
 		src, dst,
 		isakmp_pindex(&iph1->index, 0));
-	
+
 	evt_phase1(iph1, EVT_PHASE1_UP, NULL);
 	if(!iph1->rmconf->mode_cfg)
 		evt_phase1(iph1, EVT_PHASE1_MODE_CFG, NULL);
@@ -3011,7 +3017,7 @@ isakmp_plist_append_full (struct payload_list *plist, vchar_t *payload,
 	return plist;
 }
 
-vchar_t * 
+vchar_t *
 isakmp_plist_set_all (struct payload_list **plist, struct ph1handle *iph1)
 {
 	struct payload_list *ptr = *plist, *first;
@@ -3022,7 +3028,7 @@ isakmp_plist_set_all (struct payload_list **plist, struct ph1handle *iph1)
 	/* Seek to the first item.  */
 	while (ptr->prev) ptr = ptr->prev;
 	first = ptr;
-	
+
 	/* Compute the whole length.  */
 	while (ptr) {
 		tlen += ptr->payload->l + sizeof (struct isakmp_gen);
@@ -3064,7 +3070,7 @@ end:
 }
 
 #ifdef ENABLE_FRAG
-int 
+int
 frag_handler(iph1, msg, remote, local)
 	struct ph1handle *iph1;
 	vchar_t *msg;
@@ -3075,7 +3081,7 @@ frag_handler(iph1, msg, remote, local)
 
 	if (isakmp_frag_extract(iph1, msg) == 1) {
 		if ((newmsg = isakmp_frag_reassembly(iph1)) == NULL) {
-			plog(LLV_ERROR, LOCATION, remote, 
+			plog(LLV_ERROR, LOCATION, remote,
 			    "Packet reassembly failed\n");
 			return -1;
 		}
@@ -3212,7 +3218,7 @@ script_exec(script, name, envp)
 	argv[1] = script_names[name];
 	argv[2] = NULL;
 
-	switch (fork()) { 
+	switch (fork()) {
 	case 0:
 		execve(argv[0], argv, envp);
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -3227,7 +3233,7 @@ script_exec(script, name, envp)
 		break;
 	default:
 		break;
-	}	
+	}
 	return 0;
 
 }
@@ -3253,7 +3259,7 @@ purge_remote(iph1)
 	iph1->status = PHASE1ST_EXPIRED;
 
 	/* Check if we have another, still valid, phase1 SA. */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
+	new_iph1 = getph1(iph1, iph1->local, iph1->remote, GETPH1_F_ESTABLISHED);
 
 	/*
 	 * Delete all orphaned or binded to the deleting ph1handle phase2 SAs.
@@ -3329,7 +3335,7 @@ purge_remote(iph1)
 					ntohl(sa->sadb_sa_spi));
 			}else{
 
-				/* 
+				/*
 				 * If we have a new ph1, do not purge IPsec-SAs binded
 				 *  to a different ISAKMP-SA
 				 */
@@ -3341,7 +3347,7 @@ purge_remote(iph1)
 				/* If the ph2handle is established, do not purge IPsec-SA */
 				if (iph2->status == PHASE2ST_ESTABLISHED ||
 					iph2->status == PHASE2ST_EXPIRED) {
-					
+
 					plog(LLV_INFO, LOCATION, NULL,
 						 "keeping IPsec-SA spi=%u - found valid ISAKMP-SA spi=%s.\n",
 						 ntohl(sa->sadb_sa_spi),
@@ -3352,7 +3358,7 @@ purge_remote(iph1)
 			}
 		}
 
-		
+
 		pfkey_send_delete(lcconf->sock_pfkey,
 				  msg->sadb_msg_satype,
 				  IPSEC_MODE_ANY,
@@ -3383,7 +3389,7 @@ purge_remote(iph1)
 	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 }
 
-void 
+void
 delete_spd(iph2, created)
 	struct ph2handle *iph2;
  	u_int64_t created;
@@ -3409,22 +3415,22 @@ delete_spd(iph2, created)
 
 	plog(LLV_INFO, LOCATION, NULL,
 		 "generated policy, deleting it.\n");
-		
+
 	memset(&spidx, 0, sizeof(spidx));
 	iph2->spidx_gen = (caddr_t )&spidx;
-		
+
 	/* make inbound policy */
 	iph2->src = dst;
 	iph2->dst = src;
 	spidx.dir = IPSEC_DIR_INBOUND;
 	spidx.ul_proto = 0;
-		
-	/* 
+
+	/*
 	 * Note: code from get_proposal_r
 	 */
-		
+
 #define _XIDT(d) ((struct ipsecdoi_id_b *)(d)->v)->type
-		
+
 	/*
 	 * make destination address in spidx from either ID payload
 	 * or phase 1 address into a address in spidx.
@@ -3440,48 +3446,48 @@ delete_spd(iph2, created)
 									 &spidx.prefd, &spidx.ul_proto);
 		if (error)
 			goto purge;
-			
+
 #ifdef INET6
 		/*
 		 * get scopeid from the SA address.
 		 * note that the phase 1 source address is used as
-		 * a destination address to search for a inbound 
+		 * a destination address to search for a inbound
 		 * policy entry because rcoon is responder.
 		 */
 		if (_XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR) {
-			if ((error = 
+			if ((error =
 				 setscopeid((struct sockaddr *)&spidx.dst,
 							iph2->src)) != 0)
 				goto purge;
 		}
 #endif
-			
+
 		if (_XIDT(iph2->id) == IPSECDOI_ID_IPV4_ADDR
 			|| _XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR)
 			idi2type = _XIDT(iph2->id);
-			
+
 	} else {
-			
+
 		plog(LLV_DEBUG, LOCATION, NULL,
 			 "get a destination address of SP index "
 			 "from phase1 address "
 			 "due to no ID payloads found "
 			 "OR because ID type is not address.\n");
-			
+
 		/*
-		 * copy the SOURCE address of IKE into the 
-		 * DESTINATION address of the key to search the 
+		 * copy the SOURCE address of IKE into the
+		 * DESTINATION address of the key to search the
 		 * SPD because the direction of policy is inbound.
 		 */
 		memcpy(&spidx.dst, iph2->src, sysdep_sa_len(iph2->src));
 		switch (spidx.dst.ss_family) {
 		case AF_INET:
-			spidx.prefd = 
+			spidx.prefd =
 				sizeof(struct in_addr) << 3;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			spidx.prefd = 
+			spidx.prefd =
 				sizeof(struct in6_addr) << 3;
 			break;
 #endif
@@ -3490,7 +3496,7 @@ delete_spd(iph2, created)
 			break;
 		}
 	}
-					
+
 	/* make source address in spidx */
 	if (iph2->id_p != NULL
 		&& (_XIDT(iph2->id_p) == IPSECDOI_ID_IPV4_ADDR
@@ -3510,7 +3516,7 @@ delete_spd(iph2, created)
 		 * for more detail, see above of this function.
 		 */
 		if (_XIDT(iph2->id_p) == IPSECDOI_ID_IPV6_ADDR) {
-			error = 
+			error =
 				setscopeid((struct sockaddr *)&spidx.src,
 						   iph2->dst);
 			if (error)
@@ -3548,12 +3554,12 @@ delete_spd(iph2, created)
 		memcpy(&spidx.src, iph2->dst, sysdep_sa_len(iph2->dst));
 		switch (spidx.src.ss_family) {
 		case AF_INET:
-			spidx.prefs = 
+			spidx.prefs =
 				sizeof(struct in_addr) << 3;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			spidx.prefs = 
+			spidx.prefs =
 				sizeof(struct in6_addr) << 3;
 			break;
 #endif
@@ -3584,14 +3590,14 @@ delete_spd(iph2, created)
 		spidx.ul_proto = IPSEC_ULPROTO_ANY;
 
 #undef _XIDT
-	
+
 	/* Check if the generated SPD has the same timestamp as the SA.
 	 * If timestamps are different, this means that the SPD entry has been
 	 * refreshed by another SA, and should NOT be deleted with the current SA.
 	 */
 	if( created ){
 		struct secpolicy *p;
-		
+
 		p = getsp(&spidx);
 		if(p != NULL){
 			/* just do no test if p is NULL, because this probably just means
@@ -3656,7 +3662,7 @@ setscopeid(sp_addr0, sa_addr0)
 	struct sockaddr *sp_addr0, *sa_addr0;
 {
 	struct sockaddr_in6 *sp_addr, *sa_addr;
-    
+
 	sp_addr = (struct sockaddr_in6 *)sp_addr0;
 	sa_addr = (struct sockaddr_in6 *)sa_addr0;
 
