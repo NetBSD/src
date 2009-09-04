@@ -1,15 +1,18 @@
-	$NetBSD: README.dirs,v 1.8 2008/12/31 13:18:06 pooka Exp $
+	$NetBSD: README.dirs,v 1.9 2009/09/04 10:54:44 pooka Exp $
 
     Runnable Userspace Meta Programs
 
 Quick rundown of the current directory structure:
 
 sys/rump/librump - kernel runtime emulation
-  /rumpkern - kernel core, e.g. syscall, interrupt and lock support
-  /rumpnet  - networking support and sockets layer
-  /rumpuser - userspace namespace support for previous, *NO* -D_KERNEL
-	      provides e.g. malloc() and some syscalls
-  /rumpvfs  - file system support
+  /rumpkern	- kernel core, e.g. syscall, interrupt and lock support
+  /rumpuser	- userspace namespace support for rump, *NO* -D_KERNEL
+		  provides e.g. malloc() and some syscalls
+
+  /rumpcrypto	- kernel cryptographic routines
+  /rumpdev	- device support, e.g. autoconf subsystem
+  /rumpnet	- networking support and sockets layer
+  /rumpvfs	- file system support
 
 sys/rump/include
   /machine - used for architectures where the rump ABI is not yet the
@@ -17,10 +20,12 @@ sys/rump/include
 	     completely
   /rump    - rump headers installed to userspace
 
-sys/rump/fs - file system rumps
+sys/rump/dev - device components
+
+sys/rump/fs - file system components
   /lib/lib${fs}  - kernel file system code compiled out of /sys with -D_KERNEL
 
-sys/rump/net - networking rumps
+sys/rump/net - networking components
   /lib/libnet	  - subroutines from sys/net, e.g. route and if_ethersubr
   /lib/libnetinet - TCP/IP
   /lib/libvirtif  - a virtual interface which uses host tap(4) to shovel
