@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.38 2009/09/04 18:29:52 tsutsui Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.39 2009/09/04 18:40:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -40,8 +40,8 @@
 
 /* tables used by SCRIPT */
 typedef struct scr_table {
-	u_int32_t count;
-	u_int32_t addr;
+	uint32_t count;
+	uint32_t addr;
 } __packed scr_table_t;
 
 /* Number of scatter/gather entries */
@@ -53,12 +53,12 @@ typedef struct scr_table {
  * If you change something here, don't forget to update offsets in {s,es}iop.ss
  */
 struct siop_common_xfer {
-	u_int8_t msg_out[16];	/* 0 */
-	u_int8_t msg_in[16];	/* 16 */
-	u_int32_t status;	/* 32 */
-	u_int32_t pad1; 	/* 36 */
-	u_int32_t id;		/* 40 */
-	u_int32_t pad2;		/* 44 */
+	uint8_t msg_out[16];	/* 0 */
+	uint8_t msg_in[16];	/* 16 */
+	uint32_t status;	/* 32 */
+	uint32_t pad1;		/* 36 */
+	uint32_t id;		/* 40 */
+	uint32_t pad2;		/* 44 */
 	scr_table_t t_msgin;	/* 48 */
 	scr_table_t t_extmsgin;	/* 56 */
 	scr_table_t t_extmsgdata; /* 64 */
@@ -106,7 +106,7 @@ struct siop_common_cmd {
 struct siop_common_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
-	u_int32_t id;	/* for SELECT FROM */
+	uint32_t id;	/* for SELECT FROM */
 	int period;
 	int offset;
 };
@@ -152,7 +152,7 @@ struct siop_common_softc {
 	void (*sc_reset)(struct siop_common_softc*); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
 	bus_addr_t sc_scriptaddr;	/* on-board ram or physical address */
-	u_int32_t *sc_script;		/* script location in memory */
+	uint32_t *sc_script;		/* script location in memory */
 	struct siop_common_target *targets[16]; /* per-target states */
 };
 

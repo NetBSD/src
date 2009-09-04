@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.20 2008/06/11 02:09:16 kiyohara Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.21 2009/09/04 18:40:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -419,89 +419,89 @@ static const struct scf_period dt_scf_period[] __unused = {
 
 struct nvram_symbios {
 	/* Header (6 bytes) */
-	u_int16_t	type;		/* 0x0000 */
-	u_int16_t	byte_count;	/* excluding header/trailer */
-	u_int16_t	checksum;
+	uint16_t	type;		/* 0x0000 */
+	uint16_t	byte_count;	/* excluding header/trailer */
+	uint16_t	checksum;
 
 	/* Adapter configuration (20 bytes) */
-	u_int8_t	v_major;
-	u_int8_t	v_minor;
-	u_int32_t	boot_crc;
-	u_int16_t	flags;
+	uint8_t		v_major;
+	uint8_t		v_minor;
+	uint32_t	boot_crc;
+	uint16_t	flags;
 #define	NVRAM_SYM_F_SCAM_ENABLE		0x0001
 #define	NVRAM_SYM_F_PARITY_ENABLE	0x0002
 #define	NVRAM_SYM_F_VERBOSE_MESSAGES	0x0004
 #define	NVRAM_SYM_F_CHS_MAPPING		0x0008
-	u_int16_t	flags1;
+	uint16_t	flags1;
 #define	NVRAM_SYM_F1_SCAN_HI_LO		0x0001
-	u_int16_t	term_state;
+	uint16_t	term_state;
 #define	NVRAM_SYM_TERM_CANT_PROGRAM	0
 #define	NVRAM_SYM_TERM_ENABLED		1
 #define	NVRAM_SYM_TERM_DISABLED		2
-	u_int16_t	rmvbl_flags;
+	uint16_t	rmvbl_flags;
 #define	NVRAM_SYM_RMVBL_NO_SUPPORT	0
 #define	NVRAM_SYM_RMVBL_BOOT_DEVICE	1
 #define	NVRAM_SYM_RMVBL_MEDIA_INSTALLED	2
-	u_int8_t	host_id;
-	u_int8_t	num_hba;
-	u_int8_t	num_devices;
-	u_int8_t	max_scam_devices;
-	u_int8_t	num_valid_scam_devices;
-	u_int8_t	rsvd;
+	uint8_t		host_id;
+	uint8_t		num_hba;
+	uint8_t		num_devices;
+	uint8_t		max_scam_devices;
+	uint8_t		num_valid_scam_devices;
+	uint8_t		rsvd;
 
 	/* Boot order (14 bytes x 4) */
 	struct nvram_symbios_host {
-		u_int16_t	type;		/* 4 - 8xx */
-		u_int16_t	device_id;	/* PCI device ID */
-		u_int16_t	vendor_id;	/* PCI vendor ID */
-		u_int8_t	bus_nr;		/* PCI bus number */
-		u_int8_t	device_fn;	/* PCI device/func # << 3 */
-		u_int16_t	word8;
-		u_int16_t	flags;
+		uint16_t	type;		/* 4 - 8xx */
+		uint16_t	device_id;	/* PCI device ID */
+		uint16_t	vendor_id;	/* PCI vendor ID */
+		uint8_t		bus_nr;		/* PCI bus number */
+		uint8_t		device_fn;	/* PCI device/func # << 3 */
+		uint16_t	word8;
+		uint16_t	flags;
 #define	NVRAM_SYM_HOST_F_SCAN_AT_BOOT	0x0001
-		u_int16_t	io_port;	/* PCI I/O address */
+		uint16_t	io_port;	/* PCI I/O address */
 	} __packed host[4];
 
 	/* Targets (8 bytes x 16) */
 	struct nvram_symbios_target {
-		u_int8_t	flags;
+		uint8_t		flags;
 #define	NVRAM_SYM_TARG_F_DISCONNECT_EN	0x0001
 #define	NVRAM_SYM_TARG_F_SCAN_AT_BOOT	0x0002
 #define	NVRAM_SYM_TARG_F_SCAN_LUNS	0x0004
 #define	NVRAM_SYM_TARG_F_TQ_EN		0x0008
-		u_int8_t	rsvd;
-		u_int8_t	bus_width;
-		u_int8_t	sync_offset;	/* 8, 16, etc. */
-		u_int16_t	sync_period;	/* 4 * factor */
-		u_int16_t	timeout;
+		uint8_t		rsvd;
+		uint8_t		bus_width;
+		uint8_t		sync_offset;	/* 8, 16, etc. */
+		uint16_t	sync_period;	/* 4 * factor */
+		uint16_t	timeout;
 	} __packed target[16];
 
 	/* SCAM table (8 bytes x 4) */
 	struct nvram_symbios_scam {
-		u_int16_t	id;
-		u_int16_t	method;
+		uint16_t	id;
+		uint16_t	method;
 #define	NVRAM_SYM_SCAM_DEFAULT_METHOD	0
 #define	NVRAM_SYM_SCAM_DONT_ASSIGN	1
 #define	NVRAM_SYM_SCAM_SET_SPECIFIC_ID	2
 #define	NVRAM_SYM_SCAM_USE_ORDER_GIVEN	3
-		u_int16_t	status;
+		uint16_t	status;
 #define	NVRAM_SYM_SCAM_UNKNOWN		0
 #define	NVRAM_SYM_SCAM_DEVICE_NOT_FOUND	1
 #define	NVRAM_SYM_SCAM_ID_NOT_SET	2
 #define	NVRAM_SYM_SCAM_ID_VALID		3
-		u_int8_t		target_id;
-		u_int8_t		rsvd;
+		uint8_t		target_id;
+		uint8_t		rsvd;
 	} __packed scam[4];
 
-	u_int8_t	spare_devices[15 * 8];
-	u_int8_t	trailer[6];	/* 0xfe 0xfe 0x00 0x00 0x00 0x00 */
+	uint8_t		spare_devices[15 * 8];
+	uint8_t		trailer[6];	/* 0xfe 0xfe 0x00 0x00 0x00 0x00 */
 } __packed;
 
 #define	SIOP_NVRAM_TEK_SIZE		64
 #define	SIOP_NVRAM_TEK_93c46_ADDRESS	0
 #define	SIOP_NVRAM_TEK_24c16_ADDRESS	0x40
 
-static const u_int8_t tekram_sync_table[16] __unused = {
+static const uint8_t tekram_sync_table[16] __unused = {
 	25, 31, 37,  43,
 	50, 62, 75, 125,
 	12, 15, 18,  21,
@@ -510,18 +510,18 @@ static const u_int8_t tekram_sync_table[16] __unused = {
 
 struct nvram_tekram {
 	struct nvram_tekram_target {
-		u_int8_t	flags;
+		uint8_t		flags;
 #define	NVRAM_TEK_TARG_F_PARITY_CHECK	0x01
 #define	NVRAM_TEK_TARG_F_SYNC_NEGO	0x02
 #define	NVRAM_TEK_TARG_F_DISCONNECT_EN	0x04
 #define	NVRAM_TEK_TARG_F_START_CMD	0x08
 #define	NVRAM_TEK_TARG_F_TQ_EN		0x10
 #define	NVRAM_TEK_TARG_F_WIDE_NEGO	0x20
-		u_int8_t	sync_index;
-		u_int16_t	word2;
+		uint8_t		sync_index;
+		uint16_t	word2;
 	} __packed target[16];
-	u_int8_t	host_id;
-	u_int8_t	flags;
+	uint8_t		host_id;
+	uint8_t		flags;
 #define	NVRAM_TEK_F_MORE_THAN_2_DRIVES	0x01
 #define	NVRAM_TEK_F_DRIVES_SUP_1G	0x02
 #define	NVRAM_TEK_F_RESET_ON_POWER_ON	0x04
@@ -529,9 +529,9 @@ struct nvram_tekram {
 #define	NVRAM_TEK_F_IMMEDIATE_SEEK	0x10
 #define	NVRAM_TEK_F_SCAN_LUNS		0x20
 #define	NVRAM_TEK_F_REMOVABLE_FLAGS	0xc0	/* 0 dis, 1 boot, 2 all */
-	u_int8_t	boot_delay_index;
-	u_int8_t	max_tags_index;
-	u_int16_t	flags1;
+	uint8_t		boot_delay_index;
+	uint8_t		max_tags_index;
+	uint16_t	flags1;
 #define	NVRAM_TEK_F_F2_F6_ENABLED	0x0001
-	u_int16_t	spare[29];
+	uint16_t	spare[29];
 } __packed;
