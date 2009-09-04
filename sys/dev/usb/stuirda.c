@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.9 2008/10/13 10:01:24 is Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.10 2009/09/04 17:01:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.9 2008/10/13 10:01:24 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.10 2009/09/04 17:01:29 dyoung Exp $");
 
 #include <sys/param.h>
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.9 2008/10/13 10:01:24 is Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_port.h>
 
 #include <dev/ir/ir.h>
 #include <dev/ir/irdaio.h>
