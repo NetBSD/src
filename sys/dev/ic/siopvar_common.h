@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.37 2009/05/15 17:55:44 tsutsui Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.38 2009/09/04 18:29:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -206,9 +206,9 @@ int	siop_iwr(struct siop_common_cmd *);
 void	siop_minphys(struct buf *);
 int	siop_ioctl(struct scsipi_channel *, u_long,
 		void *, int, struct proc *);
-void 	siop_ma (struct siop_common_cmd *);
-void 	siop_sdp(struct siop_common_cmd *, int);
-void 	siop_update_resid(struct siop_common_cmd *, int);
+void	siop_ma (struct siop_common_cmd *);
+void	siop_sdp(struct siop_common_cmd *, int);
+void	siop_update_resid(struct siop_common_cmd *, int);
 void	siop_clearfifo(struct siop_common_softc *);
 void	siop_resetbus(struct siop_common_softc *);
 
