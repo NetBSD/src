@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -31,13 +31,19 @@
  * Various settings that controls how the C compiler works.
  */
 
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib/"
+#endif
+
 /* common cpp predefines */
-#define	CPPADD	{ "-D__Darwin__", "-I" INCLUDEDIR "/pcc", NULL }
+#define	CPPADD	{ "-D__Darwin__", "-D__APPLE__", NULL }
 #define	DYNLINKER { NULL }
-#define CRT0FILE "/usr/lib/crt1.o"
-#define CRT0FILE_PROFILE "/usr/lib/gcrt1.o"
+#define CRT0FILE PCCLIBDIR "crt1.o"
+#define CRT0FILE_PROFILE PCCLIBDIR "gcrt1.o"
 #define STARTFILES { NULL }
-#define	ENDFILES { NULL }
+#define ENDFILES { NULL }
+#define STARTFILES_S { PCCLIBDIR "dylib1.o" }
+#define ENDFILES_S { NULL }
 #define LIBCLIBS { "-lSystem", "-lpcc", NULL }
 #define LIBCLIBS_PROFILE { "-lSystem_profile", "-lpcc", NULL }
 #define STARTLABEL "start"
@@ -50,6 +56,8 @@ ld -arch ppc -weak_reference_mismatches non-weak -o a.out -lcrt1.o -lcrt2.o -L/u
 #define	CPPMDADD { "-D__i386__", "-D__LITTLE_ENDIAN__", NULL }
 #elif defined(mach_powerpc)
 #define	CPPMDADD { "-D__ppc__", "-D__BIG_ENDIAN__", NULL }
+#elif defined(mach_amd64)
+#define	CPPMDADD { "-D__x86_64__", "-D__LITTLE_ENDIAN__", NULL }
 #else
 #error defines for arch missing
 #endif

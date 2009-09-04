@@ -1,4 +1,4 @@
-/*	$Id: local.c,v 1.1.1.1 2008/08/24 05:32:56 gmcgarry Exp $	*/
+/*	$Id: local.c,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -513,11 +513,11 @@ ninval(CONSZ off, int fsz, NODE *p)
         case UNSIGNED:
                 printf("\t.word " CONFMT, (CONSZ)p->n_lval);
                 if ((q = p->n_sp) != NULL) {
-                        if ((q->sclass == STATIC && q->slevel > 0) ||
-                            q->sclass == ILABEL) {
+                        if ((q->sclass == STATIC && q->slevel > 0)) {
                                 printf("+" LABFMT, q->soffset);
                         } else
-                                printf("+%s", exname(q->soname));
+                                printf("+%s",
+				    q->soname ? q->soname : exname(q->sname));
                 }
                 printf("\n");
                 break;
@@ -625,27 +625,6 @@ instring(struct symtab *sp)
 	printf("\\0\"\n");
 }
 
-/*
- * Print out a wide string by calling ninval().
- */
-void
-inwstring(struct symtab *sp)
-{
-	char *s = sp->sname;
-	NODE *p;
-
-	defloc(sp);
-	p = xbcon(0, NULL, WCHAR_TYPE);
-	do {
-		if (*s++ == '\\')
-			p->n_lval = esccon(&s);
-		else
-			p->n_lval = (unsigned char)s[-1];
-		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
-	} while (s[-1] != 0);
-	nfree(p);
-}
-
 /* make a common declaration for id, if reasonable */
 void
 defzero(struct symtab *sp)
@@ -656,7 +635,7 @@ defzero(struct symtab *sp)
 	off = (off+(SZCHAR-1))/SZCHAR;
 	printf("	.%scomm ", sp->sclass == STATIC ? "l" : "");
 	if (sp->slevel == 0)
-		printf("%s,0%o\n", exname(sp->soname), off);
+		printf("%s,0%o\n", sp->soname ? sp->soname : exname(sp->sname), off);
 	else
 		printf(LABFMT ",0%o\n", sp->soffset, off);
 }

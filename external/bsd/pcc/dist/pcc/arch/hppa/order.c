@@ -97,14 +97,16 @@ myormake(NODE *q)
  * Shape matches for UMUL.  Cooperates with offstar().
  */
 int
-shumul(NODE *p)
+shumul(NODE *p, int shape)
 {
 
 	if (x2debug)
 		printf("shumul(%p)\n", p);
 
 	/* Turns currently anything into OREG on hppa */
-	return SOREG;
+	if (shape & SOREG)
+		return SOREG;
+	return SRNOPE;
 }
 
 /*

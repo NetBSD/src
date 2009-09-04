@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.1 2008/08/24 05:32:58 gmcgarry Exp $	*/
+/*	$Id: macdefs.h,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -95,7 +95,6 @@
 /* Default char is unsigned */
 #define TARGET_STDARGS
 #define	CHAR_UNSIGNED
-#define WCHAR_TYPE	INT	/* what used to store wchar_t */
 #define	BOOL_TYPE	INT
 
 /*
@@ -133,7 +132,7 @@ typedef long long OFFSZ;
 
 #define	shltype(o, p) \
 	((o) == REG || (o) == NAME || (o) == ICON || \
-	 (o) == OREG || ((o) == UMUL && shumul((p)->n_left)))
+	 (o) == OREG || ((o) == UMUL && shumul((p)->n_left, SOREG)))
 
 #undef	SPECIAL_INTEGERS
 

@@ -1,4 +1,4 @@
-/*	$Id: order.c,v 1.1.1.1 2008/08/24 05:32:56 gmcgarry Exp $	*/
+/*	$Id: order.c,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -95,7 +95,7 @@ offstar(NODE *p, int shape)
  * Shape matches for UMUL.  Cooperates with offstar().
  */
 int
-shumul(NODE *p)
+shumul(NODE *p, int shape)
 {
 //	NODE *l = p->n_left;
 
@@ -105,10 +105,11 @@ shumul(NODE *p)
 		fwalk(p, e2print, 0);
 	}
 #endif
+	/* XXX - fix */
 
 	/* Can only generate OREG of BREGs (or FB) */
 	if (p->n_op == REG && (isbreg(p->n_rval) || p->n_rval == FB))
-		return SOREG;
+		return SROREG;
 #if 0
 	if ((p->n_op == PLUS || p->n_op == MINUS) &&
 	    (l->n_op == REG && (isbreg(l->n_rval) || l->n_rval == FB)) &&
@@ -116,7 +117,7 @@ shumul(NODE *p)
 		return SOREG;
 	return 0;
 #else
-	return SOREG;
+	return SROREG;
 #endif
 }
 

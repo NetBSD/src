@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.1 2008/08/24 05:32:53 gmcgarry Exp $	*/
+/*	$Id: macdefs.h,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -85,7 +85,6 @@
 #define	MAX_ULONGLONG	0xffffffffffffffffULL
 
 #define	BOOL_TYPE	INT	/* what used to store _Bool */
-#define	WCHAR_TYPE	INT	/* what used to store wchar_t */
 
 /*
  * Use large-enough types.
