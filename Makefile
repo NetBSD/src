@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.273 2009/08/30 01:49:42 dyoung Exp $
+#	$NetBSD: Makefile,v 1.274 2009/09/04 17:21:33 pooka Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -92,6 +92,7 @@
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-external-lib: builds and installs prerequisites from external/lib.
+#   do-sys-rump-dev-lib: builds and installs prerequisites from sys/rump/dev/lib
 #   do-sys-rump-fs-lib:  builds and installs prerequisites from sys/rump/fs/lib
 #   do-sys-rump-net-lib: builds and installs prerequisites from sys/rump/net/lib
 #   do-sys-modules:  builds and installs kernel modules (used by rump binaries)
@@ -240,7 +241,7 @@ BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
 .if (${MACHINE} != "evbppc") && ${MKKMOD} != "no"
 BUILDTARGETS+=	do-sys-modules
 .endif
-BUILDTARGETS+=	do-sys-rump-fs-lib do-sys-rump-net-lib
+BUILDTARGETS+=	do-sys-rump-dev-lib do-sys-rump-fs-lib do-sys-rump-net-lib
 .if ${MKCOMPAT} != "no"
 BUILDTARGETS+=	do-compat-lib-csu
 BUILDTARGETS+=	do-compat-libgcc
@@ -415,7 +416,7 @@ BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
 BUILD_COMPAT_LIBS=
 .endif
 
-.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/fs/lib sys/rump/net/lib sys/modules ${BUILD_COMPAT_LIBS}
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/dev/lib sys/rump/fs/lib sys/rump/net/lib sys/modules ${BUILD_COMPAT_LIBS}
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
