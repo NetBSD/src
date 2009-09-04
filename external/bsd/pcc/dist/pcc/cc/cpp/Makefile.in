@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $
 #
 # Makefile.in for cpp
 #
@@ -19,7 +19,7 @@ strip = @strip@
 CC = @CC@
 EXEEXT = @EXEEXT@
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ ${XFL} -I${srcdir} -I${top_builddir} -I${builddir} -I${MIPDIR} -I${MDIR}
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ ${XFL} -I${srcdir} -I${top_builddir} -I${builddir} -I${MIPDIR} -I${MDIR}
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -28,7 +28,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 TARGMACH = @targmach@
 
-OBJS=cpp.o cpy.o scanner.o compat.o
+OBJS=cpp.o cpy.o token.o compat.o
 HEADERS=cpp.h
 DEST=@BINPREFIX@cpp$(EXEEXT)
 
@@ -57,6 +57,7 @@ compat.o: $(MIPDIR)/compat.c
 $(OBJS): $(HEADERS)
 
 cpp.o: cpy.o
+token.o: cpy.o
 
 test:
 	./cpp < tests/test1 > tests/run1

@@ -24,7 +24,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: compat.c,v 1.1.1.1 2008/08/24 05:33:08 gmcgarry Exp $
+ * $Id: compat.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $
  */
 
 /*-
@@ -62,7 +62,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: compat.c,v 1.1.1.1 2008/08/24 05:33:08 gmcgarry Exp $
+ *	$NetBSD: compat.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $
  */
 
 /*
@@ -93,13 +93,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: compat.c,v 1.1.1.1 2008/08/24 05:33:08 gmcgarry Exp $
+ *	$NetBSD: compat.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $
  */
 
 #include <string.h>
 #include <fcntl.h>
 
 #include "config.h"
+#define MKEXT	/* XXX */
 #include "manifest.h"
 
 #ifndef HAVE_STRLCAT

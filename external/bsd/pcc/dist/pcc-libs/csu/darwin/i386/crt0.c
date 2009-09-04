@@ -1,4 +1,4 @@
-/*	$Id: crt0.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $	*/
+/*	$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -21,8 +21,8 @@ void _start(int, char **, char **);
 
 char **environ;
 char *__progname = "";
-int _argc;
-char **_argv;
+int NXArgc;
+char **NXArgv;
 
 asm(
 #ifdef DYNAMIC
@@ -59,8 +59,8 @@ _start(int argc, char *argv[], char *envp[])
 	char *namep;
 
 	environ = envp;
-	_argc = argc;
-	_argv = argv;
+	NXArgc = argc;
+	NXArgv = argv;
 
 	if ((namep = argv[0]) != NULL) {
 		if ((__progname = _strrchr(namep, '/')) == NULL)
@@ -73,7 +73,7 @@ _start(int argc, char *argv[], char *envp[])
 	 * Initialise hooks inside libc
 	 */
 	if (mach_init_routine)
-		(void)(*mach_init_routine)();
+		(*mach_init_routine)();
 	if (_cthread_init_routine)
 		(*_cthread_init_routine)();
 
@@ -112,7 +112,7 @@ asm(
 	"	.text\n"
 	"	.private_extern __dyld_func_lookup\n"
 	"__dyld_func_lookup:\n"
-	"	jmp Ldyld_func_lookup\n"
+	"	jmp *Ldyld_func_lookup\n"
 );
 
 /*
@@ -121,10 +121,9 @@ asm(
 asm(
 	"	.text\n"
 	"	.private_extern dyld_stub_binding_helper\n"
-	"	.p2align 2\n"
 	"dyld_stub_binding_helper:\n"
 	"	pushl $__mh_execute_header\n"
-	"	jmp Ldyld_lazy_binder\n"
+	"	jmp *Ldyld_lazy_binder\n"
 );
 
 /*
@@ -138,8 +137,8 @@ asm(
 	"Ldyld_func_lookup:\n"
 	"	.long 0x8fe01008\n"
 	"	.long __mh_execute_header\n"
-	"	.long __argc\n"
-	"	.long __argv\n"
+	"	.long _NXArgc\n"
+	"	.long _NXArgv\n"
 	"	.long _environ\n"
 	"	.long ___progname\n"
 );
@@ -150,4 +149,4 @@ asm("\t.subsections_via_symbols\n");
 
 #include "common.c"
 
-IDENT("$Id: crt0.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $");
+IDENT("$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");

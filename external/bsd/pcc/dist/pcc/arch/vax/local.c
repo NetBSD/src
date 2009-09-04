@@ -1,4 +1,4 @@
-/*	$Id: local.c,v 1.1.1.1 2008/08/24 05:33:00 gmcgarry Exp $	*/
+/*	$Id: local.c,v 1.1.1.2 2009/09/04 00:27:32 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -216,25 +216,27 @@ clocal(p) NODE *p; {
 void
 myp2tree(NODE *p)
 {
+	struct symtab *sp;
 	int o = p->n_op, i;
 
 	if (o != FCON) 
 		return;
 
-	/* Write float constants to memory */
-	/* Should be volontary per architecture */
- 
-	setloc1(RDATA);
-	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
-	    ALDOUBLE : ALLDOUBLE );
-	deflab1(i = getlab()); 
-	ninval(0, btdims[p->n_type].suesize, p);
+	sp = inlalloc(sizeof(struct symtab));
+	sp->sclass = STATIC;
+	sp->ssue = MKSUE(p->n_type);
+	sp->slevel = 1; /* fake numeric label */
+	sp->soffset = getlab();
+	sp->sflags = 0;
+	sp->stype = p->n_type;
+	sp->squal = (CON >> TSHIFT);
+
+	defloc(sp);
+	ninval(0, sp->ssue->suesize, p);
+
 	p->n_op = NAME;
-	p->n_lval = 0;	
-	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
-	p->n_sp->sclass = ILABEL;
-	p->n_sp->soffset = i;
-	p->n_sp->sflags = 0;
+	p->n_lval = 0;
+	p->n_sp = sp;
 
 }
 
@@ -383,7 +385,7 @@ void
 commdec( struct symtab *q ){ /* make a common declaration for id, if reasonable */
 	OFFSZ off;
 
-	printf( "	.comm	%s,", exname( q->soname ) );
+	printf( "	.comm	%s,", q->soname ? q->soname : exname( q->sname ) );
 	off = tsize( q->stype, q->sdf, q->ssue );
 	printf( CONFMT, off/SZCHAR );
 	printf( "\n" );
@@ -398,7 +400,7 @@ lcommdec(struct symtab *q)
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
-		printf("	.lcomm %s,0%o\n", exname(q->soname), off);
+		printf("	.lcomm %s,0%o\n", q->soname ? q->soname : exname(q->sname), off);
 	else
 		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
 }
@@ -449,11 +451,10 @@ ninval(CONSZ off, int fsz, NODE *p)
 	case UNSIGNED:
 		printf("\t.long 0x%x", (int)p->n_lval);
 		if ((q = p->n_sp) != NULL) {
-			if ((q->sclass == STATIC && q->slevel > 0) ||
-			    q->sclass == ILABEL) {
+			if ((q->sclass == STATIC && q->slevel > 0)) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->soname));
+				printf("+%s", q->soname ? q->soname : exname(q->sname));
 		}
 		printf("\n");
 		break;

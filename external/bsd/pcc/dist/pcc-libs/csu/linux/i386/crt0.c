@@ -1,4 +1,4 @@
-/*	$Id: crt0.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $	*/
+/*	$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -17,23 +17,28 @@
 
 #include "common.h"
 
-void __start(int, char **);
+void __start(int, char **, char **);
 
 asm("	.text				\n"
 "	.align	4			\n"
 "	.globl	_start			\n"
 "_start:				\n"
-"	xor %ebp,%ebp			\n"
-"	pop %esi			\n"
-"	mov %esp,%ecx			\n"
-"	and $0xfffffff0,%esp		\n"
-"	push %ecx			\n"
-"	push %esi			\n"
+"	xorl %ebp,%ebp			\n"
+"	popl %ebx			\n"
+"	movl %esp,%ecx			\n"
+"	subl $16,%esp			\n"
+"	andl $-16,%esp			\n"
+"	movl %ebx,(%esp)		\n"
+"	movl %ecx,4(%esp)		\n"
+"	addl $1,%ebx			\n"
+"	shll $2,%ebx			\n"
+"	addl %ebx,%ecx			\n"
+"	movl %ecx,8(%esp)		\n"
 "	call __start			\n"
 "	hlt				\n");
 
 void
-__start(int argc, char *argv[])
+__start(int argc, char *argv[], char *envp[])
 {
 
 #ifdef PROFILE
@@ -44,9 +49,9 @@ __start(int argc, char *argv[])
 	_init();
 	atexit(_fini);
 
-	exit(main(argc, argv));
+	exit(main(argc, argv, envp));
 }
 
 #include "common.c"
 
-IDENT("$Id: crt0.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $");
+IDENT("$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");

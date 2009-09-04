@@ -1,4 +1,4 @@
-/*	$Id: init.c,v 1.1.1.1 2008/08/24 05:33:02 gmcgarry Exp $	*/
+/*	$Id: init.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -148,10 +148,19 @@ struct llist {
 	SLIST_ENTRY(llist) next;
 	CONSZ begsz;	/* bit offset of this entry */
 	struct ilist *il;
-} *curll;
-static SLIST_HEAD(, llist) lpole;
+};
+static SLIST_HEAD(llh, llist) lpole;
 static CONSZ basesz;
 static int numents; /* # of array entries allocated */
+
+static struct initctx {
+	struct initctx *prev;
+	struct instk *pstk;
+	struct symtab *psym;
+	struct llh lpole;
+	CONSZ basesz;
+	int numents;
+} *inilnk;
 
 static struct ilist *
 getil(struct ilist *next, CONSZ b, int sz, NODE *n)
@@ -212,14 +221,30 @@ setll(OFFSZ off)
 void
 beginit(struct symtab *sp)
 {
+	struct initctx *ict;
 	struct instk *is = &pbase;
-	struct llist *ll;
 
 #ifdef PCC_DEBUG
 	if (idebug)
 		printf("beginit(), sclass %s\n", scnames(sp->sclass));
 #endif
 
+	if (pstk) {
+#ifdef PCC_DEBUG
+		if (idebug)
+			printf("beginit: saving ctx pstk %p\n", pstk);
+#endif
+		/* save old context */
+		ict = tmpalloc(sizeof(struct initctx));
+		ict->prev = inilnk;
+		inilnk = ict;
+		ict->pstk = pstk;
+		ict->psym = csym;
+		ict->lpole = lpole;
+		ict->basesz = basesz;
+		ict->numents = numents;
+		is = tmpalloc(sizeof(struct instk));
+	}
 	csym = sp;
 
 	numents = 0; /* no entries in array list */
@@ -228,10 +253,9 @@ beginit(struct symtab *sp)
 	else
 		basesz = tsize(DECREF(sp->stype), sp->sdf, sp->ssue);
 	SLIST_INIT(&lpole);
-	curll = ll = getll(); /* at least first entry in list */
 
 	/* first element */
-	is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
+	is->in_lnk = ISSOU(sp->stype) ? sp->ssue->suem : NULL;
 	is->in_n = 0;
 	is->in_t = sp->stype;
 	is->in_sym = sp;
@@ -279,7 +303,7 @@ stkpush(void)
 	is->in_n = 0;
 	if (pstk == NULL) {
 		/* stack empty */
-		is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
+		is->in_lnk = ISSOU(sp->stype) ? sp->ssue->suem : NULL;
 		is->in_t = sp->stype;
 		is->in_sym = sp;
 		is->in_df = sp->sdf;
@@ -288,13 +312,13 @@ stkpush(void)
 		if (sq == NULL) {
 			uerror("excess of initializing elements");
 		} else {
-			is->in_lnk = ISSOU(sq->stype) ? sq->ssue->sylnk : 0;
+			is->in_lnk = ISSOU(sq->stype) ? sq->ssue->suem : 0;
 			is->in_t = sq->stype;
 			is->in_sym = sq;
 			is->in_df = sq->sdf;
 		}
 	} else if (ISARY(t)) {
-		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->sylnk : 0;
+		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suem : 0;
 		is->in_t = DECREF(t);
 		is->in_sym = sp;
 		if (pstk->in_df->ddim != NOOFFSET &&
@@ -505,7 +529,7 @@ scalinit(NODE *p)
 	if (pstk->in_sym->sclass & FIELD)
 		fsz = -(pstk->in_sym->sclass & FLDSIZ);
 	else
-		fsz = tsize(pstk->in_t, pstk->in_sym->sdf, pstk->in_sym->ssue);
+		fsz = (int)tsize(pstk->in_t, pstk->in_sym->sdf, pstk->in_sym->ssue);
 	woff = findoff();
 
 	nsetval(woff, fsz, q);
@@ -547,8 +571,8 @@ insbf(OFFSZ off, int fsz, int val)
 	sym.squal = 0;
 	sym.sdf = 0;
 	sym.ssue = MKSUE(typ);
-	sym.soffset = off;
-	sym.sclass = typ == INT ? FIELD | fsz : MOU;
+	sym.soffset = (int)off;
+	sym.sclass = (char)(typ == INT ? FIELD | fsz : MOU);
 	r = xbcon(0, &sym, typ);
 	p = block(STREF, p, r, INT, 0, MKSUE(INT));
 	ecode(buildtree(ASSIGN, stref(p), bcon(val)));
@@ -562,9 +586,9 @@ clearbf(OFFSZ off, OFFSZ fsz)
 {
 	/* Pad up to the next even initializer */
 	if ((off & (ALCHAR-1)) || (fsz < SZCHAR)) {
-		int ba = ((off + (SZCHAR-1)) & ~(SZCHAR-1)) - off;
+		int ba = (int)(((off + (SZCHAR-1)) & ~(SZCHAR-1)) - off);
 		if (ba > fsz)
-			ba = fsz;
+			ba = (int)fsz;
 		insbf(off, ba, 0);
 		off += ba;
 		fsz -= ba;
@@ -637,8 +661,8 @@ endinit(void)
 				sym.squal = n->n_qual;
 				sym.sdf = n->n_df;
 				sym.ssue = n->n_sue;
-				sym.soffset = ll->begsz + il->off;
-				sym.sclass = fsz < 0 ? FIELD | -fsz : 0;
+				sym.soffset = (int)(ll->begsz + il->off);
+				sym.sclass = (char)(fsz < 0 ? FIELD | -fsz : 0);
 				r = xbcon(0, &sym, INT);
 				p = block(STREF, p, r, INT, 0, MKSUE(INT));
 				ecomp(buildtree(ASSIGN, stref(p), il->n));
@@ -663,6 +687,19 @@ endinit(void)
 		clearbf(lastoff, tbit-lastoff);
 	} else
 		zbits(lastoff, tbit-lastoff);
+	if (inilnk) {
+		struct initctx *ict = inilnk;
+		pstk = ict->pstk;
+		csym = ict->psym;
+		lpole = ict->lpole;
+		basesz = ict->basesz;
+		numents = ict->numents;
+		inilnk = inilnk->prev;
+#ifdef PCC_DEBUG
+		if (idebug)
+			printf("endinit: restoring ctx pstk %p\n", pstk);
+#endif
+	}
 }
 
 /*
@@ -746,7 +783,7 @@ mkstack(NODE *p)
 			cerror("mkstack");
 		if (!ISARY(pstk->in_t))
 			uerror("array indexing non-array");
-		pstk->in_n = p->n_right->n_lval;
+		pstk->in_n = (int)p->n_right->n_lval;
 		nfree(p->n_right);
 		break;
 
@@ -783,7 +820,7 @@ desinit(NODE *p)
 		pstk = pstk->in_prev; /* Empty stack */
 
 	if (ISSOU(pstk->in_t))
-		pstk->in_lnk = pstk->in_sym->ssue->sylnk;
+		pstk->in_lnk = pstk->in_sym->ssue->suem;
 
 	mkstack(p);	/* Setup for assignment */
 
@@ -805,8 +842,15 @@ desinit(NODE *p)
 static void
 strcvt(NODE *p)
 {
+	NODE *q = p;
 	char *s;
 	int i;
+
+#ifdef mach_arm
+	/* XXX */
+	if (p->n_op == UMUL && p->n_left->n_op == ADDROF)
+		p = p->n_left->n_left;
+#endif
 
 	for (s = p->n_sp->sname; *s != 0; ) {
 		if (*s++ == '\\') {
@@ -815,7 +859,7 @@ strcvt(NODE *p)
 			i = (unsigned char)s[-1];
 		asginit(bcon(i));
 	} 
-	tfree(p);
+	tfree(q);
 }
 
 /*
@@ -908,11 +952,15 @@ prtstk(struct instk *in)
 void
 simpleinit(struct symtab *sp, NODE *p)
 {
+	NODE *q, *r, *nt;
+	TWORD t;
+	int sz;
+
 	/* May be an initialization of an array of char by a string */
 	if ((DEUNSIGN(p->n_type) == ARY+CHAR &&
 	    DEUNSIGN(sp->stype) == ARY+CHAR) ||
-	    (DEUNSIGN(p->n_type) == ARY+WCHAR_TYPE &&
-	    DEUNSIGN(sp->stype) == ARY+WCHAR_TYPE)) {
+	    (DEUNSIGN(p->n_type) == DEUNSIGN(ARY+WCHAR_TYPE) &&
+	    DEUNSIGN(sp->stype) == DEUNSIGN(ARY+WCHAR_TYPE))) {
 		/* Handle "aaa" as { 'a', 'a', 'a' } */
 		beginit(sp);
 		strcvt(p);
@@ -922,12 +970,35 @@ simpleinit(struct symtab *sp, NODE *p)
 		return;
 	}
 
+	nt = nametree(sp);
 	switch (sp->sclass) {
 	case STATIC:
 	case EXTDEF:
-		p = optim(buildtree(ASSIGN, nametree(sp), p));
+		q = nt;
+#ifndef NO_COMPLEX
+#define ANYCX(p) (p->n_type == STRTY && gcc_get_attr(p->n_sue, ATTR_COMPLEX))
+		if (ANYCX(q) || ANYCX(p)) {
+			r = cxop(ASSIGN, q, p);
+			/* XXX must unwind the code generated here */
+			/* We can rely on correct code generated */
+			p = r->n_left->n_right->n_left;
+			r->n_left->n_right->n_left = bcon(0);
+			tfree(r);
+			defloc(sp);
+			r = p->n_left->n_right;
+			sz = (int)tsize(r->n_type, r->n_df, r->n_sue);
+			ninval(0, sz, r);
+			ninval(0, sz, p->n_right->n_right);
+			tfree(p);
+			break;
+		}
+#endif
+		p = optim(buildtree(ASSIGN, nt, p));
 		defloc(sp);
-		ninval(0, p->n_right->n_sue->suesize, p->n_right);
+		q = p->n_right;
+		t = q->n_type;
+		sz = (int)tsize(t, q->n_df, q->n_sue);
+		ninval(0, sz, q);
 		tfree(p);
 		break;
 
@@ -935,7 +1006,15 @@ simpleinit(struct symtab *sp, NODE *p)
 	case REGISTER:
 		if (ISARY(sp->stype))
 			cerror("no array init");
-		ecomp(buildtree(ASSIGN, nametree(sp), p));
+		q = nt;
+#ifndef NO_COMPLEX
+
+		if (ANYCX(q) || ANYCX(p))
+			r = cxop(ASSIGN, q, p);
+		else
+#endif
+			r = buildtree(ASSIGN, q, p);
+		ecomp(r);
 		break;
 
 	default:

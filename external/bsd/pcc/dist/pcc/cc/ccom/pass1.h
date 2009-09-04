@@ -1,4 +1,4 @@
-/*	$Id: pass1.h,v 1.1.1.1 2008/08/24 05:33:02 gmcgarry Exp $	*/
+/*	$Id: pass1.h,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -37,10 +37,16 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include <string.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
+#ifndef MKEXT
+#include "external.h"
+#else
+typedef unsigned int bittype; /* XXX - for basicblock */
+#endif
 #include "manifest.h"
 
 #include "protos.h"
@@ -68,7 +74,6 @@
 #define MOE		16
 #define UFORTRAN 	17
 #define USTATIC		18
-#define ILABEL		19
 
 	/* field size is ORed in */
 #define FIELD		0100
@@ -106,6 +111,9 @@ extern	char *scnames(int);
 struct rstack;
 struct symtab;
 union arglist;
+#ifdef GCC_COMPAT
+struct gcc_attr_pack;
+#endif
 
 /*
  * Dimension/prototype information.
@@ -123,9 +131,14 @@ union dimfun {
  */
 struct suedef {
 	int	suesize;	/* Size of the struct */
-	struct	symtab *sylnk;	/* the list of elements */
 	int	suealign;	/* Alignment of this struct */
+	struct	symtab *suem;	/* the list of elements in struct/unions */
+	struct	suedef *suep;	/* parent, if any */
+#ifdef GCC_COMPAT
+	struct	gcc_attr_pack *suega;
+#endif
 };
+#define GETSUE(x, y)	for (x = y; x->suep; x = x->suep)
 
 /*
  * Argument list member info when storing prototypes.
@@ -140,19 +153,13 @@ union arglist {
 
 /*
  * Symbol table definition.
- *
- * The symtab_hdr struct is used to save label info in NAME and ICON nodes.
  */
-struct symtab_hdr {
-	struct	symtab *h_next;	/* link to other symbols in the same scope */
-	int	h_offset;	/* offset or value */
-	char	h_sclass;	/* storage class */
-	char	h_slevel;	/* scope level */
-	short	h_sflags;		/* flags, see below */
-};
-
 struct	symtab {
-	struct	symtab_hdr hdr;
+	struct	symtab *snext;	/* link to other symbols in the same scope */
+	int	soffset;	/* offset or value */
+	char	sclass;		/* storage class */
+	char	slevel;		/* scope level */
+	short	sflags;		/* flags, see below */
 	char	*sname;		/* Symbol name */
 	char	*soname;	/* Written-out name */
 	TWORD	stype;		/* type word */
@@ -160,12 +167,6 @@ struct	symtab {
 	union	dimfun *sdf;	/* ptr to the dimension/prototype array */
 	struct	suedef *ssue;	/* ptr to the definition table */
 };
-
-#define	snext	hdr.h_next
-#define	soffset	hdr.h_offset
-#define	sclass	hdr.h_sclass
-#define	slevel	hdr.h_slevel
-#define	sflags	hdr.h_sflags
 
 #define	MKSUE(type)  &btdims[type]
 extern struct suedef btdims[];
@@ -195,6 +196,7 @@ extern	OFFSZ inoff;
 
 extern	int reached;
 extern	int isinlining;
+extern	int xinline;
 
 extern	int sdebug, idebug, pdebug;
 
@@ -246,13 +248,17 @@ extern	NODE
 	*clocal(NODE *),
 	*ccopy(NODE *),
 	*tempnode(int, TWORD, union dimfun *, struct suedef *),
-	*doacall(NODE *, NODE *);
+	*eve(NODE *),
+	*doacall(struct symtab *, NODE *, NODE *);
 NODE	*intprom(NODE *);
 OFFSZ	tsize(TWORD, union dimfun *, struct suedef *),
 	psize(NODE *);
 NODE *	typenode(NODE *new);
 void	spalloc(NODE *, NODE *, OFFSZ);
 char	*exname(char *);
+NODE	*floatcon(char *);
+NODE	*fhexcon(char *);
+NODE	*bdty(int op, ...);
 extern struct rstack *rpole;
 
 int oalloc(struct symtab *, int *);
@@ -264,8 +270,10 @@ void inline_end(void);
 void inline_addarg(struct interpass *);
 void inline_ref(struct symtab *);
 void inline_prtout(void);
+void inline_args(struct symtab **, int);
+NODE *inlinetree(struct symtab *, NODE *, NODE *);
 void ftnarg(NODE *);
-struct rstack *bstruct(char *, int);
+struct rstack *bstruct(char *, int, NODE *);
 void moedef(char *);
 void beginit(struct symtab *);
 void simpleinit(struct symtab *, NODE *);
@@ -283,7 +291,7 @@ void branch(int);
 void cbranch(NODE *, NODE *);
 void extdec(struct symtab *);
 void defzero(struct symtab *);
-int falloc(struct symtab *, int, int, NODE *);
+int falloc(struct symtab *, int, NODE *);
 TWORD ctype(TWORD);  
 void ninval(CONSZ, int, NODE *);
 void infld(CONSZ, int, CONSZ);
@@ -328,15 +336,121 @@ NODE *nametree(struct symtab *sp);
 void *inlalloc(int size);
 void pass1_lastchance(struct interpass *);
 void fldty(struct symtab *p);
+int getlab(void);
+struct suedef *sueget(struct suedef *p);
+void complinit(void);
+NODE *structref(NODE *p, int f, char *name);
+NODE *cxop(int op, NODE *l, NODE *r);
+NODE *imop(int op, NODE *l, NODE *r);
+NODE *cxelem(int op, NODE *p);
+NODE *cxconj(NODE *p);
+NODE *cxret(NODE *p, NODE *q);
+
+#ifdef SOFTFLOAT
+typedef struct softfloat SF;
+SF soft_neg(SF);
+SF soft_cast(CONSZ v, TWORD);
+SF soft_plus(SF, SF);
+SF soft_minus(SF, SF);
+SF soft_mul(SF, SF);
+SF soft_div(SF, SF);
+int soft_cmp_eq(SF, SF);
+int soft_cmp_ne(SF, SF);
+int soft_cmp_ge(SF, SF);
+int soft_cmp_gt(SF, SF);
+int soft_cmp_le(SF, SF);
+int soft_cmp_lt(SF, SF);
+int soft_isz(SF);
+CONSZ soft_val(SF);
+#define FLOAT_NEG(sf)		soft_neg(sf)
+#define	FLOAT_CAST(v,t)		soft_cast(v, t)
+#define	FLOAT_PLUS(x1,x2)	soft_plus(x1, x2)
+#define	FLOAT_MINUS(x1,x2)	soft_minus(x1, x2)
+#define	FLOAT_MUL(x1,x2)	soft_mul(x1, x2)
+#define	FLOAT_DIV(x1,x2)	soft_div(x1, x2)
+#define	FLOAT_ISZERO(sf)	soft_isz(sf)
+#define	FLOAT_VAL(sf)		soft_val(sf)
+#define FLOAT_EQ(x1,x2)		soft_cmp_eq(x1, x2)
+#define FLOAT_NE(x1,x2)		soft_cmp_ne(x1, x2)
+#define FLOAT_GE(x1,x2)		soft_cmp_ge(x1, x2)
+#define FLOAT_GT(x1,x2)		soft_cmp_gt(x1, x2)
+#define FLOAT_LE(x1,x2)		soft_cmp_le(x1, x2)
+#define FLOAT_LT(x1,x2)		soft_cmp_lt(x1, x2)
+#else
+#define	FLOAT_NEG(p)		-(p)
+#define	FLOAT_CAST(p,v)		(ISUNSIGNED(v) ? \
+		(long double)(U_CONSZ)(p) : (long double)(CONSZ)(p))
+#define	FLOAT_PLUS(x1,x2)	(x1) + (x2)
+#define	FLOAT_MINUS(x1,x2)	(x1) - (x2)
+#define	FLOAT_MUL(x1,x2)	(x1) * (x2)
+#define	FLOAT_DIV(x1,x2)	(x1) / (x2)
+#define	FLOAT_ISZERO(p)		(p) == 0.0
+#define FLOAT_VAL(p)		(CONSZ)(p)
+#define FLOAT_EQ(x1,x2)		(x1) == (x2)
+#define FLOAT_NE(x1,x2)		(x1) != (x2)
+#define FLOAT_GE(x1,x2)		(x1) >= (x2)
+#define FLOAT_GT(x1,x2)		(x1) > (x2)
+#define FLOAT_LE(x1,x2)		(x1) <= (x2)
+#define FLOAT_LT(x1,x2)		(x1) < (x2)
+#endif
 
 #ifdef GCC_COMPAT
+enum {	GCC_ATYP_NONE,
+
+	/* type attributes */
+	GCC_ATYP_ALIGNED,
+	GCC_ATYP_PACKED,
+	GCC_ATYP_SECTION,
+	GCC_ATYP_TRANSP_UNION,
+	GCC_ATYP_UNUSED,
+	GCC_ATYP_DEPRECATED,
+	GCC_ATYP_MAYALIAS,
+
+	/* function attributes */
+	GCC_ATYP_NORETURN,
+	GCC_ATYP_FORMAT,
+	GCC_ATYP_NONNULL,
+	GCC_ATYP_SENTINEL,
+	GCC_ATYP_WEAK,
+	GCC_ATYP_FORMATARG,
+	GCC_ATYP_GNU_INLINE,
+
+	/* other stuff */
+	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */
+	ATTR_COMPLEX,		/* Internal definition of complex */
+
+	GCC_ATYP_MAX
+};
+
+union gcc_aarg {
+	int iarg;
+	char *sarg;
+};
+
+struct gcc_attrib {
+	int atype;
+	union gcc_aarg a1, a2, a3;
+};
+
+struct gcc_attr_pack {
+	int num;
+	struct gcc_attrib ga[];
+};
+
+typedef struct gcc_attr_pack gcc_ap_t;
+
 void gcc_init(void);
 int gcc_keyword(char *, NODE **);
+gcc_ap_t *gcc_attr_parse(NODE *);
+void gcc_tcattrfix(NODE *, NODE *);
+struct gcc_attrib *gcc_get_attr(struct suedef *, int);
+void dump_attr(gcc_ap_t *gap);
 #endif
 
 #ifdef STABS
 void stabs_init(void);
 void stabs_file(char *);
+void stabs_efile(char *);
 void stabs_line(int);
 void stabs_rbrac(int);
 void stabs_lbrac(int);
@@ -369,7 +483,7 @@ void stabs_struct(struct symtab *, struct suedef *);
 #define	OROR		(MAXOP+12)
 #define	NOT		(MAXOP+13)
 #define	CAST		(MAXOP+14)
-/* #define	STRING		(MAXOP+15) */
+#define	STRING		(MAXOP+15)
 
 /* The following must be in the same order as their NOASG counterparts */
 #define	PLUSEQ		(MAXOP+16)
@@ -387,14 +501,30 @@ void stabs_struct(struct symtab *, struct suedef *);
 
 #define INCR		(MAXOP+26)
 #define DECR		(MAXOP+27)
+#define SZOF		(MAXOP+28)
+#define CLOP		(MAXOP+29)
+#define ATTRIB		(MAXOP+30)
+#define XREAL		(MAXOP+31)
+#define XIMAG		(MAXOP+32)
+
+
 /*
  * The following types are only used in pass1.
  */
 #define SIGNED		(MAXTYPES+1)
 #define BOOL		(MAXTYPES+2)
-#define	FCOMPLEX	(MAXTYPES+3)
-#define	COMPLEX		(MAXTYPES+4)
-#define	LCOMPLEX	(MAXTYPES+5)
+#define	FIMAG		(MAXTYPES+3)
+#define	IMAG		(MAXTYPES+4)
+#define	LIMAG		(MAXTYPES+5)
+#define	FCOMPLEX	(MAXTYPES+6)
+#define	COMPLEX		(MAXTYPES+7)
+#define	LCOMPLEX	(MAXTYPES+8)
+#define	ENUMTY		(MAXTYPES+9)
+
+#define	ISFTY(x)	((x) >= FLOAT && (x) <= LDOUBLE)
+#define	ISCTY(x)	((x) >= FCOMPLEX && (x) <= LCOMPLEX)
+#define	ISITY(x)	((x) >= FIMAG && (x) <= LIMAG)
+#define ANYCX(p) (p->n_type == STRTY && gcc_get_attr(p->n_sue, ATTR_COMPLEX))
 
 #define coptype(o)	(cdope(o)&TYFLG)
 #define clogop(o)	(cdope(o)&LOGFLG)

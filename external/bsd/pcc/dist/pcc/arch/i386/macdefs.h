@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.1 2008/08/24 05:32:55 gmcgarry Exp $	*/
+/*	$Id: macdefs.h,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -65,8 +65,9 @@
 #define ALLONGLONG	32
 #define ALSHORT		16
 #define ALPOINT		32
-#define ALSTRUCT	32
+#undef ALSTRUCT		/* Not defined if ELF ABI */
 #define ALSTACK		32 
+#define	ALMAX		128	/* not yet supported type */
 
 /*
  * Min/max values.
@@ -90,11 +91,6 @@
 /* Default char is signed */
 #undef	CHAR_UNSIGNED
 #define	BOOL_TYPE	CHAR	/* what used to store _Bool */
-#if defined(os_mirbsd) || defined(os_win32)
-#define WCHAR_TYPE	USHORT	/* ISO 10646 16-bit Unicode */
-#else
-#define	WCHAR_TYPE	INT	/* what used to store wchar_t */
-#endif
 
 /*
  * Use large-enough types.
@@ -132,6 +128,8 @@ typedef long long OFFSZ;
 #define	RTOLBYTES		/* bytes are numbered right to left */
 
 #define ENUMSIZE(high,low) INT	/* enums are always stored in full int */
+
+#define FINDMOPS	/* i386 has instructions that modifies memory */
 
 /* Definitions mostly used in pass2 */
 
@@ -289,7 +287,9 @@ int COLORMAP(int c, int *r);
 			 x == LONGLONG || x == ULONGLONG ? EAXEDX : \
 			 x == FLOAT || x == DOUBLE || x == LDOUBLE ? 31 : EAX)
 
-//#define R2REGS	1	/* permit double indexing */
+#if 0
+#define R2REGS	1	/* permit double indexing */
+#endif
 
 /* XXX - to die */
 #define FPREG	EBP	/* frame pointer */
@@ -311,7 +311,6 @@ int COLORMAP(int c, int *r);
  */
 #define	SSECTION	SLOCAL1
 #define	STLS		SLOCAL2
-#define	SNOUNDERSCORE	SLOCAL3
 #define SSTDCALL	SLOCAL2	
 #define SDLLINDIRECT	SLOCAL3
 
@@ -336,6 +335,8 @@ void targarg(char *w, void *arg);
 	w++, targarg(w, ary), 1 : 0)
 int numconv(void *ip, void *p, void *q);
 #define	XASM_NUMCONV(ip, p, q)	numconv(ip, p, q)
+int xasmconstregs(char *);
+#define	XASMCONSTREGS(x) xasmconstregs(x)
 
 /*
  * builtins.

@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:02 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $
 #
 # Makefile.in for ccom
 #
@@ -7,14 +7,16 @@ srcdir=@srcdir@
 top_srcdir=@top_srcdir@
 builddir=@builddir@
 top_builddir=@top_builddir@
-XFL=-DPCC_DEBUG -DGCC_COMPAT
+XFL=-DPCC_DEBUG
 CC = @CC@
 EXEEXT = @EXEEXT@
 CC_FOR_BUILD = @CC_FOR_BUILD@
 _CFLAGS = @CFLAGS@
 CFLAGS = $(_CFLAGS) @ADD_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ ${XFL} -Dos_${TARGOS} -I${srcdir} -I${builddir} -I${top_builddir} \
-	-I${MIPDIR} -I${MDIR} -Dmach_${TARGMACH} -I${top_srcdir}/os/${TARGOS} 
+CPPFLAGS = @ADD_CPPFLAGS@ ${XFL} -Dos_${TARGOS} -Dmach_${TARGMACH} \
+	-D_ISOC99_SOURCE \
+	-I${srcdir} -I${builddir} -I${top_builddir} -I${MIPDIR} -I${MDIR} \
+	-I${top_srcdir}/os/${TARGOS} 
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -50,50 +52,61 @@ ${DEST}: $(OBJS)
 .c.o:
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-local.o: $(MDIR)/local.c
+local.o: $(MDIR)/local.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/local.c
 
-local2.o: $(MDIR)/local2.c
+local2.o: $(MDIR)/local2.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/local2.c
 
-code.o: $(MDIR)/code.c
+code.o: $(MDIR)/code.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/code.c
 
-order.o: $(MDIR)/order.c
+order.o: $(MDIR)/order.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/order.c
 
-table.o: $(MDIR)/table.c
+table.o: $(MDIR)/table.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/table.c
 
-match.o: $(MIPDIR)/match.c
+match.o: $(MIPDIR)/match.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/match.c
 
-reader.o: $(MIPDIR)/reader.c
+reader.o: $(MIPDIR)/reader.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/reader.c
 
-optim2.o: $(MIPDIR)/optim2.c
+optim2.o: $(MIPDIR)/optim2.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/optim2.c
 
-regs.o: $(MIPDIR)/regs.c
+regs.o: $(MIPDIR)/regs.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/regs.c
 
-cgram.o: cgram.c
+cgram.o: cgram.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(_CFLAGS) -c -o $@ cgram.c
 
-common.o: $(MIPDIR)/common.c
+scan.o: scan.c external.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(_CFLAGS) -c -o $@ scan.c
+
+common.o: $(MIPDIR)/common.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/common.c
 
-compat.o: $(MIPDIR)/compat.c
+compat.o: $(MIPDIR)/compat.c external.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/compat.c
 
 external.h external.c: ${MIPDIR}/mkext.c $(MDIR)/table.c
 	$(CC_FOR_BUILD) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext \
 	${MIPDIR}/mkext.c $(MDIR)/table.c ${MIPDIR}/common.c
 	./mkext
-	-rm -f mkext.o table.o common.o
 
-trees.c: pass2.h
+trees.c: ../../mip/pass2.h external.h
 
+inline.c: external.h
+init.c: external.h
+pftn.c: external.h
+gcc_compat.c: external.h
+symtabs.c: external.h
+stabs.c: external.h
+main.c: external.h
+
+pass1.h: external.h
 pass2.h: external.h
 
 cgram.c: cgram.y
@@ -105,7 +118,7 @@ scan.c: scan.l cgram.c
 	$(LEX) $(LFLAGS) $<
 	mv lex.yy.c scan.c
 
-optim2.o reader.o: external.h
+optim2.o reader.o optim.o : external.h
 
 pftn.o: cgram.c # creates cgram.h also
 
