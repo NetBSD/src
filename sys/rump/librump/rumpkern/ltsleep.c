@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.16 2009/09/04 16:41:39 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.17 2009/09/04 16:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.16 2009/09/04 16:41:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.17 2009/09/04 16:42:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -122,9 +122,11 @@ wakeup(wchan_t ident)
 	struct ltsleeper *ltsp;
 
 	mutex_enter(&sleepermtx);
-	LIST_FOREACH(ltsp, &sleepers, entries)
-		if (ltsp->id == ident)
+	LIST_FOREACH(ltsp, &sleepers, entries) {
+		if (ltsp->id == ident) {
 			cv_broadcast(&ltsp->cv);
+		}
+	}
 	mutex_exit(&sleepermtx);
 }
 
