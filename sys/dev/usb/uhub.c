@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.106 2009/09/04 16:42:38 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.107 2009/09/04 18:14:41 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.106 2009/09/04 16:42:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.107 2009/09/04 18:14:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
 int
 uhub_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uhub, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(5,("uhub_match, uaa=%p\n", uaa));
 	/*
@@ -124,7 +124,8 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 void
 uhub_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uhub, sc, uaa);
+	struct uhub_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
 	usbd_status err;
@@ -158,14 +159,14 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF(("%s: configuration failed, error=%s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err)));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (dev->depth > USB_HUB_MAX_DEPTH) {
 		aprint_error_dev(self,
 		    "hub depth (%d) exceeded, hub ignored\n",
 		    USB_HUB_MAX_DEPTH);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Get hub descriptor. */
@@ -184,7 +185,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF(("%s: getting hub descriptor failed, error=%s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err)));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	for (nremov = 0, port = 1; port <= nports; port++)
@@ -202,7 +203,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
 		     M_USBDEV, M_NOWAIT);
 	if (hub == NULL)
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	dev->hub = hub;
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
@@ -338,7 +339,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
  bad:
 	if (sc->sc_status)
@@ -348,7 +349,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (hub)
 		free(hub, M_USBDEV);
 	dev->hub = NULL;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 usbd_status
@@ -589,7 +590,7 @@ uhub_activate(device_t self, enum devact act)
 int
 uhub_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uhub, sc);
+	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	struct usbd_port *rup;
 	int port, nports;
