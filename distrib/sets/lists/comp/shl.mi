@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.85 2009/09/03 15:35:59 pooka Exp $
+# $NetBSD: shl.mi,v 1.86 2009/09/04 17:21:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -83,6 +83,7 @@
 ./usr/lib/librump_pic.a				comp-c-piclib
 ./usr/lib/librumpcrypto_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_pic.a			comp-c-piclib
+./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_cd9660_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_efs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ext2fs_pic.a		comp-c-piclib
@@ -94,6 +95,7 @@
 ./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
+./usr/lib/librumpfs_smbfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib
