@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.50 2009/05/16 03:57:57 tsutsui Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.51 2009/09/04 18:29:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.50 2009/05/16 03:57:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.51 2009/09/04 18:29:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ siop_common_attach(struct siop_common_softc *sc)
 		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, 
+			aprint_error_dev(sc->sc_dev,
 			    "unable to allocate script DMA memory, "
 			    "error = %d\n", error);
 			return error;
@@ -363,7 +363,7 @@ siop_wdtr_neg(struct siop_common_cmd *siop_cmd)
 		/* FALLTHROUGH */
 		default:
 			/*
- 			 * hum, we got more than what we can handle, shouldn't
+			 * hum, we got more than what we can handle, shouldn't
 			 * happen. Reject, and stay async
 			 */
 			siop_target->flags &= ~TARF_ISWIDE;
@@ -879,7 +879,7 @@ siop_update_resid(struct siop_common_cmd *siop_cmd, int offset)
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
 		table = &siop_cmd->siop_tables->data[offset];
-		siop_cmd->xs->resid -= 
+		siop_cmd->xs->resid -=
 		    siop_ctoh32(sc, table->count) - siop_cmd->resid;
 	}
 }
