@@ -1,7 +1,9 @@
-/*	$NetBSD: rump_dev_private.h,v 1.2 2009/09/04 12:20:42 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2009/09/04 12:20:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by The Nokia Foundation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,20 +27,30 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_DEV_PRIVATE_H_
-#define _SYS_RUMP_DEV_PRIVATE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/09/04 12:20:42 pooka Exp $");
 
-void	rump_dev_init(void);
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/stat.h>
 
-void	rump_pdev_add(void (*fn)(int), int);
-void	rump_pdev_finalize(void);
+#include "rump_dev_private.h"
 
-int	rump_dev_makenodes(dev_t, const char *, char,
-			   devmajor_t, devminor_t, int);
+void nsmbattach(int); /* XXX */
 
+void
+rump_dev_netsmb_init()
+{
+	extern const struct cdevsw nsmb_cdevsw;
+	devmajor_t bmaj, cmaj;
+	int error;
 
-void 	rump_dev_cgd_init(void);
-void 	rump_dev_raidframe_init(void);
-void 	rump_dev_netsmb_init(void);
+	bmaj = cmaj = NODEVMAJOR;
+	if ((error = devsw_attach("nsmb", NULL, &bmaj, &nsmb_cdevsw, &cmaj))!=0)
+		panic("nsmb devsw attach failed: %d", error);
+	if ((error = rump_dev_makenodes(S_IFCHR, "nsmb", '0', cmaj, 0, 4)) != 0)
+		panic("cannot create nsmb device nodes: %d", error);
 
-#endif /* _SYS_RUMP_DEV_PRIVATE_H_ */
+	rump_pdev_add(nsmbattach, 4);
+}
