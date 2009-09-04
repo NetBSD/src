@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.3 2008/05/22 01:21:18 dyoung Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.4 2009/09/04 17:53:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -66,7 +66,7 @@ struct cdce_cdata {
 };
 
 struct cdce_softc {
-	USBBASEDEVICE		 cdce_dev;
+        device_t cdce_dev;
 	struct ethercom		 cdce_ec;
 #if NRND > 0
 	rndsource_element_t	 rnd_source;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.5 2008/01/19 22:10:20 dyoung Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.6 2009/09/04 17:53:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -151,13 +151,7 @@ struct axe_cdata {
 #define AXE_INC(x, y)		(x) = (x + 1) % y
 
 struct axe_softc {
-	USBBASEDEVICE		axe_dev;
-#if defined(__FreeBSD__)
-	struct arpcom		arpcom;
-	device_t		axe_miibus;
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#define GET_MII(sc) (device_get_softc((sc)->axe_miibus))
-#elif defined(__NetBSD__)
+        device_t axe_dev;
 	struct ethercom		axe_ec;
 	struct mii_data		axe_mii;
 #if NRND > 0
@@ -165,15 +159,6 @@ struct axe_softc {
 #endif
 #define GET_IFP(sc) (&(sc)->axe_ec.ec_if)
 #define GET_MII(sc) (&(sc)->axe_mii)
-#elif defined(__OpenBSD__)
-	struct arpcom		arpcom;
-	struct mii_data		axe_mii;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#define GET_MII(sc) (&(sc)->axe_mii)
-#endif
 	usbd_device_handle	axe_udev;
 	usbd_interface_handle	axe_iface;
 
@@ -184,7 +169,7 @@ struct axe_softc {
 	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
 	int			axe_if_flags;
 	struct axe_cdata	axe_cdata;
-	usb_callout_t		axe_stat_ch;
+        struct callout axe_stat_ch;
 
 	int			axe_refcnt;
 	char			axe_dying;
