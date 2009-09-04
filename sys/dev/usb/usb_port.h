@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.85 2008/06/28 09:06:20 kent Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.86 2009/09/04 17:55:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,59 +36,6 @@
 /*
  * Macro's to cope with the differences between operating systems.
  */
-
-#if defined(_KERNEL)
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_USB);
-MALLOC_DECLARE(M_USBDEV);
-MALLOC_DECLARE(M_USBHC);
-
-#include <sys/device.h>
-
-#endif
-
-#define USB_USE_SOFTINTR
-
-#ifdef USB_DEBUG
-#define UKBD_DEBUG 1
-#define UHIDEV_DEBUG 1
-#define UHID_DEBUG 1
-#define OHCI_DEBUG 1
-#define UGEN_DEBUG 1
-#define UHCI_DEBUG 1
-#define UHUB_DEBUG 1
-#define ULPT_DEBUG 1
-#define UCOM_DEBUG 1
-#define UPLCOM_DEBUG 1
-#define UMCT_DEBUG 1
-#define UMODEM_DEBUG 1
-#define UAUDIO_DEBUG 1
-#define AUE_DEBUG 1
-#define CUE_DEBUG 1
-#define KUE_DEBUG 1
-#define URL_DEBUG 1
-#define UMASS_DEBUG 1
-#define UVISOR_DEBUG 1
-#define UPL_DEBUG 1
-#define UZCOM_DEBUG 1
-#define URIO_DEBUG 1
-#define UFTDI_DEBUG 1
-#define USCANNER_DEBUG 1
-#define USSCANNER_DEBUG 1
-#define EHCI_DEBUG 1
-#define UIRDA_DEBUG 1
-#define USTIR_DEBUG 1
-#define UISDATA_DEBUG 1
-#define UDSBR_DEBUG 1
-#define UBT_DEBUG 1
-#define AXE_DEBUG 1
-#define UIPAQ_DEBUG 1
-#define UCYCOM_DEBUG 1
-#define Static
-#else
-#define Static static
-#endif
 
 typedef struct proc *usb_proc_ptr;
 
