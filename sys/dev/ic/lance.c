@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.42 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: lance.c,v 1.43 2009/09/04 16:21:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.42 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.43 2009/09/04 16:21:24 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.42 2008/11/07 00:20:02 dyoung Exp $");
 
 integrate struct mbuf *lance_get(struct lance_softc *, int, int);
 
-hide void lance_shutdown(void *);
+hide bool lance_shutdown(device_t, int);
 
 int lance_mediachange(struct ifnet *);
 void lance_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -250,9 +250,12 @@ lance_config(struct lance_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	sc->sc_sh = shutdownhook_establish(lance_shutdown, ifp);
-	if (sc->sc_sh == NULL)
-		panic("lance_config: can't establish shutdownhook");
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, lance_shutdown))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
 	sc->sc_rbufaddr = malloc(sc->sc_nrbuf * sizeof(int), M_DEVBUF,
 					M_WAITOK);
 	sc->sc_tbufaddr = malloc(sc->sc_ntbuf * sizeof(int), M_DEVBUF,
@@ -568,11 +571,15 @@ lance_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
-hide void
-lance_shutdown(void *arg)
+hide bool
+lance_shutdown(device_t self, int howto)
 {
+	struct lance_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	lance_stop((struct ifnet *)arg, 0);
+	lance_stop(ifp, 0);
+
+	return true;
 }
 
 /*
