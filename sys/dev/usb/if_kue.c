@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.64 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.65 2009/09/04 18:10:08 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.64 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.65 2009/09/04 18:10:08 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -257,14 +257,14 @@ kue_load_fw(struct kue_softc *sc)
 	 * so we have to avoid this condition if we don't want
 	 * to look stupid.
 	 *
-         * We can test this quickly by checking the bcdRevision
-         * code. The NIC will return a different revision code if
-         * it's probed while the firmware is still loaded and
-         * running.
-         */
+	 * We can test this quickly by checking the bcdRevision
+	 * code. The NIC will return a different revision code if
+	 * it's probed while the firmware is still loaded and
+	 * running.
+	 */
 	if (usbd_get_device_desc(sc->kue_udev, &dd))
 		return (EIO);
-        if (UGETW(dd.bcdDevice) == KUE_WARM_REV) {
+	if (UGETW(dd.bcdDevice) == KUE_WARM_REV) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
 		return (0);

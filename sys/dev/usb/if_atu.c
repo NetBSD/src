@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.31 2009/09/04 17:53:58 dyoung Exp $ */
+/*	$NetBSD: if_atu.c,v 1.32 2009/09/04 18:10:08 dyoung Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.31 2009/09/04 17:53:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.32 2009/09/04 18:10:08 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1171,7 +1171,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 void
 atu_attach(device_t parent, device_t self, void *aux)
 {
-        struct atu_softc *sc = device_private(self);
+	struct atu_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	char				*devinfop;
 	usbd_status			err;
@@ -1191,13 +1191,13 @@ atu_attach(device_t parent, device_t self, void *aux)
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(self, "setting config no failed\n");
-                return;
+		return;
 	}
 
 	err = usbd_device2interface_handle(dev, ATU_IFACE_IDX, &sc->atu_iface);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-                return;
+		return;
 	}
 
 	sc->atu_unit = device_unit(self);
@@ -1239,7 +1239,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 		 * so we don't want to do any more configuration after this
 		 * point.
 		 */
-                return;
+		return;
 	}
 
 	if (mode != MODE_NETCARD) {
@@ -1264,7 +1264,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 				    " been downloaded\n",
 				    USBDEVNAME(sc->atu_dev)));
 				atu_complete_attach(sc);
-                                return;
+				return;
 			}
 		}
 
@@ -1279,7 +1279,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 		atu_complete_attach(sc);
 	}
 
-        return;
+	return;
 }
 
 void
@@ -1320,7 +1320,7 @@ atu_complete_attach(struct atu_softc *sc)
 	err = atu_get_card_config(sc);
 	if (err) {
 		aprint_error("\n%s: could not get card cfg!\n",
-                    device_xname(sc->atu_dev));
+		    device_xname(sc->atu_dev));
 		return;
 	}
 
@@ -1406,7 +1406,7 @@ atu_complete_attach(struct atu_softc *sc)
 int
 atu_detach(device_t self, int flags)
 {
-        struct atu_softc *sc = device_private(self);
+	struct atu_softc *sc = device_private(self);
 	struct ifnet		*ifp = &sc->sc_if;
 
 	DPRINTFN(10, ("%s: atu_detach state=%d\n", USBDEVNAME(sc->atu_dev),
@@ -1929,11 +1929,11 @@ atu_init(struct ifnet *ifp)
 
 	/* Init TX ring */
 	if (atu_tx_list_init(sc))
-                printf("%s: tx list init failed\n", device_xname(sc->atu_dev));
+		printf("%s: tx list init failed\n", device_xname(sc->atu_dev));
 
 	/* Init RX ring */
 	if (atu_rx_list_init(sc))
-                printf("%s: rx list init failed\n", device_xname(sc->atu_dev));
+		printf("%s: rx list init failed\n", device_xname(sc->atu_dev));
 
 	/* Load the multicast filter. */
 	/*atu_setmulti(sc); */

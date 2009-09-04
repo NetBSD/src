@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.22 2009/09/04 17:53:58 dyoung Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.23 2009/09/04 18:10:08 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -224,7 +224,7 @@ struct aue_cdata {
 };
 
 struct aue_softc {
-        device_t aue_dev;
+	device_t aue_dev;
 
 	struct ethercom		aue_ec;
 	struct mii_data		aue_mii;
@@ -239,7 +239,7 @@ struct aue_softc {
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 
-        struct callout aue_stat_ch;
+	struct callout aue_stat_ch;
 
 	usbd_device_handle	aue_udev;
 	usbd_interface_handle	aue_iface;
