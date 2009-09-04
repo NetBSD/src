@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/17 10:21:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2009/09/04 17:21:34 pooka Exp $
 #
 
-SUBDIR=	include librump fs net
+SUBDIR=	include librump dev fs net
 
 .include <bsd.subdir.mk>
