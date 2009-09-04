@@ -1,4 +1,4 @@
-.\" $NetBSD: boot26.8,v 1.4 2003/07/26 20:17:38 salo Exp $
+.\" $NetBSD: boot26.8,v 1.5 2009/09/04 23:29:03 apb Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Ben Harris
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 4, 2001
+.Dd September 4, 2009
 .Dt BOOT26 8 acorn26
 .Os
 .Sh NAME
@@ -50,7 +50,8 @@ filesystem.
 .Pp
 It takes the following options, which set flags in the
 .Va boothowto
-variable in the booted kernel:
+variable in the booted kernel (see
+.Xr boothowto 9 ) :
 .Bl -tag -width Fl
 .It Fl a
 .Pq Dv RB_ASKNAME
@@ -163,7 +164,8 @@ filesystem.
 .Xr reboot 2 ,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
-.Xr init 8
+.Xr init 8 ,
+.Xr boothowto 9
 .Sh HISTORY
 .Nm
 was introduced in

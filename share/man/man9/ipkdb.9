@@ -1,4 +1,4 @@
-.\"     $NetBSD: ipkdb.9,v 1.8 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: ipkdb.9,v 1.9 2009/09/04 23:29:03 apb Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2002
+.Dd September 4, 2009
 .Dt IPKDB 9
 .Os
 .Sh NAME
@@ -61,7 +61,10 @@ During system bootstrap, machine-dependent code must invoke
 .Fn ipkdb_init .
 If the kernel is booted with
 .Dv RB_KDB
-set in boothowto, then
+set in
+.Va boothowto
+(see
+.Xr boothowto 9 ) ,
 .Xr ipkdb 4
 is enabled by invoking
 .Fn ipkdb_connect ,
@@ -173,4 +176,5 @@ Furthermore it should reset the modification bit in the relevant page
 table entry to the value before the store.
 .El
 .Sh SEE ALSO
-.Xr ipkdb 4
+.Xr ipkdb 4 ,
+.Xr boothowto 9
