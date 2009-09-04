@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.32 2009/07/06 11:46:49 njoly Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.33 2009/09/04 16:12:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.32 2009/07/06 11:46:49 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.33 2009/09/04 16:12:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static MALLOC_DEFINE(M_SMBIOD, "SMBIOD", "SMB network io daemon");
 
 static int smb_iod_next;
 
-static void smb_iod_sendall(struct smbiod *iod);
+static bool smb_iod_sendall(struct smbiod *iod);
 static int  smb_iod_disconnect(struct smbiod *iod);
 static void smb_iod_thread(void *);
 
@@ -555,11 +555,12 @@ smb_iod_waitrq(struct smb_rq *rqp)
 }
 
 
-static void
+static bool
 smb_iod_sendall(struct smbiod *iod)
 {
 	struct smb_rq *rqp;
 	int herror;
+	bool sentany = false;
 
 	herror = 0;
 	/*
@@ -580,11 +581,14 @@ smb_iod_sendall(struct smbiod *iod)
 
 			if (__predict_false(herror != 0))
 				break;
+			sentany = true;
 		}
 	}
 	SMB_IOD_RQUNLOCK(iod);
 	if (herror == ENOTCONN)
 		smb_iod_dead(iod);
+
+	return sentany;
 }
 
 /*
@@ -647,8 +651,19 @@ smb_iod_main(struct smbiod *iod)
 		}
 	}
 #endif
+
+	/*
+	 * Do a send/receive cycle once and then as many times
+	 * afterwards as we can send out new data.  This is to make
+	 * sure we got all data sent which might have ended up in the
+	 * queue during the receive phase (which might block releasing
+	 * the kernel lock).
+	 */
 	smb_iod_sendall(iod);
 	smb_iod_recvall(iod);
+	while (smb_iod_sendall(iod)) {
+		smb_iod_recvall(iod);
+	}
 }
 
 void
