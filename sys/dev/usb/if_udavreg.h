@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.4 2007/12/05 07:15:54 ad Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.5 2009/09/04 18:10:08 dyoung Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -196,7 +196,7 @@ struct udav_softc {
 
 	int                     sc_attached;
 	int			sc_dying;
-        int                     sc_refcnt;
+	int                     sc_refcnt;
 
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
