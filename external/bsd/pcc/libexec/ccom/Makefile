@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/27 13:15:53 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.3 2009/09/04 00:50:05 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,8 @@ CPPFLAGS+=	-I${.CURDIR}/../..
 CPPFLAGS+=	-I${.OBJDIR}
 CPPFLAGS+=	-DPCC_DEBUG -DGCC_COMPAT
 YFLAGS+=	-d
+
+COPTS.scan.c += -Wno-error
 
 DPSRCS=	external.h
 
