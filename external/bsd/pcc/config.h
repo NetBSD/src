@@ -189,6 +189,12 @@
 /* Version string */
 #define VERSSTR "pcc 0.9.9 for i386-pc-netbsdelf, greg@sparky Wed Aug 13 22:19:18 EST 2008"
 
+/* Size of wide character type */
+#define WCHAR_SIZE 4
+
+/* Type to use for wide characters */
+#define WCHAR_TYPE UNSIGNED
+
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #define YYTEXT_POINTER 1

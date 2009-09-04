@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/27 13:15:53 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.3 2009/09/04 00:50:06 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIST=${DIST}/cc/cpp
 .PATH:	${SUBDIST}
 
 PROG=	cpp
-SRCS=   cpy.y scanner.c cpp.c
+SRCS=   cpy.y cpp.c token.c
 
 MAN=    cpp.1
 
