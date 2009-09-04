@@ -9,7 +9,11 @@ AC_CANONICAL_TARGET
 
 abi=unknown
 endian=little
+targosver=0
 tls=no
+gcccompat=yes
+wchar_type=UNSIGNED
+wchar_size=4
 
 case "$target_os" in
 
@@ -21,12 +25,24 @@ case "$target_os" in
 	esac
 	;;
 
+    bsd)
+	targos=bsd
+	abi=aout
+	targmach=pdp11
+	;;
+
     darwin*)
 	targos=darwin
 	abi=macho
+	case "$target_os" in
+	    *9.*) targosver=9 ;;
+	    *8.*) targosver=8 ;;
+	    *7.*) targosver=7 ;;
+	esac
 	case "$target_cpu" in
 	    i?86) targmach=i386 ;;
 	    powerpc) targmach=powerpc endian=big ;;
+	    x86_64) targmach=amd64 ;;
 	esac
         ;;
 
@@ -42,6 +58,12 @@ case "$target_os" in
     freebsd*)
 	targos=freebsd
 	abi=elf
+	case "$target_os" in
+	    *7.*) targosver=7 ;;
+	    *6.*) targosver=6 ;;
+	    *5.*) targosver=5 ;;
+	    *4.*) targosver=4 ;;
+	esac
 	case "$target_cpu" in
 	    i386) targmach=i386 ;;
 	esac
@@ -53,6 +75,7 @@ case "$target_os" in
 	case "$target_cpu" in
 	    i?86) targmach=i386 ;;
 	    powerpc*) targmach=powerpc endian=big ;;
+	    x86_64) targmach=amd64 ;;
 	esac
 	;;
 
@@ -63,6 +86,16 @@ case "$target_os" in
 	    i?86) targmach=i386 ;;
 	    sparc64) targmach=sparc64 endian=big ;;
 	esac
+	;;
+
+    mingw*)
+	targos=win32
+	abi=pecoff
+	wchar_type=USHORT
+	wchar_size=2
+	targmach=i386
+	altincdir="c:/mingw/include"
+	altlibdir="c:/mingw/lib"
 	;;
 
     minix)
@@ -76,6 +109,8 @@ case "$target_os" in
     mirbsd*)
 	targos=mirbsd
 	abi=elf
+	wchar_type=USHORT
+	wchar_size=2
 	case "$target_cpu" in
 	    i?86) targmach=i386 ;;
 	esac
@@ -84,6 +119,13 @@ case "$target_os" in
     netbsd*)
 	targos=netbsd
 	abi=elf
+	case "$target_os" in
+	    *5.*) targosver=5 ;;
+	    *4.*) targosver=4 ;;
+	    *3.*) targosver=3 ;;
+	    *2.*) targosver=2 ;;
+	    *1.*) targosver=1 ;;
+	esac
 	case "$target_cpu" in
 	    armeb) targmach=arm endian=big ;;
 	    arm*) targmach=arm ;;
@@ -91,10 +133,11 @@ case "$target_os" in
 	    m68k*) targmach=m68k endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    pdp10) targmach=pdp10 ;;
 	    powerpc) targmach=powerpc endian=big ;;
 	    sparc64) targmach=sparc64 endian=big ;;
 	    vax) targmach=vax ;;
-	    pdp10) targmach=pdp10 ;;
+	    x86_64) targmach=amd64 ;;
 	esac
 	;;
 
@@ -116,6 +159,7 @@ case "$target_os" in
 	    vax) targmach=vax ;;
 	    powerpc) targmach=powerpc endian=big ;;
 	    sparc64) targmach=sparc64 endian=big ;;
+	    x86_64) targmach=amd64 ;;
 	esac
 	;;
 
@@ -132,6 +176,8 @@ case "$target_os" in
 	target_alias=i386-pe
 	targos=win32
 	abi=pecoff
+	wchar_type=USHORT
+	wchar_size=2
 	targmach=i386
 	;;
 
@@ -144,17 +190,27 @@ case "$target_os" in
 	;;
 esac
 
-# quick hack for cross-build to win32 host
-if test "$host_os" = pe -a "$prefix" = NONE; then
-	prefix="c:/pcc"
-	assembler="yasm.exe -p gnu -f win32"
-	linker="link.exe /nologo"
-	ADD_CFLAGS=-DMSLINKER
-fi
-
 if test "X$targos" = X -o "X$targmach" = X ; then
 	AC_MSG_ERROR(['$target' is not (yet) supported by pcc.])
 fi
+
+case "$host_os" in
+
+    pe*)
+	# quick hack for cross-build to win32 host
+	if "$prefix" = NONE; then
+		prefix="c:/pcc"
+		assembler="yasm.exe -p gnu -f win32"
+		linker="link.exe /nologo"
+		ADD_CFLAGS=-DMSLINKER
+	fi
+	;;
+
+    sunos*|solaris*)
+	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_XOPEN_SOURCE=600"
+	;;
+
+esac
 
 if test "X$endian" = "Xbig" ; then
 	AC_DEFINE(TARGET_BIG_ENDIAN, 1,
@@ -201,6 +257,13 @@ AC_ARG_ENABLE(tls,
 	[tls=$enableval], [])
 if test "$tls" = "yes"; then
 	AC_DEFINE(TLS, 1, [Enable thread-local storage (TLS).])
+fi
+AC_ARG_ENABLE(gcc-compat,
+	AC_HELP_STRING([--disable-gcc-compat],
+		[Disable GCC compatibility]),
+	[gcccompat=$enableval], [])
+if test "$gcccompat" = "yes"; then
+	ADD_CPPFLAGS="$ADD_CPPFLAGS -DGCC_COMPAT";
 fi
 
 # setup for building a cross-compiler
@@ -249,12 +312,15 @@ if test -n "$preprocessor"; then
 fi
 if test -n "$compiler"; then
 	AC_DEFINE_UNQUOTED(COMPILER, "${BINPREFIX}ccom",
-		[Define path to alternate preprocessor])
+		[Define path to alternate compiler])
 fi
+
+AC_DEFINE_UNQUOTED(WCHAR_TYPE, $wchar_type, [Type to use for wide characters])
+AC_DEFINE_UNQUOTED(WCHAR_SIZE, $wchar_size, [Size of wide character type])
 
 # check for additional compiler flags
 AC_PROG_CC
-DESIRED_FLAGS="-Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wsign-compare -Werror"
+DESIRED_FLAGS="-Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wsign-compare -Wtruncate"
 for flag in $DESIRED_FLAGS
 do
 	AC_MSG_CHECKING([whether $CC accepts $flag])
@@ -330,19 +396,19 @@ fi
 
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
-AC_CHECK_HEADERS([string.h alloca.h malloc.h libgen.h])
+AC_CHECK_HEADERS([string.h malloc.h libgen.h])
 AC_HEADER_SYS_WAIT
 
 # Checks for library functions.
-AC_FUNC_ALLOCA
 ##  AC_FUNC_STRTOD
 # AC_FUNC_VPRINTF
 # AC_CHECK_FUNCS([memset strchr strdup strrchr strtol])
-AC_CHECK_FUNCS([vsnprintf snprintf mkstemp strlcat strlcpy basename getopt ffs])
+AC_CHECK_FUNCS([strtold vsnprintf snprintf mkstemp strlcat strlcpy basename getopt ffs vfork])
 
 AC_EXEEXT
 
 AC_SUBST(targos)
+AC_SUBST(targosver)
 AC_SUBST(targmach)
 AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
@@ -351,6 +417,7 @@ AC_SUBST(includedir)
 AC_SUBST(strip)
 AC_SUBST(PACKAGE_VERSION)
 AC_SUBST(ADD_CFLAGS)
+AC_SUBST(ADD_CPPFLAGS)
 
 pcc_major=`echo $PACKAGE_VERSION | awk -F. '{print $1}'`
 pcc_minor=`echo $PACKAGE_VERSION | awk -F. '{print $2}'`
@@ -358,6 +425,7 @@ pcc_minorminor=`echo $PACKAGE_VERSION | awk -F. '{print $3}'`
 versstr="\"$PACKAGE_STRING for $target, $USER@`hostname` `date`\""
 
 AC_DEFINE_UNQUOTED(TARGOS, $targos, [Target OS])
+AC_DEFINE_UNQUOTED(TARGOSVER, $targosver, [Target OS version])
 AC_DEFINE_UNQUOTED(PCC_MAJOR, $pcc_major, [Major version no])
 AC_DEFINE_UNQUOTED(PCC_MINOR, $pcc_minor, [Minor version no])
 AC_DEFINE_UNQUOTED(PCC_MINORMINOR, $pcc_minorminor, [Minor minor version no])
@@ -390,6 +458,8 @@ echo "Using linker ..................... ${linker-<default>}"
 echo "Using include path ............... ${altincdir-<default>}"
 echo "Using library path ............... ${altlibdir-<default>}"
 echo "Has TLS support .................. $tls"
+echo "Has GCC compatibility ............ $gcccompat"
+echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} bytes)"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

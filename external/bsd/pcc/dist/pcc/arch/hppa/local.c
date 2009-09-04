@@ -53,7 +53,7 @@ clocal(NODE *p)
 	register struct symtab *q, *sp;
 	register NODE *r, *l, *s;
 	register int o, m, rn;
-	char *ch, name[16];
+	char *ch, name[16], *n;
 	TWORD t;
 
 #ifdef PCC_DEBUG
@@ -118,7 +118,8 @@ clocal(NODE *p)
 			if (p->n_sp->sflags & SSTRING)
 				break;
 
-			if (strncmp(p->n_sp->soname, "__builtin", 9) == 0)
+			n = p->n_sp->soname ? p->n_sp->soname : p->n_sp->sname;
+			if (strncmp(n, "__builtin", 9) == 0)
 				break;
 
 			l = block(REG, NIL, NIL, INT, 0, 0);
@@ -551,6 +552,7 @@ makememcpy()
 void
 myp2tree(NODE *p)
 {
+	struct symtab *sp;
 	int o = p->n_op;
 
 	if (o != FCON) 
@@ -565,14 +567,21 @@ myp2tree(NODE *p)
 	    ALDOUBLE : ALLDOUBLE );
 	deflab1(i = getlab()); 
 #endif
+	sp = inlalloc(sizeof(struct symtab));
+	sp->sclass = STATIC;
+	sp->ssue = MKSUE(p->n_type);
+	sp->slevel = 1; /* fake numeric label */
+	sp->soffset = getlab();
+	sp->sflags = 0;
+	sp->stype = p->n_type;
+	sp->squal = (CON >> TSHIFT);
 
+	defloc(sp);
 	ninval(0, btdims[p->n_type].suesize, p);
+
 	p->n_op = NAME;
 	p->n_lval = 0;	
-	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
-	p->n_sp->sclass = ILABEL;
-	p->n_sp->soffset = getlab();
-	p->n_sp->sflags = 0;
+	p->n_sp = sp;
 
 }
 
@@ -706,27 +715,6 @@ instring(struct symtab *sp)
 	printf("\\0\"\n");
 }
 
-/*
- * Print out a wide string by calling ninval().
- */
-void
-inwstring(struct symtab *sp)
-{
-	char *s = sp->sname;
-	NODE *p;
-
-	defloc(sp);
-	p = bcon(0);
-	do { 
-		if (*s++ == '\\')
-			p->n_lval = esccon(&s);
-		else
-			p->n_lval = (unsigned char)s[-1];
-		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
-	} while (s[-1] != 0);
-	nfree(p);
-}
-
 static int inbits, inval;
 
 /*
@@ -823,11 +811,11 @@ ninval(CONSZ off, int fsz, NODE *p)
 	case UNSIGNED:
 		printf("\t.long 0x%x", (int)p->n_lval);
 		if ((q = p->n_sp) != NULL) {
-			if ((q->sclass == STATIC && q->slevel > 0) ||
-			    q->sclass == ILABEL) {
+			if ((q->sclass == STATIC && q->slevel > 0)) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->soname));
+				printf("+%s",
+				    q->soname ? q->soname : exname(q->sname));
 		}
 		printf("\n");
 		break;
@@ -900,13 +888,13 @@ calldec(NODE *f, NODE *a)
 		return;
 	}
 
-	printf("\t.import\t%s,code\n", exname(q->soname));
+	printf("\t.import\t%s,code\n", q->soname ? q->soname : exname(q->sname));
 }
 
 void
 extdec(struct symtab *q)
 {
-	printf("\t.import\t%s,data\n", exname(q->soname));
+	printf("\t.import\t%s,data\n", q->soname ? q->soname : exname(q->sname));
 }
 
 /* make a common declaration for id, if reasonable */
@@ -919,7 +907,7 @@ defzero(struct symtab *sp)
 	off = (off + (SZCHAR - 1)) / SZCHAR;
 	printf("\t.%scomm\t", sp->sclass == STATIC ? "l" : "");
 	if (sp->slevel == 0)
-		printf("%s,0%o\n", exname(sp->soname), off);
+		printf("%s,0%o\n", sp->soname ? sp->soname : exname(sp->sname), off);
 	else
 		printf(LABFMT ",0%o\n", sp->soffset, off);
 }

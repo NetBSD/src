@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1.1.1 2008/08/24 05:33:07 gmcgarry Exp $	*/
+/*	$Id: main.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -42,8 +42,8 @@ char xxxvers[] = "\nFORTRAN 77 PASS 1, VERSION 1.16,  3 NOVEMBER 1978\n";
 void mkdope(void);
 
 int f2debug, e2debug, odebug, rdebug, b2debug, c2debug, t2debug;
-int s2debug, udebug, x2debug, nflag, kflag;
-int xdeljumps, xtemps, xssaflag;
+int s2debug, udebug, x2debug, nflag, kflag, g2debug;
+int xdeljumps, xtemps, xssaflag, xdce;
 
 int mflag, tflag;
 
@@ -56,7 +56,7 @@ LOCAL int nch   = 0;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: fcom [w:UuOdpC1I:Z:]\n");
+	fprintf(stderr, "usage: fcom [qw:UuOdpC1I:Z:]\n");
 	exit(1);
 }
 
@@ -79,8 +79,12 @@ main(int argc, char **argv)
 
 #define DONE(c)	{ retcode = c; goto finis; }
 
-	while ((ch = getopt(argc, argv, "w:UuOdpC1I:Z:X:")) != -1)
+	while ((ch = getopt(argc, argv, "qw:UuOdpC1I:Z:X:")) != -1)
 		switch (ch) {
+		case 'q':
+			quietflag = YES;
+			break;
+
 		case 'w':
 			if(optarg[0]=='6' && optarg[1]=='6') {
 				ftn66flag = YES;
@@ -160,6 +164,7 @@ main(int argc, char **argv)
 					++udebug;
 					break;
 				case 'x': ++x2debug; break;
+				case 'g': ++g2debug; break;
 				case 'n': ++nflag; break;
 				default:
 					fprintf(stderr, "unknown Z flag '%c'\n",
@@ -193,7 +198,8 @@ main(int argc, char **argv)
 	if (argc > 0) {
 		if (inilex(copys(argv[0])))
 			DONE(1);
-		fprintf(diagfile, "%s:\n", argv[0]);
+		if (!quietflag)
+			fprintf(diagfile, "%s:\n", argv[0]);
 		if (argc != 1)
 			if (freopen(argv[1], "w", stdout) == NULL) {
 				fprintf(stderr, "open output file '%s':",

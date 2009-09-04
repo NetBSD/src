@@ -2,8 +2,9 @@ MACH ?=	i386
 TARGET ?= $(MACH)-netbsd
 VERSION ?= 0.9.9
 PCCLIBDIR ?= /usr/local/lib/pcc/$(TARGET)/$(VERSION)/lib
+SRCDIR ?= .
 
-CFLAGS = -I$(MACH) -I. -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS = -I$SRCDIR/$(MACH) -I$(SRCDIR) -Wall -Wstrict-prototypes -Wmissing-prototypes
 
 OBJS = crtbegin.o crtend.o
 

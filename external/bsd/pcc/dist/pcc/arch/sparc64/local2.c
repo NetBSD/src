@@ -51,7 +51,7 @@ prologue(struct interpass_prolog *ipp)
 
 	stack = V9RESERVE + V9STEP(p2maxautooff);
 
-	for (i=ipp->ipp_regs; i; i >>= 1)
+	for (i = ipp->ipp_regs[0]; i; i >>= 1)
 		if (i & 1)
 			stack += 16;
 

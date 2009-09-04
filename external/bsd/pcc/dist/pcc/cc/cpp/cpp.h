@@ -1,4 +1,4 @@
-/*	$Id: cpp.h,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $	*/
+/*	$Id: cpp.h,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -55,14 +55,17 @@ extern	int	ofd;
 
 /* buffer used internally */
 #ifndef CPPBUF
-#ifdef __pdp11__
+#if defined(__pdp11__)
 #define CPPBUF  BUFSIZ
+#elif defined(WIN32)
+/* winxp seems to fail > 26608 bytes */
+#define CPPBUF	16384
 #else
 #define CPPBUF	65536
 #endif
 #endif
 
-#define	NAMEMAX	64 /* max len of identifier */
+#define	NAMEMAX	CPPBUF	/* currently pushbackbuffer */
 
 /* definition for include file info */
 struct includ {
@@ -119,6 +122,7 @@ int pushfile(usch *fname);
 void popfile(void);
 void prtline(void);
 int yylex(void);
+int sloscan(void);
 void cunput(int);
 int curline(void);
 char *curfile(void);

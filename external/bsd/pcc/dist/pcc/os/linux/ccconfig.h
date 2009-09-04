@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -36,23 +36,28 @@
 #endif
 
 /* common cpp predefines */
-#define	CPPADD	{ "-D__linux__", "-D__ELF__", "-I" INCLUDEDIR "/pcc", NULL, }
-
-#define	DYNLINKER { "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
+#define	CPPADD	{ "-D__linux__", "-D__ELF__", NULL, }
 
 #define CRT0FILE LIBDIR "crt1.o"
 #define CRT0FILE_PROFILE LIBDIR "gcrt1.o"
-#define	LIBCLIBS { "-lc", "-lpcc", NULL }
 
-#define STARTFILES { LIBDIR "crti.o", NULL }
-#define	ENDFILES { LIBDIR "crtn.o", NULL }
+#define	LIBCLIBS { "-lc", "-lpcc", NULL }
+#define	LIBCLIBS_PROFILE LIBCLIBS
+
+#define STARTFILES { LIBDIR "crti.o", PCCLIBDIR "crtbegin.o", NULL }
+#define	ENDFILES { PCCLIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
 
 #define STARTLABEL "_start"
 
 #if defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
+#define	DYNLINKER { "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
 #elif defined(mach_powerpc)
 #define	CPPMDADD { "-D__ppc__", NULL, }
+#define	DYNLINKER { "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
+#elif defined(mach_amd64)
+#define CPPMDADD { "-D__x86_64__", NULL, }
+#define	DYNLINKER { "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2", NULL }
 #else
 #error defines for arch missing
 #endif

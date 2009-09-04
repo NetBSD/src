@@ -859,6 +859,12 @@ struct optab table[] = {
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,
+	SPCNHI,	ANYFIXED,
+		NAREG,		RESC1,
+		"\tldil\tUR,A1\n", },
+
+{ OPLTYPE,	INAREG,
+	SANY,	TANY,
 	SPCON,	ANYFIXED,
 		NAREG,		RESC1,
 		"\tldi\tAR,A1\n", },
@@ -879,12 +885,28 @@ struct optab table[] = {
 
 { OPLTYPE,	INLL,
 	SHLL,	TLL,
+	SPCNHW,	TLL,
+		NBREG,		RESC1,
+		"\tldil\tUR>>32,U1\n"
+		"\tldo\tAR>>32(U1),U1\n"
+		"\tcopy\t%r0,A1\n", },
+
+{ OPLTYPE,	INLL,
+	SHLL,	TLL,
+	SPCNLW,	TLL,
+		NBREG,		RESC1,
+		"\tcopy\t%r0,U1\n"
+		"\tldil\tUR,A1\n"
+		"\tldo\tAR(A1),A1\n", },
+
+{ OPLTYPE,	INLL,
+	SHLL,	TLL,
 	SCON,	TLL,
 		NBREG,		RESC1,
 		"\tldil\tUR,A1\n"
 		"\tldo\tAR(A1),A1\n"
 		"\tldil\tUR>>32,U1\n"
-		"\tldo\tAR>>32(A1),U1\n", },
+		"\tldo\tAR>>32(U1),U1\n", },
 
 { OPLTYPE,	INCREG,
 	SANY,	TFLOAT,

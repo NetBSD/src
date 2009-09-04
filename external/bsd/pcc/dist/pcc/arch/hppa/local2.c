@@ -318,7 +318,7 @@ static void
 twollcomp(NODE *p)
 {
 	int o = p->n_op;
-	int s = getlab();
+	int s = getlab2();
 	int e = p->n_label;
 	int cb1, cb2;
 
@@ -398,7 +398,7 @@ canaddr(NODE *p)
 	int o = p->n_op;
 
 	if (o == NAME || o == REG || o == ICON || o == OREG ||
-	    (o == UMUL && shumul(p->n_left)))
+	    (o == UMUL && shumul(p->n_left, SOREG)))
 		return(1);
 	return(0);
 }
@@ -601,7 +601,7 @@ countargs(NODE *p, int *n)
 }
 
 void
-fixcalls(NODE *p)
+fixcalls(NODE *p, void *arg)
 {
 	int n, o;
 
@@ -635,7 +635,7 @@ myreader(struct interpass *ipole)
 			break;
 
 		case IP_NODE:
-			walkf(ip->ip_node, fixcalls);
+			walkf(ip->ip_node, fixcalls, 0);
 			break;
 		}
 	}
@@ -651,7 +651,7 @@ myreader(struct interpass *ipole)
  * Remove some PCONVs after OREGs are created.
  */
 static void
-pconv2(NODE *p)
+pconv2(NODE *p, void *arg)
 {
 	NODE *q;
 
@@ -676,7 +676,7 @@ pconv2(NODE *p)
 void
 mycanon(NODE *p)
 {
-	walkf(p, pconv2);
+	walkf(p, pconv2, 0);
 }
 
 void
@@ -836,6 +836,18 @@ special(NODE *p, int shape)
 	case SPICON:
 		if (o != ICON || p->n_name[0] ||
 		    p->n_lval < -1024 || p->n_lval >= 1024)
+			break;
+		return SRDIR;
+	case SPCNHW:
+		if (o != ICON || p->n_name[0] || (p->n_lval & 0xffffffffLL))
+			break;
+		return SRDIR;
+	case SPCNLW:
+		if (o != ICON || p->n_name[0] || (p->n_lval & ~0xffffffffLL))
+			break;
+		return SRDIR;
+	case SPCNHI:
+		if (o != ICON || p->n_name[0] || (p->n_lval & ~0xfffff800LL))
 			break;
 		return SRDIR;
 	case SPCON:
