@@ -1,4 +1,4 @@
-/*	$Id: common.c,v 1.1.1.1 2008/08/24 05:33:08 gmcgarry Exp $	*/
+/*	$Id: common.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -156,13 +154,10 @@ static int usednodes;
 NODE *
 talloc()
 {
-	extern int inlnodecnt, recovernodes;
 	register NODE *p;
 
 	usednodes++;
 
-	if (recovernodes)
-		inlnodecnt++;
 	if (freelink != NULL) {
 		p = freelink;
 		freelink = p->next;
@@ -226,7 +221,7 @@ void
 tfree(NODE *p)
 {
 	if (p->n_op != FREE)
-		walkf(p, (void (*)(NODE *))nfree);
+		walkf(p, (void (*)(NODE *, void *))nfree, 0);
 }
 
 /*
@@ -236,9 +231,6 @@ tfree(NODE *p)
 NODE *
 nfree(NODE *p)
 {
-#ifndef LANG_F77
-	extern int inlnodecnt, recovernodes;
-#endif
 	NODE *l;
 #ifdef PCC_DEBUG_NODES
 	NODE *q;
@@ -265,10 +257,6 @@ nfree(NODE *p)
 	p->next = freelink;
 	freelink = p;
 	usednodes--;
-#ifndef LANG_F77
-	if (recovernodes)
-		inlnodecnt--;
-#endif
 	return l;
 }
 #endif
@@ -314,7 +302,7 @@ fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down)
 }
 
 void
-walkf(NODE *t, void (*f)(NODE *))
+walkf(NODE *t, void (*f)(NODE *, void *), void *arg)
 {
 	int opty;
 
@@ -322,10 +310,10 @@ walkf(NODE *t, void (*f)(NODE *))
 	opty = OPTYPE(t->n_op);
 
 	if (opty != LTYPE)
-		walkf( t->n_left, f );
+		walkf( t->n_left, f, arg );
 	if (opty == BITYPE)
-		walkf( t->n_right, f );
-	(*f)(t);
+		walkf( t->n_right, f, arg );
+	(*f)(t, arg);
 }
 
 int dope[DSIZE];
@@ -434,9 +422,13 @@ tprint(FILE *fp, TWORD t, TWORD q)
 		"void",
 		"signed", /* pass1 */
 		"bool", /* pass1 */
+		"fimag", /* pass1 */
+		"dimag", /* pass1 */
+		"limag", /* pass1 */
 		"fcomplex", /* pass1 */
 		"dcomplex", /* pass1 */
 		"lcomplex", /* pass1 */
+		"enumty", /* pass1 */
 		"?", "?"
 		};
 
@@ -460,16 +452,6 @@ tprint(FILE *fp, TWORD t, TWORD q)
 	}
 }
 
-int crslab = 10;
-/*
- * Return a number for internal labels.
- */
-int 
-getlab()
-{
-	return crslab++;
-}
-
 /*
  * Memory allocation routines.
  * Memory are allocated from the system in MEMCHUNKSZ blocks.
@@ -479,7 +461,7 @@ getlab()
  */
 
 #define	MEMCHUNKSZ 8192	/* 8k per allocation */
-struct b {
+struct balloc {
 	char a1;
 	union {
 		long long l;
@@ -487,13 +469,11 @@ struct b {
 	} a2;
 };
 
-#define ALIGNMENT ((long)&((struct b *)0)->a2)
+#define ALIGNMENT ((long)&((struct balloc *)0)->a2)
 #define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
 static int allocleft;
-static char *tmppole;
-static int tmpleft;
 int permallocsize, tmpallocsize, lostmem;
 
 void *
@@ -501,28 +481,26 @@ permalloc(int size)
 {
 	void *rv;
 
-//fprintf(stderr, "permalloc: allocpole %p allocleft %d size %d ", allocpole, allocleft, size);
-	if (size > MEMCHUNKSZ)
-		cerror("permalloc");
+	if (size > MEMCHUNKSZ) {
+		if ((rv = malloc(size)) == NULL)
+			cerror("permalloc: missing %d bytes", size);
+		return rv;
+	}
 	if (size <= 0)
 		cerror("permalloc2");
 	if (allocleft < size) {
 		/* looses unused bytes */
 		lostmem += allocleft;
-//fprintf(stderr, "allocating perm\n");
 		if ((allocpole = malloc(MEMCHUNKSZ)) == NULL)
 			cerror("permalloc: out of memory");
 		allocleft = MEMCHUNKSZ;
 	}
 	size = ROUNDUP(size);
 	rv = &allocpole[MEMCHUNKSZ-allocleft];
-//fprintf(stderr, "rv %p\n", rv);
 	allocleft -= size;
 	permallocsize += size;
 	return rv;
 }
-
-static char *tmplink;
 
 void *
 tmpcalloc(int size)
@@ -532,90 +510,6 @@ tmpcalloc(int size)
 	rv = tmpalloc(size);
 	memset(rv, 0, size);
 	return rv;
-}
-
-#define	TMPOLE	&tmppole[MEMCHUNKSZ-tmpleft]
-void *
-tmpalloc(int size)
-{
-	void *rv;
-
-	if (size > MEMCHUNKSZ/2) {
-		size += ROUNDUP(sizeof(char *));
-		if ((rv = malloc(size)) == NULL)
-			cerror("tmpalloc: out of memory");
-		/* link in before current chunk XXX */
-		*(char **)rv = *(char **)tmppole;
-		*(char **)tmppole = rv;
-		tmpallocsize += size;
-		return (char *)rv + ROUNDUP(sizeof(char *));
-	}
-	if (size <= 0)
-		cerror("tmpalloc2");
-//fprintf(stderr, "tmpalloc: tmppole %p tmpleft %d size %d ", tmppole, tmpleft, size);
-	size = ROUNDUP(size);
-	if (tmpleft < size) {
-		if ((tmppole = malloc(MEMCHUNKSZ)) == NULL)
-			cerror("tmpalloc: out of memory");
-//fprintf(stderr, "allocating tmp\n");
-		tmpleft = MEMCHUNKSZ - ROUNDUP(sizeof(char *));
-		*(char **)tmppole = tmplink;
-		tmplink = tmppole;
-	}
-	rv = TMPOLE;
-//fprintf(stderr,"rv %p\n", rv);
-	tmpleft -= size;
-	tmpallocsize += size;
-	return rv;
-}
-
-#if 0
-/*
- * Print and pack strings on heap.
- */
-char *tmpsprintf(char *fmt, ...);
-char *
-tmpsprintf(char *fmt, ...)
-{
-	va_list ap;
-	int len;
-	char *tmp;
-
-	tmp = TMPOLE;
-	va_start(ap, fmt);
-	if ((len = vsnprintf(tmp, tmpleft, fmt, ap)) >= tmpleft) {
-		(void)tmpalloc(tmpleft); /* ugly */
-		tmp = TMPOLE;
-		if ((len = vsnprintf(tmp, tmpleft, fmt, ap)) >= tmpleft)
-			cerror("bad tmpsprintf len");
-	}
-	va_end(ap);
-	tmpleft += len;
-	return tmp;
-}
-#endif
-
-/*
- * Print and pack vararg string on heap.
- */
-char *tmpvsprintf(char *fmt, va_list ap);
-char *
-tmpvsprintf(char *fmt, va_list ap)
-{
-	int len;
-	char *tmp;
-
-	if (tmpleft == 0)
-		(void)tmpalloc(1); /* XXX ugly */
-	tmp = TMPOLE;
-	if ((len = vsnprintf(tmp, tmpleft, fmt, ap)) >= tmpleft) {
-		(void)tmpalloc(tmpleft+1); /* ugly */
-		tmp = TMPOLE;
-		if ((len = vsnprintf(tmp, tmpleft, fmt, ap)) >= tmpleft)
-			cerror("bad tmpsprintf len");
-	}
-	tmpleft -= len+1;
-	return tmp;
 }
 
 /*
@@ -630,27 +524,115 @@ tmpstrdup(char *str)
 	return memcpy(tmpalloc(len), str, len);
 }
 
+/*
+ * Allocation routines for temporary memory.
+ */
+#if 0
+#define	ALLDEBUG(x)	printf x
+#else
+#define	ALLDEBUG(x)
+#endif
+
+#define	NELEM	((MEMCHUNKSZ-ROUNDUP(sizeof(struct xalloc *)))/ALIGNMENT)
+#define	ELEMSZ	(ALIGNMENT)
+#define	MAXSZ	(NELEM*ELEMSZ)
+struct xalloc {
+	struct xalloc *next;
+	union {
+		struct balloc b; /* for initial alignment */
+		char elm[MAXSZ];
+	} u;
+} *tapole, *tmpole;
+int uselem = NELEM; /* next unused element */
+
+void *
+tmpalloc(int size)
+{
+	struct xalloc *xp;
+	void *rv;
+	size_t nelem;
+
+	nelem = ROUNDUP(size)/ELEMSZ;
+	ALLDEBUG(("tmpalloc(%ld,%ld) %d (%zd) ", ELEMSZ, NELEM, size, nelem));
+	if (nelem > NELEM/2) {
+		xp = malloc(size + ROUNDUP(sizeof(struct xalloc *)));
+		if (xp == NULL)
+			cerror("out of memory");
+		ALLDEBUG(("XMEM! (%ld,%p) ",
+		    size + ROUNDUP(sizeof(struct xalloc *)), xp));
+		xp->next = tmpole;
+		tmpole = xp;
+		ALLDEBUG(("rv %p\n", &xp->u.elm[0]));
+		return &xp->u.elm[0];
+	}
+	if (nelem + uselem >= NELEM) {
+		ALLDEBUG(("MOREMEM! "));
+		/* alloc more */
+		if ((xp = malloc(sizeof(struct xalloc))) == NULL)
+			cerror("out of memory");
+		xp->next = tapole;
+		tapole = xp;
+		uselem = 0;
+	} else
+		xp = tapole;
+	rv = &xp->u.elm[uselem * ELEMSZ];
+	ALLDEBUG(("elemno %d ", uselem));
+	uselem += nelem;
+	ALLDEBUG(("new %d rv %p\n", uselem, rv));
+	return rv;
+}
+
 void
 tmpfree()
 {
-	char *f, *of;
+	struct xalloc *x1;
 
-	f = tmplink;
-	if (f == NULL)
-		return;
-	if (*(char **)f == NULL) {
-		tmpleft = MEMCHUNKSZ - ROUNDUP(sizeof(char *));
-		return;
+	while (tmpole) {
+		x1 = tmpole;
+		tmpole = tmpole->next;
+		ALLDEBUG(("XMEM! free %p\n", x1));
+		free(x1);
 	}
-	while (f != NULL) {
-		of = f;
-		f = *(char **)f;
-		free(of);
+	while (tapole && tapole->next) {
+		x1 = tapole;
+		tapole = tapole->next;
+		ALLDEBUG(("MOREMEM! free %p\n", x1));
+		free(x1);
 	}
-	tmplink = tmppole = NULL;
-	tmpleft = 0;
-//fprintf(stderr, "freeing tmp\n");
-	/* XXX - nothing right now */
+	if (tapole)
+		uselem = 0;
+}
+
+/*
+ * Set a mark for later removal from the temp heap.
+ */
+void
+markset(struct mark *m)
+{
+	m->tmsav = tmpole;
+	m->tasav = tapole;
+	m->elem = uselem;
+}
+
+/*
+ * Remove everything on tmp heap from a mark.
+ */
+void
+markfree(struct mark *m)
+{
+	struct xalloc *x1;
+
+	while (tmpole != m->tmsav) {
+		x1 = tmpole;
+		tmpole = tmpole->next;
+		free(x1);
+	}
+	while (tapole != m->tasav) {
+		x1 = tapole;
+		tapole = tapole->next;
+		free(x1);
+	}
+	uselem = m->elem;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $Id: ssp.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*      $Id: ssp.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -24,12 +24,19 @@
 #elif defined(__PCC__)
 #define __constructor _Pragma("init")
 #define __destructor _Pragma("fini")
+#elif defined(__GNUC__)
+#define __constructor __attribute__((constructor))
+#define __destructor __attribute__((destructor))
 #else
-#define __constructor __attribute ((constructor))
-#define __destructor __attribute ((destructor))
+#define __constructor
+#define __destructor
 #endif
 
+#ifdef os_win32
+#define __progname "ERROR"
+#else
 extern char *__progname;
+#endif
 
 int __stack_chk_guard;
 
@@ -57,8 +64,8 @@ __ssp_init(void)
 void
 __stack_chk_fail(void)
 {
-	const char msg[] = ": stack smashing attack detected\n";
+	static const char msg[] = ": stack smashing attack detected\n";
 	write(2, __progname, strlen(__progname));
-	write(2, msg, sizeof(msg));
+	write(2, msg, sizeof(msg) - 1);
 	abort();
 }

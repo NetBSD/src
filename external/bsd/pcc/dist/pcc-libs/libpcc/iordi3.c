@@ -1,5 +1,5 @@
-/*	$Id: iordi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
-/*	$NetBSD: iordi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: iordi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	$NetBSD: iordi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,7 @@
  * Return a | b, in quad.
  */
 quad_t
-__iordi3(a, b)
-	quad_t a, b;
+__iordi3(quad_t a, quad_t b)
 {
 	union uu aa, bb;
 

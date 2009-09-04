@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2008/08/24 05:32:55 gmcgarry Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -69,8 +69,8 @@ prologue(struct interpass_prolog *ipp)
 #endif
 
 	/* non-optimized code, jump to epilogue for code generation */
-	ftlab1 = getlab();
-	ftlab2 = getlab();
+	ftlab1 = getlab2();
+	ftlab2 = getlab2();
 	printf("	jmp.w " LABFMT "\n", ftlab1);
 	deflab(ftlab2);
 }
@@ -185,7 +185,7 @@ static void
 twollcomp(NODE *p)
 {
 	int o = p->n_op;
-	int s = getlab();
+	int s = getlab2();
 	int e = p->n_label;
 	int cb1, cb2;
 
@@ -305,7 +305,7 @@ canaddr(NODE *p)
 	int o = p->n_op;
 
 	if (o==NAME || o==REG || o==ICON || o==OREG ||
-	    (o==UMUL && shumul(p->n_left) == SRDIR))
+	    (o==UMUL && shumul(p->n_left, SOREG) == SRDIR))
 		return(1);
 	return(0);
 }
@@ -326,7 +326,7 @@ flshape(NODE *p)
 
 	if (o == OREG || o == REG || o == NAME)
 		return SRDIR; /* Direct match */
-	if (o == UMUL && shumul(p->n_left))
+	if (o == UMUL && shumul(p->n_left, SOREG))
 		return SROREG; /* Convert into oreg */
 	return SRREG; /* put it into a register */
 }

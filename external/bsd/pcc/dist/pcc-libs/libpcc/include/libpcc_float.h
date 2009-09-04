@@ -1,5 +1,5 @@
-#ifndef _FLOAT_H_
-#define _FLOAT_H_
+#ifndef _LIBPCC_FLOAT_H_
+#define _LIBPCC_FLOAT_H_
 
 #define FLT_RADIX 2
 

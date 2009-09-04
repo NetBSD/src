@@ -1,5 +1,5 @@
 %{
-/*	$Id: scanner.l,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $   */
+/*	$Id: scanner.l,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -376,11 +376,12 @@ inch(void)
 
 again:	switch (c = inpch()) {
 	case '\\': /* continued lines */
-		if ((c = inpch()) == '\n') {
+msdos:		if ((c = inpch()) == '\n') {
 			ifiles->lineno++;
 			putch('\n');
 			goto again;
-		}
+		} else if (c == '\r')
+			goto msdos;
 		unch(c);
 		return '\\';
 	case '?': /* trigraphs */

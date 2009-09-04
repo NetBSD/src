@@ -1,4 +1,4 @@
-/*	$Id: pass2.h,v 1.1.1.1 2008/08/24 05:33:09 gmcgarry Exp $	*/
+/*	$Id: pass2.h,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -34,13 +34,14 @@
  */
 #include <sys/types.h>
 
-#include "manifest.h"
-#include "protos.h"
 #ifndef MKEXT
 #include "external.h"
 #else
-typedef int bittype; /* XXX - for basicblock */
+typedef unsigned int bittype; /* XXX - for basicblock */
+#define	BIT2BYTE(a)	(((a) + 31) / 32)
 #endif
+#include "manifest.h"
+#include "protos.h"
 
 /* cookies, used as arguments to codgen */
 #define FOREFF	01		/* compute for effects only */
@@ -50,8 +51,12 @@ typedef int bittype; /* XXX - for basicblock */
 #define INDREG	020		/* compute into a register */
 #define	INREGS	(INAREG|INBREG|INCREG|INDREG)
 #define FORCC	040		/* compute for condition codes only */
+#define QUIET	0100		/* tell geninsn() to not complain if fail */
 #define INTEMP	010000		/* compute into a temporary location */
 #define FORREW	040000		/* search the table for a rewrite rule */
+#define INEREG	0x10000		/* compute into a register, > 16 bits */
+#define INFREG	0x20000		/* compute into a register, > 16 bits */
+#define INGREG	0x40000		/* compute into a register, > 16 bits */
 
 /*
  * OP descriptors,
@@ -91,10 +96,13 @@ typedef int bittype; /* XXX - for basicblock */
 #define SSCON	(SPECIAL|4)	/* -32768 <= constant < 32768 */
 #define SSOREG	(SPECIAL|5)	/* non-indexed OREG */
 #define	MAXSPECIAL	(SPECIAL|5)
+#define SEREG	0x10000		/* same as INEREG */
+#define SFREG	0x20000		/* same as INFREG */
+#define SGREG	0x40000		/* same as INGREG */
 
 /* These are used in rstatus[] in conjunction with SxREG */
-#define	TEMPREG	0100
-#define	PERMREG	0200
+#define	TEMPREG	01000
+#define	PERMREG	02000
 
 /* tshape() return values */
 #define	SRNOPE	0		/* Cannot match any shape */
@@ -140,28 +148,38 @@ typedef int bittype; /* XXX - for basicblock */
 #define RNOP		010000	/* DANGER: can cause loops.. */
 
 /* needs */
-#define NAREG		0000001
-#define NACOUNT		0000003
-#define NAMASK		0000017
-#define NASL		0000004	/* may share left register */
-#define NASR		0000010	/* may share right register */
-#define NBREG		0000020
-#define NBCOUNT		0000060
-#define NBMASK		0000360
-#define NBSL		0000100
-#define NBSR		0000200
-#define NTEMP		0000400
-#define NTMASK		0001400
-#define NSPECIAL	0040000	/* need special register treatment */
-#define REWRITE		0100000
-#define	NCSL		0x10000	/* Above 16 bit */
-#define	NCSR		0x20000	/* Above 16 bit */
-#define	NCREG		0x40000	/* Above 16 bit */
-#define	NCCOUNT		0xc0000
-#define	NDSL		0x100000	/* Above 16 bit */
-#define	NDSR		0x200000	/* Above 16 bit */
-#define	NDREG		0x400000	/* Above 16 bit */
-#define	NDCOUNT		0xc00000
+#define NASL		0x0001	/* may share left register */
+#define NASR		0x0002	/* may share right register */
+#define NAREG		0x0004
+#define NACOUNT		0x000c
+#define NBSL		0x0010
+#define NBSR		0x0020
+#define NBREG		0x0040
+#define NBCOUNT		0x00c0
+#define	NCSL		0x0100
+#define	NCSR		0x0200
+#define	NCREG		0x0400
+#define	NCCOUNT		0x0c00
+#define NTEMP		0x1000
+#define NTMASK		0x3000
+#define NSPECIAL	0x4000	/* need special register treatment */
+#define REWRITE		0x8000
+#define	NDSL		0x00010000	/* Above 16 bit */
+#define	NDSR		0x00020000	/* Above 16 bit */
+#define	NDREG		0x00040000	/* Above 16 bit */
+#define	NDCOUNT		0x000c0000
+#define	NESL		0x00100000	/* Above 16 bit */
+#define	NESR		0x00200000	/* Above 16 bit */
+#define	NEREG		0x00400000	/* Above 16 bit */
+#define	NECOUNT		0x00c00000
+#define	NFSL		0x01000000	/* Above 16 bit */
+#define	NFSR		0x02000000	/* Above 16 bit */
+#define	NFREG		0x04000000	/* Above 16 bit */
+#define	NFCOUNT		0x0c000000
+#define	NGSL		0x10000000	/* Above 16 bit */
+#define	NGSR		0x20000000	/* Above 16 bit */
+#define	NGREG		0x40000000	/* Above 16 bit */
+#define	NGCOUNT		0xc0000000
 
 /* special treatment */
 #define	NLEFT		(0001)	/* left leg register (moveadd) */
@@ -177,14 +195,6 @@ typedef int bittype; /* XXX - for basicblock */
 #define NOPREF		020000	/* no preference for register assignment */
 
 #define	isreg(p)	(p->n_op == REG || p->n_op == TEMP)
-
-#define TBUSY		01000
-
-#define SETSTO(x,y)	(stotree = (x), stocook = (y))
-extern	int stocook;
-
-extern	NODE *stotree;
-extern	int callflag;
 
 extern	int fregs;
 
@@ -215,8 +225,8 @@ struct rspecial {
 #endif
 };
 
+struct p2env;
 extern	NODE resc[];
-
 extern	int p2autooff, p2maxautooff;
 
 extern	NODE
@@ -244,7 +254,7 @@ int geninsn(NODE *, int cookie);
 void adrput(FILE *, NODE *);
 void comperr(char *str, ...);
 void genregs(NODE *p);
-void ngenregs(struct interpass *);
+void ngenregs(struct p2env *);
 NODE *store(NODE *);
 struct interpass *ipnode(NODE *);
 void deflab(int);
@@ -258,6 +268,10 @@ int finduni(NODE *p, int);
 int findumul(NODE *p, int);
 int findleaf(NODE *p, int);
 int relops(NODE *p);
+#ifdef FINDMOPS
+int findmops(NODE *p, int);
+int treecmp(NODE *p1, NODE *p2);
+#endif
 void offstar(NODE *p, int shape);
 int gclass(TWORD);
 void lastcall(NODE *);
@@ -273,7 +287,10 @@ int freetemp(int k);
 int rewfld(NODE *p);
 void canon(NODE *);
 void mycanon(NODE *);
-void oreg2(NODE *p);
+void oreg2(NODE *p, void *);
+int shumul(NODE *p, int);
+NODE *deluseless(NODE *p);
+int getlab2(void);
 
 void conput(FILE *, NODE *);
 
@@ -290,6 +307,8 @@ extern int regK[];
 #define	CLASSC	3
 #define	CLASSD	4
 #define	CLASSE	5
+#define	CLASSF	6
+#define	CLASSG	7
 
 /* used when parsing xasm codes */
 #define	XASMVAL(x)	((x) & 0377)	/* get val from codeword */
@@ -311,6 +330,7 @@ extern	int lineno;
 extern	int fldshf, fldsz;
 extern	int lflag, x2debug, udebug, e2debug, odebug;
 extern	int rdebug, t2debug, s2debug, b2debug, c2debug;
+extern	int g2debug;
 extern	int kflag;
 #ifdef FORT
 extern	int Oflag;
@@ -324,12 +344,51 @@ extern	int Oflag;
 #define PUTCHAR(x) putchar(x)
 #endif
 
+extern	int dope[];	/* a vector containing operator information */
+extern	char *opst[];	/* a vector containing names for ops */
+
+#ifdef PCC_DEBUG
+
+static inline int
+optype(int o)
+{
+	if (o >= MAXOP+1)
+		cerror("optype");
+	return (dope[o]&TYFLG);
+}
+
+static inline int
+asgop(int o)
+{
+	if (o >= MAXOP+1)
+		cerror("asgop");
+	return (dope[o]&ASGFLG);
+}
+
+static inline int
+logop(int o)
+{
+	if (o >= MAXOP+1)
+		cerror("logop");
+	return (dope[o]&LOGFLG);
+}
+
+static inline int
+callop(int o)
+{
+	if (o >= MAXOP+1)
+		cerror("callop");
+	return (dope[o]&CALLFLG);
+}
+
+#else
+
 #define optype(o)	(dope[o]&TYFLG)
 #define asgop(o)	(dope[o]&ASGFLG) 
 #define logop(o)	(dope[o]&LOGFLG)
 #define callop(o)	(dope[o]&CALLFLG)
-extern	int dope[];	/* a vector containing operator information */
-extern	char *opst[];	/* a vector containing names for ops */
+
+#endif
 
 	/* macros for doing double indexing */
 #define R2PACK(x,y,z)	(0200*((x)+1)+y+040000*z)
@@ -340,24 +399,17 @@ extern	char *opst[];	/* a vector containing names for ops */
 
 /*
  * Layout of findops() return value:
- *      bit 0-1 where to store left node.
- *      bit 2-3 where to store right node.
- *      bit 4   set if right leg should be evaluated first
- *      bit 5-  table index
+ *      bit 0 whether left shall go into a register.
+ *      bit 1 whether right shall go into a register.
+ *      bit 2 entry is only used for side effects.
+ *      bit 3 if condition codes are used.
  *
- * LOREG means: walk down left node, after code emission call canon() to
- *  convert the tree to an OREG.
+ * These values should be synced with FOREFF/FORCC.
  */
 #define LREG		001
-#define LOREG		002
-#define LTEMP		003
-#define	LDIR		003
-#define LMASK		003
-#define RREG		004
-#define ROREG		010
-#define RTEMP		014
-#define	RDIR		014
-#define RMASK		014
+#define RREG		002
+#define	RVEFF		004
+#define	RVCC		010
 #define DORIGHT		020
 #define	SCLASS(v,x)	((v) |= ((x) << 5))
 #define	TCLASS(x)	(((x) >> 5) & 7)
@@ -374,8 +426,18 @@ extern	char *opst[];	/* a vector containing names for ops */
 #define	PERMTYPE(a)	(INT)
 #endif
 
+/* Flags for the dataflow code */
+/* do the live/dead analysis */
+#define DO_LIVEDEAD  0x01
+/* compute avail expressions */
+#define DO_AVAILEXPR 0x02
+/* Do an update on the live/dead. One variable only */
+#define DO_UPDATELD  0x04
+/* Do an update on available expressions, one variable has changed */
+#define DO_UPDATEEX  0x08
+
 void emit(struct interpass *);
-void optimize(struct interpass *);
+void optimize(struct p2env *);
 
 struct basicblock {
 	DLIST_ENTRY(basicblock) bbelem;
@@ -393,6 +455,11 @@ struct basicblock {
 	bittype *dfchildren;
 	bittype *Aorig;
 	bittype *Aphi;
+	SLIST_HEAD(, phiinfo) phi;
+
+	bittype *vin, *vout, *vgen, *vkill ;
+	bittype *exin, *exout ;
+
 	struct interpass *first; /* first element of basic block */
 	struct interpass *last;  /* last element of basic block */
 };
@@ -410,6 +477,7 @@ struct bblockinfo {
 
 struct varinfo {
 	struct pvarinfo **arr;
+	SLIST_HEAD(, varstack) *stack;
 	int size;
 	int low;
 };
@@ -417,13 +485,43 @@ struct varinfo {
 struct pvarinfo {
 	struct pvarinfo *next;
 	struct basicblock *bb;
-	NODE *top, *n;
+	TWORD n_type;
 };
+
+struct varstack {
+	SLIST_ENTRY(varstack) varstackelem;
+	int tmpregno;
+};
+
 
 struct cfgnode {
 	SLIST_ENTRY(cfgnode) cfgelem;
 	struct basicblock *bblock;
 };
+
+struct phiinfo {
+	SLIST_ENTRY(phiinfo) phielem;
+	int tmpregno;
+	int newtmpregno;
+	TWORD n_type;
+	int size;
+	int *intmpregno;
+};
+
+/*
+ * Description of the pass2 environment.
+ * There will be only one of these structs.  It is used to keep
+ * all state descriptions during the compilation of a function
+ * in one place.
+ */
+struct p2env {
+	struct interpass ipole;			/* all statements */
+	struct interpass_prolog *ipp, *epp;	/* quick references */
+	struct basicblock bblocks;
+	int nbblocks;
+};
+
+extern struct p2env p2env;
 
 /*
  * C compiler second pass extra defines.

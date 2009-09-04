@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2008/08/24 05:32:59 gmcgarry Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2009/09/04 00:27:32 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -26,13 +26,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
-
-#include "pass1.h" // for exname()
+#include "pass1.h"	/* for cftnsp */
 #include "pass2.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if defined(MACHOABI)
+#define EXPREFIX	"_"
+#else
+#define EXPREFIX	""
+#endif
 
 #define LOWREG		0
 #define HIREG		1
@@ -107,7 +111,7 @@ prologue(struct interpass_prolog *ipp)
 			ipp->ipp_name,
 			ipp->ipp_vis,
 			ipp->ipp_type,
-			ipp->ipp_regs,
+			ipp->ipp_regs[0],
 			ipp->ipp_autos,
 			ipp->ip_tmpnum,
 			ipp->ip_lblnum);
@@ -118,17 +122,17 @@ prologue(struct interpass_prolog *ipp)
 	addto = p2framesize;
 
 	if (p2calls != 0 || kflag) {
-		// get return address (not required for leaf function)
+		/* get return address (not required for leaf function) */
 		printf("\tmflr %s\n", rnames[R0]);
 		printf("\tstw %s,8(%s)\n", rnames[R0], rnames[R1]);
 	}
-	// save registers R30 and R31
+	/* save registers R30 and R31 */
 	printf("\tstmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
 #ifdef FPREG
 	printf("\tmr %s,%s\n", rnames[FPREG], rnames[R1]);
 #endif
-	// create the new stack frame
-	if (addto > 65535) {
+	/* create the new stack frame */
+	if (addto > 32767) {
 		printf("\tlis %s,%d\n", rnames[R0], (-addto) >> 16);
 		printf("\tori %s,%s,%d\n", rnames[R0],
 		    rnames[R0], (-addto) & 0xffff);
@@ -143,8 +147,8 @@ prologue(struct interpass_prolog *ipp)
 		printf("\tbl _GLOBAL_OFFSET_TABLE_@local-4\n");
 		printf("\tmflr %s\n", rnames[GOTREG]);
 #elif defined(MACHOABI)
-		printf("\tbcl 20,31,L%s$pb\n", ipp->ipp_name);
-		printf("L%s$pb:\n", ipp->ipp_name);
+		printf("\tbcl 20,31,L%s$pb\n", ipp->ipp_name + 1);
+		printf("L%s$pb:\n", ipp->ipp_name + 1);
 		printf("\tmflr %s\n", rnames[GOTREG]);
 #endif
 	}
@@ -253,7 +257,7 @@ static void
 twollcomp(NODE *p)
 {
 	int o = p->n_op;
-	int s = getlab();
+	int s = getlab2();
 	int e = p->n_label;
 	int cb1, cb2;
 
@@ -375,13 +379,13 @@ stasg(NODE *p)
         }
 	if (kflag) {
 #if defined(ELFABI)
-	        printf("\tbl %s@got(30)\n", exname("memcpy"));
+	        printf("\tbl %s@got(30)\n", EXPREFIX "memcpy");
 #elif defined(MACHOABI)
-	        printf("\tbl L%s$stub\n", "memcpy");
-		addstub(&stublist, "memcpy");
+	        printf("\tbl L%s$stub\n", EXPREFIX "memcpy");
+		addstub(&stublist, EXPREFIX "memcpy");
 #endif
 	} else {
-	        printf("\tbl %s\n", exname("memcpy"));
+	        printf("\tbl %s\n", EXPREFIX "memcpy");
 	}
 }
 
@@ -469,15 +473,15 @@ fpemul(NODE *p)
 	} else if (p->n_op == SCONV && p->n_type == LONGLONG) {
 		if (l->n_type == FLOAT) ch = "fixsfdi";
 		else if (l->n_type == DOUBLE) ch = "fixdfdi";
-		else if (l->n_type == LDOUBLE) ch = "fixtfdi";
+		else if (l->n_type == LDOUBLE) ch = "fixdfdi";
 	} else if (p->n_op == SCONV && p->n_type == LONG) {
 		if (l->n_type == FLOAT) ch = "fixsfdi";
 		else if (l->n_type == DOUBLE) ch = "fixdfdi";
-		else if (l->n_type == LDOUBLE) ch = "fixtfdi";
+		else if (l->n_type == LDOUBLE) ch = "fixdfdi";
 	} else if (p->n_op == SCONV && p->n_type == ULONG) {
 		if (l->n_type == FLOAT) ch = "fixunssfdi";
 		else if (l->n_type == DOUBLE) ch = "fixunsdfdi";
-		else if (l->n_type == LDOUBLE) ch = "fixunstfdi";
+		else if (l->n_type == LDOUBLE) ch = "fixunsdfdi";
 	} else if (p->n_op == SCONV && p->n_type == INT) {
 		if (l->n_type == FLOAT) ch = "fixsfsi";
 		else if (l->n_type == DOUBLE) ch = "fixdfsi";
@@ -492,15 +496,15 @@ fpemul(NODE *p)
 
 	if (kflag) {
 #if defined(ELFABI)
-		printf("\tbl __%s@got(30)" COM "soft-float\n", exname(ch));
+		printf("\tbl __%s%s@got(30)" COM "soft-float\n", EXPREFIX, ch);
 #elif defined(MACHOABI)
 		char buf[32];
-		printf("\tbl L__%s$stub" COM "soft-float\n", ch);
-		snprintf(buf, 32, "__%s", ch);
+		printf("\tbl L__%s%s$stub" COM "soft-float\n", EXPREFIX, ch);
+		snprintf(buf, 32, "__%s%s", EXPREFIX, ch);
 		addstub(&stublist, buf);
 #endif
 	} else {
-		printf("\tbl __%s" COM "soft-float\n", exname(ch));
+		printf("\tbl __%s%s" COM "soft-float\n", EXPREFIX, ch);
 	}
 
 	if (p->n_op >= EQ && p->n_op <= GT)
@@ -557,15 +561,15 @@ emul(NODE *p)
 	else ch = 0, comperr("ZE");
 	if (kflag) {
 #if defined(ELFABI)
-		printf("\tbl __%s@got(30)" COM "emulated op\n", exname(ch));
+		printf("\tbl __%s%s@got(30)" COM "emulated op\n", EXPREFIX, ch);
 #elif defined(MACHOABI)
 		char buf[32];
-		printf("\tbl L__%s$stub" COM "emulated op\n", ch);
-		snprintf(buf, 32, "__%s", ch);
+		printf("\tbl L__%s%s$stub" COM "emulated op\n", EXPREFIX, ch);
+		snprintf(buf, 32, "__%s%s", EXPREFIX, ch);
 		addstub(&stublist, buf);
 #endif
 	} else {
-		printf("\tbl __%s" COM "emulated operation\n", exname(ch));
+		printf("\tbl __%s%s" COM "emulated operation\n", EXPREFIX, ch);
 	}
 }
 
@@ -609,13 +613,13 @@ ftou(NODE *p)
 {
 	static int lab = 0;
 	NODE *l = p->n_left;
-	int lab1 = getlab();
-	int lab2 = getlab();
+	int lab1 = getlab2();
+	int lab2 = getlab2();
 
 	printf(COM "start conversion of float/(l)double to unsigned\n");
 
 	if (lab == 0) {
-		lab = getlab();
+		lab = getlab2();
 		expand(p, 0, "\t.data\n");
 		printf(LABFMT ":\t.long 0x41e00000\n\t.long 0\n", lab);
 		expand(p, 0, "\t.text\n");
@@ -642,10 +646,10 @@ ftou(NODE *p)
 		expand(p, 0, "\taddis A1,");
 		printf("%s,ha16(", rnames[R31]);
 		printf(LABFMT, lab);
-		printf("-L%s$pb)\n", cftnsp->soname);
+		printf("-L%s$pb)\n", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
        		expand(p, 0, "\tlfd A2,lo16(");
 		printf(LABFMT, lab);
-		printf("-L%s$pb)", cftnsp->soname);
+		printf("-L%s$pb)\n", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 		expand(p, 0, "(A1)\n");
 	} else {
                	expand(p, 0, "\tlfd A2,");
@@ -667,12 +671,12 @@ ftou(NODE *p)
 	printf("%s,ha16(", rnames[R31]);
 	printf(LABFMT, lab);
 	if (kflag)
-		printf("-L%s$pb", cftnsp->soname);
+		printf("-L%s$pb", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 	printf(")\n");
        	expand(p, 0, "\tlfd A2,lo16(");
 	printf(LABFMT, lab);
 	if (kflag)
-		printf("-L%s$pb", cftnsp->soname);
+		printf("-L%s$pb", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 	expand(p, 0, ")(A1)\n");
 
 #endif
@@ -714,12 +718,12 @@ itof(NODE *p)
 	printf(COM "start conversion (u)int to float/(l)double\n");
 
 	if (labi == 0 && l->n_type == INT) {
-		labi = getlab();
+		labi = getlab2();
 		expand(p, 0, "\t.data\n");
 		printf(LABFMT ":\t.long 0x43300000\n\t.long 0x80000000\n", labi);
 		expand(p, 0, "\t.text\n");
 	} else if (labu == 0 && l->n_type == UNSIGNED) {
-		labu = getlab();
+		labu = getlab2();
 		expand(p, 0, "\t.data\n");
 		printf(LABFMT ":\t.long 0x43300000\n\t.long 0x00000000\n", labu);
 		expand(p, 0, "\t.text\n");
@@ -744,10 +748,10 @@ itof(NODE *p)
 		expand(p, 0, "\taddis A1,");
 		printf("%s,ha16(", rnames[R31]);
 		printf(LABFMT, lab);
-		printf("-L%s$pb)\n", cftnsp->soname);
+		printf("-L%s$pb)\n", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
        		expand(p, 0, "\tlfd A2,lo16(");
 		printf(LABFMT, lab);
-		printf("-L%s$pb)", cftnsp->soname);
+		printf("-L%s$pb)\n", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 		expand(p, 0, "(A1)\n");
 	} else {
                	expand(p, 0, "\tlfd A2,");
@@ -769,12 +773,12 @@ itof(NODE *p)
 	printf("%s,ha16(", rnames[R31]);
 	printf(LABFMT, lab);
 	if (kflag)
-		printf("-L%s$pb", cftnsp->soname);
+		printf("-L%s$pb", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 	printf(")\n");
        	expand(p, 0, "\tlfd A2,lo16(");
 	printf(LABFMT, lab);
 	if (kflag)
-		printf("-L%s$pb", cftnsp->soname);
+		printf("-L%s$pb", cftnsp->soname ? cftnsp->soname : exname(cftnsp->sname));
 	expand(p, 0, ")(A1)\n");
 
 #endif
@@ -856,7 +860,7 @@ canaddr(NODE *p)
 	int o = p->n_op;
 
 	if (o == NAME || o == REG || o == ICON || o == OREG ||
-	    (o == UMUL && shumul(p->n_left)))
+	    (o == UMUL && shumul(p->n_left, SOREG)))
 		return(1);
 	return 0;
 }
@@ -905,7 +909,7 @@ flshape(NODE *p)
 
 	if (o == OREG || o == REG || o == NAME)
 		return SRDIR; /* Direct match */
-	if (o == UMUL && shumul(p->n_left))
+	if (o == UMUL && shumul(p->n_left, SOREG))
 		return SROREG; /* Convert into oreg */
 	return SRREG; /* put it into a register */
 }
@@ -992,8 +996,6 @@ reg64name(int reg, int hi)
 {
 	int idx;
 	int off = 0;
-
-	assert(GCLASS(reg) == CLASSB);
 
 	idx = (reg > R14R15 ? (2*(reg - R14R15) + R14) : (reg - R3R4 + R3));
 
@@ -1165,7 +1167,7 @@ calc_args_size(NODE *p)
 
 
 static void
-fixcalls(NODE *p)
+fixcalls(NODE *p, void *arg)
 {
 	int n = 0;
 
@@ -1241,7 +1243,7 @@ myreader(struct interpass *ipole)
 	DLIST_FOREACH(ip, ipole, qelem) {
 		if (ip->type != IP_NODE)
 			continue;
-		walkf(ip->ip_node, fixcalls);
+		walkf(ip->ip_node, fixcalls, 0);
 		storefloat(ip, ip->ip_node);
 	}
 
@@ -1274,7 +1276,7 @@ myreader(struct interpass *ipole)
  * Remove some PCONVs after OREGs are created.
  */
 static void
-pconv2(NODE *p)
+pconv2(NODE *p, void *arg)
 {
 	NODE *q;
 
@@ -1299,7 +1301,7 @@ pconv2(NODE *p)
 void
 mycanon(NODE *p)
 {
-	walkf(p, pconv2);
+	walkf(p, pconv2, 0);
 }
 
 void

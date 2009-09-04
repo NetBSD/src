@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $
 #
 # top-level Makefile
 #
@@ -6,6 +6,7 @@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 libdir = @libdir@
+srcdir = @srcdir@
 
 TARGOS = @targos@
 TARGMACH = @targmach@
@@ -16,9 +17,10 @@ PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 CC = @CC@
 CFLAGS = @CFLAGS@
 
-MFLAGS += CC=$(CC) MACH=$(TARGMACH) PCCLIBDIR=$(PCCLIBDIR)
+MFLAGS += CC=$(CC) MACH=$(TARGMACH) PCCLIBDIR=$(PCCLIBDIR) VPATH=$(srcdir)/$(TARGOS) SRCDIR=$(srcdir)/$(TARGOS)/
 
 all clean install:
-	if test -d $(TARGOS) ; then cd $(TARGOS) && $(MAKE) $(MFLAGS) $@; fi
+	if test -e $(srcdir)/$(TARGOS)/Makefile ; then $(MAKE) -f $(srcdir)/$(TARGOS)/Makefile $(MFLAGS) $@ ; fi
 
 distclean: clean
+	/bin/rm -f Makefile

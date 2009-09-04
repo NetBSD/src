@@ -22,6 +22,7 @@ defloc(struct symtab *sp)
 	static char *loctbl[] = { "text", "data", "rodata" };
 	static int lastloc = -1;
 	TWORD t;
+	char *n;
 	int s;
 
 	t = sp->stype;
@@ -41,13 +42,14 @@ defloc(struct symtab *sp)
 	}
 	printf("\t.align %d\n", s);
 
+	n = sp->soname ? sp->soname : sp->sname;
 	if (sp->sclass == EXTDEF)
-		printf("\t.global %s\n", sp->soname);
+		printf("\t.global %s\n", n);
 	if (sp->slevel == 0) {
-		printf("\t.type %s,#object\n", sp->soname);
-		printf("\t.size %s," CONFMT "\n", sp->soname,
+		printf("\t.type %s,#object\n", n);
+		printf("\t.size %s," CONFMT "\n", n,
 			tsize(sp->stype, sp->sdf, sp->ssue) / SZCHAR);
-		printf("%s:\n", sp->soname);
+		printf("%s:\n", n);
 	} else
 		printf(LABFMT ":\n", sp->soffset);
 }
