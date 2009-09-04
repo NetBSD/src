@@ -1,5 +1,5 @@
-/*	$Id: fixunsdfdi.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
-/*	$NetBSD: fixunsdfdi.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: fixunsdfdi.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	$NetBSD: fixunsdfdi.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,8 +46,7 @@
  * of range becomes UQUAD_MAX.
  */
 u_quad_t
-__fixunsdfdi(x)
-	double x;
+__fixunsdfdi(double x)
 {
 	union uu t;
 	unsigned int tmp;

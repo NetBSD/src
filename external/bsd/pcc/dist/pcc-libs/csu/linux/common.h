@@ -1,4 +1,4 @@
-/* $Id: common.h,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $ */
+/* $Id: common.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $ */
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -19,14 +19,14 @@
 
 #define NULL (void *)0
 
-extern int main(int argc, char *argv[]);
+extern int main(int argc, char *argv[], char *envp[]);
 extern void exit(int);
 extern int atexit(void (*fcn)(void));
 
 #if PROFILE
 extern void monstartup(unsigned long, unsigned long);
-static void _mcleanup(void);
-extern void monitor(char *, char *, char *, int, int);
+extern void _mcleanup(void);
+extern unsigned char _etext, _eprol;
 #endif
 
 extern void _init(void);

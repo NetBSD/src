@@ -1,6 +1,6 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $
 #
-# Makefile.in for libpccsoftfloat.a
+# Makefile.in for libpcc.a
 #
 
 VPATH = @srcdir@
@@ -13,19 +13,20 @@ libdir = @libdir@
 
 CC = @CC@
 TARGMACH = @targmach@
+TARGOS = @targos@
 TARGET = @target@
 VERSION = @version@
 PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
 
-CPPFLAGS += @CPPFLAGS@ -I$(top_builddir) -I$(srcdir) -I$(srcdir)/arch/$(TARGMACH) @ENDIAN_FLAG@
+CPPFLAGS += @CPPFLAGS@ -I$(srcdir) @ENDIAN_FLAG@ -Dos_$(TARGOS)
 
 LIBS = @LIBS@
 AR = @AR@
 RANLIB = @RANLIB@
 INSTALL = @INSTALL@
 
-HEADERS +=	float.h stdarg.h stdbool.h stddef.h			\
+HEADERS +=	float.h stdarg.h stdbool.h stddef.h \
 		libpcc_float.h libpcc_stdarg.h libpcc_stdbool.h libpcc_stddef.h
 
 OBJS +=		cmpdi2.o divdi3.o fixdfdi.o fixsfdi.o fixunsdfdi.o \

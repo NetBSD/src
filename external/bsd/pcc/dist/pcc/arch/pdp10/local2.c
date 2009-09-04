@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2008/08/24 05:32:58 gmcgarry Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -62,13 +62,14 @@ prologue(struct interpass_prolog *ipp)
 	printf("	push %s,%s\n",rnames[STKREG], rnames[FPREG]);
 	printf("	move %s,%s\n", rnames[FPREG],rnames[STKREG]);
 
-	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+	for (i = ipp->ipp_regs[0], j = 0; i ; i >>= 1, j++) {
 		if (i & 1)
 			regoff[j] = addto++;
 	}
 	if (addto)
 		printf("	addi %s,0%o\n", rnames[STKREG], addto);
-	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+
+	for (i = ipp->ipp_regs[0], j = 0; i ; i >>= 1, j++) {
 		if (i & 1)
 			printf("	movem %s,%d(%s)\n",
 			    rnames[j], regoff[j], rnames[STKREG]);
@@ -82,7 +83,7 @@ eoftn(struct interpass_prolog *ipp)
 
 	if (ipp->ipp_ip.ip_lbl == 0)
 		return; /* no code needs to be generated */
-	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
+	for (i = ipp->ipp_regs[0], j = 0; i ; i >>= 1, j++) {
 		if (i & 1)
 			printf("	move %s,%d(%s)\n",
 			    rnames[j], regoff[j], rnames[STKREG]);
@@ -98,13 +99,13 @@ prologue(int regs, int autos)
 {
 	int i, addto;
 
-	offlab = getlab();
+	offlab = getlab2();
 	if (regs < 0 || autos < 0) {
 		/*
 		 * non-optimized code, jump to epilogue for code generation.
 		 */
-		ftlab1 = getlab();
-		ftlab2 = getlab();
+		ftlab1 = getlab2();
+		ftlab2 = getlab2();
 		printf("	jrst L%d\n", ftlab1);
 		printf("L%d:\n", ftlab2);
 	} else {
@@ -332,7 +333,7 @@ twollcomp(NODE *p)
 	/* Special strategy for equal/not equal */
 	if (o == EQ || o == NE) {
 		if (o == EQ)
-			m = getlab();
+			m = getlab2();
 		printf("	came ");
 		upput(getlr(p, 'L'), SZLONG);
 		putchar(',');
@@ -375,7 +376,7 @@ twollcomp(NODE *p)
 	adrput(stdout, getlr(p, 'R'));
 	if (iscon)
 		putchar(']');
-	printf("\n	jrst L%d\n", m = getlab());
+	printf("\n	jrst L%d\n", m = getlab2());
 
 	/* Test lowword. Only works with pdp10 format for longlongs */
 	printf("	cam%c%c ", o == GT || o == GE ? 'l' : 'g',
@@ -858,7 +859,7 @@ shtemp(NODE *p)
 }
 
 int
-shumul(NODE *p)
+shumul(NODE *p, int order)
 {
 	register int o;
 
@@ -914,7 +915,7 @@ shumul(NODE *p)
 		return( 0);
 	}
 #endif
-	return( 0 );
+	return( SRNOPE );
 }
 
 void
@@ -1091,7 +1092,7 @@ cbgen(int o,int lab)
  * Do some local optimizations that must be done after optim is called.
  */
 static void
-optim2(NODE *p)
+optim2(NODE *p, void *arg)
 {
 	int op = p->n_op;
 	int m, ml;
@@ -1183,7 +1184,7 @@ myreader(struct interpass *ipole)
 	DLIST_FOREACH(ip, ipole, qelem) {
 		if (ip->type != IP_NODE)
 			continue;
-		walkf(ip->ip_node, optim2);
+		walkf(ip->ip_node, optim2, 0);
 	}
 
 	if (x2debug) {
@@ -1196,7 +1197,7 @@ myreader(struct interpass *ipole)
  * Remove some PCONVs after OREGs are created.
  */
 static void
-pconv2(NODE *p)
+pconv2(NODE *p, void *arg)
 {
 	NODE *q;
 
@@ -1221,7 +1222,7 @@ pconv2(NODE *p)
 void
 mycanon(NODE *p)
 {
-	walkf(p, pconv2);
+	walkf(p, pconv2, 0);
 }
 
 /*

@@ -1,5 +1,5 @@
-/*	$Id: notdi2.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
-/*	$NetBSD: notdi2.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: notdi2.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	$NetBSD: notdi2.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,8 +41,7 @@
  * than `not'.
  */
 quad_t
-__one_cmpldi2(a)
-	quad_t a;
+__one_cmpldi2(quad_t a)
 {
 	union uu aa;
 

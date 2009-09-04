@@ -1,4 +1,4 @@
-/*      $Id: local2.c,v 1.1.1.1 2008/08/24 05:32:53 gmcgarry Exp $    */
+/*      $Id: local2.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -169,7 +169,7 @@ prologue(struct interpass_prolog *ipp)
 			ipp->ipp_name,
 			ipp->ipp_vis,
 			ipp->ipp_type,
-			ipp->ipp_regs,
+			ipp->ipp_regs[0],
 			ipp->ipp_autos,
 			ipp->ip_tmpnum,
 			ipp->ip_lblnum);
@@ -324,7 +324,7 @@ static void
 twollcomp(NODE *p)
 {
 	int o = p->n_op;
-	int s = getlab();
+	int s = getlab2();
 	int e = p->n_label;
 	int cb1, cb2;
 
@@ -807,7 +807,7 @@ flshape(NODE *p)
 
 	if (o == OREG || o == REG || o == NAME)
 		return SRDIR; /* Direct match */
-	if (o == UMUL && shumul(p->n_left))
+	if (o == UMUL && shumul(p->n_left, SOREG))
 		return SROREG; /* Convert into oreg */
 	return SRREG; /* put it into a register */
 }
@@ -868,7 +868,7 @@ conput(FILE *fp, NODE *p)
 #endif
 #ifdef notdef	/* ICON cannot ever use sp here */
 		/* If it does, it's a giant bug */
-		if (p->n_sp == NULL || (p->n_sp->sclass == ILABEL ||
+		if (p->n_sp == NULL || (
 		   (p->n_sp->sclass == STATIC && p->n_sp->slevel > 0)))
 			s = p->n_name;
 		else
@@ -1063,7 +1063,7 @@ flshlab(void)
 }
 
 static void
-prtaddr(NODE *p)
+prtaddr(NODE *p, void *arg)
 {
 	NODE *l = p->n_left;
 	struct addrsymb *el;
@@ -1144,7 +1144,7 @@ myreader(struct interpass *ipole)
 		case IP_NODE:
 			lineno = ip->lineno;
 			ipbase = ip;
-			walkf(ip->ip_node, prtaddr);
+			walkf(ip->ip_node, prtaddr, 0);
 			break;
 		case IP_EPILOG:
 			ipbase = ip;
@@ -1163,7 +1163,7 @@ myreader(struct interpass *ipole)
  * Remove some PCONVs after OREGs are created.
  */
 static void
-pconv2(NODE *p)
+pconv2(NODE *p, void *arg)
 {
 	NODE *q;
 
@@ -1188,7 +1188,7 @@ pconv2(NODE *p)
 void
 mycanon(NODE *p)
 {
-	walkf(p, pconv2);
+	walkf(p, pconv2, 0);
 }
 
 void

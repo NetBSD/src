@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -41,11 +41,23 @@
 /* host-dependent */
 #define CRT0FILE LIBDIR "crt0.o"
 #define CRT0FILE_PROFILE LIBDIR "gcrt0.o"
+
+#if TARGOSVER == 1
+#define STARTFILES { LIBDIR "crtbegin.o", NULL }
+#define	ENDFILES { LIBDIR "crtend.o", NULL }
+#else
 #define STARTFILES { LIBDIR "crti.o", LIBDIR "crtbegin.o", NULL }
 #define	ENDFILES { LIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
+#endif
+
 /* shared libraries linker files */
+#if TARGOSVER == 1
+#define STARTFILES_S { LIBDIR "crtbeginS.o", NULL }
+#define	ENDFILES_S { LIBDIR "crtendS.o", NULL }
+#else
 #define STARTFILES_S { LIBDIR "crti.o", LIBDIR "crtbeginS.o", NULL }
 #define	ENDFILES_S { LIBDIR "crtendS.o", LIBDIR "crtn.o", NULL }
+#endif
 
 #ifdef LANG_F77
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
@@ -54,7 +66,9 @@
 /* host-independent */
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
 
-#if defined(mach_arm)
+#if defined(mach_amd64)
+#define CPPMDADD { "-D__x86_64__", NULL, }
+#elif defined(mach_arm)
 #define	CPPMDADD { "-D__arm__", NULL, }
 #elif defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }

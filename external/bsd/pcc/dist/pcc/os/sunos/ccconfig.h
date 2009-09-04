@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2008 Adam Hoka.
@@ -36,7 +36,7 @@
 #endif
 
 /* common cpp predefines */
-#define	CPPADD	{ "-Dunix", "-Dsun", "-D__SVR4", "-D__unix", "-D__sun", "-D__SunOS", "-D__ELF__", NULL, }
+#define	CPPADD	{ "-Dunix", "-Dsun", "-D__SVR4", "-D__unix", "-D__sun", "-D__SunOS", "-D__ELF__", NULL }
 
 /* TODO: _ _SunOS_5_6, _ _SunOS_5_7, _ _SunOS_5_8, _ _SunOS_5_9, _ _SunOS_5_10 */
 
@@ -48,6 +48,7 @@
 /* shared libraries linker files */
 #define STARTFILES_S { LIBDIR "crti.o", NULL }
 #define	ENDFILES_S { LIBDIR "crtn.o", NULL }
+#define LIBCLIBS { "-lc", "-lpcc", NULL }
 
 #ifdef LANG_F77
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };

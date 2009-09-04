@@ -1,4 +1,4 @@
-/*	$Id: init.c,v 1.1.1.1 2008/08/24 05:33:06 gmcgarry Exp $	*/
+/*	$Id: init.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -51,6 +51,7 @@ flag nowarnflag	= NO;
 flag ftn66flag	= NO;
 flag profileflag	= NO;
 flag optimflag	= NO;
+flag quietflag	= NO;
 flag shiftcase	= YES;
 flag undeftype	= NO;
 flag shortsubs	= YES;
@@ -139,6 +140,17 @@ int nextnames	= 0;
 struct literal litpool[MAXLITERALS];
 int nliterals;
 
+/*
+ * Return a number for internal labels.
+ */
+int getlab(void);
+
+int crslab = 10;
+int
+getlab(void)
+{
+	return crslab++;
+}
 
 
 void

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1.1.1 2008/08/24 05:33:02 gmcgarry Exp $	*/
+/*	$Id: main.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -43,21 +43,48 @@ int lflag, odebug, rdebug, s2debug, udebug, x2debug;
 #if !defined(MULTIPASS) || defined(PASST)
 int iTflag, oTflag;
 #endif
-int xdebug, sdebug, gflag, c2debug, pdebug;
+int xdebug, sdebug, gflag, c2debug, pdebug, g2debug;
 int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
 	Wimplicit_function_declaration, Wpointer_sign, Wshadow,
-	Wsign_compare, Wunknown_pragmas, Wunreachable_code;
+	Wsign_compare, Wunknown_pragmas, Wunreachable_code,
+	Wtruncate;
 #ifdef CHAR_UNSIGNED
 int funsigned_char = 1;
 #else
 int funsigned_char = 0;
 #endif
 int sspflag;
-int xssaflag, xtailcallflag, xtemps, xdeljumps;
+int xssaflag, xtailcallflag, xtemps, xdeljumps, xdce, xinline;
 
 int e2debug, t2debug, f2debug, b2debug;
 
+#ifdef __MSC__
 struct suedef btdims[32];
+#else
+struct suedef btdims[32] = {
+       [BOOL] = { .suesize = SZBOOL, .suealign = ALBOOL },
+       [CHAR] = { .suesize = SZCHAR, .suealign = ALCHAR },
+       [INT] = { .suesize = SZINT, .suealign = ALINT },
+       [FLOAT] = { .suesize = SZFLOAT, .suealign = ALFLOAT },
+       [DOUBLE] = { .suesize = SZDOUBLE, .suealign = ALDOUBLE },
+       [LDOUBLE] = { .suesize = SZLDOUBLE, .suealign = ALLDOUBLE },
+       [LONG] = { .suesize = SZLONG, .suealign = ALLONG },
+       [LONGLONG] = { .suesize = SZLONGLONG, .suealign = ALLONGLONG },
+       [SHORT] = { .suesize = SZSHORT, .suealign = ALSHORT },
+       [UCHAR] = { .suesize = SZCHAR, .suealign = ALCHAR },
+       [USHORT] = { .suesize = SZSHORT, .suealign = ALSHORT },
+       [UNSIGNED] = { .suesize = SZINT, .suealign = ALINT },
+       [ULONG] = { .suesize = SZLONG, .suealign = ALLONG },
+       [ULONGLONG] = { .suesize = SZLONGLONG, .suealign = ALLONGLONG },
+       [FCOMPLEX] = { .suesize = SZFLOAT * 2, .suealign = ALFLOAT },
+       [COMPLEX] = { .suesize = SZDOUBLE * 2, .suealign = ALDOUBLE },
+       [LCOMPLEX] = { .suesize = SZLDOUBLE * 2, .suealign = ALLDOUBLE },
+       [FIMAG] = { .suesize = SZFLOAT, .suealign = ALFLOAT },
+       [IMAG] = { .suesize = SZDOUBLE, .suealign = ALDOUBLE },
+       [LIMAG] = { .suesize = SZLDOUBLE, .suealign = ALLDOUBLE },
+};
+#endif
+
 char *prgname;
 
 static void prtstats(void);
@@ -65,6 +92,7 @@ static void prtstats(void);
 static struct {
 	char *n; int *f;
 } flagstr[] = {
+	{ "truncate", &Wtruncate, },
 	{ "strict-prototypes", &Wstrict_prototypes, },
 	{ "missing-prototypes", &Wmissing_prototypes, },
 	{ "implicit-int", &Wimplicit_int, },
@@ -89,10 +117,11 @@ static void
 segvcatch(int a)
 {
 	char buf[1024];
+	int dummy;
 
 	snprintf(buf, sizeof buf, "%sinternal compiler error: %s, line %d\n",
 	    nerrors ? "" : "major ", ftitle, lineno);
-	write(STDERR_FILENO, buf, strlen(buf));
+	dummy = write(STDERR_FILENO, buf, strlen(buf));
 	_exit(1);
 }
 
@@ -164,6 +193,12 @@ main(int argc, char *argv[])
 
 	int ch;
 
+#ifdef TIMING
+	struct timeval t1, t2;
+
+	(void)gettimeofday(&t1, NULL);
+#endif
+
 	prgname = argv[0];
 
 	while ((ch = getopt(argc, argv, "OT:VW:X:Z:f:gklm:psvwx:")) != -1)
@@ -174,13 +209,13 @@ main(int argc, char *argv[])
 				switch (*optarg++) {
 				case 'd': ++ddebug; break; /* declarations */
 				case 'i': ++idebug; break; /* initializations */
-				case 'b': ++bdebug; break;
-				case 't': ++tdebug; break;
+				case 'b': ++bdebug; break; /* buildtree */
+				case 't': ++tdebug; break; /* type match */
 				case 'e': ++edebug; break; /* pass1 exit */
 				case 'x': ++xdebug; break; /* MD code */
-				case 's': ++sdebug; break;
-				case 'n': ++nflag; break;
-				case 'o': ++oflag; break;
+				case 's': ++sdebug; break; /* inline */
+				case 'n': ++nflag; break;  /* node alloc */
+				case 'o': ++oflag; break;  /* optim */
 				case 'p': ++pdebug; break; /* prototype */
 				default:
 					fprintf(stderr, "unknown X flag '%c'\n",
@@ -231,6 +266,9 @@ main(int argc, char *argv[])
 					++udebug;
 					break;
 				case 'x': ++x2debug; break;
+				case 'g':  /* print flow graphs */
+					++g2debug;
+					break;
 				case 'n': ++nflag; break;
 				default:
 					fprintf(stderr, "unknown Z flag '%c'\n",
@@ -281,6 +319,10 @@ main(int argc, char *argv[])
 				xtemps++;
 			else if (strcmp(optarg, "deljumps") == 0)
 				xdeljumps++;
+			else if (strcmp(optarg, "dce") == 0)
+				xdce++;
+			else if (strcmp(optarg, "inline") == 0)
+				xinline++;
 			else
 				usage();
 			break;
@@ -314,36 +356,75 @@ main(int argc, char *argv[])
 
 	mkdope();
 	signal(SIGSEGV, segvcatch);
+#ifdef SIGBUS
+	signal(SIGBUS, segvcatch);
+#endif
 	fregs = FREGS;	/* number of free registers */
 	lineno = 1;
 #ifdef GCC_COMPAT
 	gcc_init();
 #endif
 
+#ifdef __MSC__
 	/* dimension table initialization */
-
 	btdims[VOID].suesize = 0;
+	btdims[VOID].suealign = 0;
 	btdims[BOOL].suesize = SZBOOL;
+	btdims[BOOL].suealign = ALBOOL;
 	btdims[CHAR].suesize = SZCHAR;
+	btdims[CHAR].suealign = ALCHAR;
 	btdims[INT].suesize = SZINT;
+	btdims[INT].suealign = ALINT;
 	btdims[FLOAT].suesize = SZFLOAT;
+	btdims[FLOAT].suealign = ALFLOAT;
 	btdims[DOUBLE].suesize = SZDOUBLE;
+	btdims[DOUBLE].suealign = ALDOUBLE;
 	btdims[LDOUBLE].suesize = SZLDOUBLE;
+	btdims[LDOUBLE].suealign = ALLDOUBLE;
 	btdims[LONG].suesize = SZLONG;
+	btdims[LONG].suealign = ALLONG;
 	btdims[LONGLONG].suesize = SZLONGLONG;
+	btdims[LONGLONG].suealign = ALLONGLONG;
 	btdims[SHORT].suesize = SZSHORT;
+	btdims[SHORT].suealign = ALSHORT;
 	btdims[UCHAR].suesize = SZCHAR;
+	btdims[UCHAR].suealign = ALCHAR;
 	btdims[USHORT].suesize = SZSHORT;
+	btdims[USHORT].suealign = ALSHORT;
 	btdims[UNSIGNED].suesize = SZINT;
+	btdims[UNSIGNED].suealign = ALINT;
 	btdims[ULONG].suesize = SZLONG;
+	btdims[ULONG].suealign = ALLONG;
 	btdims[ULONGLONG].suesize = SZLONGLONG;
+	btdims[ULONGLONG].suealign = ALLONGLONG;
 	btdims[FCOMPLEX].suesize = SZFLOAT * 2;
+	btdims[FCOMPLEX].suealign = ALFLOAT;
 	btdims[COMPLEX].suesize = SZDOUBLE * 2;
+	btdims[COMPLEX].suealign = ALDOUBLE;
 	btdims[LCOMPLEX].suesize = SZLDOUBLE * 2;
+	btdims[LCOMPLEX].suealign = ALLDOUBLE;
+	btdims[FIMAG].suesize = SZFLOAT;
+	btdims[FIMAG].suealign = ALFLOAT;
+	btdims[IMAG].suesize = SZDOUBLE;
+	btdims[IMAG].suealign = ALDOUBLE;
+	btdims[LIMAG].suesize = SZLDOUBLE;
+	btdims[LIMAG].suealign = ALLDOUBLE;
+#endif
+
 	/* starts past any of the above */
 	reached = 1;
 
 	bjobcode();
+#ifndef TARGET_VALIST
+	{
+		NODE *p = block(NAME, NIL, NIL, PTR|CHAR, NULL, MKSUE(CHAR));
+		struct symtab *sp = lookup(addname("__builtin_va_list"), 0);
+		p->n_sp = sp;
+		defid(p, TYPEDEF);
+		nfree(p);
+	}
+#endif
+	complinit();
 
 #ifdef STABS
 	if (gflag) {
@@ -361,7 +442,24 @@ main(int argc, char *argv[])
 	if (!nerrors)
 		lcommprint();
 
+#ifdef STABS
+	if (gflag)
+		stabs_efile(argc ? argv[0] : "");
+#endif
+
 	ejobcode( nerrors ? 1 : 0 );
+
+#ifdef TIMING
+	(void)gettimeofday(&t2, NULL);
+	t2.tv_sec -= t1.tv_sec;
+	t2.tv_usec -= t1.tv_usec;
+	if (t2.tv_usec < 0) {
+		t2.tv_usec += 1000000;
+		t2.tv_sec -= 1;
+	}
+	fprintf(stderr, "ccom total time: %ld s %ld us\n",
+	    t2.tv_sec, t2.tv_usec);
+#endif
 
 	if (sflag)
 		prtstats();

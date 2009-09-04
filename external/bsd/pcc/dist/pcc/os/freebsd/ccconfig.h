@@ -25,13 +25,22 @@
  * SUCH DAMAGE.
  */
 
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib/"
+#endif
+
 #define CPPADD { "-D__FreeBSD__", "-D__ELF__", "-D__unix__=1", "-D__unix=1", NULL, }
-#define DYNLINKER { "-dynamic-linker", "/libexec/ld-elf.so.1", "-lgcc_s", NULL }
-#define CRT0FILE "/usr/lib/crt1.o"
-#define CRT0FILE_PROFILE "/usr/lib/gcrt1.o"
-#define STARTFILES { "/usr/lib/crti.o", "/usr/lib/crtbegin.o", NULL }
-#define ENDFILES { "/usr/lib/crtend.o", "/usr/lib/crtn.o", NULL }
+
+/* host-dependent */
+#define CRT0FILE LIBDIR "crt1.o"
+#define CRT0FILE_PROFILE LIBDIR "gcrt1.o"
+#define STARTFILES { LIBDIR "crti.o", LIBDIR "crtbegin.o", NULL }
+#define ENDFILES { LIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
+#define LIBCLIBS { "-lc", "-lpcc", NULL }
 #define STARTLABEL "_start"
+
+/* host-independent */
+#define DYNLINKER { "-dynamic-linker", "/libexec/ld-elf.so.1", NULL }
 
 #if defined(mach_i386)
 #define CPPMDADD { "-D__i386__", "-D__i386", NULL, }
@@ -44,4 +53,3 @@
 #endif
 
 #define STABS
-

@@ -1,4 +1,4 @@
-/*	$Id: flocal.c,v 1.1.1.1 2008/08/24 05:32:54 gmcgarry Exp $	*/
+/*	$Id: flocal.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -34,7 +34,6 @@
  */
 #include <stdio.h>
 
-#include "ftypes.h"
 #include "defines.h"
 #include "defs.h"
 
@@ -204,7 +203,7 @@ prdbginfo()
 }
 
 static void
-fcheck(NODE *p)
+fcheck(NODE *p, void *arg)
 {
 	NODE *r, *l;
 
@@ -230,6 +229,6 @@ void p2tree(NODE *p);
 void
 p2tree(NODE *p)
 {
-	walkf(p, fcheck);
+	walkf(p, fcheck, 0);
 }
 #endif /* FCOM */

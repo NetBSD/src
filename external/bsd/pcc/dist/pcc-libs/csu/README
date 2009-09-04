@@ -1,4 +1,4 @@
-$Id: README,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $
+$Id: README,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $
 
 OS-dependent and target-dependent:
 
@@ -8,7 +8,7 @@ gcrt1.o		profiling startup code for programs (maybe compiled -dynamic)
 crti.o		beginning of _init() and _fini() functions (inside .init section)
 crtn.o		end of _init() and _fini() functions (inside .fini section)
 
-OS-dependent dependent, but target-independent:
+OS-dependent, but target-independent:
 
 crtbegin.o	support for calling global ctors/dtors
 crtend.o	end of the ctor/dtor lists

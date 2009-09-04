@@ -1,4 +1,4 @@
-/*	$Id: _alloca.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: _alloca.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 /*
  * This explanation of _alloca() comes from Chris Giese, posted to
  * alt.os.dev:
@@ -14,7 +14,9 @@
  * an exception.  Stack-probing code prevents this.
  */
 
-__asm(	"	.text\n"
+#ifndef __MSC__
+
+asm(	"	.text\n"
 	"	.globl __alloca\n"
 	"__alloca:\n"
 #ifdef __i386__
@@ -37,3 +39,4 @@ __asm(	"	.text\n"
 #endif
 );
 
+#endif

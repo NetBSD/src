@@ -1,4 +1,4 @@
-/*	$Id: local.c,v 1.1.1.1 2008/08/24 05:32:58 gmcgarry Exp $	*/
+/*	$Id: local.c,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -784,28 +784,6 @@ instring(struct symtab *sp)
 	fwrite(str, 1, s - str, stdout);
 	printf("\\0\"\n");
 }
-
-/*		
- * Print out a wide string by calling ninval().
- */
-void
-inwstring(struct symtab *sp)
-{
-	char *s = sp->sname;
-	NODE *p;
-
-	defloc(sp);
-	p = bcon(0);
-	do {
-		if (*s++ == '\\')
-			p->n_lval = esccon(&s);
-		else
-			p->n_lval = (unsigned char)s[-1];
-		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
-	} while (s[-1] != 0);
-	nfree(p);
-}
-
 
 /* curid is a variable which is defined but
  * is not initialized (and not a function );

@@ -1,4 +1,4 @@
-/*	$Id: node.h,v 1.1.1.1 2008/08/24 05:33:09 gmcgarry Exp $	*/
+/*	$Id: node.h,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -81,7 +81,18 @@ typedef struct node {
 				struct symtab *_sp;
 			} n_r;
 		} n_u;
+#ifdef SOFTFLOAT
+#ifdef FDFLOAT
+		/* To store F- or D-floats */
+		struct softfloat {
+			unsigned short fd1, fd2, fd3, fd4;
+		} _dcon;
+#else
+#error missing softfloat structure definition
+#endif
+#else
 		long double	_dcon;
+#endif
 	} n_f;
 } NODE;
 

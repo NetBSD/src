@@ -1,4 +1,4 @@
-/*	$Id: code.c,v 1.1.1.1 2008/08/24 05:32:59 gmcgarry Exp $	*/
+/*	$Id: code.c,v 1.1.1.2 2009/09/04 00:27:32 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -55,6 +55,7 @@ defloc(struct symtab *sp)
 	static char *loctbl[] = { "text", "data", "const_data" };
 #endif
 	TWORD t;
+	char *name;
 	int s, n;
 
 	if (sp == NULL) {
@@ -73,10 +74,11 @@ defloc(struct symtab *sp)
 		cerror("defalign: n != 2^i");
 	printf("	.p2align %d\n", n);
 
+	name = sp->soname ? sp->soname : exname(sp->sname);
 	if (sp->sclass == EXTDEF)
-		printf("	.globl %s\n", exname(sp->soname));
+		printf("	.globl %s\n", name);
 	if (sp->slevel == 0)
-		printf("%s:\n", exname(sp->soname));
+		printf("%s:\n", name);
 	else
 		printf(LABFMT ":\n", sp->soffset);
 }
@@ -520,8 +522,7 @@ ejobcode(int flag )
 			if (strcmp(p->name, "mcount") == 0)
 				printf("\t.indirect_symbol %s\n", p->name);
 			else
-				printf("\t.indirect_symbol %s\n",
-				    exname(p->name));
+				printf("\t.indirect_symbol %s\n", p->name);
 			printf("\tmflr r0\n");
 			printf("\tbcl 20,31,L%s$spb\n", p->name);
 			printf("L%s$spb:\n", p->name);
@@ -538,8 +539,7 @@ ejobcode(int flag )
 			if (strcmp(p->name, "mcount") == 0)
 				printf("\t.indirect_symbol %s\n", p->name);
 			else
-				printf("\t.indirect_symbol %s\n",
-				    exname(p->name));
+				printf("\t.indirect_symbol %s\n", p->name);
 			printf("\t.long	dyld_stub_binding_helper\n");
 			printf("\t.subsections_via_symbols\n");
 		}
@@ -550,8 +550,7 @@ ejobcode(int flag )
 			if (strcmp(p->name, "mcount") == 0)
 				printf("\t.indirect_symbol %s\n", p->name);
 			else
-				printf("\t.indirect_symbol %s\n",
-				    exname(p->name));
+				printf("\t.indirect_symbol %s\n", p->name);
 			printf("\t.long 0\n");
 	        }
 
@@ -870,9 +869,12 @@ mrst_rec(int num, struct swents **p, int n, int *state, int lab)
 
 	int tbllabel = getlab();
 	struct symtab *strtbl = lookup("__switch_table", SLBLNAME|STEMP);
+	strtbl->sclass = STATIC;
+	strtbl->ssue = MKSUE(UCHAR);
+	strtbl->slevel = 1;
 	strtbl->soffset = tbllabel;
-	strtbl->sclass = ILABEL;
 	strtbl->stype = INCREF(UCHAR);
+	strtbl->squal = (CON >> TSHIFT);
 
 	t = block(NAME, NIL, NIL, UNSIGNED, 0, MKSUE(UNSIGNED));
 	t->n_sp = strtbl;

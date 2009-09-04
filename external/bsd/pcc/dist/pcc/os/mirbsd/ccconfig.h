@@ -1,4 +1,4 @@
-/* $Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $ */
+/* $Id: ccconfig.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $ */
 /*-
  * Copyright (c) 2007, 2008
  *	Thorsten Glaser <tg@mirbsd.de>
@@ -23,12 +23,6 @@
  * Configuration for pcc on a MirOS BSD (i386 or sparc) target
  */
 
-/* notes */
-
-/**
- * On MirBSD, wchar_t is a 16-bit unsigned short UCS-2 value.
- */
-
 /* === mi part === */
 
 #ifndef LIBDIR
@@ -40,8 +34,6 @@
 	"-D__MirBSD__",				\
 	"-D__OpenBSD__",			\
 	"-D__unix__",				\
-	"-D__STDC_ISO_10646__=200009L",		\
-	"-D__WCHAR_MAX__=65535U",		\
 	"-D__ELF__",				\
 	NULL					\
 }

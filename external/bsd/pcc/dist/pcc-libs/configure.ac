@@ -10,36 +10,11 @@ AC_CANONICAL_TARGET
 version=$PACKAGE_VERSION
 
 case "$target_os" in
-    netbsd*)
-	targos=netbsd
-	case "$target_cpu" in
-	    armeb) targmach=arm endian=big ;;
-	    arm*) targmach=arm ;;
-	    i?86) targmach=i386 ;;
-	    m68k*) targmach=m68k endian=big ;;
-	    mipseb) targmach=mips endian=big ;;
-	    mips*) targmach=mips ;;
-	    powerpc) targmach=powerpc endian=big ;;
-	    sparc64) targmach=sparc64 endian=big ;;
-	    vax) targmach=vax ;;
-	    pdp10) targmach=pdp10 ;;
-	esac
-	;;
 
-    openbsd*)
-	targos=openbsd
+    apple)
+	targos=apple
 	case "$target_cpu" in
-	    i?86) targmach=i386 ;;
-	    vax) targmach=vax ;;
-	    powerpc) targmach=powerpc endian=big ;;
-	    sparc64) targmach=sparc64 endian=big ;;
-	esac
-	;;
-
-    dragonfly*)
-	targos=dragonfly
-	case "$target_cpu" in
-	    i?86) targmach=i386 ;;
+	    m68k) targmach=m68k endian=big ;;
 	esac
 	;;
 
@@ -50,6 +25,13 @@ case "$target_os" in
 	    powerpc) targmach=powerpc endian=big ;;
 	esac
         ;;
+
+    dragonfly*)
+	targos=dragonfly
+	case "$target_cpu" in
+	    i?86) targmach=i386 ;;
+	esac
+	;;
 
     freebsd*)
 	targos=freebsd
@@ -63,6 +45,7 @@ case "$target_os" in
 	case "$target_cpu" in
 	    i?86) targmach=i386 ;;
 	    powerpc*) targmach=powerpc endian=big ;;
+	    x86_64) targmach=amd64 ;;
 	esac
 	;;
 
@@ -74,6 +57,13 @@ case "$target_os" in
 	esac
 	;;
 
+    minix)
+	targos=minix
+	case "$target_cpu" in
+	    m68k) targmach=m68k endian=big ;;
+	esac
+	;;
+
     mirbsd*)
 	targos=mirbsd
 	case "$target_cpu" in
@@ -81,24 +71,44 @@ case "$target_os" in
 	esac
 	;;
 
+    netbsd*)
+	targos=netbsd
+	case "$target_cpu" in
+	    armeb) targmach=arm endian=big ;;
+	    arm*) targmach=arm ;;
+	    i?86) targmach=i386 ;;
+	    m68k*) targmach=m68k endian=big ;;
+	    mipseb) targmach=mips endian=big ;;
+	    mips*) targmach=mips ;;
+	    pdp10) targmach=pdp10 ;;
+	    powerpc) targmach=powerpc endian=big ;;
+	    sparc64) targmach=sparc64 endian=big ;;
+	    vax) targmach=vax ;;
+	esac
+	;;
+
+    openbsd*)
+	targos=openbsd
+	case "$target_cpu" in
+	    i?86) targmach=i386 ;;
+	    vax) targmach=vax ;;
+	    powerpc) targmach=powerpc endian=big ;;
+	    sparc64) targmach=sparc64 endian=big ;;
+	esac
+	;;
+
+    sunos*|solaris*)
+	targos=sunos
+	case "$target_cpu" in
+	    i?86) targmach=i386 ;;
+	    sparc*) targmach=sparc64 endian=big ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
 	targmach=i386
-	;;
-
-    apple)
-	targos=apple
-	case "$target_cpu" in
-	    m68k) targmach=m68k endian=big ;;
-	esac
-	;;
-
-    minix)
-	targos=minix
-	case "$target_cpu" in
-	    m68k) targmach=m68k endian=big ;;
-	esac
 	;;
 
     *)
@@ -117,7 +127,7 @@ fi
 if test "X$endian" = "Xbig"; then
 	AC_SUBST([ENDIAN_FLAG],[-D__BIG_ENDIAN__=1])
 else
-	AC_SUBST([ENDIAN_FLAG],[-D__LITTLE_ENDIAN=1])
+	AC_SUBST([ENDIAN_FLAG],[-D__LITTLE_ENDIAN__=1])
 fi
 
 AC_CHECK_TOOLS([CC], [pcc gcc cc])

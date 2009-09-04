@@ -1,4 +1,4 @@
-/*	$Id: cpy.y,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $	*/
+/*	$Id: cpy.y,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -83,11 +83,11 @@ int setd(int l, int r);
 
 %term stop
 %term EQ NE LE GE LS RS
-%term ANDAND OROR IDENT NUMBER UNUMBER
+%term ANDAND OROR IDENT NUMBER UNUMBER DEFINED
 /*
  * The following terminals are not used in the yacc code.
  */
-%term STRING FPOINT WSPACE VA_ARGS CONCAT MKSTR ELLIPS CMNT
+%term STRING WSPACE CMNT
 
 %left ','
 %right '?' ':'
@@ -191,6 +191,10 @@ term:
 	| '~' term
 		{ EVALUNARY(~, $$, $2); }
 	| '(' e ')'
+		{$$ = $2;}
+	| DEFINED '(' NUMBER ')'
+		{$$= $3;}
+	| DEFINED NUMBER
 		{$$ = $2;}
 	| NUMBER
 		{$$ = $1;}

@@ -1,5 +1,5 @@
-/*	$Id: moddi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
-/*	$NetBSD: moddi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: moddi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	$NetBSD: moddi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
 quad_t
-__moddi3(a, b)
-	quad_t a, b;
+__moddi3(quad_t a, quad_t b)
 {
 	u_quad_t ua, ub, ur;
 	int neg = 0;

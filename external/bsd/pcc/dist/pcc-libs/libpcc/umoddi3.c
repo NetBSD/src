@@ -1,5 +1,5 @@
-/*	$Id: umoddi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
-/*	$NetBSD: umoddi3.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$Id: umoddi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	$NetBSD: umoddi3.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,7 @@
  * Return remainder after dividing two unsigned quads.
  */
 u_quad_t
-__umoddi3(a, b)
-	u_quad_t a, b;
+__umoddi3(u_quad_t a, u_quad_t b)
 {
 	u_quad_t r;
 

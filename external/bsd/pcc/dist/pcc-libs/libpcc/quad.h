@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	$NetBSD: quad.h,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,7 +51,10 @@
  * with 48-bit ints.
  */
 
+#ifndef __SunOS
 #include <sys/types.h>
+#endif
+
 #include <limits.h>
 
 #ifndef QUAD_MIN
@@ -69,6 +72,10 @@ typedef long long		quad_t;
 typedef unsigned long long 	u_quad_t;
 #endif
 
+#ifdef __SunOS
+typedef long long 		quad_t;
+typedef unsigned long long 	u_quad_t;
+#endif
 
 /*
  * Depending on the desired operation, we view a `long long' (aka quad_t) in
@@ -84,12 +91,12 @@ union uu {
 /*
  * Define high and low parts of a quad_t.
  */
-#ifdef __BIGENDIAN__
+#ifdef __BIG_ENDIAN__
 #define	H		0
 #define	L		1
 #else
-#define	H		0
-#define	L		1
+#define	H		1
+#define	L		0
 #endif
 
 /*

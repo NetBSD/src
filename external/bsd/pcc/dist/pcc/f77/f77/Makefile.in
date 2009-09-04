@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $
 #
 # Makefile.in for the f77 frontend of pcc.
 #
@@ -14,13 +14,15 @@ strip = @strip@
 CC = @CC@
 TARGOS = @targos@
 TARGMACH = @targmach@
+F77LIBDIR=-L${prefix}/lib
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@  -DLIBEXECDIR=\"${libexecdir}\" -DINCLUDEDIR=\"${includedir}\"
-CPPFLAGS = @CPPFLAGS@ -I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MDIR} -Dmach_${TARGMACH} -Dos_${TARGOS} -I${FCOMDIR} -DLANG_F77
+CPPFLAGS = @CPPFLAGS@ -I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MDIR} \
+	-Dmach_${TARGMACH} -Dos_${TARGOS} -I${FCOMDIR} -DLANG_F77 \
+	-DLIBDIR=\"${F77LIBDIR}\"
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
-
 OBJS=f77.o
 DEST=@BINPREFIX@f77
 

@@ -1,4 +1,4 @@
-/*	$Id: f77.c,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $	*/
+/*	$Id: f77.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "\n FORTRAN 77 DRIVER, VERSION 1.11,   28 JULY 1978\n";
+char xxxvers[] = "FORTRAN 77 DRIVER, VERSION 1.11,   28 JULY 1978\n";
 
 #include <sys/wait.h>
 
@@ -50,7 +50,6 @@ char xxxvers[] = "\n FORTRAN 77 DRIVER, VERSION 1.11,   28 JULY 1978\n";
 
 typedef FILE *FILEP;
 typedef int flag;
-typedef void *ptr;
 #define	YES 1
 #define NO 0
 
@@ -82,6 +81,7 @@ static char *crt0file = CRT0FILE;
 static char *macroname	= "m4";
 static char *shellname	= "/bin/sh";
 static char *aoutname	= "a.out" ;
+static char *libdir	= LIBDIR ;
 static char *liblist[] = F77LIBLIST;
 
 static char *infname;
@@ -109,25 +109,19 @@ static flag verbose	= NO;
 static flag fortonly	= NO;
 static flag macroflag	= NO;
 
-char *setdoto(char *), *lastchar(char *), *lastfield(char *);
-ptr ckalloc(int);
-void intrupt(int);
-void enbint(void (*k)(int));
-void crfnames(void);
+static char *setdoto(char *), *lastchar(char *), *lastfield(char *);
+static void intrupt(int);
+static void enbint(void (*)(int));
+static void crfnames(void);
 static void fatal1(char *, ...);
-void done(int), fatal(char *), texec(char *, char **), rmfiles(void);
-char *copys(char *), *copyn(int, char *);
-int dotchar(char *), unreadable(char *), sys(char *), dofort(char *);
-int nodup(char *), dopass2(void);
-int await(int);
-void rmf(char *), doload(char *[], char *[]), doasm(char *);
-void fname(char *, char *);
-void clf(FILEP *p);
-void badfile(char *s);
-void err(char *s);
-static int callsys(char f[], char *v[]);
-void errorx(char *fmt, ...);
-
+static void done(int), texec(char *, char **);
+static char *copyn(int, char *);
+static int dotchar(char *), unreadable(char *), sys(char *), dofort(char *);
+static int nodup(char *);
+static int await(int);
+static void rmf(char *), doload(char *[], char *[]), doasm(char *);
+static int callsys(char *, char **);
+static void errorx(char *, ...);
 
 static void
 addarg(char **ary, int *num, char *arg)
@@ -143,7 +137,7 @@ int
 main(int argc, char **argv)
 {
 	int i, c, status;
-	register char *s;
+	char *s;
 	char fortfile[20], *t;
 	char buff[100];
 
@@ -156,7 +150,9 @@ main(int argc, char **argv)
 	pid = getpid();
 	crfnames();
 
-	loadargs = (char **) ckalloc( (argc+20) * sizeof(*loadargs) );
+	loadargs = (char **)calloc(1, (argc + 20) * sizeof(*loadargs));
+	if (!loadargs)
+		fatal1("out of memory");
 	loadp = loadargs;
 
 	--argc;
@@ -181,6 +177,14 @@ main(int argc, char **argv)
 				break;
 
 			case 'w': /* F66 warn or no warn */
+				addarg(ffary, &ffmax, s-1);
+				break;
+
+			case 'q':
+				/*
+				 * Suppress printing of procedure names during
+				 * compilation.
+				 */
 				addarg(ffary, &ffmax, s-1);
 				break;
 
@@ -261,7 +265,7 @@ main(int argc, char **argv)
 				goto endfor;
 			default:
 				lflag[1] = *s;
-				*loadp++ = copys(lflag);
+				*loadp++ = copyn(strlen(lflag), lflag);
 				break;
 			}
 endfor:
@@ -371,19 +375,21 @@ endfor:
 	return 0;
 }
 
-int
+#define	ADD(x)	addarg(params, &nparms, (x))
+
+static int
 dofort(char *s)
 {
 	int nparms, i;
 	char *params[MAXARGS];
 
 	nparms = 0;
-	addarg(params, &nparms, FCOM);
+	ADD(FCOM);
 	for (i = 0; i < ffmax; i++)
-		addarg(params, &nparms, ffary[i]);
-	addarg(params, &nparms, s);
-	addarg(params, &nparms, asmfname);
-	addarg(params, &nparms, NULL);
+		ADD(ffary[i]);
+	ADD(s);
+	ADD(asmfname);
+	ADD(NULL);
 
 	infname = s;
 	if (callsys(fcom, params))
@@ -396,7 +402,7 @@ dofort(char *s)
 }
 
 
-void
+static void
 doasm(char *s)
 {
 	char *obj;
@@ -408,32 +414,27 @@ doasm(char *s)
 	else
 		obj = setdoto(s);
 
-	if(verbose)
-		fprintf(diagfile, "  ASM.");
-
 	nparms = 0;
-	addarg(params, &nparms, asmname);
-	addarg(params, &nparms, "-o");
-	addarg(params, &nparms, obj);
-	addarg(params, &nparms, asmfname);
-	addarg(params, &nparms, NULL);
+	ADD(asmname);
+	ADD("-o");
+	ADD(obj);
+	ADD(asmfname);
+	ADD(NULL);
 
 	if (callsys(asmname, params))
-		fatal("assembler error");
+		fatal1("assembler error");
 	if(verbose)
 		fprintf(diagfile, "\n");
 }
 
 
-
-void
+static void
 doload(char *v0[], char *v[])
 {
 	int nparms, i;
 	char *params[MAXARGS];
 	char **p;
 
-#define	ADD(x)	addarg(params, &nparms, x)
 	nparms = 0;
 	ADD(ldname);
 	ADD("-X");
@@ -448,14 +449,13 @@ doload(char *v0[], char *v[])
 	*v = NULL;
 	for(p = v0; *p ; p++)
 		ADD(*p);
+	if (libdir)
+		ADD(libdir);
 	for(p = liblist ; *p ; p++)
 		ADD(*p);
 	for (i = 0; endfiles[i]; i++)
 		ADD(endfiles[i]);
-	addarg(params, &nparms, NULL);
-
-	if(verbose)
-		fprintf(diagfile, "LOAD.");
+	ADD(NULL);
 
 	if (callsys(ldname, params))
 		fatal1("couldn't load %s", ldname);
@@ -470,14 +470,14 @@ doload(char *v0[], char *v[])
  * Execute f[] with parameter array v[].
  * Copied from cc.
  */
-int
+static int
 callsys(char f[], char *v[])
 {
 	int t, status = 0;
 	pid_t p;
 	char *s;
 
-	if (debugflag) {
+	if (debugflag || verbose) {
 		fprintf(stderr, "%s ", f);
 		for (t = 1; v[t]; t++)
 			fprintf(stderr, "%s ", v[t]);
@@ -522,14 +522,14 @@ callsys(char f[], char *v[])
 }
 
 
-int
+static int
 sys(char *str)
 {
-	register char *s, *t;
+	char *s, *t;
 	char *argv[100], path[100];
 	char *inname, *outname;
 	int append = 0;
-	int waitpid;
+	int wait_pid;
 	int argc;
 
 
@@ -575,7 +575,7 @@ sys(char *str)
 		*s++ = *t++;
 	for(t = argv[1] ; (*s++ = *t++) ; )
 		;
-	if((waitpid = fork()) == 0) {
+	if((wait_pid = fork()) == 0) {
 		if(inname)
 			freopen(inname, "r", stdin);
 		if(outname)
@@ -589,13 +589,11 @@ sys(char *str)
 		fatal1("Cannot load %s",path+9);
 	}
 
-	return( await(waitpid) );
+	return( await(wait_pid) );
 }
 
-#include <errno.h>
-
 /* modified version from the Shell */
-void
+static void
 texec(char *f, char **av)
 {
 
@@ -604,7 +602,7 @@ texec(char *f, char **av)
 	if (errno==ENOEXEC) {
 		av[1] = f;
 		execv(shellname, av);
-		fatal("No shell!");
+		fatal1("No shell!");
 	}
 	if (errno==ENOMEM)
 		fatal1("%s: too large", f);
@@ -613,23 +611,22 @@ texec(char *f, char **av)
 /*
  * Cleanup and exit with value k.
  */
-void
+static void
 done(int k)
 {
 	static int recurs	= NO;
 
 	if(recurs == NO) {
 		recurs = YES;
-		rmfiles();
+		if (saveasmflag == NO)
+			rmf(asmfname);
 	}
 	exit(k);
 }
 
 
-
-void
-enbint(k)
-void (*k)(int);
+static void
+enbint(void (*k)(int))
 {
 if(sigivalue == 0)
 	signal(SIGINT,k);
@@ -639,23 +636,22 @@ if(sigqvalue == 0)
 
 
 
-void
+static void
 intrupt(int a)
 {
 done(2);
 }
 
 
-int
-await(waitpid)
-int waitpid;
+static int
+await(int wait_pid)
 {
 int w, status;
 
 enbint(SIG_IGN);
-while ( (w = wait(&status)) != waitpid)
+while ( (w = wait(&status)) != wait_pid)
 	if(w == -1)
-		fatal("bad wait code");
+		fatal1("bad wait code");
 enbint(intrupt);
 if(status & 0377)
 	{
@@ -668,7 +664,7 @@ return(status>>8);
 
 /* File Name and File Manipulation Routines */
 
-int
+static int
 unreadable(char *s)
 {
 	FILE *fp;
@@ -684,62 +680,25 @@ unreadable(char *s)
 }
 
 
-
-void
-clf(p)
-FILEP *p;
+static void
+crfnames(void)
 {
-if(p!=NULL && *p!=NULL && *p!=stdout)
-	{
-	if(ferror(*p))
-		fatal("writing error");
-	fclose(*p);
-	}
-*p = NULL;
-}
-
-/*
- * Delete temporary files.
- */
-void
-rmfiles()
-{
-	if (saveasmflag == NO)
-		rmf(asmfname);
-}
-
-void
-crfnames()
-{
-	fname(asmfname, "s");
-	fname(prepfname, "p");
+	sprintf(asmfname,  "fort%d.%s", pid, "s");
+	sprintf(prepfname, "fort%d.%s", pid, "p");
 }
 
 
 
-void
-rmf(fn)
-register char *fn;
+static void
+rmf(char *fn)
 {
 if(!debugflag && fn!=NULL && *fn!='\0')
 	unlink(fn);
 }
 
 
-
-
-
-void fname(name, suff)
-char *name, *suff;
-{
-sprintf(name, "fort%d.%s", pid, suff);
-}
-
-
-
-int
-dotchar(s)
-register char *s;
+static int
+dotchar(char *s)
 {
 for( ; *s ; ++s)
 	if(s[0]=='.' && s[1]!='\0' && s[2]=='\0')
@@ -748,11 +707,10 @@ return(NO);
 }
 
 
-
-char *lastfield(s)
-register char *s;
+static char *
+lastfield(char *s)
 {
-register char *t;
+char *t;
 for(t = s; *s ; ++s)
 	if(*s == '/')
 		t = s+1;
@@ -760,77 +718,42 @@ return(t);
 }
 
 
-
-char *lastchar(s)
-register char *s;
+static char *
+lastchar(char *s)
 {
 while(*s)
 	++s;
 return(s-1);
 }
 
-char *setdoto(s)
-register char *s;
+
+static char *
+setdoto(char *s)
 {
 *lastchar(s) = 'o';
 return( lastfield(s) );
 }
 
 
-void
-badfile(s)
-char *s;
+static char *
+copyn(int n, char *s)
 {
-fatal1("cannot open intermediate file %s", s);
+	char *p, *q;
+
+	p = q = (char *)calloc(1, (unsigned) n + 1);
+	if (!p)
+		fatal1("out of memory");
+
+	while(n-- > 0)
+		*q++ = *s++;
+	return (p);
 }
 
 
-
-ptr ckalloc(n)
-int n;
+static int
+nodup(char *s)
 {
-ptr p;
-
-if( (p = calloc(1, (unsigned) n) ))
-	return(p);
-
-fatal("out of memory");
-/* NOTREACHED */
-return NULL;
-}
-
-
-
-
-char *
-copyn(n, s)
-register int n;
-register char *s;
-{
-register char *p, *q;
-
-p = q = (char *) ckalloc(n);
-while(n-- > 0)
-	*q++ = *s++;
-return(p);
-}
-
-
-char *
-copys(s)
-char *s;
-{
-return( copyn( strlen(s)+1 , s) );
-}
-
-
-
-
-int
-nodup(s)
-char *s;
-{
-register char **p;
+char **p;
 
 for(p = loadargs ; p < loadp ; ++p)
 	if( !strcmp(*p, s) )
@@ -840,14 +763,7 @@ return(YES);
 }
 
 
-
-void fatal(t)
-char *t;
-{
-	fatal1(t);
-}
-
-void
+static void
 errorx(char *fmt, ...)
 {
 	va_list ap;
@@ -860,7 +776,6 @@ errorx(char *fmt, ...)
 	if (debugflag)
 		abort();
 	done(1);
-	exit(1);
 }
 
 
@@ -878,14 +793,4 @@ fatal1(char *fmt, ...)
 	if (debugflag)
 		abort();
 	done(1);
-	exit(1);
-}
-
-
-
-void
-err(s)
-char *s;
-{
-fprintf(diagfile, "Error in file %s: %s\n", infname, s);
 }

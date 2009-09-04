@@ -1,16 +1,9 @@
 
-void cerror(char *s, ...);
-void werror(char *s, ...);
-void uerror(char *s, ...);
-void reclaim(NODE *p, int, int);
-void walkf(NODE *, void (*f)(NODE *));
-void tfree(NODE *);
 int tshape(NODE *, int);
 void tcheck(void);
 void mkdope(void);
 int shtemp(NODE *p);
 int flshape(NODE *p);
-int shumul(NODE *p);
 int ttype(TWORD t, int tword);
 void expand(NODE *, int, char *);
 void hopcode(int, int);
@@ -22,7 +15,6 @@ int andable(NODE *);
 int conval(NODE *, int, NODE *);
 int ispow2(CONSZ);
 void defid(NODE *q, int class);
-int getlab(void);
 void ftnend(void);
 void efcode(void);
 void dclargs(void);

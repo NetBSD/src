@@ -1,4 +1,4 @@
-/*	$Id: putscj.c,v 1.1.1.1 2008/08/24 05:33:08 gmcgarry Exp $	*/
+/*	$Id: putscj.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -96,6 +96,7 @@ puthead(char *s)
 {
 	struct interpass_prolog *ipp = ckalloc(sizeof(struct interpass_prolog));
 	int olbl, lbl1, lbl2;
+	unsigned int i;
 
 	if (s == NULL)
 		return;
@@ -106,7 +107,8 @@ puthead(char *s)
 	lbl1 = newlabel();
 	lbl2 = newlabel();
 
-	ipp->ipp_regs = 0;		/* no regs used yet */
+	for (i = 0; i < NIPPREGS; i++)
+		ipp->ipp_regs[i] = 0;	/* no regs used yet */
 	ipp->ipp_autos = 0;		/* no autos used yet */
 	ipp->ipp_name = copys(s);		/* function name */
 	ipp->ipp_type = INT;		/* type not known yet? */
@@ -134,10 +136,12 @@ void
 putbracket()
 {
 	struct interpass_prolog *ipp = ckalloc(sizeof(struct interpass_prolog));
+	unsigned int i;
 
 	if (inproc == 0)
 		fatal1("puteof outside procedure");
-	ipp->ipp_regs = 0;
+	for (i = 0; i < NIPPREGS; i++)
+		ipp->ipp_regs[i] = 0;
 	ipp->ipp_autos = autoleng;
 	ipp->ipp_name = copys(inproc);
 	ipp->ipp_type = INT; /* XXX should set the correct type */
@@ -265,7 +269,7 @@ putexpr(bigptr q)
 
 
 void
-putcmgo(bigptr x, int nlab, struct labelblock *labs[])
+putcmgo(bigptr x, int nlab, struct labelblock *labels[])
 {
 	bigptr y;
 	int i;
@@ -278,13 +282,13 @@ putcmgo(bigptr x, int nlab, struct labelblock *labs[])
 	y = fmktemp(x->vtype, NULL);
 	putexpr(mkexpr(OPASSIGN, cpexpr(y), x));
 #ifdef notyet /* target-specific computed goto */
-	vaxgoto(y, nlab, labs);
+	vaxgoto(y, nlab, labels);
 #else
 	/*
 	 * Primitive implementation, should use table here.
 	 */
 	for(i = 0 ; i < nlab ; ++i)
-		putif(mkexpr(OPNE, cpexpr(y), MKICON(i+1)), labs[i]->labelno);
+		putif(mkexpr(OPNE, cpexpr(y), MKICON(i+1)), labels[i]->labelno);
 	frexpr(y);
 #endif
 }

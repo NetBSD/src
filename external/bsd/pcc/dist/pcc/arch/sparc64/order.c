@@ -48,9 +48,11 @@ myormake(NODE *q)
 }
 
 int
-shumul(NODE *p)
+shumul(NODE *p, int shape)
 {
-	return SOREG;
+	if (shape & SOREG)
+		return SROREG;
+	return SRNOPE;
 }
 
 int

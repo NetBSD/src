@@ -87,7 +87,6 @@
 #define	MAX_ULONG	MAX_ULONGLONG
 
 #define BOOL_TYPE	INT
-#define WCHAR_TYPE	INT
 
 typedef	long long CONSZ;
 typedef	unsigned long long U_CONSZ;

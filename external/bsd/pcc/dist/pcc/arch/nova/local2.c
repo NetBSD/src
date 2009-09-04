@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2008/08/24 05:32:57 gmcgarry Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2009/09/04 00:27:31 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -54,9 +54,10 @@ prologue(struct interpass_prolog *ipp)
 {
 	int i, j;
 
-	for (i = ipp->ipp_regs, j = 0; i; i >>= 1)
-		if (i&1)
+	for (j = i = 0; i < MAXREGS; i++)
+		if (TESTBIT(ipp->ipp_regs, i))
 			j++;
+
 	printf(".LP%d:	.word 0%o\n", prolnum, j);
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", ipp->ipp_name);
@@ -76,8 +77,8 @@ eoftn(struct interpass_prolog *ipp)
 		return; /* no code needs to be generated */
 
 	/* return from function code */
-	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1)
-		if (i & 1)
+	for (j = i = 0; i < MAXREGS; i++)
+		if (TESTBIT(ipp->ipp_regs, i))
 			j++;
 	printf("	lda 2,.LP%d-.,1\n", prolnum);
 	printf("	jmp @46\n");
@@ -298,7 +299,7 @@ canaddr(NODE *p)
 	int o = p->n_op;
 
 	if (o==NAME || o==REG || o==ICON || o==OREG ||
-	    (o==UMUL && shumul(p->n_left)))
+	    (o==UMUL && shumul(p->n_left, SOREG)))
 		return(1);
 	return(0);
 }
@@ -314,7 +315,7 @@ flshape(NODE *p)
 cerror("flshape");
 	if (o == OREG || o == REG || o == NAME)
 		return SRDIR; /* Direct match */
-	if (o == UMUL && shumul(p->n_left))
+	if (o == UMUL && shumul(p->n_left, SOREG))
 		return SROREG; /* Convert into oreg */
 	return SRREG; /* put it into a register */
 }
