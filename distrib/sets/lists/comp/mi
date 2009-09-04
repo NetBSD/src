@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1299 2009/09/03 15:35:59 pooka Exp $
+#	$NetBSD: mi,v 1.1300 2009/09/04 17:21:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2533,6 +2533,9 @@
 ./usr/lib/librumpdev.a				comp-c-lib
 ./usr/lib/librumpdev_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_netsmb.a			comp-c-lib
+./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib
 ./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
@@ -2566,6 +2569,9 @@
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
 ./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_smbfs.a			comp-c-lib
+./usr/lib/librumpfs_smbfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib
 ./usr/lib/librumpfs_syspuffs_g.a		-unknown-		debuglib
 ./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
