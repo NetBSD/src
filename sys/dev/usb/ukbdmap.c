@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.22 2009/02/03 17:50:28 ghen Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.23 2009/09/04 16:52:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,13 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.22 2009/02/03 17:50:28 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.23 2009/09/04 16:52:24 dyoung Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <dev/usb/usb_port.h>
+#ifdef USB_DEBUG
+#define Static
+#else
+#define Static static
+#endif
 
 #define KC(n)		KS_KEYCODE(n)
 
