@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.2,v 1.26 2008/11/06 16:23:56 tsutsui Exp $
+.\"	$NetBSD: reboot.2,v 1.27 2009/09/04 23:29:02 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)reboot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 11, 2008
+.Dd September 4, 2009
 .Dt REBOOT 2
 .Os
 .Sh NAME
@@ -55,6 +55,11 @@ options, defined in the include file
 .Aq Pa sys/reboot.h ,
 to be passed
 to the new kernel or the new bootstrap and init programs.
+In addition to the options described below, other options
+described in
+.Xr boothowto 9
+may be set, but such options may be ignored by the system.
+.Pp
 Options can be combined together by OR'ing them, eg.
 .Dv RB_DUMP |
 .Dv RB_NOSYNC
@@ -166,7 +171,8 @@ The caller is not the super-user.
 .Xr halt 8 ,
 .Xr init 8 ,
 .Xr reboot 8 ,
-.Xr savecore 8
+.Xr savecore 8 ,
+.Xr boothowto 9
 .Sh HISTORY
 The
 .Fn reboot
