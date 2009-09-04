@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.5 2009/09/04 13:02:52 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.6 2009/09/04 14:23:24 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.5 2009/09/04 13:02:52 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.6 2009/09/04 14:23:24 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -463,7 +463,7 @@ extract_file(struct archive *a, struct archive_entry *e, const char *path)
 		error("open('%s')", path);
 
 	/* loop over file contents and write to disk */
-	info("x %s", path);
+	info(" extracting: %s", path);
 	text = a_opt;
 	warn = 0;
 	cr = 0;
@@ -762,7 +762,7 @@ list(struct archive *a, struct archive_entry *e)
 		    (uintmax_t)archive_entry_size(e),
 		    buf, archive_entry_pathname(e));
 	} else if (v_opt == 2) {
-		printf("%8ju  Stored  %7ju   0%%  %s %08x  %s\n",
+		printf("%8ju  Stored  %7ju   0%%  %s  %08x  %s\n",
 		    (uintmax_t)archive_entry_size(e),
 		    (uintmax_t)archive_entry_size(e),
 		    buf,
@@ -817,12 +817,13 @@ unzip(const char *fn)
 	ac(archive_read_support_format_zip(a));
 	ac(archive_read_open_fd(a, fd, 8192));
 
+	printf("Archive:  %s\n", fn);
 	if (v_opt == 1) {
-		printf("  Length     Date   Time   Name\n");
-		printf(" --------    ----   ----   ----\n");
+		printf("  Length     Date   Time    Name\n");
+		printf(" --------    ----   ----    ----\n");
 	} else if (v_opt == 2) {
-		printf(" Length   Method    Size  Ratio   Date   Time  CRC-32    Name\n");
-		printf("--------  ------  ------- -----   ----   ----  ------    ----\n");
+		printf(" Length   Method    Size  Ratio   Date   Time   CRC-32    Name\n");
+		printf("--------  ------  ------- -----   ----   ----   ------    ----\n");
 	}
 
 	total_size = 0;
@@ -850,8 +851,8 @@ unzip(const char *fn)
 		printf(" %8ju                   %ju file%s\n",
 		    total_size, file_count, file_count != 1 ? "s" : "");
 	} else if (v_opt == 2) {
-		printf("--------          ------- ---                            -------\n");
-		printf("%8ju          %7ju  0%%                            %ju file%s\n",
+		printf("--------          -------  ---                            -------\n");
+		printf("%8ju          %7ju   0%%                            %ju file%s\n",
 		    total_size, total_size, file_count,
 		    file_count != 1 ? "s" : "");
 	}
@@ -869,7 +870,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: unzip [-ajLlnoqtu] [-d dir] zipfile\n");
+	fprintf(stderr, "usage: unzip [-acfjLlnopqtuv] [-d dir] [-x pattern] zipfile\n");
 	exit(1);
 }
 
