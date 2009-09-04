@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.34 2009/09/04 16:16:52 pooka Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.35 2009/09/04 16:18:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.34 2009/09/04 16:16:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.35 2009/09/04 16:18:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,6 +684,10 @@ smb_iod_thread(void *arg)
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
 		SMBIODEBUG(("going to sleep\n"));
+		/*
+		 * technically wakeup every hz is unnecessary, but keep
+		 * this here until smb has been made mpsafe.
+		 */
 		tsleep(&iod->iod_flags, PSOCK, "smbidle", hz);
 	}
 	splx(s);
