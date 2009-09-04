@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.2 2009/09/02 16:55:07 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.3 2009/09/04 08:57:00 he Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.2 2009/09/02 16:55:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.3 2009/09/04 08:57:00 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
 #include <sys/kmem.h>
+#include <sys/lwp.h>
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
