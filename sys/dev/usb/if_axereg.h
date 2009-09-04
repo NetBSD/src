@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.6 2009/09/04 17:53:58 dyoung Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.7 2009/09/04 18:10:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -151,7 +151,7 @@ struct axe_cdata {
 #define AXE_INC(x, y)		(x) = (x + 1) % y
 
 struct axe_softc {
-        device_t axe_dev;
+	device_t axe_dev;
 	struct ethercom		axe_ec;
 	struct mii_data		axe_mii;
 #if NRND > 0
@@ -169,7 +169,7 @@ struct axe_softc {
 	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
 	int			axe_if_flags;
 	struct axe_cdata	axe_cdata;
-        struct callout axe_stat_ch;
+	struct callout axe_stat_ch;
 
 	int			axe_refcnt;
 	char			axe_dying;

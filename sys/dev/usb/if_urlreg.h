@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.4 2007/08/27 16:08:42 xtraeme Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.5 2009/09/04 18:10:08 dyoung Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -182,7 +182,7 @@ struct url_softc {
 
 	int                     sc_attached;
 	int			sc_dying;
-        int                     sc_refcnt;
+	int                     sc_refcnt;
 
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
