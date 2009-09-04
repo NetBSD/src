@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.17 2009/03/15 15:52:12 cegger Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.18 2009/09/04 18:29:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -151,7 +151,7 @@ struct esiop_softc {
 	u_int32_t sc_target_table_offset;/* pointer to target DSA table */
 	int sc_currdoneslot;		/* current done slot */
 	bus_dmamap_t sc_done_map;	/* dma map for done ring (shared) */
-	bus_addr_t sc_done_offset; 	/* offset of ring in sc_done_map */
+	bus_addr_t sc_done_offset;	/* offset of ring in sc_done_map */
 	u_int32_t *sc_done_slot;	/* The done ring itself */
 };
 

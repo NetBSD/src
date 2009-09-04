@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.92 2009/05/16 03:57:57 tsutsui Exp $	*/
+/*	$NetBSD: siop.c,v 1.93 2009/09/04 18:29:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.92 2009/05/16 03:57:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.93 2009/09/04 18:29:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	siop_handle_qtag_reject(struct siop_cmd *);
 void	siop_scsicmd_end(struct siop_cmd *);
 void	siop_unqueue(struct siop_softc *, int, int);
 static void	siop_start(struct siop_softc *, struct siop_cmd *);
-void 	siop_timeout(void *);
+void	siop_timeout(void *);
 int	siop_scsicmd(struct scsipi_xfer *);
 void	siop_scsipi_request(struct scsipi_channel *,
 			scsipi_adapter_req_t, void *);
@@ -219,7 +219,7 @@ siop_reset(struct siop_softc *sc)
 		}
 	} else {
 		for (j = 0; j < __arraycount(siop_script); j++) {
-			sc->sc_c.sc_script[j] = 
+			sc->sc_c.sc_script[j] =
 			    siop_htoc32(&sc->sc_c, siop_script[j]);
 		}
 		for (j = 0; j < __arraycount(E_abs_msgin_Used); j++) {
@@ -337,7 +337,7 @@ siop_intr(void *v)
 	dsa = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA);
 	TAILQ_FOREACH(cbdp, &sc->cmds, next) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
-	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
+		    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
 			siop_cmd = &cbdp->cmds[dsa / sizeof(struct siop_xfer)];
 			siop_table_sync(siop_cmd,
@@ -354,7 +354,7 @@ siop_intr(void *v)
 		siop_lun = siop_target->siop_lun[lun];
 #ifdef DIAGNOSTIC
 		if (siop_cmd->cmd_c.status != CMDST_ACTIVE) {
- 			printf("siop_cmd (lun %d) for DSA 0x%x "
+			printf("siop_cmd (lun %d) for DSA 0x%x "
 			    "not active (%d)\n", lun, (u_int)dsa,
 			    siop_cmd->cmd_c.status);
 			xs = NULL;
@@ -617,7 +617,7 @@ scintr:
 		 */
 		if ((irqcode & 0x80) == 0) {
 			if (siop_cmd == NULL) {
-				aprint_error_dev(sc->sc_c.sc_dev, 
+				aprint_error_dev(sc->sc_c.sc_dev,
 				    "script interrupt (0x%x) with "
 				    "invalid DSA !!!\n",
 				    irqcode);
@@ -962,7 +962,7 @@ scintr:
 			 * case, siop_cmd->saved_offset will have the proper
 			 * value if it got updated by the controller
 			 */
-			if (offset == 0 && 
+			if (offset == 0 &&
 			    siop_cmd->saved_offset != SIOP_NOOFFSET)
 				offset = siop_cmd->saved_offset;
 			siop_update_resid(&siop_cmd->cmd_c, offset);
@@ -1076,7 +1076,7 @@ siop_scsicmd_end(struct siop_cmd *siop_cmd)
 void
 siop_unqueue(struct siop_softc *sc, int target, int lun)
 {
- 	int slot, tag;
+	int slot, tag;
 	struct siop_cmd *siop_cmd;
 	struct siop_lun *siop_lun =
 	    ((struct siop_target *)sc->sc_c.targets[target])->siop_lun[lun];
@@ -1212,7 +1212,7 @@ siop_handle_reset(struct siop_softc *sc)
 				printf("command with tag id %d reset\n", tag);
 				siop_cmd->cmd_c.xs->error =
 				    (siop_cmd->cmd_c.flags & CMDFL_TIMEOUT) ?
-		    		    XS_TIMEOUT : XS_RESET;
+				    XS_TIMEOUT : XS_RESET;
 				siop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
 				siop_lun->siop_tag[tag].active = NULL;
 				siop_cmd->cmd_c.status = CMDST_DONE;
