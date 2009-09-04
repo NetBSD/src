@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.4 2009/08/23 15:50:35 wiz Exp $ */
+/* $NetBSD: unzip.c,v 1.5 2009/09/04 13:02:52 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.4 2009/08/23 15:50:35 wiz Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.5 2009/09/04 13:02:52 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -851,7 +851,7 @@ unzip(const char *fn)
 		    total_size, file_count, file_count != 1 ? "s" : "");
 	} else if (v_opt == 2) {
 		printf("--------          ------- ---                            -------\n");
-		printf("%8ju          %7ju   0%%                            %8ju file%s\n",
+		printf("%8ju          %7ju  0%%                            %ju file%s\n",
 		    total_size, total_size, file_count,
 		    file_count != 1 ? "s" : "");
 	}
