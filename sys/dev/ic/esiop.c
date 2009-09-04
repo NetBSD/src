@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.47 2009/05/16 03:57:57 tsutsui Exp $	*/
+/*	$NetBSD: esiop.c,v 1.48 2009/09/04 18:29:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.47 2009/05/16 03:57:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.48 2009/09/04 18:29:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ void	esiop_scsicmd_end(struct esiop_cmd *, int);
 void	esiop_unqueue(struct esiop_softc *, int, int);
 int	esiop_handle_qtag_reject(struct esiop_cmd *);
 static void	esiop_start(struct esiop_softc *, struct esiop_cmd *);
-void 	esiop_timeout(void *);
+void	esiop_timeout(void *);
 void	esiop_scsipi_request(struct scsipi_channel *,
 			scsipi_adapter_req_t, void *);
 void	esiop_dump_script(struct esiop_softc *);
@@ -482,7 +482,7 @@ again:
 		xs = esiop_cmd->cmd_c.xs;
 #ifdef DIAGNOSTIC
 		if (esiop_cmd->cmd_c.status != CMDST_ACTIVE) {
- 			printf("esiop_cmd (target %d lun %d) "
+			printf("esiop_cmd (target %d lun %d) "
 			    "not active (%d)\n", target, lun,
 			    esiop_cmd->cmd_c.status);
 			goto none;
@@ -1132,7 +1132,7 @@ end:
 	/*
 	 * if we got a disconnect between the last data phase
 	 * and the status phase, offset will be 0. In this
-	 * case, cmd_tables->saved_offset will have the proper value 
+	 * case, cmd_tables->saved_offset will have the proper value
 	 * if it got updated by the controller
 	 */
 	if (offset == 0 &&
@@ -1322,7 +1322,7 @@ next:
 void
 esiop_unqueue(struct esiop_softc *sc, int target, int lun)
 {
- 	int slot, tag;
+	int slot, tag;
 	uint32_t slotdsa;
 	struct esiop_cmd *esiop_cmd;
 	struct esiop_lun *esiop_lun =
@@ -1455,7 +1455,7 @@ esiop_handle_reset(struct esiop_softc *sc)
 				printf("command with tag id %d reset\n", tag);
 				esiop_cmd->cmd_c.xs->error =
 				    (esiop_cmd->cmd_c.flags & CMDFL_TIMEOUT) ?
-		    		    XS_TIMEOUT : XS_RESET;
+				    XS_TIMEOUT : XS_RESET;
 				esiop_cmd->cmd_c.xs->status = SCSI_SIOP_NOCHECK;
 				if (tag >= 0)
 					esiop_lun->tactive[tag] = NULL;
