@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.15 2009/09/04 13:58:57 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.16 2009/09/04 16:41:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.15 2009/09/04 13:58:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.16 2009/09/04 16:41:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,12 +58,12 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	struct ltsleeper lts;
 	int nlocks;
 
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
-
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
-	mutex_enter(&sleepermtx);
+	while (!mutex_tryenter(&sleepermtx))
+		continue;
+	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
 	if (slock)
 		simple_unlock(slock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
@@ -76,10 +76,11 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 
 	cv_destroy(&lts.cv);
 
+	KERNEL_LOCK(nlocks, curlwp);
+
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
 
-	KERNEL_LOCK(nlocks, curlwp);
 	return 0;
 }
 
@@ -90,12 +91,12 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	struct ltsleeper lts;
 	int nlocks;
 
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
-
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
-	mutex_enter(&sleepermtx);
+	while (!mutex_tryenter(&sleepermtx))
+		continue;
+	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
 	/* protected by sleepermtx */
@@ -107,10 +108,11 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 
 	cv_destroy(&lts.cv);
 
+	KERNEL_LOCK(nlocks, curlwp);
+
 	if ((prio & PNORELOCK) == 0)
 		mutex_enter(lock);
 
-	KERNEL_LOCK(nlocks, curlwp);
 	return 0;
 }
 
