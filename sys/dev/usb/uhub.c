@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.105 2009/09/03 20:54:03 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.106 2009/09/04 16:42:38 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.105 2009/09/03 20:54:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.106 2009/09/04 16:42:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,7 @@ uhub_detach(device_t self, int flags)
 	nports = hub->hubdesc.bNbrPorts;
 	for(port = 0; port < nports; port++) {
 		rup = &hub->ports[port];
-		if (rup->device)
+		if (rup->device != NULL)
 			usb_disconnect_port(rup, self);
 	}
 
