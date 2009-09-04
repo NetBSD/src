@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.51 2009/09/01 21:30:17 ahoka Exp $
+.\"	$NetBSD: boot.8,v 1.52 2009/09/04 23:29:03 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 1, 2009
+.Dd September 4, 2009
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -156,12 +156,8 @@ In the native
 boot protocol, options are passed from the boot loader
 to the kernel via flag bits in the
 .Va boothowto
-variable, which is interpreted by the kernel in much the same way
-as the
-.Va howto
-argument passed to the
-.Xr reboot 2
-system call.
+variable (see
+.Xr boothowto 9 ) .
 In the multiboot protocol, options are passed from the boot loader
 to the kernel as strings.
 .Ss Diagnostic Output
@@ -502,7 +498,8 @@ partition by
 .Xr pxeboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8 ,
-.Xr w95boot 8
+.Xr w95boot 8 ,
+.Xr boothowto 9
 .Sh BUGS
 The kernel file name must be specified before, not after, the boot options.
 Any
