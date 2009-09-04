@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.91 2009/07/20 17:12:43 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.92 2009/09/04 17:15:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.91 2009/07/20 17:12:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.92 2009/09/04 17:15:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -112,6 +112,10 @@ struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
 int max_devsw_convs = 0;
 int mem_no = 2;
+
+struct device *booted_device;
+struct device *booted_wedge;
+int booted_partition;
 
 kmutex_t tty_lock;
 
