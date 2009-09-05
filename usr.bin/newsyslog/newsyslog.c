@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.53.10.1 2009/02/24 02:47:30 snj Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.53.10.1.2.1 2009/09/05 12:58:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.53.10.1 2009/02/24 02:47:30 snj Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.53.10.1.2.1 2009/09/05 12:58:29 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -246,6 +246,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 
 	rv = -1;
 	line = NULL;
+	ziptype = 0;
 
 	/* Place the white-space separated fields into an array. */
 	do {
