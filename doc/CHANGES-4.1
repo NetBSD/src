@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.175 2009/09/05 13:46:18 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.176 2009/09/05 13:59:42 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3764,4 +3764,28 @@ sys/kern/kern_exec.c				1.149 via patch
 	Fix ktrace of data from iovec based system calls.
 	Fixes PR/41819
 	[dsl, ticket #1352]
+
+etc/ssh/ssh_known_hosts				1.5
+
+	add morden, mollari, pkgbuild and build
+	adjust function names' keys
+	add the proper names of hosts too in preparation of their
+	function moving
+	[spz, ticket #1355]
+
+usr.bin/netstat/netstat.1			1.52
+
+	Fix typo
+	[dholland, ticket #1356]
+
+usr.bin/chflags/chflags.1			1.18
+
+	Add some markup to improve clarity.
+	[dholland, ticket #1357]
+
+sys/netinet/tcp_usrreq.c			1.148 via patch
+
+	Make the sysctl routines take raise to splnet() before dealing with
+	any data structures.
+	[mlelstv, ticket #1358]
 
