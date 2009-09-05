@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.26 2009/07/16 20:14:17 jakllsch Exp $	 */
+/* $NetBSD: if_bce.c,v 1.27 2009/09/05 14:09:55 tsutsui Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.26 2009/07/16 20:14:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.27 2009/09/05 14:09:55 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -472,10 +472,10 @@ bce_attach(device_t parent, device_t self, void *aux)
 #endif
 	callout_init(&sc->bce_timeout, 0);
 
-	if (!pmf_device_register(self, NULL, bce_resume)) {
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	} else
+	if (pmf_device_register(self, NULL, bce_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /* handle media, and ethernet requests */

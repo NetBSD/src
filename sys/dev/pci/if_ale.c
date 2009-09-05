@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.7 2009/08/18 06:02:36 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.8 2009/09/05 14:09:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.7 2009/08/18 06:02:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.8 2009/09/05 14:09:55 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -581,10 +581,10 @@ ale_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->ale_eaddr);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 fail:
