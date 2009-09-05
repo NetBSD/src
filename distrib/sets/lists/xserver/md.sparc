@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.41 2009/08/30 21:27:35 mrg Exp $
+# $NetBSD: md.sparc,v 1.42 2009/09/05 22:38:45 macallan Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -322,6 +322,8 @@
 ./usr/X11R7/lib/modules/drivers/suncg6_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sunffb_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sunffb_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/sunleo_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/sunleo_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/suntcx_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/suntcx_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
@@ -479,6 +481,7 @@
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/suncg6.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/sunffb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/sunleo.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/suntcx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
@@ -502,6 +505,7 @@
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/suncg6.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/sunffb.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/sunleo.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/suntcx.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
@@ -525,6 +529,7 @@
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/suncg6.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/sunffb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/sunleo.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/suntcx.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
