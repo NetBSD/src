@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.107 2008/12/03 15:36:11 tsutsui Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.108 2009/09/05 14:19:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.107 2008/12/03 15:36:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.108 2009/09/05 14:19:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -448,10 +448,11 @@ ex_config(struct ex_softc *sc)
 			  RND_TYPE_NET, 0);
 #endif
 
-	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
-		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
 		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	/* The attach is successful. */
 	sc->ex_flags |= EX_FLAGS_ATTACHED;
