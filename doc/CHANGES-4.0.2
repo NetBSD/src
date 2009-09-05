@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.54 2009/08/25 18:21:50 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.55 2009/09/05 13:38:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -819,4 +819,19 @@ sys/dev/pci/twa.c				1.32
 
 	Disable completely bogus DIAGNOSTIC check.
 	[bouyer, ticket #1349]
+
+external/bsd/pkg_install/dist/info/perform.c     1.1.1.10
+external/bsd/pkg_install/dist/lib/license.c      1.1.1.4 
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in  1.1.1.5
+external/bsd/pkg_install/dist/lib/version.h      1.1.1.17
+        
+	Import pkg_install-20090724:
+	- license handling: accept upper case letters. Keep license checks
+	  case-sensitive as done in the older pkgsrc logic. Document this.
+	  OK dillo@, schmonz@, wiz@
+	- pkg_info:
+	- fix handling of non-packages, that are valid archives
+	- invert order of pkg_info -r to better match the expectations of
+	  make update.' external/bsd/pkg_install
+	[joerg, ticket #1346]
 
