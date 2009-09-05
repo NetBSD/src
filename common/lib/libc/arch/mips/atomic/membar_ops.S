@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.3.10.1 2009/09/05 04:03:01 matt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.3.10.2 2009/09/05 18:52:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,14 +49,22 @@
 #define	SYNC		sync
 #endif
 
-#ifdef SYNC
 	.text
 
 LEAF(_membar_sync)
-	SYNC
 	j	ra
+#ifdef SYNC
+	SYNC
+#else
 	  nop
+#endif
 END(_membar_sync)
+
+#ifdef _KERNEL
+STRONG_ALIAS(mb_read, _membar_sync)
+STRONG_ALIAS(mb_write, _membar_sync)
+STRONG_ALIAS(mb_memory, _membar_sync)
+#endif
 
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
@@ -67,4 +75,3 @@ ATOMIC_OP_ALIAS(membar_producer,_membar_sync)
 STRONG_ALIAS(_membar_producer,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)
-#endif /* SYNC */
