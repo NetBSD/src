@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1303 2009/09/05 09:47:14 taca Exp $
+#	$NetBSD: mi,v 1.1304 2009/09/05 10:16:46 taca Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8106,7 +8106,7 @@
 ./usr/share/man/cat8/cvsbug.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat8/genassym.0			comp-obsolete		obsolete
 ./usr/share/man/cat8/kgmon.0			comp-sysutil-catman	.cat
-./usr/share/man/cat9/BOOT_FLAG.9		comp-sys-catman		.cat
+./usr/share/man/cat9/BOOT_FLAG.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/CALLOUT_INITIALIZER.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/CALLOUT_INITIALIZER_SETFUNC.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/CARDBUS_PRODUCT.0		comp-sys-catman		.cat
@@ -8285,7 +8285,7 @@
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bitmask_snprintf.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/bluetooth.0		comp-sys-catman		.cat
-./usr/share/man/cat9/boothowto.9		comp-sys-catman		.cat
+./usr/share/man/cat9/boothowto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/boottime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bounds_check_with_label.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bread.0			comp-sys-catman		.cat
@@ -13541,7 +13541,7 @@
 ./usr/share/man/html7/operator.html		comp-c-htmlman		html
 ./usr/share/man/html8/cvsbug.html		comp-cvs-htmlman	cvs,html
 ./usr/share/man/html8/kgmon.html		comp-sysutil-htmlman	html
-./usr/share/man/html9/BOOT_FLAG.9		comp-sys-htmlman	html
+./usr/share/man/html9/BOOT_FLAG.html		comp-sys-htmlman	html
 ./usr/share/man/html9/CARDBUS_PRODUCT.html	comp-sys-htmlman	html
 ./usr/share/man/html9/CARDBUS_VENDOR.html	comp-sys-htmlman	html
 ./usr/share/man/html9/Cardbus_conf_read.html	comp-sys-htmlman	html
@@ -13706,7 +13706,7 @@
 ./usr/share/man/html9/biowait.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bitmask_snprintf.html	comp-obsolete		obsolete
 ./usr/share/man/html9/bluetooth.html		comp-sys-htmlman	html
-./usr/share/man/html9/boothowto.9		comp-sys-htmlman	html
+./usr/share/man/html9/boothowto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/boottime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bounds_check_with_label.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bread.html		comp-sys-htmlman	html
