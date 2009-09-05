@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.118.4.2 2009/03/27 14:50:36 msaitoh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.118.4.2.4.1 2009/09/05 03:49:50 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -235,7 +235,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
-		${DBSYM} $@; \
+		${DBSYM} $@ || true; \
 	fi
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
