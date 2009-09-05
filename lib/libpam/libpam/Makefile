@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2008/10/26 07:44:12 mrg Exp $
+# $NetBSD: Makefile,v 1.8.8.1 2009/09/05 03:54:48 matt Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -184,8 +184,8 @@ STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
 # XXX Using ${.ALLSRC} in the ld command causes openpam_static.c to be
 # XXX used.  Why??!!  --thorpej
 openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
-	${LD} -o ${.TARGET} -r --whole-archive openpam_static.o \
-	    ${STATIC_MODULE_LIBS}
+	${CC} ${LDFLAGS} -nostdlib -o ${.TARGET} -Wl,-r,--whole-archive \
+	    openpam_static.o ${STATIC_MODULE_LIBS}
 
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include
