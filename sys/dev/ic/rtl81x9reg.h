@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.39 2009/05/11 15:42:33 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.40 2009/09/05 03:50:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -126,8 +126,8 @@
 #define RTK_GTXSTART		0x0038	/* 8 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
-#define RTK_CSIDR		0x0064          
-#define RTK_CSIAR		0x0068          
+#define RTK_CSIDR		0x0064
+#define RTK_CSIAR		0x0068
 #define RTK_TBI_LPAR		0x006A
 #define RTK_GMEDIASTAT		0x006C	/* 8 bits */
 #define RTK_EPHYAR		0x0080
@@ -205,7 +205,7 @@
 #define RTK_TXSTAT_TXABRT	0x40000000
 #define RTK_TXSTAT_CARRLOSS	0x80000000
 
-#define RTK_TXSTAT_THRESH(x)	(((x) << 16) & RTK_TXSTAT_EARLY_THRESH) 
+#define RTK_TXSTAT_THRESH(x)	(((x) << 16) & RTK_TXSTAT_EARLY_THRESH)
 #define RTK_TXTH_256		8	/* (x) * 32 bytes */
 #define RTK_TXTH_1536		48
 
@@ -451,7 +451,7 @@
 #define RTK_RX_MAXDMA		RTK_RXDMA_256BYTES
 #define RTK_TX_MAXDMA		RTK_TXDMA_256BYTES
 
-#define RTK_RXCFG_CONFIG 	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
+#define RTK_RXCFG_CONFIG	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
 #define RTK_TXCFG_CONFIG	(RTK_TXCFG_IFG|RTK_TX_MAXDMA)
 
 #define RE_RX_FIFOTHRESH	RTK_RXFIFO_NOTHRESH
