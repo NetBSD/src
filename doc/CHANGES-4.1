@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.174 2009/08/25 18:22:37 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.175 2009/09/05 13:46:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3758,4 +3758,10 @@ sys/dev/pci/twa.c				1.32
 
 	Disable completely bogus DIAGNOSTIC check.
 	[bouyer, ticket #1349]
+
+sys/kern/kern_exec.c				1.149 via patch
+
+	Fix ktrace of data from iovec based system calls.
+	Fixes PR/41819
+	[dsl, ticket #1352]
 
