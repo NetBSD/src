@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.69 2009/04/17 15:37:43 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.70 2009/09/05 14:13:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.69 2009/04/17 15:37:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.70 2009/09/05 14:13:50 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -482,10 +482,10 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	if (!pmf_device_register(self, NULL, fxp_pci_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, fxp_pci_resume))
 		pmf_class_network_register(self, &sc->sc_ethercom.ec_if);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
