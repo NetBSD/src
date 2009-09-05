@@ -204,7 +204,8 @@ Boston, MA 02110-1301, USA.  */
   "%{EL:-m elf32ltsmip} \
    %{EB:-m elf32btsmip} \
    %(endian_spec) \
-   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} %{mips64} \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} \
+   %{mips32} %{mips32r2} %{mips64} %{mips64r2} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
    %(netbsd_link_spec)"
 
