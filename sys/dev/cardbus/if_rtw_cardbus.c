@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.29 2009/05/12 12:11:17 cegger Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.30 2009/09/05 14:50:10 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.29 2009/05/12 12:11:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.30 2009/09/05 14:50:10 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -296,15 +296,15 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	RTW_WRITE(regs, RTW_FEMR, 0);
 	RTW_WRITE(regs, RTW_FER, RTW_READ(regs, RTW_FER));
 
-	if (!pmf_device_register(self, rtw_cardbus_suspend, rtw_cardbus_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else {
+	if (pmf_device_register(self,
+	    rtw_cardbus_suspend, rtw_cardbus_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
 		/*
 		 * Power down the socket.
 		 */
 		pmf_device_suspend_self(self);
-	}
+	} else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
