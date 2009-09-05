@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.5 2009/08/23 07:49:56 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.6 2009/09/05 03:19:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_CPU_COUNTER
 #endif
 
-#ifdef _LP64
+#if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS
 #endif
 
