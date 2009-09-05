@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2.4.1 2009/09/05 03:39:26 matt Exp $
+#	$NetBSD: Makefile,v 1.4.2.2.4.2 2009/09/05 18:53:58 matt Exp $
 
 CPPFLAGS+=	-DELFSIZE=64
 LIB=	ldd_elf64
@@ -9,10 +9,13 @@ SRCS=	dummy.c
 LIBISPRIVATE=	yes
 .PATH: ${.CURDIR}/..
 
+.if ${MACHINE_ARCH:Mmips64*} != ""
+ABI64:= ${CPUFLAGS:M-mabi=64:M-mabi=o64}
+.endif
+
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
     (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64") || \
-    ((${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el") \
-     && ${CPUFLAGS:M-mabi=64} != "")
+    (${MACHINE_ARCH:Mmips64*} != "" && !empty(ABI64))
 
 # XXX we need to make sure that we don't accidentally get the elf32
 # XXX versions of these.
