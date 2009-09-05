@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.4 2009/08/30 13:03:02 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.5 2009/09/05 03:20:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,11 +82,13 @@
  * MIPS addresses are signed and we defining as negative so that
  * in LP64 kern they get sign-extended correctly.
  */
-#define	MIPS_KSEG0_START		(-0x7fffffff-1)	/* 0x80000000 */
-#define	MIPS_KSEG1_START		-0x60000000	/* 0xa0000000 */
-#define	MIPS_KSEG2_START		-0x40000000	/* 0xc0000000 */
-#define	MIPS_MAX_MEM_ADDR		-0x42000000	/* 0xbe000000 */
-#define	MIPS_RESERVED_ADDR		-0x40380000	/* 0xbfc80000 */
+#ifndef _LOCORE
+#define	MIPS_KSEG0_START		(-0x7fffffffL-1) /* 0x80000000 */
+#define	MIPS_KSEG1_START		-0x60000000L	/* 0xa0000000 */
+#define	MIPS_KSEG2_START		-0x40000000L	/* 0xc0000000 */
+#define	MIPS_MAX_MEM_ADDR		-0x42000000L	/* 0xbe000000 */
+#define	MIPS_RESERVED_ADDR		-0x40380000L	/* 0xbfc80000 */
+#endif
 
 #define	MIPS_PHYS_MASK			0x1fffffff
 
