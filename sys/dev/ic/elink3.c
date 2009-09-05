@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.127 2008/08/27 05:33:47 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.128 2009/09/05 12:30:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.127 2008/08/27 05:33:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.128 2009/09/05 12:30:59 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -192,7 +192,7 @@ int	epioctl(struct ifnet *, u_long, void *);
 void	epstart(struct ifnet *);
 void	epwatchdog(struct ifnet *);
 void	epreset(struct ep_softc *);
-static void epshutdown(void *);
+static bool epshutdown(device_t, int);
 void	epread(struct ep_softc *);
 struct mbuf *epget(struct ep_softc *, int);
 void	epmbuffill(void *);
@@ -501,7 +501,11 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
 	/*  Establish callback to reset card when we reboot. */
-	sc->sd_hook = shutdownhook_establish(epshutdown, sc);
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, epshutdown))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
@@ -1798,10 +1802,10 @@ epstop(struct ifnet *ifp, int disable)
 /*
  * Before reboots, reset card completely.
  */
-static void
-epshutdown(void *arg)
+static bool
+epshutdown(device_t self, int howto)
 {
-	struct ep_softc *sc = arg;
+	struct ep_softc *sc = device_private(self);
 	int s = splnet();
 
 	if (sc->enabled) {
@@ -1811,6 +1815,8 @@ epshutdown(void *arg)
 		sc->enabled = 0;
 	}
 	splx(s);
+
+	return true;
 }
 
 /*
@@ -2050,7 +2056,7 @@ ep_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->sd_hook);
+	pmf_device_deregister(sc->sc_dev);
 
 	return (0);
 }
