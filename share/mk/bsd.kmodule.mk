@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1.2.1 2009/06/06 22:10:49 bouyer Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1.2.1.2.1 2009/09/05 03:38:23 matt Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -40,7 +40,8 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${LD} -T ${KMODSCRIPT} -r -d -o ${.TARGET} ${OBJS}
+	${CC} ${LDFLAGS} -nostdlib -Wl,-T,${KMODSCRIPT},-r,-d \
+		-o ${.TARGET} ${OBJS}
 
 ##### Install rules
 .if !target(kmodinstall)
