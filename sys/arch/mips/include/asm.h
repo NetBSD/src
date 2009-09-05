@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.7 2009/09/03 00:02:53 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.8 2009/09/05 03:13:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -500,23 +500,29 @@ _C_LABEL(x):
 #define	REG_L		lw
 #define	REG_S		sw
 #define	REG_LI		li
+#define	REG_ADDU	addu
 #define	REG_SLL		sll
 #define	REG_SLLV	sllv
 #define	REG_SRL		srl
 #define	REG_SRLV	srlv
 #define	REG_SRA		sra
 #define	REG_SRAV	srav
+#define	REG_LL		ll
+#define	REG_SC		sc
 #define	REG_SCALESHIFT	2
 #else
 #define	REG_L		ld
 #define	REG_S		sd
 #define	REG_LI		dli
+#define	REG_ADDU	daddu
 #define	REG_SLL		dsll
 #define	REG_SLLV	dsllv
 #define	REG_SRL		dsrl
 #define	REG_SRLV	dsrlv
 #define	REG_SRA		dsra
 #define	REG_SRAV	dsrav
+#define	REG_LL		lld
+#define	REG_SC		scd
 #define	REG_SCALESHIFT	3
 #endif
 
