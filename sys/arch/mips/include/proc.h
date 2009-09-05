@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.2 2009/08/21 17:20:46 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.3 2009/09/05 03:16:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ struct mdproc {
 struct frame {
 	mips_reg_t f_regs[38];
 	u_int32_t f_ppl;	/* previous priority level */
-	int32_t f_pad;		/* for 8 byte aligned */
+	mips_reg_t f_pad;	/* for quadword alignment */
 };
 
 #ifdef _KERNEL
