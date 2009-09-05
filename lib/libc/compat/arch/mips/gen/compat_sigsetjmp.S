@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.1.34.1 2009/08/18 06:58:54 matt Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.1.34.2 2009/09/05 03:12:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -42,7 +42,7 @@
 #if 0
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	ASMSTR("$NetBSD: compat_sigsetjmp.S,v 1.1.34.1 2009/08/18 06:58:54 matt Exp $")
+	ASMSTR("$NetBSD: compat_sigsetjmp.S,v 1.1.34.2 2009/09/05 03:12:29 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,10 @@ LEAF(sigsetjmp)
 	SETUP_GP64(t0, sigsetjmp)
 	INT_S	a1, _OFFSETOF_SC_MASK13(a0)	# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
-	la	t9, _C_LABEL(_setjmp)
+	PTR_LA	t9, _C_LABEL(_setjmp)
 	jr	t9
 
-1:	la	t9, _C_LABEL(setjmp)
+1:	PTR_LA	t9, _C_LABEL(setjmp)
 	jr	t9
 END(sigsetjmp)
 
@@ -75,9 +75,9 @@ LEAF(siglongjmp)
 	SETUP_GP64(t0, siglongjmp)
 	INT_L	t1, _OFFSETOF_SC_MASK13(a0)	# get "savemask"
 	bne	t1, 0x0, 1f			# restore signal mask?
-	la	t9, _C_LABEL(_longjmp)
+	PTR_LA	t9, _C_LABEL(_longjmp)
 	jr	t9
 
-1:	la	t9, _C_LABEL(longjmp)
+1:	PTR_LA	t9, _C_LABEL(longjmp)
 	jr	t9
 END(siglongjmp)
