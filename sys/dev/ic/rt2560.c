@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.20 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.21 2009/09/05 14:19:30 tsutsui Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.20 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.21 2009/09/05 14:19:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -484,10 +484,11 @@ rt2560_attach(void *xsc, int id)
 
 	ieee80211_announce(ic);
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(&sc->sc_dev, NULL, NULL))
 		pmf_class_network_register(&sc->sc_dev, ifp);
+	else
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	return 0;
 
