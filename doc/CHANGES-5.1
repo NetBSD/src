@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.63 2009/08/30 03:08:11 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.64 2009/09/05 11:46:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2285,4 +2285,60 @@ sys/dev/acpi/files.acpi				1.54
 	- Rename asus_softc_t -> struct asus_softc
 	- Add detach method
 	[jmcneill, ticket #891]
+
+sys/dev/acpi/acpi.c				1.127 via patch
+sys/dev/acpi/acpi_button.c			1.27 via patch
+sys/dev/acpi/acpi_lid.c				1.27 via patch
+sys/dev/acpi/acpi_wakedev.c			1.1 via patch
+sys/dev/acpi/acpi_wakedev.h			1.1 via patch
+sys/dev/acpi/files.acpi				1.55 via patch
+
+	add hw.wake.* sysctl subtree for toggling which devices are allowed to
+	restore the system from sleep. set/clear wake GPEs as specified before
+	entering sleep.
+
+	by default, the following devices are enabled for wake:
+	 - sleep/power buttons
+	 - lid switch
+	 - pc kbd controller
+
+	reviewed by: joerg
+	[jmcneill, ticket #896]
+
+sys/kern/vfs_lockf.c				1.72
+
+	lockf() passes its arguments through to fcntl() but is supposed to
+	support -ve lengths (lock area before current offset).
+	Nothing in libc or the kernel allowed for this, so some random part
+	of the file would get locked (no idea which bits).
+	This also fixes PR/41620 (attempting to lock negative offsets).
+	[dsl, ticket #900]
+
+sys/kern/kern_ktrace.c				1.149
+
+	Fix ktrace of data from iovec based system calls.
+	Fixes PR/41819
+	[dsl, ticket #901]
+
+lib/libc/stdio/vfwprintf.c			1.16
+
+	If the current locale doesn't define the 'thousands' grouping info
+	then use sane defaults (',' every 3 digits).
+	Fixes PR/40714
+	[dsl, ticket #902]
+
+sys/netinet/if_arp.c				1.146
+
+	Don't require the gateway address to have room for both an interface
+	name and address.  Room for an address will do.  This should fix
+	a regression in 'arp -s ...' on interfaces such as xennet0 with
+	unusually long names. Fix PR #41878.
+	[dyoung, ticket #911]
+
+sbin/fsck_ext2fs/main.c				1.33
+
+	Ignore the "-P" option as intended to make this work with e.g.
+	"fsck_flags=3D-pP" in "/etc/rc.conf".
+	Patch supplied by Pierre Pronchery in PR bin/41490.
+	[tron, ticket #914]
 
