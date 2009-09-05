@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.5.4.1 2009/08/04 18:32:08 snj Exp $	*/
+/*	$NetBSD: event.h,v 1.5.4.2 2009/09/05 12:55:11 bouyer Exp $	*/
 /*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
 
 /*
@@ -165,6 +165,7 @@
 extern "C" {
 #endif
 
+#include <event-config.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdint.h>
