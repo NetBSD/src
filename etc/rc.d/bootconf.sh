@@ -1,10 +1,16 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.9 2006/04/23 23:26:26 hubertf Exp $
+# $NetBSD: bootconf.sh,v 1.10 2009/09/05 16:24:03 apb Exp $
 #
 
 # PROVIDE: bootconf
 # REQUIRE: mountcritlocal
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="bootconf"
+start_cmd="bootconf_start"
+stop_cmd=":"
 
 bootconf_start()
 {
@@ -60,6 +66,8 @@ bootconf_start()
 		fi
 	done
 
+	rc_print_metadata "note:Using configuration \"$conf\""
+
 	case  $conf in
 	current|default)
 		;;
@@ -74,8 +82,5 @@ bootconf_start()
 	fi
 }
 
-case "$1" in
-*start)
-	bootconf_start
-	;;
-esac
+load_rc_config $name
+run_rc_command "$1"
