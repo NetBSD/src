@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.8 2009/08/30 02:51:25 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.9 2009/09/05 11:46:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -187,4 +187,18 @@ etc/ssh/ssh_known_hosts				1.5
 
 	Update and add some TNF ssh keys.
 	[spz, ticket #930]
+
+lib/libc/stdio/vfwprintf.c			1.16
+
+	If the current locale doesn't define the 'thousands' grouping info
+	then use sane defaults (',' every 3 digits).
+	Fixes PR/40714
+	[dsl, ticket #902]
+
+sbin/fsck_ext2fs/main.c				1.33
+
+	Ignore the "-P" option as intended to make this work with e.g.
+	"fsck_flags=3D-pP" in "/etc/rc.conf".
+	Patch supplied by Pierre Pronchery in PR bin/41490.
+	[tron, ticket #914]
 
