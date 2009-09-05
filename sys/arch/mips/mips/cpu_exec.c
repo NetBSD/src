@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.7 2009/09/03 00:08:19 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.8 2009/09/05 03:03:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.7 2009/09/03 00:08:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.8 2009/09/05 03:03:44 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -329,11 +329,11 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_3:
-		if (cpu_arch < CPU_ARCH_MIPS4)
+		if (cpu_arch < CPU_ARCH_MIPS3)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_4:
-		if (cpu_arch < CPU_ARCH_MIPS3)
+		if (cpu_arch < CPU_ARCH_MIPS4)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_5:
@@ -421,11 +421,11 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_3:
-		if (cpu_arch < CPU_ARCH_MIPS4)
+		if (cpu_arch < CPU_ARCH_MIPS3)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_4:
-		if (cpu_arch < CPU_ARCH_MIPS3)
+		if (cpu_arch < CPU_ARCH_MIPS4)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_5:
@@ -440,7 +440,7 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		break;
 	}
 
-	switch (eh->e_flags & EF_MIPS_ARCH) {
+	switch (eh->e_flags & (EF_MIPS_ABI|EF_MIPS_ABI2)) {
 	case 0:
 		p->p_md.md_abi = _MIPS_BSD_API_N64;
 		if (old_abi != p->p_md.md_abi)
