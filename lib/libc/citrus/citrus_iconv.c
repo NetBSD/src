@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.7 2008/07/25 14:05:25 christos Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.8 2009/09/05 06:44:27 dholland Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.7 2008/07/25 14:05:25 christos Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.8 2009/09/05 06:44:27 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -107,7 +107,7 @@ lookup_iconv_entry(const char *curdir, const char *key,
 	char *p, path[PATH_MAX];
 
 	/* iconv.dir path */
-	snprintf(path, (size_t)PATH_MAX, "%s/" _CITRUS_ICONV_DIR, curdir);
+	snprintf(path, (size_t)PATH_MAX, ("%s/" _CITRUS_ICONV_DIR), curdir);
 
 	/* lookup db */
 	cp = p = _lookup_simple(path, key, linebuf, linebufsize,
