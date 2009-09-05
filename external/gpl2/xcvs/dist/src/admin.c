@@ -327,8 +327,17 @@ admin (int argc, char **argv)
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
-	if (c != 'q' && !strchr (config->UserAdminOptions, c))
+	if (config != NULL) {
+	    if (c != 'q' && !strchr (config->UserAdminOptions, c))
+		only_allowed_options = false;
+	} else {
+#ifdef CLIENT_SUPPORT
+	    assert(current_parsed_root->isremote);
 	    only_allowed_options = false;
+#else
+	    assert(0); /* config should not be NULL, except in a client */
+#endif
+	}
 
 	switch (c)
 	{
