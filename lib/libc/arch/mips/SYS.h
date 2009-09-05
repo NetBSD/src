@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.18.46.2 2009/08/18 06:44:26 matt Exp $ */
+/*	$NetBSD: SYS.h,v 1.18.46.3 2009/09/05 03:04:58 matt Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -80,11 +80,11 @@
 	.abicalls
 # if defined(__mips_o32) || defined(__mips_o64)
 #  define PIC_PROLOGUE(x)	SETUP_GP
-#  define PIC_TAILCALL(l)	la t9, _C_LABEL(l); jr t9
+#  define PIC_TAILCALL(l)	PTR_LA t9, _C_LABEL(l); jr t9
 #  define PIC_RETURN()		j ra
 # else
 #  define PIC_PROLOGUE(x)	SETUP_GP64(t3, x)
-#  define PIC_TAILCALL(l)	la t9, _C_LABEL(l); RESTORE_GP64; jr t9
+#  define PIC_TAILCALL(l)	PTR_LA t9, _C_LABEL(l); RESTORE_GP64; jr t9
 #  define PIC_RETURN()		RESTORE_GP64; j ra
 # endif
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.16.34.2 2009/08/18 06:56:52 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.16.34.3 2009/09/05 03:04:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.16.34.2 2009/08/18 06:56:52 matt Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.16.34.3 2009/09/05 03:04:58 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ _C_LABEL(__curbrk):
 
 LEAF(_sbrk)
 	PIC_PROLOGUE(_sbrk)
-	la		t0, _C_LABEL(__curbrk)
+	PTR_LA		t0, _C_LABEL(__curbrk)
 	PTR_L		v1, 0(t0)
 	PTR_ADDU	a0, a0, v1	# compute current break
 	SYSTRAP(break)

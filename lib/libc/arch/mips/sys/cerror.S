@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.13.46.3 2009/08/24 05:25:25 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13.46.4 2009/09/05 03:04:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.13.46.3 2009/08/24 05:25:25 matt Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.13.46.4 2009/09/05 03:04:58 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
 
 	SAVE_GP(CALLFRAME_GP)
 
-	la		t9, _C_LABEL(__errno)	# locate address of errno
+	PTR_LA		t9, _C_LABEL(__errno)	# locate address of errno
 	jalr		t9
 
 	INT_L		t0, CALLFRAME_S0(sp)
