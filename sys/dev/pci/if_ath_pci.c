@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.33 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.34 2009/09/05 14:13:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.33 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.34 2009/09/05 14:13:50 tsutsui Exp $");
 #endif
 
 /*
@@ -260,12 +260,11 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) != 0)
 		goto bad3;
 
-	if (!pmf_device_register(self, ath_pci_suspend, ath_pci_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else {
+	if (pmf_device_register(self, ath_pci_suspend, ath_pci_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
 		pmf_device_suspend_self(self);
-	}
+	} else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	return;
 bad3:
 	ATH_LOCK_DESTROY(sc);
