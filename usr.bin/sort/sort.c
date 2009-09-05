@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.53 2009/08/22 21:43:53 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.54 2009/09/05 09:16:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.53 2009/08/22 21:43:53 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.54 2009/09/05 09:16:18 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -103,11 +103,6 @@ u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
 u_char unweighted[NBINS];
 int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
 
-/*
- * Default to stable sort.
- */
-int (*radix_sort)(const u_char **, int, const u_char *, u_int) = sradixsort;
-
 unsigned int debug_flags = 0;
 
 static char toutpath[MAXPATHLEN];
@@ -124,11 +119,11 @@ int
 main(int argc, char *argv[])
 {
 	get_func_t get;
-	int ch, i, stdinflag = 0, tmp = 0;
+	int ch, i, stdinflag = 0;
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
 	struct field *fldtab, *p;
-	size_t fldtab_sz = 3, fidx = 0;
+	size_t fldtab_sz, fld_cnt;
 	struct filelist filelist;
 	int num_input_files;
 	FILE *outfp = NULL;
@@ -147,6 +142,9 @@ main(int argc, char *argv[])
 	d_mask[REC_D = '\n'] = REC_D_F;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
 
+	/* fldtab[0] is the global options. */
+	fldtab_sz = 3;
+	fld_cnt = 0;
 	fldtab = malloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
 
@@ -159,7 +157,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "bcdD:fik:mHno:rR:sSt:T:ux")) != -1) {
 		switch (ch) {
 		case 'b':
-			fldtab->flags |= BI | BT;
+			fldtab[0].flags |= BI | BT;
 			break;
 		case 'c':
 			cflag = 1;
@@ -169,9 +167,7 @@ main(int argc, char *argv[])
 			    debug_flags |= 1 << (optarg[i] & 31);
 			break;
 		case 'd': case 'f': case 'i': case 'n': case 'r':
-			tmp |= optval(ch, 0);
-			fldtab->weights = weight_tables[tmp & (R | F)];
-			fldtab->flags |= tmp;
+			fldtab[0].flags |= optval(ch, 0);
 			break;
 		case 'H':
 			/* -H was ; use merge sort for blocks of large files' */
@@ -182,11 +178,10 @@ main(int argc, char *argv[])
 			if (!p)
 				err(1, "realloc");
 			fldtab = p;
-			memset(&fldtab[fldtab_sz], 0,
-			    sizeof(fldtab[fldtab_sz]));
+			memset(&fldtab[fldtab_sz], 0, sizeof(fldtab[0]));
 			fldtab_sz++;
 
-			setfield(optarg, &fldtab[++fidx], fldtab->flags);
+			setfield(optarg, &fldtab[++fld_cnt], fldtab[0].flags);
 			break;
 		case 'm':
 			mflag = 1;
@@ -195,11 +190,21 @@ main(int argc, char *argv[])
 			outpath = optarg;
 			break;
 		case 's':
-			/* for GNU sort compatibility (this is our default) */
-			radix_sort = sradixsort;
+			/*
+			 * Nominally 'stable sort', keep lines with equal keys
+			 * in input file order. (Default for NetBSD)
+			 * (-s for GNU sort compatibility.)
+			 */
 			break;
 		case 'S':
-			radix_sort = radixsort;
+			/*
+			 * Reverse of -s!
+			 * This needs to enforce a POSIX sort where records
+			 * with equal keys are then sorted by the raw data.
+			 * Currently not implemented!
+			 * (using libc radixsort() v sradixsort() doesn't
+			 * have the desired effect.)
+			 */
 			break;
 		case 't':
 			if (SEP_FLAG)
@@ -272,19 +277,18 @@ main(int argc, char *argv[])
 			err(2, "%s", argv[i]);
 	}
 
-	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
+	if (!(fldtab[0].flags & (I|D|N) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
 		fldtab[0].icol.num = 1;
+		fldtab[0].weights = weight_tables[fldtab->flags & (R | F)];
 	} else {
 		if (!fldtab[1].icol.num) {
 			fldtab[0].flags &= ~(BI|BT);
-			setfield("1", &fldtab[++fidx], fldtab->flags);
+			setfield("1", &fldtab[++fld_cnt], fldtab->flags);
 		}
 		fldreset(fldtab);
-		// fldtab[0].flags &= ~F;
 	}
-	settables(fldtab[0].flags);
-	fldtab->weights = weight_tables[fldtab->flags & (R | F)];
+	settables();
 
 	if (optind == argc) {
 		static const char * const names[] = { _PATH_STDIN, NULL };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.25 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.26 2009/09/05 09:16:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -170,7 +170,6 @@ extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern const char *tmpdir;
-extern int (*radix_sort)(const u_char **, int, const u_char *, u_int);
 extern u_char unweighted[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
@@ -200,5 +199,6 @@ void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
 void	 putkeydump(const RECHEADER *, FILE *);
 void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
+int	 radix_sort(const u_char **, int, const u_char *, u_int);
 int	 setfield(const char *, struct field *, int);
-void	 settables(int);
+void	 settables(void);
