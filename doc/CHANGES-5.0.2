@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.9 2009/09/05 11:46:58 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.10 2009/09/05 13:18:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -201,4 +201,28 @@ sbin/fsck_ext2fs/main.c				1.33
 	"fsck_flags=3D-pP" in "/etc/rc.conf".
 	Patch supplied by Pierre Pronchery in PR bin/41490.
 	[tron, ticket #914]
+
+usr.bin/newsyslog/newsyslog.c			1.59
+
+	Reset ziptype on each line. Failure to do this caused any log file to
+	be compressed if it was listed after a line using Z or J flag.
+	[manu, ticket #925]
+
+usr.bin/netstat/netstat.1			1.52
+
+	Fix typo
+	[dholland, ticket #933]
+
+usr.bin/chflags/chflags.1			1.18
+
+	Add some markup to improve clarity.
+	[dholland, ticket #934]
+
+sys/dev/acpi/pckbc_acpi.c			1.32
+
+	PR# port-i386/39671: panic while booting with an acpi kernel on a
+	790GX board
+	If the firmware describes duplicate keyboard controller nodes,
+	don't panic when the driver fails to map registers.
+	[jmcneill, ticket #939]
 
