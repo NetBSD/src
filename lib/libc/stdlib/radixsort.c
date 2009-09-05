@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.18 2009/08/21 20:49:50 dsl Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.19 2009/09/05 08:53:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.18 2009/08/21 20:49:50 dsl Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.19 2009/09/05 08:53:06 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,11 +71,10 @@ typedef struct {
 	int sn, si;
 } stack;
 
-static inline void simplesort
-	    __P((const u_char **, int, int, const u_char *, u_int));
-static void r_sort_a __P((const u_char **, int, int, const u_char *, u_int));
-static void r_sort_b __P((const u_char **,
-	    const u_char **, int, int, const u_char *, u_int));
+static inline void simplesort(const u_char **, int, int, const u_char *, u_int);
+static void r_sort_a(const u_char **, int, int, const u_char *, u_int);
+static void r_sort_b(const u_char **,
+	    const u_char **, int, int, const u_char *, u_int);
 
 #define	THRESHOLD	20		/* Divert to simplesort(). */
 #define	SIZE		512		/* Default stack size. */
@@ -100,10 +99,7 @@ static void r_sort_b __P((const u_char **,
 }
 
 int
-radixsort(a, n, tab, endch)
-	const u_char **a, *tab;
-	int n;
-	u_int endch;
+radixsort(const u_char **a, int n, const u_char *tab, u_int endch)
 {
 	const u_char *tr;
 	u_int c;
@@ -117,10 +113,7 @@ radixsort(a, n, tab, endch)
 }
 
 int
-sradixsort(a, n, tab, endch)
-	const u_char **a, *tab;
-	int n;
-	u_int endch;
+sradixsort(const u_char **a, int n, const u_char *tab, u_int endch)
 {
 	const u_char *tr, **ta;
 	u_int c;
@@ -151,11 +144,7 @@ sradixsort(a, n, tab, endch)
 
 /* Unstable, in-place sort. */
 static void
-r_sort_a(a, n, i, tr, endch)
-	const u_char **a;
-	int n, i;
-	const u_char *tr;
-	u_int endch;
+r_sort_a(const u_char **a, int n, int i, const u_char *tr, u_int endch)
 {
 	static u_int count[256], nc, bmin;
 	u_int c;
@@ -245,11 +234,8 @@ r_sort_a(a, n, i, tr, endch)
 
 /* Stable sort, requiring additional memory. */
 static void
-r_sort_b(a, ta, n, i, tr, endch)
-	const u_char **a, **ta;
-	int n, i;
-	const u_char *tr;
-	u_int endch;
+r_sort_b(const u_char **a, const u_char **ta, int n, int i, const u_char *tr,
+    u_int endch)
 {
 	static u_int count[256], nc, bmin;
 	u_int c;
@@ -319,13 +305,10 @@ r_sort_b(a, ta, n, i, tr, endch)
 			*--top[tr[(*ak)[i]]] = *ak;
 	}
 }
-		
+
+/* insertion sort */
 static inline void
-simplesort(a, n, b, tr, endch)	/* insertion sort */
-	const u_char **a;
-	int n, b;
-	const u_char *tr;
-	u_int endch;
+simplesort(const u_char **a, int n, int b, const u_char *tr, u_int endch)
 {
 	u_char ch;
 	const u_char  **ak, **ai, *s, *t;
