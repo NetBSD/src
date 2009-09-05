@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.91 2008/11/16 02:11:29 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.92 2009/09/05 13:50:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.91 2008/11/16 02:11:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.92 2009/09/05 13:50:15 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -125,7 +125,7 @@ static int tl_intr(void *);
 static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 static int tl_mediachange(struct ifnet *);
 static void tl_ifwatchdog(struct ifnet *);
-static void tl_shutdown(void *);
+static bool tl_shutdown(device_t, int);
 
 static void tl_ifstart(struct ifnet *);
 static void tl_reset(tl_softc_t *);
@@ -429,12 +429,6 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't allocate DMA memory for lists\n");
 		return;
 	}
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing
-	 * reboot before the driver initializes.
-	 */
-	(void)shutdownhook_establish(tl_shutdown, ifp);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -476,6 +470,15 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
+
+	/*
+	 * Add shutdown hook so that DMA is disabled prior to reboot.
+	 * Not doing reboot before the driver initializes.
+	 */
+	if (pmf_device_register1(self, NULL, NULL, tl_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
@@ -523,11 +526,15 @@ tl_reset(tl_softc_t *sc)
 	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
-static void
-tl_shutdown(void *v)
+static bool
+tl_shutdown(device_t self, int howto)
 {
+	tl_softc_t *sc = device_private(self);
+	struct ifnet *ifp = &sc->tl_if;
 
-	tl_stop(v, 1);
+	tl_stop(ifp, 1);
+
+	return true;
 }
 
 static void
