@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.143 2009/05/26 23:57:34 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.144 2009/09/05 14:19:30 tsutsui Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.143 2009/05/26 23:57:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.144 2009/09/05 14:19:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -858,11 +858,11 @@ atw_attach(struct atw_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
-	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, atw_shutdown)) {
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, atw_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
+	else
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
-	} else
-		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));

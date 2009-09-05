@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.171 2009/09/01 21:46:52 jmcneill Exp $	*/
+/*	$NetBSD: tulip.c,v 1.172 2009/09/05 14:19:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.171 2009/09/01 21:46:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.172 2009/09/05 14:19:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -535,10 +535,10 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	    RND_TYPE_NET, 0);
 #endif
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return 0;
 
