@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.24 2009/08/22 15:16:50 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.25 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.24 2009/08/22 15:16:50 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.25 2009/09/05 12:00:25 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 typedef struct mfile {
 	u_char *end;
 	short flno;
-	struct recheader rec[1];
+	RECHEADER rec[1];
 } MFILE;
 
 static u_char *wts;
@@ -324,15 +324,14 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 void
 order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 {
+	RECHEADER *crec, *prec, *trec;
 	u_char *crec_end, *prec_end, *trec_end;
 	int c;
-	RECHEADER *crec, *prec, *trec;
 
-	buffer = malloc(2 * (DEFLLEN + REC_DATA_OFFSET));
-	crec = (RECHEADER *) buffer;
-	crec_end = buffer + DEFLLEN + REC_DATA_OFFSET;
-	prec = (RECHEADER *) (buffer + DEFLLEN + REC_DATA_OFFSET);
-	prec_end = buffer + 2*(DEFLLEN + REC_DATA_OFFSET);
+	crec = malloc(offsetof(RECHEADER, data[DEFLLEN]));
+	crec_end = crec->data + DEFLLEN;
+	prec = malloc(offsetof(RECHEADER, data[DEFLLEN]));
+	prec_end = prec->data + DEFLLEN;
 	wts = ftbl->weights;
 
 	/* XXX this does exit(0) for overlong lines */

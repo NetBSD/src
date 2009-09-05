@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.15 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: fsort.h,v 1.16 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,9 +83,6 @@
  * for rouding.
  */
 #define MERGE_FNUM	16
-
-extern u_char *buffer;
-extern size_t bufsize;
 
 /* Temporary files contian data (with record headers) in sorted order */
 struct tempfile {
