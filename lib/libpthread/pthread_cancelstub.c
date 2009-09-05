@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.22 2008/10/08 08:27:07 ad Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.22.2.1 2009/09/05 12:51:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.22 2008/10/08 08:27:07 ad Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.22.2.1 2009/09/05 12:51:09 bouyer Exp $");
 
 #ifndef lint
 
@@ -91,6 +91,7 @@ ssize_t	_sys_mq_timedreceive(mqd_t, char *, size_t, unsigned *,
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
 int	_sys_msgsnd(int, const void *, size_t, int);
 int	_sys___msync13(void *, size_t, int);
+int	_sys_nanosleep(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 int	_sys_pollts(struct pollfd *, nfds_t, const struct timespec *,
@@ -333,6 +334,24 @@ __msync13(void *addr, size_t len, int flags)
 }
 
 int
+nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	/*
+	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
+	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
+	 */
+	retval = _sys_nanosleep(rqtp, rmtp);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
 open(const char *path, int flags, ...)
 {
 	int retval;
@@ -553,6 +572,7 @@ __strong_alias(_mq_timedreceive, mq_timedreceive)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
+__strong_alias(_nanosleep, nanosleep)
 __strong_alias(_open, open)
 __strong_alias(_poll, poll)
 __weak_alias(pollts, _pollts)
