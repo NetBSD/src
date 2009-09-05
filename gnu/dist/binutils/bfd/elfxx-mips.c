@@ -6135,11 +6135,25 @@ _bfd_mips_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		     relocs.  We make room for this reloc in the
 		     .rel.dyn reloc section.  */
 		  mips_elf_allocate_dynamic_relocations (dynobj, 1);
-		  if ((sec->flags & MIPS_READONLY_SECTION)
-		      == MIPS_READONLY_SECTION)
-		    /* We tell the dynamic linker that there are
-		       relocations against the text segment.  */
-		    info->flags |= DF_TEXTREL;
+		  /* In the N32 and 64-bit ABIs there may be multiple
+		     consecutive relocations for the same offset.  If we have
+		     a R_MIPS_GPREL32 followed by a R_MIPS_64 then that
+		     relocation is complete and needs no futher adjustment.  */
+		  if ((rel == relocs
+		      || rel[-1].r_offset != rel->r_offset
+		      || r_type != R_MIPS_64
+		      || ELF_R_TYPE(abfd, rel[-1].r_info) != R_MIPS_GPREL32)
+		      && (sec->flags & MIPS_READONLY_SECTION)
+			  == MIPS_READONLY_SECTION)
+		    {
+		      /* We tell the dynamic linker that there are
+		         relocations against the text segment.  */
+		      info->flags |= DF_TEXTREL;
+		      info->callbacks->warning
+			(info,
+			 _("relocation emitted against readonly section"),
+			 NULL, abfd, sec, rel->r_offset);
+		    }
 		}
 	      else
 		{
