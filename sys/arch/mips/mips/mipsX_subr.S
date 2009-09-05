@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.5 2009/09/02 15:56:52 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.6 2009/09/05 03:25:07 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -306,34 +306,34 @@
  */
 VECTOR(MIPSX(TLBMiss), unknown)
 	.set	noat
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
+	PTR_SRL	k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
 	andi	k0, k0, (NBPG-(1<<PTR_SCALESHIFT))#05: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	PTR_SRL	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
 	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
 	PTR_ADDU k1, k1, k0			#0c: k1=pte address
 	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
 	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	sll	k0, 2				#0f: chop top 2 bits (part 1a)
-	srl	k0, 2				#10: chop top 2 bits (part 1b)
+	PTR_SLL	k0, 2				#0f: chop top 2 bits (part 1a)
+	PTR_SRL	k0, 2				#10: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sync.p					#12: R5900 cop0 hazard
-	sll	k1, 2				#13: chop top 2 bits (part 2a)
-	srl	k1, 2				#14: chop top 2 bits (part 2b)
+	PTR_SLL	k1, 2				#13: chop top 2 bits (part 2a)
+	PTR_SRL	k1, 2				#14: chop top 2 bits (part 2b)
 	mtc0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
 	sync.p					#16: R5900 cop0 hazard
 #else /* MIPS3_5900 */
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	sll	k1, 2				#12: chop top 2 bits (part 2a)
-	srl	k1, 2				#13: chop top 2 bits (part 2b)
+	PTR_SLL	k1, 2				#12: chop top 2 bits (part 2a)
+	PTR_SRL	k1, 2				#13: chop top 2 bits (part 2b)
 	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
@@ -371,23 +371,23 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
+	PTR_SRL	k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
 	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#05: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	PTR_SRL	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
 	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
 	PTR_ADDU k1, k1, k0			#0c: k1=pte address
 	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
 	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	sll	k0, 2				#0f: chop top 2 bits (part 1a)
-	srl	k0, 2				#10: chop top 2 bits (part 1b)
+	PTR_SLL	k0, 2				#0f: chop top 2 bits (part 1a)
+	PTR_SRL	k0, 2				#10: chop top 2 bits (part 1b)
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	sll	k1, 2				#12: chop top 2 bits (part 2a)
-	srl	k1, 2				#13: chop top 2 bits (part 2b)
+	PTR_SLL	k1, 2				#12: chop top 2 bits (part 2a)
+	PTR_SRL	k1, 2				#13: chop top 2 bits (part 2b)
 	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
@@ -452,18 +452,21 @@ VECTOR(MIPSX(exception), unknown)
 	sll	k0, k0, 3			#03: shift user bit for cause index
 	and	k1, k1, MIPS3_CR_EXC_CODE	#04: mask out the cause bits.
 	or	k1, k1, k0			#05: change index to user table
+#ifdef _LP64
+	PTR_SLL	k1, k1, 1
+#endif
 1:
 	PTR_LA	k0, MIPSX(excpt_sw)		#06: get base of the jump table
-	addu	k0, k0, k1			#07: get the address of the
+	PTR_ADDU k0, k0, k1			#08: get the address of the
 						#     function entry.  Note that
 						#     the cause is already
 						#     shifted left by 2 bits so
 						#     we dont have to shift.
-	PTR_L	k0, 0(k0)			#08: get the function address
+	PTR_L	k0, 0(k0)			#09: get the function address
 	#nop					#    -slip-
 
-	j	k0				#09: jump to the function
-	nop					#0a: branch delay slot
+	j	k0				#0a: jump to the function
+	nop					#0b: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(exception))
 
@@ -1443,16 +1446,16 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
-	subu	k0, k0, k1
+	PTR_SUBU k0, k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
-	srl	k0, k0, PGSHIFT
+	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
-	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	beq	k1, zero, MIPSX(outofworld)	# No. Failing beyond. . .
 	nop					# - delay slot -
 	PTR_L	k1, _C_LABEL(Sysmap)
 
-	sll	k0, k0, 2			# compute offset from index
-	addu	k1, k1, k0
+	PTR_SLL	k0, k0, 2			# compute offset from index
+	PTR_ADDU k1, k1, k0
 	tlbp					# Probe the invalid entry
 	COP0_SYNC
 	and	k0, k0, 4			# check even/odd page
@@ -1462,7 +1465,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	k0, outofworld			# ASSERT(TLB entry exists)
+	bltz	k0, MIPSX(outofworld)		# ASSERT(TLB entry exists)
 	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
@@ -1494,7 +1497,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 KernTLBIOdd:
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	k0, outofworld			# assert(TLB Entry exists)
+	bltz	k0, MIPSX(outofworld)		# assert(TLB Entry exists)
 	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
@@ -1556,7 +1559,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop					# - delay slot -
 1:
 #else
-	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	beq	k1, zero, MIPSX(outofworld)		# No. Failing beyond. . .
 	nop					# - delay slot -
 #endif
 	PTR_L	k1, _C_LABEL(Sysmap)
@@ -1584,7 +1587,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop
 	eret
 
-outofworld:
+MIPSX(outofworld):
 	/* eret to panic so shutdown can use K2.  Try to ensure valid $sp. */
 	PTR_LA	a0, _C_LABEL(panic)
 	_MFC0	a2, MIPS_COP_0_EXC_PC
@@ -1890,7 +1893,7 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	PTR_LA	k1, VCED_count		# count number of exceptions
 	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
-	add	k1, k0			# get address of count table
+	PTR_ADDU k1, k0			# get address of count table
 	LONG_L	k0, 0(k1)
 	LONG_ADDU k0, 1
 	LONG_S	k0, 0(k1)
@@ -1925,9 +1928,9 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	PTR_LA	k1, VCEI_count		# count number of exceptions
 	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
-	add	k1, k0			# get address of count table
+	PTR_ADDU k1, k0			# get address of count table
 	LONG_L	k0, 0(k1)
-	addu	k0, 1
+	PTR_ADDU k0, 1
 	LONG_S	k0, 0(k1)
 #endif
 	eret
@@ -2159,8 +2162,8 @@ LEAF_NOPROFILE(MIPSX(TBIS))
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	li	t1, MIPS_KSEG0_START		# invalid address
-	sll	v0, v0, PGSHIFT + 1		# PAGE_SHIFT + 1
-	addu	t1, t1, v0
+	PTR_SLL	v0, v0, PGSHIFT + 1		# PAGE_SHIFT + 1
+	PTR_ADDU t1, t1, v0
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2225,7 +2228,7 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
 	and	a0, a0, MIPS3_PG_G		# check to see it has G bit
 	bnez	a0, 2f
-	addu	ta0, ta0, v0
+	PTR_ADDU ta0, ta0, v0
 
 	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
