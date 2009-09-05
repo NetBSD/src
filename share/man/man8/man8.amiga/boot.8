@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.11 2003/08/07 10:31:22 agc Exp $
+.\"	$NetBSD: boot.8,v 1.12 2009/09/05 11:37:52 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -46,20 +46,22 @@ system bootstrapping procedures
 When the
 .Nx
 kernel is booted normally (using one of the two methods discussed below),
-it initializes itself and proceeds to boot the system.  An automatic
-consistency check of the file systems takes place, and unless this
-fails, the system comes up to multi-user operations.  The proper way
-to shut the system down is with the
+it initializes itself and proceeds to boot the system.
+An automatic consistency check of the file systems takes place,
+and unless this fails, the system comes up to multi-user operations.
+The proper way to shut the system down is with the
 .Xr shutdown 8
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
 .Xr ddb 4 ,
-if it is configured in the kernel.  If the debugger is not present,
+if it is configured in the kernel.
+If the debugger is not present,
 or the debugger is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
-during the next boot cycle).  After the dump is complete (successful
+during the next boot cycle).
+After the dump is complete (successful
 or not), the system will attempt a reboot.
 .Ss Booting NetBSD using the bootloader
 When a bootable
@@ -74,10 +76,13 @@ partition is either the highest or the
 partition is selected by means of the boot menu,
 the Amiga ROM will automatically start the
 .Nx
-bootloader. By default it will, after a short timeout, load the kernel image
+bootloader.
+By default it will, after a short timeout, load the kernel image
 .Pa /netbsd
-and attempt to boot it into multi-user mode. This behaviour can be changed by
-typing in an alternate command sequence. The command line looks like:
+and attempt to boot it into multi-user mode.
+This behaviour can be changed by
+typing in an alternate command sequence.
+The command line looks like:
 .Bd -ragged -offset indent
 .Ar kernel-path
 .Op Fl abknpqstvADZ
@@ -131,8 +136,10 @@ inhibit sync negotiation as follows: The
 .Ar mask
 is a bitmap expressed in C notation (e.g., 0xff)
 with 4*8bits, each bit, if set to 1, disabling sync negotiation for
-the corresponding target. Note that this only applies to (some of the)
-real SCSI busses, but not, e.g., to internal IDE. The bytes are used up
+the corresponding target.
+Note that this only applies to (some of the)
+real SCSI busses, but not, e.g., to internal IDE.
+The bytes are used up
 from right to left by SCSI bus drivers using this convention.
 .It Fl S
 Load the  kernel symbols
@@ -187,27 +194,33 @@ Test loading of the kernel but don't start
 .It Fl A
 enable AGA modes.
 .It Fl D
-Enter the kernel debugger after booting. Best with -S.
+Enter the kernel debugger after booting.
+Best with
+.Fl S .
 .It Fl I Ar mask
 inhibit sync negotiation as follows: The
 .Ar mask
 is a bitmap expressed in hexadecimal (e.g., ff)
 with 4*8bits, each bit, if set to 1, disabling sync negotiation for
-the corresponding target. Note that this only applies to (some of the)
-real SCSI busses, but not, e.g., to internal IDE. The bytes are used up
+the corresponding target.
+Note that this only applies to (some of the)
+real SCSI busses, but not, e.g., to internal IDE.
+The bytes are used up
 from right to left by SCSI bus drivers using this convention.
 .It Fl S
 include kernel debug symbols (for use by -D).
 .It Fl Z
-Force load via chip memory. Won't work if kernel is larger than the chip
-memory size or on the DraCo.
+Force load via chip memory.
+Won't work if kernel is larger than the chip memory size or on the
+DraCo.
 .El
 .Pp
 Note: Because the loadbsd program can only read kernels from a AmigaOS
 filesystem, the file
 .Ar /netbsd
-is often not the same as the actual kernel booted. This can cause some
-programs to fail. However, note that you can use third-party Berkeley
+is often not the same as the actual kernel booted.
+This can cause some programs to fail.
+However, note that you can use third-party Berkeley
 filesystems such as bffs to access the
 .Nx
 root partition from AmigaOS.
@@ -238,7 +251,8 @@ system (created with
 -O
 or with
 .Nx 0.9 )
-with the boot block. You can use
+with the boot block.
+You can use
 .Ic loadbsd
 to boot from AmigaOS, or upgrade the file system with
 .Ar fsck_ffs -c 2 .
