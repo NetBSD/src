@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.15 2008/11/07 16:14:37 rafal Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.16 2009/09/05 17:40:35 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.15 2008/11/07 16:14:37 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.16 2009/09/05 17:40:35 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,25 +262,11 @@ static void
 init_interrupt_masks(void)
 {
 
+	/*
+	 * disable all interrups until handlers are installed.
+	 */
 	memset(pxa2x0_imask, 0, sizeof(pxa2x0_imask));
 
-	/*
-	 * IPL_NONE has soft interrupts enabled only, at least until
-	 * hardware handlers are installed.
-	 */
-	pxa2x0_imask[IPL_NONE] = ~0;
-	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	pxa2x0_imask[IPL_SOFTCLOCK] = ~0;
-	pxa2x0_imask[IPL_SOFTBIO] = ~0;
-	pxa2x0_imask[IPL_SOFTNET] = ~0;
-	pxa2x0_imask[IPL_SOFTSERIAL] = ~0;
-
-	pxa2x0_imask[IPL_SOFTCLOCK] &= pxa2x0_imask[IPL_NONE];
-	pxa2x0_imask[IPL_SOFTBIO] &= pxa2x0_imask[IPL_SOFTCLOCK];
-	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTBIO];
-	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_SOFTNET];
 }
 
 #undef splx
