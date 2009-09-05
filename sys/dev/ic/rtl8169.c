@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.126 2009/09/05 03:50:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.127 2009/09/05 08:23:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.126 2009/09/05 03:50:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.127 2009/09/05 08:23:24 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -690,7 +690,7 @@ re_attach(struct rtk_softc *sc)
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't map tx list, error = %d\n", error);
-	 	goto fail_1;
+		goto fail_1;
 	}
 	memset(sc->re_ldata.re_tx_list, 0, RE_TX_LIST_SZ(sc));
 
