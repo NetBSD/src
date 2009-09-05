@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.19 2009/09/05 12:50:53 tsutsui Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.19 2009/09/05 12:50:53 tsutsui Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.19 2009/09/05 12:50:53 tsutsui Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -549,7 +549,7 @@ void	  ahd_platform_free(struct ahd_softc *);
 int	  ahd_map_int(struct ahd_softc *);
 int	  ahd_attach(struct ahd_softc *);
 int	  ahd_softc_comp(struct ahd_softc *, struct ahd_softc *);
-int 	  ahd_detach(device_t, int);
+int 	  ahd_detach(struct ahd_softc *, int);
 #define	ahd_platform_init(arg)
 
 
