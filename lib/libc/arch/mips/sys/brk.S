@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.16.46.2 2009/08/18 06:56:52 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.16.46.3 2009/09/05 03:04:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: brk.S,v 1.16.46.2 2009/08/18 06:56:52 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.16.46.3 2009/09/05 03:04:58 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ _C_LABEL(__minbrk):
 
 LEAF(_brk)
 	PIC_PROLOGUE(_brk)
-	la		t0, _C_LABEL(__minbrk)
+	PTR_LA		t0, _C_LABEL(__minbrk)
 	PTR_L		v0, 0(t0)
 	bgeu		a0, v0, 1f
 	move		a0, v0		# dont allow break < minbrk
