@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.28 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.29 2009/09/05 12:55:05 tsutsui Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -45,11 +45,12 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.16 2003/06/28 04:39:49 gibbs Exp $
  */
 /*
- * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
+ * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
+ *  - April 2003
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.28 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.29 2009/09/05 12:55:05 tsutsui Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -329,7 +330,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahd_pci_busdata), M_DEVBUF, M_NOWAIT);
 	if (bd == NULL) {
-		aprint_error("%s: unable to allocate bus-specific data\n", ahd_name(ahd));
+		aprint_error("%s: unable to allocate bus-specific data\n",
+		    ahd_name(ahd));
 		return;
 	}
 	memset(bd, 0, sizeof(struct ahd_pci_busdata));
@@ -360,7 +362,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	ahd->int_coalescing_maxcmds = AHD_INT_COALESCING_MAXCMDS_DEFAULT;
 	ahd->int_coalescing_mincmds = AHD_INT_COALESCING_MINCMDS_DEFAULT;
 	ahd->int_coalescing_threshold = AHD_INT_COALESCING_THRESHOLD_DEFAULT;
-	ahd->int_coalescing_stop_threshold = AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
+	ahd->int_coalescing_stop_threshold =
+	    AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
 
 	if (ahd_platform_alloc(ahd, NULL) != 0) {
                 ahd_free(ahd);
@@ -1117,9 +1120,10 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 	printf("\n%s: aic7902 chip revision 0x%x\n", ahd_name(ahd), rev);
 #endif
 	if (rev < ID_AIC7902_PCI_REV_A4) {
-		aprint_error("%s: Unable to attach to unsupported chip revision %d\n",
-		       ahd_name(ahd), rev);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, 0);
+		aprint_error("%s: Unable to attach to "
+		    "unsupported chip revision %d\n", ahd_name(ahd), rev);
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG, 0);
 		return (ENXIO);
 	}
 
@@ -1175,7 +1179,8 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 		 * 	 folks!
 		 */
 		devconfig1 = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG1);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG1, devconfig1|PREQDIS);
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    DEVCONFIG1, devconfig1|PREQDIS);
 		devconfig1 = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG1);
 	}
 
