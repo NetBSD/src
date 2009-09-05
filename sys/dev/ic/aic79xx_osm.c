@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.26 2009/09/05 12:43:56 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.27 2009/09/05 12:46:55 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.26 2009/09/05 12:43:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.27 2009/09/05 12:46:55 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -156,8 +156,10 @@ static int
 ahd_ioctl(struct scsipi_channel *channel, u_long cmd,
 	  void *addr, int flag, struct proc *p)
 {
-	struct ahd_softc *ahd = (void *)channel->chan_adapter->adapt_dev;
+	struct ahd_softc *ahd;
 	int s, ret = ENOTTY;
+
+	ahd = device_private(channel->chan_adapter->adapt_dev);
 
 	switch (cmd) {
 	case SCBUSIORESET:
@@ -321,7 +323,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	struct ahd_initiator_tinfo *tinfo;
 	struct ahd_tmode_tstate *tstate;
 
-	ahd = (void *)chan->chan_adapter->adapt_dev;
+	ahd = device_private(chan->chan_adapter->adapt_dev);
 
 	switch(req) {
 
@@ -537,7 +539,8 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs->error = 0;
 	xs->status = 0;
 	xs->xs_status = 0;
-	ahd = (void*)xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
+	ahd = device_private(
+	    xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
 
 	scb->sg_count = 0;
 	if (nsegments != 0) {
@@ -805,7 +808,7 @@ ahd_detach(device_t self, int flags)
 {
 	int rv = 0;
 
-	struct ahd_softc *ahd = (struct ahd_softc*)self;
+	struct ahd_softc *ahd = device_private(self);
 
 	if (ahd->sc_child != NULL)
 		rv = config_detach(ahd->sc_child, flags);
