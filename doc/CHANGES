@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1283 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1284 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -379,3 +379,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	postfix(1): Import version 2.6.5 [tron 20090831]
 	unzip(1): A libarchive-based unzip frontend, emulating most of
 		infozip's command line. [joerg 20090903]
+	sunleo(4): imported the xf86-video-sunleo 1.2.0 driver from Xorg
+		[macallan 20090905]
