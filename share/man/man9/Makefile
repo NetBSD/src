@@ -1,11 +1,11 @@
-#       $NetBSD: Makefile,v 1.290 2009/09/05 08:55:41 apb Exp $
+#       $NetBSD: Makefile,v 1.291 2009/09/05 16:13:21 apb Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
-	bcdtobin.9 bcmp.9 bcopy.9 bluetooth.9 bzero.9 \
-	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
+	bcdtobin.9 bcmp.9 bcopy.9 bluetooth.9 boothowto.9 \
+	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
 	callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 cons.9 copy.9 \
 	coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 \
