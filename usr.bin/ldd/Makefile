@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.52.1 2009/01/16 22:21:30 bouyer Exp $
+#	$NetBSD: Makefile,v 1.7.52.1.4.1 2009/09/05 03:39:26 matt Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -16,7 +16,9 @@ EXTRA_LIBS+=	${LIB_ELF32DIR}/libldd_elf32.a
 .endif
 
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64")
+    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64") || \
+    ((${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el") \
+     && ${CPUFLAGS:-mabi=64} != "")
 LIB_ELF64DIR!=	cd ${.CURDIR}/elf64 && ${PRINTOBJDIR}
 EXTRA_LIBS+=	${LIB_ELF64DIR}/libldd_elf64.a
 CPPFLAGS.ldd.c= -DELFSIZE=64
