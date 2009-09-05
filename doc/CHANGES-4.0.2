@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.55 2009/09/05 13:38:55 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.56 2009/09/05 13:46:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -834,4 +834,10 @@ external/bsd/pkg_install/dist/lib/version.h      1.1.1.17
 	- invert order of pkg_info -r to better match the expectations of
 	  make update.' external/bsd/pkg_install
 	[joerg, ticket #1346]
+
+sys/kern/kern_exec.c				1.149 via patch
+
+	Fix ktrace of data from iovec based system calls.
+	Fixes PR/41819
+	[dsl, ticket #1352]
 
