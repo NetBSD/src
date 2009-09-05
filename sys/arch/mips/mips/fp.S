@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.5 2009/09/02 13:00:39 uebayasi Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.6 2009/09/05 03:24:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 #ifdef SOFTFLOAT
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	FPX_L	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_L	a2, U_PCB_FPREGS+FRAME_FSR(t0)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
@@ -727,7 +727,7 @@ cfromc1:
 	move	v0, zero
 	bne	t1, t2, cfinvalid
 
-	FPX_L	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_L	v0, U_PCB_FPREGS+FRAME_FSR(t0)
 
 cfinvalid:
 
@@ -759,7 +759,7 @@ ctoc1:
 	REG_EPILOGUE
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_S	v0, U_PCB_FPREGS+FRAME_FSR(t0)
 
 	b	done
 
@@ -1316,7 +1316,7 @@ div_s:
 #ifdef SOFTFLOAT
 	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1396,7 +1396,7 @@ div_d:
 #ifdef SOFTFLOAT
 	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2014,7 +2014,7 @@ inexact_w:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2126,7 +2126,7 @@ set_cond:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2149,7 +2149,7 @@ unordered:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2266,7 +2266,7 @@ inexact_nobias_s:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2387,7 +2387,7 @@ underflow_s:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2528,7 +2528,7 @@ inexact_nobias_d:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2671,7 +2671,7 @@ underflow_d:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2688,7 +2688,7 @@ invalid_s:					# trap invalid operation
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2709,7 +2709,7 @@ invalid_d:					# trap invalid operation
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2731,7 +2731,7 @@ invalid_w:					# trap invalid operation
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2749,7 +2749,7 @@ fpe_trap:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
@@ -2762,7 +2762,7 @@ fpe_trap:
 
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #endif
 	REG_L	a1, CALLFRAME_SIZ + 1*SZREG(sp)	# frame
 	REG_L	a2, CALLFRAME_SIZ + 2*SZREG(sp)	# cause
@@ -2777,7 +2777,7 @@ ill:
 #ifdef SOFTFLOAT
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	FPX_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
