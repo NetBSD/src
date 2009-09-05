@@ -1,4 +1,4 @@
-.\"	$NetBSD: boothowto.9,v 1.1 2009/09/04 23:23:05 apb Exp $
+.\"	$NetBSD: boothowto.9,v 1.2 2009/09/05 11:32:36 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .In sys/reboot.h
 .In sys/systm.h
-.Vt extern int boothowto
+.Vt extern int boothowto;
 .In sys/boot_flag.h
 .Vt #define BOOT_FLAG(arg, retval) ...
 .Sh DESCRIPTION
@@ -53,11 +53,10 @@ symbols in
 .In sys/reboot.h .
 .Pp
 The
-.Sy BOOT_FLAG
+.Dv BOOT_FLAG
 macro defined in
 .In sys/boot_flag.h
-is used by many boot loaders to convert command line options
-into
+is used by many boot loaders to convert command line options into
 .Va boothowto
 flags.
 Note that not all boot loaders use this macro, and some boot loaders
@@ -74,7 +73,7 @@ its symbolic name,
 the corresponding numeric value defined in
 .In sys/reboot.h ,
 and the option letter (if any) understood by the
-.Sy BOOT_FLAG
+.Dv BOOT_FLAG
 macro.
 .
 .Ss Flags that affect booting or shutting down
@@ -121,7 +120,7 @@ and
 .Xr cpu_reboot 9 ) .
 .It
 Devices will not be detached (see
-.Xr autoconfig 9 ) .
+.Xr autoconf 9 ) .
 .\" actually, see config_detach_all, but that is undocumented
 .It
 File systems will not be unmounted (see
@@ -151,7 +150,7 @@ See
 .Xr ddb 4 ,
 .Xs "options KGDB"
 in
-.Xr options 7 ,
+.Xr options 4 ,
 .\" the kgdb_* functions are undocumented
 and
 .Xr ipkdb 9 .
@@ -249,17 +248,27 @@ This flag is currently not used by any ports.
 .El
 .
 .Sh SEE ALSO
-.Xr reboot 2 ,       \" sets boothowto
-.Xr ddb 4 ,          \" RB_KDB
-.Xr userconf 4 ,     \" RB_USERCONF
-.Xr boot 8 ,         \" sets boothowto
+.\" sets boothowto
+.Xr reboot 2 ,
+.\" RB_KDB
+.Xr ddb 4 ,
+.\" RB_USERCONF
+.Xr userconf 4 ,
+.\" sets boothowto
+.Xr boot 8 ,
 .\" .Xr crash 8 ,
-.Xr init 8 ,         \" RB_SINGLE, RB_INITNAME
-.Xr reboot 8 ,       \" reboot/poweroff/halt calls reboot(2)
-.Xr savecore 8 ,     \" useful after RB_DUMP
-.Xr sync 8 ,         \" RB_NOSYNC
-.Xr cpu_reboot 9 ,   \" RB_NOSYNC, RB_HALT, RB_DUMP
-.Xr kprintf 9        \" aprint_*() functions use AB_* flags
+.\" RB_SINGLE, RB_INITNAME
+.Xr init 8 ,
+.\" reboot/poweroff/halt calls reboot(2)
+.Xr reboot 8 ,
+.\" useful after RB_DUMP
+.Xr savecore 8 ,
+.\" RB_NOSYNC
+.Xr sync 8 ,
+.\" RB_NOSYNC, RB_HALT, RB_DUMP
+.Xr cpu_reboot 9 ,
+.\" aprint_*() functions use AB_* flags
+.Xr kprintf 9
 .Sh HISTORY
 The
 .Va boothowto
