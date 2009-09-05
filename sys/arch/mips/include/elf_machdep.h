@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.96.5 2009/08/23 03:40:14 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.96.6 2009/09/05 03:15:08 matt Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
@@ -142,16 +142,16 @@
 #define	EF_MIPS_ARCH_MDMX	0x08000000	/* MDMX multimedia extension */
 #define	EF_MIPS_ARCH_M16	0x04000000	/* MIPS-16 ISA extensions */
 
-#define	EF_MIPS_ARCH		0x0f000000	/* Architecture field */
+#define	EF_MIPS_ARCH		0xf0000000	/* Architecture field */
 #define	EF_MIPS_ARCH_1		0x00000000	/* -mips1 code */
-#define	EF_MIPS_ARCH_2		0x01000000	/* -mips2 code */
-#define	EF_MIPS_ARCH_3		0x02000000	/* -mips3 code */
-#define	EF_MIPS_ARCH_4		0x03000000	/* -mips4 code */
-#define	EF_MIPS_ARCH_5		0x04000000	/* -mips5 code */
-#define	EF_MIPS_ARCH_32		0x05000000	/* -mips32 code */
-#define	EF_MIPS_ARCH_64		0x06000000	/* -mips64 code */
-#define	EF_MIPS_ARCH_32R2	0x07000000	/* -mips32r2 code */
-#define	EF_MIPS_ARCH_64R4	0x08000000	/* -mips64r2 code */
+#define	EF_MIPS_ARCH_2		0x10000000	/* -mips2 code */
+#define	EF_MIPS_ARCH_3		0x20000000	/* -mips3 code */
+#define	EF_MIPS_ARCH_4		0x30000000	/* -mips4 code */
+#define	EF_MIPS_ARCH_5		0x40000000	/* -mips5 code */
+#define	EF_MIPS_ARCH_32		0x50000000	/* -mips32 code */
+#define	EF_MIPS_ARCH_64		0x60000000	/* -mips64 code */
+#define	EF_MIPS_ARCH_32R2	0x70000000	/* -mips32r2 code */
+#define	EF_MIPS_ARCH_64R4	0x80000000	/* -mips64r2 code */
 
 #define	EF_MIPS_ABI		0x0000f000
 #define	EF_MIPS_ABI_O32		0x00001000
