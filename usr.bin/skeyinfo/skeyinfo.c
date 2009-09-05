@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinfo.c,v 1.5 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: skeyinfo.c,v 1.6 2009/09/05 06:13:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skeyinfo.c,v 1.5 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: skeyinfo.c,v 1.6 2009/09/05 06:13:34 dholland Exp $");
 #endif
 
 #include <stdio.h>
 #include <pwd.h>
 #include <err.h>
+#include <errno.h>
 #include <skey.h>
 #include <string.h>
 #include <unistd.h>
@@ -57,7 +58,7 @@ main(argc, argv)
 	argv++;
 
 	if (geteuid())
-		errx(1, "must be root to read /etc/skeykeys");
+		errx(1, "Must be root to read /etc/skeykeys");
 
 	uid = getuid();
 
@@ -65,14 +66,16 @@ main(argc, argv)
 		pw = getpwuid(uid);
 	else if (!uid)
 		pw = getpwnam(argv[0]);
-	else
-		errx(1, "permission denied to look other users skeys");
+	else {
+		errno = EPERM;
+		err(1, "%s", argv[0]);
+	}
 
 	if (!pw) {
 		if (argc)
 			errx(1, "%s: no such user", argv[0]);
 		else
-			errx(1, "who are you?");
+			errx(1, "Who are you?");
 	}
 
 	(void) strlcpy(name, pw->pw_name, sizeof(name));
