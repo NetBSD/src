@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.232.2.2 2006/12/30 05:22:43 riz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.232.2.3 2009/09/05 13:45:43 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.232.2.2 2006/12/30 05:22:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.232.2.3 2009/09/05 13:45:43 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -518,7 +518,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			cp = *tmpfap;
 			while (*cp)
 				*dp++ = *cp++;
-			dp++;
+			*dp++ = 0;
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_EXEC_ARG))
+				ktrkmem(l, KTR_EXEC_ARG, *tmpfap, cp - *tmpfap);
+#endif
 
 			FREE(*tmpfap, M_EXEC);
 			tmpfap++; argc++;
