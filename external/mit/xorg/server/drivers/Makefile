@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2009/08/27 04:35:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2009/09/05 22:35:53 macallan Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -40,6 +40,7 @@ SUBDIR+= \
 	xf86-video-radeon \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
+	xf86-video-sunleo \
 	xf86-video-wsfb
 .if ${MACHINE} == "sparc"
 SUBDIR+= \
