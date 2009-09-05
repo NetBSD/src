@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.65 2009/09/05 13:18:04 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.66 2009/09/05 16:23:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2338,7 +2338,7 @@ sys/netinet/if_arp.c				1.146
 sbin/fsck_ext2fs/main.c				1.33
 
 	Ignore the "-P" option as intended to make this work with e.g.
-	"fsck_flags=3D-pP" in "/etc/rc.conf".
+	"fsck_flags=-pP" in "/etc/rc.conf".
 	Patch supplied by Pierre Pronchery in PR bin/41490.
 	[tron, ticket #914]
 
