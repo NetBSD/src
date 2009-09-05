@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.3 2009/08/30 10:01:03 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.4 2009/09/05 03:18:49 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -483,7 +483,7 @@ struct kernframe {
 #endif
 #endif
 #if defined(__mips_n32) || defined(__mips_n64)
-	register_t cf_pad;
+	register_t cf_pad[2];		/* for 16 byte alignment */
 #endif
 	register_t cf_sp;
 	register_t cf_ra;
