@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.140 2009/05/05 21:34:13 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.141 2009/09/05 14:09:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.140 2009/05/05 21:34:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.141 2009/09/05 14:09:55 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1369,10 +1369,10 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* SIP_EVENT_COUNTERS */
 
-	if (!pmf_device_register(self, sipcom_suspend, sipcom_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, sipcom_suspend, sipcom_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.31 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.32 2009/09/05 14:09:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.31 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.32 2009/09/05 14:09:55 tsutsui Exp $");
 
 
 /*
@@ -408,10 +408,10 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	if (!pmf_device_register(self, NULL, iwn_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, iwn_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	iwn_radiotap_attach(sc);
 
