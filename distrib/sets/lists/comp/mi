@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1301 2009/09/04 23:23:05 apb Exp $
+#	$NetBSD: mi,v 1.1302 2009/09/05 08:55:40 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19055,7 +19055,7 @@
 ./usr/share/man/man8/cvsbug.8			comp-cvs-man		cvs,.man
 ./usr/share/man/man8/genassym.8			comp-obsolete		obsolete
 ./usr/share/man/man8/kgmon.8			comp-sysutil-man	.man
-./usr/share/man/man9/BOOT_FLAGS.9		comp-sys-man		.man
+./usr/share/man/man9/BOOT_FLAG.9		comp-sys-man		.man
 ./usr/share/man/man9/CALLOUT_INITIALIZER.9	comp-obsolete		obsolete
 ./usr/share/man/man9/CALLOUT_INITIALIZER_SETFUNC.9	comp-obsolete		obsolete
 ./usr/share/man/man9/CARDBUS_PRODUCT.9		comp-sys-man		.man
