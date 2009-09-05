@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.25 2009/09/05 12:39:25 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.26 2009/09/05 12:43:56 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.25 2009/09/05 12:39:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.26 2009/09/05 12:43:56 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -78,7 +78,7 @@ ahd_attach(struct ahd_softc *ahd)
 	char	ahd_info[256];
 
 	ahd_controller_info(ahd, ahd_info, sizeof(ahd_info));
-	printf("%s: %s\n", device_xname(&ahd->sc_dev), ahd_info);
+	printf("%s: %s\n", ahd_name(ahd), ahd_info);
 
 	ahd_lock(ahd, &s);
 
@@ -100,7 +100,7 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_channel.chan_id = ahd->our_id;
 	ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
-	ahd->sc_child = config_found((void *)ahd, &ahd->sc_channel, scsiprint);
+	ahd->sc_child = config_found(&ahd->sc_dev, &ahd->sc_channel, scsiprint);
 
 	ahd_intr_enable(ahd, TRUE);
 
@@ -808,7 +808,7 @@ ahd_detach(device_t self, int flags)
 	struct ahd_softc *ahd = (struct ahd_softc*)self;
 
 	if (ahd->sc_child != NULL)
-		rv = config_detach((void *)ahd->sc_child, flags);
+		rv = config_detach(ahd->sc_child, flags);
 
 	pmf_device_deregister(&ahd->sc_dev);
 
