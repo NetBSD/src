@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.24 2009/09/02 17:11:26 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.25 2009/09/05 12:39:25 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.24 2009/09/02 17:11:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.25 2009/09/05 12:39:25 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -181,7 +181,7 @@ ahd_platform_intr(void *arg)
 {
 	struct	ahd_softc *ahd;
 
-	ahd = (struct ahd_softc *)arg;
+	ahd = arg;
 
 	printf("%s; ahd_platform_intr\n", ahd_name(ahd));
 
@@ -532,7 +532,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	u_int  mask;
 	int    s;
 
-	scb = (struct scb*)arg;
+	scb = arg;
 	xs = scb->xs;
 	xs->error = 0;
 	xs->status = 0;
@@ -669,7 +669,7 @@ ahd_poll(struct ahd_softc *ahd, int wait)
 		return (EIO);
 	}
 
-	ahd_intr((void *)ahd);
+	ahd_intr(ahd);
 	return (0);
 }
 
@@ -739,8 +739,8 @@ ahd_timeout(void *arg)
 	ahd_mode_state	   saved_modes;
 	int		   s;
 
-	scb = (struct scb *)arg;
-	ahd = (struct ahd_softc *)scb->ahd_softc;
+	scb = arg;
+	ahd = scb->ahd_softc;
 
 	printf("%s: ahd_timeout\n", ahd_name(ahd));
 

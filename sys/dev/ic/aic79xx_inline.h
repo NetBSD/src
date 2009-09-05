@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.19 2009/09/05 12:39:25 tsutsui Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -881,7 +881,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 static __inline int
 ahd_intr(void *arg)
 {
-	struct ahd_softc *ahd = (struct ahd_softc*)arg;
+	struct ahd_softc *ahd = arg;
 	u_int	intstat;
 
 	if ((ahd->pause & INTEN) == 0) {
