@@ -282,8 +282,7 @@ isaccessible (const char *file, const int mode)
 	omask |= S_IXOTH;
     }
 
-    mask = sb.st_uid == uid ? umask : sb.st_gid == ingroup(sb.st_gid) ?
-	gmask : omask;
+    mask = sb.st_uid == uid ? umask : ingroup(sb.st_gid) ? gmask : omask;
     if ((sb.st_mode & mask) == mask)
 	return true;
     errno = EACCES;
