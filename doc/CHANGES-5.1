@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.64 2009/09/05 11:46:29 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.65 2009/09/05 13:18:04 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2341,4 +2341,66 @@ sbin/fsck_ext2fs/main.c				1.33
 	"fsck_flags=3D-pP" in "/etc/rc.conf".
 	Patch supplied by Pierre Pronchery in PR bin/41490.
 	[tron, ticket #914]
+
+lib/libevent/Makefile				1.7, 1.8
+lib/libevent/event.h				1.7
+
+	Matthias Drochner pointed out that I lost the _EVENT_ prefix from all
+	the autoconf defines in the installed event_config.h.
+	Fix this approximately as the stock libevent Makefile does.
+	Also, some applications written for newer libevent 
+	want event.h to pull in event_config.h by magic.
+	[tls, ticket #920]
+
+lib/libpthread/pthread_cancelstub.c		1.27 via patch
+lib/libpthread/pthread_misc.c			1.14 via patch
+
+	Make nanosleep cancelable again.
+	[enami, ticket #921]
+
+sys/dev/usb/if_cdce.c				1.22
+
+	Add support for the Openmoko Freerunner to cdce(4) ported from FreeBSD.
+	The patch was supplied by Pierre Pronchery in PR kern/40049.
+	[tron, ticket #922]
+
+distrib/utils/sysinst/disks.c			1.106
+
+	PR# install/41925: sysinst find_disks() should display more than just
+	the device name
+	Try ATA/SCSI identify commands and when successful, use the model
+	information along with the disk size when creating the
+	'Available disks' menu.
+	[jmcneill, ticket #924]
+
+usr.bin/newsyslog/newsyslog.c			1.59
+
+	Reset ziptype on each line. Failure to do this caused any log file to
+	be compressed if it was listed after a line using Z or J flag.
+	[manu, ticket #925]
+
+sys/kern/subr_tftproot.c			1.9, 1.10
+
+	When netbooting, rootspec is now "md0a", and it has no chance to match
+	an interface name, so look for bootdv if looking for rootspec
+	didn't work.
+	[manu, ticket #929]
+
+usr.bin/netstat/netstat.1			1.52
+
+	Fix typo
+	[dholland, ticket #933]
+
+usr.bin/chflags/chflags.1			1.18
+
+	Add some markup to improve clarity.
+	[dholland, ticket #934]
+
+sys/dev/acpi/pckbc_acpi.c			1.32
+
+	PR# port-i386/39671: panic while booting with an acpi kernel on a
+	790GX board
+	If the firmware describes duplicate keyboard controller nodes,
+	don't panic when the driver fails to map registers.
+	[jmcneill, ticket #939]
 
