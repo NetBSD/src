@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.289 2009/09/04 23:23:04 apb Exp $
+#       $NetBSD: Makefile,v 1.290 2009/09/05 08:55:41 apb Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -58,7 +58,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
 MAN+=	boothowto.9
-MLINKS+=boothowto.9 BOOT_FLAGS.9
+MLINKS+=boothowto.9 BOOT_FLAG.9
 
 MAN+=	dmover.9
 MLINKS+=dmover.9 dmover_backend_register.9 \
