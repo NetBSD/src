@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.26 2009/09/05 09:16:18 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.27 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -109,18 +109,12 @@ typedef size_t length_t;
 
 /* A record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.
- * In order to use (s)radixsort, the array of pointers often points
- * to the data field (and sometimes not the first byte even!).
- * This means the code has to 'back up' by the correct number of bytes
- * in order to get the actual header.
  */
 typedef struct recheader {
 	length_t length;
 	length_t offset;
 	u_char data[1];
 } RECHEADER;
-
-#define REC_DATA_OFFSET offsetof(RECHEADER, data)
 
 /* This is the column as seen by struct field.  It is used by enterfield.
  * They are matched with corresponding coldescs during initialization.
@@ -162,7 +156,7 @@ struct filelist {
 
 typedef int (*get_func_t)(int, int, struct filelist *, int,
 		RECHEADER *, u_char *, struct field *);
-typedef void (*put_func_t)(const struct recheader *, FILE *);
+typedef void (*put_func_t)(const RECHEADER *, FILE *);
 
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
 extern u_char *const weight_tables[4];   /* ascii, Rascii, Ftable, RFtable */
@@ -177,7 +171,7 @@ extern int ncols;
 #define DEBUG(ch) (debug_flags & (1 << ((ch) & 31)))
 extern unsigned int debug_flags;
 
-void	 append(const u_char **, int, FILE *,
+void	 append(const RECHEADER **, int, FILE *,
 	    void (*)(const RECHEADER *, FILE *), u_char *);
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
@@ -199,6 +193,6 @@ void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
 void	 putkeydump(const RECHEADER *, FILE *);
 void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
-int	 radix_sort(const u_char **, int, const u_char *, u_int);
+int	 radix_sort(const RECHEADER **, const RECHEADER **, int, const u_char *, u_int);
 int	 setfield(const char *, struct field *, int);
 void	 settables(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.39 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.40 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,16 +72,12 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.39 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.40 2009/09/05 12:00:25 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
-
-static const u_char **keylist = 0;
-u_char *buffer = 0;
-size_t bufsize = DEFBUFSIZE;
 
 struct tempfile fstack[MAXFCT];
 
@@ -90,21 +86,24 @@ struct tempfile fstack[MAXFCT];
 void
 fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 {
-	const u_char **keypos, **keyp;
+	const RECHEADER **keylist;
+	const RECHEADER **keypos, **keyp;
+	RECHEADER *buffer;
+	size_t bufsize = DEFBUFSIZE;
 	u_char *bufend;
 	int mfct = 0;
 	int c, nelem;
 	get_func_t get;
-	struct recheader *crec;
-	u_char *nbuffer;
+	RECHEADER *crec;
+	RECHEADER *nbuffer;
 	FILE *fp;
 
-	if (!buffer) {
-		buffer = malloc(bufsize);
-		keylist = malloc(MAXNUM * sizeof(u_char *));
-		memset(keylist, 0, MAXNUM * sizeof(u_char *));
-	}
-	bufend = buffer + bufsize;
+	buffer = malloc(bufsize);
+	bufend = (u_char *)buffer + bufsize;
+	/* Allocate double length keymap for radix_sort */
+	keylist = malloc(2 * MAXNUM * sizeof(*keylist));
+	if (buffer == NULL || keylist == NULL)
+		err(2, "failed to malloc initial buffer or keylist");
 
 	if (SINGL_FLD)
 		/* Key and data are one! */
@@ -118,7 +117,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 	for (;;) {
 		keypos = keylist;
 		nelem = 0;
-		crec = (RECHEADER *) buffer;
+		crec = buffer;
 
 		/* Loop reading records */
 		for (;;) {
@@ -126,13 +125,12 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 			/* 'c' is 0, EOF or BUFFEND */
 			if (c == 0) {
 				/* Save start of key in input buffer */
-				*keypos++ = crec->data;
+				*keypos++ = crec;
 				if (++nelem == MAXNUM) {
 					c = BUFFEND;
 					break;
 				}
-				crec = (RECHEADER *)((char *) crec +
-				    SALIGN(crec->length) + REC_DATA_OFFSET);
+				crec = (RECHEADER *)(crec->data + SALIGN(crec->length));
 				continue;
 			}
 			if (c == EOF)
@@ -154,18 +152,18 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 			for (keyp = &keypos[-1]; keyp >= keylist; keyp--)
 				*keyp = nbuffer + (*keyp - buffer);
 
-			crec = (RECHEADER *) (nbuffer + ((u_char *)crec - buffer));
+			crec = nbuffer + (crec - buffer);
 			buffer = nbuffer;
-			bufend = buffer + bufsize;
+			bufend = (u_char *)buffer + bufsize;
 		}
 
 		/* Sort this set of records */
 		if (SINGL_FLD) {
-			if (radix_sort(keylist, nelem, ftbl[0].weights, REC_D))
-				err(2, "single field radix_sort");
+			nelem = radix_sort(keylist, keylist + MAXNUM, nelem,
+			    ftbl[0].weights, REC_D);
 		} else {
-			if (radix_sort(keylist, nelem, unweighted, 0))
-				err(2, "unweighted radix_sort");
+			nelem = radix_sort(keylist, keylist + MAXNUM, nelem,
+			    unweighted, 0);
 		}
 
 		if (c == EOF && mfct == 0) {
