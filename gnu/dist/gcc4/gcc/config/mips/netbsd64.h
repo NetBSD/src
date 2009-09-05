@@ -19,6 +19,12 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* Force the default endianness and ABI flags onto the command line
+   in order to make the other specs easier to write.  */
+
+#define DRIVER_SELF_SPECS \
+"%{!EB:%{!EL:%(endian_spec)}}", \
+"%{!mabi=*: -mabi=n32}"
 
 /* Define default target values.  */
 
@@ -35,20 +41,13 @@ Boston, MA 02110-1301, USA.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{EL:\
-	%{!mabi=*:-m elf32ltsmipn32} \
-	%{mabi=64:-m elf64ltsmip} \
-	%{mabi=32:-m elf32ltsmip} \
-	%{mabi=o64:-m elf64ltsmip} \
-	%{mabi=n32:-m elf32ltsmipn32}} \
-   %{EB:\
-	%{!mabi=*:-m elf32btsmipn32} \
-	%{mabi=64:-m elf64btsmip} \
-	%{mabi=32:-m elf32btsmip} \
-	%{mabi=o64:-m elf64btsmip} \
-	%{mabi=n32:-m elf32btsmipn32}} \
+  "%{mabi=64:-m elf64%{EB:b}%{EL:l}tsmip} \
+   %{mabi=32:-m elf32%{EB:b}%{EL:l}tsmip} \
+   %{mabi=o64:-m elf64%{EB:b}%{EL:l}tsmip} \
+   %{mabi=n32:-m elf32%{EB:b}%{EL:l}tsmipn32} \
    %(endian_spec) \
-   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} %{mips64} \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} \
+   %{mips32} %{mips32r2} %{mips64} %{mips64r2} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
    %(netbsd_link_spec)"
 
