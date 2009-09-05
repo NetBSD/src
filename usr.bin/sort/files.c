@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.35 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.36 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.35 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.36 2009/09/05 12:00:25 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ seq(FILE *fp, u_char **line)
 void
 putrec(const RECHEADER *rec, FILE *fp)
 {
-	EWRITE(rec, 1, rec->length + REC_DATA_OFFSET, fp);
+	EWRITE(rec, 1, offsetof(RECHEADER, data) + rec->length, fp);
 }
 
 /*
@@ -289,7 +289,7 @@ putline(const RECHEADER *rec, FILE *fp)
 void
 putkeydump(const RECHEADER *rec, FILE *fp)
 {
-	EWRITE(rec, 1, rec->offset + REC_DATA_OFFSET, fp);
+	EWRITE(rec, 1, offsetof(RECHEADER, data) + rec->offset, fp);
 }
 
 /*
@@ -303,15 +303,15 @@ geteasy(int flno, int top, struct filelist *filelist, int nfiles,
 	FILE *fp;
 
 	fp = fstack[flno].fp;
-	if ((u_char *) rec > end - REC_DATA_OFFSET)
+	if ((u_char *)(rec + 1) > end)
 		return (BUFFEND);
-	if (!fread(rec, 1, REC_DATA_OFFSET, fp)) {
+	if (!fread(rec, 1, offsetof(RECHEADER, data), fp)) {
 		fclose(fp);
 		fstack[flno].fp = 0;
 		return (EOF);
 	}
 	if (end - rec->data < (ptrdiff_t)rec->length) {
-		for (i = REC_DATA_OFFSET - 1; i >= 0;  i--)
+		for (i = offsetof(RECHEADER, data) - 1; i >= 0;  i--)
 			ungetc(*((char *) rec + i), fp);
 		return (BUFFEND);
 	}

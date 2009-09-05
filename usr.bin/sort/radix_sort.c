@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_sort.c,v 1.1 2009/09/05 09:16:18 dsl Exp $	*/
+/*	$NetBSD: radix_sort.c,v 1.2 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radix_sort.c,v 1.1 2009/09/05 09:16:18 dsl Exp $");
+__RCSID("$NetBSD: radix_sort.c,v 1.2 2009/09/05 12:00:25 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,60 +52,49 @@ __RCSID("$NetBSD: radix_sort.c,v 1.1 2009/09/05 09:16:18 dsl Exp $");
 #include "sort.h"
 
 typedef struct {
-	const u_char **sa;
-	int sn, si;
+	const RECHEADER **sa;	/* Base of saved area */
+	int sn;				/* Number of entries */
+	int si;				/* index into data for compare */
 } stack;
 
-static inline void simplesort(const u_char **, int, int, const u_char *, u_int);
-static void r_sort_b(const u_char **,
-	    const u_char **, int, int, const u_char *, u_int);
+static inline int simplesort(const RECHEADER **, int, int, const u_char *, u_int);
+static int r_sort_b(const RECHEADER **,
+	    const RECHEADER **, int, int, const u_char *, u_int);
 
 #define	THRESHOLD	20		/* Divert to simplesort(). */
 #define	SIZE		512		/* Default stack size. */
-
-int
-radix_sort(const u_char **a, int n, const u_char *tab, u_int endch)
-{
-	const u_char **ta;
-
-	endch = tab[endch];
-	if (n < THRESHOLD)
-		simplesort(a, n, 0, tab, endch);
-	else {
-		if ((ta = malloc(n * sizeof(a))) == NULL)
-			return (-1);
-		r_sort_b(a, ta, n, 0, tab, endch);
-		free(ta);
-	}
-	return (0);
-}
 
 #define empty(s)	(s >= sp)
 #define pop(a, n, i)	a = (--sp)->sa, n = sp->sn, i = sp->si
 #define push(a, n, i)	sp->sa = a, sp->sn = n, (sp++)->si = i
 #define swap(a, b, t)	t = a, a = b, b = t
 
-/* Stable sort, requiring additional memory. */
-static void
-r_sort_b(const u_char **a, const u_char **ta, int n, int i, const u_char *tr,
-    u_int endch)
+int
+radix_sort(const RECHEADER **a, const RECHEADER **ta, int n, const u_char *tab, u_int endch)
+{
+	endch = tab[endch];
+	if (n < THRESHOLD && !DEBUG('r')) {
+		return simplesort(a, n, 0, tab, endch);
+	}
+	return r_sort_b(a, ta, n, 0, tab, endch);
+}
+
+static int
+r_sort_b(const RECHEADER **a, const RECHEADER **ta, int n, int i, const u_char *tr, u_int endch)
 {
 	static u_int count[256], nc, bmin;
 	u_int c;
-	const u_char **ak, **ai;
+	const RECHEADER **ak, **ai;
 	stack s[512], *sp, *sp0, *sp1, temp;
-	const u_char **top[256];
+	const RECHEADER **top[256];
 	u_int *cp, bigc;
-
-	_DIAGASSERT(a != NULL);
-	_DIAGASSERT(ta != NULL);
-	_DIAGASSERT(tr != NULL);
+	int nrec = n;
 
 	sp = s;
 	push(a, n, i);
 	while (!empty(s)) {
 		pop(a, n, i);
-		if (n < THRESHOLD) {
+		if (n < THRESHOLD && !DEBUG('r')) {
 			simplesort(a, n, i, tr, endch);
 			continue;
 		}
@@ -113,7 +102,7 @@ r_sort_b(const u_char **a, const u_char **ta, int n, int i, const u_char *tr,
 		if (nc == 0) {
 			bmin = 255;
 			for (ak = a + n; --ak >= a;) {
-				c = tr[(*ak)[i]];
+				c = tr[(*ak)->data[i]];
 				if (++count[c] == 1 && c != endch) {
 					if (c < bmin)
 						bmin = c;
@@ -155,28 +144,37 @@ r_sort_b(const u_char **a, const u_char **ta, int n, int i, const u_char *tr,
 		for (ak = ta + n, ai = a+n; ak > ta;)	/* Copy to temp. */
 			*--ak = *--ai;
 		for (ak = ta+n; --ak >= ta;)		/* Deal to piles. */
-			*--top[tr[(*ak)[i]]] = *ak;
+			*--top[tr[(*ak)->data[i]]] = *ak;
 	}
+
+	return nrec;
 }
 
 /* insertion sort */
-static inline void
-simplesort(const u_char **a, int n, int b, const u_char *tr, u_int endch)
+static inline int
+simplesort(const RECHEADER **a, int n, int b, const u_char *tr, u_int endch)
 {
+	const RECHEADER **ak, **ai, *tmp;
+	const RECHEADER **lim = a + n;
+	const u_char *s, *t;
 	u_char ch;
-	const u_char  **ak, **ai, *s, *t;
 
-	_DIAGASSERT(a != NULL);
-	_DIAGASSERT(tr != NULL);
+	if (n <= 1)
+		return n;
 
-	for (ak = a+1; --n >= 1; ak++)
+	for (ak = a+1; ak < lim; ak++) {
 		for (ai = ak; ai > a; ai--) {
-			for (s = ai[0] + b, t = ai[-1] + b;
+			for (s = ai[0]->data + b, t = ai[-1]->data + b;
 			    (ch = tr[*s]) != endch; s++, t++)
 				if (ch != tr[*t])
 					break;
-			if (ch >= tr[*t])
+			if (ch >= tr[*t]) {
+
 				break;
-			swap(ai[0], ai[-1], s);
+			}
+			swap(ai[0], ai[-1], tmp);
 		}
+	}
+
+	return n;
 }
