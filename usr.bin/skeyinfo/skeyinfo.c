@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinfo.c,v 1.6 2009/09/05 06:13:34 dholland Exp $	*/
+/*	$NetBSD: skeyinfo.c,v 1.7 2009/09/05 06:15:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,23 +31,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skeyinfo.c,v 1.6 2009/09/05 06:13:34 dholland Exp $");
+__RCSID("$NetBSD: skeyinfo.c,v 1.7 2009/09/05 06:15:24 dholland Exp $");
 #endif
 
-#include <stdio.h>
-#include <pwd.h>
 #include <err.h>
 #include <errno.h>
-#include <skey.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-int main __P((int, char *[]));
+#include <skey.h> /* requires stdio.h */
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	struct skey     skey;
 	char            name[100], prompt[1024];
