@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.3 2009/08/21 13:04:55 uebayasi Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.4 2009/09/05 18:52:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,18 +48,8 @@
 #else
 #define	SYNC		/* nothing */
 #define	BDSYNC		nop
-#endif	/* MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR) */
+#endif /* MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR) */
 
-STRONG_ALIAS(mb_read, mb_memory)
-STRONG_ALIAS(mb_write, mb_memory)
-
-/*
- * void mb_memory(void);
- */
-LEAF(mb_memory)
-	j	ra
-	 BDSYNC
-END(mb_memory)
 
 #if MIPS_HAS_LLSC != 0
 
