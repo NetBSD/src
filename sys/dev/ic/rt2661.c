@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.25 2008/11/07 00:20:03 dyoung Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.26 2009/09/05 14:19:30 tsutsui Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.25 2008/11/07 00:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.26 2009/09/05 14:19:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -368,10 +368,11 @@ rt2661_attach(void *xsc, int id)
 
 	ieee80211_announce(ic);
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(&sc->sc_dev, NULL, NULL))
 		pmf_class_network_register(&sc->sc_dev, ifp);
+	else
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	return 0;
 
