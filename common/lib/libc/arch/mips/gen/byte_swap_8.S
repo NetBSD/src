@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_8.S,v 1.1.2.2 2009/08/30 23:27:35 matt Exp $	*/
+/*	$NetBSD: byte_swap_8.S,v 1.1.2.3 2009/09/05 18:46:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,20 +35,14 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: byte_swap_8.S,v 1.1.2.2 2009/08/30 23:27:35 matt Exp $")
+	RCSID("$NetBSD: byte_swap_8.S,v 1.1.2.3 2009/09/05 18:46:37 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #undef _LOCORE
 #define _LOCORE		/* XXX not really, just assembly-code source */
 #include <machine/endian.h>
 
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	BSWAP64_NAME	bswap64
-#else
-#define	BSWAP64_NAME	__bswap64
-#endif
-
-NLEAF(BSWAP64_NAME)	# a0 = 0xffeeddccbbaa9988 return 0x8899aabbccddeeff
+NLEAF(bswap64)	# a0 = 0xffeeddccbbaa9988 return 0x8899aabbccddeeff
 #if (__mips == 32 || __mips == 64) && __mips_isa_rev == 2
 #if !defined(__mips_o32)
 	/*
@@ -121,4 +115,4 @@ NLEAF(BSWAP64_NAME)	# a0 = 0xffeeddccbbaa9988 return 0x8899aabbccddeeff
 	or	v0, ta1, t1		# v0  = 0xbbaa9988
 	j	ra
 #endif /* defined(__mips_o32) */
-END(BSWAP64_NAME)
+END(bswap64)
