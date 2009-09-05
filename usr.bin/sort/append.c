@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.20 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.21 2009/09/05 12:00:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.20 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.21 2009/09/05 12:00:25 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -88,16 +88,16 @@ wt_cmp(const u_char *a, const u_char *b, size_t len, u_char *wts)
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(const u_char **keylist, int nelem, FILE *fp, put_func_t put, u_char *wts)
+append(const RECHEADER **keylist, int nelem, FILE *fp, put_func_t put, u_char *wts)
 {
-	const u_char **cpos, **lastkey;
-	const struct recheader *crec, *prec;
+	const RECHEADER **cpos, **lastkey;
+	const RECHEADER *crec, *prec;
 	size_t plen;
 
 	lastkey = keylist + nelem;
 	if (!UNIQUE || wts == NULL) {
 		for (cpos = keylist; cpos < lastkey; cpos++)
-			put((const RECHEADER *)(*cpos - REC_DATA_OFFSET), fp);
+			put(*cpos, fp);
 		return;
 	}
 
@@ -105,13 +105,13 @@ append(const u_char **keylist, int nelem, FILE *fp, put_func_t put, u_char *wts)
 		return;
 
 	cpos = keylist;
-	prec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+	prec = *cpos;
 
 	if (!SINGL_FLD) {
 		/* Key for each line is already in adjacent bytes */
 		plen = prec->offset;
 		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+			crec = *cpos;
 			if (crec->offset == plen
 			    && memcmp(crec->data, prec->data, plen) == 0) {
 				/* Duplicate key */
@@ -130,7 +130,7 @@ append(const u_char **keylist, int nelem, FILE *fp, put_func_t put, u_char *wts)
 	/* Key for each line is already in adjacent bytes */
 	plen = prec->length;
 	for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-		crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+		crec = *cpos;
 		if (crec->length == plen
 		    && wt_cmp(crec->data, prec->data, plen, wts) == 0) {
 			/* Duplicate key */
