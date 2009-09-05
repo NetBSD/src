@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2008/09/18 12:20:19 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.13.10.1 2009/09/05 03:51:16 matt Exp $
 
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
@@ -18,7 +18,7 @@ CPPFLAGS+=	-I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
 # This is copied from gcc/mklibgcc.in:$lib2funcs
 LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
-        _cmpdi2 _ucmpdi2 _floatdidf _floatdisf _fixunsdfsi _fixunssfsi \
+        _cmpdi2 _ucmpdi2 _floatdidf _floatdisf \
         _fixunsdfdi _fixdfdi _fixunssfdi _fixsfdi _fixxfdi _fixunsxfdi \
         _floatdixf _fixunsxfsi _fixtfdi _fixunstfdi _floatditf _clear_cache \
         _enable_execute_stack _trampoline __main _absvsi2 _absvdi2 _addvsi3 \
@@ -26,6 +26,10 @@ LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
         _ffssi2 _ffsdi2 _clz _clzsi2 _clzdi2 _ctzsi2 _ctzdi2 _popcount_tab \
         _popcountsi2 _popcountdi2 _paritysi2 _paritydi2 _powisf2 _powidf2 \
         _powixf2 _powitf2 \
+
+.if ${MKSOFTFLOAT} == "no"
+LIB2FUNCS_ALL+=	_fixunssfsi _fixunsdfsi
+.endif
 
 .if ${MACHINE_ARCH} != "vax"
 LIB2FUNCS_ALL+=	\
