@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.25 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.25.24.1 2009/09/05 11:34:26 bouyer Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25.24.1 2009/09/05 11:34:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,6 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 		    AcpiFormatException(rv));
 		return;
 	}
-
-	acpi_set_wake_gpe(sc->sc_node->ad_handle);
 
 #ifdef ACPI_BUT_DEBUG
 	/* Display the current state when it changes. */
