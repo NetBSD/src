@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.2.6.3 2009/06/21 11:42:52 bouyer Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.2.6.4 2009/09/05 13:37:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -56,7 +56,9 @@ const char *default_acceptable_licenses =
     "artistic artistic-2.0 "
     "cddl-1.0 "
     "cpl-1.0 "
-    "open-font-license ";
+    "open-font-license "
+    "mpl-1.1 "
+    "zpl";
 
 #ifdef DEBUG
 static size_t hash_collisions;
@@ -64,7 +66,8 @@ static size_t hash_collisions;
 
 static char **license_hash[HASH_SIZE];
 static const char license_spaces[] = " \t\n";
-static const char license_chars[] = "abcdefghijklmnopqrstuvwxyz0123456789_-.";
+static const char license_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 
 static size_t
 hash_license(const char *license, size_t len)
