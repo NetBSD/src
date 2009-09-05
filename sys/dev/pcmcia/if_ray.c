@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.75 2009/05/12 14:42:18 cegger Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.76 2009/09/05 14:44:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.75 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.76 2009/09/05 14:44:59 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -602,10 +602,10 @@ ray_attach(device_t parent, device_t self, void *aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;

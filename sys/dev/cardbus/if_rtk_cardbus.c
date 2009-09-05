@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.37 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.38 2009/09/05 14:50:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.37 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.38 2009/09/05 14:50:10 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -246,10 +246,10 @@ rtk_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	rtk_attach(sc);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, &sc->ethercom.ec_if);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Power down the socket.
