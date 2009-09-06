@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.19 2009/08/05 20:15:36 jym Exp $
+#	$NetBSD: XEN3_DOM0,v 1.20 2009/09/06 17:25:56 sborrill Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -668,6 +668,10 @@ opl*	at eso?
 opl*	at fms?
 opl*	at sv?
 opl*	at yds?
+
+# Intel High Definition Audio
+#hdaudio*	at pci? dev ? function ?	# Intel High Definition Audio
+#hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
