@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.14 2009/09/06 18:38:17 pooka Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.15 2009/09/06 20:07:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -623,22 +623,6 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 		 if (errno == ENOENT)
 		         return ENOENT;
 	 }
-
-#ifndef __NetBSD
-	 /*
-	  * This is a compatibility with old /dev/net/nsmb device
-	  */
-	 for (i = 0; i < 1024; i++) {
-	         snprintf(buf, sizeof(buf), "/dev/net/%s%d", NSMB_NAME, i);
-		 fd = open(buf, O_RDWR);
-		 if (fd >= 0) {
-			ctx->ct_fd = fd;
-			return 0;
-		 }
-		 if (errno == ENOENT)
-		         return ENOENT;
-	 }
-#endif
 
 	 return ENOENT;
 }
