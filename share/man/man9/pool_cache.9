@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.9 2009/08/03 22:17:11 wiz Exp $
+.\"	$NetBSD: pool_cache.9,v 1.10 2009/09/06 19:46:24 jym Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -200,10 +200,10 @@ and destructor routines.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_destroy "pc"
 .Pp
-Destroy a pool cache.
+Destroy a pool cache
+.Fa pc .
 All other access to the cache must be stopped before this call
 can be made.
-.Fa pc .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_get_paddr "pc" "flags" "pap"
 .Pp
