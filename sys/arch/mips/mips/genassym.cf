@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.4 2009/09/05 03:22:44 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.5 2009/09/06 23:01:04 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -291,6 +291,7 @@ define	TF_PPL		offsetof(struct trapframe, tf_ppl)
 define	TF_PAD		offsetof(struct trapframe, tf_pad)
 
 define	CTXSWFRAME_SIZ	sizeof(label_t)
+define	SF_REG_GP	offsetof(label_t, val[12])
 define	SF_REG_SR	offsetof(label_t, val[11])
 define	SF_REG_RA	offsetof(label_t, val[10])
 define	SF_REG_S0	offsetof(label_t, val[0])
