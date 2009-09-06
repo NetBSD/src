@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.2 2009/08/21 17:35:43 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.3 2009/09/06 22:58:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.2 2009/08/21 17:35:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.3 2009/09/06 22:58:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,13 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 *
 		 * XXX Check TLB entries for cache-inhibit bits?
 		 */
-		if (buf >= (void *)MIPS_KSEG1_START &&
-		    buf < (void *)MIPS_KSEG2_START)
+		if (MIPS_KSEG1_P(buf))
 			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+#ifdef _LP64
+		else if (MIPS_XKPHYS_P((vaddr_t)buf)
+		    && MIPS_XKPHYS_TO_CCA((vaddr_t)buf) == CCA_UNCACHED)
+			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+#endif
 	}
 	return (error);
 }
@@ -652,6 +656,17 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * TLB thrashing.
 	 */
 	if (nsegs == 1) {
+#ifdef _LP64
+		if (segs[0].ds_addr + segs[0].ds_len > MIPS_PHYS_MASK) {
+			unsigned long cca;
+			if (flags & BUS_DMA_COHERENT)
+				cca = CCA_UNCACHED;
+			else
+				cca = CCA_CACHEABLE;
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS(segs[0].ds_addr,
+			    cca);
+		} else
+#endif
 		if (flags & BUS_DMA_COHERENT)
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
@@ -699,11 +714,14 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 
 	/*
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
-	 * not in KSEG2).
+	 * not in KSEG2 or XKSEG).
 	 */
-	if (kva >= (void *)MIPS_KSEG0_START &&
-	    kva < (void *)MIPS_KSEG2_START)
+	if (MIPS_KSEG0_P(kva) || MIPS_KSEG1_P(kva))
 		return;
+#ifdef _LP64
+	if (MIPS_XKPHYS_P((vaddr_t)kva))
+		return;
+#endif
 
 	size = round_page(size);
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
