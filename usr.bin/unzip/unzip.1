@@ -25,9 +25,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: revision 180125$
-.\" $NetBSD: unzip.1,v 1.6 2009/08/24 08:38:39 joerg Exp $
+.\" $NetBSD: unzip.1,v 1.7 2009/09/06 20:19:59 wiz Exp $
 .\"
-.Dd August 22, 2009
+.Dd September 6, 2009
 .Dt UNZIP 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd extract files from a ZIP archive
 .Sh SYNOPSIS
 .Nm
-.Op Fl acfjLlnopqtuv
+.Op Fl aCcfjLlnopqtuv
 .Op Fl d Ar dir
 .Op Fl x Ar pattern
 .Ar zipfile
@@ -45,6 +45,8 @@ The following options are available:
 .It Fl a
 When extracting a text file, convert DOS-style line endings to
 Unix-style line endings.
+.It Fl C
+Match file names case-insensitively.
 .It Fl c
 Extract to stdout/screen.
 When extracting files from the zipfile, they are written to stdout.
