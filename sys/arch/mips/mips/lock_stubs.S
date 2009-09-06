@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.4 2009/09/05 18:52:32 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.5 2009/09/06 23:00:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,15 +65,15 @@ LEAF(_atomic_cas_ulong)
 1:
 	LONG_LL	t0, (a0)
 	bne	t0, a1, 2f
-	 addu	t1, zero, a2
+	 move t1, a2
 	LONG_SC	t1, (a0)
 	beq	t1, zero, 1b
 	 nop
 	j	ra
-	 addu	v0, zero, a1
+	 move	v0, a1
 2:
 	j	ra
-	 addu	v0, zero, t0
+	 move	v0, t0
 END(_atomic_cas_ulong)
 
 STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
@@ -101,15 +101,15 @@ LEAF(_atomic_cas_uint)
 1:
 	INT_LL	t0, (a0)
 	bne	t0, a1, 2f
-	 addu	t1, zero, a2
+	 move	t1, a2
 	INT_SC	t1, (a0)
 	beq	t1, zero, 1b
 	 nop
 	j	ra
-	 addu	v0, zero, a1
+	 move	v0, a1
 2:
 	j	ra
-	 addu	v0, zero, t0
+	 move	v0, t0
 END(_atomic_cas_uint)
 
 STRONG_ALIAS(_atomic_cas_32,_atomic_cas_uint)
@@ -130,7 +130,7 @@ LEAF(mutex_enter)
 	PTR_LL	t0, MTX_OWNER(a0)
 1:
 	bne	t0, zero, 2f
-	 addu	t2, zero, MIPS_CURLWP
+	 move	t2, MIPS_CURLWP
 	PTR_SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
 	 PTR_LL	t0, MTX_OWNER(a0)
@@ -149,7 +149,7 @@ LEAF(mutex_exit)
 	BDSYNC
 1:
 	bne	t0, MIPS_CURLWP, 2f
-	 addu	t2, zero, zero
+	 move	t2, zero
 	PTR_SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
 	 PTR_LL	t0, MTX_OWNER(a0)
@@ -168,7 +168,7 @@ LEAF(mutex_spin_enter)
 	li	ta3, -1
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
 	INT_L	t1, MTX_IPL(a0)
-	addu	ta2, ta2, ta3
+	INT_ADDU ta2, ta2, ta3
 	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
@@ -257,10 +257,10 @@ _atomic_cas_start:
  	 nop
 	PTR_S	a2, (a0)	/* <- critical section end */
 	j	ra
-	 addu	v0, zero, a1
+	 move	v0, a1
 1:
 	j	ra
-	 addu	v0, zero, t0
+	 move	v0, t0
 END(_atomic_cas_ulong)
 
 STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
@@ -329,7 +329,7 @@ LEAF(mutex_spin_enter)
 	li	ta3, -1
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
 	INT_L	t1, MTX_IPL(a0)
-	addu	ta2, ta2, ta3
+	INT_ADDU ta2, ta3
 	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
