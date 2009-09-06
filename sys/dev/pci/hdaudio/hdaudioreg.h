@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.3 2009/09/06 21:38:17 rmind Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -352,6 +352,6 @@ struct rirb_entry {
 	uint32_t	resp_ex;
 #define	RIRB_CODEC_ID(entry)	((entry)->resp_ex & 0xf)
 #define	RIRB_UNSOL(entry)	((entry)->resp_ex & 0x10)
-} __attribute__((__packed__));
+} __packed;
 
 #endif /* !_HDAUDIOREG_H */
