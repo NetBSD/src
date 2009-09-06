@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.2 2009/08/23 03:25:09 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.3 2009/09/06 23:01:59 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.2 2009/08/23 03:25:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.3 2009/09/06 23:01:59 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -393,7 +393,7 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (!have_addr)
 		return;
-	if (MIPS_KSEG2_START <= addr) {
+	if (VM_MIN_KERNEL_ADDRESS <= addr && addr < VM_MAX_KERNEL_ADDRESS) {
 		/*
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
