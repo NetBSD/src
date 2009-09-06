@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.6 2009/09/04 14:23:24 wiz Exp $ */
+/* $NetBSD: unzip.c,v 1.7 2009/09/06 20:19:59 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.6 2009/09/04 14:23:24 wiz Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.7 2009/09/06 20:19:59 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: unzip.c,v 1.6 2009/09/04 14:23:24 wiz Exp $");
 
 /* command-line options */
 static int		 a_opt;		/* convert EOL */
+static int		 C_opt;		/* match case-insensitively */
 static int		 c_opt;		/* extract to stdout */
 static const char	*d_arg;		/* directory */
 static int		 f_opt;		/* update existing files only */
@@ -78,9 +79,6 @@ static int		 unzip_debug;
 
 /* running on tty? */
 static int		 tty;
-
-/* error flag for -t */
-static int		 test_failed;
 
 /* convenience macro */
 /* XXX should differentiate between ARCHIVE_{WARN,FAIL,RETRY} */
@@ -291,7 +289,7 @@ match_pattern(struct pattern_list *list, const char *str)
 	struct pattern *entry;
 
 	STAILQ_FOREACH(entry, list, link) {
-		if (fnmatch(entry->pattern, str, 0) == 0)
+		if (fnmatch(entry->pattern, str, C_opt ? FNM_CASEFOLD : 0) == 0)
 			return (1);
 	}
 	return (0);
@@ -775,26 +773,30 @@ list(struct archive *a, struct archive_entry *e)
 /*
  * Extract to memory to check CRC
  */
-static void
+static int
 test(struct archive *a, struct archive_entry *e)
 {
 	ssize_t len;
+	int error_count;
 
+	error_count = 0;
 	if (S_ISDIR(archive_entry_filetype(e)))
-		return;
+		return 0;
 
-	info("%s ", archive_entry_pathname(e));
+	info("    testing: %s\t", archive_entry_pathname(e));
 	while ((len = archive_read_data(a, buffer, sizeof buffer)) > 0)
 		/* nothing */;
 	if (len < 0) {
-		info("%s\n", archive_error_string(a));
-		++test_failed;
+		info(" %s\n", archive_error_string(a));
+		++error_count;
 	} else {
-		info("OK\n");
+		info(" OK\n");
 	}
 
 	/* shouldn't be necessary, but it doesn't hurt */
 	ac(archive_read_data_skip(a));
+
+	return error_count;
 }
 
 
@@ -808,7 +810,7 @@ unzip(const char *fn)
 	struct archive *a;
 	struct archive_entry *e;
 	int fd, ret;
-	uintmax_t total_size, file_count;
+	uintmax_t total_size, file_count, error_count;
 
 	if ((fd = open(fn, O_RDONLY)) < 0)
 		error("%s", fn);
@@ -828,13 +830,14 @@ unzip(const char *fn)
 
 	total_size = 0;
 	file_count = 0;
+	error_count = 0;
 	for (;;) {
 		ret = archive_read_next_header(a, &e);
 		if (ret == ARCHIVE_EOF)
 			break;
 		ac(ret);
 		if (t_opt)
-			test(a, e);
+			error_count += test(a, e);
 		else if (v_opt)
 			list(a, e);
 		else if (p_opt || c_opt)
@@ -859,18 +862,26 @@ unzip(const char *fn)
 
 	ac(archive_read_close(a));
 	(void)archive_read_finish(a);
+
 	if (close(fd) != 0)
 		error("%s", fn);
 
-	if (t_opt && test_failed)
-		errorx("%d checksum error(s) found.", test_failed);
+	if (t_opt) {
+		if (error_count > 0) {
+			errorx("%d checksum error(s) found.", error_count);
+		}
+		else {
+			printf("No errors detected in compressed data of %s.\n",
+			       fn);
+		}
+	}
 }
 
 static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: unzip [-acfjLlnopqtuv] [-d dir] [-x pattern] zipfile\n");
+	fprintf(stderr, "usage: unzip [-aCcfjLlnopqtuv] [-d dir] [-x pattern] zipfile\n");
 	exit(1);
 }
 
@@ -880,10 +891,13 @@ getopts(int argc, char *argv[])
 	int opt;
 
 	optreset = optind = 1;
-	while ((opt = getopt(argc, argv, "acd:fjLlnopqtuvx:")) != -1)
+	while ((opt = getopt(argc, argv, "aCcd:fjLlnopqtuvx:")) != -1)
 		switch (opt) {
 		case 'a':
 			a_opt = 1;
+			break;
+		case 'C':
+			C_opt = 1;
 			break;
 		case 'c':
 			c_opt = 1;
