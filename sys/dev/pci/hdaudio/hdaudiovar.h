@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.3 2009/09/06 21:38:17 rmind Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -102,7 +102,7 @@ struct hdaudio_dma {
 struct hdaudio_dma_position {
 	uint32_t	position;
 	uint32_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 struct hdaudio_bdl_entry {
 	uint32_t	address_lo;
@@ -110,7 +110,7 @@ struct hdaudio_bdl_entry {
 	uint32_t	length;
 	uint32_t	flags;
 #define	HDAUDIO_BDL_ENTRY_IOC	0x00000001
-} __attribute__((__packed__));
+} __packed;
 
 #define	HDAUDIO_BDL_MAX		256
 
