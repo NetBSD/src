@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev_private.h,v 1.2 2009/09/04 12:20:42 pooka Exp $	*/
+/*	$NetBSD: rump_dev_private.h,v 1.3 2009/09/06 20:42:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -32,10 +32,6 @@ void	rump_dev_init(void);
 
 void	rump_pdev_add(void (*fn)(int), int);
 void	rump_pdev_finalize(void);
-
-int	rump_dev_makenodes(dev_t, const char *, char,
-			   devmajor_t, devminor_t, int);
-
 
 void 	rump_dev_cgd_init(void);
 void 	rump_dev_raidframe_init(void);
