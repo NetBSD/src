@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.48 2009/08/06 16:00:49 haad Exp $	*/
+/*	$NetBSD: dk.c,v 1.49 2009/09/06 16:18:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.48 2009/08/06 16:00:49 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.49 2009/09/06 16:18:55 pooka Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1425,4 +1425,71 @@ out:
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return rv;
+}
+
+/*
+ * config glue
+ */
+
+int
+config_handle_wedges(struct device *dv, int par)
+{
+	struct dkwedge_list wl;
+	struct dkwedge_info *wi;
+	struct vnode *vn;
+	char diskname[16];
+	int i, error;
+
+	if ((vn = opendisk(dv)) == NULL)
+		return -1;
+
+	wl.dkwl_bufsize = sizeof(*wi) * 16;
+	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
+
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED);
+	VOP_CLOSE(vn, FREAD, NOCRED);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: List wedges returned %d\n",
+		    device_xname(dv), error);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Returned %u(%u) wedges\n", device_xname(dv),
+	    wl.dkwl_nwedges, wl.dkwl_ncopied);
+#endif
+	snprintf(diskname, sizeof(diskname), "%s%c", device_xname(dv),
+	    par + 'a');
+
+	for (i = 0; i < wl.dkwl_ncopied; i++) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Looking for %s in %s\n", 
+		    device_xname(dv), diskname, wi[i].dkw_wname);
+#endif
+		if (strcmp(wi[i].dkw_wname, diskname) == 0)
+			break;
+	}
+
+	if (i == wl.dkwl_ncopied) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Cannot find wedge with parent %s\n",
+		    device_xname(dv), diskname);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
+		device_xname(dv), wi[i].dkw_devname, wi[i].dkw_wname,
+		(unsigned long long)wi[i].dkw_offset,
+		(unsigned long long)wi[i].dkw_size);
+#endif
+	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
+	free(wi, M_TEMP);
+	return 0;
 }
