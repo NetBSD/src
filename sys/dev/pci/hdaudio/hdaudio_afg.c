@@ -1,7 +1,7 @@
-/* $NetBSD: hdaudio_afg.c,v 1.1 2009/09/06 17:25:56 sborrill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
 
 /*
- * Copyright (c) 2009 Precedence Techologies Ltd <support@precedence.co.uk>
+ * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.1 2009/09/06 17:25:56 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
