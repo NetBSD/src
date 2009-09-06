@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.3 2006/05/10 06:24:02 skrll Exp $");
+__RCSID("$NetBSD: file.c,v 1.4 2009/09/06 18:38:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: file.c,v 1.3 2006/05/10 06:24:02 skrll Exp $");
 #include <netsmb/smb_conn.h>
 #include <cflib.h>
 
+#include "smb_kernelops.h"
+
 int
 smb_read(struct smb_ctx *ctx, smbfh fh, off_t offset, size_t count, char *dst)
 {
@@ -63,7 +65,7 @@ smb_read(struct smb_ctx *ctx, smbfh fh, off_t offset, size_t count, char *dst)
 	rwrq.ioc_base = dst;
 	rwrq.ioc_cnt = count;
 	rwrq.ioc_offset = offset;
-	if (ioctl(ctx->ct_fd, SMBIOC_READ, &rwrq) == -1)
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_READ, &rwrq) == -1)
 		return -1;
 	return rwrq.ioc_cnt;
 }
@@ -78,7 +80,7 @@ smb_write(struct smb_ctx *ctx, smbfh fh, off_t offset, size_t count,
 	rwrq.ioc_base = __UNCONST(src);
 	rwrq.ioc_cnt = count;
 	rwrq.ioc_offset = offset;
-	if (ioctl(ctx->ct_fd, SMBIOC_WRITE, &rwrq) == -1)
+	if (smb_kops.ko_ioctl(ctx->ct_fd, SMBIOC_WRITE, &rwrq) == -1)
 		return -1;
 	return rwrq.ioc_cnt;
 }
