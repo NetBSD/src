@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.6 2009/09/05 03:19:31 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.7 2009/09/06 22:34:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@ typedef __uint32_t	uregister32_t;
 
 #if defined(_KERNEL)
 typedef struct label_t {
-	register_t val[12];
+	register_t val[14];
 } label_t;
 #endif
 
