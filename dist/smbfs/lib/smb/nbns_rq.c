@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbns_rq.c,v 1.5 2003/08/13 01:13:42 christos Exp $");
+__RCSID("$NetBSD: nbns_rq.c,v 1.6 2009/09/06 17:02:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -259,32 +259,18 @@ nbns_rq_recv(struct nbns_rq *rqp)
 {
 	struct mbdata *mbp = &rqp->nr_rp;
 	void *rpdata = mtod(mbp->mb_top, void *);
-	fd_set rd, wr, ex;
-	struct timeval tv;
 	struct sockaddr_in sender;
 	int s = rqp->nr_fd;
 	int n, len;
 
-	FD_ZERO(&rd);
-	FD_ZERO(&wr);
-	FD_ZERO(&ex);
-	FD_SET(s, &rd);
-
-	tv.tv_sec = rqp->nr_nbd->nb_timo;
-	tv.tv_usec = 0;
-
-	n = select(s + 1, &rd, &wr, &ex, &tv);
-	if (n == -1)
-		return -1;
-	if (n == 0)
-		return ETIMEDOUT;
-	if (FD_ISSET(s, &rd) == 0)
-		return ETIMEDOUT;
 	len = sizeof(sender);
 	n = recvfrom(s, rpdata, mbp->mb_top->m_maxlen, 0,
 	    (struct sockaddr*)&sender, &len);
-	if (n < 0)
+	if (n < 0) {
+		if (errno == EAGAIN)
+			return ETIMEDOUT;
 		return errno;
+	}
 	mbp->mb_top->m_len = mbp->mb_count = n;
 	rqp->nr_sender = sender;
 	return 0;
@@ -294,6 +280,7 @@ static int
 nbns_rq_opensocket(struct nbns_rq *rqp)
 {
 	struct sockaddr_in locaddr;
+	struct timeval tv;
 	int opt, s;
 
 	s = rqp->nr_fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -302,6 +289,10 @@ nbns_rq_opensocket(struct nbns_rq *rqp)
 	if (rqp->nr_flags & NBRQF_BROADCAST) {
 		opt = 1;
 		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt)) < 0)
+			return errno;
+		tv.tv_sec = rqp->nr_nbd->nb_timo;
+		tv.tv_usec = 0;
+		if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
 			return errno;
 		if (rqp->nr_if == NULL)
 			return NBERROR(NBERR_NOBCASTIFS);
