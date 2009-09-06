@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.92 2009/09/04 17:15:21 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.93 2009/09/06 19:14:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.92 2009/09/04 17:15:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.93 2009/09/06 19:14:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -727,12 +727,6 @@ cpu_reboot(int howto, char *bootstr)
 	rumpuser_panic();
 }
 
-/* XXX: static, but not used except to make spcopy.S link */
-#ifdef __hppa__
-#undef curlwp
-struct lwp *curlwp = &lwp0;
-#endif
-
 /*
  * XXX: from sys_select.c, see that file for license.
  * (these will go away really soon in favour of the real sys_select.c)
@@ -765,3 +759,12 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	*sleepts = sleptts;
 	return tstohz(ts);
 }
+
+
+/* XXX: static, but not used except to make spcopy.S link */
+#ifdef __hppa__
+#undef curlwp
+struct lwp *curlwp = &lwp0;
+#endif
+
+/* make sure the above is the last entry in this file */
