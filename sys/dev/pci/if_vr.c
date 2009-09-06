@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.97 2009/08/23 16:11:48 jmcneill Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.98 2009/09/06 14:10:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.97 2009/08/23 16:11:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.98 2009/09/06 14:10:42 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -200,7 +200,6 @@ struct vr_descsoft {
 struct vr_softc {
 	device_t		vr_dev;
 	void			*vr_ih;		/* interrupt cookie */
-	void			*vr_ats;	/* shutdown hook */
 	bus_space_tag_t		vr_bst;		/* bus space tag */
 	bus_space_handle_t	vr_bsh;		/* bus space handle */
 	bus_dma_tag_t		vr_dmat;	/* bus DMA tag */
@@ -1391,7 +1390,7 @@ vr_stop(struct ifnet *ifp, int disable)
 
 static int	vr_probe(device_t, cfdata_t, void *);
 static void	vr_attach(device_t, device_t, void *);
-static void	vr_shutdown(void *);
+static bool	vr_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(vr, sizeof (struct vr_softc),
     vr_probe, vr_attach, NULL, NULL);
@@ -1426,12 +1425,14 @@ vr_probe(device_t parent, cfdata_t match, void *aux)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void
-vr_shutdown(void *arg)
+static bool
+vr_shutdown(device_t self, int howto)
 {
-	struct vr_softc *sc = (struct vr_softc *)arg;
+	struct vr_softc *sc = device_private(self);
 
 	vr_stop(&sc->vr_ec.ec_if, 1);
+
+	return true;
 }
 
 /*
@@ -1704,9 +1705,11 @@ vr_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 
-	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
-	if (sc->vr_ats == NULL)
-		aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
+	if (pmf_device_register1(self, NULL, NULL, vr_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
  fail_5:
