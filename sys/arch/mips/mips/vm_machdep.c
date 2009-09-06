@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.2 2009/08/23 04:06:01 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.3 2009/09/06 22:57:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.2 2009/08/23 04:06:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.3 2009/09/06 22:57:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ kvtophys(vaddr_t kva)
 	pt_entry_t *pte;
 	paddr_t phys;
 
-	if (kva >= MIPS_KSEG2_START) {
+	if (kva >= VM_MIN_KERNEL_ADDRESS) {
 		if (kva >= VM_MAX_KERNEL_ADDRESS)
 			goto overrun;
 
@@ -373,19 +373,13 @@ kvtophys(vaddr_t kva)
 		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
 		return phys;
 	}
-	if (kva >= (vaddr_t)MIPS_KSEG1_START)
+	if (MIPS_KSEG1_P(kva))
 		return MIPS_KSEG1_TO_PHYS(kva);
 
-	if (kva >= (vaddr_t)MIPS_KSEG0_START)
+	if (MIPS_KSEG0_P(kva))
 		return MIPS_KSEG0_TO_PHYS(kva);
 #ifdef _LP64
-#if 0
-	if (kva >= (vaddr_t)MIPS_XKSEG_START)
-		return MIPS_XKPHYS_TO_PHYS(kva);
-#endif
-
-	if (kva >= (vaddr_t)MIPS_XKPHYS_START
-	    && kva < (vaddr_t)MIPS_XKSEG_START)
+	if (MIPS_XKPHYS_P(kva))
 		return MIPS_XKPHYS_TO_PHYS(kva);
 #endif
 overrun:
