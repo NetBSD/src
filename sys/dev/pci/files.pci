@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.318 2009/08/12 19:28:00 macallan Exp $
+#	$NetBSD: files.pci,v 1.319 2009/09/06 17:25:56 sborrill Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -983,3 +983,6 @@ device	voyagerfb: wsemuldisplaydev, rasops8, rasops16, rasops32, vcons, videomod
 attach	voyagerfb at pci
 file	dev/pci/voyagerfb.c		voyagerfb
 defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
+
+# Intel High Definition Audio
+include "dev/pci/hdaudio/files.hdaudio"

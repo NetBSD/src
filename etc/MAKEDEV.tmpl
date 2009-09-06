@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.127 2009/07/05 21:35:16 mrg Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.128 2009/09/06 17:25:55 sborrill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -236,6 +236,7 @@
 #	fb*	PMAX generic framebuffer pseudo-device
 #	fd	file descriptors
 #	grf*	graphics frame buffer device
+#	hdaudio* High Definition audio control device
 #	hil	HP300 HIL input devices
 #	icp	ICP-Vortex/Intel RAID control interface
 #	iic*	IIC bus device
@@ -755,6 +756,7 @@ init)
 %MI_DEVICES_BEGIN%
 audio)
 	makedev audio0 audio1 audio2 audio3
+	makedev hdaudio0 hdaudio1 hdaudio2 hdaudio3
 	lndev sound0 sound
 	lndev audio0 audio
 	lndev mixer0 mixer
@@ -1304,6 +1306,11 @@ audio*)
 	mkdev $audio	c %audio_chr% $(($unit + 128))	666
 	mkdev $mixer	c %audio_chr% $(($unit + 16))	666
 	mkdev $audioctl c %audio_chr% $(($unit + 192))	666
+	;;
+
+hdaudio*)
+	unit=${i#hdaudio}
+	mkdev hdaudio$unit c %hdaudio_chr% $unit 644
 	;;
 
 gpio*)
