@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/09/05 18:37:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2009/09/06 18:39:04 pooka Exp $
 
 WARNS?=	3	# XXX: sign-compare issues
 
@@ -6,7 +6,7 @@ WARNS?=	3	# XXX: sign-compare issues
 
 PROG=	mount_smbfs
 MAN=	mount_smbfs.8
-SRCS=	mount_smbfs.c
+SRCS=	mount_smbfs.c smb_kernelops.c
 
 .include "Makefile.inc"
 
