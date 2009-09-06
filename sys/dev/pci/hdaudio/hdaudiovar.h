@@ -1,7 +1,7 @@
-/* $NetBSD: hdaudiovar.h,v 1.1 2009/09/06 17:25:56 sborrill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
 
 /*
- * Copyright (c) 2009 Precedence Techologies Ltd <support@precedence.co.uk>
+ * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
