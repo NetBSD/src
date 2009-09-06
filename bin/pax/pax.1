@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.55 2007/12/02 21:13:23 wiz Exp $
+.\"    $NetBSD: pax.1,v 1.56 2009/09/06 13:38:50 christos Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd April 23, 2007
+.Dd September 6, 2009
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -1257,11 +1257,11 @@ When running as root, one may also wish to preserve file
 ownership when copying directory trees.
 This can be done with the following commands:
 .Dl cd olddir
-.Dl pax -rw -pe .\ .../newdir
+.Dl pax -rw -pe .\ ../newdir
 which will copy the contents of
 .Pa olddir
 into
-.Pa .../newdir ,
+.Pa ../newdir ,
 preserving ownership, permissions and access times.
 .Pp
 The command:
