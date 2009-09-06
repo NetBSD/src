@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1304 2009/09/05 10:16:46 taca Exp $
+#	$NetBSD: mi,v 1.1305 2009/09/06 21:03:28 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3502,6 +3502,7 @@
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug

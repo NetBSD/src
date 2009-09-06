@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1155 2009/09/06 17:25:55 sborrill Exp $
+# $NetBSD: mi,v 1.1156 2009/09/06 21:03:28 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2527,6 +2527,7 @@
 ./usr/share/man/cat8/rump_msdos.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_nfs.0			man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_ntfs.0		man-puffs-catman	.cat
+./usr/share/man/cat8/rump_smbfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_syspuffs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_sysvbfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_tmpfs.0		man-puffs-catman	.cat
@@ -4892,6 +4893,7 @@
 ./usr/share/man/html8/rump_msdos.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_nfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_ntfs.html		man-puffs-htmlman	html
+./usr/share/man/html8/rump_smbfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_syspuffs.html	man-puffs-htmlman	html
 ./usr/share/man/html8/rump_sysvbfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_tmpfs.html		man-puffs-htmlman	html
@@ -7535,6 +7537,7 @@
 ./usr/share/man/man8/rump_msdos.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_nfs.8			man-puffs-man		.man
 ./usr/share/man/man8/rump_ntfs.8		man-puffs-man		.man
+./usr/share/man/man8/rump_smbfs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_syspuffs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_sysvbfs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_tmpfs.8		man-puffs-man		.man
