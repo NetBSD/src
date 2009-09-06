@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.3 2009/09/04 08:57:00 he Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.1 2009/09/06 20:42:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.3 2009/09/04 08:57:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1 2009/09/06 20:42:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,11 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.3 2009/09/04 08:57:00 he Exp $");
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
-#include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
 /* realqvik(tm) "devfs" */
 int
-rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
+rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
 	devmajor_t maj, devminor_t minnum, int nnodes)
 {
 	int error;
