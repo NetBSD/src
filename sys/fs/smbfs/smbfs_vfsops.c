@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.88 2009/07/02 16:17:52 njoly Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.89 2009/09/07 12:52:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.88 2009/07/02 16:17:52 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.89 2009/09/07 12:52:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct smb_share *ssp = NULL;
 	struct smb_cred scred;
 	struct proc *p;
+	char *fromname;
 	int error;
 
 	if (*data_len < sizeof *args)
@@ -185,17 +186,25 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
-	if (error)
-		return error;
-
 	smb_makescred(&scred, l, l->l_cred);
 	error = smb_dev2share(args->dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
 	smb_share_unlock(ssp);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
+
+	fromname = kmem_zalloc(MNAMELEN, KM_SLEEP);
+	snprintf(fromname, MNAMELEN,
+	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
+	error = set_statvfs_info(path, UIO_USERSPACE, fromname, UIO_USERSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
+	kmem_free(fromname, MNAMELEN);
+	if (error) {
+		smb_share_lock(ssp);
+		smb_share_put(ssp, &scred);
+		return error;
+	}
+
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 	mp->mnt_stat.f_namemax =
 	    (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
@@ -215,10 +224,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFREG;
 	smp->sm_args.dir_mode  = (smp->sm_args.dir_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
-
-	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
-	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
-	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
 
 	vfs_getnewfsid(mp);
 	return (0);
