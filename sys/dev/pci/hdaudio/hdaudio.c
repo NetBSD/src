@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.3 2009/09/07 16:21:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.3 2009/09/07 16:21:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -948,6 +948,77 @@ hdaudio_stream_disestablish(struct hdaudio_stream *st)
 	mutex_exit(&sc->sc_stream_mtx);
 }
 
+/*
+ * Convert most of audio_params_t to stream fmt descriptor; noticably missing
+ * is the # channels bits, as this is encoded differently in codec and
+ * stream descriptors.
+ *
+ * TODO: validate that the stream and selected codecs can handle the fmt
+ */
+uint16_t
+hdaudio_stream_param(struct hdaudio_stream *st, const audio_params_t *param)
+{
+	uint16_t fmt = 0;
+
+	switch (param->sample_rate) {
+	case 8000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(1) |
+		    HDAUDIO_FMT_DIV(6);
+		break;
+	case 11025:
+		fmt |= HDAUDIO_FMT_BASE_44 | HDAUDIO_FMT_MULT(1) |
+		    HDAUDIO_FMT_DIV(4);
+		break;
+	case 16000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(1) |
+		    HDAUDIO_FMT_DIV(3);
+		break;
+	case 22050:
+		fmt |= HDAUDIO_FMT_BASE_44 | HDAUDIO_FMT_MULT(1) |
+		    HDAUDIO_FMT_DIV(2);
+		break;
+	case 32000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(2) |
+		    HDAUDIO_FMT_DIV(3);
+		break;
+	case 44100:
+		fmt |= HDAUDIO_FMT_BASE_44 | HDAUDIO_FMT_MULT(1);
+		break;
+	case 48000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(1);
+		break;
+	case 88200:
+		fmt |= HDAUDIO_FMT_BASE_44 | HDAUDIO_FMT_MULT(2);
+		break;
+	case 96000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(2);
+		break;
+	case 176400:
+		fmt |= HDAUDIO_FMT_BASE_44 | HDAUDIO_FMT_MULT(4);
+		break;
+	case 192000:
+		fmt |= HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(4);
+		break;
+	default:
+		return 0;
+	}
+
+	if (param->precision == 16 && param->validbits == 8)
+		fmt |= HDAUDIO_FMT_BITS_8_16;
+	else if (param->precision == 16 && param->validbits == 16)
+		fmt |= HDAUDIO_FMT_BITS_16_16;
+	else if (param->precision == 32 && param->validbits == 20)
+		fmt |= HDAUDIO_FMT_BITS_20_32;
+	else if (param->precision == 32 && param->validbits == 24)
+		fmt |= HDAUDIO_FMT_BITS_24_32;
+	else if (param->precision == 32 && param->validbits == 32)
+		fmt |= HDAUDIO_FMT_BITS_32_32;
+	else
+		return 0;
+
+	return fmt;
+}
+
 void
 hdaudio_stream_reset(struct hdaudio_stream *st)
 {
@@ -996,6 +1067,7 @@ hdaudio_stream_start(struct hdaudio_stream *st, int blksize,
 	struct hdaudio_bdl_entry *bdl;
 	uint64_t dmaaddr;
 	uint32_t intctl;
+	uint16_t fmt;
 	uint8_t ctl0, ctl2;
 	int cnt, snum = st->st_shift;
 
@@ -1050,15 +1122,10 @@ hdaudio_stream_start(struct hdaudio_stream *st, int blksize,
 
 	/*
 	 * Program stream format
-	 *
-	 * XXX 48kHz, 16-bit, stereo for now
 	 */
-	hda_write2(sc, HDAUDIO_SD_FMT(snum),
-	    HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(1) |
-	    HDAUDIO_FMT_DIV(1) | HDAUDIO_FMT_BITS_16_16 |
-	    HDAUDIO_FMT_CHAN(params->channels));
-
-	/* XXX program codecs for stream number */
+	fmt = hdaudio_stream_param(st, params) |
+	    HDAUDIO_FMT_CHAN(params->channels);
+	hda_write2(sc, HDAUDIO_SD_FMT(snum), fmt);
 
 	/*
 	 * Switch on interrupts for this stream
