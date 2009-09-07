@@ -97,6 +97,7 @@ LIB=d X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBD.A"
 LIB=e X_LIBS:M${LIB${LIB:tu}} is "/tmp/libe.a"
 LIB=e X_LIBS:M*/lib${LIB}.a is "/tmp/libe.a"
 LIB=e X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBE.A"
+Mscanner=OK
 path=':/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:.'
 path='/bin:/usr/bin:/sbin:/usr/sbin:/home/user/bin'
 path='/bin:/usr/bin:/sbin:/usr/sbin:/homes/user/bin'
