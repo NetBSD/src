@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.251 2009/09/07 10:40:54 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.252 2009/09/07 22:59:47 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.251 $"
+#ident 		"GENERIC-$Revision: 1.252 $"
 
 maxusers	64		# estimated number of users
 
@@ -955,8 +955,8 @@ opl*	at fms?
 opl*	at sv?
 
 # High Definition Audio
-#hdaudio*	at pci? dev ? function ?	# High Definition Audio
-#hdafg*		at hdaudiobus?
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
