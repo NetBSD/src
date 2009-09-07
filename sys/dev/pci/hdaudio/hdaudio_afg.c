@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.3 2009/09/07 02:04:43 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.4 2009/09/07 11:50:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.3 2009/09/07 02:04:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.4 2009/09/07 11:50:01 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,8 +98,7 @@ static int hdaudio_afg_debug = 0;
 #define HDAUDIO_MIXER_CLASS_OUTPUTS	0
 #define	HDAUDIO_MIXER_CLASS_INPUTS	1
 #define	HDAUDIO_MIXER_CLASS_RECORD	2
-#define	HDAUDIO_MIXER_CLASS_HDAUDIO	3
-#define	HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_HDAUDIO
+#define	HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_RECORD
 
 #define	HDAUDIO_GPIO_MASK	0
 #define	HDAUDIO_GPIO_DIR	1
@@ -284,8 +283,6 @@ struct hdaudio_afg_softc {
 	struct hdaudio_control		*sc_ctls;
 	int				sc_nmixers;
 	struct hdaudio_mixer		*sc_mixers;
-
-	int				sc_gpioindex[3];
 
 	int				sc_pchan, sc_rchan;
 	int				sc_curpchan, sc_currchan;
@@ -991,8 +988,6 @@ hdaudio_afg_parse(struct hdaudio_afg_softc *sc)
 	struct hdaudio_widget *w;
 	uint32_t nodecnt;
 	int nid;
-
-	sc->sc_gpioindex[0] = sc->sc_gpioindex[1] = sc->sc_gpioindex[2] = -1;
 
 	nodecnt = hda_get_param(sc, SUBORDINATE_NODE_COUNT);
 	sc->sc_startnode = COP_NODECNT_STARTNODE(nodecnt);
@@ -2422,11 +2417,8 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		++nmixers;
 	if (nadc > 0)
 		++nmixers;
-	/* Make room for gpio controls */
-	if (numgpio > 0)
-		nmixers += 3;
 
-	hda_trace(sc, "  need %d mixers (4 classes%s)\n",
+	hda_trace(sc, "  need %d mixers (3 classes%s)\n",
 	    nmixers, needmasterctl ? " + fake master" : "");
 
 	/* Allocate memory for the mixers */
@@ -2450,53 +2442,6 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		case HDAUDIO_MIXER_CLASS_RECORD:
 			strcpy(mx[index].mx_di.label.name, AudioCrecord);
 			break;
-		case HDAUDIO_MIXER_CLASS_HDAUDIO:
-			strcpy(mx[index].mx_di.label.name, "hdaudio");
-			break;
-		}
-		++index;
-	}
-
-	/* DAC selector */
-	if (ndac > 0) {
-		mx[index].mx_ctl = NULL;
-		mx[index].mx_di.index = index;
-		mx[index].mx_di.type = AUDIO_MIXER_SET;
-		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
-		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		strcpy(mx[index].mx_di.label.name, AudioNselect);
-		mx[index].mx_di.un.s.num_mem = ndac;
-		for (i = 0, j = 0; i < sc->sc_nassocs; i++) {
-			if (sc->sc_assocs[i].as_enable == false)
-				continue;
-			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_OUT)
-				continue;
-			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
-			    "DAC%02X", i);
-			++j;
-		}
-		++index;
-	}
-
-	/* ADC selector */
-	if (nadc > 0) {
-		mx[index].mx_ctl = NULL;
-		mx[index].mx_di.index = index;
-		mx[index].mx_di.type = AUDIO_MIXER_SET;
-		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_RECORD;
-		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		strcpy(mx[index].mx_di.label.name, AudioNsource);
-		mx[index].mx_di.un.s.num_mem = nadc;
-		for (i = 0, j = 0; i < sc->sc_nassocs; i++) {
-			if (sc->sc_assocs[i].as_enable == false)
-				continue;
-			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_IN)
-				continue;
-			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
-			    "ADC%02X", i);
-			++j;
 		}
 		++index;
 	}
@@ -2556,46 +2501,49 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		++index;
 	}
 
-	/* GPIO controls */
-	if (numgpio > 0) {
-		/* mask */
-		sc->sc_gpioindex[HDAUDIO_GPIO_MASK] = index;
+	/* DAC selector */
+	if (ndac > 0) {
 		mx[index].mx_ctl = NULL;
 		mx[index].mx_di.index = index;
-		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
-		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_HDAUDIO;
+		mx[index].mx_di.type = AUDIO_MIXER_SET;
+		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
 		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		mx[index].mx_di.un.v.num_channels = 1;
-		mx[index].mx_di.un.v.delta = 1;
-		strcpy(mx[index].mx_di.label.name, "gpio.mask");
-		strcpy(mx[index].mx_di.un.v.units.name, "bitmask");
-		++index;
-		/* direction */
-		sc->sc_gpioindex[HDAUDIO_GPIO_DIR] = index;
-		mx[index].mx_ctl = NULL;
-		mx[index].mx_di.index = index;
-		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
-		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_HDAUDIO;
-		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		mx[index].mx_di.un.v.num_channels = 1;
-		mx[index].mx_di.un.v.delta = 1;
-		strcpy(mx[index].mx_di.label.name, "gpio.dir");
-		strcpy(mx[index].mx_di.un.v.units.name, "bitmask");
-		++index;
-		/* data */
-		sc->sc_gpioindex[HDAUDIO_GPIO_DATA] = index;
-		mx[index].mx_ctl = NULL;
-		mx[index].mx_di.index = index;
-		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
-		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_HDAUDIO;
-		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		mx[index].mx_di.un.v.num_channels = 1;
-		mx[index].mx_di.un.v.delta = 1;
-		strcpy(mx[index].mx_di.label.name, "gpio.data");
-		strcpy(mx[index].mx_di.un.v.units.name, "bitmask");
+		strcpy(mx[index].mx_di.label.name, AudioNselect);
+		mx[index].mx_di.un.s.num_mem = ndac;
+		for (i = 0, j = 0; i < sc->sc_nassocs; i++) {
+			if (sc->sc_assocs[i].as_enable == false)
+				continue;
+			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_OUT)
+				continue;
+			mx[index].mx_di.un.s.member[j].mask = 1 << i;
+			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    "DAC%02X", i);
+			++j;
+		}
 		++index;
 	}
 
+	/* ADC selector */
+	if (nadc > 0) {
+		mx[index].mx_ctl = NULL;
+		mx[index].mx_di.index = index;
+		mx[index].mx_di.type = AUDIO_MIXER_SET;
+		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_RECORD;
+		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
+		strcpy(mx[index].mx_di.label.name, AudioNsource);
+		mx[index].mx_di.un.s.num_mem = nadc;
+		for (i = 0, j = 0; i < sc->sc_nassocs; i++) {
+			if (sc->sc_assocs[i].as_enable == false)
+				continue;
+			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_IN)
+				continue;
+			mx[index].mx_di.un.s.member[j].mask = 1 << i;
+			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    "ADC%02X", i);
+			++j;
+		}
+		++index;
+	}
 
 	sc->sc_mixers = mx;
 }
@@ -3290,8 +3238,7 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 		return EINVAL;
 	mx = &sc->sc_mixers[mc->dev];
 	ctl = mx->mx_ctl;
-	if (ctl == NULL &&
-	    mx->mx_di.mixer_class != HDAUDIO_MIXER_CLASS_HDAUDIO) {
+	if (ctl == NULL) {
 		if (mx->mx_di.type != AUDIO_MIXER_SET)
 			return ENXIO;
 		if (mx->mx_di.mixer_class != HDAUDIO_MIXER_CLASS_OUTPUTS &&
@@ -3312,22 +3259,6 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 		hdaudio_afg_stream_connect(ad->ad_sc,
 		    mx->mx_di.mixer_class == HDAUDIO_MIXER_CLASS_OUTPUTS ?
 		    AUMODE_PLAY : AUMODE_RECORD);
-		return 0;
-	}
-	if (ctl == NULL &&
-	    mx->mx_di.mixer_class == HDAUDIO_MIXER_CLASS_HDAUDIO) {
-		uint32_t v;
-		int cmd;
-		if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_MASK])
-			cmd = CORB_SET_GPIO_ENABLE_MASK;
-		else if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_DIR])
-			cmd = CORB_SET_GPIO_DIRECTION;
-		else if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_DATA])
-			cmd = CORB_SET_GPIO_DATA;
-		else
-			return ENXIO;
-		v = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		hdaudio_command(sc->sc_codec, sc->sc_nid, cmd, v);
 		return 0;
 	}
 
@@ -3352,8 +3283,7 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 		return EINVAL;
 	mx = &sc->sc_mixers[mc->dev];
 	ctl = mx->mx_ctl;
-	if (ctl == NULL &&
-	    mx->mx_di.mixer_class != HDAUDIO_MIXER_CLASS_HDAUDIO) {
+	if (ctl == NULL) {
 		if (mx->mx_di.type != AUDIO_MIXER_SET)
 			return ENXIO;
 		if (mx->mx_di.mixer_class != HDAUDIO_MIXER_CLASS_OUTPUTS &&
@@ -3374,22 +3304,6 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 				mask |= (1 << i);
 		}
 		mc->un.mask = mask;
-		return 0;
-	}
-	if (ctl == NULL &&
-	    mx->mx_di.mixer_class == HDAUDIO_MIXER_CLASS_HDAUDIO) {
-		uint32_t v;
-		int cmd;
-		if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_MASK])
-			cmd = CORB_GET_GPIO_ENABLE_MASK;
-		else if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_DIR])
-			cmd = CORB_GET_GPIO_DIRECTION;
-		else if (mx->mx_di.index == sc->sc_gpioindex[HDAUDIO_GPIO_DATA])
-			cmd = CORB_GET_GPIO_DATA;
-		else
-			return ENXIO;
-		v = hdaudio_command(sc->sc_codec, sc->sc_nid, cmd, 0);
-		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = v;
 		return 0;
 	}
 
