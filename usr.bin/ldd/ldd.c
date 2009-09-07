@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.9 2009/08/22 06:52:16 mrg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.10 2009/09/07 17:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.9 2009/08/22 06:52:16 mrg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.10 2009/09/07 17:56:52 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -114,13 +114,13 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char *fmt1 = NULL, *fmt2 = NULL;
+	const char *fmt1 = NULL, *fmt2 = NULL;
 	int c;
 
 #ifdef DEBUG
 	debug = 1;
 #endif
-	while ((c = getopt(argc, argv, "f:")) != -1) {
+	while ((c = getopt(argc, argv, "f:o")) != -1) {
 		switch (c) {
 		case 'f':
 			if (fmt1) {
@@ -129,6 +129,11 @@ main(int argc, char **argv)
 				fmt2 = optarg;
 			} else
 				fmt1 = optarg;
+			break;
+		case 'o':
+			if (fmt1 || fmt2)
+				errx(1, "Cannot use -o and -f together");
+			fmt1 = "%a:-l%o.%m => %p\n";
 			break;
 		default:
 			usage();
