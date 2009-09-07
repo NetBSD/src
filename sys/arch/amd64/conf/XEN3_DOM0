@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.44 2009/09/06 17:25:56 sborrill Exp $
+# $NetBSD: XEN3_DOM0,v 1.45 2009/09/07 10:40:54 jmcneill Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -683,8 +683,8 @@ opl*	at fms?
 opl*	at sv?
 opl*	at yds?
 
-# Intel High Definition Audio
-#hdaudio*	at pci? dev ? function ?	# Intel High Definition Audio
+# High Definition Audio
+#hdaudio*	at pci? dev ? function ?	# High Definition Audio
 #hdafg*		at hdaudiobus?
 
 # Audio support
