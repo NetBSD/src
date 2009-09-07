@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.370 2009/07/25 16:20:10 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.371 2009/09/07 19:34:30 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -385,28 +385,9 @@ install-obsolete-lists: .PHONY .MAKE
 # distrib-dirs --
 #	Populate $DESTDIR with directories needed by NetBSD
 #
-.if ${MKUNPRIVED} == "no"
-TOOL_MTREE.unpriv=
-.else
-TOOL_MTREE.unpriv=	-W
-.endif
-
 distrib-dirs: .PHONY check_DESTDIR
-.if !defined(DISTRIBUTION_DONE)						# {
-# Create DESTDIR using HOST_INSTALL_DIR, not INSTALL_DIR, because
-# INSTALL_DIR would want to write to the metalog, and it can't do that
-# if the metalog is inside DESTDIR but DESTDIR doesn't yet exist.
-	${HOST_INSTALL_DIR} -m 755 ${DESTDIR}
-# Inkoke mtree to create the directories listed in NetBSD.dist;
-# then invoke mtree again to register those directories in the metalog.
-	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
-	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
-.if ${MKUNPRIVED} != "no"						# {
-	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
-	    -p ${DESTDIR}/ -C -k all | \
-	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
-.endif	# MKUNPRIVED							# }
-.endif	# DISTRIBUTION_DONE						# }
+	cd ${NETBSDSRCDIR}/etc/mtree && ${MAKE} distrib-dirs
+
 
 # release, snapshot --
 #	Build a full distribution including kernels & install media.
@@ -633,7 +614,7 @@ snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
-SUBDIR=	rc.d
+SUBDIR=	rc.d mtree
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
