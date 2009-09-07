@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.49 2009/09/06 16:18:55 pooka Exp $	*/
+/*	$NetBSD: dk.c,v 1.50 2009/09/07 13:59:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.49 2009/09/06 16:18:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.50 2009/09/07 13:59:38 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
