@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.8 2009/09/03 00:10:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.9 2009/09/07 22:06:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.8 2009/09/03 00:10:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.9 2009/09/07 22:06:32 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -227,16 +227,22 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	default:
 	dopanic:
 		(void)splhigh();
+		printf("pid %d(%s): ", p->p_pid, p->p_comm);
 		printf("trap: %s in %s mode\n",
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
-			", vaddr=%#" PRIxVADDR "\n", status, cause, opc, vaddr);
-		fp = l->l_md.md_regs;
-		printf("pid=%d cmd=%s usp=%#" PRIxREGISTER
-		    " ksp=%p ra=%#" PRIxREGISTER "\n",
-		    p->p_pid, p->p_comm, fp->f_regs[_R_SP],
-		    &status, fp->f_regs[_R_RA]);
+			", vaddr=%#" PRIxVADDR, status, cause, opc, vaddr);
+		if (USERMODE(status)) {
+			fp = l->l_md.md_regs;
+			printf(" frame=%p usp=%#" PRIxREGISTER
+			    " ra=%#" PRIxREGISTER "\n",
+			   fp, fp->f_regs[_R_SP], fp->f_regs[_R_RA]);
+		} else {
+			printf(" tf=%p ksp=%p ra=%#" PRIxREGISTER "\n",
+			   frame, frame+1, frame->tf_regs[TF_RA]);
+		}
+			
 #if defined(DDB)
 		kdb_trap(type, frame->tf_regs);
 		/* XXX force halt XXX */
