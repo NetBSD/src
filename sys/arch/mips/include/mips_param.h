@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.2 2009/08/22 06:45:30 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.3 2009/09/07 21:50:24 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -62,9 +62,9 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/4)
 
-#define NBSEG		0x400000	/* bytes/segment */
+#define NBSEG		(NBPG*NPTEPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define	SEGSHIFT	(2*PGSHIFT-2)	/* LOG2(NBSEG) */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
