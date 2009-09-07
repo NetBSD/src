@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.3 2009/09/07 16:21:08 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4 2009/09/07 16:35:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.3 2009/09/07 16:21:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4 2009/09/07 16:35:02 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -901,7 +901,13 @@ hdaudio_stream_establish(struct hdaudio_softc *sc,
     void *cookie)
 {
 	struct hdaudio_stream *st;
+	struct hdaudio_dma dma;
 	int i, err;
+
+	dma.dma_size = sizeof(struct hdaudio_bdl_entry) * HDAUDIO_BDL_MAX;
+	err = hdaudio_dma_alloc(sc, &dma, BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
+	if (err)
+		return NULL;
 
 	mutex_enter(&sc->sc_stream_mtx);
 	for (i = 0; i < HDAUDIO_MAX_STREAMS; i++) {
@@ -914,22 +920,17 @@ hdaudio_stream_establish(struct hdaudio_softc *sc,
 			continue;
 
 		/* Allocate stream */
-		st->st_bdl.dma_size = sizeof(struct hdaudio_bdl_entry) *
-		    HDAUDIO_BDL_MAX;
-		err = hdaudio_dma_alloc(sc, &st->st_bdl,
-		    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
-		if (!err) {
-			st->st_intr = intr;
-			st->st_cookie = cookie;
-			sc->sc_stream_mask |= (1 << i);
-		} else
-			st = NULL;
+		st->st_bdl = dma;
+		st->st_intr = intr;
+		st->st_cookie = cookie;
+		sc->sc_stream_mask |= (1 << i);
 		mutex_exit(&sc->sc_stream_mtx);
 		return st;
 	}
 	mutex_exit(&sc->sc_stream_mtx);
 
 	/* No streams of requested type available */
+	hdaudio_dma_free(sc, &dma);
 	return NULL;
 }
 
