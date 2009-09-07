@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.3 2009/09/07 02:04:43 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.2 2009/09/06 17:33:53 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.3 2009/09/07 02:04:43 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,6 +148,7 @@ static const char *hdaudio_afg_color[] = {
 	"ReservedB",
 	"ReservedC",
 	"ReservedD",
+	"White",
 	"Other"
 };
 
