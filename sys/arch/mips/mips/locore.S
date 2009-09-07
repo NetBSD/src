@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.1 2009/08/20 23:27:06 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.2 2009/09/07 22:05:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ _C_LABEL(kernel_text):
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 #ifdef _LP64
-	li	t0, MIPS_SR_KX
+	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
 #endif
@@ -145,7 +145,7 @@ _C_LABEL(kernel_text):
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 
-	PTR_L	sp, _C_LABEL(proc0paddr)	# switch to proc0 stack
+	PTR_L	sp, L_ADDR(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
 	PTR_ADDU sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)
@@ -185,6 +185,9 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a2)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
 	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a2)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(a2)
+#endif
 #ifdef IPL_ICU_MASK
 	INT_L	t0, _C_LABEL(md_imask)
 	INT_S	t0, U_PCB_PPL(a2)
@@ -244,6 +247,9 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
 	REG_L	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
 	REG_L	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L	gp, U_PCB_CONTEXT+SF_REG_GP(a0)
+#endif
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
@@ -267,6 +273,9 @@ LEAF(savectx)
 	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
 	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
 	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(a0)
+#endif
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
@@ -292,6 +301,9 @@ LEAF(setjmp)
 	REG_S	s5, SF_REG_S5(a0)
 	REG_S	s6, SF_REG_S6(a0)
 	REG_S	s7, SF_REG_S7(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, SF_REG_GP(a0)
+#endif
 	REG_S	sp, SF_REG_SP(a0)
 	REG_S	s8, SF_REG_S8(a0)
 	REG_S	ra, SF_REG_RA(a0)
@@ -314,6 +326,9 @@ LEAF(longjmp)
 	REG_L	s5, SF_REG_S5(a0)
 	REG_L	s6, SF_REG_S6(a0)
 	REG_L	s7, SF_REG_S7(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L	gp, SF_REG_GP(a0)
+#endif
 	REG_L	sp, SF_REG_SP(a0)
 	REG_L	s8, SF_REG_S8(a0)
 	REG_EPILOGUE
@@ -444,9 +459,8 @@ END(_clrsoftintr)
 LEAF(_splnone)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
 	COP0_SYNC
-#if 0
-	mfc0	v0, MIPS_COP_0_STATUS		# enable all sources
-	ori	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+#ifdef _LP64
+	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX)
 #else
 	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 #endif
