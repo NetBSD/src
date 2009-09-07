@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.10 2009/09/04 18:22:37 pooka Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.11 2009/09/07 13:52:05 pooka Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mount_smbfs.c,v 1.10 2009/09/04 18:22:37 pooka Exp $");
+__RCSID("$NetBSD: mount_smbfs.c,v 1.11 2009/09/07 13:52:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -252,6 +252,10 @@ mount_smbfs_parseargs(int argc, char *argv[], struct smbfs_args *mdatap,
 	mdatap->version = SMBFS_VERSION;
 	mdatap->dev_fd = ctx->ct_fd;
 	mdatap->caseopt = caseopt;
+
+	snprintf(canon_dev, MAXPATHLEN, "//%s@%s/%s",
+	    ctx->ct_ssn.ioc_user[0] ? ctx->ct_ssn.ioc_user : "guest",
+	    ctx->ct_ssn.ioc_srvname, ctx->ct_sh.ioc_share);
 }
 
 int
