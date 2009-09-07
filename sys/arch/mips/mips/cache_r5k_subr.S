@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k_subr.S,v 1.1 2003/03/08 04:43:25 rafal Exp $ 	*/
+/*	$NetBSD: cache_r5k_subr.S,v 1.1.126.1 2009/09/07 23:47:27 matt Exp $ 	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #include <mips/cpuregs.h>
 #include <mips/cache_r4k.h>
 #include <mips/cache_r5k.h>
+
+#include "assym.h"
 
 	.set mips3
 	.set noreorder
@@ -74,4 +76,3 @@ LEAF_NOPROFILE(r5k_enable_sdcache)
 	j	ra
 	nop	
 END(r5k_enable_sdcache)
-
