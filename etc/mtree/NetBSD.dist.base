@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.1 2009/09/07 19:34:30 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.2 2009/09/07 21:07:03 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -33,6 +33,7 @@
 ./etc/defaults
 ./etc/fonts
 ./etc/fonts/conf.d
+./etc/fonts/conf.avail
 ./etc/iscsi
 ./etc/kerberosV
 ./etc/mail
