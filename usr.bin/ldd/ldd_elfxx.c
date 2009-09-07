@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.3 2009/08/20 19:17:19 he Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.3 2009/08/20 19:17:19 he Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.4 2009/09/07 04:49:03 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: ldd_elfxx.c,v 1.3 2009/08/20 19:17:19 he Exp $");
  * returns 0 on success and -1 on failure.
  */
 int
-ELFNAME(ldd)(int fd, char *path, char *fmt1, char *fmt2)
+ELFNAME(ldd)(int fd, char *path, const char *fmt1, const char *fmt2)
 {
 	struct stat st;
 

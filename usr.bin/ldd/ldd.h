@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.h,v 1.3 2009/08/22 06:52:16 mrg Exp $	*/
+/*	$NetBSD: ldd.h,v 1.4 2009/09/07 04:49:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008 Matthew R. Green
@@ -28,10 +28,10 @@
  * SUCH DAMAGE.
  */
 
-int elf32_ldd(int, char *, char *, char *);
+int elf32_ldd(int, char *, const char *, const char *);
 
 #ifdef _LP64
-int elf64_ldd(int, char *, char *, char *);
+int elf64_ldd(int, char *, const char *, const char *);
 #define elf_ldd elf64_ldd
 #else
 #define elf_ldd elf32_ldd
