@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.66 2009/08/23 21:16:17 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.67 2009/09/07 02:31:53 jnemeth Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -734,6 +734,9 @@ message set_man_pages
 
 message set_misc
 {Inne}
+
+message set_modules
+{Kernel Modules}
 
 message set_tests
 {Test programs}

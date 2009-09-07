@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.107 2009/08/23 21:16:17 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.108 2009/09/07 02:31:53 jnemeth Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -807,6 +807,9 @@ message set_man_pages
 
 message set_misc
 {Divers}
+
+message set_modules
+{Kernel Modules}
 
 message set_tests
 {Test programs}
