@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2009/07/22 21:35:38 joerg Exp $
+# $NetBSD: mi,v 1.47 2009/09/07 08:22:51 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -853,7 +853,6 @@
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests
 ./usr/tests/lib/libc/string/t_popcount		tests-lib-tests
 ./usr/tests/modules				tests-sys-tests
-./usr/tests/modules/Atffile			tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests
 ./usr/tests/net/sys				tests-net-tests
