@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/20 18:09:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/07 11:23:39 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -10,6 +10,7 @@ SRCS=   cgd.c cgd_crypto.c
 SRCS+=	component.c
 
 CPPFLAGS+=	-Wno-pointer-sign
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
