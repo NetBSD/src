@@ -688,6 +688,9 @@ BUILDING
                    This command will run ``make cleandir'' on the kernel in
                    question first unless the -u option is given.
 
+     modules       This command will build kernel modules and install them
+                   into DESTDIR.
+
      releasekernel=kconf
                    Install a gzip(1)ed copy of the kernel previously built by
                    kernel=kconf into
