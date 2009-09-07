@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.3 2009/09/06 22:58:59 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.4 2009/09/07 22:28:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.3 2009/09/06 22:58:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.4 2009/09/07 22:28:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.3 2009/09/06 22:58:59 matt Exp $
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#ifdef _LP64
+#include <mips/mips3_pte.h>
+#endif
 
 #define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -267,7 +270,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
 #ifdef _LP64
 		else if (MIPS_XKPHYS_P((vaddr_t)buf)
-		    && MIPS_XKPHYS_TO_CCA((vaddr_t)buf) == CCA_UNCACHED)
+		    && MIPS_XKPHYS_TO_CCA((vaddr_t)buf) == MIPS3_PG_TO_CCA(MIPS3_PG_UNCACHED))
 			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
 #endif
 	}
@@ -660,11 +663,11 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		if (segs[0].ds_addr + segs[0].ds_len > MIPS_PHYS_MASK) {
 			unsigned long cca;
 			if (flags & BUS_DMA_COHERENT)
-				cca = CCA_UNCACHED;
+				cca = MIPS3_PG_TO_CCA(MIPS3_PG_UNCACHED);
 			else
-				cca = CCA_CACHEABLE;
-			*kvap = (void *)MIPS_PHYS_TO_XKPHYS(segs[0].ds_addr,
-			    cca);
+				cca = MIPS3_PG_TO_CCA(MIPS3_PG_CACHED);
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS(cca,
+			    segs[0].ds_addr);
 		} else
 #endif
 		if (flags & BUS_DMA_COHERENT)
