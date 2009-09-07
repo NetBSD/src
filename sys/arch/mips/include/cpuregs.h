@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.6 2009/09/06 22:36:16 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.7 2009/09/07 21:34:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,8 +103,8 @@
 #define	MIPS_KSEG1_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
 #define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG1_START)
 
-#define	MIPS_KSEG0_P(x)		(((uintptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG0_START)
-#define	MIPS_KSEG1_P(x)		(((uintptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG1_START)
+#define	MIPS_KSEG0_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG0_START)
+#define	MIPS_KSEG1_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG1_START)
 #define	MIPS_KSEG2_P(x)		((uintptr_t)MIPS_KSEG2_START <= (uintptr_t)(x))
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
@@ -118,8 +118,8 @@
 #define	MIPS_XKPHYS_START	(0x2ULL << 62)
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
-#define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffLL)
-#define	MIPS_XKPHYS_TO_CCA(x)	(((x) >> 59) & 7)
+#define	MIPS_XKPHYS_TO_PHYS(x)	((uintptr_t)(x) & 0x0effffffffffffffLL)
+#define	MIPS_XKPHYS_TO_CCA(x)	(((uintptr_t)(x) >> 59) & 7)
 #define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
 
 #define	CCA_UNCACHED		2
