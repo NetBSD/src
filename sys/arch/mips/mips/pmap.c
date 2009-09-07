@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.2 2009/08/23 06:38:07 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.3 2009/09/07 22:08:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.2 2009/08/23 06:38:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.3 2009/09/07 22:08:31 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -147,7 +147,10 @@ CTASSERT((uint32_t)MIPS_KSEG1_START == 0xa0000000);
 CTASSERT((uint32_t)MIPS_KSEG2_START == 0xc0000000);
 CTASSERT((uint32_t)MIPS_MAX_MEM_ADDR == 0xbe000000);
 CTASSERT((uint32_t)MIPS_RESERVED_ADDR == 0xbfc80000);
+CTASSERT(MIPS_KSEG0_P(MIPS_PHYS_TO_KSEG0(0)));
+CTASSERT(MIPS_KSEG1_P(MIPS_PHYS_TO_KSEG1(0)));
 
+CTASSERT(NBPG >= sizeof(struct segtab));
 #ifdef DEBUG
 struct {
 	int kernel;	/* entering kernel mapping */
@@ -374,6 +377,7 @@ pmap_bootstrap(void)
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_asid = PMAP_ASID_RESERVED;
 	pmap_kernel()->pm_asidgen = 0;
+	pmap_kernel()->pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 
 	pmap_max_asid = MIPS_TLB_NUM_PIDS;
 	pmap_next_asid = 1;
@@ -590,22 +594,30 @@ pmap_create(void)
 		pmap->pm_segtab->seg_tab[0] = NULL;
 	} else {
 		struct segtab *stp;
-		struct vm_page *mem;
+		struct vm_page *stp_pg;
+		paddr_t stp_pa;
 
-		do {
-			mem = uvm_pagealloc(NULL, 0, NULL,
+		for (;;) {
+			stp_pg = uvm_pagealloc(NULL, 0, NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-			if (mem == NULL) {
-				/*
-				 * XXX What else can we do?  Could we
-				 * XXX deadlock here?
-				 */
-				uvm_wait("pmap_create");
-			}
-		} while (mem == NULL);
+			if (stp_pg != NULL)
+				break;
+			/*
+			 * XXX What else can we do?  Could we
+			 * XXX deadlock here?
+			 */
+			uvm_wait("pmap_create");
+		}
 
-		pmap->pm_segtab = stp =
-		    (struct segtab *)MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
+		stp_pa = VM_PAGE_TO_PHYS(stp_pg);
+#ifdef _LP64
+		if (stp_pa > MIPS_PHYS_MASK)
+			stp = (struct segtab *)MIPS_PHYS_TO_XKPHYS(
+			    stp_pa, MIPS3_PG_TO_CCA(mips3_pg_cached));
+		else
+#endif
+			stp = (struct segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
+		pmap->pm_segtab = stp;
 		i = NBPG / sizeof(struct segtab);
 		while (--i != 0) {
 			stp++;
@@ -650,6 +662,7 @@ pmap_destroy(pmap_t pmap)
 #endif
 
 		for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+			paddr_t pa;
 			/* get pointer to segment map */
 			pte = pmap->pm_segtab->seg_tab[i];
 			if (!pte)
@@ -673,7 +686,13 @@ pmap_destroy(pmap_t pmap)
 			if (mips_cache_virtual_alias)
 				mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
-			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
+#ifdef _LP64
+			if (MIPS_XKPHYS_P(pte))
+				pa = MIPS_XKPHYS_TO_PHYS(pte);
+			else
+#endif
+				pa = MIPS_KSEG0_TO_PHYS(pte);
+			uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -1284,6 +1303,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	if (!(pte = pmap_segmap(pmap, va))) {
+		paddr_t phys;
 		mem = uvm_pagealloc(NULL, 0, NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 		if (mem == NULL) {
@@ -1292,8 +1312,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			panic("pmap_enter: cannot allocate segmap");
 		}
 
-		pmap_segmap(pmap, va) = pte =
-		    (pt_entry_t *)MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
+		phys = VM_PAGE_TO_PHYS(mem);
+#ifdef _LP64
+		if ((vaddr_t)pte > MIPS_PHYS_MASK)
+			pte = (pt_entry_t *)MIPS_PHYS_TO_XKPHYS(phys,
+			    MIPS3_PG_TO_CCA(mips3_pg_cached));
+		else
+#endif
+			pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(phys);
+		pmap_segmap(pmap, va) = pte;
 #ifdef PARANOIADIAG
 	    {
 		int i;
@@ -1326,23 +1353,23 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap->pm_stats.wired_count++;
 		npte |= mips_pg_wired_bit();
 	}
-#ifdef DEBUG
+#if defined(DEBUG)
 	if (pmapdebug & PDB_ENTER) {
-		printf("pmap_enter: new pte %x", npte);
+		printf("pmap_enter: %p: %#"PRIxVADDR": new pte %#x (pa %#"PRIxPADDR")", pmap, va, npte, pa);
 		if (pmap->pm_asidgen == pmap_asid_generation)
-			printf(" asid %d", pmap->pm_asid);
+			printf(" asid %u (%#x)", pmap->pm_asid, pmap->pm_asid);
 		printf("\n");
 	}
 #endif
 
 #ifdef PARANOIADIAG
 	if (PMAP_IS_ACTIVE(pmap)) {
-		unsigned asid;
+		unsigned int asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
-			panic("inconsistency for active TLB update: %d <-> %d",
+			panic("inconsistency for active TLB update: %u <-> %u",
 			    asid, pmap->pm_asid);
 		}
 	}
@@ -1526,18 +1553,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		printf("pmap_extract(%p, %#"PRIxVADDR") -> ", pmap, va);
 #endif
 	if (pmap == pmap_kernel()) {
-		if (va >= (uintptr_t)MIPS_KSEG0_START && va < (uintptr_t)MIPS_KSEG1_START) {
+		if (MIPS_KSEG0_P(va)) {
 			pa = MIPS_KSEG0_TO_PHYS(va);
 			goto done;
 		}
 #ifdef _LP64
-		if (va >= (uintptr_t)MIPS_XKPHYS_START && va < (uintptr_t)MIPS_XKSEG_START) {
+		if (MIPS_XKPHYS_P(va)) {
 			pa = MIPS_XKPHYS_TO_PHYS(va);
 			goto done;
 		}
 #endif
 #ifdef DIAGNOSTIC
-		else if (va >= (uintptr_t)MIPS_KSEG1_START && va < (uintptr_t)MIPS_KSEG2_START)
+		if (MIPS_KSEG1_P(va))
 			panic("pmap_extract: kseg1 address %#"PRIxVADDR"", va);
 #endif
 		else
@@ -1631,7 +1658,12 @@ pmap_zero_page(paddr_t phys)
 	if (!(phys < MIPS_MAX_MEM_ADDR))
 		printf("pmap_zero_page(%#"PRIxPADDR") nonphys\n", phys);
 #endif
-	va = MIPS_PHYS_TO_KSEG0(phys);
+#ifdef _LP64
+	if (phys > MIPS_PHYS_MASK)
+		va = MIPS_PHYS_TO_XKPHYS(phys, MIPS3_PG_TO_CCA(mips3_pg_cached));
+	else
+#endif
+		va = MIPS_PHYS_TO_KSEG0(phys);
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	pg = PHYS_TO_VM_PAGE(phys);
@@ -1666,11 +1698,24 @@ pmap_zero_page(paddr_t phys)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
+	vaddr_t src_va, dst_va;
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%#"PRIxPADDR", %#"PRIxPADDR")\n", src, dst);
 #endif
-#ifdef PARANOIADIAG
+#ifdef _LP64
+	if (src > MIPS_PHYS_MASK)
+		src_va = MIPS_PHYS_TO_XKPHYS(src, MIPS3_PG_TO_CCA(mips3_pg_cached));
+	else
+#endif
+		src_va = MIPS_PHYS_TO_KSEG0(src);
+#ifdef _LP64
+	if (dst > MIPS_PHYS_MASK)
+		dst_va = MIPS_PHYS_TO_XKPHYS(dst, MIPS3_PG_TO_CCA(mips3_pg_cached));
+	else
+#endif
+		dst_va = MIPS_PHYS_TO_KSEG0(dst);
+#if !defined(_LP64) && defined(PARANOIADIAG)
 	if (!(src < MIPS_MAX_MEM_ADDR))
 		printf("pmap_copy_page(%#"PRIxPADDR") src nonphys\n", src);
 	if (!(dst < MIPS_MAX_MEM_ADDR))
@@ -1700,8 +1745,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	}
 #endif	/* MIPS3_PLUS */
 
-	mips_pagecopy((void *)MIPS_PHYS_TO_KSEG0(dst),
-		      (void *)MIPS_PHYS_TO_KSEG0(src));
+	mips_pagecopy((void *)dst_va, (void *)src_va);
 
 #if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
@@ -1716,8 +1760,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * XXXJRT -- This is totally disgusting.
 	 */
 	if (mips_cache_virtual_alias) {
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), PAGE_SIZE);
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), PAGE_SIZE);
+		mips_dcache_wbinv_range(src_va, PAGE_SIZE);
+		mips_dcache_wbinv_range(dst_va, PAGE_SIZE);
 	}
 #endif	/* MIPS3_PLUS */
 }
@@ -2143,7 +2187,12 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 		return NULL;
 	}
 	phys = VM_PAGE_TO_PHYS(pg);
-	va = MIPS_PHYS_TO_KSEG0(phys);
+#ifdef _LP64
+	if (phys > MIPS_PHYS_MASK)
+		va = MIPS_PHYS_TO_XKPHYS(phys, MIPS3_PG_TO_CCA(mips3_pg_cached));
+	else
+#endif
+		va = MIPS_PHYS_TO_KSEG0(phys);
 #if defined(MIPS3_PLUS)
 	if (mips_cache_virtual_alias) {
 		pg = PHYS_TO_VM_PAGE(phys);
@@ -2164,12 +2213,19 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 void
 pmap_pv_page_free(struct pool *pp, void *v)
 {
+	paddr_t phys;
 
 #ifdef MIPS3_PLUS
 	if (mips_cache_virtual_alias)
 		mips_dcache_inv_range((vaddr_t)v, PAGE_SIZE);
 #endif
-	uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS((vaddr_t)v)));
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(v))
+		phys = MIPS_XKPHYS_TO_PHYS((vaddr_t)v);
+	else
+#endif
+		phys = MIPS_KSEG0_TO_PHYS((vaddr_t)v);
+	uvm_pagefree(PHYS_TO_VM_PAGE(phys));
 }
 
 pt_entry_t *
