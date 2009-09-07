@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.143 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: defs.h,v 1.144 2009/09/07 02:31:53 jnemeth Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -108,6 +108,7 @@ enum {
     SET_GAMES,		/* text games */
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
+    SET_MODULES,	/* kernel modules */
     SET_TESTS,		/* tests */
     SET_TEXT_TOOLS,	/* text processing tools */
 
@@ -136,7 +137,7 @@ enum {
 #define SET_KERNEL SET_KERNEL_1, SET_KERNEL_2, SET_KERNEL_3, SET_KERNEL_4, \
 		    SET_KERNEL_5, SET_KERNEL_6, SET_KERNEL_7, SET_KERNEL_8
 /* Core system sets */
-#define SET_CORE SET_BASE, SET_ETC
+#define SET_CORE SET_MODULES, SET_BASE, SET_ETC
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MISC, SET_TESTS, SET_TEXT_TOOLS
