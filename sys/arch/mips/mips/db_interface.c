@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.3 2009/09/06 23:01:59 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.4 2009/09/07 21:54:39 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.3 2009/09/06 23:01:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.4 2009/09/07 21:54:39 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.3 2009/09/06 23:01:59 matt 
 
 int		db_active = 0;
 db_regs_t	ddb_regs;
-mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
+label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -201,17 +201,18 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 		tfp[TF_MULLO] = f->f_regs[_R_MULLO];
 		tfp[TF_MULHI] = f->f_regs[_R_MULHI];
 		tfp[TF_EPC] = f->f_regs[_R_PC];
-		kdbaux[0] = f->f_regs[_R_S0];
-		kdbaux[1] = f->f_regs[_R_S1];
-		kdbaux[2] = f->f_regs[_R_S2];
-		kdbaux[3] = f->f_regs[_R_S3];
-		kdbaux[4] = f->f_regs[_R_S4];
-		kdbaux[5] = f->f_regs[_R_S5];
-		kdbaux[6] = f->f_regs[_R_S6];
-		kdbaux[7] = f->f_regs[_R_S7];
-		kdbaux[8] = f->f_regs[_R_SP];
-		kdbaux[9] = f->f_regs[_R_S8];
-		kdbaux[10] = f->f_regs[_R_GP];
+		kdbaux.val[_L_S0] = f->f_regs[_R_S0];
+		kdbaux.val[_L_S1] = f->f_regs[_R_S1];
+		kdbaux.val[_L_S2] = f->f_regs[_R_S2];
+		kdbaux.val[_L_S3] = f->f_regs[_R_S3];
+		kdbaux.val[_L_S4] = f->f_regs[_R_S4];
+		kdbaux.val[_L_S5] = f->f_regs[_R_S5];
+		kdbaux.val[_L_S6] = f->f_regs[_R_S6];
+		kdbaux.val[_L_S7] = f->f_regs[_R_S7];
+		kdbaux.val[_L_GP] = f->f_regs[_R_GP];
+		kdbaux.val[_L_SP] = f->f_regs[_R_SP];
+		kdbaux.val[_L_S8] = f->f_regs[_R_S8];
+		kdbaux.val[_L_SR] = f->f_regs[_R_SR];
 	}
 
 	return (1);
@@ -258,17 +259,17 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 		f->f_regs[_R_MULLO] = tfp[TF_MULLO];
 		f->f_regs[_R_MULHI] = tfp[TF_MULHI];
 		f->f_regs[_R_PC] = tfp[TF_EPC];
-		f->f_regs[_R_S0] = kdbaux[0];
-		f->f_regs[_R_S1] = kdbaux[1];
-		f->f_regs[_R_S2] = kdbaux[2];
-		f->f_regs[_R_S3] = kdbaux[3];
-		f->f_regs[_R_S4] = kdbaux[4];
-		f->f_regs[_R_S5] = kdbaux[5];
-		f->f_regs[_R_S6] = kdbaux[6];
-		f->f_regs[_R_S7] = kdbaux[7];
-		f->f_regs[_R_SP] = kdbaux[8];
-		f->f_regs[_R_S8] = kdbaux[9];
-		f->f_regs[_R_GP] = kdbaux[10];
+		f->f_regs[_R_S0] = kdbaux.val[_L_S0];
+		f->f_regs[_R_S1] = kdbaux.val[_L_S1];
+		f->f_regs[_R_S2] = kdbaux.val[_L_S2];
+		f->f_regs[_R_S3] = kdbaux.val[_L_S3];
+		f->f_regs[_R_S4] = kdbaux.val[_L_S4];
+		f->f_regs[_R_S5] = kdbaux.val[_L_S5];
+		f->f_regs[_R_S6] = kdbaux.val[_L_S6];
+		f->f_regs[_R_S7] = kdbaux.val[_L_S7];
+		f->f_regs[_R_GP] = kdbaux.val[_L_GP];
+		f->f_regs[_R_SP] = kdbaux.val[_L_SP];
+		f->f_regs[_R_S8] = kdbaux.val[_L_S8];
 	}
 }
 
