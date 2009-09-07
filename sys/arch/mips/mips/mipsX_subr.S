@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.6 2009/09/05 03:25:07 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.7 2009/09/07 22:32:52 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,6 +133,18 @@
 #include <machine/endian.h>
 
 #include "assym.h"
+
+#ifdef _LP64
+#define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
+	li reg, MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
+#define	SET_EXCEPTION_LEVEL(reg) \
+	li reg, MIPS_SR_EXL | MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
+#else
+#define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
+	mtc0 zero, MIPS_COP_0_STATUS
+#define	SET_EXCEPTION_LEVEL(reg) \
+	li reg, MIPS_SR_EXL; mtc0 reg, MIPS_COP_0_STATUS
+#endif
 
 /*
  * XXX MIPS3_5900 is still "special" for much of this code.
@@ -592,7 +604,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	PTR_ADDU v0, sp, KERNFRAME_SIZ
 	REG_S	v0, KERNFRAME_SP(sp)
 #endif
-	mtc0	zero, MIPS_COP_0_STATUS		# Set kernel no error level
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	nop
@@ -603,7 +615,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 /*
  * Restore registers and return from the exception.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# Make sure int disabled
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
@@ -771,13 +783,12 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
  * Restore user registers and return.
  * First disable interrupts and set exception level.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupt
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 clock delay before
 	nop					# exceptions blocked
 	nop					# for R4X
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
@@ -946,14 +957,13 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * Restore user registers and return.
  * First disable interrupts and set exception level.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# disable int
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
 	nop
 
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
@@ -1122,7 +1132,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	INT_S	t0, TF_BASE+TF_PPL(sp)
 	.set noat
 #endif
-	mtc0	zero, MIPS_COP_0_STATUS		# Reset exl, trap possible.
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
         PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)     # XXX Atheros HAL
 	jal	_C_LABEL(cpu_intr)
@@ -1130,7 +1140,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 /*
  * Restore registers and return from the interrupt.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupt
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	nop
@@ -1284,13 +1294,12 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Restore registers and return from the interrupt.
  */
 	nop
-	mtc0	zero, MIPS_COP_0_STATUS
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop hazard
 	nop
 	nop
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level bit.
+	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
 	COP0_SYNC
 	nop					# 3 nop hazard
 	nop
@@ -1323,7 +1332,11 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	jal	_C_LABEL(spllowersofthigh);
 	nop
 #else
+#ifdef _LP64
+	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX
+#else
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
+#endif
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 	COP0_SYNC
@@ -1333,13 +1346,12 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	mtc0	zero, MIPS_COP_0_STATUS
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
 	nop
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level bit.
+	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
@@ -1665,7 +1677,7 @@ END(MIPSX(SetPID))
  */
 LEAF(MIPSX(TLBWriteIndexedVPS))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	lw	a2, 8(a1)			# fetch tlb->tlb_lo0
@@ -1979,13 +1991,12 @@ LEAF(MIPSX(lwp_trampoline))
 	#
 	.set	noat
 1:
-	mtc0	zero, MIPS_COP_0_STATUS		# disable int
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
 	nop
-	li	a0, MIPS_SR_EXL			# set exception level
-	mtc0	a0, MIPS_COP_0_STATUS
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop
 	nop
@@ -2075,9 +2086,14 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	PTR_L	v0, L_ADDR(a0)			# va = l->l_addr
-	li	s0, MIPS_KSEG2_START
+	li	s0, VM_MIN_KERNEL_ADDRESS
+#if VM_MIN_KERNEL_ADDRESS > MIPS_KSEG0_START
 	blt	v0, s0, resume
 	nop
+#else
+	blt	s0, v0, resume
+	nop
+#endif
 
 	and	s0, v0, MIPS3_PG_ODDPG
 	beq	s0, zero, entry0
