@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2009/07/20 18:11:37 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.3 2009/09/07 14:28:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2009/07/20 18:11:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2009/09/07 14:28:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2009/07/20 18:11:37 pooka Exp $");
 #include <sys/stat.h>
 
 #include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
 CFDRIVER_DECL(raid, DV_DISK, NULL);
 
@@ -54,10 +55,10 @@ rump_dev_raidframe_init()
 	    &raid_cdevsw, &cmaj)) != 0)
 		panic("raid devsw attach failed: %d", error);
 
-	if ((error = rump_dev_makenodes(S_IFBLK, "raid0", 'a',
+	if ((error = rump_vfs_makedevnodes(S_IFBLK, "raid0", 'a',
 	    bmaj, 0, 7)) != 0)
 		panic("cannot create cooked raid dev nodes: %d", error);
-	if ((error = rump_dev_makenodes(S_IFCHR, "rraid0", 'a',
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "rraid0", 'a',
 	    cmaj, 0, 7)) != 0)
 		panic("cannot create raw raid dev nodes: %d", error);
 
