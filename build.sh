@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.206 2009/03/13 16:23:31 perry Exp $
+#	$NetBSD: build.sh,v 1.207 2009/09/07 04:14:17 jnemeth Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -231,6 +231,7 @@ initdefaults()
 	do_release=false
 	do_kernel=false
 	do_releasekernel=false
+	do_modules=false
 	do_install=false
 	do_sets=false
 	do_sourcesets=false
@@ -565,6 +566,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                         except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    modules             Build and install kernel modules.
     sets                Create binary sets in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
                         DESTDIR should be populated beforehand.
@@ -822,6 +824,10 @@ parseoptions()
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
 			    bomb "Must supply a kernel name with \`${op}=...'"
+			;;
+
+		modules)
+			op=modules
 			;;
 
 		install=*)
@@ -1217,7 +1223,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.206 2009/03/13 16:23:31 perry Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.207 2009/09/07 04:14:17 jnemeth Exp $
 # with these arguments: ${_args}
 #
 
@@ -1356,6 +1362,30 @@ releasekernel()
 	done
 }
 
+buildmodules()
+{
+	if ! ${do_tools} && ! ${buildmoduleswarned:-false}; then
+		# Building tools every time we build modules is clearly
+		# unnecessary as well as a kernel.
+		#
+		statusmsg "Building modules without building new tools"
+		buildmoduleswarned=true
+	fi
+
+	statusmsg "Building kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		make_in_dir sys/modules obj ||
+		    bomb "Failed to make obj in sys/modules"
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir sys/modules cleandir
+	fi
+	${runcmd} "${makewrapper}" ${parallel} do-sys-modules ||
+	    bomb "Failed to make do-sys-modules"
+
+	statusmsg "Successful build kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+}
+
 installworld()
 {
 	dir="$1"
@@ -1428,6 +1458,10 @@ main()
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
+			;;
+
+		modules)
+			buildmodules
 			;;
 
 		install=*)
