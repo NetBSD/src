@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.6 2009/09/07 16:21:08 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.7 2009/09/07 16:41:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.6 2009/09/07 16:21:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.7 2009/09/07 16:41:37 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2908,8 +2908,16 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 	 * the direction.
 	 */
 	if (sc->sc_rchan == 0 || sc->sc_pchan == 0) {
+		memset(&f, 0, sizeof(f));
+		f.driver_data = NULL;
+		f.mode = 0;
+		f.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		f.validbits = 16;
+		f.precision = 16;
 		f.channels = 2;
 		f.channel_mask = AUFMT_STEREO;
+		f.frequency_type = 0;
+		f.frequency[0] = f.frequency[1] = 48000;
 		f.mode = AUMODE_PLAY|AUMODE_RECORD;
 		hdaudio_afg_append_formats(&sc->sc_audiodev, &f);
 	}
