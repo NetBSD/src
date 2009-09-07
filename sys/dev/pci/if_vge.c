@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.48 2009/05/16 07:34:05 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.49 2009/09/07 12:44:29 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.48 2009/05/16 07:34:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.49 2009/09/07 12:44:29 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -318,7 +318,7 @@ static void vge_watchdog(struct ifnet *);
 static int vge_suspend(device_t);
 static int vge_resume(device_t);
 #endif
-static void vge_shutdown(void *);
+static bool vge_shutdown(device_t, int);
 
 static uint16_t vge_read_eeprom(struct vge_softc *, int);
 
@@ -1077,10 +1077,10 @@ vge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	if (shutdownhook_establish(vge_shutdown, sc) == NULL) {
-		aprint_error_dev(self,
-		    "WARNING: unable to establish shutdown hook\n");
-	}
+	if (pmf_device_register1(self, NULL, NULL, vge_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -2212,11 +2212,13 @@ vge_resume(device_t dev)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void
-vge_shutdown(void *arg)
+static bool
+vge_shutdown(device_t self, int howto)
 {
 	struct vge_softc *sc;
 
-	sc = arg;
+	sc = device_private(self);
 	vge_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
