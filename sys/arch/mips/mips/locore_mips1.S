@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.1 2009/08/20 22:37:16 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.2 2009/09/07 22:29:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1115,7 +1115,7 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	lw	s0, L_ADDR(a0)			# va = l->l_addr
-	li	s2, MIPS_KSEG2_START
+	li	s2, VM_MIN_KERNEL_ADDRESS
 	blt	s0, s2, resume
 	nop
 
