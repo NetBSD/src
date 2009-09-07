@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.4 2009/08/23 06:38:07 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.5 2009/09/07 22:27:30 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.4 2009/08/23 06:38:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.5 2009/09/07 22:27:30 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -205,7 +205,7 @@ int mips3_pg_cached;
 u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
-struct	segtab *segbase;
+struct	segtab *segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 
 void *	msgbufaddr;
 
