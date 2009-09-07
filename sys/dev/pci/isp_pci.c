@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.109 2009/06/25 23:44:02 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.110 2009/09/07 13:39:19 tsutsui Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.109 2009/06/25 23:44:02 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.110 2009/09/07 13:39:19 tsutsui Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -424,7 +424,7 @@ struct isp_pcisoftc {
 	int16_t			pci_poff[_NREG_BLKS];
 };
 
-CFATTACH_DECL(isp_pci, sizeof (struct isp_pcisoftc),
+CFATTACH_DECL_NEW(isp_pci, sizeof (struct isp_pcisoftc),
     isp_pci_probe, isp_pci_attach, NULL, NULL);
 
 static int
@@ -492,6 +492,8 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 	size_t mamt;
+
+	isp->isp_osinfo.dev = self;
 
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
@@ -684,7 +686,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 
 	isp->isp_param = malloc(mamt, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_param == NULL) {
-		printf(nomem, device_xname(&isp->isp_osinfo.dev));
+		printf(nomem, device_xname(self));
 		return;
 	}
 	memset(isp->isp_param, 0, mamt);
@@ -692,7 +694,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	isp->isp_osinfo.chan = malloc(mamt, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_osinfo.chan == NULL) {
 		free(isp->isp_param, M_DEVBUF);
-		printf(nomem, device_xname(&isp->isp_osinfo.dev));
+		printf(nomem, device_xname(self));
 		return;
 	}
 	memset(isp->isp_osinfo.chan, 0, mamt);
@@ -752,7 +754,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&isp->isp_osinfo.dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		free(isp->isp_param, M_DEVBUF);
 		free(isp->isp_osinfo.chan, M_DEVBUF);
 		return;
@@ -763,16 +765,16 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	pcs->pci_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    isp_pci_intr, isp);
 	if (pcs->pci_ih == NULL) {
-		aprint_error_dev(&isp->isp_osinfo.dev, "couldn't establish interrupt at %s\n",
+		aprint_error_dev(self, "couldn't establish interrupt at %s\n",
 			intrstr);
 		free(isp->isp_param, M_DEVBUF);
 		free(isp->isp_osinfo.chan, M_DEVBUF);
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", device_xname(&isp->isp_osinfo.dev), intrstr);
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
 
-	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_confopts = device_cfdata(self)->cf_flags;
 	ISP_LOCK(isp);
 	isp_reset(isp, 1);
 	if (isp->isp_state != ISP_RESETSTATE) {
@@ -1436,7 +1438,7 @@ isp_pci_dumpregs(struct ispsoftc *isp, const char *msg)
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
 	if (msg)
-		printf("%s: %s\n", device_xname(&isp->isp_osinfo.dev), msg);
+		printf("%s: %s\n", device_xname(isp->isp_osinfo.dev), msg);
 	if (IS_SCSI(isp))
 		printf("    biu_conf1=%x", ISP_READ(isp, BIU_CONF1));
 	else
