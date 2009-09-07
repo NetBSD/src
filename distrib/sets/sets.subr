@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.85 2009/08/30 01:49:41 dyoung Exp $
+#	$NetBSD: sets.subr,v 1.86 2009/09/07 02:27:27 jnemeth Exp $
 #
 
 #
@@ -194,8 +194,6 @@ done
 IFS=$oIFS
 
 setsdir=${0%/*}
-nlists="base comp etc games man misc tests text"
-xlists="xbase xcomp xetc xfont xserver"
 obsolete=0
 module=yes
 if [ "${MACHINE}" = "evbppc" ]; then
@@ -215,6 +213,12 @@ fi
 if [ "${MACHINE_ARCH}" = "m68000" ]; then
 	shlib=no			# Turn off shlibs for some ports.
 fi
+if [ "$module" != "no" ]; then
+	nlists="base comp etc games man misc modules tests text"
+else
+	nlists="base comp etc games man misc tests text"
+fi
+xlists="xbase xcomp xetc xfont xserver"
 
 OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
 MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
@@ -229,7 +233,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.85 2009/08/30 01:49:41 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.86 2009/09/07 02:27:27 jnemeth Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

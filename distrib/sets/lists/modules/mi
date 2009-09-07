@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.11 2009/08/30 01:49:42 dyoung Exp $
+# $NetBSD: mi,v 1.1 2009/09/07 02:27:29 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
