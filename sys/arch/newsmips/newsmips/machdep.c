@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:46 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -381,7 +381,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
