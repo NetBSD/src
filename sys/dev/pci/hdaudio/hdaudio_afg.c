@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.5 2009/09/07 11:59:53 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.6 2009/09/07 16:21:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.5 2009/09/07 11:59:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.6 2009/09/07 16:21:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,7 +151,7 @@ static const char *hdaudio_afg_color[] = {
 	"Other"
 };
 
-#define	HDAUDIO_MAXFORMATS	10
+#define	HDAUDIO_MAXFORMATS	24
 #define	HDAUDIO_MAXCONNECTIONS	32
 #define	HDAUDIO_MAXPINS		16
 #define	HDAUDIO_PARSE_MAXDEPTH	10
@@ -285,7 +285,7 @@ struct hdaudio_afg_softc {
 	struct hdaudio_mixer		*sc_mixers;
 
 	int				sc_pchan, sc_rchan;
-	int				sc_curpchan, sc_currchan;
+	audio_params_t			sc_pparam, sc_rparam;
 
 	struct callout			sc_jack_callout;
 
@@ -378,12 +378,12 @@ static int
 hdaudio_afg_append_formats(struct hdaudio_audiodev *ad,
     const struct audio_format *format)
 {
-	struct hdaudio_afg_softc *sc = ad->ad_sc;
-	if (ad->ad_nformats >= HDAUDIO_MAXFORMATS) {
-		hda_error(sc, "too many formats\n");
-		return EINVAL;
+	if (ad->ad_nformats + 1 >= HDAUDIO_MAXFORMATS) {
+		hda_print1(ad->ad_sc, "[ENOMEM] ");
+		return ENOMEM;
 	}
 	ad->ad_formats[ad->ad_nformats++] = *format;
+
 	return 0;
 }
 
@@ -2609,32 +2609,37 @@ hdaudio_afg_stream_connect(struct hdaudio_afg_softc *sc, int mode)
 	int tag, chn, maxchan, c;
 	int i, j;
 
-	fmt = HDAUDIO_FMT_BASE_48 | HDAUDIO_FMT_MULT(1) |
-	    HDAUDIO_FMT_DIV(1) | HDAUDIO_FMT_BITS_16_16;
+	KASSERT(mode == AUMODE_PLAY || mode == AUMODE_RECORD);
+
 	dfmt = COP_DIGITAL_CONVCTRL1_DIGEN;	/* TODO: AC3 */
+
+	if (mode == AUMODE_PLAY)
+		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_playback,
+		    &sc->sc_pparam);
+	else
+		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_capture,
+		    &sc->sc_rparam);
 
 	for (i = 0; i < sc->sc_nassocs; i++) {
 		if (as[i].as_enable == false)
 			continue;
 
-		if ((mode & (AUMODE_PLAY|AUMODE_RECORD)) == AUMODE_PLAY &&
-		    as[i].as_dir != HDAUDIO_PINDIR_OUT)
+		if (mode == AUMODE_PLAY && as[i].as_dir != HDAUDIO_PINDIR_OUT)
 			continue;
-		if ((mode & (AUMODE_PLAY|AUMODE_RECORD)) == AUMODE_RECORD &&
-		    as[i].as_dir != HDAUDIO_PINDIR_IN)
+		if (mode == AUMODE_RECORD && as[i].as_dir != HDAUDIO_PINDIR_IN)
 			continue;
 
 		fmt &= ~HDAUDIO_FMT_CHAN_MASK;
 		if (as[i].as_dir == HDAUDIO_PINDIR_OUT &&
 		    sc->sc_audiodev.ad_playback != NULL) {
 			tag = hdaudio_stream_tag(sc->sc_audiodev.ad_playback);
-			fmt |= HDAUDIO_FMT_CHAN(sc->sc_curpchan);
-			maxchan = sc->sc_curpchan;
+			fmt |= HDAUDIO_FMT_CHAN(sc->sc_pparam.channels);
+			maxchan = sc->sc_pparam.channels;
 		} else if (as[i].as_dir == HDAUDIO_PINDIR_IN &&
 		    sc->sc_audiodev.ad_capture != NULL) {
 			tag = hdaudio_stream_tag(sc->sc_audiodev.ad_capture);
-			fmt |= HDAUDIO_FMT_CHAN(sc->sc_currchan);
-			maxchan = sc->sc_currchan;
+			fmt |= HDAUDIO_FMT_CHAN(sc->sc_rparam.channels);
+			maxchan = sc->sc_rparam.channels;
 		} else {
 			tag = 0;
 			if (as[i].as_dir == HDAUDIO_PINDIR_OUT) {
@@ -2732,40 +2737,85 @@ hdaudio_afg_assoc_count_channels(struct hdaudio_afg_softc *sc,
 	return nchans;
 }
 
-static void
-hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
+static bool
+hdaudio_afg_rate_supported(struct hdaudio_afg_softc *sc, u_int frequency)
 {
-	struct hdaudio_assoc *as = sc->sc_assocs;
+	uint32_t caps = sc->sc_p.pcm_size_rate;
+
+#define ISFREQOK(shift)	((caps & (1 << (shift))) ? true : false)
+	switch (frequency) {
+	case 8000:
+		return ISFREQOK(0);
+	case 11025:
+		return ISFREQOK(1);
+	case 16000:
+		return ISFREQOK(2);
+	case 22050:
+		return ISFREQOK(3);
+	case 32000:
+		return ISFREQOK(4);
+	case 44100:
+		return ISFREQOK(5);
+	case 48000:
+		return true;	/* Must be supported by all codecs */
+	case 88200:
+		return ISFREQOK(7);
+	case 96000:
+		return ISFREQOK(8);
+	case 176400:
+		return ISFREQOK(9);
+	case 192000:
+		return ISFREQOK(10);
+	case 384000:
+		return ISFREQOK(11);
+	default:
+		return false;
+	}
+#undef ISFREQOK
+}
+
+static bool
+hdaudio_afg_bits_supported(struct hdaudio_afg_softc *sc, u_int bits)
+{
+	uint32_t caps = sc->sc_p.pcm_size_rate;
+#define ISBITSOK(shift)	((caps & (1 << (shift))) ? true : false)
+	switch (bits) {
+	case 8:
+		return ISBITSOK(16);
+	case 16:
+		return ISBITSOK(17);
+	case 20:
+		return ISBITSOK(18);
+	case 24:
+		return ISBITSOK(19);
+	case 32:
+		return ISBITSOK(20);
+	default:
+		return false;
+	}
+#undef ISBITSOK
+}
+
+static bool
+hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
+    u_int minrate, u_int maxrate, u_int validbits, u_int precision)
+{
 	struct audio_format f;
-	int nchan, i;
 
-	sc->sc_pchan = sc->sc_rchan = 0;
-
-	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
-		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
-		    HDAUDIO_PINDIR_OUT);
-		if (nchan > sc->sc_pchan)
-			sc->sc_pchan = nchan;
-	}
-	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
-		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
-		    HDAUDIO_PINDIR_IN);
-		if (nchan > sc->sc_rchan)
-			sc->sc_rchan = nchan;
-	}
-
-	sc->sc_curpchan = sc->sc_pchan;
-	sc->sc_currchan = sc->sc_rchan;
+	if (hdaudio_afg_bits_supported(sc, validbits) == false)
+		return false;
 
 	memset(&f, 0, sizeof(f));
 	f.driver_data = NULL;
 	f.mode = 0;
 	f.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	f.validbits = f.precision = 16;	/* XXX */
+	f.validbits = validbits;
+	f.precision = precision;
 	f.channels = 0;
 	f.channel_mask = 0;
 	f.frequency_type = 0;
-	f.frequency[0] = f.frequency[1] = 48000; /* XXX */
+	f.frequency[0] = minrate;
+	f.frequency[1] = maxrate;
 
 #define HDAUDIO_INITFMT(ch, chmask)			\
 	do {						\
@@ -2789,8 +2839,66 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 	HDAUDIO_INITFMT(6, AUFMT_DOLBY_5_1);
 	HDAUDIO_INITFMT(8, AUFMT_SURROUND_7_1);
 
-	hda_print(sc, "%d playback channels, %d capture channels\n",
-	    sc->sc_pchan, sc->sc_rchan);
+#undef HDAUDIO_INITFMT
+
+	return true;
+}
+
+
+static void
+hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
+{
+	const u_int possible_rates[] = {
+		8000, 11025, 16000, 22050, 32000, 44100,
+		48000, 88200, 96000, 176500, 192000, /* 384000, */
+	};
+	struct hdaudio_assoc *as = sc->sc_assocs;
+	struct audio_format f;
+	u_int minrate, maxrate;
+	int nchan, i;
+
+	sc->sc_pchan = sc->sc_rchan = 0;
+	minrate = maxrate = 0;
+
+	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
+		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
+		    HDAUDIO_PINDIR_OUT);
+		if (nchan > sc->sc_pchan)
+			sc->sc_pchan = nchan;
+	}
+	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
+		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
+		    HDAUDIO_PINDIR_IN);
+		if (nchan > sc->sc_rchan)
+			sc->sc_rchan = nchan;
+	}
+	hda_print(sc, "%dch/%dch", sc->sc_pchan, sc->sc_rchan);
+
+	for (i = 0; __arraycount(possible_rates); i++)
+		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
+			minrate = possible_rates[i];
+			break;
+		}
+	for (i = __arraycount(possible_rates) - 1; i >= 0; i--)
+		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
+			maxrate = possible_rates[i];
+			break;
+		}
+	KASSERT(minrate > 0 && maxrate > 0);	/* impossible */
+	hda_print1(sc, " %uHz", minrate);
+	if (minrate != maxrate)
+		hda_print1(sc, "-%uHz", maxrate);
+
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 8, 16))
+		hda_print1(sc, " 8/16");
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16))
+		hda_print1(sc, " 16/16");
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 20, 32))
+		hda_print1(sc, " 20/32");
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 24, 32))
+		hda_print1(sc, " 24/32");
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 32, 32))
+		hda_print1(sc, " 32/32");
 
 	/*
 	 * XXX JDM 20090614
@@ -2806,8 +2914,7 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 		hdaudio_afg_append_formats(&sc->sc_audiodev, &f);
 	}
 
-
-#undef HDAUDIO_INITFMT
+	hda_print1(sc, "\n");
 }
 
 static void
@@ -2957,6 +3064,7 @@ static void
 hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 {
 	struct hdaudio_afg_softc *sc = device_private(self);
+	audio_params_t defparams;
 	prop_dictionary_t args = opaque;
 	uint64_t fgptr = 0;
 	uint8_t nid = 0;
@@ -3058,7 +3166,13 @@ hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 	    HDAUDIO_STREAM_OSS, hdaudio_afg_stream_intr, &sc->sc_audiodev);
 
 	hda_debug(sc, "connecting streams\n");
-	hdaudio_afg_stream_connect(sc, AUMODE_PLAY | AUMODE_RECORD);
+	defparams.channels = 2;
+	defparams.sample_rate = 48000;
+	defparams.precision = defparams.validbits = 16;
+	defparams.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	sc->sc_pparam = sc->sc_rparam = defparams;
+	hdaudio_afg_stream_connect(sc, AUMODE_PLAY);
+	hdaudio_afg_stream_connect(sc, AUMODE_RECORD);
 
 	hda_debug(sc, "attaching audio device\n");
 	sc->sc_audiodev.ad_audiodev = audio_attach_mi(&hdaudio_afg_hw_if,
@@ -3125,7 +3239,8 @@ hdaudio_afg_resume(device_t self PMF_FN_ARGS)
 	hda_delay(1000);
 
 	hdaudio_afg_commit(sc);
-	hdaudio_afg_stream_connect(sc, AUMODE_PLAY | AUMODE_RECORD);
+	hdaudio_afg_stream_connect(sc, AUMODE_PLAY);
+	hdaudio_afg_stream_connect(sc, AUMODE_RECORD);
 
 	return true;
 }
@@ -3150,12 +3265,16 @@ hdaudio_afg_set_params(void *opaque, int setmode, int usemode,
 		    AUMODE_PLAY, play, TRUE, pfil);
 		if (index < 0)
 			return EINVAL;
+		ad->ad_sc->sc_pparam = *play;
+		hdaudio_afg_stream_connect(ad->ad_sc, AUMODE_PLAY);
 	}
 	if (rec && (setmode & AUMODE_RECORD)) {
 		index = auconv_set_converter(ad->ad_formats, ad->ad_nformats,
 		    AUMODE_RECORD, rec, TRUE, rfil);
 		if (index < 0)
 			return EINVAL;
+		ad->ad_sc->sc_rparam = *rec;
+		hdaudio_afg_stream_connect(ad->ad_sc, AUMODE_RECORD);
 	}
 	return 0;
 }
@@ -3419,7 +3538,7 @@ hdaudio_afg_trigger_output(void *opaque, void *start, void *end, int blksize,
 	ad->ad_playbackintrarg = intrarg;
 
 	dmasize = (char *)end - (char *)start;
-	ad->ad_sc->sc_curpchan = param->channels;
+	ad->ad_sc->sc_pparam = *param;
 	hdaudio_afg_stream_connect(ad->ad_sc, AUMODE_PLAY);
 	hdaudio_stream_start(ad->ad_playback, blksize, dmasize, param);
 
@@ -3442,7 +3561,7 @@ hdaudio_afg_trigger_input(void *opaque, void *start, void *end, int blksize,
 	ad->ad_captureintrarg = intrarg;
 
 	dmasize = (char *)end - (char *)start;
-	ad->ad_sc->sc_currchan = param->channels;
+	ad->ad_sc->sc_rparam = *param;
 	hdaudio_afg_stream_connect(ad->ad_sc, AUMODE_RECORD);
 	hdaudio_stream_start(ad->ad_capture, blksize, dmasize, param);
 
