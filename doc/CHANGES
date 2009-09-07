@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1285 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1286 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -383,3 +383,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[macallan 20090905]
 	hdaudio(4): New standards-compliant Intel High Definition Audio driver
 		written to replace azalia(4). [sborrill 20090906]
+	sets: Move kernel modules out of base.tgz and into a new modules.tgz.
+		[jnemeth 20090907]
+	sysinst(8): Install the new modules.tgz set. [jnemeth 20090907]
+	build.sh: Add a modules operation which builds kernel modules and
+		installs them into DESTDIR. [jnemeth 20090907]
