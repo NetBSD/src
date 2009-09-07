@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.53 2009/09/02 10:34:05 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.54 2009/09/07 13:31:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct ncr53c9x_ecb {
 	uint8_t	*daddr;		/* Saved data pointer */
 	int	 clen;		/* Size of command in cmd.cmd */
 	int	 dleft;		/* Residue */
-	u_char 	 stat;		/* SCSI status byte */
+	u_char	 stat;		/* SCSI status byte */
 	u_char	 tag[2];	/* TAG bytes */
 	u_char	 pad[1];
 
@@ -370,7 +370,7 @@ struct ncr53c9x_softc {
 #define SEND_PARITY_ERROR	0x0002
 #define SEND_INIT_DET_ERR	0x0004
 #define SEND_REJECT		0x0008
-#define SEND_IDENTIFY  		0x0010
+#define SEND_IDENTIFY		0x0010
 #define SEND_ABORT		0x0020
 #define SEND_WDTR		0x0040
 #define SEND_SDTR		0x0080

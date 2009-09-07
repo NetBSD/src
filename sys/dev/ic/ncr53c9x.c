@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.140 2009/09/02 10:34:04 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.141 2009/09/07 13:31:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.140 2009/09/02 10:34:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.141 2009/09/07 13:31:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,9 @@ static int  ncr53c9x_rdfifo(struct ncr53c9x_softc *, int);
 
 
 #define NCR_SET_COUNT(sc, size) do { \
-		NCR_WRITE_REG((sc), NCR_TCL, (size)); 			\
+		NCR_WRITE_REG((sc), NCR_TCL, (size));			\
 		NCR_WRITE_REG((sc), NCR_TCM, (size) >> 8);		\
-		if ((sc->sc_cfg2 & NCRCFG2_FE) || 			\
+		if ((sc->sc_cfg2 & NCRCFG2_FE) ||			\
 		    (sc->sc_rev == NCR_VARIANT_FAS366)) {		\
 			NCR_WRITE_REG((sc), NCR_TCH, (size) >> 16);	\
 		}							\
@@ -1400,7 +1400,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 
 #if 0
 #ifdef NCR53C9X_DEBUG
- 	{
+	{
 		int j;
 
 		NCR_TRACE(("\n[rdfifo %s (%d):",
@@ -2385,7 +2385,7 @@ again:
 		ecb = sc->sc_nexus;
 		if (sc->sc_phase != MESSAGE_IN_PHASE) {
 			int i = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
- 			/*
+			/*
 			 * Things are seriously screwed up.
 			 * Pull the brakes, i.e. reset
 			 */
