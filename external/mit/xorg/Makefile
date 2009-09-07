@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/20 15:39:46 jnemeth Exp $
+#	$NetBSD: Makefile,v 1.7 2009/09/07 21:07:03 mrg Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
@@ -57,7 +57,9 @@ DISTRIBTARGETS=	\
 	bin/xfs \
 	bin/xinit \
 	bin/xsm \
-	lib/fontconfig/etc
+	lib/fontconfig/etc \
+	lib/fontconfig/etc/conf.avail \
+	lib/fontconfig/etc/conf.d
 
 distribution: check_X11SRCDIR
 .for tgt in ${DISTRIBTARGETS}

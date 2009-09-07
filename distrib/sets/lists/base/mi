@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.827 2009/09/07 19:34:29 mrg Exp $
+# $NetBSD: mi,v 1.828 2009/09/07 21:07:02 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -89,6 +89,7 @@
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
 ./etc/fonts/conf.d				base-x11-root
+./etc/fonts/conf.avail				base-x11-root
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
