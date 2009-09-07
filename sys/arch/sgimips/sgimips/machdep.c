@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2008/08/03 00:35:03 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.8.1 2009/09/07 23:46:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2008/08/03 00:35:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.1 2009/09/07 23:46:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -696,7 +696,13 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+#ifdef _LP64
+	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
+#endif
+	proc0paddr->u_pcb.pcb_context.val[_L_SR] =
+#ifdef _LP64
+	    MIPS_SR_KZ |
+#endif
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.10.1 2009/09/07 23:46:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.10.1 2009/09/07 23:46:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -157,9 +157,9 @@ mach_init()
 	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] = PSL_LOWIPL;	/* SR */
+	lwp0.l_addr->u_pcb.pcb_context.val[11] = PSL_LOWIPL;	/* SR */
 #ifdef IPL_ICU_MASK
-	proc0paddr->u_pcb.pcb_ppl = 0;
+	lwp0.l_addr->u_pcb.pcb_ppl = 0;
 #endif
 }
 
