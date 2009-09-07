@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.4 2009/09/07 11:50:01 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.5 2009/09/07 11:59:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.4 2009/09/07 11:50:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.5 2009/09/07 11:59:53 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2508,7 +2508,7 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		mx[index].mx_di.type = AUDIO_MIXER_SET;
 		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
 		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
-		strcpy(mx[index].mx_di.label.name, AudioNselect);
+		strcpy(mx[index].mx_di.label.name, "dacsel"); /* AudioNselect */
 		mx[index].mx_di.un.s.num_mem = ndac;
 		for (i = 0, j = 0; i < sc->sc_nassocs; i++) {
 			if (sc->sc_assocs[i].as_enable == false)
