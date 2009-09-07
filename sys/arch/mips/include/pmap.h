@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2007/12/26 16:01:34 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.1 2009/09/07 21:42:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 #define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
-#define PMAP_SEGTABSIZE		512
+#define PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
 
 union pt_entry;
 
@@ -114,12 +114,12 @@ struct segtab {
  * Machine dependent pmap structure.
  */
 typedef struct pmap {
-	int			pm_count;	/* pmap reference count */
 	kmutex_t		pm_lock;	/* lock on pmap */
-	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	unsigned		pm_asid;	/* TLB address space tag */
-	unsigned		pm_asidgen;	/* its generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	int			pm_count;	/* pmap reference count */
+	unsigned int		pm_asid;	/* TLB address space tag */
+	unsigned int		pm_asidgen;	/* its generation number */
+	struct pmap_statistics	pm_stats;	/* pmap statistics */
 } *pmap_t;
 
 /*
@@ -130,7 +130,7 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;			/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	int		pv_flags;	/* some flags for the mapping */
 } *pv_entry_t;
 
@@ -189,12 +189,18 @@ paddr_t mips_pmap_unmap_poolpage(vaddr_t);
 /*
  * Other hooks for the pool allocator.
  */
+#ifdef _LP64
+#define	POOL_VTOPHYS(va)	(MIPS_KSEG0_P(va) \
+				    ? MIPS_KSEG0_TO_PHYS(va) \
+				    : MIPS_XKPHYS_TO_PHYS(va))
+#else
 #define	POOL_VTOPHYS(va)	MIPS_KSEG0_TO_PHYS((vaddr_t)(va))
+#endif
 
 /*
  * Select CCA to use for unmanaged pages.
  */
-#define	PMAP_CCA_FOR_PA(pa)	2		/* uncached */
+#define	PMAP_CCA_FOR_PA(pa)	CCA_UNCACHED		/* uncached */
 
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 #define PMAP_NOCACHE	0x4000000000000000ULL
