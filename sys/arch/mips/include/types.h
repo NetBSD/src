@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.7 2009/09/06 22:34:53 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.8 2009/09/07 21:28:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,6 +110,19 @@ typedef __uint32_t	uregister32_t;
 typedef struct label_t {
 	register_t val[14];
 } label_t;
+#define	_L_S0		0
+#define	_L_S1		1
+#define	_L_S2		2
+#define	_L_S3		3
+#define	_L_S4		4
+#define	_L_S5		5
+#define	_L_S6		6
+#define	_L_S7		7
+#define	_L_GP		8
+#define	_L_SP		9
+#define	_L_S8		10
+#define	_L_RA		11
+#define	_L_SR		12
 #endif
 
 typedef	volatile int		__cpu_simple_lock_t;
