@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.101 2009/08/06 08:31:58 mbalmer Exp $
+# $NetBSD: postinstall,v 1.102 2009/09/07 19:34:30 mrg Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -887,8 +887,20 @@ do_mtree()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_mtree  fix|check"
 
-	compare_dir "$1" "${SRC_DIR}/etc/mtree" "${DEST_DIR}/etc/mtree" 444 \
-		NetBSD.dist special
+	compare_dir "$1" "${SRC_DIR}/etc/mtree" "${DEST_DIR}/etc/mtree" 444 special
+	if ! $SOURCEMODE; then
+		MTREE_DIR="${SRC_DIR}/etc/mtree"
+	else
+		extrafile=/dev/null
+		if [ "${MKX11}" != "no" ]; then
+			get_makevar X11FLAVOUR
+			extrafile="${SRC_DIR}/etc/mtree/NetBSD.dist.${X11FLAVOUR}"
+		fi
+		cat "${SRC_DIR}/etc/mtree/NetBSD.dist.base" "${extrafile}" > \
+		    "${SCRATCHDIR}/NetBSD.dist"
+		MTREE_DIR="${SCRATCHDIR}"
+	fi
+	compare_dir "$1" "${MTREE_DIR}" "${DEST_DIR}/etc/mtree" 444 NetBSD.dist
 }
 
 #
