@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.3 2009/09/06 22:57:11 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.4 2009/09/07 21:54:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.3 2009/09/06 22:57:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.4 2009/09/07 21:54:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,11 +171,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 	pcb = &l2->l_addr->u_pcb;
-	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
-	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
-	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
-	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
+	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
+	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;	/* S? */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb->pcb_context.val[_L_RA] = (intptr_t)lwp_trampoline;		/* RA */
+#ifdef _LP64
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
+#endif
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
 #endif
@@ -188,18 +191,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
-	struct frame *f;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct frame *f = l->l_md.md_regs;
 
-	f = (struct frame *)((char *)l->l_addr + USPACE) - 1;
-	KASSERT(l->l_md.md_regs == f);
+	KASSERT(f == (struct frame *)((char *)l->l_addr + USPACE) - 1);
 
-	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
-	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
-	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
-	pcb->pcb_context[10] = (intptr_t)setfunc_trampoline;	/* RA */
+	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
+	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb->pcb_context.val[_L_RA] = (intptr_t)setfunc_trampoline;	/* RA */
+#ifdef _LP64
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
+#endif
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif

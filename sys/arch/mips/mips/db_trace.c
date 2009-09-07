@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35.38.2 2009/08/23 04:38:34 uebayasi Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35.38.3 2009/09/07 21:54:39 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.2 2009/08/23 04:38:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.3 2009/09/07 21:54:39 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -177,9 +177,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	stacktrace_subr(0,0,0,0,	/* no args known */
 			(vaddr_t)cpu_switchto,
-			pcb->pcb_context[8],
-			pcb->pcb_context[9],
-			pcb->pcb_context[10],
+			pcb->pcb_context.val[_L_SP],
+			pcb->pcb_context.val[_L_S8],
+			pcb->pcb_context.val[_L_RA],
 			pr);
 #else
 /*
