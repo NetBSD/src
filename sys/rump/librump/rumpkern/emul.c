@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.93 2009/09/06 19:14:54 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.94 2009/09/07 20:56:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.93 2009/09/06 19:14:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.94 2009/09/07 20:56:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -758,6 +758,23 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	timespecsub(ts, &sleptts, ts);
 	*sleepts = sleptts;
 	return tstohz(ts);
+}
+
+bool
+pmf_device_register1(struct device *dev,
+	bool (*suspend)(device_t PMF_FN_PROTO),
+	bool (*resume)(device_t PMF_FN_PROTO),
+	bool (*shutdown)(device_t, int))
+{
+
+	return true;
+}
+
+void
+pmf_device_deregister(struct device *dev)
+{
+
+	/* nada */
 }
 
 
