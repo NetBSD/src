@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.8 2008/01/09 11:25:59 simonb Exp $
+# $NetBSD: README,v 1.9 2009/09/07 02:27:27 jnemeth Exp $
 
 To: "NetBSD Port Maintainers"
 Subject: distribution sets, etc...
@@ -79,6 +79,8 @@ the sets are as follows:
 	misc:	share/dict, share/doc, and the machine-dependent
 		man pages for other CPUs which happen to always
 		be installed.
+
+	modules:	stand/${MACHINE}/${OSRELEASE}/modules kernel modules
 
 	tests:	unit, regression, integration and stress tests for the
 		whole system.
