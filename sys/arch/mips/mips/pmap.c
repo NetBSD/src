@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.3 2009/09/07 22:08:31 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.4 2009/09/07 22:19:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.3 2009/09/07 22:08:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.4 2009/09/07 22:19:53 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -483,7 +483,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		else
 #ifdef _LP64
 			va = MIPS_PHYS_TO_XKPHYS(
-			    MIPS3_PG_TO_CCA(mips3_pg_cached), pa);
+			    MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), pa);
 #else
 			panic("pmap_steal_memory: "
 			      "pa can not be mapped into K0");
@@ -613,7 +613,7 @@ pmap_create(void)
 #ifdef _LP64
 		if (stp_pa > MIPS_PHYS_MASK)
 			stp = (struct segtab *)MIPS_PHYS_TO_XKPHYS(
-			    stp_pa, MIPS3_PG_TO_CCA(mips3_pg_cached));
+			    MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), stp_pa);
 		else
 #endif
 			stp = (struct segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
@@ -1315,8 +1315,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		phys = VM_PAGE_TO_PHYS(mem);
 #ifdef _LP64
 		if ((vaddr_t)pte > MIPS_PHYS_MASK)
-			pte = (pt_entry_t *)MIPS_PHYS_TO_XKPHYS(phys,
-			    MIPS3_PG_TO_CCA(mips3_pg_cached));
+			pte = (pt_entry_t *)MIPS_PHYS_TO_XKPHYS(
+			    MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), phys);
 		else
 #endif
 			pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(phys);
@@ -1660,7 +1660,7 @@ pmap_zero_page(paddr_t phys)
 #endif
 #ifdef _LP64
 	if (phys > MIPS_PHYS_MASK)
-		va = MIPS_PHYS_TO_XKPHYS(phys, MIPS3_PG_TO_CCA(mips3_pg_cached));
+		va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), phys);
 	else
 #endif
 		va = MIPS_PHYS_TO_KSEG0(phys);
@@ -1705,13 +1705,13 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 #endif
 #ifdef _LP64
 	if (src > MIPS_PHYS_MASK)
-		src_va = MIPS_PHYS_TO_XKPHYS(src, MIPS3_PG_TO_CCA(mips3_pg_cached));
+		src_va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), src);
 	else
 #endif
 		src_va = MIPS_PHYS_TO_KSEG0(src);
 #ifdef _LP64
 	if (dst > MIPS_PHYS_MASK)
-		dst_va = MIPS_PHYS_TO_XKPHYS(dst, MIPS3_PG_TO_CCA(mips3_pg_cached));
+		dst_va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), dst);
 	else
 #endif
 		dst_va = MIPS_PHYS_TO_KSEG0(dst);
@@ -2189,7 +2189,7 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	phys = VM_PAGE_TO_PHYS(pg);
 #ifdef _LP64
 	if (phys > MIPS_PHYS_MASK)
-		va = MIPS_PHYS_TO_XKPHYS(phys, MIPS3_PG_TO_CCA(mips3_pg_cached));
+		va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), phys);
 	else
 #endif
 		va = MIPS_PHYS_TO_KSEG0(phys);
@@ -2276,7 +2276,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 		va = MIPS_PHYS_TO_KSEG0(pa);
 	else
 #ifdef _LP64
-		va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(mips3_pg_cached), pa);
+		va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), pa);
 #else
 		panic("mips_pmap_map_poolpage: "
 		    "pa #%"PRIxPADDR" can not be mapped into KSEG0", pa);
