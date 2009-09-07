@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.89 2009/09/07 12:52:53 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.90 2009/09/07 15:12:03 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.89 2009/09/07 12:52:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.90 2009/09/07 15:12:03 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	fromname = kmem_zalloc(MNAMELEN, KM_SLEEP);
 	snprintf(fromname, MNAMELEN,
 	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
-	error = set_statvfs_info(path, UIO_USERSPACE, fromname, UIO_USERSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, fromname, UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
 	kmem_free(fromname, MNAMELEN);
 	if (error) {
