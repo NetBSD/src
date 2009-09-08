@@ -1,4 +1,4 @@
-/*	$NetBSD: img2cgd.c,v 1.1 2009/09/08 21:48:25 pooka Exp $	*/
+/*	$NetBSD: img2cgd.c,v 1.2 2009/09/08 21:51:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@
 #define SIZEOFF	8
 
 #define SKIPLABEL 8192
-#define IMG_MINSIZE (128*1024) /* label/mbr/etc search looks here and there */
+#define IMG_MINSIZE (120*1024) /* label/mbr/etc search looks here and there */
 
 static void
 usage(void)
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 		if (pread(fd, &tmpval, 8, MAGOFF) != 8)
 			err(1, "magic read failed");
 		if (tmpval != MYMAGIC)
-			errx(1, "%s is not a valid image", img_file);
+			errx(1, "%s is not a valid image", cgd_file);
 		if (pread(fd, &tmpval, 8, SIZEOFF) != 8)
 			errx(1, "size read failed");
 		close(fd);
