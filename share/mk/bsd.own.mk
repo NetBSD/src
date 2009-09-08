@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.571 2009/09/04 20:19:04 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.572 2009/09/08 07:08:03 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -476,14 +476,14 @@ OBJECT_FMT=	ELF
 # If this platform's toolchain is missing, we obviously cannot build it.
 #
 .if ${TOOLCHAIN_MISSING} != "no"
-MKBFD:= no
+MKBINUTILS:= no
 MKGDB:= no
 MKGCC:= no
 .endif
 
 #
 # If we are using an external toolchain, we can still build the target's
-# BFD stuff, but we cannot build GCC's support libraries, since those are
+# binutils, but we cannot build GCC's support libraries, since those are
 # tightly-coupled to the version of GCC being used.
 #
 .if defined(EXTERNAL_TOOLCHAIN)
@@ -650,11 +650,18 @@ MKCOMPAT:=	no
 .endif
 
 #
+# MK* backward compatibility.
+#
+.if defined(MKBFD)
+MKBINUTILS?=	${MKBFD}
+.endif
+
+#
 # MK* options which default to "yes".
 #
 .for var in \
 	MKATF \
-	MKBFD MKBINUTILS \
+	MKBINUTILS \
 	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
 	MKDOC \
 	MKGCC MKGCCCMDS MKGDB \

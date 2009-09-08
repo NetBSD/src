@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.828 2009/09/07 21:07:02 mrg Exp $
+# $NetBSD: mi,v 1.829 2009/09/08 07:08:01 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -434,7 +434,7 @@
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
-./usr/bin/ld					base-util-bin		bfd
+./usr/bin/ld					base-util-bin		binutils
 ./usr/bin/ldapadd				base-ldap-bin		ldap
 ./usr/bin/ldapcompare				base-ldap-bin		ldap
 ./usr/bin/ldapdelete				base-ldap-bin		ldap
@@ -1016,7 +1016,7 @@
 ./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
-./usr/sbin/dbsym				base-sysutil-bin	bfd
+./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
@@ -1118,7 +1118,7 @@
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
 ./usr/sbin/mdconfig				base-sysutil-bin
-./usr/sbin/mdsetimage				base-sysutil-bin	bfd
+./usr/sbin/mdsetimage				base-sysutil-bin	binutils
 ./usr/sbin/mk-amd-map				base-amd-bin
 ./usr/sbin/mkalias				base-nis-bin		yp
 ./usr/sbin/mknetid				base-nis-bin		yp
