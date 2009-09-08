@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.7 2009/09/07 22:32:52 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.8 2009/09/08 00:51:14 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -357,7 +357,7 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	eret					#1b: return from exception
 4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
 	nop					#1d: branch delay slot
-5:	j	slowfault			#1e: no page table present
+5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(TLBMiss))
@@ -410,7 +410,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	eret					#1b: return from exception
 4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
 	nop					#1d: branch delay slot
-5:	j	slowfault			#1e: no page table present
+5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(XTLBMiss))
@@ -484,7 +484,7 @@ _VECTOR_END(MIPSX(exception))
 
 /*----------------------------------------------------------------------------
  *
- * slowfault --
+ * MIPSX(slowfault) --
  *
  * Alternate entry point into the mips3_UserGenException or
  * mips3_KernGenException, when the ULTB miss handler couldn't
@@ -499,7 +499,7 @@ _VECTOR_END(MIPSX(exception))
  * We couldn't find a TLB entry.
  * Find out what mode we came from and call the appropriate handler.
  */
-slowfault:
+MIPSX(slowfault):
 	.set	noat
 	mfc0	k0, MIPS_COP_0_STATUS
 	nop
@@ -1456,7 +1456,12 @@ END(MIPSX(UserIntr))
 LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
 	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
 	PTR_SUBU k0, k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
@@ -1558,7 +1563,12 @@ END(MIPSX(TLBInvalidException))
 LEAF_NOPROFILE(MIPSX(TLBMissException))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
 	PTR_SUBU k0, k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	PTR_SRL	k0, k0, PGSHIFT
@@ -1607,7 +1617,12 @@ MIPSX(outofworld):
 	PTR_SLL	k0, k0, PGSHIFT
 	_MTC0	a0, MIPS_COP_0_EXC_PC		# return to panic
 	COP0_SYNC
-	li	k1, VM_MIN_KERNEL_ADDRESS
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
 	PTR_ADDU a3, k0, k1
 #if defined(DDB)
 	bltz	sp, 1f				# for ddb try to keep frame
@@ -2086,18 +2101,23 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	PTR_L	v0, L_ADDR(a0)			# va = l->l_addr
-	li	s0, VM_MIN_KERNEL_ADDRESS
-#if VM_MIN_KERNEL_ADDRESS > MIPS_KSEG0_START
-	blt	v0, s0, resume
-	nop
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
+	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
+	blt	v0, t0, resume
+	 nop
 #else
-	blt	s0, v0, resume
-	nop
+	li	t0, MIPS_KSEG0_START		# above XKSEG?
+	blt	t0, v0, resume
+	 nop
+	li	t0, VM_MIN_KERNEL_ADDRESS>>32	# below XKSEG?
+	dsll32	t0, t0, 0
+	blt	v0, t0, resume
+	 nop
 #endif
 
-	and	s0, v0, MIPS3_PG_ODDPG
-	beq	s0, zero, entry0
-	nop
+	and	t0, v0, MIPS3_PG_ODDPG
+	beq	t0, zero, entry0
+	 nop
 
 	PANIC("USPACE sat on odd page boundary")
 
@@ -2110,12 +2130,12 @@ entry0:
 	COP0_SYNC
 	nop
 	nop
-	mfc0	s0, MIPS_COP_0_TLB_INDEX
+	mfc0	t0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	s0, entry0set
-	sll	s0, s0, PGSHIFT + 1		# PAGE_SHIFT + 1
-	PTR_LA	s0, MIPS_KSEG0_START(s0)
-	_MTC0	s0, MIPS_COP_0_TLB_HI
+	bltz	t0, entry0set
+	sll	t0, t0, PGSHIFT + 1		# PAGE_SHIFT + 1
+	PTR_LA	t0, MIPS_KSEG0_START(s0)
+	_MTC0	t0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0
 	COP0_SYNC
