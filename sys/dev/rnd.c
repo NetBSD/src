@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.73 2009/09/08 20:07:35 pooka Exp $	*/
+/*	$NetBSD: rnd.c,v 1.74 2009/09/08 20:57:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.73 2009/09/08 20:07:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.74 2009/09/08 20:57:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -653,9 +653,9 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		mutex_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
 		    rnddata->entropy);
+		mutex_exit(&rndpool_mtx);
 
 		rnd_wakeup_readers();
-		mutex_exit(&rndpool_mtx);
 
 		break;
 
