@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.2 2009/09/03 07:27:21 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.3 2009/09/08 00:52:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,6 +147,16 @@
  * These are negative addresses since MIPS addresses are signed.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
+#ifdef _LP64
+#if 1
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 31)	/* 0x0000000080000000 */
+#else
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 62)	/* 0x4000000000000000 */
+#endif
+#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
+#else
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
 #define VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
@@ -154,6 +164,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
 #else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
+#endif
 #endif
 
 /*
