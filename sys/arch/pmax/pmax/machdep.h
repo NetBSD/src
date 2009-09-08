@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.11 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: machdep.h,v 1.11.96.1 2009/09/08 17:24:09 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,15 +31,15 @@
  */
 
 /* max memory for a model */
-extern	int physmem_boardmax;	/* {model,simm}-specific bound on physmem */
+extern intptr_t physmem_boardmax; /* {model,simm}-specific bound on physmem */
 
 struct memmap;
 
 /* PROM callback routines - see pmax/promcall.c */
-void	 prom_findcons __P((int *, int *, int *));
-void	 prom_halt __P((int, char *)) __attribute__((__noreturn__));
-void	 prom_haltbutton __P((void));
-int	 prom_scsiid __P((int));
-char	*prom_getenv __P((const char *));
-int	 prom_systype __P((void));
-int	 prom_getbitmap __P((struct memmap *));
+void	 prom_findcons(int *, int *, int *);
+void	 prom_halt(int, char *) __dead;
+void	 prom_haltbutton(void);
+int	 prom_scsiid(int);
+char	*prom_getenv(const char *);
+int	 prom_systype(void);
+int	 prom_getbitmap(struct memmap *);
