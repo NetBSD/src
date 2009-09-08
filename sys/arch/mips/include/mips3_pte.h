@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.1 2009/08/20 07:44:50 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.2 2009/09/08 07:54:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,10 +128,13 @@ struct tlb {
 #define	MIPS3_CCA_TO_PG(cca)	((cca) << 3)
 #define	MIPS3_PG_TO_CCA(cca)	(((cca) >> 3) & 7)
 
+#define	MIPS3_XPHYS_UNCACHED	MIPS_PHYS_TO_XKPHYS(2, 0)
 #define	MIPS3_PG_UNCACHED	MIPS3_CCA_TO_PG(2)
 #ifdef HPCMIPS_L1CACHE_DISABLE		/* MIPS3_L1CACHE_DISABLE */
+#define	MIPS3_DEFAULT_XKPHYS_CACHED	MIPS3_DEFAULT_XKPHYS_UNCACHED
 #define	MIPS3_PG_CACHED		MIPS3_PG_UNCACHED	/* XXX: brain damaged!!! */
 #else /* HPCMIPS_L1CACHE_DISABLE */
+#define	MIPS3_DEFAULT_XKPHYS_CACHED	MIPS_PHYS_TO_XKPHYS(3, 0)
 #define	MIPS3_PG_CACHED		mips3_pg_cached
 #define	MIPS3_DEFAULT_PG_CACHED	MIPS3_CCA_TO_PG(3)
 #endif /* ! HPCMIPS_L1CACHE_DISABLE */

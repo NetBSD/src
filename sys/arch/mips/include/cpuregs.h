@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.7 2009/09/07 21:34:47 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.8 2009/09/08 07:54:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,10 +116,14 @@
 #define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
 
 #define	MIPS_XKPHYS_START	(0x2ULL << 62)
+#define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
+	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
+#define	MIPS_PHYS_TO_XKPHYS_CACHED(x) \
+	(mips3_xkphys_cached | (x))
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
-#define	MIPS_XKPHYS_TO_PHYS(x)	((uintptr_t)(x) & 0x0effffffffffffffLL)
-#define	MIPS_XKPHYS_TO_CCA(x)	(((uintptr_t)(x) >> 59) & 7)
+#define	MIPS_XKPHYS_TO_PHYS(x)	((uint64_t)(x) & 0x07ffffffffffffffLL)
+#define	MIPS_XKPHYS_TO_CCA(x)	(((uint64_t)(x) >> 59) & 7)
 #define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
 
 #define	CCA_UNCACHED		2
