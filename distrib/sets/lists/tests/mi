@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2009/09/07 08:22:51 he Exp $
+# $NetBSD: mi,v 1.48 2009/09/08 20:37:46 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -129,6 +129,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug
@@ -838,6 +839,7 @@
 ./usr/tests/kernel/t_pipe			tests-kernel-tests
 ./usr/tests/kernel/t_poll3w			tests-kernel-tests
 ./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests
+./usr/tests/kernel/t_rnd			tests-kernel-tests
 ./usr/tests/kernel/t_time			tests-kernel-tests
 ./usr/tests/kernel/t_ucontext			tests-kernel-tests
 ./usr/tests/kernel/t_umount			tests-kernel-tests
