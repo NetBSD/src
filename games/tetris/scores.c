@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.17 2009/06/01 04:03:26 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.18 2009/09/08 13:38:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,6 +57,13 @@
 #include "screen.h"
 #include "scores.h"
 #include "tetris.h"
+
+/*
+ * Allow updating the high scores unless we're built as part of /rescue.
+ */
+#ifndef RESCUEDIR
+#define ALLOW_SCORE_UPDATES
+#endif
 
 /*
  * Within this code, we can hang onto one extra "high score", leaving
@@ -379,11 +386,14 @@ getscores(int *fdp)
 	int serrno;
 	ssize_t result;
 
+#ifdef ALLOW_SCORE_UPDATES
 	if (fdp != NULL) {
 		mint = O_RDWR | O_CREAT;
 		human = "read/write";
 		lck = LOCK_EX;
-	} else {
+	} else
+#endif
+	{
 		mint = O_RDONLY;
 		mstr = "r";
 		human = "reading";
@@ -556,6 +566,7 @@ getscores(int *fdp)
 	nscores = 0;
 }
 
+#ifdef ALLOW_SCORE_UPDATES
 /*
  * Paranoid write wrapper; unlike fwrite() it preserves errno.
  */
@@ -578,6 +589,7 @@ dowrite(int sd, const void *vbuf, size_t len)
 	}
 	return 0;
 }
+#endif /* ALLOW_SCORE_UPDATES */
 
 /*
  * Write the score file out.
@@ -585,6 +597,7 @@ dowrite(int sd, const void *vbuf, size_t len)
 static void
 putscores(int sd)
 {
+#ifdef ALLOW_SCORE_UPDATES
 	struct highscore_header header;
 	struct highscore_ondisk buf[MAXHISCORES];
 	int i;
@@ -618,6 +631,9 @@ putscores(int sd)
 	return;
  fail:
 	warnx("high scores may be damaged");
+#else
+	(void)sd;
+#endif /* ALLOW_SCORE_UPDATES */
 }
 
 /*
