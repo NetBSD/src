@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.52.28.1 2009/09/08 17:24:09 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52.28.1 2009/09/08 17:24:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ static void	kn02ca_wbflush __P((void));
 /*
  * local declarations
  */
-static u_int32_t xine_tc3_imask;
+static uint32_t xine_tc3_imask;
 
 static const int dec_maxine_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
@@ -174,7 +174,7 @@ dec_maxine_init()
 	/* MAXINE has 1 microsec. free-running high resolution timer */
  
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
  
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
@@ -184,19 +184,19 @@ dec_maxine_init()
 	/* calibrate cpu_mhz value */  
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(uint32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(uint32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(u_int32_t *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
-	*(u_int32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
+	*(uint32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(uint32_t *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
+	*(uint32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
+	*(uint32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
 #endif
   
 	/* sanitize interrupt mask */
 	xine_tc3_imask = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
+	*(uint32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
 
 	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
@@ -212,10 +212,10 @@ dec_maxine_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(uint32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ca_wbflush();
 }
 
@@ -265,7 +265,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 {
 	unsigned mask;
 
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 	  case SYS_DEV_OPT0:
 		mask = XINE_INTR_TC_0;
 		break;
@@ -294,16 +294,16 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 		break;
 	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", (int)cookie);
+		printf("warning: enabling unknown intr %p\n", cookie);
 #endif
 		return;
 	}
 
 	xine_tc3_imask |= mask;
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(uintptr_t)cookie].ih_func = handler;
+	intrtab[(uintptr_t)cookie].ih_arg = arg;
 
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
 }
 
@@ -345,12 +345,12 @@ dec_maxine_intr(status, cause, pc, ipending)
 
 	if (ipending & MIPS_INT_MASK_3) {
 		int ifound;
-		u_int32_t imsk, intr, can_serve, xxxintr;
+		uint32_t imsk, intr, can_serve, xxxintr;
 
 		do {
 			ifound = 0;
-			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
+			imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
 			can_serve = intr & imsk;
 
 			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
@@ -386,7 +386,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 			xxxintr = can_serve & (ERRORS | PTRLOAD);
 			if (xxxintr) {
 				ifound = 1;
-				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+				*(uint32_t *)(ioasic_base + IOASIC_INTR)
 					= intr &~ xxxintr;
 			}
 		} while (ifound);
@@ -410,7 +410,7 @@ kn02ca_wbflush()
 static uint32_t
 dec_maxine_get_timecount(struct timecounter *tc)
 {
-	return *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
+	return *(uint32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 }
 
 static void

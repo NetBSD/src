@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.17 2000/02/29 04:41:59 nisimura Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.17.154.1 2009/09/08 17:24:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -62,14 +62,14 @@
 
 #include <mips/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
-typedef int32_t		tc_addr_t;
+typedef paddr_t		tc_addr_t;
 typedef int32_t		tc_offset_t;
 
 #define	tc_mb()		wbflush()
 #define	tc_wmb()	wbflush()
 #define	tc_syncbus()	wbflush() /* XXX how to do this on a DECstation ? */
 
-#define	tc_badaddr(tcaddr) badaddr((void *)(tcaddr), sizeof (u_int32_t))
+#define	tc_badaddr(tcaddr) badaddr((void *)(tcaddr), sizeof (uint32_t))
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
 
