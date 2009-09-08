@@ -1,13 +1,13 @@
-# $NetBSD: mi,v 1.1156 2009/09/06 21:03:28 pooka Exp $
+# $NetBSD: mi,v 1.1157 2009/09/08 07:08:01 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
-./usr/share/info/as.info			man-computil-info	bfd,info
+./usr/share/info/as.info			man-computil-info	binutils,info
 ./usr/share/info/awk.info			man-util-info		info
-./usr/share/info/bfd.info			man-computil-info	bfd,info
-./usr/share/info/binutils.info			man-computil-info	bfd,info
+./usr/share/info/bfd.info			man-computil-info	binutils,info
+./usr/share/info/binutils.info			man-computil-info	binutils,info
 ./usr/share/info/bzip2.info			man-obsolete		obsolete
 ./usr/share/info/cpp.info			man-util-info		gcccmds,info
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
@@ -22,7 +22,7 @@
 ./usr/share/info/gdb.info			man-debug-info		gdb,info
 ./usr/share/info/gdbint.info			man-debug-info		gdb,info
 ./usr/share/info/gettext.info			man-sys-info		info
-./usr/share/info/gprof.info			man-debug-info		bfd,info
+./usr/share/info/gprof.info			man-debug-info		binutils,info
 ./usr/share/info/grep.info			man-util-info		info
 ./usr/share/info/groff.info			man-groff-info		info
 ./usr/share/info/gzip.info			man-obsolete		obsolete
@@ -31,7 +31,7 @@
 ./usr/share/info/info.info			man-texinfo-info	info
 ./usr/share/info/iostream.info			man-obsolete		obsolete
 ./usr/share/info/kth-krb.info			man-obsolete		obsolete
-./usr/share/info/ld.info			man-computil-info	bfd,info
+./usr/share/info/ld.info			man-computil-info	binutils,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
 ./usr/share/info/stabs.info			man-debug-info		gdb,info
 ./usr/share/info/tar.info			man-obsolete		obsolete
@@ -2029,7 +2029,7 @@
 ./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/crash.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
-./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
+./usr/share/man/cat8/dbsym.0			man-sysutil-catman	binutils,.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
@@ -2261,7 +2261,7 @@
 ./usr/share/man/cat8/mbr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman	bfd,.cat
+./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman	binutils,.cat
 ./usr/share/man/cat8/mfs.0			man-sys-catman		.cat
 ./usr/share/man/cat8/mipsco/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mipsco/makedev.0		man-obsolete		obsolete
@@ -4504,7 +4504,7 @@
 ./usr/share/man/html8/cpuctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/crash.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
-./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	bfd,html
+./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dhclient-script.html	man-dhclient-htmlman	html
@@ -4680,7 +4680,7 @@
 ./usr/share/man/html8/master.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/mbrlabel.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mdconfig.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mdsetimage.html		man-sysutil-htmlman	bfd,html
+./usr/share/man/html8/mdsetimage.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/mfs.html			man-sys-htmlman		html
 ./usr/share/man/html8/mk-amd-map.html		man-amd-htmlman		html
 ./usr/share/man/html8/mkalias.html		man-nis-htmlman		yp,html
@@ -7038,7 +7038,7 @@
 ./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/crash.8			man-crash-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
-./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man
+./usr/share/man/man8/dbsym.8			man-sysutil-man		binutils,.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
@@ -7271,7 +7271,7 @@
 ./usr/share/man/man8/mbr.8			man-obsolete		obsolete
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man		.man
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man		.man
-./usr/share/man/man8/mdsetimage.8		man-sysutil-man		bfd,.man
+./usr/share/man/man8/mdsetimage.8		man-sysutil-man		binutils,.man
 ./usr/share/man/man8/mfs.8			man-sys-man		.man
 ./usr/share/man/man8/mipsco/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mipsco/makedev.8		man-obsolete		obsolete
