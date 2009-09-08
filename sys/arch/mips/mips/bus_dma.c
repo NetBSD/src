@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.4 2009/09/07 22:28:24 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.5 2009/09/08 08:11:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.4 2009/09/07 22:28:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.5 2009/09/08 08:11:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,20 +660,18 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 */
 	if (nsegs == 1) {
 #ifdef _LP64
-		if (segs[0].ds_addr + segs[0].ds_len > MIPS_PHYS_MASK) {
-			unsigned long cca;
-			if (flags & BUS_DMA_COHERENT)
-				cca = MIPS3_PG_TO_CCA(MIPS3_PG_UNCACHED);
-			else
-				cca = MIPS3_PG_TO_CCA(MIPS3_PG_CACHED);
-			*kvap = (void *)MIPS_PHYS_TO_XKPHYS(cca,
+		if (flags & BUS_DMA_COHERENT)
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(
 			    segs[0].ds_addr);
-		} else
-#endif
+		else
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(
+			    segs[0].ds_addr);
+#else
 		if (flags & BUS_DMA_COHERENT)
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
 			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
+#endif
 		return (0);
 	}
 
