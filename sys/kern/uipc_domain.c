@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.82 2009/05/27 23:44:36 pooka Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.83 2009/09/08 18:01:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.82 2009/05/27 23:44:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.83 2009/09/08 18:01:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -207,7 +207,7 @@ const void *
 sockaddr_const_addr(const struct sockaddr *sa, socklen_t *slenp)
 {
 	const struct domain *dom;
-	
+
 	if ((dom = pffinddomain(sa->sa_family)) == NULL ||
 	    dom->dom_sockaddr_const_addr == NULL)
 		return NULL;
@@ -219,7 +219,7 @@ const struct sockaddr *
 sockaddr_any_by_family(int family)
 {
 	const struct domain *dom;
-	
+
 	if ((dom = pffinddomain(family)) == NULL)
 		return NULL;
 
