@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.25 2009/09/08 18:15:17 tsutsui Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.26 2009/09/08 18:31:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.25 2009/09/08 18:15:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.26 2009/09/08 18:31:36 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -175,9 +175,9 @@ leattach_lebuffer(device_t parent, device_t self, void *aux)
 	sc->sc_conf3 = prom_getpropint(sa->sa_node, "busmaster-regval",
 				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
-	/* Assume SBus is grandparent */
+	/* SBus is grandparent, but sbus_establish() looks for it properly */
 	lesc->sc_sd.sd_reset = le_lebuffer_reset;
-	sbus_establish(&lesc->sc_sd, parent);
+	sbus_establish(&lesc->sc_sd, self);
 
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
