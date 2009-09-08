@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.10 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.11 2009/09/08 21:34:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.10 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.11 2009/09/08 21:34:57 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,8 +44,9 @@ __RCSID("$NetBSD: opendisk.c,v 1.10 2008/04/28 20:23:03 martin Exp $");
 #include <stdio.h>
 #include <string.h>
 
-int
-opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
+static int
+__opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
+	int (*ofn)(const char *, int, mode_t))
 {
 	int f, rawpart;
 
@@ -64,12 +65,12 @@ opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 	if (rawpart < 0)
 		return (-1);	/* sysctl(3) in getrawpartition sets errno */
 
-	f = open(buf, flags);
+	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
 	snprintf(buf, buflen, "%s%c", path, 'a' + rawpart);
-	f = open(buf, flags);
+	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
@@ -77,12 +78,27 @@ opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 		return (-1);
 
 	snprintf(buf, buflen, "%s%s%s", _PATH_DEV, iscooked ? "" : "r", path);
-	f = open(buf, flags);
+	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
 	snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV, iscooked ? "" : "r", path,
 	    'a' + rawpart);
-	f = open(buf, flags);
+	f = ofn(buf, flags, 0);
 	return (f);
+}
+
+int
+opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
+{
+
+	return __opendisk(path, flags, buf, buflen, iscooked, (void *)open);
+}
+
+int
+opendisk1(const char *path, int flags, char *buf, size_t buflen, int iscooked,
+	int (*ofn)(const char *, int, mode_t))
+{
+
+	return __opendisk(path, flags, buf, buflen, iscooked, ofn);
 }
