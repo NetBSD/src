@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.48 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.49 2009/09/08 18:15:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.48 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.49 2009/09/08 18:15:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,8 @@ static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
 static int	esp_dma_isactive(struct ncr53c9x_softc *);
+
+static void	esp_sbus_reset(device_t);
 
 #ifdef DDB
 static void	esp_init_ddb_cmds(void);
@@ -287,7 +289,7 @@ espattach_sbus(device_t parent, device_t self, void *aux)
 		esc->sc_pri = sa->sa_pri;
 
 		/* add me to the sbus structures */
-		esc->sc_sd.sd_reset = (void *)ncr53c9x_reset;
+		esc->sc_sd.sd_reset = esp_sbus_reset;
 		sbus_establish(&esc->sc_sd, self);
 
 		espattach(esc, &esp_sbus_glue);
@@ -347,7 +349,7 @@ espattach_sbus(device_t parent, device_t self, void *aux)
 	esc->sc_pri = sa->sa_pri;
 
 	/* add me to the sbus structures */
-	esc->sc_sd.sd_reset = (void *)ncr53c9x_reset;
+	esc->sc_sd.sd_reset = esp_sbus_reset;
 	sbus_establish(&esc->sc_sd, self);
 
 	if (strcmp("ptscII", sa->sa_name) == 0) {
@@ -407,7 +409,7 @@ espattach_dma(device_t parent, device_t self, void *aux)
 	esc->sc_pri = sa->sa_pri;
 
 	/* Assume SBus is grandparent */
-	esc->sc_sd.sd_reset = (void *)ncr53c9x_reset;
+	esc->sc_sd.sd_reset = esp_sbus_reset;
 	sbus_establish(&esc->sc_sd, parent);
 
 	espattach(esc, &esp_sbus_glue);
@@ -698,6 +700,15 @@ esp_dma_isactive(struct ncr53c9x_softc *sc)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	return DMA_ISACTIVE(esc->sc_dma);
+}
+
+void
+esp_sbus_reset(device_t self)
+{
+	struct esp_softc *esc = device_private(self);
+	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+
+	ncr53c9x_reset(sc);
 }
 
 #ifdef DDB
