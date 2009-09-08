@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.50 2009/09/07 13:59:38 pooka Exp $	*/
+/*	$NetBSD: dk.c,v 1.51 2009/09/08 21:14:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.50 2009/09/07 13:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.51 2009/09/08 21:14:33 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -658,7 +658,6 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	struct iovec iov;
 	struct dkwedge_softc *sc;
 	struct dkwedge_info dkw;
-	struct vmspace *vm;
 	int error = 0;
 
 	iov.iov_base = dkwl->dkwl_buf;
@@ -669,15 +668,8 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	uio.uio_offset = 0;
 	uio.uio_resid = dkwl->dkwl_bufsize;
 	uio.uio_rw = UIO_READ;
-	if (l == NULL) {
-		UIO_SETUP_SYSSPACE(&uio);
-	} else {
-		error = proc_vmspace_getref(l->l_proc, &vm);
-		if (error) {
-			return error;
-		}
-		uio.uio_vmspace = vm;
-	}
+	KASSERT(l == curlwp);
+	uio.uio_vmspace = l->l_proc->p_vmspace;
 
 	dkwl->dkwl_ncopied = 0;
 
@@ -705,10 +697,6 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	}
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
 	mutex_exit(&pdk->dk_openlock);
-
-	if (l != NULL) {
-		uvmspace_free(vm);
-	}
 
 	return (error);
 }
