@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.1 2009/08/21 17:17:37 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.2 2009/09/08 07:54:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -157,6 +157,9 @@ extern int mips_cpu_flags;
 extern int mips_has_r4k_mmu;
 extern int mips_has_llsc;
 extern int mips3_pg_cached;
+#ifdef _LP64
+extern uint64_t mips3_xkphys_cached;
+#endif
 extern u_int mips3_pg_shift;
 
 #define	CPU_MIPS_R4K_MMU		0x0001
