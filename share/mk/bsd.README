@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.251 2009/06/18 06:36:59 mrg Exp $
+#	$NetBSD: bsd.README,v 1.252 2009/09/08 07:08:03 skrll Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -117,8 +117,9 @@ MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
 		with the Automated Testing Framework (ATF).
 		Default: yes
 
-MKBFD		If "no", don't build libbfd, libiberty, or any of the things
-		that depend on them (binutils/gas/ld, gdb, dbsym, mdsetimage).
+MKBFD		Obsolete, use MKBINUTILS
+
+MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd, libopcodes)
 		Default: yes
 
 MKCATPAGES	If "no", don't build or install the catman pages.
@@ -591,7 +592,7 @@ TOOLCHAIN_MISSING
 		TOOLCHAIN_MISSING is conditionally assigned the value "yes". 
 		Otherwise, the variable is unconditionally assigned the
 		value "no".
-		If not "no", ${MKBFD}, ${MKGCC}, and ${MKGDB} are
+		If not "no", ${MKBINUTILS}, ${MKGCC}, and ${MKGDB} are
 		unconditionally assigned the value "no".
 
 EXTERNAL_TOOLCHAIN

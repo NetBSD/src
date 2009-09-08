@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.66 2009/09/03 15:35:59 pooka Exp $
+# $NetBSD: md.amd64,v 1.67 2009/09/08 07:08:01 skrll Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -54,8 +54,10 @@
 ./usr/lib/i386/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic
 ./usr/lib/i386/libasn1.so.8			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libasn1.so.8.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/i386/libbfd.so.10			base-compat-shlib	compat,pic,bfd
-./usr/lib/i386/libbfd.so.10.0			base-compat-shlib	compat,pic,bfd
+./usr/lib/i386/libbfd.so.10			base-compat-shlib	compat,pic,binutils=216
+./usr/lib/i386/libbfd.so.10.0			base-compat-shlib	compat,pic,binutils=216
+./usr/lib/i386/libbfd.so.11			base-compat-shlib	compat,pic,binutils=219
+./usr/lib/i386/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils=219
 ./usr/lib/i386/libbind9.so.4			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbind9.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
@@ -136,8 +138,8 @@
 ./usr/lib/i386/libnetpgp.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libopcodes.so.3			base-compat-shlib	compat,pic,bfd
-./usr/lib/i386/libopcodes.so.3.0		base-compat-shlib	compat,pic,bfd
+./usr/lib/i386/libopcodes.so.3			base-compat-shlib	compat,pic,binutils
+./usr/lib/i386/libopcodes.so.3.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libossaudio.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libp2k.so.1			base-compat-shlib	compat,pic
