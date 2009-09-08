@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10 2008/04/28 20:23:28 martin Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.1 2009/09/08 08:11:29 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.1 2009/09/08 08:11:29 matt Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -729,12 +729,21 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 
  mapit:
 #endif /* CHIP_EXTENT */
+#ifdef _LP64
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		*hp = MIPS_PHYS_TO_XKPHYS_CACHED(mbst.mbst_sys_start +
+		    (addr - mbst.mbst_bus_start));
+	else
+		*hp = MIPS_PHYS_TO_XKPHYS_UNCACHED(mbst.mbst_sys_start +
+		    (addr - mbst.mbst_bus_start));
+#else
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		*hp = MIPS_PHYS_TO_KSEG0(mbst.mbst_sys_start +
 		    (addr - mbst.mbst_bus_start));
 	else
 		*hp = MIPS_PHYS_TO_KSEG1(mbst.mbst_sys_start +
 		    (addr - mbst.mbst_bus_start));
+#endif
 
 	return (0);
 }
@@ -753,10 +762,15 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 	printf("xxx: freeing handle 0x%lx for 0x%lx\n", h, size);
 #endif
 
-	if (h >= MIPS_KSEG0_START && h < MIPS_KSEG1_START)
+#ifdef _LP64
+	KASSERT(MIPS_XKPHYS_P(h));
+	h = MIPS_XKPHYS_TO_PHYS(h);
+#else
+	if (MIPS_KSEG0_P(h))
 		h = MIPS_KSEG0_TO_PHYS(h);
 	else
 		h = MIPS_KSEG1_TO_PHYS(h);
+#endif
 
 #ifdef CHIP_W1_BUS_START
 	if (h >= CHIP_W1_SYS_START(v) && h <= CHIP_W1_SYS_END(v)) {
@@ -867,12 +881,21 @@ __BS(alloc)(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	}
 
 	*addrp = addr;
+#ifdef _LP64
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		*bshp = MIPS_PHYS_TO_XKPHYS_CACHED(mbst.mbst_sys_start +
+		    (addr - mbst.mbst_bus_start));
+	else
+		*bshp = MIPS_PHYS_TO_XKPHYS_UNCACHED(mbst.mbst_sys_start +
+		    (addr - mbst.mbst_bus_start));
+#else
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		*bshp = MIPS_PHYS_TO_KSEG0(mbst.mbst_sys_start +
 		    (addr - mbst.mbst_bus_start));
 	else
 		*bshp = MIPS_PHYS_TO_KSEG1(mbst.mbst_sys_start +
 		    (addr - mbst.mbst_bus_start));
+#endif
 
 	return (0);
 #else /* ! CHIP_EXTENT */
