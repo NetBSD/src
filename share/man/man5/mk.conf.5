@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.46 2008/11/15 11:27:49 mrg Exp $
+.\"	$NetBSD: mk.conf.5,v 1.47 2009/09/08 07:08:03 skrll Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -224,20 +224,18 @@ flag.
 Indicates whether the Automated Testing Framework is built and installed.
 .DFLTy
 .
-.It Sy MKBFD
+.It Sy MKBINUTILS
 .YorN
-Indicates whether
+Indicates whether any of the binutils tools or libraries should be built.
+That is, the libraries 
 .Sy libbfd ,
 .Sy libiberty ,
-or any of the things that depend
-upon them (such as the binutils,
+or any of the things that depend upon them, e.g.
 .Xr as 1 ,
-.Xr gdb 1 ,
 .Xr ld 1 ,
 .Xr dbsym 8 ,
 or
-.Xr mdsetimage 8 )
-should be built.
+.Xr mdsetimage 8 .
 .DFLTy
 .
 .It Sy MKCATPAGES

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.86 2009/09/07 02:27:27 jnemeth Exp $
+#	$NetBSD: sets.subr,v 1.87 2009/09/08 07:08:00 skrll Exp $
 #
 
 #
@@ -15,6 +15,7 @@
 #	MACHINE	
 #	MACHINE_ARCH
 #	MACHINE_CPU
+#	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
 #	TOOLCHAIN_MISSING
@@ -23,6 +24,7 @@
 #
 MKVARS="\
 	MKBFD		\
+	MKBINUTILS	\
 	MKCATPAGES	\
 	MKCOMPAT	\
 	MKCRYPTO	\
@@ -181,7 +183,7 @@ MKXORG:=no
 .endif
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
-		HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
+		HAVE_BINUTILS HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
 		${MKVARS}
 	@echo "export \$i=\${\$i}"
 .endfor
@@ -233,7 +235,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.86 2009/09/07 02:27:27 jnemeth Exp $
+# 	# $NetBSD: sets.subr,v 1.87 2009/09/08 07:08:00 skrll Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -253,7 +255,8 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	obsolete		file is obsolete, and only printed if 
 #				${obsolete} != 0
 #
-#	bfd			${MKBFD} != no
+#	bfd			obsolete, use binutils.
+#	binutils		${MKBINUTILS} != no
 #	catpages		${MKCATPAGES} != no
 #	compat			${MKCOMPAT} != no
 #	crypto			${MKCRYPTO} != no
@@ -295,6 +298,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
 #	yp			${MKYP} != no
 #
+#	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
 #
@@ -339,6 +343,7 @@ list_set_files()
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
+				wanted["binutils=" "'"${HAVE_BINUTILS}"'"] = 1
 				wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
 				wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
 			}

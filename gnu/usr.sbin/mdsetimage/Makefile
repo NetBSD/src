@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.19 2008/02/09 02:37:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2009/09/08 07:08:02 skrll Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
-    ${MKBFD} != "no"
+    ${MKBINUTILS} != "no"
 TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/binutils
 BFDSUBDIR=	lib
@@ -34,6 +34,6 @@ CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .endif # HOSTPROG
-.endif # MKBFD != no
+.endif # MKBINUTILS != no
 
 .include <bsd.prog.mk>

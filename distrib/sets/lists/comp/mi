@@ -1,15 +1,15 @@
-#	$NetBSD: mi,v 1.1305 2009/09/06 21:03:28 pooka Exp $
+#	$NetBSD: mi,v 1.1306 2009/09/08 07:08:01 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.comp				comp-sys-root
-./usr/bin/addr2line				comp-debug-bin		bfd
-./usr/bin/ar					comp-util-bin		bfd
-./usr/bin/as					comp-util-bin		bfd
+./usr/bin/addr2line				comp-debug-bin		binutils
+./usr/bin/ar					comp-util-bin		binutils
+./usr/bin/as					comp-util-bin		binutils
 ./usr/bin/asa					comp-fortran-bin
 ./usr/bin/atf-compile				comp-atf-bin
 ./usr/bin/c++					comp-cxx-bin		gcccmds
-./usr/bin/c++filt				comp-cxx-bin		bfd
+./usr/bin/c++filt				comp-cxx-bin		binutils
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
@@ -38,7 +38,7 @@
 ./usr/bin/genclass				comp-obsolete		obsolete
 ./usr/bin/gettext				comp-c-bin
 ./usr/bin/gettextize				comp-obsolete		obsolete
-./usr/bin/gprof					comp-debug-bin		bfd
+./usr/bin/gprof					comp-debug-bin		binutils
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lorder				comp-util-bin
@@ -58,17 +58,17 @@
 ./usr/bin/msgunfmt				comp-c-bin
 ./usr/bin/msguniq				comp-c-bin
 ./usr/bin/nbperf				comp-util-bin
-./usr/bin/nm					comp-util-bin		bfd
-./usr/bin/objcopy				comp-util-bin		bfd
-./usr/bin/objdump				comp-util-bin		bfd
+./usr/bin/nm					comp-util-bin		binutils
+./usr/bin/objcopy				comp-util-bin		binutils
+./usr/bin/objdump				comp-util-bin		binutils
 ./usr/bin/protoize				comp-c-bin		gcccmds
-./usr/bin/ranlib				comp-util-bin		bfd
+./usr/bin/ranlib				comp-util-bin		binutils
 ./usr/bin/rcs2log				comp-cvs-bin		cvs
-./usr/bin/readelf				comp-util-bin		bfd
+./usr/bin/readelf				comp-util-bin		binutils
 ./usr/bin/rpcgen				comp-c-bin
-./usr/bin/size					comp-util-bin		bfd
-./usr/bin/strings				comp-util-bin		bfd
-./usr/bin/strip					comp-util-bin		bfd
+./usr/bin/size					comp-util-bin		binutils
+./usr/bin/strings				comp-util-bin		binutils
+./usr/bin/strip					comp-util-bin		binutils
 ./usr/bin/tsort					comp-util-bin
 ./usr/bin/unifdef				comp-util-bin
 ./usr/bin/unifdefall				comp-util-bin
@@ -2809,11 +2809,11 @@
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wsconsctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	bfd,debug
+./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
-./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		bfd,debug
-./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		binutils,debug
+./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/bin/atf-check.debug	comp-atf-debug		debug
@@ -2836,7 +2836,7 @@
 ./usr/libdata/debug/usr/bin/btpin.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bzip2.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bzip2recover.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/c++filt.debug	comp-cxx-debug		bfd,debug
+./usr/libdata/debug/usr/bin/c++filt.debug	comp-cxx-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/cal.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/calendar.debug	comp-calendar-debug	debug
 ./usr/libdata/debug/usr/bin/cap_mkdb.debug	comp-util-debug		debug
@@ -2904,7 +2904,7 @@
 ./usr/libdata/debug/usr/bin/getopt.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gettext.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/gkermit.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	bfd,debug
+./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/grep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/grodvi.debug	comp-groff-debug	debug
@@ -2945,7 +2945,7 @@
 ./usr/libdata/debug/usr/bin/lam.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/last.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lastcomm.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/ld.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/ld.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/ldapcompare.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapdelete.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapexop.debug	comp-ldap-debug		ldap,debug
@@ -3019,13 +3019,13 @@
 ./usr/libdata/debug/usr/bin/nfsstat.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/nice.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nl.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/nm.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/nm.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/nohup.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nslookup.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/nsupdate.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/nvi.debug		comp-obsolete		obsolete
-./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		bfd,debug
-./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		binutils,debug
+./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
@@ -3051,13 +3051,13 @@
 ./usr/libdata/debug/usr/bin/qsubst.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/quota.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/radioctl.debug	comp-audio-debug	debug
-./usr/libdata/debug/usr/bin/ranlib.debug	comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/ranlib.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/rcs.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rcsclean.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rcsdiff.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rcsmerge.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rdist.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/readelf.debug	comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/readelf.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/renice.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
@@ -3084,7 +3084,7 @@
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/showmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/shuffle.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/skey.debug		comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinfo.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinit.debug	comp-util-debug		skey,debug
@@ -3099,8 +3099,8 @@
 ./usr/libdata/debug/usr/bin/ssh.debug		comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/stat.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/string2key.debug	comp-krb5-debug		kerberos,debug
-./usr/libdata/debug/usr/bin/strings.debug	comp-util-debug		bfd,debug
-./usr/libdata/debug/usr/bin/strip.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/strings.debug	comp-util-debug		binutils,debug
+./usr/libdata/debug/usr/bin/strip.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/su.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/systat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tabs.debug		comp-util-debug		debug
@@ -3327,7 +3327,7 @@
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	bfd,debug
+./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
@@ -3402,7 +3402,7 @@
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdconfig.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/mdsetimage.debug	comp-sysutil-debug	bfd,debug
+./usr/libdata/debug/usr/sbin/mdsetimage.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/mk-amd-map.debug	comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/mkalias.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/mknetid.debug	comp-nis-debug		yp,debug
@@ -3566,7 +3566,7 @@
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
-./usr/libdata/ldscripts/kmodule			comp-util-share		bfd
+./usr/libdata/ldscripts/kmodule			comp-util-share		binutils
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
@@ -3784,12 +3784,12 @@
 ./usr/share/locale/uk/LC_MESSAGES/gettext-tools.mo	comp-c_locale-uk	nls
 ./usr/share/locale/zh_CN/LC_MESSAGES/gettext-tools.mo	comp-c_locale-zh_CN	nls
 ./usr/share/locale/zh_TW/LC_MESSAGES/gettext-tools.mo	comp-c_locale-zh_TW	nls
-./usr/share/man/cat1/addr2line.0		comp-debug-catman	bfd,.cat
-./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/addr2line.0		comp-debug-catman	binutils,.cat
+./usr/share/man/cat1/ar.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/as.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/asa.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/c++.0			comp-cxx-catman		gcccmds,.cat
-./usr/share/man/cat1/c++filt.0			comp-cxx-catman		bfd,.cat
+./usr/share/man/cat1/c++filt.0			comp-cxx-catman		binutils,.cat
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
 ./usr/share/man/cat1/c99.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cc.0			comp-c-catman		gcccmds,.cat
@@ -3816,8 +3816,8 @@
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	gcccmds,.cat
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
-./usr/share/man/cat1/gprof.0			comp-debug-catman	bfd,.cat
-./usr/share/man/cat1/ld.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/gprof.0			comp-debug-catman	binutils,.cat
+./usr/share/man/cat1/ld.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/lex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat1/lint.0			comp-c-catman		.cat
@@ -3838,17 +3838,17 @@
 ./usr/share/man/cat1/msg_window.0		comp-obsolete		obsolete
 ./usr/share/man/cat1/msgc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/nbperf.0			comp-util-catman	.cat
-./usr/share/man/cat1/nm.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/objcopy.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/objdump.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/nm.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/objcopy.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/objdump.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/openssl_ocsp.0		comp-c-catman		crypto,.cat
-./usr/share/man/cat1/ranlib.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/ranlib.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/rcs2log.0			comp-cvs-catman		cvs,.cat
-./usr/share/man/cat1/readelf.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/readelf.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/rpcgen.0			comp-c-catman		.cat
-./usr/share/man/cat1/size.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/strings.0			comp-util-catman	bfd,.cat
-./usr/share/man/cat1/strip.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/size.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/strings.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/strip.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/tsort.0			comp-c-catman		.cat
 ./usr/share/man/cat1/unifdef.0			comp-c-catman		.cat
 ./usr/share/man/cat1/unifdefall.0		comp-c-catman		.cat
@@ -9399,12 +9399,12 @@
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/yield.0			comp-sys-catman		.cat
-./usr/share/man/html1/addr2line.html		comp-debug-htmlman	bfd,html
-./usr/share/man/html1/ar.html			comp-util-htmlman	bfd,html
-./usr/share/man/html1/as.html			comp-util-htmlman	bfd,html
+./usr/share/man/html1/addr2line.html		comp-debug-htmlman	binutils,html
+./usr/share/man/html1/ar.html			comp-util-htmlman	binutils,html
+./usr/share/man/html1/as.html			comp-util-htmlman	binutils,html
 ./usr/share/man/html1/asa.html			comp-fortran-htmlman	html
 ./usr/share/man/html1/c++.html			comp-cxx-htmlman	gcccmds,html
-./usr/share/man/html1/c++filt.html		comp-cxx-htmlman	bfd,html
+./usr/share/man/html1/c++filt.html		comp-cxx-htmlman	binutils,html
 ./usr/share/man/html1/c89.html			comp-c-htmlman		html
 ./usr/share/man/html1/c99.html			comp-c-htmlman		html
 ./usr/share/man/html1/cc.html			comp-c-htmlman		gcccmds,html
@@ -9427,8 +9427,8 @@
 ./usr/share/man/html1/gcov.html			comp-debug-htmlman	gcccmds,html
 ./usr/share/man/html1/gdb.html			comp-debug-htmlman	gdb,html
 ./usr/share/man/html1/genassym.html		comp-util-htmlman	html
-./usr/share/man/html1/gprof.html		comp-debug-htmlman	bfd,html
-./usr/share/man/html1/ld.html			comp-util-htmlman	bfd,html
+./usr/share/man/html1/gprof.html		comp-debug-htmlman	binutils,html
+./usr/share/man/html1/ld.html			comp-util-htmlman	binutils,html
 ./usr/share/man/html1/lex.html			comp-c-htmlman		html
 ./usr/share/man/html1/lint.html			comp-c-htmlman		html
 ./usr/share/man/html1/lorder.html		comp-util-htmlman	html
@@ -9436,17 +9436,17 @@
 ./usr/share/man/html1/mkstr.html		comp-c-htmlman		html
 ./usr/share/man/html1/msgc.html			comp-c-htmlman		html
 ./usr/share/man/html1/nbperf.html		comp-util-htmlman	html
-./usr/share/man/html1/nm.html			comp-util-htmlman	bfd,html
-./usr/share/man/html1/objcopy.html		comp-util-htmlman	bfd,html
-./usr/share/man/html1/objdump.html		comp-util-htmlman	bfd,html
+./usr/share/man/html1/nm.html			comp-util-htmlman	binutils,html
+./usr/share/man/html1/objcopy.html		comp-util-htmlman	binutils,html
+./usr/share/man/html1/objdump.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/openssl_ocsp.html		comp-c-htmlman		crypto,html
-./usr/share/man/html1/ranlib.html		comp-util-htmlman	bfd,html
+./usr/share/man/html1/ranlib.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/rcs2log.html		comp-cvs-htmlman	cvs,html
-./usr/share/man/html1/readelf.html		comp-util-htmlman	bfd,html
+./usr/share/man/html1/readelf.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/rpcgen.html		comp-c-htmlman		html
-./usr/share/man/html1/size.html			comp-util-htmlman	bfd,html
-./usr/share/man/html1/strings.html		comp-util-htmlman	bfd,html
-./usr/share/man/html1/strip.html		comp-util-htmlman	bfd,html
+./usr/share/man/html1/size.html			comp-util-htmlman	binutils,html
+./usr/share/man/html1/strings.html		comp-util-htmlman	binutils,html
+./usr/share/man/html1/strip.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/tsort.html		comp-c-htmlman		html
 ./usr/share/man/html1/unifdef.html		comp-c-htmlman		html
 ./usr/share/man/html1/unifdefall.html		comp-c-htmlman		html
@@ -14746,12 +14746,12 @@
 ./usr/share/man/html9/wsmouse_input.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wsmousedevprint.html	comp-sys-htmlman	html
 ./usr/share/man/html9/yield.html		comp-sys-htmlman	html
-./usr/share/man/man1/addr2line.1		comp-debug-man		bfd,.man
-./usr/share/man/man1/ar.1			comp-util-man		bfd,.man
-./usr/share/man/man1/as.1			comp-util-man		bfd,.man
+./usr/share/man/man1/addr2line.1		comp-debug-man		binutils,.man
+./usr/share/man/man1/ar.1			comp-util-man		binutils,.man
+./usr/share/man/man1/as.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/asa.1			comp-fortran-man	.man
 ./usr/share/man/man1/c++.1			comp-cxx-man		gcccmds,.man
-./usr/share/man/man1/c++filt.1			comp-cxx-man		bfd,.man
+./usr/share/man/man1/c++filt.1			comp-cxx-man		binutils,.man
 ./usr/share/man/man1/c89.1			comp-c-man		.man
 ./usr/share/man/man1/c99.1			comp-c-man		.man
 ./usr/share/man/man1/cc.1			comp-c-man		gcccmds,.man
@@ -14777,8 +14777,8 @@
 ./usr/share/man/man1/gcov.1			comp-debug-man		gcccmds,.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/genassym.1			comp-util-man		.man
-./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man
-./usr/share/man/man1/ld.1			comp-util-man		bfd,.man
+./usr/share/man/man1/gprof.1			comp-debug-man		binutils,.man
+./usr/share/man/man1/ld.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
 ./usr/share/man/man1/lorder.1			comp-util-man		.man
@@ -14798,17 +14798,17 @@
 ./usr/share/man/man1/msg_window.1		comp-obsolete		obsolete
 ./usr/share/man/man1/msgc.1			comp-c-man		.man
 ./usr/share/man/man1/nbperf.1			comp-util-man		.man
-./usr/share/man/man1/nm.1			comp-util-man		bfd,.man
-./usr/share/man/man1/objcopy.1			comp-util-man		bfd,.man
-./usr/share/man/man1/objdump.1			comp-util-man		bfd,.man
+./usr/share/man/man1/nm.1			comp-util-man		binutils,.man
+./usr/share/man/man1/objcopy.1			comp-util-man		binutils,.man
+./usr/share/man/man1/objdump.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/openssl_ocsp.1		comp-c-man		crypto,.man
-./usr/share/man/man1/ranlib.1			comp-util-man		bfd,.man
+./usr/share/man/man1/ranlib.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/rcs2log.1			comp-cvs-man		cvs,.man
-./usr/share/man/man1/readelf.1			comp-util-man		bfd,.man
+./usr/share/man/man1/readelf.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/rpcgen.1			comp-c-man		.man
-./usr/share/man/man1/size.1			comp-util-man		bfd,.man
-./usr/share/man/man1/strings.1			comp-util-man		bfd,.man
-./usr/share/man/man1/strip.1			comp-util-man		bfd,.man
+./usr/share/man/man1/size.1			comp-util-man		binutils,.man
+./usr/share/man/man1/strings.1			comp-util-man		binutils,.man
+./usr/share/man/man1/strip.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/tsort.1			comp-util-man		.man
 ./usr/share/man/man1/unifdef.1			comp-util-man		.man
 ./usr/share/man/man1/unifdefall.1		comp-util-man		.man
