@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.153 2009/09/07 17:56:24 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.154 2009/09/08 17:29:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.153 2009/09/07 17:56:24 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.154 2009/09/08 17:29:20 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.153 2009/09/07 17:56:24 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.154 2009/09/08 17:29:20 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -811,6 +811,23 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
+    /*
+     * Another special case.
+     * Several make's support this sort of mechanism for tracking
+     * recursion - but each uses a different name.
+     * We allow the makefiles to update .MAKE.LEVEL and ensure
+     * children see a correctly incremented value.
+     */
+    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0) {
+	char tmp[64];
+	int level;
+	
+	level = atoi(val);
+	snprintf(tmp, sizeof(tmp), "%u", level + 1);
+	setenv(MAKE_LEVEL, tmp, 1);
+    }
+	
+	
  out:
     if (expanded_name != NULL)
 	free(expanded_name);
