@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.58 2009/05/14 15:33:36 roy Exp $
+# $NetBSD: network,v 1.59 2009/09/08 08:56:33 cegger Exp $
 #
 
 # PROVIDE: network
@@ -12,6 +12,7 @@ $_rc_subr_loaded . /etc/rc.subr
 name="network"
 start_cmd="network_start"
 stop_cmd="network_stop"
+fstab_file="/etc/fstab"
 
 nl='
 ' # a newline
@@ -53,6 +54,26 @@ network_start()
 		echo "NIS domainname: $domainname"
 		domainname $domainname
 	fi
+
+	# Do not flush routes if root file system is nfs mounted in /etc/fstab,
+	# or the nfs server is unreachable if it is in a different subnet,
+	# otherwise.
+	while read fs_spec fs_file fs_vfstype fs_mntops fs_freq fs_passno
+	do
+		case "${fs_spec}:${fs_file}:${fs_passno}" in
+		\#*|'':*)
+			continue # skip comment or blank line
+			;;
+		*:/:*)  case "${fs_spec}" in
+			*:*)
+				echo "Not flushing routes. /: nfs mounted"
+				flushroutes="NO"
+				;;
+			esac
+			;;
+		esac
+	done <"${fstab_file}"
+
 
 	# Flush all routes just to make sure it is clean
 	if checkyesno flushroutes; then
