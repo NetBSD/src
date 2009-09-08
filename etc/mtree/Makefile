@@ -1,19 +1,19 @@
-#	$NetBSD: Makefile,v 1.6 2009/09/07 19:34:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2009/09/08 09:57:32 he Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKX11} != "no"
 . if ${X11FLAVOUR} == "Xorg"
-NETBSD_DIST_X11_FILE=	NetBSD.dist.Xorg
+NETBSD_DIST_X11_FILE=	${.CURDIR}/NetBSD.dist.Xorg
 . else
-NETBSD_DIST_X11_FILE=	NetBSD.dist.XFree86
+NETBSD_DIST_X11_FILE=	${.CURDIR}/NetBSD.dist.XFree86
 . endif
 .else
 NETBSD_DIST_X11_FILE=
 .endif
 
 NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE}
-	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${.CURDIR}/${NETBSD_DIST_X11_FILE} > ${.TARGET}
+	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} > ${.TARGET}
 
 CONFIGFILES=	NetBSD.dist special
 FILESDIR=	/etc/mtree
