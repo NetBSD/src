@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.80 2009/09/08 17:16:33 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.81 2009/09/08 18:35:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.80 2009/09/08 17:16:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.81 2009/09/08 18:35:42 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -86,38 +86,37 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.80 2009/09/08 17:16:33 tsutsui Exp $");
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>
 
-void		hme_start(struct ifnet *);
-void		hme_stop(struct ifnet *, int);
-int		hme_ioctl(struct ifnet *, u_long, void *);
-void		hme_tick(void *);
-void		hme_watchdog(struct ifnet *);
-bool		hme_shutdown(device_t, int);
-int		hme_init(struct hme_softc *);
-void		hme_meminit(struct hme_softc *);
-void		hme_mifinit(struct hme_softc *);
-void		hme_reset(struct hme_softc *);
-void		hme_chipreset(struct hme_softc *);
-void		hme_setladrf(struct hme_softc *);
+static void	hme_start(struct ifnet *);
+static void	hme_stop(struct ifnet *, int);
+static int	hme_ioctl(struct ifnet *, u_long, void *);
+static void	hme_tick(void *);
+static void	hme_watchdog(struct ifnet *);
+static bool	hme_shutdown(device_t, int);
+static int	hme_init(struct hme_softc *);
+static void	hme_meminit(struct hme_softc *);
+static void	hme_mifinit(struct hme_softc *);
+static void	hme_chipreset(struct hme_softc *);
+static void	hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
 static int	hme_mii_readreg(device_t, int, int);
 static void	hme_mii_writereg(device_t, int, int, int);
 static void	hme_mii_statchg(device_t);
 
-int		hme_mediachange(struct ifnet *);
+static int	hme_mediachange(struct ifnet *);
 
-struct mbuf	*hme_get(struct hme_softc *, int, uint32_t);
-int		hme_put(struct hme_softc *, int, struct mbuf *);
-void		hme_read(struct hme_softc *, int, uint32_t);
-int		hme_eint(struct hme_softc *, u_int);
-int		hme_rint(struct hme_softc *);
-int		hme_tint(struct hme_softc *);
+static struct mbuf *hme_get(struct hme_softc *, int, uint32_t);
+static int	hme_put(struct hme_softc *, int, struct mbuf *);
+static void	hme_read(struct hme_softc *, int, uint32_t);
+static int	hme_eint(struct hme_softc *, u_int);
+static int	hme_rint(struct hme_softc *);
+static int	hme_tint(struct hme_softc *);
 
+#if 0
 /* Default buffer copy routines */
-void	hme_copytobuf_contig(struct hme_softc *, void *, int, int);
-void	hme_copyfrombuf_contig(struct hme_softc *, void *, int, int);
-void	hme_zerobuf_contig(struct hme_softc *, int, int);
-
+static void	hme_copytobuf_contig(struct hme_softc *, void *, int, int);
+static void	hme_copyfrombuf_contig(struct hme_softc *, void *, int, int);
+#endif
 
 void
 hme_config(struct hme_softc *sc)
