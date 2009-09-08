@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.72 2009/05/05 21:03:29 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.73 2009/09/08 20:07:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.72 2009/05/05 21:03:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.73 2009/09/08 20:07:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -178,7 +178,7 @@ rnd_counter(void)
 {
 	struct timeval tv;
 
-#ifdef __HAVE_CPU_COUNTER
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
