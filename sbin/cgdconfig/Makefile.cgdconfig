@@ -1,0 +1,24 @@
+#	$NetBSD: Makefile.cgdconfig,v 1.1 2009/09/08 21:36:35 pooka Exp $
+#
+
+SRCS+=	cgdconfig.c		\
+	cgdlex.l		\
+	cgdparse.y		\
+	pkcs5_pbkdf2.c		\
+	params.c		\
+	utils.c
+
+CPPFLAGS+= -I${.CURDIR} -I. -DYY_NO_INPUT
+
+YHEADER=1
+
+DPADD=  ${LIBUTIL} ${LIBCRYPTO} ${LIBCRYPT} ${LIBY} ${LIBL}
+LDADD=  -lutil -lcrypto -lcrypt -ly -ll
+
+.include <bsd.own.mk>
+
+CGDCONFIGDIR=	${NETBSDSRCDIR}/sbin/cgdconfig
+
+.PATH:	${CGDCONFIGDIR}
+
+CPPFLAGS+=	-I${CGDCONFIGDIR}
