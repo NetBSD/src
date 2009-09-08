@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.49 2009/09/08 18:15:17 tsutsui Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.50 2009/09/08 18:31:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.49 2009/09/08 18:15:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.50 2009/09/08 18:31:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,9 +408,9 @@ espattach_dma(device_t parent, device_t self, void *aux)
 
 	esc->sc_pri = sa->sa_pri;
 
-	/* Assume SBus is grandparent */
+	/* SBus is grandparent, but sbus_establish() looks for it properly */
 	esc->sc_sd.sd_reset = esp_sbus_reset;
-	sbus_establish(&esc->sc_sd, parent);
+	sbus_establish(&esc->sc_sd, self);
 
 	espattach(esc, &esp_sbus_glue);
 }

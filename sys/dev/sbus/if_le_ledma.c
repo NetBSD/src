@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.32 2009/09/08 18:15:17 tsutsui Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.33 2009/09/08 18:31:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.32 2009/09/08 18:15:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.33 2009/09/08 18:31:36 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -391,9 +391,9 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	lesc->sc_lostcount = 0;
 
-	/* Assume SBus is grandparent */
+	/* SBus is grandparent, but sbus_establish looks for it properly */
 	lesc->sc_sd.sd_reset = le_ledma_reset;
-	sbus_establish(&lesc->sc_sd, parent);
+	sbus_establish(&lesc->sc_sd, self);
 
 	sc->sc_mediachange = lemediachange;
 	sc->sc_mediastatus = lemediastatus;
