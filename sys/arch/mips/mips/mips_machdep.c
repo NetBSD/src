@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.5 2009/09/07 22:27:30 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.6 2009/09/08 07:46:14 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.5 2009/09/07 22:27:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.6 2009/09/08 07:46:14 uebayasi Exp $");
 
 #include "opt_cputype.h"
 
@@ -1138,7 +1138,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	 *	  vectors.  They are fixed up by ld.elf_so.
 	 *	- ps_strings is a NetBSD extension.
 	 */
-	f->f_regs[_R_A0] = (uintptr_t)stack;
+	f->f_regs[_R_A0] = (intptr_t)stack;
 	f->f_regs[_R_A1] = 0;
 	f->f_regs[_R_A2] = 0;
 	f->f_regs[_R_A3] = (intptr_t)l->l_proc->p_psstr;
@@ -1827,15 +1827,15 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		/* NOTREACHED */
 	}
 
-	f->f_regs[_R_PC] = (uintptr_t)upcall;
-	f->f_regs[_R_SP] = (uintptr_t)sf;
+	f->f_regs[_R_PC] = (intptr_t)upcall;
+	f->f_regs[_R_SP] = (intptr_t)sf;
 	f->f_regs[_R_A0] = type;
-	f->f_regs[_R_A1] = (uintptr_t)sas;
+	f->f_regs[_R_A1] = (intptr_t)sas;
 	f->f_regs[_R_A2] = nevents;
 	f->f_regs[_R_A3] = ninterrupted;
 	f->f_regs[_R_S8] = 0;
 	f->f_regs[_R_RA] = 0;
-	f->f_regs[_R_T9] = (uintptr_t)upcall;  /* t9=Upcall function*/
+	f->f_regs[_R_T9] = (intptr_t)upcall;  /* t9=Upcall function*/
 }
 
 
