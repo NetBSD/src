@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.7 2009/09/07 16:41:37 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.8 2009/09/08 18:33:24 drochner Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.7 2009/09/07 16:41:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.8 2009/09/08 18:33:24 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3390,8 +3390,8 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 	}
 
 	hdaudio_afg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE,
-	    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / 2,
-	    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / 2);
+	  mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / (255 / ctl->ctl_step),
+	  mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / (255 / ctl->ctl_step));
 	    
 	return 0;
 }
@@ -3434,8 +3434,10 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 		return 0;
 	}
 
-	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = ctl->ctl_left * 2;
-	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = ctl->ctl_right * 2;
+	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+			ctl->ctl_left * (255 / ctl->ctl_step);
+	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+			ctl->ctl_right * (255 / ctl->ctl_step);
 	return 0;
 }
 
