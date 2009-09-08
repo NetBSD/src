@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.78 2009/01/24 14:43:28 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.79 2009/09/08 17:29:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -398,6 +398,7 @@ extern char	*progname;	/* The program name */
 #define	MAKE_JOB_PREFIX	".MAKE.JOB.PREFIX" /* prefix for job target output */
 #define	MAKE_EXPORTED	".MAKE.EXPORTED"   /* variables we export */
 #define	MAKE_MAKEFILES	".MAKE.MAKEFILES"  /* all the makefiles we read */
+#define	MAKE_LEVEL	".MAKE.LEVEL"	   /* recursion level */
 
 /*
  * debug control:
