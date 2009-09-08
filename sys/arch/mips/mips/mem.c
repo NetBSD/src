@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.1 2009/09/08 00:24:01 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.2 2009/09/08 08:11:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.1 2009/09/08 00:24:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.2 2009/09/08 08:11:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -150,8 +150,7 @@ mmrw(dev, uio, flags)
 			if (v + c > ctob(physmem))
 				return (EFAULT);
 #ifdef _LP64
-			v = MIPS_PHYS_TO_XKPHYS(
-			     MIPS3_PG_TO_CCA(MIPS3_PG_CACHED), v);
+			v = MIPS_PHYS_TO_XKPHYS_CACHED(v);
 #else
 			v = MIPS_PHYS_TO_KSEG0(v);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.6 2009/09/08 07:46:14 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.7 2009/09/08 08:11:29 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.6 2009/09/08 07:46:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.7 2009/09/08 08:11:29 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -202,6 +202,9 @@ int mips_cpu_flags;
 int mips_has_llsc;
 int mips_has_r4k_mmu;
 int mips3_pg_cached;
+#ifdef _LP64
+uint64_t mips3_xkphys_cached;
+#endif
 u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
@@ -878,8 +881,15 @@ mips_vector_init(void)
 		cca = (ct->cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
 		mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
-	} else
+#ifdef _LP64
+		mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(cca, 0);
+#endif
+	} else {
 		mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
+#ifdef _LP64
+		mips3_xkphys_cached = MIPS3_DEFAULT_XKPHYS_CACHED;
+#endif
+	}
 
 #ifdef __HAVE_MIPS_MACHDEP_CACHE_CONFIG
 	mips_machdep_cache_config();
