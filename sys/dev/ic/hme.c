@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.79 2009/05/17 00:40:43 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.80 2009/09/08 17:16:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.79 2009/05/17 00:40:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.80 2009/09/08 17:16:33 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -87,15 +87,16 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.79 2009/05/17 00:40:43 tsutsui Exp $");
 #include <dev/ic/hmevar.h>
 
 void		hme_start(struct ifnet *);
-void		hme_stop(struct hme_softc *,bool);
+void		hme_stop(struct ifnet *, int);
 int		hme_ioctl(struct ifnet *, u_long, void *);
 void		hme_tick(void *);
 void		hme_watchdog(struct ifnet *);
-void		hme_shutdown(void *);
+bool		hme_shutdown(device_t, int);
 int		hme_init(struct hme_softc *);
 void		hme_meminit(struct hme_softc *);
 void		hme_mifinit(struct hme_softc *);
 void		hme_reset(struct hme_softc *);
+void		hme_chipreset(struct hme_softc *);
 void		hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
@@ -159,8 +160,7 @@ hme_config(struct hme_softc *sc)
 	 */
 
 	/* Make sure the chip is stopped. */
-	hme_stop(sc, true);
-
+	hme_chipreset(sc);
 
 	/*
 	 * Allocate descriptors and buffers
@@ -237,6 +237,7 @@ hme_config(struct hme_softc *sc)
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
+	ifp->if_stop = hme_stop;
 	ifp->if_ioctl = hme_ioctl;
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
@@ -319,9 +320,11 @@ hme_config(struct hme_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	sc->sc_sh = shutdownhook_establish(hme_shutdown, sc);
-	if (sc->sc_sh == NULL)
-		panic("hme_config: can't establish shutdownhook");
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, hme_shutdown))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -355,16 +358,11 @@ hme_reset(struct hme_softc *sc)
 }
 
 void
-hme_stop(struct hme_softc *sc, bool chip_only)
+hme_chipreset(struct hme_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
-
-	if (!chip_only) {
-		callout_stop(&sc->sc_tick_ch);
-		mii_down(&sc->sc_mii);
-	}
 
 	/* Mask all interrupts */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK, 0xffffffff);
@@ -380,7 +378,23 @@ hme_stop(struct hme_softc *sc, bool chip_only)
 		DELAY(20);
 	}
 
-	printf("%s: hme_stop: reset failed\n", device_xname(sc->sc_dev));
+	printf("%s: %s: reset failed\n", device_xname(sc->sc_dev), __func__);
+}
+
+void
+hme_stop(struct ifnet *ifp, int disable)
+{
+	struct hme_softc *sc;
+
+	sc = ifp->if_softc;
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	callout_stop(&sc->sc_tick_ch);
+	mii_down(&sc->sc_mii);
+
+	hme_chipreset(sc);
 }
 
 void
@@ -484,7 +498,7 @@ hme_init(struct hme_softc *sc)
 	 */
 
 	/* step 1 & 2. Reset the Ethernet Channel */
-	hme_stop(sc, false);
+	hme_stop(ifp, 0);
 
 	/* Re-initialize the MIF */
 	hme_mifinit(sc);
@@ -898,13 +912,14 @@ hme_start(struct ifnet *ifp)
 	void *txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
 	unsigned int txflags;
-	unsigned int ri, len;
+	unsigned int ri, len, obusy;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	ri = sc->sc_rb.rb_tdhead;
+	obusy = sc->sc_rb.rb_td_nbusy;
 
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -975,7 +990,10 @@ hme_start(struct ifnet *ifp)
 		}
 	}
 
-	sc->sc_rb.rb_tdhead = ri;
+	if (obusy != sc->sc_rb.rb_td_nbusy) {
+		sc->sc_rb.rb_tdhead = ri;
+		ifp->if_timer = 5;
+	}
 }
 
 /*
@@ -1460,7 +1478,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			hme_stop(sc, false);
+			hme_stop(ifp, 0);
 			ifp->if_flags &= ~IFF_RUNNING;
 			break;
 		case IFF_UP:
@@ -1518,13 +1536,17 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	return (error);
 }
 
-void
-hme_shutdown(void *arg)
+bool
+hme_shutdown(device_t self, int howto)
 {
 	struct hme_softc *sc;
+	struct ifnet *ifp;
 
-	sc = arg;
-	hme_stop(sc, false);
+	sc = device_private(self);
+	ifp = &sc->sc_ethercom.ec_if;
+	hme_stop(ifp, 1);
+
+	return true;
 }
 
 /*
