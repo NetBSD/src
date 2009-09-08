@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.20 2008/04/28 20:23:31 martin Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.20.18.1 2009/09/08 17:24:09 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.20 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.20.18.1 2009/09/08 17:24:09 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,7 +304,7 @@ static int
 asc_ioasic_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	int trans, resid;
+	ssize_t trans, resid;
 	u_int tcl, tcm, ssr, scr, intr;
 	
 	if ((asc->sc_flags & ASC_DMAACTIVE) == 0)
@@ -352,7 +352,7 @@ asc_ioasic_intr(struct ncr53c9x_softc *sc)
 
 	trans = asc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("ioasic_intr: xfer (%d) > req (%d)\n",
+		printf("ioasic_intr: xfer (%zd) > req (%zu)\n",
 		    trans, asc->sc_dmasize);
 		trans = asc->sc_dmasize;
 	}

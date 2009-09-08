@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.10 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.10.96.1 2009/09/08 17:24:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10.96.1 2009/09/08 17:24:09 matt Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -100,17 +100,19 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10 2005/12/11 12:18:39 christos Exp 
  * XXX check for clean user pages, replace frame,  and reload ?
  */
 void
-kn02ba_errintr()
+kn02ba_errintr(void)
 {
-	int mer, adr, siz, err;
-	static int errintr_cnt = 0;
+	paddr_t err, adr;
+	size_t siz;
+	uint32_t mer;
+	static unsigned int errintr_cnt = 0;
 
-	siz = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
-	mer = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
-	adr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
+	siz = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
+	mer = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
+	adr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
 
 	/* clear interrupt bit */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 
 	err = 0;	/* XXX gcc */
 	switch (mer & KMIN_MER_LASTBYTE) {
@@ -126,6 +128,7 @@ kn02ba_errintr()
 	err |= (adr & KMIN_AER_ADDR_MASK);
 
 	errintr_cnt++;
-	printf("(%d)Bad memory chip at phys %x [%x %x %x]\n",
-		errintr_cnt, err, mer, siz, adr);
+	printf("(%u)Bad memory chip at phys %#"PRIxPADDR
+	    " [%x %zx %#"PRIxPADDR"]\n",
+	    errintr_cnt, err, mer, siz, adr);
 }

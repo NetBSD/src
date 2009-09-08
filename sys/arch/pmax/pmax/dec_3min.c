@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.60 2008/03/15 08:50:08 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.60.22.1 2009/09/08 17:24:09 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60 2008/03/15 08:50:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.1 2009/09/08 17:24:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ static void	dec_3min_tc_init(void);
 /*
  * Local declarations.
  */
-static u_int32_t kmin_tc3_imask;
+static uint32_t kmin_tc3_imask;
 
 static const int dec_3min_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
@@ -176,7 +176,7 @@ dec_3min_init()
 	platform.tc_init = dec_3min_tc_init;
 
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
@@ -184,22 +184,22 @@ dec_3min_init()
 	ipl2spl_table = dec_3min_ipl2spl_table;
 
 	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_3);
 
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(uint32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(uint32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+	*(uint32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(uint32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(uint32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
 
 	/* sanitize interrupt mask */
 	kmin_tc3_imask = (KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT);
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+	*(uint32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
 
 	/*
 	 * The kmin memory hardware seems to wrap memory addresses
@@ -228,10 +228,10 @@ dec_3min_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(uint32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ba_wbflush();
 }
 
@@ -273,7 +273,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 {
 	unsigned mask;
 
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 		/* slots 0-2 don't interrupt through the IOASIC. */
 	  case SYS_DEV_OPT0:
 		mask = MIPS_INT_MASK_0;
@@ -300,14 +300,14 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 		break;
 	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", (int)cookie);
+		printf("warning: enabling unknown intr %p\n", cookie);
 #endif
 		return;
 	}
 
 #if defined(DEBUG)
-	printf("3MIN: imask %x, enabling slot %d, dev %p handler %p\n",
-	    kmin_tc3_imask, (int)cookie, dev, handler);
+	printf("3MIN: imask %x, enabling slot %p, dev %p handler %p\n",
+	    kmin_tc3_imask, cookie, dev, handler);
 #endif
 
 	/*
@@ -320,10 +320,10 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 	 */
 
 	/* Set the interrupt handler and argument ... */
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(uintptr_t)cookie].ih_func = handler;
+	intrtab[(uintptr_t)cookie].ih_arg = arg;
 	/* ... and set the relevant mask */
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 	case SYS_DEV_OPT0:
 	case SYS_DEV_OPT1:
 	case SYS_DEV_OPT2:
@@ -340,7 +340,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 		break;
 	}
 
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
 	kn02ba_wbflush();
 }
 
@@ -362,10 +362,10 @@ dec_3min_intr(status, cause, pc, ipending)
 {
 	static int user_warned = 0;
 	static int intr_depth = 0;
-	u_int32_t old_mask;
+	uint32_t old_mask;
 
 	intr_depth++;
-	old_mask = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+	old_mask = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
 
 	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();
@@ -373,11 +373,11 @@ dec_3min_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_3) {
 		/* NB: status & MIPS_INT_MASK3 must also be set */
 		/* masked interrupts are still observable */
-		u_int32_t intr, imsk, can_serve, turnoff;
+		uint32_t intr, imsk, can_serve, turnoff;
 
 		turnoff = 0;
-		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+		intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
+		imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
 		can_serve = intr & imsk;
 
 		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
@@ -394,7 +394,7 @@ dec_3min_intr(status, cause, pc, ipending)
 			turnoff |= IOASIC_INTR_LANCE_READ_E;
 
 		if (turnoff)
-			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
+			*(uint32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
 		if (intr & KMIN_INTR_TIMEOUT) {
 			kn02ba_errintr();
@@ -416,7 +416,7 @@ dec_3min_intr(status, cause, pc, ipending)
 		/* If clock interrupts were enabled, re-enable them ASAP. */
 		if (old_mask & KMIN_INTR_CLOCK) {
 			/* ioctl interrupt mask to splclock and higher */
-			*(u_int32_t *)(ioasic_base + IOASIC_IMSK)
+			*(uint32_t *)(ioasic_base + IOASIC_IMSK)
 				= old_mask &
 					~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
 					  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
@@ -474,7 +474,7 @@ done:
 	/* restore entry state */
 	splhigh();
 	intr_depth--;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
+	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }

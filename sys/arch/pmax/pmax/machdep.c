@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.2 2009/09/08 17:24:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.2 2009/09/08 17:24:09 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.1 2009/09/07 23:46:46 matt E
 #include "opt_dec_3maxplus.h"
 #include "ksyms.h"
 
-unsigned ssir;				/* simulated interrupt register */
+unsigned int ssir;			/* simulated interrupt register */
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -136,7 +136,7 @@ int		systype;		/* mother board type */
 char		*bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
 int		physmem;		/* max supported memory, changes to actual */
-int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
@@ -158,7 +158,7 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
+void	mach_init __P((int, char *[], int, intptr_t, u_int, char *)); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
@@ -192,7 +192,8 @@ void
 mach_init(argc, argv, code, cv, bim, bip)
 	int argc;
 	char *argv[];
-	int code, cv;
+	int code;
+	intptr_t cv;
 	u_int bim;
 	char *bip;
 {
@@ -230,8 +231,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
-		ssym = (void *)bi_syms->ssym;
-		esym = (void *)bi_syms->esym;
+		ssym = (void *)(intptr_t)bi_syms->ssym;
+		esym = (void *)(intptr_t)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
@@ -346,7 +347,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	memset(lwp0.l_addr, 0, USPACE);
 #ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
+	lwp0.l_md.md_regs->f_regs[_L_SR] = MIPS_SR_KX;
 #endif
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
 #ifdef _LP64
