@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.27 2008/07/24 19:07:36 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.28 2009/09/08 21:36:35 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.27 2008/07/24 19:07:36 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.28 2009/09/08 21:36:35 pooka Exp $");
 #endif
 
 #include <err.h>
@@ -59,6 +59,8 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.27 2008/07/24 19:07:36 christos Exp $");
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
+#include "cgd_kernelops.h"
+#include "cgdconfig.h"
 
 #define CGDCONFIG_DIR		"/etc/cgd"
 #define CGDCONFIG_CFILE		CGDCONFIG_DIR "/cgd.conf"
@@ -168,8 +170,17 @@ set_action(enum action *action, enum action value)
 	*action = value;
 }
 
+#ifndef CGDCONFIG_AS_LIB
 int
 main(int argc, char **argv)
+{
+
+	return cgdconfig(argc, argv);
+}
+#endif
+
+int
+cgdconfig(int argc, char *argv[])
 {
 	struct params *p;
 	struct params *tp;
@@ -447,7 +458,7 @@ unconfigure(int argc, char **argv, struct params *inparams, int flags)
 	if (flags == CONFIG_FLAGS_FROMALL && (argc < 2 || argc > 3))
 		return -1;
 
-	fd = opendisk(*argv, O_RDWR, buf, sizeof(buf), 1);
+	fd = opendisk1(*argv, O_RDWR, buf, sizeof(buf), 1, cgd_kops.ko_open);
 	if (fd == -1) {
 		int saved_errno = errno;
 
@@ -464,7 +475,7 @@ unconfigure(int argc, char **argv, struct params *inparams, int flags)
 		return 0;
 
 	ret = unconfigure_fd(fd);
-	(void)close(fd);
+	(void)cgd_kops.ko_close(fd);
 	return ret;
 }
 
@@ -473,7 +484,7 @@ unconfigure_fd(int fd)
 {
 	struct	cgd_ioctl ci;
 
-	if (ioctl(fd, CGDIOCCLR, &ci) == -1) {
+	if (cgd_kops.ko_ioctl(fd, CGDIOCCLR, &ci) == -1) {
 		warn("ioctl");
 		return -1;
 	}
@@ -572,7 +583,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 			break;
 
 		(void)unconfigure_fd(fd);
-		(void)close(fd);
+		(void)cgd_kops.ko_close(fd);
 
 		if (!loop) {
 			warnx("verification failed permanently");
@@ -583,11 +594,11 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	}
 
 	params_free(p);
-	(void)close(fd);
+	(void)cgd_kops.ko_close(fd);
 	return 0;
 bail_err:
 	params_free(p);
-	(void)close(fd);
+	(void)cgd_kops.ko_close(fd);
 	return -1;
 }
 
@@ -646,7 +657,7 @@ opendisk_werror(const char *cgd, char *buf, size_t buflen)
 		return 0;
 	}
 
-	fd = opendisk(cgd, O_RDWR, buf, buflen, 0);
+	fd = opendisk1(cgd, O_RDWR, buf, buflen, 0, cgd_kops.ko_open);
 	if (fd == -1)
 		warnx("can't open cgd \"%s\", \"%s\"", cgd, buf);
 
@@ -680,7 +691,7 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 	if (nflag)
 		return 0;
 
-	if (ioctl(fd, CGDIOCSET, &ci) == -1) {
+	if (cgd_kops.ko_ioctl(fd, CGDIOCSET, &ci) == -1) {
 		int saved_errno = errno;
 		warn("ioctl");
 		return saved_errno;
@@ -728,7 +739,7 @@ verify_disklabel(int fd)
 	 * partition information.
 	 */
 
-	ret = pread(fd, buf, 8192, 0);
+	ret = cgd_kops.ko_pread(fd, buf, 8192, 0);
 	if (ret < 0) {
 		warn("can't read disklabel area");
 		return -1;
@@ -753,7 +764,7 @@ verify_ffs(int fd)
 		} u;
 		ssize_t ret;
 
-		ret = pread(fd, &u, sizeof(u), sblock_try[i]);
+		ret = cgd_kops.ko_pread(fd, &u, sizeof(u), sblock_try[i]);
 		if (ret < 0) {
 			warn("pread");
 			break;
