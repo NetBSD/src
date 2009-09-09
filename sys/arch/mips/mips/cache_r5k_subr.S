@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k_subr.S,v 1.1.126.1 2009/09/07 23:47:27 matt Exp $ 	*/
+/*	$NetBSD: cache_r5k_subr.S,v 1.1.126.2 2009/09/09 04:49:25 matt Exp $ 	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,15 @@
  *	Enable and clear out the R5k secondary (unified) cache.
  */
 LEAF_NOPROFILE(r5k_enable_sdcache)
-	lw	t2, _C_LABEL(mips_sdcache_size)
-	la	t1, MIPS_KSEG0_START
+	INT_L	t2, _C_LABEL(mips_sdcache_size)
+	PTR_LA	t1, MIPS_KSEG0_START
 
 	beq	t2, zero, 3f		# if no sdcache, we can bail now
 	nop
 
-	add	t2, t1, t2
+	PTR_ADDU t2, t1, t2
 
-	la	v0, 1f
+	PTR_LA	v0, 1f
 	or	v0, MIPS_KSEG1_START
 
 	j	v0			# run the rest from uncached space
@@ -66,7 +66,7 @@ LEAF_NOPROFILE(r5k_enable_sdcache)
 
 2:
 	cache	0x17, 0(t1)		# 0x17 == Page_Invalidate_SD
-	addiu	t1, t1, 4096
+	PTR_ADDU t1, t1, 4096
 
 	sltu	v0, t1, t2
 	bne	v0, zero, 2b
