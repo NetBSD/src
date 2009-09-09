@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.16.20.2 2009/08/23 04:04:35 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.16.20.3 2009/09/09 04:50:03 matt Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.20.2 2009/08/23 04:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.20.3 2009/09/09 04:50:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	sigset_t mask;
 
 #if !defined(__mips_o32)
-	if (p->p_md.md_abi != _MIPS_BSD_ABI_O32)
+	if (p->p_md.md_abi != _MIPS_BSD_API_O32)
 		return ENOSYS;
 #endif
 
