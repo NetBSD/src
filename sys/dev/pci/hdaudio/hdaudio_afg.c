@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.9 2009/09/09 01:39:51 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.10 2009/09/09 11:47:24 drochner Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.9 2009/09/09 01:39:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.10 2009/09/09 11:47:24 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3355,7 +3355,7 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 	struct hdaudio_afg_softc *sc = ad->ad_sc;
 	struct hdaudio_mixer *mx;
 	struct hdaudio_control *ctl;
-	int i;
+	int i, divisor;
 
 	if (mc->dev < 0 || mc->dev >= sc->sc_nmixers)
 		return EINVAL;
@@ -3385,9 +3385,14 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 		return 0;
 	}
 
+	if (ctl->ctl_step == 0)
+		divisor = 128; /* ??? - just avoid div by 0 */
+	else
+		divisor = 255 / ctl->ctl_step;
+
 	hdaudio_afg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE,
-	  mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / (255 / ctl->ctl_step),
-	  mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / (255 / ctl->ctl_step));
+	  mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / divisor,
+	  mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / divisor);
 	    
 	return 0;
 }
@@ -3400,7 +3405,7 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 	struct hdaudio_mixer *mx;
 	struct hdaudio_control *ctl;
 	u_int mask = 0;
-	int i;
+	int i, factor;
 
 	if (mc->dev < 0 || mc->dev >= sc->sc_nmixers)
 		return EINVAL;
@@ -3430,10 +3435,13 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 		return 0;
 	}
 
-	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			ctl->ctl_left * (255 / ctl->ctl_step);
-	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			ctl->ctl_right * (255 / ctl->ctl_step);
+	if (ctl->ctl_step == 0)
+		factor = 128; /* ??? - just avoid div by 0 */
+	else
+		factor = 255 / ctl->ctl_step;
+
+	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = ctl->ctl_left * factor;
+	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = ctl->ctl_right * factor;
 	return 0;
 }
 
