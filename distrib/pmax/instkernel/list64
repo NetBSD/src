@@ -1,0 +1,4 @@
+#	$NetBSD: list64,v 1.1.2.1 2009/09/09 02:12:25 matt Exp $
+
+COPY	${DESTDIR}/usr/mdec/boot.pmax	boot.pmax
+COPY	${OBJDIR}/netbsd-INSTALL64.gz	netbsd
