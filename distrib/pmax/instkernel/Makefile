@@ -1,27 +1,33 @@
-#	$NetBSD: Makefile,v 1.36 2006/01/16 00:16:44 he Exp $
+#	$NetBSD: Makefile,v 1.36.32.1 2009/09/09 02:11:54 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
+.if ${MACHINE_ARCH} == "mips64el"
+SFX=		64
+.endif
+
 IMAGE=		diskimage
-IMAGESIZE=	2100k
-LISTS=		${.CURDIR}/list
+IMAGESIZE=	2400k
+LISTS=		${.CURDIR}/list${SFX}
 MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	le
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
-IMAGEDEPENDS=	netbsd-INSTALL.gz ${DESTDIR}/usr/mdec/boot.pmax ${PRIMARYBOOT}
+IMAGEDEPENDS=	netbsd-INSTALL${SFX}.gz ${DESTDIR}/usr/mdec/boot.pmax ${PRIMARYBOOT}
 IMAGEPOSTBUILD=	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT}
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		RAMDISK ${RAMDISK} netbsd-INSTALL
+MDSETTARGETS=		RAMDISK${SFX} ${RAMDISK} netbsd-INSTALL${SFX}
 MDSET_RELEASEDIR=	binary/kernel
 
-MDSET_SUFFIXES.netbsd-INSTALL=	ecoff create-ecoff
-create-ecoff=			${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
+.if ${MACHINE_ARCH} == "mipsel"
+MDSET_SUFFIXES.netbsd-INSTALL${SFX}=	ecoff create-ecoff
+create-ecoff=				${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
+.endif
 
 IMAGE_RELEASEDIR=	installation/diskimage
 
