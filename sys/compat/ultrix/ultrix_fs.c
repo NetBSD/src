@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.49 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.49.16.1 2009/09/09 21:15:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49.16.1 2009/09/09 21:15:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,24 +75,24 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49 2008/05/06 18:43:44 ad Exp $");
  * compatibility with the size the Ultrix kernel and user apps expect.
  */
 struct ultrix_fs_data {
-	u_int32_t	ufsd_flags;	/* how mounted */
-	u_int32_t	ufsd_mtsize;	/* max transfer size in bytes */
-	u_int32_t	ufsd_otsize;	/* optimal transfer size in bytes */
-	u_int32_t	ufsd_bsize;	/* fs block size (bytes) for vm code */
-	u_int32_t	ufsd_fstype;	/* see ../h/fs_types.h  */
-	u_int32_t	ufsd_gtot;	/* total number of gnodes */
-	u_int32_t	ufsd_gfree;	/* # of free gnodes */
-	u_int32_t	ufsd_btot;	/* total number of 1K blocks */
-	u_int32_t	ufsd_bfree;	/* # of free 1K blocks */
-	u_int32_t	ufsd_bfreen;	/* user consumable 1K blocks */
-	u_int32_t	ufsd_pgthresh;	/* min size in bytes before paging*/
+	uint32_t	ufsd_flags;	/* how mounted */
+	uint32_t	ufsd_mtsize;	/* max transfer size in bytes */
+	uint32_t	ufsd_otsize;	/* optimal transfer size in bytes */
+	uint32_t	ufsd_bsize;	/* fs block size (bytes) for vm code */
+	uint32_t	ufsd_fstype;	/* see ../h/fs_types.h  */
+	uint32_t	ufsd_gtot;	/* total number of gnodes */
+	uint32_t	ufsd_gfree;	/* # of free gnodes */
+	uint32_t	ufsd_btot;	/* total number of 1K blocks */
+	uint32_t	ufsd_bfree;	/* # of free 1K blocks */
+	uint32_t	ufsd_bfreen;	/* user consumable 1K blocks */
+	uint32_t	ufsd_pgthresh;	/* min size in bytes before paging*/
 	int32_t		ufsd_uid;	/* uid that mounted me */
 	int16_t		ufsd_dev;	/* major/minor of fs */
 	int16_t		ufsd_exroot;	/* root mapping from exports */
 	char		ufsd_devname[ULTRIX_MAXPATHLEN + 4]; /* name of dev */
 	char		ufsd_path[ULTRIX_MAXPATHLEN + 4]; /* name of mnt point */
-	u_int32_t	ufsd_nupdate;	/* number of writes */
-	u_int32_t	ufsd_pad[112];	/* pad to 2560 bytes. */
+	uint32_t	ufsd_nupdate;	/* number of writes */
+	uint32_t	ufsd_pad[112];	/* pad to 2560 bytes. */
 };
 
 /*
@@ -337,8 +337,8 @@ struct	ultrix_nfs_args {
  * mounting local (4.2bsd FFS) filesystems
  */
 struct ultrix_ufs_args {
-	u_long ufs_flags;		/* mount flags?*/
-	u_long ufs_pgthresh;		/* minimum file size to page */
+	uint32_t ufs_flags;		/* mount flags?*/
+	uint32_t ufs_pgthresh;		/* minimum file size to page */
 };
 
 int
