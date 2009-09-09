@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.35 2008/03/21 21:54:59 ad Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.35.22.1 2009/09/09 21:15:59 matt Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.35 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.35.22.1 2009/09/09 21:15:59 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -87,7 +87,7 @@ static const struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static const u_long s2btab[] = {
+static const uint16_t s2btab[] = {
 	0,
 	50,
 	75,
@@ -143,7 +143,7 @@ static void stio2stios(struct emul_termio *, struct emul_termios *);
 static void
 stios2btios(struct emul_termios *st, struct termios *bt)
 {
-	u_long l, r;
+	uint32_t l, r;
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -273,7 +273,7 @@ stios2btios(struct emul_termios *st, struct termios *bt)
 static void
 btios2stios(struct termios *bt, struct emul_termios *st)
 {
-	u_long l, r;
+	uint32_t l, r;
 	int speed;
 
 	l = bt->c_iflag;
