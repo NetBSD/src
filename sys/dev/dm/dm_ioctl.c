@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.13 2009/06/05 21:52:31 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.14 2009/09/09 22:38:49 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -746,7 +746,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		}
 		
 		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
-			    KM_NOSLEEP)) == NULL) {
+			    KM_SLEEP)) == NULL) {
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_dev_unbusy(dmv);
 			return ENOMEM;
@@ -913,7 +913,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 				prop_dictionary_set_cstring(target_dict,
 				    DM_TABLE_PARAMS, params);
 				
-				kmem_free(params, strlen(params) + 1);
+				kmem_free(params, DM_MAX_PARAMS_SIZE);
 			}
 		}
 

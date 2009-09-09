@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.3 2009/03/18 10:22:39 cegger Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.4 2009/09/09 22:38:49 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ dm_pdev_alloc(const char *name)
 {
 	dm_pdev_t *dmp;
 
-	if ((dmp = kmem_zalloc(sizeof(dm_pdev_t), KM_NOSLEEP)) == NULL)
+	if ((dmp = kmem_zalloc(sizeof(dm_pdev_t), KM_SLEEP)) == NULL)
 		return NULL;
 
 	strlcpy(dmp->name, name, MAX_DEV_NAME);
