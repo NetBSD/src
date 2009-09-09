@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.572 2009/09/08 07:08:03 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.573 2009/09/09 10:38:35 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -49,7 +49,12 @@ HAVE_GCC=	4
 HAVE_GDB?=	6
 
 # default to binutils 2.16
+.if \
+    ${MACHINE_ARCH} == "i386"
+HAVE_BINUTILS?=	219
+.else
 HAVE_BINUTILS?=	216
+.endif
 
 CPPFLAG_ISYSTEM=	-isystem
 .if defined(HAVE_GCC)
