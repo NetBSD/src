@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.8 2009/09/08 18:33:24 drochner Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.9 2009/09/09 01:39:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.8 2009/09/08 18:33:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.9 2009/09/09 01:39:51 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1479,13 +1479,10 @@ hdaudio_afg_assoc_trace_to_out(struct hdaudio_afg_softc *sc, int nid, int depth)
 static void
 hdaudio_afg_assoc_trace_misc(struct hdaudio_afg_softc *sc)
 {
-#if notyet
 	struct hdaudio_assoc *as = sc->sc_assocs;
-#endif
 	struct hdaudio_widget *w;
 	int j;
 
-#if notyet
 	/* Input monitor */
 	/*
 	 * Find mixer associated with input, but supplying signal
@@ -1505,7 +1502,6 @@ hdaudio_afg_assoc_trace_misc(struct hdaudio_afg_softc *sc)
 			w->w_audiodev = HDAUDIO_MIXER_IMIX;
 		}
 	}
-#endif
 
 	/* Beeper */
 	for (j = sc->sc_startnode; j < sc->sc_endnode; j++) {
