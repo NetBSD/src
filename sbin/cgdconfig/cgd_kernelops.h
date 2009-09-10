@@ -1,4 +1,4 @@
-/*      $NetBSD: cgd_kernelops.h,v 1.1 2009/09/08 21:36:35 pooka Exp $	*/
+/*      $NetBSD: cgd_kernelops.h,v 1.2 2009/09/10 09:10:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ struct cgd_kernelops {
 	int (*ko_open)(const char *, int, mode_t);
 	int (*ko_ioctl)(int, unsigned long, void *);
 	int (*ko_close)(int);
-	int (*ko_pread)(int, void *, size_t, off_t);
+	ssize_t (*ko_pread)(int, void *, size_t, off_t);
 };
 extern const struct cgd_kernelops cgd_kops;
 
