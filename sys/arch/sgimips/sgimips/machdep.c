@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.8.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.8.2 2009/09/10 01:51:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.2 2009/09/10 01:51:32 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -177,7 +177,7 @@ extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 #endif
 
-void	mach_init(int, char **, u_int, void *);
+void	mach_init(int, char **, uintptr_t, void *);
 
 void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
@@ -232,18 +232,14 @@ uint8_t *bootinfo;			/* pointer to bootinfo structure */
 static uint8_t bi_buf[BOOTINFO_SIZE];	/* buffer to store bootinfo data */
 static const char *bootinfo_msg = NULL;
 
-#if defined(_LP64)
-#define ARCS_VECTOR 0xa800000000001000
-#else
-#define ARCS_VECTOR (MIPS_PHYS_TO_KSEG0(0x00001000))
-#endif
+#define ARCS_VECTOR MIPS_PHYS_TO_KSEG0(0x00001000)
 
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(int argc, char *argv[], u_int magic, void *bip)
+mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 {
 	paddr_t first, last;
 	int firstpfn, lastpfn;
@@ -701,7 +697,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 #endif
 	proc0paddr->u_pcb.pcb_context.val[_L_SR] =
 #ifdef _LP64
-	    MIPS_SR_KZ |
+	    MIPS_SR_KX |
 #endif
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
