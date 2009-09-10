@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.52.14.1 2009/08/26 03:46:40 matt Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.52.14.2 2009/09/10 01:52:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.52.14.1 2009/08/26 03:46:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.52.14.2 2009/09/10 01:52:34 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -127,7 +127,10 @@ irix_n32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct frame *f = l->l_md.md_regs;
 
 	/* Enable 64 bit instructions (eg: sd) */
-	f->f_regs[_R_SR] |= MIPS3_SR_UX;
+	f->f_regs[_R_SR] |= MIPS3_SR_UX | MIPS3_SR_FR;
+#ifdef _LP64
+	f->f_regs[_R_SR] |= MIPS3_SR_KX;
+#endif
 }
 
 /*

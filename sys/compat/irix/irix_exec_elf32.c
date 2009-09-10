@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.15 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.15.18.1 2009/09/10 01:52:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15.18.1 2009/09/10 01:52:34 matt Exp $");
 
 #ifndef ELFSIZE
+#ifdef _LP64
+#define ELFSIZE		64	/* XXX should die */
+#else
 #define ELFSIZE		32	/* XXX should die */
+#endif
 #endif
 
 #include <sys/param.h>
@@ -56,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15 2008/04/28 20:23:41 martin 
 
 #include <compat/irix/irix_exec.h>
 
+#ifdef EXEC_ELF32
 /*
  * IRIX o32 ABI probe function
  */
@@ -90,6 +95,7 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
+	l->l_proc->l_md.md_abi = _MIP_BSD_API_O32;
 	return 0;
 }
 
@@ -126,6 +132,46 @@ ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
+	l->l_proc->l_md.md_abi = _MIP_BSD_API_N32;
+	return 0;
+}
+#endif /* EXEC_ELF32 */
+
+#ifdef EXEC_ELF64
+/*
+ * IRIX n32 ABI probe function
+ */
+int
+ELFNAME2(irix,probe_n64)(l, epp, eh, itp, pos)
+	struct lwp *l;
+	struct exec_package *epp;
+	void *eh;
+	char *itp;
+	vaddr_t *pos;
+{
+	int error = 0;
+
+#ifdef DEBUG_IRIX
+	printf("irix_probe_n64()\n");
+#endif
+	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
+	    IRIX_EF_IRIX_ABI64)
+		return error;
+
+	if (itp) {
+		/* n32 binaries use /lib64/libc.so.1 */
+		if (strncmp(itp, "/lib64/libc.so", 14) &&
+		    strncmp(itp, "/usr/lib64/libc.so", 18))
+			return ENOEXEC;
+		if ((error = emul_find_interp(l, epp, itp)))
+			return error;
+	}
+#ifdef DEBUG_IRIX
+	printf("irix_probe_n32: returning 0\n");
+	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
+#endif
+	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
+	l->l_proc->l_md.md_abi = _MIP_BSD_API_N32;
 	return 0;
 }
 
@@ -152,7 +198,7 @@ ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
 	 * the code that sets up the stack in copyargs():
 	 */
 #ifdef DEBUG_IRIX
-	printf("irix_elf32_copyargs(): *stackp = %p\n", *stackp);
+	printf("%s(): *stackp = %p\n", __func__, *stackp);
 #endif
 	/*
 	 * This is borrowed from sys/kern/kern_exec.c:copyargs()
