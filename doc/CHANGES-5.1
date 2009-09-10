@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.66 2009/09/05 16:23:53 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.67 2009/09/10 07:43:28 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2403,4 +2403,29 @@ sys/dev/acpi/pckbc_acpi.c			1.32
 	If the firmware describes duplicate keyboard controller nodes,
 	don't panic when the driver fails to map registers.
 	[jmcneill, ticket #939]
+
+sys/dev/ic/mfi.c				1.28 via patch
+
+	Fix command list corruption seen on heavy I/O load on the mfi
+	driver(4).
+	[bouyer, ticket #931]
+
+dist/nvi/regex/regcomp.c			1.5
+
+	Fix PR bin/41781, the pattern /\$/ doesn't match a dollar sign
+	anymore by default.
+	[tnozaki, ticket #938]
+
+sys/dev/pci/if_ale.c				1.4-1.7
+
+	Print chipset name.  Support flow control.  Don't read/write
+	1000baseT specific MII registers on 10/100M only device.
+	Fix multicast.
+	[sborrill, ticket #941]
+
+sys/fs/ntfs/ntfs_subr.c				1.43
+sys/fs/ntfs/ntfs_vfsops.c			1.79
+
+	Fix cp(1) from ntfs, addressing PR kern/38531.
+	[pooka, ticket #942]
 
