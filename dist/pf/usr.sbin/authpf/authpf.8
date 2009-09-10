@@ -1,4 +1,4 @@
-.\" $NetBSD: authpf.8,v 1.9 2009/03/22 14:29:35 perry Exp $
+.\" $NetBSD: authpf.8,v 1.10 2009/09/10 13:17:39 wiz Exp $
 .\" $OpenBSD: authpf.8,v 1.44 2007/05/31 19:20:22 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
@@ -390,8 +390,7 @@ an email to remove@bulkmailerz.net.
 wireless network (a hub with several hundred ports), the default rule set as
 well as the per-user rules should probably allow very few things beyond
 encrypted protocols like
-.Xr ssh 1 ,
-.Xr ssl 8 ,
+.Xr ssh 1
 or
 .Xr ipsec 4 .
 On a securely switched network, with plug-in jacks for visitors who are
@@ -508,7 +507,6 @@ rdr-anchor "authpf/*" from <authpf_users>
 .Sh SEE ALSO
 .Xr pf 4 ,
 .Xr pf.conf 5 ,
-.Xr securelevel 7 ,
 .Xr ftp-proxy 8
 .Sh HISTORY
 The
