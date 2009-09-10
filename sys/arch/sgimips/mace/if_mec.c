@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.33 2008/08/23 18:44:51 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.33.12.1 2009/09/10 01:51:32 matt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.33 2008/08/23 18:44:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.33.12.1 2009/09/10 01:51:32 matt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1704,7 +1704,7 @@ mec_rxintr(struct mec_softc *sc)
 		     MEC_RXSTAT_INVALID   |
 		     MEC_RXSTAT_CRCERROR  |
 		     MEC_RXSTAT_VIOLATION)) {
-			printf("%s: mec_rxintr: status = 0x%016llx\n",
+			printf("%s: mec_rxintr: status = 0x%016"PRIx64"\n",
 			    device_xname(sc->sc_dev), rxstat);
 			goto dropit;
 		}
@@ -1815,7 +1815,7 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 		ifp->if_collisions += col;
 
 		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
-			printf("%s: TX error: txstat = 0x%016llx\n",
+			printf("%s: TX error: txstat = 0x%016"PRIx64"\n",
 			    device_xname(sc->sc_dev), txstat);
 			ifp->if_oerrors++;
 		} else
