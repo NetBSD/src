@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.11 2009/09/05 16:24:20 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.12 2009/09/10 07:42:49 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -225,4 +225,16 @@ sys/dev/acpi/pckbc_acpi.c			1.32
 	If the firmware describes duplicate keyboard controller nodes,
 	don't panic when the driver fails to map registers.
 	[jmcneill, ticket #939]
+
+sys/dev/ic/mfi.c				1.28 via patch
+
+	Fix command list corruption seen on heavy I/O load on the mfi
+	driver(4).
+	[bouyer, ticket #931]
+
+dist/nvi/regex/regcomp.c			1.5
+
+	Fix PR bin/41781, the pattern /\$/ doesn't match a dollar sign
+	anymore by default.
+	[tnozaki, ticket #938]
 
