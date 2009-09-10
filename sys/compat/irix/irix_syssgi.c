@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.48 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.48.16.1 2009/09/10 01:52:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.48 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.48.16.1 2009/09/10 01:52:34 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
 #ifndef ELFSIZE
+#ifdef _LP64
+#define ELFSIZE 64
+#else
 #define ELFSIZE 32
+#endif
 #endif
 
 /* round up and down to page boundaries. Borrowed from sys/kern/exec_elf32.c */
@@ -109,7 +113,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 	case IRIX_SGI_SETGROUPS: {	/* setgroups(2) */
 		struct sys_setgroups_args cup;
 
-		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidsetsize) = (intptr_t)SCARG(uap, arg1);
 		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
 		return (sys_setgroups(l, &cup, retval));
 		break;
@@ -118,7 +122,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 	case IRIX_SGI_GETGROUPS: {	/* getgroups(2) */
 		struct sys_getgroups_args cup;
 
-		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidsetsize) = (intptr_t)SCARG(uap, arg1);
 		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
 		return (sys_getgroups(l, &cup, retval));
 		break;
@@ -131,7 +135,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
 		struct sys_getsid_args cup;
 
-		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1);
+		SCARG(&cup, pid) = (pid_t)(intptr_t)SCARG(uap, arg1);
 		return (sys_getsid(l, &cup, retval));
 		break;
 	}
@@ -139,7 +143,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 	case IRIX_SGI_GETPGID: {/* Get parent process GID: getpgid(2) */
 		struct sys_getpgid_args cup;
 
-		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1);
+		SCARG(&cup, pid) = (pid_t)(intptr_t)SCARG(uap, arg1);
 		return (sys_getpgid(l, &cup, retval));
 		break;
 	}
@@ -147,21 +151,21 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 	case IRIX_SGI_SETPGID: {/* Get parent process GID: setpgid(2) */
 		struct sys_setpgid_args cup;
 
-		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1);
-		SCARG(&cup, pgid) = (pid_t)SCARG(uap, arg2);
+		SCARG(&cup, pid) = (pid_t)(intptr_t)SCARG(uap, arg1);
+		SCARG(&cup, pgid) = (pid_t)(intptr_t)SCARG(uap, arg2);
 		return (sys_setpgid(l, &cup, retval));
 		break;
 	}
 
 	case IRIX_SGI_PATHCONF: /* Get file limits: pathconf(3) */
 		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
-		    (int)SCARG(uap, arg2), l, retval);
+		    (intptr_t)SCARG(uap, arg2), l, retval);
 		break;
 
 	case IRIX_SGI_RUSAGE: {	/* BSD getrusage(2) */
 		struct sys_getrusage_args cup;
 
-		SCARG(&cup, who) = (int)SCARG(uap, arg1);
+		SCARG(&cup, who) = (intptr_t)SCARG(uap, arg1);
 		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
 		return sys_getrusage(l, &cup, retval);
 		break;
@@ -173,9 +177,9 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 		break;
 
 	case IRIX_SGI_MODULE_INFO: { /* <sys/systeminfo.h> get_module_info() */
-		int module_num = (int)SCARG(uap, arg1);
+		int module_num = (intptr_t)SCARG(uap, arg1);
 		struct irix_module_info_s *imip = SCARG(uap, arg2);
-		int mss = (int)SCARG(uap, arg3);
+		int mss = (intptr_t)SCARG(uap, arg3);
 		struct irix_module_info_s imi;
 		char *idx;
 
@@ -206,7 +210,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 		arg1 = SCARG(uap, arg1); /* PID of the process */
 		arg2 = SCARG(uap, arg2); /* Address of user buffer */
 		arg3 = SCARG(uap, arg3); /* Length of user buffer */
-		tp = pfind((pid_t)arg1);
+		tp = pfind((pid_t)(intptr_t)arg1);
 		if (tp == NULL || \
 		    tp->p_psstr == NULL || \
 		    tp->p_psstr->ps_argvstr == NULL || \
@@ -231,8 +235,8 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 		 arg1 = SCARG(uap, arg1); /* file descriptor  */
 		 arg2 = SCARG(uap, arg2); /* ptr to ELF program header array */
 		 arg3 = SCARG(uap, arg3); /* array's length */
-		return irix_syssgi_mapelf((int)arg1, (Elf_Phdr *)arg2,
-		    (int)arg3, l, retval);
+		return irix_syssgi_mapelf((intptr_t)arg1, (Elf_Phdr *)arg2,
+		    (intptr_t)arg3, l, retval);
 		break;
 
 	case IRIX_SGI_USE_FP_BCOPY:	/* bcopy and bzero can use FPU or not */
@@ -250,7 +254,7 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 
 	case IRIX_SGI_SYSCONF:		/* POSIX sysconf */
 		arg1 = SCARG(uap, arg1); /* system variable name */
-		return irix_syssgi_sysconf((int)arg1, l, retval);
+		return irix_syssgi_sysconf((intptr_t)arg1, l, retval);
 		break;
 
 	case IRIX_SGI_SATCTL:		/* control audit stream */
