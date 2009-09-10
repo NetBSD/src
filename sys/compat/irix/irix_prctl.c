@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.48 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.48.14.1 2009/09/10 01:52:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.48 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.48.14.1 2009/09/10 01:52:34 matt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -101,9 +101,9 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 		int shmask = 0;
 		struct irix_emuldata *ied;
 
-		p2 = pfind((pid_t)SCARG(uap, arg1));
+		p2 = pfind((pid_t)(uintptr_t)SCARG(uap, arg1));
 
-		if (p2 == p || SCARG(uap, arg1) == 0) {
+		if (p2 == p || SCARG(uap, arg1) == NULL) {
 			/* XXX return our own shmask */
 			return 0;
 		}
@@ -160,7 +160,7 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 	}
 
 	case IRIX_PR_ISBLOCKED: {	/* Is process blocked? */
-		pid_t pid = (pid_t)SCARG(uap, arg1);
+		pid_t pid = (pid_t)(uintptr_t)SCARG(uap, arg1);
 		struct irix_emuldata *ied;
 		struct proc *target;
 
