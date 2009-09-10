@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.3.2.2 2009/05/03 23:45:47 snj Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.3.2.3 2009/09/10 07:26:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.2.2 2009/05/03 23:45:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.2.3 2009/09/10 07:26:38 snj Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -142,6 +142,17 @@ ale_miibus_readreg(device_t dev, int phy, int reg)
 	if (phy != sc->ale_phyaddr)
 		return 0;
 
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		switch (reg) {
+		case MII_100T2CR:
+		case MII_100T2SR:
+		case MII_EXTSR:
+			return 0;
+		default:
+			break;
+		}
+	}
+
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
 	for (i = ALE_PHY_TIMEOUT; i > 0; i--) {
@@ -157,7 +168,7 @@ ale_miibus_readreg(device_t dev, int phy, int reg)
 		return 0;
 	}
 
-	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
+	return (v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT;
 }
 
 static void
@@ -169,6 +180,17 @@ ale_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	if (phy != sc->ale_phyaddr)
 		return;
+
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		switch (reg) {
+		case MII_100T2CR:
+		case MII_100T2SR:
+		case MII_EXTSR:
+			return;
+		default:
+			break;
+		}
+	}
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
@@ -370,8 +392,9 @@ ale_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	pcireg_t memtype;
-	int error = 0;
+	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
+	const char *chipname;
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L1E Ethernet\n");
@@ -418,7 +441,6 @@ ale_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		goto fail;
 	}
-	aprint_normal_dev(self, "%s\n", intrstr);
 
 	/* Set PHY address. */
 	sc->ale_phyaddr = ALE_PHY_ADDR;
@@ -434,15 +456,19 @@ ale_attach(device_t parent, device_t self, void *aux)
 	if (sc->ale_rev >= 0xF0) {
 		/* L2E Rev. B. AR8114 */
 		sc->ale_flags |= ALE_FLAG_FASTETHER;
+		chipname = "AR8114 (L2E RevB)";
 	} else {
 		if ((CSR_READ_4(sc, ALE_PHY_STATUS) & PHY_STATUS_100M) != 0) {
 			/* L1E AR8121 */
 			sc->ale_flags |= ALE_FLAG_JUMBO;
+			chipname = "AR8121 (L1E)";
 		} else {
 			/* L2E Rev. A. AR8113 */
 			sc->ale_flags |= ALE_FLAG_FASTETHER;
+			chipname = "AR8113 (L2E RevA)";
 		}
 	}
+	aprint_normal_dev(self, "%s, %s\n", chipname, intrstr);
 
 	/*
 	 * All known controllers seems to require 4 bytes alignment
@@ -538,8 +564,11 @@ ale_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_mii = &sc->sc_miibus;
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, ale_mediachange,
 	    ale_mediastatus);
+	mii_flags = 0;
+	if ((sc->ale_flags & ALE_FLAG_JUMBO) != 0)
+		mii_flags |= MIIF_DOPAUSE;
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -1151,12 +1180,10 @@ ale_mac_config(struct ale_softc *sc)
 	}
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		reg |= MAC_CFG_FULL_DUPLEX;
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			reg |= MAC_CFG_TX_FC;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			reg |= MAC_CFG_RX_FC;
-#endif
 	}
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 }
@@ -1999,15 +2026,15 @@ ale_rxfilter(struct ale_softc *sc)
 
 	rxcfg = CSR_READ_4(sc, ALE_MAC_CFG);
 	rxcfg &= ~(MAC_CFG_ALLMULTI | MAC_CFG_BCAST | MAC_CFG_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * Always accept broadcast frames.
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC || 
-	    ec->ec_multicnt > 0) {
-allmulti:
+	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxcfg |= MAC_CFG_PROMISC;
 		else
@@ -2019,13 +2046,7 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-			    	ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 			ETHER_NEXT_MULTI(step, enm);
 		}
