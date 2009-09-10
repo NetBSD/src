@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.27 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.28 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -104,16 +104,20 @@
 		 err(2, NULL);						\
 }
 
-/* length of record is currently limited to maximum string length (size_t) */
-typedef size_t length_t;
+/* Records are limited to MAXBUFSIZE (8MB) and less if you want to sort
+ * in a sane way.
+ * Anyone who wants to sort data records longer than 2GB definitely needs a
+ * different program! */
+typedef unsigned int length_t;
 
 /* A record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.
  */
 typedef struct recheader {
-	length_t length;
-	length_t offset;
-	u_char data[1];
+	length_t length;	/* total length of key and line */
+	length_t offset;	/* to line */
+	int      keylen;	/* length of key */
+	u_char   data[];	/* key then line */
 } RECHEADER;
 
 /* This is the column as seen by struct field.  It is used by enterfield.
@@ -161,18 +165,17 @@ typedef void (*put_func_t)(const RECHEADER *, FILE *);
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
 extern u_char *const weight_tables[4];   /* ascii, Rascii, Ftable, RFtable */
 extern u_char d_mask[NBINS];
-extern int SINGL_FLD, SEP_FLAG, UNIQUE;
+extern int SINGL_FLD, SEP_FLAG, UNIQUE, REVERSE;
+extern int posix_sort;
 extern int REC_D;
 extern const char *tmpdir;
-extern u_char unweighted[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
 
 #define DEBUG(ch) (debug_flags & (1 << ((ch) & 31)))
 extern unsigned int debug_flags;
 
-void	 append(const RECHEADER **, int, FILE *,
-	    void (*)(const RECHEADER *, FILE *), u_char *);
+void	 append(RECHEADER **, int, FILE *, void (*)(const RECHEADER *, FILE *));
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
 void	 fixit(int *, char **);
@@ -193,6 +196,6 @@ void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
 void	 putkeydump(const RECHEADER *, FILE *);
 void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
-int	 radix_sort(const RECHEADER **, const RECHEADER **, int, const u_char *, u_int);
+void	 radix_sort(RECHEADER **, RECHEADER **, int);
 int	 setfield(const char *, struct field *, int);
 void	 settables(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.22 2009/09/05 09:16:18 dsl Exp $	*/
+/*	$NetBSD: init.c,v 1.23 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.22 2009/09/05 09:16:18 dsl Exp $");
+__RCSID("$NetBSD: init.c,v 1.23 2009/09/10 22:02:40 dsl Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #include <string.h>
 
 static void insertcol(struct field *);
-static const char *setcolumn(const char *, struct field *, int);
+static const char *setcolumn(const char *, struct field *);
 
 /*
  * masks of ignored characters.
@@ -152,7 +152,7 @@ fldreset(struct field *fldtab)
  * interprets a column in a -k field
  */
 static const char *
-setcolumn(const char *pos, struct field *cur_fld, int gflag)
+setcolumn(const char *pos, struct field *cur_fld)
 {
 	struct column *col;
 	char *npos;
@@ -183,27 +183,27 @@ setcolumn(const char *pos, struct field *cur_fld, int gflag)
 int
 setfield(const char *pos, struct field *cur_fld, int gflag)
 {
-	int tmp;
-
 	cur_fld->mask = NULL;
 
-	pos = setcolumn(pos, cur_fld, gflag);
+	pos = setcolumn(pos, cur_fld);
 	if (*pos == '\0')			/* key extends to EOL. */
 		cur_fld->tcol.num = 0;
 	else {
 		if (*pos != ',')
 			errx(2, "illegal field descriptor");
-		setcolumn((++pos), cur_fld, gflag);
+		setcolumn((++pos), cur_fld);
 	}
 	if (!cur_fld->flags)
 		cur_fld->flags = gflag;
-	tmp = cur_fld->flags;
+	if (REVERSE)
+		/* A local 'r' doesn't invert the global one */
+		cur_fld->flags &= ~R;
 
 	/* Assign appropriate mask table and weight table. */
-	cur_fld->weights = weight_tables[tmp & (R | F)];
-	if (tmp & I)
+	cur_fld->weights = weight_tables[cur_fld->flags & (R | F)];
+	if (cur_fld->flags & I)
 		cur_fld->mask = itable;
-	else if (tmp & D)
+	else if (cur_fld->flags & D)
 		cur_fld->mask = dtable;
 
 	cur_fld->flags |= (gflag & (BI | BT));
@@ -217,6 +217,7 @@ setfield(const char *pos, struct field *cur_fld, int gflag)
 		    && cur_fld->tcol.indent != 0
 		    && cur_fld->tcol.indent < cur_fld->icol.indent))
 		errx(2, "fields out of order");
+
 	insertcol(cur_fld);
 	return (cur_fld->tcol.num);
 }
@@ -319,17 +320,26 @@ fixit(int *argc, char **argv)
  * Convert 'ascii' characters into their sort order.
  * The 'F' variants fold lower case to upper equivalent
  * The 'R' variants are for reverse sorting.
- * The record separator (REC_D) always maps to 0.
- * One is reserved for field separators (added when key is generated)
- * The field separator (from -t<ch>) map to 1 or 255 (unless SINGL_FLD)
+ *
+ * The record separator (REC_D) never needs a weight, this frees one
+ * byte value as an 'end of key' marker. This must be 0 for normal
+ * weight tables, and 0xff for reverse weight tables - and is used
+ * to terminate keys so that short keys sort before (after if reverse)
+ * longer keys.
+ *
+ * The field separator has a normal weight - although it cannot occur
+ * within a key unless it is the default (space+tab).
+ *
  * All other bytes map to the appropriate value for the sort order.
  * Numeric sorts don't need any tables, they are reversed by negation.
  *
+ * Global reverse sorts are done by writing the sorted keys in reverse
+ * order - the sort itself is stil forwards.
+ * This means that weights are only ever used when generating keys, any
+ * sort of the original data bytes is always forwards and unweighted.
+ *
  * Note: this is only good for ASCII sorting.  For different LC 's,
  * all bets are off.
- *
- * If SINGL_FLD then the weights have to be applied during the actual sort.
- * Otherwise they are applied when the key bytes are built.
  *
  * itable[] and dtable[] are the masks for -i (ignore non-printables)
  * and -d (only sort blank and alphanumerics).
@@ -338,21 +348,17 @@ void
 settables(void)
 {
 	int i;
-	int next_weight = SINGL_FLD ? 1 : 2;
-	int rev_weight = SINGL_FLD ? 255 : 254;
-	int had_field_sep = SINGL_FLD;
+	int next_weight = 1;
+	int rev_weight = 254;
+
+	ascii[REC_D] = 0;
+	Rascii[REC_D] = 255;
+	Ftable[REC_D] = 0;
+	RFtable[REC_D] = 255;
 
 	for (i = 0; i < 256; i++) {
-		unweighted[i] = i;
-		if (d_mask[i] & REC_D_F)
+		if (i == REC_D)
 			continue;
-		if (!had_field_sep && d_mask[i] & FLD_D) {
-			/* First/only separator sorts before any data */
-			ascii[i] = 1;
-			Rascii[i] = 255;
-			had_field_sep = 1;
-			continue;
-		}
 		ascii[i] = next_weight;
 		Rascii[i] = rev_weight;
 		if (Ftable[i] == 0) {

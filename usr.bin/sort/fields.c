@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.27 2009/08/22 21:28:55 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.28 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.27 2009/08/22 21:28:55 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.28 2009/09/10 22:02:40 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -152,10 +152,18 @@ enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data,
 		    fieldtable->flags)) == NULL)
 			return (1);
 	}
-	*keypos++ = 0;
 
 	keybuf->offset = keypos - keybuf->data;
 	keybuf->length = keybuf->offset + line_size;
+
+	/*
+	 * Posix requires that equal keys be further sorted by the
+	 * entire original record.
+	 * NetBSD has (at least for some time) kept equal keys in
+	 * their original order.
+	 * For 'sort -u' posix_sort is unset.
+	 */
+	keybuf->keylen = posix_sort ? keybuf->length : keybuf->offset;
 
 	memcpy(keypos, line_data, line_size);
 	return (0);
@@ -209,33 +217,31 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
 			*tablepos++ = lweight[*start];
 		}
 	}
-	/* Add extra byte to sort short keys correctly */
-	*tablepos++ = flags & R ? 255 : 1;
+	/* Add extra byte (absent from lweight) to sort short keys correctly */
+	*tablepos++ = lweight[REC_D];
 	return tablepos;
 }
 
 /*
  * Numbers are converted to a floating point format (exponent & mantissa)
  * so that they compare correctly as sequence of unsigned bytes.
- * The output cannot contain a 0x00 byte (the record separator).
- * Bytes 0x01 and 0xff are used to terminate positive and negative numbers
+ * Bytes 0x00 and 0xff are used to terminate positive and negative numbers
  * to ensure that 0.123 sorts after 0.12 and -0.123 sorts before -0.12.
  *
  * The first byte contain the overall sign, exponent sign and some of the
  * exponent. These have to be ordered (-ve value, decreasing exponent),
  * zero, (+ve value, increasing exponent).
- * After excluding 0, 1, 0xff and 0x80 (used for zero) there are 61
- * exponent values available, this isn't quite enough and the highest
- * values are used to encode large exponents in multiple bytes.
  *
- * An exponent of zero has value 0xc0 for +ve numbers and 0x40 for -ves.
+ * The first byte is 0x80 for zero, 0x40 for -ve with exponent 0 and
+ * 0xc0 for +ve with exponent zero.
+ * This only leaves 62 byte values for +ve exponents - which isn't enough.
+ * The largest 5 exponent values are used to hold a byte count of the
+ * number of following bytes that contain 7 exponent bits per byte,
  *
  * The mantissa is stored 2 digits per byte offset by 0x40, for negative
  * numbers the order must be reversed (they are subtracted from 0x100).
  *
  * Reverse sorts are done by inverting the sign of the number.
- *
- * We don't have to worry about REC_D, the key is terminated by 0x00.
  */
 
 #define SIGNED(reverse, value) ((reverse) ? 0x100 - (value) : (value))
@@ -298,16 +304,14 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 
 	/* Maybe here we should allow for e+12 (etc) */
 
-	/* exponent 0 is 0xc0 for +ve numbers and 0x40 for -ve ones */
-	exponent += 0xc0;
-
-	if (exponent > 0x80 + MAX_EXP_ENC && exponent < 0x100 - MAX_EXP_ENC) {
+	if (exponent < 0x3f - MAX_EXP_ENC && -exponent < 0x3f - MAX_EXP_ENC) {
 		/* Value ok for simple encoding */
+		/* exponent 0 is 0xc0 for +ve numbers and 0x40 for -ve ones */
+		exponent += 0xc0;
 		*pos++ = SIGNED(reverse, exponent);
 	} else {
 		/* Out or range for a single byte */
 		int c, t;
-		exponent -= 0xc0;
 		t = exponent > 0 ? exponent : -exponent;
 		/* Count how many 7-bit blocks are needed */
 		for (c = 0; ; c++) {
