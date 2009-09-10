@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.55 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus.c,v 1.55.16.1 2009/09/10 01:51:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55.16.1 2009/09/10 01:51:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,6 +1086,16 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	size = round_page(size);
 
 	high = avail_end - PAGE_SIZE;
+
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+	/*
+	 * Limit dma to low 4GB if HPC
+	 */
+	if (t == (bus_dma_tag_t) SGIMIPS_BUS_SPACE_HPC) {
+		if ((uint32_t) high != (uint64_t) high)
+			high = trunc_page(0xffffffff);
+	}
+#endif
 
 	/*
 	 * Allocate pages from the VM system.

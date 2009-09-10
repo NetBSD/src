@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.15 2008/08/23 17:43:36 tsutsui Exp $	*/
+/*	$NetBSD: mace.c,v 1.15.12.1 2009/09/10 01:51:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.15 2008/08/23 17:43:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.15.12.1 2009/09/10 01:51:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,9 +146,9 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
-	aprint_debug("%s: isa sts %llx\n", self->dv_xname,
+	aprint_debug("%s: isa sts %#"PRIx64"\n", self->dv_xname,
 	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_STATUS));
-	aprint_debug("%s: isa msk %llx\n", self->dv_xname,
+	aprint_debug("%s: isa msk %#"PRIx64"\n", self->dv_xname,
 	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK));
 
 	/*

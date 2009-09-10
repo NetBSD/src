@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.19 2008/08/23 17:25:54 tsutsui Exp $	*/
+/*	$NetBSD: int.c,v 1.19.12.1 2009/09/10 01:51:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.19 2008/08/23 17:25:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.19.12.1 2009/09/10 01:51:31 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -207,7 +207,7 @@ int_mappable_intr(void *arg)
 	int intnum;
 	uint32_t mstat;
 	uint32_t mmask;
-	int which = (int)arg;
+	int which = (intptr_t)arg;
 	struct sgimips_intrhand *ih;
 
 	ret = 0;
