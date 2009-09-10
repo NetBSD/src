@@ -837,8 +837,21 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 #ifdef __FreeBSD__
 	DRM_UNLOCK();
 #endif
+/*
+ * This fix is not correct in case where we have i386 and PAE, where
+ * unfortunately we have > 32 bit address space, but bus_size_t is still
+ * 32 bits. To fix this properly we would have to change bus_size_t to a
+ * 64 bit quantity for PAE. Good enough for now. When that is fixed, we
+ * should change BOUNDARY to:
+ * 	((paddr_t)(sizeof(paddr_t) > 4 ? 0x100000000ULL : 0ULL))
+ */
+#ifdef _LP64
+#define        BOUNDARY        0x100000000ULL
+#else
+#define        BOUNDARY        0
+#endif
 	cpu_addr_dmah =
-	    drm_pci_alloc(dev, 0x1000, 0x1000, 0xfffffffful);
+	    drm_pci_alloc(dev, 0x1000, 0x1000, BOUNDARY);
 #ifdef __FreeBSD__
 	DRM_LOCK();
 #endif
