@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.36 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.37 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.36 2009/09/05 12:00:25 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.37 2009/09/10 22:02:40 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 			if (c == REC_D) {
 				recbuf->offset = 0;
 				recbuf->length = pos - recbuf->data;
+				recbuf->keylen = recbuf->length - 1;
 				return (0);
 			}
 		}
@@ -138,6 +139,7 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 				*pos++ = REC_D;
 				recbuf->offset = 0;
 				recbuf->length = pos - recbuf->data;
+				recbuf->keylen = recbuf->length - 1;
 				return (0);
 			}
 			FCLOSE(fp);
@@ -154,6 +156,7 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 
 			recbuf->offset = 0;
 			recbuf->length = 0;
+			recbuf->keylen = 0;
 
 			return (BUFFEND);
 		}

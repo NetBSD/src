@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.40 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.41 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.40 2009/09/05 12:00:25 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.41 2009/09/10 22:02:40 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -86,8 +86,8 @@ struct tempfile fstack[MAXFCT];
 void
 fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 {
-	const RECHEADER **keylist;
-	const RECHEADER **keypos, **keyp;
+	RECHEADER **keylist;
+	RECHEADER **keypos, **keyp;
 	RECHEADER *buffer;
 	size_t bufsize = DEFBUFSIZE;
 	u_char *bufend;
@@ -158,25 +158,19 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		}
 
 		/* Sort this set of records */
-		if (SINGL_FLD) {
-			nelem = radix_sort(keylist, keylist + MAXNUM, nelem,
-			    ftbl[0].weights, REC_D);
-		} else {
-			nelem = radix_sort(keylist, keylist + MAXNUM, nelem,
-			    unweighted, 0);
-		}
+		radix_sort(keylist, keylist + MAXNUM, nelem);
 
 		if (c == EOF && mfct == 0) {
 			/* all the data is (sorted) in the buffer */
 			append(keylist, nelem, outfp,
-			    DEBUG('k') ? putkeydump : putline, ftbl->weights);
+			    DEBUG('k') ? putkeydump : putline);
 			break;
 		}
 
 		/* Save current data to a temporary file for a later merge */
 		fp = ftmp();
 		fstack[mfct].fp = fp;
-		append(keylist, nelem, fp, putrec, NULL);
+		append(keylist, nelem, fp, putrec);
 		mfct++;
 
 		if (c == EOF) {

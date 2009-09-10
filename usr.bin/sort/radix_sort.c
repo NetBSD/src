@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_sort.c,v 1.2 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: radix_sort.c,v 1.3 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radix_sort.c,v 1.2 2009/09/05 12:00:25 dsl Exp $");
+__RCSID("$NetBSD: radix_sort.c,v 1.3 2009/09/10 22:02:40 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,82 +49,96 @@ __RCSID("$NetBSD: radix_sort.c,v 1.2 2009/09/05 12:00:25 dsl Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <util.h>
 #include "sort.h"
 
 typedef struct {
-	const RECHEADER **sa;	/* Base of saved area */
-	int sn;				/* Number of entries */
-	int si;				/* index into data for compare */
+	RECHEADER **sa;		/* Base of saved area */
+	int sn;			/* Number of entries */
+	int si;			/* index into data for compare */
 } stack;
 
-static inline int simplesort(const RECHEADER **, int, int, const u_char *, u_int);
-static int r_sort_b(const RECHEADER **,
-	    const RECHEADER **, int, int, const u_char *, u_int);
+static void simplesort(RECHEADER **, int, int);
 
 #define	THRESHOLD	20		/* Divert to simplesort(). */
-#define	SIZE		512		/* Default stack size. */
 
 #define empty(s)	(s >= sp)
 #define pop(a, n, i)	a = (--sp)->sa, n = sp->sn, i = sp->si
 #define push(a, n, i)	sp->sa = a, sp->sn = n, (sp++)->si = i
 #define swap(a, b, t)	t = a, a = b, b = t
 
-int
-radix_sort(const RECHEADER **a, const RECHEADER **ta, int n, const u_char *tab, u_int endch)
+void
+radix_sort(RECHEADER **a, RECHEADER **ta, int n)
 {
-	endch = tab[endch];
-	if (n < THRESHOLD && !DEBUG('r')) {
-		return simplesort(a, n, 0, tab, endch);
-	}
-	return r_sort_b(a, ta, n, 0, tab, endch);
-}
-
-static int
-r_sort_b(const RECHEADER **a, const RECHEADER **ta, int n, int i, const u_char *tr, u_int endch)
-{
-	static u_int count[256], nc, bmin;
+	u_int count[256], nc, bmin;
 	u_int c;
-	const RECHEADER **ak, **ai;
-	stack s[512], *sp, *sp0, *sp1, temp;
-	const RECHEADER **top[256];
+	RECHEADER **ak, **tai, **lim;
+	RECHEADER *hdr;
+	int stack_size = 512;
+	stack *s, *sp, *sp0, *sp1, temp;
+	RECHEADER **top[256];
 	u_int *cp, bigc;
-	int nrec = n;
+	int data_index = 0;
+
+	if (n < THRESHOLD && !DEBUG('r')) {
+		simplesort(a, n, 0);
+		return;
+	}
+
+	s = emalloc(stack_size * sizeof *s);
+	memset(&count, 0, sizeof count);
+	/* Technically 'top' doesn't need zeroing */
+	memset(&top, 0, sizeof top);
 
 	sp = s;
-	push(a, n, i);
+	push(a, n, data_index);
 	while (!empty(s)) {
-		pop(a, n, i);
+		pop(a, n, data_index);
 		if (n < THRESHOLD && !DEBUG('r')) {
-			simplesort(a, n, i, tr, endch);
+			simplesort(a, n, data_index);
 			continue;
 		}
 
-		if (nc == 0) {
-			bmin = 255;
-			for (ak = a + n; --ak >= a;) {
-				c = tr[(*ak)->data[i]];
-				if (++count[c] == 1 && c != endch) {
-					if (c < bmin)
-						bmin = c;
-					nc++;
-				}
-			}
-			if (sp + nc > s + SIZE) {
-				r_sort_b(a, ta, n, i, tr, endch);
+		/* Count number of times each 'next byte' occurs */
+		nc = 0;
+		bmin = 255;
+		lim = a + n;
+		for (ak = a, tai = ta; ak < lim; ak++) {
+			hdr = *ak;
+			if (data_index >= hdr->keylen) {
+				/* Short key, copy to start of output */
+				if (UNIQUE && a != sp->sa)
+					/* Stop duplicate being written out */
+					hdr->keylen = -1;
+				*a++ = hdr;
+				n--;
 				continue;
 			}
+			/* Save in temp buffer for distribute */
+			*tai++ = hdr;
+			c = hdr->data[data_index];
+			if (++count[c] == 1) {
+				if (c < bmin)
+					bmin = c;
+				nc++;
+			}
+		}
+		/*
+		 * We need save the bounds for each 'next byte' that
+		 * occurs more so we can sort each block.
+		 */
+		if (sp + nc > s + stack_size) {
+			stack_size *= 2;
+			sp1 = erealloc(s, stack_size * sizeof *s);
+			sp = sp1 + (sp - s);
+			s = sp1;
 		}
 
+		/* Minor optimisation to do the largest set last */
 		sp0 = sp1 = sp;
 		bigc = 2;
-		if (endch == 0) {
-			top[0] = ak = a + count[0];
-			count[0] = 0;
-		} else {
-			ak = a;
-			top[255] = a + n;
-			count[255] = 0;
-		}
+		/* Convert 'counts' positions, saving bounds for later sorts */
+		ak = a;
 		for (cp = count + bmin; nc > 0; cp++) {
 			while (*cp == 0)
 				cp++;
@@ -133,48 +147,69 @@ r_sort_b(const RECHEADER **a, const RECHEADER **ta, int n, int i, const u_char *
 					bigc = c;
 					sp1 = sp;
 				}
-				push(ak, c, i+1);
+				push(ak, c, data_index+1);
 			}
-			top[cp-count] = ak += c;
+			ak += c;
+			top[cp-count] = ak;
 			*cp = 0;			/* Reset count[]. */
 			nc--;
 		}
 		swap(*sp0, *sp1, temp);
 
-		for (ak = ta + n, ai = a+n; ak > ta;)	/* Copy to temp. */
-			*--ak = *--ai;
 		for (ak = ta+n; --ak >= ta;)		/* Deal to piles. */
-			*--top[tr[(*ak)->data[i]]] = *ak;
+			*--top[(*ak)->data[data_index]] = *ak;
 	}
 
-	return nrec;
+	free(s);
 }
 
-/* insertion sort */
-static inline int
-simplesort(const RECHEADER **a, int n, int b, const u_char *tr, u_int endch)
+/* insertion sort, short records are sorted before long ones */
+static void
+simplesort(RECHEADER **a, int n, int data_index)
 {
-	const RECHEADER **ak, **ai, *tmp;
-	const RECHEADER **lim = a + n;
+	RECHEADER **ak, **ai;
+	RECHEADER *akh;
+	RECHEADER **lim = a + n;
 	const u_char *s, *t;
-	u_char ch;
+	int s_len, t_len;
+	int i;
+	int r;
 
 	if (n <= 1)
-		return n;
+		return;
 
 	for (ak = a+1; ak < lim; ak++) {
-		for (ai = ak; ai > a; ai--) {
-			for (s = ai[0]->data + b, t = ai[-1]->data + b;
-			    (ch = tr[*s]) != endch; s++, t++)
-				if (ch != tr[*t])
+		akh = *ak;
+		s = akh->data;
+		s_len = akh->keylen;
+		for (ai = ak; ;) {
+			ai--;
+			t = (*ai)->data;
+			t_len = (*ai)->keylen;
+			for (i = data_index; ; i++) {
+				if (i >= s_len || i >= t_len) {
+					r = s_len - t_len;
 					break;
-			if (ch >= tr[*t]) {
-
+				}
+				r =  s[i]  - t[i];
+				if (r != 0)
+					break;
+			}
+			if (r >= 0) {
+				if (r == 0 && UNIQUE) {
+					/* Put record below existing */
+					ai[1] = ai[0];
+					/* Mark so ignored by output() */
+					akh->keylen = -1;
+				} else {
+					ai++;
+				}
 				break;
 			}
-			swap(ai[0], ai[-1], tmp);
+			ai[1] = ai[0];
+			if (ai == a)
+				break;
 		}
+		ai[0] = akh;
 	}
-
-	return n;
 }

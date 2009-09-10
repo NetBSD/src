@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.25 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.26 2009/09/10 22:02:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.25 2009/09/05 12:00:25 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.26 2009/09/10 22:02:40 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -78,11 +78,9 @@ __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 
 typedef struct mfile {
 	u_char *end;
-	short flno;
+	int flno;
 	RECHEADER rec[1];
 } MFILE;
-
-static u_char *wts;
 
 static int cmp(RECHEADER *, RECHEADER *);
 static int insert(struct mfile **, struct mfile **, int, int);
@@ -95,8 +93,6 @@ fmerge(int binno, struct filelist *filelist, int nfiles,
 	FILE *tout;
 	int i, j, last;
 	put_func_t put;
-
-	wts = ftbl->weights;
 
 	while (nfiles) {
 		put = putrec;
@@ -278,6 +274,8 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 			 * comes here).
 			 */
 			cmpv = tmprec->flno - flist[mid]->flno;
+			if (REVERSE)
+				cmpv = -cmpv;
 		}
 		if (cmpv < 0)
 			top = mid;
@@ -332,7 +330,6 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 	crec_end = crec->data + DEFLLEN;
 	prec = malloc(offsetof(RECHEADER, data[DEFLLEN]));
 	prec_end = prec->data + DEFLLEN;
-	wts = ftbl->weights;
 
 	/* XXX this does exit(0) for overlong lines */
 	if (get(-1, 0, filelist, 1, prec, prec_end, ftbl) != 0)
@@ -365,27 +362,15 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 static int
 cmp(RECHEADER *rec1, RECHEADER *rec2)
 {
+	int len;
 	int r;
-	size_t len, i;
-	u_char *pos1, *pos2;
-	u_char *cwts;
 
-	if (!SINGL_FLD)
-		/* key is weights, and is 0x00 terminated */
-		return memcmp(rec1->data, rec2->data, rec1->offset);
-
-	/* We have to apply the weights ourselves */
-	cwts = wts;
-
-	pos1 = rec1->data;
-	pos2 = rec2->data;
-	len = rec1->length;
-
-	for (i = 0; i < len; i++) {
-		r = cwts[pos1[i]] - cwts[pos2[i]];
-		if (r)
-			return r;
-	}
-
-	return (0);
+	/* key is weights */
+	len = min(rec1->keylen, rec2->keylen);
+	r = memcmp(rec1->data, rec2->data, len);
+	if (r == 0)
+		r = rec1->keylen - rec2->keylen;
+	if (REVERSE)
+		r = -r;
+	return r;
 }
