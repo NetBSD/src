@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.1.1.2.6.2 2009/01/20 03:14:17 snj Exp $ */
+/*	$NetBSD: regcomp.c,v 1.1.1.2.6.3 2009/09/10 07:17:30 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -549,12 +549,14 @@ p_simp_re(register struct parse *p, int starordinary)
 	register sopno pos;
 	register int i;
 	register sopno subno;
+	int backsl;
 
 	pos = HERE();		/* repetion op, if any, covers from here */
 
 	assert(MORE());		/* caller should have ensured this */
 	c = GETNEXT();
-	if (c == '\\') {
+	backsl = c == '\\';
+	if (backsl) {
 		(void)REQUIRE(MORE(), REG_EESCAPE);
 		c = (unsigned char)GETNEXT();
 		switch (c) {
@@ -651,7 +653,7 @@ p_simp_re(register struct parse *p, int starordinary)
 			(void)REQUIRE(MORE(), REG_EBRACE);
 			SETERROR(REG_BADBR);
 		}
-	} else if (c == (unsigned char)'$')	/* $ (but not \$) ends it */
+	} else if (!backsl && c == (unsigned char)'$')	/* $ (but not \$) ends it */
 		return(1);
 
 	return(0);
