@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.58 2009/06/05 19:21:02 haad Exp $ */
+/* $NetBSD: cgd.c,v 1.59 2009/09/11 09:28:34 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.58 2009/06/05 19:21:02 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.59 2009/09/11 09:28:34 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -775,9 +775,13 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
-	char		sink[blocksize];
-	char		zero_iv[blocksize];
-	char		blkno_buf[blocksize];
+	char		*sink;
+	char		*zero_iv;
+	char		*blkno_buf;
+
+	sink = malloc(blocksize * 3, M_DEVBUF, M_WAITOK);
+	zero_iv = &sink[blocksize];
+	blkno_buf = &zero_iv[blocksize];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
@@ -831,6 +835,8 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		src += secsize;
 		blkno++;
 	}
+
+	free(sink, M_DEVBUF);
 }
 
 #ifdef DEBUG
