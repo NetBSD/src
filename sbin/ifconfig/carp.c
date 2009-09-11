@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.13 2009/09/11 23:22:28 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: carp.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: carp.c,v 1.13 2009/09/11 23:22:28 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -257,18 +257,18 @@ int
 setcarpdev(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
-	prop_data_t data;
+	prop_string_t s;
 
-	data = (prop_data_t)prop_dictionary_get(env, "carpdev");
-	if (data == NULL) {
+	s = (prop_string_t)prop_dictionary_get(env, "carpdev");
+	if (s == NULL) {
 		errno = ENOENT;
 		return -1;
 	}
 
 	carp_get(env, &carpr);
 
-	strlcpy(carpr.carpr_carpdev, prop_data_data_nocopy(data),
-	    MIN(sizeof(carpr.carpr_carpdev), prop_data_size(data)));
+	strlcpy(carpr.carpr_carpdev, prop_string_cstring_nocopy(s),
+	    sizeof(carpr.carpr_carpdev));
 
 	carp_set(env, &carpr);
 	return 0;
