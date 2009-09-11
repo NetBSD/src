@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.152 2009/08/13 00:34:04 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.153 2009/09/11 22:06:29 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.152 2009/08/13 00:34:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.153 2009/09/11 22:06:29 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -350,13 +350,14 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 
 static int
 in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    struct lwp *l)
+    lwp_t *l)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
 	int error;
+
 	switch (cmd) {
 	/*
 	 * XXX: Fix me, once we fix SIOCSIFADDR, SIOCIFDSTADDR, etc.
@@ -370,6 +371,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
 		return mrt6_ioctl(cmd, data);
+	case SIOCGIFADDRPREF:
+	case SIOCSIFADDRPREF:
+		if (ifp == NULL)
+			return EINVAL;
+		return ifaddrpref_ioctl(so, cmd, data, ifp, l);
 	}
 
 	if (ifp == NULL)
@@ -1793,22 +1799,24 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 struct in6_ifaddr *
 in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 {
-	struct ifaddr *ifa;
+	struct ifaddr *best_ifa = NULL, *ifa;
 
 	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr == NULL)
 			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-		if (IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa))) {
-			if ((((struct in6_ifaddr *)ifa)->ia6_flags &
-			     ignoreflags) != 0)
-				continue;
-			break;
-		}
+		if (!IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa)))
+			continue;
+		if ((((struct in6_ifaddr *)ifa)->ia6_flags & ignoreflags) != 0)
+			continue;
+		if (best_ifa == NULL)
+			best_ifa = ifa;
+		else if (best_ifa->ifa_preference < ifa->ifa_preference)
+			best_ifa = ifa;
 	}
 
-	return (struct in6_ifaddr *)ifa;
+	return (struct in6_ifaddr *)best_ifa;
 }
 
 
