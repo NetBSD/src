@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.11 2009/09/06 12:30:45 apb Exp $
+# $NetBSD: bootconf.sh,v 1.12 2009/09/11 18:17:43 apb Exp $
 #
 
 # PROVIDE: bootconf
 # REQUIRE: mountcritlocal
+# KEYWORD: interactive
 
 $_rc_subr_loaded . /etc/rc.subr
 
@@ -65,6 +66,8 @@ bootconf_start()
 			conf=${_DUMMY}
 		fi
 	done
+
+	rc_print_metadata "note:Using configuration \"${conf}\""
 
 	case  $conf in
 	current|default)
