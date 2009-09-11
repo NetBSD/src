@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.32 2009/09/01 18:02:44 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.33 2009/09/11 18:35:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.32 2009/09/01 18:02:44 plunky Exp $
+ * $Id: hci.h,v 1.33 2009/09/11 18:35:50 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -168,7 +168,12 @@
 /* ------------------- byte 7 --------------------*/
 #define HCI_LMP_LINK_SUPERVISION_TO	0x01
 #define HCI_LMP_INQ_RSP_TX_POWER	0x02
+#define HCI_LMP_ENHANCED_POWER_CONTROL	0x04
 #define HCI_LMP_EXTENDED_FEATURES	0x80
+
+/* page 1 of extended features */
+/* ------------------- byte 0 --------------------*/
+#define HCI_LMP_SSP			0x01
 
 /* Link types */
 #define HCI_LINK_SCO			0x00 /* Voice */
