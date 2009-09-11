@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.3 2009/09/11 12:00:12 phx Exp $	*/
+/* $NetBSD: mbr.h,v 1.1 2009/09/11 12:00:12 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,27 +30,14 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_STAND_DEV_H_
-#define	_STAND_DEV_H_
 
-#include <sys/types.h>
+#ifndef MBR_H_
+#define MBR_H_
 
-struct of_dev {
-	int handle;
-	int type;
-	u_long partoff;
-	int bsize;
-};
+#include <sys/disklabel.h>
+#include "ofdev.h"
 
-/* Known types: */
-#define	OFDEV_NET	1
-#define	OFDEV_DISK	2
+int search_mbr_label(struct of_dev *, u_long, char *, struct disklabel *,
+    u_long);
 
-#define	DEFAULT_KERNEL	"/netbsd"
-
-extern char opened_name[];
-extern int floppyboot;
-
-int strategy(void *, int, daddr_t, size_t, void *, size_t *);
-
-#endif
+#endif /* MBR_H_ */
