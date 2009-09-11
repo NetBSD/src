@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.60 2009/09/11 16:01:59 mrg Exp $
+# $NetBSD: md.sparc64,v 1.61 2009/09/11 22:36:53 mrg Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -52,8 +52,10 @@
 ./usr/lib/sparc/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic
 ./usr/lib/sparc/libasn1.so.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libasn1.so.8.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbfd.so.10			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbfd.so.10.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbfd.so.10			base-compat-shlib	compat,pic,binutils=216
+./usr/lib/sparc/libbfd.so.10.0			base-compat-shlib	compat,pic,binutils=216
+./usr/lib/sparc/libbfd.so.11			base-compat-shlib	compat,pic,binutils=219
+./usr/lib/sparc/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils=219
 ./usr/lib/sparc/libbind9.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbind9.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
