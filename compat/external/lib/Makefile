@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/06/10 12:48:06 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2009/09/11 16:01:59 mrg Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -20,5 +20,9 @@ SUBDIR+= ../bsd/openldap/lib
 
 SUBDIR+= ../bsd/bind/lib
 SUBDIR+= ../bsd/file/lib
+
+.if ${MKBINUTILS} != "no" && ${HAVE_BINUTILS} == "219"
+SUBDIR+=        ../gpl3/binutils/lib
+.endif
 
 .include <bsd.subdir.mk>
