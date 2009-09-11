@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/11 16:01:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/11 22:36:39 mrg Exp $
 #	Generated from: NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp 
 
 NOLINT= # defined
@@ -6,6 +6,7 @@ NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
+LIBDPLIBS=	z	${.CURDIR}/../../../../../lib/libz
 
 NOCHECKVER=	# defined
 
