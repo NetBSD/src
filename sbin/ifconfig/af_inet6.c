@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.24 2009/08/07 18:53:37 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.25 2009/09/11 22:06:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.24 2009/08/07 18:53:37 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.25 2009/09/11 22:06:29 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -374,8 +374,6 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 				printf("infty");
 		}
 	}
-
-	printf("\n");
 }
 
 static void
@@ -384,12 +382,14 @@ in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	struct ifaddrs *ifap, *ifa;
 	struct in6_ifreq ifr;
 	const char *ifname;
+	bool printprefs = false;
 
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
+	printprefs = ifa_any_preferences(ifname, ifap, AF_INET6);
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
@@ -402,6 +402,9 @@ in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		estrlcpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
 		memcpy(&ifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
 		in6_alias(ifname, env, oenv, &ifr);
+		if (printprefs)
+			ifa_print_preference(ifa->ifa_name, ifa->ifa_addr);
+		printf("\n");
 	}
 	freeifaddrs(ifap);
 }

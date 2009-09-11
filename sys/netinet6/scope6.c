@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.7 2009/03/15 21:26:09 cegger Exp $	*/
+/*	$NetBSD: scope6.c,v 1.8 2009/09/11 22:06:29 dyoung Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.7 2009/03/15 21:26:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8 2009/09/11 22:06:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -326,6 +326,20 @@ sa6_embedscope(struct sockaddr_in6 *sin6, int defaultok)
 	}
 
 	return 0;
+}
+
+struct sockaddr *
+sockaddr_in6_externalize(struct sockaddr *dst, socklen_t socklen,
+    const struct sockaddr *src)
+{
+	struct sockaddr_in6 *sin6;
+
+	sin6 = satosin6(sockaddr_copy(dst, socklen, src));
+
+	if (sin6 == NULL || sa6_recoverscope(sin6) != 0)
+		return NULL;
+
+	return dst;
 }
 
 /*

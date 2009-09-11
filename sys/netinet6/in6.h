@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.67 2009/08/19 18:52:48 seanb Exp $	*/
+/*	$NetBSD: in6.h,v 1.68 2009/09/11 22:06:29 dyoung Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -684,6 +684,8 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 struct mbuf;
 struct ifnet;
 int sockaddr_in6_cmp(const struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_in6_externalize(struct sockaddr *, socklen_t,
+    const struct sockaddr *);
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
 void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);

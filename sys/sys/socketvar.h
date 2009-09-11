@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.120 2009/09/02 14:56:57 tls Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.121 2009/09/11 22:06:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -281,6 +281,7 @@ void	soinit(void);
 void	soinit2(void);
 int	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
+int	sofamily(const struct socket *);
 int	sobind(struct socket *, struct mbuf *, struct lwp *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);

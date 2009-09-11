@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.13 2009/08/07 19:35:55 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.14 2009/09/11 22:06:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.13 2009/08/07 19:35:55 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.14 2009/09/11 22:06:29 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -63,7 +63,6 @@ static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
 static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in_aliasreq *);
-static void in_preference(const char *, const struct sockaddr *);
 
 static struct afswtch af = {
 	.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
@@ -139,46 +138,12 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	}
 }
 
-static int16_t
-in_get_preference(const char *ifname, const struct sockaddr *sa)
-{
-	struct if_addrprefreq ifap;
-	int s;
-
-	if ((s = getsock(AF_INET)) == -1) {
-		if (errno == EPROTONOSUPPORT)
-			return 0;
-		err(EXIT_FAILURE, "socket");
-	}
-	memset(&ifap, 0, sizeof(ifap));
-	estrlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
-	memcpy(&ifap.ifap_addr, sa, MIN(sizeof(ifap.ifap_addr), sa->sa_len));
-	if (ioctl(s, SIOCGIFADDRPREF, &ifap) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
-			return 0;
-		warn("SIOCGIFADDRPREF");
-	}
-	return ifap.ifap_preference;
-}
-
-static void
-in_preference(const char *ifname, const struct sockaddr *sa)
-{
-	int16_t preference;
-
-	if (lflag)
-		return;
-
-	preference = in_get_preference(ifname, sa);
-	printf(" preference %" PRId16, preference);
-}
-
 static void
 in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct in_aliasreq ifra;
-	int printprefs = 0;
+	bool printprefs = false;
 	const char *ifname;
 
 	if ((ifname = getifname(env)) == NULL)
@@ -187,19 +152,8 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
 
-	/* Print address preference numbers if any address has a non-zero
-	 * preference assigned.
-	 */
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(ifname, ifa->ifa_name) != 0)
-			continue;
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-		if (in_get_preference(ifa->ifa_name, ifa->ifa_addr) != 0) {
-			printprefs = 1;
-			break;
-		}
-	}
+	printprefs = ifa_any_preferences(ifname, ifap, AF_INET);
+
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
@@ -213,7 +167,7 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		memcpy(&ifra.ifra_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
 		in_alias(ifa->ifa_name, env, oenv, &ifra);
 		if (printprefs)
-			in_preference(ifa->ifa_name, ifa->ifa_addr);
+			ifa_print_preference(ifa->ifa_name, ifa->ifa_addr);
 		printf("\n");
 	}
 	freeifaddrs(ifap);
