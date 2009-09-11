@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.12 2009/09/10 07:42:49 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.13 2009/09/11 23:02:24 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -237,4 +237,10 @@ dist/nvi/regex/regcomp.c			1.5
 	Fix PR bin/41781, the pattern /\$/ doesn't match a dollar sign
 	anymore by default.
 	[tnozaki, ticket #938]
+
+xsrc/external/mit/expat/dist/lib/xmltok_impl.c	1.2
+xsrc/xfree/xc/extras/expat/lib/xmltok_impl.c		1.2
+
+	Apply revisions 1.14 and 1.15 from expat CVS to fix SA36425.
+	[snj, ticket #951]
 
