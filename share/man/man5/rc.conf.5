@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.132 2009/09/03 20:06:39 apb Exp $
+.\"	$NetBSD: rc.conf.5,v 1.133 2009/09/11 18:17:04 apb Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -195,6 +195,34 @@ All directories in
 .Ev rc_directories
 must be located in the root filesystem, otherwise they will be silently
 skipped.
+.It Sy rc_silent
+Boolean value.
+If true then the usual output is suppresses, and
+.Xr rc 8
+invokes the command specified in the
+.Va rc_silent_cmd
+variable once for each line of suppressed output.
+The default value of
+.Va rc_silent
+is set from the
+.Dv AB_SILENT
+flag in the kernel's
+.Va boothowto
+variable (see
+.Xr boot 8 ,
+.Xr reboot 2 ) .
+.It Sy rc_silent_cmd
+A command to be executed once per line of suppressed output, when
+.Va rc_silent
+is true.
+The default value of
+.Va rc_silent_cmd
+is
+.Dq twiddle ,
+which will display a spinning symbol instead of each line of output.
+Another useful value is
+.Dq \&: ,
+which will display nothing at all.
 .El
 .Ss Basic network configuration
 .Bl -tag -width net_interfaces

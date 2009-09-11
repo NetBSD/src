@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.31 2008/04/30 13:10:57 martin Exp $
+.\" 	$NetBSD: rc.8,v 1.32 2009/09/11 18:17:04 apb Exp $
 .\"
 .\" Copyright (c) 2000-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,6 +116,27 @@ and sources the script in a subshell.
 If the script has a
 .Sq .sh
 suffix then it is sourced directly into the current shell.
+.It
+The output from the above steps is sent to a post-processor.
+If
+.Sy rc_silent
+is false, then the post-processor displays the output.
+If
+.Sy rc_silent
+is true, then the post-processor invokes the command specified in
+.Va rc_silent_cmd
+once for each line, without otherwise displaying the output.
+Useful values for
+.Va rc_silent_cmd
+include
+.Dq \&:
+to display nothing at all, and
+.Dq twiddle
+to display a spinning symbol on the console.
+Regardless of the value of
+.Sy rc_silent ,
+the post-processor saves the output in
+.Pa /var/run/rc.log .
 .El
 .Ss Operation of rc.shutdown
 .Bl -enum
@@ -311,6 +332,9 @@ Contains
 functions used by various scripts.
 .It Pa /etc/rc.conf
 System startup configuration file.
+.It Pa /var/run/rc.log
+Log file created by
+.Nm .
 .El
 .Sh SEE ALSO
 .Xr rc.conf 5 ,
@@ -331,3 +355,9 @@ support was implemented in
 by
 .An Luke Mewburn
 .Aq lukem@NetBSD.org .
+The post-processor, support for
+.Va rc_silent ,
+and saving output to a file, was implemented in
+.Nx 6.0
+by
+.An Alan Barrett .
