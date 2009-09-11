@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.59 2009/09/03 15:35:59 pooka Exp $
+# $NetBSD: md.sparc64,v 1.60 2009/09/11 16:01:59 mrg Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -132,8 +132,10 @@
 ./usr/lib/sparc/libnetpgp.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libopcodes.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libopcodes.so.3.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libopcodes.so.3			base-compat-shlib	compat,pic,binutils=216
+./usr/lib/sparc/libopcodes.so.3.0		base-compat-shlib	compat,pic,binutils=216
+./usr/lib/sparc/libopcodes.so.4			base-compat-shlib	compat,pic,binutils=219
+./usr/lib/sparc/libopcodes.so.4.0		base-compat-shlib	compat,pic,binutils=219
 ./usr/lib/sparc/libossaudio.so.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libp2k.so.1			base-compat-shlib	compat,pic
