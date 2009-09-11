@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.16 2009/09/01 18:04:33 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.17 2009/09/11 19:22:15 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.16 2009/09/01 18:04:33 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.17 2009/09/11 19:22:15 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -70,7 +70,9 @@ void print_stats(void);
 void print_class(const char *);
 void print_voice(int);
 void tag(const char *);
-void print_features(const char *, uint8_t *);
+void print_features(const char *, uint8_t, uint8_t *);
+void print_features0(uint8_t *);
+void print_features1(uint8_t *);
 void do_inquiry(void);
 void print_result(int, struct result *, int);
 
@@ -785,7 +787,19 @@ print_info(int level)
 		return;
 
 	load_value(HCI_CMD_READ_LOCAL_FEATURES, buf, HCI_FEATURES_SIZE);
-	print_features("\tfeatures:", buf);
+	if ((buf[7] & HCI_LMP_EXTENDED_FEATURES) == 0) {
+		print_features("\tfeatures:", 0, buf);
+	} else {
+		buf[0] = 0;
+
+		do {
+			hci_req(HCI_CMD_READ_LOCAL_EXTENDED_FEATURES, 0,
+				buf, 1,
+				buf, HCI_FEATURES_SIZE + 2);
+
+			print_features("\tfeatures page#%d:", buf[0], buf + 2);
+		} while (buf[0]++ < buf[1]);
+	}
 }
 
 void
@@ -816,10 +830,23 @@ print_stats(void)
 }
 
 void
-print_features(const char *str, uint8_t *f)
+print_features(const char *fmt, uint8_t page, uint8_t *f)
 {
 
-	width = printf("%s", str);
+	width = printf(fmt, page);
+
+	switch(page) {
+	case 0:	print_features0(f);	break;
+	case 1:	print_features1(f);	break;
+	default:			break;
+	}
+
+	tag(NULL);
+}
+
+void
+print_features0(uint8_t *f)
+{
 
 	/* ------------------- byte 0 --------------------*/
 	if (*f & HCI_LMP_3SLOT)		    tag("<3 slot>");
@@ -894,9 +921,16 @@ print_features(const char *str, uint8_t *f)
 	/* ------------------- byte 7 --------------------*/
 	if (*f & HCI_LMP_LINK_SUPERVISION_TO)tag("<link supervision timeout changed>");
 	if (*f & HCI_LMP_INQ_RSP_TX_POWER)  tag("<inquiry rsp TX power level>");
+	if (*f & HCI_LMP_ENHANCED_POWER_CONTROL)tag("<enhanced power control>");
 	if (*f & HCI_LMP_EXTENDED_FEATURES) tag("<extended features>");
+}
 
-	tag(NULL);
+void
+print_features1(uint8_t *f)
+{
+
+	/* ------------------- byte 0 --------------------*/
+	if (*f & HCI_LMP_SSP)		    tag("<secure simple pairing>");
 }
 
 void
