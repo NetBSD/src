@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.22 2009/05/18 00:41:53 snj Exp $
+.\"	$NetBSD: sysctl.7,v 1.23 2009/09/11 18:14:58 apb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -341,6 +341,10 @@ If set to 0, automatic lowering of priority is not performed, and if set to \-1
 all non-root processes are immediately lowered.
 .It Li kern.autoniceval ( KERN_AUTONICEVAL )
 The priority assigned for automatically niced processes.
+.It Li kern.boothowto
+Flags passed from the boot loader; see
+.Xr reboot 2
+for the meanings of the flags.
 .It Li kern.boottime ( KERN_BOOTTIME )
 A
 .Va struct timeval

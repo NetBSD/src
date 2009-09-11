@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1286 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1287 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -388,3 +388,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sysinst(8): Install the new modules.tgz set. [jnemeth 20090907]
 	build.sh: Add a modules operation which builds kernel modules and
 		installs them into DESTDIR. [jnemeth 20090907]
+	sysctl(7): Add kern.boothowto variable.  [apb 20090911]
