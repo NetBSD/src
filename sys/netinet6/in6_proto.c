@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.85 2009/08/21 16:52:43 tsutsui Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.86 2009/09/11 20:10:06 dyoung Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.85 2009/08/21 16:52:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.86 2009/09/11 20:10:06 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -424,6 +424,7 @@ struct domain inet6domain = {
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inet6domain.dom_rtcache)
 };
 
+#if 0
 int
 sockaddr_in6_cmp(const struct sockaddr *lsa, const struct sockaddr *rsa)
 {
@@ -445,6 +446,7 @@ sockaddr_in6_cmp(const struct sockaddr *lsa, const struct sockaddr *rsa)
 
 	return lsin6->sin6_len - rsin6->sin6_len;
 }
+#endif
 
 /*
  * Internet configuration info
