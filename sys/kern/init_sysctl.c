@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.165 2009/08/16 20:28:19 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.166 2009/09/11 18:14:58 apb Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.165 2009/08/16 20:28:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.166 2009/09/11 18:14:58 apb Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -445,6 +445,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* _POSIX_SAVED_IDS */
 		       NULL, 0, CTL_KERN, KERN_SAVED_IDS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_HEX,
+		       CTLTYPE_INT, "boothowto",
+		       SYSCTL_DESCR("Flags from boot loader"),
+		       NULL, 0, &boothowto, sizeof(boothowto),
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "boottime",
