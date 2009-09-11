@@ -1,7 +1,8 @@
-# $NetBSD: mi,v 1.1 2009/09/07 02:27:29 jnemeth Exp $
+# $NetBSD: mi,v 1.2 2009/09/11 22:32:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./etc/mtree/set.modules				modules-sys-root	kmod
 ./stand/@MACHINE@				base-kernel-modules	kmod
 ./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod
 ./@MODULEDIR@					base-kernel-modules	kmod
