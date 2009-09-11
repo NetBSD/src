@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.2 2009/09/07 22:05:45 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.3 2009/09/11 23:51:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -530,6 +530,98 @@ LEAF(mips_cp0_status_write)
 	nop
 END(mips_cp0_status_write)
 
+#ifdef MIPS3_PLUS
+	.set	push
+	.set	mips3
+/*
+ * uint64_t mips_cp0_tlb_entry_hi_probe(void);
+ *
+ * Write 1s to the VPN field of Entry_Hi0 to see how many VA bits
+ * are implemented.  Assumes that interrupts are disabled.
+ */
+LEAF(mips_cp0_tlb_entry_hi_probe)
+	dmfc0	t0, MIPS_COP_0_TLB_HI
+	li	v0, -4096	/* all 1s except low 12 bits */
+	dsll	v0, v0, 2	/* except the top 2 */
+	dsrl	v0, v0, 2
+	dmtc0	v0, MIPS_COP_0_TLB_HI
+	COP0_SYNC
+	nop
+	nop
+	dmfc0	v0, MIPS_COP_0_TLB_HI
+	dmtc0	t0, MIPS_COP_0_TLB_HI
+	COP0_SYNC
+	nop
+#ifdef __mips_o32
+	nop
+#if BYTE_ORDER == BIG_ENDIAN
+	srl	v1, v0, 0
+	dsra	v0, v0, 32
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+	dsra	v1, v0, 32
+	srl	v0, v0, 0
+#endif
+#endif /* __mips_o32 */
+	j	ra
+	 nop
+END(mips_cp0_tlb_entry_hi_probe)
+
+/*
+ * uint64_t mips_cp0_tlb_entry_lo_probe(void);
+ *
+ * Write 1s to the PFN field of Entry_Lo0 to see how many
+ * PA bits are implemented.  Assumes that interrupts are disabled.
+ */
+LEAF(mips_cp0_tlb_entry_lo_probe)
+	dmfc0	t0, MIPS_COP_0_TLB_LO0
+	li	v0, -64		/* all 1s except low 6 bits */
+	dmtc0	v0, MIPS_COP_0_TLB_LO0
+	COP0_SYNC
+	nop
+	nop
+	dmfc0	v0, MIPS_COP_0_TLB_LO0
+	dmtc0	t0, MIPS_COP_0_TLB_LO0
+	COP0_SYNC
+	nop
+#ifdef __mips_o32
+	nop
+#if BYTE_ORDER == BIG_ENDIAN
+	srl	v1, v0, 0
+	dsra	v0, v0, 32
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+	dsra	v1, v0, 32
+	srl	v0, v0, 0
+#endif
+#endif /* __mips_o32 */
+	j	ra
+	 nop
+END(mips_cp0_tlb_entry_lo_probe)
+	.set	pop
+
+/*
+ * uint32_t mips_cp0_tlb_page_mask_probe(void);
+ *
+ * Write 1s to the RPN field of Entry_Lo0 to see how many PA bits are implemented.
+ * Assumes that interrupts are disabled.
+ */
+LEAF(mips_cp0_tlb_page_mask_probe)
+	mfc0	t0, MIPS_COP_0_TLB_PG_MASK
+	lui	v0, 0xffff
+	srl	v0, v0, 3
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK
+	COP0_SYNC
+	nop
+	nop
+	mfc0	v0, MIPS_COP_0_TLB_PG_MASK
+	mtc0	t0, MIPS_COP_0_TLB_PG_MASK
+	COP0_SYNC
+	nop
+	j	ra
+	 nop
+END(mips_cp0_tlb_page_mask_probe)
+#endif /* MIPS3_PLUS */
 
 #if !defined(NOFPU) && !defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
