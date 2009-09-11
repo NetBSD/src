@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1287 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1288 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -389,3 +389,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	build.sh: Add a modules operation which builds kernel modules and
 		installs them into DESTDIR. [jnemeth 20090907]
 	sysctl(7): Add kern.boothowto variable.  [apb 20090911]
+	rc(8): Output is now logged to /var/run/rc.log.  A new rc_silent
+		option, enabled if the kernel is booted in silent mode,
+		suppresses output to the console.  [apb 20090911]
