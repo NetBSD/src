@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.83 2009/09/08 18:01:34 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.84 2009/09/11 22:06:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.83 2009/09/08 18:01:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.84 2009/09/11 22:06:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -266,6 +266,20 @@ sockaddr_copy(struct sockaddr *dst, socklen_t socklen,
 		    src->sa_len);
 	}
 	return memcpy(dst, src, src->sa_len);
+}
+
+struct sockaddr *
+sockaddr_externalize(struct sockaddr *dst, socklen_t socklen,
+    const struct sockaddr *src)
+{
+	struct domain *dom;
+
+	dom = pffinddomain(src->sa_family);
+
+	if (dom != NULL && dom->dom_sockaddr_externalize != NULL)
+		return (*dom->dom_sockaddr_externalize)(dst, socklen, src);
+
+	return sockaddr_copy(dst, socklen, src);
 }
 
 int

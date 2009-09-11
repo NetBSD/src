@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2009/08/07 18:53:37 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2009/09/11 22:06:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.12 2009/08/07 18:53:37 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.13 2009/09/11 22:06:29 dyoung Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -289,6 +289,60 @@ print_link_addresses(prop_dictionary_t env, bool print_active_only)
 	}
 	freeifaddrs(ifap);
 }
+
+int16_t
+ifa_get_preference(const char *ifname, const struct sockaddr *sa)
+{
+	struct if_addrprefreq ifap;
+	int s;
+
+	if ((s = getsock(sa->sa_family)) == -1) {
+		if (errno == EPROTONOSUPPORT)
+			return 0;
+		err(EXIT_FAILURE, "socket");
+	}
+	memset(&ifap, 0, sizeof(ifap));
+	estrlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
+	memcpy(&ifap.ifap_addr, sa, MIN(sizeof(ifap.ifap_addr), sa->sa_len));
+	if (ioctl(s, SIOCGIFADDRPREF, &ifap) == -1) {
+		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
+			return 0;
+		warn("SIOCGIFADDRPREF");
+	}
+	return ifap.ifap_preference;
+}
+
+void
+ifa_print_preference(const char *ifname, const struct sockaddr *sa)
+{
+	int16_t preference;
+
+	if (lflag)
+		return;
+
+	preference = ifa_get_preference(ifname, sa);
+	printf(" preference %" PRId16, preference);
+}
+
+bool
+ifa_any_preferences(const char *ifname, struct ifaddrs *ifap, int family)
+{
+	struct ifaddrs *ifa;
+
+	/* Print address preference numbers if any address has a non-zero
+	 * preference assigned.
+	 */
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(ifname, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != family)
+			continue;
+		if (ifa_get_preference(ifa->ifa_name, ifa->ifa_addr) != 0)
+			return true;
+	}
+	return false;
+}
+
 
 #ifdef INET6
 /* KAME idiosyncrasy */
