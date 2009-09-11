@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.67 2009/09/10 07:43:28 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.68 2009/09/11 23:01:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2428,4 +2428,10 @@ sys/fs/ntfs/ntfs_vfsops.c			1.79
 
 	Fix cp(1) from ntfs, addressing PR kern/38531.
 	[pooka, ticket #942]
+
+xsrc/external/mit/expat/dist/lib/xmltok_impl.c	1.2
+xsrc/xfree/xc/extras/expat/lib/xmltok_impl.c		1.2
+
+	Apply revisions 1.14 and 1.15 from expat CVS to fix SA36425.
+	[snj, ticket #951]
 
