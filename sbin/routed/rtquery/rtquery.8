@@ -1,6 +1,6 @@
-.\"	$NetBSD: rtquery.8,v 1.19 2003/09/23 12:14:49 wiz Exp $
+.\"	$NetBSD: rtquery.8,v 1.20 2009/09/11 11:44:38 wiz Exp $
 .\"
-.Dd June 1, 1996
+.Dd September 11, 2009
 .Dt RTQUERY 8
 .Os
 .Sh NAME
@@ -8,10 +8,10 @@
 .Nd query routing daemons for their routing tables
 .Sh SYNOPSIS
 .Nm
-.Op Fl np1
-.Op Fl w Ar timeout
-.Op Fl r Ar addr
+.Op Fl 1np
 .Op Fl a Ar secret
+.Op Fl r Ar addr
+.Op Fl w Ar timeout
 .Ar host ...
 .Nm
 .Op Fl t Ar op
@@ -114,8 +114,15 @@ dumps the daemon's routing table to the current tracefile.
 .El
 .Sh SEE ALSO
 .Xr gated 8 ,
-.Xr routed 8
-.br
-RFC\ 1058 - Routing Information Protocol, RIPv1
-.br
-RFC\ 1723 - Routing Information Protocol, RIPv2
+.Xr routed 8 ,
+.Pa pkgsrc/net/gated
+.Rs
+.%R RFC 1058
+.%T Routing Information Protocol, RIPv1
+.%D 1988
+.Re
+.Rs
+.%R RFC 1723
+.%T Routing Information Protocol, RIPv2
+.%D 1994
+.Re
