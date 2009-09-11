@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.16 2009/01/12 07:49:57 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.17 2009/09/11 12:00:12 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,8 +37,6 @@
 #include "ofdev.h"
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
-#include <sys/bootblock.h>
 
 #include <netinet/in.h>
 
@@ -52,6 +50,8 @@
 
 #include "net.h"
 #include "openfirm.h"
+#include "mbr.h"
+#include "rdb.h"
 
 extern char bootdev[];
 
@@ -120,7 +120,7 @@ filename(char *str, char *ppart)
 	return 0;
 }
 
-static int
+int
 strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	 size_t *rsize)
 {
@@ -186,76 +186,6 @@ static struct of_dev ofdev = {
 char opened_name[256];
 int floppyboot;
 
-static u_long
-get_long(const void *p)
-{
-	const unsigned char *cp = p;
-
-	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
-}
-
-/*
- * Find a valid disklabel.
- */
-static int
-search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
-								u_long off0)
-{
-	size_t read;
-	struct mbr_partition *p;
-	int i;
-	u_long poff;
-	static int recursion;
-
-	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-	    || read != DEV_BSIZE)
-		return ERDLAB;
-
-	if (*(u_int16_t *)&buf[MBR_MAGIC_OFFSET] != sa_htole16(MBR_MAGIC))
-		return ERDLAB;
-
-	if (recursion++ <= 1)
-		off0 += off;
-	for (p = (struct mbr_partition *)(buf + MBR_PART_OFFSET), i = 0;
-	     i < MBR_PART_COUNT; i++, p++) {
-		if (p->mbrp_type == MBR_PTYPE_NETBSD
-#ifdef COMPAT_386BSD_MBRPART
-		    || (p->mbrp_type == MBR_PTYPE_386BSD &&
-			(printf("WARNING: old BSD partition ID!\n"), 1)
-			/* XXX XXX - libsa printf() is void */ )
-#endif
-		    ) {
-			poff = get_long(&p->mbrp_start) + off0;
-			if (strategy(devp, F_READ, poff + LABELSECTOR,
-				     DEV_BSIZE, buf, &read) == 0
-			    && read == DEV_BSIZE) {
-				if (!getdisklabel(buf, lp)) {
-					recursion--;
-					return 0;
-				}
-			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
-				recursion--;
-				return ERDLAB;
-			}
-		} else if (p->mbrp_type == MBR_PTYPE_EXT) {
-			poff = get_long(&p->mbrp_start);
-			if (!search_label(devp, poff, buf, lp, off0)) {
-				recursion--;
-				return 0;
-			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
-				recursion--;
-				return ERDLAB;
-			}
-		}
-	}
-
-	recursion--;
-	return ERDLAB;
-}
 
 int
 devopen(struct open_file *of, const char *name, char **file)
@@ -263,11 +193,12 @@ devopen(struct open_file *of, const char *name, char **file)
 	char *cp;
 	char partition;
 	char fname[256];
-	char buf[DEV_BSIZE];
 	struct disklabel label;
 	int handle, part;
 	size_t read;
 	int error = 0;
+	/* allow disk blocks up to 65536 bytes */
+	char buf[DEV_BSIZE<<7];
 
 	if (ofdev.handle != -1)
 		panic("devopen");
@@ -326,14 +257,19 @@ devopen(struct open_file *of, const char *name, char **file)
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 
-		/* First try to find a disklabel without MBR partitions */
+		/* First try to find a disklabel without MBR/RDB partitions */
 		if (strategy(&ofdev, F_READ,
 			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || getdisklabel(buf, &label)) {
 
 			/* Else try MBR partitions */
-			error = search_label(&ofdev, 0, buf, &label, 0);
+			error = search_mbr_label(&ofdev, 0, buf, &label, 0);
+			if (error && error != ERDLAB)
+				goto bad;
+
+			/* and finally try RDB partitions */
+			error = search_rdb_label(&ofdev, buf, &label);
 			if (error && error != ERDLAB)
 				goto bad;
 		}
