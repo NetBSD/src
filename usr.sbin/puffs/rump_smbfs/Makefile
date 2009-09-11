@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/06 20:26:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/11 06:48:50 skrll Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,6 +10,9 @@ LDADD+= 	-lrumpnet_netinet -lrumpnet_sockin -lrumpnet
 LDADD+=		-lrumpcrypto -lrumpdev_netsmb -lrumpdev
 
 ISRUMP=		# it is
+
+LDFLAGS+=      -Wl,--ignore-unresolved-symbol,__start_link_set_domains
+LDFLAGS+=      -Wl,--ignore-unresolved-symbol,__stop_link_set_domains
 
 .include "${.CURDIR}/../../../sbin/mount_smbfs/Makefile.inc"
 
