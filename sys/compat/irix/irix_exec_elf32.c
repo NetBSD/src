@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.15.18.1 2009/09/10 01:52:34 matt Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.15.18.2 2009/09/12 19:25:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,15 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15.18.1 2009/09/10 01:52:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15.18.2 2009/09/12 19:25:23 matt Exp $");
 
 #ifndef ELFSIZE
-#ifdef _LP64
-#define ELFSIZE		64	/* XXX should die */
-#else
 #define ELFSIZE		32	/* XXX should die */
 #endif
-#endif
+
+#include "opt_execfmt.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,17 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.15.18.1 2009/09/10 01:52:34 ma
 
 #include <compat/irix/irix_exec.h>
 
-#ifdef EXEC_ELF32
+#if ELFSIZE == 32
 /*
  * IRIX o32 ABI probe function
  */
 int
-ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+ELFNAME2(irix,probe_o32)(struct lwp *l, struct exec_package *epp, void *eh,
+	char *itp, vaddr_t *pos)
 {
 	int error = 0;
 
@@ -95,7 +89,7 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
-	l->l_proc->l_md.md_abi = _MIP_BSD_API_O32;
+	l->l_proc->p_md.md_abi = _MIPS_BSD_API_O32;
 	return 0;
 }
 
@@ -103,12 +97,8 @@ ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
  * IRIX n32 ABI probe function
  */
 int
-ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+ELFNAME2(irix,probe_n32)(struct lwp *l, struct exec_package *epp, void *eh,
+	char *itp, vaddr_t *pos)
 {
 	int error = 0;
 
@@ -132,22 +122,18 @@ ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
-	l->l_proc->l_md.md_abi = _MIP_BSD_API_N32;
+	l->l_proc->p_md.md_abi = _MIPS_BSD_API_N32;
 	return 0;
 }
-#endif /* EXEC_ELF32 */
+#endif /* ELFSIZE == 32 */
 
-#ifdef EXEC_ELF64
+#if ELFSIZE == 64
 /*
- * IRIX n32 ABI probe function
+ * IRIX n64 ABI probe function
  */
 int
-ELFNAME2(irix,probe_n64)(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+irix_elf64_probe_n64(struct lwp *l, struct exec_package *epp, void *eh,
+	char *itp, vaddr_t *pos)
 {
 	int error = 0;
 
@@ -171,9 +157,10 @@ ELFNAME2(irix,probe_n64)(l, epp, eh, itp, pos)
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
-	l->l_proc->l_md.md_abi = _MIP_BSD_API_N32;
+	l->l_proc->p_md.md_abi = _MIPS_BSD_API_N32;
 	return 0;
 }
+#endif /* ELFSIZE == 64 */
 
 int
 ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
