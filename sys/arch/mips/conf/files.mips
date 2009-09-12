@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.58.24.1 2009/08/23 04:38:34 uebayasi Exp $
+#	$NetBSD: files.mips,v 1.58.24.2 2009/09/12 17:37:29 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -60,6 +60,10 @@ file	arch/mips/mips/mips_emul.c
 file	arch/mips/mips/fp.S			softfloat | !nofpu
 
 file	arch/mips/mips/procfs_machdep.c		procfs
+
+# Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
+file	arch/mips/mips/netbsd32_machdep.c	compat_netbsd32
+include "compat/netbsd32/files.netbsd32"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
