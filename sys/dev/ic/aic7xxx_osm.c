@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.33 2009/09/02 11:44:11 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.34 2009/09/12 19:16:35 tsutsui Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.33 2009/09/02 11:44:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.34 2009/09/12 19:16:35 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -516,7 +516,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	struct	ahc_tmode_tstate *tstate;
 
 	u_int	mask;
-	long	s;
+	u_long	s;
 
 	scb = (struct scb *)arg;
 	xs = scb->xs;
@@ -795,7 +795,7 @@ ahc_timeout(void *arg)
 {
 	struct	scb *scb;
 	struct	ahc_softc *ahc;
-	long	s;
+	u_long	s;
 	int	found;
 	u_int	last_phase;
 	int	target;
