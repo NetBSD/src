@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.12 2009/09/11 18:17:43 apb Exp $
+# $NetBSD: bootconf.sh,v 1.13 2009/09/12 17:40:01 apb Exp $
 #
 
 # PROVIDE: bootconf
@@ -67,7 +67,7 @@ bootconf_start()
 		fi
 	done
 
-	rc_print_metadata "note:Using configuration \"${conf}\""
+	print_rc_metadata "note:Using configuration \"${conf}\""
 
 	case  $conf in
 	current|default)
