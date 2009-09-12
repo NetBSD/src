@@ -1,8 +1,8 @@
-#	$NetBSD: std.sgimips64,v 1.1.2.1 2009/09/10 01:51:31 matt Exp $
+#	$NetBSD: std.sgimips64,v 1.1.2.2 2009/09/12 18:27:59 matt Exp $
 
 no makeoptions	MACHINE_ARCH
 makeoptions	MACHINE_ARCH="mips64eb"
 makeoptions	LP64="yes"
 
-no options	EXEC_ELF32
 options 	EXEC_ELF64	# exec ELF64 binaries
+options 	COMPAT_NETBSD64
