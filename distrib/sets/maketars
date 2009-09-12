@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.68 2009/04/11 15:09:32 apb Exp $
+# $NetBSD: maketars,v 1.69 2009/09/12 11:01:55 apb Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -140,24 +140,28 @@ trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
 
 for setname in ${lists}; do
 	${HOST_SH} "${setsdir}/makeflist" -a "${MACHINE_ARCH}" -m "${MACHINE}" \
-	    -s "${setsdir}" "${setname}" > "${SDIR}/flist.${setname}"
+	    -s "${setsdir}" "${setname}" > "${SDIR}/flist.${setname}" \
+	    || exit 1
 	if [ -n "${metalog}" ]; then
 		${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
-		    > "${SDIR}/flist.${setname}.full"
+		    > "${SDIR}/flist.${setname}.full" \
+		    || exit 1
 		(
 			echo "/set uname=root gname=wheel"
 			${AWK} -f "${rundir}/join.awk" \
 				"${SDIR}/flist.${setname}.full" "${metalog}"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
 		) | ${MTREE} -CS -k all -R time -N "${etcdir}" \
-		    > "${setlistdir}/set.${setname}"
+		    > "${setlistdir}/set.${setname}" \
+		    || exit 1
 		# We deliberately do not add set.${setname} to ${metalog},
 		# because we depend on it as an input.
 	elif ! cmp -s "${SDIR}/flist.${setname}" \
 			"${setlistdir}/set.${setname}" >/dev/null 2>&1; then
 		rm -f "${setlistdir}/set.${setname}"
-		cp "${SDIR}/flist.${setname}" "${setlistdir}/set.${setname}"
+		cp "${SDIR}/flist.${setname}" "${setlistdir}/set.${setname}" \
+		    || exit 1
 	fi
 done
 if ${setfilesonly}; then		# exit after creating the set lists
