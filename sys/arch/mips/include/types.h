@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.9 2009/09/09 04:48:28 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.10 2009/09/12 17:16:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,10 +98,8 @@ typedef __int64_t	register_t;
 typedef __uint64_t	uregister_t;
 typedef __int64_t	mips_reg_t;		/* do not use */
 typedef __uint64_t	mips_ureg_t;		/* do not use */
-typedef __int32_t	register32_t;
-typedef __uint32_t	uregister32_t;
-#define PRIxREGISTER32	PRIx32
-#define PRIxUREGISTER32	PRIx32
+typedef __int64_t	register32_t;
+typedef __uint64_t	uregister32_t;
 #define PRIxREGISTER	PRIx64
 #define PRIxUREGISTER	PRIx64
 #endif /* __mips_o32 */
