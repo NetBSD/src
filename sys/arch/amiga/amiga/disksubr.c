@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.59 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.60 2009/09/12 09:18:42 phx Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,14 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.59 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.60 2009/09/12 09:18:42 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <amiga/amiga/adosglue.h>
 
 /*
  * In /usr/src/sys/dev/scsipi/sd.c, routine sdstart() adjusts the
