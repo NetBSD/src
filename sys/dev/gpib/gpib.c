@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.18 2009/09/12 18:38:00 tsutsui Exp $	*/
+/*	$NetBSD: gpib.c,v 1.19 2009/09/12 18:41:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.18 2009/09/12 18:38:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.19 2009/09/12 18:41:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.18 2009/09/12 18:38:00 tsutsui Exp $");
 
 #include "locators.h"
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 #ifdef DEBUG
 int gpibdebug = 0xff;
