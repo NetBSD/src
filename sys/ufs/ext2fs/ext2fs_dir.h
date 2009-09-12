@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.16 2009/09/12 11:27:39 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.17 2009/09/12 14:59:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,7 +78,7 @@
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
  */
 #define	doff_t			int32_t
-#define	EXT2FS_MAXDIRSIZE	(0x7fffffff)
+#define	EXT2FS_MAXDIRSIZE	INT32_MAX
 
 /*
  * A directory consists of some number of blocks of e2fs_bsize bytes.
@@ -117,7 +117,7 @@ struct	ext2fs_direct {
 	char e2d_name[EXT2FS_MAXNAMLEN];/* name with length<=EXT2FS_MAXNAMLEN */
 };
 
-/* Ext2 directory file types (not the same as FFS. Sigh. */
+/* Ext2 directory file types (not the same as FFS. Sigh.) */
 #define EXT2_FT_UNKNOWN         0
 #define EXT2_FT_REG_FILE        1
 #define EXT2_FT_DIR             2
@@ -135,7 +135,8 @@ static __inline uint8_t inot2ext2dt(uint16_t) __unused;
 static __inline uint8_t
 inot2ext2dt(uint16_t type)
 {
-	switch(type) {
+
+	switch (type) {
 	case E2IFTODT(EXT2_IFIFO):
 		return EXT2_FT_FIFO;
 	case E2IFTODT(EXT2_IFCHR):
@@ -162,7 +163,7 @@ inot2ext2dt(uint16_t type)
  * without the d_name field, plus enough space for the name without a
  * terminating null byte, rounded up to a 4 byte boundary.
  */
-#define EXT2FS_DIRSIZ(len)	(( 8 + len + 3) & ~3)
+#define EXT2FS_DIRSIZ(len)	roundup2(8 + len, 4)
 
 /*
  * Template for manipulating directories.  Should use struct direct's,
