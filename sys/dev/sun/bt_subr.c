@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.13 2009/04/18 14:58:04 tsutsui Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.14 2009/09/12 19:39:12 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.13 2009/04/18 14:58:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.14 2009/09/12 19:39:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ bt_loadcmap_packed256(struct fbdevice *fb, volatile struct bt_regs *bt, int star
 	 * Figure out where to start in the RGB arrays
 	 * See btreg.h for the way RGB triplets are packed into 4-byte words.
 	 */
-	c[0] = &cm->red[(4 * count) / 3)];
+	c[0] = &cm->red[(4 * count) / 3];
 	c[1] = &cm->green[(4 * count) / 3];
 	c[2] = &cm->blue[(4 * count) / 3];
 	p = &c[0];
