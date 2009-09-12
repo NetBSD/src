@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.3 2009/09/07 21:50:24 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.4 2009/09/12 17:17:05 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -11,6 +11,8 @@
 # if defined(__mips_n32) || defined(__mips_n64)
 #  define	_MACHINE_ARCH	mips64eb
 #  define	MACHINE_ARCH	"mips64eb"
+#  define	_MACHINE32_ARCH	mipseb
+#  define	MACHINE32_ARCH	"mipseb"
 # else
 #  define	_MACHINE_ARCH	mipseb
 #  define	MACHINE_ARCH	"mipseb"
@@ -19,6 +21,8 @@
 # if defined(__mips_n32) || defined(__mips_n64)
 #  define	_MACHINE_ARCH	mips64el
 #  define	MACHINE_ARCH	"mips64el"
+#  define	_MACHINE32_ARCH	mipsel
+#  define	MACHINE32_ARCH	"mipsel"
 # else
 #  define	_MACHINE_ARCH	mipsel
 #  define	MACHINE_ARCH	"mipsel"
