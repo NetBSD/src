@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.148 2009/09/12 02:32:14 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.149 2009/09/12 02:50:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.148 2009/09/12 02:32:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.149 2009/09/12 02:50:38 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -461,7 +461,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ext2fs_reload(mp, l->l_cred);
+			error = ext2fs_reload(mp, l->l_cred, l);
 			if (error)
 				return (error);
 		}
@@ -522,9 +522,8 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
+ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct lwp *l = curlwp;
 	struct vnode *vp, *mvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
@@ -533,14 +532,16 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	struct partinfo dpart;
 	int i, size, error;
 	void *cp;
+	struct ufsmount *ump;
 
-	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
 
+	ump = VFSTOUFS(mp);
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
-	devvp = VFSTOUFS(mountp)->um_devvp;
+	devvp = ump->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -559,13 +560,13 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(newfs, (mountp->mnt_flag & MNT_RDONLY) != 0);
+	error = ext2fs_checksb(newfs, (mp->mnt_flag & MNT_RDONLY) != 0);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
 	}
 
-	fs = VFSTOUFS(mountp)->um_e2fs;
+	fs = ump->um_e2fs;
 	/*
 	 * copy in new superblock, and compute in-memory values
 	 */
@@ -605,17 +606,17 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mountp)) == NULL)
-		return (ENOMEM);
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
 	mutex_enter(&mntvnode_lock);
 loop:
-	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		if (vp->v_mount != mountp || vismarker(vp))
+		if (vp->v_mount != mp || vismarker(vp))
 			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
