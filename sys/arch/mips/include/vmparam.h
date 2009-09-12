@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.3 2009/09/08 00:52:14 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.4 2009/09/12 17:16:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,8 @@
  * and some QED CPUs perform some virtual address checks before the
  * offset is calculated.
  */
-#define	USRSTACK	0x7ffff000		/* Start of user stack */
+#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
@@ -120,6 +121,25 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * Virtual memory related constants, all in bytes
+ */
+#ifndef MAXTSIZ32
+#define	MAXTSIZ32	MAXTSIZ			/* max text size */
+#endif
+#ifndef DFLDSIZ32
+#define	DFLDSIZ32	DFLDSIZ			/* initial data size limit */
+#endif
+#ifndef MAXDSIZ32
+#define	MAXDSIZ32	MAXDSIZ			/* max data size */
+#endif
+#ifndef	DFLSSIZ32
+#define	DFLSSIZ32	DFLTSIZ			/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ32
+#define	MAXSSIZ32	MAXSSIZ			/* max stack size */
 #endif
 
 /*
@@ -166,6 +186,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 #endif
+#define VM_MAXUSER32_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
 
 /*
  * The address to which unspecified mapping requests default
@@ -173,6 +194,8 @@
 #define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
 	trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS32(da, sz) \
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
