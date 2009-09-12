@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3 2009/03/02 20:51:35 snj Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.1 2009/09/12 18:38:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3 2009/03/02 20:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.1 2009/09/12 18:38:46 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1344,6 +1344,8 @@ uvm_pagefree(struct vm_page *pg)
 	struct uvm_cpu *ucpu;
 	int index, color, queue;
 	bool iszero;
+
+	KASSERT(pg);
 
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
