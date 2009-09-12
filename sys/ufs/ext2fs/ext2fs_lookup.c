@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.59 2009/09/12 11:27:39 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.60 2009/09/12 11:35:46 tsutsui Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.59 2009/09/12 11:27:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.60 2009/09/12 11:35:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ ext2fs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;	/* vnode for directory being searched */
 	struct inode *dp = VTOI(vdp);	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	struct ext2fs_direct *ep; 	/* the current directory entry */
+	struct ext2fs_direct *ep;	/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {NONE, COMPACT, FOUND} slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */

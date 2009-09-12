@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.88 2009/07/03 21:17:42 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.89 2009/09/12 11:35:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.88 2009/07/03 21:17:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.89 2009/09/12 11:35:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,7 +622,7 @@ out2:
 
 /*
  * Rename system call.
- * 	rename("foo", "bar");
+ *	rename("foo", "bar");
  * is essentially
  *	unlink("bar");
  *	link("foo", "bar");
@@ -739,14 +739,14 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-        	if (!error && tvp)
-                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
-        	if (error) {
-                	VOP_UNLOCK(fvp, 0);
-                	error = EACCES;
-                	goto abortit;
-        	}
+		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
+		if (!error && tvp)
+			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
+		if (error) {
+			VOP_UNLOCK(fvp, 0);
+			error = EACCES;
+			goto abortit;
+		}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
@@ -1653,7 +1653,7 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
+	{ &vop_putpages_desc, fifo_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =
