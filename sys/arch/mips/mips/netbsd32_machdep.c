@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.1 2009/09/12 17:37:00 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.2 2009/09/12 19:26:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.1 2009/09/12 17:37:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.2 2009/09/12 19:26:27 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -115,6 +115,20 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
 	}
 	return (error);
 }
+
+#ifdef COMPAT_13
+int
+compat_13_netbsd32_sigreturn(struct lwp *l,
+	const struct compat_13_netbsd32_sigreturn_args *uap,
+	register_t *retval)
+{
+	struct compat_13_sys_sigreturn_args ua;
+
+	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
+
+	return compat_13_sys_sigreturn(l, &ua, retval);
+}
+#endif
 
 #ifdef COMPAT_16
 int
