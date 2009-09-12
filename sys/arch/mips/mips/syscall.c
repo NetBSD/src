@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.8 2009/09/02 07:44:28 uebayasi Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.9 2009/09/12 17:41:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.8 2009/09/02 07:44:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.9 2009/09/12 17:41:10 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -288,8 +288,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			 * after skipping the slots for the 4 register passed
 			 * arguments.
 			 */
-			usp = frame->f_regs[_R_SP] + 4*sizeof(register32_t);
-			error = copyin((register32_t *)usp, copy32args,
+			usp = frame->f_regs[_R_SP] + 4*sizeof(int32_t);
+			error = copyin((int32_t *)usp, copy32args,
 			    (nargs + narg64 - nregs) * sizeof(copy32args[0]));
 			if (error)
 				goto bad;
