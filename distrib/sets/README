@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.10 2009/09/12 09:21:31 jnemeth Exp $
+# $NetBSD: README,v 1.11 2009/09/12 09:24:32 jnemeth Exp $
 
 the scripts should be run from the directory where they reside.
 
@@ -74,3 +74,6 @@ installed on only one architecture, are listed in the md.${ARCH}
 file.)  basically, it's grepped through, to see which of the
 machine-dependent man pages that are always installed should go
 in the 'man' set, and which should go into the 'misc' set.
+
+Each set must contain "./etc/mtree/set.<set name>" within the mi
+list.  Failure to add this will break unprivileged builds.
