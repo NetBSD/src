@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.68 2009/03/01 15:59:57 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.69 2009/09/12 11:27:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.68 2009/03/01 15:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.69 2009/09/12 11:27:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,18 +95,18 @@ static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
 /*
  * Get the size of an inode.
  */
-u_int64_t
+uint64_t
 ext2fs_size(struct inode *ip)
 {
-	u_int64_t size = ip->i_e2fs_size;
+	uint64_t size = ip->i_e2fs_size;
 
 	if ((ip->i_e2fs_mode & IFMT) == IFREG)
-		size |= (u_int64_t)ip->i_e2fs_dacl << 32;
+		size |= (uint64_t)ip->i_e2fs_dacl << 32;
 	return size;
 }
 
 int
-ext2fs_setsize(struct inode *ip, u_int64_t size)
+ext2fs_setsize(struct inode *ip, uint64_t size)
 {
 	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
 	    ip->i_e2fs_mode == 0) {
@@ -507,7 +507,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		copy = malloc(fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((void *)copy, (void *)bap, (u_int)fs->e2fs_bsize);
 		memset((void *)&bap[last + 1], 0,
-			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
+			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (uint32_t));
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
