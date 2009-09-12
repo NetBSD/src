@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.145.4.2 2008/11/25 17:31:26 snj Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.145.4.2.4.1 2009/09/12 18:02:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145.4.2 2008/11/25 17:31:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145.4.2.4.1 2009/09/12 18:02:32 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -87,14 +87,15 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145.4.2 2008/11/25 17:31:26 sn
 
 #include <net/if.h>
 
+#include <fs/cd9660/cd9660_mount.h>
+#include <ufs/ufs/ufsmount.h>
+
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_sa.h>
-
-#include <machine/frame.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
@@ -119,6 +120,7 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
+#if defined(COMPAT_40) && defined(KERN_SA)
 const struct sa_emul saemul_netbsd32 = {
 	sizeof(ucontext32_t),
 	sizeof(struct netbsd32_sa_t),
@@ -133,6 +135,7 @@ const struct sa_emul saemul_netbsd32 = {
 	NULL
 #endif
 }; 
+#endif
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -177,7 +180,7 @@ const struct emul emul_netbsd32 = {
 
 	netbsd32_vm_default_addr,
 	NULL,
-#ifdef COMPAT_40
+#if defined(COMPAT_40) && defined(KERN_SA)
 	&saemul_netbsd32,
 #else
 	NULL,
@@ -401,6 +404,135 @@ netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t 
 #else
 	return ENOSYS;
 #endif
+}
+
+int
+netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
+	register_t *retval) 
+{
+	/* {
+		syscallarg(netbsd32_charp) type;
+		syscallarg(netbsd32_charp) path;
+		syscallarg(int) flags;
+		syscallarg(netbsd32_voidp) data;
+		syscallarg(netbsd32_size_t) data_len;
+	} */
+	char mtype[MNAMELEN];
+	union {
+		struct netbsd32_ufs_args ufs_args;
+		struct netbsd32_mfs_args mfs_args;
+		struct netbsd32_iso_args iso_args;
+	} fs_args32;
+	union {
+		struct ufs_args ufs_args;
+		struct mfs_args mfs_args;
+		struct iso_args iso_args;
+	} fs_args;
+	const char *type = SCARG_P32(uap, type);
+	const char *path = SCARG_P32(uap, path);
+	int flags = SCARG(uap, flags);
+	void *data = SCARG_P32(uap, data);
+	size_t data_len = SCARG(uap, data_len);
+	enum uio_seg data_seg;
+	size_t len;
+	int error;
+ 
+	error = copyinstr(type, mtype, sizeof(mtype), &len);
+	if (error)
+		return error;
+	if (strcmp(mtype, MOUNT_MFS) == 0) {
+		if (data_len != sizeof(fs_args32.mfs_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.mfs_args, 
+			    sizeof(fs_args32.mfs_args));
+			if (error)
+				return error;
+			fs_args.mfs_args.fspec =
+			    NETBSD32PTR64(fs_args32.mfs_args.fspec);
+			memset(&fs_args.mfs_args._pad1, 0,
+			    sizeof(fs_args.mfs_args._pad1));
+			fs_args.mfs_args.base =
+			    NETBSD32PTR64(fs_args32.mfs_args.base);
+			fs_args.mfs_args.size = fs_args32.mfs_args.size;
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.mfs_args;
+		data_len = sizeof(fs_args.mfs_args);
+	} else if (strcmp(mtype, MOUNT_UFS) == 0) {
+		if (data_len > sizeof(fs_args32.ufs_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.ufs_args, 
+			    sizeof(fs_args32.ufs_args));
+			if (error)
+				return error;
+			fs_args.ufs_args.fspec =
+			    NETBSD32PTR64(fs_args32.ufs_args.fspec);
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.ufs_args;
+		data_len = sizeof(fs_args.ufs_args);
+	} else if (strcmp(mtype, MOUNT_CD9660) == 0) {
+		if (data_len != sizeof(fs_args32.iso_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.iso_args, 
+			    sizeof(fs_args32.iso_args));
+			if (error)
+				return error;
+			fs_args.iso_args.fspec =
+			    NETBSD32PTR64(fs_args32.iso_args.fspec);
+			memset(&fs_args.iso_args._pad1, 0,
+			    sizeof(fs_args.iso_args._pad1));
+			fs_args.iso_args.flags = fs_args32.iso_args.flags;
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.iso_args;
+		data_len = sizeof(fs_args.iso_args);
+	} else {
+		data_seg = UIO_USERSPACE;
+	}
+	error = do_sys_mount(l, NULL, type, path, flags, data, data_seg,
+	    data_len, retval);
+	if (error) {
+		printf("do_sys_mount(%s): %p, %p, %#x, %p, %d, %zu, %p: failed: error %d\n", mtype, type, path, flags, data, data_seg, data_len, retval, error);
+		return error;
+	}
+	if (flags & MNT_GETARGS) {
+		data_len = *retval;
+		if (strcmp(mtype, MOUNT_MFS) == 0) {
+			if (data_len != sizeof(fs_args.mfs_args))
+				return EINVAL;
+			NETBSD32PTR32(fs_args32.mfs_args.fspec,
+			    fs_args.mfs_args.fspec);
+			memset(&fs_args32.mfs_args._pad1, 0,
+			    sizeof(fs_args32.mfs_args._pad1));
+			NETBSD32PTR32(fs_args32.mfs_args.base,
+			    fs_args.mfs_args.base);
+			fs_args32.mfs_args.size = fs_args.mfs_args.size;
+			error = copyout(&fs_args32.mfs_args, data,
+				    sizeof(fs_args32.mfs_args));
+		} else if (strcmp(mtype, MOUNT_UFS) == 0) {
+			if (data_len != sizeof(fs_args.ufs_args))
+				return EINVAL;
+			NETBSD32PTR32(fs_args32.ufs_args.fspec,
+			    fs_args.ufs_args.fspec);
+			error = copyout(&fs_args32.ufs_args, data, 
+			    sizeof(fs_args32.ufs_args));
+		} else if (strcmp(mtype, MOUNT_CD9660) == 0) {
+			if (data_len != sizeof(fs_args.iso_args))
+				return EINVAL;
+			NETBSD32PTR32(fs_args32.iso_args.fspec,
+			    fs_args.iso_args.fspec);
+			memset(&fs_args32.iso_args._pad1, 0,
+			    sizeof(fs_args32.iso_args._pad1));
+			fs_args32.iso_args.flags = fs_args.iso_args.flags;
+			error = copyout(&fs_args32.iso_args, data,
+				    sizeof(fs_args32.iso_args));
+		}
+	}
+	return error;
 }
 
 int
