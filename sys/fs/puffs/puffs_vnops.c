@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.131 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.132 2009/09/12 18:17:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.131 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.132 2009/09/12 18:17:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2422,7 +2422,7 @@ puffs_vnop_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
-		pcinfo = kmem_zalloc(sizeof_puffs_cacheinfo) + runsize,
+		pcinfo = kmem_zalloc(sizeof(struct puffs_cacheinfo) + runsize,
 		    locked ? KM_NOSLEEP : KM_SLEEP);
 
 		/*
