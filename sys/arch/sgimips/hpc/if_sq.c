@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.33.62.1 2009/09/10 01:51:32 matt Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.33.62.2 2009/09/12 19:27:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33.62.1 2009/09/10 01:51:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33.62.2 2009/09/12 19:27:31 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -1326,7 +1326,7 @@ void
 sq_dump_buffer(paddr_t addr, psize_t len)
 {
 	u_int i;
-	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((void *)addr);
+	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1(addr);
 
 	if (len == 0)
 		return;
