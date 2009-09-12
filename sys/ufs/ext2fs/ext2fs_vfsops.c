@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.147 2009/09/12 02:25:39 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.148 2009/09/12 02:32:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.147 2009/09/12 02:25:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.148 2009/09/12 02:32:14 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -583,6 +583,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
 	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+	brelse(bp, 0);
 
 	/*
 	 * Step 3: re-read summary information from disk.
