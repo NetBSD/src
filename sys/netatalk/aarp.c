@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.33 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: aarp.c,v 1.34 2009/09/12 20:43:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.33 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.34 2009/09/12 20:43:18 tsutsui Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -443,6 +443,12 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
+
+	/*
+	 * Prepare and send AARP-response.
+	 */
+	m->m_len = sizeof(*ea);
+	m->m_pkthdr.len = sizeof(*ea);
 	memcpy(ea->aarp_tha, ea->aarp_sha, sizeof(ea->aarp_sha));
 	memcpy(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha));
 
