@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.17 2009/05/12 14:21:58 cegger Exp $	*/
+/*	$NetBSD: ppi.c,v 1.18 2009/09/12 18:43:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.17 2009/05/12 14:21:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.18 2009/09/12 18:43:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if (sc->sc_flags & PPIF_ALIVE) == 0)
+	if ((sc->sc_flags & PPIF_ALIVE) == 0)
 		return (ENXIO);
 
 	DPRINTF(PDB_FOLLOW, ("ppiopen(%x, %x): flags %x\n",
