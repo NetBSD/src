@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.125 2009/04/02 21:02:06 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.126 2009/09/12 18:09:25 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.125 2009/04/02 21:02:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.126 2009/09/12 18:09:25 tsutsui Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -355,12 +355,13 @@ route_output(struct mbuf *m, ...)
 				    AF_INET) {
 					printf("%s: copying out RTAX_IFA %s ",
 					    __func__, inet_ntoa(
-					    (const struct sockaddr_in *)
-					    info.rti_info[RTAX_IFA])->sin_addr);
+					    ((const struct sockaddr_in *)
+					    info.rti_info[RTAX_IFA])->sin_addr)
+					    );
 					printf("for info.rti_info[RTAX_DST] %s "
 					    "ifa_getifa %p ifa_seqno %p\n",
 					    inet_ntoa(
-					    (const struct sockaddr_in *)
+					    ((const struct sockaddr_in *)
 					    info.rti_info[RTAX_DST])->sin_addr),
 					    (void *)rtifa->ifa_getifa,
 					    rtifa->ifa_seqno);
