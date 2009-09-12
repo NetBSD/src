@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.58 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.59 2009/09/12 11:27:39 tsutsui Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.58 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.59 2009/09/12 11:27:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1017,7 +1017,7 @@ ext2fs_checkpath(struct inode *source, struct inode *target,
 	struct vnode *vp;
 	int error, rootino, namlen;
 	struct ext2fs_dirtemplate dirbuf;
-	u_int32_t ino;
+	uint32_t ino;
 
 	vp = ITOV(target);
 	if (target->i_number == source->i_number) {

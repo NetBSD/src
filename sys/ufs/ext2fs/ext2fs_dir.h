@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.15 2007/12/25 18:33:49 perry Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.16 2009/09/12 11:27:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -110,10 +110,10 @@
 #define	EXT2FS_MAXNAMLEN	255
 
 struct	ext2fs_direct {
-	u_int32_t e2d_ino;		/* inode number of entry */
-	u_int16_t e2d_reclen;		/* length of this record */
-	u_int8_t e2d_namlen;		/* length of string in d_name */
-	u_int8_t e2d_type;		/* file type */
+	uint32_t e2d_ino;		/* inode number of entry */
+	uint16_t e2d_reclen;		/* length of this record */
+	uint8_t e2d_namlen;		/* length of string in d_name */
+	uint8_t e2d_type;		/* file type */
 	char e2d_name[EXT2FS_MAXNAMLEN];/* name with length<=EXT2FS_MAXNAMLEN */
 };
 
@@ -131,9 +131,9 @@ struct	ext2fs_direct {
 
 #define E2IFTODT(mode)    (((mode) & 0170000) >> 12)
 
-static __inline u_int8_t inot2ext2dt(u_int16_t) __unused;
-static __inline u_int8_t
-inot2ext2dt(u_int16_t type)
+static __inline uint8_t inot2ext2dt(uint16_t) __unused;
+static __inline uint8_t
+inot2ext2dt(uint16_t type)
 {
 	switch(type) {
 	case E2IFTODT(EXT2_IFIFO):
@@ -169,15 +169,15 @@ inot2ext2dt(u_int16_t type)
  * but the name field is EXT2FS_MAXNAMLEN - 1, and this just won't do.
  */
 struct ext2fs_dirtemplate {
-	u_int32_t	dot_ino;
+	uint32_t	dot_ino;
 	int16_t		dot_reclen;
-	u_int8_t	dot_namlen;
-	u_int8_t	dot_type;
+	uint8_t		dot_namlen;
+	uint8_t		dot_type;
 	char		dot_name[4];	/* must be multiple of 4 */
-	u_int32_t	dotdot_ino;
+	uint32_t	dotdot_ino;
 	int16_t		dotdot_reclen;
-	u_int8_t	dotdot_namlen;
-	u_int8_t	dotdot_type;
+	uint8_t		dotdot_namlen;
+	uint8_t		dotdot_type;
 	char		dotdot_name[4];	/* ditto */
 };
 
