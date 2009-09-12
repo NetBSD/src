@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.39 2009/05/07 19:26:08 elad Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.40 2009/09/12 11:35:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.39 2009/05/07 19:26:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.40 2009/09/12 11:35:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,7 @@ static daddr_t	ext2fs_alloccg(struct inode *, int, daddr_t, int);
 static u_long	ext2fs_dirpref(struct m_ext2fs *);
 static void	ext2fs_fserr(struct m_ext2fs *, u_int, const char *);
 static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
-				   daddr_t (*)(struct inode *, int, daddr_t,
-						   int));
+		    daddr_t (*)(struct inode *, int, daddr_t, int));
 static daddr_t	ext2fs_nodealloccg(struct inode *, int, daddr_t, int);
 static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
 
@@ -139,7 +138,7 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 	else
 		cg = dtog(fs, bpref);
 	bno = (daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
-						 ext2fs_alloccg);
+	    ext2fs_alloccg);
 	if (bno > 0) {
 		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
