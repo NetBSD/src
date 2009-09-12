@@ -6312,6 +6312,10 @@ _bfd_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
   if (name[0] == '.' && name[1] == 'L')
     return TRUE;
 
+  /* Normal local symbols start with ``$L''.  */
+  if (name[0] == '$' && name[1] == 'L')
+    return TRUE;
+
   /* At least some SVR4 compilers (e.g., UnixWare 2.1 cc) generate
      DWARF debugging symbols starting with ``..''.  */
   if (name[0] == '.' && name[1] == '.')
