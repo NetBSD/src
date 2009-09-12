@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1307 2009/09/08 20:34:47 pooka Exp $
+#	$NetBSD: mi,v 1.1308 2009/09/12 10:33:44 phx Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1960,6 +1960,7 @@
 ./usr/include/sys/disklabel_acorn.h		comp-c-include
 ./usr/include/sys/disklabel_gpt.h		comp-c-include
 ./usr/include/sys/disklabel_mbr.h		comp-obsolete		obsolete
+./usr/include/sys/disklabel_rdb.h		comp-c-include
 ./usr/include/sys/dkbad.h			comp-c-include
 ./usr/include/sys/dkio.h			comp-c-include
 ./usr/include/sys/dkstat.h			comp-c-include
