@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.9 2009/09/12 00:03:27 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.10 2009/09/12 17:37:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,9 +112,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.9 2009/09/12 00:03:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.10 2009/09/12 17:37:00 matt Exp $");
 
 #include "opt_cputype.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +138,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.9 2009/09/12 00:03:
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 
-#include <machine/kcore.h>
-#include <machine/cpu.h>
+#include <mips/kcore.h>
+#include <mips/cpu.h>
+
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -1847,23 +1852,43 @@ loadfpregs(struct lwp *l)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	int err;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	err = cpu_setmcontext(curlwp, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC
 	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
+		printf("%s: Error %d from cpu_setmcontext", __func__, err);
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	userret(l);
+	userret(curlwp);
 }
+
+#ifdef COMPAT_NETBSD32
+/* 
+ * Start a new LWP
+ */
+void
+startlwp32(void *arg)
+{
+	ucontext32_t *uc = arg;
+	int err;
+
+	err = cpu_setmcontext32(curlwp, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("%s: Error %d from cpu_setmcontext32", __func__, err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(curlwp);
+}
+#endif /* COMPAT_NETBSD32 */
 
 /*
  * XXX This is a terrible name.
@@ -1878,8 +1903,13 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct saframe *sf, frame;
 	struct frame *f = l->l_md.md_regs;
+	struct saframe frame;
+#ifdef COMPAT_NETBSD32
+	struct saframe32 frame32;
+#endif
+	void *ksf, *usf;
+	size_t sfsz;
 
 #if 0 /* First 4 args in regs (see below). */
 	frame.sa_type = type;
@@ -1887,11 +1917,29 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	frame.sa_events = nevents;
 	frame.sa_interrupted = ninterrupted;
 #endif
-	frame.sa_arg = ap;
-	frame.sa_upcall = upcall;
+#ifdef COMPAT_NETBSD32
+	switch (l->l_proc->p_md.md_abi) {
+	case _MIPS_BSD_API_O32:
+	case _MIPS_BSD_API_N32:
+		NETBSD32PTR32(frame32.sa_arg, ap);
+		NETBSD32PTR32(frame32.sa_upcall, upcall);
+		ksf = &frame32;
+		usf = (struct saframe32 *)sp - 1;
+		sfsz = sizeof(frame32);
+		break;
+	default:
+#endif
+		frame.sa_arg = ap;
+		frame.sa_upcall = upcall;
+		ksf = &frame;
+		usf = (struct saframe *)sp - 1;
+		sfsz = sizeof(frame);
+#ifdef COMPAT_NETBSD32
+		break;
+	}
+#endif
 
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+	if (copyout(ksf, usf, sfsz) != 0) {
 		/* Copying onto the stack didn't work. Die. */
 		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
@@ -1899,7 +1947,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	}
 
 	f->f_regs[_R_PC] = (intptr_t)upcall;
-	f->f_regs[_R_SP] = (intptr_t)sf;
+	f->f_regs[_R_SP] = (intptr_t)usf;
 	f->f_regs[_R_A0] = type;
 	f->f_regs[_R_A1] = (intptr_t)sas;
 	f->f_regs[_R_A2] = nevents;
@@ -1911,10 +1959,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct frame *f = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -1937,6 +1982,7 @@ cpu_getmcontext(l, mcp, flags)
 
 	/* Save floating point register context, if any. */
 	if (l->l_md.md_flags & MDP_FPUSED) {
+		size_t fplen;
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
@@ -1948,23 +1994,26 @@ cpu_getmcontext(l, mcp, flags)
 		 * The PCB FP regs struct includes the FP CSR, so use the
 		 * size of __fpregs.__fp_r when copying.
 		 */
-		memcpy(&mcp->__fpregs.__fp_r,
-		    &l->l_addr->u_pcb.pcb_fpregs.r_regs,
-		    sizeof(mcp->__fpregs.__fp_r));
-		mcp->__fpregs.__fp_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
+#if !defined(__mips_o32)
+		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {
+			fplen = sizeof(struct fpreg);
+		} else {
+#endif
+			fplen = sizeof(struct fpreg_oabi);
+#if !defined(__mips_o32)
+		}
+#endif
+		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs, fplen);
 		*flags |= _UC_FPU;
 	}
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct frame *f = l->l_md.md_regs;
-	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
@@ -1982,17 +2031,25 @@ cpu_setmcontext(l, mcp, flags)
 
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
+		size_t fplen;
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		fpcurlwp = &lwp0;
 
+#if !defined(__mips_o32)
+		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {
+			fplen = sizeof(struct fpreg);
+		} else {
+#endif
+			fplen = sizeof(struct fpreg_oabi);
+#if !defined(__mips_o32)
+		}
+#endif
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the
-		 * size of __fpregs.__fp_r when copying.
+		 * proper size of fpreg when copying.
 		 */
-		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs,
-		    &mcp->__fpregs.__fp_r, sizeof(mcp->__fpregs.__fp_r));
-		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
+		memcpy(&l->l_addr->u_pcb.pcb_fpregs, &mcp->__fpregs, fplen);
 	}
 
 	mutex_enter(p->p_lock);
