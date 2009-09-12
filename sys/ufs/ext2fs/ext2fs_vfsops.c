@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.145 2009/09/11 15:59:07 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.146 2009/09/12 01:43:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.145 2009/09/11 15:59:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.146 2009/09/12 01:43:52 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -362,8 +362,15 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
