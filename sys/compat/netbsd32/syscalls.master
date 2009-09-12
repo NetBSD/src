@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70.4.1 2008/11/25 17:31:26 snj Exp $
+	$NetBSD: syscalls.master,v 1.70.4.1.4.1 2009/09/12 17:42:05 matt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -682,9 +682,9 @@
 408	UNIMPL
 409	UNIMPL
 
-410	UNIMPL		{ int sys___mount50(const char *type, \
-			    const char *path, int flags, void *data, \
-			    size_t data_len); }
+410	STD		{ int netbsd32___mount50(netbsd32_charp type, \
+			    netbsd32_charp path, int flags, \
+			    netbsd32_voidp data, netbsd32_size_t data_len); }
 411	STD 		{ netbsd32_voidp netbsd32_mremap( \
 			    netbsd32_voidp old_address, \
 			    netbsd32_size_t old_size, \
