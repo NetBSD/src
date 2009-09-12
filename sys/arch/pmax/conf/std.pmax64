@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmax64,v 1.1.2.1 2009/09/08 17:24:08 matt Exp $
+#	$NetBSD: std.pmax64,v 1.1.2.2 2009/09/12 18:25:25 matt Exp $
 # standard, required pmax info
 
 machine pmax mips
@@ -7,8 +7,9 @@ makeoptions	MACHINE_ARCH="mips64el"
 
 # Standard exec-package options
 options 	EXEC_ELF64
-#options 	EXEC_ELF32	# 32-bit ELF support (native format)
+options 	EXEC_ELF32	# 32-bit ELF support (native format)
 options 	EXEC_SCRIPT	# exec of #! scripts
+options 	COMPAT_NETBSD32	# exec NetBSD 32-bit binaries
 
 makeoptions	DEFTEXTADDR="0x80030000"
 makeoptions	LP64="yes"
