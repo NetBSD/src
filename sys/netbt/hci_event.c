@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.20 2009/08/24 20:37:36 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.21 2009/09/12 18:31:46 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.20 2009/08/24 20:37:36 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.21 2009/09/12 18:31:46 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -845,11 +845,11 @@ hci_event_read_clock_offset_compl(struct hci_unit *unit, struct mbuf *m)
 
 	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
 	link = hci_link_lookup_handle(unit, ep.con_handle);
-
-	if (ep.status != 0 || link == NULL)
+	if (link == NULL || link->hl_type != HCI_LINK_ACL)
 		return;
 
-	link->hl_clock = ep.clock_offset;
+	if (ep.status == 0)
+		link->hl_clock = ep.clock_offset;
 }
 
 /*
