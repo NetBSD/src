@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.146 2009/09/12 01:43:52 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.147 2009/09/12 02:25:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.146 2009/09/12 01:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.147 2009/09/12 02:25:39 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -478,7 +478,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->e2fs_fmod = 1;
 		}
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
