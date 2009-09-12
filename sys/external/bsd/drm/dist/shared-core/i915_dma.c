@@ -82,21 +82,8 @@ static int i915_init_phys_hws(struct drm_device *dev)
 
 	/* Program Hardware Status Page */
 	DRM_UNLOCK();
-/*
- * This fix is not correct in case where we have i386 and PAE, where
- * unfortunately we have > 32 bit address space, but bus_size_t is still
- * 32 bits. To fix this properly we would have to change bus_size_t to a
- * 64 bit quantity for PAE. Good enough for now. When that is fixed, we
- * should change BOUNDARY to:
- * 	((paddr_t)(sizeof(paddr_t) > 4 ? 0x100000000ULL : 0ULL))
- */
-#ifdef _LP64
-#define        BOUNDARY        0x100000000ULL
-#else
-#define        BOUNDARY        0
-#endif
 	dev_priv->status_page_dmah =
-		drm_pci_alloc(dev, PAGE_SIZE, PAGE_SIZE, BOUNDARY);
+		drm_pci_alloc(dev, PAGE_SIZE, PAGE_SIZE, 0xffffffff);
 	DRM_LOCK();
 	if (!dev_priv->status_page_dmah) {
 		DRM_ERROR("Can not allocate hardware status page\n");
