@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1288 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1289 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -390,5 +390,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		installs them into DESTDIR. [jnemeth 20090907]
 	sysctl(7): Add kern.boothowto variable.  [apb 20090911]
 	rc(8): Output is now logged to /var/run/rc.log.  A new rc_silent
-		option, enabled if the kernel is booted in silent mode,
-		suppresses output to the console.  [apb 20090911]
+		option suppresses output to the console; it can be set
+		in rc.conf(5) or by booting in silent mode (e.g. "boot
+		netbsd -z" on i386 or amd64).  [apb 20090911]
