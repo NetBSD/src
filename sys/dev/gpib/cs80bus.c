@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.14 2009/05/12 14:21:58 cegger Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.15 2009/09/12 18:41:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.14 2009/05/12 14:21:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.15 2009/09/12 18:41:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.14 2009/05/12 14:21:58 cegger Exp $");
 #include <dev/gpib/gpibvar.h>
 #include <dev/gpib/cs80busvar.h>
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 #ifdef DEBUG
 int cs80busdebug = 0xff;
