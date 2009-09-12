@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.11 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: cec.c,v 1.12 2009/09/12 18:52:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.11 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.12 2009/09/12 18:52:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.11 2009/05/12 09:10:15 cegger Exp $");
 
 #include <dev/ic/nec7210reg.h>
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 #ifdef DEBUG
 int cecdebug = 0x1f;
