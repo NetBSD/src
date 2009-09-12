@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.10 2009/09/12 17:37:00 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.11 2009/09/12 18:19:17 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.10 2009/09/12 17:37:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.11 2009/09/12 18:19:17 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -933,8 +933,8 @@ mips_vector_init(void)
 #if defined(MIPS3)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
-#if defined(MIPS3_5900)	/* XXX */
 		mips3_tlb_probe();
+#if defined(MIPS3_5900)	/* XXX */
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
@@ -942,7 +942,6 @@ mips_vector_init(void)
 		r5900_vector_init();
 		mips_locoresw = mips5900_locoresw;
 #else /* MIPS3_5900 */
-		mips3_tlb_probe();
 #if defined(MIPS3_4100)
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
 			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
@@ -959,6 +958,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
+		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
@@ -1004,7 +1004,7 @@ mips_set_wbflush(flush_fn)
 	(*flush_fn)();
 }
 
-#ifdef MIPS3_PLUS
+#if defined(MIPS3_PLUS)
 static void
 mips3_tlb_probe(void)
 {
@@ -1996,11 +1996,11 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 */
 #if !defined(__mips_o32)
 		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {
-			fplen = sizeof(struct fpreg);
-		} else {
 #endif
-			fplen = sizeof(struct fpreg_oabi);
+			fplen = sizeof(struct fpreg);
 #if !defined(__mips_o32)
+		} else {
+			fplen = sizeof(struct fpreg_oabi);
 		}
 #endif
 		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs, fplen);
@@ -2038,11 +2038,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 #if !defined(__mips_o32)
 		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {
-			fplen = sizeof(struct fpreg);
-		} else {
 #endif
-			fplen = sizeof(struct fpreg_oabi);
+			fplen = sizeof(struct fpreg);
 #if !defined(__mips_o32)
+		} else {
+			fplen = sizeof(struct fpreg_oabi);
 		}
 #endif
 		/*
