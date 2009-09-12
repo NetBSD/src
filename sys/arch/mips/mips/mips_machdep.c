@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.8 2009/09/11 23:51:25 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.9 2009/09/12 00:03:27 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.8 2009/09/11 23:51:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.9 2009/09/12 00:03:27 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -1132,7 +1132,7 @@ cpu_identify(void)
 			i = ffs(~(mips3_tlb_vpn_mask >> 31)) + 30;
 			printf(", %d%cB (%d-bit) VAs",
 			    1 << (i % 10), sufx[(i / 10) - 1], i);
-			for (i = 64, pfn_mask = mips3_tlb_pfn_mask;
+			for (i = 64, pfn_mask = mips3_tlb_pfn_mask << 6;
 			     pfn_mask > 0; i--, pfn_mask <<= 1)
 				;
 			printf(", %d%cB (%d-bit) PAs",
