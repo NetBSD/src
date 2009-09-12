@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.31 2009/09/01 12:23:36 pooka Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.32 2009/09/12 12:52:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.31 2009/09/01 12:23:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.32 2009/09/12 12:52:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -176,6 +176,7 @@ nsmbattach(int num)
 		smb_sm_done();
 		return;
 	}
+	smb_rqpool_init();
 }
 #endif /* __NetBSD__ */
 
@@ -256,6 +257,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 #ifndef __NetBSD__
 	destroy_dev(dev);
 #endif
+	smb_rqpool_fini();
 	splx(s);
 	return 0;
 }
