@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.6 2009/04/10 19:41:41 perry Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.7 2009/09/13 23:53:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -274,6 +274,10 @@ getchoicefrominput(char *input, int def)
 		if (choice < 0 || choice >= bootconf.nummenu)
 			choice = -1;
 	}
+
+	if (bootconf.menuformat != MENUFORMAT_LETTER && !isnum(*input))
+		choice = -1;
+
 	return choice;
 }
 
