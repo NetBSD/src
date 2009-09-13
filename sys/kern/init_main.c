@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.399 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,13 +97,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.399 2009/09/13 18:45:10 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
+#include "opt_sa.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -195,6 +196,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $"
 #ifdef WAPBL
 #include <sys/wapbl.h>
 #endif
+#ifdef KERN_SA
+#include <sys/savar.h>
+#endif
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -227,6 +231,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $"
 #include <net/raw_cb.h>
 
 #include <secmodel/secmodel.h>
+
+#include <prop/proplib.h>
 
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
@@ -311,6 +317,8 @@ main(void)
 
 	uvm_init();
 
+	prop_kern_init();
+
 #if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
 	ksyms_init();
 #endif
@@ -360,6 +368,9 @@ main(void)
 #endif
 
 	/* Initialize process and pgrp structures. */
+#ifdef KERN_SA
+	sa_init();
+#endif
 	procinit();
 	lwpinit();
 

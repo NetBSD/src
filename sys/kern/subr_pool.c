@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.173 2009/08/29 00:09:02 rmind Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.174 2009/09/13 18:45:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.173 2009/08/29 00:09:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.174 2009/09/13 18:45:11 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -587,16 +587,9 @@ void
 pool_subsystem_init(void)
 {
 	struct pool_allocator *pa;
-	__link_set_decl(pools, struct link_pool_init);
-	struct link_pool_init * const *pi;
 
 	mutex_init(&pool_head_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pool_busy, "poolbusy");
-
-	__link_set_foreach(pi, pools)
-		pool_init((*pi)->pp, (*pi)->size, (*pi)->align,
-		    (*pi)->align_offset, (*pi)->flags, (*pi)->wchan,
-		    (*pi)->palloc, (*pi)->ipl);
 
 	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
 		KASSERT(pa->pa_backingmapptr != NULL);

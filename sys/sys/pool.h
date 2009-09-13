@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.64 2008/07/04 16:38:59 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.65 2009/09/13 18:45:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -264,23 +264,6 @@ extern struct pool_allocator pool_allocator_meta;
 extern struct pool_allocator pool_allocator_kmem_fullpage;
 extern struct pool_allocator pool_allocator_nointr_fullpage;
 #endif
-
-struct link_pool_init {	/* same as args to pool_init() */
-	struct pool *pp;
-	size_t size;
-	u_int align;
-	u_int align_offset;
-	int flags;
-	const char *wchan;
-	struct pool_allocator *palloc;
-	int ipl;
-};
-#define	POOL_INIT(pp, size, align, align_offset, flags, wchan, palloc, ipl)\
-struct pool pp;								\
-static const struct link_pool_init _link_ ## pp[1] = {			\
-	{ &pp, size, align, align_offset, flags, wchan, palloc, ipl }	\
-};									\
-__link_set_add_rodata(pools, _link_ ## pp)
 
 void		pool_subsystem_init(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.74 2009/09/08 20:57:59 pooka Exp $	*/
+/*	$NetBSD: rnd.c,v 1.75 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.74 2009/09/08 20:57:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.75 2009/09/13 18:45:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.74 2009/09/08 20:57:59 pooka Exp $");
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/once.h>
 
 #ifdef __HAVE_CPU_COUNTER
 #include <machine/cpu_counter.h>
@@ -117,8 +118,7 @@ volatile u_int32_t rnd_status;
 /*
  * Memory pool for sample buffers
  */
-POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL,
-    IPL_VM);
+static struct pool rnd_mempool;
 
 /*
  * Our random pool.  This is defined here rather than using the general
@@ -268,6 +268,16 @@ rnd_estimate_entropy(rndsource_t *rs, u_int32_t t)
 	return (1);
 }
 
+static int
+rnd_mempool_init(void)
+{
+
+	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
+	    NULL, IPL_VM);
+	return 0;
+}
+static ONCE_DECL(rnd_mempoolinit_ctrl);
+
 /*
  * "Attach" the random device. This is an (almost) empty stub, since
  * pseudo-devices don't get attached until after config, after the
@@ -278,6 +288,8 @@ void
 rndattach(int num)
 {
 	u_int32_t c;
+
+	RUN_ONCE(&rnd_mempoolinit_ctrl, rnd_mempool_init);
 
 	/* Trap unwary players who don't call rnd_init() early */
 	KASSERT(rnd_ready);
@@ -815,6 +827,8 @@ rnd_attach_source(rndsource_element_t *rs, const char *name, u_int32_t type,
     u_int32_t flags)
 {
 	u_int32_t ts;
+
+	RUN_ONCE(&rnd_mempoolinit_ctrl, rnd_mempool_init);
 
 	ts = rnd_counter();
 
