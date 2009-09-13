@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $	*/
 
 #ifndef _MIPS_RMIXL_OBIOVAR_H_
 #define _MIPS_RMIXL_OBIOVAR_H_
@@ -18,8 +18,8 @@ struct obio_attach_args {
 typedef struct obio_softc {
 	struct device		sc_dev;
 	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 	bus_addr_t		sc_base;
 	bus_size_t		sc_size;
 
@@ -30,9 +30,6 @@ typedef struct obio_softc {
 	struct XXX_pci_chipset sc_pci_chipset;
 #endif
 } obio_softc_t;
-
-extern void rmixl_obio_bus_init(void);
-extern bus_space_tag_t rmixl_obio_get_bus_space_tag(void);
 
 extern struct mips_bus_space   rmixl_bus_mbst;
 extern struct mips_bus_dma_tag rmixl_bus_mdt;
