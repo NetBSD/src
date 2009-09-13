@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.40 2009/09/08 20:24:08 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.41 2009/09/13 22:51:41 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -38,6 +38,15 @@ CPPFLAGS+=	-DPPC_OEA
 
 # If this file changes, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
+
+.ifdef RUMP_ISMODULE
+.PATH:		${RUMPTOP}/librump
+SRCS+=		rump_module.c
+.endif
+.ifdef RUMP_ISDOMAIN
+.PATH:		${RUMPTOP}/librump
+SRCS+=		rump_domain.c
+.endif
 
 #
 # Rename library symbols before use.  If a symbol does not already belong
