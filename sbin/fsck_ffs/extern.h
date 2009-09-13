@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2008/08/30 10:46:16 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2009/09/13 14:25:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -82,6 +82,7 @@ void		setinodebuf(ino_t);
 int		setup(const char *, const char *);
 void		voidquit(int);
 
+int		check_wapbl(void);
 void		replay_wapbl(void);
 void		cleanup_wapbl(void);
 int		read_wapbl(char *, long, daddr_t);

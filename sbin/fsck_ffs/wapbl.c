@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.3 2008/11/10 20:12:13 joerg Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.4 2009/09/13 14:25:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.3 2008/11/10 20:12:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.4 2009/09/13 14:25:28 bouyer Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -90,60 +90,8 @@ struct wapbl_replay *wapbl_replay;
 void
 replay_wapbl(void)
 {
-	uint64_t addr, count, blksize;
 	int error;
 
-	if (debug)
-		wapbl_debug_print = WAPBL_PRINT_ERROR | WAPBL_PRINT_REPLAY;
-	if (debug > 1)
-		wapbl_debug_print |= WAPBL_PRINT_IO;
-
-	if (sblock->fs_journal_version != UFS_WAPBL_VERSION) {
-		pfatal("INVALID JOURNAL VERSION %d",
-		    sblock->fs_journal_version);
-		if (reply("CONTINUE") == 0) {
-			exit(FSCK_EXIT_CHECK_FAILED);
-		}
-		return;
-	}
-
-	switch (sblock->fs_journal_location) {
-	case UFS_WAPBL_JOURNALLOC_NONE:
-		pfatal("INVALID JOURNAL LOCATION 'NONE'");
-		if (reply("CONTINUE") == 0) {
-			exit(FSCK_EXIT_CHECK_FAILED);
-		}
-		return;
-
-	case UFS_WAPBL_JOURNALLOC_END_PARTITION:
-		addr = sblock->fs_journallocs[UFS_WAPBL_EPART_ADDR];
-		count = sblock->fs_journallocs[UFS_WAPBL_EPART_COUNT];
-		blksize = sblock->fs_journallocs[UFS_WAPBL_EPART_BLKSZ];
-		break;
-
-	case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
-		addr = sblock->fs_journallocs[UFS_WAPBL_INFS_ADDR];
-		count = sblock->fs_journallocs[UFS_WAPBL_INFS_COUNT];
-		blksize = sblock->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
-		break;
-
-	default:
-		pfatal("INVALID JOURNAL LOCATION %d",
-		    sblock->fs_journal_location);
-		if (reply("CONTINUE") == 0) {
-			exit(FSCK_EXIT_CHECK_FAILED);
-		}
-		return;
-	}
-
-	error = wapbl_replay_start(&wapbl_replay, 0, addr, count, blksize);
-	if (error) {
-		pfatal("UNABLE TO READ JOURNAL FOR REPLAY");
-		if (reply("CONTINUE") == 0) {
-			exit(FSCK_EXIT_CHECK_FAILED);
-		}
-		return;
-	}
 	if (!nflag) {
 		error = wapbl_replay_write(wapbl_replay, 0);
 		if (error) {
@@ -200,4 +148,126 @@ is_journal_inode(ino_t ino)
 		return 1;
 
 	return 0;
+}
+
+int
+check_wapbl(void)
+{
+	uint64_t addr = 0, count = 0, blksize = 0;
+	int error;
+	int ret = 0;
+	if (debug)
+		wapbl_debug_print = WAPBL_PRINT_ERROR | WAPBL_PRINT_REPLAY;
+	if (debug > 1)
+		wapbl_debug_print |= WAPBL_PRINT_IO;
+
+	if (sblock->fs_flags & FS_DOWAPBL) {
+		if (sblock->fs_journal_version != UFS_WAPBL_VERSION) {
+			pfatal("INVALID JOURNAL VERSION %d",
+			    sblock->fs_journal_version);
+			if (reply("CONTINUE") == 0) {
+				exit(FSCK_EXIT_CHECK_FAILED);
+			}
+			pwarn("CLEARING EXISTING JOURNAL\n");
+			sblock->fs_flags &= ~FS_DOWAPBL;
+			sbdirty();
+			ret = FSCK_EXIT_CHECK_FAILED;
+		} else {
+			switch(sblock->fs_journal_location) {
+			case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+				addr =
+				  sblock->fs_journallocs[UFS_WAPBL_EPART_ADDR];
+				count =
+				  sblock->fs_journallocs[UFS_WAPBL_EPART_COUNT];
+				blksize =
+				  sblock->fs_journallocs[UFS_WAPBL_EPART_BLKSZ];
+				break;
+			case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+				addr =
+				  sblock->fs_journallocs[UFS_WAPBL_INFS_ADDR];
+				count =
+				  sblock->fs_journallocs[UFS_WAPBL_INFS_COUNT];
+				blksize =
+				  sblock->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
+				break;
+			default:
+				pfatal("INVALID JOURNAL LOCATION %d",
+				    sblock->fs_journal_location);
+				if (reply("CONTINUE") == 0) {
+					exit(FSCK_EXIT_CHECK_FAILED);
+				}
+				pwarn("CLEARING EXISTING JOURNAL\n");
+				sblock->fs_flags &= ~FS_DOWAPBL;
+				sblock->fs_journal_location =
+				    UFS_WAPBL_JOURNALLOC_NONE;
+				sbdirty();
+				ret = FSCK_EXIT_CHECK_FAILED;
+				break;
+			}
+			if (sblock->fs_flags & FS_DOWAPBL) {
+				error = wapbl_replay_start(
+				    &wapbl_replay, 0, addr, count, blksize);
+				if (error) {
+					pfatal(
+					   "UNABLE TO READ JOURNAL FOR REPLAY");
+					if (reply("CONTINUE") == 0) {
+						exit(FSCK_EXIT_CHECK_FAILED);
+					}
+					pwarn("CLEARING EXISTING JOURNAL\n");
+					sblock->fs_flags &= ~FS_DOWAPBL;
+					sbdirty();
+					ret = FSCK_EXIT_CHECK_FAILED;
+				}
+			}
+		}
+	}
+	/*
+	 * at this time fs_journal_flags can only be 0,
+	 * UFS_WAPBL_FLAGS_CREATE_LOG or UFS_WAPBL_FLAGS_CLEAR_LOG.
+	 * We can't have both flags at the same time.
+	 */
+	switch (sblock->fs_journal_flags) {
+	case 0:
+		break;
+	case UFS_WAPBL_FLAGS_CREATE_LOG:
+	case UFS_WAPBL_FLAGS_CLEAR_LOG:
+		switch(sblock->fs_journal_location) {
+		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+			break;
+		case UFS_WAPBL_JOURNALLOC_NONE:
+			if (sblock->fs_journal_flags ==
+			    UFS_WAPBL_FLAGS_CLEAR_LOG)
+				break;
+			/* FALLTHROUGH */
+		default:
+			pfatal("INVALID JOURNAL LOCATION %d",
+			    sblock->fs_journal_location);
+			if (reply("CONTINUE") == 0) {
+				exit(FSCK_EXIT_CHECK_FAILED);
+			}
+			pwarn("CLEARING JOURNAL FLAGS\n");
+			sblock->fs_journal_flags = 0;
+			sblock->fs_journal_location =
+			    UFS_WAPBL_JOURNALLOC_NONE;
+			sbdirty();
+			ret = FSCK_EXIT_CHECK_FAILED;
+			break;
+		}
+		break;
+	default:
+		pfatal("INVALID JOURNAL FLAGS %d",
+		    sblock->fs_journal_flags);
+		if (reply("CONTINUE") == 0) {
+			exit(FSCK_EXIT_CHECK_FAILED);
+		}
+		pwarn("CLEARING JOURNAL FLAGS\n");
+		sblock->fs_journal_flags = 0;
+		sblock->fs_journal_location =
+		    UFS_WAPBL_JOURNALLOC_NONE;
+		sbdirty();
+		ret = FSCK_EXIT_CHECK_FAILED;
+		break;
+	}
+	return ret;
 }
