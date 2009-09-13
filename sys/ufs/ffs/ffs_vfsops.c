@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.250 2009/07/31 20:58:50 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.251 2009/09/13 05:17:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.250 2009/07/31 20:58:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.251 2009/09/13 05:17:36 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -116,8 +116,6 @@ static struct sysctllog *ffs_sysctl_log;
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
-
-extern kmutex_t ufs_hashlock;
 
 extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ffs_specop_opv_desc;

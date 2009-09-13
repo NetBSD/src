@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.277 2009/08/05 15:39:57 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.278 2009/09/13 05:17:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.277 2009/08/05 15:39:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.278 2009/09/13 05:17:37 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1250,8 +1250,6 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 #endif
 	return (error);
 }
-
-extern kmutex_t ufs_hashlock;
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
