@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,8 +39,7 @@
 #include <machine/bus.h>
 
 struct rmixl_config {
-	uint64_t		 rc_io_base;
-	struct mips_bus_space	 rc_iot;
+	uint64_t		 rc_io_pbase;	
 	struct mips_bus_space	 rc_memt; 
 	struct mips_bus_dma_tag	 rc_pci_dmat; 
 	struct mips_pci_chipset	 rc_pc; 
@@ -52,6 +51,9 @@ struct rmixl_config {
 extern struct rmixl_config rmixl_configuration;
 
 extern void rmixl_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_obio_bus_init(void);
+extern bus_space_tag_t rmixl_obio_get_bus_space_tag(void);
+extern bus_addr_t rmixl_obio_get_io_pbase(void);
 
 extern void *rmixl_intr_establish(int, int, int (*)(void *), void *);
 extern void  rmixl_intr_disestablish(void *);
