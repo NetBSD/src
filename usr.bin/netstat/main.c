@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2009/09/13 02:53:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.71 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.72 2009/09/13 02:53:17 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,6 +357,10 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 	 * Try to figure out if we can use sysctl or not.
 	 */
 	if (nlistf != NULL && memf != NULL) {
+		/* Of course, we can't use sysctl with dumps. */
+		if (force_sysctl)
+			errx(EXIT_FAILURE, "can't use sysctl with dumps");
+
 		/* If we have -M and -N, we're not dealing with live memory. */
 		use_sysctl = 0;
 	} else if (qflag ||
@@ -375,6 +379,13 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		use_sysctl = 0;
 	} else {
 		/* We can use sysctl(3). */
+		use_sysctl = 1;
+	}
+
+	if (force_sysctl && !use_sysctl) {
+		/* Let the user know what's about to happen. */
+		warnx("forcing sysctl usage even though it might not be "\
+		    "supported");
 		use_sysctl = 1;
 	}
 
@@ -414,7 +425,7 @@ main(argc, argv)
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "AabBdf:ghI:LliM:mN:nP:p:qrsStuvw:")) != -1)
+	    "AabBdf:ghI:LliM:mN:nP:p:qrsStuvw:X")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -519,6 +530,9 @@ main(argc, argv)
 		case 'w':
 			interval = atoi(optarg);
 			iflag = 1;
+			break;
+		case 'X':
+			force_sysctl = 1;
 			break;
 		case '?':
 		default:

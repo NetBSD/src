@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.7 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.8 2009/09/13 02:53:17 elad Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ p_rttables(int paf)
 	if (paf != 0 && paf != PF_KEY)
 		return;
 
-#ifdef notyet /* XXX elad */
+#if 0 /* XXX-elad */
 	mib[0] = CTL_NET;
 	mib[1] = PF_KEY;
 	mib[2] = PF_KEY_V2;
@@ -180,7 +180,7 @@ p_rttables(int paf)
 		free(buf);
 		buf = NULL;
 	}
-#endif
+#endif /* 0 */
 }
 
 /* 
@@ -252,7 +252,7 @@ p_rtentry(struct rt_msghdr *rtm)
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
-#ifdef notyet /* XXX: elad */
+#if 0 /* XXX-elad */
 	printf("%6d %8ld ", (int)rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
 #else
@@ -420,7 +420,7 @@ routename(struct sockaddr *sa)
 	case AF_LINK:
 		return (link_print(sa));
 
-#ifdef notyet /* XXX elad */
+#if 0 /* XXX-elad */
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
 			static char name[RTLABEL_LEN];
