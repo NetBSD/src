@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.21 2005/01/18 13:42:37 wiz Exp $
+.\" $NetBSD: pms.4,v 1.21.34.1 2009/09/13 22:13:04 snj Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd January 18, 2005
+.Dd December 13, 2008
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Pp
 .Cd options PMS_DISABLE_POWERHOOK
 .Cd options PMS_SYNAPTICS_TOUCHPAD
+.Cd options PMS_ELANTECH_TOUCHPAD
 .Sh DESCRIPTION
 The
 .Nm
@@ -82,14 +83,18 @@ In addition, the
 .Nm
 driver supports the
 .Dq Synaptics
-touchpad in native mode, enabled with the
+and
+.Dq Elantech
+touchpads in native mode, enabled with the
 .Va PMS_SYNAPTICS_TOUCHPAD
-kernel option.
+and
+.Va PMS_ELANTECH_TOUCHPAD
+kernel options.
 This allows the driver to take advantage of extra
-features available on Synaptics Touchpads.
+features available on Synaptics and Elantech Touchpads.
 The following
 .Xr sysctl 8
-variables control the touchpad's behavior:
+variables control behavior of Synaptics touchpads:
 .Bl -tag
 .It Dv hw.synaptics.up_down_emulation
 If the touchpad reports the existence of Up/Down buttons, this value
@@ -144,6 +149,20 @@ event (default 32).
 Movements of less than this value (in Synaptics coordinates) are
 ignored (default 4).
 .El
+.Pp
+The following
+.Xr sysctl 8
+variables control behavior of Elantech touchpads:
+.Bl -tag
+.It Dv hw.elantech.xy_precision_shift
+.It Dv hw.elantech.z_precision_shift
+Increased values improve the accuracy of X, Y, and Z-axis reporting
+at the expense of slower mouse movement (default 2 for xy,
+and 3 for z).
+.El
+.Pp
+For Elantech touchpads, the Z-axis is emulated using two-finger
+Y-axis reporting.
 .Sh SEE ALSO
 .Xr pckbc 4 ,
 .Xr ums 4 ,
@@ -161,6 +180,9 @@ insight into how to identify bogus mouse data.
 The changes to add
 .Dq Synaptics
 pad support were by Ales Krenek, Kentaro A. Kurahone, and Steve C. Woodford.
+The changes to add 
+.Dq Elantech
+pad support were by Jared D. McNeill.
 .Sh BUGS
 It is possible for the driver to mistakenly negotiate the non-scroll-wheel
 protocol, after which it is unlikely to recover until the device is closed
