@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.64 2009/09/13 02:53:17 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.65 2009/09/13 19:04:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.64 2009/09/13 02:53:17 elad Exp $");
+__RCSID("$NetBSD: if.c,v 1.65 2009/09/13 19:04:29 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -590,15 +590,15 @@ iftot_print(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
 		printf("%10llu %8.8s %10llu %5.5s",
-		    cur->ift_ib - old->ift_ib, " ",
-		    cur->ift_ob - old->ift_ob, " ");
+		    (unsigned long long)(cur->ift_ib - old->ift_ib), " ",
+		    (unsigned long long)(cur->ift_ob - old->ift_ob), " ");
 	else
 		printf("%8llu %5llu %8llu %5llu %5llu",
-		    cur->ift_ip - old->ift_ip,
-		    cur->ift_ie - old->ift_ie,
-		    cur->ift_op - old->ift_op,
-		    cur->ift_oe - old->ift_oe,
-		    cur->ift_co - old->ift_co);
+		    (unsigned long long)(cur->ift_ip - old->ift_ip),
+		    (unsigned long long)(cur->ift_ie - old->ift_ie),
+		    (unsigned long long)(cur->ift_op - old->ift_op),
+		    (unsigned long long)(cur->ift_oe - old->ift_oe),
+		    (unsigned long long)(cur->ift_co - old->ift_co));
 	if (dflag)
 		printf(" %5llu",
 		    /* XXX ifnet.if_snd.ifq_drops - ip->ift_dr); */
@@ -610,15 +610,15 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
 		printf("  %10llu %8.8s %10llu %5.5s",
-		    cur->ift_ib - old->ift_ib, " ",
-		    cur->ift_ob - old->ift_ob, " ");
+		    (unsigned long long)(cur->ift_ib - old->ift_ib), " ",
+		    (unsigned long long)(cur->ift_ob - old->ift_ob), " ");
 	else
 		printf("  %8llu %5llu %8llu %5llu %5llu",
-		    cur->ift_ip - old->ift_ip,
-		    cur->ift_ie - old->ift_ie,
-		    cur->ift_op - old->ift_op,
-		    cur->ift_oe - old->ift_oe,
-		    cur->ift_co - old->ift_co);
+		    (unsigned long long)(cur->ift_ip - old->ift_ip),
+		    (unsigned long long)(cur->ift_ie - old->ift_ie),
+		    (unsigned long long)(cur->ift_op - old->ift_op),
+		    (unsigned long long)(cur->ift_oe - old->ift_oe),
+		    (unsigned long long)(cur->ift_co - old->ift_co));
 
 	if (dflag)
 		printf(" %5llu", (unsigned long long)(cur->ift_dr - old->ift_dr));
