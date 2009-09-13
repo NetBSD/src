@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.106 2009/05/12 12:10:29 cegger Exp $	*/
+/*	$NetBSD: ata.c,v 1.107 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.106 2009/05/12 12:10:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.107 2009/09/13 18:45:10 pooka Exp $");
 
 #include "opt_ata.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.106 2009/05/12 12:10:29 cegger Exp $");
 #include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#include <sys/once.h>
 
 #include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
@@ -78,8 +79,7 @@ int atadebug_mask = 0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL,
-    IPL_BIO);
+static struct pool ata_xfer_pool;
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
@@ -429,6 +429,15 @@ atabus_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
+static int
+atabus_xferpool_init(void)
+{
+
+	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl",
+	    NULL, IPL_BIO);
+	return 0;
+}
+
 /*
  * atabus_attach:
  *
@@ -440,6 +449,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
+	static ONCE_DECL(poolinit_ctrl);
 	int error;
 
 	sc->sc_chan = chp;
@@ -451,6 +461,8 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	if (ata_addref(chp))
 		return;
+
+	RUN_ONCE(&poolinit_ctrl, atabus_xferpool_init);
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;

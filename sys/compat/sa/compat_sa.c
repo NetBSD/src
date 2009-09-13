@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.10 2009/04/16 07:42:28 skrll Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.11 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10 2009/04/16 07:42:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.11 2009/09/13 18:45:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,26 +82,22 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10 2009/04/16 07:42:28 skrll Exp $")
 /*
  * memory pool for sadata structures
  */
-static POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool sadata_pool;
 
 /*
  * memory pool for pending upcalls
  */
-static POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
-    "saupcpl", &pool_allocator_nointr, IPL_NONE);
+static struct pool saupcall_pool;
 
 /*
  * memory pool for sastack structs
  */
-static POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool sastack_pool;
 
 /*
  * memory pool for sadata_vp structures
  */
-static POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool savp_pool;
 
 static struct sadata_vp *sa_newsavp(struct proc *);
 static void sa_freevp(struct proc *, struct sadata *, struct sadata_vp *);
@@ -164,6 +160,20 @@ RB_GENERATE(sasttree, sastack, sast_node, sast_compare);
 
 kmutex_t	saupcall_mutex;
 SIMPLEQ_HEAD(, sadata_upcall) saupcall_freelist;
+
+void
+sa_init(void)
+{
+
+	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
+	    "saupcpl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
+	    &pool_allocator_nointr, IPL_NONE);
+}
 
 /*
  * sa_critpath API

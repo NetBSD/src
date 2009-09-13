@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.132 2009/07/10 23:07:54 dyoung Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.133 2009/09/13 18:45:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.132 2009/07/10 23:07:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.133 2009/09/13 18:45:11 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -243,8 +243,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.132 2009/07/10 23:07:54 dyoung Exp $"
 
 struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
-POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool lwp_uc_pool;
 
 static pool_cache_t lwp_cache;
 static specificdata_domain_t lwp_specificdata_domain;
@@ -253,6 +252,8 @@ void
 lwpinit(void)
 {
 
+	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+	    &pool_allocator_nointr, IPL_NONE);
 	lwp_specificdata_domain = specificdata_domain_create();
 	KASSERT(lwp_specificdata_domain != NULL);
 	lwp_sys_init();

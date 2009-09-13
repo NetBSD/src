@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.29 2009/01/03 18:31:34 pooka Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.30 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -263,8 +263,17 @@ struct _prop_object_iterator {
 #define	_PROP_POOL_GET(p)		pool_get(&(p), PR_WAITOK)
 #define	_PROP_POOL_PUT(p, v)		pool_put(&(p), (v))
 
-#define	_PROP_POOL_INIT(p, s, d)					\
-		POOL_INIT(p, s, 0, 0, 0, d, &pool_allocator_nointr, IPL_NONE);
+struct prop_pool_init {
+	struct pool *pp;
+	size_t size;
+	const char *wchan;
+};
+#define	_PROP_POOL_INIT(pp, size, wchan)				\
+struct pool pp;								\
+static const struct prop_pool_init _link_ ## pp[1] = {			\
+	{ &pp, size, wchan }						\
+};									\
+__link_set_add_rodata(prop_linkpools, _link_ ## pp);
 
 #define	_PROP_MALLOC_DEFINE(t, s, l)					\
 		MALLOC_DEFINE(t, s, l);
