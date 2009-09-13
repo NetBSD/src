@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.65 2009/09/13 19:04:29 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.66 2009/09/13 21:46:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.65 2009/09/13 19:04:29 elad Exp $");
+__RCSID("$NetBSD: if.c,v 1.66 2009/09/13 21:46:23 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ intpr_sysctl(void)
 					continue;
 			}
 
-			printf("%-5s %-5qu ", name, ifd->ifi_mtu);
+			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
 			print_addr(rti_info[RTAX_IFP], rti_info, ifd);
 			break;
 
@@ -234,7 +234,7 @@ intpr_sysctl(void)
 
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			printf("%-5s %-5qu ", name, ifd->ifi_mtu);
+			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
 			print_addr(rti_info[RTAX_IFA], rti_info, ifd);
 			break;
 		}
@@ -589,16 +589,16 @@ static void
 iftot_print(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
-		printf("%10llu %8.8s %10llu %5.5s",
-		    (unsigned long long)(cur->ift_ib - old->ift_ib), " ",
-		    (unsigned long long)(cur->ift_ob - old->ift_ob), " ");
+		printf("%10" PRIu64 "%8.8s %10" PRIu64 "%5.5s",
+		    cur->ift_ib - old->ift_ib, " ",
+		    cur->ift_ob - old->ift_ob, " ");
 	else
-		printf("%8llu %5llu %8llu %5llu %5llu",
-		    (unsigned long long)(cur->ift_ip - old->ift_ip),
-		    (unsigned long long)(cur->ift_ie - old->ift_ie),
-		    (unsigned long long)(cur->ift_op - old->ift_op),
-		    (unsigned long long)(cur->ift_oe - old->ift_oe),
-		    (unsigned long long)(cur->ift_co - old->ift_co));
+		printf("%8" PRIu64 "%5" PRIu64 "%8" PRIu64 "%5" PRIu64 "%5" PRIu64,
+		    cur->ift_ip - old->ift_ip,
+		    cur->ift_ie - old->ift_ie,
+		    cur->ift_op - old->ift_op,
+		    cur->ift_oe - old->ift_oe,
+		    cur->ift_co - old->ift_co);
 	if (dflag)
 		printf(" %5llu",
 		    /* XXX ifnet.if_snd.ifq_drops - ip->ift_dr); */
@@ -609,16 +609,16 @@ static void
 iftot_print_sum(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
-		printf("  %10llu %8.8s %10llu %5.5s",
-		    (unsigned long long)(cur->ift_ib - old->ift_ib), " ",
-		    (unsigned long long)(cur->ift_ob - old->ift_ob), " ");
+		printf("  %10" PRIu64 "%8.8s %10" PRIu64 "%5.5s",
+		    cur->ift_ib - old->ift_ib, " ",
+		    cur->ift_ob - old->ift_ob, " ");
 	else
-		printf("  %8llu %5llu %8llu %5llu %5llu",
-		    (unsigned long long)(cur->ift_ip - old->ift_ip),
-		    (unsigned long long)(cur->ift_ie - old->ift_ie),
-		    (unsigned long long)(cur->ift_op - old->ift_op),
-		    (unsigned long long)(cur->ift_oe - old->ift_oe),
-		    (unsigned long long)(cur->ift_co - old->ift_co));
+		printf("  %8" PRIu64 "%5" PRIu64 "%8" PRIu64 "%5" PRIu64 "%5" PRIu64,
+		    cur->ift_ip - old->ift_ip,
+		    cur->ift_ie - old->ift_ie,
+		    cur->ift_op - old->ift_op,
+		    cur->ift_oe - old->ift_oe,
+		    cur->ift_co - old->ift_co);
 
 	if (dflag)
 		printf(" %5llu", (unsigned long long)(cur->ift_dr - old->ift_dr));
