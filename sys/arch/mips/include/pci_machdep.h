@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.96.1 2009/08/16 03:33:58 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.96.2 2009/09/13 03:29:36 cliff Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _MIPS_INCLUDE_PCI_MACHDEP_H_
+#define _MIPS_INCLUDE_PCI_MACHDEP_H_
 
 /*
  * __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH (if used) needs to be
@@ -116,3 +119,5 @@ struct mips_pci_chipset {
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\
 	(ch), (f), (a)))
 #endif
+
+#endif	/* _MIPS_INCLUDE_PCI_MACHDEP_H_ */
