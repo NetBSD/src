@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.17 2009/09/13 18:39:20 jmcneill Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.18 2009/09/13 18:57:36 snj Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -97,9 +97,9 @@ The argument is either the complete path and file name of the module to be
 loaded, or a symbolic module name.
 When the argument is not an absolute path, the boot loader will first
 attempt to load
-.Pa /stand/<machine>/<kernel_version>/modules/<name>/<name>.kmod .
+.Pa /stand/\*[Lt]machine\*[Gt]/\*[Lt]kernel_version\*[Gt]/modules/\*[Lt]name\*[Gt]/\*[Lt]name\*[Gt].kmod .
 If that file does not exist, it will then attempt to load
-.Pa /<name> .
+.Pa /\*[Lt]name\*[Gt] .
 May be used as many times as needed.
 .It Sy menu
 (may be present multiple times)
