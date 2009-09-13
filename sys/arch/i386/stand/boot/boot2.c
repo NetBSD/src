@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.44 2009/03/21 15:01:56 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.45 2009/09/13 22:45:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -420,7 +420,8 @@ command_dev(char *arg)
 	const char *file; /* dummy */
 
 	if (*arg == '\0') {
-		printf("%s%d%c:\n", default_devname, default_unit,
+		biosdisk_probe();
+		printf("default %s%d%c\n", default_devname, default_unit,
 		       'a' + default_partition);
 		return;
 	}
