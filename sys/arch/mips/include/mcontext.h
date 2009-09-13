@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8.18.2 2009/09/12 17:23:06 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.18.3 2009/09/13 23:38:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ struct __fpregset_oabi {
 	union {
 		double	__fp_dregs[16];
 		float	__fp_fregs[32];
-		int32_t __fp_regs[32];
+		__int32_t __fp_regs[32];
 	} __fp_r;
 	unsigned int	__fp_csr;
 	unsigned int	__fp_pad;
@@ -128,7 +128,7 @@ typedef struct {
 } mcontext_t;
 
 #if defined(_KERNEL) && defined(_LP64)
-typedef	int32_t		__greg32_t;
+typedef	__int32_t	__greg32_t;
 typedef __greg32_t	__gregset32_t[_NGREG];
 
 typedef struct {
