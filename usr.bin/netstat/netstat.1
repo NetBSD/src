@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.53 2009/09/13 02:53:17 elad Exp $
+.\"	$NetBSD: netstat.1,v 1.54 2009/09/13 09:17:26 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,12 +266,12 @@ Show network interface statistics at intervals of
 seconds.
 .It Fl X
 Force use of
-.Xr sysctl 2
+.Xr sysctl 3
 when retrieving information.
 Some features of
 .Nm
 may not be (fully) supported when using
-.Xr sysctl 2 .
+.Xr sysctl 3 .
 This flag forces the use of the latter regardless, and emits a message if a
 not yet fully supported feature is used in conjunction with it.
 This flag might be removed at any time; do not rely on its presence.
