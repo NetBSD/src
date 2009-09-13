@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.37 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: netstat.h,v 1.38 2009/09/13 02:53:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
 
 int	af;		/* address family */
 int	use_sysctl;	/* use sysctl instead of kmem */
+int	force_sysctl;	/* force use of sysctl (or exit) - for testing */
 
 
 int	kread __P((u_long addr, char *buf, int size));
