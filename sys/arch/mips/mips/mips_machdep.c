@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.11 2009/09/12 18:19:17 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.12 2009/09/13 03:30:27 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.11 2009/09/12 18:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.12 2009/09/13 03:30:27 cliff Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -447,6 +447,10 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_HAVE_SPECIAL_CCA | (5 << CPU_MIPS_CACHED_CCA_SHIFT),
 						"SB-1"			},
 
+	{ MIPS_PRID_CID_RMI, MIPS_XLS616, -1,	-1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT,
+						"XLS616"		},
+
 	{ 0, 0, 0,				0, 0, 0,
 	  0,					NULL			}
 };
@@ -471,6 +475,13 @@ static const char * const cidnames[] = {
 	"Alchemy",	/* or "Alchemy Semiconductor"	*/
 	"SiByte",	/* or "Broadcom Corp. (SiByte)"	*/
 	"SandCraft",
+	"Phillips",
+	"Toshiba",
+	"LSI",
+	"(unannounced)",
+	"(unannounced)",
+	"Lexra",
+	"RMI",
 };
 #define	ncidnames (sizeof(cidnames) / sizeof(cidnames[0]))
 
@@ -1494,6 +1505,8 @@ dumpsys(void)
 		bytes = mem_clusters[memcl].size;
 
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
+			void *maddr_va;
+
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
 				printf_nolog("%ld ",
@@ -1504,8 +1517,12 @@ dumpsys(void)
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			error = (*dump)(dumpdev, blkno,
-			    (void *)MIPS_PHYS_TO_KSEG0(maddr), n);
+#ifdef _LP64
+			maddr_va = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(maddr);
+#else
+			maddr_va = (void *)MIPS_PHYS_TO_KSEG0(maddr);
+#endif
+			error = (*dump)(dumpdev, blkno, maddr_va, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1565,7 +1582,11 @@ mips_init_msgbuf(void)
 
 	vps->end -= atop(sz);
 	vps->avail_end -= atop(sz);
+#ifdef _LP64
+	msgbufaddr = (void *) MIPS_PHYS_TO_XKPHYS_CACHED(ptoa(vps->end));
+#else
 	msgbufaddr = (void *) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
+#endif
 	initmsgbuf(msgbufaddr, sz);
 
 	/* Remove the last segment if it now has no pages. */
