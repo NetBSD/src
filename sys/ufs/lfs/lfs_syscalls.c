@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.134 2009/01/11 02:45:56 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.135 2009/09/13 05:17:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.134 2009/01/11 02:45:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.135 2009/09/13 05:17:37 tsutsui Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1018,7 +1018,6 @@ sys___lfs_segwait50(struct lwp *l, const struct sys___lfs_segwait50_args *uap,
  * we lfs_vref, and it is the caller's responsibility to lfs_vunref
  * when finished.
  */
-extern kmutex_t ufs_hashlock;
 
 int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
