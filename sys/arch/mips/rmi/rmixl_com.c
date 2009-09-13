@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,10 +144,9 @@ volatile uint32_t *com0addr = (uint32_t *)
 	MIPS_PHYS_TO_KSEG1(RMIXL_IO_DEV_PBASE + RMIXL_IO_DEV_UART_1);
 
 void
-rmixl_putchar_init(uint64_t io_base)
+rmixl_putchar_init(uint64_t io_pbase)
 {
-	com0addr = (uint32_t *)
-		MIPS_PHYS_TO_KSEG1(io_base + RMIXL_IO_DEV_UART_1);
+	com0addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
 }
 
 void

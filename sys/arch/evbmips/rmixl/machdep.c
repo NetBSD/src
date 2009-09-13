@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -264,7 +264,7 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 	physmem = btoc(memsize);
 
 	rcp = &rmixl_configuration;
-	rcp->rc_io_base = rmixlfw_info.io_base;
+	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
 	rmixl_bus_mem_init(&rcp->rc_memt, rcp);
 #ifdef NOTYET
 	rmixl_bus_io_init(&rcp->rc_iot, rcp);
@@ -392,7 +392,7 @@ rmixlfw_init(void *infop)
 			goto found;
 	}
 
-	rmixl_putchar_init(rmixlfw_info.io_base);
+	rmixl_putchar_init(MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base));
 	rmixl_puts("\r\nWARNING: untested psb_version: ");
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");

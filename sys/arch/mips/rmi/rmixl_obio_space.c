@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio_space.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio_space.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $");
 
+#include <sys/types.h>
 #include <sys/param.h>
 
 #include <machine/bus.h>
@@ -50,32 +51,34 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.1 2009/09/13 03:27:38 cli
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	0
 #define	CHIP_W1_BUS_END(v)	(RMIXL_IO_DEV_SIZE - 1)
-#define	CHIP_W1_SYS_START(v)	(((struct rmixl_config *)(v))->rc_io_base)
+#define	CHIP_W1_SYS_START(v)	(((struct rmixl_config *)(v))->rc_io_pbase)
 #define	CHIP_W1_SYS_END(v)	(CHIP_W1_SYS_START(v) + RMIXL_IO_DEV_SIZE - 1)
-
-struct mips_bus_space   rmixl_bus_memt;
-struct mips_bus_dma_tag rmixl_bus_dmat;
 
 void
 rmixl_obio_bus_init(void)
 {
 	static int done = 0;
+
 	if (done)
 		return;
 	done = 1;
-
-	rmixl_bus_mem_init(&rmixl_bus_memt, &rmixl_configuration);
+	rmixl_bus_mem_init(&rmixl_configuration.rc_memt, &rmixl_configuration);
 #ifdef NOTYET
-	rmixl_dma_init(NULL, &rmixl_bus_dmat);
+	rmixl_dma_init(&rmixl_configuration.rc_pci_dmat);
 #endif
 }
 
-/* this primarily exists so we can get to the console... */
 bus_space_tag_t
 rmixl_obio_get_bus_space_tag(void)
 {
-	rmixl_obio_bus_init();
-	return (bus_space_tag_t)&rmixl_bus_memt;
+	return (bus_space_tag_t)&rmixl_configuration.rc_memt;
 }
+
+bus_addr_t
+rmixl_obio_get_io_pbase(void)
+{
+	return (bus_addr_t)rmixl_configuration.rc_io_pbase;
+}
+
 
 #include <mips/mips/bus_space_alignstride_chipdep.c>
