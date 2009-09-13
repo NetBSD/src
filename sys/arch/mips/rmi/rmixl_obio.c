@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.2 2009/09/13 20:35:00 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.2 2009/09/13 20:35:00 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp
 #include <machine/bus.h>
 
 #include <mips/rmi/rmixlreg.h>
+#include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_obiovar.h>
 
 #include "locators.h"
@@ -78,24 +79,16 @@ void
 obio_attach(struct device *parent, device_t self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
-#if 0
-	bus_space_handle_t *ioh;
-	int err;
-#endif
+	bus_addr_t ba;
 
 	obio_found = 1;
 
-	sc->sc_iot = rmixl_obio_get_bus_space_tag();
+	rmixl_obio_bus_init();
+	ba = rmixl_obio_get_io_pbase();
+	sc->sc_bst = rmixl_obio_get_bus_space_tag();
 
+	aprint_normal(" addr %#lx size %#x\n", ba, RMIXL_IO_DEV_SIZE);
 	aprint_naive("\n");
-	aprint_normal("\n");
-
-#if 0
-	err = bus_space_map(sc->sc_iot, RMIXL_IO_DEV_PBASE, RMIXL_IO_DEV_SIZE, 0, &ioh);
-	if (err)
-		panic("%s: bus_space_map failed, iot %p, addr %#lx, size %#x\n",
-			__func__, sc->sc_iot, RMIXL_IO_DEV_PBASE, RMIXL_IO_DEV_SIZE);
-#endif
 
 	/*
 	 * Attach on-board devices as specified in the kernel config file.
@@ -123,9 +116,10 @@ int
 obio_search(struct device *parent, struct cfdata *cf,
 	    const int *ldesc, void *aux)
 {
+	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args obio;
 
-	obio.obio_bst = rmixl_obio_get_bus_space_tag();
+	obio.obio_bst = sc->sc_bst;
 	obio.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
