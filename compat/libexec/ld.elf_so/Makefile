@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2008/11/06 23:51:26 snj Exp $
+#	$NetBSD: Makefile,v 1.1.2.1.4.1 2009/09/13 21:21:17 matt Exp $
 
 NOMAN=	# defined
 
@@ -8,8 +8,6 @@ NOMAN=	# defined
 .if ${MKPIC} != "no"
 
 SHLINKINSTALLDIR=	/usr/libexec
-
-LDFLAGS+=		-m32
 
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
@@ -28,6 +26,10 @@ ARCHSUBDIR=	sparc
 .elif ${MACHINE} == "amd64"
 PROG=		ld.elf_so-i386
 ARCHSUBDIR=	i386
+.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+PROG=		ld.elf_so-64
+ARCHSUBDIR=	mips
+ABI64=		-mabi=64
 .endif
 
 # XXX why do i need this?

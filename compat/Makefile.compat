@@ -1,17 +1,36 @@
-#	$NetBSD: Makefile.compat,v 1.3 2008/10/28 22:58:23 mrg Exp $
+#	$NetBSD: Makefile.compat,v 1.3.8.1 2009/09/13 21:21:16 matt Exp $
 
+# XXX ugly
+.if ${MACHINE} == "sparc64"
+LD+=			-m elf32_sparc
+LDFLAGS+=		-m32
+LD32DIR=		sparc
+ARCH32DIR=		sparc
 COPTS+=			-m32
 CPUFLAGS+=		-m32
 LDADD+=			-m32
 MKDEPFLAGS+=		-m32
 
-# XXX ugly
-.if ${MACHINE} == "sparc64"
-LD+=			-m elf32_sparc
-LD32DIR=		sparc
 .elif ${MACHINE} == "amd64"
 LD+=			-m elf_i386
+LDFLAGS+=		-m32
 LD32DIR=		i386
+ARCH32DIR=		i386
+COPTS+=			-m32
+CPUFLAGS+=		-m32
+LDADD+=			-m32
+MKDEPFLAGS+=		-m32
+
+.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+LD+=			-m elf64${MACHINE_ARCH:S/mips64e//}tsmip
+LDFLAGS+=		-mabi=64
+LD32DIR=		lib64
+ARCH32DIR=		${MACHINE_ARCH}
+COPTS+=			-mabi=64
+CPUFLAGS+=		-mabi=64
+LDADD+=			-mabi=64
+MKDEPFLAGS+=		-mabi=64
+
 .endif
 
 LIBDIR=			/usr/lib/${LD32DIR}
