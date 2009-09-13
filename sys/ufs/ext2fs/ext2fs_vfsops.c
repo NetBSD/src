@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.149 2009/09/12 02:50:38 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.150 2009/09/13 05:17:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.149 2009/09/12 02:50:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.150 2009/09/13 05:17:36 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.149 2009/09/12 02:50:38 tsutsui 
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
-
-extern kmutex_t ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
