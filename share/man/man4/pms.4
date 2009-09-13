@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.21.34.1 2009/09/13 22:13:04 snj Exp $
+.\" $NetBSD: pms.4,v 1.21.34.2 2009/09/13 22:13:54 snj Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -187,3 +187,7 @@ pad support were by Jared D. McNeill.
 It is possible for the driver to mistakenly negotiate the non-scroll-wheel
 protocol, after which it is unlikely to recover until the device is closed
 and reopened.
+.Pp
+The
+.Dq Elantech
+pad code only supports trackpads with firmware version 2.48 or above.
