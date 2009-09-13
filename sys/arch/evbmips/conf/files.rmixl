@@ -1,0 +1,86 @@
+#	$NetBSD: files.rmixl,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+
+file	arch/evbmips/rmixl/autoconf.c
+file	arch/evbmips/rmixl/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/disksubr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
+file	arch/mips/mips/softintr.c
+
+# The autoconfiguration root.
+device	mainbus { [addr = -1] }
+attach	mainbus at root
+file	arch/mips/rmi/rmixl_mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/rmixl/cpu.c		cpu
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
+
+# Machine-independent PC-style keyboard controller drivers
+include "dev/pckbport/files.pckbport"
+
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks
+
+include "dev/pci/files.pci"
+include "dev/isa/files.isa"
+
+#device	panel
+#attach	panel at mainbus
+#file	arch/evbmips/rmixl/dev/panel.c		panel
+
+#
+# PCI bus support.
+#
+## TBD
+
+file	arch/evbmips/rmixl/pci/pci_machdep.c	pci
+file	arch/evbmips/rmixl/pci/pciide_machdep.c	pciide_common
+
+device	pchb
+attach	pchb at pci
+file	arch/evbmips/rmixl/pci/pchb.c		pchb
+
+device	pcib: isabus
+attach	pcib at pci
+file	arch/evbmips/rmixl/pci/pcib.c		pcib
+
+#
+# ISA bus support.
+#
+device	mcclock: mc146818
+attach	mcclock at isa with mcclock_isa
+file	arch/evbmips/isa/mcclock_isa.c		mcclock_isa
+
+file	arch/evbmips/isa/isadma_bounce.c	isa
+
+# Floppy disk controller
+device	fdc { drive = -1 }: isadma
+file	dev/isa/fd.c				fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
+
+device	fd: disk
+attach	fd at fdc
+
+#
+# Devices on the local I/O bus.
+#
+include "arch/mips/conf/files.rmixl"

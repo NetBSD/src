@@ -1,0 +1,24 @@
+# $NetBSD: std.rmixl,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+# Platform support
+options		MIPS32
+options		MIPS64
+options		MIPS64_XLS
+options		ENABLE_MIPS_16KB_PAGE
+##no options	VMSWAP_UAREA
+
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	CPUFLAGS+="-mips64"
+##makeoptions	CFLAGS+="-mips64"
+makeoptions	DEFTEXTADDR="0x80100000"
+makeoptions	BOARDTYPE="rmixl"
+
+include "arch/evbmips/conf/files.rmixl"

@@ -1,0 +1,10 @@
+# $NetBSD: XLS6ATX_7A64,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+#
+include "arch/evbmips/conf/XLS6ATX_7A"
+
+makeoptions	LP64="yes"
+makeoptions	CPUFLAGS+="-mips64"
+makeoptions	AFLAGS+="-mips64"
+
+no options 	MIPS32
+options 	EXEC_ELF64
