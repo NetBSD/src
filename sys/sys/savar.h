@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.28 2008/10/17 08:16:57 cegger Exp $	*/
+/*	$NetBSD: savar.h,v 1.29 2009/09/13 18:45:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -169,6 +169,8 @@ struct sadata {
 #define SA_FLAG_ALL	SA_FLAG_PREEMPT
 
 #define	SA_MAXNUMSTACKS	16		/* Maximum number of upcall stacks per VP. */
+
+void	sa_init(void);
 
 struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.9 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.10 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -224,11 +224,26 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm.h>
 
+#include "prop_object_impl.h"
+
 /* Arbitrary limit ioctl input to 64KB */
 unsigned int prop_object_copyin_limit = 65536;
+
+/* initialize proplib for use in the kernel */
+void
+prop_kern_init(void)
+{
+	__link_set_decl(prop_linkpools, struct prop_pool_init);
+	struct prop_pool_init * const *pi;
+
+	__link_set_foreach(pi, prop_linkpools)
+		pool_init((*pi)->pp, (*pi)->size, 0, 0, 0, (*pi)->wchan,
+		    &pool_allocator_nointr, IPL_NONE);
+}
 
 static int
 _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
