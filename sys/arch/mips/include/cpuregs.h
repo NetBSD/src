@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.8 2009/09/08 07:54:53 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.9 2009/09/13 03:28:22 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -868,6 +868,9 @@
 #endif
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>
+#endif
+#if defined(MIPS64_XLP) || defined(MIPS64_XLR) || defined(MIPS64_XLS)
+#include <mips/rmi/rmixlreg.h>
 #endif
 
 #endif /* _MIPS_CPUREGS_H_ */
