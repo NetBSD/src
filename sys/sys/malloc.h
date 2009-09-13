@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.104 2009/01/07 21:06:31 pooka Exp $	*/
+/*	$NetBSD: malloc.h,v 1.105 2009/09/13 18:45:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -105,6 +105,7 @@ void	kern_free(void *, struct malloc_type *);
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
+void	debug_malloc_init(void);
 int	debug_malloc(unsigned long, struct malloc_type *, int, void **);
 int	debug_free(void *, struct malloc_type *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib.h,v 1.6 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: proplib.h,v 1.7 2009/09/13 18:45:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,5 +42,9 @@
 #include <prop/prop_ingest.h>
 
 #include <prop/plistref.h>
+
+#ifdef _KERNEL
+void	prop_kern_init(void);
+#endif
 
 #endif /* _PROPLIB_PROPLIB_H_ */
