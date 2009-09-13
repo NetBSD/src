@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.8 2009/09/08 00:51:14 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.9 2009/09/13 03:31:05 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1053,8 +1053,14 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	PTR_LA	k0, panic			# return to panic
 	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
+#if defined(MIPS64_XLS)
+	# CP0 ECC and CACHE_ERR "not implemented"
+	move	a2, $0
+	move	a3, $0
+#else
 	mfc0	a2, MIPS_COP_0_ECC
 	mfc0	a3, MIPS_COP_0_CACHE_ERR
+#endif
 
 	_MTC0	k0, MIPS_COP_0_ERROR_PC		# set return address
 	COP0_SYNC
