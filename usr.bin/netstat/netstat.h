@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.38 2009/09/13 02:53:17 elad Exp $	*/
+/*	$NetBSD: netstat.h,v 1.39 2009/09/14 10:36:51 degroote Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@ void	igmp_stats __P((u_long, const char *));
 void	pim_stats __P((u_long, const char *));
 void	arp_stats __P((u_long, const char *));
 void	carp_stats __P((u_long, const char *));
+void	pfsync_stats __P((u_long, const char*));
 #ifdef IPSEC
 /* run-time selector for which  implementation (KAME, FAST_IPSEC) to show */
 void	ipsec_switch __P((u_long, const char *));

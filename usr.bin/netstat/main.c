@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2009/09/13 02:53:17 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2009/09/14 10:36:51 degroote Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.72 2009/09/13 02:53:17 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2009/09/14 10:36:51 degroote Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,8 @@ struct nlist nl[] = {
 	{ "_pimstat", 0, 0, 0, 0 },
 #define N_CARPSTAT	65
 	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
+#define N_PFSYNCSTAT	66
+	{ "_pfsyncstats", 0, 0, 0, 0},  /* not available via kvm */
 	{ "", 0, 0, 0, 0 },
 };
 
@@ -233,6 +235,8 @@ struct protox {
 #endif
 	{ -1,		N_PIMSTAT,	1,	0,
 	  pim_stats,	NULL,		0,	"pim" },
+	{ -1,		N_PFSYNCSTAT,  1,  0,
+	  pfsync_stats,  NULL,		0,  "pfsync" },	
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0,	0 }
 };
