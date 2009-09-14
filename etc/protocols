@@ -1,4 +1,4 @@
-# $NetBSD: protocols,v 1.20 2008/11/30 08:49:25 tsutsui Exp $
+# $NetBSD: protocols,v 1.21 2009/09/14 10:36:49 degroote Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 # 
@@ -157,6 +157,7 @@ mobility     135 Mobility     # Header                               [RFC3775]
 udplite      136 UDPLite      # [RFC3828]
 mpls-in-ip   137 MPLS-in-IP   # [RFC4023]
 #    138-252 Unassigned                                       [IANA]
+pfsync		 240 PFSYNC		  # PF Synchronization
 use          253 Use          # for experimentation and testing           [RFC3692] 
 use          254 Use          # for experimentation and testing           [RFC3692] 
 #    255                 Reserved                             [IANA]

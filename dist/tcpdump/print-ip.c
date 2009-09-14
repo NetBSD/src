@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.7 2007/07/24 11:53:44 drochner Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.8 2009/09/14 10:36:49 degroote Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.149.2.8 2007/01/29 20:57:47 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.7 2007/07/24 11:53:44 drochner Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.8 2009/09/14 10:36:49 degroote Exp $");
 #endif
 #endif
 
@@ -523,6 +523,10 @@ again:
 
 	case IPPROTO_PGM:
 		pgm_print(ipds->cp, ipds->len, (const u_char *)ipds->ip);
+		break;
+
+	case IPPROTO_PFSYNC:
+		pfsync_ip_print(ipds->cp, ipds->len, (const u_char *)ipds->ip);
 		break;
 
 	default:

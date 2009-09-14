@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1157 2009/09/08 07:08:01 skrll Exp $
+# $NetBSD: mi,v 1.1158 2009/09/14 10:36:49 degroote Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1285,6 +1285,7 @@
 ./usr/share/man/cat4/pdcsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pf.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat4/pflog.0			man-pf-catman		pf,.cat
+./usr/share/man/cat4/pfsync.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat4/phy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/piixide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/piixpcib.0			man-sys-catman		.cat
@@ -3851,6 +3852,7 @@
 ./usr/share/man/html4/pdcsata.html		man-sys-htmlman		html
 ./usr/share/man/html4/pf.html			man-pf-htmlman		pf,html
 ./usr/share/man/html4/pflog.html		man-pf-htmlman		pf,html
+./usr/share/man/html4/pfsync.html		man-pf-htmlman		pf,html
 ./usr/share/man/html4/phy.html			man-sys-htmlman		html
 ./usr/share/man/html4/piixide.html		man-sys-htmlman		html
 ./usr/share/man/html4/piixpcib.html		man-sys-htmlman		html
@@ -6295,6 +6297,7 @@
 ./usr/share/man/man4/pdcsata.4			man-sys-man		.man
 ./usr/share/man/man4/pf.4			man-pf-man		pf,.man
 ./usr/share/man/man4/pflog.4			man-pf-man		pf,.man
+./usr/share/man/man4/pfsync.4			man-pf-man		pf,.man
 ./usr/share/man/man4/phy.4			man-sys-man		.man
 ./usr/share/man/man4/piixide.4			man-sys-man		.man
 ./usr/share/man/man4/piixpcib.4			man-sys-man		.man
