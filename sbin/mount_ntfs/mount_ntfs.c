@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.22 2009/09/14 12:43:46 pooka Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.22 2009/09/14 12:43:46 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ mount_ntfs_parseargs(int argc, char **argv,
 	pathadj(dev, canon_dev);
 	pathadj(dir, canon_dir);
 
-	args->fspec = dev;
+	args->fspec = canon_dev;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(EX_OSERR, "stat %s", dir);
