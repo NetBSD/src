@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.47 2009/05/17 02:08:35 tsutsui Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.48 2009/09/14 12:02:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.47 2009/05/17 02:08:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.48 2009/09/14 12:02:48 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -137,7 +137,6 @@ struct stge_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 	int sc_rev;			/* silicon revision */
 
 	void *sc_ih;			/* interrupt cookie */
@@ -266,7 +265,7 @@ static int	stge_ioctl(struct ifnet *, u_long, void *);
 static int	stge_init(struct ifnet *);
 static void	stge_stop(struct ifnet *, int);
 
-static void	stge_shutdown(void *);
+static bool	stge_shutdown(device_t, int);
 
 static void	stge_reset(struct stge_softc *);
 static void	stge_rxdrain(struct stge_softc *);
@@ -696,10 +695,11 @@ stge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(stge_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(self,
-		    "WARNING: unable to establish shutdown hook\n");
+	if (pmf_device_register1(self, NULL, NULL, stge_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -735,12 +735,15 @@ stge_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-stge_shutdown(void *arg)
+static bool
+stge_shutdown(device_t self, int howto)
 {
-	struct stge_softc *sc = arg;
+	struct stge_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	stge_stop(&sc->sc_ethercom.ec_if, 1);
+	stge_stop(ifp, 1);
+
+	return true;
 }
 
 static void
