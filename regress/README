@@ -1,5 +1,9 @@
-$NetBSD: README,v 1.1 2006/03/14 09:46:34 martin Exp $
+$NetBSD: README,v 1.2 2009/09/14 17:15:32 apb Exp $
 
+NOTE: New tests should use the ATF framework; see atf(7)
+and the src/tests directory.
+
+------------------------------------------------------------------------
 This part of the source tree contains regression tests. There are special
 make targets and rules to follow. Most of these, however, are currently not
 enforced, and most tests available are not conforming.
