@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.4,v 1.10 2009/09/14 10:36:48 degroote Exp $
+.\"	$NetBSD: pf.4,v 1.11 2009/09/14 11:17:49 wiz Exp $
 .\"	$OpenBSD: pf.4,v 1.59 2007/05/31 19:19:51 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 31, 2007
+.Dd September 14, 2009
 .Dt PF 4
 .Os
 .Sh NAME
@@ -1065,32 +1065,32 @@ The following example demonstrates how to use the
 .Dv DIOCNATLOOK
 command to find the internal host/port of a NATed connection:
 .Bd -literal
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <net/pfvar.h>
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]sys/socket.h\*[Gt]
+#include \*[Lt]sys/ioctl.h\*[Gt]
+#include \*[Lt]sys/fcntl.h\*[Gt]
+#include \*[Lt]net/if.h\*[Gt]
+#include \*[Lt]netinet/in.h\*[Gt]
+#include \*[Lt]net/pfvar.h\*[Gt]
+#include \*[Lt]err.h\*[Gt]
+#include \*[Lt]stdio.h\*[Gt]
+#include \*[Lt]stdlib.h\*[Gt]
 
 u_int32_t
 read_address(const char *s)
 {
 	int a, b, c, d;
 
-	sscanf(s, "%i.%i.%i.%i", &a, &b, &c, &d);
-	return htonl(a << 24 | b << 16 | c << 8 | d);
+	sscanf(s, "%i.%i.%i.%i", \*[Am]a, \*[Am]b, \*[Am]c, \*[Am]d);
+	return htonl(a \*[Lt]\*[Lt] 24 | b \*[Lt]\*[Lt] 16 | c \*[Lt]\*[Lt] 8 | d);
 }
 
 void
 print_address(u_int32_t a)
 {
 	a = ntohl(a);
-	printf("%d.%d.%d.%d", a >> 24 & 255, a >> 16 & 255,
-	    a >> 8 & 255, a & 255);
+	printf("%d.%d.%d.%d", a \*[Gt]\*[Gt] 24 \*[Am] 255, a \*[Gt]\*[Gt] 16 \*[Am] 255,
+	    a \*[Gt]\*[Gt] 8 \*[Am] 255, a \*[Am] 255);
 }
 
 int
@@ -1100,7 +1100,7 @@ main(int argc, char *argv[])
 	int dev;
 
 	if (argc != 5) {
-		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\\n",
+		printf("%s \*[Lt]gwy addr\*[Gt] \*[Lt]gwy port\*[Gt] \*[Lt]ext addr\*[Gt] \*[Lt]ext port\*[Gt]\\n",
 		    argv[0]);
 		return 1;
 	}
@@ -1109,7 +1109,7 @@ main(int argc, char *argv[])
 	if (dev == -1)
 		err(1, "open(\\"/dev/pf\\") failed");
 
-	memset(&nl, 0, sizeof(struct pfioc_natlook));
+	memset(\*[Am]nl, 0, sizeof(struct pfioc_natlook));
 	nl.saddr.v4.s_addr	= read_address(argv[1]);
 	nl.sport		= htons(atoi(argv[2]));
 	nl.daddr.v4.s_addr	= read_address(argv[3]);
@@ -1118,7 +1118,7 @@ main(int argc, char *argv[])
 	nl.proto		= IPPROTO_TCP;
 	nl.direction		= PF_IN;
 
-	if (ioctl(dev, DIOCNATLOOK, &nl))
+	if (ioctl(dev, DIOCNATLOOK, \*[Am]nl))
 		err(1, "DIOCNATLOOK");
 
 	printf("internal host ");
