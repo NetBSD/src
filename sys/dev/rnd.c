@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.75 2009/09/13 18:45:10 pooka Exp $	*/
+/*	$NetBSD: rnd.c,v 1.76 2009/09/14 09:26:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.75 2009/09/13 18:45:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.76 2009/09/14 09:26:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.75 2009/09/13 18:45:10 pooka Exp $");
 #include <sys/kauth.h>
 #include <sys/once.h>
 
-#ifdef __HAVE_CPU_COUNTER
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 #include <machine/cpu_counter.h>
 #endif
 
