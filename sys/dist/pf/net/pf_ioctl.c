@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.35 2009/07/28 18:15:26 minskim Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.36 2009/09/14 10:36:50 degroote Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,18 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.35 2009/07/28 18:15:26 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.36 2009/09/14 10:36:50 degroote Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 #endif
 
-#ifndef __NetBSD__
 #include "pfsync.h"
-#else
-#define NPFSYNC 0
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

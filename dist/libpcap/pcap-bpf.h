@@ -37,7 +37,7 @@
  *
  *      @(#)bpf.h       7.1 (Berkeley) 5/7/91
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-bpf.h,v 1.1.1.1 2006/02/27 15:45:47 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap-bpf.h,v 1.2 2009/09/14 10:36:48 degroote Exp $ (LBL)
  */
 
 /*
@@ -299,8 +299,8 @@ struct bpf_version {
  */
 #ifdef __OpenBSD__
 #define DLT_OLD_PFLOG	17
-#define DLT_PFSYNC	18
 #endif
+#define DLT_PFSYNC	18
 #define DLT_PFLOG	117
 
 /*
