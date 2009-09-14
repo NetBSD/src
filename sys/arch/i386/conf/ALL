@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.209 2009/09/12 18:53:22 tsutsui Exp $
+# $NetBSD: ALL,v 1.210 2009/09/14 11:38:29 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.209 $"
+#ident 		"ALL-$Revision: 1.210 $"
 
 maxusers	32		# estimated number of users
 
@@ -114,8 +114,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#options 	IPKDB		# IP Kernel Debugger
-#options 	IPKDBKEY="\"yes\""
+options 	IPKDB		# IP Kernel Debugger
+options 	IPKDBKEY="\"Pass_phrase_to_debug_over_network\""
 makeoptions 	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES 	# per syscall times
