@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pfsync.c,v 1.1 2009/09/14 10:36:49 degroote Exp $	*/
+/*	$NetBSD: print-pfsync.c,v 1.2 2009/09/14 15:18:15 he Exp $	*/
 /*	$OpenBSD: print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
@@ -31,9 +31,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/dist/tcpdump/Attic/print-pfsync.c,v 1.1 2009/09/14 10:36:49 degroote Exp $";
+    "@(#) $Header: /cvsroot/src/dist/tcpdump/Attic/print-pfsync.c,v 1.2 2009/09/14 15:18:15 he Exp $";
 #else
-__RCSID("$NetBSD: print-pfsync.c,v 1.1 2009/09/14 10:36:49 degroote Exp $");
+__RCSID("$NetBSD: print-pfsync.c,v 1.2 2009/09/14 15:18:15 he Exp $");
 #endif
 #endif
 
@@ -211,7 +211,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	case PFSYNC_ACT_TDB_UPD:
 		for (i = 1, t = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*t) <= len; i++, t++)
-			printf("\n\tspi: %08x rpl: %u cur_bytes: %llu",
+			printf("\n\tspi: %08x rpl: %u cur_bytes: %" PRIu64,
 			    htonl(t->spi), htonl(t->rpl),
 			    be64toh(t->cur_bytes));
 			/* XXX add dst and sproto? */
