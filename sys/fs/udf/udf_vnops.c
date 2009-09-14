@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.54 2009/07/30 12:13:51 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.55 2009/09/14 21:10:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.54 2009/07/30 12:13:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.55 2009/09/14 21:10:44 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -364,16 +364,14 @@ udf_write(void *v)
 		 * flush what we just wrote if necessary.
 		 * XXXUBC simplistic async flushing.
 		 *
-		 * this one works on page sizes. Directories are excluded
-		 * since its file data that we want to purge.
+		 * Directories are excluded since its file data that we want
+		 * to purge.
 		 */
 		if (!async && (vp->v_type != VDIR) &&
-		  (uio->uio_offset - old_offset >= PAGE_SIZE)) {
+		  (old_offset >> 16 != uio->uio_offset >> 16)) {
 			mutex_enter(&vp->v_interlock);
-			error = VOP_PUTPAGES(vp,
-				ptoa(atop(old_offset)),
-				ptoa(atop(uio->uio_offset + PAGE_SIZE-1)),
-				PGO_CLEANIT);
+			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
+			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			old_offset = uio->uio_offset;
 		}
 	}
@@ -1297,9 +1295,18 @@ udf_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *udf_node = VTOI(vp);
+	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
+	int error;
 
 	DPRINTF(CALL, ("udf_close called\n"));
 	udf_node = udf_node;	/* shut up gcc */
+
+	if (!async && (vp->v_type != VDIR)) {
+		mutex_enter(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0, PGO_CLEANIT);
+		if (error)
+			return error;
+	}
 
 	mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 1)
