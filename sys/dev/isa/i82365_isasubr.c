@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.43 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.44 2009/09/14 13:41:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.43 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.44 2009/09/14 13:41:15 tsutsui Exp $");
 
 #define	PCICISADEBUG
 
@@ -126,7 +126,7 @@ int	pcicsubr_debug = 0;
  * just use socket 0
  */
 
-void pcic_isa_probe_interrupts(struct pcic_softc *, struct pcic_handle *);
+void pcic_isa_probe_interrupts(struct pcic_isa_softc *, struct pcic_handle *);
 static int pcic_isa_count_intr(void *);
 
 static int
@@ -138,8 +138,8 @@ pcic_isa_count_intr(void *arg)
 	int cscreg;
 
 	h = arg;
-	sc = (struct pcic_softc *)h->ph_parent;
-	isc = (struct pcic_isa_softc *)h->ph_parent;
+	isc = device_private(h->ph_parent);
+	sc = &isc->sc_pcic;
 
 	cscreg = pcic_read(h, PCIC_CSC);
 	if (cscreg & PCIC_CSC_CD) {
@@ -176,9 +176,9 @@ pcic_isa_count_intr(void *arg)
  * for this controller
  */
 void
-pcic_isa_probe_interrupts(struct pcic_softc *sc, struct pcic_handle *h)
+pcic_isa_probe_interrupts(struct pcic_isa_softc *isc, struct pcic_handle *h)
 {
-	struct pcic_isa_softc *isc = (void *) sc;
+	struct pcic_softc *sc = &isc->sc_pcic;
 	isa_chipset_tag_t ic;
 	int i, j, mask, irq;
 	int cd, cscintr, intr, csc;
@@ -277,8 +277,8 @@ pcic_isa_config_interrupts(device_t self)
 	isa_chipset_tag_t ic;
 	int s, i, chipmask, chipuniq;
 
-	sc = (struct pcic_softc *) self;
-	isc = (struct pcic_isa_softc *) self;
+	isc = device_private(self);
+	sc = &isc->sc_pcic;
 	ic = isc->sc_ic;
 
 	/* probe each controller */
@@ -297,7 +297,7 @@ pcic_isa_config_interrupts(device_t self)
 		/* the cirrus chips lack support for the soft interrupt */
 		if (pcic_irq_probe != 0 &&
 		    h->vendor != PCIC_VENDOR_CIRRUS_PD67XX)
-			pcic_isa_probe_interrupts(sc, h);
+			pcic_isa_probe_interrupts(isc, h);
 
 		chipmask &= sc->intr_mask[h->chip];
 	}
@@ -328,17 +328,17 @@ pcic_isa_config_interrupts(device_t self)
 			if ((chipmask & (1 << sc->irq)) == 0)
 				printf("%s: warning: configured irq %d not "
 				    "detected as available\n",
-				    device_xname(&sc->dev), sc->irq);
+				    device_xname(self), sc->irq);
 		} else if (chipmask == 0 ||
 		    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
-			aprint_error_dev(&sc->dev, "no available irq; ");
+			aprint_error_dev(self, "no available irq; ");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
-			aprint_error_dev(&sc->dev, "can't share irq with cards; ");
+			aprint_error_dev(self, "can't share irq with cards; ");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		}
 	} else {
-		printf("%s: ", device_xname(&sc->dev));
+		printf("%s: ", device_xname(self));
 		sc->irq = ISA_UNKNOWN_IRQ;
 	}
 
@@ -346,15 +346,15 @@ pcic_isa_config_interrupts(device_t self)
 		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
-			aprint_error_dev(&sc->dev, "can't establish interrupt");
+			aprint_error_dev(self, "can't establish interrupt");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		}
 	}
 	if (sc->irq == ISA_UNKNOWN_IRQ)
 		printf("polling for socket events\n");
 	else
-		printf("%s: using irq %d for socket events\n", device_xname(&sc->dev),
-		    sc->irq);
+		printf("%s: using irq %d for socket events\n",
+		    device_xname(self), sc->irq);
 
 	pcic_attach_sockets_finish(sc);
 
@@ -452,8 +452,8 @@ pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
-	struct pcic_isa_softc *isc = (struct pcic_isa_softc *)(h->ph_parent);
+	struct pcic_isa_softc *isc = device_private(h->ph_parent);
+	struct pcic_softc *sc = &isc->sc_pcic;
 	isa_chipset_tag_t ic = isc->sc_ic;
 	int irq, ist;
 	void *ih;
@@ -498,7 +498,7 @@ void
 pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_isa_softc *isc = (struct pcic_isa_softc *)(h->ph_parent);
+	struct pcic_isa_softc *isc = device_private(h->ph_parent);
 	isa_chipset_tag_t ic = isc->sc_ic;
 	int reg;
 
