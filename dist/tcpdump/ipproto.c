@@ -1,4 +1,4 @@
-/*	$NetBSD: ipproto.c,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
+/*	$NetBSD: ipproto.c,v 1.3 2009/09/14 10:36:49 degroote Exp $	*/
 
 /* 
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/ipproto.c,v 1.3.2.3 2005/09/20 06:05:37 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: ipproto.c,v 1.2 2007/07/24 11:53:39 drochner Exp $");
+__RCSID("$NetBSD: ipproto.c,v 1.3 2009/09/14 10:36:49 degroote Exp $");
 #endif
 #endif
 
@@ -62,6 +62,7 @@ struct tok ipproto_values[] = {
     { IPPROTO_PGM, "PGM" },
     { IPPROTO_SCTP, "SCTP" },
     { IPPROTO_MOBILITY, "Mobility" },
+    { IPPROTO_PFSYNC, "PFSYNC" },
     { 0, NULL }
 };
 

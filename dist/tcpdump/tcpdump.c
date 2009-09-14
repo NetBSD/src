@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.8 2007/07/24 11:53:50 drochner Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.9 2009/09/14 10:36:49 degroote Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -36,7 +36,7 @@ The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.253.2.12 2006/02/01 14:39:56 hannes Exp (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.8 2007/07/24 11:53:50 drochner Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.9 2009/09/14 10:36:49 degroote Exp $");
 #endif
 #endif
 
@@ -199,6 +199,9 @@ static struct printer printers[] = {
 #endif
 #ifdef DLT_PFLOG
 	{ pflog_if_print, 	DLT_PFLOG },
+#endif
+#ifdef DLT_PFSYNC
+	{ pfsync_if_print,  DLT_PFSYNC },
 #endif
 #ifdef DLT_FR
 	{ fr_if_print,		DLT_FR },

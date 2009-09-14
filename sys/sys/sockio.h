@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.28 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: sockio.h,v 1.29 2009/09/14 10:36:50 degroote Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -128,5 +128,8 @@
 #define	SIOCGIFDATA	_IOWR('i', 133, struct ifdatareq) /* get if_data */
 #define	SIOCZIFDATA	_IOWR('i', 134, struct ifdatareq) /* get if_data then
 							     zero ctrs*/
+
+#define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
+#define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
 
 #endif /* !_SYS_SOCKIO_H_ */

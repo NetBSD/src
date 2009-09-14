@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.90 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.91 2009/09/14 10:36:50 degroote Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.90 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: inet.c,v 1.91 2009/09/14 10:36:50 degroote Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,8 @@ __RCSID("$NetBSD: inet.c,v 1.90 2009/04/12 16:08:37 lukem Exp $");
 #include <netinet/udp.h>
 #include <netinet/ip_carp.h>
 #include <netinet/udp_var.h>
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 
 #include <arpa/inet.h>
 #include <kvm.h>
@@ -680,6 +682,52 @@ carp_stats(u_long off, const char *name)
 	p(CARP_STAT_OPACKETS6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
 	p2(CARP_STAT_ONOMEM,
 	    "\t\t%" PRIu64 " send failed due to mbuf memory error\n");
+#undef p
+#undef p2
+}
+
+/*
+ * Dump PFSYNC statistics structure.
+ */
+void
+pfsync_stats(u_long off, const char *name)
+{
+	uint64_t pfsyncstat[PFSYNC_NSTATS];
+
+	if (use_sysctl) {
+		size_t size = sizeof(pfsyncstat);
+
+		if (sysctlbyname("net.inet.pfsync.stats", pfsyncstat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
+	}
+
+	printf("%s:\n", name);
+
+#define p(f, m) if (pfsyncstat[f] || sflag <= 1) \
+	printf(m, pfsyncstat[f], plural(pfsyncstat[f]))
+#define p2(f, m) if (pfsyncstat[f] || sflag <= 1) \
+	printf(m, pfsyncstat[f])
+
+	p(PFSYNC_STAT_IPACKETS, "\t%" PRIu64 " packet%s received (IPv4)\n");
+	p(PFSYNC_STAT_IPACKETS6,"\t%" PRIu64 " packet%s received (IPv6)\n");
+	p(PFSYNC_STAT_BADIF, "\t\t%" PRIu64 " packet%s discarded for bad interface\n");
+	p(PFSYNC_STAT_BADTTL, "\t\t%" PRIu64 " packet%s discarded for bad ttl\n");
+	p(PFSYNC_STAT_HDROPS, "\t\t%" PRIu64 " packet%s shorter than header\n");
+	p(PFSYNC_STAT_BADVER, "\t\t%" PRIu64 " packet%s discarded for bad version\n");
+	p(PFSYNC_STAT_BADAUTH, "\t\t%" PRIu64 " packet%s discarded for bad HMAC\n");
+	p(PFSYNC_STAT_BADACT,"\t\t%" PRIu64 " packet%s discarded for bad action\n");
+	p(PFSYNC_STAT_BADLEN, "\t\t%" PRIu64 " packet%s discarded for short packet\n");
+	p(PFSYNC_STAT_BADVAL, "\t\t%" PRIu64 " state%s discarded for bad values\n");
+	p(PFSYNC_STAT_STALE, "\t\t%" PRIu64 " stale state%s\n");
+	p(PFSYNC_STAT_BADSTATE, "\t\t%" PRIu64 " failed state lookup/insert%s\n");
+	p(PFSYNC_STAT_OPACKETS, "\t%" PRIu64 " packet%s sent (IPv4)\n");
+	p(PFSYNC_STAT_OPACKETS6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
+	p2(PFSYNC_STAT_ONOMEM, "\t\t%" PRIu64 " send failed due to mbuf memory error\n");
+	p2(PFSYNC_STAT_OERRORS, "\t\t%" PRIu64 " send error\n");
 #undef p
 #undef p2
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2009/04/22 15:23:09 lukem Exp $	
+#	$NetBSD: Makefile,v 1.50 2009/09/14 10:36:51 degroote Exp $	
 
 WARNS?=	1	# XXX: out of date third-party program 
 
@@ -13,6 +13,7 @@ PROG=	tcpdump
 MAN=	tcpdump.8 
 
 SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
+		pf_print_state.c \
 	print-802_11.c print-ah.c print-aodv.c print-ap1394.c print-arcnet.c \
 	print-arp.c \
 	print-ascii.c print-atalk.c print-atm.c print-bfd.c print-bgp.c \
@@ -24,7 +25,7 @@ SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
 	print-ipx.c print-isakmp.c print-isoclns.c print-krb.c \
 	print-l2tp.c print-lane.c print-ldp.c print-llc.c print-lwres.c \
 	print-msdp.c print-mobile.c print-mobility.c print-mpls.c print-nfs.c \
-	print-ntp.c print-null.c print-ospf.c print-pflog.c \
+	print-ntp.c print-null.c print-ospf.c print-pflog.c print-pfsync.c \
 	print-pim.c print-ppp.c print-pppoe.c print-pptp.c \
 	print-radius.c print-raw.c print-rip.c print-rsvp.c print-rx.c \
 	print-sctp.c print-sl.c print-sll.c print-smb.c print-snmp.c \
@@ -51,6 +52,7 @@ LDADD+=	-lpcap -ll
 DPADD+=	${LIBPCAP} ${LIBL}
 
 CPPFLAGS+=	-I${.CURDIR} -I${SRCDIR} -I${NETBSDSRCDIR}/sys/dist/pf
+CPPFLAGS+=  -I${NETBSDSRCDIR}/dist/pf/sbin/pfctl
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
 
