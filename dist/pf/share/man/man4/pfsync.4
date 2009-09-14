@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfsync.4,v 1.2 2009/09/14 11:17:42 wiz Exp $
+.\"	$NetBSD: pfsync.4,v 1.3 2009/09/14 11:45:01 degroote Exp $
 .\"	$OpenBSD: pfsync.4,v 1.25 2007/05/31 19:19:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
@@ -108,16 +108,16 @@ The protocol is IP protocol 240, PFSYNC, and the multicast group
 used is 224.0.0.240.
 When a peer address is specified using the
 .Ic syncpeer
-keyword, the peer address is used as a destination for the pfsync traffic,
-and the traffic can then be protected using
-.Xr ipsec 4 .
-In such a configuration, the syncdev should be set to the
-.Xr enc 4
-interface, as this is where the traffic arrives when it is decapsulated,
-e.g.:
-.Bd -literal -offset indent
-# ifconfig pfsync0 syncpeer 10.0.0.2 syncdev enc0
-.Ed
+keyword, the peer address is used as a destination for the pfsync traffic.
+.\"and the traffic can then be protected using
+.\".Xr ipsec 4 .
+.\"In such a configuration, the syncdev should be set to the
+.\".Xr enc 4
+.\"interface, as this is where the traffic arrives when it is decapsulated,
+.\"e.g.:
+.\".Bd -literal -offset indent
+.\"# ifconfig pfsync0 syncpeer 10.0.0.2 syncdev enc0
+.\".Ed
 .Pp
 It is important that the pfsync traffic be well secured
 as there is no authentication on the protocol and it would
@@ -125,7 +125,9 @@ be trivial to spoof packets which create states, bypassing the pf ruleset.
 Either run the pfsync protocol on a trusted network \- ideally  a network
 dedicated to pfsync messages such as a crossover cable between two firewalls,
 or specify a peer address and protect the traffic with
-.Xr ipsec 4 .
+.Xr ipsec 4 (it is not supported at the moment on
+.Nx
+due to the lack of any encapsulation pseudo-device).
 .Pp
 There is a one-to-one correspondence between packets seen by
 .Xr bpf 4
@@ -161,32 +163,32 @@ uses .253.
 The interfaces are configured as follows (firewall A unless otherwise
 indicated):
 .Pp
-.Pa /etc/hostname.sis0 :
+.Pa /etc/ifconfig.sis0 :
 .Bd -literal -offset indent
 inet 10.0.0.254 255.255.255.0 NONE
 .Ed
 .Pp
-.Pa /etc/hostname.sis1 :
+.Pa /etc/ifconfig.sis1 :
 .Bd -literal -offset indent
 inet 192.168.0.254 255.255.255.0 NONE
 .Ed
 .Pp
-.Pa /etc/hostname.sis2 :
+.Pa /etc/ifconfig.sis2 :
 .Bd -literal -offset indent
 inet 192.168.254.254 255.255.255.0 NONE
 .Ed
 .Pp
-.Pa /etc/hostname.carp0 :
+.Pa /etc/ifconfig.carp0 :
 .Bd -literal -offset indent
 inet 10.0.0.1 255.255.255.0 10.0.0.255 vhid 1 pass foo
 .Ed
 .Pp
-.Pa /etc/hostname.carp1 :
+.Pa /etc/ifconfig.carp1 :
 .Bd -literal -offset indent
 inet 192.168.0.1 255.255.255.0 192.168.0.255 vhid 2 pass bar
 .Ed
 .Pp
-.Pa /etc/hostname.pfsync0 :
+.Pa /etc/ifconfig.pfsync0 :
 .Bd -literal -offset indent
 up syncdev sis2
 .Ed
@@ -212,7 +214,7 @@ on the backup firewall's
 interfaces should be set to something higher than
 the primary's.
 For example, if firewall B is the backup, its
-.Pa /etc/hostname.carp1
+.Pa /etc/ifconfig.carp1
 would look like this:
 .Bd -literal -offset indent
 inet 192.168.0.1 255.255.255.0 192.168.0.255 vhid 2 pass bar \e
@@ -232,9 +234,10 @@ net.inet.carp.preempt=1
 .Xr ipsec 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
-.Xr hostname.if 5 ,
+.Xr ifconfig.if 5 ,
 .Xr pf.conf 5 ,
 .Xr protocols 5 ,
+.\" enc 8,
 .Xr ifconfig 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
