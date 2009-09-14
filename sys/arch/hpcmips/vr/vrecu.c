@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.7 2008/04/28 20:23:22 martin Exp $ */
+/* $NetBSD: vrecu.c,v 1.8 2009/09/14 12:49:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.7 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.8 2009/09/14 12:49:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,8 +65,8 @@ static int pcic_vrip_intr(void *);
 
 struct pcic_vrip_softc {
 	struct pcic_softc	sc_pcic;	/* real pcic softc */
-	u_int16_t		sc_intr_mask;
-	u_int16_t		sc_intr_valid;
+	uint16_t		sc_intr_mask;
+	uint16_t		sc_intr_valid;
 	struct intrhand {
 		int	(*ih_fun)(void *);
 		void	*ih_arg;
@@ -273,7 +273,7 @@ pcic_vrip_intr(void *arg)
 	struct pcic_softc	*sc = arg;
 	struct pcic_vrip_softc	*vsc = arg;
 	int			i;
-	u_int16_t		r;
+	uint16_t		r;
 
 	r = bus_space_read_2(sc->iot, sc->ioh, ECU_INTSTAT_REG_W)
 		& ~vsc->sc_intr_mask;
