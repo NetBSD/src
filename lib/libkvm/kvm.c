@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.93 2009/08/20 11:18:55 he Exp $	*/
+/*	$NetBSD: kvm.c,v 1.94 2009/09/14 19:29:20 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.93 2009/08/20 11:18:55 he Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.94 2009/09/14 19:29:20 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -324,6 +324,29 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	if (sf == 0)
 		sf = _PATH_DRUM;
 
+	/*
+	 * Open the kernel namelist.  If /dev/ksyms doesn't
+	 * exist, open the current kernel.
+	 */
+	if (ufgiven == 0)
+		kd->nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
+	if (kd->nlfd < 0) {
+		if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
+			_kvm_syserr(kd, kd->program, "%s", uf);
+			goto failed;
+		}
+	} else {
+		/*
+		 * We're here because /dev/ksyms was opened
+		 * successfully.  However, we don't want to keep it
+		 * open, so we close it now.  Later, we will open
+		 * it again, since it will be the only case where
+		 * kd->nlfd is negative.
+		 */
+		close(kd->nlfd);
+		kd->nlfd = -1;
+	}
+
 	if ((kd->pmfd = open_cloexec(mf, flag, 0)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
@@ -350,41 +373,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			}
 			/* swap is not configured?  not fatal */
 		}
-		/*
-		 * Open the kernel namelist.  If /dev/ksyms doesn't 
-		 * exist, open the current kernel.
-		 */
-		if (ufgiven == 0)
-			kd->nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
-		if (kd->nlfd < 0) {
-			if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
-				_kvm_syserr(kd, kd->program, "%s", uf);
-				goto failed;
-			}
-		} else {
-			/*
-			 * We're here because /dev/ksyms was opened
-			 * successfully.  However, we don't want to keep it
-			 * open, so we close it now.  Later, we will open
-			 * it again, since it will be the only case where
-			 * kd->nlfd is negative.
-			 */
-			close(kd->nlfd);
-			kd->nlfd = -1;
-		}
 	} else {
 		kd->fdalign = DEV_BSIZE;	/* XXX */
 		/*
 		 * This is a crash dump.
-		 * Initialize the virtual address translation machinery,
-		 * but first setup the namelist fd.
-		 */
-		if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
-			_kvm_syserr(kd, kd->program, "%s", uf);
-			goto failed;
-		}
-
-		/*
+		 * Initialize the virtual address translation machinery.
+		 *
 		 * If there is no valid core header, fail silently here.
 		 * The address translations however will fail without
 		 * header. Things can be made to run by calling
