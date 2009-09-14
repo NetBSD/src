@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.3 2009/08/24 02:15:46 jmcneill Exp $ */
+/* $NetBSD: vbe.c,v 1.4 2009/09/14 11:56:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,6 +42,7 @@ static int vbeverbose = 1;
 
 static struct _vbestate {
 	int		available;
+	int		modenum;
 } vbestate;
 
 static void
@@ -91,6 +92,7 @@ vbe_init(void)
 
 	vbe_dump(&vbe);
 	vbestate.available = 1;
+	vbestate.modenum = 0;
 }
 
 int
@@ -171,6 +173,22 @@ vbe_set_mode(int modenum)
 	framebuffer_configure(&fb);
 
 	return 0;
+}
+
+int
+vbe_commit(void)
+{
+	int ret = 1;
+
+	if (vbestate.modenum > 0) {
+		ret = vbe_set_mode(vbestate.modenum);
+		if (ret) {
+			printf("WARNING: failed to set VESA VBE mode 0x%x\n",
+			    vbestate.modenum);
+			delay(5000000);
+		}
+	}
+	return ret;
 }
 
 static void *
@@ -330,8 +348,7 @@ command_vesa(char *cmd)
 	}
 
 	if (strcmp(arg, "disabled") == 0 || strcmp(arg, "off") == 0) {
-		framebuffer_configure(NULL);
-		biosvideomode();
+		vbestate.modenum = 0;
 		return;
 	}
 
@@ -341,13 +358,15 @@ command_vesa(char *cmd)
 		modenum = strtoul(arg, NULL, 0);
 	else if (strchr(arg, 'x') != NULL) {
 		modenum = vbe_find_mode(arg);
-		if (modenum == 0)
+		if (modenum == 0) {
+			printf("mode %s not supported by firmware\n", arg);
 			return;
+		}
 	} else
 		modenum = 0;
 
 	if (modenum >= 0x100) {
-		vbe_set_mode(modenum);
+		vbestate.modenum = modenum;
 		return;
 	}
 

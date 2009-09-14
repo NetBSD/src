@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.41 2009/09/13 18:13:37 jmcneill Exp $	 */
+/*	$NetBSD: exec.c,v 1.42 2009/09/14 11:56:27 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@
 #include "libi386.h"
 #include "bootinfo.h"
 #include "bootmod.h"
+#include "vbe.h"
 #ifdef SUPPORT_PS2
 #include "biosmca.h"
 #endif
@@ -289,8 +290,6 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	BI_ALLOC(32); /* ??? */
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
-	BI_ADD(&btinfo_framebuffer, BTINFO_FRAMEBUFFER,
-	    sizeof(struct btinfo_framebuffer));
 
 	howto = boothowto;
 
@@ -322,6 +321,11 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	btinfo_symtab.ssym = marks[MARK_SYM];
 	btinfo_symtab.esym = marks[MARK_END];
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
+
+	/* set new video mode if necessary */
+	vbe_commit();
+	BI_ADD(&btinfo_framebuffer, BTINFO_FRAMEBUFFER,
+	    sizeof(struct btinfo_framebuffer));
 
 	if (callback != NULL)
 		(*callback)();

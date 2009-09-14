@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/03/21 15:01:56 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/09/14 11:56:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -48,6 +48,7 @@
 #include <bootmenu.h>
 #include <bootmod.h>
 #include "pxeboot.h"
+#include "vbe.h"
 
 extern struct x86_boot_params boot_params;
 
@@ -72,6 +73,7 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ "modules",    command_modules },
 	{ "load",	module_add },
+	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
 };
 
@@ -180,6 +182,7 @@ command_help(char *arg)
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "vesa {enabled|disabled|list|modenum}\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "help|?\n"

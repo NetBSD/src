@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.h,v 1.1 2009/02/16 22:39:31 jmcneill Exp $ */
+/* $NetBSD: vbe.h,v 1.2 2009/09/14 11:56:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -94,6 +94,7 @@ int biosvbe_palette_data(int, int, struct paletteentry *);
 
 /* high-level VBE helpers, from vbe.c */
 void vbe_init(void);
+int vbe_commit(void);
 int vbe_available(void);
 int vbe_set_mode(int);
 int vbe_set_palette(const uint8_t *, int);
