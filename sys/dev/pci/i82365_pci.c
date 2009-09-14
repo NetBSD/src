@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.30 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.31 2009/09/14 13:41:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.30 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.31 2009/09/14 13:41:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ void
 pcic_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcic_pci_softc *psc = device_private(self);
-	struct pcic_softc *sc = device_private(self);
+	struct pcic_softc *sc = &psc->sc_pcic;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
@@ -185,7 +185,7 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 		   PCIC_CIRRUS_EXT_CONTROL_1);
 	if ((pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
 	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK)) {
-		aprint_error_dev(&sc->dev, "PCI interrupts not supported\n");
+		aprint_error_dev(self, "PCI interrupts not supported\n");
 		return;
 	}
 
@@ -196,7 +196,7 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 	/* Map and establish the interrupt. */
 	sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 	if (sc->ih == NULL) {
-		aprint_error_dev(&sc->dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 #endif

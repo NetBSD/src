@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.8 2009/09/14 12:49:33 tsutsui Exp $ */
+/* $NetBSD: vrecu.c,v 1.9 2009/09/14 13:41:15 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.8 2009/09/14 12:49:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.9 2009/09/14 13:41:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,8 +105,8 @@ pcic_vrip_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 pcic_vrip_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pcic_softc	*sc = (void *) self;
-	struct pcic_vrip_softc	*vsc = (void *) self;
+	struct pcic_vrip_softc	*vsc = device_private(self);
+	struct pcic_softc	*sc = &vsc->sc_pcic;
 	struct vrip_attach_args	*va = aux;
 	bus_space_handle_t	ioh;
 	bus_space_handle_t	memh;
@@ -118,9 +118,9 @@ pcic_vrip_attach(struct device *parent, struct device *self, void *aux)
 		vsc->sc_intrhand[i].ih_fun = NULL;
 
 	if ((sc->ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
-					  IPL_NET, pcic_vrip_intr, sc))
+					  IPL_NET, pcic_vrip_intr, vsc))
 	    == NULL) {
-		printf("%s: can't establish interrupt", sc->dev.dv_xname);
+		printf(": can't establish interrupt");
 	}
 
         /* Map i/o space. */
@@ -203,8 +203,8 @@ pcic_vrip_chip_intr_establish(pcmcia_chipset_handle_t pch,
 
 
 	h = (struct pcic_handle *) pch;
-	sc = (struct pcic_softc *) h->ph_parent;
-	vsc = (struct pcic_vrip_softc *) h->ph_parent;
+	vsc = device_private(h->ph_parent);
+	sc = &vsc->sc_pcic;
 
 
 	ih = &vsc->sc_intrhand[irq];
@@ -239,8 +239,8 @@ pcic_vrip_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *arg)
 	int	r;
 
 	h = (struct pcic_handle *) pch;
-	sc = (struct pcic_softc *) h->ph_parent;
-	vsc = (struct pcic_vrip_softc *) h->ph_parent;
+	vsc = device_private(h->ph_parent);
+	sc = &vsc->sc_pcic;
 
 	if (ih != &vsc->sc_intrhand[h->ih_irq])
 		panic("pcic_vrip_chip_intr_disestablish: bad handler");
@@ -270,8 +270,8 @@ pcic_vrip_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *arg)
 static int
 pcic_vrip_intr(void *arg)
 {
-	struct pcic_softc	*sc = arg;
 	struct pcic_vrip_softc	*vsc = arg;
+	struct pcic_softc	*sc = &vsc->sc_pcic;
 	int			i;
 	uint16_t		r;
 

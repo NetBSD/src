@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.31 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.32 2009/09/14 13:41:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.31 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.32 2009/09/14 13:41:15 tsutsui Exp $");
 
 #define	PCICISADEBUG
 
@@ -184,8 +184,8 @@ pcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 void
 pcic_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcic_softc *sc = (void *) self;
-	struct pcic_isa_softc *isc = (void *) self;
+	struct pcic_isa_softc *isc = device_private(self);
+	struct pcic_softc *sc = &isc->sc_pcic;
 	struct isa_attach_args *ia = aux;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	bus_space_tag_t iot = ia->ia_iot;

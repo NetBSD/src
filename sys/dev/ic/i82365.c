@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.109 2009/09/14 12:49:33 tsutsui Exp $	*/
+/*	$NetBSD: i82365.c,v 1.110 2009/09/14 13:41:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.109 2009/09/14 12:49:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.110 2009/09/14 13:41:15 tsutsui Exp $");
 
 #define	PCICDEBUG
 
@@ -230,9 +230,11 @@ pcic_attach(struct pcic_softc *sc)
 {
 	int i, reg, chip, socket;
 	struct pcic_handle *h;
+	device_t self;
 
 	DPRINTF(("pcic ident regs:"));
 
+	self = &sc->dev;
 	mutex_init(&sc->sc_pcic_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* find and configure for the available sockets */
@@ -241,7 +243,7 @@ pcic_attach(struct pcic_softc *sc)
 		chip = i / 2;
 		socket = i % 2;
 
-		h->ph_parent = (device_t)sc;
+		h->ph_parent = self;
 		h->chip = chip;
 		h->socket = socket;
 		h->sock = chip * PCIC_CHIP_OFFSET + socket * PCIC_SOCKET_OFFSET;
@@ -315,7 +317,7 @@ pcic_attach(struct pcic_softc *sc)
 		if (h->vendor == PCIC_VENDOR_NONE)
 			continue;
 
-		aprint_normal_dev(&sc->dev, "controller %d (%s) has ",
+		aprint_normal_dev(self, "controller %d (%s) has ",
 		    chip, pcic_vendor_to_string(sc->handle[i].vendor));
 
 		if ((h->flags & PCIC_FLAG_SOCKETP) &&
@@ -347,7 +349,7 @@ void
 pcic_power(int why, void *arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *)arg;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 	int reg;
 
 	DPRINTF(("%s: power: why %d\n", device_xname(h->ph_parent), why));
@@ -388,7 +390,7 @@ void
 pcic_attach_socket(struct pcic_handle *h)
 {
 	struct pcmciabus_attach_args paa;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 	int locs[PCMCIABUSCF_NLOCS];
 
 	/* initialize the rest of the handle */
@@ -439,7 +441,7 @@ pcic_attach_sockets_finish(struct pcic_softc *sc)
 void
 pcic_attach_socket_finish(struct pcic_handle *h)
 {
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 	int reg;
 	char cs[4];
 
@@ -520,7 +522,7 @@ pcic_event_thread(void *arg)
 	struct pcic_handle *h = arg;
 	struct pcic_event *pe;
 	int s, first = 1;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	while (h->shutdown == 0) {
 		/*
@@ -797,7 +799,7 @@ pcic_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size, struct pcmcia_
 	bus_addr_t addr;
 	bus_size_t sizepg;
 	int i, mask, mhandle;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	/* out of sc->memh, allocate as many pages as necessary */
 
@@ -837,7 +839,7 @@ void
 pcic_chip_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pcmhp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	sc->subregionmask |= pcmhp->mhandle;
 }
@@ -964,7 +966,7 @@ pcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr, b
 	bus_addr_t busaddr;
 	long card_offset;
 	int i, win;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	win = -1;
 	for (i = 0; i < (sizeof(mem_map_index) / sizeof(mem_map_index[0]));
@@ -1044,7 +1046,7 @@ pcic_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t siz
 	bus_space_handle_t ioh;
 	bus_addr_t ioaddr;
 	int flags = 0;
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	/*
 	 * Allocate some arbitrary I/O space.
@@ -1172,7 +1174,7 @@ pcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_
 #ifdef PCICDEBUG
 	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
-	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	struct pcic_softc *sc = device_private(h->ph_parent);
 
 	/* XXX Sanity check offset/size. */
 
