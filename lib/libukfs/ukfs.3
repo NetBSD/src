@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.8 2009/04/11 16:44:01 joerg Exp $
+.\"     $NetBSD: ukfs.3,v 1.9 2009/09/14 20:54:34 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -239,7 +239,7 @@ to prior activity, otherwise 0 should be passed.
 .It Ft int
 .Fn ukfs_lchflags "struct ukfs *ukfs" "const char *filename" "u_long flags"
 .It Ft int
-.Fn ukfs_utimes "struct ukfs *ukfs" "const char *filename"
+.Fn ukfs_utimes "struct ukfs *ukfs" "const char *filename" \
 "const struct timeval *tptr"
 .It Ft int
 .Fn ukfs_lutimes "struct ukfs *ukfs" "const char *filename" \
