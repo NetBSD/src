@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.108 2009/08/05 13:29:16 jun Exp $	*/
+/*	$NetBSD: i82365.c,v 1.109 2009/09/14 12:49:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.108 2009/08/05 13:29:16 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.109 2009/09/14 12:49:33 tsutsui Exp $");
 
 #define	PCICDEBUG
 
@@ -108,8 +108,8 @@ void	pcic_power(int, void *);
 static int	pcic_wait_ready(struct pcic_handle *);
 static void	pcic_delay(struct pcic_handle *, int, const char *);
 
-static u_int8_t st_pcic_read(struct pcic_handle *, int);
-static void st_pcic_write(struct pcic_handle *, int, u_int8_t);
+static uint8_t st_pcic_read(struct pcic_handle *, int);
+static void st_pcic_write(struct pcic_handle *, int, uint8_t);
 
 int
 pcic_ident_ok(int ident)
@@ -1233,7 +1233,7 @@ pcic_chip_io_unmap(pcmcia_chipset_handle_t pch, int window)
 static int
 pcic_wait_ready(struct pcic_handle *h)
 {
-	u_int8_t stat;
+	uint8_t stat;
 	int i;
 
 	/* wait an initial 10ms for quick cards */
@@ -1286,7 +1286,7 @@ pcic_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int win;
-	u_int8_t power, intr;
+	uint8_t power, intr;
 #ifdef DIAGNOSTIC
 	int reg;
 #endif
@@ -1391,7 +1391,7 @@ void
 pcic_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	u_int8_t intr;
+	uint8_t intr;
 
 	DPRINTF(("pcic_chip_socket_disable\n"));
 
@@ -1434,7 +1434,7 @@ pcic_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 
-static u_int8_t
+static uint8_t
 st_pcic_read(struct pcic_handle *h, int idx)
 {
 
@@ -1445,7 +1445,7 @@ st_pcic_read(struct pcic_handle *h, int idx)
 }
 
 static void
-st_pcic_write(struct pcic_handle *h, int idx, u_int8_t data)
+st_pcic_write(struct pcic_handle *h, int idx, uint8_t data)
 {
 
 	if (idx != -1)
