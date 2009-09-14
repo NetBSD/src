@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.134 2009/09/11 19:47:27 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.135 2009/09/14 12:05:12 apb Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 11, 2009
+.Dd September 14, 2009
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -279,12 +279,26 @@ Usually
 is part of this, because it is needed by services such as
 .Xr dhclient 8
 which may be required to get the network operational.
+The default is
+.Dq "OPTIONAL:/var" ,
+where the
+.Dq OPTIONAL:
+prefix means that it's not an error if the file system is not
+present in
+.Xr fstab 5.
 .It Sy critical_filesystems_remote
 A string.
 File systems such as
 .Pa /usr
 that may require network services to be available to mount,
 that must be available early in the system boot for general services to use.
+The default is
+.Dq "OPTIONAL:/usr" ,
+where the
+.Dq OPTIONAL:
+prefix means that it's not an error if the file system is not
+present in
+.Xr fstab 5.
 .It Sy fsck_flags
 A string.
 A file system is checked with
