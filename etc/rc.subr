@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.79 2009/09/14 12:05:12 apb Exp $
+# $NetBSD: rc.subr,v 1.80 2009/09/14 22:30:30 apb Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -802,7 +802,7 @@ run_rc_script()
 	eval unset ${_arg}_cmd ${_arg}_precmd ${_arg}_postcmd
 
 	_must_redirect=false
-	if ! [ -n "${_rc_postprocessor_fd}" ] \
+	if [ -n "${_rc_postprocessor_fd}" ] \
 	    && _has_rcorder_keyword interactive $_file
 	then
 		_must_redirect=true
@@ -813,7 +813,8 @@ run_rc_script()
 		if $_must_redirect; then
 			print_rc_metadata \
 			    "note:Output from ${_file} is not logged"
-			set $_arg ; no_rc_postprocess . $_file
+			no_rc_postprocess eval \
+			    'set $_arg ; . $_file'
 		else
 			set $_arg ; . $_file
 		fi
@@ -826,9 +827,11 @@ run_rc_script()
 			print_rc_metadata \
 			    "note:Output from ${_file} is not logged"
 			if [ -n "$rc_fast_and_loose" ]; then
-				set $_arg ; no_rc_postprocess . $_file
+				no_rc_postprocess eval \
+				    'set $_arg ; . $_file'
 			else
-				( set $_arg ; no_rc_postprocess . $_file )
+				no_rc_postprocess eval \
+				    '( set $_arg ; . $_file )'
 			fi
 		elif [ -x $_file ]; then
 			if [ -n "$rc_fast_and_loose" ]; then
