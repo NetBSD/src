@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.4 2007/12/12 23:33:22 jmcneill Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.5 2009/09/15 19:41:30 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4 2007/12/12 23:33:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5 2009/09/15 19:41:30 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,7 +127,7 @@ ACPI_STATUS
 AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 {
 	void *LogicalAddress;
-	ACPI_STATUS rv;
+	ACPI_STATUS rv = AE_OK;
 
 	LogicalAddress = AcpiOsMapMemory(Address, Width / 8);
 	if (LogicalAddress == NULL)
@@ -164,7 +164,7 @@ ACPI_STATUS
 AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 {
 	void *LogicalAddress;
-	ACPI_STATUS rv;
+	ACPI_STATUS rv = AE_OK;
 
 	LogicalAddress = AcpiOsMapMemory(Address, Width / 8);
 	if (LogicalAddress == NULL)
