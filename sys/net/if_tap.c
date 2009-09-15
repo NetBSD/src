@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.58 2009/07/23 17:53:17 plunky Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.59 2009/09/15 19:38:15 drochner Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.58 2009/07/23 17:53:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.59 2009/09/15 19:38:15 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -977,7 +977,7 @@ out:
 static int
 tap_fops_stat(file_t *fp, struct stat *st)
 {
-	int error;
+	int error = 0;
 	struct tap_softc *sc;
 	int unit = (uintptr_t)fp->f_data;
 
