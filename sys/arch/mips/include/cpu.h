@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.3 2009/09/15 05:12:53 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.4 2009/09/15 06:10:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -190,6 +190,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	0
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
+# define MIPS_HAS_LLADDR	0
 
 #elif defined(MIPS3) || defined(MIPS4)
 
@@ -209,6 +210,7 @@ extern u_int mips3_pg_shift;
 # else	/* _LOCORE */
 #  define MIPS_HAS_LLSC		(mips_has_llsc)
 # endif	/* _LOCORE */
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS32)
 
@@ -220,6 +222,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS64)
 
@@ -231,6 +234,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #endif
 
