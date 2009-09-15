@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.16.6.1 2009/09/15 06:40:52 snj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16.6.1 2009/09/15 06:40:52 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciio.h>
+
+#include "opt_pci.h"
 
 static int
 pciopen(dev_t dev, int flags, int mode, struct lwp *l)
@@ -110,7 +112,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
-#if 0
+#ifdef PCI_ALLOW_MMAP
 	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
 
 	/*
@@ -119,7 +121,26 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	 * and pass 0 as the offset into that range.
 	 *
 	 * XXX Need a way to deal with linear/prefetchable/etc.
+	 *
+	 * XXX we rely on MD mmap() methods to enforce limits since these
+	 * are hidden in *_tag_t structs if they exist at all 
 	 */
+
+#ifdef PCI_MAGIC_IO_RANGE
+	/* 
+	 * first, check if someone's trying to map the IO range
+	 * XXX this assumes 64kB IO space even though some machines can have
+	 * significantly more than that - macppc's bandit host bridge allows
+	 * 8MB IO space and sparc64 may have the entire 4GB available. The
+	 * firmware on both tries to use the lower 64kB first though and
+	 * exausting it is pretty difficult so we should be safe
+	 */
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < (PCI_MAGIC_IO_RANGE + 0x10000))) {
+		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, 0);
+	}
+#endif /* PCI_MAGIC_IO_RANGE */
 	return (bus_space_mmap(sc->sc_memt, offset, 0, prot, 0));
 #else
 	/* XXX Consider this further. */
