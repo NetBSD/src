@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.2 2009/09/08 07:54:52 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.3 2009/09/15 05:12:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -173,6 +173,7 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
 #define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
+#define	CPU_MIPS_NO_LLADDR		0x1000
 #define	MIPS_NOT_SUPP			0x8000
 
 #endif	/* !_LOCORE */
@@ -239,6 +240,7 @@ extern u_int mips3_pg_shift;
 
 #define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
 #define	MIPS_HAS_LLSC		(mips_has_llsc)
+#define	MIPS_HAS_LLADDR		((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 /* This test is ... rather bogus */
 #define	CPUISMIPS3	((cpu_arch & \
