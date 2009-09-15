@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.69 2009/09/13 22:16:39 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.70 2009/09/15 06:19:28 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2448,4 +2448,3037 @@ sys/dev/pckbport/pmsvar.h			1.8
 
 	Add Elantech multi-touch driver.
 	[jmcneill, ticket #943]
+
+distrib/sets/lists/base/mi			1.820
+distrib/sets/lists/comp/mi			1.1273
+distrib/sets/lists/etc/mi			1.211
+distrib/sets/lists/man/mi			1.1142
+distrib/sets/lists/misc/mi			1.160
+doc/3RDPARTY					patch
+etc/Makefile					1.367
+external/Makefile				1.4 via patch
+external/ibm-public/Makefile			1.2
+external/ibm-public/postfix/Makefile		new file
+external/ibm-public/postfix/Makefile.inc	new file
+external/ibm-public/postfix/dist/AAAREADME	new file
+external/ibm-public/postfix/dist/COMPATIBILITY	new file
+external/ibm-public/postfix/dist/COPYRIGHT	new file
+external/ibm-public/postfix/dist/HISTORY	new file
+external/ibm-public/postfix/dist/INSTALL	new file
+external/ibm-public/postfix/dist/IPv6-ChangeLog new file
+external/ibm-public/postfix/dist/LICENSE	new file
+external/ibm-public/postfix/dist/Makefile	new file
+external/ibm-public/postfix/dist/Makefile.in	new file
+external/ibm-public/postfix/dist/Makefile.init	new file
+external/ibm-public/postfix/dist/PORTING	new file
+external/ibm-public/postfix/dist/README_FILES/AAAREADME new file
+external/ibm-public/postfix/dist/README_FILES/ADDRESS_CLASS_README new file
+external/ibm-public/postfix/dist/README_FILES/ADDRESS_REWRITING_README new file
+external/ibm-public/postfix/dist/README_FILES/ADDRESS_VERIFICATION_README new file
+external/ibm-public/postfix/dist/README_FILES/BACKSCATTER_README new file
+external/ibm-public/postfix/dist/README_FILES/BASIC_CONFIGURATION_README new file
+external/ibm-public/postfix/dist/README_FILES/BUILTIN_FILTER_README new file
+external/ibm-public/postfix/dist/README_FILES/CDB_README new file
+external/ibm-public/postfix/dist/README_FILES/CONNECTION_CACHE_README new file
+external/ibm-public/postfix/dist/README_FILES/CONTENT_INSPECTION_README new file
+external/ibm-public/postfix/dist/README_FILES/CYRUS_README new file
+external/ibm-public/postfix/dist/README_FILES/DATABASE_README new file
+external/ibm-public/postfix/dist/README_FILES/DB_README new file
+external/ibm-public/postfix/dist/README_FILES/DEBUG_README new file
+external/ibm-public/postfix/dist/README_FILES/DSN_README new file
+external/ibm-public/postfix/dist/README_FILES/ETRN_README new file
+external/ibm-public/postfix/dist/README_FILES/FILTER_README new file
+external/ibm-public/postfix/dist/README_FILES/INSTALL new file
+external/ibm-public/postfix/dist/README_FILES/IPV6_README new file
+external/ibm-public/postfix/dist/README_FILES/LDAP_README new file
+external/ibm-public/postfix/dist/README_FILES/LINUX_README new file
+external/ibm-public/postfix/dist/README_FILES/LOCAL_RECIPIENT_README new file
+external/ibm-public/postfix/dist/README_FILES/MAILDROP_README new file
+external/ibm-public/postfix/dist/README_FILES/MILTER_README new file
+external/ibm-public/postfix/dist/README_FILES/MULTI_INSTANCE_README new file
+external/ibm-public/postfix/dist/README_FILES/MYSQL_README new file
+external/ibm-public/postfix/dist/README_FILES/NFS_README new file
+external/ibm-public/postfix/dist/README_FILES/OVERVIEW new file
+external/ibm-public/postfix/dist/README_FILES/PACKAGE_README new file
+external/ibm-public/postfix/dist/README_FILES/PCRE_README new file
+external/ibm-public/postfix/dist/README_FILES/PGSQL_README new file
+external/ibm-public/postfix/dist/README_FILES/QMQP_README new file
+external/ibm-public/postfix/dist/README_FILES/QSHAPE_README new file
+external/ibm-public/postfix/dist/README_FILES/RELEASE_NOTES new file
+external/ibm-public/postfix/dist/README_FILES/RESTRICTION_CLASS_README new file
+external/ibm-public/postfix/dist/README_FILES/SASL_README new file
+external/ibm-public/postfix/dist/README_FILES/SCHEDULER_README new file
+external/ibm-public/postfix/dist/README_FILES/SMTPD_ACCESS_README new file
+external/ibm-public/postfix/dist/README_FILES/SMTPD_POLICY_README new file
+external/ibm-public/postfix/dist/README_FILES/SMTPD_PROXY_README new file
+external/ibm-public/postfix/dist/README_FILES/SOHO_README new file
+external/ibm-public/postfix/dist/README_FILES/STANDARD_CONFIGURATION_README new file
+external/ibm-public/postfix/dist/README_FILES/STRESS_README new file
+external/ibm-public/postfix/dist/README_FILES/TLS_LEGACY_README new file
+external/ibm-public/postfix/dist/README_FILES/TLS_README new file
+external/ibm-public/postfix/dist/README_FILES/TUNING_README new file
+external/ibm-public/postfix/dist/README_FILES/ULTRIX_README new file
+external/ibm-public/postfix/dist/README_FILES/UUCP_README new file
+external/ibm-public/postfix/dist/README_FILES/VERP_README new file
+external/ibm-public/postfix/dist/README_FILES/VIRTUAL_README new file
+external/ibm-public/postfix/dist/README_FILES/XCLIENT_README new file
+external/ibm-public/postfix/dist/README_FILES/XFORWARD_README new file
+external/ibm-public/postfix/dist/RELEASE_NOTES	new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-1.0 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-1.1 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.0 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.1 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.2 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.3 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.4 new file
+external/ibm-public/postfix/dist/RELEASE_NOTES-2.5 new file
+external/ibm-public/postfix/dist/TLS_ACKNOWLEDGEMENTS new file
+external/ibm-public/postfix/dist/TLS_CHANGES	new file
+external/ibm-public/postfix/dist/TLS_LICENSE	new file
+external/ibm-public/postfix/dist/TLS_TODO	new file
+external/ibm-public/postfix/dist/US_PATENT_6321267 new file
+external/ibm-public/postfix/dist/conf/LICENSE	new file
+external/ibm-public/postfix/dist/conf/TLS_LICENSE new file
+external/ibm-public/postfix/dist/conf/access	new file
+external/ibm-public/postfix/dist/conf/aliases	new file
+external/ibm-public/postfix/dist/conf/canonical new file
+external/ibm-public/postfix/dist/conf/generic	new file
+external/ibm-public/postfix/dist/conf/header_checks new file
+external/ibm-public/postfix/dist/conf/main.cf	new file
+external/ibm-public/postfix/dist/conf/master.cf new file
+external/ibm-public/postfix/dist/conf/post-install new file
+external/ibm-public/postfix/dist/conf/postfix-files new file
+external/ibm-public/postfix/dist/conf/postfix-script new file
+external/ibm-public/postfix/dist/conf/postfix-wrapper new file
+external/ibm-public/postfix/dist/conf/postmulti-script new file
+external/ibm-public/postfix/dist/conf/relocated new file
+external/ibm-public/postfix/dist/conf/transport new file
+external/ibm-public/postfix/dist/conf/virtual	new file
+external/ibm-public/postfix/dist/examples/chroot-setup/AIX42 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/BSDI2 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/BSDI3 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/FREEBSD3 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/FreeBSD2 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/HPUX10 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/HPUX9 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/IRIX5 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/IRIX6 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/LINUX2 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/NETBSD1 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/NEXTSTEP3 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/OPENSTEP4 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/OSF1 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/Solaris10 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/Solaris2 new file
+external/ibm-public/postfix/dist/examples/chroot-setup/Solaris8 new file
+external/ibm-public/postfix/dist/examples/qmail-local/qmail-local.txt new file
+external/ibm-public/postfix/dist/examples/smtpd-policy/README.SPF new file
+external/ibm-public/postfix/dist/examples/smtpd-policy/greylist.pl new file
+external/ibm-public/postfix/dist/html/ADDRESS_CLASS_README.html new file
+external/ibm-public/postfix/dist/html/ADDRESS_REWRITING_README.html new file
+external/ibm-public/postfix/dist/html/ADDRESS_VERIFICATION_README.html new file
+external/ibm-public/postfix/dist/html/BACKSCATTER_README.html new file
+external/ibm-public/postfix/dist/html/BASIC_CONFIGURATION_README.html new file
+external/ibm-public/postfix/dist/html/BUILTIN_FILTER_README.html new file
+external/ibm-public/postfix/dist/html/CDB_README.html new file
+external/ibm-public/postfix/dist/html/CONNECTION_CACHE_README.html new file
+external/ibm-public/postfix/dist/html/CONTENT_INSPECTION_README.html new file
+external/ibm-public/postfix/dist/html/DATABASE_README.html new file
+external/ibm-public/postfix/dist/html/DB_README.html new file
+external/ibm-public/postfix/dist/html/DEBUG_README.html new file
+external/ibm-public/postfix/dist/html/DSN_README.html new file
+external/ibm-public/postfix/dist/html/ETRN_README.html new file
+external/ibm-public/postfix/dist/html/FILTER_README.html new file
+external/ibm-public/postfix/dist/html/INSTALL.html new file
+external/ibm-public/postfix/dist/html/IPV6_README.html new file
+external/ibm-public/postfix/dist/html/LDAP_README.html new file
+external/ibm-public/postfix/dist/html/LINUX_README.html new file
+external/ibm-public/postfix/dist/html/LOCAL_RECIPIENT_README.html new file
+external/ibm-public/postfix/dist/html/MAILDROP_README.html new file
+external/ibm-public/postfix/dist/html/MILTER_README.html new file
+external/ibm-public/postfix/dist/html/MULTI_INSTANCE_README.html new file
+external/ibm-public/postfix/dist/html/MYSQL_README.html new file
+external/ibm-public/postfix/dist/html/Makefile.in new file
+external/ibm-public/postfix/dist/html/NFS_README.html new file
+external/ibm-public/postfix/dist/html/OVERVIEW.html new file
+external/ibm-public/postfix/dist/html/PACKAGE_README.html new file
+external/ibm-public/postfix/dist/html/PCRE_README.html new file
+external/ibm-public/postfix/dist/html/PGSQL_README.html new file
+external/ibm-public/postfix/dist/html/QSHAPE_README.html new file
+external/ibm-public/postfix/dist/html/RESTRICTION_CLASS_README.html new file
+external/ibm-public/postfix/dist/html/SASL_README.html new file
+external/ibm-public/postfix/dist/html/SCHEDULER_README.html new file
+external/ibm-public/postfix/dist/html/SMTPD_ACCESS_README.html new file
+external/ibm-public/postfix/dist/html/SMTPD_POLICY_README.html new file
+external/ibm-public/postfix/dist/html/SMTPD_PROXY_README.html new file
+external/ibm-public/postfix/dist/html/SOHO_README.html new file
+external/ibm-public/postfix/dist/html/STANDARD_CONFIGURATION_README.html new file
+external/ibm-public/postfix/dist/html/STRESS_README.html new file
+external/ibm-public/postfix/dist/html/TLS_LEGACY_README.html new file
+external/ibm-public/postfix/dist/html/TLS_README.html new file
+external/ibm-public/postfix/dist/html/TUNING_README.html new file
+external/ibm-public/postfix/dist/html/UUCP_README.html new file
+external/ibm-public/postfix/dist/html/VERP_README.html new file
+external/ibm-public/postfix/dist/html/VIRTUAL_README.html new file
+external/ibm-public/postfix/dist/html/XCLIENT_README.html new file
+external/ibm-public/postfix/dist/html/XFORWARD_README.html new file
+external/ibm-public/postfix/dist/html/access.5.html new file
+external/ibm-public/postfix/dist/html/aliases.5.html new file
+external/ibm-public/postfix/dist/html/anvil.8.html new file
+external/ibm-public/postfix/dist/html/bounce.5.html new file
+external/ibm-public/postfix/dist/html/bounce.8.html new file
+external/ibm-public/postfix/dist/html/canonical.5.html new file
+external/ibm-public/postfix/dist/html/cidr_table.5.html new file
+external/ibm-public/postfix/dist/html/cleanup.8.html new file
+external/ibm-public/postfix/dist/html/defer.8.html new file
+external/ibm-public/postfix/dist/html/discard.8.html new file
+external/ibm-public/postfix/dist/html/error.8.html new file
+external/ibm-public/postfix/dist/html/flush.8.html new file
+external/ibm-public/postfix/dist/html/generic.5.html new file
+external/ibm-public/postfix/dist/html/header_checks.5.html new file
+external/ibm-public/postfix/dist/html/index.html new file
+external/ibm-public/postfix/dist/html/ldap_table.5.html new file
+external/ibm-public/postfix/dist/html/lmtp.8.html new file
+external/ibm-public/postfix/dist/html/local.8.html new file
+external/ibm-public/postfix/dist/html/mailq.1.html new file
+external/ibm-public/postfix/dist/html/master.5.html new file
+external/ibm-public/postfix/dist/html/master.8.html new file
+external/ibm-public/postfix/dist/html/mysql_table.5.html new file
+external/ibm-public/postfix/dist/html/newaliases.1.html new file
+external/ibm-public/postfix/dist/html/nisplus_table.5.html new file
+external/ibm-public/postfix/dist/html/oqmgr.8.html new file
+external/ibm-public/postfix/dist/html/pcre_table.5.html new file
+external/ibm-public/postfix/dist/html/pgsql_table.5.html new file
+external/ibm-public/postfix/dist/html/pickup.8.html new file
+external/ibm-public/postfix/dist/html/pipe.8.html new file
+external/ibm-public/postfix/dist/html/postalias.1.html new file
+external/ibm-public/postfix/dist/html/postcat.1.html new file
+external/ibm-public/postfix/dist/html/postconf.1.html new file
+external/ibm-public/postfix/dist/html/postconf.5.html new file
+external/ibm-public/postfix/dist/html/postdrop.1.html new file
+external/ibm-public/postfix/dist/html/postfix-logo.jpg new file
+external/ibm-public/postfix/dist/html/postfix-manuals.html new file
+external/ibm-public/postfix/dist/html/postfix-power.png new file
+external/ibm-public/postfix/dist/html/postfix-wrapper.5.html new file
+external/ibm-public/postfix/dist/html/postfix.1.html new file
+external/ibm-public/postfix/dist/html/postkick.1.html new file
+external/ibm-public/postfix/dist/html/postlock.1.html new file
+external/ibm-public/postfix/dist/html/postlog.1.html new file
+external/ibm-public/postfix/dist/html/postmap.1.html new file
+external/ibm-public/postfix/dist/html/postmulti.1.html new file
+external/ibm-public/postfix/dist/html/postqueue.1.html new file
+external/ibm-public/postfix/dist/html/postsuper.1.html new file
+external/ibm-public/postfix/dist/html/proxymap.8.html new file
+external/ibm-public/postfix/dist/html/qmgr.8.html new file
+external/ibm-public/postfix/dist/html/qmqp-sink.1.html new file
+external/ibm-public/postfix/dist/html/qmqp-source.1.html new file
+external/ibm-public/postfix/dist/html/qmqpd.8.html new file
+external/ibm-public/postfix/dist/html/qshape.1.html new file
+external/ibm-public/postfix/dist/html/regexp_table.5.html new file
+external/ibm-public/postfix/dist/html/relocated.5.html new file
+external/ibm-public/postfix/dist/html/scache.8.html new file
+external/ibm-public/postfix/dist/html/sendmail.1.html new file
+external/ibm-public/postfix/dist/html/showq.8.html new file
+external/ibm-public/postfix/dist/html/smtp-sink.1.html new file
+external/ibm-public/postfix/dist/html/smtp-source.1.html new file
+external/ibm-public/postfix/dist/html/smtp.8.html new file
+external/ibm-public/postfix/dist/html/smtpd.8.html new file
+external/ibm-public/postfix/dist/html/spawn.8.html new file
+external/ibm-public/postfix/dist/html/tcp_table.5.html new file
+external/ibm-public/postfix/dist/html/tlsmgr.8.html new file
+external/ibm-public/postfix/dist/html/trace.8.html new file
+external/ibm-public/postfix/dist/html/transport.5.html new file
+external/ibm-public/postfix/dist/html/trivial-rewrite.8.html new file
+external/ibm-public/postfix/dist/html/verify.8.html new file
+external/ibm-public/postfix/dist/html/virtual.5.html new file
+external/ibm-public/postfix/dist/html/virtual.8.html new file
+external/ibm-public/postfix/dist/implementation-notes/DSN new file
+external/ibm-public/postfix/dist/implementation-notes/ENHANCED_STATUS_CODES new file
+external/ibm-public/postfix/dist/implementation-notes/MILTER new file
+external/ibm-public/postfix/dist/makedefs	new file
+external/ibm-public/postfix/dist/man/Makefile.in new file
+external/ibm-public/postfix/dist/man/man1/mailq.1 new file
+external/ibm-public/postfix/dist/man/man1/newaliases.1 new file
+external/ibm-public/postfix/dist/man/man1/postalias.1 new file
+external/ibm-public/postfix/dist/man/man1/postcat.1 new file
+external/ibm-public/postfix/dist/man/man1/postconf.1 new file
+external/ibm-public/postfix/dist/man/man1/postdrop.1 new file
+external/ibm-public/postfix/dist/man/man1/postfix.1 new file
+external/ibm-public/postfix/dist/man/man1/postkick.1 new file
+external/ibm-public/postfix/dist/man/man1/postlock.1 new file
+external/ibm-public/postfix/dist/man/man1/postlog.1 new file
+external/ibm-public/postfix/dist/man/man1/postmap.1 new file
+external/ibm-public/postfix/dist/man/man1/postmulti.1 new file
+external/ibm-public/postfix/dist/man/man1/postqueue.1 new file
+external/ibm-public/postfix/dist/man/man1/postsuper.1 new file
+external/ibm-public/postfix/dist/man/man1/qmqp-sink.1 new file
+external/ibm-public/postfix/dist/man/man1/qmqp-source.1 new file
+external/ibm-public/postfix/dist/man/man1/qshape.1 new file
+external/ibm-public/postfix/dist/man/man1/sendmail.1 new file
+external/ibm-public/postfix/dist/man/man1/smtp-sink.1 new file
+external/ibm-public/postfix/dist/man/man1/smtp-source.1 new file
+external/ibm-public/postfix/dist/man/man5/access.5 new file
+external/ibm-public/postfix/dist/man/man5/aliases.5 new file
+external/ibm-public/postfix/dist/man/man5/body_checks.5 new file
+external/ibm-public/postfix/dist/man/man5/bounce.5 new file
+external/ibm-public/postfix/dist/man/man5/canonical.5 new file
+external/ibm-public/postfix/dist/man/man5/cidr_table.5 new file
+external/ibm-public/postfix/dist/man/man5/generic.5 new file
+external/ibm-public/postfix/dist/man/man5/header_checks.5 new file
+external/ibm-public/postfix/dist/man/man5/ldap_table.5 new file
+external/ibm-public/postfix/dist/man/man5/master.5 new file
+external/ibm-public/postfix/dist/man/man5/mysql_table.5 new file
+external/ibm-public/postfix/dist/man/man5/nisplus_table.5 new file
+external/ibm-public/postfix/dist/man/man5/pcre_table.5 new file
+external/ibm-public/postfix/dist/man/man5/pgsql_table.5 new file
+external/ibm-public/postfix/dist/man/man5/postconf.5 new file
+external/ibm-public/postfix/dist/man/man5/postfix-wrapper.5 new file
+external/ibm-public/postfix/dist/man/man5/regexp_table.5 new file
+external/ibm-public/postfix/dist/man/man5/relocated.5 new file
+external/ibm-public/postfix/dist/man/man5/tcp_table.5 new file
+external/ibm-public/postfix/dist/man/man5/transport.5 new file
+external/ibm-public/postfix/dist/man/man5/virtual.5 new file
+external/ibm-public/postfix/dist/man/man8/anvil.8 new file
+external/ibm-public/postfix/dist/man/man8/bounce.8 new file
+external/ibm-public/postfix/dist/man/man8/cleanup.8 new file
+external/ibm-public/postfix/dist/man/man8/defer.8 new file
+external/ibm-public/postfix/dist/man/man8/discard.8 new file
+external/ibm-public/postfix/dist/man/man8/error.8 new file
+external/ibm-public/postfix/dist/man/man8/flush.8 new file
+external/ibm-public/postfix/dist/man/man8/lmtp.8 new file
+external/ibm-public/postfix/dist/man/man8/local.8 new file
+external/ibm-public/postfix/dist/man/man8/master.8 new file
+external/ibm-public/postfix/dist/man/man8/oqmgr.8 new file
+external/ibm-public/postfix/dist/man/man8/pickup.8 new file
+external/ibm-public/postfix/dist/man/man8/pipe.8 new file
+external/ibm-public/postfix/dist/man/man8/proxymap.8 new file
+external/ibm-public/postfix/dist/man/man8/qmgr.8 new file
+external/ibm-public/postfix/dist/man/man8/qmqpd.8 new file
+external/ibm-public/postfix/dist/man/man8/scache.8 new file
+external/ibm-public/postfix/dist/man/man8/showq.8 new file
+external/ibm-public/postfix/dist/man/man8/smtp.8 new file
+external/ibm-public/postfix/dist/man/man8/smtpd.8 new file
+external/ibm-public/postfix/dist/man/man8/spawn.8 new file
+external/ibm-public/postfix/dist/man/man8/tlsmgr.8 new file
+external/ibm-public/postfix/dist/man/man8/trace.8 new file
+external/ibm-public/postfix/dist/man/man8/trivial-rewrite.8 new file
+external/ibm-public/postfix/dist/man/man8/verify.8 new file
+external/ibm-public/postfix/dist/man/man8/virtual.8 new file
+external/ibm-public/postfix/dist/mantools/README new file
+external/ibm-public/postfix/dist/mantools/ccformat new file
+external/ibm-public/postfix/dist/mantools/check-postlink new file
+external/ibm-public/postfix/dist/mantools/dehtml new file
+external/ibm-public/postfix/dist/mantools/docparam new file
+external/ibm-public/postfix/dist/mantools/docuseparam new file
+external/ibm-public/postfix/dist/mantools/double new file
+external/ibm-public/postfix/dist/mantools/enter new file
+external/ibm-public/postfix/dist/mantools/find-fluff new file
+external/ibm-public/postfix/dist/mantools/fixman new file
+external/ibm-public/postfix/dist/mantools/get_anchors.pl new file
+external/ibm-public/postfix/dist/mantools/hchangered new file
+external/ibm-public/postfix/dist/mantools/html2readme new file
+external/ibm-public/postfix/dist/mantools/make-relnotes new file
+external/ibm-public/postfix/dist/mantools/make_soho_readme new file
+external/ibm-public/postfix/dist/mantools/makemanidx new file
+external/ibm-public/postfix/dist/mantools/makepostconf new file
+external/ibm-public/postfix/dist/mantools/makepostconflinks new file
+external/ibm-public/postfix/dist/mantools/makereadme new file
+external/ibm-public/postfix/dist/mantools/man2html new file
+external/ibm-public/postfix/dist/mantools/mandouble new file
+external/ibm-public/postfix/dist/mantools/manlint new file
+external/ibm-public/postfix/dist/mantools/manlint.stop new file
+external/ibm-public/postfix/dist/mantools/mansect new file
+external/ibm-public/postfix/dist/mantools/manspell new file
+external/ibm-public/postfix/dist/mantools/postconf2html new file
+external/ibm-public/postfix/dist/mantools/postconf2man new file
+external/ibm-public/postfix/dist/mantools/postconffix new file
+external/ibm-public/postfix/dist/mantools/postlink new file
+external/ibm-public/postfix/dist/mantools/postlink.sed new file
+external/ibm-public/postfix/dist/mantools/readme2html new file
+external/ibm-public/postfix/dist/mantools/specmiss new file
+external/ibm-public/postfix/dist/mantools/spell new file
+external/ibm-public/postfix/dist/mantools/srctoman new file
+external/ibm-public/postfix/dist/mantools/useparam new file
+external/ibm-public/postfix/dist/mantools/user2var new file
+external/ibm-public/postfix/dist/mantools/var2user new file
+external/ibm-public/postfix/dist/mantools/xpostconf new file
+external/ibm-public/postfix/dist/mantools/xpostdef new file
+external/ibm-public/postfix/dist/pflogsumm-conn-delays-dsn-patch new file
+external/ibm-public/postfix/dist/postfix-install new file
+external/ibm-public/postfix/dist/proto/ADDRESS_CLASS_README.html new file
+external/ibm-public/postfix/dist/proto/ADDRESS_REWRITING_README.html new file
+external/ibm-public/postfix/dist/proto/ADDRESS_VERIFICATION_README.html new file
+external/ibm-public/postfix/dist/proto/BACKSCATTER_README.html new file
+external/ibm-public/postfix/dist/proto/BASIC_CONFIGURATION_README.html new file
+external/ibm-public/postfix/dist/proto/BUILTIN_FILTER_README.html new file
+external/ibm-public/postfix/dist/proto/CDB_README.html new file
+external/ibm-public/postfix/dist/proto/CONNECTION_CACHE_README.html new file
+external/ibm-public/postfix/dist/proto/CONTENT_INSPECTION_README.html new file
+external/ibm-public/postfix/dist/proto/DATABASE_README.html new file
+external/ibm-public/postfix/dist/proto/DB_README.html new file
+external/ibm-public/postfix/dist/proto/DEBUG_README.html new file
+external/ibm-public/postfix/dist/proto/DSN_README.html new file
+external/ibm-public/postfix/dist/proto/ETRN_README.html new file
+external/ibm-public/postfix/dist/proto/FILTER_README.html new file
+external/ibm-public/postfix/dist/proto/INSTALL.html new file
+external/ibm-public/postfix/dist/proto/IPV6_README.html new file
+external/ibm-public/postfix/dist/proto/LDAP_README.html new file
+external/ibm-public/postfix/dist/proto/LINUX_README.html new file
+external/ibm-public/postfix/dist/proto/LOCAL_RECIPIENT_README.html new file
+external/ibm-public/postfix/dist/proto/MAILDROP_README.html new file
+external/ibm-public/postfix/dist/proto/MILTER_README.html new file
+external/ibm-public/postfix/dist/proto/MULTI_INSTANCE_README.html new file
+external/ibm-public/postfix/dist/proto/MYSQL_README.html new file
+external/ibm-public/postfix/dist/proto/Makefile.in new file
+external/ibm-public/postfix/dist/proto/NFS_README.html new file
+external/ibm-public/postfix/dist/proto/OVERVIEW.html new file
+external/ibm-public/postfix/dist/proto/PACKAGE_README.html new file
+external/ibm-public/postfix/dist/proto/PCRE_README.html new file
+external/ibm-public/postfix/dist/proto/PGSQL_README.html new file
+external/ibm-public/postfix/dist/proto/QSHAPE_README.html new file
+external/ibm-public/postfix/dist/proto/README	new file
+external/ibm-public/postfix/dist/proto/RESTRICTION_CLASS_README.html new file
+external/ibm-public/postfix/dist/proto/SASL_README.html new file
+external/ibm-public/postfix/dist/proto/SCHEDULER_README.html new file
+external/ibm-public/postfix/dist/proto/SMTPD_ACCESS_README.html new file
+external/ibm-public/postfix/dist/proto/SMTPD_POLICY_README.html new file
+external/ibm-public/postfix/dist/proto/SMTPD_PROXY_README.html new file
+external/ibm-public/postfix/dist/proto/STANDARD_CONFIGURATION_README.html new file
+external/ibm-public/postfix/dist/proto/STRESS_README.html new file
+external/ibm-public/postfix/dist/proto/TLS_LEGACY_README.html new file
+external/ibm-public/postfix/dist/proto/TLS_README.html new file
+external/ibm-public/postfix/dist/proto/TUNING_README.html new file
+external/ibm-public/postfix/dist/proto/UUCP_README.html new file
+external/ibm-public/postfix/dist/proto/VERP_README.html new file
+external/ibm-public/postfix/dist/proto/VIRTUAL_README.html new file
+external/ibm-public/postfix/dist/proto/XCLIENT_README.html new file
+external/ibm-public/postfix/dist/proto/XFORWARD_README.html new file
+external/ibm-public/postfix/dist/proto/access	new file
+external/ibm-public/postfix/dist/proto/aliases	new file
+external/ibm-public/postfix/dist/proto/aliases0 new file
+external/ibm-public/postfix/dist/proto/bounce	new file
+external/ibm-public/postfix/dist/proto/canonical new file
+external/ibm-public/postfix/dist/proto/cidr_table new file
+external/ibm-public/postfix/dist/proto/generic	new file
+external/ibm-public/postfix/dist/proto/header_checks new file
+external/ibm-public/postfix/dist/proto/html2text.rc new file
+external/ibm-public/postfix/dist/proto/ldap_table new file
+external/ibm-public/postfix/dist/proto/manual-format new file
+external/ibm-public/postfix/dist/proto/master	new file
+external/ibm-public/postfix/dist/proto/mysql_table new file
+external/ibm-public/postfix/dist/proto/nisplus_table new file
+external/ibm-public/postfix/dist/proto/pcre_table new file
+external/ibm-public/postfix/dist/proto/pgsql_table new file
+external/ibm-public/postfix/dist/proto/postconf.html.epilog new file
+external/ibm-public/postfix/dist/proto/postconf.html.prolog new file
+external/ibm-public/postfix/dist/proto/postconf.man.epilog new file
+external/ibm-public/postfix/dist/proto/postconf.man.prolog new file
+external/ibm-public/postfix/dist/proto/postconf.proto new file
+external/ibm-public/postfix/dist/proto/postfix-wrapper new file
+external/ibm-public/postfix/dist/proto/regexp_table new file
+external/ibm-public/postfix/dist/proto/relocated new file
+external/ibm-public/postfix/dist/proto/stop	new file
+external/ibm-public/postfix/dist/proto/tcp_table new file
+external/ibm-public/postfix/dist/proto/transport new file
+external/ibm-public/postfix/dist/proto/virtual	new file
+external/ibm-public/postfix/dist/src/anvil/Makefile.in new file
+external/ibm-public/postfix/dist/src/anvil/anvil.c new file
+external/ibm-public/postfix/dist/src/bounce/2template_test.in new file
+external/ibm-public/postfix/dist/src/bounce/Makefile.in new file
+external/ibm-public/postfix/dist/src/bounce/annotate.pl new file
+external/ibm-public/postfix/dist/src/bounce/bounce.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_append_service.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_cleanup.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_service.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_util.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_verp.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_one_service.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_service.h new file
+external/ibm-public/postfix/dist/src/bounce/bounce_template.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_template.h new file
+external/ibm-public/postfix/dist/src/bounce/bounce_templates.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_trace_service.c new file
+external/ibm-public/postfix/dist/src/bounce/bounce_warn_service.c new file
+external/ibm-public/postfix/dist/src/bounce/template_test.ref new file
+external/ibm-public/postfix/dist/src/cleanup/Makefile.in new file
+external/ibm-public/postfix/dist/src/cleanup/bug1.file new file
+external/ibm-public/postfix/dist/src/cleanup/bug1.file.ref new file
+external/ibm-public/postfix/dist/src/cleanup/bug1.in new file
+external/ibm-public/postfix/dist/src/cleanup/bug1.ref new file
+external/ibm-public/postfix/dist/src/cleanup/bug1.text.ref new file
+external/ibm-public/postfix/dist/src/cleanup/bug2.file new file
+external/ibm-public/postfix/dist/src/cleanup/bug2.in new file
+external/ibm-public/postfix/dist/src/cleanup/bug2.ref new file
+external/ibm-public/postfix/dist/src/cleanup/bug2.text.ref new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup.h new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_addr.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_api.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_body_edit.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_bounce.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_envelope.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_extracted.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_final.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_init.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_map11.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_map1n.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_masq.ref new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_masquerade.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_message.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in1 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in10a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in10b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in10c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in10d new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in10e new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in11 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in12 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in13a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in13b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in13c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in13d new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in2 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in3 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in4a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in4b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in4c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in5 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in6a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in6b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in6c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in7 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in8 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.in9 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref1 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref10a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref10b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref10c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref10d new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref10e new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref11 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref12 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref13a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref13b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref13c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref13d new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref2 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref3 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref4 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref5 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref6a new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref6b new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref6c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref7 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref8 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.ref9 new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_out.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_out_recipient.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_region.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_rewrite.c new file
+external/ibm-public/postfix/dist/src/cleanup/cleanup_state.c new file
+external/ibm-public/postfix/dist/src/cleanup/loremipsum new file
+external/ibm-public/postfix/dist/src/cleanup/loremipsum2 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file10 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file11 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file12 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file13a new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file13b new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file13c new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file13d new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file2 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file3 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file4 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file5 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file6 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file7 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file8 new file
+external/ibm-public/postfix/dist/src/cleanup/test-queue-file9 new file
+external/ibm-public/postfix/dist/src/discard/Makefile.in new file
+external/ibm-public/postfix/dist/src/discard/discard.c new file
+external/ibm-public/postfix/dist/src/dns/Makefile.in new file
+external/ibm-public/postfix/dist/src/dns/dns.h	new file
+external/ibm-public/postfix/dist/src/dns/dns_lookup.c new file
+external/ibm-public/postfix/dist/src/dns/dns_rr.c new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_eq_sa.c new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_eq_sa.in new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_eq_sa.ref new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_pa.c new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_pa.in new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_pa.ref new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_sa.c new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_sa.in new file
+external/ibm-public/postfix/dist/src/dns/dns_rr_to_sa.ref new file
+external/ibm-public/postfix/dist/src/dns/dns_sa_to_rr.c new file
+external/ibm-public/postfix/dist/src/dns/dns_sa_to_rr.in new file
+external/ibm-public/postfix/dist/src/dns/dns_sa_to_rr.ref new file
+external/ibm-public/postfix/dist/src/dns/dns_strerror.c new file
+external/ibm-public/postfix/dist/src/dns/dns_strtype.c new file
+external/ibm-public/postfix/dist/src/dns/test_dns_lookup.c new file
+external/ibm-public/postfix/dist/src/error/Makefile.in new file
+external/ibm-public/postfix/dist/src/error/error.c new file
+external/ibm-public/postfix/dist/src/flush/Makefile.in new file
+external/ibm-public/postfix/dist/src/flush/flush.c new file
+external/ibm-public/postfix/dist/src/fsstone/Makefile.in new file
+external/ibm-public/postfix/dist/src/fsstone/fsstone.c new file
+external/ibm-public/postfix/dist/src/global/Makefile.in new file
+external/ibm-public/postfix/dist/src/global/abounce.c new file
+external/ibm-public/postfix/dist/src/global/abounce.h new file
+external/ibm-public/postfix/dist/src/global/anvil_clnt.c new file
+external/ibm-public/postfix/dist/src/global/anvil_clnt.h new file
+external/ibm-public/postfix/dist/src/global/been_here.c new file
+external/ibm-public/postfix/dist/src/global/been_here.h new file
+external/ibm-public/postfix/dist/src/global/bounce.c new file
+external/ibm-public/postfix/dist/src/global/bounce.h new file
+external/ibm-public/postfix/dist/src/global/bounce_log.c new file
+external/ibm-public/postfix/dist/src/global/bounce_log.h new file
+external/ibm-public/postfix/dist/src/global/canon_addr.c new file
+external/ibm-public/postfix/dist/src/global/canon_addr.h new file
+external/ibm-public/postfix/dist/src/global/cfg_parser.c new file
+external/ibm-public/postfix/dist/src/global/cfg_parser.h new file
+external/ibm-public/postfix/dist/src/global/cleanup_strerror.c new file
+external/ibm-public/postfix/dist/src/global/cleanup_strflags.c new file
+external/ibm-public/postfix/dist/src/global/cleanup_user.h new file
+external/ibm-public/postfix/dist/src/global/clnt_stream.c new file
+external/ibm-public/postfix/dist/src/global/clnt_stream.h new file
+external/ibm-public/postfix/dist/src/global/config.h new file
+external/ibm-public/postfix/dist/src/global/conv_time.c new file
+external/ibm-public/postfix/dist/src/global/conv_time.h new file
+external/ibm-public/postfix/dist/src/global/data_redirect.c new file
+external/ibm-public/postfix/dist/src/global/data_redirect.h new file
+external/ibm-public/postfix/dist/src/global/db_common.c new file
+external/ibm-public/postfix/dist/src/global/db_common.h new file
+external/ibm-public/postfix/dist/src/global/debug_peer.c new file
+external/ibm-public/postfix/dist/src/global/debug_peer.h new file
+external/ibm-public/postfix/dist/src/global/debug_process.c new file
+external/ibm-public/postfix/dist/src/global/debug_process.h new file
+external/ibm-public/postfix/dist/src/global/defer.c new file
+external/ibm-public/postfix/dist/src/global/defer.h new file
+external/ibm-public/postfix/dist/src/global/deliver_completed.c new file
+external/ibm-public/postfix/dist/src/global/deliver_completed.h new file
+external/ibm-public/postfix/dist/src/global/deliver_flock.c new file
+external/ibm-public/postfix/dist/src/global/deliver_flock.h new file
+external/ibm-public/postfix/dist/src/global/deliver_pass.c new file
+external/ibm-public/postfix/dist/src/global/deliver_pass.h new file
+external/ibm-public/postfix/dist/src/global/deliver_request.c new file
+external/ibm-public/postfix/dist/src/global/deliver_request.h new file
+external/ibm-public/postfix/dist/src/global/delivered_hdr.c new file
+external/ibm-public/postfix/dist/src/global/delivered_hdr.h new file
+external/ibm-public/postfix/dist/src/global/dict_ldap.c new file
+external/ibm-public/postfix/dist/src/global/dict_ldap.h new file
+external/ibm-public/postfix/dist/src/global/dict_mysql.c new file
+external/ibm-public/postfix/dist/src/global/dict_mysql.h new file
+external/ibm-public/postfix/dist/src/global/dict_pgsql.c new file
+external/ibm-public/postfix/dist/src/global/dict_pgsql.h new file
+external/ibm-public/postfix/dist/src/global/dict_proxy.c new file
+external/ibm-public/postfix/dist/src/global/dict_proxy.h new file
+external/ibm-public/postfix/dist/src/global/domain_list.c new file
+external/ibm-public/postfix/dist/src/global/domain_list.h new file
+external/ibm-public/postfix/dist/src/global/dot_lockfile.c new file
+external/ibm-public/postfix/dist/src/global/dot_lockfile.h new file
+external/ibm-public/postfix/dist/src/global/dot_lockfile_as.c new file
+external/ibm-public/postfix/dist/src/global/dot_lockfile_as.h new file
+external/ibm-public/postfix/dist/src/global/dsb_scan.c new file
+external/ibm-public/postfix/dist/src/global/dsb_scan.h new file
+external/ibm-public/postfix/dist/src/global/dsn.c new file
+external/ibm-public/postfix/dist/src/global/dsn.h new file
+external/ibm-public/postfix/dist/src/global/dsn_buf.c new file
+external/ibm-public/postfix/dist/src/global/dsn_buf.h new file
+external/ibm-public/postfix/dist/src/global/dsn_mask.c new file
+external/ibm-public/postfix/dist/src/global/dsn_mask.h new file
+external/ibm-public/postfix/dist/src/global/dsn_print.c new file
+external/ibm-public/postfix/dist/src/global/dsn_print.h new file
+external/ibm-public/postfix/dist/src/global/dsn_util.c new file
+external/ibm-public/postfix/dist/src/global/dsn_util.h new file
+external/ibm-public/postfix/dist/src/global/ehlo_mask.c new file
+external/ibm-public/postfix/dist/src/global/ehlo_mask.h new file
+external/ibm-public/postfix/dist/src/global/ehlo_mask.in new file
+external/ibm-public/postfix/dist/src/global/ehlo_mask.ref new file
+external/ibm-public/postfix/dist/src/global/ext_prop.c new file
+external/ibm-public/postfix/dist/src/global/ext_prop.h new file
+external/ibm-public/postfix/dist/src/global/file_id.c new file
+external/ibm-public/postfix/dist/src/global/file_id.h new file
+external/ibm-public/postfix/dist/src/global/flush_clnt.c new file
+external/ibm-public/postfix/dist/src/global/flush_clnt.h new file
+external/ibm-public/postfix/dist/src/global/fold_addr.c new file
+external/ibm-public/postfix/dist/src/global/fold_addr.h new file
+external/ibm-public/postfix/dist/src/global/header_body_checks.c new file
+external/ibm-public/postfix/dist/src/global/header_body_checks.h new file
+external/ibm-public/postfix/dist/src/global/header_body_checks_ignore.ref new file
+external/ibm-public/postfix/dist/src/global/header_body_checks_null.ref new file
+external/ibm-public/postfix/dist/src/global/header_body_checks_prepend.ref new file
+external/ibm-public/postfix/dist/src/global/header_body_checks_replace.ref new file
+external/ibm-public/postfix/dist/src/global/header_body_checks_warn.ref new file
+external/ibm-public/postfix/dist/src/global/header_opts.c new file
+external/ibm-public/postfix/dist/src/global/header_opts.h new file
+external/ibm-public/postfix/dist/src/global/header_token.c new file
+external/ibm-public/postfix/dist/src/global/header_token.h new file
+external/ibm-public/postfix/dist/src/global/input_transp.c new file
+external/ibm-public/postfix/dist/src/global/input_transp.h new file
+external/ibm-public/postfix/dist/src/global/int_filt.c new file
+external/ibm-public/postfix/dist/src/global/int_filt.h new file
+external/ibm-public/postfix/dist/src/global/is_header.c new file
+external/ibm-public/postfix/dist/src/global/is_header.h new file
+external/ibm-public/postfix/dist/src/global/lex_822.h new file
+external/ibm-public/postfix/dist/src/global/log_adhoc.c new file
+external/ibm-public/postfix/dist/src/global/log_adhoc.h new file
+external/ibm-public/postfix/dist/src/global/mail_addr.c new file
+external/ibm-public/postfix/dist/src/global/mail_addr.h new file
+external/ibm-public/postfix/dist/src/global/mail_addr_crunch.c new file
+external/ibm-public/postfix/dist/src/global/mail_addr_crunch.h new file
+external/ibm-public/postfix/dist/src/global/mail_addr_find.c new file
+external/ibm-public/postfix/dist/src/global/mail_addr_find.h new file
+external/ibm-public/postfix/dist/src/global/mail_addr_map.c new file
+external/ibm-public/postfix/dist/src/global/mail_addr_map.h new file
+external/ibm-public/postfix/dist/src/global/mail_command_client.c new file
+external/ibm-public/postfix/dist/src/global/mail_command_server.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf.h new file
+external/ibm-public/postfix/dist/src/global/mail_conf_bool.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_int.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_long.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_nint.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_raw.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_str.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_time.c new file
+external/ibm-public/postfix/dist/src/global/mail_conf_time.ref new file
+external/ibm-public/postfix/dist/src/global/mail_connect.c new file
+external/ibm-public/postfix/dist/src/global/mail_copy.c new file
+external/ibm-public/postfix/dist/src/global/mail_copy.h new file
+external/ibm-public/postfix/dist/src/global/mail_date.c new file
+external/ibm-public/postfix/dist/src/global/mail_date.h new file
+external/ibm-public/postfix/dist/src/global/mail_dict.c new file
+external/ibm-public/postfix/dist/src/global/mail_dict.h new file
+external/ibm-public/postfix/dist/src/global/mail_error.c new file
+external/ibm-public/postfix/dist/src/global/mail_error.h new file
+external/ibm-public/postfix/dist/src/global/mail_flush.c new file
+external/ibm-public/postfix/dist/src/global/mail_flush.h new file
+external/ibm-public/postfix/dist/src/global/mail_open_ok.c new file
+external/ibm-public/postfix/dist/src/global/mail_open_ok.h new file
+external/ibm-public/postfix/dist/src/global/mail_params.c new file
+external/ibm-public/postfix/dist/src/global/mail_params.h new file
+external/ibm-public/postfix/dist/src/global/mail_pathname.c new file
+external/ibm-public/postfix/dist/src/global/mail_proto.h new file
+external/ibm-public/postfix/dist/src/global/mail_queue.c new file
+external/ibm-public/postfix/dist/src/global/mail_queue.h new file
+external/ibm-public/postfix/dist/src/global/mail_run.c new file
+external/ibm-public/postfix/dist/src/global/mail_run.h new file
+external/ibm-public/postfix/dist/src/global/mail_scan_dir.c new file
+external/ibm-public/postfix/dist/src/global/mail_scan_dir.h new file
+external/ibm-public/postfix/dist/src/global/mail_stream.c new file
+external/ibm-public/postfix/dist/src/global/mail_stream.h new file
+external/ibm-public/postfix/dist/src/global/mail_task.c new file
+external/ibm-public/postfix/dist/src/global/mail_task.h new file
+external/ibm-public/postfix/dist/src/global/mail_trigger.c new file
+external/ibm-public/postfix/dist/src/global/mail_version.c new file
+external/ibm-public/postfix/dist/src/global/mail_version.h new file
+external/ibm-public/postfix/dist/src/global/maps.c new file
+external/ibm-public/postfix/dist/src/global/maps.h new file
+external/ibm-public/postfix/dist/src/global/mark_corrupt.c new file
+external/ibm-public/postfix/dist/src/global/mark_corrupt.h new file
+external/ibm-public/postfix/dist/src/global/match_parent_style.c new file
+external/ibm-public/postfix/dist/src/global/match_parent_style.h new file
+external/ibm-public/postfix/dist/src/global/match_service.c new file
+external/ibm-public/postfix/dist/src/global/match_service.h new file
+external/ibm-public/postfix/dist/src/global/mbox_conf.c new file
+external/ibm-public/postfix/dist/src/global/mbox_conf.h new file
+external/ibm-public/postfix/dist/src/global/mbox_open.c new file
+external/ibm-public/postfix/dist/src/global/mbox_open.h new file
+external/ibm-public/postfix/dist/src/global/mime_8bit.in new file
+external/ibm-public/postfix/dist/src/global/mime_8bit.ref new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.in new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.in2 new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.in3 new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.ref new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.ref2 new file
+external/ibm-public/postfix/dist/src/global/mime_cvt.ref3 new file
+external/ibm-public/postfix/dist/src/global/mime_dom.in new file
+external/ibm-public/postfix/dist/src/global/mime_dom.ref new file
+external/ibm-public/postfix/dist/src/global/mime_garb1.in new file
+external/ibm-public/postfix/dist/src/global/mime_garb1.ref new file
+external/ibm-public/postfix/dist/src/global/mime_garb2.in new file
+external/ibm-public/postfix/dist/src/global/mime_garb2.ref new file
+external/ibm-public/postfix/dist/src/global/mime_garb3.in new file
+external/ibm-public/postfix/dist/src/global/mime_garb3.ref new file
+external/ibm-public/postfix/dist/src/global/mime_garb4.in new file
+external/ibm-public/postfix/dist/src/global/mime_garb4.ref new file
+external/ibm-public/postfix/dist/src/global/mime_nest.in new file
+external/ibm-public/postfix/dist/src/global/mime_nest.ref new file
+external/ibm-public/postfix/dist/src/global/mime_state.c new file
+external/ibm-public/postfix/dist/src/global/mime_state.h new file
+external/ibm-public/postfix/dist/src/global/mime_test.in new file
+external/ibm-public/postfix/dist/src/global/mime_test.ref new file
+external/ibm-public/postfix/dist/src/global/mime_trunc.in new file
+external/ibm-public/postfix/dist/src/global/mime_trunc.ref new file
+external/ibm-public/postfix/dist/src/global/mkmap.h new file
+external/ibm-public/postfix/dist/src/global/mkmap_cdb.c new file
+external/ibm-public/postfix/dist/src/global/mkmap_db.c new file
+external/ibm-public/postfix/dist/src/global/mkmap_dbm.c new file
+external/ibm-public/postfix/dist/src/global/mkmap_open.c new file
+external/ibm-public/postfix/dist/src/global/mkmap_proxy.c new file
+external/ibm-public/postfix/dist/src/global/mkmap_sdbm.c new file
+external/ibm-public/postfix/dist/src/global/msg_stats.h new file
+external/ibm-public/postfix/dist/src/global/msg_stats_print.c new file
+external/ibm-public/postfix/dist/src/global/msg_stats_scan.c new file
+external/ibm-public/postfix/dist/src/global/mynetworks.c new file
+external/ibm-public/postfix/dist/src/global/mynetworks.h new file
+external/ibm-public/postfix/dist/src/global/mypwd.c new file
+external/ibm-public/postfix/dist/src/global/mypwd.h new file
+external/ibm-public/postfix/dist/src/global/namadr_list.c new file
+external/ibm-public/postfix/dist/src/global/namadr_list.h new file
+external/ibm-public/postfix/dist/src/global/namadr_list.in new file
+external/ibm-public/postfix/dist/src/global/namadr_list.ref new file
+external/ibm-public/postfix/dist/src/global/off_cvt.c new file
+external/ibm-public/postfix/dist/src/global/off_cvt.h new file
+external/ibm-public/postfix/dist/src/global/opened.c new file
+external/ibm-public/postfix/dist/src/global/opened.h new file
+external/ibm-public/postfix/dist/src/global/own_inet_addr.c new file
+external/ibm-public/postfix/dist/src/global/own_inet_addr.h new file
+external/ibm-public/postfix/dist/src/global/pipe_command.c new file
+external/ibm-public/postfix/dist/src/global/pipe_command.h new file
+external/ibm-public/postfix/dist/src/global/post_mail.c new file
+external/ibm-public/postfix/dist/src/global/post_mail.h new file
+external/ibm-public/postfix/dist/src/global/qmgr_user.h new file
+external/ibm-public/postfix/dist/src/global/qmqp_proto.h new file
+external/ibm-public/postfix/dist/src/global/quote_821_local.c new file
+external/ibm-public/postfix/dist/src/global/quote_821_local.h new file
+external/ibm-public/postfix/dist/src/global/quote_822_local.c new file
+external/ibm-public/postfix/dist/src/global/quote_822_local.h new file
+external/ibm-public/postfix/dist/src/global/quote_flags.h new file
+external/ibm-public/postfix/dist/src/global/rcpt_buf.c new file
+external/ibm-public/postfix/dist/src/global/rcpt_buf.h new file
+external/ibm-public/postfix/dist/src/global/rcpt_print.c new file
+external/ibm-public/postfix/dist/src/global/rcpt_print.h new file
+external/ibm-public/postfix/dist/src/global/rec2stream.c new file
+external/ibm-public/postfix/dist/src/global/rec_attr_map.c new file
+external/ibm-public/postfix/dist/src/global/rec_attr_map.h new file
+external/ibm-public/postfix/dist/src/global/rec_streamlf.c new file
+external/ibm-public/postfix/dist/src/global/rec_streamlf.h new file
+external/ibm-public/postfix/dist/src/global/rec_type.c new file
+external/ibm-public/postfix/dist/src/global/rec_type.h new file
+external/ibm-public/postfix/dist/src/global/recdump.c new file
+external/ibm-public/postfix/dist/src/global/recipient_list.c new file
+external/ibm-public/postfix/dist/src/global/recipient_list.h new file
+external/ibm-public/postfix/dist/src/global/record.c new file
+external/ibm-public/postfix/dist/src/global/record.h new file
+external/ibm-public/postfix/dist/src/global/remove.c new file
+external/ibm-public/postfix/dist/src/global/resolve_clnt.c new file
+external/ibm-public/postfix/dist/src/global/resolve_clnt.h new file
+external/ibm-public/postfix/dist/src/global/resolve_clnt.in new file
+external/ibm-public/postfix/dist/src/global/resolve_clnt.ref new file
+external/ibm-public/postfix/dist/src/global/resolve_local.c new file
+external/ibm-public/postfix/dist/src/global/resolve_local.h new file
+external/ibm-public/postfix/dist/src/global/rewrite_clnt.c new file
+external/ibm-public/postfix/dist/src/global/rewrite_clnt.h new file
+external/ibm-public/postfix/dist/src/global/rewrite_clnt.in new file
+external/ibm-public/postfix/dist/src/global/rewrite_clnt.ref new file
+external/ibm-public/postfix/dist/src/global/scache.c new file
+external/ibm-public/postfix/dist/src/global/scache.h new file
+external/ibm-public/postfix/dist/src/global/scache_clnt.c new file
+external/ibm-public/postfix/dist/src/global/scache_multi.c new file
+external/ibm-public/postfix/dist/src/global/scache_multi.in new file
+external/ibm-public/postfix/dist/src/global/scache_multi.ref new file
+external/ibm-public/postfix/dist/src/global/scache_single.c new file
+external/ibm-public/postfix/dist/src/global/sent.c new file
+external/ibm-public/postfix/dist/src/global/sent.h new file
+external/ibm-public/postfix/dist/src/global/smtp_stream.c new file
+external/ibm-public/postfix/dist/src/global/smtp_stream.h new file
+external/ibm-public/postfix/dist/src/global/split_addr.c new file
+external/ibm-public/postfix/dist/src/global/split_addr.h new file
+external/ibm-public/postfix/dist/src/global/stream2rec.c new file
+external/ibm-public/postfix/dist/src/global/string_list.c new file
+external/ibm-public/postfix/dist/src/global/string_list.h new file
+external/ibm-public/postfix/dist/src/global/strip_addr.c new file
+external/ibm-public/postfix/dist/src/global/strip_addr.h new file
+external/ibm-public/postfix/dist/src/global/strip_addr.ref new file
+external/ibm-public/postfix/dist/src/global/sys_exits.c new file
+external/ibm-public/postfix/dist/src/global/sys_exits.h new file
+external/ibm-public/postfix/dist/src/global/timed_ipc.c new file
+external/ibm-public/postfix/dist/src/global/timed_ipc.h new file
+external/ibm-public/postfix/dist/src/global/tok822.h new file
+external/ibm-public/postfix/dist/src/global/tok822_find.c new file
+external/ibm-public/postfix/dist/src/global/tok822_limit.in new file
+external/ibm-public/postfix/dist/src/global/tok822_limit.ref new file
+external/ibm-public/postfix/dist/src/global/tok822_node.c new file
+external/ibm-public/postfix/dist/src/global/tok822_parse.c new file
+external/ibm-public/postfix/dist/src/global/tok822_parse.in new file
+external/ibm-public/postfix/dist/src/global/tok822_parse.ref new file
+external/ibm-public/postfix/dist/src/global/tok822_resolve.c new file
+external/ibm-public/postfix/dist/src/global/tok822_rewrite.c new file
+external/ibm-public/postfix/dist/src/global/tok822_tree.c new file
+external/ibm-public/postfix/dist/src/global/trace.c new file
+external/ibm-public/postfix/dist/src/global/trace.h new file
+external/ibm-public/postfix/dist/src/global/user_acl.c new file
+external/ibm-public/postfix/dist/src/global/user_acl.h new file
+external/ibm-public/postfix/dist/src/global/valid_mailhost_addr.c new file
+external/ibm-public/postfix/dist/src/global/valid_mailhost_addr.h new file
+external/ibm-public/postfix/dist/src/global/verify.c new file
+external/ibm-public/postfix/dist/src/global/verify.h new file
+external/ibm-public/postfix/dist/src/global/verify_clnt.c new file
+external/ibm-public/postfix/dist/src/global/verify_clnt.h new file
+external/ibm-public/postfix/dist/src/global/verp_sender.c new file
+external/ibm-public/postfix/dist/src/global/verp_sender.h new file
+external/ibm-public/postfix/dist/src/global/wildcard_inet_addr.c new file
+external/ibm-public/postfix/dist/src/global/wildcard_inet_addr.h new file
+external/ibm-public/postfix/dist/src/global/xtext.c new file
+external/ibm-public/postfix/dist/src/global/xtext.h new file
+external/ibm-public/postfix/dist/src/local/Makefile.in new file
+external/ibm-public/postfix/dist/src/local/Musings new file
+external/ibm-public/postfix/dist/src/local/alias.c new file
+external/ibm-public/postfix/dist/src/local/biff_notify.c new file
+external/ibm-public/postfix/dist/src/local/biff_notify.h new file
+external/ibm-public/postfix/dist/src/local/command.c new file
+external/ibm-public/postfix/dist/src/local/deliver_attr.c new file
+external/ibm-public/postfix/dist/src/local/dotforward.c new file
+external/ibm-public/postfix/dist/src/local/file.c new file
+external/ibm-public/postfix/dist/src/local/forward.c new file
+external/ibm-public/postfix/dist/src/local/include.c new file
+external/ibm-public/postfix/dist/src/local/indirect.c new file
+external/ibm-public/postfix/dist/src/local/local.c new file
+external/ibm-public/postfix/dist/src/local/local.h new file
+external/ibm-public/postfix/dist/src/local/local_expand.c new file
+external/ibm-public/postfix/dist/src/local/mailbox.c new file
+external/ibm-public/postfix/dist/src/local/maildir.c new file
+external/ibm-public/postfix/dist/src/local/recipient.c new file
+external/ibm-public/postfix/dist/src/local/resolve.c new file
+external/ibm-public/postfix/dist/src/local/token.c new file
+external/ibm-public/postfix/dist/src/local/unknown.c new file
+external/ibm-public/postfix/dist/src/master/Makefile.in new file
+external/ibm-public/postfix/dist/src/master/mail_flow.c new file
+external/ibm-public/postfix/dist/src/master/mail_flow.h new file
+external/ibm-public/postfix/dist/src/master/mail_server.h new file
+external/ibm-public/postfix/dist/src/master/master.c new file
+external/ibm-public/postfix/dist/src/master/master.h new file
+external/ibm-public/postfix/dist/src/master/master_avail.c new file
+external/ibm-public/postfix/dist/src/master/master_conf.c new file
+external/ibm-public/postfix/dist/src/master/master_ent.c new file
+external/ibm-public/postfix/dist/src/master/master_flow.c new file
+external/ibm-public/postfix/dist/src/master/master_listen.c new file
+external/ibm-public/postfix/dist/src/master/master_proto.c new file
+external/ibm-public/postfix/dist/src/master/master_proto.h new file
+external/ibm-public/postfix/dist/src/master/master_service.c new file
+external/ibm-public/postfix/dist/src/master/master_sig.c new file
+external/ibm-public/postfix/dist/src/master/master_spawn.c new file
+external/ibm-public/postfix/dist/src/master/master_status.c new file
+external/ibm-public/postfix/dist/src/master/master_vars.c new file
+external/ibm-public/postfix/dist/src/master/master_wakeup.c new file
+external/ibm-public/postfix/dist/src/master/master_watch.c new file
+external/ibm-public/postfix/dist/src/master/multi_server.c new file
+external/ibm-public/postfix/dist/src/master/single_server.c new file
+external/ibm-public/postfix/dist/src/master/trigger_server.c new file
+external/ibm-public/postfix/dist/src/milter/Makefile.in new file
+external/ibm-public/postfix/dist/src/milter/milter.c new file
+external/ibm-public/postfix/dist/src/milter/milter.h new file
+external/ibm-public/postfix/dist/src/milter/milter8.c new file
+external/ibm-public/postfix/dist/src/milter/milter_macros.c new file
+external/ibm-public/postfix/dist/src/milter/test-list new file
+external/ibm-public/postfix/dist/src/milter/test-milter.c new file
+external/ibm-public/postfix/dist/src/oqmgr/Makefile.in new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr.h new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_active.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_bounce.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_defer.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_deliver.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_enable.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_entry.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_error.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_feedback.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_message.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_move.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_queue.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_scan.c new file
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_transport.c new file
+external/ibm-public/postfix/dist/src/pickup/Makefile.in new file
+external/ibm-public/postfix/dist/src/pickup/pickup.c new file
+external/ibm-public/postfix/dist/src/pipe/Makefile.in new file
+external/ibm-public/postfix/dist/src/pipe/pipe.c new file
+external/ibm-public/postfix/dist/src/postalias/Makefile.in new file
+external/ibm-public/postfix/dist/src/postalias/map-abc1.ref new file
+external/ibm-public/postfix/dist/src/postalias/map-abc2.ref new file
+external/ibm-public/postfix/dist/src/postalias/map-ghi1.ref new file
+external/ibm-public/postfix/dist/src/postalias/map-ghi2.ref new file
+external/ibm-public/postfix/dist/src/postalias/map-uABC1.ref new file
+external/ibm-public/postfix/dist/src/postalias/map-uABC2.ref new file
+external/ibm-public/postfix/dist/src/postalias/map.in new file
+external/ibm-public/postfix/dist/src/postalias/postalias.c new file
+external/ibm-public/postfix/dist/src/postcat/Makefile.in new file
+external/ibm-public/postfix/dist/src/postcat/postcat.c new file
+external/ibm-public/postfix/dist/src/postconf/Makefile.in new file
+external/ibm-public/postfix/dist/src/postconf/auto.awk new file
+external/ibm-public/postfix/dist/src/postconf/extract.awk new file
+external/ibm-public/postfix/dist/src/postconf/install_table.h new file
+external/ibm-public/postfix/dist/src/postconf/install_vars.h new file
+external/ibm-public/postfix/dist/src/postconf/postconf.c new file
+external/ibm-public/postfix/dist/src/postdrop/Makefile.in new file
+external/ibm-public/postfix/dist/src/postdrop/postdrop.c new file
+external/ibm-public/postfix/dist/src/postfix/Makefile.in new file
+external/ibm-public/postfix/dist/src/postfix/postfix.c new file
+external/ibm-public/postfix/dist/src/postkick/Makefile.in new file
+external/ibm-public/postfix/dist/src/postkick/postkick.c new file
+external/ibm-public/postfix/dist/src/postlock/Makefile.in new file
+external/ibm-public/postfix/dist/src/postlock/postlock.c new file
+external/ibm-public/postfix/dist/src/postlog/Makefile.in new file
+external/ibm-public/postfix/dist/src/postlog/postlog.c new file
+external/ibm-public/postfix/dist/src/postmap/Makefile.in new file
+external/ibm-public/postfix/dist/src/postmap/map-abc1.ref new file
+external/ibm-public/postfix/dist/src/postmap/map-abc2.ref new file
+external/ibm-public/postfix/dist/src/postmap/map-ghi1.ref new file
+external/ibm-public/postfix/dist/src/postmap/map-ghi2.ref new file
+external/ibm-public/postfix/dist/src/postmap/map-uABC1.ref new file
+external/ibm-public/postfix/dist/src/postmap/map-uABC2.ref new file
+external/ibm-public/postfix/dist/src/postmap/map.in new file
+external/ibm-public/postfix/dist/src/postmap/postmap.c new file
+external/ibm-public/postfix/dist/src/postmulti/Makefile.in new file
+external/ibm-public/postfix/dist/src/postmulti/postmulti.c new file
+external/ibm-public/postfix/dist/src/postqueue/Makefile.in new file
+external/ibm-public/postfix/dist/src/postqueue/postqueue.c new file
+external/ibm-public/postfix/dist/src/postsuper/Makefile.in new file
+external/ibm-public/postfix/dist/src/postsuper/postsuper.c new file
+external/ibm-public/postfix/dist/src/proxymap/Makefile.in new file
+external/ibm-public/postfix/dist/src/proxymap/proxymap.c new file
+external/ibm-public/postfix/dist/src/qmgr/Makefile.in new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr.h new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_active.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_bounce.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_defer.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_deliver.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_enable.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_entry.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_error.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_feedback.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_job.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_message.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_move.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_peer.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_queue.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_scan.c new file
+external/ibm-public/postfix/dist/src/qmgr/qmgr_transport.c new file
+external/ibm-public/postfix/dist/src/qmqpd/Makefile.in new file
+external/ibm-public/postfix/dist/src/qmqpd/qmqpd.c new file
+external/ibm-public/postfix/dist/src/qmqpd/qmqpd.h new file
+external/ibm-public/postfix/dist/src/qmqpd/qmqpd_peer.c new file
+external/ibm-public/postfix/dist/src/qmqpd/qmqpd_state.c new file
+external/ibm-public/postfix/dist/src/scache/Makefile.in new file
+external/ibm-public/postfix/dist/src/scache/scache.c new file
+external/ibm-public/postfix/dist/src/sendmail/Makefile.in new file
+external/ibm-public/postfix/dist/src/sendmail/sendmail.c new file
+external/ibm-public/postfix/dist/src/showq/Makefile.in new file
+external/ibm-public/postfix/dist/src/showq/showq.c new file
+external/ibm-public/postfix/dist/src/smtp/Makefile.in new file
+external/ibm-public/postfix/dist/src/smtp/lmtp_params.c new file
+external/ibm-public/postfix/dist/src/smtp/map11_map new file
+external/ibm-public/postfix/dist/src/smtp/smtp-only new file
+external/ibm-public/postfix/dist/src/smtp/smtp.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp.h new file
+external/ibm-public/postfix/dist/src/smtp/smtp_addr.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_addr.h new file
+external/ibm-public/postfix/dist/src/smtp/smtp_chat.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_connect.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_map11.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_map11.ref new file
+external/ibm-public/postfix/dist/src/smtp/smtp_params.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_proto.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_rcpt.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_reuse.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_reuse.h new file
+external/ibm-public/postfix/dist/src/smtp/smtp_sasl.h new file
+external/ibm-public/postfix/dist/src/smtp/smtp_sasl_auth_cache.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_sasl_auth_cache.h new file
+external/ibm-public/postfix/dist/src/smtp/smtp_sasl_glue.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_sasl_proto.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_session.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_state.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_trouble.c new file
+external/ibm-public/postfix/dist/src/smtp/smtp_unalias.c new file
+external/ibm-public/postfix/dist/src/smtp/tls_policy.in new file
+external/ibm-public/postfix/dist/src/smtp/tls_policy.ref new file
+external/ibm-public/postfix/dist/src/smtpd/Makefile.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_acl.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_acl.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_chat.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_chat.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.in2 new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.in3 new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.in4 new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.ref2 new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.ref4 new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check_access new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check_backup.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check_backup.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check_dsn.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check_dsn.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_dsn_fix.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_dsn_fix.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_exp.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_exp.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_milter.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_milter.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_peer.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_resolve.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_resolve.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_glue.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_glue.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_proto.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_proto.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_state.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_token.c new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_token.h new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_token.in new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_token.ref new file
+external/ibm-public/postfix/dist/src/smtpd/smtpd_xforward.c new file
+external/ibm-public/postfix/dist/src/smtpstone/Makefile.in new file
+external/ibm-public/postfix/dist/src/smtpstone/hashed-deferred new file
+external/ibm-public/postfix/dist/src/smtpstone/hashed-incoming new file
+external/ibm-public/postfix/dist/src/smtpstone/mx-deliver new file
+external/ibm-public/postfix/dist/src/smtpstone/mx-explode new file
+external/ibm-public/postfix/dist/src/smtpstone/mx-relay new file
+external/ibm-public/postfix/dist/src/smtpstone/performance new file
+external/ibm-public/postfix/dist/src/smtpstone/qmail-deliver new file
+external/ibm-public/postfix/dist/src/smtpstone/qmail-explode new file
+external/ibm-public/postfix/dist/src/smtpstone/qmail-relay new file
+external/ibm-public/postfix/dist/src/smtpstone/qmqp-sink.c new file
+external/ibm-public/postfix/dist/src/smtpstone/qmqp-source.c new file
+external/ibm-public/postfix/dist/src/smtpstone/smtp-sink.c new file
+external/ibm-public/postfix/dist/src/smtpstone/smtp-source.c new file
+external/ibm-public/postfix/dist/src/smtpstone/throughput new file
+external/ibm-public/postfix/dist/src/smtpstone/vmail-local new file
+external/ibm-public/postfix/dist/src/smtpstone/vmail-relay new file
+external/ibm-public/postfix/dist/src/spawn/Makefile.in new file
+external/ibm-public/postfix/dist/src/spawn/spawn.c new file
+external/ibm-public/postfix/dist/src/tls/Makefile.in new file
+external/ibm-public/postfix/dist/src/tls/tls.h	new file
+external/ibm-public/postfix/dist/src/tls/tls_bio_ops.c new file
+external/ibm-public/postfix/dist/src/tls/tls_certkey.c new file
+external/ibm-public/postfix/dist/src/tls/tls_client.c new file
+external/ibm-public/postfix/dist/src/tls/tls_dh.c new file
+external/ibm-public/postfix/dist/src/tls/tls_level.c new file
+external/ibm-public/postfix/dist/src/tls/tls_mgr.c new file
+external/ibm-public/postfix/dist/src/tls/tls_mgr.h new file
+external/ibm-public/postfix/dist/src/tls/tls_misc.c new file
+external/ibm-public/postfix/dist/src/tls/tls_prng.h new file
+external/ibm-public/postfix/dist/src/tls/tls_prng_dev.c new file
+external/ibm-public/postfix/dist/src/tls/tls_prng_egd.c new file
+external/ibm-public/postfix/dist/src/tls/tls_prng_exch.c new file
+external/ibm-public/postfix/dist/src/tls/tls_prng_file.c new file
+external/ibm-public/postfix/dist/src/tls/tls_rsa.c new file
+external/ibm-public/postfix/dist/src/tls/tls_scache.c new file
+external/ibm-public/postfix/dist/src/tls/tls_scache.h new file
+external/ibm-public/postfix/dist/src/tls/tls_seed.c new file
+external/ibm-public/postfix/dist/src/tls/tls_server.c new file
+external/ibm-public/postfix/dist/src/tls/tls_session.c new file
+external/ibm-public/postfix/dist/src/tls/tls_stream.c new file
+external/ibm-public/postfix/dist/src/tls/tls_verify.c new file
+external/ibm-public/postfix/dist/src/tlsmgr/Makefile.in new file
+external/ibm-public/postfix/dist/src/tlsmgr/tlsmgr.c new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/Makefile.in new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/resolve.c new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/rewrite.c new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/transport.c new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/transport.h new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/trivial-rewrite.c new file
+external/ibm-public/postfix/dist/src/trivial-rewrite/trivial-rewrite.h new file
+external/ibm-public/postfix/dist/src/util/Makefile.in new file
+external/ibm-public/postfix/dist/src/util/allascii.c new file
+external/ibm-public/postfix/dist/src/util/alldig.c new file
+external/ibm-public/postfix/dist/src/util/allprint.c new file
+external/ibm-public/postfix/dist/src/util/allspace.c new file
+external/ibm-public/postfix/dist/src/util/argv.c new file
+external/ibm-public/postfix/dist/src/util/argv.h new file
+external/ibm-public/postfix/dist/src/util/argv_split.c new file
+external/ibm-public/postfix/dist/src/util/attr.h new file
+external/ibm-public/postfix/dist/src/util/attr_clnt.c new file
+external/ibm-public/postfix/dist/src/util/attr_clnt.h new file
+external/ibm-public/postfix/dist/src/util/attr_print0.c new file
+external/ibm-public/postfix/dist/src/util/attr_print64.c new file
+external/ibm-public/postfix/dist/src/util/attr_print_plain.c new file
+external/ibm-public/postfix/dist/src/util/attr_scan.ref new file
+external/ibm-public/postfix/dist/src/util/attr_scan0.c new file
+external/ibm-public/postfix/dist/src/util/attr_scan0.ref new file
+external/ibm-public/postfix/dist/src/util/attr_scan64.c new file
+external/ibm-public/postfix/dist/src/util/attr_scan64.ref new file
+external/ibm-public/postfix/dist/src/util/attr_scan_plain.c new file
+external/ibm-public/postfix/dist/src/util/attr_scan_plain.ref new file
+external/ibm-public/postfix/dist/src/util/auto_clnt.c new file
+external/ibm-public/postfix/dist/src/util/auto_clnt.h new file
+external/ibm-public/postfix/dist/src/util/base64_code.c new file
+external/ibm-public/postfix/dist/src/util/base64_code.h new file
+external/ibm-public/postfix/dist/src/util/basename.c new file
+external/ibm-public/postfix/dist/src/util/binhash.c new file
+external/ibm-public/postfix/dist/src/util/binhash.h new file
+external/ibm-public/postfix/dist/src/util/cache.in new file
+external/ibm-public/postfix/dist/src/util/chroot_uid.c new file
+external/ibm-public/postfix/dist/src/util/chroot_uid.h new file
+external/ibm-public/postfix/dist/src/util/cidr_match.c new file
+external/ibm-public/postfix/dist/src/util/cidr_match.h new file
+external/ibm-public/postfix/dist/src/util/clean_env.c new file
+external/ibm-public/postfix/dist/src/util/clean_env.h new file
+external/ibm-public/postfix/dist/src/util/close_on_exec.c new file
+external/ibm-public/postfix/dist/src/util/concatenate.c new file
+external/ibm-public/postfix/dist/src/util/connect.h new file
+external/ibm-public/postfix/dist/src/util/ctable.c new file
+external/ibm-public/postfix/dist/src/util/ctable.h new file
+external/ibm-public/postfix/dist/src/util/ctable.in new file
+external/ibm-public/postfix/dist/src/util/ctable.ref new file
+external/ibm-public/postfix/dist/src/util/dict.c new file
+external/ibm-public/postfix/dist/src/util/dict.h new file
+external/ibm-public/postfix/dist/src/util/dict_alloc.c new file
+external/ibm-public/postfix/dist/src/util/dict_cdb.c new file
+external/ibm-public/postfix/dist/src/util/dict_cdb.h new file
+external/ibm-public/postfix/dist/src/util/dict_cidr.c new file
+external/ibm-public/postfix/dist/src/util/dict_cidr.h new file
+external/ibm-public/postfix/dist/src/util/dict_cidr.in new file
+external/ibm-public/postfix/dist/src/util/dict_cidr.map new file
+external/ibm-public/postfix/dist/src/util/dict_cidr.ref new file
+external/ibm-public/postfix/dist/src/util/dict_db.c new file
+external/ibm-public/postfix/dist/src/util/dict_db.h new file
+external/ibm-public/postfix/dist/src/util/dict_dbm.c new file
+external/ibm-public/postfix/dist/src/util/dict_dbm.h new file
+external/ibm-public/postfix/dist/src/util/dict_debug.c new file
+external/ibm-public/postfix/dist/src/util/dict_env.c new file
+external/ibm-public/postfix/dist/src/util/dict_env.h new file
+external/ibm-public/postfix/dist/src/util/dict_ht.c new file
+external/ibm-public/postfix/dist/src/util/dict_ht.h new file
+external/ibm-public/postfix/dist/src/util/dict_ni.c new file
+external/ibm-public/postfix/dist/src/util/dict_ni.h new file
+external/ibm-public/postfix/dist/src/util/dict_nis.c new file
+external/ibm-public/postfix/dist/src/util/dict_nis.h new file
+external/ibm-public/postfix/dist/src/util/dict_nisplus.c new file
+external/ibm-public/postfix/dist/src/util/dict_nisplus.h new file
+external/ibm-public/postfix/dist/src/util/dict_open.c new file
+external/ibm-public/postfix/dist/src/util/dict_pcre.c new file
+external/ibm-public/postfix/dist/src/util/dict_pcre.h new file
+external/ibm-public/postfix/dist/src/util/dict_pcre.in new file
+external/ibm-public/postfix/dist/src/util/dict_pcre.map new file
+external/ibm-public/postfix/dist/src/util/dict_pcre.ref new file
+external/ibm-public/postfix/dist/src/util/dict_regexp.c new file
+external/ibm-public/postfix/dist/src/util/dict_regexp.h new file
+external/ibm-public/postfix/dist/src/util/dict_regexp.in new file
+external/ibm-public/postfix/dist/src/util/dict_regexp.map new file
+external/ibm-public/postfix/dist/src/util/dict_regexp.ref new file
+external/ibm-public/postfix/dist/src/util/dict_sdbm.c new file
+external/ibm-public/postfix/dist/src/util/dict_sdbm.h new file
+external/ibm-public/postfix/dist/src/util/dict_static.c new file
+external/ibm-public/postfix/dist/src/util/dict_static.h new file
+external/ibm-public/postfix/dist/src/util/dict_tcp.c new file
+external/ibm-public/postfix/dist/src/util/dict_tcp.h new file
+external/ibm-public/postfix/dist/src/util/dict_test.in new file
+external/ibm-public/postfix/dist/src/util/dict_test.ref new file
+external/ibm-public/postfix/dist/src/util/dict_unix.c new file
+external/ibm-public/postfix/dist/src/util/dict_unix.h new file
+external/ibm-public/postfix/dist/src/util/dir_forest.c new file
+external/ibm-public/postfix/dist/src/util/dir_forest.h new file
+external/ibm-public/postfix/dist/src/util/doze.c new file
+external/ibm-public/postfix/dist/src/util/dummy_read.c new file
+external/ibm-public/postfix/dist/src/util/dummy_write.c new file
+external/ibm-public/postfix/dist/src/util/dup2_pass_on_exec.c new file
+external/ibm-public/postfix/dist/src/util/duplex_pipe.c new file
+external/ibm-public/postfix/dist/src/util/edit_file.c new file
+external/ibm-public/postfix/dist/src/util/edit_file.h new file
+external/ibm-public/postfix/dist/src/util/environ.c new file
+external/ibm-public/postfix/dist/src/util/events.c new file
+external/ibm-public/postfix/dist/src/util/events.h new file
+external/ibm-public/postfix/dist/src/util/exec_command.c new file
+external/ibm-public/postfix/dist/src/util/exec_command.h new file
+external/ibm-public/postfix/dist/src/util/fifo_listen.c new file
+external/ibm-public/postfix/dist/src/util/fifo_open.c new file
+external/ibm-public/postfix/dist/src/util/fifo_rdonly_bug.c new file
+external/ibm-public/postfix/dist/src/util/fifo_rdwr_bug.c new file
+external/ibm-public/postfix/dist/src/util/fifo_trigger.c new file
+external/ibm-public/postfix/dist/src/util/file_limit.c new file
+external/ibm-public/postfix/dist/src/util/find_inet.c new file
+external/ibm-public/postfix/dist/src/util/find_inet.h new file
+external/ibm-public/postfix/dist/src/util/format_tv.c new file
+external/ibm-public/postfix/dist/src/util/format_tv.h new file
+external/ibm-public/postfix/dist/src/util/format_tv.in new file
+external/ibm-public/postfix/dist/src/util/format_tv.ref new file
+external/ibm-public/postfix/dist/src/util/fsspace.c new file
+external/ibm-public/postfix/dist/src/util/fsspace.h new file
+external/ibm-public/postfix/dist/src/util/fullname.c new file
+external/ibm-public/postfix/dist/src/util/fullname.h new file
+external/ibm-public/postfix/dist/src/util/gccw.c new file
+external/ibm-public/postfix/dist/src/util/gccw.ref new file
+external/ibm-public/postfix/dist/src/util/get_domainname.c new file
+external/ibm-public/postfix/dist/src/util/get_domainname.h new file
+external/ibm-public/postfix/dist/src/util/get_hostname.c new file
+external/ibm-public/postfix/dist/src/util/get_hostname.h new file
+external/ibm-public/postfix/dist/src/util/hex_code.c new file
+external/ibm-public/postfix/dist/src/util/hex_code.h new file
+external/ibm-public/postfix/dist/src/util/hex_quote.c new file
+external/ibm-public/postfix/dist/src/util/hex_quote.h new file
+external/ibm-public/postfix/dist/src/util/host_port.c new file
+external/ibm-public/postfix/dist/src/util/host_port.h new file
+external/ibm-public/postfix/dist/src/util/host_port.in new file
+external/ibm-public/postfix/dist/src/util/host_port.ref new file
+external/ibm-public/postfix/dist/src/util/htable.c new file
+external/ibm-public/postfix/dist/src/util/htable.h new file
+external/ibm-public/postfix/dist/src/util/inet_addr_host.c new file
+external/ibm-public/postfix/dist/src/util/inet_addr_host.h new file
+external/ibm-public/postfix/dist/src/util/inet_addr_list.c new file
+external/ibm-public/postfix/dist/src/util/inet_addr_list.h new file
+external/ibm-public/postfix/dist/src/util/inet_addr_list.in new file
+external/ibm-public/postfix/dist/src/util/inet_addr_list.ref new file
+external/ibm-public/postfix/dist/src/util/inet_addr_local.c new file
+external/ibm-public/postfix/dist/src/util/inet_addr_local.h new file
+external/ibm-public/postfix/dist/src/util/inet_connect.c new file
+external/ibm-public/postfix/dist/src/util/inet_listen.c new file
+external/ibm-public/postfix/dist/src/util/inet_proto.c new file
+external/ibm-public/postfix/dist/src/util/inet_proto.h new file
+external/ibm-public/postfix/dist/src/util/inet_trigger.c new file
+external/ibm-public/postfix/dist/src/util/inet_windowsize.c new file
+external/ibm-public/postfix/dist/src/util/iostuff.h new file
+external/ibm-public/postfix/dist/src/util/killme_after.c new file
+external/ibm-public/postfix/dist/src/util/killme_after.h new file
+external/ibm-public/postfix/dist/src/util/line_wrap.c new file
+external/ibm-public/postfix/dist/src/util/line_wrap.h new file
+external/ibm-public/postfix/dist/src/util/listen.h new file
+external/ibm-public/postfix/dist/src/util/load_file.c new file
+external/ibm-public/postfix/dist/src/util/load_file.h new file
+external/ibm-public/postfix/dist/src/util/lowercase.c new file
+external/ibm-public/postfix/dist/src/util/lstat_as.c new file
+external/ibm-public/postfix/dist/src/util/lstat_as.h new file
+external/ibm-public/postfix/dist/src/util/mac_expand.c new file
+external/ibm-public/postfix/dist/src/util/mac_expand.h new file
+external/ibm-public/postfix/dist/src/util/mac_expand.in new file
+external/ibm-public/postfix/dist/src/util/mac_expand.ref new file
+external/ibm-public/postfix/dist/src/util/mac_parse.c new file
+external/ibm-public/postfix/dist/src/util/mac_parse.h new file
+external/ibm-public/postfix/dist/src/util/make_dirs.c new file
+external/ibm-public/postfix/dist/src/util/make_dirs.h new file
+external/ibm-public/postfix/dist/src/util/mask_addr.c new file
+external/ibm-public/postfix/dist/src/util/mask_addr.h new file
+external/ibm-public/postfix/dist/src/util/match_list.c new file
+external/ibm-public/postfix/dist/src/util/match_list.h new file
+external/ibm-public/postfix/dist/src/util/match_ops.c new file
+external/ibm-public/postfix/dist/src/util/match_ops.h new file
+external/ibm-public/postfix/dist/src/util/msg.c new file
+external/ibm-public/postfix/dist/src/util/msg.h new file
+external/ibm-public/postfix/dist/src/util/msg_output.c new file
+external/ibm-public/postfix/dist/src/util/msg_output.h new file
+external/ibm-public/postfix/dist/src/util/msg_syslog.c new file
+external/ibm-public/postfix/dist/src/util/msg_syslog.h new file
+external/ibm-public/postfix/dist/src/util/msg_vstream.c new file
+external/ibm-public/postfix/dist/src/util/msg_vstream.h new file
+external/ibm-public/postfix/dist/src/util/mvect.c new file
+external/ibm-public/postfix/dist/src/util/mvect.h new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo.c new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo.h new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo.ref new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo.ref2 new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo4.ref new file
+external/ibm-public/postfix/dist/src/util/myaddrinfo4.ref2 new file
+external/ibm-public/postfix/dist/src/util/myflock.c new file
+external/ibm-public/postfix/dist/src/util/myflock.h new file
+external/ibm-public/postfix/dist/src/util/mymalloc.c new file
+external/ibm-public/postfix/dist/src/util/mymalloc.h new file
+external/ibm-public/postfix/dist/src/util/myrand.c new file
+external/ibm-public/postfix/dist/src/util/myrand.h new file
+external/ibm-public/postfix/dist/src/util/mystrtok.c new file
+external/ibm-public/postfix/dist/src/util/name_code.c new file
+external/ibm-public/postfix/dist/src/util/name_code.h new file
+external/ibm-public/postfix/dist/src/util/name_mask.c new file
+external/ibm-public/postfix/dist/src/util/name_mask.h new file
+external/ibm-public/postfix/dist/src/util/netstring.c new file
+external/ibm-public/postfix/dist/src/util/netstring.h new file
+external/ibm-public/postfix/dist/src/util/neuter.c new file
+external/ibm-public/postfix/dist/src/util/non_blocking.c new file
+external/ibm-public/postfix/dist/src/util/nvtable.c new file
+external/ibm-public/postfix/dist/src/util/nvtable.h new file
+external/ibm-public/postfix/dist/src/util/open_as.c new file
+external/ibm-public/postfix/dist/src/util/open_as.h new file
+external/ibm-public/postfix/dist/src/util/open_limit.c new file
+external/ibm-public/postfix/dist/src/util/open_lock.c new file
+external/ibm-public/postfix/dist/src/util/open_lock.h new file
+external/ibm-public/postfix/dist/src/util/peekfd.c new file
+external/ibm-public/postfix/dist/src/util/percentm.c new file
+external/ibm-public/postfix/dist/src/util/percentm.h new file
+external/ibm-public/postfix/dist/src/util/posix_signals.c new file
+external/ibm-public/postfix/dist/src/util/posix_signals.h new file
+external/ibm-public/postfix/dist/src/util/printable.c new file
+external/ibm-public/postfix/dist/src/util/rand_sleep.c new file
+external/ibm-public/postfix/dist/src/util/read_wait.c new file
+external/ibm-public/postfix/dist/src/util/readable.c new file
+external/ibm-public/postfix/dist/src/util/readlline.c new file
+external/ibm-public/postfix/dist/src/util/readlline.h new file
+external/ibm-public/postfix/dist/src/util/ring.c new file
+external/ibm-public/postfix/dist/src/util/ring.h new file
+external/ibm-public/postfix/dist/src/util/safe.h new file
+external/ibm-public/postfix/dist/src/util/safe_getenv.c new file
+external/ibm-public/postfix/dist/src/util/safe_open.c new file
+external/ibm-public/postfix/dist/src/util/safe_open.h new file
+external/ibm-public/postfix/dist/src/util/sane_accept.c new file
+external/ibm-public/postfix/dist/src/util/sane_accept.h new file
+external/ibm-public/postfix/dist/src/util/sane_basename.c new file
+external/ibm-public/postfix/dist/src/util/sane_basename.in new file
+external/ibm-public/postfix/dist/src/util/sane_basename.ref new file
+external/ibm-public/postfix/dist/src/util/sane_connect.c new file
+external/ibm-public/postfix/dist/src/util/sane_connect.h new file
+external/ibm-public/postfix/dist/src/util/sane_fsops.h new file
+external/ibm-public/postfix/dist/src/util/sane_link.c new file
+external/ibm-public/postfix/dist/src/util/sane_rename.c new file
+external/ibm-public/postfix/dist/src/util/sane_socketpair.c new file
+external/ibm-public/postfix/dist/src/util/sane_socketpair.h new file
+external/ibm-public/postfix/dist/src/util/sane_time.c new file
+external/ibm-public/postfix/dist/src/util/sane_time.h new file
+external/ibm-public/postfix/dist/src/util/scan_dir.c new file
+external/ibm-public/postfix/dist/src/util/scan_dir.h new file
+external/ibm-public/postfix/dist/src/util/select_bug.c new file
+external/ibm-public/postfix/dist/src/util/set_eugid.c new file
+external/ibm-public/postfix/dist/src/util/set_eugid.h new file
+external/ibm-public/postfix/dist/src/util/set_ugid.c new file
+external/ibm-public/postfix/dist/src/util/set_ugid.h new file
+external/ibm-public/postfix/dist/src/util/sigdelay.c new file
+external/ibm-public/postfix/dist/src/util/sigdelay.h new file
+external/ibm-public/postfix/dist/src/util/skipblanks.c new file
+external/ibm-public/postfix/dist/src/util/sock_addr.c new file
+external/ibm-public/postfix/dist/src/util/sock_addr.h new file
+external/ibm-public/postfix/dist/src/util/spawn_command.c new file
+external/ibm-public/postfix/dist/src/util/spawn_command.h new file
+external/ibm-public/postfix/dist/src/util/split_at.c new file
+external/ibm-public/postfix/dist/src/util/split_at.h new file
+external/ibm-public/postfix/dist/src/util/split_nameval.c new file
+external/ibm-public/postfix/dist/src/util/stat_as.c new file
+external/ibm-public/postfix/dist/src/util/stat_as.h new file
+external/ibm-public/postfix/dist/src/util/strcasecmp.c new file
+external/ibm-public/postfix/dist/src/util/stream_connect.c new file
+external/ibm-public/postfix/dist/src/util/stream_listen.c new file
+external/ibm-public/postfix/dist/src/util/stream_recv_fd.c new file
+external/ibm-public/postfix/dist/src/util/stream_send_fd.c new file
+external/ibm-public/postfix/dist/src/util/stream_test.c new file
+external/ibm-public/postfix/dist/src/util/stream_trigger.c new file
+external/ibm-public/postfix/dist/src/util/stringops.h new file
+external/ibm-public/postfix/dist/src/util/sys_compat.c new file
+external/ibm-public/postfix/dist/src/util/sys_defs.h new file
+external/ibm-public/postfix/dist/src/util/testdb new file
+external/ibm-public/postfix/dist/src/util/timed_connect.c new file
+external/ibm-public/postfix/dist/src/util/timed_connect.h new file
+external/ibm-public/postfix/dist/src/util/timed_read.c new file
+external/ibm-public/postfix/dist/src/util/timed_wait.c new file
+external/ibm-public/postfix/dist/src/util/timed_wait.h new file
+external/ibm-public/postfix/dist/src/util/timed_write.c new file
+external/ibm-public/postfix/dist/src/util/translit.c new file
+external/ibm-public/postfix/dist/src/util/trigger.h new file
+external/ibm-public/postfix/dist/src/util/trimblanks.c new file
+external/ibm-public/postfix/dist/src/util/unescape.c new file
+external/ibm-public/postfix/dist/src/util/unescape.in new file
+external/ibm-public/postfix/dist/src/util/unescape.ref new file
+external/ibm-public/postfix/dist/src/util/unix_connect.c new file
+external/ibm-public/postfix/dist/src/util/unix_listen.c new file
+external/ibm-public/postfix/dist/src/util/unix_recv_fd.c new file
+external/ibm-public/postfix/dist/src/util/unix_send_fd.c new file
+external/ibm-public/postfix/dist/src/util/unix_trigger.c new file
+external/ibm-public/postfix/dist/src/util/unsafe.c new file
+external/ibm-public/postfix/dist/src/util/upass_connect.c new file
+external/ibm-public/postfix/dist/src/util/upass_listen.c new file
+external/ibm-public/postfix/dist/src/util/upass_trigger.c new file
+external/ibm-public/postfix/dist/src/util/uppercase.c new file
+external/ibm-public/postfix/dist/src/util/username.c new file
+external/ibm-public/postfix/dist/src/util/username.h new file
+external/ibm-public/postfix/dist/src/util/valid_hostname.c new file
+external/ibm-public/postfix/dist/src/util/valid_hostname.h new file
+external/ibm-public/postfix/dist/src/util/valid_hostname.in new file
+external/ibm-public/postfix/dist/src/util/valid_hostname.ref new file
+external/ibm-public/postfix/dist/src/util/vbuf.c new file
+external/ibm-public/postfix/dist/src/util/vbuf.h new file
+external/ibm-public/postfix/dist/src/util/vbuf_print.c new file
+external/ibm-public/postfix/dist/src/util/vbuf_print.h new file
+external/ibm-public/postfix/dist/src/util/vstream.c new file
+external/ibm-public/postfix/dist/src/util/vstream.h new file
+external/ibm-public/postfix/dist/src/util/vstream_popen.c new file
+external/ibm-public/postfix/dist/src/util/vstream_tweak.c new file
+external/ibm-public/postfix/dist/src/util/vstring.c new file
+external/ibm-public/postfix/dist/src/util/vstring.h new file
+external/ibm-public/postfix/dist/src/util/vstring_vstream.c new file
+external/ibm-public/postfix/dist/src/util/vstring_vstream.h new file
+external/ibm-public/postfix/dist/src/util/watchdog.c new file
+external/ibm-public/postfix/dist/src/util/watchdog.h new file
+external/ibm-public/postfix/dist/src/util/writable.c new file
+external/ibm-public/postfix/dist/src/util/write_buf.c new file
+external/ibm-public/postfix/dist/src/util/write_wait.c new file
+external/ibm-public/postfix/dist/src/verify/Makefile.in new file
+external/ibm-public/postfix/dist/src/verify/verify.c new file
+external/ibm-public/postfix/dist/src/virtual/Makefile.in new file
+external/ibm-public/postfix/dist/src/virtual/deliver_attr.c new file
+external/ibm-public/postfix/dist/src/virtual/mailbox.c new file
+external/ibm-public/postfix/dist/src/virtual/maildir.c new file
+external/ibm-public/postfix/dist/src/virtual/recipient.c new file
+external/ibm-public/postfix/dist/src/virtual/unknown.c new file
+external/ibm-public/postfix/dist/src/virtual/virtual.c new file
+external/ibm-public/postfix/dist/src/virtual/virtual.h new file
+external/ibm-public/postfix/dist/src/xsasl/Makefile.in new file
+external/ibm-public/postfix/dist/src/xsasl/README new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl.h new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_client.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus.h new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_client.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_common.h new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_log.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_security.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_server.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_dovecot.h new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_dovecot_server.c new file
+external/ibm-public/postfix/dist/src/xsasl/xsasl_server.c new file
+external/ibm-public/postfix/etc/Makefile	new file
+external/ibm-public/postfix/etc/README		new file
+external/ibm-public/postfix/lib/Makefile	new file
+external/ibm-public/postfix/lib/Makefile.inc	new file
+external/ibm-public/postfix/lib/dns/Makefile	new file
+external/ibm-public/postfix/lib/global/Makefile new file
+external/ibm-public/postfix/lib/masterlib/Makefile new file
+external/ibm-public/postfix/lib/milter/Makefile new file
+external/ibm-public/postfix/lib/tls/Makefile	new file
+external/ibm-public/postfix/lib/util/Makefile	new file
+external/ibm-public/postfix/lib/xsasl/Makefile	new file
+external/ibm-public/postfix/libexec/Makefile	new file
+external/ibm-public/postfix/libexec/Makefile.inc new file
+external/ibm-public/postfix/libexec/anvil/Makefile new file
+external/ibm-public/postfix/libexec/bounce/Makefile new file
+external/ibm-public/postfix/libexec/cleanup/Makefile new file
+external/ibm-public/postfix/libexec/discard/Makefile new file
+external/ibm-public/postfix/libexec/error/Makefile new file
+external/ibm-public/postfix/libexec/flush/Makefile new file
+external/ibm-public/postfix/libexec/local/Makefile new file
+external/ibm-public/postfix/libexec/master/Makefile new file
+external/ibm-public/postfix/libexec/oqmgr/Makefile new file
+external/ibm-public/postfix/libexec/pickup/Makefile new file
+external/ibm-public/postfix/libexec/pipe/Makefile new file
+external/ibm-public/postfix/libexec/postfix-script/Makefile new file
+external/ibm-public/postfix/libexec/proxymap/Makefile new file
+external/ibm-public/postfix/libexec/qmgr/Makefile new file
+external/ibm-public/postfix/libexec/scache/Makefile new file
+external/ibm-public/postfix/libexec/sendmail/Makefile new file
+external/ibm-public/postfix/libexec/showq/Makefile new file
+external/ibm-public/postfix/libexec/smtp/Makefile new file
+external/ibm-public/postfix/libexec/smtpd/Makefile new file
+external/ibm-public/postfix/libexec/spawn/Makefile new file
+external/ibm-public/postfix/libexec/tlsmgr/Makefile new file
+external/ibm-public/postfix/libexec/trivial-rewrite/Makefile new file
+external/ibm-public/postfix/libexec/verify/Makefile new file
+external/ibm-public/postfix/libexec/virtual/Makefile new file
+external/ibm-public/postfix/man/Makefile	new file
+external/ibm-public/postfix/man/man1/Makefile	new file
+external/ibm-public/postfix/man/man5/Makefile	new file
+external/ibm-public/postfix/man/man8/Makefile	new file
+external/ibm-public/postfix/postfix2netbsd	new file
+external/ibm-public/postfix/sbin/Makefile	new file
+external/ibm-public/postfix/sbin/Makefile.inc	new file
+external/ibm-public/postfix/sbin/postalias/Makefile new file
+external/ibm-public/postfix/sbin/postcat/Makefile new file
+external/ibm-public/postfix/sbin/postconf/Makefile new file
+external/ibm-public/postfix/sbin/postdrop/Makefile new file
+external/ibm-public/postfix/sbin/postfix/Makefile new file
+external/ibm-public/postfix/sbin/postkick/Makefile new file
+external/ibm-public/postfix/sbin/postlock/Makefile new file
+external/ibm-public/postfix/sbin/postlog/Makefile new file
+external/ibm-public/postfix/sbin/postmap/Makefile new file
+external/ibm-public/postfix/sbin/postmulti/Makefile new file
+external/ibm-public/postfix/sbin/postqueue/Makefile new file
+external/ibm-public/postfix/sbin/postsuper/Makefile new file
+external/ibm-public/postfix/share/Makefile	new file
+external/ibm-public/postfix/share/Makefile.inc	new file
+external/ibm-public/postfix/share/README_FILES/Makefile new file
+external/ibm-public/postfix/share/conf/Makefile new file
+external/ibm-public/postfix/share/html/Makefile new file
+gnu/dist/postfix/AAAREADME			delete
+gnu/dist/postfix/COMPATIBILITY			delete
+gnu/dist/postfix/COPYRIGHT			delete
+gnu/dist/postfix/HISTORY			delete
+gnu/dist/postfix/IPv6-ChangeLog			delete
+gnu/dist/postfix/LICENSE			delete
+gnu/dist/postfix/Makefile			delete
+gnu/dist/postfix/Makefile.in			delete
+gnu/dist/postfix/Makefile.init			delete
+gnu/dist/postfix/PORTING			delete
+gnu/dist/postfix/README_FILES/AAAREADME		delete
+gnu/dist/postfix/README_FILES/ADDRESS_CLASS_README delete
+gnu/dist/postfix/README_FILES/ADDRESS_REWRITING_README delete
+gnu/dist/postfix/README_FILES/ADDRESS_VERIFICATION_README delete
+gnu/dist/postfix/README_FILES/BACKSCATTER_README delete
+gnu/dist/postfix/README_FILES/BASIC_CONFIGURATION_README delete
+gnu/dist/postfix/README_FILES/BUILTIN_FILTER_README delete
+gnu/dist/postfix/README_FILES/CDB_README	delete
+gnu/dist/postfix/README_FILES/CONNECTION_CACHE_README delete
+gnu/dist/postfix/README_FILES/CONTENT_INSPECTION_README delete
+gnu/dist/postfix/README_FILES/CYRUS_README	delete
+gnu/dist/postfix/README_FILES/DATABASE_README	delete
+gnu/dist/postfix/README_FILES/DB_README		delete
+gnu/dist/postfix/README_FILES/DEBUG_README	delete
+gnu/dist/postfix/README_FILES/DSN_README	delete
+gnu/dist/postfix/README_FILES/ETRN_README	delete
+gnu/dist/postfix/README_FILES/FILTER_README	delete
+gnu/dist/postfix/README_FILES/INSTALL		delete
+gnu/dist/postfix/README_FILES/IPV6_README	delete
+gnu/dist/postfix/README_FILES/LDAP_README	delete
+gnu/dist/postfix/README_FILES/LINUX_README	delete
+gnu/dist/postfix/README_FILES/LOCAL_RECIPIENT_README delete
+gnu/dist/postfix/README_FILES/MAILDROP_README	delete
+gnu/dist/postfix/README_FILES/MILTER_README	delete
+gnu/dist/postfix/README_FILES/MYSQL_README	delete
+gnu/dist/postfix/README_FILES/NFS_README	delete
+gnu/dist/postfix/README_FILES/OVERVIEW		delete
+gnu/dist/postfix/README_FILES/PACKAGE_README	delete
+gnu/dist/postfix/README_FILES/PCRE_README	delete
+gnu/dist/postfix/README_FILES/PGSQL_README	delete
+gnu/dist/postfix/README_FILES/QMQP_README	delete
+gnu/dist/postfix/README_FILES/QSHAPE_README	delete
+gnu/dist/postfix/README_FILES/RESTRICTION_CLASS_README delete
+gnu/dist/postfix/README_FILES/SASL_README	delete
+gnu/dist/postfix/README_FILES/SCHEDULER_README	delete
+gnu/dist/postfix/README_FILES/SMTPD_ACCESS_README delete
+gnu/dist/postfix/README_FILES/SMTPD_POLICY_README delete
+gnu/dist/postfix/README_FILES/SMTPD_PROXY_README delete
+gnu/dist/postfix/README_FILES/SOHO_README	delete
+gnu/dist/postfix/README_FILES/STANDARD_CONFIGURATION_README delete
+gnu/dist/postfix/README_FILES/STRESS_README	delete
+gnu/dist/postfix/README_FILES/TLS_LEGACY_README delete
+gnu/dist/postfix/README_FILES/TLS_README	delete
+gnu/dist/postfix/README_FILES/TUNING_README	delete
+gnu/dist/postfix/README_FILES/ULTRIX_README	delete
+gnu/dist/postfix/README_FILES/UUCP_README	delete
+gnu/dist/postfix/README_FILES/VERP_README	delete
+gnu/dist/postfix/README_FILES/VIRTUAL_README	delete
+gnu/dist/postfix/README_FILES/XCLIENT_README	delete
+gnu/dist/postfix/README_FILES/XFORWARD_README	delete
+gnu/dist/postfix/RELEASE_NOTES			delete
+gnu/dist/postfix/RELEASE_NOTES-1.0		delete
+gnu/dist/postfix/RELEASE_NOTES-1.1		delete
+gnu/dist/postfix/RELEASE_NOTES-2.0		delete
+gnu/dist/postfix/RELEASE_NOTES-2.1		delete
+gnu/dist/postfix/RELEASE_NOTES-2.2		delete
+gnu/dist/postfix/RELEASE_NOTES-2.3		delete
+gnu/dist/postfix/RELEASE_NOTES-2.4		delete
+gnu/dist/postfix/TLS_ACKNOWLEDGEMENTS		delete
+gnu/dist/postfix/TLS_CHANGES			delete
+gnu/dist/postfix/TLS_LICENSE			delete
+gnu/dist/postfix/US_PATENT_6321267		delete
+gnu/dist/postfix/auxiliary/name-addr-test/getaddrinfo.c delete
+gnu/dist/postfix/auxiliary/name-addr-test/gethostbyaddr.c delete
+gnu/dist/postfix/auxiliary/name-addr-test/gethostbyname.c delete
+gnu/dist/postfix/auxiliary/name-addr-test/getnameinfo.c delete
+gnu/dist/postfix/conf/access			delete
+gnu/dist/postfix/conf/aliases			delete
+gnu/dist/postfix/conf/canonical			delete
+gnu/dist/postfix/conf/generic			delete
+gnu/dist/postfix/conf/header_checks		delete
+gnu/dist/postfix/conf/main.cf			delete
+gnu/dist/postfix/conf/master.cf			delete
+gnu/dist/postfix/conf/post-install		delete
+gnu/dist/postfix/conf/postfix-files		delete
+gnu/dist/postfix/conf/postfix-script		delete
+gnu/dist/postfix/conf/relocated			delete
+gnu/dist/postfix/conf/transport			delete
+gnu/dist/postfix/conf/virtual			delete
+gnu/dist/postfix/examples/chroot-setup/AIX42	delete
+gnu/dist/postfix/examples/chroot-setup/BSDI2	delete
+gnu/dist/postfix/examples/chroot-setup/BSDI3	delete
+gnu/dist/postfix/examples/chroot-setup/FREEBSD3 delete
+gnu/dist/postfix/examples/chroot-setup/FreeBSD2 delete
+gnu/dist/postfix/examples/chroot-setup/HPUX10	delete
+gnu/dist/postfix/examples/chroot-setup/HPUX9	delete
+gnu/dist/postfix/examples/chroot-setup/IRIX5	delete
+gnu/dist/postfix/examples/chroot-setup/IRIX6	delete
+gnu/dist/postfix/examples/chroot-setup/LINUX2	delete
+gnu/dist/postfix/examples/chroot-setup/NETBSD1	delete
+gnu/dist/postfix/examples/chroot-setup/NEXTSTEP3 delete
+gnu/dist/postfix/examples/chroot-setup/OPENSTEP4 delete
+gnu/dist/postfix/examples/chroot-setup/OSF1	delete
+gnu/dist/postfix/examples/chroot-setup/Solaris10 delete
+gnu/dist/postfix/examples/chroot-setup/Solaris2 delete
+gnu/dist/postfix/examples/chroot-setup/Solaris8 delete
+gnu/dist/postfix/examples/qmail-local/qmail-local.txt delete
+gnu/dist/postfix/examples/smtpd-policy/README.SPF delete
+gnu/dist/postfix/examples/smtpd-policy/greylist.pl delete
+gnu/dist/postfix/html/ADDRESS_CLASS_README.html delete
+gnu/dist/postfix/html/ADDRESS_REWRITING_README.html delete
+gnu/dist/postfix/html/ADDRESS_VERIFICATION_README.html delete
+gnu/dist/postfix/html/BACKSCATTER_README.html	delete
+gnu/dist/postfix/html/BASIC_CONFIGURATION_README.html delete
+gnu/dist/postfix/html/BUILTIN_FILTER_README.html delete
+gnu/dist/postfix/html/CDB_README.html		delete
+gnu/dist/postfix/html/CONNECTION_CACHE_README.html delete
+gnu/dist/postfix/html/CONTENT_INSPECTION_README.html delete
+gnu/dist/postfix/html/DATABASE_README.html	delete
+gnu/dist/postfix/html/DB_README.html		delete
+gnu/dist/postfix/html/DEBUG_README.html		delete
+gnu/dist/postfix/html/DSN_README.html		delete
+gnu/dist/postfix/html/ETRN_README.html		delete
+gnu/dist/postfix/html/FILTER_README.html	delete
+gnu/dist/postfix/html/INSTALL.html		delete
+gnu/dist/postfix/html/IPV6_README.html		delete
+gnu/dist/postfix/html/LDAP_README.html		delete
+gnu/dist/postfix/html/LINUX_README.html		delete
+gnu/dist/postfix/html/LOCAL_RECIPIENT_README.html delete
+gnu/dist/postfix/html/MAILDROP_README.html	delete
+gnu/dist/postfix/html/MILTER_README.html	delete
+gnu/dist/postfix/html/MYSQL_README.html		delete
+gnu/dist/postfix/html/Makefile.in		delete
+gnu/dist/postfix/html/NFS_README.html		delete
+gnu/dist/postfix/html/OVERVIEW.html		delete
+gnu/dist/postfix/html/PACKAGE_README.html	delete
+gnu/dist/postfix/html/PCRE_README.html		delete
+gnu/dist/postfix/html/PGSQL_README.html		delete
+gnu/dist/postfix/html/QSHAPE_README.html	delete
+gnu/dist/postfix/html/RESTRICTION_CLASS_README.html delete
+gnu/dist/postfix/html/SASL_README.html		delete
+gnu/dist/postfix/html/SCHEDULER_README.html	delete
+gnu/dist/postfix/html/SMTPD_ACCESS_README.html	delete
+gnu/dist/postfix/html/SMTPD_POLICY_README.html	delete
+gnu/dist/postfix/html/SMTPD_PROXY_README.html	delete
+gnu/dist/postfix/html/SOHO_README.html		delete
+gnu/dist/postfix/html/STANDARD_CONFIGURATION_README.html delete
+gnu/dist/postfix/html/STRESS_README.html	delete
+gnu/dist/postfix/html/TLS_LEGACY_README.html	delete
+gnu/dist/postfix/html/TLS_README.html		delete
+gnu/dist/postfix/html/TUNING_README.html	delete
+gnu/dist/postfix/html/UUCP_README.html		delete
+gnu/dist/postfix/html/VERP_README.html		delete
+gnu/dist/postfix/html/VIRTUAL_README.html	delete
+gnu/dist/postfix/html/XCLIENT_README.html	delete
+gnu/dist/postfix/html/XFORWARD_README.html	delete
+gnu/dist/postfix/html/access.5.html		delete
+gnu/dist/postfix/html/aliases.5.html		delete
+gnu/dist/postfix/html/anvil.8.html		delete
+gnu/dist/postfix/html/bounce.5.html		delete
+gnu/dist/postfix/html/bounce.8.html		delete
+gnu/dist/postfix/html/canonical.5.html		delete
+gnu/dist/postfix/html/cidr_table.5.html		delete
+gnu/dist/postfix/html/cleanup.8.html		delete
+gnu/dist/postfix/html/defer.8.html		delete
+gnu/dist/postfix/html/discard.8.html		delete
+gnu/dist/postfix/html/error.8.html		delete
+gnu/dist/postfix/html/flush.8.html		delete
+gnu/dist/postfix/html/generic.5.html		delete
+gnu/dist/postfix/html/header_checks.5.html	delete
+gnu/dist/postfix/html/index.html		delete
+gnu/dist/postfix/html/ldap_table.5.html		delete
+gnu/dist/postfix/html/lmtp.8.html		delete
+gnu/dist/postfix/html/local.8.html		delete
+gnu/dist/postfix/html/mailq.1.html		delete
+gnu/dist/postfix/html/master.5.html		delete
+gnu/dist/postfix/html/master.8.html		delete
+gnu/dist/postfix/html/mysql_table.5.html	delete
+gnu/dist/postfix/html/newaliases.1.html		delete
+gnu/dist/postfix/html/nisplus_table.5.html	delete
+gnu/dist/postfix/html/oqmgr.8.html		delete
+gnu/dist/postfix/html/pcre_table.5.html		delete
+gnu/dist/postfix/html/pgsql_table.5.html	delete
+gnu/dist/postfix/html/pickup.8.html		delete
+gnu/dist/postfix/html/pipe.8.html		delete
+gnu/dist/postfix/html/postalias.1.html		delete
+gnu/dist/postfix/html/postcat.1.html		delete
+gnu/dist/postfix/html/postconf.1.html		delete
+gnu/dist/postfix/html/postconf.5.html		delete
+gnu/dist/postfix/html/postdrop.1.html		delete
+gnu/dist/postfix/html/postfix-logo.jpg		delete
+gnu/dist/postfix/html/postfix-manuals.html	delete
+gnu/dist/postfix/html/postfix-power.png		delete
+gnu/dist/postfix/html/postfix.1.html		delete
+gnu/dist/postfix/html/postkick.1.html		delete
+gnu/dist/postfix/html/postlock.1.html		delete
+gnu/dist/postfix/html/postlog.1.html		delete
+gnu/dist/postfix/html/postmap.1.html		delete
+gnu/dist/postfix/html/postqueue.1.html		delete
+gnu/dist/postfix/html/postsuper.1.html		delete
+gnu/dist/postfix/html/proxymap.8.html		delete
+gnu/dist/postfix/html/qmgr.8.html		delete
+gnu/dist/postfix/html/qmqp-sink.1.html		delete
+gnu/dist/postfix/html/qmqp-source.1.html	delete
+gnu/dist/postfix/html/qmqpd.8.html		delete
+gnu/dist/postfix/html/qshape.1.html		delete
+gnu/dist/postfix/html/regexp_table.5.html	delete
+gnu/dist/postfix/html/relocated.5.html		delete
+gnu/dist/postfix/html/scache.8.html		delete
+gnu/dist/postfix/html/sendmail.1.html		delete
+gnu/dist/postfix/html/showq.8.html		delete
+gnu/dist/postfix/html/smtp-sink.1.html		delete
+gnu/dist/postfix/html/smtp-source.1.html	delete
+gnu/dist/postfix/html/smtp.8.html		delete
+gnu/dist/postfix/html/smtpd.8.html		delete
+gnu/dist/postfix/html/spawn.8.html		delete
+gnu/dist/postfix/html/tcp_table.5.html		delete
+gnu/dist/postfix/html/tlsmgr.8.html		delete
+gnu/dist/postfix/html/trace.8.html		delete
+gnu/dist/postfix/html/transport.5.html		delete
+gnu/dist/postfix/html/trivial-rewrite.8.html	delete
+gnu/dist/postfix/html/verify.8.html		delete
+gnu/dist/postfix/html/virtual.5.html		delete
+gnu/dist/postfix/html/virtual.8.html		delete
+gnu/dist/postfix/implementation-notes/DSN	delete
+gnu/dist/postfix/implementation-notes/ENHANCED_STATUS_CODES delete
+gnu/dist/postfix/implementation-notes/MILTER	delete
+gnu/dist/postfix/makedefs			delete
+gnu/dist/postfix/man/Makefile.in		delete
+gnu/dist/postfix/man/man1/mailq.1		delete
+gnu/dist/postfix/man/man1/newaliases.1		delete
+gnu/dist/postfix/man/man1/postalias.1		delete
+gnu/dist/postfix/man/man1/postcat.1		delete
+gnu/dist/postfix/man/man1/postconf.1		delete
+gnu/dist/postfix/man/man1/postdrop.1		delete
+gnu/dist/postfix/man/man1/postfix.1		delete
+gnu/dist/postfix/man/man1/postkick.1		delete
+gnu/dist/postfix/man/man1/postlock.1		delete
+gnu/dist/postfix/man/man1/postlog.1		delete
+gnu/dist/postfix/man/man1/postmap.1		delete
+gnu/dist/postfix/man/man1/postqueue.1		delete
+gnu/dist/postfix/man/man1/postsuper.1		delete
+gnu/dist/postfix/man/man1/qmqp-sink.1		delete
+gnu/dist/postfix/man/man1/qmqp-source.1		delete
+gnu/dist/postfix/man/man1/qshape.1		delete
+gnu/dist/postfix/man/man1/sendmail.1		delete
+gnu/dist/postfix/man/man1/smtp-sink.1		delete
+gnu/dist/postfix/man/man1/smtp-source.1		delete
+gnu/dist/postfix/man/man5/access.5		delete
+gnu/dist/postfix/man/man5/aliases.5		delete
+gnu/dist/postfix/man/man5/body_checks.5		delete
+gnu/dist/postfix/man/man5/bounce.5		delete
+gnu/dist/postfix/man/man5/canonical.5		delete
+gnu/dist/postfix/man/man5/cidr_table.5		delete
+gnu/dist/postfix/man/man5/generic.5		delete
+gnu/dist/postfix/man/man5/header_checks.5	delete
+gnu/dist/postfix/man/man5/ldap_table.5		delete
+gnu/dist/postfix/man/man5/master.5		delete
+gnu/dist/postfix/man/man5/mysql_table.5		delete
+gnu/dist/postfix/man/man5/nisplus_table.5	delete
+gnu/dist/postfix/man/man5/pcre_table.5		delete
+gnu/dist/postfix/man/man5/pgsql_table.5		delete
+gnu/dist/postfix/man/man5/postconf.5		delete
+gnu/dist/postfix/man/man5/regexp_table.5	delete
+gnu/dist/postfix/man/man5/relocated.5		delete
+gnu/dist/postfix/man/man5/tcp_table.5		delete
+gnu/dist/postfix/man/man5/transport.5		delete
+gnu/dist/postfix/man/man5/virtual.5		delete
+gnu/dist/postfix/man/man8/anvil.8		delete
+gnu/dist/postfix/man/man8/bounce.8		delete
+gnu/dist/postfix/man/man8/cleanup.8		delete
+gnu/dist/postfix/man/man8/defer.8		delete
+gnu/dist/postfix/man/man8/discard.8		delete
+gnu/dist/postfix/man/man8/error.8		delete
+gnu/dist/postfix/man/man8/flush.8		delete
+gnu/dist/postfix/man/man8/lmtp.8		delete
+gnu/dist/postfix/man/man8/local.8		delete
+gnu/dist/postfix/man/man8/master.8		delete
+gnu/dist/postfix/man/man8/oqmgr.8		delete
+gnu/dist/postfix/man/man8/pickup.8		delete
+gnu/dist/postfix/man/man8/pipe.8		delete
+gnu/dist/postfix/man/man8/proxymap.8		delete
+gnu/dist/postfix/man/man8/qmgr.8		delete
+gnu/dist/postfix/man/man8/qmqpd.8		delete
+gnu/dist/postfix/man/man8/scache.8		delete
+gnu/dist/postfix/man/man8/showq.8		delete
+gnu/dist/postfix/man/man8/smtp.8		delete
+gnu/dist/postfix/man/man8/smtpd.8		delete
+gnu/dist/postfix/man/man8/spawn.8		delete
+gnu/dist/postfix/man/man8/tlsmgr.8		delete
+gnu/dist/postfix/man/man8/trace.8		delete
+gnu/dist/postfix/man/man8/trivial-rewrite.8	delete
+gnu/dist/postfix/man/man8/verify.8		delete
+gnu/dist/postfix/man/man8/virtual.8		delete
+gnu/dist/postfix/mantools/README		delete
+gnu/dist/postfix/mantools/ccformat		delete
+gnu/dist/postfix/mantools/dehtml		delete
+gnu/dist/postfix/mantools/docparam		delete
+gnu/dist/postfix/mantools/docuseparam		delete
+gnu/dist/postfix/mantools/double		delete
+gnu/dist/postfix/mantools/enter			delete
+gnu/dist/postfix/mantools/find-fluff		delete
+gnu/dist/postfix/mantools/fixman		delete
+gnu/dist/postfix/mantools/get_anchors.pl	delete
+gnu/dist/postfix/mantools/hchangered		delete
+gnu/dist/postfix/mantools/html2readme		delete
+gnu/dist/postfix/mantools/make-relnotes		delete
+gnu/dist/postfix/mantools/make_soho_readme	delete
+gnu/dist/postfix/mantools/makemanidx		delete
+gnu/dist/postfix/mantools/makepostconf		delete
+gnu/dist/postfix/mantools/makepostconflinks	delete
+gnu/dist/postfix/mantools/makereadme		delete
+gnu/dist/postfix/mantools/man2html		delete
+gnu/dist/postfix/mantools/mandouble		delete
+gnu/dist/postfix/mantools/manlint		delete
+gnu/dist/postfix/mantools/manlint.stop		delete
+gnu/dist/postfix/mantools/mansect		delete
+gnu/dist/postfix/mantools/manspell		delete
+gnu/dist/postfix/mantools/postconf2html		delete
+gnu/dist/postfix/mantools/postconf2man		delete
+gnu/dist/postfix/mantools/postconffix		delete
+gnu/dist/postfix/mantools/postlink		delete
+gnu/dist/postfix/mantools/postlink.sed		delete
+gnu/dist/postfix/mantools/readme2html		delete
+gnu/dist/postfix/mantools/specmiss		delete
+gnu/dist/postfix/mantools/spell			delete
+gnu/dist/postfix/mantools/srctoman		delete
+gnu/dist/postfix/mantools/useparam		delete
+gnu/dist/postfix/mantools/user2var		delete
+gnu/dist/postfix/mantools/var2user		delete
+gnu/dist/postfix/mantools/xpostconf		delete
+gnu/dist/postfix/mantools/xpostdef		delete
+gnu/dist/postfix/pflogsumm-conn-delays-dsn-patch delete
+gnu/dist/postfix/postfix-install		delete
+gnu/dist/postfix/proto/ADDRESS_CLASS_README.html delete
+gnu/dist/postfix/proto/ADDRESS_REWRITING_README.html delete
+gnu/dist/postfix/proto/ADDRESS_VERIFICATION_README.html delete
+gnu/dist/postfix/proto/BACKSCATTER_README.html	delete
+gnu/dist/postfix/proto/BASIC_CONFIGURATION_README.html delete
+gnu/dist/postfix/proto/BUILTIN_FILTER_README.html delete
+gnu/dist/postfix/proto/CDB_README.html		delete
+gnu/dist/postfix/proto/CONNECTION_CACHE_README.html delete
+gnu/dist/postfix/proto/CONTENT_INSPECTION_README.html delete
+gnu/dist/postfix/proto/DATABASE_README.html	delete
+gnu/dist/postfix/proto/DB_README.html		delete
+gnu/dist/postfix/proto/DEBUG_README.html	delete
+gnu/dist/postfix/proto/DSN_README.html		delete
+gnu/dist/postfix/proto/ETRN_README.html		delete
+gnu/dist/postfix/proto/FILTER_README.html	delete
+gnu/dist/postfix/proto/INSTALL.html		delete
+gnu/dist/postfix/proto/IPV6_README.html		delete
+gnu/dist/postfix/proto/LDAP_README.html		delete
+gnu/dist/postfix/proto/LINUX_README.html	delete
+gnu/dist/postfix/proto/LOCAL_RECIPIENT_README.html delete
+gnu/dist/postfix/proto/MAILDROP_README.html	delete
+gnu/dist/postfix/proto/MILTER_README.html	delete
+gnu/dist/postfix/proto/MYSQL_README.html	delete
+gnu/dist/postfix/proto/Makefile.in		delete
+gnu/dist/postfix/proto/NFS_README.html		delete
+gnu/dist/postfix/proto/OVERVIEW.html		delete
+gnu/dist/postfix/proto/PACKAGE_README.html	delete
+gnu/dist/postfix/proto/PCRE_README.html		delete
+gnu/dist/postfix/proto/PGSQL_README.html	delete
+gnu/dist/postfix/proto/QSHAPE_README.html	delete
+gnu/dist/postfix/proto/README			delete
+gnu/dist/postfix/proto/RESTRICTION_CLASS_README.html delete
+gnu/dist/postfix/proto/SASL_README.html		delete
+gnu/dist/postfix/proto/SCHEDULER_README.html	delete
+gnu/dist/postfix/proto/SMTPD_ACCESS_README.html delete
+gnu/dist/postfix/proto/SMTPD_POLICY_README.html delete
+gnu/dist/postfix/proto/SMTPD_PROXY_README.html	delete
+gnu/dist/postfix/proto/STANDARD_CONFIGURATION_README.html delete
+gnu/dist/postfix/proto/STRESS_README.html	delete
+gnu/dist/postfix/proto/TLS_LEGACY_README.html	delete
+gnu/dist/postfix/proto/TLS_README.html		delete
+gnu/dist/postfix/proto/TUNING_README.html	delete
+gnu/dist/postfix/proto/UUCP_README.html		delete
+gnu/dist/postfix/proto/VERP_README.html		delete
+gnu/dist/postfix/proto/VIRTUAL_README.html	delete
+gnu/dist/postfix/proto/XCLIENT_README.html	delete
+gnu/dist/postfix/proto/XFORWARD_README.html	delete
+gnu/dist/postfix/proto/access			delete
+gnu/dist/postfix/proto/aliases			delete
+gnu/dist/postfix/proto/aliases0			delete
+gnu/dist/postfix/proto/bounce			delete
+gnu/dist/postfix/proto/canonical		delete
+gnu/dist/postfix/proto/cidr_table		delete
+gnu/dist/postfix/proto/generic			delete
+gnu/dist/postfix/proto/header_checks		delete
+gnu/dist/postfix/proto/html2text.rc		delete
+gnu/dist/postfix/proto/ldap_table		delete
+gnu/dist/postfix/proto/manual-format		delete
+gnu/dist/postfix/proto/master			delete
+gnu/dist/postfix/proto/mysql_table		delete
+gnu/dist/postfix/proto/nisplus_table		delete
+gnu/dist/postfix/proto/pcre_table		delete
+gnu/dist/postfix/proto/pgsql_table		delete
+gnu/dist/postfix/proto/postconf.html.epilog	delete
+gnu/dist/postfix/proto/postconf.html.prolog	delete
+gnu/dist/postfix/proto/postconf.man.epilog	delete
+gnu/dist/postfix/proto/postconf.man.prolog	delete
+gnu/dist/postfix/proto/postconf.proto		delete
+gnu/dist/postfix/proto/regexp_table		delete
+gnu/dist/postfix/proto/relocated		delete
+gnu/dist/postfix/proto/stop			delete
+gnu/dist/postfix/proto/tcp_table		delete
+gnu/dist/postfix/proto/transport		delete
+gnu/dist/postfix/proto/virtual			delete
+gnu/dist/postfix/src/anvil/.printfck		delete
+gnu/dist/postfix/src/anvil/Makefile.in		delete
+gnu/dist/postfix/src/anvil/anvil.c		delete
+gnu/dist/postfix/src/bounce/2template_test.in	delete
+gnu/dist/postfix/src/bounce/Makefile.in		delete
+gnu/dist/postfix/src/bounce/annotate.pl		delete
+gnu/dist/postfix/src/bounce/bounce.c		delete
+gnu/dist/postfix/src/bounce/bounce_append_service.c delete
+gnu/dist/postfix/src/bounce/bounce_cleanup.c	delete
+gnu/dist/postfix/src/bounce/bounce_notify_service.c delete
+gnu/dist/postfix/src/bounce/bounce_notify_util.c delete
+gnu/dist/postfix/src/bounce/bounce_notify_verp.c delete
+gnu/dist/postfix/src/bounce/bounce_one_service.c delete
+gnu/dist/postfix/src/bounce/bounce_service.h	delete
+gnu/dist/postfix/src/bounce/bounce_template.c	delete
+gnu/dist/postfix/src/bounce/bounce_template.h	delete
+gnu/dist/postfix/src/bounce/bounce_templates.c	delete
+gnu/dist/postfix/src/bounce/bounce_trace_service.c delete
+gnu/dist/postfix/src/bounce/bounce_warn_service.c delete
+gnu/dist/postfix/src/bounce/template_test.ref	delete
+gnu/dist/postfix/src/cleanup/Makefile.in	delete
+gnu/dist/postfix/src/cleanup/bug1.file		delete
+gnu/dist/postfix/src/cleanup/bug1.file.ref	delete
+gnu/dist/postfix/src/cleanup/bug1.in		delete
+gnu/dist/postfix/src/cleanup/bug1.ref		delete
+gnu/dist/postfix/src/cleanup/bug1.text.ref	delete
+gnu/dist/postfix/src/cleanup/bug2.file		delete
+gnu/dist/postfix/src/cleanup/bug2.in		delete
+gnu/dist/postfix/src/cleanup/bug2.ref		delete
+gnu/dist/postfix/src/cleanup/bug2.text.ref	delete
+gnu/dist/postfix/src/cleanup/cleanup.c		delete
+gnu/dist/postfix/src/cleanup/cleanup.h		delete
+gnu/dist/postfix/src/cleanup/cleanup_addr.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_api.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_body_edit.c delete
+gnu/dist/postfix/src/cleanup/cleanup_bounce.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_envelope.c delete
+gnu/dist/postfix/src/cleanup/cleanup_extracted.c delete
+gnu/dist/postfix/src/cleanup/cleanup_final.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_init.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_map11.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_map1n.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_masq.ref	delete
+gnu/dist/postfix/src/cleanup/cleanup_masquerade.c delete
+gnu/dist/postfix/src/cleanup/cleanup_message.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in1 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in10a delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in10b delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in10c delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in10d delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in10e delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in11 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in12 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in2 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in3 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in4a delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in4b delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in4c delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in5 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in6a delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in6b delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in6c delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in7 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in8 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.in9 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref1 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref10a delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref10b delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref10c delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref10d delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref10e delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref11 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref12 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref2 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref3 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref4 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref5 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref6a delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref6b delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref6c delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref7 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref8 delete
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref9 delete
+gnu/dist/postfix/src/cleanup/cleanup_out.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_out_recipient.c delete
+gnu/dist/postfix/src/cleanup/cleanup_region.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_rewrite.c	delete
+gnu/dist/postfix/src/cleanup/cleanup_state.c	delete
+gnu/dist/postfix/src/cleanup/loremipsum		delete
+gnu/dist/postfix/src/cleanup/loremipsum2	delete
+gnu/dist/postfix/src/cleanup/test-queue-file	delete
+gnu/dist/postfix/src/cleanup/test-queue-file10	delete
+gnu/dist/postfix/src/cleanup/test-queue-file11	delete
+gnu/dist/postfix/src/cleanup/test-queue-file12	delete
+gnu/dist/postfix/src/cleanup/test-queue-file2	delete
+gnu/dist/postfix/src/cleanup/test-queue-file3	delete
+gnu/dist/postfix/src/cleanup/test-queue-file4	delete
+gnu/dist/postfix/src/cleanup/test-queue-file5	delete
+gnu/dist/postfix/src/cleanup/test-queue-file6	delete
+gnu/dist/postfix/src/cleanup/test-queue-file7	delete
+gnu/dist/postfix/src/cleanup/test-queue-file8	delete
+gnu/dist/postfix/src/cleanup/test-queue-file9	delete
+gnu/dist/postfix/src/discard/.printfck		delete
+gnu/dist/postfix/src/discard/Makefile.in	delete
+gnu/dist/postfix/src/discard/discard.c		delete
+gnu/dist/postfix/src/dns/Makefile.in		delete
+gnu/dist/postfix/src/dns/dns.h			delete
+gnu/dist/postfix/src/dns/dns_lookup.c		delete
+gnu/dist/postfix/src/dns/dns_rr.c		delete
+gnu/dist/postfix/src/dns/dns_rr_eq_sa.c		delete
+gnu/dist/postfix/src/dns/dns_rr_eq_sa.in	delete
+gnu/dist/postfix/src/dns/dns_rr_eq_sa.ref	delete
+gnu/dist/postfix/src/dns/dns_rr_to_pa.c		delete
+gnu/dist/postfix/src/dns/dns_rr_to_pa.in	delete
+gnu/dist/postfix/src/dns/dns_rr_to_pa.ref	delete
+gnu/dist/postfix/src/dns/dns_rr_to_sa.c		delete
+gnu/dist/postfix/src/dns/dns_rr_to_sa.in	delete
+gnu/dist/postfix/src/dns/dns_rr_to_sa.ref	delete
+gnu/dist/postfix/src/dns/dns_sa_to_rr.c		delete
+gnu/dist/postfix/src/dns/dns_sa_to_rr.in	delete
+gnu/dist/postfix/src/dns/dns_sa_to_rr.ref	delete
+gnu/dist/postfix/src/dns/dns_strerror.c		delete
+gnu/dist/postfix/src/dns/dns_strtype.c		delete
+gnu/dist/postfix/src/dns/test_dns_lookup.c	delete
+gnu/dist/postfix/src/error/Makefile.in		delete
+gnu/dist/postfix/src/error/error.c		delete
+gnu/dist/postfix/src/flush/Makefile.in		delete
+gnu/dist/postfix/src/flush/flush.c		delete
+gnu/dist/postfix/src/fsstone/Makefile.in	delete
+gnu/dist/postfix/src/fsstone/fsstone.c		delete
+gnu/dist/postfix/src/global/Makefile.in		delete
+gnu/dist/postfix/src/global/abounce.c		delete
+gnu/dist/postfix/src/global/abounce.h		delete
+gnu/dist/postfix/src/global/anvil_clnt.c	delete
+gnu/dist/postfix/src/global/anvil_clnt.h	delete
+gnu/dist/postfix/src/global/been_here.c		delete
+gnu/dist/postfix/src/global/been_here.h		delete
+gnu/dist/postfix/src/global/bounce.c		delete
+gnu/dist/postfix/src/global/bounce.h		delete
+gnu/dist/postfix/src/global/bounce_log.c	delete
+gnu/dist/postfix/src/global/bounce_log.h	delete
+gnu/dist/postfix/src/global/canon_addr.c	delete
+gnu/dist/postfix/src/global/canon_addr.h	delete
+gnu/dist/postfix/src/global/cfg_parser.c	delete
+gnu/dist/postfix/src/global/cfg_parser.h	delete
+gnu/dist/postfix/src/global/cleanup_strerror.c	delete
+gnu/dist/postfix/src/global/cleanup_strflags.c	delete
+gnu/dist/postfix/src/global/cleanup_user.h	delete
+gnu/dist/postfix/src/global/clnt_stream.c	delete
+gnu/dist/postfix/src/global/clnt_stream.h	delete
+gnu/dist/postfix/src/global/config.h		delete
+gnu/dist/postfix/src/global/conv_time.c		delete
+gnu/dist/postfix/src/global/conv_time.h		delete
+gnu/dist/postfix/src/global/data_redirect.c	delete
+gnu/dist/postfix/src/global/data_redirect.h	delete
+gnu/dist/postfix/src/global/db_common.c		delete
+gnu/dist/postfix/src/global/db_common.h		delete
+gnu/dist/postfix/src/global/debug_peer.c	delete
+gnu/dist/postfix/src/global/debug_peer.h	delete
+gnu/dist/postfix/src/global/debug_process.c	delete
+gnu/dist/postfix/src/global/debug_process.h	delete
+gnu/dist/postfix/src/global/defer.c		delete
+gnu/dist/postfix/src/global/defer.h		delete
+gnu/dist/postfix/src/global/deliver_completed.c delete
+gnu/dist/postfix/src/global/deliver_completed.h delete
+gnu/dist/postfix/src/global/deliver_flock.c	delete
+gnu/dist/postfix/src/global/deliver_flock.h	delete
+gnu/dist/postfix/src/global/deliver_pass.c	delete
+gnu/dist/postfix/src/global/deliver_pass.h	delete
+gnu/dist/postfix/src/global/deliver_request.c	delete
+gnu/dist/postfix/src/global/deliver_request.h	delete
+gnu/dist/postfix/src/global/delivered_hdr.c	delete
+gnu/dist/postfix/src/global/delivered_hdr.h	delete
+gnu/dist/postfix/src/global/dict_ldap.c		delete
+gnu/dist/postfix/src/global/dict_ldap.h		delete
+gnu/dist/postfix/src/global/dict_mysql.c	delete
+gnu/dist/postfix/src/global/dict_mysql.h	delete
+gnu/dist/postfix/src/global/dict_pgsql.c	delete
+gnu/dist/postfix/src/global/dict_pgsql.h	delete
+gnu/dist/postfix/src/global/dict_proxy.c	delete
+gnu/dist/postfix/src/global/dict_proxy.h	delete
+gnu/dist/postfix/src/global/domain_list.c	delete
+gnu/dist/postfix/src/global/domain_list.h	delete
+gnu/dist/postfix/src/global/dot_lockfile.c	delete
+gnu/dist/postfix/src/global/dot_lockfile.h	delete
+gnu/dist/postfix/src/global/dot_lockfile_as.c	delete
+gnu/dist/postfix/src/global/dot_lockfile_as.h	delete
+gnu/dist/postfix/src/global/dsb_scan.c		delete
+gnu/dist/postfix/src/global/dsb_scan.h		delete
+gnu/dist/postfix/src/global/dsn.c		delete
+gnu/dist/postfix/src/global/dsn.h		delete
+gnu/dist/postfix/src/global/dsn_buf.c		delete
+gnu/dist/postfix/src/global/dsn_buf.h		delete
+gnu/dist/postfix/src/global/dsn_mask.c		delete
+gnu/dist/postfix/src/global/dsn_mask.h		delete
+gnu/dist/postfix/src/global/dsn_print.c		delete
+gnu/dist/postfix/src/global/dsn_print.h		delete
+gnu/dist/postfix/src/global/dsn_util.c		delete
+gnu/dist/postfix/src/global/dsn_util.h		delete
+gnu/dist/postfix/src/global/ehlo_mask.c		delete
+gnu/dist/postfix/src/global/ehlo_mask.h		delete
+gnu/dist/postfix/src/global/ehlo_mask.in	delete
+gnu/dist/postfix/src/global/ehlo_mask.ref	delete
+gnu/dist/postfix/src/global/ext_prop.c		delete
+gnu/dist/postfix/src/global/ext_prop.h		delete
+gnu/dist/postfix/src/global/file_id.c		delete
+gnu/dist/postfix/src/global/file_id.h		delete
+gnu/dist/postfix/src/global/flush_clnt.c	delete
+gnu/dist/postfix/src/global/flush_clnt.h	delete
+gnu/dist/postfix/src/global/fold_addr.c		delete
+gnu/dist/postfix/src/global/fold_addr.h		delete
+gnu/dist/postfix/src/global/header_body_checks.c delete
+gnu/dist/postfix/src/global/header_body_checks.h delete
+gnu/dist/postfix/src/global/header_body_checks_ignore.ref delete
+gnu/dist/postfix/src/global/header_body_checks_null.ref delete
+gnu/dist/postfix/src/global/header_body_checks_prepend.ref delete
+gnu/dist/postfix/src/global/header_body_checks_replace.ref delete
+gnu/dist/postfix/src/global/header_body_checks_warn.ref delete
+gnu/dist/postfix/src/global/header_opts.c	delete
+gnu/dist/postfix/src/global/header_opts.h	delete
+gnu/dist/postfix/src/global/header_token.c	delete
+gnu/dist/postfix/src/global/header_token.h	delete
+gnu/dist/postfix/src/global/input_transp.c	delete
+gnu/dist/postfix/src/global/input_transp.h	delete
+gnu/dist/postfix/src/global/int_filt.c		delete
+gnu/dist/postfix/src/global/int_filt.h		delete
+gnu/dist/postfix/src/global/is_header.c		delete
+gnu/dist/postfix/src/global/is_header.h		delete
+gnu/dist/postfix/src/global/lex_822.h		delete
+gnu/dist/postfix/src/global/log_adhoc.c		delete
+gnu/dist/postfix/src/global/log_adhoc.h		delete
+gnu/dist/postfix/src/global/mail_addr.c		delete
+gnu/dist/postfix/src/global/mail_addr.h		delete
+gnu/dist/postfix/src/global/mail_addr_crunch.c	delete
+gnu/dist/postfix/src/global/mail_addr_crunch.h	delete
+gnu/dist/postfix/src/global/mail_addr_find.c	delete
+gnu/dist/postfix/src/global/mail_addr_find.h	delete
+gnu/dist/postfix/src/global/mail_addr_map.c	delete
+gnu/dist/postfix/src/global/mail_addr_map.h	delete
+gnu/dist/postfix/src/global/mail_command_client.c delete
+gnu/dist/postfix/src/global/mail_command_server.c delete
+gnu/dist/postfix/src/global/mail_conf.c		delete
+gnu/dist/postfix/src/global/mail_conf.h		delete
+gnu/dist/postfix/src/global/mail_conf_bool.c	delete
+gnu/dist/postfix/src/global/mail_conf_int.c	delete
+gnu/dist/postfix/src/global/mail_conf_long.c	delete
+gnu/dist/postfix/src/global/mail_conf_raw.c	delete
+gnu/dist/postfix/src/global/mail_conf_str.c	delete
+gnu/dist/postfix/src/global/mail_conf_time.c	delete
+gnu/dist/postfix/src/global/mail_conf_time.ref	delete
+gnu/dist/postfix/src/global/mail_connect.c	delete
+gnu/dist/postfix/src/global/mail_copy.c		delete
+gnu/dist/postfix/src/global/mail_copy.h		delete
+gnu/dist/postfix/src/global/mail_date.c		delete
+gnu/dist/postfix/src/global/mail_date.h		delete
+gnu/dist/postfix/src/global/mail_dict.c		delete
+gnu/dist/postfix/src/global/mail_dict.h		delete
+gnu/dist/postfix/src/global/mail_error.c	delete
+gnu/dist/postfix/src/global/mail_error.h	delete
+gnu/dist/postfix/src/global/mail_flush.c	delete
+gnu/dist/postfix/src/global/mail_flush.h	delete
+gnu/dist/postfix/src/global/mail_open_ok.c	delete
+gnu/dist/postfix/src/global/mail_open_ok.h	delete
+gnu/dist/postfix/src/global/mail_params.c	delete
+gnu/dist/postfix/src/global/mail_params.h	delete
+gnu/dist/postfix/src/global/mail_pathname.c	delete
+gnu/dist/postfix/src/global/mail_proto.h	delete
+gnu/dist/postfix/src/global/mail_queue.c	delete
+gnu/dist/postfix/src/global/mail_queue.h	delete
+gnu/dist/postfix/src/global/mail_run.c		delete
+gnu/dist/postfix/src/global/mail_run.h		delete
+gnu/dist/postfix/src/global/mail_scan_dir.c	delete
+gnu/dist/postfix/src/global/mail_scan_dir.h	delete
+gnu/dist/postfix/src/global/mail_stream.c	delete
+gnu/dist/postfix/src/global/mail_stream.h	delete
+gnu/dist/postfix/src/global/mail_task.c		delete
+gnu/dist/postfix/src/global/mail_task.h		delete
+gnu/dist/postfix/src/global/mail_trigger.c	delete
+gnu/dist/postfix/src/global/mail_version.c	delete
+gnu/dist/postfix/src/global/mail_version.h	delete
+gnu/dist/postfix/src/global/maps.c		delete
+gnu/dist/postfix/src/global/maps.h		delete
+gnu/dist/postfix/src/global/mark_corrupt.c	delete
+gnu/dist/postfix/src/global/mark_corrupt.h	delete
+gnu/dist/postfix/src/global/match_parent_style.c delete
+gnu/dist/postfix/src/global/match_parent_style.h delete
+gnu/dist/postfix/src/global/mbox_conf.c		delete
+gnu/dist/postfix/src/global/mbox_conf.h		delete
+gnu/dist/postfix/src/global/mbox_open.c		delete
+gnu/dist/postfix/src/global/mbox_open.h		delete
+gnu/dist/postfix/src/global/mime_8bit.in	delete
+gnu/dist/postfix/src/global/mime_8bit.ref	delete
+gnu/dist/postfix/src/global/mime_cvt.in		delete
+gnu/dist/postfix/src/global/mime_cvt.in2	delete
+gnu/dist/postfix/src/global/mime_cvt.in3	delete
+gnu/dist/postfix/src/global/mime_cvt.ref	delete
+gnu/dist/postfix/src/global/mime_cvt.ref2	delete
+gnu/dist/postfix/src/global/mime_cvt.ref3	delete
+gnu/dist/postfix/src/global/mime_dom.in		delete
+gnu/dist/postfix/src/global/mime_dom.ref	delete
+gnu/dist/postfix/src/global/mime_garb1.in	delete
+gnu/dist/postfix/src/global/mime_garb1.ref	delete
+gnu/dist/postfix/src/global/mime_garb2.in	delete
+gnu/dist/postfix/src/global/mime_garb2.ref	delete
+gnu/dist/postfix/src/global/mime_garb3.in	delete
+gnu/dist/postfix/src/global/mime_garb3.ref	delete
+gnu/dist/postfix/src/global/mime_garb4.in	delete
+gnu/dist/postfix/src/global/mime_garb4.ref	delete
+gnu/dist/postfix/src/global/mime_nest.in	delete
+gnu/dist/postfix/src/global/mime_nest.ref	delete
+gnu/dist/postfix/src/global/mime_state.c	delete
+gnu/dist/postfix/src/global/mime_state.h	delete
+gnu/dist/postfix/src/global/mime_test.in	delete
+gnu/dist/postfix/src/global/mime_test.ref	delete
+gnu/dist/postfix/src/global/mime_trunc.in	delete
+gnu/dist/postfix/src/global/mime_trunc.ref	delete
+gnu/dist/postfix/src/global/mkmap.h		delete
+gnu/dist/postfix/src/global/mkmap_cdb.c		delete
+gnu/dist/postfix/src/global/mkmap_db.c		delete
+gnu/dist/postfix/src/global/mkmap_dbm.c		delete
+gnu/dist/postfix/src/global/mkmap_open.c	delete
+gnu/dist/postfix/src/global/mkmap_proxy.c	delete
+gnu/dist/postfix/src/global/mkmap_sdbm.c	delete
+gnu/dist/postfix/src/global/msg_stats.h		delete
+gnu/dist/postfix/src/global/msg_stats_print.c	delete
+gnu/dist/postfix/src/global/msg_stats_scan.c	delete
+gnu/dist/postfix/src/global/mynetworks.c	delete
+gnu/dist/postfix/src/global/mynetworks.h	delete
+gnu/dist/postfix/src/global/mypwd.c		delete
+gnu/dist/postfix/src/global/mypwd.h		delete
+gnu/dist/postfix/src/global/namadr_list.c	delete
+gnu/dist/postfix/src/global/namadr_list.h	delete
+gnu/dist/postfix/src/global/namadr_list.in	delete
+gnu/dist/postfix/src/global/namadr_list.ref	delete
+gnu/dist/postfix/src/global/off_cvt.c		delete
+gnu/dist/postfix/src/global/off_cvt.h		delete
+gnu/dist/postfix/src/global/opened.c		delete
+gnu/dist/postfix/src/global/opened.h		delete
+gnu/dist/postfix/src/global/own_inet_addr.c	delete
+gnu/dist/postfix/src/global/own_inet_addr.h	delete
+gnu/dist/postfix/src/global/pipe_command.c	delete
+gnu/dist/postfix/src/global/pipe_command.h	delete
+gnu/dist/postfix/src/global/post_mail.c		delete
+gnu/dist/postfix/src/global/post_mail.h		delete
+gnu/dist/postfix/src/global/qmgr_user.h		delete
+gnu/dist/postfix/src/global/qmqp_proto.h	delete
+gnu/dist/postfix/src/global/quote_821_local.c	delete
+gnu/dist/postfix/src/global/quote_821_local.h	delete
+gnu/dist/postfix/src/global/quote_822_local.c	delete
+gnu/dist/postfix/src/global/quote_822_local.h	delete
+gnu/dist/postfix/src/global/quote_flags.h	delete
+gnu/dist/postfix/src/global/rcpt_buf.c		delete
+gnu/dist/postfix/src/global/rcpt_buf.h		delete
+gnu/dist/postfix/src/global/rcpt_print.c	delete
+gnu/dist/postfix/src/global/rcpt_print.h	delete
+gnu/dist/postfix/src/global/rec2stream.c	delete
+gnu/dist/postfix/src/global/rec_attr_map.c	delete
+gnu/dist/postfix/src/global/rec_attr_map.h	delete
+gnu/dist/postfix/src/global/rec_streamlf.c	delete
+gnu/dist/postfix/src/global/rec_streamlf.h	delete
+gnu/dist/postfix/src/global/rec_type.c		delete
+gnu/dist/postfix/src/global/rec_type.h		delete
+gnu/dist/postfix/src/global/recdump.c		delete
+gnu/dist/postfix/src/global/recipient_list.c	delete
+gnu/dist/postfix/src/global/recipient_list.h	delete
+gnu/dist/postfix/src/global/record.c		delete
+gnu/dist/postfix/src/global/record.h		delete
+gnu/dist/postfix/src/global/remove.c		delete
+gnu/dist/postfix/src/global/resolve_clnt.c	delete
+gnu/dist/postfix/src/global/resolve_clnt.h	delete
+gnu/dist/postfix/src/global/resolve_clnt.in	delete
+gnu/dist/postfix/src/global/resolve_clnt.ref	delete
+gnu/dist/postfix/src/global/resolve_local.c	delete
+gnu/dist/postfix/src/global/resolve_local.h	delete
+gnu/dist/postfix/src/global/rewrite_clnt.c	delete
+gnu/dist/postfix/src/global/rewrite_clnt.h	delete
+gnu/dist/postfix/src/global/rewrite_clnt.in	delete
+gnu/dist/postfix/src/global/rewrite_clnt.ref	delete
+gnu/dist/postfix/src/global/scache.c		delete
+gnu/dist/postfix/src/global/scache.h		delete
+gnu/dist/postfix/src/global/scache_clnt.c	delete
+gnu/dist/postfix/src/global/scache_multi.c	delete
+gnu/dist/postfix/src/global/scache_multi.in	delete
+gnu/dist/postfix/src/global/scache_multi.ref	delete
+gnu/dist/postfix/src/global/scache_single.c	delete
+gnu/dist/postfix/src/global/sent.c		delete
+gnu/dist/postfix/src/global/sent.h		delete
+gnu/dist/postfix/src/global/smtp_stream.c	delete
+gnu/dist/postfix/src/global/smtp_stream.h	delete
+gnu/dist/postfix/src/global/split_addr.c	delete
+gnu/dist/postfix/src/global/split_addr.h	delete
+gnu/dist/postfix/src/global/stream2rec.c	delete
+gnu/dist/postfix/src/global/string_list.c	delete
+gnu/dist/postfix/src/global/string_list.h	delete
+gnu/dist/postfix/src/global/strip_addr.c	delete
+gnu/dist/postfix/src/global/strip_addr.h	delete
+gnu/dist/postfix/src/global/strip_addr.ref	delete
+gnu/dist/postfix/src/global/sys_exits.c		delete
+gnu/dist/postfix/src/global/sys_exits.h		delete
+gnu/dist/postfix/src/global/timed_ipc.c		delete
+gnu/dist/postfix/src/global/timed_ipc.h		delete
+gnu/dist/postfix/src/global/tok822.h		delete
+gnu/dist/postfix/src/global/tok822_find.c	delete
+gnu/dist/postfix/src/global/tok822_limit.in	delete
+gnu/dist/postfix/src/global/tok822_limit.ref	delete
+gnu/dist/postfix/src/global/tok822_node.c	delete
+gnu/dist/postfix/src/global/tok822_parse.c	delete
+gnu/dist/postfix/src/global/tok822_parse.in	delete
+gnu/dist/postfix/src/global/tok822_parse.ref	delete
+gnu/dist/postfix/src/global/tok822_resolve.c	delete
+gnu/dist/postfix/src/global/tok822_rewrite.c	delete
+gnu/dist/postfix/src/global/tok822_tree.c	delete
+gnu/dist/postfix/src/global/trace.c		delete
+gnu/dist/postfix/src/global/trace.h		delete
+gnu/dist/postfix/src/global/user_acl.c		delete
+gnu/dist/postfix/src/global/user_acl.h		delete
+gnu/dist/postfix/src/global/valid_mailhost_addr.c delete
+gnu/dist/postfix/src/global/valid_mailhost_addr.h delete
+gnu/dist/postfix/src/global/verify.c		delete
+gnu/dist/postfix/src/global/verify.h		delete
+gnu/dist/postfix/src/global/verify_clnt.c	delete
+gnu/dist/postfix/src/global/verify_clnt.h	delete
+gnu/dist/postfix/src/global/verp_sender.c	delete
+gnu/dist/postfix/src/global/verp_sender.h	delete
+gnu/dist/postfix/src/global/wildcard_inet_addr.c delete
+gnu/dist/postfix/src/global/wildcard_inet_addr.h delete
+gnu/dist/postfix/src/global/xtext.c		delete
+gnu/dist/postfix/src/global/xtext.h		delete
+gnu/dist/postfix/src/local/Makefile.in		delete
+gnu/dist/postfix/src/local/Musings		delete
+gnu/dist/postfix/src/local/alias.c		delete
+gnu/dist/postfix/src/local/biff_notify.c	delete
+gnu/dist/postfix/src/local/biff_notify.h	delete
+gnu/dist/postfix/src/local/command.c		delete
+gnu/dist/postfix/src/local/deliver_attr.c	delete
+gnu/dist/postfix/src/local/dotforward.c		delete
+gnu/dist/postfix/src/local/file.c		delete
+gnu/dist/postfix/src/local/forward.c		delete
+gnu/dist/postfix/src/local/include.c		delete
+gnu/dist/postfix/src/local/indirect.c		delete
+gnu/dist/postfix/src/local/local.c		delete
+gnu/dist/postfix/src/local/local.h		delete
+gnu/dist/postfix/src/local/local_expand.c	delete
+gnu/dist/postfix/src/local/mailbox.c		delete
+gnu/dist/postfix/src/local/maildir.c		delete
+gnu/dist/postfix/src/local/recipient.c		delete
+gnu/dist/postfix/src/local/resolve.c		delete
+gnu/dist/postfix/src/local/token.c		delete
+gnu/dist/postfix/src/local/unknown.c		delete
+gnu/dist/postfix/src/master/Makefile.in		delete
+gnu/dist/postfix/src/master/mail_flow.c		delete
+gnu/dist/postfix/src/master/mail_flow.h		delete
+gnu/dist/postfix/src/master/mail_server.h	delete
+gnu/dist/postfix/src/master/master.c		delete
+gnu/dist/postfix/src/master/master.h		delete
+gnu/dist/postfix/src/master/master_avail.c	delete
+gnu/dist/postfix/src/master/master_conf.c	delete
+gnu/dist/postfix/src/master/master_ent.c	delete
+gnu/dist/postfix/src/master/master_flow.c	delete
+gnu/dist/postfix/src/master/master_listen.c	delete
+gnu/dist/postfix/src/master/master_proto.c	delete
+gnu/dist/postfix/src/master/master_proto.h	delete
+gnu/dist/postfix/src/master/master_service.c	delete
+gnu/dist/postfix/src/master/master_sig.c	delete
+gnu/dist/postfix/src/master/master_spawn.c	delete
+gnu/dist/postfix/src/master/master_status.c	delete
+gnu/dist/postfix/src/master/master_vars.c	delete
+gnu/dist/postfix/src/master/master_wakeup.c	delete
+gnu/dist/postfix/src/master/multi_server.c	delete
+gnu/dist/postfix/src/master/single_server.c	delete
+gnu/dist/postfix/src/master/trigger_server.c	delete
+gnu/dist/postfix/src/milter/Makefile.in		delete
+gnu/dist/postfix/src/milter/milter.c		delete
+gnu/dist/postfix/src/milter/milter.h		delete
+gnu/dist/postfix/src/milter/milter8.c		delete
+gnu/dist/postfix/src/milter/milter_macros.c	delete
+gnu/dist/postfix/src/milter/test-list		delete
+gnu/dist/postfix/src/milter/test-milter.c	delete
+gnu/dist/postfix/src/oqmgr/Makefile.in		delete
+gnu/dist/postfix/src/oqmgr/qmgr.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr.h		delete
+gnu/dist/postfix/src/oqmgr/qmgr_active.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_bounce.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_defer.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_deliver.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_enable.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_entry.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_error.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_feedback.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_message.c	delete
+gnu/dist/postfix/src/oqmgr/qmgr_move.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_queue.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_scan.c		delete
+gnu/dist/postfix/src/oqmgr/qmgr_transport.c	delete
+gnu/dist/postfix/src/pickup/Makefile.in		delete
+gnu/dist/postfix/src/pickup/pickup.c		delete
+gnu/dist/postfix/src/pipe/Makefile.in		delete
+gnu/dist/postfix/src/pipe/pipe.c		delete
+gnu/dist/postfix/src/postalias/Makefile.in	delete
+gnu/dist/postfix/src/postalias/map-abc1.ref	delete
+gnu/dist/postfix/src/postalias/map-abc2.ref	delete
+gnu/dist/postfix/src/postalias/map-ghi1.ref	delete
+gnu/dist/postfix/src/postalias/map-ghi2.ref	delete
+gnu/dist/postfix/src/postalias/map-uABC1.ref	delete
+gnu/dist/postfix/src/postalias/map-uABC2.ref	delete
+gnu/dist/postfix/src/postalias/map.in		delete
+gnu/dist/postfix/src/postalias/postalias.c	delete
+gnu/dist/postfix/src/postcat/Makefile.in	delete
+gnu/dist/postfix/src/postcat/postcat.c		delete
+gnu/dist/postfix/src/postconf/Makefile.in	delete
+gnu/dist/postfix/src/postconf/auto.awk		delete
+gnu/dist/postfix/src/postconf/extract.awk	delete
+gnu/dist/postfix/src/postconf/install_table.h	delete
+gnu/dist/postfix/src/postconf/install_vars.h	delete
+gnu/dist/postfix/src/postconf/postconf.c	delete
+gnu/dist/postfix/src/postdrop/Makefile.in	delete
+gnu/dist/postfix/src/postdrop/postdrop.c	delete
+gnu/dist/postfix/src/postfix/Makefile.in	delete
+gnu/dist/postfix/src/postfix/postfix.c		delete
+gnu/dist/postfix/src/postkick/Makefile.in	delete
+gnu/dist/postfix/src/postkick/postkick.c	delete
+gnu/dist/postfix/src/postlock/Makefile.in	delete
+gnu/dist/postfix/src/postlock/postlock.c	delete
+gnu/dist/postfix/src/postlog/Makefile.in	delete
+gnu/dist/postfix/src/postlog/postlog.c		delete
+gnu/dist/postfix/src/postmap/Makefile.in	delete
+gnu/dist/postfix/src/postmap/map-abc1.ref	delete
+gnu/dist/postfix/src/postmap/map-abc2.ref	delete
+gnu/dist/postfix/src/postmap/map-ghi1.ref	delete
+gnu/dist/postfix/src/postmap/map-ghi2.ref	delete
+gnu/dist/postfix/src/postmap/map-uABC1.ref	delete
+gnu/dist/postfix/src/postmap/map-uABC2.ref	delete
+gnu/dist/postfix/src/postmap/map.in		delete
+gnu/dist/postfix/src/postmap/postmap.c		delete
+gnu/dist/postfix/src/postqueue/Makefile.in	delete
+gnu/dist/postfix/src/postqueue/postqueue.c	delete
+gnu/dist/postfix/src/postsuper/Makefile.in	delete
+gnu/dist/postfix/src/postsuper/postsuper.c	delete
+gnu/dist/postfix/src/proxymap/Makefile.in	delete
+gnu/dist/postfix/src/proxymap/proxymap.c	delete
+gnu/dist/postfix/src/qmgr/Makefile.in		delete
+gnu/dist/postfix/src/qmgr/qmgr.c		delete
+gnu/dist/postfix/src/qmgr/qmgr.h		delete
+gnu/dist/postfix/src/qmgr/qmgr_active.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_bounce.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_defer.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_deliver.c	delete
+gnu/dist/postfix/src/qmgr/qmgr_enable.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_entry.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_error.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_feedback.c	delete
+gnu/dist/postfix/src/qmgr/qmgr_job.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_message.c	delete
+gnu/dist/postfix/src/qmgr/qmgr_move.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_peer.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_queue.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_scan.c		delete
+gnu/dist/postfix/src/qmgr/qmgr_transport.c	delete
+gnu/dist/postfix/src/qmqpd/Makefile.in		delete
+gnu/dist/postfix/src/qmqpd/qmqpd.c		delete
+gnu/dist/postfix/src/qmqpd/qmqpd.h		delete
+gnu/dist/postfix/src/qmqpd/qmqpd_peer.c		delete
+gnu/dist/postfix/src/qmqpd/qmqpd_state.c	delete
+gnu/dist/postfix/src/scache/Makefile.in		delete
+gnu/dist/postfix/src/scache/scache.c		delete
+gnu/dist/postfix/src/sendmail/Makefile.in	delete
+gnu/dist/postfix/src/sendmail/sendmail.c	delete
+gnu/dist/postfix/src/showq/Makefile.in		delete
+gnu/dist/postfix/src/showq/showq.c		delete
+gnu/dist/postfix/src/smtp/Makefile.in		delete
+gnu/dist/postfix/src/smtp/lmtp_params.c		delete
+gnu/dist/postfix/src/smtp/map11_map		delete
+gnu/dist/postfix/src/smtp/smtp-only		delete
+gnu/dist/postfix/src/smtp/smtp.c		delete
+gnu/dist/postfix/src/smtp/smtp.h		delete
+gnu/dist/postfix/src/smtp/smtp_addr.c		delete
+gnu/dist/postfix/src/smtp/smtp_addr.h		delete
+gnu/dist/postfix/src/smtp/smtp_chat.c		delete
+gnu/dist/postfix/src/smtp/smtp_connect.c	delete
+gnu/dist/postfix/src/smtp/smtp_map11.c		delete
+gnu/dist/postfix/src/smtp/smtp_map11.ref	delete
+gnu/dist/postfix/src/smtp/smtp_params.c		delete
+gnu/dist/postfix/src/smtp/smtp_proto.c		delete
+gnu/dist/postfix/src/smtp/smtp_rcpt.c		delete
+gnu/dist/postfix/src/smtp/smtp_reuse.c		delete
+gnu/dist/postfix/src/smtp/smtp_reuse.h		delete
+gnu/dist/postfix/src/smtp/smtp_sasl.h		delete
+gnu/dist/postfix/src/smtp/smtp_sasl_auth_cache.c delete
+gnu/dist/postfix/src/smtp/smtp_sasl_auth_cache.h delete
+gnu/dist/postfix/src/smtp/smtp_sasl_glue.c	delete
+gnu/dist/postfix/src/smtp/smtp_sasl_proto.c	delete
+gnu/dist/postfix/src/smtp/smtp_session.c	delete
+gnu/dist/postfix/src/smtp/smtp_state.c		delete
+gnu/dist/postfix/src/smtp/smtp_trouble.c	delete
+gnu/dist/postfix/src/smtp/smtp_unalias.c	delete
+gnu/dist/postfix/src/smtp/tls_policy.in		delete
+gnu/dist/postfix/src/smtp/tls_policy.ref	delete
+gnu/dist/postfix/src/smtpd/Makefile.in		delete
+gnu/dist/postfix/src/smtpd/smtpd.c		delete
+gnu/dist/postfix/src/smtpd/smtpd.h		delete
+gnu/dist/postfix/src/smtpd/smtpd_acl.in		delete
+gnu/dist/postfix/src/smtpd/smtpd_acl.ref	delete
+gnu/dist/postfix/src/smtpd/smtpd_chat.c		delete
+gnu/dist/postfix/src/smtpd/smtpd_chat.h		delete
+gnu/dist/postfix/src/smtpd/smtpd_check.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.in	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.in2	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.in3	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.in4	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.ref	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.ref2	delete
+gnu/dist/postfix/src/smtpd/smtpd_check.ref4	delete
+gnu/dist/postfix/src/smtpd/smtpd_check_access	delete
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.in delete
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.ref delete
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.in	delete
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.ref	delete
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_exp.in		delete
+gnu/dist/postfix/src/smtpd/smtpd_exp.ref	delete
+gnu/dist/postfix/src/smtpd/smtpd_milter.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_milter.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_peer.c		delete
+gnu/dist/postfix/src/smtpd/smtpd_proxy.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_proxy.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_sasl_glue.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_sasl_glue.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_sasl_proto.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_sasl_proto.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_state.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_token.c	delete
+gnu/dist/postfix/src/smtpd/smtpd_token.h	delete
+gnu/dist/postfix/src/smtpd/smtpd_token.in	delete
+gnu/dist/postfix/src/smtpd/smtpd_token.ref	delete
+gnu/dist/postfix/src/smtpd/smtpd_xforward.c	delete
+gnu/dist/postfix/src/smtpstone/Makefile.in	delete
+gnu/dist/postfix/src/smtpstone/hashed-deferred	delete
+gnu/dist/postfix/src/smtpstone/hashed-incoming	delete
+gnu/dist/postfix/src/smtpstone/mx-deliver	delete
+gnu/dist/postfix/src/smtpstone/mx-explode	delete
+gnu/dist/postfix/src/smtpstone/mx-relay		delete
+gnu/dist/postfix/src/smtpstone/performance	delete
+gnu/dist/postfix/src/smtpstone/qmail-deliver	delete
+gnu/dist/postfix/src/smtpstone/qmail-explode	delete
+gnu/dist/postfix/src/smtpstone/qmail-relay	delete
+gnu/dist/postfix/src/smtpstone/qmqp-sink.c	delete
+gnu/dist/postfix/src/smtpstone/qmqp-source.c	delete
+gnu/dist/postfix/src/smtpstone/smtp-sink.c	delete
+gnu/dist/postfix/src/smtpstone/smtp-source.c	delete
+gnu/dist/postfix/src/smtpstone/throughput	delete
+gnu/dist/postfix/src/smtpstone/vmail-local	delete
+gnu/dist/postfix/src/smtpstone/vmail-relay	delete
+gnu/dist/postfix/src/spawn/Makefile.in		delete
+gnu/dist/postfix/src/spawn/spawn.c		delete
+gnu/dist/postfix/src/tls/Makefile.in		delete
+gnu/dist/postfix/src/tls/tls.h			delete
+gnu/dist/postfix/src/tls/tls_bio_ops.c		delete
+gnu/dist/postfix/src/tls/tls_certkey.c		delete
+gnu/dist/postfix/src/tls/tls_client.c		delete
+gnu/dist/postfix/src/tls/tls_dh.c		delete
+gnu/dist/postfix/src/tls/tls_level.c		delete
+gnu/dist/postfix/src/tls/tls_mgr.c		delete
+gnu/dist/postfix/src/tls/tls_mgr.h		delete
+gnu/dist/postfix/src/tls/tls_misc.c		delete
+gnu/dist/postfix/src/tls/tls_prng.h		delete
+gnu/dist/postfix/src/tls/tls_prng_dev.c		delete
+gnu/dist/postfix/src/tls/tls_prng_egd.c		delete
+gnu/dist/postfix/src/tls/tls_prng_exch.c	delete
+gnu/dist/postfix/src/tls/tls_prng_file.c	delete
+gnu/dist/postfix/src/tls/tls_rsa.c		delete
+gnu/dist/postfix/src/tls/tls_scache.c		delete
+gnu/dist/postfix/src/tls/tls_scache.h		delete
+gnu/dist/postfix/src/tls/tls_seed.c		delete
+gnu/dist/postfix/src/tls/tls_server.c		delete
+gnu/dist/postfix/src/tls/tls_session.c		delete
+gnu/dist/postfix/src/tls/tls_stream.c		delete
+gnu/dist/postfix/src/tls/tls_verify.c		delete
+gnu/dist/postfix/src/tlsmgr/Makefile.in		delete
+gnu/dist/postfix/src/tlsmgr/tlsmgr.c		delete
+gnu/dist/postfix/src/trivial-rewrite/Makefile.in delete
+gnu/dist/postfix/src/trivial-rewrite/resolve.c	delete
+gnu/dist/postfix/src/trivial-rewrite/rewrite.c	delete
+gnu/dist/postfix/src/trivial-rewrite/transport.c delete
+gnu/dist/postfix/src/trivial-rewrite/transport.h delete
+gnu/dist/postfix/src/trivial-rewrite/trivial-rewrite.c delete
+gnu/dist/postfix/src/trivial-rewrite/trivial-rewrite.h delete
+gnu/dist/postfix/src/util/Makefile.in		delete
+gnu/dist/postfix/src/util/allascii.c		delete
+gnu/dist/postfix/src/util/alldig.c		delete
+gnu/dist/postfix/src/util/allprint.c		delete
+gnu/dist/postfix/src/util/allspace.c		delete
+gnu/dist/postfix/src/util/argv.c		delete
+gnu/dist/postfix/src/util/argv.h		delete
+gnu/dist/postfix/src/util/argv_split.c		delete
+gnu/dist/postfix/src/util/attr.h		delete
+gnu/dist/postfix/src/util/attr_clnt.c		delete
+gnu/dist/postfix/src/util/attr_clnt.h		delete
+gnu/dist/postfix/src/util/attr_print0.c		delete
+gnu/dist/postfix/src/util/attr_print64.c	delete
+gnu/dist/postfix/src/util/attr_print_plain.c	delete
+gnu/dist/postfix/src/util/attr_scan.ref		delete
+gnu/dist/postfix/src/util/attr_scan0.c		delete
+gnu/dist/postfix/src/util/attr_scan0.ref	delete
+gnu/dist/postfix/src/util/attr_scan64.c		delete
+gnu/dist/postfix/src/util/attr_scan64.ref	delete
+gnu/dist/postfix/src/util/attr_scan_plain.c	delete
+gnu/dist/postfix/src/util/attr_scan_plain.ref	delete
+gnu/dist/postfix/src/util/auto_clnt.c		delete
+gnu/dist/postfix/src/util/auto_clnt.h		delete
+gnu/dist/postfix/src/util/base64_code.c		delete
+gnu/dist/postfix/src/util/base64_code.h		delete
+gnu/dist/postfix/src/util/basename.c		delete
+gnu/dist/postfix/src/util/binhash.c		delete
+gnu/dist/postfix/src/util/binhash.h		delete
+gnu/dist/postfix/src/util/cache.in		delete
+gnu/dist/postfix/src/util/chroot_uid.c		delete
+gnu/dist/postfix/src/util/chroot_uid.h		delete
+gnu/dist/postfix/src/util/cidr_match.c		delete
+gnu/dist/postfix/src/util/cidr_match.h		delete
+gnu/dist/postfix/src/util/clean_env.c		delete
+gnu/dist/postfix/src/util/clean_env.h		delete
+gnu/dist/postfix/src/util/close_on_exec.c	delete
+gnu/dist/postfix/src/util/concatenate.c		delete
+gnu/dist/postfix/src/util/connect.h		delete
+gnu/dist/postfix/src/util/ctable.c		delete
+gnu/dist/postfix/src/util/ctable.h		delete
+gnu/dist/postfix/src/util/ctable.in		delete
+gnu/dist/postfix/src/util/ctable.ref		delete
+gnu/dist/postfix/src/util/dict.c		delete
+gnu/dist/postfix/src/util/dict.h		delete
+gnu/dist/postfix/src/util/dict_alloc.c		delete
+gnu/dist/postfix/src/util/dict_cdb.c		delete
+gnu/dist/postfix/src/util/dict_cdb.h		delete
+gnu/dist/postfix/src/util/dict_cidr.c		delete
+gnu/dist/postfix/src/util/dict_cidr.h		delete
+gnu/dist/postfix/src/util/dict_cidr.in		delete
+gnu/dist/postfix/src/util/dict_cidr.map		delete
+gnu/dist/postfix/src/util/dict_cidr.ref		delete
+gnu/dist/postfix/src/util/dict_db.c		delete
+gnu/dist/postfix/src/util/dict_db.h		delete
+gnu/dist/postfix/src/util/dict_dbm.c		delete
+gnu/dist/postfix/src/util/dict_dbm.h		delete
+gnu/dist/postfix/src/util/dict_debug.c		delete
+gnu/dist/postfix/src/util/dict_env.c		delete
+gnu/dist/postfix/src/util/dict_env.h		delete
+gnu/dist/postfix/src/util/dict_ht.c		delete
+gnu/dist/postfix/src/util/dict_ht.h		delete
+gnu/dist/postfix/src/util/dict_ni.c		delete
+gnu/dist/postfix/src/util/dict_ni.h		delete
+gnu/dist/postfix/src/util/dict_nis.c		delete
+gnu/dist/postfix/src/util/dict_nis.h		delete
+gnu/dist/postfix/src/util/dict_nisplus.c	delete
+gnu/dist/postfix/src/util/dict_nisplus.h	delete
+gnu/dist/postfix/src/util/dict_open.c		delete
+gnu/dist/postfix/src/util/dict_pcre.c		delete
+gnu/dist/postfix/src/util/dict_pcre.h		delete
+gnu/dist/postfix/src/util/dict_pcre.in		delete
+gnu/dist/postfix/src/util/dict_pcre.map		delete
+gnu/dist/postfix/src/util/dict_pcre.ref		delete
+gnu/dist/postfix/src/util/dict_regexp.c		delete
+gnu/dist/postfix/src/util/dict_regexp.h		delete
+gnu/dist/postfix/src/util/dict_regexp.in	delete
+gnu/dist/postfix/src/util/dict_regexp.map	delete
+gnu/dist/postfix/src/util/dict_regexp.ref	delete
+gnu/dist/postfix/src/util/dict_sdbm.c		delete
+gnu/dist/postfix/src/util/dict_sdbm.h		delete
+gnu/dist/postfix/src/util/dict_static.c		delete
+gnu/dist/postfix/src/util/dict_static.h		delete
+gnu/dist/postfix/src/util/dict_tcp.c		delete
+gnu/dist/postfix/src/util/dict_tcp.h		delete
+gnu/dist/postfix/src/util/dict_test.in		delete
+gnu/dist/postfix/src/util/dict_test.ref		delete
+gnu/dist/postfix/src/util/dict_unix.c		delete
+gnu/dist/postfix/src/util/dict_unix.h		delete
+gnu/dist/postfix/src/util/dir_forest.c		delete
+gnu/dist/postfix/src/util/dir_forest.h		delete
+gnu/dist/postfix/src/util/doze.c		delete
+gnu/dist/postfix/src/util/dummy_read.c		delete
+gnu/dist/postfix/src/util/dummy_write.c		delete
+gnu/dist/postfix/src/util/dup2_pass_on_exec.c	delete
+gnu/dist/postfix/src/util/duplex_pipe.c		delete
+gnu/dist/postfix/src/util/environ.c		delete
+gnu/dist/postfix/src/util/events.c		delete
+gnu/dist/postfix/src/util/events.h		delete
+gnu/dist/postfix/src/util/exec_command.c	delete
+gnu/dist/postfix/src/util/exec_command.h	delete
+gnu/dist/postfix/src/util/fifo_listen.c		delete
+gnu/dist/postfix/src/util/fifo_open.c		delete
+gnu/dist/postfix/src/util/fifo_rdonly_bug.c	delete
+gnu/dist/postfix/src/util/fifo_rdwr_bug.c	delete
+gnu/dist/postfix/src/util/fifo_trigger.c	delete
+gnu/dist/postfix/src/util/file_limit.c		delete
+gnu/dist/postfix/src/util/find_inet.c		delete
+gnu/dist/postfix/src/util/find_inet.h		delete
+gnu/dist/postfix/src/util/format_tv.c		delete
+gnu/dist/postfix/src/util/format_tv.h		delete
+gnu/dist/postfix/src/util/format_tv.in		delete
+gnu/dist/postfix/src/util/format_tv.ref		delete
+gnu/dist/postfix/src/util/fsspace.c		delete
+gnu/dist/postfix/src/util/fsspace.h		delete
+gnu/dist/postfix/src/util/fullname.c		delete
+gnu/dist/postfix/src/util/fullname.h		delete
+gnu/dist/postfix/src/util/gccw.c		delete
+gnu/dist/postfix/src/util/gccw.ref		delete
+gnu/dist/postfix/src/util/get_domainname.c	delete
+gnu/dist/postfix/src/util/get_domainname.h	delete
+gnu/dist/postfix/src/util/get_hostname.c	delete
+gnu/dist/postfix/src/util/get_hostname.h	delete
+gnu/dist/postfix/src/util/hex_code.c		delete
+gnu/dist/postfix/src/util/hex_code.h		delete
+gnu/dist/postfix/src/util/hex_quote.c		delete
+gnu/dist/postfix/src/util/hex_quote.h		delete
+gnu/dist/postfix/src/util/host_port.c		delete
+gnu/dist/postfix/src/util/host_port.h		delete
+gnu/dist/postfix/src/util/host_port.in		delete
+gnu/dist/postfix/src/util/host_port.ref		delete
+gnu/dist/postfix/src/util/htable.c		delete
+gnu/dist/postfix/src/util/htable.h		delete
+gnu/dist/postfix/src/util/inet_addr_host.c	delete
+gnu/dist/postfix/src/util/inet_addr_host.h	delete
+gnu/dist/postfix/src/util/inet_addr_list.c	delete
+gnu/dist/postfix/src/util/inet_addr_list.h	delete
+gnu/dist/postfix/src/util/inet_addr_list.in	delete
+gnu/dist/postfix/src/util/inet_addr_list.ref	delete
+gnu/dist/postfix/src/util/inet_addr_local.c	delete
+gnu/dist/postfix/src/util/inet_addr_local.h	delete
+gnu/dist/postfix/src/util/inet_connect.c	delete
+gnu/dist/postfix/src/util/inet_listen.c		delete
+gnu/dist/postfix/src/util/inet_proto.c		delete
+gnu/dist/postfix/src/util/inet_proto.h		delete
+gnu/dist/postfix/src/util/inet_trigger.c	delete
+gnu/dist/postfix/src/util/iostuff.h		delete
+gnu/dist/postfix/src/util/killme_after.c	delete
+gnu/dist/postfix/src/util/killme_after.h	delete
+gnu/dist/postfix/src/util/line_wrap.c		delete
+gnu/dist/postfix/src/util/line_wrap.h		delete
+gnu/dist/postfix/src/util/listen.h		delete
+gnu/dist/postfix/src/util/load_file.c		delete
+gnu/dist/postfix/src/util/load_file.h		delete
+gnu/dist/postfix/src/util/lowercase.c		delete
+gnu/dist/postfix/src/util/lstat_as.c		delete
+gnu/dist/postfix/src/util/lstat_as.h		delete
+gnu/dist/postfix/src/util/mac_expand.c		delete
+gnu/dist/postfix/src/util/mac_expand.h		delete
+gnu/dist/postfix/src/util/mac_expand.in		delete
+gnu/dist/postfix/src/util/mac_expand.ref	delete
+gnu/dist/postfix/src/util/mac_parse.c		delete
+gnu/dist/postfix/src/util/mac_parse.h		delete
+gnu/dist/postfix/src/util/make_dirs.c		delete
+gnu/dist/postfix/src/util/make_dirs.h		delete
+gnu/dist/postfix/src/util/mask_addr.c		delete
+gnu/dist/postfix/src/util/mask_addr.h		delete
+gnu/dist/postfix/src/util/match_list.c		delete
+gnu/dist/postfix/src/util/match_list.h		delete
+gnu/dist/postfix/src/util/match_ops.c		delete
+gnu/dist/postfix/src/util/match_ops.h		delete
+gnu/dist/postfix/src/util/msg.c			delete
+gnu/dist/postfix/src/util/msg.h			delete
+gnu/dist/postfix/src/util/msg_output.c		delete
+gnu/dist/postfix/src/util/msg_output.h		delete
+gnu/dist/postfix/src/util/msg_syslog.c		delete
+gnu/dist/postfix/src/util/msg_syslog.h		delete
+gnu/dist/postfix/src/util/msg_vstream.c		delete
+gnu/dist/postfix/src/util/msg_vstream.h		delete
+gnu/dist/postfix/src/util/mvect.c		delete
+gnu/dist/postfix/src/util/mvect.h		delete
+gnu/dist/postfix/src/util/myaddrinfo.c		delete
+gnu/dist/postfix/src/util/myaddrinfo.h		delete
+gnu/dist/postfix/src/util/myaddrinfo.ref	delete
+gnu/dist/postfix/src/util/myaddrinfo.ref2	delete
+gnu/dist/postfix/src/util/myaddrinfo4.ref	delete
+gnu/dist/postfix/src/util/myaddrinfo4.ref2	delete
+gnu/dist/postfix/src/util/myflock.c		delete
+gnu/dist/postfix/src/util/myflock.h		delete
+gnu/dist/postfix/src/util/mymalloc.c		delete
+gnu/dist/postfix/src/util/mymalloc.h		delete
+gnu/dist/postfix/src/util/myrand.c		delete
+gnu/dist/postfix/src/util/myrand.h		delete
+gnu/dist/postfix/src/util/mystrtok.c		delete
+gnu/dist/postfix/src/util/name_code.c		delete
+gnu/dist/postfix/src/util/name_code.h		delete
+gnu/dist/postfix/src/util/name_mask.c		delete
+gnu/dist/postfix/src/util/name_mask.h		delete
+gnu/dist/postfix/src/util/netstring.c		delete
+gnu/dist/postfix/src/util/netstring.h		delete
+gnu/dist/postfix/src/util/neuter.c		delete
+gnu/dist/postfix/src/util/non_blocking.c	delete
+gnu/dist/postfix/src/util/nvtable.c		delete
+gnu/dist/postfix/src/util/nvtable.h		delete
+gnu/dist/postfix/src/util/open_as.c		delete
+gnu/dist/postfix/src/util/open_as.h		delete
+gnu/dist/postfix/src/util/open_limit.c		delete
+gnu/dist/postfix/src/util/open_lock.c		delete
+gnu/dist/postfix/src/util/open_lock.h		delete
+gnu/dist/postfix/src/util/peekfd.c		delete
+gnu/dist/postfix/src/util/percentm.c		delete
+gnu/dist/postfix/src/util/percentm.h		delete
+gnu/dist/postfix/src/util/posix_signals.c	delete
+gnu/dist/postfix/src/util/posix_signals.h	delete
+gnu/dist/postfix/src/util/printable.c		delete
+gnu/dist/postfix/src/util/rand_sleep.c		delete
+gnu/dist/postfix/src/util/read_wait.c		delete
+gnu/dist/postfix/src/util/readable.c		delete
+gnu/dist/postfix/src/util/readlline.c		delete
+gnu/dist/postfix/src/util/readlline.h		delete
+gnu/dist/postfix/src/util/ring.c		delete
+gnu/dist/postfix/src/util/ring.h		delete
+gnu/dist/postfix/src/util/safe.h		delete
+gnu/dist/postfix/src/util/safe_getenv.c		delete
+gnu/dist/postfix/src/util/safe_open.c		delete
+gnu/dist/postfix/src/util/safe_open.h		delete
+gnu/dist/postfix/src/util/sane_accept.c		delete
+gnu/dist/postfix/src/util/sane_accept.h		delete
+gnu/dist/postfix/src/util/sane_basename.c	delete
+gnu/dist/postfix/src/util/sane_basename.in	delete
+gnu/dist/postfix/src/util/sane_basename.ref	delete
+gnu/dist/postfix/src/util/sane_connect.c	delete
+gnu/dist/postfix/src/util/sane_connect.h	delete
+gnu/dist/postfix/src/util/sane_fsops.h		delete
+gnu/dist/postfix/src/util/sane_link.c		delete
+gnu/dist/postfix/src/util/sane_rename.c		delete
+gnu/dist/postfix/src/util/sane_socketpair.c	delete
+gnu/dist/postfix/src/util/sane_socketpair.h	delete
+gnu/dist/postfix/src/util/sane_time.c		delete
+gnu/dist/postfix/src/util/sane_time.h		delete
+gnu/dist/postfix/src/util/scan_dir.c		delete
+gnu/dist/postfix/src/util/scan_dir.h		delete
+gnu/dist/postfix/src/util/select_bug.c		delete
+gnu/dist/postfix/src/util/set_eugid.c		delete
+gnu/dist/postfix/src/util/set_eugid.h		delete
+gnu/dist/postfix/src/util/set_ugid.c		delete
+gnu/dist/postfix/src/util/set_ugid.h		delete
+gnu/dist/postfix/src/util/sigdelay.c		delete
+gnu/dist/postfix/src/util/sigdelay.h		delete
+gnu/dist/postfix/src/util/skipblanks.c		delete
+gnu/dist/postfix/src/util/sock_addr.c		delete
+gnu/dist/postfix/src/util/sock_addr.h		delete
+gnu/dist/postfix/src/util/spawn_command.c	delete
+gnu/dist/postfix/src/util/spawn_command.h	delete
+gnu/dist/postfix/src/util/split_at.c		delete
+gnu/dist/postfix/src/util/split_at.h		delete
+gnu/dist/postfix/src/util/split_nameval.c	delete
+gnu/dist/postfix/src/util/stat_as.c		delete
+gnu/dist/postfix/src/util/stat_as.h		delete
+gnu/dist/postfix/src/util/strcasecmp.c		delete
+gnu/dist/postfix/src/util/stream_connect.c	delete
+gnu/dist/postfix/src/util/stream_listen.c	delete
+gnu/dist/postfix/src/util/stream_recv_fd.c	delete
+gnu/dist/postfix/src/util/stream_send_fd.c	delete
+gnu/dist/postfix/src/util/stream_test.c		delete
+gnu/dist/postfix/src/util/stream_trigger.c	delete
+gnu/dist/postfix/src/util/stringops.h		delete
+gnu/dist/postfix/src/util/sys_compat.c		delete
+gnu/dist/postfix/src/util/sys_defs.h		delete
+gnu/dist/postfix/src/util/testdb		delete
+gnu/dist/postfix/src/util/timed_connect.c	delete
+gnu/dist/postfix/src/util/timed_connect.h	delete
+gnu/dist/postfix/src/util/timed_read.c		delete
+gnu/dist/postfix/src/util/timed_wait.c		delete
+gnu/dist/postfix/src/util/timed_wait.h		delete
+gnu/dist/postfix/src/util/timed_write.c		delete
+gnu/dist/postfix/src/util/translit.c		delete
+gnu/dist/postfix/src/util/trigger.h		delete
+gnu/dist/postfix/src/util/trimblanks.c		delete
+gnu/dist/postfix/src/util/unescape.c		delete
+gnu/dist/postfix/src/util/unescape.in		delete
+gnu/dist/postfix/src/util/unescape.ref		delete
+gnu/dist/postfix/src/util/unix_connect.c	delete
+gnu/dist/postfix/src/util/unix_listen.c		delete
+gnu/dist/postfix/src/util/unix_recv_fd.c	delete
+gnu/dist/postfix/src/util/unix_send_fd.c	delete
+gnu/dist/postfix/src/util/unix_trigger.c	delete
+gnu/dist/postfix/src/util/unsafe.c		delete
+gnu/dist/postfix/src/util/upass_connect.c	delete
+gnu/dist/postfix/src/util/upass_listen.c	delete
+gnu/dist/postfix/src/util/upass_trigger.c	delete
+gnu/dist/postfix/src/util/uppercase.c		delete
+gnu/dist/postfix/src/util/username.c		delete
+gnu/dist/postfix/src/util/username.h		delete
+gnu/dist/postfix/src/util/valid_hostname.c	delete
+gnu/dist/postfix/src/util/valid_hostname.h	delete
+gnu/dist/postfix/src/util/valid_hostname.in	delete
+gnu/dist/postfix/src/util/valid_hostname.ref	delete
+gnu/dist/postfix/src/util/vbuf.c		delete
+gnu/dist/postfix/src/util/vbuf.h		delete
+gnu/dist/postfix/src/util/vbuf_print.c		delete
+gnu/dist/postfix/src/util/vbuf_print.h		delete
+gnu/dist/postfix/src/util/vstream.c		delete
+gnu/dist/postfix/src/util/vstream.h		delete
+gnu/dist/postfix/src/util/vstream_popen.c	delete
+gnu/dist/postfix/src/util/vstream_tweak.c	delete
+gnu/dist/postfix/src/util/vstring.c		delete
+gnu/dist/postfix/src/util/vstring.h		delete
+gnu/dist/postfix/src/util/vstring_vstream.c	delete
+gnu/dist/postfix/src/util/vstring_vstream.h	delete
+gnu/dist/postfix/src/util/watchdog.c		delete
+gnu/dist/postfix/src/util/watchdog.h		delete
+gnu/dist/postfix/src/util/writable.c		delete
+gnu/dist/postfix/src/util/write_buf.c		delete
+gnu/dist/postfix/src/util/write_wait.c		delete
+gnu/dist/postfix/src/verify/Makefile.in		delete
+gnu/dist/postfix/src/verify/verify.c		delete
+gnu/dist/postfix/src/virtual/Makefile.in	delete
+gnu/dist/postfix/src/virtual/deliver_attr.c	delete
+gnu/dist/postfix/src/virtual/mailbox.c		delete
+gnu/dist/postfix/src/virtual/maildir.c		delete
+gnu/dist/postfix/src/virtual/recipient.c	delete
+gnu/dist/postfix/src/virtual/unknown.c		delete
+gnu/dist/postfix/src/virtual/virtual.c		delete
+gnu/dist/postfix/src/virtual/virtual.h		delete
+gnu/dist/postfix/src/xsasl/Makefile.in		delete
+gnu/dist/postfix/src/xsasl/README		delete
+gnu/dist/postfix/src/xsasl/xsasl.h		delete
+gnu/dist/postfix/src/xsasl/xsasl_client.c	delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus.h	delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_client.c delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_common.h delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_log.c	delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_security.c delete
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_server.c delete
+gnu/dist/postfix/src/xsasl/xsasl_dovecot.h	delete
+gnu/dist/postfix/src/xsasl/xsasl_dovecot_server.c delete
+gnu/dist/postfix/src/xsasl/xsasl_server.c	delete
+gnu/usr.sbin/Makefile				1.16
+gnu/usr.sbin/postfix/Makefile			delete
+gnu/usr.sbin/postfix/Makefile.inc		delete
+gnu/usr.sbin/postfix/README_FILES/Makefile	delete
+gnu/usr.sbin/postfix/anvil/Makefile		delete
+gnu/usr.sbin/postfix/bounce/Makefile		delete
+gnu/usr.sbin/postfix/cleanup/Makefile		delete
+gnu/usr.sbin/postfix/conf/Makefile		delete
+gnu/usr.sbin/postfix/discard/Makefile		delete
+gnu/usr.sbin/postfix/dns/Makefile		delete
+gnu/usr.sbin/postfix/error/Makefile		delete
+gnu/usr.sbin/postfix/flush/Makefile		delete
+gnu/usr.sbin/postfix/global/Makefile		delete
+gnu/usr.sbin/postfix/html/Makefile		delete
+gnu/usr.sbin/postfix/local/Makefile		delete
+gnu/usr.sbin/postfix/man/Makefile		delete
+gnu/usr.sbin/postfix/man/man1/Makefile		delete
+gnu/usr.sbin/postfix/man/man5/Makefile		delete
+gnu/usr.sbin/postfix/man/man8/Makefile		delete
+gnu/usr.sbin/postfix/master/Makefile		delete
+gnu/usr.sbin/postfix/masterlib/Makefile		delete
+gnu/usr.sbin/postfix/milter/Makefile		delete
+gnu/usr.sbin/postfix/oqmgr/Makefile		delete
+gnu/usr.sbin/postfix/pickup/Makefile		delete
+gnu/usr.sbin/postfix/pipe/Makefile		delete
+gnu/usr.sbin/postfix/postalias/Makefile		delete
+gnu/usr.sbin/postfix/postcat/Makefile		delete
+gnu/usr.sbin/postfix/postconf/Makefile		delete
+gnu/usr.sbin/postfix/postdrop/Makefile		delete
+gnu/usr.sbin/postfix/postfix-etc/Makefile	delete
+gnu/usr.sbin/postfix/postfix-etc/README		delete
+gnu/usr.sbin/postfix/postfix-script/Makefile	delete
+gnu/usr.sbin/postfix/postfix/Makefile		delete
+gnu/usr.sbin/postfix/postkick/Makefile		delete
+gnu/usr.sbin/postfix/postlock/Makefile		delete
+gnu/usr.sbin/postfix/postlog/Makefile		delete
+gnu/usr.sbin/postfix/postmap/Makefile		delete
+gnu/usr.sbin/postfix/postqueue/Makefile		delete
+gnu/usr.sbin/postfix/postsuper/Makefile		delete
+gnu/usr.sbin/postfix/proxymap/Makefile		delete
+gnu/usr.sbin/postfix/qmgr/Makefile		delete
+gnu/usr.sbin/postfix/scache/Makefile		delete
+gnu/usr.sbin/postfix/sendmail/Makefile		delete
+gnu/usr.sbin/postfix/showq/Makefile		delete
+gnu/usr.sbin/postfix/smtp/Makefile		delete
+gnu/usr.sbin/postfix/smtpd/Makefile		delete
+gnu/usr.sbin/postfix/spawn/Makefile		delete
+gnu/usr.sbin/postfix/tls/Makefile		delete
+gnu/usr.sbin/postfix/tlsmgr/Makefile		delete
+gnu/usr.sbin/postfix/trivial-rewrite/Makefile	delete
+gnu/usr.sbin/postfix/util/Makefile		delete
+gnu/usr.sbin/postfix/verify/Makefile		delete
+gnu/usr.sbin/postfix/virtual/Makefile		delete
+gnu/usr.sbin/postfix/xsasl/Makefile		delete
+usr.sbin/postinstall/postinstall		1.99
+
+	Update Postfix to version 2.6.5.
+	[tron, ticket #944]
 
