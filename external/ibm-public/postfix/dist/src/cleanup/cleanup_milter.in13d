@@ -1,0 +1,9 @@
+#verbose on
+open test-queue-file13d.tmp
+
+# Change the null sender, to test correct padding of short sender records. 
+
+chg_from m@porcupine.org esmtpstuff
+chg_from n@porcupine.org esmtpstuff
+
+close

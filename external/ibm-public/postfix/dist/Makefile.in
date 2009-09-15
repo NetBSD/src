@@ -1,0 +1,110 @@
+SHELL	= /bin/sh
+WARN    = -Wmissing-prototypes -Wformat
+OPTS	= 'CC=$(CC)'
+DIRS	= src/util src/global src/dns src/tls src/xsasl src/milter src/master \
+	src/postfix src/fsstone src/smtpstone \
+	src/sendmail src/error src/pickup src/cleanup src/smtpd src/local \
+	src/trivial-rewrite src/qmgr src/oqmgr src/smtp src/bounce \
+	src/pipe src/showq src/postalias src/postcat src/postconf src/postdrop \
+	src/postkick src/postlock src/postlog src/postmap src/postqueue \
+	src/postsuper src/qmqpd src/spawn src/flush src/verify \
+	src/virtual src/proxymap src/anvil src/scache src/discard src/tlsmgr \
+	src/postmulti
+MANDIRS	= proto man html
+LIBEXEC	= libexec/post-install libexec/postfix-files libexec/postfix-script \
+	libexec/postfix-wrapper libexec/main.cf libexec/master.cf \
+	libexec/postmulti-script
+
+default: update
+
+makefiles Makefiles:
+	(echo "# Do not edit -- this file documents how Postfix was built for your machine."; $(SHELL) makedefs) >makedefs.tmp
+	set +e; if cmp makedefs.tmp conf/makedefs.out; then rm makedefs.tmp; \
+	else mv makedefs.tmp conf/makedefs.out; fi >/dev/null 2>/dev/null
+	set -e; for i in $(DIRS); do \
+	 (set -e; echo "[$$i]"; cd $$i; rm -f Makefile; \
+	 $(MAKE) -f Makefile.in Makefile MAKELEVEL=) || exit 1; \
+	done;
+	rm -f Makefile; (cat conf/makedefs.out Makefile.in) >Makefile
+
+update printfck tests root_tests:
+	set -e; for i in $(DIRS); do \
+	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) $(OPTS) $@ MAKELEVEL=) || exit 1; \
+	done
+
+update: $(LIBEXEC)
+
+libexec/post-install: conf/post-install
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/postfix-files: conf/postfix-files
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/postfix-script: conf/postfix-script
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/postfix-wrapper: conf/postfix-wrapper
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/main.cf: conf/main.cf
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/master.cf: conf/master.cf
+	rm -f $@ && ln -sf ../$? $@
+
+libexec/postmulti-script: conf/postmulti-script
+	rm -f $@ && ln -sf ../$? $@
+
+manpages:
+	set -e; for i in $(MANDIRS); do \
+	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) -f Makefile.in $(OPTS) MAKELEVEL=) || exit 1; \
+	done
+
+printfck: update
+
+install: update
+	$(SHELL) postfix-install
+
+package: update
+	$(SHELL) postfix-install -package
+
+upgrade: update
+	$(SHELL) postfix-install -non-interactive
+
+non-interactive-package: update
+	$(SHELL) postfix-install -non-interactive -package
+
+depend clean:
+	set -e; for i in $(DIRS); do \
+	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) $@) || exit 1; \
+	done
+
+depend_update:
+	set -e; for i in $(DIRS); do \
+	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) depend && $(MAKE) $(OPTS) update) \
+	    || exit 1; \
+	done
+
+tidy:	clean
+	rm -f Makefile */Makefile src/*/Makefile
+	cp Makefile.init Makefile
+	rm -f README_FILES/RELEASE_NOTES
+	ln -s ../RELEASE_NOTES README_FILES
+	rm -f bin/[!CRS]* lib/[!CRS]* include/[!CRS]* libexec/[!CRS]* \
+	    junk */junk */*/junk \
+	    *core */*core */*/*core \
+	    .nfs* */.nfs* */*/.nfs* \
+	    .pure */.pure */*/.pure \
+	    *.out */*.out */*/*.out \
+	    *.tmp */*.tmp */*/*.tmp \
+	    *.a */*.a */*/*.a \
+	    *~ */*~ */*/*~ \
+	    *- */*- */*/*- \
+	    *.orig */*.orig */*/*.orig \
+	    *.bak */*.bak */*/*.bak \
+	    make.err */make.err */*/make.err \
+	    *.gmon */*.gmon */*/*.gmon \
+	    conf/main.cf.default conf/bounce.cf.default
+	find . -type s -print | xargs rm -f
+	find . -type d -print | xargs chmod 755
+	find . -type f -print | xargs chmod a+r

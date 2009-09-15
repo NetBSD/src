@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.19 2009/05/14 00:26:59 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.20 2009/09/15 06:04:55 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -764,7 +764,7 @@ do_gid()
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
-	    named ntpd postfix sshd authpf _pflogd _rwhod _proxy _timedc \
+	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
 	    _sdpd _httpd
 }
 
@@ -981,31 +981,6 @@ do_pf()
 	failed=$(( ${failed} + $? ))
 
 	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc" 444 pf.os
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
-#
-#	postfix
-#
-additem postfix "/etc/postfix/ being up to date"
-do_postfix()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_postfix  fix|check"
-	op="$1"
-	failed=0
-
-	find_file_in_dirlist postfix-script "postfix scripts" \
-	    "${SRC_DIR}/gnu/dist/postfix/conf" \
-	    "${DEST_DIR}/usr/share/examples/postfix" \
-	    || return 1
-			# ${dir} is set by find_file_in_dirlist()
-	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc/postfix" 555 \
-	    post-install postfix-script
-	failed=$(( ${failed} + $? ))
-	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc/postfix" 444 \
-	    postfix-files
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}

@@ -1,0 +1,66 @@
+.\"	$NetBSD: qmqp-sink.1,v 1.1.1.1.2.2 2009/09/15 06:02:18 snj Exp $
+.\"
+.TH QMQP-SINK 1 
+.ad
+.fi
+.SH NAME
+qmqp-sink
+\-
+multi-threaded QMQP test server
+.SH "SYNOPSIS"
+.na
+.nf
+.fi
+\fBqmqp-sink\fR [\fB-46cv\fR] [\fB-x \fItime\fR]
+[\fBinet:\fR][\fIhost\fR]:\fIport\fR \fIbacklog\fR
+
+\fBqmqp-sink\fR [\fB-46cv\fR] [\fB-x \fItime\fR]
+\fBunix:\fR\fIpathname\fR \fIbacklog\fR
+.SH DESCRIPTION
+.ad
+.fi
+\fBqmqp-sink\fR listens on the named host (or address) and port.
+It receives messages from the network and throws them away.
+The purpose is to measure QMQP client performance, not protocol
+compliance.
+Connections can be accepted on IPv4 or IPv6 endpoints, or on
+UNIX-domain sockets.
+IPv4 and IPv6 are the default.
+This program is the complement of the \fBqmqp-source\fR(1) program.
+
+Note: this is an unsupported test program. No attempt is made
+to maintain compatibility between successive versions.
+
+Arguments:
+.IP \fB-4\fR
+Support IPv4 only. This option has no effect when
+Postfix is built without IPv6 support.
+.IP \fB-6\fR
+Support IPv6 only. This option is not available when
+Postfix is built without IPv6 support.
+.IP \fB-c\fR
+Display a running counter that is updated whenever a delivery
+is completed.
+.IP \fB-v\fR
+Increase verbosity. Specify \fB-v -v\fR to see some of the QMQP
+conversation.
+.IP "\fB-x \fItime\fR
+Terminate after \fItime\fR seconds. This is to facilitate memory
+leak testing.
+.SH "SEE ALSO"
+.na
+.nf
+qmqp-source(1), QMQP message generator
+.SH "LICENSE"
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH "AUTHOR(S)"
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 2008/10/30 21:37:55 mrg Exp $
+# $NetBSD: mi,v 1.158.2.1 2009/09/15 06:01:39 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -276,6 +276,7 @@
 ./usr/share/doc/html/postfix/LOCAL_RECIPIENT_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MAILDROP_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MILTER_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/MULTI_INSTANCE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MYSQL_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/NFS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/OVERVIEW.html		misc-postfix-htmldoc	postfix,doc
@@ -349,10 +350,12 @@
 ./usr/share/doc/html/postfix/postfix-logo.jpg	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-manuals.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postfix-wrapper.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlock.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlog.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postmap.1.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postmulti.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postqueue.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
@@ -745,6 +748,7 @@
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MULTI_INSTANCE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
@@ -777,9 +781,9 @@
 ./usr/share/examples/postfix/main.cf		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/master.cf		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/pcre_table		misc-obsolete		obsolete
-./usr/share/examples/postfix/post-install	misc-postfix-examples	postfix,share
-./usr/share/examples/postfix/postfix-files	misc-postfix-examples	postfix,share
-./usr/share/examples/postfix/postfix-script	misc-postfix-examples	postfix,share
+./usr/share/examples/postfix/post-install	misc-obsolete		obsolete
+./usr/share/examples/postfix/postfix-files	misc-obsolete		obsolete
+./usr/share/examples/postfix/postfix-script	misc-obsolete		obsolete
 ./usr/share/examples/postfix/regexp_table	misc-obsolete		obsolete
 ./usr/share/examples/postfix/relocated		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/sample-aliases.cf	misc-obsolete		obsolete

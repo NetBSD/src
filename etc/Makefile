@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.359.2.3 2009/03/27 14:50:35 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.359.2.4 2009/09/15 06:01:40 snj Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -350,7 +350,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh configinstall
 .endif
 .if (${MKPOSTFIX} != "no")
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/ibm-public/postfix configinstall
 .endif
 
 
