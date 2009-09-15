@@ -2983,10 +2983,13 @@ ztest_thread(void *arg)
 		    (double)zi->zi_call_total / zi->zi_call_target >
 		    (double)(now - zs->zs_start_time) / (zopt_time * NANOSEC))
 			continue;
-
+#ifdef __HAVE_ATOMIC64_OPS
 		atomic_add_64(&zi->zi_calls, 1);
 		atomic_add_64(&zi->zi_call_total, 1);
-
+#else
+		atomic_add_32(&zi->zi_calls, 1);
+		atomic_add_32(&zi->zi_call_total, 1);
+#end		
 		za->za_diroff = (za->za_instance * ZTEST_FUNCS + f) *
 		    ZTEST_DIRSIZE;
 		za->za_diroff_shared = (1ULL << 63);
@@ -2995,9 +2998,11 @@ ztest_thread(void *arg)
 			zi->zi_func(za);
 
 		functime = gethrtime() - now;
-
+#ifdef __HAVE_ATOMIC64_OPS
 		atomic_add_64(&zi->zi_call_time, functime);
-
+#else
+		atomic_add_32(&zi->zi_call_time, functime);
+#endif
 		if (zopt_verbose >= 4) {
 			Dl_info dli;
 			(void) dladdr((void *)zi->zi_func, &dli);
