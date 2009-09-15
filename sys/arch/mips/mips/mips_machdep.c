@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.12 2009/09/13 03:30:27 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.13 2009/09/15 06:51:02 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.12 2009/09/13 03:30:27 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.13 2009/09/15 06:51:02 cliff Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -448,7 +448,7 @@ static const struct pridtab cputab[] = {
 						"SB-1"			},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS616, -1,	-1, -1, 0,
-	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
 						"XLS616"		},
 
 	{ 0, 0, 0,				0, 0, 0,
