@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.70 2009/09/15 06:19:28 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.71 2009/09/15 06:56:09 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -5481,4 +5481,9 @@ usr.sbin/postinstall/postinstall		1.99
 
 	Update Postfix to version 2.6.5.
 	[tron, ticket #944]
+
+sys/dev/pci/pci_usrreq.c			1.20-1.22 via patch
+
+	Fix various mmap() operations used by libpciaccess.
+	[mrg, ticket #952]
 
