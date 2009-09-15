@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.5 2009/01/26 05:09:25 agc Exp $
+$NetBSD: system,v 1.6 2009/09/15 21:07:58 agc Exp $
 
 NetBSD System Roadmap
 =====================
@@ -6,39 +6,20 @@ NetBSD System Roadmap
 This is a small roadmap document, and deals with the main system
 aspects of the operating system.
 
-NetBSD 5.0 will ship with the following main changes to the system:
-
-1. Modularized scheduler
-2. Real-time scheduling classes and priorities
-3. Processor sets, processor affinity and processor control
-4. Multiprocessor optimized scheduler
-5. High-performance 1:1 threading implementation
-6. Pushback of the global kernel lock
-7. New kernel concurrency model
-8. Multiprocessor optimized memory allocators
-9. POSIX asynchronous I/O and message queues
-10. In-kernel linker
-11. SysV IPC tuneables
-12. Improved observability: minidumps, lockstat and tprof
-13. Power management framework
-
-The following element has been added to the NetBSD-current tree, and will be
-in NetBSD 6.0
-
-14. 64-bit time values supported
-
 The following projects are expected to be included in NetBSD 6.0
 
-15. Full kernel preemption for real-time threads
-16. POSIX shared memory
-17. namei() tactical changes
-18. Better resource controls
-19. Improved observability: online crashdumps, remote debugging
-20. Processor and cache topology aware scheduler
+1. 64-bit time values supported
+2. Better Kernel Modules support
+3. Full kernel preemption for real-time threads
+4. POSIX shared memory
+5. namei() tactical changes
+6. Better resource controls
+7. Improved observability: online crashdumps, remote debugging
+8. Processor and cache topology aware scheduler
+9. namei() strategic changes
 
-The timescales for 6.0 are not known at the present time, but we would
-expect to branch 6.0 late in 2009, with a view to a 6.0 release in
-early 2010.
+We currently expect to branch 6.0 in the March 2010 timeframe, with a view
+to a 6.0 release later in 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -46,146 +27,7 @@ We'll continue to update this roadmap as features and dates get firmed up.
 Some explanations
 =================
 
-1. Modularized scheduler
-------------------------
-
-Traditionally the only method of control on process scheduling was the
-'nice' value assigned to each process.  The scheduler interface has been
-redesiged to allow for pluggable schedulers, selected at compile time.
-At the current time, there are no plans to switch schedulers at run-time,
-since there is little appreciable gain to be had from that, and the extra
-performance hit to provide this functionality is thought not to be worth
-it.
-
-The in-kernel scheduler interface has been enhanced to provide a framework
-for adding new schedulers, called the common scheduler framework - more
-information can be found in the csf(9) manual page.
-
-Responsible: ad, dsieger, rmind, yamt
-
-2. Real-time scheduling classes and priorities
-----------------------------------------------
-
-The scheduler has been extended to allow provide multiple new priority
-bands, including real-time.  POSIX standard interfaces for controlling
-thread priority and scheduling class have been implemented, along with
-a command line tool to allow control by the system administrator.
-
-3. Processor sets, processor affinity and processor control
------------------------------------------------------------
-
-A Solaris and HP-UX compatible interface for defining and controlling
-processor sets has been added.  Processor sets allow applications and
-the administrator complete flexibility in partitioning CPU resources
-among applications, down to thread-level granularity.
-
-Linux compatibile interface controlling processor affinity, similar
-in spirit to processor sets, is provided.
-
-A new utility to control CPU status (cpuctl) is provided.  cpuctl
-allows the administrator to enable and disable individual CPUs at
-the software level, while the system is running.  It is expected that
-this will in time be extended to support full dynamic reconfiguration,
-in concert with a hypervisor such as Xen.
-
-4. Multiprocessor optimized scheduler
--------------------------------------
-
-An intelligent, pluggable scheduler named M2 that is optimized for
-multiprocessor systems, supports POSIX real-time extensions,
-time-sharing class, and implements thread affinity.
-
-5. High-performance 1:1 threading implementation
-------------------------------------------------
-
-A new lightweight 1:1 threading implementation, replacing the M:N based
-implementation found in NetBSD 4.0 and earlier.  The new implementation is
-more correct according to POSIX thread standards, and provides a massive
-performance boost to threaded workloads in both uni- and multi-processor
-configurations.
-
-6. Pushback of the global kernel lock
--------------------------------------
-
-Previously, most access to the kernel was single threaded on multiprocessor
-systems by the global kernel_lock.  The kernel_lock has been pushed back to
-to the device driver and wire-protocol layers, providing a significant
-performance boost on heavily loaded multiprocessor systems.
-
-7. New kernel concurrency model
--------------------------------
-
-The non-preemptive spinlock and "interrupt priority level" synchronization
-model has been replaced wholesale with a hybrid thread/interrupt model.  A
-full range of new, lightweight synchronization primitives are available to
-the kernel programmer, including: adaptive mutexes, reader/writer locks,
-memory barriers, atomic operations, threaded soft interrupts, generic cross
-calls, workqueues, priority inheritance, and per-CPU storage.
-
-8. Multiprocessor optimized memory allocators
----------------------------------------------
-
-The memory allocators in both the kernel and user space are now fully
-optimized for multiprocessor systems and eliminate the performance
-degradation typically associated with memory allocators in an MP setting.
-
-9. POSIX asynchronous I/O and message queues
----------------------------------------------
-
-A full implementation of the POSIX asynchronous I/O and message
-queue facilities is now available.
-
-10. In-kernel linker
---------------------
-
-A in-kernel ELF object linker has been added, and a revamped kernel module
-infrastructure developed to accompany it.  It is expected that the kernel
-will become completely modular over time, while continuing to retain the
-ability to link to a single binary image for embedded and hobby systems.
-
-11. SysV IPC tuneables
-----------------------
-
-Parameters for the SVR3-compatible IPC mechanisms can now be tuned
-completely at runtime.
-
-12. Improved observability: minidumps, lockstat and tprof
----------------------------------------------------------
-
-The x86 architecture now supports mini crash-dumps as a support aid for
-kernel debugging. Only memory contents actively in use by the kernel at
-the time of crash are dumped to and recovered from disk, an improvement
-over the traditional scheme where the complete contents of memory is
-dumped to disk.
-
-The lockstat and tprof commands have been addded to the system. lockstat
-provides a high-resolution description of lock activity in a running system.
-
-tprof uses sample based profiling in conjuction with the available
-performance counters in order to better profile system activity.
-
-13. Power management framework
-------------------------------
-
-A new power management framework has been introduced that improves
-handling of device power state transitions. As power management support
-is now integrated with the auto-configuration subsystem, the kernel can
-ensure that a parent device is powered on before attempting to access
-the device.
-
-With these changes comes an updated release of the Intel ACPI
-Component Architecture and an x86 emulator which assists in restoring
-uninitialized display adapters.
-
-Leveraging this work, the i386 and amd64 kernels now support suspend
-to RAM in uni- and multi-processor configurations on ACPI-capable
-machines. This support has been successfully tested on a wide variety of
-laptops, including (but not limited to) recent systems from Dell, IBM/Lenovo,
-Fujitsu, Toshiba, and Sony.
-
-Responsible: jmcneill, joerg
-
-14. 64-bit time_t support
+1. 64-bit time_t support
 -------------------------
 
 The Unix 32-bit time_t value will overflow in 2037 - any mortgage calculations
@@ -195,16 +37,28 @@ of seconds since 1970.
 
 Responsible: christos
 
-15. Full kernel preemption for real-time threads
-------------------------------------------------
+2. Better Kernel Module Support
+-------------------------------
+
+Starting with 5.99.2, the kernel support for modules was enhanced by
+ad, and GENERIC was switched over to be a MODULAR kernel.  Support
+from booting from modules, like ffs, was introduced at the same time. 
+Some work has been done by Luke Mewburn in this area to define module
+locations and paths so that effective kernel development can be done
+using modules.
+
+Responsible: ad, lukem
+
+3. Full kernel preemption for real-time threads
+-----------------------------------------------
 
 With the revamp of the kernel concurrency model, much of the kernel is fully
 multi-threaded and can therefore be preempted at any time. In support of
 lower context switch and dispatch times for real-time threads, full kernel
 preemption is being implemented.
 
-16. POSIX shared memory
------------------------
+4. POSIX shared memory
+----------------------
 
 Implement POSIX shared memory facilities, which can be used to create the
 shared memory objects and add the memory locations to the address space of
@@ -212,30 +66,29 @@ a process.
 
 Responsible: rmind
 
-17. Incremental namei improvements, Phase 1
--------------------------------------------
+5. Incremental namei improvements, Phase 1
+------------------------------------------
 
-Implement the rest of the changes to namei outlined in Message-ID: 
-<20080319053709.GB3951@netbsd.org>.  Simplify the locking and behavior
-of namei() calls within the kernel to resolve path names within file
-systems. This phase simplifies the majority of calls to namei().
+In NetBSD 5.99.15, some changes were made to split the namei() routine
+up into logical parts, so that changes can be made to the constituent
+parts in a less intrusive way.
 
 Responsible: dholland
 
-18. Better resource controls
-----------------------------
+6. Better resource controls
+---------------------------
 
 A resource provisioning and control framework that extends beyond the
 traditional Unix process limits.
 
-19. Improved observability: online crashdumps, remote debugging
----------------------------------------------------------------
+7. Improved observability: online crashdumps, remote debugging
+--------------------------------------------------------------
 
 XXX crashdumps while the system is running
 XXX firewire support in libkvm
 
-20. Processor and cache topology aware scheduler
-------------------------------------------------
+8. Processor and cache topology aware scheduler
+-----------------------------------------------
 
 Implement the detection of the topology of the processors and caches. 
 Improve the scheduler to make decisions about thread migration
@@ -245,8 +98,8 @@ systems.
 
 Responsible: rmind
 
-29. Incremental namei improvements, Phase 2
--------------------------------------------
+9. Incremental namei improvements, Phase 2
+------------------------------------------
 
 Implement the rest of the changes to namei outlined in Message-ID: 
 <20080319053709.GB3951@netbsd.org>.  Simplify the locking and behavior
@@ -257,6 +110,5 @@ Responsible: dholland
 
 
 
-Andrew Doran
 Alistair Crooks
-Sun 25 Jan 2009 21:03:04 PST
+Tue 15 Sep 2009 08:02:11 PDT
