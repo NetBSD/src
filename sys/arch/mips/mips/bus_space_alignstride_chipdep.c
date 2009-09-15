@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.1 2009/09/08 08:11:29 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.2 2009/09/15 02:20:07 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.1 2009/09/08 08:11:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.2 2009/09/15 02:20:07 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -1248,7 +1248,7 @@ CHIP_read_multi_stream_N(8,uint64_t)
 
 #define CHIP_read_region_stream_N(BYTES,TYPE)				\
 void									\
-__C(__BS(read_region_stream),BYTES)(void *v, bus_space_handle_t h,	\
+__C(__BS(read_region_stream_),BYTES)(void *v, bus_space_handle_t h,	\
     bus_size_t o, TYPE *a, bus_size_t c)				\
 {									\
 									\
@@ -1301,7 +1301,7 @@ __BS(write_stream_4)(void *v, bus_space_handle_t h, bus_size_t off,
 #endif	/* CHIP_ACCESS_SIZE > 4 */
 
 	ptr = (void *)(h + CHIP_OFF32(off));
-	*ptr = val
+	*ptr = val;
 }
 
 inline void
