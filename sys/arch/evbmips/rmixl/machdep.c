@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -265,14 +265,8 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 
 	rcp = &rmixl_configuration;
 	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
-	rmixl_bus_mem_init(&rcp->rc_memt, rcp);
-#ifdef NOTYET
-	rmixl_bus_io_init(&rcp->rc_iot, rcp);
-	rmixl_dma_init(rcp);
-#endif
-#if NPCI > 0
-	rmixl_pci_init(&rcp->rc_pc, &rcp->rc_gt);
-#endif
+	rmixl_eb_bus_mem_init(&rcp->rc_eb_memt, rcp); /* need for console */
+	rmixl_el_bus_mem_init(&rcp->rc_el_memt, rcp); /* XXX defer ? */
 
 #if NCOM > 0
 	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
