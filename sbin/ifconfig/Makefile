@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2009/06/02 23:41:35 pooka Exp $
+#	$NetBSD: Makefile,v 1.44 2009/09/15 09:22:07 he Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -16,6 +16,9 @@ SRCS+= af_inet6.c
 .endif
 
 .include "Makefile.inc"
+
+CPPFLAGS+=-I ${.CURDIR}/../../sys/dist/pf/
+SRCS+= pfsync.c
 
 .if ${MACHINE_ARCH} == "m68000"
 # XXX workaround for gcc -O1 bug (PR bin/40036 and toolchain/40066)
