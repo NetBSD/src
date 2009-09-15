@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.3 2009/09/15 02:32:02 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.4 2009/09/15 03:04:03 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.3 2009/09/15 02:32:02 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.4 2009/09/15 03:04:03 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ CFATTACH_DECL(obio, sizeof(struct obio_softc),
 
 int obio_found;
 
-int
+static int
 obio_match(struct device * parent, struct cfdata *cf, void *aux)
 {
 	if (obio_found)
@@ -73,7 +73,7 @@ obio_match(struct device * parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-void
+static void
 obio_attach(struct device * parent, struct device * self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
@@ -95,7 +95,7 @@ obio_attach(struct device * parent, struct device * self, void *aux)
 	config_search_ia(obio_search, self, "obio", NULL);
 }
 
-int
+static int
 obio_print(void *aux, const char *pnp)
 {
 	struct obio_attach_args *obio = aux;
@@ -111,7 +111,7 @@ obio_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 obio_search(struct device * parent, struct cfdata *cf,
 	    const int *ldesc, void *aux)
 {
