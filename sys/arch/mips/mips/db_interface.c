@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.5 2009/09/13 03:31:05 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.6 2009/09/15 05:12:53 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.5 2009/09/13 03:31:05 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.6 2009/09/15 05:12:53 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -507,14 +507,14 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 
 	if (MIPS_HAS_LLSC) {
-		if (CPUISMIPS64) {
-#if !defined(MIPS64_XLS)					/* CP0 reg #17 "reserved" */
-			SHOW64(MIPS_COP_0_LLADDR, "lladdr");
-			SHOW64(MIPS_COP_0_WATCH_LO, "watchlo");
-#endif
-		} else {
-			SHOW32(MIPS_COP_0_LLADDR, "lladdr");
-			SHOW32(MIPS_COP_0_WATCH_LO, "watchlo");
+		if (MIPS_HAS_LLADDR) {
+			if (CPUIS64BITS) {
+				SHOW64(MIPS_COP_0_LLADDR, "lladdr");
+				SHOW64(MIPS_COP_0_WATCH_LO, "watchlo");
+			} else {
+				SHOW32(MIPS_COP_0_LLADDR, "lladdr");
+				SHOW32(MIPS_COP_0_WATCH_LO, "watchlo");
+			}
 		}
 
 		SHOW32(MIPS_COP_0_WATCH_HI, "watchhi");
