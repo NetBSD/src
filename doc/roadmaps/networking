@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.6 2009/01/26 05:09:25 agc Exp $
+$NetBSD: networking,v 1.7 2009/09/15 21:07:58 agc Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -16,9 +16,8 @@ The following projects are expected to be included in NetBSD 6.0
 6. tcp support in libsa
 7. netboot from http
 
-The timescales for 6.0 are not known at the present time, but we would
-expect to branch 6.0 late in 2009, with a view to a 6.0 release in
-early 2010.
+We currently expect to branch 6.0 in the March 2010 timeframe, with a view
+to a 6.0 release later in 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 

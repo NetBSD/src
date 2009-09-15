@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.4 2009/01/26 05:09:25 agc Exp $
+$NetBSD: storage,v 1.5 2009/09/15 21:07:58 agc Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -6,39 +6,28 @@ NetBSD Storage Roadmap
 This is a small roadmap document, and deals with the storage and file
 systems side of the operating system.
 
-NetBSD 5.0 will ship with the following storage elements in place:
-
-1. puffs/putter
-2. ReFUSE
-3. rump
-4. RAIDframe
-5. iSCSI target
-6. iSCSI initiator
-7. cgd
-8. fss
-9. journalling functionality for ffs
-10. read/write support for UDF file systems
-
 The following elements and projects are pencilled in for 6.0, but
 please do not rely on them being there.
 
-11. devfs
-12. logical volume management
-13. a native port of Sun's ZFS
-14. ReFUSE-lowlevel
-15. web-based management tools for storage subsystems
-16. support for flash devices - NAND and MMC/SD
+1. devfs
+2. logical volume management
+3. a native port of Sun's ZFS
+4. ReFUSE-lowlevel
+5. web-based management tools for storage subsystems
+6. support for flash devices - NAND and MMC/SD
+7. rump extensions
+8. virtualised disks in userland
+9. in-kernel iSCSI initiator
 
-The timescales for 6.0 are not known at the present time, but we would
-expect to branch 6.0 late in 2009, with a view to a 6.0 release in
-early 2010.
+We currently expect to branch 6.0 in the March 2010 timeframe, with a view
+to a 6.0 release later in 2010.
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
 Some explanations
 =================
 
-11. devfs
+1. devfs
 ---------
 
 Devfs will allow device special files (the files used to access
@@ -48,35 +37,35 @@ directory and removes the need to run the MAKEDEV script when support
 for new devices is added to the NetBSD kernel.  NetBSD's devfs
 implementation will also allow multiple instances of the file system
 to be mounted simultaneously, which is very useful for chroot jails.
+Please contact core@ if you are interested in devfs development.
 
 Responsible: mjf
 
-9. Journalling Functionality for FFS
--------------------------------------
-
-Contributed by Wasabi Systems, Inc, technical review on tech-kern
-in March 2008, merged to HEAD in July 2008, will be in NetBSD 5.0.
-
-12. Logical Volume Management
------------------------------
+2. Logical Volume Management
+----------------------------
 
 Based on the Linux lvm2 and devmapper software, with a new kernel component
 for NetBSD written. Merged in 5.99.5 sources, will be in 6.0.
 
 Responsible: haad, martin
 
-13. Native port of Sun's ZFS
-----------------------------
+3. Native port of Sun's ZFS
+---------------------------
 
-Mostly completed by ad@, this is the FreeBSD port of Sun's ZFS, with
-modifications to make it compile on NetBSD 5.0 by ad@, and based on
-the original Sun code for the block layer, rather than the GEOM-based
-layer.
+Two Summer of Code projects have been held, concentrating on the
+provision of ZFS support for NetBSD.  Mostly completed by haad, and
+building on ver's work, this is the port of Sun's ZFS, with
+modifications to make it compile on NetBSD by ad@, and based on the
+Sun code for the block layer. Discussions are still taking place to
+get the design right for support for the openat(2) system call family,
+and the correct architecture for reclaiming vnodes.
 
-Responsible: ad, many others
+The ZFS source code has been committed to the repository.
 
-14. ReFUSE-lowlevel
--------------------
+Responsible: haad, ad, ver
+
+4. ReFUSE-lowlevel
+------------------
 
 FUSE has two interfaces, the normal high-level one, and a lower-level
 interface which is closer to the way standard file systems operate. This
@@ -85,8 +74,8 @@ high-level functionality
 
 Responsible: pooka, agc
 
-15. Web-based Management tools for Storage Subsystems
------------------------------------------------------
+5. Web-based Management tools for Storage Subsystems
+----------------------------------------------------
 
 Standard tools for managing the storage subsystems that NetBSD provides,
 using a standard web-server as the basic user interface on the storage
@@ -94,6 +83,44 @@ device, allowing remote management by a standard web browser.
 
 Responsible: agc
 
+6. Support for flash devices - NAND and MMC/SD
+----------------------------------------------
+
+The NetBSD Foundation is interested in having a file system which is
+optimised to work with today's flash devices, including SSDs both with
+wear-levelling functionality and without, as well as support for NAND,
+and MMC/SD devices. Please get in touch with core@ if you're interested
+in helping out with this area of development.
+
+Responsible: TBD
+
+7. RUMP Extensions
+------------------
+
+Rump support has been in NetBSD for 2 releases now, and continues to be
+developed actively. Recent additions have included cgd support, and smbfs
+client support.
+
+Responsible: pooka
+
+8. Virtualised disks in Userland
+--------------------------------
+
+For better support of virtualization, a library which provides a consistent 
+view of virtualized disk images has been developed by jmcneill.
+
+Responsible: jmcneill
+
+9. In-kernel iSCSI Initiator
+----------------------------
+
+NetBSD has had a userland implementation of an iSCSI initiator since
+NetBSD 4.99.35, based on ReFUSE.  There is a possibility that an
+in-kernel initiator may be available - please contact core if you are
+interested in this functionality.
+
+Responsible: core
+
 
 Alistair Crooks
-Sun 25 Jan 2009 20:55:12 PST
+Tue 15 Sep 2009 08:44:14 PDT
