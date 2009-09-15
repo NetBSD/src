@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.86 2009/04/27 14:52:50 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.87 2009/09/15 19:29:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.86 2009/04/27 14:52:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.87 2009/09/15 19:29:17 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -799,22 +799,14 @@ int
 rtk_activate(device_t self, enum devact act)
 {
 	struct rtk_softc *sc = device_private(self);
-	int s, error;
 
-	error = 0;
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
-		mii_activate(&sc->mii, act, MII_PHY_ANY, MII_OFFSET_ANY);
 		if_deactivate(&sc->ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return error;
 }
 
 /*
