@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.2 2009/09/15 02:34:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -215,6 +215,27 @@
 #define RMIXL_PIC_IPIBASE_ID_CPU	__BITS(22,20)	/* Physical CPU ID */
 #define RMIXL_PIC_IPIBASE_ID_RESb	__BITS(19,18)
 #define RMIXL_PIC_IPIBASE_ID_THREAD	__BITS(22,20)	/* Thread ID */
+
+/*
+ * RMIXL_PIC_IRTENTRYC0 bits
+ * IRT Entry low word
+ */
+#define RMIXL_PIC_IRTENTRYC0_TMASK	__BITS(7,0)	/* Thread Mask */
+#define RMIXL_PIC_IRTENTRYC0_RESV	__BITS(31,8)
+
+/*
+ * RMIXL_PIC_IRTENTRYC1 bits
+ * IRT Entry high word
+ */
+#define RMIXL_PIC_IRTENTRYC1_INTVEC	__BITS(5,0)	/* maps to bit# in CPU's EIRR */
+#define RMIXL_PIC_IRTENTRYC1_GL		__BIT(6)	/* 0=Global; 1=Local */
+#define RMIXL_PIC_IRTENTRYC1_NMI	__BIT(7)	/* 0=Maskable; 1=NMI */
+#define RMIXL_PIC_IRTENTRYC1_RESV	__BITS(28,8)
+#define RMIXL_PIC_IRTENTRYC1_P		__BIT(29)	/* 0=Rising/High; 1=Falling/Low */
+#define RMIXL_PIC_IRTENTRYC1_TRG	__BIT(30)	/* 0=Edge; 1=Level */
+#define RMIXL_PIC_IRTENTRYC1_VALID	__BIT(31)	/* 0=Invalid; 1=Valid IRT Entry */
+
+
 
 #endif	/* _MIPS_RMI_RMIRMIXLEGS_H_ */
 
