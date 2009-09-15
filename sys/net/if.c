@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.235 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.236 2009/09/15 23:24:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.235 2009/09/11 22:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.236 2009/09/15 23:24:34 jakllsch Exp $");
 
 #include "opt_inet.h"
 
@@ -1583,7 +1583,7 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	union {
 		struct sockaddr sa;
 		struct sockaddr_storage ss;
-	} u;
+	} u, v;
 
 	switch (cmd) {
 	case SIOCSIFADDRPREF:
@@ -1610,11 +1610,13 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	if ((any = sockaddr_any(sa)) == NULL || sa->sa_len != any->sa_len)
 		return EINVAL;
 
+	sockaddr_externalize(&v.sa, sizeof(v.ss), sa);
+
 	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != sa->sa_family)
 			continue;
 		sockaddr_externalize(&u.sa, sizeof(u.ss), ifa->ifa_addr);
-		if (sockaddr_cmp(&u.sa, sa) == 0)
+		if (sockaddr_cmp(&u.sa, &v.sa) == 0)
 			break;
 	}
 	if (ifa == NULL)
