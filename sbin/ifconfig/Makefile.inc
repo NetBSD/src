@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2009/09/14 15:12:21 he Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2009/09/15 09:22:07 he Exp $
 
 PROG=	ifconfig
 
@@ -19,6 +19,3 @@ SRCS+= parse.c
 SRCS+= tunnel.c
 SRCS+= util.c
 SRCS+= vlan.c
-
-CPPFLAGS+=-I ${NETBSDSRCDIR}/sys/dist/pf/
-SRCS+= pfsync.c
