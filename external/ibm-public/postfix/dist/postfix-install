@@ -1,0 +1,748 @@
+#!/bin/sh
+
+# To view the formatted manual page of this file, type:
+#	POSTFIXSOURCE/mantools/srctoman - postfix-install | nroff -man
+
+#++
+# NAME
+#	postfix-install 1
+# SUMMARY
+#	Postfix installation procedure
+# SYNOPSIS
+#	sh postfix-install [options] [name=value] ...
+# DESCRIPTION
+#	The postfix-install script is to be run from the top-level
+#	Postfix source directory. It implements the following operations:
+# .IP o
+#	Install or upgrade Postfix from source code. This requires
+#	super-user privileges.
+# .IP o
+#	Build a package that can be distributed to other systems, in order
+#	to install or upgrade Postfix elsewhere. This requires no super-user
+#	privileges. To complete the installation after unpacking the
+#	package, execute as super-user the post-install script in the Postfix
+#	configuration directory.
+# .PP
+#	The postfix-install script is controlled by installation parameters.
+#	Specific parameters are described at the end of this document.
+#
+#	By default, postfix-install asks the user for installation
+#	parameter settings. Most settings are stored in the installed
+#	main.cf file. Stored settings are used as site-specific defaults
+#	when the postfix-install script is run later.
+#
+#	The names of Postfix files and directories, as well as their
+#	ownerships and permissions, are stored in the postfix-files file
+#	in the Postfix configuration directory. This information is used
+#	by the post-install script (also in the configuration directory)
+#	for creating missing queue directories when Postfix is started,
+#	and for setting correct ownership and permissions when Postfix
+#	is installed from a pre-built package or from source code.
+#
+#	Arguments
+# .IP -non-interactive
+#	Do not ask the user for parameter settings. Installation parameters
+#	are specified via one of the non-interactive methods described
+#	below.
+# .IP -package
+#	Build a ready-to-install package. This requires that a
+#	non-default install_root parameter is specified.
+# INSTALLATION PARAMETER INPUT METHODS
+# .ad
+# .fi
+#	Parameter settings can be specified through a variety of
+#	mechanisms.  In order of decreasing precedence these are:
+# .IP "interactive mode"
+#	By default, postfix-install will ask the user for installation
+#	parameter settings. These settings have the highest precedence.
+# .IP "command line"
+#	Parameter settings can be given as name=value arguments on
+#	the postfix-install command line.
+# .IP "process environment"
+#	Parameter settings can be given as name=value environment
+#	variables. Environment parameters can also be specified on the
+#	make(1) command line as "make install name=value ...".
+# .IP "installed configuration files"
+#	If a parameter is not specified via the command line or via the
+#	process environment, postfix-install will attempt to extract its
+#	value from an already installed Postfix main.cf configuration file.
+# .IP "built-in defaults"
+#	These settings have the lowest precedence.
+# INSTALLATION PARAMETER DESCRIPTION
+# .ad
+# .fi
+#	The description of installation parameters and their built-in
+#	default settings is as follows:
+# .IP install_root
+#	Prefix that is prepended to the pathnames of installed files.
+#	Specify this ONLY when creating pre-built packages for distribution to
+#	other systems. The built-in default is "/", the local root directory.
+#	This parameter setting is not recorded in the installed main.cf file.
+# .IP tempdir
+#	Directory for scratch files while installing Postfix.
+#	You must have write permission in this directory.
+#	The built-in default directory name is the current directory.
+#	This parameter setting is not recorded in the installed main.cf file.
+# .IP config_directory
+#	The final destination directory for Postfix configuration files.
+#	The built-in default directory name is /etc/postfix.
+#	This parameter setting is not recorded in the installed main.cf file
+#	and can be changed only by recompiling Postfix.
+# .IP data_directory
+#	The final destination directory for Postfix-writable data files such
+#	as caches. This directory should not be shared with non-Postfix
+#	software. The built-in default directory name is /var/db/postfix.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP daemon_directory
+#	The final destination directory for Postfix daemon programs. This
+#	directory should not be in the command search path of any users.
+#	The built-in default directory name is /usr/libexec/postfix.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP command_directory
+#	The final destination directory for Postfix administrative commands.
+#	This directory should be in the command search path of adminstrative
+#	users. The built-in default directory name is system dependent.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP html_directory
+#	The destination directory for the Postfix HTML files.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP queue_directory
+#	The final destination directory for Postfix queues.
+#	The built-in default directory name is /var/spool/postfix.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP sendmail_path
+#	The final destination pathname for the Postfix sendmail command.
+#	This is the Sendmail-compatible mail posting interface.
+#	The built-in default pathname is system dependent.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP newaliases_path
+#	The final destination pathname for the Postfix newaliases command.
+#	This is the Sendmail-compatible command to build alias databases
+#	for the Postfix local delivery agent.
+#	The built-in default pathname is system dependent.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP mailq_path
+#	The final destination pathname for the Postfix mailq command.
+#	This is the Sendmail-compatible command to list the mail queue.
+#	The built-in default pathname is system dependent.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP mail_owner
+#	The owner of the Postfix queue. Its numerical user ID and group ID
+#	must not be used by any other accounts on the system.
+#	The built-in default account name is postfix.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP setgid_group
+#	The group for mail submission and for queue management commands.
+#	Its numerical group ID must not be used by any other accounts on the
+#	system, not even by the mail_owner account.
+#	The built-in default group name is postdrop.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP manpage_directory
+#	The destination directory for the Postfix on-line manual pages.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP sample_directory
+#	The destination directory for the Postfix sample configuration files.
+#	This parameter is obsolete as of Postfix version 2.1.
+#	This parameter setting is recorded in the installed main.cf file.
+# .IP readme_directory
+#	The destination directory for the Postfix README files.
+#	This parameter setting is recorded in the installed main.cf file.
+# SEE ALSO
+#	post-install(1) post-installation procedure
+# FILES
+#	$config_directory/main.cf, Postfix installation configuration.
+#	$daemon_directory/postfix-files, installation control file.
+#	$config_directory/install.cf, obsolete configuration file.
+# LICENSE
+# .ad
+# .fi
+#	The Secure Mailer license must be distributed with this software.
+# AUTHOR(S)
+#	Wietse Venema
+#	IBM T.J. Watson Research
+#	P.O. Box 704
+#	Yorktown Heights, NY 10598, USA
+#--
+
+# Initialize.
+# By now, shells must have functions. Ultrix users must use sh5 or lose.
+
+umask 022
+PATH=/bin:/usr/bin:/usr/sbin:/usr/etc:/sbin:/etc:/usr/contrib/bin:/usr/gnu/bin:/usr/ucb:/usr/bsd
+SHELL=/bin/sh
+IFS=" 	
+"
+BACKUP_IFS="$IFS"
+
+USAGE="Usage: $0 [name=value] [option]
+    -non-interactive        Do not ask for installation parameters.
+    -package                Build a ready-to-install package.
+    name=value              Specify an installation parameter".
+
+# Process command-line options and parameter settings. Work around
+# brain damaged shells. "IFS=value command" should not make the
+# IFS=value setting permanent. But some broken standard allows it.
+
+for arg
+do
+    case $arg in
+      *=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
+-non-int*) non_interactive=1;;
+ -package) need_install_root=install_root;;
+        *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
+    esac
+    shift
+done
+
+# Sanity checks.
+
+test -z "$non_interactive" -a ! -t 0 && {
+    echo $0: Error: for non-interactive use, run: \"$0 -non-interactive\" 1>&2
+    exit 1
+}
+
+test -x bin/postconf || {
+    echo $0: Error: no bin/postconf file. Did you forget to run \"make\"? 1>&2
+    exit 1
+}
+
+case `uname -s` in
+HP-UX*) FMT=cat;;
+     *) FMT=fmt;;
+esac
+
+# Disclaimer.
+
+test -z "$non_interactive" && cat <<EOF | ${FMT}
+
+    Warning: if you use this script to install Postfix locally,
+    this script will replace existing sendmail or Postfix programs.
+    Make backups if you want to be able to recover.
+
+    Before installing files, this script prompts you for some
+    definitions.  Most definitions will be remembered, so you have
+    to specify them only once. All definitions should have a
+    reasonable default value.
+EOF
+
+# The following shell functions replace files/symlinks while minimizing
+# the time that a file does not exist, and avoid copying over files
+# in order to not disturb running programs. That is certainly desirable
+# when upgrading Postfix on a live machine. It also avoids surprises
+# when building a Postfix package for distribution to other systems.
+
+compare_or_replace() {
+    mode=$1
+    owner=$2
+    group=$3
+    src=$4
+    dst=$5
+    (cmp $src $dst >/dev/null 2>&1 && echo Skipping $dst...) || {
+	echo Updating $dst...
+	rm -f $tempdir/junk || exit 1
+	cp $src $tempdir/junk || exit 1
+	mv -f $tempdir/junk $dst || exit 1
+	test -z "$owner" || chown $owner $dst || exit 1
+	test -z "$group" || chgrp $group $dst || exit 1
+	chmod $mode $dst || exit 1
+    }
+}
+
+compare_or_symlink() {
+    (cmp $1 $2 >/dev/null 2>&1 && echo Skipping $2...) || {
+	echo Updating $2...
+	rm -f $tempdir/junk || exit 1
+	dest=`echo $1 | sed '
+	    s;^'$install_root';;
+	    s;/\./;/;g
+	    s;//*;/;g
+	    s;^/;;
+	'`
+	link=`echo $2 | sed '
+	    s;^'$install_root';;
+	    s;/\./;/;g
+	    s;//*;/;g
+	    s;^/;;
+	    s;/[^/]*$;/;
+	    s;[^/]*/;../;g
+	    s;$;'$dest';
+	'`
+	ln -s $link $tempdir/junk || exit 1
+	mv -f $tempdir/junk $2 || {
+	    echo $0: Error: your mv command has trouble renaming symlinks. 1>&2
+	    echo If you run Linux, upgrade to GNU fileutils-4.0 or better, 1>&2
+	    echo or choose a tempdir that is in the same file system as $2. 1>&2
+	    echo If you run FreeBSD, upgrade to version 5 or better. 1>&2
+	    exit 1
+	}
+    }
+}
+
+compare_or_hardlink() {
+    (cmp $1 $2 >/dev/null 2>&1 && echo Skipping $2...) || {
+	echo Updating $2...
+	rm -f $2 || exit 1
+	ln $1 $2 || exit 1
+    }
+}
+
+check_parent() {
+    for path
+    do
+	dir=`echo $path|sed -e 's/[/][/]*[^/]*$//' -e 's/^$/\//'`
+	test -d $dir || mkdir -p $dir || exit 1
+    done
+}
+
+# How to supress newlines in echo.
+
+case `echo -n` in
+"") n=-n; c=;;
+ *) n=; c='\c';;
+esac
+
+# Prompts.
+
+install_root_prompt="the prefix for installed file names. Specify
+this ONLY if you are building ready-to-install packages for
+distribution to other machines."
+
+tempdir_prompt="a directory for scratch files while installing
+Postfix.  You must have write permission in this directory."
+
+config_directory_prompt="the final destination directory for
+installed Postfix configuration files."
+
+data_directory_prompt="the final destination directory for
+Postfix-writable data files such as caches or random numbers.  This
+directory should not be shared with non-Postfix software."
+
+daemon_directory_prompt="the final destination directory for
+installed Postfix daemon programs.  This directory should not be
+in the command search path of any users."
+
+command_directory_prompt="the final destination directory for
+installed Postfix administrative commands.  This directory should
+be in the command search path of adminstrative users."
+
+queue_directory_prompt="the final destination directory for Postfix
+queues."
+
+sendmail_path_prompt="the final destination pathname for the
+installed Postfix sendmail command. This is the Sendmail-compatible
+mail posting interface."
+
+newaliases_path_prompt="the final destination pathname for the
+installed Postfix newaliases command.  This is the Sendmail-compatible
+command to build alias databases for the Postfix local delivery
+agent."
+
+mailq_path_prompt="the final destination pathname for the installed
+Postfix mailq command.  This is the Sendmail-compatible mail queue
+listing command."
+
+mail_owner_prompt="the owner of the Postfix queue. Specify an
+account with numerical user ID and group ID values that are not
+used by any other accounts on the system."
+
+setgid_group_prompt="the group for mail submission and for queue
+management commands.  Specify a group name with a numerical group
+ID that is not shared with other accounts, not even with the Postfix
+mail_owner account. You can no longer specify \"no\" here."
+
+manpage_directory_prompt="the destination directory for the Postfix on-line
+manual pages. You can no longer specify \"no\" here."
+
+readme_directory_prompt="the destination directory for the Postfix
+README files. Specify \"no\" if you do not want to install these files."
+
+html_directory_prompt="the destination directory for the Postfix
+HTML files. Specify \"no\" if you do not want to install these files."
+
+# Default settings, just to get started.
+
+: ${install_root=/}
+: ${tempdir=`pwd`}
+: ${config_directory=`bin/postconf -h -d config_directory`}
+
+# Find out the location of installed configuration files.
+
+test -z "$non_interactive" && for name in install_root tempdir config_directory
+do
+    while :
+    do
+	echo
+	eval echo Please specify \$${name}_prompt | ${FMT}
+	eval echo \$n "$name: [\$$name]\  \$c"
+	read ans
+	case $ans in
+	"") break;;
+	 *) case $ans in
+	    /*) eval $name=$ans; break;;
+	     *) echo; echo $0: Error: $name should be an absolute path name. 1>&2;;
+	    esac;;
+	esac
+    done
+done
+
+# In case some systems special-case pathnames beginning with //.
+
+case $install_root in
+/) install_root=
+esac
+
+test -z "$need_install_root" || test -n "$install_root" || {
+    echo $0: Error: invalid package root directory: \"install_root=/\" 1>&2
+    exit 1
+}
+
+CONFIG_DIRECTORY=$install_root$config_directory
+
+# If a parameter is not set via the command line or environment,
+# try to use settings from installed configuration files.
+
+# Extract parameter settings from the obsolete install.cf file, as
+# a transitional aid.
+
+grep setgid_group $CONFIG_DIRECTORY/main.cf >/dev/null 2>&1 || {
+    test -f $CONFIG_DIRECTORY/install.cf && {
+	for name in sendmail_path newaliases_path mailq_path setgid manpages
+	do
+	    eval junk=\$$name
+	    case "$junk" in
+	    "") eval unset $name;;
+	    esac
+	    eval : \${$name="\`. $CONFIG_DIRECTORY/install.cf; echo \$$name\`"} \
+		|| exit 1
+	done
+	: ${setgid_group=$setgid}
+	: ${manpage_directory=$manpages}
+    }
+}
+
+CONFIG_PARAMS="command_directory daemon_directory data_directory \
+html_directory mail_owner mailq_path  manpage_directory newaliases_path \
+queue_directory readme_directory sendmail_path setgid_group"
+
+# Extract parameter settings from the installed main.cf file.
+
+test -f $CONFIG_DIRECTORY/main.cf && {
+    for name in $CONFIG_PARAMS sample_directory
+    do
+	eval junk=\$$name
+	case "$junk" in
+	"") eval unset $name;;
+	esac
+	eval : \${$name=\`bin/postconf -c $CONFIG_DIRECTORY -h $name\`} ||
+	    exit 1
+    done
+}
+
+# Use built-in defaults as the final source of parameter settings.
+
+for name in $CONFIG_PARAMS sample_directory
+do
+    eval junk=\$$name
+    case "$junk" in
+    "") eval unset $name;;
+    esac
+    eval : \${$name=\`bin/postconf -d -h $name\`} || exit 1
+done
+
+# Override settings manually.
+
+test -z "$non_interactive" && for name in $CONFIG_PARAMS
+do
+    while :
+    do
+	echo
+	eval echo Please specify \$${name}_prompt | ${FMT}
+	eval echo \$n "$name: [\$$name]\  \$c"
+	read ans
+	case $ans in
+	"") break;;
+	 *) eval $name=$ans; break;;
+	esac
+    done
+done
+
+# Sanity checks
+
+case "$setgid_group" in
+ no) (echo $0: Error: the setgid_group parameter no longer accepts 
+     echo \"no\" values. Try again with \"setgid_group=groupname\" on the 
+     echo command line or execute \"make install\" and specify setgid_group
+     echo interactively.) | ${FMT} 1>&2
+     exit 1;;
+esac
+
+case "$manpage_directory" in
+ no) (echo $0: Error: the manpage_directory parameter no longer accepts 
+     echo \"no\" values.  Try again with \"manpage_directory=/path/name\" 
+     echo on the command line or execute \"make install\" and specify
+     echo manpage_directory interactively.) | ${FMT} 1>&2
+     exit 1;;
+esac
+
+for path in "$html_directory" "$readme_directory"
+do
+   case "$path" in
+   /*) ;;
+   no) ;;
+    *) echo $0: Error: \"$path\" should be \"no\" or an absolute path name. 1>&2
+       exit 1;;
+   esac
+done
+
+for path in "$daemon_directory" "$data_directory" "$command_directory" "$queue_directory" \
+    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
+do
+   case "$path" in
+   /*) ;;
+    *) echo $0: Error: \"$path\" should be an absolute path name. 1>&2; exit 1;;
+   esac
+done
+
+for path in mailq_path newaliases_path sendmail_path
+do
+    eval test -d $install_root\$$path && {
+	echo $0: Error: \"$path\" specifies a directory. 1>&2
+	exit 1
+    }
+done
+
+for path in command_directory config_directory daemon_directory data_directory \
+    manpage_directory queue_directory html_directory readme_directory
+do
+    eval test -f $install_root\$$path && {
+	echo $0: Error: \"$path\" specifies a regular file. 1>&2
+	exit 1
+    }
+done
+
+test -d $tempdir || mkdir -p $tempdir || exit 1
+
+trap "rm -f $tempdir/junk" 0 1 2 3 15
+
+( rm -f $tempdir/junk && touch $tempdir/junk ) || {
+    echo $0: Error: you have no write permission to $tempdir. 1>&2
+    echo Specify an alternative directory for scratch files. 1>&2
+    exit 1
+}
+
+test -z "$install_root" && {
+
+    chown root $tempdir/junk >/dev/null 2>&1 || {
+	echo Error: you have no permission to change file ownership. 1>&2
+	exit 1
+    }
+
+    chown "$mail_owner" $tempdir/junk >/dev/null 2>&1 || {
+	echo $0: Error: \"$mail_owner\" needs an entry in the passwd file. 1>&2
+	echo Remember, \"$mail_owner\" needs a dedicated user and group id. 1>&2
+	exit 1
+    }
+
+    chgrp "$setgid_group" $tempdir/junk >/dev/null 2>&1 || {
+	echo $0: Error: \"$setgid_group\" needs an entry in the group file. 1>&2
+	echo Remember, \"$setgid_group\" needs a dedicated group id. 1>&2
+	exit 1
+    }
+
+}
+
+rm -f $tempdir/junk || exit 1
+
+trap 0 1 2 3 15
+
+# Avoid clumsiness.
+
+DAEMON_DIRECTORY=$install_root$daemon_directory
+COMMAND_DIRECTORY=$install_root$command_directory
+QUEUE_DIRECTORY=$install_root$queue_directory
+SENDMAIL_PATH=$install_root$sendmail_path
+HTML_DIRECTORY=$install_root$html_directory
+MANPAGE_DIRECTORY=$install_root$manpage_directory
+README_DIRECTORY=$install_root$readme_directory
+
+# Avoid repeated tests for existence of these; default permissions suffice.
+
+test -d $DAEMON_DIRECTORY || mkdir -p $DAEMON_DIRECTORY || exit 1
+test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
+test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
+test "$html_directory" = "no" -o -d $HTML_DIRECTORY || 
+	mkdir -p $HTML_DIRECTORY || exit 1
+test "$readme_directory" = "no" -o -d $README_DIRECTORY || 
+	mkdir -p $README_DIRECTORY || exit 1
+
+# Upgrade or first-time installation?
+
+if [ -f $CONFIG_DIRECTORY/main.cf ]
+then
+    post_install_options="upgrade-source"
+else
+    post_install_options="first-install"
+fi
+
+# Install files, using information from the postfix-files file.
+
+exec < libexec/postfix-files || exit 1
+while IFS=: read path type owner group mode flags junk
+do
+    IFS="$BACKUP_IFS"
+
+    # Skip comments.
+
+    case $path in
+    [$]*) ;;
+       *) continue;;
+    esac
+
+    # Skip over files that ought to be removed.
+    # Leave it up to post-install to report them to the user.
+
+    case $flags in
+    *o*) continue
+    esac
+
+    # Skip over files that must be preserved.
+
+    case $flags in
+    *p*) eval test -f $install_root$path && {
+	    eval echo "Skipping $install_root$path..."
+	    continue
+	 };;
+    esac
+
+    # Save source path before it is clobbered.
+
+    case $type in
+    [hl]) eval source=$owner;;
+    esac
+
+    # If installing from source code, apply special permissions or ownership.
+    # If building a package, don't apply special permissions or ownership.
+
+    case $install_root in
+    "") case $owner in
+	[$]*) eval owner=$owner;;
+	root) owner=;;
+	esac
+	case $group in
+	[$]*) eval group=$group;;
+	   -) group=;;
+	esac;;
+     *) case $mode in
+	[1-7]755) mode=755;;
+	esac
+	owner=
+	group=;;
+    esac
+
+
+    case $type in
+
+     # Create/update directory.
+
+     d) eval path=$install_root$path
+	test "$path" = "${install_root}no" -o -d $path || {
+	    mkdir -p $path || exit 1
+	    test -z "$owner" || chown $owner $path || exit 1
+	    test -z "$group" || chgrp $group $path || exit 1
+	    chmod $mode $path || exit 1
+	}
+	continue;;
+
+     # Create/update regular file.
+
+     f) echo $path | (IFS=/ read prefix file; IFS="$BACKUP_IFS"
+	case $prefix in
+	'$daemon_directory')
+	    compare_or_replace $mode "$owner" "$group" libexec/$file \
+		$DAEMON_DIRECTORY/$file || exit 1;;
+	'$command_directory')
+	    compare_or_replace $mode "$owner" "$group" bin/$file \
+		$COMMAND_DIRECTORY/$file || exit 1;;
+	'$config_directory')
+	    compare_or_replace $mode "$owner" "$group" conf/$file \
+		$CONFIG_DIRECTORY/$file || exit 1;;
+	'$sendmail_path')
+	    check_parent $SENDMAIL_PATH || exit 1
+	    compare_or_replace $mode "$owner" "$group" bin/sendmail \
+		$SENDMAIL_PATH || exit 1;;
+	'$html_directory')
+	    test "$html_directory" = "no" ||
+		compare_or_replace $mode "$owner" "$group" html/$file \
+		    $HTML_DIRECTORY/$file || exit 1;;
+	'$manpage_directory')
+	    check_parent $MANPAGE_DIRECTORY/$file || exit 1
+	    compare_or_replace $mode "$owner" "$group" man/$file \
+		$MANPAGE_DIRECTORY/$file || exit 1;;
+	'$readme_directory')
+	    test "$readme_directory" = "no" ||
+		compare_or_replace $mode "$owner" "$group" README_FILES/$file \
+		    $README_DIRECTORY/$file || exit 1;;
+	 *) echo $0: Error: unknown entry $path in libexec/postfix-files 1>&2
+	    exit 1;;
+	esac) || exit 1
+	continue;;
+
+     # Hard link. Skip files that are not installed.
+
+     h) eval echo $path | (
+	    IFS=/ read prefix file; IFS="$BACKUP_IFS"
+	    test "$prefix" = "no" || (
+		eval dest_path=$install_root$path
+		check_parent $dest_path || exit 1
+		eval source_path=$install_root$source
+		compare_or_hardlink $source_path $dest_path || exit 1
+	    )
+	) || exit 1
+	continue;;
+
+     # Symbolic link. Skip files that are not installed.
+
+     l) eval echo $path | (
+	    IFS=/ read prefix file; IFS="$BACKUP_IFS"
+	    test "$prefix" = "no" || (
+		eval dest_path=$install_root$path
+		check_parent $dest_path || exit 1
+		eval source_path=$install_root$source
+		compare_or_symlink $source_path $dest_path || exit 1
+	    )
+	) || exit 1
+	continue;;
+
+     *) echo $0: Error: unknown type $type for $path in libexec/postfix-files 1>&2
+	exit 1;;
+    esac
+
+    done
+
+# Save the installation parameters to main.cf even when they haven't
+# changed from their current default. Defaults can change between
+# Postfix releases, and software should not suddenly be installed in
+# the wrong place when Postfix is being upgraded.
+
+bin/postconf -c $CONFIG_DIRECTORY -e \
+    "daemon_directory = $daemon_directory" \
+    "data_directory = $data_directory" \
+    "command_directory = $command_directory" \
+    "queue_directory = $queue_directory" \
+    "mail_owner = $mail_owner" \
+    "setgid_group = $setgid_group" \
+    "sendmail_path = $sendmail_path" \
+    "mailq_path = $mailq_path" \
+    "newaliases_path = $newaliases_path" \
+    "html_directory = $html_directory" \
+    "manpage_directory = $manpage_directory" \
+    "sample_directory = $sample_directory" \
+    "readme_directory = $readme_directory" \
+|| exit 1
+
+# If Postfix is being installed locally from source code, do the
+# post-install processing now.
+
+test -n "$install_root" || {
+    bin/postfix post-install $post_install_options || exit 1
+}

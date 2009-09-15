@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.11 2009/08/04 18:32:08 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.12 2009/09/15 06:01:38 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3344,6 +3344,7 @@
 ./usr/libdata/debug/usr/sbin/postlock.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postlog.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postmap.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/sbin/postmulti.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postqueue.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
