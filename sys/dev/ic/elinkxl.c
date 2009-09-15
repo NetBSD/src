@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.108 2009/09/05 14:19:30 tsutsui Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.109 2009/09/15 19:20:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.108 2009/09/05 14:19:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.109 2009/09/15 19:20:30 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1679,24 +1679,14 @@ int
 ex_activate(device_t self, enum devact act)
 {
 	struct ex_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->ex_conf & EX_CONF_MII)
-			mii_activate(&sc->ex_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
 int
