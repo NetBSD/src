@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.2 2009/09/15 02:34:03 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.2 2009/09/15 02:34:03 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.1 2009/09/13 03:27:38 cliff 
 #include <machine/bus.h>
 #include "locators.h"
 
-static int  mainbusmatch  __P((struct device *, struct cfdata *, void *));
-static void mainbusattach __P((struct device *, struct device *, void *));
-static int  mainbussearch __P((struct device *, struct cfdata *,
-				const int *, void *));
+static int  mainbusmatch(struct device *, struct cfdata *, void *);
+static void mainbusattach(struct device *, struct device *, void *);
+static int  mainbussearch(struct device *, struct cfdata *,
+				const int *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbusmatch, mainbusattach, NULL, NULL);
@@ -65,10 +65,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 static int mainbus_found;
 
 static int
-mainbusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (mainbus_found)
 		return 0;
@@ -76,11 +73,8 @@ mainbusmatch(parent, cf, aux)
 }
 
 static int
-mainbussearch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mainbussearch(struct device *parent, struct cfdata *cf,
+	const int *ldesc, void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, aux, NULL);
@@ -89,13 +83,12 @@ mainbussearch(parent, cf, ldesc, aux)
 }
 
 static void
-mainbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbusattach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	mainbus_found = 1;
 
 	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
