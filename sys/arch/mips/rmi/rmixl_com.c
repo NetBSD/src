@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.3 2009/09/15 02:33:39 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.2 2009/09/13 07:00:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.3 2009/09/15 02:33:39 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ volatile uint32_t *com0addr = (uint32_t *)
 void
 rmixl_putchar_init(uint64_t io_pbase)
 {
-	com0addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
+	com0addr = (uint32_t *)
+		MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
 }
 
 void
@@ -154,13 +155,13 @@ rmixl_putchar(char c)
 {
 	int timo = 150000;
 
-	while ((com0addr[5] & LSR_TXRDY) == 0)
+	while ((be32toh(com0addr[5]) & LSR_TXRDY) == 0)
 		if (--timo == 0)
 			break;
 
-	com0addr[0] = c;
+	com0addr[0] = htobe32((uint32_t)c);
 
-	while ((com0addr[5] & LSR_TSRE) == 0)
+	while ((be32toh(com0addr[5]) & LSR_TSRE) == 0)
 		if (--timo == 0)
 			break;
 }
@@ -174,70 +175,57 @@ rmixl_puts(const char *restrict s)
 		rmixl_putchar(c);
 }
 
+static char hexc[] = "0123456789abcdef";
+
+#define RMIXL_PUTHEX 						\
+	u_int shift = sizeof(val) * 8;				\
+	rmixl_putchar('0');					\
+	rmixl_putchar('x');					\
+	do {							\
+		shift -= 4;					\
+		rmixl_putchar(hexc[(val >> shift) & 0xf]);	\
+	} while(shift != 0)
+
 void
 rmixl_puthex32(uint32_t val)
 {
-	char hexc[] = "0123456789abcdef";
-
-	rmixl_putchar('0');
-	rmixl_putchar('x');
-	rmixl_putchar(hexc[(val >> 28) & 0xf]);
-	rmixl_putchar(hexc[(val >> 24) & 0xf]);
-	rmixl_putchar(hexc[(val >> 20) & 0xf]);
-	rmixl_putchar(hexc[(val >> 16) & 0xf]);
-	rmixl_putchar(hexc[(val >> 12) & 0xf]);
-	rmixl_putchar(hexc[(val >> 8) & 0xf]);
-	rmixl_putchar(hexc[(val >> 4) & 0xf]);
-	rmixl_putchar(hexc[(val >> 0) & 0xf]);
+	RMIXL_PUTHEX;
 }
 
 void
 rmixl_puthex64(uint64_t val)
 {
-	char hexc[] = "0123456789abcdef";
-
-	rmixl_putchar('0');
-	rmixl_putchar('x');
-	rmixl_putchar(hexc[(val >> 60) & 0xf]);
-	rmixl_putchar(hexc[(val >> 56) & 0xf]);
-	rmixl_putchar(hexc[(val >> 52) & 0xf]);
-	rmixl_putchar(hexc[(val >> 48) & 0xf]);
-	rmixl_putchar(hexc[(val >> 44) & 0xf]);
-	rmixl_putchar(hexc[(val >> 40) & 0xf]);
-	rmixl_putchar(hexc[(val >> 36) & 0xf]);
-	rmixl_putchar(hexc[(val >> 32) & 0xf]);
-	rmixl_putchar(hexc[(val >> 28) & 0xf]);
-	rmixl_putchar(hexc[(val >> 24) & 0xf]);
-	rmixl_putchar(hexc[(val >> 20) & 0xf]);
-	rmixl_putchar(hexc[(val >> 16) & 0xf]);
-	rmixl_putchar(hexc[(val >> 12) & 0xf]);
-	rmixl_putchar(hexc[(val >> 8) & 0xf]);
-	rmixl_putchar(hexc[(val >> 4) & 0xf]);
-	rmixl_putchar(hexc[(val >> 0) & 0xf]);
+	RMIXL_PUTHEX;
 }
 
 int
 rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	bus_size_t size;
 	struct com_regs	regs;
 	int rv;
 
-	if (com_is_console(obio->obio_bst, obio->obio_addr, &regs.cr_ioh))
+	bst = obio->obio_eb_bst;	/* com is always big endian */
+	addr = obio->obio_addr;
+	size = obio->obio_size;
+
+	if (com_is_console(bst, addr, &regs.cr_ioh))
 		return 1;
 
-	if (bus_space_map(obio->obio_bst, obio->obio_addr, obio->obio_size,
-		0, &regs.cr_ioh))
-			return 0;
+	if (bus_space_map(bst, addr, size, 0, &regs.cr_ioh))
+		return 0;		/* FAIL */
 
-	regs.cr_iot = obio->obio_bst;
-	regs.cr_iobase = obio->obio_addr;
-	regs.cr_nports = obio->obio_size;
+	regs.cr_iot = bst;
+	regs.cr_iobase = addr;
+	regs.cr_nports = size;
 	rmixl_com_initmap(&regs);
 
 	rv = com_probe_subr(&regs);
 
-	bus_space_unmap(obio->obio_bst, regs.cr_ioh, obio->obio_size);
+	bus_space_unmap(bst, regs.cr_ioh, size);
 
 	return rv;
 }
@@ -248,36 +236,25 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_com_softc *rsc = device_private(self);
 	struct com_softc *sc = &rsc->sc_com;
 	struct obio_attach_args *obio = aux;
-#if 0
-	prop_number_t prop;
-#endif
+	bus_space_tag_t bst;
 	bus_space_handle_t ioh;
+	bus_addr_t addr;
+	bus_size_t size;
 
-	sc->sc_dev = self;
-
-#if 0
-	prop = prop_dictionary_get(device_properties(sc->sc_dev),
-	    "frequency");
-	if (prop == NULL) {
-		aprint_error(": unable to get frequency property\n");
-		return;
-	}
-	KASSERT(prop_object_type(prop) == PROP_TYPE_NUMBER);
-
-	sc->sc_frequency = (int)prop_number_integer_value(prop);
-#else
 	sc->sc_frequency = -1;	/* XXX */
-#endif
 
-	if (!com_is_console(obio->obio_bst, obio->obio_addr, &ioh) &&
-	    bus_space_map(obio->obio_bst, obio->obio_addr, obio->obio_size, 0,
-		&ioh) != 0) {
+	bst = obio->obio_eb_bst;
+	addr = obio->obio_addr;
+	size = obio->obio_size;
+
+	if (!com_is_console(bst, addr, &ioh)
+	&&  bus_space_map(bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": can't map registers\n");
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, obio->obio_bst, ioh, obio->obio_addr);
-	sc->sc_regs.cr_nports = obio->obio_size;
+	COM_INIT_REGS(sc->sc_regs, bst, ioh, addr);
+	sc->sc_regs.cr_nports = size;
 	rmixl_com_initmap(&sc->sc_regs);
 
 	com_attach_subr(sc);
@@ -302,13 +279,14 @@ rmixl_com_initmap(struct com_regs *regsp)
 }
 
 void
-rmixl_com_cnattach(bus_addr_t addr, int speed, int freq, int type, tcflag_t mode)
+rmixl_com_cnattach(bus_addr_t addr, int speed, int freq,
+	int type, tcflag_t mode)
 {
 	bus_space_tag_t bst;
 	bus_size_t sz;
 	struct com_regs	regs;
 
-	bst = rmixl_obio_get_bus_space_tag();
+	bst = (bus_space_tag_t)&rmixl_configuration.rc_el_memt;
 	sz = COM_NPORTS * sizeof(uint32_t);	/* span of UART regs in bytes */
 
 	memset(&regs, 0, sizeof(regs));
