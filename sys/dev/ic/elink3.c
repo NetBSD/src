@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.128 2009/09/05 12:30:59 tsutsui Exp $	*/
+/*	$NetBSD: elink3.c,v 1.129 2009/09/15 19:20:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.128 2009/09/05 12:30:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.129 2009/09/15 19:20:29 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2002,24 +2002,14 @@ int
 ep_activate(device_t self, enum devact act)
 {
 	struct ep_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int error = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->ep_flags & ELINK_FLAGS_MII)
-			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
-		if_deactivate(ifp);
-		break;
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }
 
 /*
