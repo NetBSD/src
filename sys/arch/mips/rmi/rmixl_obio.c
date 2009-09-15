@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.2 2009/09/13 20:35:00 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.3 2009/09/15 02:32:02 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.2 2009/09/13 20:35:00 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.3 2009/09/15 02:32:02 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,21 +54,19 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.2 2009/09/13 20:35:00 cliff Exp
 
 #include "locators.h"
 
-int	obio_match(struct device *, struct cfdata *, void *);
-void	obio_attach(struct device *, struct device *, void *);
+static int  obio_match(struct device *, struct cfdata *, void *);
+static void obio_attach(struct device *, struct device *, void *);
+static int  obio_print(void *, const char *);
+static int  obio_search(struct device *, struct cfdata *, const int *, void *);
+static void obio_bus_init(struct obio_softc *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
-int	obio_print(void *, const char *);
-int	obio_search(struct device *, struct cfdata *,
-		    const int *, void *);
-
-/* there can be only one */
-int	obio_found;
+int obio_found;
 
 int
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(struct device * parent, struct cfdata *cf, void *aux)
 {
 	if (obio_found)
 		return 0;
@@ -76,16 +74,17 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-obio_attach(struct device *parent, device_t self, void *aux)
+obio_attach(struct device * parent, struct device * self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
 	bus_addr_t ba;
 
 	obio_found = 1;
 
-	rmixl_obio_bus_init();
-	ba = rmixl_obio_get_io_pbase();
-	sc->sc_bst = rmixl_obio_get_bus_space_tag();
+	ba = (bus_addr_t)rmixl_configuration.rc_io_pbase;
+	KASSERT(ba != 0);
+
+	obio_bus_init(sc);
 
 	aprint_normal(" addr %#lx size %#x\n", ba, RMIXL_IO_DEV_SIZE);
 	aprint_naive("\n");
@@ -113,13 +112,14 @@ obio_print(void *aux, const char *pnp)
 }
 
 int
-obio_search(struct device *parent, struct cfdata *cf,
+obio_search(struct device * parent, struct cfdata *cf,
 	    const int *ldesc, void *aux)
 {
 	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args obio;
 
-	obio.obio_bst = sc->sc_bst;
+	obio.obio_el_bst = sc->sc_el_bst;
+	obio.obio_eb_bst = sc->sc_eb_bst;
 	obio.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
@@ -130,3 +130,39 @@ obio_search(struct device *parent, struct cfdata *cf,
 
 	return 0;
 }
+
+static void
+obio_bus_init(struct obio_softc *sc)
+{
+	static int done = 0;
+
+	if (done)
+		return;
+	done = 1;
+
+	/* little endian space */
+	if (rmixl_configuration.rc_el_memt.bs_cookie == 0)
+		rmixl_el_bus_mem_init(&rmixl_configuration.rc_el_memt,
+			&rmixl_configuration);
+
+	/* big endian space */
+	if (rmixl_configuration.rc_eb_memt.bs_cookie == 0)
+		rmixl_eb_bus_mem_init(&rmixl_configuration.rc_eb_memt,
+			&rmixl_configuration);
+#ifdef NOTYET
+	/* dma space for addr < 4GB */
+	if (rmixl_configuration.rc_lt4G_dmat._cookie == 0)
+		rmixl_dma_init(&rmixl_configuration.rc_lt4G_dmat);
+	/* dma space for all memory, including >= 4GB */
+	if (rmixl_configuration.rc_ge4G_dmat._cookie == 0)
+		rmixl_dma_init(&rmixl_configuration.rc_ge4G_dmat);
+#endif
+
+	sc->sc_base = (bus_addr_t)rmixl_configuration.rc_io_pbase;
+	sc->sc_size = (bus_size_t)RMIXL_IO_DEV_SIZE;
+	sc->sc_el_bst = (bus_space_tag_t)&rmixl_configuration.rc_el_memt;
+	sc->sc_eb_bst = (bus_space_tag_t)&rmixl_configuration.rc_eb_memt;
+	sc->sc_lt4G_dmat = &rmixl_configuration.rc_lt4G_dmat;
+	sc->sc_ge4G_dmat = &rmixl_configuration.rc_ge4G_dmat;
+}
+

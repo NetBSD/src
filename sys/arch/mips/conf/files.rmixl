@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.2 2009/09/15 02:32:01 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -10,7 +10,8 @@ define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio, pcibus
 attach	obio at mainbus
 file	arch/mips/rmi/rmixl_obio.c		obio needs-count
-file    arch/mips/rmi/rmixl_obio_space.c	obio
+file    arch/mips/rmi/rmixl_el_space.c		obio
+file    arch/mips/rmi/rmixl_eb_space.c		obio
 
 # NS16550 compatible serial ports
 attach com at obio with rmixl_com
