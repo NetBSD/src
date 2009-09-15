@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.230 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.230 2009/05/12 14:25:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -603,27 +603,19 @@ wi_detach(struct wi_softc *sc)
 	return 0;
 }
 
-#ifdef __NetBSD__
 int
 wi_activate(device_t self, enum devact act)
 {
-	struct wi_softc *sc = (struct wi_softc *)self;
-	int rv = 0, s;
+	struct wi_softc *sc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return rv;
 }
-#endif /* __NetBSD__ */
 
 int
 wi_intr(void *arg)
