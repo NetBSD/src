@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.83 2009/09/15 18:32:00 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.84 2009/09/15 18:37:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.83 2009/09/15 18:32:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.84 2009/09/15 18:37:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -322,7 +322,7 @@ awi_detach(struct awi_softc *sc)
 int
 awi_activate(device_t self, enum devact act)
 {
-	struct awi_softc *sc = (struct awi_softc *)self;
+	struct awi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	int s, error = 0;
 
