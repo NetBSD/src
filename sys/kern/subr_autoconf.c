@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.183 2009/09/16 16:34:50 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.184 2009/09/16 22:45:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.183 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.184 2009/09/16 22:45:24 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1488,24 +1488,6 @@ config_detach_all(int how)
 			aprint_debug("failed.");
 	}
 	return progress;
-}
-
-int
-config_activate(device_t dev)
-{
-	const struct cfattach *ca = dev->dv_cfattach;
-	int rv = 0, oflags = dev->dv_flags;
-
-	if (ca->ca_activate == NULL)
-		return EOPNOTSUPP;
-
-	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
-		dev->dv_flags |= DVF_ACTIVE;
-		rv = (*ca->ca_activate)(dev, DVACT_ACTIVATE);
-		if (rv)
-			dev->dv_flags = oflags;
-	}
-	return rv;
 }
 
 int
