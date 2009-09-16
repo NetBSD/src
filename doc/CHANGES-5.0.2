@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.13 2009/09/11 23:02:24 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.14 2009/09/16 04:58:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -243,4 +243,52 @@ xsrc/xfree/xc/extras/expat/lib/xmltok_impl.c		1.2
 
 	Apply revisions 1.14 and 1.15 from expat CVS to fix SA36425.
 	[snj, ticket #951]
+
+sys/dev/pad/padvol.c				1.4
+
+	Catch up to audio(4) device_t/softc split.
+	[jmcneill, ticket #945]
+
+sys/dev/rnd.c					1.74
+
+	rnd_wakeup_readers() uses rndpool_mtx for its own consistency
+	management, so it cannot be called with the mutex held.  There
+	is no consistency requirement to synchronize over the whole
+	add-and-wakeup operation, as if data is consumed in the window
+	the mutex is locked, wakeups will simply be skipped.
+
+	Fix from Juho Salminen in PR kern/42020.
+	[pooka, ticket #948]
+
+sys/arch/alpha/alpha/cpu.c			1.86
+
+	There's now some per-cpu initialization that occurs before the
+	secondary cpus are told to begin running.  Since the seconedary
+	cpus weren't being added to the cpu_info list until then, that
+	initialization wasn't being done and resulted in crashes on the
+	secondary cpus.  Add the secondary cpus to the cpu_info_list
+	after they've been started (but waiting to be told to start
+	running).  This fixes the problem specifically stated in PR
+	port-alpha/41106.  MP alphas will now at least boot and begin
+	running, but will eventually crash in various ways later.
+	[mhitch, ticket #949]
+
+sys/arch/alpha/alpha/pmap.c			1.241
+
+	Now that secondary cpus are added the cpu_info list earlier,
+	attempt to send pmap tlb shootdowns to them cause the shootdown
+	job queue to fill up, but since the cpus aren't running yet, no
+	IPIs get sent.  When the job queue is full, the bit mask of cpus
+	to send the IPI to is not set and no shootdown IPI ever gets sent
+	after the cpu is marked running.  Always set the cpumask even when
+	the queue is full.
+	[mhitch, ticket #953]
+
+sys/arch/vax/vax/clock.c			1.51
+
+	Keep track of the previous ICR value and hardclock_ticks to ensure
+	the 32 bit counter doesn't go backwards.  Also, the ICR runs from
+	-10000 to -1, so adjust the value when reading it.  Now mfpr works
+	quite nicely on a 4000/90.
+	[mhitch, ticket #955]
 
