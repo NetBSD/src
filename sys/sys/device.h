@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.122 2009/09/16 16:34:56 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.123 2009/09/16 22:45:23 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -457,7 +457,6 @@ device_t config_attach_pseudo(cfdata_t);
 int	config_detach(device_t, int);
 int	config_detach_children(device_t, int flags);
 bool	config_detach_all(int);
-int	config_activate(device_t);
 int	config_deactivate(device_t);
 void	config_defer(device_t, void (*)(device_t));
 void	config_deferred(device_t);
