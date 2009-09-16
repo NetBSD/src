@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.47 2009/05/06 09:25:15 cegger Exp $ */
+/* $NetBSD: if_lmc.c,v 1.48 2009/09/16 21:14:15 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -72,77 +72,9 @@
  *
  * Send bug reports and improvements to <boggs@boggs.palo-alto.ca.us>.
  */
-#if defined(__FreeBSD__)
-# include <sys/param.h>	/* OS version */
-# include "opt_inet.h"	/* INET */
-# include "opt_inet6.h"	/* INET6 */
-# include "opt_netgraph.h" /* NETGRAPH */
-# if defined(HAVE_KERNEL_OPTION_HEADERS)
-#  include "opt_device_polling.h" /* DEVICE_POLLING */
-# else
-#  include "opt_global.h" /* ALTQ, DEVICE_POLLING */
-# endif
-# include "opt_bpf.h"	/* DEV_BPF */
-# define NBPFILTER DEV_BPF
-# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
-# define IFNET 1
-# define NETDEV 0
-# define NAPI 0
-# define SPPP 1
-# define P2P 0
-# define GEN_HDLC 0
-# define SYNC_PPP 0
-#
-# include <sys/systm.h>
-# include <sys/kernel.h>
-# include <sys/malloc.h>
-# include <sys/mbuf.h>
-# include <sys/socket.h>
-# include <sys/sockio.h>
-# include <sys/mutex.h>
-# include <sys/module.h>
-# include <sys/bus.h>
-# include <net/if.h>
-# include <net/if_types.h>
-# include <net/if_media.h>
-# include <net/netisr.h>
-# include <sys/bus.h>
-# include <machine/resource.h>
-# include <machine/clock.h>
-# include <sys/rman.h>
-# include <vm/vm.h>
-# include <vm/pmap.h>
-# include <dev/pci/pcivar.h>
-# if NETGRAPH
-#  include <netgraph/ng_message.h>
-#  include <netgraph/netgraph.h>
-# endif
-# if INET || INET6
-#  include <netinet/in.h>
-#  include <netinet/in_var.h>
-# endif
-# if SPPP
-#  include <net/if_sppp.h>
-# endif
-# if NBPFILTER
-#  include <net/bpf.h>
-# endif
-# if !defined(NETGRAPH)
-#  define NETGRAPH 0
-# endif
-# if !defined(DEVICE_POLLING)
-#  define DEVICE_POLLING 0
-# endif
-# if !defined(ALTQ)
-#  define ALTQ 0
-# endif
-/* and finally... */
-# include <dev/lmc/if_lmc.h>
-#endif /*__FreeBSD__*/
 
-#if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.47 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.48 2009/09/16 21:14:15 dyoung Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -193,171 +125,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.47 2009/05/06 09:25:15 cegger Exp $");
 # endif
 /* and finally... */
 # include "if_lmc.h"
-#endif /*__NetBSD__*/
 
-#if defined(__OpenBSD__)
-# include <sys/param.h>	/* OS version */
-/* -DINET  is passed on the compiler command line */
-/* -DINET6 is passed on the compiler command line */
-/* -DALTQ  is passed on the compiler command line */
-# include "bpfilter.h"	/* NBPFILTER */
-# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
-# define IFNET 1
-# define NAPI 0
-# define SPPP 1
-# define P2P 0
-# define GEN_HDLC 0
-# define SYNC_PPP 0
-# define NETGRAPH 0
-# define DEVICE_POLLING 0
-#
-# include <sys/systm.h>
-# include <sys/kernel.h>
-# include <sys/conf.h>
-# include <sys/exec.h>
-# include <sys/module.h>
-# include <sys/mbuf.h>
-# include <sys/socket.h>
-# include <sys/sockio.h>
-# include <sys/device.h>
-# include <net/if.h>
-# include <net/if_types.h>
-# include <net/if_media.h>
-# include <net/netisr.h>
-# include <sys/bus.h>
-# include <sys/intr.h>
-# include <machine/lock.h>
-# include <uvm/uvm_extern.h>
-# include <dev/pci/pcivar.h>
-# if INET || INET6
-#  include <netinet/in.h>
-#  include <netinet/in_var.h>
-# endif
-# if SPPP
-#  include <net/if_sppp.h>
-# endif
-# if NBPFILTER
-#  include <net/bpf.h>
-# endif
-# if !defined(ALTQ)
-#  define ALTQ 0
-# endif
-# undef   NETDEV
-# define  NETDEV 0
-/* and finally... */
-# include "if_lmc.h"
-#endif /*__OpenBSD__*/
 
-#if defined(__bsdi__)
-# include <sys/param.h>	/* OS version */
-/* -DINET  is passed on the compiler command line */
-/* -DINET6 is passed on the compiler command line */
-/* -DPPP   is passed on the compiler command line */
-/* -DCISCO_HDLC is passed on the compiler command line */
-/* -DFR    is passed on the compiler command line */
-# if PPP || CISCO_HDLC || FR
-#  define P2P 1
-# else
-#  define P2P 0
-# endif
-# include "bpfilter.h"	/* NBPFILTER */
-# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
-# define IFNET 1
-# define NETDEV 0
-# define NAPI 0
-# define ALTQ 0
-# define SPPP 0
-# define GEN_HDLC 0
-# define SYNC_PPP 0
-# define NETGRAPH 0
-# define DEVICE_POLLING 0
-#
-# include <sys/kernel.h>
-# include <sys/malloc.h>
-# include <sys/mbuf.h>
-# include <sys/socket.h>
-# include <sys/sockio.h>
-# include <sys/device.h>
-# include <sys/reboot.h>
-# include <net/if.h>
-# include <net/if_types.h>
-# include <net/if_media.h>
-# include <net/netisr.h>
-# include <net/raw_cb.h>
-# include <vm/vm.h>
-# include <i386/isa/dma.h>
-# include <i386/isa/isavar.h>
-# include <i386/include/cpu.h>
-# include <i386/pci/pci.h>
-# if INET || INET6
-#  include <netinet/in.h>
-#  include <netinet/in_var.h>
-# endif
-# if P2P
-#  include <net/if_p2p.h>
-#  include <sys/ttycom.h>
-# endif
-# if NBPFILTER
-#  include <net/bpf.h>
-# endif
-/* and finally... */
-# include "if_lmc.h"
-#endif /*__bsdi__*/
 
-#if defined(__linux__)
-# include <linux/version.h> /* OS version */
-# include <linux/config.h>
-# if CONFIG_LANMEDIA_GENHDLC
-#  define GEN_HDLC 1
-# else
-#  define GEN_HDLC 0
-# endif
-# if CONFIG_LANMEDIA_SYNCPPP
-#  define SYNC_PPP 1
-# else
-#  define SYNC_PPP 0
-# endif
-# if CONFIG_LANMEDIA_NAPI
-#  define NAPI 1
-# else
-#  define NAPI 0
-# endif
-# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
-# define BSD 0
-# define IFNET 0
-# define NETDEV 1
-# define ALTQ 0
-# define P2P 0
-# define SPPP 0
-# define NETGRAPH 0
-# define NBPFILTER 0
-# define DEVICE_POLLING 0
-#
-# include <asm/byteorder.h>
-# include <asm/semaphore.h>
-# include <asm/uaccess.h>
-# include <linux/delay.h>
-# include <linux/errno.h>
-# include <linux/if_arp.h>
-# include <linux/init.h>
-# include <linux/kernel.h>
-# include <linux/module.h>
-# include <linux/moduleparam.h>
-# include <linux/netdevice.h>
-# include <linux/pci.h>
-# include <linux/sched.h>
-# include <linux/skbuff.h>
-# include <linux/slab.h>
-# include <linux/spinlock.h>
-# if GEN_HDLC
-#  include <linux/hdlc.h>
-# endif
-# if SYNC_PPP
-#  include <net/syncppp.h>
-# endif
-/* and finally... */
-# include "if_lmc.h"
-#endif /* __linux__ */
 
 /* The SROM is a generic 93C46 serial EEPROM (64 words by 16 bits). */
 /* Data is set up before the RISING edge of CLK; CLK is parked low. */
@@ -2640,87 +2410,6 @@ t1_detach(softc_t *sc)
 
 /* End T1E1 card code */
 
-#if NETGRAPH /* FreeBSD */
-
-static struct stack netgraph_stack =
-  {
-  .ioctl    = netgraph_ioctl,
-  .input    = netgraph_input,
-  .output   = netgraph_output,
-  .watchdog = netgraph_watchdog,
-  .open     = netgraph_open,
-  .attach   = netgraph_attach,
-  .detach   = netgraph_detach,
-  };
-
-static int  /* context: process */
-netgraph_ioctl(softc_t *sc, u_long cmd, void *data)
-  {
-  if (sc->config.debug)
-    printf("%s: netgraph_ioctl() was called\n", NAME_UNIT);
-
-  return EINVAL;
-  }
-
-static void  /* context: interrupt */
-netgraph_input(softc_t *sc, struct mbuf *m)
-  {
-  int error;  /* ignore error */
-
-  NG_SEND_DATA_ONLY(error, sc->ng_hook, m);
-  }
-
-static void  /* context: interrupt */
-netgraph_output(softc_t *sc)
-  {
-  if (!IFQ_IS_EMPTY(&sc->ng_fastq))
-    IFQ_DEQUEUE(&sc->ng_fastq, sc->tx_mbuf);
-  else
-    IFQ_DEQUEUE(&sc->ng_sndq,  sc->tx_mbuf);
-  }
-
-static void  /* context: softirq */
-netgraph_watchdog(softc_t *sc)
-  {
-  sc->status.stack = STACK_NETGRAPH;
-  sc->status.proto = PROTO_NONE;
-  }
-
-static int
-netgraph_open(softc_t *sc, struct config *config)
-  {
-  sc->config.proto = PROTO_NONE;
-
-  return 0;
-  }
-
-static int
-netgraph_attach(softc_t *sc, struct config *config)
-  {
-  int error;
-
-  if ((error = ng_attach(sc)))
-    return error;
-
-  sc->config.proto = PROTO_NONE;
-  sc->stack = &netgraph_stack;
-
-  return 0;
-  }
-
-static int  /* never fails */
-netgraph_detach(softc_t *sc)
-  {
-  ng_detach(sc);
-
-  sc->config.stack = STACK_NONE;
-  sc->config.proto = PROTO_NONE;
-  sc->stack = NULL;
-
-  return 0;
-  }
-
-#endif /* NETGRAPH */
 
 #if SYNC_PPP  /* Linux */
 
@@ -3359,13 +3048,7 @@ sppp_stack_watchdog(softc_t *sc)
 
   /* Report current line protocol. */
   sc->status.stack = STACK_SPPP;
-# if defined(__FreeBSD__)
-  if (sc->sppp->pp_flags & PP_FR)
-    sc->status.proto = PROTO_FRM_RLY;
-  else if (sc->ifp->if_flags  & IFF_LINK2)
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
   if (sc->sppp->pp_flags & PP_CISCO)
-# endif
     sc->status.proto = PROTO_C_HDLC;
   else
     sc->status.proto = PROTO_PPP;
@@ -3398,12 +3081,7 @@ sppp_stack_open(softc_t *sc, struct config *config)
     {
     case PROTO_PPP:
       {
-# if defined(__FreeBSD__)
-      sc->ifp->if_flags  &= ~IFF_LINK2;
-      sc->sppp->pp_flags &= ~PP_FR;
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
       sc->sppp->pp_flags &= ~PP_CISCO;
-# endif
       LMC_BPF_ATTACH(sc, DLT_PPP, 4);
       sc->config.proto = PROTO_PPP;
       break;
@@ -3412,29 +3090,12 @@ sppp_stack_open(softc_t *sc, struct config *config)
     default:
     case PROTO_C_HDLC:
       {
-# if defined(__FreeBSD__)
-      sc->ifp->if_flags  |=  IFF_LINK2;
-      sc->sppp->pp_flags &= ~PP_FR;
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
       sc->sppp->pp_flags |=  PP_CISCO;
-# endif
       LMC_BPF_ATTACH(sc, DLT_C_HDLC, 4);
       sc->config.proto = PROTO_C_HDLC;
       break;
       }
 
-# if defined(__FreeBSD__)
-    case PROTO_FRM_RLY:
-      {
-      sc->ifp->if_flags  &= ~IFF_LINK2;
-      sc->sppp->pp_flags |= PP_FR;
-      sc->sppp->pp_flags |= PP_KEEPALIVE;
-      sc->config.keep_alive = 1;
-      LMC_BPF_ATTACH(sc, DLT_FRELAY, 4);
-      sc->config.proto = PROTO_FRM_RLY;
-      break;
-      }
-# endif
     } /* switch(config->proto) */
 
   /* Open */
@@ -3447,11 +3108,7 @@ sppp_stack_open(softc_t *sc, struct config *config)
 static int  /* never fails */
 sppp_stack_attach(softc_t *sc, struct config *config)
   {
-# if defined(__FreeBSD__)
-  sc->sppp = sc->ifp->if_l2com;
-# else
   sc->sppp = &sc->spppcom;
-# endif
 
   LMC_BPF_ATTACH(sc, DLT_RAW, 0);
   sppp_attach(sc->ifp);
@@ -3488,12 +3145,7 @@ sppp_tls(struct sppp *sppp)
   /* Calling pp_up/down() required by PPP mode in OpenBSD. */
   /* Calling pp_up/down() panics      PPP mode in NetBSD. */
   /* Calling pp_up/down() breaks    Cisco mode in FreeBSD. */
-# if defined(__FreeBSD__)
-  if (!(sppp->pp_mode  & IFF_LINK2) && /* not Cisco */
-      !(sppp->pp_flags & PP_FR))       /* not FrmRly */
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
   if (!(sppp->pp_flags & PP_CISCO))    /* not Cisco */
-# endif
     sppp->pp_up(sppp);
   }
 
@@ -3504,12 +3156,7 @@ sppp_tlf(struct sppp *sppp)
   /* Calling pp_up/down() required by PPP mode in OpenBSD. */
   /* Calling pp_up/down() panics      PPP mode in NetBSD. */
   /* Calling pp_up/down() breaks    Cisco mode in FreeBSD. */
-# if defined(__FreeBSD__)
-  if (!(sppp->pp_mode  & IFF_LINK2) && /* not Cisco */
-      !(sppp->pp_flags & PP_FR))       /* not FrmRly */
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
   if (!(sppp->pp_flags & PP_CISCO))    /* not Cisco */
-# endif
     sppp->pp_down(sppp);
   }
 
@@ -3618,18 +3265,10 @@ rawip_watchdog(softc_t *sc)
 #if IFNET
   if ((sc->status.link_state == STATE_UP) &&
       (sc->ifp->if_flags & IFF_UP))
-# if defined(__FreeBSD__)
-    sc->ifp->if_drv_flags |= IFF_DRV_RUNNING;
-# else
     sc->ifp->if_flags |= IFF_RUNNING;
-# endif
   if ((sc->status.link_state != STATE_UP) ||
      !(sc->ifp->if_flags & IFF_UP))
-# if defined(__FreeBSD__)
-    sc->ifp->if_drv_flags &= ~IFF_DRV_RUNNING;
-# else
     sc->ifp->if_flags &= ~IFF_RUNNING;
-# endif
 #endif /* IFNET */
 
   /* Report current line protocol. */
@@ -3692,9 +3331,7 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
   if (mbuf->m_data[0]>>4 == 4)
     {
     isr = NETISR_IP;
-#  if !defined(__FreeBSD__)
     intrq = &ipintrq;
-#  endif
     }
 # endif /* INET */
 
@@ -3702,17 +3339,12 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
   if (mbuf->m_data[0]>>4 == 6)
     {
     isr = NETISR_IPV6;
-#  if !defined(__FreeBSD__)
     intrq = &ip6intrq;
-#  endif
     }
 # endif /* INET6 */
 
   if (isr)
     {
-# if defined(__FreeBSD__)
-    netisr_dispatch(isr, mbuf);
-# else
     if (!IF_QFULL(intrq))
       {
       /* ifnet_input() ENQUEUES in a hard interrupt. */
@@ -3730,7 +3362,6 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
       if (sc->config.debug)
         printf("%s: ifnet_input: rx pkt dropped: intrq full\n", NAME_UNIT);
       }
-# endif /* __FreeBSD__ */
     }
   else /* isr is zero */
     {
@@ -3767,11 +3398,7 @@ ifnet_output(struct ifnet *ifp, struct mbuf *m,
   /* Some BSD QUEUE routines are not interrupt-safe. */
   {
   DISABLE_INTR; /* noop in FreeBSD */
-#if defined(__FreeBSD__)
-  IFQ_ENQUEUE(&ifp->if_snd, m, error);
-#else
   IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-#endif
   ENABLE_INTR; /* noop in FreeBSD */
   }
 
@@ -3811,7 +3438,6 @@ ifnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
       error = lmc_ioctl(sc, cmd, data);
       break;
 
-# if defined(__FreeBSD__) || defined(__NetBSD__)
     case SIOCSIFCAP:
 #  if DEVICE_POLLING
       if ((ifr->ifr_reqcap & IFCAP_POLLING) &&
@@ -3832,33 +3458,12 @@ ifnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
         error = EINVAL;
 #  endif /* DEVICE_POLLING */
       break;
-# endif /* FreeBSD || NetBSD */
 
     case SIOCSIFMEDIA: /* calls lmc_ifmedia_change() */
     case SIOCGIFMEDIA: /* calls ifmedia_status() */
       error = ifmedia_ioctl(ifp, ifr, &sc->ifm, cmd);
       break;
 
-# if defined(__OpenBSD__)
-    case SIOCSIFTIMESLOT:
-      if (sc->status.card_type == CSID_LMC_T1E1)
-        {
-        struct config config = sc->config;
-        if ((error = copyin(ifr->ifr_data, &config.time_slots,
-         sizeof sc->config.time_slots))) break;
-        sc->card->attach(sc, &config);
-	}
-      else
-        error = EINVAL;
-      break;
-    case SIOCGIFTIMESLOT:
-      if (sc->status.card_type == CSID_LMC_T1E1)
-        error = copyout(&sc->status.time_slots, ifr->ifr_data,
-         sizeof sc->status.time_slots);
-      else
-        error = EINVAL;
-      break;
-# endif /* OpenBSD */
 
     /* Pass the rest to the line protocol. */
     default:
@@ -3897,12 +3502,10 @@ ifnet_watchdog(struct ifnet *ifp)
 
   lmc_watchdog(sc); /* updates link_state */
 
-# if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
   if (sc->status.link_state == STATE_UP)
     ifp->if_link_state = LINK_STATE_UP;
   else
     ifp->if_link_state = LINK_STATE_DOWN;
-# endif
 
   /* Copy statistics from sc to ifp. */
   ifp->if_baudrate = sc->status.tx_speed;
@@ -3930,9 +3533,7 @@ ifnet_setup(struct ifnet *ifp)
   ifp->if_flags    = IFF_POINTOPOINT;
   ifp->if_flags   |= IFF_SIMPLEX;
   ifp->if_flags   |= IFF_NOARP;
-# if defined(__FreeBSD__) || defined(__NetBSD__)
   ifp->if_input    = ifnet_input;
-# endif
   ifp->if_output   = ifnet_output;
   ifp->if_start    = ifnet_start;
   ifp->if_ioctl    = ifnet_ioctl;
@@ -3949,10 +3550,7 @@ ifnet_setup(struct ifnet *ifp)
 static int
 ifnet_attach(softc_t *sc)
   {
-# if defined(__FreeBSD__)
-  sc->ifp = if_alloc(SPPP ? IFT_PPP : IFT_OTHER);
-  if (sc->ifp == NULL) return ENOMEM;
-# elif SPPP
+# if   SPPP
   sc->ifp = &sc->spppcom.pp_if;
 # elif P2P
   sc->ifp = &sc->p2pcom.p2p_if;
@@ -3963,35 +3561,19 @@ ifnet_attach(softc_t *sc)
   sc->ifp->if_softc = sc;
   ifnet_setup(sc->ifp);
 
-# if defined(__FreeBSD__) || defined(__OpenBSD__)
-  sc->ifp->if_capabilities |= IFCAP_JUMBO_MTU;
-# endif
 # if DEVICE_POLLING
   sc->ifp->if_capabilities |= IFCAP_POLLING;
 # endif
 
   /* Every OS does it differently! */
-# if defined(__FreeBSD__)
-  sc->ifp->if_dname = device_get_name(sc->dev);
-  sc->ifp->if_dunit = device_get_unit(sc->dev);
-  strlcpy(sc->ifp->if_xname, device_get_nameunit(sc->dev), IFNAMSIZ);
-# elif defined(__NetBSD__)
   strlcpy(sc->ifp->if_xname, device_xname(&sc->dev), IFNAMSIZ);
-# elif defined(__OpenBSD__)
-  bcopy(sc->dev.dv_xname, sc->ifp->if_xname, IFNAMSIZ);
-# elif defined(__bsdi__)
-  sc->ifp->if_name  = sc->dev.dv_cfdata->cf_driver->cd_name;
-  sc->ifp->if_unit  = sc->dev.dv_unit;
-# endif
 
   IFQ_SET_MAXLEN(&sc->ifp->if_snd, SNDQ_MAXLEN);
   IFQ_SET_READY(&sc->ifp->if_snd);
 
   if_attach(sc->ifp);
 
-# if defined(__NetBSD__) || defined(__OpenBSD__)
   if_alloc_sadl(sc->ifp);
-# endif
 
   ifmedia_setup(sc);
 
@@ -4003,11 +3585,7 @@ ifnet_attach(softc_t *sc)
 static void
 ifnet_detach(softc_t *sc)
   {
-# if defined(__FreeBSD__)
-  ifmedia_removeall(&sc->ifm);
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
   ifmedia_delete_instance(&sc->ifm, IFM_INST_ANY);
-# endif
 
 # if DEVICE_POLLING
   if (sc->ifp->if_capenable & IFCAP_POLLING)
@@ -4016,15 +3594,10 @@ ifnet_detach(softc_t *sc)
 
   IFQ_PURGE(&sc->ifp->if_snd);
 
-# if defined(__NetBSD__) || defined(__OpenBSD__)
   if_free_sadl(sc->ifp);
-# endif
 
   if_detach(sc->ifp);
 
-# if defined(__FreeBSD__)
-  if_free_type(sc->ifp, SPPP ? IFT_PPP : IFT_OTHER);
-# endif
   }
 
 static void
@@ -4034,31 +3607,8 @@ ifmedia_setup(softc_t *sc)
   ifmedia_init(&sc->ifm, IFM_OMASK | IFM_GMASK | IFM_IMASK,
    lmc_ifmedia_change, ifmedia_status);
 
-# if defined(__OpenBSD__)
-  if (sc->status.card_type == CSID_LMC_T3)
-    {
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T3, 0, NULL);
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T3_M13, 0, NULL);
-    ifmedia_set(&sc->ifm, IFM_TDM | IFM_TDM_T3);
-    }
-  else if  (sc->status.card_type == CSID_LMC_T1E1)
-    {
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T1, 0, NULL);
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T1_AMI, 0, NULL);
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1, 0, NULL);
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1_G704, 0, NULL);
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1_G704_CRC4, 0, NULL);
-    ifmedia_set(&sc->ifm, IFM_TDM | IFM_TDM_T1);
-    }
-  else
-    {
-    ifmedia_add(&sc->ifm, IFM_TDM | IFM_NONE, 0, NULL);
-    ifmedia_set(&sc->ifm, IFM_TDM | IFM_NONE);
-    }
-# else /* FreeBSD, NetBSD, BSD/OS */
   ifmedia_add(&sc->ifm, IFM_ETHER | IFM_NONE, 0, NULL);
   ifmedia_set(&sc->ifm, IFM_ETHER | IFM_NONE);
-# endif  /* OpenBSD */
   }
 
 /* SIOCSIFMEDIA: context: process. */
@@ -4070,48 +3620,6 @@ lmc_ifmedia_change(struct ifnet *ifp)
   int media = sc->ifm.ifm_media;
   int error;
 
-# if defined(__OpenBSD__)
-  /* ifconfig lmc0 media t1 */
-  if      (sc->status.card_type == CSID_LMC_T3)
-    {
-    if      ((media & IFM_TMASK) == IFM_TDM_T3)
-      config.format = CFG_FORMAT_T3CPAR;
-    else if ((media & IFM_TMASK) == IFM_TDM_T3_M13)
-      config.format = CFG_FORMAT_T3M13;
-    }
-  else if (sc->status.card_type == CSID_LMC_T1E1)
-    {
-    if      ((media & IFM_TMASK) == IFM_TDM_T1)
-      config.format = CFG_FORMAT_T1ESF;
-    else if ((media & IFM_TMASK) == IFM_TDM_T1_AMI)
-      config.format = CFG_FORMAT_T1SF;
-    else if ((media & IFM_TMASK) == IFM_TDM_E1)
-      config.format = CFG_FORMAT_E1NONE;
-    else if ((media & IFM_TMASK) == IFM_TDM_E1_G704)
-      config.format = CFG_FORMAT_E1FAS;
-    else if ((media & IFM_TMASK) == IFM_TDM_E1_G704_CRC4)
-      config.format = CFG_FORMAT_E1FASCRC;
-    }
-
-  /* ifconfig lmc0 mediaopt hdlc-crc16 */
-  if (media & IFM_TDM_HDLC_CRC16)
-    config.proto = PROTO_C_HDLC;
-
-  /* ifconfig lmc0 mediaopt ppp */
-  if (media & IFM_TDM_PPP)
-    config.proto = PROTO_PPP;
-
-  /* ifconfig lmc0 mediaopt framerelay-ansi */
-  if (media & IFM_TDM_FR_ANSI)
-    config.proto = PROTO_FRM_RLY;
-
-  /* ifconfig lmc0 mediaopt master */
-  if ((media & IFM_TDM_MASTER) &&
-   (sc->status.card_type == CSID_LMC_T1E1))
-    config.tx_clk_src = CFG_CLKMUX_INT; /* xtal */
-  else
-    config.tx_clk_src = CFG_CLKMUX_RT; /* loop */
-# endif  /* OpenBSD */
 
   /* ifconfig lmc0 mediaopt loopback */
   if (media & IFM_LOOP)
@@ -4139,19 +3647,6 @@ ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
   if (sc->config.loop_back != CFG_LOOP_NONE)
     ifmr->ifm_active |= IFM_LOOP;
 
-# if defined(__OpenBSD__)
-  if (sc->status.proto == PROTO_C_HDLC)
-    ifmr->ifm_active |= IFM_TDM_HDLC_CRC16;
-
-  if (sc->status.proto == PROTO_PPP)
-    ifmr->ifm_active |= IFM_TDM_PPP;
-
-  if (sc->status.proto == PROTO_FRM_RLY)
-    ifmr->ifm_active |= IFM_TDM_FR_ANSI;
-
-  if (sc->config.tx_clk_src == CFG_CLKMUX_INT)
-    ifmr->ifm_active |= IFM_TDM_MASTER;
-# endif  /* OpenBSD */
   }
 
 #endif  /* IFNET */
@@ -4532,331 +4027,6 @@ netdev_detach(softc_t *sc)
 
 #endif /* NETDEV */
 
-#if NETGRAPH
-
-/* These next two macros should be added to netgraph */
-#  define NG_TYPE_REF(type) atomic_add_int(&(type)->refs, 1)
-#  define NG_TYPE_UNREF(type)	\
-do {				\
-  if ((type)->refs == 1)	\
-    ng_rmtype(type);		\
-  else				\
-    atomic_subtract_int(&(type)->refs, 1); \
-   } while (0)
-
-/* It is an error to construct new copies of this Netgraph node. */
-/* All instances are constructed by ng_attach and are persistent. */
-static int ng_constructor(node_p  node)
-  { return EINVAL; }
-
-/* Incoming Netgraph control message. */
-static int
-ng_rcvmsg(node_p node, item_p item, hook_p lasthook)
-  {
-  struct ng_mesg *msg;
-  struct ng_mesg *resp = NULL;
-  softc_t *sc = NG_NODE_PRIVATE(node);
-  int error = 0;
-
-  if ((error = TOP_LOCK(sc))) return error;
-
-  NGI_GET_MSG(item, msg);
-  if (msg->header.typecookie == NGM_LMC_COOKIE)
-    {
-    switch (msg->header.cmd)
-      {
-      case LMCIOCGSTAT:
-      case LMCIOCGCFG:
-      case LMCIOCSCFG:
-      case LMCIOCREAD:
-      case LMCIOCWRITE:
-      case LMCIOCTL:
-        {
-        /* Call the core ioctl procedure. */
-        error = lmc_ioctl(sc, msg->header.cmd, msg->data);
-        if (msg->header.cmd & IOC_OUT)
-          { /* synchronous response */
-          NG_MKRESPONSE(resp, msg, sizeof(struct ng_mesg) +
-           IOCPARM_LEN(msg->header.cmd), M_NOWAIT);
-          if (resp == NULL)
-            error = ENOMEM;
-          else
-            memcpy(resp->data, msg->data, IOCPARM_LEN(msg->header.cmd));
-          }
-        break;
-        }
-      default:
-        error = EINVAL;
-        break;
-      }
-    }
-  else if ((msg->header.typecookie == NGM_GENERIC_COOKIE) &&
-           (msg->header.cmd == NGM_TEXT_STATUS))
-    {  /* synchronous response */
-    NG_MKRESPONSE(resp, msg, sizeof(struct ng_mesg) +
-     NG_TEXTRESPONSE, M_NOWAIT);
-    if (resp == NULL)
-      error = ENOMEM;
-    else
-      {
-      char *s = resp->data;
-      sprintf(s, "Card type = <%s>\n"
-       "This driver considers the link to be %s.\n"
-       "Use lmcconfig to configure this interface.\n",
-       sc->dev_desc, (sc->status.link_state==STATE_UP) ? "UP" : "DOWN");
-      resp->header.arglen = strlen(s) +1;
-      }
-    }
-  else
-    error = EINVAL;
-/* Netgraph should be able to read and write these
- *  parameters with text-format control messages:
- *  SSI	     HSSI     T1E1     T3
- *  crc	     crc      crc      crc      
- *  loop     loop     loop     loop
- *           clksrc   clksrc
- *  dte	     dte      format   format
- *  synth    synth    cablen   cablen
- *  cable             timeslot scram
- *                    gain
- *                    pulse
- *                    lbo
- * Someday I'll implement this...
- */
-
-  /* Handle synchronous response. */
-  NG_RESPOND_MSG(error, node, item, resp);
-  NG_FREE_MSG(msg);
-
-  TOP_UNLOCK(sc);
-
-  return error;
-  }
-
-/* This is a persistent netgraph node. */
-static int
-ng_shutdown(node_p node)
-  {
-  /* unless told to really die, bounce back to life */
-  if ((node->nd_flags & NG_REALLY_DIE)==0)
-    node->nd_flags &= ~NG_INVALID; /* bounce back to life */
-
-  return 0;
-  }
-
-/* ng_disconnect is the opposite of this procedure. */
-static int
-ng_newhook(node_p node, hook_p hook, const char *name)
-  {
-  softc_t *sc = NG_NODE_PRIVATE(node);
-
-  /* Hook name must be 'rawdata'. */
-  if (strncmp(name, "rawdata", 7)) return EINVAL;
-
-  /* Is netgraph the current package? */
-  if (sc->stack != &netgraph_stack) return EBUSY;
-
-  /* Is our hook connected? */
-  if (sc->ng_hook) return EBUSY;
-
-  /* Accept the hook. */
-  sc->ng_hook = hook;
-
-  return 0;
-  }
-
-/* Both ends have accepted their hooks and the links have been made. */
-/* This is the last chance to reject the connection request. */
-static int
-ng_connect(hook_p hook)
-  {
-  /* Probably not at splnet, force outward queueing. */
-  NG_HOOK_FORCE_QUEUE(NG_HOOK_PEER(hook));
-
-  return 0; /* always accept */
-  }
-
-/* Receive data in mbufs from another Netgraph node.
- * Transmit an mbuf-chain on the communication link.
- * This procedure is very similar to ifnet_output().
- */
-static int  /* context: process */
-ng_rcvdata(hook_p hook, item_p item)
-  {
-  softc_t *sc = NG_NODE_PRIVATE(NG_HOOK_NODE(hook));
-  int error = 0;
-  struct mbuf *m;
-  meta_p meta = NULL;
-
-  NGI_GET_M(item, m);
-  NGI_GET_META(item, meta);
-  NG_FREE_ITEM(item);
-  NG_FREE_META(meta);
-
-  /* Fail if the link is down. */
-  if (sc->status.link_state != STATE_UP)
-    {
-    m_freem(m);
-    sc->status.cntrs.odrops++;
-    if (sc->config.debug)
-      printf("%s: ng_rcvdata: tx pkt dropped: link down\n", NAME_UNIT);
-    return ENETDOWN;
-    }
-
-  /* ng_rcvdata() ENQUEUEs in a syscall or softirq. */
-  /* txintr_setup() DEQUEUEs in a hard interrupt. */
-  /* Some BSD QUEUE routines are not interrupt-safe. */
-  {
-  DISABLE_INTR; /* noop in FreeBSD */
-# if defined(__FreeBSD__)
-  if (meta==NULL)
-    IFQ_ENQUEUE(&sc->ng_sndq, m, error);
-  else
-    IFQ_ENQUEUE(&sc->ng_fastq, m, error);
-# else
-  if (meta==NULL)
-    IFQ_ENQUEUE(&sc->ng_sndq, m, NULL, error);
-  else
-    IFQ_ENQUEUE(&sc->ng_fastq, m, NULL, error);
-# endif
-  ENABLE_INTR;  /* noop in FreeBSD */
-  }
-
-  if (error)
-    {
-    sc->status.cntrs.odrops++;
-    if (sc->config.debug)
-      printf("%s: ng_rcvdata: tx pkt dropped: IFQ_ENQUEUE(): error %d\n",
-       NAME_UNIT, error);
-    }
-  else
-    /* Process tx pkts; do not process rx pkts. */
-    lmc_interrupt(sc, 0, 0);
-
-  return error;
-  }
-
-/* ng_newhook is the opposite of this procedure, not */
-/*  ng_connect, as you might expect from the names. */
-static int
-ng_disconnect(hook_p hook)
-  {
-  softc_t *sc = NG_NODE_PRIVATE(NG_HOOK_NODE(hook));
-
-  /* Disconnect the hook. */
-  sc->ng_hook = NULL;
-
-  return 0;
-  }
-
-static
-struct ng_type ng_type =
-  {
-  .version	= NG_ABI_VERSION,
-  .name		= NG_LMC_NODE_TYPE,
-  .mod_event	= NULL,
-  .constructor	= ng_constructor,
-  .rcvmsg	= ng_rcvmsg,
-  .close	= NULL,
-  .shutdown	= ng_shutdown,
-  .newhook	= ng_newhook,
-  .findhook	= NULL,
-  .connect	= ng_connect,
-  .rcvdata	= ng_rcvdata,
-  .disconnect	= ng_disconnect,
-  };
-
-static void  /* context: softirq */
-ng_watchdog(void *arg)
-  {
-  softc_t *sc = arg;
-
-  /* Call the core watchdog procedure. */
-  lmc_watchdog(sc);
-
-  /* Call this procedure again after one second. */
-  callout_reset(&sc->ng_callout, hz, ng_watchdog, sc);
-  }
-
-/* Attach the Netgraph kernel interface. */
-/* This is effectively ng_constructor. */
-/* context: kernel (boot) or process (syscall) */
-static int
-ng_attach(softc_t *sc)
-  {
-  int error;
-
-  /* If this node type is not known to Netgraph then register it. */
-  if (ng_findtype(ng_type.name) == NULL)
-    {
-    if ((error = ng_newtype(&ng_type)))
-      {
-      printf("%s: ng_newtype(): error %d\n", NAME_UNIT, error);
-      return error;
-      }
-    }
-  else
-    NG_TYPE_REF(&ng_type);
-
-  /* Call the superclass node constructor. */
-  if ((error = ng_make_node_common(&ng_type, &sc->ng_node)))
-    {
-    NG_TYPE_UNREF(&ng_type);
-    printf("%s: ng_make_node_common(): error %d\n", NAME_UNIT, error);
-    return error;
-    }
-
-  /* Associate a name with this netgraph node. */
-  if ((error = ng_name_node(sc->ng_node, NAME_UNIT)))
-    {
-    NG_NODE_UNREF(sc->ng_node);
-    NG_TYPE_UNREF(&ng_type);
-    printf("%s: ng_name_node(): error %d\n", NAME_UNIT, error);
-    return error;
-    }
-
-  /* Initialize the send queue mutexes. */
-  mtx_init(&sc->ng_sndq.ifq_mtx,  NAME_UNIT, "ng sndq",  MTX_DEF);
-  mtx_init(&sc->ng_fastq.ifq_mtx, NAME_UNIT, "ng fastq", MTX_DEF);
-
-  /* Put a backpointer to softc in the netgraph node. */
-  NG_NODE_SET_PRIVATE(sc->ng_node, sc);
-
-  /* ALTQ output queue initialization. */
-  IFQ_SET_MAXLEN(&sc->ng_fastq, SNDQ_MAXLEN);
-  IFQ_SET_READY(&sc->ng_fastq);
-  IFQ_SET_MAXLEN(&sc->ng_sndq,  SNDQ_MAXLEN);
-  IFQ_SET_READY(&sc->ng_sndq);
-
-  /* If ifnet is present, it will call watchdog. */
-  /* Otherwise, arrange to call watchdog here. */
-  if (IFNET==0)
-    {
-    /* Arrange to call ng_watchdog() once a second. */
-    callout_init(&sc->ng_callout, 0);
-    callout_reset(&sc->ng_callout, hz, ng_watchdog, sc);
-    }
-
-  return 0;
-  }
-
-/* Detach the Netgraph kernel interface. */
-/* context: kernel (boot) or process (syscall) */
-static void
-ng_detach(softc_t *sc)
-  {
-  if (IFNET==0)
-    callout_stop(&sc->ng_callout);
-  IFQ_PURGE(&sc->ng_fastq);
-  IFQ_PURGE(&sc->ng_sndq);
-  mtx_destroy(&sc->ng_sndq.ifq_mtx);
-  mtx_destroy(&sc->ng_fastq.ifq_mtx);
-  ng_rmnode_self(sc->ng_node); /* free hook */
-  NG_NODE_UNREF(sc->ng_node);  /* free node */
-  NG_TYPE_UNREF(&ng_type);
-  }
-
-#endif /* NETGRAPH */
 
 #if BSD
 
@@ -4888,45 +4058,6 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
     return EINVAL;
     }
 
-# if defined(__FreeBSD__)
-
-  /* Create a DMA tag for descriptors and buffers. */
-  if ((error = bus_dma_tag_create(NULL, 4, 0, BUS_SPACE_MAXADDR_32BIT,
-   BUS_SPACE_MAXADDR, NULL, NULL, PAGE_SIZE, 2, PAGE_SIZE, BUS_DMA_ALLOCNOW,
-   NULL, NULL, &ring->tag)))
-    {
-    printf("%s: bus_dma_tag_create(): error %d\n", NAME_UNIT, error);
-    return error;
-    }
-
-  /* Allocate wired physical memory for DMA descriptor array */
-  /*  and map physical address to kernel virtual address. */
-  if ((error = bus_dmamem_alloc(ring->tag, (void**)&ring->first,
-   BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_ZERO, &ring->map)))
-    {
-    printf("%s: bus_dmamem_alloc(): error %d\n", NAME_UNIT, error);
-    return error;
-    }
-  descs = ring->first;
-
-  /* Map kernel virt addr to PCI bus addr for DMA descriptor array. */
-  if ((error = bus_dmamap_load(ring->tag, ring->map, descs, size_descs,
-   fbsd_dmamap_load, ring, 0)))
-    {
-    printf("%s: bus_dmamap_load(): error %d\n", NAME_UNIT, error);
-    return error;
-    }
-  ring->dma_addr = ring->segs[0].ds_addr;
-
-  /* Allocate dmamaps for each DMA descriptor. */
-  for (i=0; i<num_descs; i++)
-    if ((error = bus_dmamap_create(ring->tag, 0, &descs[i].map)))
-      {
-      printf("%s: bus_dmamap_create(): error %d\n", NAME_UNIT, error);
-      return error;
-      }
-
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
 
   /* Use the DMA tag passed to attach() for descriptors and buffers. */
   ring->tag = sc->pa_dmat;
@@ -4975,21 +4106,6 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
       return error;
       }
 
-# elif defined(__bsdi__)
-
-  /* Allocate wired physical memory for DMA descriptor array. */
-  if ((ring->first = malloc(size_descs, M_DEVBUF, M_NOWAIT)) == NULL)
-    {
-    printf("%s: malloc() failed for DMA descriptor array\n", NAME_UNIT);
-    return ENOMEM;
-    }
-  descs = ring->first;
-  memset(descs, 0, size_descs);
-
-  /* Map kernel virt addr to PCI bus addr for DMA descriptor array. */
-  ring->dma_addr = vtophys(descs); /* Relax! BSD/OS only. */
-
-# endif
 
   ring->read  = descs;
   ring->write = descs;
@@ -5030,23 +4146,6 @@ destroy_ring(softc_t *sc, struct desc_ring *ring)
     if (ring->read++ == ring->last) ring->read = ring->first;
     }
 
-# if defined(__FreeBSD__)
-
-  /* Free the dmamaps of all DMA descriptors. */
-  for (desc=ring->first; desc!=ring->last+1; desc++)
-    if (desc->map)
-      bus_dmamap_destroy(ring->tag, desc->map);
-  /* Unmap PCI address for DMA descriptor array. */
-  if (ring->dma_addr)
-    bus_dmamap_unload(ring->tag, ring->map);
-  /* Free kernel memory for DMA descriptor array. */
-  if (ring->first)
-    bus_dmamem_free(ring->tag, ring->first, ring->map);
-  /* Free the DMA tag created for this ring. */
-  if (ring->tag)
-    bus_dma_tag_destroy(ring->tag);
-
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
 
   /* Free the dmamaps of all DMA descriptors. */
   for (desc=ring->first; desc!=ring->last+1; desc++)
@@ -5065,13 +4164,6 @@ destroy_ring(softc_t *sc, struct desc_ring *ring)
   if (ring->segs[0].ds_addr)
     bus_dmamem_free(ring->tag, ring->segs, ring->nsegs);
 
-# elif defined(__bsdi__)
-
-  /* Free kernel memory for DMA descriptor array. */
-  if (ring->first)
-    free(ring->first, M_DEVBUF);
-
-# endif
   }
 
 /* Singly-linked tail-queues hold mbufs with active DMA.
@@ -5317,13 +4409,7 @@ rxintr_setup(softc_t *sc)
   DMA_SYNC(desc->map, desc_len, BUS_DMASYNC_PREREAD);
 
   /* Set up the DMA descriptor. */
-# if defined(__FreeBSD__)
-  desc->address1 = ring->segs[0].ds_addr;
-# elif defined(__NetBSD__) || defined(__OpenBSD__)
   desc->address1 = desc->map->dm_segs[0].ds_addr;
-# elif defined(__bsdi__)
-  desc->address1 = vtophys(m->m_data); /* Relax! BSD/OS only. */
-# endif
   desc->length1  = desc_len>>1;
   desc->address2 = desc->address1 + desc->length1;
   desc->length2  = desc_len>>1;
@@ -5453,15 +4539,9 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
       /* Prevent wild fetches if mapping fails (nsegs==0). */
       desc->length1  = desc->length2  = 0;
       desc->address1 = desc->address2 = 0;
-# if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
         {
-#  if defined(__FreeBSD__)
-        bus_dma_segment_t *segs = ring->segs;
-        int nsegs = ring->nsegs;
-#  elif defined(__NetBSD__) || defined(__OpenBSD__)
         bus_dma_segment_t *segs = desc->map->dm_segs;
         int nsegs = desc->map->dm_nsegs;
-#  endif
         if (nsegs >= 1)
           {
           desc->address1 = segs[0].ds_addr;
@@ -5473,10 +4553,6 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
           desc->length2  = segs[1].ds_len;
           }
         }
-# elif defined(__bsdi__)
-      desc->address1 = vtophys(data); /* Relax! BSD/OS only. */
-      desc->length1  = desc_len;
-# endif
 
       data   += desc_len;
       length -= desc_len;
@@ -5586,573 +4662,6 @@ bsd_poll(struct ifnet *ifp, enum poll_cmd cmd, int quota)
 
 # endif /* DEVICE_POLLING */
 
-#if defined(__linux__)
-
-/* There are TWO VERSIONS of interrupt/DMA code: Linux & BSD.
- * Handling Linux and the BSDs with CPP directives would
- *  make the code unreadable, so there are two versions.
- * Conceptually, the two versions do the same thing and
- *  lmc_interrupt() does not know they are different.
- *
- * We are "standing on the head of a pin" in these routines.
- * Tulip CSRs can be accessed, but nothing else is interrupt-safe!
- * Do NOT access: MII, GPIO, SROM, BIOSROM, XILINX, SYNTH, or DAC.
- */
-
-/* Initialize a DMA descriptor ring. */
-/* context: kernel (boot) or process (syscall) */
-static int  /* Linux version */
-create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
-  {
-  struct dma_desc *descs;
-  int size_descs = sizeof(struct dma_desc)*num_descs;
-
-  /* Allocate and map CACHE COHERENT memory for DMA descriptor array. */
-  if ((descs = pci_alloc_consistent(sc->pcidev, size_descs,
-   &ring->dma_addr)) == NULL)
-    {
-    printk("%s: pci_alloc_consistent() failed\n", NAME_UNIT);
-    return -ENOMEM;
-    }
-  memset(descs, 0, size_descs);
-
-  ring->read  = descs;
-  ring->write = descs;
-  ring->first = descs;
-  ring->last  = descs + num_descs -1;
-  ring->last->control = TLP_DCTL_END_RING;
-  ring->num_descs = num_descs;
-  ring->size_descs = size_descs;
-  ring->head = NULL;
-  ring->tail = NULL;
-
-  return 0;
-  }
-
-/* Destroy a DMA descriptor ring */
-/* context: kernel (boot) or process (syscall) */
-static void  /* Linux version */
-destroy_ring(softc_t *sc, struct desc_ring *ring)
-  {
-  struct sk_buff *skb;
-
-  /* Free queued skbuffs. */
-  while ((skb = skbuff_dequeue(ring)))
-    dev_kfree_skb(skb);
-
-  /* TX may have one pkt that is not on any queue. */
-  if (sc->tx_skb)
-    {
-    dev_kfree_skb(sc->tx_skb);
-    sc->tx_skb = NULL;
-    }
-
-  if (ring->first)
-    {
-    /* Unmap active DMA descriptors. */
-    while (ring->read != ring->write)
-      {
-      pci_unmap_single(sc->pcidev, ring->read->address1,
-       ring->read->length1 + ring->read->length2, PCI_DMA_BIDIRECTIONAL);
-      if (ring->read++ == ring->last) ring->read = ring->first;
-      }
-
-    /* Unmap and free memory for DMA descriptor array. */
-    pci_free_consistent(sc->pcidev, ring->size_descs, ring->first,
-     ring->dma_addr);
-    }
-  }
-
-/* Singly-linked tail-queues hold sk_buffs with active DMA.
- * skbuffs are linked through their sk_buff.next field.
- * Callers must hold sc->bottom_lock; not otherwise locked.
- */
-
-/* Put an skbuff on the tail of the descriptor ring queue. */
-static void  /* Linux version */
-skbuff_enqueue(struct desc_ring *ring, struct sk_buff *skb)
-  {
-  skb->next = NULL;
-  if (ring->tail == NULL)
-    ring->head = skb;
-  else
-    ring->tail->next = skb;
-  ring->tail = skb;
-  }
-
-/* Get an skbuff from the head of the descriptor ring queue. */
-static struct sk_buff*  /* Linux version */
-skbuff_dequeue(struct desc_ring *ring)
-  {
-  struct sk_buff *skb = ring->head;
-  if (skb)
-    if ((ring->head = skb->next) == NULL)
-      ring->tail = NULL;
-  return skb;
-  }
-
-static int  /* Linux version */
-rxintr_cleanup(softc_t *sc)
-  {
-  struct desc_ring *ring = &sc->rxring;
-  struct dma_desc *first_desc, *last_desc;
-  struct sk_buff *first_skb=NULL, *last_skb=NULL;
-  struct sk_buff *new_skb;
-  int pkt_len, desc_len;
-
-  /* Input packet flow control (livelock prevention): */
-  /* Give pkts to higher levels only if quota is > 0. */
-  if (sc->quota <= 0) return 0;
-
-  /* This looks complicated, but remember: packets up to 4032 */
-  /*  bytes long fit in one skbuff and use one DMA descriptor. */
-
-  first_desc = last_desc = ring->read;
-
-  /* ASSERTION: If there is a descriptor in the ring and the hardware has */
-  /*  finished with it, then that descriptor will have RX_FIRST_DESC set. */
-  if ((ring->read != ring->write) && /* descriptor ring not empty */
-     !(ring->read->status & TLP_DSTS_OWNER) && /* hardware done */
-     !(ring->read->status & TLP_DSTS_RX_FIRST_DESC)) /* should be set */
-    panic("%s: rxintr_cleanup: rx-first-descriptor not set.\n", NAME_UNIT);
-
-  /* First decide if a complete packet has arrived. */
-  /* Run down DMA descriptors looking for one marked "last". */
-  /* Bail out if an active descriptor is encountered. */
-  /* Accumulate most significant bits of packet length. */
-  pkt_len = 0;
-  for (;;)
-    {
-    if (last_desc == ring->write) return 0;  /* no more descs */
-    if (last_desc->status & TLP_DSTS_OWNER) return 0; /* still active */
-    if (last_desc->status & TLP_DSTS_RX_LAST_DESC) break; /* end of packet */
-    pkt_len += last_desc->length1 + last_desc->length2; /* entire desc filled */
-    if (last_desc++->control & TLP_DCTL_END_RING) last_desc = ring->first; /* ring wrap */
-    }
-  sc->netdev->last_rx = jiffies; /* timestamp arrival of new packet */
-
-  /* A complete packet has arrived; how long is it? */
-  /* H/w ref man shows RX pkt length as a 14-bit field. */
-  /* An experiment found that only the 12 LSBs work. */
-  if (((last_desc->status>>16)&0xFFF) == 0) pkt_len += 4096; /* carry-bit */
-  pkt_len = (pkt_len & 0xF000) + ((last_desc->status>>16) & 0x0FFF);
-  /* Subtract the CRC length unless doing so would underflow. */
-  if (pkt_len >= sc->config.crc_len) pkt_len -= sc->config.crc_len;
-
-  /* Run down DMA descriptors again doing the following:
-   *  1) put pkt info in hdr of first skbuff.
-   *  2) put additional skbuffs on frag_list.
-   *  3) set skbuff lengths.
-   */
-  first_desc = ring->read;
-  do
-    {
-    /* Read a DMA descriptor from the ring. */
-    last_desc = ring->read;
-    /* Advance the ring read pointer. */
-    if (ring->read++ == ring->last) ring->read = ring->first;
-
-    /* Dequeue the corresponding skbuff. */
-    new_skb = skbuff_dequeue(ring);
-    if (new_skb == NULL)
-      panic("%s: rxintr_cleanup: expected an skbuff\n", NAME_UNIT);
-
-    desc_len = last_desc->length1 + last_desc->length2;
-    /* Unmap kernel virtual addresss to PCI bus address. */
-    pci_unmap_single(sc->pcidev, last_desc->address1,
-     desc_len, PCI_DMA_FROMDEVICE);
-
-    /* Set skbuff length. */
-    skb_put(new_skb, (pkt_len >= desc_len) ? desc_len : pkt_len);
-    pkt_len -= new_skb->len;
-
-    /* 1) Put pkt info in hdr of first skbuff. */
-    if (last_desc == first_desc)
-      {
-      first_skb = new_skb;
-      if (sc->stack)
-        first_skb->protocol = sc->stack->type(sc, first_skb);
-      else
-        first_skb->protocol = htons(ETH_P_HDLC);
-      first_skb->pkt_type   = PACKET_HOST;
-      first_skb->mac.raw    = first_skb->data;
-      first_skb->ip_summed  = CHECKSUM_NONE;
-      first_skb->dev        = sc->netdev;
-      }
-    else /* 2) link skbuffs. */
-      {
-      /* Put this skbuff on the frag_list of the first skbuff. */
-      new_skb->next = NULL;
-      if (skb_shinfo(first_skb)->frag_list == NULL)
-        skb_shinfo(first_skb)->frag_list = new_skb;
-      else
-        /* ASSERT(last_skb != NULL); */
-        last_skb->next = new_skb;
-      /* 3) set skbuff lengths. */
-      first_skb->len      += new_skb->len;
-      first_skb->data_len += new_skb->len;
-      }
-    last_skb = new_skb;
-    } while ((last_desc->status & TLP_DSTS_RX_LAST_DESC)==0);
-
-  /* Decide whether to accept or to drop this packet. */
-  /* RxHDLC sets MIIERR for bad CRC, abort and partial byte at pkt end. */
-  if (!(last_desc->status & TLP_DSTS_RX_BAD) &&
-   (sc->status.link_state == STATE_UP) &&
-   (first_skb->len > 0))
-    {
-    /* Optimization: copy a small pkt into a small skbuff. */
-    if (first_skb->len <= COPY_BREAK)
-      if ((new_skb = skb_copy(first_skb, GFP_ATOMIC)))
-        {
-        dev_kfree_skb_any(first_skb);
-        first_skb = new_skb;
-	}
-
-    /* Include CRC and one flag byte in input byte count. */
-    sc->status.cntrs.ibytes += first_skb->len + sc->config.crc_len +1;
-    sc->status.cntrs.ipackets++;
-
-    /* Give this good packet to the network stacks. */
-    sc->quota--;
-# if NAPI
-    netif_receive_skb(first_skb);
-# else
-    if (netif_rx(first_skb) == NET_RX_DROP)
-      {
-      sc->status.cntrs.idrops++;
-      if (sc->config.debug && printk_ratelimit())
-        printk("%s: rxintr_cleanup: rx pkt dropped by kernel\n", NAME_UNIT);
-      }
-# endif
-    }
-  else if (sc->status.link_state != STATE_UP)
-    {
-    /* If the link is down, this packet is probably noise. */
-    dev_kfree_skb_any(first_skb);
-    sc->status.cntrs.idrops++;
-    if (sc->config.debug && printk_ratelimit())
-      printk("%s: rxintr_cleanup: rx pkt dropped: link down\n", NAME_UNIT);
-    }
-  else /* Log and drop this bad packet. */
-    {
-    if (sc->config.debug && printk_ratelimit())
-      printk("%s: RX bad pkt; len=%d %s%s%s%s\n",
-       NAME_UNIT, first_skb->len,
-       (last_desc->status & TLP_DSTS_RX_MII_ERR)  ? " miierr"  : "",
-       (last_desc->status & TLP_DSTS_RX_DRIBBLE)  ? " dribble" : "",
-       (last_desc->status & TLP_DSTS_RX_DESC_ERR) ? " descerr" : "",
-       (last_desc->status & TLP_DSTS_RX_OVERRUN)  ? " overrun" : "");
-    if (last_desc->status & TLP_DSTS_RX_OVERRUN)
-      sc->status.cntrs.fifo_over++;
-    else
-      sc->status.cntrs.ierrors++;
-    dev_kfree_skb_any(first_skb);
-    }
-
-  return 1; /* did something */
-  }
-
-/* Setup (prepare) to receive a packet. */
-/* Try to keep the RX descriptor ring full of empty buffers. */
-static int  /* Linux version */
-rxintr_setup(softc_t *sc)
-  {
-  struct desc_ring *ring = &sc->rxring;
-  struct dma_desc *desc;
-  struct sk_buff *skb;
-  u_int32_t dma_addr;
-
-  /* Ring is full if (wrap(write+1)==read) */
-  if (((ring->write == ring->last) ? ring->first : ring->write+1) == ring->read)
-    return 0;  /* ring is full; nothing to do */
-
-  /* Allocate an skbuff. */
-  if ((skb = dev_alloc_skb(MAX_DESC_LEN)) == NULL)
-    {
-    sc->status.cntrs.rxbuf++;
-    if (sc->config.debug && printk_ratelimit())
-      printk("%s: rxintr_setup: dev_alloc_skb() failed\n", NAME_UNIT);
-    return 0;
-    }
-  skb->dev = sc->netdev;
-
-  /* Queue the skbuff for later processing by rxintr_cleanup. */
-  skbuff_enqueue(ring, skb);
-
-  /* Write a DMA descriptor into the ring. */
-  /* Hardware will not see it until the OWNER bit is set. */
-  desc = ring->write;
-  /* Advance the ring write pointer. */
-  if (ring->write++ == ring->last) ring->write = ring->first;
-
-  /* Map kernel virt addr to PCI bus addr; invalidate cache. */
-  dma_addr = pci_map_single(sc->pcidev, skb->data,
-   MAX_DESC_LEN, PCI_DMA_FROMDEVICE);
-
-  /* Set up the DMA descriptor. */
-  desc->address1 = dma_addr;
-  desc->length1  = MAX_CHUNK_LEN;
-  desc->address2 = desc->address1 + desc->length1;
-  desc->length2  = MAX_CHUNK_LEN;
-
-  /* Before setting the OWNER bit, force descriptor writes to complete. */
-  wmb(); /* write memory barrier */
-
-  /* Commit the DMA descriptor to the hardware. */
-  desc->status = TLP_DSTS_OWNER;
-
-  /* Notify the receiver that there is another buffer available. */
-  WRITE_CSR(sc, TLP_RX_POLL, 1);
-
-  return 1; /* did something */
-  }
-
-/* Clean up after a packet has been transmitted. */
-/* Free the sk_buff and update the DMA descriptor ring. */
-static int  /* Linux version */
-txintr_cleanup(softc_t *sc)
-  {
-  struct desc_ring *ring = &sc->txring;
-  struct dma_desc *desc;
-
-  while ((ring->read != ring->write) && /* ring is not empty */
-        !(ring->read->status & TLP_DSTS_OWNER))
-    {
-    /* Read a DMA descriptor from the ring. */
-    desc = ring->read;
-    /* Advance the ring read pointer. */
-    if (ring->read++ == ring->last) ring->read = ring->first;
-
-    /* Unmap kernel virtual address to PCI bus address. */
-    pci_unmap_single(sc->pcidev, desc->address1,
-     desc->length1 + desc->length2, PCI_DMA_TODEVICE);
-
-    /* If this descriptor is the last segment of a packet, */
-    /*  then dequeue and free the corresponding skbuff. */
-    if (desc->control & TLP_DCTL_TX_LAST_SEG)
-      {
-      struct sk_buff *skb;
-
-      if ((skb = skbuff_dequeue(ring)) == NULL)
-        panic("%s: txintr_cleanup: expected an sk_buff\n", NAME_UNIT);
-
-      /* The only bad TX status is fifo underrun. */
-      if (desc->status & TLP_DSTS_TX_UNDERRUN)
-        {
-        if (sc->config.debug)
-          printk("%s: txintr_cleanup: tx fifo underrun\n", NAME_UNIT);
-        sc->status.cntrs.fifo_under++;
-        sc->status.cntrs.oerrors++;
-	}
-      else
-        {
-        /* Include CRC and one flag byte in output byte count. */
-        sc->status.cntrs.obytes += skb->len + sc->config.crc_len +1;
-        sc->status.cntrs.opackets++;
-	}
-
-      dev_kfree_skb_any(skb);
-      return 1;  /* did something */
-      }
-    }
-
-  return 0;
-  }
-
-/* Build DMA descriptors for a tranmit packet fragment, */
-/* Assertion: fragment is contiguous in physical memory. */
-static int  /* 0=success; 1=error */ /* linux version */
-txintr_setup_frag(softc_t *sc, char *data, int length)
-  {
-  struct desc_ring *ring = &sc->txring;
-  struct dma_desc *desc;
-  unsigned int desc_len;
-  u_int32_t dma_addr;
-
-  while (length > 0)
-    {
-    /* Ring is full if (wrap(write+1)==read) */
-    if (((ring->temp==ring->last) ? ring->first : ring->temp+1) == ring->read)
-      { /* Not enough DMA descriptors; try later. */
-      for (; ring->temp!=ring->write;
-       ring->temp = (ring->temp==ring->first)? ring->last : ring->temp-1)
-        pci_unmap_single(sc->pcidev, ring->temp->address1,
-         ring->temp->length1 + ring->temp->length2, PCI_DMA_FROMDEVICE);
-      sc->status.cntrs.txdma++;
-      return 1;
-      }
-
-    /* Provisionally, write a DMA descriptor into the ring. */
-    /* But do not change the REAL ring write pointer. */
-    /* Hardware will not see it until the OWNER bit is set. */
-    desc = ring->temp;
-    /* Advance the temporary ring write pointer. */
-    if (ring->temp++ == ring->last) ring->temp = ring->first;
-
-    /* Clear all control bits except the END_RING bit. */
-    desc->control &= TLP_DCTL_END_RING;
-    /* Do not pad short packets up to 64 bytes */
-    desc->control |= TLP_DCTL_TX_NO_PAD;
-    /* Use Tulip's CRC-32 generator, if appropriate. */
-    if (sc->config.crc_len != CFG_CRC_32)
-      desc->control |= TLP_DCTL_TX_NO_CRC;
-    /* Set the OWNER bit, except in the first descriptor. */
-    if (desc != ring->write)
-      desc->status = TLP_DSTS_OWNER;
-
-    desc_len = (length >= MAX_DESC_LEN) ? MAX_DESC_LEN : length;
-    /* Map kernel virt addr to PCI bus addr; flush cache. */
-    dma_addr = pci_map_single(sc->pcidev, data, desc_len, PCI_DMA_TODEVICE);
-    /* If it will fit in one chunk, do so, otherwise split it. */
-    if (desc_len <= MAX_CHUNK_LEN)
-      {
-      desc->address1 = dma_addr;
-      desc->length1  = desc_len;
-      desc->address2 = 0;
-      desc->length2  = 0;
-      }
-    else
-      {
-      desc->address1 = dma_addr;
-      desc->length1  = desc_len>>1;
-      desc->address2 = desc->address1 + desc->length1;
-      desc->length2  = desc_len>>1;
-      if (desc_len & 1) desc->length2++;
-      }
-
-    data   += desc_len;
-    length -= desc_len;
-    } /* while (length > 0) */
-
-  return 0; /* success */
-  }
-
-/* NB: this procedure is recursive! */
-static int  /* 0=success; 1=error */
-txintr_setup_skb(softc_t *sc, struct sk_buff *skb)
-  {
-  struct sk_buff *list;
-  int i;
-
-  /* First, handle the data in the skbuff itself. */
-  if (txintr_setup_frag(sc, skb->data, skb_headlen(skb)))
-    return 1;
-
-  /* Next, handle the VM pages in the Scatter/Gather list. */
-  if (skb_shinfo(skb)->nr_frags)
-    for (i=0; i<skb_shinfo(skb)->nr_frags; i++)
-      {
-      skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
-      if (txintr_setup_frag(sc, page_address(frag->page) +
-       frag->page_offset, frag->size))
-        return 1;
-      }
-
-  /* Finally, handle the skbuffs in the frag_list. */
-  if ((list = skb_shinfo(skb)->frag_list))
-    for (; list; list=list->next)
-      if (txintr_setup_skb(sc, list)) /* recursive! */
-        return 1;
-
-  return 0;
-  }
-
-/* Setup (prepare) to transmit a packet. */
-/* Select a packet, build DMA descriptors and give packet to hardware. */
-/* If DMA descriptors run out, abandon the attempt and return 0. */
-static int  /* Linux version */
-txintr_setup(softc_t *sc)
-  {
-  struct desc_ring *ring = &sc->txring;
-  struct dma_desc *first_desc, *last_desc;
-
-  /* Protect against half-up links: Do not transmit */
-  /*  if the receiver can not hear the far end. */
-  if (sc->status.link_state != STATE_UP) return 0;
-
-  /* Pick a packet to transmit. */
-  /* netdev_start() puts packets in sc->tx_skb. */
-  if (sc->tx_skb == NULL)
-    {
-    /* netdev_start() calls netif_stop_queue() sometimes. */
-    if (netif_queue_stopped(sc->netdev))
-      netif_wake_queue(sc->netdev);
-    return 0; /* no pkt to transmit */
-    }
-
-  /* Build DMA descriptors for an outgoing skbuff. */
-  ring->temp = ring->write; /* temporary ring write pointer */
-  if (txintr_setup_skb(sc, sc->tx_skb)) return 0;
-
-  /* Enqueue the skbuff; txintr_cleanup will free it. */
-  skbuff_enqueue(ring, sc->tx_skb);
-
-  /* The transmitter has room for another packet. */
-  sc->tx_skb = NULL;
-
-  /* Set first & last segment bits. */
-  /* last_desc is the desc BEFORE the one pointed to by ring->temp. */
-  first_desc = ring->write;
-  first_desc->control |= TLP_DCTL_TX_FIRST_SEG;
-  last_desc = (ring->temp==ring->first)? ring->last : ring->temp-1;
-   last_desc->control |= TLP_DCTL_TX_LAST_SEG;
-  /* Interrupt at end-of-transmission?  Why bother the poor computer! */
-/* last_desc->control |= TLP_DCTL_TX_INTERRUPT; */
-
-  /* Make sure the OWNER bit is not set in the next descriptor. */
-  /* The OWNER bit may have been set if a previous call aborted. */
-  ring->temp->status = 0;
-
-  /* Commit the DMA descriptors to the software. */
-  ring->write = ring->temp;
-
-  /* Before setting the OWNER bit, force descriptor writes to complete. */
-  wmb(); /* write memory barrier */
-
-  /* Commit the DMA descriptors to the hardware. */
-  first_desc->status = TLP_DSTS_OWNER;
-
-  /* Notify the transmitter that there is another packet to send. */
-  WRITE_CSR(sc, TLP_TX_POLL, 1);
-
-  sc->netdev->trans_start = jiffies;
-
-  return 1; /* did something */
-  }
-
-/* Linux kernels call this when a hardware interrupt happens. */
-static irqreturn_t  /* context: interrupt */
-linux_interrupt(int irq, void *arg, struct pt_regs *regs)
-  {
-  softc_t *sc = arg;
-
-  /* Cut losses early if this is not our interrupt. */
-  if ((READ_CSR(sc, TLP_STATUS) & TLP_INT_TXRX)==0)
-    return IRQ_NONE;
-
-# if NAPI
-
-  /* Disable card interrupts. */
-  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_DISABLE);
-
-  /* Add self to poll list. */
-  if (netif_rx_schedule_prep(sc->netdev))
-    __netif_rx_schedule(sc->netdev);
-  else
-    printk("%s: interrupt while on poll list\n", NAME_UNIT);
-
-# else /* not NAPI */
-
-  /* Process tx and rx pkts. */
-  lmc_interrupt(sc, sc->rxring,num_descs, 0);
-
-# endif /* NAPI */
-
-  return IRQ_HANDLED;
-  }
-
-#endif /* __linux__ */
 
 /* Open a line protocol. */
 /* context: kernel (boot) or process (syscall) */
@@ -6215,11 +4724,6 @@ attach_stack(softc_t *sc, struct config *config)
       break;
 #endif
 
-#if NETGRAPH
-    case STACK_NETGRAPH:
-      stack = &netgraph_stack;
-      break;
-#endif
 
     default:
       stack = NULL;
@@ -6873,191 +5377,7 @@ print_driver_info(void)
     }
   }
 
-#if defined(__FreeBSD__)
 
-/* This is the I/O configuration interface for FreeBSD */
-
-/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-/* context: kernel (boot) or process (syscall) */
-static int
-fbsd_probe(device_t dev)
-  {
-  u_int32_t cfid = pci_read_config(dev, TLP_CFID, 4);
-  u_int32_t csid = pci_read_config(dev, TLP_CSID, 4);
-
-  if (cfid != TLP_CFID_TULIP) return ENXIO;
-  switch (csid)
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-      device_set_desc(dev, HSSI_DESC);
-      break;
-    case CSID_LMC_T3:
-      device_set_desc(dev,   T3_DESC);
-      break;
-    case CSID_LMC_SSI:
-      device_set_desc(dev,  SSI_DESC);
-      break;
-    case CSID_LMC_T1E1:
-      device_set_desc(dev, T1E1_DESC);
-      break;
-    default:
-      return ENXIO;
-    }
-
-  print_driver_info();
-  return 0;
-  }
-
-/* FreeBSD bottom-half initialization. */
-/* context: kernel (boot) or process (syscall) */
-static int
-fbsd_attach(device_t dev)
-  {
-  softc_t *sc = device_get_softc(dev);
-  int error;
-
-  /* for READ/WRITE_PCI_CFG() */
-  sc->dev = dev;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case CSID_LMC_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case CSID_LMC_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case CSID_LMC_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    }
-
-  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
-# if IOREF_CSR
-  sc->csr_res_id   = TLP_CBIO;
-  sc->csr_res_type = SYS_RES_IOPORT;
-# else
-  sc->csr_res_id   = TLP_CBMA;
-  sc->csr_res_type = SYS_RES_MEMORY;
-# endif
-  sc->csr_res = bus_alloc_resource(dev, sc->csr_res_type, &sc->csr_res_id,
-   0, ~0, 1, RF_ACTIVE);
-  if (sc->csr_res == NULL)
-    {
-    printf("%s: bus_alloc_resource(csr) failed\n", NAME_UNIT);
-    return ENXIO;
-    }
-  sc->csr_tag    = rman_get_bustag(sc->csr_res);
-  sc->csr_handle = rman_get_bushandle(sc->csr_res); 
-
-  /* Allocate PCI interrupt resources for the card. */
-  sc->irq_res_id = 0;
-  sc->irq_res = bus_alloc_resource(dev, SYS_RES_IRQ, &sc->irq_res_id,
-   0, ~0, 1, RF_ACTIVE | RF_SHAREABLE);
-  if (sc->irq_res == NULL)
-    {
-    printf("%s: bus_alloc_resource(irq) failed\n", NAME_UNIT);
-    fbsd_detach(dev);
-    return ENXIO;
-    }
-  if ((error = bus_setup_intr(dev, sc->irq_res, INTR_TYPE_NET | INTR_MPSAFE,
-   bsd_interrupt, sc, &sc->irq_cookie)))
-    {
-    printf("%s: bus_setup_intr(): error %d\n", NAME_UNIT, error);
-    fbsd_detach(dev);
-    return error;
-    }
-
-  /* Initialize the top-half and bottom-half locks. */
-  mtx_init(&sc->top_lock, NAME_UNIT, "top-half lock", MTX_DEF);
-  sc->bottom_lock = 0;
-
-  /* Initialize the driver. */
-  if ((error = lmc_attach(sc))) fbsd_detach(dev);
-
-  return error;
-  }
-
-/* context: kernel (boot) or process (syscall) */
-static int
-fbsd_detach(device_t dev)
-  {
-  softc_t *sc = device_get_softc(dev);
-
-  /* Detach from the bus and the kernel. */
-  lmc_detach(sc);
-
-  /* Release resources. */
-  if (sc->irq_cookie)
-    bus_teardown_intr(dev, sc->irq_res, sc->irq_cookie);
-  if (sc->irq_res)
-    bus_release_resource(dev, SYS_RES_IRQ, sc->irq_res_id, sc->irq_res);
-  if (sc->csr_res)
-    bus_release_resource(dev, sc->csr_res_type, sc->csr_res_id, sc->csr_res);
-
-  /* Destroy locks. */
-  mtx_destroy(&sc->top_lock);
-
-  return 0;
-  }
-
-static void
-fbsd_shutdown(device_t dev)
-  {
-  tulip_detach(device_get_softc(dev));
-  }
-
-static void  /* Callout from bus_dmamap_load() */
-fbsd_dmamap_load(void *arg, bus_dma_segment_t *segs, int nsegs, int error)
-  {
-  struct desc_ring *ring = arg;
-  ring->nsegs = error ? 0 : nsegs;
-  ring->segs[0] = segs[0];
-  ring->segs[1] = segs[1];
-  }
-
-static device_method_t methods[] =
-  {
-  DEVMETHOD(device_probe,    fbsd_probe),
-  DEVMETHOD(device_attach,   fbsd_attach),
-  DEVMETHOD(device_detach,   fbsd_detach),
-  DEVMETHOD(device_shutdown, fbsd_shutdown),
-  /* This driver does not suspend and resume. */
-  { 0, 0 }
-  };
-
-static driver_t driver =
-  {
-  .name    = DEVICE_NAME,
-  .methods = methods,
-  .size    = sizeof(softc_t),
-  };
-
-static devclass_t devclass;
-
-DRIVER_MODULE(if_lmc, pci, driver, devclass, 0, 0);
-MODULE_VERSION(if_lmc, 2);
-MODULE_DEPEND(if_lmc, pci, 1, 1, 1);
-# if NETGRAPH
-MODULE_DEPEND(if_lmc, netgraph, NG_ABI_VERSION, NG_ABI_VERSION, NG_ABI_VERSION);
-# endif
-# if SPPP
-MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
-# endif
-
-#endif  /* __FreeBSD__ */
-
-#if defined(__NetBSD__)
 
 /* This is the I/O configuration interface for NetBSD. */
 
@@ -7201,602 +5521,6 @@ nbsd_detach(struct device *self, int flags)
 CFATTACH_DECL(lmc, sizeof(softc_t),		/* lmc_ca */
  nbsd_match, nbsd_attach, nbsd_detach, NULL);
 
-#endif  /* __NetBSD__ */
 
-#if defined(__OpenBSD__)
 
-/* This is the I/O configuration interface for OpenBSD. */
 
-/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-/* context: kernel (boot) or process (syscall) */
-static int
-obsd_match(struct device *parent, void *match, void *aux)
-  {
-  struct pci_attach_args *pa = aux;
-  u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
-  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
-
-  if (cfid != TLP_CFID_TULIP) return 0;
-  switch (csid)
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-    case CSID_LMC_T3:
-    case CSID_LMC_SSI:
-    case CSID_LMC_T1E1:
-      print_driver_info();
-      return 100; /* match better than other 21140 drivers */
-    default:
-      return 0;
-    }
-  }
-
-/* OpenBSD bottom-half initialization. */
-/* context: kernel (boot) or process (syscall) */
-static void
-obsd_attach(struct device *parent, struct device *self, void *aux)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-  struct pci_attach_args *pa = aux;
-  const char *intrstr;
-  bus_addr_t csr_addr;
-  int error;
-
-  /* for READ/WRITE_PCI_CFG() */
-  sc->pa_pc   = pa->pa_pc;
-  sc->pa_tag  = pa->pa_tag;
-  sc->pa_dmat = pa->pa_dmat;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case CSID_LMC_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case CSID_LMC_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case CSID_LMC_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default:
-      return;
-    }
-
-  /* Allocate PCI resources to access the Tulip chip CSRs. */
-# if IOREF_CSR
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBIO) & -2;
-  sc->csr_tag = pa->pa_iot;	/* bus_space tag for IO refs */
-# else
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBMA);
-  sc->csr_tag = pa->pa_memt;	/* bus_space tag for MEM refs */
-# endif
-  if ((error = bus_space_map(sc->csr_tag, csr_addr,
-   TLP_CSR_SIZE, 0, &sc->csr_handle)))
-    {
-    printf("%s: bus_space_map(): error %d\n", NAME_UNIT, error);
-    return;
-    }
-
-  /* Allocate PCI interrupt resources. */
-  if (pci_intr_map(pa, &sc->intr_handle))
-    {
-    printf("%s: pci_intr_map() failed\n", NAME_UNIT);
-    obsd_detach(self, 0);
-    return;
-    }
-  if ((sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
-   IPL_NET, bsd_interrupt, sc, device_xname(self))) == NULL)
-    {
-    printf("%s: pci_intr_establish() failed\n", NAME_UNIT);
-    obsd_detach(self, 0);
-    return;
-    }
-  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
-  printf(" %s: %s\n", intrstr, sc->dev_desc);
-
-  /* Install a shutdown hook. */
-  if ((sc->sdh_cookie = shutdownhook_establish(tulip_detach, sc)) == NULL)
-    {
-    printf("%s: shutdown_hook_establish() failed\n", NAME_UNIT);
-    obsd_detach(self, 0);
-    return;
-    }
-
-  /* Initialize the top-half and bottom-half locks. */
-  __cpu_simple_lock_init(&sc->top_lock);
-  __cpu_simple_lock_init(&sc->bottom_lock);
-
-  /* Initialize the driver. */
-  if ((error = lmc_attach(sc))) obsd_detach(self, 0);
-  }
-
-/* context: kernel (boot) or process (syscall) */
-static int
-obsd_detach(struct device *self, int flags)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-
-  /* Detach from the bus and the kernel. */
-  lmc_detach(sc);
-
-  /* Release resources. */
-  if (sc->sdh_cookie)
-    shutdownhook_disestablish(sc->sdh_cookie);
-  if (sc->irq_cookie)
-    pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
-  if (sc->csr_handle)
-    bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
-
-  return 0;
-  }
-
-struct cfattach lmc_ca =
-  {
-  .ca_devsize	= sizeof(softc_t),
-  .ca_match	= obsd_match,
-  .ca_attach	= obsd_attach,
-  .ca_detach	= obsd_detach,
-  .ca_activate	= NULL,
-  };
-
-# if defined(_MODULE)
-
-struct cfdriver lmc_cd =
-  {
-  .cd_name	= DEVICE_NAME,
-  .cd_devs	= NULL,
-  .cd_class	= DV_IFNET,
-  .cd_indirect	= 0,
-  .cd_ndevs	= 0,
-  };
-
-/* cfdata is declared static, unseen outside this module. */
-/* It is used for LKM; config builds its own in ioconf.c. */
-static struct cfdata lmc_cfdata =
-  {
-  .cf_attach	= &lmc_ca,
-  .cf_driver	= &lmc_cd,
-  .cf_unit	= 0,
-  .cf_fstate	= FSTATE_STAR,
-  };
-
-static struct lkm_any _module =
-  {
-  .lkm_name	= "if_"DEVICE_NAME,
-  .lkm_type	= LM_MISC,
-  .lkm_offset	= 0,
-  .lkm_ver	= LKM_VERSION,
-  };
-
-/* From /sys/dev/pci/pci.c (no public prototype). */
-int pciprint(void *, const char *);
-
-/* struct cfdriver for pci bus; lmc cards are all pci devices. */
-extern struct cfdriver pci_cd;
-
-/* XXX This has only been tested on the i386 architecture.  */
-/* XXX To do this right, need struct pcibus_attach_args.    */
-/* XXX struct pcibus_attach_args exists only while booting. */
-/* LKM finds this by appending "_lkmentry" to filename "if_lmc"(.o). */
-int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-  {
-  int i, error = 0;
-
-  if (ver != LKM_VERSION) return EINVAL;
-  switch (cmd)
-    {
-    case LKM_E_LOAD:
-      {
-      lkmtp->private.lkm_any = &_module;
-      for (i=0; i<pci_cd.cd_ndevs; i++)
-        {  /* for each pci bus... */
-        int devnum, maxdevs;
-        struct pci_attach_args pa;
-        device_t parent = device_lookup(&pci_cd, i);
-        /* This is ugly: only way to get pci_chipset_tag. */
-        struct pci_sc { struct device dev; pci_chipset_tag_t pc; };
-        struct pci_sc *pci_sc = device_lookup_private(&pci_cd, i);
-
-        if (parent == NULL) continue; /* no pci bus */
-        pa.pa_pc   = pci_sc->pc;
-        pa.pa_iot  = 0;	/* XXX arch_BUS_SPACE_IO  */
-        pa.pa_memt = 1;	/* XXX arch_BUS_SPACE_MEM; */
-        pa.pa_dmat = &pci_bus_dma_tag;
-        pa.pa_bus  = parent->dv_unit;
-        pa.pa_function = 0; /* DEC-21140A has function 0 only */
-        maxdevs = pci_bus_maxdevs(pa.pa_pc, pa.pa_bus);
-        for (devnum=0; devnum<maxdevs; devnum++)
-          { /* for each pci device... */
-          pcireg_t intr;
-          pa.pa_device = devnum;
-          pa.pa_tag   = pci_make_tag (pa.pa_pc, pa.pa_bus, pa.pa_device, 0);
-          pa.pa_id    = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_ID_REG);
-          if (PCI_VENDOR(pa.pa_id) == 0xFFFF) continue;
-          if (PCI_VENDOR(pa.pa_id) == 0) continue;
-          pa.pa_class = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_CLASS_REG);
-          /* XXX i386 only; need struct pcibus_attach_args to swizzle */
-          pa.pa_intrswiz = 0;
-          pa.pa_intrtag = pa.pa_tag;
-          intr = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_INTERRUPT_REG);
-          pa.pa_intrpin = ((PCI_INTERRUPT_PIN(intr) -1) % 4) +1;
-          pa.pa_intrline =  PCI_INTERRUPT_LINE(intr);
-          if (obsd_match(parent, &lmc_cfdata, &pa))
-            config_attach(parent, &lmc_cfdata, &pa, pciprint);
-          /* config_attach does not return on failure; it calls panic. */
-          }
-	}
-      break;
-      }
-    case LKM_E_UNLOAD:
-      {
-      for (i=lmc_cd.cd_ndevs-1; i>=0; i--)
-        {
-        device_t dev = device_lookup(&lmc_cd, i);
-        if (dev == NULL) continue;
-        if ((error = config_detach(dev, 0)))
-          printf("%s: config_detach(): error %d\n",
-           device_xname(dev), error);
-        }
-      break;
-      }
-    case LKM_E_STAT:
-      break;
-    }
-
-  return error;
-  }
-
-# endif /* _MODULE */
-
-#endif  /* __OpenBSD__ */
-
-#if defined(__bsdi__)
-
-/* This is the I/O configuration interface for BSD/OS. */
-
-/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-/* context: kernel (boot) or process (syscall) */
-static int
-bsdi_match(pci_devaddr_t *pa)
-  {
-  u_int32_t cfid = pci_inl(pa, TLP_CFID);
-  u_int32_t csid = pci_inl(pa, TLP_CSID);
-
-  if (cfid != TLP_CFID_TULIP) return 0;
-  switch (csid)
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-    case CSID_LMC_T3:
-    case CSID_LMC_SSI:
-    case CSID_LMC_T1E1:
-      return 1;
-    default:
-      return 0;
-    }
-  }
-
-static int  /* context: kernel (boot) */
-bsdi_probe(struct device *parent, cfdata_t cf, void *aux)
-  {
-  struct isa_attach_args *ia = aux;
-  pci_devaddr_t *pa = NULL;
-  pci_devres_t res;
-
-  /* This must be a PCI bus. */
-  if (ia->ia_bustype != BUS_PCI) return 0;
-
-  /* Scan PCI bus for our cards. */
-  if ((pa = pci_scan(bsdi_match)) == NULL) return 0;
-  print_driver_info(); /* found a card */
-
-  /* Scan config space for IO and MEM base registers and IRQ info. */
-  pci_getres(pa, &res, 1, ia);
-
-  /* Pass matching PCI addr (bus+device+function) in ia_aux. */
-  ia->ia_aux = (void *)pa;
-
-  return 1;
-  }
-
-/* BSD/OS bottom-half initialization. */
-static void  /* context: kernel (boot) */
-bsdi_attach(struct device *parent, struct device *self, void *aux)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-  struct isa_attach_args *ia = aux;
-  pci_devaddr_t *pa = ia->ia_aux;
-  int error;
-
-  /* for READ/WRITE_PCI_CFG() */
-  sc->cfgbase = *pa;  /* bus+device+function */
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case CSID_LMC_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case CSID_LMC_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case CSID_LMC_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default:
-      return;
-    }
-  aprint_naive(": %s\n", sc->dev_desc);
-  aprint_normal(": %s\n", sc->dev_desc);
-
-  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
-  sc->csr_iobase  = ia->ia_iobase;
-  sc->csr_membase = (u_int32_t *)mapphys((vm_offset_t)ia->ia_maddr, TLP_CSR_SIZE);
-
-  /* Attach to the PCI bus. */
-  isa_establish(&sc->id, &sc->dev);
-
-  /* Allocate PCI interrupt resources for the card. */
-  sc->ih.ih_fun = bsd_interrupt;
-  sc->ih.ih_arg = sc;
-  intr_establish(ia->ia_irq, &sc->ih, DV_NET);
-
-  /* Install a shutdown hook. */
-  sc->ats.func = tulip_detach;
-  sc->ats.arg = sc;
-  atshutdown(&sc->ats, ATSH_ADD);
-
-  /* Initialize the top-half and bottom-half locks. */
-  simple_lock_init(&sc->top_lock);
-  simple_lock_init(&sc->bottom_lock);
-
-  /* Initialize the driver. */
-  if ((error = lmc_attach(sc))) lmc_detach(sc);
-  }
-
-struct cfdriver lmccd =
-  {
-  .cd_devs	= NULL,
-  .cd_name	= DEVICE_NAME,
-  .cd_match	= bsdi_probe,
-  .cd_attach	= bsdi_attach,
-  .cd_class	= DV_IFNET,
-  .cd_devsize	= sizeof(softc_t),
-  };
-#endif  /* __bsdi__ */
-
-#if defined(__linux__)
-
-/* This is the I/O configuration interface for Linux. */
-
-/* This pci_driver method is called during boot or module-load. */
-/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-/* context: kernel (boot) or process (syscall) */
-static int __init
-linux_probe(struct pci_dev *pcidev, const struct pci_device_id *id)
-  {
-  u_int32_t cfid;
-  u_int32_t csid;
-
-  pci_read_config_dword(pcidev, TLP_CFID, &cfid);
-  pci_read_config_dword(pcidev, TLP_CSID, &csid);
-
-  if (cfid != TLP_CFID_TULIP) return -ENXIO;
-  switch (csid)
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-    case CSID_LMC_T3:
-    case CSID_LMC_SSI:
-    case CSID_LMC_T1E1:
-      print_driver_info();
-      break;
-    default:
-      return -ENXIO;
-    }
-
-  /* Factor this task the way BSDs do. */
-  return linux_attach(pcidev);
-  }
-
-/* Linux bottom-half initialization. */
-/* context: kernel (boot) or process (syscall) */
-static int __init
-linux_attach(struct pci_dev *pcidev)
-  {
-  softc_t *sc;
-  int error;
-
-  /* Allocate the software context, softc, also known as sc. */
-  if ((sc = kzalloc(sizeof(softc_t), GFP_KERNEL)) == NULL)
-    {
-    printk("%s: kzalloc() failed\n", DEVICE_NAME);
-    return -ENOMEM;
-    }
-  /* for linux_remove() */
-  pci_set_drvdata(pcidev, sc);
-
-  /* for READ/WRITE_PCI_CFG() */
-  sc->pcidev = pcidev;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case CSID_LMC_HSSI:
-    case CSID_LMC_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case CSID_LMC_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case CSID_LMC_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case CSID_LMC_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default: /* should not happen! */
-      kfree(sc);
-      return -ENXIO;
-    }
-
-  /* Declare that these cards use 32-bit single-address PCI cycles. */
-  if ((error = pci_set_dma_mask(pcidev, DMA_32BIT_MASK)))
-    {
-    printk("%s: pci_set_dma_mask(): error %d\n", DEVICE_NAME, error);
-    linux_remove(pcidev);
-    return error;
-    }
-  pci_set_consistent_dma_mask(pcidev, DMA_32BIT_MASK); /* can not fail */
-
-  /* Allocate PCI resources to access the Tulip chip CSRs. */
-  /* Since PCI resources will not change, request them now. */
-  if ((error = pci_request_regions(pcidev, DEVICE_NAME)))
-    {
-    printk("%s: pci_request_regions(): error %d\n", DEVICE_NAME, error);
-    linux_remove(pcidev);
-    return error;
-    }
-  if ((sc->csr_cookie = pci_iomap(pcidev, (IOREF_CSR ? 0:1),
-   TLP_CSR_SIZE)) == NULL)
-    {
-    printk("%s: pci_iomap() failed\n", DEVICE_NAME);
-    linux_remove(pcidev);
-    return -EFAULT;
-    }
-
-  /* Set cfcs.master, enabling busmaster DMA; check bus latency value. */
-  pci_set_master(pcidev);
-  /* Set cfcs.io and cfcs.mem; set pcidev->irq based on cfit.int. */
-  if ((error = pci_enable_device(pcidev)))
-    {
-    printk("%s: pci_enable_device(): error %d\n", DEVICE_NAME, error);
-    linux_remove(pcidev);
-    return error;
-    }
-
-  /* Allocate PCI interrupt resources for the card. */
-  /* Since the interrupt is shared, request it now. */
-  if ((error = request_irq(pcidev->irq, &linux_interrupt, SA_SHIRQ,
-   DEVICE_NAME, sc)))
-    {
-    printk("%s: request_irq(): error %d\n", DEVICE_NAME, error);
-    linux_remove(pcidev);
-    return error;
-    }
-
-  /* Initialize the top-half and bottom-half locks. */
-  /* Top_lock must be initialized before lmc_attach() is called. */
-  init_MUTEX(&sc->top_lock);
-  sc->bottom_lock = 0;
-
-  /* Install module parameter. */
-  sc->config.debug = debug;
-
-  /* Initialize the driver. */
-  /* The NAME_UNIT macro works after lmc_attach. */
-  /* Use DEVICE_NAME before this. */
-  if ((error = lmc_attach(sc)))
-    linux_remove(pcidev);
-  else
-    {
-    /* Describe the hardware. */
-    printk("%s: <%s> at pci %s irq %d\n", NAME_UNIT,
-     sc->dev_desc, pci_name(pcidev), pcidev->irq);
-    if (BOOT_VERBOSE)
-      printk("%s: io 0x%04lx/9 mem 0x%08lx/25 rom 0x%08lx/14\n", NAME_UNIT,
-       pci_resource_start(pcidev, 0), pci_resource_start(pcidev, 1),
-       pci_resource_start(pcidev, 6));
-    }
-
-  return error;
-  }
-
-/* This pci_driver method is called during shutdown or module-unload. */
-/* context: kernel (boot) or process (syscall) */
-static void __exit  /* This is detach() in BSD parlance. */
-linux_remove(struct pci_dev *pcidev)
-  {
-  softc_t *sc = pci_get_drvdata(pcidev);
-
-  /* Detach from the bus and the kernel. */
-  lmc_detach(sc);
-
-  /* Release resources. */
-  free_irq(pcidev->irq, sc);
-  if (sc->csr_cookie)
-    pci_iounmap(pcidev, sc->csr_cookie);
-  if (pci_resource_start(pcidev, 0))
-    pci_release_regions(pcidev);
-  pci_disable_device(pcidev);
-
-  kfree(sc);
-  }
-
-static u_int32_t
-READ_PCI_CFG(softc_t *sc, u_int32_t addr)
-  {
-  u_int32_t data;
-  pci_read_config_dword(sc->pcidev, addr, &data);
-  return data;
-  }
-
-/* This pci driver knows how to drive these devices: */
-static __initdata struct pci_device_id pci_device_id_tbl[] =
-  {
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-    { 0x1011, 0x0009, 0x1376, PCI_ANY_ID, 0, 0, 0 },
-    { 0, }
-  };
-MODULE_DEVICE_TABLE(pci, pci_device_id_tbl);
-
-static struct pci_driver pci_driver =
-  {
-  .name	    = DEVICE_NAME,
-  .id_table = pci_device_id_tbl,
-  .probe    = linux_probe,
-  .remove   = __devexit_p(linux_remove),
-  /* This driver does not suspend and resume. */
-  };
-
-/* This ultimately calls our pci_driver.probe() method. */
-static int  __init linux_modload(void)
-  { return pci_module_init(&pci_driver); }
-module_init(linux_modload);
-
-/* This ultimately calls our pci_driver.remove() method. */
-static void __exit linux_modunload(void)
-  { pci_unregister_driver(&pci_driver); }
-module_exit(linux_modunload);
-
-module_param(debug, int, 0);
-MODULE_PARM_DESC(debug, "Extra messages during operation");
-module_param(verbose, int, 0);
-MODULE_PARM_DESC(verbose, "Extra messages during startup");
-
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_DESCRIPTION("Device driver for LMC Wide-Area Network cards");
-MODULE_AUTHOR("David Boggs <boggs@boggs.palo-alto.ca.us>");
-
-#endif /* __linux__ */
