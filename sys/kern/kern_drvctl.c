@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.28 2009/04/30 20:39:08 dyoung Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.28 2009/04/30 20:39:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,13 +180,13 @@ pmdevbyname(u_long cmd, struct devpmargs *a)
 
 	switch (cmd) {
 	case DRVSUSPENDDEV:
-		return pmf_device_recursive_suspend(d, PMF_F_NONE) ? 0 : EBUSY;
+		return pmf_device_recursive_suspend(d, PMF_Q_DRVCTL) ? 0 : EBUSY;
 	case DRVRESUMEDEV:
 		if (a->flags & DEVPM_F_SUBTREE) {
-			return pmf_device_resume_subtree(d, PMF_F_NONE)
+			return pmf_device_subtree_resume(d, PMF_Q_DRVCTL)
 			    ? 0 : EBUSY;
 		} else {
-			return pmf_device_recursive_resume(d, PMF_F_NONE)
+			return pmf_device_recursive_resume(d, PMF_Q_DRVCTL)
 			    ? 0 : EBUSY;
 		}
 	default:

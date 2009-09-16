@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.244 2009/04/17 20:04:35 dyoung Exp $	*/
+/*	$NetBSD: audio.c,v 1.245 2009/09/16 16:34:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.244 2009/04/17 20:04:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.245 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3998,11 +3998,11 @@ audio_idle(void *arg)
 	sc->sc_idle = true;
 
 	/* XXX joerg Make pmf_device_suspend handle children? */
-	if (!pmf_device_suspend(dv, PMF_F_SELF))
+	if (!pmf_device_suspend(dv, PMF_Q_SELF))
 		return;
 
-	if (!pmf_device_suspend(sc->sc_dev, PMF_F_SELF))
-		pmf_device_resume(dv, PMF_F_SELF);
+	if (!pmf_device_suspend(sc->sc_dev, PMF_Q_SELF))
+		pmf_device_resume(dv, PMF_Q_SELF);
 }
 
 static void
@@ -4018,8 +4018,8 @@ audio_activity(device_t dv, devactive_t type)
 	sc->sc_idle = false;
 	if (!device_is_active(dv)) {
 		/* XXX joerg How to deal with a failing resume... */
-		pmf_device_resume(sc->sc_dev, PMF_F_SELF);
-		pmf_device_resume(dv, PMF_F_SELF);
+		pmf_device_resume(sc->sc_dev, PMF_Q_SELF);
+		pmf_device_resume(dv, PMF_Q_SELF);
 	}
 }
 #endif

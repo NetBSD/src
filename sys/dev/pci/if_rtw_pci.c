@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.14 2009/09/05 14:13:50 tsutsui Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.15 2009/09/16 16:34:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.14 2009/09/05 14:13:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.15 2009/09/16 16:34:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ rtw_pci_resume(device_t self PMF_FN_ARGS)
 		return false;
 	}
 
-	return rtw_resume(self, flags);
+	return rtw_resume(self PMF_FN_CALL);
 }
 
 static bool
@@ -157,7 +157,7 @@ rtw_pci_suspend(device_t self PMF_FN_ARGS)
 {
 	struct rtw_pci_softc *psc = device_private(self);
 
-	if (!rtw_suspend(self, flags))
+	if (!rtw_suspend(self PMF_FN_CALL))
 		return false;
 
 	/* Unhook the interrupt handler. */
@@ -256,7 +256,7 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Power down the socket.
 		 */
-		pmf_device_suspend_self(self);
+		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 	} else
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
