@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.6 2007/12/04 10:33:11 dyoung Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.6.16.1 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.6 2007/12/04 10:33:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.6.16.1 2009/09/16 13:38:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -508,7 +508,7 @@ in_domifattach_sysctl(struct in_ifsysctl *isc)
 	const struct sysctlnode *rnode;
 
 	if ((rc = sysctl_createv(&isc->isc_log, 0, NULL, &rnode,
-	                         CTLFLAG_READWRITE, CTLTYPE_NODE,
+	                         CTLFLAG_READONLY, CTLTYPE_NODE,
 				 "interfaces", NULL,
 				 NULL, 0, NULL, 0,
 				 CTL_NET, PF_INET, IPPROTO_IP, CTL_CREATE,
@@ -518,7 +518,7 @@ in_domifattach_sysctl(struct in_ifsysctl *isc)
 		return NULL;
 	}
 	if ((rc = sysctl_createv(&isc->isc_log, 0, &rnode, &rnode,
-	                         CTLFLAG_READWRITE, CTLTYPE_NODE,
+	                         CTLFLAG_READONLY, CTLTYPE_NODE,
 				 isc->isc_ifp->if_xname,
 				 SYSCTL_DESCR("interface ip options"),
 				 NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0) {

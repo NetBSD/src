@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.6.18.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.6.18.2 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.6.18.1 2009/05/04 08:14:17 yamt Exp $
+ * $Id: rfcomm.h,v 1.6.18.2 2009/09/16 13:38:02 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -401,6 +401,7 @@ void rfcomm_session_free(struct rfcomm_session *);
 int rfcomm_session_send_frame(struct rfcomm_session *, int, int);
 int rfcomm_session_send_uih(struct rfcomm_session *, struct rfcomm_dlc *, int, struct mbuf *);
 int rfcomm_session_send_mcc(struct rfcomm_session *, int, uint8_t, void *, int);
+void rfcomm_init(void);
 
 /* rfcomm_socket.c */
 int rfcomm_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);

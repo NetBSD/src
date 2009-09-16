@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.125.4.2 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.125.4.3 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.125.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.125.4.3 2009/09/16 13:37:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -192,7 +192,7 @@ int	epioctl(struct ifnet *, u_long, void *);
 void	epstart(struct ifnet *);
 void	epwatchdog(struct ifnet *);
 void	epreset(struct ep_softc *);
-static void epshutdown(void *);
+static bool epshutdown(device_t, int);
 void	epread(struct ep_softc *);
 struct mbuf *epget(struct ep_softc *, int);
 void	epmbuffill(void *);
@@ -501,7 +501,11 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
 	/*  Establish callback to reset card when we reboot. */
-	sc->sd_hook = shutdownhook_establish(epshutdown, sc);
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, epshutdown))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
@@ -1798,10 +1802,10 @@ epstop(struct ifnet *ifp, int disable)
 /*
  * Before reboots, reset card completely.
  */
-static void
-epshutdown(void *arg)
+static bool
+epshutdown(device_t self, int howto)
 {
-	struct ep_softc *sc = arg;
+	struct ep_softc *sc = device_private(self);
 	int s = splnet();
 
 	if (sc->enabled) {
@@ -1811,6 +1815,8 @@ epshutdown(void *arg)
 		sc->enabled = 0;
 	}
 	splx(s);
+
+	return true;
 }
 
 /*
@@ -1996,24 +2002,14 @@ int
 ep_activate(device_t self, enum devact act)
 {
 	struct ep_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int error = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->ep_flags & ELINK_FLAGS_MII)
-			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
-		if_deactivate(ifp);
-		break;
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }
 
 /*
@@ -2050,7 +2046,7 @@ ep_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->sd_hook);
+	pmf_device_deregister(sc->sc_dev);
 
 	return (0);
 }

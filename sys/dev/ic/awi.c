@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.78.4.3 2009/05/16 10:41:22 yamt Exp $	*/
+/*	$NetBSD: awi.c,v 1.78.4.4 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,20 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.78.4.3 2009/05/16 10:41:22 yamt Exp $");
-#endif
-#ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
-#endif
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.78.4.4 2009/09/16 13:37:47 yamt Exp $");
 
 #include "opt_inet.h"
-#ifdef __NetBSD__
 #include "bpfilter.h"
-#endif
-#ifdef __FreeBSD__
-#define	NBPFILTER	1
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,22 +93,11 @@ __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $"
 #include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/endian.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
-#ifdef __NetBSD__
 #include <sys/device.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __NetBSD__
 #include <net/if_ether.h>
-#endif
-#ifdef __FreeBSD__
-#include <net/ethernet.h>
-#include <net/if_arp.h>
-#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
 
@@ -132,22 +111,11 @@ __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $"
 #include <sys/cpu.h>
 #include <sys/bus.h>
 
-#ifdef __NetBSD__
 #include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
-#endif
-#ifdef __FreeBSD__
-#include <dev/awi/am79c930reg.h>
-#include <dev/awi/am79c930var.h>
-#include <dev/awi/awireg.h>
-#include <dev/awi/awivar.h>
-#endif
 
-#ifdef __FreeBSD__
-static void awi_init0(void *);
-#endif
 static int  awi_init(struct ifnet *);
 static void awi_stop(struct ifnet *, int);
 static void awi_start(struct ifnet *);
@@ -253,18 +221,10 @@ awi_attach(struct awi_softc *sc)
 	ifp->if_ioctl = awi_ioctl;
 	ifp->if_start = awi_start;
 	ifp->if_watchdog = awi_watchdog;
-#ifdef __NetBSD__
 	ifp->if_init = awi_init;
 	ifp->if_stop = awi_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
-#endif
-#ifdef __FreeBSD__
-	ifp->if_init = awi_init0;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
-	if_initname(ifp, device_get_name(sc->sc_dev),
-	    device_get_unit(sc->sc_dev));
-#endif
 
 	ic->ic_ifp = ifp;
 	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_IBSS | IEEE80211_C_HOSTAP;
@@ -288,9 +248,7 @@ awi_attach(struct awi_softc *sc)
 	printf("%s: 802.11 address: %s\n", ifp->if_xname,
 	    ether_sprintf(ic->ic_myaddr));
 
-#ifdef __NetBSD__
 	if_attach(ifp);
-#endif
 	ieee80211_ifattach(ic);
 
 	sc->sc_newstate = ic->ic_newstate;
@@ -318,7 +276,6 @@ awi_attach(struct awi_softc *sc)
 	}
 #undef	ADD
 
-#ifdef __NetBSD__
 	if ((sc->sc_sdhook = shutdownhook_establish(awi_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    ifp->if_xname);
@@ -326,7 +283,6 @@ awi_attach(struct awi_softc *sc)
 	     powerhook_establish(ifp->if_xname, awi_power, sc)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    ifp->if_xname);
-#endif
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -356,20 +312,17 @@ awi_detach(struct awi_softc *sc)
 	}
 	sc->sc_attached = 0;
 	ieee80211_ifdetach(ic);
-#ifdef __NetBSD__
 	if_detach(ifp);
 	shutdownhook_disestablish(sc->sc_sdhook);
 	powerhook_disestablish(sc->sc_powerhook);
-#endif
 	splx(s);
 	return 0;
 }
 
-#ifdef __NetBSD__
 int
 awi_activate(device_t self, enum devact act)
 {
-	struct awi_softc *sc = (struct awi_softc *)self;
+	struct awi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	int s, error = 0;
 
@@ -418,7 +371,6 @@ awi_power(int why, void *arg)
 	sc->sc_cansleep = ocansleep;
 	splx(s);
 }
-#endif /* __NetBSD__ */
 
 void
 awi_shutdown(void *arg)
@@ -504,15 +456,6 @@ awi_intr(void *arg)
 	return handled;
 }
 
-#ifdef __FreeBSD__
-static void
-awi_init0(void *arg)
-{
-	struct awi_softc *sc = arg;
-
-	(void)awi_init(&sc->sc_if);
-}
-#endif
 
 static int
 awi_init(struct ifnet *ifp)
@@ -923,11 +866,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#ifdef __FreeBSD__
-		error = ENETRESET;	/* XXX */
-#else
 		error = ether_ioctl(ifp, cmd, data);
-#endif
 		if (error == ENETRESET) {
 			/* do not rescan */
 			if (ifp->if_flags & IFF_RUNNING)
@@ -1080,12 +1019,8 @@ awi_mode_init(struct awi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	int n, error;
-#ifdef __FreeBSD__
-	struct ifmultiaddr *ifma;
-#else
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 
 	/* reinitialize muticast filter */
 	n = 0;
@@ -1096,19 +1031,6 @@ awi_mode_init(struct awi_softc *sc)
 		goto set_mib;
 	}
 	sc->sc_mib_mac.aPromiscuous_Enable = 0;
-#ifdef __FreeBSD__
-	if (ifp->if_amcount != 0)
-		goto set_mib;
-	TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-		if (n == AWI_GROUP_ADDR_SIZE)
-			goto set_mib;
-		IEEE80211_ADDR_COPY(sc->sc_mib_addr.aGroup_Addresses[n],
-		    CLLADDR(satocsdl(ifma->ifma_addr)));
-		n++;
-	}
-#else
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
 		if (n == AWI_GROUP_ADDR_SIZE ||
@@ -1119,7 +1041,6 @@ awi_mode_init(struct awi_softc *sc)
 		n++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
 	for (; n < AWI_GROUP_ADDR_SIZE; n++)
 		memset(sc->sc_mib_addr.aGroup_Addresses[n], 0,
 		    IEEE80211_ADDR_LEN);
@@ -1741,11 +1662,7 @@ awi_lock(struct awi_softc *sc)
 {
 	int error = 0;
 
-#ifdef __NetBSD__
 	if (curlwp == NULL)
-#else
-	if (curproc == NULL)
-#endif
 	{
 		/*
 		 * XXX

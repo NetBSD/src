@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.4.44.1 2009/05/04 08:14:34 yamt Exp $ */
+/* $NetBSD: suser.h,v 1.4.44.2 2009/09/16 13:38:06 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -49,6 +49,8 @@ int secmodel_bsd44_suser_network_cb(kauth_cred_t, kauth_action_t, void *,
 int secmodel_bsd44_suser_machdep_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 int secmodel_bsd44_suser_device_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
+int secmodel_bsd44_suser_vnode_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
 #endif /* !_SECMODEL_BSD44_SUSER_H_ */

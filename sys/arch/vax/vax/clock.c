@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.10.1 2009/05/04 08:12:04 yamt Exp $	 */
+/*	$NetBSD: clock.c,v 1.49.10.2 2009/09/16 13:37:43 yamt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.10.1 2009/05/04 08:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.10.2 2009/09/16 13:37:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,13 +83,31 @@ vax_mfpr_get_counter(struct timecounter *tc)
 {
 	int cur_hardclock;
 	u_int counter;
+	static int prev_count, prev_hardclock;
 
 	do {
 		cur_hardclock = hardclock_ticks;
-		counter = mfpr(PR_ICR);
+		counter = mfpr(PR_ICR) + tick;
 	} while (cur_hardclock != hardclock_ticks);
 
-	return counter + hardclock_ticks * tick;
+	/*
+	 * Handle interval counter wrapping with interrupts blocked.
+	 * If the current hardclock_ticks is less than what we saw
+	 *   previously, use the previous value.
+	 * If the interval counter is smaller, assume it has wrapped,
+	 *   and if the [adjusted] current hardclock ticks is the same
+	 *   as what we saw previously, increment the local copy of
+	 *   the hardclock ticks.
+	 */
+	if (cur_hardclock < prev_hardclock)
+		cur_hardclock = prev_hardclock;
+	if (counter < prev_count && cur_hardclock == prev_hardclock)
+		cur_hardclock++;
+
+	prev_count = counter;
+	prev_hardclock=cur_hardclock;
+
+	return counter + cur_hardclock * tick;
 }
 
 #if VAX46 || VAXANY
@@ -108,7 +126,7 @@ static struct timecounter vax_diag_tc = {
 static struct timecounter vax_mfpr_tc = {
 	vax_mfpr_get_counter,	/* get_timecount */
 	0,			/* no poll_pps */
-	0x1fff,			/* counter_mask */
+	~0u,			/* counter_mask */
 	1000000,		/* frequency */
 	"mfpr",			/* name */
 	100,			/* quality */

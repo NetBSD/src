@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.11.4.2 2009/05/16 10:41:35 yamt Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.2 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,17 +251,15 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	rtw_attach(sc);
 
-	if (!pmf_device_register(sc->sc_dev, rtw_pci_suspend,
-	                         rtw_pci_resume)) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
-	} else {
+	if (pmf_device_register(sc->sc_dev, rtw_pci_suspend, rtw_pci_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
 		/*
 		 * Power down the socket.
 		 */
 		pmf_device_suspend_self(self);
-	}
+	} else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 static int

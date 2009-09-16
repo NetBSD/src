@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.3.2.3 2009/05/04 10:28:53 yamt Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.3.2.4 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.3.2.3 2009/05/04 10:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.3.2.4 2009/09/16 13:38:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
  * The void *arg is a pointer to the "struct nfssvc_sock".
  */
 void
-nfsrv_soupcall(struct socket *so, void *arg, int waitflag)
+nfsrv_soupcall(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct nfssvc_sock *slp = (struct nfssvc_sock *)arg;
 

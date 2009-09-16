@@ -1,11 +1,11 @@
-#	$NetBSD: files.pf,v 1.3.74.1 2009/05/04 08:14:14 yamt Exp $
+#	$NetBSD: files.pf,v 1.3.74.2 2009/09/16 13:38:01 yamt Exp $
 
 defpseudo pf:		ifnet
 defpseudo pflog:	ifnet
-#defpseudo pfsync:	ifnet
+defpseudo pfsync:	ifnet
 
 file	dist/pf/net/if_pflog.c		pflog		needs-flag
-#file	dist/pf/net/if_pfsync.c		pfsync		needs-flag
+file	dist/pf/net/if_pfsync.c		pfsync		needs-flag
 
 file	dist/pf/net/pf.c		pf		needs-flag
 file	dist/pf/net/pf_if.c		pf

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.11.10.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.11.10.2 2009/09/16 13:37:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,6 +111,18 @@ wakeup_16:
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+
+	/* If we need to restore a VESA VBE mode, do it now */
+	cmpb	$0,WAKEUP_vesa_modenum
+	je	1f
+	movw	WAKEUP_vesa_modenum,%bx
+	orw	$0x4000,%bx
+	movw	$0x4f02,%ax
+	int	$0x10
+
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
 1:
 
 	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
@@ -199,5 +211,7 @@ WAKEUP_restorecpu:	.long 0
 
 	.global WAKEUP_vbios_reset
 WAKEUP_vbios_reset:	.byte 0
+	.global WAKEUP_vesa_modenum
+WAKEUP_vesa_modenum:	.word 0
 	.global WAKEUP_beep_on_reset
 WAKEUP_beep_on_reset:	.byte 0

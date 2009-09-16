@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.23.78.1 2009/05/04 08:11:19 yamt Exp $	*/
+/*	$NetBSD: libi386.h,v 1.23.78.2 2009/09/16 13:37:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -122,6 +122,7 @@ int biosdisk_getinfo(int);
 struct biosdisk_extinfo;
 void biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
+void biosdisk_probe(void);
 
 int pcibios_cfgread(unsigned int, int, int *);
 int pcibios_cfgwrite(unsigned int, int, int);

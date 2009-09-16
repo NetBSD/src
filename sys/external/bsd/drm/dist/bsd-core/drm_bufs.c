@@ -323,13 +323,8 @@ void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 	case _DRM_FRAME_BUFFER:
 		if (map->mtrr) {
 			int __unused retcode;
-#if defined(__FreeBSD__)
 			retcode = drm_mtrr_del(0, map->offset, map->size,
 			    DRM_MTRR_WC);
-#elif   defined(__NetBSD__)
-			retcode = drm_mtrr_del(map->offset, map->size,
-			    DRM_MTRR_WC);
-#endif
 			DRM_DEBUG("mtrr_del = %d\n", retcode);
 		}
 		break;

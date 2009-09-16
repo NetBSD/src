@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.15.2.2 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.15.2.3 2009/09/16 13:37:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15.2.2 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15.2.3 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -700,12 +700,21 @@ bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr,
 {
 	struct bthidev_softc *sc = arg;
 
-	if (bdaddr_same(&raddr->bt_bdaddr, &sc->sc_raddr) == 0
-	    || (sc->sc_flags & BTHID_CONNECTING)
+	if (bdaddr_same(&raddr->bt_bdaddr, &sc->sc_raddr) == 0)
+		return NULL;
+
+	if ((sc->sc_flags & BTHID_CONNECTING)
 	    || sc->sc_state != BTHID_WAIT_CTL
 	    || sc->sc_ctl != NULL
-	    || sc->sc_int != NULL)
+	    || sc->sc_int != NULL) {
+		aprint_verbose_dev(sc->sc_dev, "reject ctl newconn %s%s%s%s\n",
+		    (sc->sc_flags & BTHID_CONNECTING) ? " (CONNECTING)" : "",
+		    (sc->sc_state == BTHID_WAIT_CTL) ? " (WAITING)": "",
+		    (sc->sc_ctl != NULL) ? " (GOT CONTROL)" : "",
+		    (sc->sc_int != NULL) ? " (GOT INTERRUPT)" : "");
+
 		return NULL;
+	}
 
 	l2cap_attach(&sc->sc_ctl, &bthidev_ctl_proto, sc);
 	return sc->sc_ctl;
@@ -717,12 +726,21 @@ bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr,
 {
 	struct bthidev_softc *sc = arg;
 
-	if (bdaddr_same(&raddr->bt_bdaddr, &sc->sc_raddr) == 0
-	    || (sc->sc_flags & BTHID_CONNECTING)
+	if (bdaddr_same(&raddr->bt_bdaddr, &sc->sc_raddr) == 0)
+		return NULL;
+
+	if ((sc->sc_flags & BTHID_CONNECTING)
 	    || sc->sc_state != BTHID_WAIT_INT
 	    || sc->sc_ctl == NULL
-	    || sc->sc_int != NULL)
+	    || sc->sc_int != NULL) {
+		aprint_verbose_dev(sc->sc_dev, "reject int newconn %s%s%s%s\n",
+		    (sc->sc_flags & BTHID_CONNECTING) ? " (CONNECTING)" : "",
+		    (sc->sc_state == BTHID_WAIT_INT) ? " (WAITING)": "",
+		    (sc->sc_ctl == NULL) ? " (NO CONTROL)" : "",
+		    (sc->sc_int != NULL) ? " (GOT INTERRUPT)" : "");
+
 		return NULL;
+	}
 
 	l2cap_attach(&sc->sc_int, &bthidev_int_proto, sc);
 	return sc->sc_int;

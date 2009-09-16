@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.2.2.3 2009/08/19 18:48:35 yamt Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.2.2.4 2009/09/16 13:38:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2.2.3 2009/08/19 18:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2.2.4 2009/09/16 13:38:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,7 +87,7 @@ uvm_emap_sysinit(void)
 
 	uvm_emap_size = roundup(uvm_emap_size, PAGE_SIZE);
 	qmax = 16 * PAGE_SIZE;
-
+#if 0
 	uvm_emap_va = uvm_km_alloc(kernel_map, uvm_emap_size, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (uvm_emap_va == 0) {
@@ -99,7 +99,10 @@ uvm_emap_sysinit(void)
 	if (uvm_emap_vmem == NULL) {
 		panic("uvm_emap_init: vmem creation failed");
 	}
-
+#else
+	uvm_emap_va = 0;
+	uvm_emap_vmem = NULL;
+#endif
 	/* Initial generation value is 1. */
 	uvm_emap_gen = 1;
 	for (i = 0; i < MAXCPUS; i++) {

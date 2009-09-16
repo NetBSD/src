@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.39.4.3 2009/05/16 10:41:41 yamt Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.39.4.4 2009/09/16 13:37:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.39.4.3 2009/05/16 10:41:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.39.4.4 2009/09/16 13:37:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ static void
 awi_pcmcia_attach(device_t parent, device_t self,
     void *aux)
 {
-	struct awi_pcmcia_softc *psc = (void *)self;
+	struct awi_pcmcia_softc *psc = device_private(self);
 	struct awi_softc *sc = &psc->sc_awi;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -241,7 +241,7 @@ fail:
 static int
 awi_pcmcia_detach(device_t self, int flags)
 {
-	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)self;
+	struct awi_pcmcia_softc *psc = device_private(self);
 	int error;
 
 	if (psc->sc_state != AWI_PCMCIA_ATTACHED)

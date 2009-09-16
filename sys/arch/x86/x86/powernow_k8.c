@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.21.4.2 2009/05/04 08:12:11 yamt Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.21.4.3 2009/09/16 13:37:44 yamt Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.21.4.2 2009/05/04 08:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.21.4.3 2009/09/16 13:37:44 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -470,7 +470,7 @@ k8_powernow_init_main(void)
 
 	aprint_normal("%s: AMD %s Technology %d MHz\n",
 	    cpuname, techname, cur_freq);
-	aprint_normal("%s: available frequencies (Mhz): %s\n",
+	aprint_normal("%s: available frequencies (MHz): %s\n",
 	    cpuname, freq_names);
 
 	return;

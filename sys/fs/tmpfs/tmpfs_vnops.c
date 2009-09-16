@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.49.10.3 2009/07/18 14:53:22 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.49.10.4 2009/09/16 13:38:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.49.10.3 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.49.10.4 2009/09/16 13:38:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -209,15 +209,31 @@ tmpfs_lookup(void *v)
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
+				kauth_action_t action = 0;
+
+				/* This is the file-system's decision. */
 				if ((dnode->tn_mode & S_ISTXT) != 0 &&
-				    kauth_authorize_generic(cnp->cn_cred,
-				     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
 				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
-					return EPERM;
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+					error = EPERM;
+				else
+					error = 0;
+
+				/* Only bother if we're not already failing it. */
+				if (!error) {
+					error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+				}
+
+				if (cnp->cn_nameiop == DELETE)
+					action |= KAUTH_VNODE_DELETE;
+				else /* if (cnp->cn_nameiop == RENAME) */
+					action |= KAUTH_VNODE_RENAME;
+
+				error = kauth_authorize_vnode(cnp->cn_cred,
+				    action, *vpp, dvp, error);
 				if (error != 0)
 					goto out;
+
 				cnp->cn_flags |= SAVENAME;
 			} else
 				de = NULL;
@@ -405,6 +421,9 @@ tmpfs_access(void *v)
 		goto out;
 
 	error = tmpfs_check_permitted(vp, node, mode, cred);
+
+	error = kauth_authorize_vnode(cred, kauth_mode_to_action(mode), vp,
+	    NULL, error);
 
 out:
 	KASSERT(VOP_ISLOCKED(vp));

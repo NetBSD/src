@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.6 2006/12/25 18:39:48 wiz Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.6.46.1 2009/09/16 13:37:57 yamt Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -129,7 +129,7 @@ struct atu_cdata {
 #define ATU_AVG_TIME		20
 
 struct atu_softc {
-	USBBASEDEVICE           atu_dev;
+	device_t atu_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,

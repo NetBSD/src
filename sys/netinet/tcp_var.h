@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.156.2.3 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.156.2.4 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -686,7 +686,8 @@ struct syn_cache_head {
 #define	TCPCTL_DEBUG		31	/* TCP debug sockets */
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
 #define	TCPCTL_DROP		33	/* drop tcp connection */
-#define	TCPCTL_MAXID		34
+#define	TCPCTL_MSL		34	/* Max Segment Life */
+#define	TCPCTL_MAXID		35
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -723,6 +724,7 @@ struct syn_cache_head {
 	{ "debug", CTLTYPE_STRUCT }, \
 	{ "debx", CTLTYPE_INT }, \
 	{ "drop", CTLTYPE_STRUCT }, \
+	{ "msl", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -734,6 +736,7 @@ extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
 extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_minmss;		/* minimal seg size */
+extern  int tcp_msl;		/* max segment life */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */

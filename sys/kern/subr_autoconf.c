@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146.2.4 2009/07/18 14:53:23 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146.2.5 2009/09/16 13:38:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,10 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.4 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.5 2009/09/16 13:38:01 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "drvctl.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,12 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.4 2009/07/18 14:53:23 yamt
 
 #include <machine/limits.h>
 
-#include "opt_userconf.h"
-#ifdef USERCONF
-#include <sys/userconf.h>
-#endif
-
-#ifdef __i386__
+#if defined(__i386__) && defined(_KERNEL_OPT)
 #include "opt_splash.h"
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 #include <dev/splash/splash.h>
@@ -173,7 +170,6 @@ static void config_devdealloc(device_t);
 static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
-static void config_twiddle_fn(void *);
 
 static void pmflock_debug(device_t, const char *, int);
 static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
@@ -228,112 +224,6 @@ static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
 static callout_t config_twiddle_ch;
-
-struct vnode *
-opendisk(struct device *dv)
-{
-	int bmajor, bminor;
-	struct vnode *tmpvn;
-	int error;
-	dev_t dev;
-	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
-	if (bmajor == -1)
-		return NULL;
-	
-	bminor = minor(device_unit(dv));
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * and hash the sectors.
-	 */
-	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
-	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
-	if (bdevvp(dev, &tmpvn))
-		panic("%s: can't alloc vnode for %s", __func__,
-		    device_xname(dv));
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("%s: can't open dev %s (%d)\n",
-			    __func__, device_xname(dv), error);
-		vput(tmpvn);
-		return NULL;
-	}
-
-	return tmpvn;
-}
-
-int
-config_handle_wedges(struct device *dv, int par)
-{
-	struct dkwedge_list wl;
-	struct dkwedge_info *wi;
-	struct vnode *vn;
-	char diskname[16];
-	int i, error;
-
-	if ((vn = opendisk(dv)) == NULL)
-		return -1;
-
-	wl.dkwl_bufsize = sizeof(*wi) * 16;
-	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
-
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED);
-	VOP_CLOSE(vn, FREAD, NOCRED);
-	vput(vn);
-	if (error) {
-#ifdef DEBUG_WEDGE
-		printf("%s: List wedges returned %d\n",
-		    device_xname(dv), error);
-#endif
-		free(wi, M_TEMP);
-		return -1;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Returned %u(%u) wedges\n", device_xname(dv),
-	    wl.dkwl_nwedges, wl.dkwl_ncopied);
-#endif
-	snprintf(diskname, sizeof(diskname), "%s%c", device_xname(dv),
-	    par + 'a');
-
-	for (i = 0; i < wl.dkwl_ncopied; i++) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Looking for %s in %s\n", 
-		    device_xname(dv), diskname, wi[i].dkw_wname);
-#endif
-		if (strcmp(wi[i].dkw_wname, diskname) == 0)
-			break;
-	}
-
-	if (i == wl.dkwl_ncopied) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Cannot find wedge with parent %s\n",
-		    device_xname(dv), diskname);
-#endif
-		free(wi, M_TEMP);
-		return -1;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
-		device_xname(dv), wi[i].dkw_devname, wi[i].dkw_wname,
-		(unsigned long long)wi[i].dkw_offset,
-		(unsigned long long)wi[i].dkw_size);
-#endif
-	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
-	free(wi, M_TEMP);
-	return 0;
-}
 
 /*
  * Initialize the autoconfiguration data structures.  Normally this
@@ -402,94 +292,15 @@ config_interrupts_thread(void *cookie)
 	kthread_exit(0);
 }
 
-/*
- * Configure the system's hardware.
- */
 void
-configure(void)
+config_create_interruptthreads()
 {
-	/* Initialize data structures. */
-	config_init();
-	/*
-	 * XXX
-	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
-	 * on amiga and atari which use config_init() and autoconf(9) fucntions
-	 * to initialize console devices.
-	 */
-	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
+	int i;
 
-	pmf_init();
-#if NDRVCTL > 0
-	drvctl_init();
-#endif
-
-#ifdef USERCONF
-	if (boothowto & RB_USERCONF)
-		user_config();
-#endif
-
-	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
-		config_do_twiddle = 1;
-		printf_nolog("Detecting hardware...");
-	}
-
-	/*
-	 * Do the machine-dependent portion of autoconfiguration.  This
-	 * sets the configuration machinery here in motion by "finding"
-	 * the root bus.  When this function returns, we expect interrupts
-	 * to be enabled.
-	 */
-	cpu_configure();
-}
-
-void
-configure2(void)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	int i, s;
-
-	/*
-	 * Now that we've found all the hardware, start the real time
-	 * and statistics clocks.
-	 */
-	initclocks();
-
-	cold = 0;	/* clocks are running, we're warm now! */
-	s = splsched();
-	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
-	splx(s);
-
-	/* Boot the secondary processors. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		uvm_cpu_attach(ci);
-	}
-	mp_online = true;
-#if defined(MULTIPROCESSOR)
-	cpu_boot_secondary_processors();
-#endif
-
-	/* Setup the runqueues and scheduler. */
-	runq_init();
-	sched_init();
-
-	/*
-	 * Bus scans can make it appear as if the system has paused, so
-	 * twiddle constantly while config_interrupts() jobs are running.
-	 */
-	config_twiddle_fn(NULL);
-
-	/*
-	 * Create threads to call back and finish configuration for
-	 * devices that want interrupts enabled.
-	 */
 	for (i = 0; i < interrupt_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
 		    config_interrupts_thread, NULL, NULL, "config");
 	}
-
-	/* Get the threads going and into any sleeps before continuing. */
-	yield();
 }
 
 /*
@@ -1914,6 +1725,16 @@ config_finalize(void)
 			    errcnt == 1 ? "" : "s");
 		}
 	}
+}
+
+void
+config_twiddle_init()
+{
+
+	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
+		config_do_twiddle = 1;
+	}
+	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
 }
 
 void

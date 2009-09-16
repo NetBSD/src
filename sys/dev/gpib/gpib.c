@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.11.4.3 2009/05/16 10:41:20 yamt Exp $	*/
+/*	$NetBSD: gpib.c,v 1.11.4.4 2009/09/16 13:37:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.11.4.3 2009/05/16 10:41:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.11.4.4 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.11.4.3 2009/05/16 10:41:20 yamt Exp $");
 
 #include "locators.h"
 
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 #ifdef DEBUG
 int gpibdebug = 0xff;
@@ -216,8 +218,7 @@ int
 _gpibregister(struct gpib_softc *sc, int slave, gpib_callback_t callback, void *arg, gpib_handle_t *hdl)
 {
 
-	MALLOC(*hdl, gpib_handle_t, sizeof(struct gpibqueue),
-	    M_DEVBUF, M_NOWAIT);
+	*hdl = malloc(sizeof(struct gpibqueue), M_DEVBUF, M_NOWAIT);
 	if (*hdl == NULL) {
 		DPRINTF(DBG_FAIL, ("_gpibregister: can't allocate queue\n"));
 		return (1);

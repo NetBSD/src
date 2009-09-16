@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.160.2.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.160.2.3 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.3 2009/09/16 13:38:01 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -552,6 +552,19 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 		*fdout = fd;
 	}
 	return error;
+}
+
+int
+sofamily(const struct socket *so)
+{
+	const struct protosw *pr;
+	const struct domain *dom;
+
+	if ((pr = so->so_proto) == NULL)
+		return AF_UNSPEC;
+	if ((dom = pr->pr_domain) == NULL)
+		return AF_UNSPEC;
+	return dom->dom_family;
 }
 
 int

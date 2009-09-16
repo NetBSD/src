@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.23.4.4 2009/06/20 07:20:28 yamt Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.23.4.5 2009/09/16 13:37:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.23.4.4 2009/06/20 07:20:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.23.4.5 2009/09/16 13:37:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ struct hmesbus_softc {
 
 int	hmematch_sbus(device_t, cfdata_t, void *);
 void	hmeattach_sbus(device_t, device_t, void *);
+
+static void hme_sbus_reset(device_t);
 
 CFATTACH_DECL_NEW(hme_sbus, sizeof(struct hmesbus_softc),
     hmematch_sbus, hmeattach_sbus, NULL, NULL);
@@ -157,7 +159,7 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sd->sd_reset = (void *)hme_reset;
+	sd->sd_reset = hme_sbus_reset;
 	sbus_establish(sd, self);
 
 	prom_getether(node, sc->sc_enaddr);
@@ -189,4 +191,13 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 hme_intr, sc);
+}
+
+void
+hme_sbus_reset(device_t self)
+{
+	struct hmesbus_softc *hsc = device_private(self);
+	struct hme_softc *sc = &hsc->hsc_hme;
+
+	hme_reset(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.50.4.2 2009/05/16 10:41:23 yamt Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.50.4.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct ncr53c9x_ecb {
 	uint8_t	*daddr;		/* Saved data pointer */
 	int	 clen;		/* Size of command in cmd.cmd */
 	int	 dleft;		/* Residue */
-	u_char 	 stat;		/* SCSI status byte */
+	u_char	 stat;		/* SCSI status byte */
 	u_char	 tag[2];	/* TAG bytes */
 	u_char	 pad[1];
 
@@ -370,7 +370,7 @@ struct ncr53c9x_softc {
 #define SEND_PARITY_ERROR	0x0002
 #define SEND_INIT_DET_ERR	0x0004
 #define SEND_REJECT		0x0008
-#define SEND_IDENTIFY  		0x0010
+#define SEND_IDENTIFY		0x0010
 #define SEND_ABORT		0x0020
 #define SEND_WDTR		0x0040
 #define SEND_SDTR		0x0080
@@ -443,5 +443,6 @@ void	ncr53c9x_scsipi_request(struct scsipi_channel *chan,
 void	ncr53c9x_reset(struct ncr53c9x_softc *);
 int	ncr53c9x_intr(void *);
 void	ncr53c9x_init(struct ncr53c9x_softc *, int);
+void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 
 #endif /* _DEV_IC_NCR53C9XVAR_H_ */

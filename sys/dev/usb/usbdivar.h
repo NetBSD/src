@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.83.4.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.83.4.3 2009/09/16 13:37:58 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -34,7 +34,11 @@
 #include <sys/callout.h>
 
 /* From usb_mem.h */
-DECLARE_USB_DMA_T;
+struct usb_dma_block;
+typedef struct {
+	struct usb_dma_block *block;
+	u_int offs;
+} usb_dma_t;
 
 struct usbd_xfer;
 struct usbd_pipe;
@@ -213,7 +217,7 @@ struct usbd_xfer {
 #define UXFER_ABORTING	0x01	/* xfer is aborting. */
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 
-	usb_callout_t		timeout_handle;
+        struct callout timeout_handle;
 };
 
 void usbd_init(void);
@@ -235,10 +239,10 @@ usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
 				struct usbd_endpoint *, int,
 				usbd_pipe_handle *pipe);
-usbd_status	usbd_new_device(device_ptr_t, usbd_bus_handle, int, int, int,
-				struct usbd_port *);
-usbd_status	usbd_reattach_device(device_ptr_t, usbd_device_handle,
-				     int, const int *);
+usbd_status usbd_new_device(device_t, usbd_bus_handle, int, int, int,
+                                struct usbd_port *);
+usbd_status usbd_reattach_device(device_t, usbd_device_handle,
+                                     int, const int *);
 
 void		usbd_remove_device(usbd_device_handle, struct usbd_port *);
 int		usbd_printBCD(char *, size_t, int);
@@ -247,7 +251,7 @@ void		usb_free_device(usbd_device_handle);
 
 usbd_status	usb_insert_transfer(usbd_xfer_handle);
 void		usb_transfer_complete(usbd_xfer_handle);
-void		usb_disconnect_port(struct usbd_port *, device_ptr_t);
+void usb_disconnect_port(struct usbd_port *, device_t);
 
 /* Routines from usb.c */
 void		usb_needs_explore(usbd_device_handle);

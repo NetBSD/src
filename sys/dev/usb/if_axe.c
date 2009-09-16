@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.24.4.1 2009/05/04 08:13:20 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.24.4.2 2009/09/16 13:37:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.1 2009/05/04 08:13:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.2 2009/09/16 13:37:58 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -164,7 +164,13 @@ Static const struct axe_type axe_devs[] = {
 };
 #define axe_lookup(v, p) ((const struct axe_type *)usb_lookup(axe_devs, v, p))
 
-USB_DECLARE_DRIVER(axe);
+int axe_match(device_t, cfdata_t, void *);
+void axe_attach(device_t, device_t, void *);
+int axe_detach(device_t, int);
+int axe_activate(device_t, enum devact);
+extern struct cfdriver axe_cd;
+CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc), axe_match, axe_attach,
+    axe_detach, axe_activate);
 
 Static int axe_tx_list_init(struct axe_softc *);
 Static int axe_rx_list_init(struct axe_softc *);
@@ -182,9 +188,9 @@ Static int axe_ioctl(struct ifnet *, u_long, void *);
 Static void axe_init(void *);
 Static void axe_stop(struct axe_softc *);
 Static void axe_watchdog(struct ifnet *);
-Static int axe_miibus_readreg(device_ptr_t, int, int);
-Static void axe_miibus_writereg(device_ptr_t, int, int, int);
-Static void axe_miibus_statchg(device_ptr_t);
+Static int axe_miibus_readreg(device_t, int, int);
+Static void axe_miibus_writereg(device_t, int, int, int);
+Static void axe_miibus_statchg(device_t);
 Static int axe_cmd(struct axe_softc *, int, int, int, void *);
 Static void axe_reset(struct axe_softc *sc);
 
@@ -205,7 +211,7 @@ axe_unlock_mii(struct axe_softc *sc)
 {
 	mutex_exit(&sc->axe_mii_lock);
 	if (--sc->axe_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->axe_dev));
+		usb_detach_wakeup((sc->axe_dev));
 }
 
 Static int
@@ -237,9 +243,9 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 }
 
 Static int
-axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
+axe_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc *sc = device_private(dev);
 	usbd_status		err;
 	u_int16_t		val;
 
@@ -283,9 +289,9 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 Static void
-axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int aval)
+axe_miibus_writereg(device_t dev, int phy, int reg, int aval)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc *sc = device_private(dev);
 	usbd_status		err;
 	u_int16_t		val;
 
@@ -306,9 +312,9 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int aval)
 }
 
 Static void
-axe_miibus_statchg(device_ptr_t dev)
+axe_miibus_statchg(device_t dev)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc *sc = device_private(dev);
 	struct mii_data		*mii = GET_MII(sc);
 	int val, err;
 
@@ -391,9 +397,10 @@ axe_reset(struct axe_softc *sc)
 /*
  * Probe for a AX88172 chip.
  */
-USB_MATCH(axe)
+int
+axe_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(axe, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -403,9 +410,11 @@ USB_MATCH(axe)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(axe)
+void
+axe_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(axe, sc, uaa);
+	struct axe_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
@@ -418,14 +427,15 @@ USB_ATTACH(axe)
 	int i, s;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
+	aprint_naive("\n");
+	aprint_normal("\n");
 	sc->axe_dev = self;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-                usbd_devinfo_free(devinfop);
-		USB_ATTACH_ERROR_RETURN;
+		usbd_devinfo_free(devinfop);
+		return;
 	}
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
@@ -435,8 +445,8 @@ USB_ATTACH(axe)
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-                usbd_devinfo_free(devinfop);
-		USB_ATTACH_ERROR_RETURN;
+		usbd_devinfo_free(devinfop);
+		return;
 	}
 
 	sc->axe_udev = dev;
@@ -453,7 +463,7 @@ USB_ATTACH(axe)
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
 			aprint_error_dev(self, "couldn't get ep %d\n", i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -529,26 +539,26 @@ USB_ATTACH(axe)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp, eaddr);
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->axe_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->axe_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
-	usb_callout_init(sc->axe_stat_ch);
+	callout_init(&(sc->axe_stat_ch), 0);
 
 	sc->axe_attached = 1;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev,
-			   USBDEV(sc->axe_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev, sc->axe_dev);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
-USB_DETACH(axe)
+int
+axe_detach(device_t self, int flags)
 {
-	USB_DETACH_START(axe, sc);
+	struct axe_softc *sc = device_private(self);
 	int			s;
 	struct ifnet		*ifp = GET_IFP(sc);
 
@@ -558,7 +568,7 @@ USB_DETACH(axe)
 	if (!sc->axe_attached)
 		return (0);
 
-	usb_uncallout(sc->axe_stat_ch, axe_tick, sc);
+	callout_stop(&(sc->axe_stat_ch));
 
 	sc->axe_dying = 1;
 
@@ -582,7 +592,7 @@ USB_DETACH(axe)
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away */
-		usb_detach_wait(USBDEV(sc->axe_dev));
+		usb_detach_wait((sc->axe_dev));
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -609,18 +619,17 @@ USB_DETACH(axe)
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->axe_dev));
+		usb_detach_wait((sc->axe_dev));
 	}
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->axe_udev,
-			   USBDEV(sc->axe_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->axe_udev, sc->axe_dev);
 
 	return (0);
 }
 
 int
-axe_activate(device_ptr_t self, enum devact act)
+axe_activate(device_t self, enum devact act)
 {
 	struct axe_softc *sc = device_private(self);
 
@@ -797,7 +806,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 		if (usbd_ratecheck(&sc->axe_rx_notice)) {
 			printf("%s: usb errors on rx: %s\n",
-			    USBDEVNAME(sc->axe_dev), usbd_errstr(status));
+			    device_xname(sc->axe_dev), usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_RX]);
@@ -838,7 +847,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
 		    __func__, m->m_len));
-	IF_INPUT(ifp, m);
+	(*(ifp)->if_input)((ifp), (m));
  done1:
 	splx(s);
 
@@ -885,7 +894,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		}
 		ifp->if_oerrors++;
-		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->axe_dev),
+		printf("%s: usb error on tx: %s\n", device_xname(sc->axe_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_TX]);
@@ -951,7 +960,7 @@ axe_tick_task(void *xsc)
 
 	mii_tick(mii);
 
-	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);
+	callout_reset(&(sc->axe_stat_ch), (hz), (axe_tick), (sc));
 
 	splx(s);
 }
@@ -1052,14 +1061,14 @@ axe_init(void *xsc)
 
 	/* Init RX ring. */
 	if (axe_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", USBDEVNAME(sc->axe_dev));
+		printf("%s: rx list init failed\n", device_xname(sc->axe_dev));
 		splx(s);
 		return;
 	}
 
 	/* Init TX ring. */
 	if (axe_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", USBDEVNAME(sc->axe_dev));
+		printf("%s: tx list init failed\n", device_xname(sc->axe_dev));
 		splx(s);
 		return;
 	}
@@ -1091,7 +1100,7 @@ axe_init(void *xsc)
 	    USBD_EXCLUSIVE_USE, &sc->axe_ep[AXE_ENDPT_RX]);
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
-		    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+		    device_xname(sc->axe_dev), usbd_errstr(err));
 		splx(s);
 		return;
 	}
@@ -1100,7 +1109,7 @@ axe_init(void *xsc)
 	    USBD_EXCLUSIVE_USE, &sc->axe_ep[AXE_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
-		    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+		    device_xname(sc->axe_dev), usbd_errstr(err));
 		splx(s);
 		return;
 	}
@@ -1119,8 +1128,8 @@ axe_init(void *xsc)
 
 	splx(s);
 
-	usb_callout_init(sc->axe_stat_ch);
-	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);
+	callout_init(&(sc->axe_stat_ch), 0);
+	callout_reset(&(sc->axe_stat_ch), (hz), (axe_tick), (sc));
 	return;
 }
 
@@ -1234,7 +1243,7 @@ axe_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
-	printf("%s: watchdog timeout\n", USBDEVNAME(sc->axe_dev));
+	printf("%s: watchdog timeout\n", device_xname(sc->axe_dev));
 
 	s = splusb();
 	c = &sc->axe_cdata.axe_tx_chain[0];
@@ -1262,19 +1271,19 @@ axe_stop(struct axe_softc *sc)
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
 
-	usb_uncallout(sc->axe_stat_ch, axe_tick, sc);
+	callout_stop(&(sc->axe_stat_ch));
 
 	/* Stop transfers. */
 	if (sc->axe_ep[AXE_ENDPT_RX] != NULL) {
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("%s: abort rx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		sc->axe_ep[AXE_ENDPT_RX] = NULL;
 	}
@@ -1283,12 +1292,12 @@ axe_stop(struct axe_softc *sc)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
 			printf("%s: abort tx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
-			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		sc->axe_ep[AXE_ENDPT_TX] = NULL;
 	}
@@ -1297,12 +1306,12 @@ axe_stop(struct axe_softc *sc)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: abort intr pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",
-			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    device_xname(sc->axe_dev), usbd_errstr(err));
 		}
 		sc->axe_ep[AXE_ENDPT_INTR] = NULL;
 	}

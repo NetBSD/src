@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.23.10.1 2009/05/04 08:11:40 yamt Exp $
+#	$NetBSD: Makefile,v 1.23.10.2 2009/09/16 13:37:41 yamt Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
 PROG=		ofwboot
-SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c vers.c
+SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c
+SRCS+=		mbr.c rdb.c vers.c
 CFLAGS+=	-msoft-float -Wno-main -ffreestanding
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-g -DALLOC_TRACE -DDEBUG #-DOFW_DEBUG -DNETIF_DEBUG

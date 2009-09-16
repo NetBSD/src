@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.34.2.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.34.2.3 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.34.2.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.34.2.3 2009/09/16 13:38:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ nb_intr(struct nbpcb *nbp, struct lwp *l)
 }
 
 static void
-nb_upcall(struct socket *so, void *arg, int waitflag)
+nb_upcall(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct nbpcb *nbp = (void *)arg;
 

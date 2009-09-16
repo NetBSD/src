@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.124.4.2 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: in.c,v 1.124.4.3 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.124.4.2 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.124.4.3 2009/09/16 13:38:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -139,8 +139,6 @@ static void in_len2mask(struct in_addr *, u_int);
 static int in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *, struct lwp *);
 
-static int in_ifaddrpref_ioctl(struct socket *, u_long, void *,
-	struct ifnet *);
 static int in_addprefix(struct in_ifaddr *, int);
 static int in_scrubprefix(struct in_ifaddr *);
 
@@ -321,15 +319,15 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-	case SIOCSIFADDRPREF:
-	case SIOCGIFADDRPREF:
 	case SIOCGLIFADDR:
 		if (ifp == NULL)
 			return EINVAL;
-		if (cmd == SIOCGIFADDRPREF || cmd == SIOCSIFADDRPREF)
-			return in_ifaddrpref_ioctl(so, cmd, data, ifp);
-		else
-			return in_lifaddr_ioctl(so, cmd, data, ifp, l);
+		return in_lifaddr_ioctl(so, cmd, data, ifp, l);
+	case SIOCGIFADDRPREF:
+	case SIOCSIFADDRPREF:
+		if (ifp == NULL)
+			return EINVAL;
+		return ifaddrpref_ioctl(so, cmd, data, ifp, l);
 	}
 
 	/*
@@ -339,7 +337,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		IFP_TO_IA(ifp, ia);
 
 	switch (cmd) {
-
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 	case SIOCGIFALIAS:
@@ -775,66 +772,6 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 	}
 
 	return EOPNOTSUPP;	/*just for safety*/
-}
-
-static int
-in_ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data,
-    struct ifnet *ifp)
-{
-	struct if_addrprefreq *ifap = (struct if_addrprefreq *)data;
-	struct ifaddr *ifa;
-	struct sockaddr *sa;
-	struct in_ifaddr *ia = NULL; /* appease gcc -Wuninitialized */
-	struct in_addr match;
-	struct sockaddr_in *sin;
-
-	/* sanity checks */
-	if (data == NULL || ifp == NULL) {
-		panic("invalid argument to %s", __func__);
-		/*NOTREACHED*/
-	}
-
-	/* address must be specified on ADD and DELETE */
-	sa = (struct sockaddr *)&ifap->ifap_addr;
-	if (sa->sa_family != AF_INET)
-		return EINVAL;
-	if (sa->sa_len != sizeof(struct sockaddr_in))
-		return EINVAL;
-
-	switch (cmd) {
-	case SIOCSIFADDRPREF:
-	case SIOCGIFADDRPREF:
-		break;
-	default:
-		return EOPNOTSUPP;
-	}
-
-	sin = (struct sockaddr_in *)&ifap->ifap_addr;
-	match.s_addr = sin->sin_addr.s_addr;
-
-	IFADDR_FOREACH(ifa, ifp) {
-		ia = (struct in_ifaddr *)ifa;
-		if (ia->ia_addr.sin_family != AF_INET)
-			continue;
-		if (ia->ia_addr.sin_addr.s_addr == match.s_addr)
-			break;
-	}
-	if (ifa == NULL)
-		return EADDRNOTAVAIL;
-
-	switch (cmd) {
-	case SIOCSIFADDRPREF:
-		ifa->ifa_preference = ifap->ifap_preference;
-		return 0;
-	case SIOCGIFADDRPREF:
-		/* fill in the if_laddrreq structure */
-		(void)memcpy(&ifap->ifap_addr, &ia->ia_addr,
-		    ia->ia_addr.sin_len);
-		ifap->ifap_preference = ifa->ifa_preference;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 /*

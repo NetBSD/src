@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.5.2.3 2009/06/20 07:20:21 yamt Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.5.2.4 2009/09/16 13:37:46 yamt Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -164,8 +164,6 @@ dm_target_stripe_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dic
 	tsc->stripe_devs[0].offset = offset1;
 	tsc->stripe_devs[1].offset = offset2;
 
-	/* Save length of param string */
-	tsc->params_len = DM_MAX_PARAMS_SIZE;
 	tsc->stripe_chunksize = chunk_size;
 	tsc->stripe_num = (uint8_t)stripes;
 	
@@ -185,10 +183,10 @@ dm_target_stripe_status(void *target_config)
 
 	tsc = target_config;
 	
-	if ((params = kmem_alloc(tsc->params_len, KM_NOSLEEP)) == NULL)
+	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
 		return NULL;
 
-	snprintf(params, tsc->params_len, "%d %"PRIu64" %s %"PRIu64" %s %"PRIu64,
+	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %"PRIu64" %s %"PRIu64" %s %"PRIu64,
 	    tsc->stripe_num, tsc->stripe_chunksize,
 	    tsc->stripe_devs[0].pdev->name, tsc->stripe_devs[0].offset,
 	    tsc->stripe_devs[1].pdev->name, tsc->stripe_devs[1].offset);

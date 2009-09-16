@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.15 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.15.74.1 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -62,12 +62,12 @@
 #define  NCRCMD_TCCS	0x25		/*	Target Command Comp Seq	*/
 #define  NCRCMD_DISC	0x27		/*	Disconnect		*/
 #define  NCRCMD_RECMSG	0x28		/*	Receive Message		*/
-#define  NCRCMD_RECCMD	0x29		/*	Receive Command 	*/
+#define  NCRCMD_RECCMD	0x29		/*	Receive Command		*/
 #define  NCRCMD_RECDATA	0x2a		/*	Receive Data		*/
 #define  NCRCMD_RECCSEQ	0x2b		/*	Receive Command Sequence*/
 #define  NCRCMD_ABORT	0x04		/*	Target Abort DMA	*/
 #define  NCRCMD_TRANS	0x10		/*	Transfer Information	*/
-#define  NCRCMD_ICCS	0x11		/*	Initiator Cmd Comp Seq 	*/
+#define  NCRCMD_ICCS	0x11		/*	Initiator Cmd Comp Seq	*/
 #define  NCRCMD_MSGOK	0x12		/*	Message Accepted	*/
 #define  NCRCMD_TRPAD	0x18		/*	Transfer Pad		*/
 #define  NCRCMD_SETATN	0x1a		/*	Set ATN			*/
@@ -82,7 +82,7 @@
 #define  NCRSTAT_PHASE	0x07		/*	Phase bits		*/
 
 #define	NCR_SELID	0x04		/* WO - Select/Reselect Bus ID	*/
-#define  NCR_BUSID_HME		0x10 	/* XXX HME reselect ID 		*/
+#define  NCR_BUSID_HME		0x10	/* XXX HME reselect ID		*/
 #define  NCR_BUSID_HME32	0x40	/* XXX HME to select more than 16 */
 
 #define	NCR_INTR	0x05		/* RO - Interrupt		*/
@@ -134,12 +134,12 @@
 
 #define	NCR_CFG2	0x0b		/* RW - Configuration #2	*/
 #define	 NCRCFG2_RSVD	0xa0		/*	reserved		*/
-#define  NCRCFG2_FE	0x40		/* 	Features Enable		*/
-#define  NCRCFG2_DREQ	0x10		/* 	DREQ High Impedance	*/
-#define  NCRCFG2_SCSI2	0x08		/* 	SCSI-2 Enable		*/
-#define  NCRCFG2_BPA	0x04		/* 	Target Bad Parity Abort	*/
-#define  NCRCFG2_RPE	0x02		/* 	Register Parity Error	*/
-#define  NCRCFG2_DPE	0x01		/* 	DMA Parity Error	*/
+#define  NCRCFG2_FE	0x40		/*	Features Enable		*/
+#define  NCRCFG2_DREQ	0x10		/*	DREQ High Impedance	*/
+#define  NCRCFG2_SCSI2	0x08		/*	SCSI-2 Enable		*/
+#define  NCRCFG2_BPA	0x04		/*	Target Bad Parity Abort	*/
+#define  NCRCFG2_RPE	0x02		/*	Register Parity Error	*/
+#define  NCRCFG2_DPE	0x01		/*	DMA Parity Error	*/
 
 #define  NCRCFG2_HMEFE	0x10		/*	HME feature enable	*/
 #define	 NCRCFG2_HME32  0x80		/*	HME 32 extended		*/
@@ -183,14 +183,14 @@
 #define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
 
 /* Config #3 on FAS366 */
-#define  NCRFASCFG3_OBAUTO    	0x80    /*	auto push odd-byte to DMA */
-#define  NCRFASCFG3_EWIDE     	0x40    /* 	Enable Wide-SCSI     */
-#define  NCRFASCFG3_IDBIT3	0x20	/* 	Bit 3 of HME SCSI-ID */
-#define	 NCRFASCFG3_IDRESCHK	0x10	/* 	ID message checking */
-#define	 NCRFASCFG3_QUENB	0x08	/* 	3-byte msg support */
-#define	 NCRFASCFG3_CDB10	0x04	/* 	group 2 scsi-2 support */
-#define	 NCRFASCFG3_FASTSCSI	0x02	/* 	10 MB/S fast scsi mode */
-#define	 NCRFASCFG3_FASTCLK	0x01	/* 	fast clock mode */
+#define  NCRFASCFG3_OBAUTO	0x80    /*	auto push odd-byte to DMA */
+#define  NCRFASCFG3_EWIDE	0x40    /*	Enable Wide-SCSI     */
+#define  NCRFASCFG3_IDBIT3	0x20	/*	Bit 3 of HME SCSI-ID */
+#define	 NCRFASCFG3_IDRESCHK	0x10	/*	ID message checking */
+#define	 NCRFASCFG3_QUENB	0x08	/*	3-byte msg support */
+#define	 NCRFASCFG3_CDB10	0x04	/*	group 2 scsi-2 support */
+#define	 NCRFASCFG3_FASTSCSI	0x02	/*	10 MB/S fast scsi mode */
+#define	 NCRFASCFG3_FASTCLK	0x01	/*	fast clock mode */
 
 /* Config #4 only on ESP406/FAS408 */
 #define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/

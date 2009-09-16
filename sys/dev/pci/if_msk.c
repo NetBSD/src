@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.18.4.2 2009/05/16 10:41:35 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.18.4.3 2009/09/16 13:37:51 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.18.4.2 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.18.4.3 2009/09/16 13:37:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1118,10 +1118,10 @@ msk_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
-	if (!pmf_device_register(self, NULL, msk_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, msk_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sk_dev),

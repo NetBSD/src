@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.12 2005/12/11 00:06:21 elad Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.12.74.1 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -130,6 +130,9 @@ struct smb_t2rq {
 	struct smb_rq *	t2_rq;
 	struct smb_vc * t2_vc;
 };
+
+void smb_rqpool_init(void);
+void smb_rqpool_fini(void);
 
 int  smb_rq_alloc(struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred, struct smb_rq **rqpp);

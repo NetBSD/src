@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.7.4.2 2009/06/20 07:20:35 yamt Exp $	*/
+/*	$NetBSD: pool.c,v 1.7.4.3 2009/09/16 13:38:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pool.c,v 1.7.4.2 2009/06/20 07:20:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pool.c,v 1.7.4.3 2009/09/16 13:38:05 yamt Exp $");
 
 #ifndef RUMP_USE_REAL_ALLOCATORS
 
@@ -45,15 +45,8 @@ struct pool_allocator pool_allocator_nointr;
 void
 pool_subsystem_init()
 {
-	__link_set_decl(pools, struct link_pool_init);
-	struct link_pool_init *const *pi;
 
-#define _pi(name) (*pi)->name
-	__link_set_foreach(pi, pools) {
-		pool_init(_pi(pp), _pi(size), _pi(align), _pi(align_offset),
-		    _pi(flags), _pi(wchan), _pi(palloc), _pi(ipl));
-	}
-#undef _pi
+	/* nada */
 }
 
 void

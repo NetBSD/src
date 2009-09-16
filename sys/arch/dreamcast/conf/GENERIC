@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82.10.2 2009/05/04 08:10:55 yamt Exp $
+# $NetBSD: GENERIC,v 1.82.10.3 2009/09/16 13:37:37 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -187,7 +187,7 @@ g2rtc0		at g2bus?			# time-of-day clock
 gapspci*	at g2bus?			# GAPS PCI bridge
 pci*		at gapspci?
 rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
-ukphy*		at mii? phy ?
+rlphy*		at mii? phy ?
 
 mbe*		at g2bus?			# SEGA LAN Adapter
 

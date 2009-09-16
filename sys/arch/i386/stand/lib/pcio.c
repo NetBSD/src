@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.21.76.2 2009/07/18 14:52:54 yamt Exp $	 */
+/*	$NetBSD: pcio.c,v 1.21.76.3 2009/09/16 13:37:39 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -70,6 +70,20 @@ static int getcomaddr(int);
 #endif /* SUPPORT_SERIAL */
 
 #define POLL_FREQ 10
+
+static void
+wait(int us)
+{
+	int prev = biosgetsystime();
+	int tgt = prev + (20 * us) / 1000000;
+	int new;
+
+	while ((new = biosgetsystime()) < tgt) {
+		if (new < prev) /* XXX timer wrapped */
+			break;
+		prev = new;
+	}
+}
 
 #ifdef SUPPORT_SERIAL
 static int
@@ -346,7 +360,7 @@ awaitkey(int timeout, int tell)
 			goto out;
 		}
 		if (i--)
-			delay(1000000 / POLL_FREQ);
+			wait(1000000 / POLL_FREQ);
 		else
 			break;
 	}

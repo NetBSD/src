@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.72.4.2 2009/05/16 10:41:34 yamt Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.72.4.3 2009/09/16 13:37:51 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.72.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.72.4.3 2009/09/16 13:37:51 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -429,10 +429,10 @@ iwi_attach(device_t parent, device_t self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	ieee80211_announce(ic);
 

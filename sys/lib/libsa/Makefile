@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65.4.2 2009/05/04 08:13:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.65.4.3 2009/09/16 13:38:01 yamt Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -18,13 +18,19 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 .-include "${SA_EXTRADIR}/Makefile.inc"
 .endif
 
+.include <bsd.own.mk>
+
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
 
 # stand routines
-SRCS+=	alloc.c errno.c exit.c exec.c files.c \
+SRCS+=	alloc.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
 	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
 	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
+
+.if (${MACHINE_CPU} != "mips")
+SRCS+=	exec.c
+.endif
 
 # string routines
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
@@ -39,8 +45,11 @@ SRCS+=	cread.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-SRCS+=	loadfile.c loadfile_aout.c loadfile_ecoff.c loadfile_elf32.c \
+SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c \
 	loadfile_elf64.c
+.if (${MACHINE_CPU} != "mips")
+SRCS+=	loadfile_aout.c
+.endif
 .endif
 
 .if (${SA_INCLUDE_NET} == "yes")

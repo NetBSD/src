@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.27.24.1 2009/06/20 07:20:37 yamt Exp $	*/
+/*	$NetBSD: domain.h,v 1.27.24.2 2009/09/16 13:38:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,6 +75,9 @@ struct	domain {
 	void	*(*dom_sockaddr_addr)(struct sockaddr *, socklen_t *);
 	int	(*dom_sockaddr_cmp)(const struct sockaddr *,
 	                            const struct sockaddr *);
+	struct sockaddr *(*dom_sockaddr_externalize)(struct sockaddr *,
+	                                             socklen_t,
+						     const struct sockaddr *);
 	const struct sockaddr *dom_sa_any;
 	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;

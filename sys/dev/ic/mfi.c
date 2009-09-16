@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.17.2.3 2009/07/18 14:53:02 yamt Exp $ */
+/* $NetBSD: mfi.c,v 1.17.2.4 2009/09/16 13:37:48 yamt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.17.2.3 2009/07/18 14:53:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.17.2.4 2009/09/16 13:37:48 yamt Exp $");
 
 #include "bio.h"
 
@@ -114,7 +114,7 @@ static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_dis(struct mfi_softc *sc);
 static int 		mfi_xscale_intr(struct mfi_softc *sc);
 static void 		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
-			  	 
+
 static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
 	mfi_xscale_intr_dis,
@@ -122,13 +122,13 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_intr,
 	mfi_xscale_post
 };
- 	 
+
 static uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
 static void 		mfi_ppc_intr_ena(struct mfi_softc *sc);
 static void 		mfi_ppc_intr_dis(struct mfi_softc *sc);
 static int 		mfi_ppc_intr(struct mfi_softc *sc);
 static void 		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
-		  	 
+
 static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
 	mfi_ppc_intr_dis,
@@ -136,7 +136,7 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_intr,
 	mfi_ppc_post
 };
- 	 
+
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
 #define mfi_intr_enable(_s) 	((_s)->sc_iop->mio_intr_ena(_s))
 #define mfi_intr_disable(_s) 	((_s)->sc_iop->mio_intr_dis(_s))
@@ -312,7 +312,7 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
-		goto amfree; 
+		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
@@ -882,7 +882,7 @@ mfi_poll(struct mfi_ccb *ccb)
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -1402,7 +1402,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 		}
 		mfi_put_ccb(ccb);
 		scsipi_done(xs);
-	} else 
+	} else
 		wakeup(ccb);
 }
 
@@ -2032,18 +2032,20 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct mfi_softc	*sc = sme->sme_cookie;
 	struct bioc_vol		bv;
 	int s;
+	int error;
 
 	if (edata->sensor >= sc->sc_ld_cnt)
 		return;
 
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
+	KERNEL_LOCK(1, curlwp);
 	s = splbio();
-	if (mfi_ioctl_vol(sc, &bv)) {
-		splx(s);
-		return;
-	}
+	error = mfi_ioctl_vol(sc, &bv);
 	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+	if (error)
+		return;
 
 	switch(bv.bv_status) {
 	case BIOC_SVOFFLINE:
@@ -2077,7 +2079,7 @@ mfi_xscale_fw_state(struct mfi_softc *sc)
 {
 	return mfi_read(sc, MFI_OMSG0);
 }
- 	 
+
 static void
 mfi_xscale_intr_dis(struct mfi_softc *sc)
 {
@@ -2089,7 +2091,7 @@ mfi_xscale_intr_ena(struct mfi_softc *sc)
 {
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 }
- 	 
+
 static int
 mfi_xscale_intr(struct mfi_softc *sc)
 {
@@ -2103,7 +2105,7 @@ mfi_xscale_intr(struct mfi_softc *sc)
 	mfi_write(sc, MFI_OSTS, status);
 	return 1;
 }
- 	 
+
 static void
 mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
@@ -2117,13 +2119,13 @@ mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
 	    ccb->ccb_extra_frames);
 }
- 	 
+
 static uint32_t
 mfi_ppc_fw_state(struct mfi_softc *sc)
 {
 	return mfi_read(sc, MFI_OSP);
 }
- 	 
+
 static void
 mfi_ppc_intr_dis(struct mfi_softc *sc)
 {
@@ -2138,21 +2140,21 @@ mfi_ppc_intr_ena(struct mfi_softc *sc)
 	mfi_write(sc, MFI_ODC, 0xffffffff);
 	mfi_write(sc, MFI_OMSK, ~0x80000004);
 }
- 	 
+
 static int
 mfi_ppc_intr(struct mfi_softc *sc)
 {
 	uint32_t status;
- 	 
+
 	status = mfi_read(sc, MFI_OSTS);
 	if (!ISSET(status, MFI_OSTS_PPC_INTR_VALID))
 		return 0;
-							  	 
+
 	/* write status back to acknowledge interrupt */
 	mfi_write(sc, MFI_ODC, status);
 	return 1;
 }
- 	 
+
 static void
 mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {

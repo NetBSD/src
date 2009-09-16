@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.28.10.2 2009/07/18 14:53:20 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.28.10.3 2009/09/16 13:38:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.28.10.2 2009/07/18 14:53:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.28.10.3 2009/09/16 13:38:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,6 +342,7 @@ int
 adosfs_write(void *v)
 {
 #ifdef ADOSFS_DIAGNOSTIC
+#if 0
 	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -349,6 +350,7 @@ adosfs_write(void *v)
 		kauth_cred_t a_cred;
 	} */ *sp = v;
 	advopprint(sp);
+#endif
 	printf(" EOPNOTSUPP)");
 #endif
 	return(EOPNOTSUPP);

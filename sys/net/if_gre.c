@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.130.2.2 2009/05/04 08:14:14 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.130.2.3 2009/09/16 13:38:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.2 2009/05/04 08:14:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.3 2009/09/16 13:38:01 yamt Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -419,7 +419,7 @@ gre_clone_destroy(struct ifnet *ifp)
 }
 
 static void
-gre_receive(struct socket *so, void *arg, int waitflag)
+gre_receive(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 	int rc;

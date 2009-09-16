@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.11.44.2 2009/05/04 08:12:44 yamt Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.11.44.3 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@ struct epic_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	int sc_hwflags;			/* info about board */
 #define EPIC_HAS_BNC		0x01	/* BNC on serial interface */

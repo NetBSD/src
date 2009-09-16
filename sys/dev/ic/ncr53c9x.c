@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.135.4.2 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.135.4.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.135.4.2 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.135.4.3 2009/09/16 13:37:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,23 +100,24 @@ int ncr53c9x_debug = NCR_SHOWMISC; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR
 int ncr53c9x_notag = 0;
 #endif
 
-/*static*/ void	ncr53c9x_readregs(struct ncr53c9x_softc *);
-/*static*/ void	ncr53c9x_select(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
-/*static*/ int ncr53c9x_reselect(struct ncr53c9x_softc *, int, int, int);
-/*static*/ void	ncr53c9x_scsi_reset(struct ncr53c9x_softc *);
-/*static*/ void ncr53c9x_clear(struct ncr53c9x_softc *, scsipi_xfer_result_t);
-/*static*/ int	ncr53c9x_poll(struct ncr53c9x_softc *,
+static void	ncr53c9x_readregs(struct ncr53c9x_softc *);
+static void	ncr53c9x_select(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+static int	ncr53c9x_reselect(struct ncr53c9x_softc *, int, int, int);
+#if 0
+static void	ncr53c9x_scsi_reset(struct ncr53c9x_softc *);
+#endif
+static void	ncr53c9x_clear(struct ncr53c9x_softc *, scsipi_xfer_result_t);
+static int	ncr53c9x_poll(struct ncr53c9x_softc *,
 			      struct scsipi_xfer *, int);
-/*static*/ void	ncr53c9x_sched(struct ncr53c9x_softc *);
-/*static*/ void	ncr53c9x_done(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
-/*static*/ void	ncr53c9x_msgin(struct ncr53c9x_softc *);
-/*static*/ void	ncr53c9x_msgout(struct ncr53c9x_softc *);
-/*static*/ void	ncr53c9x_timeout(void *arg);
-/*static*/ void	ncr53c9x_watch(void *arg);
-/*static*/ void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
-/*static*/ void ncr53c9x_dequeue(struct ncr53c9x_softc *,
-				struct ncr53c9x_ecb *);
-/*static*/ int	ncr53c9x_ioctl(struct scsipi_channel *, u_long,
+static void	ncr53c9x_sched(struct ncr53c9x_softc *);
+static void	ncr53c9x_done(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+static void	ncr53c9x_msgin(struct ncr53c9x_softc *);
+static void	ncr53c9x_msgout(struct ncr53c9x_softc *);
+static void	ncr53c9x_timeout(void *arg);
+static void	ncr53c9x_watch(void *arg);
+static void	ncr53c9x_dequeue(struct ncr53c9x_softc *,
+				 struct ncr53c9x_ecb *);
+static int	ncr53c9x_ioctl(struct scsipi_channel *, u_long,
 			       void *, int, struct proc *);
 
 void ncr53c9x_sense(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
@@ -138,9 +139,9 @@ static int  ncr53c9x_rdfifo(struct ncr53c9x_softc *, int);
 
 
 #define NCR_SET_COUNT(sc, size) do { \
-		NCR_WRITE_REG((sc), NCR_TCL, (size)); 			\
+		NCR_WRITE_REG((sc), NCR_TCL, (size));			\
 		NCR_WRITE_REG((sc), NCR_TCM, (size) >> 8);		\
-		if ((sc->sc_cfg2 & NCRCFG2_FE) || 			\
+		if ((sc->sc_cfg2 & NCRCFG2_FE) ||			\
 		    (sc->sc_rev == NCR_VARIANT_FAS366)) {		\
 			NCR_WRITE_REG((sc), NCR_TCH, (size) >> 16);	\
 		}							\
@@ -422,6 +423,7 @@ ncr53c9x_reset(struct ncr53c9x_softc *sc)
 #endif
 }
 
+#if 0
 /*
  * Reset the SCSI bus, but not the chip
  */
@@ -434,6 +436,7 @@ ncr53c9x_scsi_reset(struct ncr53c9x_softc *sc)
 	printf("%s: resetting SCSI bus\n", device_xname(sc->sc_dev));
 	NCRCMD(sc, NCRCMD_RSTSCSI);
 }
+#endif
 
 /*
  * Clear all commands
@@ -1397,7 +1400,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 
 #if 0
 #ifdef NCR53C9X_DEBUG
- 	{
+	{
 		int j;
 
 		NCR_TRACE(("\n[rdfifo %s (%d):",
@@ -2382,7 +2385,7 @@ again:
 		ecb = sc->sc_nexus;
 		if (sc->sc_phase != MESSAGE_IN_PHASE) {
 			int i = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
- 			/*
+			/*
 			 * Things are seriously screwed up.
 			 * Pull the brakes, i.e. reset
 			 */

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5.78.2 2009/05/04 08:11:18 yamt Exp $
+$NetBSD: version,v 1.5.78.3 2009/09/16 13:37:39 yamt Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -40,3 +40,5 @@ is taken as the current.
 5.1:	Change boot messages to replace build date with kernel version.
 5.2:	Support for multiboot.
 5.3:	Autoload kernel module for root file system.
+5.4:	The VESA VBE mode number is now passed to the kernel so it can be
+	restored on ACPI resume.

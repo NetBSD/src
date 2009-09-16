@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.10.2.1 2008/05/16 02:24:03 yamt Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.10.2.2 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ struct sonic_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	int sc_32bit;			/* use 32-bit mode */
 	int sc_bigendian;		/* BMODE -> Vcc */

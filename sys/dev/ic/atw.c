@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.137.4.3 2009/06/20 07:20:21 yamt Exp $  */
+/*	$NetBSD: atw.c,v 1.137.4.4 2009/09/16 13:37:47 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.3 2009/06/20 07:20:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.4 2009/09/16 13:37:47 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.3 2009/06/20 07:20:21 yamt Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 #include <sys/time.h>
 #include <lib/libkern/libkern.h>
 
@@ -131,10 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.3 2009/06/20 07:20:21 yamt Exp $");
 
 #define ATW_REFSLAVE	/* slavishly do what the reference driver does */
 
-#define	VOODOO_DUR_11_ROUNDING		0x01 /* necessary */
-#define	VOODOO_DUR_2_4_SPECIALCASE	0x02 /* NOT necessary */
-int atw_voodoo = VOODOO_DUR_11_ROUNDING;
-
 int atw_pseudo_milli = 1;
 int atw_magic_delay1 = 100 * 1000;
 int atw_magic_delay2 = 100 * 1000;
@@ -211,7 +208,7 @@ void	atw_reset(struct atw_softc *);
 /* Interrupt handlers */
 void	atw_linkintr(struct atw_softc *, u_int32_t);
 void	atw_rxintr(struct atw_softc *);
-void	atw_txintr(struct atw_softc *);
+void	atw_txintr(struct atw_softc *, uint32_t);
 
 /* 802.11 state machine */
 static int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -718,7 +715,7 @@ atw_attach(struct atw_softc *sc)
 	 * before this point releases all resources that may have been
 	 * allocated.
 	 */
-	sc->sc_flags |= ATWF_ATTACHED /* | ATWF_RTSCTS */;
+	sc->sc_flags |= ATWF_ATTACHED;
 
 	ATW_DPRINTF((" SROM MAC %04x%04x%04x",
 	    htole16(sc->sc_srom[ATW_SR_MAC00]),
@@ -858,11 +855,11 @@ atw_attach(struct atw_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
-	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, atw_shutdown)) {
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, atw_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
+	else
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
-	} else
-		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
@@ -1158,10 +1155,10 @@ atw_ifs_init(struct atw_softc *sc)
 	 * Go figure.
 	 */
 	ifst = __SHIFTIN(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
-	      __SHIFTIN(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
+	      __SHIFTIN(22 * 10 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
 	             ATW_IFST_SIFS_MASK) |
 	      __SHIFTIN(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
-	      __SHIFTIN(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
+	      __SHIFTIN(IEEE80211_DUR_DS_EIFS, ATW_IFST_EIFS_MASK);
 
 	ATW_WRITE(sc, ATW_IFST, ifst);
 }
@@ -1436,7 +1433,6 @@ atw_init(struct ifnet *ifp)
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* send no beacons, yet. */
 	atw_start_beacon(sc, 0);
@@ -1447,7 +1443,7 @@ atw_init(struct ifnet *ifp)
 		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
 		sc->sc_tx_timer = 0;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
@@ -2368,7 +2364,7 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	/* TBD use ni_capinfo */
 
 	capinfo = 0;
-	if (sc->sc_flags & ATWF_SHORT_PREAMBLE)
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
@@ -2677,8 +2673,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	sc->sc_tx_timer = 0;
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable) {
@@ -2777,6 +2772,30 @@ atw_shutdown(device_t self, int flags)
 	return true;
 }
 
+#if 0
+static void
+atw_workaround1(struct atw_softc *sc)
+{
+	uint32_t test1;
+
+	test1 = ATW_READ(sc, ATW_TEST1);
+
+	sc->sc_misc_ev.ev_count++;
+
+	if ((test1 & ATW_TEST1_RXPKT1IN) != 0) {
+		sc->sc_rxpkt1in_ev.ev_count++;
+		return;
+	}
+	if (__SHIFTOUT(test1, ATW_TEST1_RRA_MASK) ==
+	    __SHIFTOUT(test1, ATW_TEST1_RWA_MASK)) {
+		sc->sc_rxamatch_ev.ev_count++;
+		return;
+	}
+	sc->sc_workaround1_ev.ev_count++;
+	(void)atw_init(&sc->sc_if);
+}
+#endif
+
 int
 atw_intr(void *arg)
 {
@@ -2863,17 +2882,17 @@ atw_intr(void *arg)
 				    device_xname(sc->sc_dev));
 				/* Get the receive process going again. */
 				ATW_WRITE(sc, ATW_RDR, 0x1);
-				break;
 			}
 		}
 
 		if (txstatus) {
 			/* Sweep up transmit descriptors. */
-			atw_txintr(sc);
+			atw_txintr(sc, txstatus);
 
 			if (txstatus & ATW_INTR_TLT) {
 				DPRINTF(sc, ("%s: tx lifetime exceeded\n",
 				    device_xname(sc->sc_dev)));
+				(void)atw_init(&sc->sc_if);
 			}
 
 			if (txstatus & ATW_INTR_TRT) {
@@ -2903,7 +2922,7 @@ atw_intr(void *arg)
 				 */
 				ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
 				DELAY(atw_nar_delay);
-				ATW_WRITE(sc, ATW_RDR, 0x1);
+				ATW_WRITE(sc, ATW_TDR, 0x1);
 				/* XXX Log every Nth underrun from
 				 * XXX now on?
 				 */
@@ -3073,7 +3092,7 @@ atw_rxintr(struct atw_softc *sc)
 	int i, len, rate, rate0;
 	u_int32_t rssi, ctlrssi;
 
-	for (i = sc->sc_rxptr;; i = ATW_NEXTRX(i)) {
+	for (i = sc->sc_rxptr;; i = sc->sc_rxptr) {
 		rxs = &sc->sc_rxsoft[i];
 
 		ATW_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -3082,8 +3101,12 @@ atw_rxintr(struct atw_softc *sc)
 		ctlrssi = le32toh(sc->sc_rxdescs[i].ar_ctlrssi);
 		rate0 = __SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
-		if (rxstat & ATW_RXSTAT_OWN)
-			break; /* We have processed all receive buffers. */
+		if (rxstat & ATW_RXSTAT_OWN) {
+			ATW_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
+			break;
+		}
+
+		sc->sc_rxptr = ATW_NEXTRX(i);
 
 		DPRINTF3(sc,
 		    ("%s: rx stat %08x ctlrssi %08x buf1 %08x buf2 %08x\n",
@@ -3224,9 +3247,6 @@ atw_rxintr(struct atw_softc *sc)
 		ieee80211_input(ic, m, ni, (int)rssi, 0);
 		ieee80211_free_node(ni);
 	}
-
-	/* Update the receive pointer. */
-	sc->sc_rxptr = i;
 }
 
 /*
@@ -3235,7 +3255,7 @@ atw_rxintr(struct atw_softc *sc)
  *	Helper; handle transmit interrupts.
  */
 void
-atw_txintr(struct atw_softc *sc)
+atw_txintr(struct atw_softc *sc, uint32_t status)
 {
 	static char txstat_buf[sizeof("ffffffff<>" ATW_TXSTAT_FMT)];
 	struct ifnet *ifp = &sc->sc_if;
@@ -3273,16 +3293,19 @@ atw_txintr(struct atw_softc *sc)
 				if (i == txs->txs_lastdesc)
 					break;
 			}
+			ATW_CDTXSYNC(sc, txs->txs_firstdesc,
+			    txs->txs_ndescs - 1, BUS_DMASYNC_PREREAD);
 		}
 #endif
 
 		txstat = le32toh(sc->sc_txdescs[txs->txs_lastdesc].at_stat);
-		if (txstat & ATW_TXSTAT_OWN)
+		if (txstat & ATW_TXSTAT_OWN) {
+			ATW_CDTXSYNC(sc, txs->txs_lastdesc, 1,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
-
-		sc->sc_txfree += txs->txs_ndescs;
 
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize,
@@ -3291,10 +3314,11 @@ atw_txintr(struct atw_softc *sc)
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
 
+		sc->sc_txfree += txs->txs_ndescs;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
-		KASSERT(!(SIMPLEQ_EMPTY(&sc->sc_txfreeq) ||
-		        sc->sc_txfree == 0));
+		KASSERT(!SIMPLEQ_EMPTY(&sc->sc_txfreeq) && sc->sc_txfree != 0);
+		sc->sc_tx_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
@@ -3306,20 +3330,21 @@ atw_txintr(struct atw_softc *sc)
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		}
 
+		sc->sc_xmit_ev.ev_count++;
+
 		/*
 		 * Check for errors and collisions.
 		 */
 		if (txstat & ATW_TXSTAT_TUF)
-			sc->sc_stats.ts_tx_tuf++;
+			sc->sc_tuf_ev.ev_count++;
 		if (txstat & ATW_TXSTAT_TLT)
-			sc->sc_stats.ts_tx_tlt++;
+			sc->sc_tlt_ev.ev_count++;
 		if (txstat & ATW_TXSTAT_TRT)
-			sc->sc_stats.ts_tx_trt++;
+			sc->sc_trt_ev.ev_count++;
 		if (txstat & ATW_TXSTAT_TRO)
-			sc->sc_stats.ts_tx_tro++;
-		if (txstat & ATW_TXSTAT_SOFBR) {
-			sc->sc_stats.ts_tx_sofbr++;
-		}
+			sc->sc_tro_ev.ev_count++;
+		if (txstat & ATW_TXSTAT_SOFBR)
+			sc->sc_sofbr_ev.ev_count++;
 
 		if ((txstat & ATW_TXSTAT_ES) == 0)
 			ifp->if_collisions +=
@@ -3330,14 +3355,7 @@ atw_txintr(struct atw_softc *sc)
 		ifp->if_opackets++;
 	}
 
-	/*
-	 * If there are no more pending transmissions, cancel the watchdog
-	 * timer.
-	 */
-	if (txs == NULL) {
-		KASSERT((ifp->if_flags & IFF_OACTIVE) == 0);
-		sc->sc_tx_timer = 0;
-	}
+	KASSERT(txs != NULL || (ifp->if_flags & IFF_OACTIVE) == 0);
 }
 
 /*
@@ -3355,18 +3373,14 @@ atw_watchdog(struct ifnet *ifp)
 	if (ATW_IS_ENABLED(sc) == 0)
 		return;
 
-	if (sc->sc_rescan_timer) {
-		if (--sc->sc_rescan_timer == 0)
-			(void)ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	}
-	if (sc->sc_tx_timer) {
-		if (--sc->sc_tx_timer == 0 &&
-		    !SIMPLEQ_EMPTY(&sc->sc_txdirtyq)) {
-			printf("%s: transmit timeout\n", ifp->if_xname);
-			ifp->if_oerrors++;
-			(void)atw_init(ifp);
-			atw_start(ifp);
-		}
+	if (sc->sc_rescan_timer != 0 && --sc->sc_rescan_timer == 0)
+		(void)ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	if (sc->sc_tx_timer != 0 && --sc->sc_tx_timer == 0 &&
+	    !SIMPLEQ_EMPTY(&sc->sc_txdirtyq)) {
+		printf("%s: transmit timeout\n", ifp->if_xname);
+		ifp->if_oerrors++;
+		(void)atw_init(ifp);
+		atw_start(ifp);
 	}
 	if (sc->sc_tx_timer != 0 || sc->sc_rescan_timer != 0)
 		ifp->if_timer = 1;
@@ -3382,6 +3396,18 @@ atw_evcnt_detach(struct atw_softc *sc)
 	evcnt_detach(&sc->sc_crc32e_ev);
 	evcnt_detach(&sc->sc_crc16e_ev);
 	evcnt_detach(&sc->sc_recv_ev);
+
+	evcnt_detach(&sc->sc_tuf_ev);
+	evcnt_detach(&sc->sc_tro_ev);
+	evcnt_detach(&sc->sc_trt_ev);
+	evcnt_detach(&sc->sc_tlt_ev);
+	evcnt_detach(&sc->sc_sofbr_ev);
+	evcnt_detach(&sc->sc_xmit_ev);
+
+	evcnt_detach(&sc->sc_rxpkt1in_ev);
+	evcnt_detach(&sc->sc_rxamatch_ev);
+	evcnt_detach(&sc->sc_workaround1_ev);
+	evcnt_detach(&sc->sc_misc_ev);
 }
 
 static void
@@ -3399,6 +3425,28 @@ atw_evcnt_attach(struct atw_softc *sc)
 	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP SFD error");
 	evcnt_attach_dynamic(&sc->sc_sige_ev, EVCNT_TYPE_MISC,
 	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP Signal Field error");
+
+	evcnt_attach_dynamic(&sc->sc_xmit_ev, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_if.if_xname, "xmit");
+	evcnt_attach_dynamic(&sc->sc_tuf_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_xmit_ev, sc->sc_if.if_xname, "transmit underflow");
+	evcnt_attach_dynamic(&sc->sc_tro_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_xmit_ev, sc->sc_if.if_xname, "transmit overrun");
+	evcnt_attach_dynamic(&sc->sc_trt_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_xmit_ev, sc->sc_if.if_xname, "retry count exceeded");
+	evcnt_attach_dynamic(&sc->sc_tlt_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_xmit_ev, sc->sc_if.if_xname, "lifetime exceeded");
+	evcnt_attach_dynamic(&sc->sc_sofbr_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_xmit_ev, sc->sc_if.if_xname, "packet size mismatch");
+
+	evcnt_attach_dynamic(&sc->sc_misc_ev, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_if.if_xname, "misc");
+	evcnt_attach_dynamic(&sc->sc_workaround1_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_misc_ev, sc->sc_if.if_xname, "workaround #1");
+	evcnt_attach_dynamic(&sc->sc_rxamatch_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_misc_ev, sc->sc_if.if_xname, "rra equals rwa");
+	evcnt_attach_dynamic(&sc->sc_rxpkt1in_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_misc_ev, sc->sc_if.if_xname, "rxpkt1in set");
 }
 
 #ifdef ATW_DEBUG
@@ -3441,6 +3489,7 @@ atw_start(struct ifnet *ifp)
 	struct ieee80211_frame_min *whm;
 	struct ieee80211_frame *wh;
 	struct atw_frame *hh;
+	uint16_t hdrctl;
 	struct mbuf *m0, *m;
 	struct atw_txsoft *txs, *last_txs;
 	struct atw_txdesc *txd;
@@ -3471,6 +3520,8 @@ atw_start(struct ifnet *ifp)
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
 	       sc->sc_txfree != 0) {
+
+		hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
 
 		/*
 		 * Grab a packet off the management queue, if it
@@ -3515,6 +3566,14 @@ atw_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			break;
 		}
+#if 0
+		if (IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+		    m0->m_pkthdr.len > ic->ic_fragthreshold)
+			hdrctl |= htole16(ATW_HDRCTL_MORE_FRAG);
+#endif
+
+		if (m0->m_pkthdr.len + IEEE80211_CRC_LEN >= ic->ic_rtsthreshold)
+			hdrctl |= htole16(ATW_HDRCTL_RTSCTS);
 
 		if (ieee80211_compute_duration(whm, k, m0->m_pkthdr.len,
 		    ic->ic_flags, ic->ic_fragthreshold, rate,
@@ -3593,12 +3652,20 @@ atw_start(struct ifnet *ifp)
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 
-		hh->atw_fragthr = htole16(ic->ic_fragthreshold);
+		/* never fragment multicast frames */
+		if (IEEE80211_IS_MULTICAST(hh->atw_dst))
+			hh->atw_fragthr = htole16(IEEE80211_FRAG_MAX);
+		else {
+			if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+			    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE))
+				hdrctl |= htole16(ATW_HDRCTL_SHORT_PREAMBLE);
+			hh->atw_fragthr = htole16(ic->ic_fragthreshold);
+		}
+
 		hh->atw_rtylmt = 3;
-		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
 #if 0
 		if (do_encrypt) {
-			hh->atw_hdrctl |= htole16(ATW_HDRCTL_WEP);
+			hdrctl |= htole16(ATW_HDRCTL_WEP);
 			hh->atw_keyid = ic->ic_def_txkey;
 		}
 #endif
@@ -3612,15 +3679,9 @@ atw_start(struct ifnet *ifp)
 		hh->atw_head_dur = htole16(txs->txs_d0.d_rts_dur);
 		hh->atw_tail_dur = htole16(txs->txs_dn.d_rts_dur);
 
-		/* never fragment multicast frames */
-		if (IEEE80211_IS_MULTICAST(hh->atw_dst)) {
-			hh->atw_fragthr = htole16(ic->ic_fragthreshold);
-		} else if (sc->sc_flags & ATWF_RTSCTS) {
-			hh->atw_hdrctl |= htole16(ATW_HDRCTL_RTSCTS);
-		}
-
+		hh->atw_hdrctl = hdrctl;
+		hh->atw_fragnum = npkt << 4;
 #ifdef ATW_DEBUG
-		hh->atw_fragnum = 0;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
 			printf("%s: dst = %s, rate = 0x%02x, "
@@ -3833,6 +3894,7 @@ int
 atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct atw_softc *sc = ifp->if_softc;
+	struct ieee80211req *ireq;
 	int s, error = 0;
 
 	/* XXX monkey see, monkey do. comes from wi_ioctl. */
@@ -3866,6 +3928,22 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
+	case SIOCS80211:
+		ireq = data;
+		if (ireq->i_type == IEEE80211_IOC_FRAGTHRESHOLD) {
+			if ((error = kauth_authorize_network(curlwp->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL) != 0))
+				break;
+			if (!(IEEE80211_FRAG_MIN <= ireq->i_val &&
+			      ireq->i_val <= IEEE80211_FRAG_MAX))
+				error = EINVAL;
+			else
+				sc->sc_ic.ic_fragthreshold = ireq->i_val;
+			break;
+		}
+		/*FALLTHROUGH*/
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error == ENETRESET || error == ERESTART) {

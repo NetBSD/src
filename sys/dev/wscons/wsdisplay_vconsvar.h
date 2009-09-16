@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.8.26.1 2008/05/16 02:25:17 yamt Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.8.26.2 2009/09/16 13:37:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -124,6 +124,6 @@ int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
 
 void	vcons_redraw_screen(struct vcons_screen *);
 
-
+void	vcons_replay_msgbuf(struct vcons_screen *);
 
 #endif /* _WSDISPLAY_VCONS_H_ */

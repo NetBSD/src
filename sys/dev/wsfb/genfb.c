@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.16.4.2 2009/05/04 08:13:25 yamt Exp $ */
+/*	$NetBSD: genfb.c,v 1.16.4.3 2009/09/16 13:37:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.16.4.2 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.16.4.3 2009/09/16 13:37:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
-static void	genfb_restore_palette(struct genfb_softc *);
 static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
@@ -90,7 +89,7 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb;
+	uint64_t cmap_cb, pmf_cb;
 	uint32_t fboffset;
 
 	dict = device_properties(&sc->sc_dev);
@@ -135,6 +134,12 @@ genfb_init(struct genfb_softc *sc)
 	if (prop_dictionary_get_uint64(dict, "cmap_callback", &cmap_cb)) {
 		if (cmap_cb != 0)
 			sc->sc_cmcb = (void *)(vaddr_t)cmap_cb;
+	}
+	/* optional pmf callback */
+	sc->sc_pmfcb = NULL;
+	if (prop_dictionary_get_uint64(dict, "pmf_callback", &pmf_cb)) {
+		if (pmf_cb != 0)
+			sc->sc_pmfcb = (void *)(vaddr_t)pmf_cb;
 	}
 }
 
@@ -211,7 +216,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
+	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
 
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
@@ -220,6 +225,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
+
+	vcons_replay_msgbuf(&sc->sc_console_screen);
 
 	if (genfb_softc == NULL)
 		genfb_softc = sc;
@@ -338,6 +345,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
+	/* TODO: actually center output */
 	ri->ri_hw = scr;
 }
 
@@ -405,14 +413,16 @@ genfb_getcmap(struct genfb_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-static void
+void
 genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-		genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+	if (sc->sc_depth <= 8) {
+		for (i = 0; i < (1 << sc->sc_depth); i++) {
+			genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
+			    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		}
 	}
 }
 

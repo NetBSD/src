@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.3.14.2 2009/05/04 08:10:32 yamt Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.3.14.3 2009/09/16 13:37:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -112,6 +112,18 @@ wakeup_16:
 	lcall	$0xc000,$3
 
 	/* Reset registers in case the VBIOS changed them. */
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
+
+	/* If we need to restore a VESA VBE mode, do it now */
+	cmpb	$0,WAKEUP_vesa_modenum
+	je	1f
+	movw	WAKEUP_vesa_modenum,%bx
+	orw	$0x4000,%bx
+	movw	$0x4f02,%ax
+	int	$0x10
+
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
@@ -253,6 +265,8 @@ WAKEUP_restorecpu:	.quad 0
 
 	.global WAKEUP_vbios_reset
 WAKEUP_vbios_reset:	.byte 0
+	.global WAKEUP_vesa_modenum
+WAKEUP_vesa_modenum:    .word 0
 	.global WAKEUP_beep_on_reset
 WAKEUP_beep_on_reset:	.byte 0
 

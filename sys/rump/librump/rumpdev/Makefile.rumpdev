@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdev,v 1.1.4.2 2009/08/19 18:48:28 yamt Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.1.4.3 2009/09/16 13:38:04 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,7 +8,7 @@ LIB=	rumpdev
 .PATH:	${RUMPTOP}/librump/rumpdev				\
 	${RUMPTOP}/../kern
 
-SRCS=	rump_dev.c autoconf.c devnodes.c
+SRCS=	rump_dev.c autoconf.c
 
 # sys/kern
 SRCS+=	subr_autoconf.c

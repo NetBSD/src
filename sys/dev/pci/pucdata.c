@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.54.4.1 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.54.4.2 2009/09/16 13:37:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54.4.1 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54.4.2 2009/09/16 13:37:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -894,11 +894,21 @@ const struct puc_device_description puc_devices[] = {
 	 * Boards with an Oxford Semiconductor chip.
 	 *
 	 * Oxford Semiconductor provides documentation for their chip at:
-	 * <URL:http://www.oxsemi.com/products/uarts/index.html>
+	 * <URL:http://www.plxtech.com/products/uart>
 	 *
 	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
+
+	/* Oxford Semiconductor OXmPCI952 PCI UARTs */
+	{   "Oxford Semiconductor OXmPCI952 UARTs",
+	    {	0x1415,	0x950a,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+	    },
+	},
 
 	/* Oxford Semiconductor OX16PCI952 PCI `950 UARTs - 128 byte FIFOs */
 	{   "Oxford Semiconductor OX16PCI952 UARTs",

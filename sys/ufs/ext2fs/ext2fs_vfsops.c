@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.131.10.3 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.131.10.4 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131.10.3 2009/07/18 14:53:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131.10.4 2009/09/16 13:38:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131.10.3 2009/07/18 14:53:27 yam
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
-
-extern kmutex_t ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
@@ -362,8 +360,15 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
@@ -384,14 +389,16 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * updating the mount is okay (for example, as far as securelevel goes)
 	 * which leaves us with the normal check.
 	 */
-	accessmode = VREAD;
-	if (update ?
-	    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-	    (mp->mnt_flag & MNT_RDONLY) == 0)
-		accessmode |= VWRITE;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	if (error == 0) {
+		accessmode = VREAD;
+		if (update ?
+		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		VOP_UNLOCK(devvp, 0);
+	}
 
 	if (error) {
 		vrele(devvp);
@@ -452,7 +459,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ext2fs_reload(mp, l->l_cred);
+			error = ext2fs_reload(mp, l->l_cred, l);
 			if (error)
 				return (error);
 		}
@@ -469,7 +476,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->e2fs_fmod = 1;
 		}
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
@@ -513,9 +520,8 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
+ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct lwp *l = curlwp;
 	struct vnode *vp, *mvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
@@ -524,14 +530,16 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	struct partinfo dpart;
 	int i, size, error;
 	void *cp;
+	struct ufsmount *ump;
 
-	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
 
+	ump = VFSTOUFS(mp);
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
-	devvp = VFSTOUFS(mountp)->um_devvp;
+	devvp = ump->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -550,13 +558,13 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 		return (error);
 	}
 	newfs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(newfs, (mountp->mnt_flag & MNT_RDONLY) != 0);
+	error = ext2fs_checksb(newfs, (mp->mnt_flag & MNT_RDONLY) != 0);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
 	}
 
-	fs = VFSTOUFS(mountp)->um_e2fs;
+	fs = ump->um_e2fs;
 	/*
 	 * copy in new superblock, and compute in-memory values
 	 */
@@ -574,6 +582,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
 	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+	brelse(bp, 0);
 
 	/*
 	 * Step 3: re-read summary information from disk.
@@ -595,17 +604,17 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mountp)) == NULL)
-		return (ENOMEM);
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
 	mutex_enter(&mntvnode_lock);
 loop:
-	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		if (vp->v_mount != mountp || vismarker(vp))
+		if (vp->v_mount != mp || vismarker(vp))
 			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.

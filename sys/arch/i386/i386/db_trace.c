@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.58.20.2 2009/05/04 08:11:16 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.58.20.3 2009/09/16 13:37:39 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.58.20.2 2009/05/04 08:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.58.20.3 2009/09/16 13:37:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
 				    &narg);
 
-		if (lastframe == 0 && sym == (db_sym_t)0) {
+		if (lastframe == 0 && sym == (db_sym_t)0 && callpc != 0) {
 			/* Symbol not found, peek at code */
 			int	instr = db_get_value(callpc, 4, false);
 

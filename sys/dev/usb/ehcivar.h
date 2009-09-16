@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.29.4.2 2009/05/04 08:13:20 yamt Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.29.4.3 2009/09/16 13:37:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,15 +162,11 @@ typedef struct ehci_softc {
 
 	kmutex_t sc_doorbell_lock;
 
-	usb_callout_t sc_tmo_intrlist;
+	struct callout sc_tmo_intrlist;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	device_ptr_t sc_child;		/* /dev/usb# device */
-#endif
+	device_t sc_child; /* /dev/usb# device */
 	char sc_dying;
-#if defined(__NetBSD__)
 	struct usb_dma_reserve sc_dma_reserve;
-#endif
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.28.4.3 2009/08/19 18:47:10 yamt Exp $ */
+/*	$NetBSD: if_age.c,v 1.28.4.4 2009/09/16 13:37:50 yamt Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.3 2009/08/19 18:47:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.4 2009/09/16 13:37:50 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -290,10 +290,10 @@ age_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	if (!pmf_device_register(self, NULL, age_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, age_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 

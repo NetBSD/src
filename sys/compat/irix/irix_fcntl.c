@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.24.4.2 2009/07/18 14:52:57 yamt Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.24.4.3 2009/09/16 13:37:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.24.4.2 2009/07/18 14:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.24.4.3 2009/09/16 13:37:44 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.24.4.2 2009/07/18 14:52:57 yamt Exp
 #include <compat/svr4/svr4_syscallargs.h>
 
 static int fd_truncate(struct lwp *, int, int, off_t, register_t *);
-static int bsd_to_irix_fcntl_flags(int);
-static int irix_to_bsd_fcntl_flags(int);
+static uintptr_t bsd_to_irix_fcntl_flags(uintptr_t);
+static uintptr_t irix_to_bsd_fcntl_flags(uintptr_t);
 
 int
 irix_sys_lseek64(struct lwp *l, const struct irix_sys_lseek64_args *uap, register_t *retval)
@@ -161,12 +161,12 @@ irix_sys_fcntl(struct lwp *l, const struct irix_sys_fcntl_args *uap, register_t 
 		 * All unsupported flags are silently ignored
 		 * except FDIRECT taht will return EINVAL
 		 */
-		if ((int)SCARG(uap, arg) & IRIX_FDIRECT)
+		if ((uintptr_t)SCARG(uap, arg) & IRIX_FDIRECT)
 			return EINVAL;
 
 		SCARG(&bsd_ua, fd) = SCARG(uap, fd);
 		SCARG(&bsd_ua, arg) =
-		    (char *)irix_to_bsd_fcntl_flags((int)SCARG(uap, arg));
+		    (char *)irix_to_bsd_fcntl_flags((uintptr_t)SCARG(uap, arg));
 		SCARG(&bsd_ua, cmd) = F_SETFL;
 		return sys_fcntl(l, &bsd_ua, retval);
 		break;
@@ -329,10 +329,10 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 	return 0;
 }
 
-static int
-irix_to_bsd_fcntl_flags(int flags)
+static uintptr_t
+irix_to_bsd_fcntl_flags(uintptr_t flags)
 {
-	int ret = 0;
+	uintptr_t ret = 0;
 
 	if (flags & IRIX_FNDELAY) ret |= FNDELAY;
 	if (flags & IRIX_FAPPEND) ret |= FAPPEND;
@@ -355,10 +355,10 @@ irix_to_bsd_fcntl_flags(int flags)
 	return ret;
 }
 
-static int
-bsd_to_irix_fcntl_flags(int flags)
+static uintptr_t
+bsd_to_irix_fcntl_flags(uintptr_t flags)
 {
-	int ret = 0;
+	uintptr_t ret = 0;
 
 	if (flags & FNDELAY) ret |= IRIX_FNDELAY;
 	if (flags & FAPPEND) ret |= IRIX_FAPPEND;

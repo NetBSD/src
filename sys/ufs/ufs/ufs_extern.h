@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.58.10.1 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.58.10.2 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -175,5 +175,6 @@ void	ffs_snapgone(struct inode *);
 __END_DECLS
 
 extern kmutex_t ufs_ihash_lock;
+extern kmutex_t ufs_hashlock;
 
 #endif /* !_UFS_UFS_EXTERN_H_ */

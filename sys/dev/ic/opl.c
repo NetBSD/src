@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.33.4.2 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: opl.c,v 1.33.4.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.33.4.2 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.33.4.3 2009/09/16 13:37:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ opl_attach(struct opl_softc *sc)
 
 	opl_reset(sc);
 
-	printf(": model OPL%d", sc->model);
+	aprint_normal(": model OPL%d", sc->model);
 
 	/* Set up panpot */
 	sc->panl = OPL_VOICE_TO_LEFT;
@@ -169,10 +169,11 @@ opl_attach(struct opl_softc *sc)
 	    device_cfdata(sc->mididev.dev)->cf_flags & OPL_FLAGS_SWAP_LR) {
 		sc->panl = OPL_VOICE_TO_RIGHT;
 		sc->panr = OPL_VOICE_TO_LEFT;
-		printf(": LR swapped");
+		aprint_normal(": LR swapped");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_mididev =
 	    midi_attach_mi(&midisyn_hw_if, &sc->syn, sc->mididev.dev);

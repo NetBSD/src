@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.82.2.1 2009/05/04 08:14:18 yamt Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.82.2.2 2009/09/16 13:38:02 yamt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.2.1 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.2.2 2009/09/16 13:38:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -178,9 +178,13 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
-PR_WRAP_CTLINPUT(esp6_ctlinput)
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
+#endif
+
+#if (defined(IPSEC) && defined(IPSEC_ESP)) || defined(FAST_IPSEC)
+PR_WRAP_CTLINPUT(esp6_ctlinput)
+
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
 #endif
 
@@ -417,9 +421,11 @@ struct domain inet6domain = {
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in6, sin6_addr),
 	.dom_sa_cmplen = sizeof(struct in6_addr),
 	.dom_sa_any = (const struct sockaddr *)&in6_any,
+	.dom_sockaddr_externalize = sockaddr_in6_externalize,
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inet6domain.dom_rtcache)
 };
 
+#if 0
 int
 sockaddr_in6_cmp(const struct sockaddr *lsa, const struct sockaddr *rsa)
 {
@@ -441,6 +447,7 @@ sockaddr_in6_cmp(const struct sockaddr *lsa, const struct sockaddr *rsa)
 
 	return lsin6->sin6_len - rsin6->sin6_len;
 }
+#endif
 
 /*
  * Internet configuration info

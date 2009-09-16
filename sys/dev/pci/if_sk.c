@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.48.4.2 2009/05/04 08:12:57 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.48.4.3 2009/09/16 13:37:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.2 2009/05/04 08:12:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.3 2009/09/16 13:37:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1462,10 +1462,10 @@ sk_attach(device_t parent, device_t self, void *aux)
             RND_TYPE_NET, 0);
 #endif
 
-	if (!pmf_device_register(self, NULL, sk_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, sk_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	DPRINTFN(2, ("sk_attach: end\n"));
 

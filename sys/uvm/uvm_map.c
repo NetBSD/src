@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.254.2.3 2009/08/19 18:48:35 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254.2.4 2009/09/16 13:38:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.3 2009/08/19 18:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.4 2009/09/16 13:38:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4146,6 +4146,8 @@ uvmspace_share(struct proc *p1, struct proc *p2)
 	p2->p_vmspace = p1->p_vmspace;
 }
 
+#if 0
+
 /*
  * uvmspace_unshare: ensure that process "p" has its own, unshared, vmspace
  *
@@ -4173,6 +4175,8 @@ uvmspace_unshare(struct lwp *l)
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
+
+#endif
 
 /*
  * uvmspace_exec: the process wants to exec a new program

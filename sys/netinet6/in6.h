@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.66 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: in6.h,v 1.66.10.1 2009/09/16 13:38:02 yamt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -231,37 +231,37 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) == 0))
+	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[3] == 0)
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) == ntohl(1)))
+	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[3] == ntohl(1))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) != 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) != ntohl(1)))
+	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[3] != 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[3] != ntohl(1))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr.__u6_addr32[2] == ntohl(0x0000ffff))
 
 /*
  * KAME Scope Values
@@ -684,6 +684,8 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 struct mbuf;
 struct ifnet;
 int sockaddr_in6_cmp(const struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_in6_externalize(struct sockaddr *, socklen_t,
+    const struct sockaddr *);
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
 void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);

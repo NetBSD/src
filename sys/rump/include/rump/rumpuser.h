@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.23.2.3 2009/06/20 07:20:35 yamt Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.23.2.4 2009/09/16 13:38:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -179,5 +179,6 @@ int  rumpuser_net_listen(int, int, int *);
 enum rumpuser_getnametype { RUMPUSER_SOCKNAME, RUMPUSER_PEERNAME };
 int  rumpuser_net_getname(int, struct sockaddr *, int *,
 			      enum rumpuser_getnametype, int *);
+int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
 
 #endif /* _RUMP_RUMPUSER_H_ */

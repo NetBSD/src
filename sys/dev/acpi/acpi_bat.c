@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.65.4.3 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.65.4.4 2009/09/16 13:37:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.65.4.3 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.65.4.4 2009/09/16 13:37:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ static void
 acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
-	int rv;
+	ACPI_STATUS rv;
 
 #ifdef ACPI_BAT_DEBUG
 	aprint_debug_dev(dv, "received notify message: 0x%x\n", notify);

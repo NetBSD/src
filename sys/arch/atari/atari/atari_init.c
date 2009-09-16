@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67.44.2 2009/07/18 14:52:52 yamt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.44.3 2009/09/16 13:37:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.2 2009/07/18 14:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.3 2009/09/16 13:37:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.2 2009/07/18 14:52:52 yamt Ex
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 
@@ -177,9 +178,10 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
 int kernel_copyback = 1;
 
 void
-start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize, char *esym_addr)
+start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
+    char *esym_addr)
 	/* id:			 Machine id			*/
-	/* ttphystart, ttphysize:	 Start address and size of TT-ram */
+	/* ttphystart, ttphysize: Start address and size of TT-ram */
 	/* stphysize:		 Size of ST-ram 		*/
 	/* esym_addr:		 Address of kernel '_esym' symbol */
 {
@@ -322,7 +324,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize, char *esym_a
 	 * If present, add pci areas
 	 */
 	if (machineid & ATARI_HADES)
-		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
+		ptextra += btoc(PCI_CONFIG_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
 	if (machineid & ATARI_MILAN)
 		ptextra += btoc(PCI_IO_SIZE + PCI_MEM_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
@@ -731,7 +733,7 @@ atari_hwinit(void)
  */
 static void
 map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
-	/* ptsize:		 Size of 'pt' in bytes	*/
+	/* ptsize:	 Size of 'pt' in bytes		*/
 	/* ptextra:	 #of additional I/O pte's	*/
 {
 	extern void	bootm_init(vaddr_t, pt_entry_t *, u_long);
@@ -774,9 +776,9 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 		 * Only Hades maps the PCI-config space!
 		 */
 		pci_conf_addr = ioaddr;
-		ioaddr       += PCI_CONF_SIZE;
+		ioaddr       += PCI_CONFIG_SIZE;
 		pg            = &pt[pci_conf_addr / PAGE_SIZE];
-		epg           = &pg[btoc(PCI_CONF_SIZE)];
+		epg           = &pg[btoc(PCI_CONFIG_SIZE)];
 		mask          = PCI_CONFM_PHYS;
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
 		for (; pg < epg; mask <<= 1)
@@ -871,7 +873,7 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern char end[];
-	int	i;
+	int i;
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
@@ -925,11 +927,12 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 }
 
 void
-mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, paddr_t sysptmap_pa, paddr_t kbase)
+mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
+    paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
 	/* kstsize:	 size of 'sysseg' in pages	*/
-	/* ptpa:		 Kernel page table		*/
-	/* ptsize:		 size	of 'pt' in bytes	*/
+	/* ptpa:	 Kernel page table		*/
+	/* ptsize:	 size	of 'pt' in bytes	*/
 	/* sysptmap_pa:	 System page table		*/
 {
 	st_entry_t	sg_proto, *sg, *esg;
@@ -976,11 +979,12 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 
 #if defined(M68040) || defined(M68060)
 void
-mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, paddr_t sysptmap_pa, paddr_t kbase)
+mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
+    paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
 	/* kstsize:	 size of 'sysseg' in pages	*/
-	/* ptpa:		 Kernel page table		*/
-	/* ptsize:		 size	of 'pt' in bytes	*/
+	/* ptpa:	 Kernel page table		*/
+	/* ptsize:	 size	of 'pt' in bytes	*/
 	/* sysptmap_pa:	 System page table		*/
 {
 	int		nl1desc, nl2desc, i;

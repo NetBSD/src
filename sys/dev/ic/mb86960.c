@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.70.4.2 2009/05/16 10:41:23 yamt Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.2 2009/05/16 10:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -417,7 +417,7 @@ mb86960_stop(struct mb86960_softc *sc)
 		(*sc->stop_card)(sc);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: end of mb86960_stop()\n", sc->sc_dev));
+	log(LOG_INFO, "%s: end of mb86960_stop()\n", device_xname(sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.60.4.2 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.60.4.3 2009/09/16 13:37:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.60.4.2 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.60.4.3 2009/09/16 13:37:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,11 +322,6 @@ ep_pcmcia_attach(device_t parent, device_t self, void *aux)
 	if (epconfig(sc, epp->epp_chipset, enaddr))
 		aprint_error_dev(self, "couldn't configure controller\n");
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->sc_ethercom.ec_if);
-
 	sc->enabled = 0;
 	ep_pcmcia_disable(sc);
 	return;
@@ -348,8 +343,6 @@ ep_pcmcia_detach(device_t self, int flags)
 	if (psc->sc_io_window == -1)
 		/* Nothing to detach. */
 		return 0;
-
-	pmf_device_deregister(self);
 
 	rv = ep_detach(self, flags);
 	if (rv != 0)

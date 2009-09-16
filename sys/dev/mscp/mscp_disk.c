@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.59.4.2 2009/05/16 10:41:31 yamt Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.59.4.3 2009/09/16 13:37:50 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.59.4.2 2009/05/16 10:41:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.59.4.3 2009/09/16 13:37:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -428,7 +428,7 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		memcpy(&newlabel, lp, sizeof disklabel);
+		memcpy(&newlabel, lp, sizeof newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
@@ -446,7 +446,7 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCWDINFO:
 	case ODIOCSDINFO:
-		if (cmd == ODIOCSDINFO || xfer == ODIOCWDINFO) {
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
 			memset(&newlabel, 0, sizeof newlabel);
 			memcpy(&newlabel, data, sizeof (struct olddisklabel));
 			tp = &newlabel;
@@ -462,9 +462,8 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if ((error == 0) && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
 			    || cmd == ODIOCWDINFO
-#else
-			    )) {
 #endif
+			    )) {
 				ra->ra_wlabel = 1;
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;

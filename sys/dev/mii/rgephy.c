@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.20.4.2 2009/05/04 08:12:52 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.20.4.3 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20.4.2 2009/05/04 08:12:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20.4.3 2009/09/16 13:37:49 yamt Exp $");
 
 
 /*
@@ -366,7 +366,6 @@ rgephy_status(struct mii_softc *sc)
 			mii->mii_media_status |= IFM_ACTIVE;
 	}
 
-	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
 

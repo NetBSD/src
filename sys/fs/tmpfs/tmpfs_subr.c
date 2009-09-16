@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.46.10.3 2009/05/16 10:41:47 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.46.10.4 2009/09/16 13:38:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.3 2009/05/16 10:41:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.4 2009/09/16 13:38:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -964,6 +964,8 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
+	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
+	int fs_decision = 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -973,30 +975,44 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if (kauth_cred_geteuid(cred) != node->tn_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)))
+	if (kauth_cred_geteuid(cred) != node->tn_uid)
+		fs_decision = EACCES;
+
+	/*
+	 * If the new flags have non-user flags that are different than
+	 * those on the node, we need special permission to change them.
+	 */
+	if ((flags & SF_SETTABLE) != (node->tn_flags & SF_SETTABLE)) {
+		action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+		if (!fs_decision)
+			fs_decision = EPERM;
+	}
+
+	/*
+	 * Indicate that this node's flags have system attributes in them if
+	 * that's the case.
+	 */
+	if (node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) {
+		action |= KAUTH_VNODE_HAS_SYSFLAGS;
+	}
+
+	error = kauth_authorize_vnode(cred, action, vp, NULL, fs_decision);
+	if (error)
 		return error;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-		/* The super-user is only allowed to change flags if the file
-		 * wasn't protected before and the securelevel is zero. */
-		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-		    kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHSYSFLAGS,
-		     0, NULL, NULL, NULL))
-			return EPERM;
+
+	/*
+	 * Set the flags. If we're not setting non-user flags, be careful not
+	 * to overwrite them.
+	 *
+	 * XXX: Can't we always assign here? if the system flags are different,
+	 *      the code above should catch attempts to change them without
+	 *      proper permissions, and if we're here it means it's okay to
+	 *      change them...
+	 */
+	if (action & KAUTH_VNODE_WRITE_SYSFLAGS) {
 		node->tn_flags = flags;
 	} else {
-		/* Regular users can change flags provided they only want to
-		 * change user-specific ones, not those reserved for the
-		 * super-user. */
-		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) ||
-		    (flags & UF_SETTABLE) != flags)
-			return EPERM;
-		if ((node->tn_flags & SF_SETTABLE) != (flags & SF_SETTABLE))
-			return EPERM;
+		/* Clear all user-settable flags and re-set them. */
 		node->tn_flags &= SF_SETTABLE;
 		node->tn_flags |= (flags & UF_SETTABLE);
 	}
@@ -1036,6 +1052,9 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 
 	error = genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid,
 	    mode);
+
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, error);
 	if (error)
 		return (error);
 
@@ -1087,6 +1106,9 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 
 	error = genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
 	    gid);
+
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
+	    NULL, error);
 	if (error)
 		return (error);
 
@@ -1186,6 +1208,9 @@ tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
 		return EPERM;
 
 	error = genfs_can_chtimes(vp, vaflags, node->tn_uid, cred);
+
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp, NULL,
+	    error);
 	if (error)
 		return (error);
 

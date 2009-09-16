@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.15.4.3 2009/05/16 10:41:40 yamt Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.15.4.4 2009/09/16 13:37:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.15.4.3 2009/05/16 10:41:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.15.4.4 2009/09/16 13:37:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,6 +451,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bg = ri->ri_devcmap[bg];
 	voodoofb_clearscreen(sc);
 
+	if (console)
+		vcons_replay_msgbuf(&voodoofb_console_screen);
 	aa.console = console;
 	aa.scrdata = &voodoofb_screenlist;
 	aa.accessops = &voodoofb_accessops;

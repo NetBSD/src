@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.179.10.1 2009/05/04 08:10:28 yamt Exp $
+# $NetBSD: files.alpha,v 1.179.10.2 2009/09/16 13:37:35 yamt Exp $
 #
 # alpha-specific configuration info
 
@@ -421,6 +421,8 @@ file	arch/alpha/common/bus_dma.c
 file	arch/alpha/common/comlogout.c
 file	dev/cons.c
 file	kern/kern_cctr.c
+
+file	common/bus_dma/bus_dmamem_common.c
 
 # PROM console support (for ports that don't have native console support)
 file	arch/alpha/alpha/promcons.c

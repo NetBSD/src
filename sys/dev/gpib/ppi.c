@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.11.4.3 2009/05/16 10:41:20 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.11.4.4 2009/09/16 13:37:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.11.4.3 2009/05/16 10:41:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.11.4.4 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,10 +181,10 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if (sc->sc_flags & PPIF_ALIVE) == 0)
+	if ((sc->sc_flags & PPIF_ALIVE) == 0)
 		return (ENXIO);
 
-	DPRINTF(PDB_FOLLOW, ("ppiopen(%x, %x): flags %x\n",
+	DPRINTF(PDB_FOLLOW, ("ppiopen(%" PRIx64 ", %x): flags %x\n",
 	    dev, flags, sc->sc_flags));
 
 	if (sc->sc_flags & PPIF_OPEN)
@@ -204,7 +204,7 @@ ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&ppi_cd, UNIT(dev));
 
-	DPRINTF(PDB_FOLLOW, ("ppiclose(%x, %x): flags %x\n",
+	DPRINTF(PDB_FOLLOW, ("ppiclose(%" PRIx64 ", %x): flags %x\n",
 		       dev, flags, sc->sc_flags));
 
 	sc->sc_flags &= ~PPIF_OPEN;
@@ -259,7 +259,7 @@ int
 ppiread(dev_t dev, struct uio *uio, int flags)
 {
 
-	DPRINTF(PDB_FOLLOW, ("ppiread(%x, %p)\n", dev, uio));
+	DPRINTF(PDB_FOLLOW, ("ppiread(%" PRIx64 ", %p)\n", dev, uio));
 
 	return (ppirw(dev, uio));
 }
@@ -268,7 +268,7 @@ int
 ppiwrite(dev_t dev, struct uio *uio, int flags)
 {
 
-	DPRINTF(PDB_FOLLOW, ("ppiwrite(%x, %p)\n", dev, uio));
+	DPRINTF(PDB_FOLLOW, ("ppiwrite(%" PRIx64 ", %p)\n", dev, uio));
 
 	return (ppirw(dev, uio));
 }
@@ -289,7 +289,7 @@ ppirw(dev_t dev, struct uio *uio)
 	address = sc->sc_address;
 
 	DPRINTF(PDB_FOLLOW|PDB_IO,
-	    ("ppirw(%x, %p, %c): burst %d, timo %d, resid %x\n",
+	    ("ppirw(%" PRIx64 ", %p, %c): burst %d, timo %d, resid %x\n",
 	    dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 	    sc->sc_burst, sc->sc_timo, uio->uio_resid));
 

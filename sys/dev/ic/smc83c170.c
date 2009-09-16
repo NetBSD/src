@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.73.4.2 2009/05/04 08:12:44 yamt Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.73.4.3 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.2 2009/05/04 08:12:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.3 2009/09/16 13:37:49 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -77,7 +77,7 @@ int	epic_ioctl(struct ifnet *, u_long, void *);
 int	epic_init(struct ifnet *);
 void	epic_stop(struct ifnet *, int);
 
-void	epic_shutdown(void *);
+bool	epic_shutdown(device_t, int);
 
 void	epic_reset(struct epic_softc *);
 void	epic_rxdrain(struct epic_softc *);
@@ -301,10 +301,12 @@ epic_attach(struct epic_softc *sc)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(epic_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, epic_shutdown))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
 		aprint_error_dev(sc->sc_dev,
-		    "WARNING: unable to establish shutdown hook\n");
+		    "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -340,12 +342,14 @@ epic_attach(struct epic_softc *sc)
 /*
  * Shutdown hook.  Make sure the interface is stopped at reboot.
  */
-void
-epic_shutdown(void *arg)
+bool
+epic_shutdown(device_t self, int howto)
 {
-	struct epic_softc *sc = arg;
+	struct epic_softc *sc = device_private(self);
 
 	epic_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 /*

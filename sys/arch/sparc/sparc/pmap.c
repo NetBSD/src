@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322.10.3 2009/08/19 18:46:47 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.322.10.4 2009/09/16 13:37:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.3 2009/08/19 18:46:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.4 2009/09/16 13:37:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3467,6 +3467,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 			setpte4(p, getpte4(p) & ~PG_NC);
 
 	}
+	cpus[0] = (struct cpu_info *)CPUINFO_VA;
 }
 #endif
 

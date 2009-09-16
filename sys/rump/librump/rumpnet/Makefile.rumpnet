@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.4.4.3 2009/06/20 07:20:36 yamt Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.4.4.4 2009/09/16 13:38:05 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -10,7 +10,7 @@ LIB=		rumpnet
 	${RUMPTOP}/../net					\
 	${RUMPTOP}/../compat/common
 
-SRCS=	net_stub.c netisr.c rump_net.c
+SRCS=	net_stub.c netisr.c rump_net.c net_emul.c
 
 # sys/kern networking (sockets, mbufs, etc.)
 SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\

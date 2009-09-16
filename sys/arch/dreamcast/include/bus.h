@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13.44.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.44.2 2009/09/16 13:37:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ struct dreamcast_bus_space {
 			    bus_size_t);
 	int		(*dbs_subregion)(void *, bus_space_handle_t,
 			    bus_size_t, bus_size_t, bus_space_handle_t *);
+	paddr_t		(*dbs_mmap)(void *, bus_addr_t, off_t, int, int);
 
 	/* allocation/deallocation */
 	int		(*dbs_alloc)(void *, bus_addr_t, bus_addr_t,
@@ -270,6 +271,8 @@ do {									\
 	(*(t)->dbs_unmap)((t)->dbs_cookie, (h), (s))
 #define	bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->dbs_subregion)((t)->dbs_cookie, (h), (o), (s), (hp))
+#define	bus_space_mmap(t, a, o, p, f)				\
+	(*(t)->dbs_mmap)((t)->dbs_cookie, (a), (o), (p), (f))
 
 #endif /* _KERNEL */
 

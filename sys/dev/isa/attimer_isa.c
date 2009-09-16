@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer_isa.c,v 1.10.4.2 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: attimer_isa.c,v 1.10.4.3 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.10.4.2 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.10.4.3 2009/09/16 13:37:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ attimer_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 
-	aprint_naive(": AT Timer\n");
-	aprint_normal(": AT Timer\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_size = 4;
 	if (bus_space_map(sc->sc_iot, IO_TIMER1, sc->sc_size, 0,

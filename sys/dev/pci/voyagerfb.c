@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.1.2.2 2009/08/19 18:47:18 yamt Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.1.2.3 2009/09/16 13:37:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.1.2.2 2009/08/19 18:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.1.2.3 2009/09/16 13:37:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,9 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 
 	voyagerfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+
+	if (is_console)
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.32.4.3 2009/05/16 10:41:45 yamt Exp $	*/
+/* 	$NetBSD: px.c,v 1.32.4.4 2009/09/16 13:37:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32.4.3 2009/05/16 10:41:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32.4.4 2009/09/16 13:37:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,14 +98,14 @@ static int	px_match(device_t, cfdata_t, void *);
 
 static int	px_intr(void *);
 static uint32_t	*px_pbuf_get(struct stic_info *);
-static int	px_pbuf_post(struct stic_info *, u_int32_t *);
+static int	px_pbuf_post(struct stic_info *, uint32_t *);
 
 void	px_cnattach(tc_addr_t);
 
 struct px_softc {
 	device_t px_dev;
 	struct	stic_info *px_si;
-	volatile u_int32_t	*px_qpoll[PX_BUF_COUNT];
+	volatile uint32_t	*px_qpoll[PX_BUF_COUNT];
 };
 
 CFATTACH_DECL_NEW(px, sizeof(struct px_softc),
@@ -159,7 +159,7 @@ px_attach(device_t parent, device_t self, void *aux)
 		v = i * STIC_PACKET_SIZE +
 		    si->si_buf_phys + STIC_XCOMM_SIZE;
 		v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
-		px->px_qpoll[i] = (volatile u_int32_t *)
+		px->px_qpoll[i] = (volatile uint32_t *)
 		    ((char *)si->si_slotbase + (v >> 9));
 	}
 
@@ -209,11 +209,11 @@ px_init(struct stic_info *si, int bootstrap)
 		bpa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	}
 
-	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);
-	si->si_vdac_reset = (u_int32_t *)(kva + PX_VDAC_RESET_OFFSET);
+	si->si_vdac = (uint32_t *)(kva + PX_VDAC_OFFSET);
+	si->si_vdac_reset = (uint32_t *)(kva + PX_VDAC_RESET_OFFSET);
 	si->si_stic = (volatile struct stic_regs *)(kva + PX_STIC_OFFSET);
-	si->si_stamp = (u_int32_t *)(kva + PX_STAMP_OFFSET);
-	si->si_buf = (u_int32_t *)TC_PHYS_TO_UNCACHED(bpa);
+	si->si_stamp = (uint32_t *)(kva + PX_STAMP_OFFSET);
+	si->si_buf = (uint32_t *)TC_PHYS_TO_UNCACHED(bpa);
 	si->si_buf_phys = bpa;
 	si->si_buf_size = PX_BUF_SIZE;
 	si->si_disptype = WSDISPLAY_TYPE_PX;
@@ -314,13 +314,13 @@ px_pbuf_get(struct stic_info *si)
 
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
 	off = si->si_pbuf_select + STIC_XCOMM_SIZE;
-	return ((u_int32_t *)((char *)si->si_buf + off));
+	return ((uint32_t *)((char *)si->si_buf + off));
 }
 
 static int
-px_pbuf_post(struct stic_info *si, u_int32_t *buf)
+px_pbuf_post(struct stic_info *si, uint32_t *buf)
 {
-	volatile u_int32_t *poll, junk;
+	volatile uint32_t *poll, junk;
 	volatile struct stic_regs *sr;
 	u_long v;
 	int c;
@@ -330,7 +330,7 @@ px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	/* Get address of poll register for this buffer. */
 	v = (u_long)STIC_KSEG_TO_PHYS(buf);
 	v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
-	poll = (volatile u_int32_t *)((char *)si->si_slotbase + (v >> 9));
+	poll = (volatile uint32_t *)((char *)si->si_slotbase + (v >> 9));
 
 	/*
 	 * Read the poll register and make sure the stamp wants to accept

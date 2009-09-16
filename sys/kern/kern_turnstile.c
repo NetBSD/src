@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.18.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.18.2.3 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.3 2009/09/16 13:38:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -253,6 +253,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	ts->ts_waiters[q]++;
 	sleepq_enter(sq, l, tc->tc_mutex);
+	/* now tc->tc_mutex is also cur->l_mutex and l->l_mutex */
 	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
 	l->l_kpriority = true;
 	obase = l->l_kpribase;
@@ -275,6 +276,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	 * compiling a kernel with LOCKDEBUG to pinpoint the problem.
 	 */
 	prio = lwp_eprio(l);
+
 	for (;;) {
 		bool dolock;
 
@@ -285,9 +287,24 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		if (owner == NULL)
 			break;
 
-		KASSERT(l != owner);
-		KASSERT(cur != owner);
+		/* The owner may have changed as we have dropped the tc lock */
+		if (cur == owner) {
+			/*
+			 * we own the lock: stop here, sleepq_block()
+			 * should wake up immediatly
+			 */
+			break;
+		}
 
+		if (l == owner) {
+			/* owner has changed, restart from curlwp */
+			lwp_unlock(l);
+			l = cur;
+			lwp_lock(l);
+			prio = lwp_eprio(l);
+			continue;
+		}
+			
 		if (l->l_mutex != owner->l_mutex)
 			dolock = true;
 		else
@@ -295,6 +312,10 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		if (dolock && !lwp_trylock(owner)) {
 			/*
 			 * restart from curlwp.
+			 * Note that there may be a livelock here:
+			 * the owner may try grabing cur's lock (which is
+			 * the tc lock) while we're trying to grab
+			 * the owner's lock.
 			 */
 			lwp_unlock(l);
 			l = cur;

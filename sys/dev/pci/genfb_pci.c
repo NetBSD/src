@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.9.4.4 2009/09/16 13:37:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.4 2009/09/16 13:37:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $
 
 #include <dev/wsfb/genfbvar.h>
 
+#include <dev/pci/genfb_pcivar.h>
+
 #include "opt_wsfb.h"
 #include "opt_genfb.h"
 
@@ -55,26 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $
 #else
 # define DPRINTF while (0) printf
 #endif
-
-struct range {
-	bus_addr_t offset;
-	bus_size_t size;
-	int flags;
-};
-
-struct pci_genfb_softc {
-	struct genfb_softc sc_gen;
-
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pcitag;
-	bus_space_tag_t sc_memt;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_memh;
-	pcireg_t sc_bars[9];
-	struct range sc_ranges[8];
-	int sc_ranges_used;
-	int sc_want_wsfb;
-};
 
 static int	pci_genfb_match(device_t, cfdata_t, void *);
 static void	pci_genfb_attach(device_t, device_t, void *);
@@ -129,6 +111,14 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_want_wsfb = 0;
 
 	genfb_init(&sc->sc_gen);
+
+	/* firmware / MD code responsible for restoring the display */
+	if (sc->sc_gen.sc_pmfcb == NULL)
+		pmf_device_register(self, NULL, NULL);
+	else
+		pmf_device_register(self,
+		    sc->sc_gen.sc_pmfcb->gpc_suspend,
+		    sc->sc_gen.sc_pmfcb->gpc_resume);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
 		aprint_debug_dev(self, "not configured by firmware\n");

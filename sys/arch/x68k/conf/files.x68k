@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.65.10.1 2009/05/04 08:12:05 yamt Exp $
+#	$NetBSD: files.x68k,v 1.65.10.2 2009/09/16 13:37:43 yamt Exp $
 #
 # new style config file for x68k architecture
 #
@@ -42,6 +42,8 @@ file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
+
+file	common/bus_dma/bus_dmamem_common.c
 
 file	dev/cons.c
 file	dev/cninit.c

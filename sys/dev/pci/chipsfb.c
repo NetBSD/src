@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.14.4.2 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.14.4.3 2009/09/16 13:37:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14.4.2 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14.4.3 2009/09/16 13:37:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,9 @@ chipsfb_attach(device_t parent, device_t self, void *aux)
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
 	sc->sc_bg = ri->ri_devcmap[bg];
 	chipsfb_clearscreen(sc);
+
+	if (console)
+		vcons_replay_msgbuf(&chipsfb_console_screen);
 
 	aprint_normal_dev(&sc->sc_dev, "%d MB aperture, %d MB VRAM at 0x%08x\n",
 	    (u_int)(sc->sc_fbsize >> 20),

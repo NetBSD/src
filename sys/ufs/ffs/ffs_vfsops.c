@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.4.4 2009/08/19 18:48:34 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.5 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.4 2009/08/19 18:48:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.5 2009/09/16 13:38:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -116,8 +116,6 @@ static struct sysctllog *ffs_sysctl_log;
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
-
-extern kmutex_t ufs_hashlock;
 
 extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ffs_specop_opv_desc;
@@ -961,28 +959,32 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #ifdef WAPBL
 	if ((mp->mnt_wapbl_replay == 0) && (fs->fs_flags & FS_DOWAPBL)) {
 		error = ffs_wapbl_replay_start(mp, fs, devvp);
-		if (error)
+		if (error && (mp->mnt_flag & MNT_FORCE) == 0)
 			goto out;
+		if (!error) {
+			if (!ronly) {
+				/* XXX fsmnt may be stale. */
+				printf("%s: replaying log to disk\n",
+				    fs->fs_fsmnt);
+				error = wapbl_replay_write(mp->mnt_wapbl_replay,
+				    devvp);
+				if (error)
+					goto out;
+				wapbl_replay_stop(mp->mnt_wapbl_replay);
+				fs->fs_clean = FS_WASCLEAN;
+			} else {
+				/* XXX fsmnt may be stale */
+				printf("%s: replaying log to memory\n",
+				    fs->fs_fsmnt);
+			}
 
-		if (!ronly) {
-			/* XXX fsmnt may be stale. */
-			printf("%s: replaying log to disk\n", fs->fs_fsmnt);
-			error = wapbl_replay_write(mp->mnt_wapbl_replay, devvp);
-			if (error)
-				goto out;
-			wapbl_replay_stop(mp->mnt_wapbl_replay);
-			fs->fs_clean = FS_WASCLEAN;
-		} else {
-			/* XXX fsmnt may be stale */
-			printf("%s: replaying log to memory\n", fs->fs_fsmnt);
+			/* Force a re-read of the superblock */
+			brelse(bp, BC_INVAL);
+			bp = NULL;
+			free(fs, M_UFSMNT);
+			fs = NULL;
+			goto sbagain;
 		}
-
-		/* Force a re-read of the superblock */
-		brelse(bp, BC_INVAL);
-		bp = NULL;
-		free(fs, M_UFSMNT);
-		fs = NULL;
-		goto sbagain;
 	}
 #else /* !WAPBL */
 	if ((fs->fs_flags & FS_DOWAPBL) && (mp->mnt_flag & MNT_FORCE) == 0) {

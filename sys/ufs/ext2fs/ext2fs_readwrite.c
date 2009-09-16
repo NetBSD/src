@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.51.2.1 2009/05/04 08:14:37 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.51.2.2 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51.2.1 2009/05/04 08:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51.2.2 2009/09/16 13:38:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ ext2fs_read(void *v)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
 	fs = ip->i_e2fs;
-	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
+	if ((uint64_t)uio->uio_offset > ump->um_maxfilesize)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
@@ -273,7 +273,7 @@ ext2fs_write(void *v)
 
 	fs = ip->i_e2fs;
 	if (uio->uio_offset < 0 ||
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
+	    (uint64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
 		return (EFBIG);
 	/*
 	 * Maybe this should be above the vnode op call, but so long as

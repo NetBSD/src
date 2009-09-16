@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.50.20.1 2009/05/04 08:13:19 yamt Exp $ */
+/* $NetBSD: mfb.c,v 1.50.20.2 2009/09/16 13:37:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50.20.1 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50.20.2 2009/09/16 13:37:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50.20.1 2009/05/04 08:13:19 yamt Exp $");
 #define	bt_ctl	0xc
 
 #define	REGWRITE32(p,i,v) do {					\
-	*(volatile u_int32_t *)((p) + (i)) = (v); tc_wmb();	\
+	*(volatile uint32_t *)((p) + (i)) = (v); tc_wmb();	\
     } while (0)
 
 #define	SELECT455(p,r) do {					\
@@ -98,9 +98,9 @@ struct hwcursor64 {
 	struct wsdisplay_curpos cc_size;
 	struct wsdisplay_curpos cc_magic;
 #define	CURSOR_MAX_SIZE	64
-	u_int8_t cc_color[6];
-	u_int64_t cc_image[CURSOR_MAX_SIZE];
-	u_int64_t cc_mask[CURSOR_MAX_SIZE];
+	uint8_t cc_color[6];
+	uint64_t cc_image[CURSOR_MAX_SIZE];
+	uint64_t cc_mask[CURSOR_MAX_SIZE];
 };
 
 struct mfb_softc {
@@ -175,7 +175,7 @@ static int  get_cursor(struct mfb_softc *, struct wsdisplay_cursor *);
 static void set_curpos(struct mfb_softc *, struct wsdisplay_curpos *);
 
 /* bit order reverse */
-static const u_int8_t flip[256] = {
+static const uint8_t flip[256] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -259,9 +259,9 @@ mfbattach(device_t parent, device_t self, void *aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, mfbintr, sc);
 
 	/* clear any pending interrupts */
-	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 0;
-	junk = *(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET);
-	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 1;
+	*(uint8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 0;
+	junk = *(uint8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET);
+	*(uint8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 1;
 
 	waa.console = console;
 	waa.scrdata = &mfb_screenlist;
@@ -469,9 +469,9 @@ mfbintr(void *arg)
 	volatile register int junk;
 
 	base = (void *)sc->sc_ri->ri_hw;
-	junk = *(u_int8_t *)(base + MX_IREQ_OFFSET);
+	junk = *(uint8_t *)(base + MX_IREQ_OFFSET);
 #if 0
-	*(u_int8_t *)(base + MX_IREQ_OFFSET) = 0;
+	*(uint8_t *)(base + MX_IREQ_OFFSET) = 0;
 #endif
 	if (sc->sc_changed == 0)
 		return (1);
@@ -488,7 +488,7 @@ mfbintr(void *arg)
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
 		int x, y;
-		u_int32_t twin;
+		uint32_t twin;
 
 		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
 		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
@@ -503,7 +503,7 @@ mfbintr(void *arg)
 		REGWRITE32(curs, bt_ctl, TWIN_HI(y));
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		u_int8_t *cp = sc->sc_cursor.cc_color;
+		uint8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT455(vdac, 8);
 		REGWRITE32(vdac, bt_cmap, 0);
@@ -519,11 +519,11 @@ mfbintr(void *arg)
 		REGWRITE32(vdac, bt_ovly, 0);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		u_int8_t *ip, *mp, img, msk;
+		uint8_t *ip, *mp, img, msk;
 		int bcnt;
 
-		ip = (u_int8_t *)sc->sc_cursor.cc_image;
-		mp = (u_int8_t *)sc->sc_cursor.cc_mask;
+		ip = (uint8_t *)sc->sc_cursor.cc_image;
+		mp = (uint8_t *)sc->sc_cursor.cc_mask;
 		bcnt = 0;
 		SELECT431(curs, BT431_REG_CRAM_BASE);
 

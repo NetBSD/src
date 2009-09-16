@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47.10.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.47.10.2 2009/09/16 13:37:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.10.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.10.2 2009/09/16 13:37:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,7 +112,7 @@ static u_int clk_getcounter(struct timecounter *);
 static struct timecounter clk_timecounter = {
 	clk_getcounter,	/* get_timecount */
 	0,		/* no poll_pps */
-	0x0fffu,	/* counter_mask */
+	~0u,		/* counter_mask */
 	0,		/* frequency */
 	"clock",	/* name, overriden later */
 	100,		/* quality */
@@ -159,7 +159,6 @@ void
 clockattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	const char *clockchip;
-	u_int counter_mask;
 	unsigned short interval;
 #ifdef DRACO
 	u_char dracorev;
@@ -189,14 +188,8 @@ clockattach(struct device *pdp, struct device *dp, void *auxp)
 
 	amiga_clk_interval = (eclockfreq / hz);
 
-	counter_mask = 0x8000;
-	while (counter_mask != 0 && (counter_mask & amiga_clk_interval) == 0)
-		counter_mask >>= 1;
-	counter_mask -= 1;
-
 	clk_timecounter.tc_name = clockchip;
 	clk_timecounter.tc_frequency = eclockfreq;
-	clk_timecounter.tc_counter_mask = counter_mask;
 
 	fast_delay_limit = UINT_MAX / amiga_clk_interval;
 
@@ -333,6 +326,8 @@ clk_gettick(void)
 static u_int
 clk_getcounter(struct timecounter *tc)
 {
+	static int last_hardclock_ticks;
+	static u_int last_clock_tick = 0;
 	int old_hardclock_ticks;
 	u_int clock_tick;
 
@@ -340,6 +335,19 @@ clk_getcounter(struct timecounter *tc)
 		old_hardclock_ticks = hardclock_ticks;
 		clock_tick = clk_gettick();
 	} while (old_hardclock_ticks != hardclock_ticks);
+
+	/*
+	 * Handle the situation of a wrapped interval counter, while
+	 * the hardclock() interrupt was not yet executed to update
+	 * hardclock_ticks.
+	 */
+	if (last_hardclock_ticks > old_hardclock_ticks)
+		old_hardclock_ticks = last_hardclock_ticks;
+	if (clock_tick < last_clock_tick &&
+	    old_hardclock_ticks == last_hardclock_ticks)
+		old_hardclock_ticks++;
+	last_hardclock_ticks = old_hardclock_ticks;
+	last_clock_tick = clock_tick;
 
 	return old_hardclock_ticks * amiga_clk_interval + clock_tick;
 }

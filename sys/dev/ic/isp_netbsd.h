@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.65.4.2 2009/07/18 14:53:01 yamt Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.65.4.3 2009/09/16 13:37:48 yamt Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -73,7 +73,7 @@
 #define	ISP_PLATFORM_VERSION_MINOR	0
 
 struct isposinfo {
-	struct device		dev;
+	device_t		dev;
 	struct scsipi_adapter   adapter;
 	struct scsipi_channel * chan;
 	bus_dma_tag_t		dmatag;
@@ -219,7 +219,7 @@ default:							\
 #define	XS_CHANNEL(xs)		\
 	((int) (xs)->xs_periph->periph_channel->chan_channel)
 #define	XS_ISP(xs)		\
-	((void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
+	device_private((xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
 #define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
 #define	XS_TGT(xs)		((int) (xs)->xs_periph->periph_target)
 #define	XS_CDBP(xs)		((uint8_t *) (xs)->cmd)
@@ -343,7 +343,7 @@ default:							\
 /*
  * isp_osinfo definitions, extensions and shorthand.
  */
-#define	isp_unit	isp_osinfo.dev.dv_unit
+#define	isp_unit	device_unit(isp_osinfo.dev)
 
 
 /*
