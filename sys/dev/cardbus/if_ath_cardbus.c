@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.34 2009/09/05 14:50:10 tsutsui Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.35 2009/09/16 16:34:50 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.34 2009/09/05 14:50:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.35 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -218,7 +218,7 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	if (pmf_device_register(self,
 	    ath_cardbus_suspend, ath_cardbus_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
-		pmf_device_suspend_self(self);
+		pmf_device_suspend(self, &sc->sc_qual);
 	} else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }

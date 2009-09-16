@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.28 2009/07/08 18:53:36 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.28 2009/07/08 18:53:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,16 +54,26 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.28 2009/07/08 18:53:36 dyoung Exp $")
 #include <dev/wscons/wsdisplayvar.h>
 #endif
 
+#ifndef	PMF_DEBUG
+#define PMF_DEBUG
+#endif
+
 #ifdef PMF_DEBUG
 int pmf_debug_event;
+int pmf_debug_suspend;
+int pmf_debug_suspensor;
 int pmf_debug_idle;
 int pmf_debug_transition;
 
+#define	PMF_SUSPENSOR_PRINTF(x)		if (pmf_debug_suspensor) printf x
+#define	PMF_SUSPEND_PRINTF(x)		if (pmf_debug_suspend) printf x
 #define	PMF_EVENT_PRINTF(x)		if (pmf_debug_event) printf x
 #define	PMF_IDLE_PRINTF(x)		if (pmf_debug_idle) printf x
 #define	PMF_TRANSITION_PRINTF(x)	if (pmf_debug_transition) printf x
 #define	PMF_TRANSITION_PRINTF2(y,x)	if (pmf_debug_transition>y) printf x
 #else
+#define	PMF_SUSPENSOR_PRINTF(x)		do { } while (0)
+#define	PMF_SUSPEND_PRINTF(x)		do { } while (0)
 #define	PMF_EVENT_PRINTF(x)		do { } while (0)
 #define	PMF_IDLE_PRINTF(x)		do { } while (0)
 #define	PMF_TRANSITION_PRINTF(x)	do { } while (0)
@@ -76,6 +86,7 @@ MALLOC_DEFINE(M_PMF, "pmf", "device pmf messaging memory");
 
 static prop_dictionary_t pmf_platform = NULL;
 static struct workqueue *pmf_event_workqueue;
+static struct workqueue *pmf_suspend_workqueue;
 
 typedef struct pmf_event_handler {
 	TAILQ_ENTRY(pmf_event_handler) pmf_link;
@@ -89,20 +100,89 @@ static TAILQ_HEAD(, pmf_event_handler) pmf_all_events =
     TAILQ_HEAD_INITIALIZER(pmf_all_events);
 
 typedef struct pmf_event_workitem {
-	struct work		pew_work;
-	pmf_generic_event_t	pew_event;
-	device_t		pew_device;
+	struct work				pew_work;
+	pmf_generic_event_t			pew_event;
+	device_t				pew_device;
+	SIMPLEQ_ENTRY(pmf_event_workitem)	pew_next_free;
 } pmf_event_workitem_t;
+
+typedef struct pmf_suspend_workitem {
+	struct work	psw_work;
+	device_t	psw_dev;
+	struct pmf_qual	psw_qual;
+} pmf_suspend_workitem_t;
 
 static pool_cache_t pew_pc;
 
 static pmf_event_workitem_t *pmf_event_workitem_get(void);
 static void pmf_event_workitem_put(pmf_event_workitem_t *);
 
+bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
+bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
+static bool device_pmf_any_suspensor(device_t, devact_level_t);
 
+static bool
+complete_suspension(device_t dev, device_suspensor_t *susp, pmf_qual_t pqp)
+{
+	int i;
+	struct pmf_qual pq;
+	device_suspensor_t ds;
 
-static bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
-static bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
+	ds = pmf_qual_suspension(pqp);
+	KASSERT(ds->ds_delegator != NULL);
+
+	pq = *pqp;
+	pq.pq_suspensor = ds->ds_delegator;
+
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (susp[i] != ds)
+			continue;
+		if (!pmf_device_suspend(dev, &pq))
+			return false;
+	}
+	return true;
+}
+
+static void
+pmf_suspend_worker(struct work *wk, void *dummy)
+{
+	pmf_suspend_workitem_t *psw;
+	deviter_t di;
+	device_t dev;
+
+	psw = (void *)wk;
+	KASSERT(wk == &psw->psw_work);
+	KASSERT(psw != NULL);
+
+	for (dev = deviter_first(&di, 0); dev != NULL;
+	     dev = deviter_next(&di)) {
+		if (dev == psw->psw_dev && device_pmf_lock(dev))
+			break;
+	}
+	deviter_release(&di);
+
+	if (dev == NULL)
+		return;
+
+	switch (pmf_qual_depth(&psw->psw_qual)) {
+	case DEVACT_LEVEL_FULL:
+		if (!complete_suspension(dev, dev->dv_class_suspensors,
+		    &psw->psw_qual))
+			break;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_DRIVER:
+		if (!complete_suspension(dev, dev->dv_driver_suspensors,
+		    &psw->psw_qual))
+			break;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_BUS:
+		if (!complete_suspension(dev, dev->dv_bus_suspensors,
+		    &psw->psw_qual))
+			break;
+	}
+	device_pmf_unlock(dev);
+	kmem_free(psw, sizeof(*psw));
+}
 
 static void
 pmf_event_worker(struct work *wk, void *dummy)
@@ -354,10 +434,246 @@ pmf_device_deregister(device_t dev)
 	device_pmf_driver_deregister(dev);
 }
 
-bool
-pmf_device_suspend_self(device_t dev)
+static const struct device_suspensor _device_suspensor_drvctl = {
+	  .ds_delegator = NULL
+	, .ds_name = "drvctl"
+};
+
+static const struct device_suspensor _device_suspensor_self = {
+	  .ds_delegator = NULL
+	, .ds_name = "self"
+};
+
+#if 0
+static const struct device_suspensor _device_suspensor_self_delegate = {
+	  .ds_delegator = &_device_suspensor_self
+	, .ds_name = "self delegate"
+};
+#endif
+
+static const struct device_suspensor _device_suspensor_system = {
+	  .ds_delegator = NULL
+	, .ds_name = "system"
+};
+
+const struct device_suspensor
+    * const device_suspensor_self = &_device_suspensor_self,
+#if 0
+    * const device_suspensor_self_delegate = &_device_suspensor_self_delegate,
+#endif
+    * const device_suspensor_system = &_device_suspensor_system,
+    * const device_suspensor_drvctl = &_device_suspensor_drvctl;
+
+static const struct pmf_qual _pmf_qual_system = {
+	  .pq_actlvl = DEVACT_LEVEL_FULL
+	, .pq_suspensor = &_device_suspensor_system
+};
+
+static const struct pmf_qual _pmf_qual_drvctl = {
+	  .pq_actlvl = DEVACT_LEVEL_FULL
+	, .pq_suspensor = &_device_suspensor_drvctl
+};
+
+static const struct pmf_qual _pmf_qual_self = {
+	  .pq_actlvl = DEVACT_LEVEL_DRIVER
+	, .pq_suspensor = &_device_suspensor_self
+};
+
+const struct pmf_qual
+    * const PMF_Q_DRVCTL = &_pmf_qual_drvctl,
+    * const PMF_Q_NONE = &_pmf_qual_system,
+    * const PMF_Q_SELF = &_pmf_qual_self;
+
+static bool
+device_suspensor_delegates_to(device_suspensor_t ds,
+    device_suspensor_t delegate)
 {
-	return pmf_device_suspend(dev, PMF_F_SELF);
+	device_suspensor_t iter;
+
+	for (iter = delegate->ds_delegator; iter != NULL;
+	     iter = iter->ds_delegator) {
+		if (ds == iter)
+			return true;
+	}
+	return false;
+}
+
+static bool
+add_suspensor(device_t dev, const char *kind, device_suspensor_t *susp,
+    device_suspensor_t ds)
+{
+	int i;
+
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (susp[i] == NULL)
+			continue;
+		if (ds == susp[i]) {
+			PMF_SUSPENSOR_PRINTF((
+			    "%s: %s-suspended by %s (delegator %s) already\n",
+			    device_xname(dev), kind,
+			    susp[i]->ds_name,
+			    (susp[i]->ds_delegator != NULL) ?
+			    susp[i]->ds_delegator->ds_name : "<none>"));
+			return true;
+		}
+		if (device_suspensor_delegates_to(ds, susp[i])) {
+			PMF_SUSPENSOR_PRINTF((
+			    "%s: %s assumes %s-suspension by %s "
+			    "(delegator %s)\n",
+			    device_xname(dev), ds->ds_name, kind,
+			    susp[i]->ds_name,
+			    (susp[i]->ds_delegator != NULL) ?
+			    susp[i]->ds_delegator->ds_name : "<none>"));
+			susp[i] = ds;
+			return true;
+		}
+	}
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (susp[i] == NULL) {
+			susp[i] = ds;
+			PMF_SUSPENSOR_PRINTF((
+			    "%s: newly %s-suspended by %s (delegator %s)\n",
+			    device_xname(dev), kind,
+			    susp[i]->ds_name,
+			    (susp[i]->ds_delegator != NULL) ?
+			    susp[i]->ds_delegator->ds_name : "<none>"));
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool
+device_pmf_add_suspensor(device_t dev, pmf_qual_t pq)
+{
+	device_suspensor_t ds;
+
+	KASSERT(pq != NULL);
+
+	ds = pmf_qual_suspension(pq);
+
+	KASSERT(ds != NULL);
+
+	if (!add_suspensor(dev, "class", dev->dv_class_suspensors, ds))
+		return false;
+	if (!add_suspensor(dev, "driver", dev->dv_driver_suspensors, ds))
+		return false;
+	if (!add_suspensor(dev, "bus", dev->dv_bus_suspensors, ds))
+		return false;
+	return true;
+}
+
+#if 0
+static bool
+device_pmf_has_suspension(device_t dev, device_suspensor_t ds)
+{
+	int i;
+
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (dev->dv_suspensions[i] == ds)
+			return true;
+		if (device_suspensor_delegates_to(dev->dv_suspensions[i], ds))
+			return true;
+	}
+	return false;
+}
+#endif
+
+static bool
+any_suspensor(device_t dev, const char *kind, device_suspensor_t *susp)
+{
+	int i;
+	bool suspended = false;
+
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (susp[i] != NULL) {
+			PMF_SUSPENSOR_PRINTF(("%s: %s is suspended by %s "
+			    "(delegator %s)\n",
+			    device_xname(dev), kind,
+			    susp[i]->ds_name,
+			    (susp[i]->ds_delegator != NULL) ?
+			    susp[i]->ds_delegator->ds_name : "<none>"));
+			suspended = true;
+		}
+	}
+	return suspended;
+}
+
+static bool
+device_pmf_any_suspensor(device_t dev, devact_level_t depth)
+{
+	switch (depth) {
+	case DEVACT_LEVEL_FULL:
+		if (any_suspensor(dev, "class", dev->dv_class_suspensors))
+			return true;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_DRIVER:
+		if (any_suspensor(dev, "driver", dev->dv_driver_suspensors))
+			return true;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_BUS:
+		if (any_suspensor(dev, "bus", dev->dv_bus_suspensors))
+			return true;
+	}
+	return false;
+}
+
+static bool
+remove_suspensor(device_t dev, const char *kind, device_suspensor_t *susp,
+    device_suspensor_t ds)
+{
+	int i;
+
+	for (i = 0; i < DEVICE_SUSPENSORS_MAX; i++) {
+		if (susp[i] == NULL)
+			continue;
+		if (ds == susp[i] ||
+		    device_suspensor_delegates_to(ds, susp[i])) {
+			PMF_SUSPENSOR_PRINTF(("%s: %s suspension %s "
+			    "(delegator %s) removed by %s\n",
+			    device_xname(dev), kind,
+			    susp[i]->ds_name,
+			    (susp[i]->ds_delegator != NULL)
+			        ?  susp[i]->ds_delegator->ds_name
+			        : "<none>",
+			    ds->ds_name));
+			susp[i] = NULL;
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool
+device_pmf_remove_suspensor(device_t dev, pmf_qual_t pq)
+{
+	device_suspensor_t ds;
+
+	KASSERT(pq != NULL);
+
+	ds = pmf_qual_suspension(pq);
+
+	KASSERT(ds != NULL);
+
+	if (!remove_suspensor(dev, "class", dev->dv_class_suspensors, ds))
+		return false;
+	if (!remove_suspensor(dev, "driver", dev->dv_driver_suspensors, ds))
+		return false;
+	if (!remove_suspensor(dev, "bus", dev->dv_bus_suspensors, ds))
+		return false;
+
+	return true;
+}
+
+void
+pmf_self_suspensor_init(device_t dev, struct device_suspensor *ds,
+    struct pmf_qual *pq)
+{
+	ds->ds_delegator = device_suspensor_self;
+	snprintf(ds->ds_name, sizeof(ds->ds_name), "%s-self",
+	    device_xname(dev));
+	pq->pq_actlvl = DEVACT_LEVEL_DRIVER;
+	pq->pq_suspensor = ds;
 }
 
 bool
@@ -369,39 +685,36 @@ pmf_device_suspend(device_t dev PMF_FN_ARGS)
 	if (!device_pmf_is_registered(dev))
 		return false;
 
-	if (!device_pmf_lock(dev PMF_FN_CALL))
+	if (!device_pmf_lock(dev))
 		return false;
 
 	rc = pmf_device_suspend_locked(dev PMF_FN_CALL);
 
-	device_pmf_unlock(dev PMF_FN_CALL);
+	device_pmf_unlock(dev);
 
 	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
 	return rc;
 }
 
-static bool
+bool
 pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
 {
-	PMF_TRANSITION_PRINTF2(1, ("%s: self suspend\n", device_xname(dev)));
-	device_pmf_self_suspend(dev, flags);
+	if (!device_pmf_add_suspensor(dev PMF_FN_CALL))
+		return false;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
 	if (!device_pmf_class_suspend(dev PMF_FN_CALL))
 		return false;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
 	if (!device_pmf_driver_suspend(dev PMF_FN_CALL))
 		return false;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
 	if (!device_pmf_bus_suspend(dev PMF_FN_CALL))
 		return false;
 
 	return true;
-}
-
-bool
-pmf_device_resume_self(device_t dev)
-{
-	return pmf_device_resume(dev, PMF_F_SELF);
 }
 
 bool
@@ -413,31 +726,36 @@ pmf_device_resume(device_t dev PMF_FN_ARGS)
 	if (!device_pmf_is_registered(dev))
 		return false;
 
-	if (!device_pmf_lock(dev PMF_FN_CALL))
+	if (!device_pmf_lock(dev))
 		return false;
 
 	rc = pmf_device_resume_locked(dev PMF_FN_CALL);
 
-	device_pmf_unlock(dev PMF_FN_CALL);
+	device_pmf_unlock(dev);
 
 	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
 	return rc;
 }
 
-static bool
+bool
 pmf_device_resume_locked(device_t dev PMF_FN_ARGS)
 {
+	device_pmf_remove_suspensor(dev PMF_FN_CALL);
+
+	if (device_pmf_any_suspensor(dev, DEVACT_LEVEL_FULL))
+		return true;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
 	if (!device_pmf_bus_resume(dev PMF_FN_CALL))
 		return false;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
 	if (!device_pmf_driver_resume(dev PMF_FN_CALL))
 		return false;
+
 	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
 	if (!device_pmf_class_resume(dev PMF_FN_CALL))
 		return false;
-	PMF_TRANSITION_PRINTF2(1, ("%s: self resume\n", device_xname(dev)));
-	device_pmf_self_resume(dev, flags);
 
 	return true;
 }
@@ -448,15 +766,15 @@ pmf_device_recursive_suspend(device_t dv PMF_FN_ARGS)
 	bool rv = true;
 	device_t curdev;
 	deviter_t di;
+	struct pmf_qual pq;
 
-	if (!device_is_active(dv))
-		return true;
+	pmf_qual_recursive_copy(&pq, qual);
 
 	for (curdev = deviter_first(&di, 0); curdev != NULL;
 	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pmf_device_recursive_suspend(curdev PMF_FN_CALL)) {
+		if (!pmf_device_recursive_suspend(curdev, &pq)) {
 			rv = false;
 			break;
 		}
@@ -466,17 +784,27 @@ pmf_device_recursive_suspend(device_t dv PMF_FN_ARGS)
 	return rv && pmf_device_suspend(dv PMF_FN_CALL);
 }
 
+void
+pmf_qual_recursive_copy(struct pmf_qual *dst, pmf_qual_t src)
+{
+	*dst = *src;
+	dst->pq_actlvl = DEVACT_LEVEL_FULL;
+}
+
 bool
 pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
 {
 	device_t parent;
+	struct pmf_qual pq;
 
 	if (device_is_active(dv))
 		return true;
 
+	pmf_qual_recursive_copy(&pq, qual);
+
 	parent = device_parent(dv);
 	if (parent != NULL) {
-		if (!pmf_device_recursive_resume(parent PMF_FN_CALL))
+		if (!pmf_device_recursive_resume(parent, &pq))
 			return false;
 	}
 
@@ -484,7 +812,7 @@ pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
 }
 
 bool
-pmf_device_resume_descendants(device_t dv PMF_FN_ARGS)
+pmf_device_descendants_release(device_t dv PMF_FN_ARGS)
 {
 	bool rv = true;
 	device_t curdev;
@@ -494,7 +822,8 @@ pmf_device_resume_descendants(device_t dv PMF_FN_ARGS)
 	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pmf_device_resume_subtree(curdev PMF_FN_CALL)) {
+		device_pmf_remove_suspensor(curdev PMF_FN_CALL);
+		if (!pmf_device_descendants_release(curdev PMF_FN_CALL)) {
 			rv = false;
 			break;
 		}
@@ -504,12 +833,52 @@ pmf_device_resume_descendants(device_t dv PMF_FN_ARGS)
 }
 
 bool
-pmf_device_resume_subtree(device_t dv PMF_FN_ARGS)
+pmf_device_descendants_resume(device_t dv PMF_FN_ARGS)
 {
+	bool rv = true;
+	device_t curdev;
+	deviter_t di;
+
+	KASSERT(pmf_qual_descend_ok(PMF_FN_CALL1));
+
+	for (curdev = deviter_first(&di, 0); curdev != NULL;
+	     curdev = deviter_next(&di)) {
+		if (device_parent(curdev) != dv)
+			continue;
+		if (!pmf_device_resume(curdev PMF_FN_CALL) ||
+		    !pmf_device_descendants_resume(curdev PMF_FN_CALL)) {
+			rv = false;
+			break;
+		}
+	}
+	deviter_release(&di);
+	return rv;
+}
+
+bool
+pmf_device_subtree_release(device_t dv PMF_FN_ARGS)
+{
+	struct pmf_qual pq;
+
+	device_pmf_remove_suspensor(dv PMF_FN_CALL);
+
+	return pmf_device_descendants_release(dv, &pq);
+}
+
+bool
+pmf_device_subtree_resume(device_t dv PMF_FN_ARGS)
+{
+	struct pmf_qual pq;
+
+	if (!pmf_device_subtree_release(dv PMF_FN_CALL))
+		return false;
+
 	if (!pmf_device_recursive_resume(dv PMF_FN_CALL))
 		return false;
 
-	return pmf_device_resume_descendants(dv PMF_FN_CALL);
+	pmf_qual_recursive_copy(&pq, qual);
+
+	return pmf_device_descendants_resume(dv, &pq);
 }
 
 #include <net/if.h>
@@ -532,9 +901,6 @@ pmf_class_network_resume(device_t dev PMF_FN_ARGS)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
-
-	if ((flags & PMF_F_SELF) != 0)
-		return true;
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP) {
@@ -726,6 +1092,13 @@ pmf_init(void)
 	    pmf_event_worker, NULL, PRI_NONE, IPL_VM, 0);
 	if (err)
 		panic("couldn't create pmfevent workqueue");
+
+	KASSERT(pmf_suspend_workqueue == NULL);
+	err = workqueue_create(&pmf_suspend_workqueue, "pmfsuspend",
+	    pmf_suspend_worker, NULL, PRI_NONE, IPL_VM, 0);
+	if (err)
+		panic("couldn't create pmfsuspend workqueue");
+
 
 	callout_init(&global_idle_counter, 0);
 	callout_setfunc(&global_idle_counter, input_idle, NULL);
