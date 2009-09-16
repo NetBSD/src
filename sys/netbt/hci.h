@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.26.2.3 2009/08/19 18:48:24 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.26.2.4 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.26.2.3 2009/08/19 18:48:24 yamt Exp $
+ * $Id: hci.h,v 1.26.2.4 2009/09/16 13:38:02 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -93,12 +93,13 @@
 #define HCI_COMMANDS_SIZE		64  /* supported commands mask */
 
 /* HCI specification */
-#define HCI_SPEC_V10			0x00 /* v1.0 */
+#define HCI_SPEC_V10			0x00 /* v1.0b */
 #define HCI_SPEC_V11			0x01 /* v1.1 */
 #define HCI_SPEC_V12			0x02 /* v1.2 */
-#define HCI_SPEC_V20			0x03 /* v2.0 */
-#define HCI_SPEC_V21			0x04 /* v2.1 */
-/* 0x05 - 0xFF - reserved for future use */
+#define HCI_SPEC_V20			0x03 /* v2.0 + EDR */
+#define HCI_SPEC_V21			0x04 /* v2.1 + EDR */
+#define HCI_SPEC_V30			0x05 /* v3.0 + HS */
+/* 0x06 - 0xFF - reserved for future use */
 
 /* LMP features (and page 0 of extended features) */
 /* ------------------- byte 0 --------------------*/
@@ -167,7 +168,12 @@
 /* ------------------- byte 7 --------------------*/
 #define HCI_LMP_LINK_SUPERVISION_TO	0x01
 #define HCI_LMP_INQ_RSP_TX_POWER	0x02
+#define HCI_LMP_ENHANCED_POWER_CONTROL	0x04
 #define HCI_LMP_EXTENDED_FEATURES	0x80
+
+/* page 1 of extended features */
+/* ------------------- byte 0 --------------------*/
+#define HCI_LMP_SSP			0x01
 
 /* Link types */
 #define HCI_LINK_SCO			0x00 /* Voice */
@@ -2346,6 +2352,7 @@ struct btreq {
 #define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
 #define BTF_POWER_UP_NOOP	(1<<8)	/* should wait for No-op on power up */
 #define BTF_INIT_COMMANDS	(1<<9)	/* waiting for supported commands */
+#define BTF_MASTER		(1<<10) /* request Master role */
 
 #define BTF_INIT		(BTF_INIT_BDADDR	\
 				| BTF_INIT_BUFFER_SIZE	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.7.18.1 2009/05/04 08:14:16 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.7.18.2 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.7.18.1 2009/05/04 08:14:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.7.18.2 2009/09/16 13:38:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -234,7 +234,8 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 			unit->hci_flags &= ~BTF_UP;
 		}
 
-		unit->hci_flags |= (btr->btr_flags & BTF_INIT);
+		unit->hci_flags &= ~BTF_MASTER;
+		unit->hci_flags |= (btr->btr_flags & (BTF_INIT | BTF_MASTER));
 
 		if ((unit->hci_flags & BTF_UP) == 0
 		    && (btr->btr_flags & BTF_UP)) {

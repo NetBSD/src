@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.12.2.2 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.12.2.3 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.12.2.2 2009/05/04 08:14:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.12.2.3 2009/09/16 13:38:07 yamt Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -275,7 +275,7 @@ wapbl_remove_log(struct mount *mp)
 	default:
 		printf("ffs_wapbl: unknown journal type %d\n",
 		    fs->fs_journal_location);
-		return EINVAL;
+		break;
 	}
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.134.2.5 2009/07/18 14:53:26 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.134.2.6 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.5 2009/07/18 14:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.6 2009/09/16 13:38:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +128,6 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	struct nfssvc_sock *slp;
 	struct nfsuid *nuidp;
 
-	/*
-	 * Must be super user
-	 */
 	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_NFS,
 	    KAUTH_REQ_NETWORK_NFS_SVC, NULL, NULL, NULL);
 	if (error)

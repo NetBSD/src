@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.16.4.1 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.16.4.2 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -456,7 +456,7 @@ ahd_post_scb(struct ahd_softc *ahd, struct scb *scb)
 	if ((sgptr & SG_STATUS_VALID) != 0)
 		ahd_handle_scb_status(ahd, scb);
 	else
-        	ahd_done(ahd, scb);
+		ahd_done(ahd, scb);
 }
 
 static __inline void
@@ -881,7 +881,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 static __inline int
 ahd_intr(void *arg)
 {
-	struct ahd_softc *ahd = (struct ahd_softc*)arg;
+	struct ahd_softc *ahd = arg;
 	u_int	intstat;
 
 	if ((ahd->pause & INTEN) == 0) {
@@ -978,10 +978,10 @@ ahd_minphys(struct buf *bp)
  * discontinuous physically, hence the "page per segment" limit
  * enforced here.
  */
-        if (bp->b_bcount > AHD_MAXTRANSFER_SIZE) {
-                bp->b_bcount = AHD_MAXTRANSFER_SIZE;
-        }
-        minphys(bp);
+	if (bp->b_bcount > AHD_MAXTRANSFER_SIZE) {
+		bp->b_bcount = AHD_MAXTRANSFER_SIZE;
+	}
+	minphys(bp);
 }
 
 static __inline u_int32_t scsi_4btoul(u_int8_t *);
@@ -989,13 +989,13 @@ static __inline u_int32_t scsi_4btoul(u_int8_t *);
 static __inline u_int32_t
 scsi_4btoul(u_int8_t *bytes)
 {
-        u_int32_t rv;
+	u_int32_t rv;
 
-        rv = (bytes[0] << 24) |
-             (bytes[1] << 16) |
-             (bytes[2] << 8) |
-             bytes[3];
-        return (rv);
+	rv = (bytes[0] << 24) |
+	     (bytes[1] << 16) |
+	     (bytes[2] << 8) |
+	     bytes[3];
+	return (rv);
 }
 
 

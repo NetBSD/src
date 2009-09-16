@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.41.2.2 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.41.2.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -90,12 +90,12 @@ struct rtk_mii_frame {
  * Instead, there are only four register sets, each or which represents
  * one 'descriptor.' Basically, each TX descriptor is just a contiguous
  * packet buffer (32-bit aligned!) and we place the buffer addresses in
- * the registers so the chip knows where they are. 
- * 
+ * the registers so the chip knows where they are.
+ *
  * We can sort of kludge together the same kind of buffer management
  * used in previous drivers, but we have to do buffer copies almost all
  * the time, so it doesn't really buy us much.
- * 
+ *
  * For reception, there's just one large buffer where the chip stores
  * all received packets.
  */
@@ -157,14 +157,14 @@ struct re_list_data {
 	int			re_tx_free;	/* # of free descriptors */
 	int			re_tx_nextfree; /* next descriptor to use */
 	int			re_tx_desc_cnt; /* # of descriptors */
-	bus_dma_segment_t 	re_tx_listseg;
+	bus_dma_segment_t	re_tx_listseg;
 	int			re_tx_listnseg;
 
 	struct re_rxsoft	re_rxsoft[RE_RX_DESC_CNT];
 	bus_dmamap_t		re_rx_list_map;
 	struct re_desc		*re_rx_list;
 	int			re_rx_prodidx;
-	bus_dma_segment_t 	re_rx_listseg;
+	bus_dma_segment_t	re_rx_listseg;
 	int			re_rx_listnseg;
 };
 
@@ -195,12 +195,12 @@ struct rtk_softc {
 #define RTKQ_MACSTAT		0x00000100	/* set MACSTAT_DIS on init */
 #define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
 
-	bus_dma_tag_t 		sc_dmat;
+	bus_dma_tag_t		sc_dmat;
 
-	bus_dma_segment_t 	sc_dmaseg;	/* for rtk(4) */
+	bus_dma_segment_t	sc_dmaseg;	/* for rtk(4) */
 	int			sc_dmanseg;	/* for rtk(4) */
 
-	bus_dmamap_t 		recv_dmamap;	/* for rtk(4) */
+	bus_dmamap_t		recv_dmamap;	/* for rtk(4) */
 	uint8_t			*rtk_rx_buf;
 
 	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
@@ -254,7 +254,7 @@ struct rtk_softc {
 /*
  * re(4) hardware ip4csum-tx could be mangled with 28 byte or less IP packets
  */
-#define RE_IP4CSUMTX_MINLEN	28                                
+#define RE_IP4CSUMTX_MINLEN	28
 #define RE_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + RE_IP4CSUMTX_MINLEN)
 /*
  * XXX

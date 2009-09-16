@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.94.2.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.94.2.2 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.94.2.1 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.94.2.2 2009/09/16 13:38:02 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -142,6 +142,12 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.94.2.1 2009/05/04 08:14:17 yamt Exp $
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#include "pfsync.h"
+#if NPFSYNC > 0
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 #endif
 
 #include "etherip.h"
@@ -358,6 +364,17 @@ const struct protosw inetsw[] = {
 	.pr_usrreq = rip_usrreq,
 },
 #endif /* NCARP > 0 */
+#if NPFSYNC > 0
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_PFSYNC,
+	.pr_flags	 = PR_ATOMIC|PR_ADDR,
+	.pr_input	 = pfsync_input,
+	.pr_output	 = rip_output,
+	.pr_ctloutput = rip_ctloutput,
+	.pr_usrreq	 = rip_usrreq,
+},
+#endif /* NPFSYNC > 0 */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IGMP,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.1.4.3 2009/09/16 13:38:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.1.4.3 2009/09/16 13:38:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,6 +37,8 @@ void nocomponent(void);
 void nocomponent() {}
 __weak_alias(rump_dev_cgd_init,nocomponent);
 __weak_alias(rump_dev_raidframe_init,nocomponent);
+__weak_alias(rump_dev_netsmb_init,nocomponent);
+__weak_alias(rump_dev_rnd_init,nocomponent);
 
 void
 rump_dev_init(void)
@@ -46,6 +48,8 @@ rump_dev_init(void)
 
 	rump_dev_cgd_init();
 	rump_dev_raidframe_init();
+	rump_dev_netsmb_init();
+	rump_dev_rnd_init();
 
 	rump_pdev_finalize();
 

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.8.12.3 2009/08/19 18:48:32 yamt Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.8.12.4 2009/09/16 13:38:06 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.8.12.3 2009/08/19 18:48:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.8.12.4 2009/09/16 13:38:06 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.8.12.3 2009/08/19 18:48:3
 
 static int securelevel;
 
-static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device;
+static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
+    l_vnode;
 
 /*
  * sysctl helper routine for securelevel. ensures that the value
@@ -126,6 +127,8 @@ secmodel_securelevel_start(void)
 	    secmodel_securelevel_machdep_cb, NULL);
 	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_securelevel_device_cb, NULL);
+	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
+	    secmodel_securelevel_vnode_cb, NULL);
 }
 
 #if defined(_LKM)
@@ -137,6 +140,7 @@ secmodel_securelevel_stop(void)
 	kauth_unlisten_scope(l_network);
 	kauth_unlisten_scope(l_machdep);
 	kauth_unlisten_scope(l_device);
+	kauth_unlisten_scope(l_vnode);
 }
 #endif /* _LKM */
 
@@ -545,3 +549,21 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 	return (result);
 }
+
+int
+secmodel_securelevel_vnode_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if ((action & KAUTH_VNODE_WRITE_SYSFLAGS) &&
+	    (action & KAUTH_VNODE_HAS_SYSFLAGS)) {
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
+	}
+
+	return (result);
+}
+

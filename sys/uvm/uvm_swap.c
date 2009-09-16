@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.137.4.2 2009/05/04 08:14:40 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.137.4.3 2009/09/16 13:38:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.4.2 2009/05/04 08:14:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.4.3 2009/09/16 13:38:08 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -204,10 +204,7 @@ struct swapent50 {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL,
-    IPL_BIO);
-POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL,
-    IPL_BIO);
+static struct pool vndxfer_pool, vndbuf_pool;
 
 /*
  * local variables
@@ -313,6 +310,11 @@ uvm_swap_init(void)
             CTLTYPE_INT, "swapout",
             SYSCTL_DESCR("Set 0 to disable swapout of kernel stacks"),
             NULL, 0, &uvm.swapout_enabled, 0, CTL_VM, CTL_CREATE, CTL_EOL);
+
+	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
+	    NULL, IPL_BIO);
+	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
+	    NULL, IPL_BIO);
 }
 
 /*

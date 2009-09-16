@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.37.4.5 2009/08/19 18:47:05 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.37.4.6 2009/09/16 13:37:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.5 2009/08/19 18:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.6 2009/09/16 13:37:46 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +658,6 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	struct iovec iov;
 	struct dkwedge_softc *sc;
 	struct dkwedge_info dkw;
-	struct vmspace *vm;
 	int error = 0;
 
 	iov.iov_base = dkwl->dkwl_buf;
@@ -667,15 +668,8 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	uio.uio_offset = 0;
 	uio.uio_resid = dkwl->dkwl_bufsize;
 	uio.uio_rw = UIO_READ;
-	if (l == NULL) {
-		UIO_SETUP_SYSSPACE(&uio);
-	} else {
-		error = proc_vmspace_getref(l->l_proc, &vm);
-		if (error) {
-			return error;
-		}
-		uio.uio_vmspace = vm;
-	}
+	KASSERT(l == curlwp);
+	uio.uio_vmspace = l->l_proc->p_vmspace;
 
 	dkwl->dkwl_ncopied = 0;
 
@@ -703,10 +697,6 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	}
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
 	mutex_exit(&pdk->dk_openlock);
-
-	if (l != NULL) {
-		uvmspace_free(vm);
-	}
 
 	return (error);
 }
@@ -1425,4 +1415,71 @@ out:
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return rv;
+}
+
+/*
+ * config glue
+ */
+
+int
+config_handle_wedges(struct device *dv, int par)
+{
+	struct dkwedge_list wl;
+	struct dkwedge_info *wi;
+	struct vnode *vn;
+	char diskname[16];
+	int i, error;
+
+	if ((vn = opendisk(dv)) == NULL)
+		return -1;
+
+	wl.dkwl_bufsize = sizeof(*wi) * 16;
+	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
+
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED);
+	VOP_CLOSE(vn, FREAD, NOCRED);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: List wedges returned %d\n",
+		    device_xname(dv), error);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Returned %u(%u) wedges\n", device_xname(dv),
+	    wl.dkwl_nwedges, wl.dkwl_ncopied);
+#endif
+	snprintf(diskname, sizeof(diskname), "%s%c", device_xname(dv),
+	    par + 'a');
+
+	for (i = 0; i < wl.dkwl_ncopied; i++) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Looking for %s in %s\n", 
+		    device_xname(dv), diskname, wi[i].dkw_wname);
+#endif
+		if (strcmp(wi[i].dkw_wname, diskname) == 0)
+			break;
+	}
+
+	if (i == wl.dkwl_ncopied) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Cannot find wedge with parent %s\n",
+		    device_xname(dv), diskname);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
+		device_xname(dv), wi[i].dkw_devname, wi[i].dkw_wname,
+		(unsigned long long)wi[i].dkw_offset,
+		(unsigned long long)wi[i].dkw_size);
+#endif
+	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
+	free(wi, M_TEMP);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.78.10.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.78.10.3 2009/09/16 13:37:58 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -39,6 +39,59 @@
 #include <sys/time.h>
 
 #include <sys/ioctl.h>
+
+#if defined(_KERNEL)
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_USB);
+MALLOC_DECLARE(M_USBDEV);
+MALLOC_DECLARE(M_USBHC);
+
+#include <sys/device.h>
+
+#endif
+
+#define USB_USE_SOFTINTR
+
+#ifdef USB_DEBUG
+#define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
+#define UHID_DEBUG 1
+#define OHCI_DEBUG 1
+#define UGEN_DEBUG 1
+#define UHCI_DEBUG 1
+#define UHUB_DEBUG 1
+#define ULPT_DEBUG 1
+#define UCOM_DEBUG 1
+#define UPLCOM_DEBUG 1
+#define UMCT_DEBUG 1
+#define UMODEM_DEBUG 1
+#define UAUDIO_DEBUG 1
+#define AUE_DEBUG 1
+#define CUE_DEBUG 1
+#define KUE_DEBUG 1
+#define URL_DEBUG 1
+#define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
+#define UPL_DEBUG 1
+#define UZCOM_DEBUG 1
+#define URIO_DEBUG 1
+#define UFTDI_DEBUG 1
+#define USCANNER_DEBUG 1
+#define USSCANNER_DEBUG 1
+#define EHCI_DEBUG 1
+#define UIRDA_DEBUG 1
+#define USTIR_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UDSBR_DEBUG 1
+#define UBT_DEBUG 1
+#define AXE_DEBUG 1
+#define UIPAQ_DEBUG 1
+#define UCYCOM_DEBUG 1
+#define Static
+#else
+#define Static static
+#endif
 
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.36.44.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.36.44.3 2009/09/16 13:37:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@ usbd_status	usbd_set_report_async(usbd_interface_handle iface, int type,
 usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
 				void *data, int len);
 usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
-usbd_status	usbd_read_report_desc(usbd_interface_handle ifc, void **descp,
-				       int *sizep, usb_malloc_type mem);
+usbd_status	usbd_read_report_desc(usbd_interface_handle, void **,
+                                      int *, struct malloc_type *);
 usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
 usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
 				     int langid,usb_string_descriptor_t *sdesc,
@@ -83,8 +83,8 @@ usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
  			       u_int16_t, u_int32_t, void *,
  			       u_int32_t *, const char *);
 
-void usb_detach_wait(device_ptr_t);
-void usb_detach_wakeup(device_ptr_t);
+void usb_detach_wait(device_t);
+void usb_detach_wakeup(device_t);
 
 
 typedef struct {

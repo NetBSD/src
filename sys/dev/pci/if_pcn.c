@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.46.4.1 2009/05/16 10:41:35 yamt Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.46.4.2 2009/09/16 13:37:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.46.4.1 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.46.4.2 2009/09/16 13:37:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -251,7 +251,6 @@ struct pcn_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* Ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	/* Points to our media routines, etc. */
 	const struct pcn_variant *sc_variant;
@@ -398,7 +397,7 @@ static int	pcn_ioctl(struct ifnet *, u_long, void *);
 static int	pcn_init(struct ifnet *);
 static void	pcn_stop(struct ifnet *, int);
 
-static void	pcn_shutdown(void *);
+static bool	pcn_shutdown(device_t, int);
 
 static void	pcn_reset(struct pcn_softc *);
 static void	pcn_rxdrain(struct pcn_softc *);
@@ -862,11 +861,15 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	    NULL, device_xname(self), "txcopy");
 #endif /* PCN_EVENT_COUNTERS */
 
-	/* Make sure the interface is shutdown during reboot. */
-	sc->sc_sdhook = shutdownhook_establish(pcn_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(self,
-		    "WARNING: unable to establish shutdown hook\n");
+	/*
+	 * Establish power handler with shutdown hook, to make sure
+	 * the interface is shutdown during reboot.
+	 */
+	if (pmf_device_register1(self, NULL, NULL, pcn_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -902,14 +905,16 @@ pcn_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-pcn_shutdown(void *arg)
+static bool
+pcn_shutdown(device_t self, int howto)
 {
-	struct pcn_softc *sc = arg;
+	struct pcn_softc *sc = device_private(self);
 
 	pcn_stop(&sc->sc_ethercom.ec_if, 1);
 	/* explicitly reset the chip for some onboard one with lazy firmware */
 	pcn_reset(sc);
+
+	return true;
 }
 
 /*

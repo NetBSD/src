@@ -334,14 +334,27 @@ drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 void
 drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 {
+	device_t parent_dev;
 	struct drm_device *dev;
-	int unit;
+	int unit, parent_unit;
 
 	unit = device_unit(kdev);
 	if (unit < 0 || unit >= DRM_MAXUNITS)
-	panic("drm_attach: device unit %d invalid", unit);
+		panic("drm_attach: device unit %d invalid", unit);
 	if (drm_units[unit] != NULL)
-	panic("drm_attach: unit %d already attached", unit);
+		panic("drm_attach: unit %d already attached", unit);
+
+	/*
+	 * this is kind of ugly but we fake up the pci "domain" by using
+	 * our pci unit number, so, find our parent pci device's unit...
+	 */
+	parent_dev = kdev;
+	do {
+		parent_dev = device_parent(parent_dev);
+	} while (parent_dev && !device_is_a(parent_dev, "pci"));
+	parent_unit = device_unit(parent_dev);
+	if (parent_unit < 0)
+		panic("drm_attach: device parent_unit %d invalid", parent_unit);
 
 	dev = device_private(kdev);
 	dev->device = kdev;
@@ -372,7 +385,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
 		DRM_DEBUG("pci resource %d: type=%d, base=%lx, size=%zx, flags=%x\n",
 			unit, dev->pci_map_data[unit].maptype,
-			dev->pci_map_data[unit].base,
+			(unsigned long)dev->pci_map_data[unit].base,
 			dev->pci_map_data[unit].size,
 			dev->pci_map_data[unit].flags);
 	}
@@ -389,8 +402,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
 	dev->irq = pa->pa_intrline;
-	/* XXX this needs to be deal with for other platforms, e.g. alpha */
-	dev->pci_domain = 0;
+	dev->pci_domain = parent_unit;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
@@ -698,10 +710,7 @@ static void drm_unload(struct drm_device *dev)
 	if (dev->agp && dev->agp->mtrr) {
 		int __unused retcode;
 
-		retcode = drm_mtrr_del(
-#if defined(__FreeBSD__)
-		    0,
-#endif
+		retcode = drm_mtrr_del(0,
 		    dev->agp->info.ai_aperture_base,
 		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
 		DRM_DEBUG("mtrr_del = %d", retcode);
@@ -932,7 +941,17 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 #if defined(__NetBSD__)
 	/* On NetBSD, close will only be called once */
 	DRM_DEBUG("setting open_count %d to 1\n", (int)dev->open_count);
-	dev->open_count = 1;
+	while (dev->open_count != 1) {
+		/*
+		 * XXXMRG probably should assert that we are freeing
+		 * one of these each time.  i think.
+		 */
+		if (!TAILQ_EMPTY(&dev->files)) {
+			file_priv = TAILQ_FIRST(&dev->files);
+			TAILQ_REMOVE(&dev->files, file_priv, link);
+		}
+		dev->open_count--;
+	}
 #endif
 	if (--dev->open_count == 0) {
 		retcode = drm_lastclose(dev);

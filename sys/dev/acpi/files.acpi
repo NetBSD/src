@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.50.4.4 2009/08/19 18:47:03 yamt Exp $
+#	$NetBSD: files.acpi,v 1.50.4.5 2009/09/16 13:37:45 yamt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -51,11 +51,6 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
-
-# ACPI Display Device
-device	acpidisplay
-attach	acpidisplay at acpinodebus
-file	dev/acpi/acpi_display.c		acpidisplay
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys

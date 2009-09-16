@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.28 2008/01/05 15:28:43 dsl Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.28.10.1 2009/09/16 13:37:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -63,16 +63,21 @@
  * the rights to redistribute these changes.
  */
 
+#ifndef NO_DISKLABEL
+#define FSTYPENAMES
+#endif
+
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/md5.h>
 #include <sys/param.h>
+#include <sys/disklabel.h>
 
 #include <fs/cd9660/iso.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
 #include <machine/stdarg.h>
+#include <machine/cpu.h>
 
 #include "libi386.h"
 #include "biosdisk_ll.h"
@@ -291,6 +296,79 @@ read_label(struct biosdisk *d)
 	return 0;
 }
 #endif /* NO_DISKLABEL */
+
+void
+biosdisk_probe(void)
+{
+#ifndef NO_DISKLABEL
+	struct disklabel *lp;
+	int first, part;
+#endif
+	struct biosdisk d;
+	struct biosdisk_extinfo ed;
+	uint64_t size;
+	int i;
+
+	for (i = 0; i < MAX_BIOSDISKS + 2; i++) {
+		first = 1;
+		memset(&d, 0, sizeof(d));
+		memset(&ed, 0, sizeof(ed));
+		if (i >= MAX_BIOSDISKS)
+			d.ll.dev = 0x00 + i - MAX_BIOSDISKS;	/* fd */
+		else
+			d.ll.dev = 0x80 + i;			/* hd/cd */
+		if (set_geometry(&d.ll, &ed))
+			continue;
+		switch (d.ll.type) {
+		case BIOSDISK_TYPE_CD:
+			printf("disk cd0\n");
+			printf("  cd0a(unknown)\n");
+			break;
+		case BIOSDISK_TYPE_FD:
+			printf("disk fd%d\n", d.ll.dev & 0x7f);
+			printf("  fd%da(unknown)\n", d.ll.dev & 0x7f);
+			break;
+		case BIOSDISK_TYPE_HD:
+			printf("disk hd%d", d.ll.dev & 0x7f);
+			if (d.ll.flags & BIOSDISK_INT13EXT) {
+				printf(" size ");
+				size = ed.totsec * ed.sbytes;
+				if (size >= (10ULL * 1024 * 1024 * 1024))
+					printf("%llu GB",
+					    size / (1024 * 1024 * 1024));
+				else
+					printf("%llu MB",
+					    size / (1024 * 1024));
+			}
+			printf("\n");
+			break;
+		}
+#ifndef NO_DISKLABEL
+		if (read_label(&d) == -1)
+			break;
+		lp = (struct disklabel *)(d.buf + LABELOFFSET);
+		for (part = 0; part < lp->d_npartitions; part++) {
+			if (lp->d_partitions[part].p_size == 0)
+				continue;
+			if (lp->d_partitions[part].p_fstype == FS_UNUSED)
+				continue;
+			if (first) {
+				printf(" ");
+				first = 0;
+			}
+			printf(" hd%d%c(", d.ll.dev & 0x7f, part + 'a');
+			if (lp->d_partitions[part].p_fstype < FSMAXTYPES)
+				printf("%s",
+				  fstypenames[lp->d_partitions[part].p_fstype]);
+			else
+				printf("%d", lp->d_partitions[part].p_fstype);
+			printf(")");
+		}
+		if (first == 0)
+			printf("\n");
+#endif
+	}
+}
 
 /* Determine likely partition for possible sector number of dos
  * partition.

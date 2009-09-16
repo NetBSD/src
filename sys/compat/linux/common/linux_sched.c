@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.53.2.3 2009/07/18 14:52:57 yamt Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.53.2.4 2009/09/16 13:37:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.53.2.3 2009/07/18 14:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.53.2.4 2009/09/16 13:37:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -351,7 +351,7 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 	/* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(int) policy;
-		syscallarg(cont struct linux_sched_scheduler *) sp;
+		syscallarg(cont struct linux_sched_param *) sp;
 	} */
 	int error, policy;
 	struct linux_sched_param lp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.6.10.2 2009/06/20 07:20:35 yamt Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.10.3 2009/09/16 13:38:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.2 2009/06/20 07:20:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.3 2009/09/16 13:38:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,11 +56,14 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
 	struct ltsleeper lts;
+	int nlocks;
 
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
-	mutex_enter(&sleepermtx);
+	while (!mutex_tryenter(&sleepermtx))
+		continue;
+	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
 	if (slock)
 		simple_unlock(slock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
@@ -73,6 +76,8 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 
 	cv_destroy(&lts.cv);
 
+	KERNEL_LOCK(nlocks, curlwp);
+
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
 
@@ -84,11 +89,14 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	kmutex_t *lock)
 {
 	struct ltsleeper lts;
+	int nlocks;
 
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
-	mutex_enter(&sleepermtx);
+	while (!mutex_tryenter(&sleepermtx))
+		continue;
+	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
 	/* protected by sleepermtx */
@@ -99,6 +107,8 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_exit(&sleepermtx);
 
 	cv_destroy(&lts.cv);
+
+	KERNEL_LOCK(nlocks, curlwp);
 
 	if ((prio & PNORELOCK) == 0)
 		mutex_enter(lock);
@@ -112,9 +122,11 @@ wakeup(wchan_t ident)
 	struct ltsleeper *ltsp;
 
 	mutex_enter(&sleepermtx);
-	LIST_FOREACH(ltsp, &sleepers, entries)
-		if (ltsp->id == ident)
-			cv_signal(&ltsp->cv);
+	LIST_FOREACH(ltsp, &sleepers, entries) {
+		if (ltsp->id == ident) {
+			cv_broadcast(&ltsp->cv);
+		}
+	}
 	mutex_exit(&sleepermtx);
 }
 

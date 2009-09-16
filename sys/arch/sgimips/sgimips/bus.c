@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.53.10.2 2009/05/04 08:11:50 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.53.10.3 2009/09/16 13:37:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53.10.2 2009/05/04 08:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53.10.3 2009/09/16 13:37:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53.10.2 2009/05/04 08:11:50 yamt Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/machtype.h>
+
+#include <common/bus_dma/bus_dmamem_common.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1082,57 +1084,11 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		  int nsegs, int *rsegs, int flags)
 {
 	extern paddr_t avail_start, avail_end;
-	vaddr_t curaddr, lastaddr;
-	psize_t high;
-	struct vm_page *m;
-	struct pglist mlist;
-	int curseg, error;
 
-	/* Always round the size. */
-	size = round_page(size);
-
-	high = avail_end - PAGE_SIZE;
-
-	/*
-	 * Allocate pages from the VM system.
-	 */
-	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
-	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
-		return error;
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	m = mlist.tqh_first;
-	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
-	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.queue.tqe_next;
-
-	for (; m != NULL; m = m->pageq.queue.tqe_next) {
-		curaddr = VM_PAGE_TO_PHYS(m);
-#ifdef DIAGNOSTIC
-		if (curaddr < avail_start || curaddr >= high) {
-			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc");
-		}
-#endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
-			segs[curseg].ds_len += PAGE_SIZE;
-		else {
-			curseg++;
-			segs[curseg].ds_addr = curaddr;
-			segs[curseg].ds_len = PAGE_SIZE;
-		}
-		lastaddr = curaddr;
-	}
-
-	*rsegs = curseg + 1;
-
-	return 0;
+	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
+					       segs, nsegs, rsegs, flags,
+					       avail_start /*low*/,
+					       avail_end - PAGE_SIZE /*high*/));
 }
 
 /*
@@ -1142,25 +1098,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 void
 _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
-	struct vm_page *m;
-	bus_addr_t addr;
-	struct pglist mlist;
-	int curseg;
 
-	/*
-	 * Build a list of pages to free back to the VM system.
-	 */
-	TAILQ_INIT(&mlist);
-	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
-		}
-	}
-
-	uvm_pglistfree(&mlist);
+	_bus_dmamem_free_common(t, segs, nsegs);
 }
 
 /*
@@ -1229,11 +1168,6 @@ void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
-#endif
-
 	/*
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
 	 * not in KSEG2).
@@ -1242,10 +1176,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	    kva < (void *)MIPS_KSEG2_START)
 		return;
 
-	size = round_page(size);
-	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
+	_bus_dmamem_unmap_common(t, kva, size);
 }
 
 /*
@@ -1256,32 +1187,17 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		 off_t off, int prot, int flags)
 {
-	int i;
+	bus_addr_t rv;
 
-	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif
-		if (off >= segs[i].ds_len) {
-			off -= segs[i].ds_len;
-			continue;
-		}
-
+	rv = _bus_dmamem_mmap_common(t, segs, nsegs, off, prot, flags);
+	if (rv == (bus_addr_t)-1)
+		return (-1);
+	
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-		return mips_btop((segs[i].ds_addr + off) | PMAP_NOCACHE);
+	return (mips_btop(rv | PMAP_NOCACHE));
 #else
-		return mips_btop(segs[i].ds_addr + off);
+	return (mips_btop(rv));
 #endif
-	}
-
-	/* Page not found. */
-	return -1;
 }
 
 paddr_t

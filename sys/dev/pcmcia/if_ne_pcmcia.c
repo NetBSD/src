@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.154.4.1 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.154.4.2 2009/09/16 13:37:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.154.4.1 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.154.4.2 2009/09/16 13:37:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,13 +741,12 @@ found:
 		   "WARNING: unable to establish power hook\n");
 
 	/* pmf(9) power hooks */
-	if (!pmf_device_register(self, ne2000_suspend, ne2000_resume))
-		aprint_error_dev(self, "unable to establish power handler\n");
-	else {
+	if (pmf_device_register(self, ne2000_suspend, ne2000_resume)) {
 #if 0 /* XXX: notyet: if_stop is NULL! */
 		pmf_class_network_register(self, &dsc->sc_ec.ec_if);
 #endif
-	}
+	} else
+		aprint_error_dev(self, "unable to establish power handler\n");
 
 	psc->sc_state = NE_PCMCIA_ATTACHED;
 	ne_pcmcia_disable(dsc);

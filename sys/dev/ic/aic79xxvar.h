@@ -832,8 +832,8 @@ struct ahd_tmode_tstate {
  * to parity errors in each phase table.
  */
 struct ahd_phase_table_entry {
-        uint8_t phase;
-        uint8_t mesg_out; /* Message response to parity errors */
+	uint8_t phase;
+	uint8_t mesg_out; /* Message response to parity errors */
 	const char *phasemsg;
 };
 
@@ -1071,7 +1071,6 @@ struct ahd_softc {
 	bus_space_tag_t           tags[2];
 	bus_space_handle_t        bshs[2];
 
-	void 			 *shutdown_hook;
 	struct scb_data		  scb_data;
 
 	struct hardware_scb	 *next_queued_hscb;
@@ -1258,7 +1257,7 @@ struct ahd_softc {
 	uint16_t	 	  user_discenable;/* Disconnection allowed  */
 	uint16_t		  user_tagenable;/* Tagged Queuing allowed */
 
-        /* Adapter interrupt routine */
+	/* Adapter interrupt routine */
 	void*                     ih;
 	struct ahd_pci_busdata	  *bus_data;
 };

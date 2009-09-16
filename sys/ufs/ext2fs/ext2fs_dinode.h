@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.16.18.1 2009/05/04 08:14:37 yamt Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.16.18.2 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -94,37 +94,37 @@
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
-#define EXT2_MAXSYMLINKLEN ((NDADDR+NIADDR) * sizeof (u_int32_t))
+#define EXT2_MAXSYMLINKLEN ((NDADDR+NIADDR) * sizeof (uint32_t))
 
 struct ext2fs_dinode {
-	u_int16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
-	u_int16_t	e2di_uid;	/*   2: Owner UID */
-	u_int32_t	e2di_size;	/*	 4: Size (in bytes) */
-	u_int32_t	e2di_atime;	/*	 8: Acces time */
-	u_int32_t	e2di_ctime;	/*	12: Create time */
-	u_int32_t	e2di_mtime;	/*	16: Modification time */
-	u_int32_t	e2di_dtime;	/*	20: Deletion time */
-	u_int16_t	e2di_gid;	/*  24: Owner GID */
-	u_int16_t	e2di_nlink;	/*  26: File link count */
-	u_int32_t	e2di_nblock;	/*  28: Blocks count */
-	u_int32_t	e2di_flags;	/*  32: Status flags (chflags) */
-	u_int32_t	e2di_linux_reserved1; /* 36 */
-	u_int32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
-	u_int32_t	e2di_gen;	/* 100: generation number */
-	u_int32_t	e2di_facl;	/* 104: file ACL (not implemented) */
-	u_int32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
-	u_int32_t	e2di_faddr;	/* 112: fragment address */
-	u_int8_t	e2di_nfrag;	/* 116: fragment number */
-	u_int8_t	e2di_fsize;	/* 117: fragment size */
-	u_int16_t	e2di_linux_reserved2; /* 118 */
-	u_int16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
-	u_int16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
-	u_int32_t	e2di_linux_reserved3; /* 124 */
+	uint16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
+	uint16_t	e2di_uid;	/*   2: Owner UID */
+	uint32_t	e2di_size;	/*	 4: Size (in bytes) */
+	uint32_t	e2di_atime;	/*	 8: Acces time */
+	uint32_t	e2di_ctime;	/*	12: Create time */
+	uint32_t	e2di_mtime;	/*	16: Modification time */
+	uint32_t	e2di_dtime;	/*	20: Deletion time */
+	uint16_t	e2di_gid;	/*  24: Owner GID */
+	uint16_t	e2di_nlink;	/*  26: File link count */
+	uint32_t	e2di_nblock;	/*  28: Blocks count */
+	uint32_t	e2di_flags;	/*  32: Status flags (chflags) */
+	uint32_t	e2di_linux_reserved1; /* 36 */
+	uint32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
+	uint32_t	e2di_gen;	/* 100: generation number */
+	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) */
+	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
+	uint32_t	e2di_faddr;	/* 112: fragment address */
+	uint8_t		e2di_nfrag;	/* 116: fragment number */
+	uint8_t		e2di_fsize;	/* 117: fragment size */
+	uint16_t	e2di_linux_reserved2; /* 118 */
+	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
+	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
+	uint32_t	e2di_linux_reserved3; /* 124 */
 };
 
 
 
-#define	E2MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(u_int32_t))
+#define	E2MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(uint32_t))
 
 /* File permissions. */
 #define	EXT2_IEXEC		0000100		/* Executable. */

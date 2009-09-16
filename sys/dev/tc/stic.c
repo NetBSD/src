@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.42.20.2 2009/05/04 08:13:19 yamt Exp $	*/
+/*	$NetBSD: stic.c,v 1.42.20.3 2009/09/16 13:37:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.42.20.2 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.42.20.3 2009/09/16 13:37:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,19 +93,19 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.42.20.2 2009/05/04 08:13:19 yamt Exp $");
  * adjacent each other in a word, i.e.,
  *	struct bt459triplet {
  * 		struct {
- *			u_int8_t u0;
- *			u_int8_t u1;
- *			u_int8_t u2;
+ *			uint8_t u0;
+ *			uint8_t u1;
+ *			uint8_t u2;
  *			unsigned :8;
  *		} bt_lo;
  *		struct {
  *
  * Although HX has single Bt459, 32bit R/W can be done w/o any trouble.
  *	struct bt459reg {
- *		   u_int32_t	   bt_lo;
- *		   u_int32_t	   bt_hi;
- *		   u_int32_t	   bt_reg;
- *		   u_int32_t	   bt_cmap;
+ *		   uint32_t	   bt_lo;
+ *		   uint32_t	   bt_hi;
+ *		   uint32_t	   bt_reg;
+ *		   uint32_t	   bt_cmap;
  *	};
  *
  */
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.42.20.2 2009/05/04 08:13:19 yamt Exp $");
 #define bt_reg	2
 #define bt_cmap 3
 
-#define REG(base, index)	*((volatile u_int32_t *)(base) + (index))
+#define REG(base, index)	*((volatile uint32_t *)(base) + (index))
 #define SELECT(vdac, regno) do {		\
 	REG(vdac, bt_lo) = DUPBYTE0(regno);	\
 	REG(vdac, bt_hi) = DUPBYTE1(regno);	\
@@ -161,7 +161,7 @@ const struct cdevsw stic_cdevsw = {
 };
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity. */
-static const u_int8_t stic_cmap[16*3] = {
+static const uint8_t stic_cmap[16*3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
 	0x00, 0x7f, 0x00, /* green */
@@ -188,7 +188,7 @@ static const u_int8_t stic_cmap[16*3] = {
  *   3 2 1 0 3 2 1 0		0 0 1 1 2 2 3 3
  *   7 6 5 4 7 6 5 4		4 4 5 5 6 6 7 7
  */
-static const u_int8_t shuffle[256] = {
+static const uint8_t shuffle[256] = {
 	0x00, 0x40, 0x10, 0x50, 0x04, 0x44, 0x14, 0x54,
 	0x01, 0x41, 0x11, 0x51, 0x05, 0x45, 0x15, 0x55,
 	0x80, 0xc0, 0x90, 0xd0, 0x84, 0xc4, 0x94, 0xd4,
@@ -267,7 +267,7 @@ static int	stic_unit;
 void
 stic_init(struct stic_info *si)
 {
-	volatile u_int32_t *vdac;
+	volatile uint32_t *vdac;
 	int i, cookie;
 
 	/* Reset the STIC & stamp(s). */
@@ -450,13 +450,13 @@ stic_cnattach(struct stic_info *si)
 static void
 stic_setup_vdac(struct stic_info *si)
 {
-	u_int8_t *ip, *mp;
+	uint8_t *ip, *mp;
 	int r, c, o, b, i, s;
 
 	s = spltty();
 
-	ip = (u_int8_t *)si->si_cursor.cc_image;
-	mp = (u_int8_t *)si->si_cursor.cc_mask;
+	ip = (uint8_t *)si->si_cursor.cc_image;
+	mp = (uint8_t *)si->si_cursor.cc_mask;
 	memset(ip, 0, sizeof(si->si_cursor.cc_image));
 	memset(mp, 0, sizeof(si->si_cursor.cc_mask));
 
@@ -500,7 +500,7 @@ stic_setup_vdac(struct stic_info *si)
 static void
 stic_clear_screen(struct stic_info *si)
 {
-	u_int32_t *pb;
+	uint32_t *pb;
 	int i;
 
 	/*
@@ -691,7 +691,7 @@ stic_do_switch(void *cookie)
 	struct stic_screen *ss;
 	struct stic_info *si;
 	u_int r, c, nr, nc;
-	u_int16_t *p, *sp;
+	uint16_t *p, *sp;
 
 	ss = cookie;
 	si = ss->ss_si;
@@ -779,9 +779,9 @@ stic_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct stic_info *si;
 	struct stic_screen *ss;
-	u_int32_t *pb;
+	uint32_t *pb;
 	u_int i, linewidth;
-	u_int16_t *p;
+	uint16_t *p;
 
 	ss = cookie;
 	si = ss->ss_si;
@@ -789,7 +789,7 @@ stic_erasecols(void *cookie, int row, int col, int num, long attr)
 	if (ss->ss_backing != NULL) {
 		p = ss->ss_backing + row * si->si_consw + col;
 		for (i = num; i != 0; i--)
-			*p++ = (u_int16_t)attr;
+			*p++ = (uint16_t)attr;
 	}
 	if ((ss->ss_flags & SS_ACTIVE) == 0)
 		return;
@@ -821,15 +821,15 @@ stic_eraserows(void *cookie, int row, int num, long attr)
 	struct stic_info *si;
 	struct stic_screen *ss;
 	u_int linewidth, i;
-	u_int32_t *pb;
+	uint32_t *pb;
 
 	ss = cookie;
 	si = ss->ss_si;
 
 	if (ss->ss_backing != NULL) {
-		pb = (u_int32_t *)(ss->ss_backing + row * si->si_consw);
+		pb = (uint32_t *)(ss->ss_backing + row * si->si_consw);
 		for (i = si->si_consw * num; i > 0; i -= 2)
-			*pb++ = (u_int32_t)attr;
+			*pb++ = (uint32_t)attr;
 	}
 	if ((ss->ss_flags & SS_ACTIVE) == 0)
 		return;
@@ -859,7 +859,7 @@ stic_copyrows(void *cookie, int src, int dst, int height)
 {
 	struct stic_info *si;
 	struct stic_screen *ss;
-	u_int32_t *pb, *pbs;
+	uint32_t *pb, *pbs;
 	u_int num, inc, adj;
 
 	ss = cookie;
@@ -920,7 +920,7 @@ stic_copycols(void *cookie, int row, int src, int dst, int num)
 	struct stic_info *si;
 	struct stic_screen *ss;
 	u_int height, updword;
-	u_int32_t *pb, *pbs;
+	uint32_t *pb, *pbs;
 
 	ss = cookie;
 	si = ss->ss_si;
@@ -1147,7 +1147,7 @@ stic_cursor(void *cookie, int on, int row, int col)
 void
 stic_flush(struct stic_info *si)
 {
-	volatile u_int32_t *vdac;
+	volatile uint32_t *vdac;
 	int v;
 
 	if ((si->si_flags & SI_ALL_CHANGED) == 0)
@@ -1167,7 +1167,7 @@ stic_flush(struct stic_info *si)
 	}
 
 	if ((v & SI_CURCMAP_CHANGED) != 0) {
-		u_int8_t *cp;
+		uint8_t *cp;
 
 		cp = si->si_cursor.cc_color;
 
@@ -1181,12 +1181,12 @@ stic_flush(struct stic_info *si)
 	}
 
 	if ((v & SI_CURSHAPE_CHANGED) != 0) {
-		u_int8_t *ip, *mp, img, msk;
-		u_int8_t u;
+		uint8_t *ip, *mp, img, msk;
+		uint8_t u;
 		int bcnt;
 
-		ip = (u_int8_t *)si->si_cursor.cc_image;
-		mp = (u_int8_t *)si->si_cursor.cc_mask;
+		ip = (uint8_t *)si->si_cursor.cc_image;
+		mp = (uint8_t *)si->si_cursor.cc_mask;
 
 		bcnt = 0;
 		SELECT(vdac, BT459_IREG_CRAM_BASE);
@@ -1394,7 +1394,7 @@ stic_set_curpos(struct stic_info *si, struct wsdisplay_curpos *curpos)
 static void
 stic_set_hwcurpos(struct stic_info *si)
 {
-	volatile u_int32_t *vdac;
+	volatile uint32_t *vdac;
 	int x, y, s;
 
 	vdac = si->si_vdac;

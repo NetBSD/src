@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.104.4.2 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.104.4.3 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.104.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.104.4.3 2009/09/16 13:37:47 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -448,10 +448,11 @@ ex_config(struct ex_softc *sc)
 			  RND_TYPE_NET, 0);
 #endif
 
-	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
-		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
 		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	/* The attach is successful. */
 	sc->ex_flags |= EX_FLAGS_ATTACHED;
@@ -1678,24 +1679,14 @@ int
 ex_activate(device_t self, enum devact act)
 {
 	struct ex_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->ex_conf & EX_CONF_MII)
-			mii_activate(&sc->ex_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.89.26.1 2009/05/04 08:14:36 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.89.26.2 2009/09/16 13:38:06 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -572,6 +572,8 @@ sockaddr_getlen(const struct sockaddr *sa)
 
 __BEGIN_DECLS
 struct sockaddr *sockaddr_copy(struct sockaddr *, socklen_t,
+    const struct sockaddr *);
+struct sockaddr *sockaddr_externalize(struct sockaddr *, socklen_t,
     const struct sockaddr *);
 struct sockaddr *sockaddr_alloc(sa_family_t, socklen_t, int);
 const void *sockaddr_const_addr(const struct sockaddr *, socklen_t *);

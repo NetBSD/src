@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.3.20.2 2009/08/19 18:46:40 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3.20.3 2009/09/16 13:37:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ struct pic_ops;			/* XXX */
  */
 void	genppc_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
+void	genppc_isa_detach_hook(isa_chipset_tag_t, device_t);
 const struct evcnt *genppc_isa_intr_evcnt(isa_chipset_tag_t, int);
 void	*genppc_isa_intr_establish(isa_chipset_tag_t, int /*irq*/, int /*type*/,
 	    int /*level*/, int (*ih_fun)(void *), void *);

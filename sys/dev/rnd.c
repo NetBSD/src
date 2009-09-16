@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.65.4.3 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: rnd.c,v 1.65.4.4 2009/09/16 13:37:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.65.4.3 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.65.4.4 2009/09/16 13:37:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -49,8 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.65.4.3 2009/05/16 10:41:18 yamt Exp $");
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/once.h>
 
-#ifdef __HAVE_CPU_COUNTER
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 #include <machine/cpu_counter.h>
 #endif
 
@@ -117,8 +118,7 @@ volatile u_int32_t rnd_status;
 /*
  * Memory pool for sample buffers
  */
-POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL,
-    IPL_VM);
+static struct pool rnd_mempool;
 
 /*
  * Our random pool.  This is defined here rather than using the general
@@ -178,7 +178,7 @@ rnd_counter(void)
 {
 	struct timeval tv;
 
-#ifdef __HAVE_CPU_COUNTER
+#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
@@ -268,6 +268,16 @@ rnd_estimate_entropy(rndsource_t *rs, u_int32_t t)
 	return (1);
 }
 
+static int
+rnd_mempool_init(void)
+{
+
+	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
+	    NULL, IPL_VM);
+	return 0;
+}
+static ONCE_DECL(rnd_mempoolinit_ctrl);
+
 /*
  * "Attach" the random device. This is an (almost) empty stub, since
  * pseudo-devices don't get attached until after config, after the
@@ -278,6 +288,8 @@ void
 rndattach(int num)
 {
 	u_int32_t c;
+
+	RUN_ONCE(&rnd_mempoolinit_ctrl, rnd_mempool_init);
 
 	/* Trap unwary players who don't call rnd_init() early */
 	KASSERT(rnd_ready);
@@ -653,9 +665,9 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		mutex_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
 		    rnddata->entropy);
+		mutex_exit(&rndpool_mtx);
 
 		rnd_wakeup_readers();
-		mutex_exit(&rndpool_mtx);
 
 		break;
 
@@ -815,6 +827,8 @@ rnd_attach_source(rndsource_element_t *rs, const char *name, u_int32_t type,
     u_int32_t flags)
 {
 	u_int32_t ts;
+
+	RUN_ONCE(&rnd_mempoolinit_ctrl, rnd_mempool_init);
 
 	ts = rnd_counter();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.5.20.2 2009/05/04 08:13:25 yamt Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.5.20.3 2009/09/16 13:37:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.20.2 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.20.3 2009/09/16 13:37:59 yamt Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -56,6 +56,11 @@ struct genfb_colormap_callback {
 	void (*gcc_set_mapreg)(void *, int, int, int, int);
 };
 
+struct genfb_pmf_callback {
+	bool (*gpc_suspend)(device_t PMF_FN_PROTO);
+	bool (*gpc_resume)(device_t PMF_FN_PROTO);
+};
+
 struct genfb_softc {
 	struct	device sc_dev;
 	struct vcons_data vd;
@@ -65,6 +70,7 @@ struct genfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct genfb_colormap_callback *sc_cmcb;
+	struct genfb_pmf_callback *sc_pmfcb;
 	void *sc_fbaddr;	/* kva */
 	void *sc_shadowfb; 
 	bus_addr_t sc_fboffset;	/* bus address */
@@ -84,5 +90,7 @@ int	genfb_is_enabled(void);
 void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
 int	genfb_borrow(bus_addr_t, bus_space_handle_t *);
+void	genfb_restore_palette(struct genfb_softc *);
+
 
 #endif /* GENFBVAR_H */

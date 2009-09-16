@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.33.4.2 2009/05/16 10:41:45 yamt Exp $ */
+/* $NetBSD: bba.c,v 1.33.4.3 2009/09/16 13:37:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.33.4.2 2009/05/16 10:41:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.33.4.3 2009/09/16 13:37:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ static struct audio_device bba_device = {
 
 static int	bba_intr(void *);
 static void	bba_reset(struct bba_softc *, int);
-static void	bba_codec_dwrite(struct am7930_softc *, int, u_int8_t);
+static void	bba_codec_dwrite(struct am7930_softc *, int, uint8_t);
 static uint8_t	bba_codec_dread(struct am7930_softc *, int);
 
 static int
@@ -513,7 +513,7 @@ bba_trigger_input(void *addr, void *start, void *end, int blksize,
 	struct bba_softc *sc;
 	struct bba_dma_state *d;
 	tc_addr_t phys, nphys;
-	u_int32_t ssr;
+	uint32_t ssr;
 	int state = 0;
 
 	DPRINTF(("bba_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",

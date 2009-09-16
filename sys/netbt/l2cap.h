@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.6.20.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.6.20.2 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.6.20.1 2009/05/04 08:14:17 yamt Exp $
+ * $Id: l2cap.h,v 1.6.20.2 2009/09/16 13:38:02 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -455,6 +455,7 @@ int l2cap_request_alloc(struct l2cap_channel *, uint8_t);
 struct l2cap_req *l2cap_request_lookup(struct hci_link *, uint8_t);
 void l2cap_request_free(struct l2cap_req *);
 void l2cap_rtx(void *);
+void l2cap_init(void);
 
 /* l2cap_signal.c */
 void l2cap_recv_signal(struct mbuf *, struct hci_link *);

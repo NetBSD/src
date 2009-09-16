@@ -1,7 +1,7 @@
-/*	$NetBSD: tcx.c,v 1.23.4.4 2009/08/19 18:47:19 yamt Exp $ */
+/*	$NetBSD: tcx.c,v 1.23.4.5 2009/09/16 13:37:57 yamt Exp $ */
 
 /*
- *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
+ *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
  *  All rights reserved.
  *
  *  This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.23.4.4 2009/08/19 18:47:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.23.4.5 2009/09/16 13:37:57 yamt Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -101,6 +101,8 @@ struct tcx_softc {
 	u_char	sc_cmap_green[256];
 	u_char	sc_cmap_blue[256];
 	int 	sc_mode, sc_bg;
+	int	sc_cursor_x, sc_cursor_y;
+	int	sc_hotspot_x, sc_hotspot_y;
 	struct vcons_data vd;
 };
 
@@ -174,11 +176,13 @@ static int	tcx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	tcx_mmap(void *, void *, off_t, int);
 
 static void	tcx_init_screen(void *, struct vcons_screen *, int, long *);
-static void	tcx_clearscreen(struct tcx_softc *);
+static void	tcx_clearscreen(struct tcx_softc *, int);
 static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
 static void	tcx_set_video(struct tcx_softc *, int);
+static int	tcx_do_cursor(struct tcx_softc *, struct wsdisplay_cursor *);
+static void	tcx_set_cursor(struct tcx_softc *);
 
 struct wsdisplay_accessops tcx_accessops = {
 	tcx_ioctl,
@@ -238,6 +242,11 @@ tcxattach(device_t parent, device_t self, void *args)
 	sc->sc_bustag = sa->sa_bustag;
 	node = sa->sa_node;
 
+	sc->sc_cursor_x = 0x7fff;
+	sc->sc_cursor_y = 0x7fff;
+	sc->sc_hotspot_x = 0;
+	sc->sc_hotspot_y = 0;
+
 	fb->fb_driver = &tcx_fbdriver;
 	fb->fb_device = sc->sc_dev;
 	/* Mask out invalid flags from the user. */
@@ -264,11 +273,11 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", OBPNAME,
+	printf("%s: %s, %d x %d", device_xname(self), OBPNAME,
 		fb->fb_type.fb_width,
 		fb->fb_type.fb_height);
 
-	fb->fb_type.fb_type = FBTYPE_SUNTCX;
+	fb->fb_type.fb_type = FBTYPE_TCXCOLOR;
 
 
 	if (sa->sa_nreg != TCX_NREG) {
@@ -357,6 +366,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	}
 	tcx_loadcmap(sc, 0, 256);
 
+	tcx_set_cursor(sc);
 	/* enable video */
 	confreg = bus_space_read_4(sa->sa_bustag, sc->sc_thc, THC_MISC);
 	confreg |= THC_MISC_VIDEN;
@@ -380,7 +390,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	tcx_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	sc->sc_bg = (defattr >> 16) & 0xff;
-	tcx_clearscreen(sc);
+	tcx_clearscreen(sc, 0);
 
 	ri = &tcx_console_screen.scr_ri;
 
@@ -391,6 +401,7 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	if(isconsole) {
 		wsdisplay_cnattach(&tcx_defscreendesc, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&tcx_console_screen);
 	}
 
 	aa.console = isconsole;
@@ -495,16 +506,13 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static void
 tcx_reset(struct tcx_softc *sc)
 {
+	uint32_t reg;
 
-	/* Disable cursor in Brooktree DAC. */
-	bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_ADDRESS,
-	    DAC_C1_CONTROL_0);
-	bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_CONTROL_1, 0);
+	reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc, THC_MISC);
+	reg |= THC_MISC_CURSRES;
+	bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC, reg);
 }
 
-/*
- * Load a subset of the current (new) colormap into the color DAC.
- */
 static void
 tcx_loadcmap(struct tcx_softc *sc, int start, int ncolors)
 {
@@ -611,7 +619,7 @@ tcxmmap(dev_t dev, off_t off, int prot)
 		{ TCX_USER_RBLIT, 1, TCX_REG_RBLIT },
 		{ TCX_USER_TEC, 1, TCX_REG_TEC },
 		{ TCX_USER_BTREGS, 8192 /* XXX */, TCX_REG_CMAP },
-		{ TCX_USER_THC, 0x1000, TCX_REG_THC },
+		{ TCX_USER_THC, 0x2000, TCX_REG_THC },
 		{ TCX_USER_DHC, 1, TCX_REG_DHC },
 		{ TCX_USER_ALT, 1, TCX_REG_ALT },
 		{ TCX_USER_ROM, 65536, TCX_REG_ROM },
@@ -637,8 +645,10 @@ tcxmmap(dev_t dev, off_t off, int prot)
 	for (; mo < mo_end; mo++) {
 		if ((u_int)off < mo->mo_uaddr)
 			continue;
+
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size;
+
 		if (sz == 0) {
 			sz = sc->sc_fb.fb_type.fb_size;
 			/*
@@ -656,6 +666,9 @@ tcxmmap(dev_t dev, off_t off, int prot)
 				sz *= 4;
 			}
 		}
+		if (sz == 1)
+			sz = rr[mo->mo_bank].oa_size;
+
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				BUS_ADDR(rr[mo->mo_bank].oa_space,
@@ -726,10 +739,45 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
 						tcx_loadcmap(sc, 0, 256);
-						tcx_clearscreen(sc);
+						tcx_clearscreen(sc, 0);
 						vcons_redraw_screen(ms);
-					}
+					} else if (!sc->sc_8bit)
+						tcx_clearscreen(sc, 3);
 				}
+			}
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				sc->sc_cursor_x = cp->x;
+				sc->sc_cursor_y = cp->y;
+				tcx_set_cursor(sc);
+			}
+			return 0;
+
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 32;
+				cp->y = 32;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return tcx_do_cursor(sc, cursor);
 			}
 	}
 	return EPASSTHROUGH;
@@ -792,13 +840,17 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static void
-tcx_clearscreen(struct tcx_softc *sc)
+tcx_clearscreen(struct tcx_softc *sc, int spc)
 {
 	uint64_t bg = ((uint64_t)sc->sc_bg << 32) | 0xffffffffLL;
+	uint64_t spc64;
 	int i;
 
+	spc64 = spc & 3;
+	spc64 = spc64 << 56;
+
 	for (i = 0; i < 1024 * 1024; i += 32)
-		sc->sc_rstip[i] = bg;
+		sc->sc_rstip[i] = bg | spc64;
 }
 
 static void
@@ -1004,5 +1056,94 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		}
 		
 	}
+}
+
+static int
+tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		if (cur->enable) {
+			tcx_set_cursor(sc);
+		} else {
+			/* move the cursor out of sight */
+			bus_space_write_4(sc->sc_bustag, sc->sc_thc,
+			    THC_CURSOR_POS, 0x7fff7fff);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hotspot_x = cur->hot.x;
+		sc->sc_hotspot_y = cur->hot.y;
+		tcx_set_cursor(sc);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		sc->sc_cursor_x = cur->pos.x;
+		sc->sc_cursor_y = cur->pos.y;
+		tcx_set_cursor(sc);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+#if 0
+	/*
+	 * apparently we're not writing in the right register here - if we do
+	 * this the screen goes all funky
+	 */
+		int i;
+	
+		for (i = 0; i < cur->cmap.count; i++) {
+			bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_ADDRESS,
+			    (cur->cmap.index + i + 2) << 24);
+			bus_space_write_4(sc->sc_bustag, sc->sc_bt,
+			    DAC_CURSOR_LUT, cur->cmap.red[i] << 24);
+			bus_space_write_4(sc->sc_bustag, sc->sc_bt,
+			    DAC_CURSOR_LUT, cur->cmap.green[i] << 24);
+			bus_space_write_4(sc->sc_bustag, sc->sc_bt,
+			    DAC_CURSOR_LUT, cur->cmap.blue[i] << 24);
+		}
+#endif
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int i;
+		uint32_t temp, poof;
+
+		for (i = 0; i < 128; i += 4) {
+			memcpy(&temp, &cur->mask[i], 4);
+			printf("%08x -> ", temp);
+			poof = ((temp & 0x80808080) >> 7) |
+			       ((temp & 0x40404040) >> 5) |
+			       ((temp & 0x20202020) >> 3) |
+			       ((temp & 0x10101010) >> 1) |
+			       ((temp & 0x08080808) << 1) |
+			       ((temp & 0x04040404) << 3) |
+			       ((temp & 0x02020202) << 5) |
+			       ((temp & 0x01010101) << 7);
+			printf("%08x\n", poof);
+			bus_space_write_4(sc->sc_bustag, sc->sc_thc,
+			    THC_CURSOR_1 + i, poof);
+			memcpy(&temp, &cur->image[i], 4);
+			poof = ((temp & 0x80808080) >> 7) |
+			       ((temp & 0x40404040) >> 5) |
+			       ((temp & 0x20202020) >> 3) |
+			       ((temp & 0x10101010) >> 1) |
+			       ((temp & 0x08080808) << 1) |
+			       ((temp & 0x04040404) << 3) |
+			       ((temp & 0x02020202) << 5) |
+			       ((temp & 0x01010101) << 7);
+			bus_space_write_4(sc->sc_bustag, sc->sc_thc,
+			    THC_CURSOR_0 + i, poof);
+		}
+	}
+	return 0;
+}
+
+static void
+tcx_set_cursor(struct tcx_softc *sc)
+{
+	uint32_t reg;
+
+	reg = (sc->sc_cursor_x - sc->sc_hotspot_x) << 16 | 
+	     ((sc->sc_cursor_y - sc->sc_hotspot_y) & 0xffff);
+	bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_CURSOR_POS, reg);
 }
 

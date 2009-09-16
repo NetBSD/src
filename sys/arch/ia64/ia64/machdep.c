@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.4.3 2009/08/19 18:46:21 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.4.4 2009/09/16 13:37:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -227,7 +227,7 @@ identifycpu(void)
 
 	printf("CPU: %s (", model_name);
 	if (processor_frequency) {
-		printf("%ld.%02ld-Mhz ", (processor_frequency + 4999) / Mhz,
+		printf("%ld.%02ld-MHz ", (processor_frequency + 4999) / Mhz,
 		    ((processor_frequency + 4999) / (Mhz/100)) % 100);
 	}
 	printf("%s)\n", family_name);

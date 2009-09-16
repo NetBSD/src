@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40.10.2 2009/07/18 14:52:52 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.40.10.3 2009/09/16 13:37:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.10.2 2009/07/18 14:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.10.3 2009/09/16 13:37:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -428,18 +428,20 @@ profclock(void *pc, int ps)
  *                   Real Time Clock support                           *
  ***********************************************************************/
 
-u_int mc146818_read(void *rtc, u_int regno)
+u_int mc146818_read(void *cookie, u_int regno)
 {
+	struct rtc *rtc = cookie;
 
-	((struct rtc *)rtc)->rtc_regno = regno;
-	return ((struct rtc *)rtc)->rtc_data & 0377;
+	rtc->rtc_regno = regno;
+	return rtc->rtc_data & 0xff;
 }
 
-void mc146818_write(void *rtc, u_int regno, u_int value)
+void mc146818_write(void *cookie, u_int regno, u_int value)
 {
+	struct rtc *rtc = cookie;
 
-	((struct rtc *)rtc)->rtc_regno = regno;
-	((struct rtc *)rtc)->rtc_data  = value;
+	rtc->rtc_regno = regno;
+	rtc->rtc_data  = value;
 }
 
 static int

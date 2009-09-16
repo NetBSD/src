@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.126.2.3 2009/08/19 18:48:25 yamt Exp $	*/
+/*	$NetBSD: nd6.c,v 1.126.2.4 2009/09/16 13:38:03 yamt Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.126.2.3 2009/08/19 18:48:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.126.2.4 2009/09/16 13:38:03 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -177,7 +177,7 @@ nd6_ifattach(struct ifnet *ifp)
 	 * here.
 	 */
 	nd->flags = (ND6_IFF_PERFORMNUD |
-		ip6_accept_rtadv ? ND6_IFF_ACCEPT_RTADV : 0);
+		(ip6_accept_rtadv ? ND6_IFF_ACCEPT_RTADV : 0));
 
 	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
 	nd6_setmtu0(ifp, nd);

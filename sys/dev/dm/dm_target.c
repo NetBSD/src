@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.9.2.3 2009/08/19 18:47:05 yamt Exp $      */
+/*        $NetBSD: dm_target.c,v 1.9.2.4 2009/09/16 13:37:46 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ dm_target_destroy(void)
 dm_target_t*
 dm_target_alloc(const char *name)
 {
-	return kmem_zalloc(sizeof(dm_target_t), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(dm_target_t), KM_SLEEP);
 }
 
 /*

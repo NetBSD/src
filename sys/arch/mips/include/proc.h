@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.18.1 2009/08/19 18:46:30 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.18.2 2009/09/16 13:37:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 #define _MIPS_PROC_H_
 
 #include <sys/param.h>
+#include <mips/vmparam.h>
 
 struct lwp;
 

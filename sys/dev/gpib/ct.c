@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.14.4.3 2009/05/16 10:41:20 yamt Exp $ */
+/*	$NetBSD: ct.c,v 1.14.4.4 2009/09/16 13:37:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.14.4.3 2009/05/16 10:41:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.14.4.4 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,8 @@ ctstrategy(struct buf *bp)
 	struct ct_softc *sc;
 	int s;
 
-	DPRINTF(CDB_FOLLOW, ("cdstrategy(%p): dev %x, bn %x, bcount %lx, %c\n",
+	DPRINTF(CDB_FOLLOW, ("cdstrategy(%p): dev %" PRIx64 ", bn %" PRIx64
+	    ", bcount %x, %c\n",
 	    bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 	    (bp->b_flags & B_READ) ? 'R' : 'W'));
 
@@ -641,7 +642,7 @@ cteof(struct ct_softc *sc, struct buf *bp)
 	 * we really read and update b_resid.
 	 */
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
-	DPRINTF(CDB_FILES, ("cteof: bc %ld oblk %d nblk %d read %ld, resid %ld\n",
+	DPRINTF(CDB_FILES, ("cteof: bc %d oblk %d nblk %d read %ld, resid %ld\n",
 	    bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 	    blks, bp->b_bcount - CTKTOB(blks)));
 	if (blks == -1) { /* 9145 on EOF does not change sc_stat.c_blk */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.112.4.2 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.112.4.3 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.112.4.2 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.112.4.3 2009/09/16 13:37:48 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2482,24 +2482,14 @@ int
 fxp_activate(device_t self, enum devact act)
 {
 	struct fxp_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_flags & FXPF_MII)
-			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
 /*

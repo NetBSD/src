@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.18.10.2 2009/05/16 10:41:34 yamt Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.18.10.3 2009/09/16 13:37:50 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18.10.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18.10.3 2009/09/16 13:37:50 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -699,10 +699,10 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->bnx_timeout, 0);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));

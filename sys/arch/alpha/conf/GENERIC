@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.322.10.1 2009/05/04 08:10:28 yamt Exp $
+# $NetBSD: GENERIC,v 1.322.10.2 2009/09/16 13:37:35 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.322.10.1 $"
+ident		"GENERIC-$Revision: 1.322.10.2 $"
 
 maxusers 32
 
@@ -385,6 +385,13 @@ opl*	at	yds?
 mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
+
+# I2O devices
+iop*	at pci? dev ? function ?	# I/O processor
+iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+ld*	at iop? tid ?			# block devices
+# XXX dpti.c wants a processor type that is not assigned for x86-64
+#dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs

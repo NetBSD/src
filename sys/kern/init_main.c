@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.353.2.5 2009/08/19 18:48:15 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,13 +97,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.5 2009/08/19 18:48:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
+#include "opt_sa.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -195,6 +196,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.5 2009/08/19 18:48:15 yamt Exp
 #ifdef WAPBL
 #include <sys/wapbl.h>
 #endif
+#ifdef KERN_SA
+#include <sys/savar.h>
+#endif
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -228,9 +232,18 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.5 2009/08/19 18:48:15 yamt Exp
 
 #include <secmodel/secmodel.h>
 
+#include <prop/proplib.h>
+
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
 struct timeval50 boottime50;
+#endif
+
+#ifdef _KERNEL_OPT
+#include "opt_userconf.h"
+#endif
+#ifdef USERCONF
+#include <sys/userconf.h>
 #endif
 
 extern struct proc proc0;
@@ -252,6 +265,8 @@ int	start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
+static void configure(void);
+static void configure2(void);
 void main(void);
 
 void __secmodel_none(void);
@@ -297,7 +312,12 @@ main(void)
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	/* Initialize the device switch tables. */
+	devsw_init();
+
 	uvm_init();
+
+	prop_kern_init();
 
 #if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
 	ksyms_init();
@@ -348,6 +368,9 @@ main(void)
 #endif
 
 	/* Initialize process and pgrp structures. */
+#ifdef KERN_SA
+	sa_init();
+#endif
 	procinit();
 	lwpinit();
 
@@ -449,9 +472,6 @@ main(void)
 
 	inittimecounter();
 	ntp_init();
-
-	/* Initialize the device switch tables. */
-	devsw_init();
 
 	/* Initialize tty subsystem. */
 	tty_init();
@@ -684,6 +704,93 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
+}
+
+/*
+ * Configure the system's hardware.
+ */
+static void
+configure(void)
+{
+
+	/* Initialize autoconf data structures. */
+	config_init();
+	/*
+	 * XXX
+	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
+	 * on amiga and atari which use config_init() and autoconf(9) fucntions
+	 * to initialize console devices.
+	 */
+	config_twiddle_init();
+
+	pmf_init();
+#if NDRVCTL > 0
+	drvctl_init();
+#endif
+
+#ifdef USERCONF
+	if (boothowto & RB_USERCONF)
+		user_config();
+#endif
+
+	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
+		printf_nolog("Detecting hardware...");
+	}
+
+	/*
+	 * Do the machine-dependent portion of autoconfiguration.  This
+	 * sets the configuration machinery here in motion by "finding"
+	 * the root bus.  When this function returns, we expect interrupts
+	 * to be enabled.
+	 */
+	cpu_configure();
+}
+
+static void
+configure2(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int s;
+
+	/*
+	 * Now that we've found all the hardware, start the real time
+	 * and statistics clocks.
+	 */
+	initclocks();
+
+	cold = 0;	/* clocks are running, we're warm now! */
+	s = splsched();
+	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
+
+	/* Boot the secondary processors. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		uvm_cpu_attach(ci);
+	}
+	mp_online = true;
+#if defined(MULTIPROCESSOR)
+	cpu_boot_secondary_processors();
+#endif
+
+	/* Setup the runqueues and scheduler. */
+	runq_init();
+	sched_init();
+
+	/*
+	 * Bus scans can make it appear as if the system has paused, so
+	 * twiddle constantly while config_interrupts() jobs are running.
+	 */
+	config_twiddle_fn(NULL);
+
+	/*
+	 * Create threads to call back and finish configuration for
+	 * devices that want interrupts enabled.
+	 */
+	config_create_interruptthreads();
+
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
 }
 
 static void

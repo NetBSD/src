@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.6.74.1 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.6.74.2 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -50,7 +50,7 @@ void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
  */
 
 void pcic_isa_bus_width_probe(struct pcic_softc *, bus_space_tag_t,
-				   bus_space_handle_t, bus_addr_t, u_int32_t);
+				   bus_space_handle_t, bus_addr_t, uint32_t);
 void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 void	pcic_isa_config_interrupts(device_t);
 void	*pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.134.12.3 2009/08/19 18:48:23 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.134.12.4 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -829,6 +829,8 @@ void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
 void	ifinit1(void);
+int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *,
+    lwp_t *);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);

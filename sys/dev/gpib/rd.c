@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.19.4.3 2009/05/16 10:41:20 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.19.4.4 2009/09/16 13:37:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.4.3 2009/05/16 10:41:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.4.4 2009/09/16 13:37:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -597,7 +597,7 @@ rdstrategy(struct buf *bp)
 	sc = device_lookup_private(&rd_cd, RDUNIT(bp->b_dev));
 
 	DPRINTF(RDB_FOLLOW,
-	    ("rdstrategy(%p): dev %x, bn %" PRId64 ", bcount %ld, %c\n",
+	    ("rdstrategy(%p): dev %" PRIx64 ", bn %" PRId64 ", bcount %d, %c\n",
 	    bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 	    (bp->b_flags & B_READ) ? 'R' : 'W'));
 
@@ -1060,7 +1060,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 
 	memset((void *)lp, 0, sizeof(struct disklabel));
 
-	lp->d_type = DTYPE_GPIB;
+	lp->d_type = DTYPE_HPIB /* DTYPE_GPIB */;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = rdidentinfo[type].ri_nbpt;
 	lp->d_ntracks = rdidentinfo[type].ri_ntpc;
@@ -1202,7 +1202,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va += sectorsize * nwrt;
+		va = (char *)va + sectorsize * nwrt;
 	}
 	rddoingadump = 0;
 	return (0);
