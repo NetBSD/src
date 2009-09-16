@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.37 2008/03/12 18:02:21 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.38 2009/09/16 16:34:50 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -418,6 +418,9 @@ struct rtw_led_state {
 
 struct rtw_softc {
 	device_t		sc_dev;
+	struct device_suspensor	sc_suspensor;
+	struct pmf_qual		sc_qual;
+
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;

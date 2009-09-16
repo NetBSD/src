@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.108 2009/04/07 18:02:04 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.109 2009/09/16 16:34:50 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.108 2009/04/07 18:02:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.109 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2141,7 +2141,7 @@ rtw_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(sc->sc_dev)) {
+	    !device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER)) {
 		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n",
 		    device_xname(sc->sc_dev)));
 		return (0);
@@ -2253,7 +2253,7 @@ rtw_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	if (disable)
-		pmf_device_suspend_self(sc->sc_dev);
+		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 
 	return;
 }
@@ -2724,8 +2724,9 @@ rtw_init(struct ifnet *ifp)
 	if (device_is_active(sc->sc_dev)) {
 		/* Cancel pending I/O and reset. */
 		rtw_stop(ifp, 0);
-	} else if (!pmf_device_resume_self(sc->sc_dev))
-		return 0;	/* XXX error? */
+	} else if (!pmf_device_resume(sc->sc_dev, &sc->sc_qual) ||
+	           !device_is_active(sc->sc_dev))
+		return 0;
 
 	DPRINTF(sc, RTW_DEBUG_TUNE, ("%s: channel %d freq %d flags 0x%04x\n",
 	    __func__, ieee80211_chan2ieee(ic, ic->ic_curchan),
@@ -2977,15 +2978,22 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	if (cmd == SIOCSIFFLAGS) {
 		if ((rc = ifioctl_common(ifp, cmd, data)) != 0)
 			;
-		else if ((ifp->if_flags & IFF_UP) != 0) {
-			if (device_is_active(sc->sc_dev))
-				rtw_pktfilt_load(sc);
-			else
-				rc = rtw_init(ifp);
+		else switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP:
+			rc = rtw_init(ifp);
 			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
-		} else if (device_is_active(sc->sc_dev)) {
+			break;
+		case IFF_UP|IFF_RUNNING:
+			if (device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
+				rtw_pktfilt_load(sc);
+			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
+			break;
+		case IFF_RUNNING:
 			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
 			rtw_stop(ifp, 1);
+			break;
+		default:
+			break;
 		}
 	} else if ((rc = ieee80211_ioctl(&sc->sc_ic, cmd, data)) != ENETRESET)
 		;	/* nothing to do */
@@ -3983,6 +3991,8 @@ rtw_attach(struct rtw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_txsoft_blk *tsb;
 	int pri, rc;
+
+	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	rtw_cipher_wep = ieee80211_cipher_wep;
 	rtw_cipher_wep.ic_decap = rtw_wep_decap;

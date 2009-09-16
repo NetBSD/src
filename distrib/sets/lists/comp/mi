@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1308 2009/09/12 10:33:44 phx Exp $
+#	$NetBSD: mi,v 1.1309 2009/09/16 16:34:49 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1953,6 +1953,7 @@
 ./usr/include/sys/cpu_data.h			comp-obsolete		obsolete
 ./usr/include/sys/cpuio.h			comp-c-include
 ./usr/include/sys/device.h			comp-c-include
+./usr/include/sys/device_if.h			comp-c-include
 ./usr/include/sys/dir.h				comp-c-include
 ./usr/include/sys/dirent.h			comp-c-include
 ./usr/include/sys/disk.h			comp-c-include

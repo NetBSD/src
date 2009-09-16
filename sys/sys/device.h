@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.121 2009/09/03 15:20:08 pooka Exp $ */
+/* $NetBSD: device.h,v 1.122 2009/09/16 16:34:56 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,10 +77,10 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
+#include <sys/device_if.h>
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 
-typedef struct device *device_t;
 #ifdef _KERNEL
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -131,7 +131,12 @@ struct device_lock {
 	kcondvar_t	dvl_cv;
 };
 
-typedef struct device_lock *device_lock_t;
+struct device_suspensor {
+	const struct device_suspensor	*ds_delegator;
+	char				ds_name[32];
+};
+
+#define	DEVICE_SUSPENSORS_MAX	16
 
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
@@ -170,6 +175,9 @@ struct device {
 	void		(*dv_class_deregister)(device_t);
 
 	struct device_lock	dv_lock;
+	device_suspensor_t	dv_bus_suspensors[DEVICE_SUSPENSORS_MAX];
+	device_suspensor_t	dv_driver_suspensors[DEVICE_SUSPENSORS_MAX];
+	device_suspensor_t	dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
 };
 
 /* dv_flags */
@@ -179,7 +187,6 @@ struct device {
 #define	DVF_CLASS_SUSPENDED	0x0008	/* device class suspend was called */
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
-#define	DVF_SELF_SUSPENDED	0x0040	/* device suspended itself */
 #define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
 TAILQ_HEAD(devicelist, device);
@@ -479,6 +486,7 @@ int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
 bool		device_is_active(device_t);
+bool		device_activation(device_t, devact_level_t);
 bool		device_is_enabled(device_t);
 bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
@@ -523,8 +531,8 @@ bool		device_pmf_bus_resume(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_shutdown(device_t, int);
 
 device_lock_t	device_getlock(device_t);
-void		device_pmf_unlock(device_t PMF_FN_PROTO);
-bool		device_pmf_lock(device_t PMF_FN_PROTO);
+void		device_pmf_unlock(device_t);
+bool		device_pmf_lock(device_t);
 
 bool		device_is_self_suspended(device_t);
 void		device_pmf_self_suspend(device_t PMF_FN_PROTO);

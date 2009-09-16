@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.21 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.22 2009/09/16 16:34:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.21 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.22 2009/09/16 16:34:50 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,8 @@ struct atw_pci_softc {
 
 static int	atw_pci_match(device_t, cfdata_t, void *);
 static void	atw_pci_attach(device_t, device_t, void *);
+static bool	atw_pci_suspend(device_t PMF_FN_PROTO);
+static bool	atw_pci_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(atw_pci, sizeof(struct atw_pci_softc),
     atw_pci_match, atw_pci_attach, NULL, NULL);
@@ -131,31 +133,33 @@ atw_pci_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-static int
-atw_pci_enable(struct atw_softc *sc)
+static bool
+atw_pci_resume(device_t self PMF_FN_ARGS)
 {
-	struct atw_pci_softc *psc = (struct atw_pci_softc *)sc;
+	struct atw_pci_softc *psc = device_private(self);
+	struct atw_softc *sc = &psc->psc_atw;
 
 	/* Establish the interrupt. */
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
 	    IPL_NET, atw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to establish interrupt\n");
-		return (1);
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return false;
 	}
 
-	return (0);
+	return true;
 }
 
-static void
-atw_pci_disable(struct atw_softc *sc)
+static bool
+atw_pci_suspend(device_t self PMF_FN_ARGS)
 {
-	struct atw_pci_softc *psc = (struct atw_pci_softc *)sc;
+	struct atw_pci_softc *psc = device_private(self);
 
 	/* Unhook the interrupt handler. */
 	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
 	psc->psc_intrcookie = NULL;
+
+	return atw_suspend(self PMF_FN_CALL);
 }
 
 static void
@@ -182,12 +186,6 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 		printf("\n");
 		panic("atw_pci_attach: impossible");
 	}
-
-	/*
-	 * No power management hooks.
-	 * XXX Maybe we should add some!
-	 */
-	sc->sc_flags |= ATWF_ENABLED;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.
@@ -269,11 +267,20 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	sc->sc_enable = atw_pci_enable;
-	sc->sc_disable = atw_pci_disable;
-
 	/*
-	 * Finish off the attach.
+	 * Bus-independent attach.
 	 */
 	atw_attach(sc);
+
+	if (pmf_device_register1(sc->sc_dev, atw_pci_suspend, atw_pci_resume,
+	    atw_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
+	/*
+	 * Power down the socket.
+	 */
+	pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 }

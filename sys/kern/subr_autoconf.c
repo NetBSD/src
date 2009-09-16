@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.182 2009/09/16 15:23:04 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.183 2009/09/16 16:34:50 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.182 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.183 2009/09/16 16:34:50 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -172,7 +172,6 @@ static void config_devlink(device_t);
 static void config_devunlink(device_t);
 
 static void pmflock_debug(device_t, const char *, int);
-static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
 
 static device_t deviter_next1(deviter_t *);
 static void deviter_reinit(deviter_t *);
@@ -1331,7 +1330,7 @@ config_detach(device_t dev, int flags)
 	if (!detachall &&
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
-		rv = EBUSY;	/* XXX EOPNOTSUPP? */
+		rv = EOPNOTSUPP;
 	} else if ((rv = config_deactivate(dev)) == EOPNOTSUPP)
 		rv = 0;	/* Do not treat EOPNOTSUPP as an error */
 
@@ -1839,6 +1838,27 @@ device_parent(device_t dev)
 }
 
 bool
+device_activation(device_t dev, devact_level_t level)
+{
+	int active_flags;
+
+	active_flags = DVF_ACTIVE;
+	switch (level) {
+	case DEVACT_LEVEL_FULL:
+		active_flags |= DVF_CLASS_SUSPENDED;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_DRIVER:
+		active_flags |= DVF_DRIVER_SUSPENDED;
+		/*FALLTHROUGH*/
+	case DEVACT_LEVEL_BUS:
+		active_flags |= DVF_BUS_SUSPENDED;
+		break;
+	}
+
+	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
+}
+
+bool
 device_is_active(device_t dev)
 {
 	int active_flags;
@@ -1962,7 +1982,8 @@ device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return false;
-	if (*dev->dv_driver_suspend != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_DRIVER &&
+	    dev->dv_driver_suspend != NULL &&
 	    !(*dev->dv_driver_suspend)(dev PMF_FN_CALL))
 		return false;
 
@@ -1977,9 +1998,8 @@ device_pmf_driver_resume(device_t dev PMF_FN_ARGS)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return false;
-	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
-		return false;
-	if (*dev->dv_driver_resume != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_DRIVER &&
+	    dev->dv_driver_resume != NULL &&
 	    !(*dev->dv_driver_resume)(dev PMF_FN_CALL))
 		return false;
 
@@ -2060,36 +2080,6 @@ device_pmf_driver_set_child_register(device_t dev,
 	dev->dv_driver_child_register = child_register;
 }
 
-void
-device_pmf_self_resume(device_t dev PMF_FN_ARGS)
-{
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-	if ((dev->dv_flags & DVF_SELF_SUSPENDED) != 0)
-		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-}
-
-bool
-device_is_self_suspended(device_t dev)
-{
-	return (dev->dv_flags & DVF_SELF_SUSPENDED) != 0;
-}
-
-void
-device_pmf_self_suspend(device_t dev PMF_FN_ARGS)
-{
-	bool self = (flags & PMF_F_SELF) != 0;
-
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-
-	if (!self)
-		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
-	else if (device_is_active(dev))
-		dev->dv_flags |= DVF_SELF_SUSPENDED;
-
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-}
-
 static void
 pmflock_debug(device_t dev, const char *func, int line)
 {
@@ -2100,31 +2090,21 @@ pmflock_debug(device_t dev, const char *func, int line)
 	    dev->dv_flags);
 }
 
-static void
-pmflock_debug_with_flags(device_t dev, const char *func, int line PMF_FN_ARGS)
-{
-	device_lock_t dvl = device_getlock(dev);
-
-	aprint_debug_dev(dev, "%s.%d, %s dvl_nlock %d dvl_nwait %d dv_flags %x "
-	    "flags " PMF_FLAGS_FMT "\n", func, line, curlwp_name(),
-	    dvl->dvl_nlock, dvl->dvl_nwait, dev->dv_flags PMF_FN_CALL);
-}
-
 static bool
-device_pmf_lock1(device_t dev PMF_FN_ARGS)
+device_pmf_lock1(device_t dev)
 {
 	device_lock_t dvl = device_getlock(dev);
 
 	while (device_pmf_is_registered(dev) &&
 	    dvl->dvl_nlock > 0 && dvl->dvl_holder != curlwp) {
 		dvl->dvl_nwait++;
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		cv_wait(&dvl->dvl_cv, &dvl->dvl_mtx);
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		dvl->dvl_nwait--;
 	}
 	if (!device_pmf_is_registered(dev)) {
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		/* We could not acquire the lock, but some other thread may
 		 * wait for it, also.  Wake that thread.
 		 */
@@ -2133,25 +2113,25 @@ device_pmf_lock1(device_t dev PMF_FN_ARGS)
 	}
 	dvl->dvl_nlock++;
 	dvl->dvl_holder = curlwp;
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	pmflock_debug(dev, __func__, __LINE__);
 	return true;
 }
 
 bool
-device_pmf_lock(device_t dev PMF_FN_ARGS)
+device_pmf_lock(device_t dev)
 {
 	bool rc;
 	device_lock_t dvl = device_getlock(dev);
 
 	mutex_enter(&dvl->dvl_mtx);
-	rc = device_pmf_lock1(dev PMF_FN_CALL);
+	rc = device_pmf_lock1(dev);
 	mutex_exit(&dvl->dvl_mtx);
 
 	return rc;
 }
 
 void
-device_pmf_unlock(device_t dev PMF_FN_ARGS)
+device_pmf_unlock(device_t dev)
 {
 	device_lock_t dvl = device_getlock(dev);
 
@@ -2160,7 +2140,7 @@ device_pmf_unlock(device_t dev PMF_FN_ARGS)
 	if (--dvl->dvl_nlock == 0)
 		dvl->dvl_holder = NULL;
 	cv_signal(&dvl->dvl_cv);
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	pmflock_debug(dev, __func__, __LINE__);
 	mutex_exit(&dvl->dvl_mtx);
 }
 
@@ -2184,7 +2164,8 @@ device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return false;
-	if (*dev->dv_bus_suspend != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_BUS &&
+	    dev->dv_bus_suspend != NULL &&
 	    !(*dev->dv_bus_suspend)(dev PMF_FN_CALL))
 		return false;
 
@@ -2197,9 +2178,8 @@ device_pmf_bus_resume(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
-	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
-		return false;
-	if (*dev->dv_bus_resume != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_BUS &&
+	    dev->dv_bus_resume != NULL &&
 	    !(*dev->dv_bus_resume)(dev PMF_FN_CALL))
 		return false;
 
@@ -2253,7 +2233,8 @@ device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
-	if (*dev->dv_class_suspend != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_CLASS &&
+	    dev->dv_class_suspend != NULL &&
 	    !(*dev->dv_class_suspend)(dev PMF_FN_CALL))
 		return false;
 
@@ -2269,7 +2250,8 @@ device_pmf_class_resume(device_t dev PMF_FN_ARGS)
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return false;
-	if (*dev->dv_class_resume != NULL &&
+	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_CLASS &&
+	    dev->dv_class_resume != NULL &&
 	    !(*dev->dv_class_resume)(dev PMF_FN_CALL))
 		return false;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.15 2009/04/02 00:09:34 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.16 2009/09/16 16:34:56 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #ifdef _KERNEL
 
 #include <sys/types.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 
 typedef enum {
 	PMFE_DISPLAY_ON,
@@ -49,19 +49,28 @@ typedef enum {
 	PMFE_CHASSIS_LID_OPEN
 } pmf_generic_event_t;
 
-enum pmf_flags {
-	  PMF_F_NONE = 0x0
-	, PMF_F_SELF = 0x1
+struct pmf_qual {
+	device_suspensor_t	pq_suspensor;
+	devact_level_t		pq_actlvl;
 };
 
-typedef enum pmf_flags pmf_flags_t;
+typedef const struct pmf_qual * pmf_qual_t;
+extern const struct pmf_qual * const PMF_Q_NONE;
+extern const struct pmf_qual * const PMF_Q_SELF;
+extern const struct pmf_qual * const PMF_Q_DRVCTL;
 
-#define	PMF_FN_PROTO1	pmf_flags_t
-#define	PMF_FN_ARGS1	pmf_flags_t flags
+extern const struct device_suspensor
+    * const device_suspensor_self,
+    * const device_suspensor_system,
+    * const device_suspensor_drvctl;
 
-#define	PMF_FN_PROTO	, pmf_flags_t
-#define	PMF_FN_ARGS	, pmf_flags_t flags
-#define	PMF_FN_CALL	, flags
+#define	PMF_FN_PROTO1	pmf_qual_t
+#define	PMF_FN_ARGS1	pmf_qual_t qual
+#define	PMF_FN_CALL1	qual
+
+#define	PMF_FN_PROTO	, pmf_qual_t
+#define	PMF_FN_ARGS	, pmf_qual_t qual
+#define	PMF_FN_CALL	, qual
 
 #define PMF_FLAGS_FMT	"%x" /* "n/a" */
 
@@ -93,19 +102,41 @@ void		pmf_device_deregister(device_t);
 bool		pmf_device_suspend(device_t PMF_FN_PROTO);
 bool		pmf_device_resume(device_t PMF_FN_PROTO);
 
-bool		pmf_device_suspend_self(device_t);
-bool		pmf_device_resume_self(device_t);
-
 bool		pmf_device_recursive_suspend(device_t PMF_FN_PROTO);
 bool		pmf_device_recursive_resume(device_t PMF_FN_PROTO);
-bool		pmf_device_resume_descendants(device_t PMF_FN_PROTO);
-bool		pmf_device_resume_subtree(device_t PMF_FN_PROTO);
+bool		pmf_device_descendants_resume(device_t PMF_FN_PROTO);
+bool		pmf_device_subtree_resume(device_t PMF_FN_PROTO);
+
+bool		pmf_device_descendants_release(device_t PMF_FN_PROTO);
+bool		pmf_device_subtree_release(device_t PMF_FN_PROTO);
 
 struct ifnet;
 void		pmf_class_network_register(device_t, struct ifnet *);
 
 bool		pmf_class_input_register(device_t);
 bool		pmf_class_display_register(device_t);
+
+void		pmf_qual_recursive_copy(struct pmf_qual *, pmf_qual_t);
+void		pmf_self_suspensor_init(device_t, struct device_suspensor *,
+		    struct pmf_qual *);
+
+static inline device_suspensor_t
+pmf_qual_suspension(pmf_qual_t pq)
+{
+	return pq->pq_suspensor;
+}
+
+static inline devact_level_t
+pmf_qual_depth(pmf_qual_t pq)
+{
+	return pq->pq_actlvl;
+}
+
+static inline bool
+pmf_qual_descend_ok(pmf_qual_t pq)
+{
+	return pq->pq_actlvl == DEVACT_LEVEL_FULL;
+}
 
 #endif /* !_KERNEL */
 

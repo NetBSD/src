@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.26 2009/04/02 00:09:33 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.27 2009/09/16 16:34:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.26 2009/04/02 00:09:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.27 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -122,8 +122,8 @@ CFATTACH_DECL3_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
 
 static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
-static int	atw_cardbus_enable(struct atw_softc *);
-static void	atw_cardbus_disable(struct atw_softc *);
+static bool	atw_cardbus_suspend(device_t PMF_FN_PROTO);
+static bool	atw_cardbus_resume(device_t PMF_FN_PROTO);
 
 static const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
@@ -196,12 +196,6 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 		panic("atw_cardbus_attach: impossible");
 	}
 
-	/*
-	 * Power management hooks.
-	 */
-	sc->sc_enable = atw_cardbus_enable;
-	sc->sc_disable = atw_cardbus_disable;
-
 	/* Get revision info. */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
 
@@ -271,24 +265,32 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txthresh = 3; /* TBD name constant */
 #endif
 
-	/*
-	 * Finish off the attach.
-	 */
-	atw_attach(sc);
-
 #if 0
 	for (i = 0; i < __arraycount(funcregs); i++) {
 		aprint_error_dev(sc->sc_dev, "%s %" PRIx32 "\n",
 		    funcregs[i].name, ATW_READ(sc, funcregs[i].ofs));
 	}
 #endif
+
 	ATW_WRITE(sc, ATW_FEMR, 0);
 	ATW_WRITE(sc, ATW_FER, ATW_READ(sc, ATW_FER));
 
 	/*
+	 * Bus-independent attach.
+	 */
+	atw_attach(sc);
+
+	if (pmf_device_register1(sc->sc_dev, atw_cardbus_suspend,
+	    atw_cardbus_resume, atw_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
+	/*
 	 * Power down the socket.
 	 */
-	Cardbus_function_disable(csc->sc_ct);
+	pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 }
 
 static int
@@ -324,23 +326,14 @@ atw_cardbus_detach(device_t self, int flags)
 	return 0;
 }
 
-static int
-atw_cardbus_enable(struct atw_softc *sc)
+static bool
+atw_cardbus_resume(device_t self PMF_FN_ARGS)
 {
-	struct atw_cardbus_softc *csc = (struct atw_cardbus_softc *)sc;
+	struct atw_cardbus_softc *csc = device_private(self);
+	struct atw_softc *sc = &csc->sc_atw;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-
-	/*
-	 * Power on the socket.
-	 */
-	Cardbus_function_enable(ct);
-
-	/*
-	 * Set up the PCI configuration registers.
-	 */
-	atw_cardbus_setup(csc);
 
 	/*
 	 * Map and establish the interrupt.
@@ -348,19 +341,17 @@ atw_cardbus_enable(struct atw_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    atw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev,
-				 "unable to establish interrupt\n");
-		Cardbus_function_disable(csc->sc_ct);
-		return 1;
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
-static void
-atw_cardbus_disable(struct atw_softc *sc)
+static bool
+atw_cardbus_suspend(device_t self PMF_FN_ARGS)
 {
-	struct atw_cardbus_softc *csc = (struct atw_cardbus_softc *)sc;
+	struct atw_cardbus_softc *csc = device_private(self);
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
@@ -369,8 +360,7 @@ atw_cardbus_disable(struct atw_softc *sc)
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
 
-	/* Power down the socket. */
-	Cardbus_function_disable(ct);
+	return atw_suspend(self PMF_FN_CALL);
 }
 
 static void
@@ -380,8 +370,10 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t csr;
+	int rc;
 
-	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
+	if ((rc = cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0)) != 0)
+		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,

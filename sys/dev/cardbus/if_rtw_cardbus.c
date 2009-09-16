@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.30 2009/09/05 14:50:10 tsutsui Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.31 2009/09/16 16:34:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.30 2009/09/05 14:50:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.31 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -302,7 +302,7 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Power down the socket.
 		 */
-		pmf_device_suspend_self(self);
+		pmf_device_suspend(self, &sc->sc_qual);
 	} else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -365,7 +365,7 @@ rtw_cardbus_resume(device_t self PMF_FN_ARGS)
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR, RTW_FEMR_INTR);
 	RTW_WRITE(&sc->sc_regs, RTW_FER, RTW_FER_INTR);
 
-	return rtw_resume(self, flags);
+	return rtw_resume(self PMF_FN_CALL);
 }
 
 bool
@@ -377,7 +377,7 @@ rtw_cardbus_suspend(device_t self PMF_FN_ARGS)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	if (!rtw_suspend(self, flags))
+	if (!rtw_suspend(self PMF_FN_CALL))
 		return false;
 
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR,
