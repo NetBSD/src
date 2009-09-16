@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.8 2009/05/28 00:02:16 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.9 2009/09/16 13:30:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.8 2009/05/28 00:02:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.9 2009/09/16 13:30:41 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -61,9 +61,10 @@ rump_net_init(void)
 	rump_net_inet_init();
 	rump_net_local_init();
 	rump_net_sockin_init();
-	rump_net_virtif_init();
-	/* Note: should be last due to calling of rn_init() */
+	/* Note: should be last _domain_ due to calling of rn_init() */
 	rump_net_net_init();
+
+	rump_net_virtif_init();
 
 	soinit();
 	soinit2();
