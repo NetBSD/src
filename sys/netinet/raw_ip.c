@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.109 2009/01/19 02:27:57 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.110 2009/09/16 15:23:05 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.109 2009/01/19 02:27:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.110 2009/09/16 15:23:05 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,8 @@ int	 rip_bind(struct inpcb *, struct mbuf *);
 int	 rip_connect(struct inpcb *, struct mbuf *);
 void	 rip_disconnect(struct inpcb *);
 
+static void sysctl_net_inet_raw_setup(struct sysctllog **);
+
 /*
  * Nominal space allocated to a raw ip socket.
  */
@@ -136,6 +138,7 @@ void
 rip_init(void)
 {
 
+	sysctl_net_inet_raw_setup(NULL);
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
@@ -696,7 +699,8 @@ release:
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_net_inet_raw_setup, "sysctl net.inet.raw subtree setup")
+static void
+sysctl_net_inet_raw_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

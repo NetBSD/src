@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.87 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.88 2009/09/16 15:23:05 pooka Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.87 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.88 2009/09/16 15:23:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,11 +113,13 @@ extern struct inpcbtable udbtable;
 percpu_t *udp6stat_percpu;
 
 static	void udp6_notify(struct in6pcb *, int);
+static	void sysctl_net_inet6_udp6_setup(struct sysctllog **);
 
 void
 udp6_init(void)
 {
-	/* initialization done in udp_init() due to initialization order */
+
+	sysctl_net_inet6_udp6_setup(NULL);
 }
 
 /*
@@ -414,7 +416,8 @@ sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(udp6stat_percpu, UDP6_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
+static void
+sysctl_net_inet6_udp6_setup(struct sysctllog **clog)
 {
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
