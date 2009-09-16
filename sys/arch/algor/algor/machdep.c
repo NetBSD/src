@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.2 2009/09/16 03:39:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.3 2009/09/16 03:44:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.2 2009/09/16 03:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.3 2009/09/16 03:44:59 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -404,7 +404,12 @@ mach_init(int argc, char *argv[], char *envp[])
 	led_display('b', 'o', 'p', 't');
 	boothowto = 0;
 	if (argc > 1) {
-		for (cp = argv[1]; cp != NULL && *cp != '\0'; cp++) {
+#ifdef _LP64
+		cp = (void *)(intptr_t)((int32_t *)argv)[1];
+#else
+		cp = argv[1];
+#endif
+		for (; cp != NULL && *cp != '\0'; cp++) {
 			switch (*cp) {
 #if defined(KGDB) || defined(DDB)
 			case 'd':	/* break into kernel debugger */
