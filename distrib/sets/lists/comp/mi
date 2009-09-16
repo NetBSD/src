@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1309 2009/09/16 16:34:49 dyoung Exp $
+#	$NetBSD: mi,v 1.1310 2009/09/16 22:52:40 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8426,7 +8426,7 @@
 ./usr/share/man/cat9/cnputc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/condvar.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/config.0			comp-sys-catman		.cat
-./usr/share/man/cat9/config_activate.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_activate.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/config_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_attach_loc.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_attach_pseudo.0	comp-sys-catman		.cat
@@ -13843,7 +13843,7 @@
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config.html		comp-sys-htmlman	html
-./usr/share/man/html9/config_activate.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_activate.html	comp-sys-htmlman	obsolete
 ./usr/share/man/html9/config_attach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_attach_loc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_attach_pseudo.html	comp-sys-htmlman	html
@@ -19379,7 +19379,7 @@
 ./usr/share/man/man9/cnputc.9			comp-sys-man		.man
 ./usr/share/man/man9/condvar.9			comp-sys-man		.man
 ./usr/share/man/man9/config.9			comp-sys-man		.man
-./usr/share/man/man9/config_activate.9		comp-sys-man		.man
+./usr/share/man/man9/config_activate.9		comp-sys-man		obsolete
 ./usr/share/man/man9/config_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/config_attach_loc.9	comp-sys-man		.man
 ./usr/share/man/man9/config_attach_pseudo.9	comp-sys-man		.man
