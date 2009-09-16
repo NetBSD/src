@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.25 2009/05/12 14:43:59 cegger Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.26 2009/09/16 13:05:07 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.25 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.26 2009/09/16 13:05:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,10 @@ cgthreematch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0);
+	if (strcmp(cf->cf_name, sa->sa_name) == 0)
+		return 100;	/* beat genfb(4) */
+
+	return 0;
 }
 
 /*
