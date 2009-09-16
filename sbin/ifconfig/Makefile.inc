@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.6 2009/09/15 09:22:07 he Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2009/09/16 14:59:45 tsutsui Exp $
+
+# shared stuff with src/distrib/utils/x_ifconfig for install media.
+# stuff not required by install media should be into Makefile.
 
 PROG=	ifconfig
 
