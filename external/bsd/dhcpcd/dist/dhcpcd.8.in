@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 26, 2009
+.Dd September 16, 2009
 .Dt DHCPCD 8 SMM
 .Os
 .Sh NAME
@@ -81,14 +81,15 @@ then runs the configuration script which writes DNS information to
 .Xr resolvconf 8 ,
 if available, otherwise directly to
 .Pa /etc/resolv.conf .
-If the hostname is currenly blank, (null) or localhost, or
+If the hostname is currently blank, (null) or localhost, or
 .Va force_hostname
 is YES or TRUE or 1 then
 .Nm
 sets the hostname to the one supplied by the DHCP server.
 .Nm
 then daemonises and waits for the lease renewal time to lapse.
-Then it attempts to renew its lease and reconfigure if the new lease changes.
+It will then attempts to renew its lease and reconfigure if the new lease
+changes.
 .Pp
 .Nm
 is also an implementation of the BOOTP client specified in
@@ -156,7 +157,7 @@ for details on how these scripts work.
 .Nm
 currently ignores the exit code of the script.
 .Ss Fine tuning
-You can fine tune the behaviour of
+You can fine-tune the behaviour of
 .Nm
 with the following options:
 .Bl -tag -width indent
@@ -220,7 +221,7 @@ This causes an existing
 .Nm
 process running on the
 .Ar interface
-to release its lease, deconfigure the
+to release its lease, de-configure the
 .Ar interface
 and then exit.
 .Nm
@@ -230,7 +231,7 @@ Request a specific lease time in
 .Ar seconds .
 By default
 .Nm
-does not request any lease time and leaves the it in the hands of the
+does not request any lease time and leaves it in the hands of the
 DHCP server.
 .It Fl m , -metric Ar metric
 Metrics are used to prefer an interface over another one, lowest wins.
@@ -248,7 +249,7 @@ Notifies an existing
 .Nm
 process running on the
 .Ar interface
-to rebind it's lease.
+to rebind its lease.
 .Nm
 will not re-configure itself or use any other command line arguments.
 .Nm
@@ -266,10 +267,11 @@ This option used to be renew, but rebind is more accurate as we need to
 broadcast the request instead of unicasting.
 .It Fl p , -persistent
 .Nm
-normally deconfigures the
+normally de-configures the
 .Ar interface
 and configuration when it exits.
-Sometimes, this isn't desirable if for example you have root mounted over NFS.
+Sometimes, this isn't desirable if, for example, you have root mounted over
+NFS.
 You can use this option to stop this from happening.
 .It Fl r , -request Op Ar address
 .Nm
@@ -297,7 +299,7 @@ This does not get a lease as such, just notifies the DHCP server of the
 in use.
 You should also include the optional
 .Ar cidr
-network number in-case the address is not already configured on the interface.
+network number in case the address is not already configured on the interface.
 .Nm
 remains running and pretends it has an infinite lease.
 .Nm
@@ -318,7 +320,7 @@ to wait forever to get a lease.
 .It Fl u , -userclass Ar class
 Tags the DHCP message with the userclass
 .Ar class .
-DHCP servers use this give members of the class DHCP options other than the
+DHCP servers use this to give members of the class DHCP options other than the
 default, without having to know things like hardware address or hostname.
 .It Fl v , -vendor Ar code , Ns Ar value
 Add an enscapulated vendor option.
@@ -337,7 +339,7 @@ This will signal an existing
 .Nm
 process running on the
 .Ar interface
-to deconfigure the
+to de-configure the
 .Ar interface
 and exit.
 .Nm
@@ -347,17 +349,17 @@ Allow
 .Ar reboot
 seconds before moving to the discover phase if we have an old lease to use.
 The default is 10 seconds.
-A setting if 0 seconds causes
+A setting of 0 seconds causes
 .Nm
 to skip the reboot phase and go straight into discover.
 .It Fl D , -duid 
 Generate an
 .Li RFC 4361
 compliant clientid.
-This requires persistent storage and not all DHCP servers work with it so it's
-not enabled by default.
+This requires persistent storage and not all DHCP servers work with it so it
+is not enabled by default.
 .Nm
-generates the DUID and stores in it
+generates the DUID and stores it in
 .Pa @SYSCONFDIR@/dhcpcd.duid .
 This file should not be copied to other hosts.
 .It Fl E , -lastlease
@@ -467,7 +469,7 @@ Here is an example which configures a static address, routes and dns.
 .It Fl T, -test
 On receipt of DHCP messages just call
 .Pa @SCRIPT@
-with the reason of TEST which echo's the DHCP variables found in the message
+with the reason of TEST which echos the DHCP variables found in the message
 to the console.
 The interface configuration isn't touched and neither are any configuration
 files.
@@ -504,7 +506,7 @@ is marked as STATIC or INFORM without an address then
 .Nm
 will monitor the interface until an address is added or removed from it and
 act accordingly.
-For point to point interfaces (like PPP), a default route to it's
+For point to point interfaces (like PPP), a default route to its
 destination is automatically added to the configuration.
 If the point to point interface if configured for INFORM, then
 .Nm
@@ -521,7 +523,7 @@ If you always use the same options, put them here.
 .It Pa @SYSCONFDIR@/dhcpcd.duid
 Text file that holds the DUID used to identify the host.
 .It Pa @SCRIPT@
-Bourne shell script that is run to configure or deconfigure an interface.
+Bourne shell script that is run to configure or de-configure an interface.
 .It Pa @HOOKDIR@
 A directory containing bourne shell scripts that are run by the above script.
 Each script can be disabled by using the
