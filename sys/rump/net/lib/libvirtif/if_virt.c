@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.10 2009/05/27 23:41:20 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.11 2009/09/16 13:29:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.10 2009/05/27 23:41:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.11 2009/09/16 13:29:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.10 2009/05/27 23:41:20 pooka Exp $");
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/poll.h>
 #include <sys/sockio.h>
 #include <sys/socketvar.h>
 
@@ -207,9 +208,24 @@ virtif_worker(void *arg)
 		m = m_gethdr(M_WAIT, MT_DATA);
 		MEXTMALLOC(m, plen, M_WAIT);
 
+ again:
 		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
 		KASSERT(n < ETHER_MAX_LEN_JUMBO);
 		if (n <= 0) {
+			/*
+			 * work around tap bug: /dev/tap is opened in
+			 * non-blocking mode if it previously was
+			 * non-blocking.
+			 */
+			if (n == -1 && error == EAGAIN) {
+				struct pollfd pfd;
+
+				pfd.fd = sc->sc_tapfd;
+				pfd.events = POLLIN;
+
+				rumpuser_poll(&pfd, 1, INFTIM, &error);
+				goto again;
+			}
 			m_freem(m);
 			break;
 		}
