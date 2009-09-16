@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.236 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: pmap.c,v 1.236.14.1 2009/09/16 04:26:04 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236.14.1 2009/09/16 04:26:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3681,6 +3681,8 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 			continue;
 		}
 
+		cpumask |= 1UL << ci->ci_cpuid;
+
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		/*
@@ -3720,7 +3722,6 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 			pq->pq_count++;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
 		}
-		cpumask |= 1UL << ci->ci_cpuid;
 		mutex_spin_exit(&pq->pq_lock);
 	}
 
