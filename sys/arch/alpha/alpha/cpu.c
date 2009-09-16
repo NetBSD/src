@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.82 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.82.10.1 2009/09/16 04:12:48 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82.10.1 2009/09/16 04:12:48 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -337,6 +337,12 @@ recognized:
 		 * on its merry way.
 		 */
 		cpu_boot_secondary(ci);
+
+		/*
+		 * Link the processor into the list.
+		 */
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
 #else /* ! MULTIPROCESSOR */
 		printf("%s: processor off-line; multiprocessor support "
 		    "not present in kernel\n", sc->sc_dev.dv_xname);
@@ -408,10 +414,8 @@ cpu_boot_secondary_processors(void)
 		}
 
 		/*
-		 * Link the processor into the list, and launch it.
+		 * Launch the processor.
 		 */
-		ci->ci_next = cpu_info_list->ci_next;
-		cpu_info_list->ci_next = ci;
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_or_ulong(&cpus_running, (1U << i));
 	}
