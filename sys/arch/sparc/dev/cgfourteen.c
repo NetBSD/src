@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.52.20.3 2009/07/18 14:52:55 yamt Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52.20.4 2009/09/16 13:37:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -834,6 +834,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest

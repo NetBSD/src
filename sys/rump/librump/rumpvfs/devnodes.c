@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.1.2.2 2009/09/16 13:38:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,19 +26,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1.2.2 2009/09/16 13:38:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
+#include <sys/lwp.h>
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
-#include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
 /* realqvik(tm) "devfs" */
 int
-rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
+rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
 	devmajor_t maj, devminor_t minnum, int nnodes)
 {
 	int error;
@@ -46,7 +48,7 @@ rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
 	size_t devlen;
 	register_t retval;
 
-	error = do_sys_mkdir("/dev", 0777);
+	error = do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
 	if (error != 0 && error != EEXIST)
 		return error;
 
@@ -61,7 +63,7 @@ rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
 		*p = minchar;
 
 		if ((error = do_sys_mknod(curlwp, devname, 0666 | devtype,
-		    makedev(maj, minnum), &retval)))
+		    makedev(maj, minnum), &retval, UIO_SYSSPACE)))
 			goto out;
 	}
 

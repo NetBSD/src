@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.13.4.4 2009/06/20 07:20:21 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.13.4.5 2009/09/16 13:37:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.13.4.4 2009/06/20 07:20:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.13.4.5 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -955,8 +955,9 @@ mtintr(struct mt_softc *sc)
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
-			DPRINTF(MDB_ANY, ("%s intr: bcount %ld, resid %ld",
-			    device_xname(&sc->sc_dev), bp->b_bcount, bp->b_resid));
+			DPRINTF(MDB_ANY, ("%s intr: bcount %d, resid %d",
+			    device_xname(&sc->sc_dev),
+			    bp->b_bcount, bp->b_resid));
 		} else {
 			tprintf(sc->sc_ttyp,
 				"%s: record (%d) larger than wanted (%d)\n",

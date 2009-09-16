@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.48.2.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: igmp.c,v 1.48.2.2 2009/09/16 13:38:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.48.2.1 2008/05/16 02:25:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.48.2.2 2009/09/16 13:38:02 yamt Exp $");
 
 #include "opt_mrouting.h"
 
@@ -68,8 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.48.2.1 2008/05/16 02:25:41 yamt Exp $");
 
 #define IP_MULTICASTOPTS	0
 
-POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL,
-    IPL_SOFTNET);
+static struct pool igmp_rti_pool;
 
 static percpu_t *igmpstat_percpu;
 
@@ -150,6 +149,8 @@ void
 igmp_init(void)
 {
 
+	pool_init(&igmp_rti_pool, sizeof(struct router_info), 0, 0, 0,
+	    "igmppl", NULL, IPL_SOFTNET);
 	igmpstat_percpu = percpu_alloc(sizeof(uint64_t) * IGMP_NSTATS);
 }
 

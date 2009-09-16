@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135.10.3 2009/08/19 18:45:55 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135.10.4 2009/09/16 13:37:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.10.3 2009/08/19 18:45:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.10.4 2009/09/16 13:37:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,19 @@ pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
-struct pv_entry	*pv_table;	/* array of entries, one per page */
+struct pv_header {
+	struct pv_entry		pvh_first;	/* first PV entry */
+	uint16_t		pvh_attrs;	/* attributes:
+						   bits 0-7: PTE bits
+						   bits 8-15: flags */
+	uint16_t		pvh_cimappings;	/* # caller-specified CI
+						   mappings */
+};
+
+#define	PVH_CI		0x10	/* all entries are cache-inhibited */
+#define	PVH_PTPAGE	0x20	/* entry maps a page table page */
+
+struct pv_header *pv_table;	/* array of entries, one per page */
 
 static struct pmap kernel_pmap_store;
 struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
@@ -287,7 +299,6 @@ vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by the VM system */
 bool		pmap_initialized = false;	/* Has pmap_init completed? */
-char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 #if defined(M68040) || defined(M68060)
@@ -323,25 +334,13 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
-static inline struct pv_entry *pa_to_pvh(paddr_t pa);
-static inline char *pa_to_attribute(paddr_t pa);
-
-static inline struct pv_entry *
+static inline struct pv_header *
 pa_to_pvh(paddr_t pa)
 {
 	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
-	return &vm_physmem[bank].pmseg.pvent[pg];
-}
-
-static inline char *
-pa_to_attribute(paddr_t pa)
-{
-	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
-
-	bank = vm_physseg_find(atop((pa)), &pg);
-	return &vm_physmem[bank].pmseg.attrs[pg];
+	return &vm_physmem[bank].pmseg.pvheader[pg];
 }
 
 /*
@@ -355,8 +354,7 @@ pmap_init(void)
 	vaddr_t		addr, addr2;
 	vsize_t		s;
 	u_int		npg;
-	struct pv_entry *pv;
-	char            *attr;
+	struct pv_header *pvh;
 	int             rv, bank;
 #if defined(M68060)
 	struct kpt_page *kptp;
@@ -397,8 +395,7 @@ pmap_init(void)
 #endif
 	}
 	s = M68K_STSIZE;				/* Segtabzero */
-	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
-	s += page_cnt * sizeof(char);			/* attribute table */
+	s += page_cnt * sizeof(struct pv_header);	/* pv table */
 	s = round_page(s);
 
 	addr = uvm_km_alloc(kernel_map, s, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
@@ -408,30 +405,26 @@ pmap_init(void)
 	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)(void *)&Segtabzeropa);
 	addr += M68K_STSIZE;
 
-	pv_table = (struct pv_entry *) addr;
-	addr += page_cnt * sizeof(struct pv_entry);
+	pv_table = (struct pv_header *) addr;
+	addr += page_cnt * sizeof(struct pv_header);
 
-	pmap_attributes = (char *) addr;
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_init: %lx bytes: page_cnt %x s0 %p(%p) "
-			"tbl %p atr %p\n",
+			"tbl %p\n",
 			s, page_cnt, Segtabzero, Segtabzeropa,
-			pv_table, pmap_attributes);
+			pv_table);
 #endif
 
 	/*
 	 * Now that the pv and attribute tables have been allocated,
 	 * assign them to the memory segments.
 	 */
-	pv = pv_table;
-	attr = pmap_attributes;
+	pvh = pv_table;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		npg = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pv;
-		vm_physmem[bank].pmseg.attrs = attr;
-		pv += npg;
-		attr += npg;
+		vm_physmem[bank].pmseg.pvheader = pvh;
+		pvh += npg;
 	}
 
 	/*
@@ -796,6 +789,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 	int s;
 	paddr_t	pa = VM_PAGE_TO_PHYS(pg);
@@ -815,7 +809,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		break;
 	/* remove_all */
 	default:
-		pv = pa_to_pvh(pa);
+		pvh = pa_to_pvh(pa);
+		pv = &pvh->pvh_first;
 		s = splvm();
 		while (pv->pv_pmap != NULL) {
 			pt_entry_t  *pte;
@@ -1030,13 +1025,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * since pmap_enter can be called at interrupt time.
 	 */
 	if (PAGE_IS_MANAGED(pa)) {
+		struct pv_header *pvh;
 		struct pv_entry *pv, *npv;
 		int s;
 
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
-		pv = pa_to_pvh(pa);
+		pvh = pa_to_pvh(pa);
+		pv = &pvh->pvh_first;
 		s = splvm();
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
@@ -1055,7 +1052,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pv->pv_next = NULL;
 			pv->pv_ptste = NULL;
 			pv->pv_ptpmap = NULL;
-			pv->pv_flags = 0;
 		}
 		/*
 		 * There is at least one other VA mapping this page.
@@ -1278,10 +1274,12 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		while (sva < nssva) {
 			if (pmap_pte_v(pte)) {
 #ifdef DEBUG
+				struct pv_header *pvh;
 				struct pv_entry *pv;
 				int s;
 
-				pv = pa_to_pvh(pmap_pte_pa(pte));
+				pvh = pa_to_pvh(pmap_pte_pa(pte));
+				pv = &pvh->pvh_first;
 				s = splvm();
 				while (pv->pv_pmap != NULL) {
 					KASSERT(pv->pv_pmap != pmap_kernel() ||
@@ -1472,6 +1470,7 @@ void
 pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 	pt_entry_t *pte;
 	paddr_t kpa;
@@ -1487,8 +1486,10 @@ pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 		 * Locate physical pages which are being used as kernel
 		 * page table pages.
 		 */
-		pv = pa_to_pvh(pa);
-		if (pv->pv_pmap != pmap_kernel() || !(pv->pv_flags & PV_PTPAGE))
+		pvh = pa_to_pvh(pa);
+		pv = &pvh->pvh_first;
+		if (pv->pv_pmap != pmap_kernel() ||
+		    !(pvh->pvh_attrs & PVH_PTPAGE))
 			continue;
 		do {
 			if (pv->pv_ptste && pv->pv_ptpmap == pmap_kernel())
@@ -1812,6 +1813,7 @@ static void
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 {
 	paddr_t pa;
+	struct pv_header *pvh;
 	struct pv_entry *pv, *npv;
 	pmap_t ptpmap;
 	st_entry_t *ste;
@@ -1878,6 +1880,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		 */
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
+			struct pv_header *_pvh;
 			struct pv_entry *_pv;
 #endif
 			paddr_t _pa;
@@ -1886,7 +1889,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 #ifdef DIAGNOSTIC
 			if (PAGE_IS_MANAGED(_pa) == 0)
 				panic("pmap_remove_mapping: unmanaged PT page");
-			_pv = pa_to_pvh(_pa);
+			_pvh = pa_to_pvh(_pa);
+			_pv = &_pvh->pvh_first;
 			if (_pv->pv_ptste == NULL)
 				panic("pmap_remove_mapping: ptste == NULL");
 			if (_pv->pv_pmap != pmap_kernel() ||
@@ -1918,7 +1922,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 	 * Otherwise remove it from the PV table
 	 * (raise IPL since we may be called at interrupt time).
 	 */
-	pv = pa_to_pvh(pa);
+	pvh = pa_to_pvh(pa);
+	pv = &pvh->pvh_first;
 	ste = ST_ENTRY_NULL;
 	s = splvm();
 	/*
@@ -1932,7 +1937,6 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		ptpmap = pv->pv_ptpmap;
 		npv = pv->pv_next;
 		if (npv) {
-			npv->pv_flags = pv->pv_flags;
 			*pv = *npv;
 			pmap_free_pv(npv);
 		} else
@@ -1957,7 +1961,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		ptpmap = npv->pv_ptpmap;
 		pv->pv_next = npv->pv_next;
 		pmap_free_pv(npv);
-		pv = pa_to_pvh(pa);
+		pvh = pa_to_pvh(pa);
+		pv = &pvh->pvh_first;
 	}
 
 	/*
@@ -2040,13 +2045,13 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		else
 			TBIAU();
 #endif
-		pv->pv_flags &= ~PV_PTPAGE;
+		pvh->pvh_attrs &= ~PVH_PTPAGE;
 		ptpmap->pm_ptpages--;
 	}
 	/*
 	 * Update saved attributes for managed page
 	 */
-	*pa_to_attribute(pa) |= bits;
+	pvh->pvh_attrs |= bits;
 	splx(s);
 }
 
@@ -2088,18 +2093,20 @@ pmap_ptpage_delref(vaddr_t ptpva)
 bool
 pmap_testbit(paddr_t pa, int bit)
 {
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 	int *pte;
 	int s;
 
-	pv = pa_to_pvh(pa);
+	pvh = pa_to_pvh(pa);
+	pv = &pvh->pvh_first;
 	s = splvm();
 
 	/*
 	 * Check saved info first
 	 */
 
-	if (*pa_to_attribute(pa) & bit) {
+	if (pvh->pvh_attrs & bit) {
 		splx(s);
 		return(true);
 	}
@@ -2125,6 +2132,7 @@ pmap_testbit(paddr_t pa, int bit)
 static void
 pmap_changebit(paddr_t pa, int bit, bool setem)
 {
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 	int *pte, npte;
 	vaddr_t va;
@@ -2139,7 +2147,8 @@ pmap_changebit(paddr_t pa, int bit, bool setem)
 		    pa, bit, setem ? "set" : "clear");
 #endif
 
-	pv = pa_to_pvh(pa);
+	pvh = pa_to_pvh(pa);
+	pv = &pvh->pvh_first;
 	s = splvm();
 
 	/*
@@ -2147,7 +2156,7 @@ pmap_changebit(paddr_t pa, int bit, bool setem)
 	 */
 
 	if (!setem)
-		*pa_to_attribute(pa) &= ~bit;
+		pvh->pvh_attrs &= ~bit;
 
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
@@ -2195,6 +2204,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 {
 	paddr_t ptpa;
 	struct vm_page *pg;
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 #ifdef M68060
 	u_int stpa;
@@ -2398,14 +2408,17 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 	 * record the STE address.  This is so that we can invalidate
 	 * the STE when we remove the mapping for the page.
 	 */
-	pv = pa_to_pvh(ptpa);
+	pvh = pa_to_pvh(ptpa);
 	s = splvm();
-	if (pv) {
-		pv->pv_flags |= PV_PTPAGE;
+	if (pvh) {
+		pv = &pvh->pvh_first;
+		pvh->pvh_attrs |= PVH_PTPAGE;
 		do {
 			if (pv->pv_pmap == pmap_kernel() && pv->pv_va == va)
 				break;
 		} while ((pv = pv->pv_next) > 0);
+	} else {
+		pv = NULL;
 	}
 #ifdef DEBUG
 	if (pv == NULL) {
@@ -2464,13 +2477,13 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 void
 pmap_pvdump(paddr_t pa)
 {
+	struct pv_header *pvh;
 	struct pv_entry *pv;
 
 	printf("pa %lx", pa);
-	for (pv = pa_to_pvh(pa); pv; pv = pv->pv_next)
-		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p, flags %x",
-		       pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap,
-		       pv->pv_flags);
+	for (pvh = pa_to_pvh(pa), pv = &pvh->pvh_first; pv; pv = pv->pv_next)
+		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p",
+		       pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap);
 	printf("\n");
 }
 

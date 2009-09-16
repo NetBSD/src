@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.78.4.6 2009/07/18 14:53:26 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.78.4.7 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ void nfs_timer_srvfini(void);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
-void nfsrv_soupcall(struct socket *, void *, int);
+void nfsrv_soupcall(struct socket *, void *, int, int);
 void nfsrv_rcv(struct nfssvc_sock *);
 int nfsrv_getstream(struct nfssvc_sock *, int);
 int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **,

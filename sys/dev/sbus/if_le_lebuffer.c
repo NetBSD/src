@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.23.4.1 2008/05/16 02:25:02 yamt Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.23.4.2 2009/09/16 13:37:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.23.4.1 2008/05/16 02:25:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.23.4.2 2009/09/16 13:37:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -84,6 +84,8 @@ struct	le_softc {
 
 int	lematch_lebuffer(device_t, cfdata_t, void *);
 void	leattach_lebuffer(device_t, device_t, void *);
+
+static void le_lebuffer_reset(device_t);
 
 /*
  * Media types supported.
@@ -173,9 +175,9 @@ leattach_lebuffer(device_t parent, device_t self, void *aux)
 	sc->sc_conf3 = prom_getpropint(sa->sa_node, "busmaster-regval",
 				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
-	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)lance_reset;
-	sbus_establish(&lesc->sc_sd, parent);
+	/* SBus is grandparent, but sbus_establish() looks for it properly */
+	lesc->sc_sd.sd_reset = le_lebuffer_reset;
+	sbus_establish(&lesc->sc_sd, self);
 
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
@@ -198,4 +200,13 @@ leattach_lebuffer(device_t parent, device_t self, void *aux)
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
 					 IPL_NET, am7990_intr, sc);
+}
+
+void
+le_lebuffer_reset(device_t self)
+{
+	struct le_softc *lesc = device_private(self);
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+
+	lance_reset(sc);
 }

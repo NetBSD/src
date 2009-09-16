@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.55.16.1 2009/05/04 08:14:37 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.55.16.2 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.16.1 2009/05/04 08:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.16.2 2009/09/16 13:38:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ ext2fs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;	/* vnode for directory being searched */
 	struct inode *dp = VTOI(vdp);	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	struct ext2fs_direct *ep; 	/* the current directory entry */
+	struct ext2fs_direct *ep;	/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {NONE, COMPACT, FOUND} slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */
@@ -1017,7 +1017,7 @@ ext2fs_checkpath(struct inode *source, struct inode *target,
 	struct vnode *vp;
 	int error, rootino, namlen;
 	struct ext2fs_dirtemplate dirbuf;
-	u_int32_t ino;
+	uint32_t ino;
 
 	vp = ITOV(target);
 	if (target->i_number == source->i_number) {

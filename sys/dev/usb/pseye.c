@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.11.4.3 2009/08/19 18:47:21 yamt Exp $ */
+/* $NetBSD: pseye.c,v 1.11.4.4 2009/09/16 13:37:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.3 2009/08/19 18:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.4 2009/09/16 13:37:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,13 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.3 2009/08/19 18:47:21 yamt Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/uvideoreg.h>
 
 #include <dev/video_if.h>
 
 #define PRI_PSEYE	PRI_BIO
 
-/* Bulk-in buffer length */
-#define PSEYE_BULKIN_BUFLEN	(640 * 480 * 2)
+/* Bulk-in buffer length -- make room for payload + UVC headers */
+#define PSEYE_BULKIN_BUFLEN	((640 * 480 * 2) + 4096)
+#define PSEYE_BULKIN_BLKLEN	2048
 
 /* SCCB/sensor interface */
 #define PSEYE_SCCB_ADDRESS	0xf1
@@ -119,7 +121,8 @@ static bool	pseye_sccb_status(struct pseye_softc *);
 static int	pseye_init_pipes(struct pseye_softc *);
 static int	pseye_close_pipes(struct pseye_softc *);
 
-static usbd_status	pseye_get_frame(struct pseye_softc *);
+static usbd_status	pseye_get_frame(struct pseye_softc *, uint32_t *);
+static void	pseye_submit_payload(struct pseye_softc *, uint32_t);
 
 /* video(9) API */
 static int		pseye_open(void *, int);
@@ -351,9 +354,6 @@ pseye_init(struct pseye_softc *sc)
 	pseye_setregv(sc, 0xe2, 0x00);
 	pseye_setregv(sc, 0xe7, 0x3e);
 
-	pseye_setreg(sc, 0x1c, 0x0a);
-	pseye_setreg(sc, 0x1d, 0x22);
-	pseye_setreg(sc, 0x1d, 0x06);
 	pseye_setregv(sc, 0x96, 0x00);
 
 	pseye_setreg(sc, 0x97, 0x20);
@@ -380,11 +380,15 @@ pseye_init(struct pseye_softc *sc)
 
 	pseye_setreg(sc, 0x1c, 0x00);
 	pseye_setreg(sc, 0x1d, 0x40);
-	pseye_setreg(sc, 0x1d, 0x02);
+	pseye_setreg(sc, 0x1d, 0x02);	/* payload size 0x0200 * 4 == 2048 */
 	pseye_setreg(sc, 0x1d, 0x00);
-	pseye_setreg(sc, 0x1d, 0x02);
-	pseye_setreg(sc, 0x1d, 0x57);
-	pseye_setreg(sc, 0x1d, 0xff);
+	pseye_setreg(sc, 0x1d, 0x02);	/* frame size 0x025800 * 4 == 614400 */
+	pseye_setreg(sc, 0x1d, 0x58);
+	pseye_setreg(sc, 0x1d, 0x00);
+
+	pseye_setreg(sc, 0x1c, 0x0a);
+	pseye_setreg(sc, 0x1d, 0x08);	/* enable UVC header */
+	pseye_setreg(sc, 0x1d, 0x0e);
 
 	pseye_setregv(sc, 0x8d, 0x1c);
 	pseye_setregv(sc, 0x8e, 0x80);
@@ -610,16 +614,14 @@ pseye_sccb_status(struct pseye_softc *sc)
 }
 
 static usbd_status
-pseye_get_frame(struct pseye_softc *sc)
+pseye_get_frame(struct pseye_softc *sc, uint32_t *plen)
 {
-	uint32_t len = sc->sc_bulkin_bufferlen;
-
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
 	return usbd_bulk_transfer(sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-	    USBD_SHORT_XFER_OK|USBD_NO_COPY, 50,
-	    sc->sc_bulkin_buffer, &len, "pseyerb");
+	    USBD_SHORT_XFER_OK|USBD_NO_COPY, 1000,
+	    sc->sc_bulkin_buffer, plen, "pseyerb");
 }
 
 static int
@@ -658,23 +660,57 @@ pseye_close_pipes(struct pseye_softc *sc)
 }
 
 static void
+pseye_submit_payload(struct pseye_softc *sc, uint32_t tlen)
+{
+	struct video_payload payload;
+	uvideo_payload_header_t *uvchdr;
+	uint8_t *buf = sc->sc_bulkin_buffer;
+	uint32_t len;
+	uint32_t brem = (640*480*2);
+
+	while (brem > 0 && tlen > 0) {
+		len = min(tlen, PSEYE_BULKIN_BLKLEN);
+		if (len < UVIDEO_PAYLOAD_HEADER_SIZE) {
+			printf("pseye_submit_payload: len=%u\n", len);
+			return;
+		}
+
+		uvchdr = (uvideo_payload_header_t *)buf;
+		if (uvchdr->bHeaderLength != UVIDEO_PAYLOAD_HEADER_SIZE)
+			goto next;
+		if (uvchdr->bHeaderLength == len &&
+		    !(uvchdr->bmHeaderInfo & UV_END_OF_FRAME))
+			goto next;
+		if (uvchdr->bmHeaderInfo & UV_ERROR)
+			return;
+		if ((uvchdr->bmHeaderInfo & UV_PRES_TIME) == 0)
+			goto next;
+
+		payload.data = buf + uvchdr->bHeaderLength;
+		payload.size = min(brem, len - uvchdr->bHeaderLength);
+		payload.frameno = UGETDW(&buf[2]);
+		payload.end_of_frame = uvchdr->bmHeaderInfo & UV_END_OF_FRAME;
+		video_submit_payload(sc->sc_videodev, &payload);
+
+next:
+		tlen -= len;
+		buf += len;
+		brem -= payload.size;
+	}
+}
+
+static void
 pseye_transfer_thread(void *opaque)
 {
 	struct pseye_softc *sc = opaque;
+	uint32_t len;
 	int error;
-	struct video_payload payload;
-
-	payload.frameno = 0;
 
 	while (sc->sc_running) {
-		error = pseye_get_frame(sc);
-		if (error == USBD_NORMAL_COMPLETION) {
-			payload.data = sc->sc_bulkin_buffer;
-			payload.size = sc->sc_bulkin_bufferlen;
-			payload.frameno = (payload.frameno + 1) & 1;
-			payload.end_of_frame = 1;
-			video_submit_payload(sc->sc_videodev, &payload);
-		}
+		len = sc->sc_bulkin_bufferlen;
+		error = pseye_get_frame(sc, &len);
+		if (error == USBD_NORMAL_COMPLETION)
+			pseye_submit_payload(sc, len);
 	}
 
 	mutex_enter(&sc->sc_mtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.16.10.1 2009/05/04 08:11:26 yamt Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.16.10.2 2009/09/16 13:37:40 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -136,11 +136,7 @@ struct pv_entry {
 	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
-	int		pv_flags;	/* flags */
 };
-
-#define PV_CI		0x01	/* header: all entries are cache inhibited */
-#define PV_PTPAGE	0x02	/* header: entry maps a page table page */
 
 struct pv_page;
 
@@ -171,7 +167,7 @@ struct pv_page {
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
-extern struct pv_entry	*pv_table;	/* array of entries, one per page */
+extern struct pv_header	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)

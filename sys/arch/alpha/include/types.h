@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.40 2008/01/20 18:09:04 joerg Exp $ */
+/* $NetBSD: types.h,v 1.40.10.1 2009/09/16 13:37:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,9 +50,16 @@ typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
+#define	PRTxPADDR	"lx"
+#define	PRTxPSIZE	"lx"
+#define	PRTxVADDR	"lx"
+#define	PRTxVSIZE	"lx"
 #endif
 
 typedef long int	register_t;
+#if defined(_NETBSD_SOURCE)
+#define	PRTxREGISTER	"lx"
+#endif
 
 typedef	volatile int		__cpu_simple_lock_t;
 

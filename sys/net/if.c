@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.220.2.3 2009/08/19 18:48:23 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.220.2.4 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.3 2009/08/19 18:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.4 2009/09/16 13:38:01 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1571,6 +1571,70 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		return ENOTTY;
 	}
 	return 0;
+}
+
+int
+ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
+    lwp_t *l)
+{
+	struct if_addrprefreq *ifap = (struct if_addrprefreq *)data;
+	struct ifaddr *ifa;
+	const struct sockaddr *any, *sa;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_storage ss;
+	} u, v;
+
+	switch (cmd) {
+	case SIOCSIFADDRPREF:
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL) != 0)
+			return EPERM;
+	case SIOCGIFADDRPREF:
+		break;
+	default:
+		return EOPNOTSUPP;
+	}
+
+	/* sanity checks */
+	if (data == NULL || ifp == NULL) {
+		panic("invalid argument to %s", __func__);
+		/*NOTREACHED*/
+	}
+
+	/* address must be specified on ADD and DELETE */
+	sa = sstocsa(&ifap->ifap_addr);
+	if (sa->sa_family != sofamily(so))
+		return EINVAL;
+	if ((any = sockaddr_any(sa)) == NULL || sa->sa_len != any->sa_len)
+		return EINVAL;
+
+	sockaddr_externalize(&v.sa, sizeof(v.ss), sa);
+
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != sa->sa_family)
+			continue;
+		sockaddr_externalize(&u.sa, sizeof(u.ss), ifa->ifa_addr);
+		if (sockaddr_cmp(&u.sa, &v.sa) == 0)
+			break;
+	}
+	if (ifa == NULL)
+		return EADDRNOTAVAIL;
+
+	switch (cmd) {
+	case SIOCSIFADDRPREF:
+		ifa->ifa_preference = ifap->ifap_preference;
+		return 0;
+	case SIOCGIFADDRPREF:
+		/* fill in the if_laddrreq structure */
+		(void)sockaddr_copy(sstosa(&ifap->ifap_addr),
+		    sizeof(ifap->ifap_addr), ifa->ifa_addr);
+		ifap->ifap_preference = ifa->ifa_preference;
+		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 /*

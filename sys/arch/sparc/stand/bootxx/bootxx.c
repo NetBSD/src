@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.19.44.2 2009/05/04 08:11:56 yamt Exp $ */
+/*	$NetBSD: bootxx.c,v 1.19.44.3 2009/09/16 13:37:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/bootblock.h>
 
 #include <lib/libkern/libkern.h>

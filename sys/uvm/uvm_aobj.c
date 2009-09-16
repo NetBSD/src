@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.99.4.2 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.99.4.3 2009/09/16 13:38:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.99.4.2 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.99.4.3 2009/09/16 13:38:08 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -140,8 +140,7 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
  * uao_swhash_elt_pool: pool of uao_swhash_elt structures
  * NOTE: Pages for this pool must not come from a pageable kernel map!
  */
-static POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
-    "uaoeltpl", NULL, IPL_VM);
+static struct pool uao_swhash_elt_pool;
 
 static struct pool_cache uvm_aobj_cache;
 
@@ -552,6 +551,8 @@ uao_init(void)
 	mutex_init(&uao_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	pool_cache_bootstrap(&uvm_aobj_cache, sizeof(struct uvm_aobj), 0, 0,
 	    0, "aobj", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
+	    0, 0, 0, "uaoeltpl", NULL, IPL_VM);
 }
 
 /*

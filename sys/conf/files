@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.899.2.6 2009/08/19 18:47:01 yamt Exp $
+#	$NetBSD: files,v 1.899.2.7 2009/09/16 13:37:44 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1466,6 +1466,7 @@ file	kern/subr_callback.c
 file	kern/subr_debug.c		debug
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
+file	kern/subr_disk_open.c
 file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_exec_fd.c

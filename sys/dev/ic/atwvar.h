@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.28.4.3 2009/05/16 10:41:22 yamt Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.28.4.4 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -34,17 +34,6 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/time.h>
-
-/*
- * Some misc. statics, useful for debugging.
- */
-struct atw_stats {
-	u_long		ts_tx_tuf;	/* transmit underflow errors */
-	u_long		ts_tx_tro;	/* transmit jabber timeouts */
-	u_long		ts_tx_trt;	/* retry count exceeded */
-	u_long		ts_tx_tlt;	/* lifetime exceeded */
-	u_long		ts_tx_sofbr;	/* packet size mismatch */
-};
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
@@ -192,8 +181,6 @@ struct atw_softc {
 	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211_node_table*);
 	void			(*sc_node_free)(struct ieee80211_node *);
 
-	struct atw_stats sc_stats;	/* debugging stats */
-
 	int			sc_tx_timer;
 	int			sc_rescan_timer;
 
@@ -252,9 +239,6 @@ struct atw_softc {
 	u_int32_t	sc_txint_mask;	/* mask of Tx interrupts we want */
 	u_int32_t	sc_linkint_mask;/* link-state interrupts mask */
 
-	/* interrupt acknowledge hook */
-	void (*sc_intr_ack)(struct atw_softc *);
-
 	enum atw_rftype		sc_rftype;
 	enum atw_bbptype	sc_bbptype;
 	u_int32_t	sc_synctl_rd;
@@ -274,6 +258,18 @@ struct atw_softc {
 	uint8_t		sc_rev;
 	uint8_t		sc_rf3000_options1;
 	uint8_t		sc_rf3000_options2;
+
+	struct evcnt	sc_misc_ev;
+	struct evcnt	sc_workaround1_ev;
+	struct evcnt	sc_rxamatch_ev;
+	struct evcnt	sc_rxpkt1in_ev;
+
+	struct evcnt	sc_xmit_ev;
+	struct evcnt	sc_tuf_ev;	/* transmit underflow errors */
+	struct evcnt	sc_tro_ev;	/* transmit overrun */
+	struct evcnt	sc_trt_ev;	/* retry count exceeded */
+	struct evcnt	sc_tlt_ev;	/* lifetime exceeded */
+	struct evcnt	sc_sofbr_ev;	/* packet size mismatch */
 
 	struct evcnt	sc_recv_ev;
 	struct evcnt	sc_crc16e_ev;
@@ -345,9 +341,13 @@ struct atw_frame {
 #define atw_ihdr	u.s2.ihdr
 
 #define ATW_HDRCTL_SHORT_PREAMBLE	__BIT(0)	/* use short preamble */
+#define ATW_HDRCTL_MORE_FRAG		__BIT(1)	/* ??? from Linux */
+#define ATW_HDRCTL_MORE_DATA		__BIT(2)	/* ??? from Linux */
+#define ATW_HDRCTL_FRAG_NUM		__BIT(3)	/* ??? from Linux */
 #define ATW_HDRCTL_RTSCTS		__BIT(4)	/* send RTS */
 #define ATW_HDRCTL_WEP			__BIT(5)
-#define ATW_HDRCTL_UNKNOWN1		__BIT(15) /* MAC adds FCS? */
+/* MAC adds FCS?  Linux calls this "enable extended header" */
+#define ATW_HDRCTL_UNKNOWN1		__BIT(15)
 #define ATW_HDRCTL_UNKNOWN2		__BIT(8)
 
 #define ATW_FRAGTHR_FRAGTHR_MASK	__BITS(0, 11)
@@ -358,10 +358,9 @@ struct atw_frame {
 #define	ATWF_MRM		0x00000002	/* memory read multi okay */
 #define	ATWF_MWI		0x00000004	/* memory write inval okay */
 #define	ATWF_SHORT_PREAMBLE	0x00000008	/* short preamble enabled */
-#define	ATWF_RTSCTS		0x00000010	/* RTS/CTS enabled */
-#define	ATWF_ATTACHED		0x00000020	/* attach has succeeded */
-#define	ATWF_ENABLED		0x00000040	/* chip is enabled */
-#define	ATWF_WEP_SRAM_VALID	0x00000080	/* SRAM matches s/w state */
+#define	ATWF_ATTACHED		0x00000010	/* attach has succeeded */
+#define	ATWF_ENABLED		0x00000020	/* chip is enabled */
+#define	ATWF_WEP_SRAM_VALID	0x00000040	/* SRAM matches s/w state */
 
 #define	ATW_IS_ENABLED(sc)	((sc)->sc_flags & ATWF_ENABLED)
 

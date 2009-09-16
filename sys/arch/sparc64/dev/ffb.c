@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.33.4.1 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: ffb.c,v 1.33.4.2 2009/09/16 13:37:43 yamt Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.33.4.1 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.33.4.2 2009/09/16 13:37:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,11 +239,12 @@ ffb_attach(struct ffb_softc *sc)
 	sc->sc_fb.fb_device = &sc->sc_dv;
 	fb_attach(&sc->sc_fb, sc->sc_console);
 
+	ffb_clearscreen(sc);
+
 	if (sc->sc_console) {
 		wsdisplay_cnattach(&ffb_stdscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&ffb_console_screen);
 	}
-
-	ffb_clearscreen(sc);
 	
 	waa.console = sc->sc_console;
 	waa.scrdata = &ffb_screenlist;
@@ -433,7 +434,6 @@ ffb_mmap(void *vsc, void *vs, off_t off, int prot)
 		break;
 #endif
 	}
-
 	return (-1);
 }
 

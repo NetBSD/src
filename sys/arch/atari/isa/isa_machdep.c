@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.30.48.2 2009/08/19 18:46:03 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.30.48.3 2009/09/16 13:37:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30.48.2 2009/08/19 18:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30.48.3 2009/09/16 13:37:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach
 }
 
 void
-isa_detach_hook(isa_chipset_tag_t, device_t self)
+isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 }
 

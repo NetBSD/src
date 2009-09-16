@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.15.2.2 2009/05/04 08:14:33 yamt Exp $	*/
+/*	$NetBSD: sockin.c,v 1.15.2.3 2009/09/16 13:38:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.15.2.2 2009/05/04 08:14:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.15.2.3 2009/09/16 13:38:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -197,7 +197,7 @@ sockin_process(struct socket *so)
 		m_freem(m);
 
 		/* Treat a TCP socket a goner */
-		if (so->so_proto->pr_type == SOCK_STREAM && error != EAGAIN) {
+		if (error != EAGAIN && so->so_proto->pr_type == SOCK_STREAM) {
 			mutex_enter(softnet_lock);
 			soisdisconnected(so);
 			mutex_exit(softnet_lock);
@@ -464,7 +464,9 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 static int
 sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
+	int error;
 
-	/* XXX: we should also do something here */
-	return 0;
+	rumpuser_net_setsockopt(SO2S(so), sopt->sopt_level,
+	    sopt->sopt_name, sopt->sopt_data, sopt->sopt_size, &error);
+	return error;
 }

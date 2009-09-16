@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.76.2.2 2009/06/20 07:20:32 yamt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.76.2.3 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.2.2 2009/06/20 07:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.2.3 2009/09/16 13:38:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -207,7 +207,7 @@ const void *
 sockaddr_const_addr(const struct sockaddr *sa, socklen_t *slenp)
 {
 	const struct domain *dom;
-	
+
 	if ((dom = pffinddomain(sa->sa_family)) == NULL ||
 	    dom->dom_sockaddr_const_addr == NULL)
 		return NULL;
@@ -219,7 +219,7 @@ const struct sockaddr *
 sockaddr_any_by_family(int family)
 {
 	const struct domain *dom;
-	
+
 	if ((dom = pffinddomain(family)) == NULL)
 		return NULL;
 
@@ -266,6 +266,20 @@ sockaddr_copy(struct sockaddr *dst, socklen_t socklen,
 		    src->sa_len);
 	}
 	return memcpy(dst, src, src->sa_len);
+}
+
+struct sockaddr *
+sockaddr_externalize(struct sockaddr *dst, socklen_t socklen,
+    const struct sockaddr *src)
+{
+	struct domain *dom;
+
+	dom = pffinddomain(src->sa_family);
+
+	if (dom != NULL && dom->dom_sockaddr_externalize != NULL)
+		return (*dom->dom_sockaddr_externalize)(dst, socklen, src);
+
+	return sockaddr_copy(dst, socklen, src);
 }
 
 int

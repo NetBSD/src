@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.38.2.4 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.38.2.5 2009/09/16 13:38:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.38.2.4 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.38.2.5 2009/09/16 13:38:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -112,6 +112,10 @@ struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
 int max_devsw_convs = 0;
 int mem_no = 2;
+
+struct device *booted_device;
+struct device *booted_wedge;
+int booted_partition;
 
 kmutex_t tty_lock;
 
@@ -723,12 +727,6 @@ cpu_reboot(int howto, char *bootstr)
 	rumpuser_panic();
 }
 
-/* XXX: static, but not used except to make spcopy.S link */
-#ifdef __hppa__
-#undef curlwp
-struct lwp *curlwp = &lwp0;
-#endif
-
 /*
  * XXX: from sys_select.c, see that file for license.
  * (these will go away really soon in favour of the real sys_select.c)
@@ -761,3 +759,29 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	*sleepts = sleptts;
 	return tstohz(ts);
 }
+
+bool
+pmf_device_register1(struct device *dev,
+	bool (*suspend)(device_t PMF_FN_PROTO),
+	bool (*resume)(device_t PMF_FN_PROTO),
+	bool (*shutdown)(device_t, int))
+{
+
+	return true;
+}
+
+void
+pmf_device_deregister(struct device *dev)
+{
+
+	/* nada */
+}
+
+
+/* XXX: static, but not used except to make spcopy.S link */
+#ifdef __hppa__
+#undef curlwp
+struct lwp *curlwp = &lwp0;
+#endif
+
+/* make sure the above is the last entry in this file */

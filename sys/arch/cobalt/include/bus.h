@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21.44.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.21.44.2 2009/09/16 13:37:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -86,6 +86,16 @@ void	bus_space_unmap (bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 int	bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp);
+
+/*
+ *	paddr_t bus_space_mmap(bus_space_tag_t t,
+ *          bus_addr_t addr, off_t offset, int prot, int flags);
+ *
+ * Mmap bus space for a user application.
+ */
+
+paddr_t	bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags);
 
 /*
  *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t, rstart,

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.34.4.3 2009/08/19 18:46:52 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.34.4.4 2009/09/16 13:37:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.3 2009/08/19 18:46:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.4 2009/09/16 13:37:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,18 +53,28 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.3 2009/08/19 18:46:52 yamt E
 #include <machine/bootinfo.h>
 #include <machine/pio.h>
 
+#include "acpica.h"
 #include "pci.h"
 #include "genfb.h"
 #include "wsdisplay.h"
+#include "opt_vga.h"
 
+#ifdef VGA_POST
+#include <x86/vga_post.h>
+#endif
 #include <dev/isa/isavar.h>
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#include <dev/pci/genfb_pcivar.h>
 #include <dev/ic/vgareg.h>
 
-struct genfb_colormap_callback gfb_cb;
+static struct genfb_colormap_callback gfb_cb;
+static struct genfb_pmf_callback pmf_cb;
+#ifdef VGA_POST
+static struct vga_post *vga_posth = NULL;
+#endif
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -77,6 +87,35 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)r >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
+}
+
+static bool
+x86_genfb_suspend(device_t dev PMF_FN_ARGS)
+{
+	return true;
+}
+
+static bool
+x86_genfb_resume(device_t dev PMF_FN_ARGS)
+{
+#if NGENFB > 0
+	struct pci_genfb_softc *psc = device_private(dev);
+#if NACPICA > 0 && defined(VGA_POST)
+	extern int acpi_md_vbios_reset;
+	extern int acpi_md_vesa_modenum;
+#endif
+
+#if NACPICA > 0 && defined(VGA_POST)
+	if (vga_posth != NULL && acpi_md_vbios_reset == 2) {
+		vga_post_call(vga_posth);
+		if (acpi_md_vesa_modenum != 0)
+			vga_post_set_vbe(vga_posth, acpi_md_vesa_modenum);
+	}
+#endif
+	genfb_restore_palette(&psc->sc_gen);
+#endif
+
+	return true;
 }
 #endif
 
@@ -597,6 +636,14 @@ device_register(device_t dev, void *aux)
 				prop_dictionary_set_uint64(dict,
 				    "cmap_callback", (uint64_t)&gfb_cb);
 			}
+			pmf_cb.gpc_suspend = x86_genfb_suspend;
+			pmf_cb.gpc_resume = x86_genfb_resume;
+			prop_dictionary_set_uint64(dict,
+			    "pmf_callback", (uint64_t)&pmf_cb);
+#ifdef VGA_POST
+			vga_posth = vga_post_init(pa->pa_bus, pa->pa_device,
+			    pa->pa_function);
+#endif
 			found_console = true;
 			return;
 		}

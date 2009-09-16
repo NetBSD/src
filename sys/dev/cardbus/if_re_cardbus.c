@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.17.2.1 2009/05/04 08:12:36 yamt Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.17.2.2 2009/09/16 13:37:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,38 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.17.2.1 2009/05/04 08:12:36 yamt Exp $");
-
-#include "opt_inet.h"
-#include "bpfilter.h"
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.17.2.2 2009/09/16 13:37:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_ether.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -76,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.17.2.1 2009/05/04 08:12:36 yamt 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -231,11 +207,6 @@ re_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->ethercom.ec_if);
-
 	/*
 	 * Power down the socket.
 	 */
@@ -259,8 +230,6 @@ re_cardbus_detach(device_t self, int flags)
 	rv = re_detach(sc);
 	if (rv)
 		return rv;
-
-	pmf_device_deregister(self);
 
 	/*
 	 * Unhook the interrupt handler.

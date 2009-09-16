@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.145.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.145.2.3 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.145.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.145.2.3 2009/09/16 13:38:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -93,10 +93,7 @@ kmutex_t	timer_lock;
 static void	*timer_sih;
 static TAILQ_HEAD(, ptimer) timer_queue;
 
-POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool ptimer_pool, ptimers_pool;
 
 /*
  * Initialize timekeeping.
@@ -105,7 +102,10 @@ void
 time_init(void)
 {
 
-	/* nothing yet */
+	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
+	    &pool_allocator_nointr, IPL_NONE);
 }
 
 void

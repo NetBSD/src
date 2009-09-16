@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.126.10.1 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.126.10.2 2009/09/16 13:37:47 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.126.10.1 2009/05/04 08:12:40 yamt Exp $
+ * $Id: aic7xxx.c,v 1.126.10.2 2009/09/16 13:37:47 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126.10.1 2009/05/04 08:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126.10.2 2009/09/16 13:37:47 yamt Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -211,7 +211,9 @@ static void		ahc_setup_target_msgin(struct ahc_softc *ahc,
 					       struct scb *scb);
 #endif
 
-//static bus_dmamap_callback_t	ahc_dmamap_cb;
+#if 0
+static bus_dmamap_callback_t	ahc_dmamap_cb;
+#endif
 static void			ahc_build_free_scb_list(struct ahc_softc *ahc);
 static int			ahc_init_scbdata(struct ahc_softc *ahc);
 static void			ahc_fini_scbdata(struct ahc_softc *ahc);
@@ -341,7 +343,8 @@ ahc_run_qoutfifo(struct ahc_softc *ahc)
 			 */
 			modnext = ahc->qoutfifonext & ~0x3;
 			*((uint32_t *)(&ahc->qoutfifo[modnext])) = 0xFFFFFFFFUL;
-			ahc_dmamap_sync(ahc, ahc->parent_dmat /*shared_data_dmat*/,
+			ahc_dmamap_sync(ahc,
+					ahc->parent_dmat /*shared_data_dmat*/,
 					ahc->shared_data_dmamap,
 					/*offset*/modnext, /*len*/4,
 					BUS_DMASYNC_PREREAD);
@@ -517,7 +520,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 							&tstate);
 			tinfo = &targ_info->curr;
 			sg = scb->sg_list;
-			sc = (struct scsi_request_sense *)(&hscb->shared_data.cdb);
+			sc = (struct scsi_request_sense *)
+			    (&hscb->shared_data.cdb);
 			/*
 			 * Save off the residual if there is one.
 			 */
@@ -987,7 +991,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 	if (status == 0 && status0 == 0) {
 		if ((ahc->features & AHC_TWIN) != 0) {
 			/* Try the other channel */
-		 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
+			ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
 			status = ahc_inb(ahc, SSTAT1)
 			       & (SELTO|SCSIRSTI|BUSFREE|SCSIPERR);
 			intr_channel = (cur_channel == 'A') ? 'B' : 'A';
@@ -1033,7 +1037,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		printf("%s: Someone reset channel %c\n",
 			ahc_name(ahc), intr_channel);
 		if (intr_channel != cur_channel)
-		 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
+			ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) ^ SELBUSB);
 		ahc_reset_channel(ahc, intr_channel, /*Initiate Reset*/FALSE);
 	} else if ((status & SCSIPERR) != 0) {
 		/*
@@ -1277,7 +1281,8 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 						  CAM_LUN_WILDCARD,
 						  SCB_LIST_NULL,
 						  ROLE_INITIATOR)) {
-					ahc_set_transaction_status(scb, CAM_REQ_CMP);
+					ahc_set_transaction_status(scb,
+								   CAM_REQ_CMP);
 				}
 #endif
 				ahc_compile_devinfo(&devinfo,
@@ -1504,7 +1509,7 @@ ahc_clear_intstat(struct ahc_softc *ahc)
 				CLRREQINIT);
 	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRSINT0, CLRSELDO|CLRSELDI|CLRSELINGO);
- 	ahc_flush_device_writes(ahc);
+	ahc_flush_device_writes(ahc);
 	ahc_outb(ahc, CLRINT, CLRSCSIINT);
 	ahc_flush_device_writes(ahc);
 }
@@ -1568,8 +1573,7 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 	    && ahc->enabled_targets[scsi_id] != master_tstate)
 		panic("%s: ahc_alloc_tstate - Target already allocated",
 		      ahc_name(ahc));
-	tstate = (struct ahc_tmode_tstate*)malloc(sizeof(*tstate),
-						   M_DEVBUF, M_NOWAIT);
+	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT);
 	if (tstate == NULL)
 		return (NULL);
 
@@ -1729,7 +1733,7 @@ ahc_find_syncrate(struct ahc_softc *ahc, u_int *period,
 			 * At some speeds, we only support
 			 * ST transfers.
 			 */
-		 	if ((syncrate->sxfr_u2 & ST_SXFR) != 0)
+			if ((syncrate->sxfr_u2 & ST_SXFR) != 0)
 				*ppr_options &= ~MSG_EXT_PPR_DT_REQ;
 			break;
 		}
@@ -2073,7 +2077,7 @@ void
 ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 	     ahc_queue_alg alg)
 {
- 	ahc_platform_set_tags(ahc, devinfo, alg);
+	ahc_platform_set_tags(ahc, devinfo, alg);
 }
 
 /*
@@ -2174,7 +2178,7 @@ ahc_fetch_devinfo(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 	if (role == ROLE_TARGET
 	 && (ahc->features & AHC_MULTI_TID) != 0
 	 && (ahc_inb(ahc, SEQ_FLAGS)
- 	   & (CMDPHASE_PENDING|TARG_CMD_PENDING|NO_DISCONNECT)) != 0) {
+	   & (CMDPHASE_PENDING|TARG_CMD_PENDING|NO_DISCONNECT)) != 0) {
 		/* We were selected, so pull our id from TARGIDIN */
 		our_id = ahc_inb(ahc, TARGIDIN) & OID;
 	} else if ((ahc->features & AHC_ULTRA2) != 0)
@@ -3510,7 +3514,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		 */
 		ahc_outb(ahc, SCB_CONTROL,
 			 ahc_inb(ahc, SCB_CONTROL) & mask);
-	 	scb->hscb->control &= mask;
+		scb->hscb->control &= mask;
 		ahc_set_transaction_tag(scb, /*enabled*/FALSE,
 					/*type*/MSG_SIMPLE_TASK);
 		ahc_outb(ahc, MSG_OUT, MSG_IDENTIFYFLAG);
@@ -3920,8 +3924,10 @@ ahc_free(struct ahc_softc *ahc)
 	case 1:
 		bus_dmamap_unload(ahc->parent_dmat, ahc->shared_data_dmamap);
 		bus_dmamap_destroy(ahc->parent_dmat, ahc->shared_data_dmamap);
-		bus_dmamem_unmap(ahc->parent_dmat, (void *)ahc->qoutfifo, ahc->shared_data_size);
-		bus_dmamem_free(ahc->parent_dmat, &ahc->shared_data_seg, ahc->shared_data_nseg);
+		bus_dmamem_unmap(ahc->parent_dmat, (void *)ahc->qoutfifo,
+		    ahc->shared_data_size);
+		bus_dmamem_free(ahc->parent_dmat, &ahc->shared_data_seg,
+		    ahc->shared_data_nseg);
 		break;
 	case 0:
 		break;
@@ -3973,7 +3979,7 @@ ahc_shutdown(void *arg)
 	struct	ahc_softc *ahc;
 	int	i;
 
-	ahc = (struct ahc_softc *)arg;
+	ahc = arg;
 
 	/* This will reset most registers to 0, but not all */
 	ahc_reset(ahc);
@@ -4062,7 +4068,8 @@ ahc_reset(struct ahc_softc *ahc)
 		ahc->features |= AHC_TWIN;
 		break;
 	default:
-		printf(" Unsupported adapter type (0x%x).  Ignoring\n", sblkctl);
+		printf(" Unsupported adapter type (0x%x).  Ignoring\n",
+		     sblkctl);
 		return(-1);
 	}
 
@@ -4176,9 +4183,8 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	SLIST_INIT(&scb_data->sg_maps);
 
 	/* Allocate SCB resources */
-	scb_data->scbarray =
-	    (struct scb *)malloc(sizeof(struct scb) * AHC_SCB_MAX_ALLOC,
-				 M_DEVBUF, M_NOWAIT);
+	scb_data->scbarray = malloc(sizeof(struct scb) * AHC_SCB_MAX_ALLOC,
+				     M_DEVBUF, M_NOWAIT);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
 	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX_ALLOC);
@@ -4330,7 +4336,8 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 	if (ahc_createdmamem(ahc->parent_dmat, PAGE_SIZE, ahc->sc_dmaflags,
 			     &sg_map->sg_dmamap,
 			     (void **)&sg_map->sg_vaddr, &sg_map->sg_physaddr,
-			     &sg_map->sg_dmasegs, &sg_map->sg_nseg, ahc_name(ahc),
+			     &sg_map->sg_dmasegs, &sg_map->sg_nseg,
+			     ahc_name(ahc),
 			     "SG space") < 0) {
 		free(sg_map, M_DEVBUF);
 		return (0);
@@ -4347,8 +4354,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		struct scb_platform_data *pdata;
 		int error;
 
-		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_WAITOK);
+		pdata = malloc(sizeof(*pdata), M_DEVBUF, M_WAITOK);
 		if (pdata == NULL)
 			break;
 		next_scb->platform_data = pdata;
@@ -4393,7 +4399,7 @@ ahc_controller_info(struct ahc_softc *ahc, char *tbuf, size_t l)
 	    ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
 	tbuf += len;
 	if ((ahc->features & AHC_TWIN) != 0)
- 		len = snprintf(tbuf, ep - tbuf, "Twin Channel, A SCSI Id=%d, "
+		len = snprintf(tbuf, ep - tbuf, "Twin Channel, A SCSI Id=%d, "
 			      "B SCSI Id=%d, primary %c, ",
 			      ahc->our_id, ahc->our_id_b,
 			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
@@ -4509,7 +4515,8 @@ ahc_init(struct ahc_softc *ahc)
 			     ahc->sc_dmaflags,
 			     &ahc->shared_data_dmamap, (void **)&ahc->qoutfifo,
 			     &ahc->shared_data_busaddr, &ahc->shared_data_seg,
-			     &ahc->shared_data_nseg, ahc_name(ahc), "shared data") < 0)
+			     &ahc->shared_data_nseg, ahc_name(ahc),
+			     "shared data") < 0)
 		return (ENOMEM);
 
 	ahc->init_level++;
@@ -4580,7 +4587,9 @@ ahc_init(struct ahc_softc *ahc)
 	}
 #endif /* AHC_DEBUG */
 
-	/* Set the SCSI Id, SXFRCTL0, SXFRCTL1, and SIMODE1, for both channels*/
+	/*
+	 * Set the SCSI Id, SXFRCTL0, SXFRCTL1, and SIMODE1, for both channels
+	 */
 	if (ahc->features & AHC_TWIN) {
 
 		/*
@@ -4731,7 +4740,7 @@ ahc_init(struct ahc_softc *ahc)
 				 && (ultraenb & mask) != 0) {
 					/* Treat 10MHz as a non-ultra speed */
 					scsirate &= ~SXFR;
-				 	ultraenb &= ~mask;
+					ultraenb &= ~mask;
 				}
 				tinfo->user.period =
 				    ahc_find_period(ahc, scsirate,
@@ -5464,7 +5473,8 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 				if (cstat != CAM_REQ_CMP)
 					ahc_freeze_scb(scb);
 				if ((scb->flags & SCB_ACTIVE) == 0)
-					printf("Inactive SCB in Waiting List\n");
+					printf("Inactive SCB in "
+					       "Waiting List\n");
 				ahc_done(ahc, scb);
 				/* FALLTHROUGH */
 			}
@@ -6336,7 +6346,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 				if (begin_set[cs_count] == TRUE
 				 && end_set[cs_count] == FALSE) {
 					cs_table[cs_count].end = downloaded;
-				 	end_set[cs_count] = TRUE;
+					end_set[cs_count] = TRUE;
 					cs_count++;
 				}
 				continue;
@@ -6864,7 +6874,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 		if ((ahc->features & AHC_MULTIROLE) != 0) {
 
 			if ((ahc->features & AHC_MULTI_TID) != 0
-		   	 && (ahc->flags & AHC_INITIATORROLE) != 0) {
+			 && (ahc->flags & AHC_INITIATORROLE) != 0) {
 				/*
 				 * Only allow additional targets if
 				 * the initiator role is disabled.
@@ -7121,7 +7131,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 					targid_mask &= ~target_mask;
 					ahc_outb(ahc, TARGID, targid_mask);
 					ahc_outb(ahc, TARGID+1,
-					 	 (targid_mask >> 8));
+						 (targid_mask >> 8));
 					ahc_update_scsiid(ahc, targid_mask);
 				}
 			}
@@ -7367,7 +7377,9 @@ ahc_handle_target_cmd(struct ahc_softc *ahc, struct target_cmd *cmd)
 #endif
 
 static int
-ahc_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg, const char *myname, const char *what)
+ahc_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp,
+    void **vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg,
+    const char *myname, const char *what)
 {
 	int error, level = 0;
 
@@ -7426,7 +7438,8 @@ out:
 }
 
 static void
-ahc_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr, bus_dma_segment_t *seg, int nseg)
+ahc_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, void *vaddr,
+    bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

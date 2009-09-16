@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.152.4.3 2009/08/19 18:47:21 yamt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.152.4.4 2009/09/16 13:37:58 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.3 2009/08/19 18:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.4 2009/09/16 13:37:58 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -78,8 +78,8 @@ Static int usbd_ifprint(void *, const char *);
 Static void usbd_free_iface_data(usbd_device_handle dev, int ifcno);
 Static void usbd_kill_pipe(usbd_pipe_handle);
 usbd_status usbd_attach_roothub(device_t, usbd_device_handle);
-Static usbd_status usbd_probe_and_attach(device_ptr_t parent,
-				 usbd_device_handle dev, int port, int addr);
+Static usbd_status usbd_probe_and_attach(device_t parent,
+                                 usbd_device_handle dev, int port, int addr);
 
 Static u_int32_t usb_cookie_no = 0;
 
@@ -640,7 +640,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		if (msg)
 			printf("%s: device addr %d (config %d): "
 				 "can't set self powered configuration\n",
-			       USBDEVNAME(dev->bus->bdev), dev->address,
+			       device_xname(dev->bus->bdev), dev->address,
 			       cdp->bConfigurationValue);
 		err = USBD_NO_POWER;
 		goto bad;
@@ -904,8 +904,8 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 }
 
 usbd_status
-usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
-		      int port, int addr)
+usbd_probe_and_attach(device_t parent, usbd_device_handle dev,
+                      int port, int addr)
 {
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int confi, nifaces;
@@ -927,11 +927,11 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		if (err) {
 #ifdef USB_DEBUG
 			DPRINTF(("%s: port %d, set config at addr %d failed, "
-				 "error=%s\n", USBDEVPTRNAME(parent), port,
-				 addr, usbd_errstr(err)));
+			    "error=%s\n", device_xname(parent), port,
+			    addr, usbd_errstr(err)));
 #else
 			printf("%s: port %d, set config at addr %d failed\n",
-			       USBDEVPTRNAME(parent), port, addr);
+			    device_xname(parent), port, addr);
 #endif
 			return (err);
 		}
@@ -976,8 +976,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
  * called before calling this.
  */
 usbd_status
-usbd_reattach_device(device_ptr_t parent, usbd_device_handle dev,
-		     int port, const int *locators)
+usbd_reattach_device(device_t parent, usbd_device_handle dev,
+                     int port, const int *locators)
 {
 	int i, loc;
 
@@ -1024,8 +1024,8 @@ usbd_reattach_device(device_ptr_t parent, usbd_device_handle dev,
  * and attach a driver.
  */
 usbd_status
-usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
-		int speed, int port, struct usbd_port *up)
+usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
+                int speed, int port, struct usbd_port *up)
 {
 	usbd_device_handle dev, adev;
 	struct usbd_device *hub;
@@ -1211,9 +1211,9 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	if (err) {
 		usbd_remove_device(dev, up);
 		return (err);
-  	}
+	}
 
-  	return (USBD_NORMAL_COMPLETION);
+	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
@@ -1337,16 +1337,16 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 			     j < USB_MAX_DEVNAMES; i++) {
 			if (!dev->subdevs[i])
 				continue;
-			strncpy(di->udi_devnames[j], USBDEVPTRNAME(dev->subdevs[i]),
-				USB_MAX_DEVNAMELEN);
+			strncpy(di->udi_devnames[j],
+			    device_xname(dev->subdevs[i]), USB_MAX_DEVNAMELEN);
 			di->udi_devnames[j][USB_MAX_DEVNAMELEN-1] = '\0';
 			j++;
-                }
-        } else {
-                j = 0;
-        }
-        for (/* j is set */; j < USB_MAX_DEVNAMES; j++)
-                di->udi_devnames[j][0] = 0;                 /* empty */
+		}
+	} else {
+		j = 0;
+	}
+	for (/* j is set */; j < USB_MAX_DEVNAMES; j++)
+		di->udi_devnames[j][0] = 0;                 /* empty */
 
 	if (dev->hub) {
 		for (i = 0;
@@ -1403,8 +1403,8 @@ usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
 			     j < USB_MAX_DEVNAMES; i++) {
 			if (!dev->subdevs[i])
 				continue;
-			strncpy(di->udi_devnames[j], USBDEVPTRNAME(dev->subdevs[i]),
-				USB_MAX_DEVNAMELEN);
+			strncpy(di->udi_devnames[j],
+			    device_xname(dev->subdevs[i]), USB_MAX_DEVNAMELEN);
 			di->udi_devnames[j][USB_MAX_DEVNAMELEN-1] = '\0';
 			j++;
 		}
@@ -1482,10 +1482,10 @@ usb_free_device(usbd_device_handle dev)
  * been disconnected.
  */
 void
-usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
+usb_disconnect_port(struct usbd_port *up, device_t parent)
 {
 	usbd_device_handle dev = up->device;
-	const char *hubname = USBDEVPTRNAME(parent);
+	const char *hubname = device_xname(parent);
 	int i;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",
@@ -1503,7 +1503,7 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 		for (i = 0; i < dev->subdevlen; i++) {
 			if (!dev->subdevs[i])
 				continue;
-			printf("%s: at %s", USBDEVPTRNAME(dev->subdevs[i]),
+			printf("%s: at %s", device_xname(dev->subdevs[i]),
 			       hubname);
 			if (up->portno != 0)
 				printf(" port %d", up->portno);

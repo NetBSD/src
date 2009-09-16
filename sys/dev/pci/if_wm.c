@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.158.4.4 2009/08/19 18:47:11 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.158.4.5 2009/09/16 13:37:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.4.4 2009/08/19 18:47:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.4.5 2009/09/16 13:37:52 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1679,10 +1679,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 

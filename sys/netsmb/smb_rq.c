@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.29.10.2 2009/07/18 14:53:25 yamt Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.29.10.3 2009/09/16 13:38:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.29.10.2 2009/07/18 14:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.29.10.3 2009/09/16 13:38:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,13 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.29.10.2 2009/07/18 14:53:25 yamt Exp $"
 MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
 #endif
 
-#ifdef __NetBSD__
-POOL_INIT(smbrq_pool, sizeof(struct smb_rq), 0, 0, 0, "smbrqpl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0, "smbt2pl",
-    &pool_allocator_nointr, IPL_NONE);
-#endif
-
 static int  smb_rq_init(struct smb_rq *, struct smb_connobj *, u_char,
 		struct smb_cred *);
 static int  smb_rq_getenv(struct smb_connobj *layer,
@@ -73,17 +66,25 @@ static int  smb_t2_init(struct smb_t2rq *, struct smb_connobj *, u_short,
 		struct smb_cred *);
 static int  smb_t2_reply(struct smb_t2rq *t2p);
 
-#ifndef __NetBSD__
-int
-smb_rqinit(void)
+static struct pool smbrq_pool, smbt2rq_pool;
+
+void
+smb_rqpool_init(void)
 {
-	pool_init(&smbrq_pool, sizeof(struct smb_rq), 0, 0, 0,
-		"smbrqpl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0,
-		"smbt2pl", &pool_allocator_nointr, IPL_NONE);
-	return (0);
+
+	pool_init(&smbrq_pool, sizeof(struct smb_rq), 0, 0, 0, "smbrqpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&smbt2rq_pool, sizeof(struct smb_t2rq), 0, 0, 0, "smbt2pl",
+	    &pool_allocator_nointr, IPL_NONE);
 }
-#endif
+
+void
+smb_rqpool_fini(void)
+{
+
+	pool_destroy(&smbrq_pool);
+	pool_destroy(&smbt2rq_pool);
+}
 
 int
 smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,

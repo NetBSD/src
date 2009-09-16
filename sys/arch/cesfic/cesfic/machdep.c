@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.10.2 2009/08/19 18:46:04 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.10.3 2009/09/16 13:37:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.10.2 2009/08/19 18:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.10.3 2009/09/16 13:37:37 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -531,7 +531,7 @@ dumpsys(void)
 	dump = bdev->d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %"PRIx64", offset %ld\n", dumpdev, dumplo);
 
 	printf("dump ");
 	maddr = lowram;

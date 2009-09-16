@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.29.4.2 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.29.4.3 2009/09/16 13:37:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.29.4.2 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.29.4.3 2009/09/16 13:37:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -92,6 +92,8 @@ struct	le_softc {
 
 int	lematch_ledma(device_t, cfdata_t, void *);
 void	leattach_ledma(device_t, device_t, void *);
+
+static void le_ledma_reset(device_t);
 
 /*
  * Media types supported by the Sun4m.
@@ -389,9 +391,9 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	lesc->sc_lostcount = 0;
 
-	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)lance_reset;
-	sbus_establish(&lesc->sc_sd, parent);
+	/* SBus is grandparent, but sbus_establish looks for it properly */
+	lesc->sc_sd.sd_reset = le_ledma_reset;
+	sbus_establish(&lesc->sc_sd, self);
 
 	sc->sc_mediachange = lemediachange;
 	sc->sc_mediastatus = lemediastatus;
@@ -422,4 +424,13 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 
 	/* now initialize DMA */
 	lehwreset(sc);
+}
+
+void
+le_ledma_reset(device_t self)
+{
+	struct le_softc *lesc = device_private(self);
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+
+	lance_reset(sc);
 }

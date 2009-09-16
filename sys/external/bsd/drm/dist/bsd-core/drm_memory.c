@@ -245,6 +245,7 @@ drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 int
 drm_mtrr_add(unsigned long offset, size_t size, int flags)
 {
+#ifdef MTRR_GETSET_KERNEL
 	struct mtrr mtrrmap;
 	int one = 1;
 
@@ -253,11 +254,15 @@ drm_mtrr_add(unsigned long offset, size_t size, int flags)
 	mtrrmap.type = flags;
 	mtrrmap.flags = MTRR_VALID;
 	return mtrr_set(&mtrrmap, &one, NULL, MTRR_GETSET_KERNEL);
+#else
+	return 0;
+#endif
 }
 
 int
-drm_mtrr_del(unsigned long offset, size_t size, int flags)
+drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 {
+#ifdef MTRR_GETSET_KERNEL
 	struct mtrr mtrrmap;
 	int one = 1;
 
@@ -266,5 +271,8 @@ drm_mtrr_del(unsigned long offset, size_t size, int flags)
 	mtrrmap.type = flags;
 	mtrrmap.flags = 0;
 	return mtrr_set(&mtrrmap, &one, NULL, MTRR_GETSET_KERNEL);
+#else
+	return 0;
+#endif
 }
 #endif

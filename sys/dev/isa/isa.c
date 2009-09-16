@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.133.4.3 2009/08/19 18:47:08 yamt Exp $	*/
+/*	$NetBSD: isa.c,v 1.133.4.4 2009/09/16 13:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.3 2009/08/19 18:47:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.4 2009/09/16 13:37:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ isadetach(device_t self, int flags)
 #if NISADMA > 0
 	isa_dmadestroy(sc->sc_ic);
 #endif
-	isa_detach_hook(self);
+	isa_detach_hook(sc->sc_ic, self);
 
 	return 0;
 }

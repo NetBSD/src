@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.29.4.3 2009/08/19 18:47:11 yamt Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.29.4.4 2009/09/16 13:37:50 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.3 2009/08/19 18:47:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.4 2009/09/16 13:37:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,12 +399,12 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	/* Finish off the attach. */
 	gem_attach(sc, enaddr);
 
-	if (!pmf_device_register1(sc->sc_dev, gem_pci_suspend, gem_pci_resume,
-	                          gem_shutdown)) {
+	if (pmf_device_register1(sc->sc_dev,
+	    gem_pci_suspend, gem_pci_resume, gem_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
+	else
 		aprint_error_dev(sc->sc_dev,
 		    "could not establish power handlers\n");
-	} else
-		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
 }
 
 static bool

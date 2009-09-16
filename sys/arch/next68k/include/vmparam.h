@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.78.1 2009/05/04 08:11:39 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.78.2 2009/09/16 13:37:41 yamt Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -177,8 +177,7 @@
  * pmap-specific data stored in the vm_physmem[] array.
  */
 struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv table for this seg */
-	char *attrs;			/* page attributes for this seg */
+	struct pv_header *pvheader;	/* pv table for this seg */
 };
 
 #endif /* _MVME68K_VMPARAM_H_ */

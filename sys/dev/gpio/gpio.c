@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.15.4.3 2009/08/19 18:47:05 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.15.4.4 2009/09/16 13:37:46 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.3 2009/08/19 18:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.4 2009/09/16 13:37:46 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -217,6 +217,30 @@ gpiobus_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+/* return 1 if all pins can be mapped, 0 if not */
+
+int
+gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
+{
+	struct gpio_softc *sc = gpio;
+	int npins, pin, i;
+
+	npins = gpio_npins(mask);
+	if (npins > sc->sc_npins)
+		return 0;
+
+	for (npins = 0, i = 0; i < 32; i++)
+		if (mask & (1 << i)) {
+			pin = offset + i;
+			if (pin < 0 || pin >= sc->sc_npins)
+				return 0;
+			if (sc->sc_pins[pin].pin_mapped)
+				return 0;
+		}
+
+	return 1;
+}
+
 int
 gpio_pin_map(void *gpio, int offset, u_int32_t mask, struct gpio_pinmap *map)
 {
@@ -366,7 +390,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	cfdata_t cf;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
-	int pin, value, flags, npins, found;
+	int pin, value, flags, npins;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
 	gc = sc->sc_gc;
@@ -483,8 +507,13 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
-                        
+
 		attach = (struct gpio_attach *)data;
+
+		/* do not try to attach if the pins are already mapped */
+		if (!gpio_pin_can_map(sc, attach->ga_offset, attach->ga_mask))
+			return EBUSY;
+
 		ga.ga_gpio = sc;
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
@@ -562,17 +591,21 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		/* rename pin or new pin? */
-		/* XXX avoid the creation of duplicates */
 		if (set->gp_name2[0] != '\0') {
-			found = 0;
-			LIST_FOREACH(nm, &sc->sc_names, gp_next)
-				if (nm->gp_pin == pin) {
-					strlcpy(nm->gp_name, set->gp_name2,
-					    sizeof(nm->gp_name));
-					found = 1;
-					break;
-				}
-			if (!found) {
+			struct gpio_name *gnm;
+
+			gnm = NULL;
+			LIST_FOREACH(nm, &sc->sc_names, gp_next) {
+				if (!strcmp(nm->gp_name, set->gp_name2) &&
+				    nm->gp_pin != pin)
+					return EINVAL;	/* duplicate name */
+				if (nm->gp_pin == pin)
+					gnm = nm;
+			}
+			if (gnm != NULL)
+				strlcpy(gnm->gp_name, set->gp_name2,
+				    sizeof(gnm->gp_name));
+			else  {
 				nm = kmem_alloc(sizeof(struct gpio_name),
 				    KM_SLEEP);
 				strlcpy(nm->gp_name, set->gp_name2,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.42.4.5 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.5 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,9 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.5 2009/08/19 18:48:29 yamt Exp $");
 
 #include <secmodel/secmodel.h>
 
+#include <prop/proplib.h>
+
 #include "rump_private.h"
 #include "rump_net_private.h"
 #include "rump_vfs_private.h"
+#include "rump_dev_private.h"
 
 struct proc proc0;
 struct session rump_session = {
@@ -116,12 +119,17 @@ void rump__unavailable(void);
 void rump__unavailable() {}
 __weak_alias(rump_net_init,rump__unavailable);
 __weak_alias(rump_vfs_init,rump__unavailable);
+__weak_alias(rump_dev_init,rump__unavailable);
+
+__weak_alias(biodone,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
 __weak_alias(vn_open,rump__unavailable_vfs_panic);
 __weak_alias(vn_rdwr,rump__unavailable_vfs_panic);
+__weak_alias(vn_stat,rump__unavailable_vfs_panic);
 __weak_alias(vn_close,rump__unavailable_vfs_panic);
+__weak_alias(namei,rump__unavailable_vfs_panic);
 
 static void
 pvfsinit_nop(struct proc *p)
@@ -201,6 +209,7 @@ rump__init(int rump_version)
 	evcnt_init();
 
 	once_init();
+	prop_kern_init();
 
 	rump_sleepers_init();
 
@@ -245,13 +254,14 @@ rump__init(int rump_version)
 	module_init();
 	sysctl_init();
 	softint_init(&rump_cpu);
-	cold = 0;
 	devsw_init();
 	secmodel_start();
 
 	/* these do nothing if not present */
 	rump_vfs_init();
 	rump_net_init();
+	rump_dev_init();
+	cold = 0;
 
 	/* aieeeedondest */
 	if (rump_threads) {
@@ -367,6 +377,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 		p->p_pid = pid;
 		p->p_vmspace = &rump_vmspace;
 		p->p_fd = fd_init(NULL);
+		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	} else {
 		p = &proc0;
 	}
@@ -402,6 +413,7 @@ rump_clear_curlwp(void)
 	l = rumpuser_get_curlwp();
 	p = l->l_proc;
 	if (p->p_pid != 0) {
+		mutex_obj_free(p->p_lock);
 		fd_free();
 		rump_proc_vfs_release(p);
 		rump_cred_put(l->l_cred);

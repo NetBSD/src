@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.102.2.5 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.5 2009/09/16 13:37:48 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $
  *
  *	o Jumbo frames
  *
- * 	o GMII and TBI ports/registers for interfacing with copper
+ *	o GMII and TBI ports/registers for interfacing with copper
  *	  or fiber PHYs
  *
  *      o RX and TX DMA rings can have up to 1024 descriptors
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -586,11 +585,12 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8168C_SPIN2:
 		case RTK_HWREV_8168CP:
 		case RTK_HWREV_8168D:
+		case RTK_HWREV_8168DP:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
 			/*
 			 * From FreeBSD driver:
-			 * 
+			 *
 			 * These (8168/8111) controllers support jumbo frame
 			 * but it seems that enabling it requires touching
 			 * additional magic registers. Depending on MAC
@@ -690,7 +690,7 @@ re_attach(struct rtk_softc *sc)
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't map tx list, error = %d\n", error);
-	  	goto fail_1;
+		goto fail_1;
 	}
 	memset(sc->re_ldata.re_tx_list, 0, RE_TX_LIST_SZ(sc));
 
@@ -833,6 +833,12 @@ re_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
+	if (pmf_device_register(sc->sc_dev, NULL, NULL))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
 	return;
 
  fail_8:
@@ -883,21 +889,14 @@ int
 re_activate(device_t self, enum devact act)
 {
 	struct rtk_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
-		mii_activate(&sc->mii, act, MII_PHY_ANY, MII_OFFSET_ANY);
 		if_deactivate(&sc->ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return error;
 }
 
 /*
@@ -955,6 +954,8 @@ re_detach(struct rtk_softc *sc)
 	    (void *)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
+
+	pmf_device_deregister(sc->sc_dev);
 
 	return 0;
 }
@@ -1389,7 +1390,7 @@ re_tick(void *arg)
 	struct rtk_softc *sc = arg;
 	int s;
 
-	/*XXX: just return for 8169S/8110S with rev 2 or newer phy */
+	/* XXX: just return for 8169S/8110S with rev 2 or newer phy */
 	s = splnet();
 
 	mii_tick(&sc->mii);
@@ -1636,12 +1637,9 @@ re_start(struct ifnet *ifp)
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 		if (__predict_false(pad)) {
-			bus_addr_t paddaddr;
-
 			d = &sc->re_ldata.re_tx_list[curdesc];
 			d->re_vlanctl = htole32(vlanctl);
-			paddaddr = RE_TXPADDADDR(sc);
-			re_set_bufaddr(d, paddaddr);
+			re_set_bufaddr(d, RE_TXPADDADDR(sc));
 			cmdstat = re_flags |
 			    RE_TDESC_CMD_OWN | RE_TDESC_CMD_EOF |
 			    (RE_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);

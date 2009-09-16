@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.100.4.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.100.4.4 2009/09/16 13:38:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.4 2009/09/16 13:38:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100.4.3 2009/07/18 14:53:23 yamt Exp 
  * #define PIPE_NODIRECT
  */
 
-/* XXX Disabled for now; rare hangs switching between direct/buffered */
+/* XXX Disabled for now; rare hangs switching between direct/buffered */        
 #define PIPE_NODIRECT
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);

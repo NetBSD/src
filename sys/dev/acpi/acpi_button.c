@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.25.14.2 2009/08/19 18:47:03 yamt Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.25.14.3 2009/09/16 13:37:45 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25.14.2 2009/08/19 18:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25.14.3 2009/09/16 13:37:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ static void
 acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
-	int rv;
+	ACPI_STATUS rv;
 
 	switch (notify) {
 	case ACPI_NOTIFY_S0PowerButtonPressed:

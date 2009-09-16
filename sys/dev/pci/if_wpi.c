@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.37.4.4 2009/09/16 13:37:52 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.4 2009/09/16 13:37:52 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -360,10 +360,10 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 
 	wpi_sysctlattach(sc);
 
-	if (!pmf_device_register(self, NULL, wpi_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
+	if (pmf_device_register(self, NULL, wpi_resume))
 		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,

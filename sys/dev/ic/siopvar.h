@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.25.10.1 2009/05/04 08:12:44 yamt Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.25.10.2 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -41,8 +41,8 @@
  */
 struct siop_xfer {
 	struct siop_common_xfer siop_tables;
-	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
-	u_int32_t resel[25];
+	/* uint32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
+	uint32_t resel[25];
 } __packed;
 
 /*
@@ -56,7 +56,7 @@ struct siop_cmd {
 	struct siop_common_cmd cmd_c;
 	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
 	int reselslot;
-	u_int32_t saved_offset; /* offset in table after disc without sdp */
+	uint32_t saved_offset; /* offset in table after disc without sdp */
 };
 #define cmd_tables cmd_c.siop_tables
 
@@ -94,8 +94,8 @@ struct siop_target {
 
 struct siop_lunsw {
 	TAILQ_ENTRY (siop_lunsw) next;
-	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
-	u_int32_t lunsw_size; /* size of this lun sw */
+	uint32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
+	uint32_t lunsw_size; /* size of this lun sw */
 };
 
 static __inline void siop_table_sync(struct siop_cmd *, int);
@@ -124,10 +124,10 @@ struct siop_softc {
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
-	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
-	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
+	uint32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
+	uint32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
 	int sc_ntargets;		/* number of known targets */
-	u_int32_t sc_flags;
+	uint32_t sc_flags;
 };
 
 /* defs for sc_flags */

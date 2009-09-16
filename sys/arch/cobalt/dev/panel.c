@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.17.4.1 2008/05/16 02:22:09 yamt Exp $ */
+/* $NetBSD: panel.c,v 1.17.4.2 2009/09/16 13:37:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.17.4.1 2008/05/16 02:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.17.4.2 2009/09/16 13:37:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.17.4.1 2008/05/16 02:22:09 yamt Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/select.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -76,14 +77,18 @@ static const struct lcd_message startup_message = {
 	"NetBSD/cobalt   ",
 	"Starting up...  "
 };
-static const struct lcd_message shutdown_message = {
+static const struct lcd_message halt_message = {
 	"NetBSD/cobalt   ",
-	"Shutting down..."
+	"Halting...      "
+};
+static const struct lcd_message reboot_message = {
+	"NetBSD/cobalt   ",
+	"Rebooting...    "
 };
 
 static int	panel_match(device_t, cfdata_t, void *);
 static void	panel_attach(device_t, device_t, void *);
-static void	panel_shutdown(void *);
+static bool	panel_shutdown(device_t, int);
 
 static void	panel_soft(void *);
 
@@ -139,6 +144,8 @@ panel_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_lcd.sc_iot, sc->sc_lcd.sc_ioir, DATA_OFFSET,
 	    1, &sc->sc_lcd.sc_iodr);
 
+	printf("\n");
+
 	sc->sc_lcd.sc_dev_ok = 1;
 	sc->sc_lcd.sc_cols = PANEL_COLS;
 	sc->sc_lcd.sc_vcols = PANEL_VCOLS;
@@ -156,7 +163,7 @@ panel_attach(device_t parent, device_t self, void *aux)
 	hd44780_ddram_io(&sc->sc_lcd, sc->sc_lcd.sc_curchip, &io,
 	    HD_DDRAM_WRITE);
 
-	shutdownhook_establish(panel_shutdown, sc);
+	pmf_device_register1(self, NULL, NULL, panel_shutdown);
 
 	sc->sc_kp.sc_iot = maa->ma_iot;
 	sc->sc_kp.sc_ioh = MIPS_PHYS_TO_KSEG1(PANEL_BASE); /* XXX */
@@ -169,22 +176,25 @@ panel_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_callout, 0);
 	selinit(&sc->sc_selq);
-
-	printf("\n");
 }
 
-static void
-panel_shutdown(void *arg)
+static bool
+panel_shutdown(device_t self, int howto)
 {
-	struct panel_softc *sc = arg;
+	struct panel_softc *sc = device_private(self);
 	struct hd44780_io io;
 
 	/* Goodbye World */
 	io.dat = 0;
 	io.len = PANEL_VCOLS * PANEL_ROWS;
-	memcpy(io.buf, &shutdown_message, io.len);
+	if (howto & RB_HALT)
+		memcpy(io.buf, &halt_message, io.len);
+	else
+		memcpy(io.buf, &reboot_message, io.len);
 	hd44780_ddram_io(&sc->sc_lcd, sc->sc_lcd.sc_curchip, &io,
 	    HD_DDRAM_WRITE);
+
+	return true;
 }
 
 static uint8_t

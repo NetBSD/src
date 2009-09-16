@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.25.4.2 2009/08/19 18:47:03 yamt Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.25.4.3 2009/09/16 13:37:45 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25.4.2 2009/08/19 18:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25.4.3 2009/09/16 13:37:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
 	struct acpilid_softc *sc = device_private(dv);
-	int rv;
+	ACPI_STATUS rv;
 
 	switch (notify) {
 	case ACPI_NOTIFY_LidStatusChanged:

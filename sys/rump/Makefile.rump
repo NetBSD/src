@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.6.10.2 2009/05/04 08:14:24 yamt Exp $
+#	$NetBSD: Makefile.rump,v 1.6.10.3 2009/09/16 13:38:03 yamt Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -12,6 +12,7 @@ CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 .endif
 
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
+CWARNFLAGS+=	-Wno-format-zero-length
 CPPFLAGS+=	-D_RUMPKERNEL
 CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
@@ -25,6 +26,9 @@ CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
 
+# make sure __NetBSD__ gets defined (for builds on non-NetBSD)
+CPPFLAGS+=	-D__NetBSD__
+
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
 # workaround: evbppc is not a well-defined arch
@@ -34,6 +38,15 @@ CPPFLAGS+=	-DPPC_OEA
 
 # If this file changes, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
+
+.ifdef RUMP_ISMODULE
+.PATH:		${RUMPTOP}/librump
+SRCS+=		rump_module.c
+.endif
+.ifdef RUMP_ISDOMAIN
+.PATH:		${RUMPTOP}/librump
+SRCS+=		rump_domain.c
+.endif
 
 #
 # Rename library symbols before use.  If a symbol does not already belong

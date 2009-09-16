@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.45.2.3 2009/06/20 07:20:35 yamt Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.45.2.4 2009/09/16 13:38:05 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -60,8 +60,8 @@ SRCS+=	clock_subr.c
 SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpvfs
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpdev
 CFLAGS+=	-Wno-pointer-sign
 AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 

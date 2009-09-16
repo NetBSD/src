@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.120.20.3 2009/08/19 18:46:31 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.3 2009/08/19 18:46:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -215,6 +215,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_swapin(struct lwp *l)
 {
+#if USPACE > PAGE_SIZE
 	pt_entry_t *pte;
 	int i, x;
 
@@ -229,6 +230,7 @@ cpu_swapin(struct lwp *l)
 	pte = kvtopte(l->l_addr);
 	for (i = 0; i < UPAGES; i++)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+#endif
 }
 
 void

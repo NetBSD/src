@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.4.2.4 2009/08/19 18:47:05 yamt Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.4.2.5 2009/09/16 13:37:46 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ dm_target_linear_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dic
 	aprint_debug("Linear target init function called %s--%"PRIu64"!!\n",
 	    device, offset);
 	
-	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_NOSLEEP))
+	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_SLEEP))
 	    == NULL)
 		return 1;
 
@@ -109,7 +109,7 @@ dm_target_linear_status(void *target_config)
 		
 	aprint_debug("Linear target status function called\n");
 
-	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_NOSLEEP)) == NULL)
+	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
 		return NULL;
 
 	aprint_normal("%s %"PRIu64, tlc->pdev->name, tlc->offset);

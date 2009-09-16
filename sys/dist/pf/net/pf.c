@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.4.3 2009/08/19 18:47:33 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.4.4 2009/09/16 13:37:59 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,16 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.3 2009/08/19 18:47:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.4 2009/09/16 13:37:59 yamt Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
 
-#ifndef __NetBSD__
 #include "pfsync.h"
-#else
-#define NPFSYNC	0
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

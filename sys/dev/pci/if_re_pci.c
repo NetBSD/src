@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.34.2.1 2009/05/04 08:12:57 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.34.2.2 2009/09/16 13:37:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,29 +46,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.34.2.1 2009/05/04 08:12:57 yamt Exp $");
-
-#include "bpfilter.h"
-#include "vlan.h"
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.34.2.2 2009/09/16 13:37:51 yamt Exp $");
 
 #include <sys/types.h>
 
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
-#include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-#include <net/if_vlanvar.h>
 
 #include <sys/bus.h>
 
@@ -298,9 +286,4 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 				bus_space_unmap(memt, memh, memsize);
 		}
 	}
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->ethercom.ec_if);
 }

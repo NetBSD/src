@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.235.4.3 2009/08/19 18:45:53 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.235.4.4 2009/09/16 13:37:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.3 2009/08/19 18:45:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.4 2009/09/16 13:37:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,11 +422,11 @@ struct pmap_tlb_shootdown_job {
 
 static struct pmap_tlb_shootdown_q {
 	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;	/* queue 16b */
-	kmutex_t pq_lock;		/* spin lock on queue 12b */
+	kmutex_t pq_lock;		/* spin lock on queue 16b */
 	int pq_pte;			/* aggregate PTE bits 4b */
 	int pq_count;			/* number of pending requests 4b */
 	int pq_tbia;			/* pending global flush 4b */
-	uint8_t pq_pad[64-16-12-4-4-4];	/* pad to 64 bytes */
+	uint8_t pq_pad[64-16-16-4-4-4];	/* pad to 64 bytes */
 } pmap_tlb_shootdown_q[ALPHA_MAXPROCS] __aligned(CACHE_LINE_SIZE);
 
 /* If we have more pending jobs than this, we just nail the whole TLB. */
@@ -3680,6 +3680,8 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 			continue;
 		}
 
+		cpumask |= 1UL << ci->ci_cpuid;
+
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		/*
@@ -3719,7 +3721,6 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 			pq->pq_count++;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
 		}
-		cpumask |= 1UL << ci->ci_cpuid;
 		mutex_spin_exit(&pq->pq_lock);
 	}
 

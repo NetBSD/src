@@ -1,5 +1,5 @@
-# $NetBSD: files.pad,v 1.2.28.1 2009/05/04 08:12:53 yamt Exp $
+# $NetBSD: files.pad,v 1.2.28.2 2009/09/16 13:37:50 yamt Exp $
 
-defpseudodev pad: audiobus, auconv, aurateconv
+defpseudodev pad: audiobus, auconv, aurateconv, mulaw
 file	dev/pad/pad.c		pad
 file	dev/pad/padvol.c	pad

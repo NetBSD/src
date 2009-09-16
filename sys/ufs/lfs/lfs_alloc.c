@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.106.10.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.106.10.2 2009/09/16 13:38:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.106.10.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.106.10.2 2009/09/16 13:38:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.106.10.1 2008/05/16 02:26:00 yamt Ex
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-extern kmutex_t ufs_hashlock;
 
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */

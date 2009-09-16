@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2009/06/20 07:20:35 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2009/09/16 13:38:04 yamt Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern					\
@@ -7,10 +7,12 @@
 LIB=	rumpdev_disk
 
 # sys/kern
-SRCS=	kern_physio.c subr_disk.c subr_disk_mbr.c
+#SRCS=	kern_physio.c subr_disk.c subr_disk_mbr.c subr_disk_open.c
 
 # sys/dev
-SRCS+=	dksubr.c dk.c
+#SRCS+=	dksubr.c dk.c
+
+SRCS+=	dummy.c
 
 CFLAGS+=	-Wno-pointer-sign
 

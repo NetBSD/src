@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.11.4.1 2008/05/16 02:24:05 yamt Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.11.4.2 2009/09/16 13:37:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -90,8 +90,6 @@ struct lance_softc {
 	int	sc_initmodemedia;
 
 	int	sc_havecarrier;	/* carrier status */
-
-	void	*sc_sh;		/* shutdownhook cookie */
 
 	uint16_t sc_conf3;	/* CSR3 value */
 	uint16_t sc_saved_csr0;/* Value of csr0 at time of interrupt */

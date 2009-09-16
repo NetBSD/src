@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.7.16.2 2009/05/04 08:12:19 yamt Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.7.16.3 2009/09/16 13:37:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.7.16.2 2009/05/04 08:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.7.16.3 2009/09/16 13:37:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ irix_kmemread(dev_t dev, struct uio *uio, int flag)
 	printf("irix_kmemread(): addr = %p\n", uio->uio_iov->iov_base);
 	printf("irix_kmemread(): len = 0x%08lx\n", (long)uio->uio_iov->iov_len);
 #endif
-	offset = (void *)(uint32_t)uio->uio_offset; /* XXX */
+	offset = (void *)(uintptr_t)uio->uio_offset; /* XXX */
 	if (offset == &averunnable) { /* load average */
 		struct irix_loadavg iav;
 		int scale = averunnable.fscale / IRIX_LOADAVG_SCALE;
