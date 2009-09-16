@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.77 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.78 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.77 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.78 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -74,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.77 2009/08/18 16:41:03 jmcneill Exp $")
 #include <dev/acpi/acpi_madt.h>
 
 #include <dev/cons.h>
+
+#define _COMPONENT     ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME       ("mpacpi")
 
 #include "pci.h"
 #include "ioapic.h"
@@ -554,14 +557,14 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 		/* add this device to the list only if it's active */
 		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
 		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
-			AcpiOsFree(devinfo);
+			ACPI_FREE(devinfo);
 			dev = kmem_zalloc(sizeof(struct ac_dev), KM_SLEEP);
 			if (dev == NULL)
 				return -1;
 			dev->handle = current;
 			TAILQ_INSERT_HEAD(&dev_list, dev, list);
 		} else
-			AcpiOsFree(devinfo);
+			ACPI_FREE(devinfo);
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
@@ -578,7 +581,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 			break;
 		}
 
-		AcpiOsFree(devinfo);
+		ACPI_FREE(devinfo);
 	}
 
 	/*
@@ -645,7 +648,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
 	if (mpr == NULL) {
-		AcpiOsFree(devinfo);
+		ACPI_FREE(devinfo);
 		return AE_NO_MEMORY;
 	}
 
@@ -697,7 +700,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	mpacpi_npci++;
 
  out:
-	AcpiOsFree(devinfo);
+	ACPI_FREE(devinfo);
 	return AE_OK;
 }
 
@@ -820,7 +823,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		mpb->mb_intrs = mpi;
 	}
 
-	AcpiOsFree(mpr->mpr_buf.Pointer);
+	ACPI_FREE(mpr->mpr_buf.Pointer);
 	mpr->mpr_buf.Pointer = NULL;	/* be preventive to bugs */
 
 	if (mp_verbose > 1)
