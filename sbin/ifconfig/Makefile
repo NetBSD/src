@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2009/09/16 14:59:45 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.46 2009/09/16 15:08:29 tsutsui Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -18,7 +18,7 @@ SRCS+= af_inet6.c
 
 .include "Makefile.inc"
 
-CPPFLAGS+=-I ${.CURDIR}/../../sys/dist/pf/
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/pf/
 SRCS+= pfsync.c
 
 .if ${MACHINE_ARCH} == "m68000"
