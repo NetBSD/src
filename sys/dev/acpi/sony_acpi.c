@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.10 2009/08/19 00:19:37 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.10 2009/08/19 00:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.10 2009/08/19 00:19:37 christos Exp 
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpireg.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("sony_acpi")
 
 #define	SONY_NOTIFY_FnKeyEvent			0x92
 #define	SONY_NOTIFY_BrightnessDownPressed	0x85
@@ -458,7 +462,7 @@ sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
 	    strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 
-	AcpiOsFree(devinfo);
+	ACPI_FREE(devinfo);
 
 	return AE_OK;
 }

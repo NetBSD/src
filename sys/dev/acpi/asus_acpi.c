@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.10 2009/08/04 23:23:39 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.10 2009/08/04 23:23:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.10 2009/08/04 23:23:39 jmcneill Exp 
 #include <sys/sysctl.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpireg.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("asus_acpi")
 
 struct asus_softc {
 	device_t		sc_dev;
@@ -245,7 +249,7 @@ asus_init(device_t self)
 	ACPI_INTEGER cfv;
 
 	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
+	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	param.Type = ACPI_TYPE_INTEGER;
 	param.Integer.Value = 0x40;	/* disable ASL display switching */
 	params.Pointer = &param;
@@ -258,7 +262,7 @@ asus_init(device_t self)
 		    AcpiFormatException(rv));
 
 	if (ret.Pointer)
-		AcpiOsFree(ret.Pointer);
+		ACPI_FREE(ret.Pointer);
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, ASUS_METHOD_CFVG, &cfv);
 	if (ACPI_FAILURE(rv))
@@ -296,7 +300,7 @@ asus_resume(device_t self PMF_FN_ARGS)
 
 	/* restore previous display brightness */
 	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
+	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	param.Type = ACPI_TYPE_INTEGER;
 	param.Integer.Value = sc->sc_brightness;
 	params.Pointer = &param;

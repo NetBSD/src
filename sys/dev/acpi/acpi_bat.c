@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.72 2009/08/25 10:34:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.73 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.72 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.73 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.72 2009/08/25 10:34:08 jmcneill Exp $
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_BAT_COMPONENT
+ACPI_MODULE_NAME            ("acpi_bat")
 
 /* sensor indexes */
 #define ACPIBAT_PRESENT		0
@@ -417,7 +420,7 @@ acpibat_get_info(device_t dv)
 	rv = AE_OK;
 
 out:
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 	return rv;
 }
 
@@ -512,7 +515,7 @@ acpibat_get_status(device_t dv)
 	rv = AE_OK;
 
 out:
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.35 2009/02/17 12:46:01 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.36 2009/09/16 10:47:55 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.35 2009/02/17 12:46:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.36 2009/09/16 10:47:55 mlelstv Exp $");
 
 #include "rnd.h"
 
@@ -62,6 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.35 2009/02/17 12:46:01 jmcneill Exp $
 #include <dev/isa/fdreg.h>
 
 #include <dev/acpi/fdc_acpireg.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("fdc_acpi")
 
 static int	fdc_acpi_match(device_t, cfdata_t, void *);
 static void	fdc_acpi_attach(device_t, device_t, void *);
@@ -283,7 +286,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	 */
 
 out:
-	AcpiOsFree(abuf.Pointer);
+	ACPI_FREE(abuf.Pointer);
 	return drives;
 }
 
@@ -326,7 +329,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_present &= ~(1 << i);
 
 out:
-		AcpiOsFree(abuf.Pointer);
+		ACPI_FREE(abuf.Pointer);
 	}
 }
 

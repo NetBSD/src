@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.7 2009/09/16 10:47:54 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.7 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 	rp->ap_resource = res;
 
 	/* get the Power Resource object */
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	status = AcpiEvaluateObject(res, NULL, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
@@ -184,7 +184,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 			     acpi_name(res)));
  out:
 	if (buf.Pointer != NULL)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	if (ACPI_FAILURE(status) && (rp != NULL))
 		free(rp, M_ACPIPWR);
 	return_ACPI_STATUS(status);
@@ -370,7 +370,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		if (ACPI_FAILURE(AcpiGetHandle(consumer, "_PR0", &pr0_handle))) {
 			goto bad;
 		}
-		reslist_buffer.Length = ACPI_ALLOCATE_BUFFER;
+		reslist_buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 		status = AcpiEvaluateObject(pr0_handle, NULL, NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status))
 			goto bad;
@@ -379,7 +379,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		    (reslist_object->Package.Count == 0)) {
 			goto bad;
 		}
-		AcpiOsFree(reslist_buffer.Pointer);
+		ACPI_FREE(reslist_buffer.Pointer);
 		reslist_buffer.Pointer = NULL;
 		reslist_object = NULL;
 	}
@@ -388,7 +388,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	 * Check that we can actually fetch the list of power resources
 	 */
 	if (reslist_handle != NULL) {
-		reslist_buffer.Length = ACPI_ALLOCATE_BUFFER;
+		reslist_buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 		status = AcpiEvaluateObject(reslist_handle, NULL, NULL,
 		    &reslist_buffer);
 		if (ACPI_FAILURE(status)) {
@@ -471,7 +471,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 
  out:
 	if (reslist_buffer.Pointer != NULL)
-		AcpiOsFree(reslist_buffer.Pointer);
+		ACPI_FREE(reslist_buffer.Pointer);
 	return_ACPI_STATUS(status);
 }
 

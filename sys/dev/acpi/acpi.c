@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.131 2009/08/25 10:34:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.132 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.131 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.132 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -93,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.131 2009/08/25 10:34:08 jmcneill Exp $");
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif
+
+#define _COMPONENT          ACPI_TOOLS 
+ACPI_MODULE_NAME            ("acpi")
 
 #if defined(ACPI_PCI_FIXUP)
 #error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP_DISABLED.  Please adjust your kernel configuration file.
@@ -834,7 +837,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	}
 
 	(void)AcpiGetObjectInfo(handle, &newdi);
-	AcpiOsFree(*di);
+	ACPI_FREE(*di);
 	*di = newdi;
 
 #ifdef ACPI_DEBUG
@@ -964,7 +967,7 @@ acpi_print(void *aux, const char *pnp)
 			    pnpstr);
 
 			buf.Pointer = NULL;
-			buf.Length = ACPI_ALLOCATE_BUFFER;
+			buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 			rv = AcpiEvaluateObject(aa->aa_node->ad_handle,
 			    "_STR", NULL, &buf);
 			if (ACPI_SUCCESS(rv)) {
@@ -980,7 +983,7 @@ acpi_print(void *aux, const char *pnp)
 					aprint_normal("type %d ",obj->Type);
 					break;
 				}
-				AcpiOsFree(buf.Pointer);
+				ACPI_FREE(buf.Pointer);
 			}
 #ifdef ACPIVERBOSE
 			else {
@@ -1182,18 +1185,18 @@ acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
 		handle = ACPI_ROOT_OBJECT;
 
 	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
 	if (ACPI_SUCCESS(rv)) {
 		ACPI_OBJECT *param = buf.Pointer;
 		const char *ptr = param->String.Pointer;
 		size_t len = param->String.Length;
-		if ((*stringp = AcpiOsAllocate(len)) == NULL)
+		if ((*stringp = ACPI_ALLOCATE(len)) == NULL)
 			rv = AE_NO_MEMORY;
 		else
 			(void)memcpy(*stringp, ptr, len);
-		AcpiOsFree(param);
+		ACPI_FREE(param);
 	}
 
 	return rv;
@@ -1204,7 +1207,7 @@ acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
  * acpi_eval_struct:
  *
  *	Evaluate a more complex structure.
- *	Caller must free buf.Pointer by AcpiOsFree().
+ *	Caller must free buf.Pointer by ACPI_FREE().
  */
 ACPI_STATUS
 acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *bufp)
@@ -1215,7 +1218,7 @@ acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *bufp)
 		handle = ACPI_ROOT_OBJECT;
 
 	bufp->Pointer = NULL;
-	bufp->Length = ACPI_ALLOCATE_BUFFER;
+	bufp->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
 
@@ -1270,14 +1273,14 @@ acpi_name(ACPI_HANDLE handle)
  * acpi_get:
  *
  *	Fetch data info the specified (empty) ACPI buffer.
- *	Caller must free buf.Pointer by AcpiOsFree().
+ *	Caller must free buf.Pointer by ACPI_FREE().
  */
 ACPI_STATUS
 acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
     ACPI_STATUS (*getit)(ACPI_HANDLE, ACPI_BUFFER *))
 {
 	buf->Pointer = NULL;
-	buf->Length = ACPI_ALLOCATE_BUFFER;
+	buf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	return (*getit)(handle, buf);
 }
@@ -1342,7 +1345,7 @@ acpi_wake_gpe_helper(ACPI_HANDLE handle, bool enable)
 		AcpiDisableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
 
  out:
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 }
 
 /*
@@ -1563,9 +1566,9 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 out3:
 	free(bufn.Pointer, M_ACPI);
 out2:
-	AcpiOsFree(bufc.Pointer);
+	ACPI_FREE(bufc.Pointer);
 out1:
-	AcpiOsFree(bufp.Pointer);
+	ACPI_FREE(bufp.Pointer);
 out:
 	return rv;
 }

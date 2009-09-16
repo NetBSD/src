@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.5 2005/12/11 12:21:02 christos Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.6 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -319,3 +319,4 @@
 #define	ACPI_EC_COMPONENT	0x00100000
 #define	ACPI_LID_COMPONENT	0x00200000
 #define	ACPI_RESOURCE_COMPONENT	0x00400000
+#define	ACPI_TZ_COMPONENT	0x00800000

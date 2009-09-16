@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.46 2009/08/25 10:34:08 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.47 2009/09/16 10:47:54 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.46 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.47 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.46 2009/08/25 10:34:08 jmcneill Exp $"
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_TZ_COMPONENT
+ACPI_MODULE_NAME            ("acpi_tz")
 
 /* flags */
 #define ATZ_F_VERBOSE		0x01	/* show events to console */
@@ -428,7 +431,7 @@ acpitz_get_zone(void *opaque, int verbose)
 
 		for (i = 0; i < ATZ_NLEVELS; i++) {
 			if (sc->sc_zone.al[i].Pointer != NULL)
-				AcpiOsFree(sc->sc_zone.al[i].Pointer);
+				ACPI_FREE(sc->sc_zone.al[i].Pointer);
 			sc->sc_zone.al[i].Pointer = NULL;
 		}
 	} else
@@ -455,7 +458,7 @@ acpitz_get_zone(void *opaque, int verbose)
 		if (obj != NULL) {
 			if (obj->Type != ACPI_TYPE_PACKAGE) {
 				aprint_error("%d not package\n", i);
-				AcpiOsFree(obj);
+				ACPI_FREE(obj);
 				sc->sc_zone.al[i].Pointer = NULL;
 				continue;
 			}
@@ -471,7 +474,7 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_get_integer(dv, "_TMP", &sc->sc_zone.tmp);
 	acpitz_get_integer(dv, "_CRT", &sc->sc_zone.crt);
 	acpitz_get_integer(dv, "_HOT", &sc->sc_zone.hot);
-	sc->sc_zone.psl.Length = ACPI_ALLOCATE_BUFFER;
+	sc->sc_zone.psl.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	sc->sc_zone.psl.Pointer = NULL;
 	AcpiEvaluateObject(sc, "_PSL", NULL, &sc->sc_zone.psl);
 	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);

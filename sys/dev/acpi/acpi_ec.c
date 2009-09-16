@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.56 2009/07/06 00:54:00 alc Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.57 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.56 2009/07/06 00:54:00 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.57 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.56 2009/07/06 00:54:00 alc Exp $");
 
 #include <sys/bus.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
+
+#define _COMPONENT          ACPI_EC_COMPONENT
+ACPI_MODULE_NAME            ("acpi_ec")
 
 /* Maximum time to wait for global ACPI lock in ms */
 #define	EC_LOCK_TIMEOUT		5
@@ -438,19 +442,19 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 	if (p->Type == ACPI_TYPE_INTEGER) {
 		*gpe_handle = NULL;
 		*gpebit = p->Integer.Value;
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return true;
 	}
 
 	if (p->Type != ACPI_TYPE_PACKAGE) {
 		aprint_error_dev(self, "_GPE is neither integer nor package\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 	
 	if (p->Package.Count != 2) {
 		aprint_error_dev(self, "_GPE package does not contain 2 elements\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 
@@ -466,24 +470,24 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 		if (rv != AE_OK) {
 			aprint_error_dev(self,
 			    "_GPE device reference unresolvable\n");
-			AcpiOsFree(p);
+			ACPI_FREE(p);
 			return false;
 		}
 		break;
 	default:
 		aprint_error_dev(self, "_GPE device reference incorrect\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 	c = &p->Package.Elements[1];
 	if (c->Type != ACPI_TYPE_INTEGER) {
 		aprint_error_dev(self,
 		    "_GPE package needs integer as 2nd field\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 	*gpebit = c->Integer.Value;
-	AcpiOsFree(p);
+	ACPI_FREE(p);
 	return true;
 }
 

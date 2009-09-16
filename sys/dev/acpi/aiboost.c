@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.26 2009/05/12 09:29:46 cegger Exp $ */
+/* $NetBSD: aiboost.c,v 1.27 2009/09/16 10:47:54 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.26 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.27 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.26 2009/05/12 09:29:46 cegger Exp $");
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("aiboost")
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -284,7 +287,7 @@ aiboost_get_value(ACPI_HANDLE handle, const char *path, UINT32 number)
 	ACPI_OBJECT_LIST args;
 	ACPI_BUFFER buf;
 	int val;	
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	buf.Pointer = 0;
 
 	arg1.Type = ACPI_TYPE_INTEGER;
@@ -298,7 +301,7 @@ aiboost_get_value(ACPI_HANDLE handle, const char *path, UINT32 number)
 	ret = buf.Pointer;
 	val = (ret->Type == ACPI_TYPE_INTEGER) ? ret->Integer.Value : -1;
 
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 	return val;
 
 }
@@ -428,19 +431,19 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		(void)memcpy(c->elem[i].desc, str, length);
 
 		if (buf2.Pointer)
-			AcpiOsFree(buf2.Pointer);
+			ACPI_FREE(buf2.Pointer);
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 
 	return 0;
 
 error:
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	if (buf2.Pointer)
-		AcpiOsFree(buf2.Pointer);
+		ACPI_FREE(buf2.Pointer);
 	if (c)
 		kmem_free(c, clen);
 
