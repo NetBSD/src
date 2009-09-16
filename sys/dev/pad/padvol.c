@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.c,v 1.3 2008/06/06 20:51:51 mlelstv Exp $ */
+/* $NetBSD: padvol.c,v 1.3.8.1 2009/09/16 03:50:42 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.3 2008/06/06 20:51:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.3.8.1 2009/09/16 03:50:42 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_le)
 	int m, err;
 
 	pf = (pad_filter_t *)self;
-	sc = (pad_softc_t *)pf->audiosc->sc_dev;
+	sc = device_private(pf->audiosc->sc_dev);
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
@@ -105,7 +105,7 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_be)
 	int m, err;
 
 	pf = (pad_filter_t *)self;
-	sc = (pad_softc_t *)pf->audiosc->sc_dev;
+	sc = device_private(pf->audiosc->sc_dev);
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
