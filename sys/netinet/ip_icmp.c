@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.120 2008/06/18 09:06:28 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.121 2009/09/16 15:23:05 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.120 2008/06/18 09:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.121 2009/09/16 15:23:05 pooka Exp $");
 
 #include "opt_ipsec.h"
 
@@ -178,10 +178,14 @@ static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 static int icmp_ratelimit(const struct in_addr *, const int, const int);
 
+static void sysctl_netinet_icmp_setup(struct sysctllog **);
 
 void
 icmp_init(void)
 {
+
+	sysctl_netinet_icmp_setup(NULL);
+
 	/*
 	 * This is only useful if the user initializes redirtimeout to
 	 * something other than zero.
@@ -983,7 +987,8 @@ sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(icmpstat_percpu, ICMP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
+static void
+sysctl_netinet_icmp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.8 2008/11/20 10:00:54 ad Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.9 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8 2008/11/20 10:00:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.9 2009/09/16 15:23:04 pooka Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -87,7 +87,8 @@ static LIST_HEAD(, accept_filter) accept_filtlsthd =
 /*
  * Names of Accept filter sysctl objects
  */
-SYSCTL_SETUP(sysctl_net_inet_accf_setup, "sysctl net.inet.accf subtree setup")
+static void
+sysctl_net_inet_accf_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -184,6 +185,7 @@ accept_filter_init0(void)
 {
 
 	rw_init(&accept_filter_lock);
+	sysctl_net_inet_accf_setup(NULL);
 
 	return 0;
 }

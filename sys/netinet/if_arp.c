@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.146 2009/08/12 22:16:15 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.147 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.146 2009/08/12 22:16:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.147 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -318,10 +318,13 @@ do {									\
 
 #define	ARP_UNLOCK()		arp_unlock()
 
+static void sysctl_net_inet_arp_setup(struct sysctllog **);
+
 void
 arp_init(void)
 {
 
+	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
 }
 
@@ -1594,7 +1597,8 @@ sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
 	return NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS);
 }
 
-SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
+static void
+sysctl_net_inet_arp_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 

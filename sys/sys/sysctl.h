@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.186 2009/08/21 22:51:00 dyoung Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.187 2009/09/16 15:23:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1129,6 +1129,7 @@ void	fill_eproc(struct proc *, struct eproc *, bool);
  * subsystem setup
  */
 void	sysctl_init(void);
+void	sysctl_finalize(void);
 
 /*
  * typical syscall call order

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.399 2009/09/13 18:45:10 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.400 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.399 2009/09/13 18:45:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.400 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -588,6 +588,8 @@ main(void)
 	 * selected, since finalization may create the root device.
 	 */
 	config_finalize();
+
+	sysctl_finalize();
 
 	/*
 	 * Now that autoconfiguration has completed, we can determine

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.152 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.153 2009/09/16 15:23:05 pooka Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.152 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.153 2009/09/16 15:23:05 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -170,11 +170,14 @@ static int icmp6_notify_error(struct mbuf *, int, int, int);
 static struct rtentry *icmp6_mtudisc_clone(struct sockaddr *);
 static void icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
+static void sysctl_net_inet6_icmp6_setup(struct sysctllog **);
 
 
 void
 icmp6_init(void)
 {
+
+	sysctl_net_inet6_icmp6_setup(NULL);
 	mld_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
@@ -2756,8 +2759,8 @@ sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(icmp6stat_percpu, ICMP6_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
-	     "sysctl net.inet6.icmp6 subtree setup")
+static void
+sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 {
 	extern int nd6_maxqueuelen; /* defined in nd6.c */
 

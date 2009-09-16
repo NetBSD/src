@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.236 2009/09/15 23:24:34 jakllsch Exp $	*/
+/*	$NetBSD: if.c,v 1.237 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.236 2009/09/15 23:24:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.237 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -170,6 +170,9 @@ static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 
+static void sysctl_net_ifq_setup(struct sysctllog **, int, const char *,
+				 int, const char *, int, struct ifqueue *);
+
 /*
  * Network interface utility routines.
  *
@@ -179,6 +182,16 @@ static void sysctl_sndq_setup(struct sysctllog **, const char *,
 void
 ifinit(void)
 {
+#ifdef INET
+	{extern struct ifqueue ipintrq;
+	sysctl_net_ifq_setup(NULL, PF_INET, "inet", IPPROTO_IP, "ip",
+			     IPCTL_IFQ, &ipintrq);}
+#endif /* INET */
+#ifdef INET6
+	{extern struct ifqueue ip6intrq;
+	sysctl_net_ifq_setup(NULL, PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
+			     IPV6CTL_IFQ, &ip6intrq);}
+#endif /* INET6 */
 
 	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 	callout_init(&if_slowtimo_ch, 0);
@@ -2076,26 +2089,4 @@ sysctl_net_ifq_setup(struct sysctllog **clog,
 		       NULL, 0, &ifq->ifq_drops, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
 }
-
-#ifdef INET
-SYSCTL_SETUP(sysctl_net_inet_ip_ifq_setup,
-	     "sysctl net.inet.ip.ifq subtree setup")
-{
-	extern struct ifqueue ipintrq;
-
-	sysctl_net_ifq_setup(clog, PF_INET, "inet", IPPROTO_IP, "ip",
-			     IPCTL_IFQ, &ipintrq);
-}
-#endif /* INET */
-
-#ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_ip6_ifq_setup,
-	     "sysctl net.inet6.ip6.ifq subtree setup")
-{
-	extern struct ifqueue ip6intrq;
-
-	sysctl_net_ifq_setup(clog, PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
-			     IPV6CTL_IFQ, &ip6intrq);
-}
-#endif /* INET6 */
 #endif /* INET || INET6 */

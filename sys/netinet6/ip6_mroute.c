@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.97 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.98 2009/09/16 15:23:05 pooka Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.97 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.98 2009/09/16 15:23:05 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -293,6 +293,7 @@ static int add_m6if(struct mif6ctl *);
 static int del_m6if(mifi_t *);
 static int add_m6fc(struct mf6cctl *);
 static int del_m6fc(struct mf6cctl *);
+static void sysctl_net_inet6_pim6_setup(struct sysctllog **);
 
 static callout_t expire_upcalls_ch;
 
@@ -300,6 +301,7 @@ void
 pim6_init(void)
 {
 
+	sysctl_net_inet6_pim6_setup(NULL);
 	pim6stat_percpu = percpu_alloc(sizeof(uint64_t) * PIM6_NSTATS);
 }
 
@@ -1934,7 +1936,8 @@ sysctl_net_inet6_pim6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(pim6stat_percpu, PIM6_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet6_pim6_setup, "sysctl net.inet6.pim6 subtree setup")
+static void
+sysctl_net_inet6_pim6_setup(struct sysctllog **clog)
 {
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.40 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.41 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.40 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41 2009/09/16 15:23:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,12 +102,16 @@ static long syncer_last;
 static struct synclist *syncer_workitem_pending;
 struct lwp *updateproc = NULL;
 
+static void sysctl_vfs_syncfs_setup(struct sysctllog **);
+
 void
 vn_initialize_syncerd(void)
 {
 	int i;
 
 	syncer_last = SYNCER_MAXDELAY + 2;
+
+	sysctl_vfs_syncfs_setup(NULL);
 
 	syncer_workitem_pending =
 	    kmem_alloc(syncer_last * sizeof (struct synclist), KM_SLEEP);
@@ -344,7 +348,8 @@ speedup_syncer(void)
 	return (1);
 }
 
-SYSCTL_SETUP(sysctl_vfs_syncfs_setup, "sysctl vfs.sync subtree setup")
+static void
+sysctl_vfs_syncfs_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode, *cnode;
         

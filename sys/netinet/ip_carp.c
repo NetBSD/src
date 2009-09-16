@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.38 2009/06/07 06:11:18 taca Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.39 2009/09/16 15:23:05 pooka Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.38 2009/06/07 06:11:18 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.39 2009/09/16 15:23:05 pooka Exp $");
 
 /*
  * TODO:
@@ -218,6 +218,8 @@ int	carp_clone_destroy(struct ifnet *);
 int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
 int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 void	carp_ether_purgemulti(struct carp_softc *);
+
+static void sysctl_net_inet_carp_setup(struct sysctllog **);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -2252,7 +2254,15 @@ sysctl_net_inet_carp_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(carpstat_percpu, CARP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")
+void
+carp_init(void)
+{
+
+	sysctl_net_inet_carp_setup(NULL);
+}
+
+static void
+sysctl_net_inet_carp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

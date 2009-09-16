@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.117 2009/04/02 21:02:06 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.118 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.117 2009/04/02 21:02:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.118 2009/09/16 15:23:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -143,7 +143,9 @@ static int rtflushclone1(struct rtentry *, void *);
 static void rtflushclone(sa_family_t family, struct rtentry *);
 
 #ifdef RTFLUSH_DEBUG
-SYSCTL_SETUP(sysctl_net_rtcache_setup, "sysctl net.rtcache.debug setup")
+static void sysctl_net_rtcache_setup(struct sysctllog **);
+static void
+sysctl_net_rtcache_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
@@ -261,6 +263,10 @@ rtable_init(void **table)
 void
 route_init(void)
 {
+
+#ifdef RTFLUSH_DEBUG
+	sysctl_net_rtcache_setup(NULL);
+#endif
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
 	    NULL, IPL_SOFTNET);

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.181 2009/09/06 16:18:56 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.182 2009/09/16 15:23:04 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.181 2009/09/06 16:18:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.182 2009/09/16 15:23:04 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -225,6 +225,8 @@ static int config_initialized;		/* config_init() has been called. */
 static int config_do_twiddle;
 static callout_t config_twiddle_ch;
 
+static void sysctl_detach_setup(struct sysctllog **);
+
 /*
  * Initialize the autoconfiguration data structures.  Normally this
  * is done by configure(), but some platforms need to do this very
@@ -267,6 +269,7 @@ config_init(void)
 
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
+	sysctl_detach_setup(NULL);
 
 	config_initialized = 1;
 }
@@ -2578,7 +2581,8 @@ deviter_release(deviter_t *di)
 	mutex_exit(&alldevs_mtx);
 }
 
-SYSCTL_SETUP(sysctl_detach_setup, "sysctl detach setup")
+static void
+sysctl_detach_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node = NULL;
 

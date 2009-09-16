@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.50 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: igmp.c,v 1.51 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.50 2009/09/13 18:45:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.51 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_mrouting.h"
 
@@ -81,6 +81,8 @@ void igmp_sendpkt(struct in_multi *, int);
 static int rti_fill(struct in_multi *);
 static struct router_info *rti_find(struct ifnet *);
 static void rti_delete(struct ifnet *);
+
+static void sysctl_net_inet_igmp_setup(struct sysctllog **);
 
 static int
 rti_fill(struct in_multi *inm)
@@ -149,6 +151,7 @@ void
 igmp_init(void)
 {
 
+	sysctl_net_inet_igmp_setup(NULL);
 	pool_init(&igmp_rti_pool, sizeof(struct router_info), 0, 0, 0,
 	    "igmppl", NULL, IPL_SOFTNET);
 	igmpstat_percpu = percpu_alloc(sizeof(uint64_t) * IGMP_NSTATS);
@@ -608,7 +611,8 @@ sysctl_net_inet_igmp_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(igmpstat_percpu, IGMP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_igmp_setup, "sysctl net.inet.igmp subtree setup")
+static void
+sysctl_net_inet_igmp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
