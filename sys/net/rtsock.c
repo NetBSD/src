@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.126 2009/09/12 18:09:25 tsutsui Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.127 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.126 2009/09/12 18:09:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -106,6 +106,7 @@ static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
 static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
     struct rt_addrinfo *);
+static void sysctl_net_route_setup(struct sysctllog **);
 static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct rt_walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
@@ -1218,6 +1219,7 @@ void
 rt_init(void)
 {
 
+	sysctl_net_route_setup(NULL);
 	route_intrq.ifq_maxlen = route_maxqlen;
 	route_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    route_intr, NULL);
@@ -1250,7 +1252,8 @@ struct domain routedomain = {
 	.dom_protoswNPROTOSW = &routesw[__arraycount(routesw)],
 };
 
-SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
+static void
+sysctl_net_route_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
 

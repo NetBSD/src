@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.225 2009/08/24 20:53:00 dyoung Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.226 2009/09/16 15:23:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.225 2009/08/24 20:53:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.226 2009/09/16 15:23:04 pooka Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -235,14 +235,20 @@ sysctl_init(void)
 		f = (void*)*sysctl_setup;
 		(*f)(NULL);
 	}
+}
 
-	/*
-	 * setting this means no more permanent nodes can be added,
-	 * trees that claim to be readonly at the root now are, and if
-	 * the main tree is readonly, *everything* is.
-	 */
+/*
+ * Setting this means no more permanent nodes can be added,
+ * trees that claim to be readonly at the root now are, and if
+ * the main tree is readonly, *everything* is.
+ *
+ * Call this at the end of kernel init.
+ */
+void
+sysctl_finalize(void)
+{
+
 	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
-
 }
 
 /*
