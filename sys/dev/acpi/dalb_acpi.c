@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.2 2008/06/01 23:35:18 jmcneill Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.3 2009/09/16 10:47:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2 2008/06/01 23:35:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.3 2009/09/16 10:47:55 mlelstv Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -46,6 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2 2008/06/01 23:35:18 jmcneill Exp $
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpireg.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("dalb_acpi")
 
 #define DALB_ID_INVALID		-1
 
@@ -121,7 +125,7 @@ acpi_dalb_init(device_t dev)
 	ACPI_BUFFER ret;
 
 	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
+	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
 	if (ACPI_FAILURE(rv) || ret.Pointer == NULL) {
@@ -156,7 +160,7 @@ acpi_dalb_init(device_t dev)
 	}
 
 out:
-	AcpiOsFree(ret.Pointer);
+	ACPI_FREE(ret.Pointer);
 }
 
 static void
@@ -252,7 +256,7 @@ acpi_dalb_resume(device_t dev PMF_FN_ARGS)
 	ACPI_BUFFER ret;
 
 	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
+	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
 	if (ACPI_FAILURE(rv)) {
@@ -261,7 +265,7 @@ acpi_dalb_resume(device_t dev PMF_FN_ARGS)
 		return false;
 	}
 	if (ret.Pointer)
-		AcpiOsFree(ret.Pointer);
+		ACPI_FREE(ret.Pointer);
 
 	return true;
 }
