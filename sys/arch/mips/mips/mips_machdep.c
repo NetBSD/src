@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.13 2009/09/15 06:51:02 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.14 2009/09/16 04:23:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.13 2009/09/15 06:51:02 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.14 2009/09/16 04:23:19 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1631,8 +1631,8 @@ savefpregs(struct lwp *l)
 		"cfc1	%1, $31"				"\n\t"
 		".set reorder"					"\n\t"
 		".set at" 
-		: "=r" (status), "=r"(fpcsr)
-		: "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR)));
+		: "=&r" (status), "=r"(fpcsr)
+		: "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
 
 	/*
 	 * Make sure we don't reenable FP when we return to userspace.
@@ -1766,8 +1766,8 @@ loadfpregs(struct lwp *l)
 		___STRING(COP0_HAZARD_FPUENABLE)
 		".set reorder"					"\n\t"
 		".set at"
-	    : "=r"(status)
-	    : "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR)));
+	    : "=&r"(status)
+	    : "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
 
 	/*
 	 * load FP registers and establish processes' FP context.
