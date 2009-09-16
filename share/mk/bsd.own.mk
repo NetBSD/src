@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.574 2009/09/12 07:21:09 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.575 2009/09/16 06:10:52 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -710,7 +710,7 @@ ${var}?=no
 	${MACHINE} == "hpcsh" || ${MACHINE} == "mac68k" || \
 	${MACHINE} == "netwinder" || ${MACHINE} == "newsmips" || \
 	${MACHINE} == "ofppc" || ${MACHINE} == "pmax" || \
-	${MACHINE} == "sparc" || ${MACHINE} == "sun3" || ${MACHINE} == "x68k"
+	${MACHINE} == "sun3" || ${MACHINE} == "x68k"
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
