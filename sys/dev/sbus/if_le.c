@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.37 2009/09/08 18:15:17 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.38 2009/09/16 11:17:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.37 2009/09/08 18:15:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.38 2009/09/16 11:17:19 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -147,10 +147,9 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 {
 	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	struct sbus_softc *sbsc = device_private(parent);
 	struct sbus_attach_args *sa = aux;
 	bus_dma_tag_t dmatag;
-	struct sbusdev *sd;
+	cfdriver_t lebufcd;
 
 	sc->sc_dev = self;
 	lesc->sc_bustag = sa->sa_bustag;
@@ -171,26 +170,51 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 	 * a pre-historic ROM that doesn't establish le<=>lebuffer
 	 * parent-child relationships.
 	 */
-	for (sd = sbsc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
+	lebufcd = config_cfdriver_lookup("lebuffer");
+	if (lebufcd != NULL) {
+		int unit;
 
-		struct lebuf_softc *lebuf = device_private(sd->sd_dev);
+		/* Check all possible lebuffer units */
+		for (unit = 0; unit < lebufcd->cd_ndevs; unit++) {
+			device_t lebufdev;
+			struct lebuf_softc *lebufsc;
 
-		if (strncmp("lebuffer", device_xname(sd->sd_dev), 8) != 0)
-			continue;
+			/* Check if unit is valid */
+			lebufdev = device_lookup(lebufcd, unit);
+			if (lebufdev == NULL)
+				continue;
 
-		if (lebuf->attached != 0)
-			continue;
+			/* Check if we have a common sbus parent */
+			if (parent != device_parent(lebufdev))
+				continue;
+			lebufsc = device_private(lebufdev);
 
-		sc->sc_mem = lebuf->sc_buffer;
-		sc->sc_memsize = lebuf->sc_bufsiz;
-		sc->sc_addr = 0; /* Lance view is offset by buffer location */
-		lebuf->attached = 1;
+			/*
+			 * Check if this lebuffer unit is attached
+			 * but unused by its child, if_le_lebuffer.
+			 * XXX: this won't work if lebuffer is configured
+			 *      but not le at lebuffer?
+			 */
+			if (lebufsc->sc_buffer == 0 || lebufsc->attached != 0)
+				continue;
 
-		/* That old black magic... */
-		sc->sc_conf3 = prom_getpropint(sa->sa_node,
-					  "busmaster-regval",
-					  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
-		break;
+			/* Assume this lebuffer is my pair */
+			sc->sc_mem = lebufsc->sc_buffer;
+			sc->sc_memsize = lebufsc->sc_bufsiz;
+
+			/* Lance view is offset by buffer location */
+			sc->sc_addr = 0;
+
+			/* Denote it */
+			aprint_normal(" (%s)", device_xname(lebufdev));
+			lebufsc->attached = 1;
+
+			/* That old black magic... */
+			sc->sc_conf3 = prom_getpropint(sa->sa_node,
+			    "busmaster-regval",
+			    LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+			break;
+		}
 	}
 
 	lesc->sc_sd.sd_reset = le_sbus_reset;
