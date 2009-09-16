@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.16 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: callvec.c,v 1.16.96.1 2009/09/16 19:23:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,51 +36,22 @@
 
 #include <machine/dec_prom.h>
 
-const struct callback callvec = {
-	(void *(*) __P((void *, void *, int)))0,
-	(void *(*) __P((void *, int, int)))0,
-	(char *(*) __P((char *, char *)))DEC_PROM_STRCAT,
-	(int (*) __P((char *, char *)))DEC_PROM_STRCMP,
-	(char *(*) __P((char *, char *)))DEC_PROM_STRCPY,
-	(int (*) __P((char *)))DEC_PROM_STRLEN,
-	(char *(*) __P((char *, char *, int)))0,
-	(char *(*) __P((char *, char *, int)))0,
-	(int (*) __P((char *, char *, int)))0,
-	(int (*) __P((void)))DEC_PROM_GETCHAR,
-	(char *(*) __P((char *)))DEC_PROM_GETS,
-	(int (*) __P((char *)))DEC_PROM_PUTS,
-	(int (*) __P((const char *, ...)))DEC_PROM_PRINTF,
-	(int (*) __P((char *, char *, ...)))0,
-	(int (*) __P((void)))0,
-	(long (*) __P((char *, char **, int)))0,
-	(psig_t (*) __P((int, psig_t)))0,
-	(int (*) __P((int)))0,
-	(long (*) __P((long *)))0,
-	(int (*) __P((jmp_buf)))0,
-	(void (*) __P((jmp_buf, int)))0,
-	(int (*) __P(( char *)))0,
-	(int (*) __P((int, void *, int)))0,
-	(int (*) __P((int, void *, int)))0,
-	(int (*) __P((char *, char *)))DEC_PROM_SETENV2,
-	(char *(*) __P((const char *)))DEC_PROM_GETENV2,
-	(int (*) __P((char *)))DEC_PROM_UNSETENV,
-	(u_long (*) __P((int)))0,
-	(void (*) __P((void)))0,
-	(void (*) __P((int)))0,
-	(void (*) __P((int)))0,
-	(void (*) __P((char *, int)))DEC_PROM_CLEARCACHE,
-	(int (*) __P((void)))0,
-	(int (*) __P((memmap *)))0,
-	(int (*) __P((int)))0,
-	(int (*) __P((int)))0,
-	(int (*) __P((int)))0,
-	(void *)0,
-	(int (*) __P((void)))0,
-	(void (*) __P((int *, int)))0,
-	(void (*) __P((void)))0,
-	(tcinfo *(*) __P((void)))0,	/* XXX what are the args for this?*/
-	(int (*) __P((char *)))0,
-	(void (*) __P((char)))0,
+#ifndef _LP64
+const
+#endif
+struct callback callvec = {
+	._strcat	= (void *)DEC_PROM_STRCAT,
+	._strcmp	= (void *)DEC_PROM_STRCMP,
+	._strcpy	= (void *)DEC_PROM_STRCPY,
+	._strlen	= (void *)DEC_PROM_STRLEN,
+	._getchar	= (void *)DEC_PROM_GETCHAR,
+	._gets		= (void *)DEC_PROM_GETS,
+	._puts		= (void *)DEC_PROM_PUTS,
+	._printf	= (void *)DEC_PROM_PRINTF,
+	._setenv	= (void *)DEC_PROM_SETENV2,
+	._getenv	= (void *)DEC_PROM_GETENV2,
+	._unsetenv	= (void *)DEC_PROM_UNSETENV,
+	._clear_cache	= (void *)DEC_PROM_CLEARCACHE,
 };
 
-const   struct callback *callv = &callvec;
+const struct callback *callv = &callvec;

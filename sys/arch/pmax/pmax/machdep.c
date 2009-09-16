@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.2 2009/09/08 17:24:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.3 2009/09/16 19:23:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.2 2009/09/08 17:24:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.3 2009/09/16 19:23:18 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -101,12 +101,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.2 2009/09/08 17:24:09 matt E
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <mips/cache.h>
-#include <machine/psl.h>
+#include <mips/regnum.h>
+#include <mips/psl.h>
+
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
+
 #include <pmax/pmax/machdep.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
@@ -158,7 +161,7 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-void	mach_init __P((int, char *[], int, intptr_t, u_int, char *)); /* XXX */
+void	mach_init(int, int32_t *, int, intptr_t, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
@@ -183,19 +186,15 @@ extern void *esym;			/* XXX */
 extern struct user *proc0paddr;		/* XXX */
 extern struct consdev promcd;		/* XXX */
 
+#define	ARGV(i)	((char *)(intptr_t)(argv32[i]))
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * The first 4 argments are passed by PROM monitor, and remaining two
- * are built on temporary stack by our boot loader.
+ * are built on temporary stack by our boot loader (or in reg if N32/N64).
  */
 void
-mach_init(argc, argv, code, cv, bim, bip)
-	int argc;
-	char *argv[];
-	int code;
-	intptr_t cv;
-	u_int bim;
-	char *bip;
+mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip)
 {
 	char *cp;
 	const char *bootinfo_msg;
@@ -256,6 +255,21 @@ mach_init(argc, argv, code, cv, bim, bip)
 	}
 
 	/* Initialize callv so we can do PROM output... */
+	if (code == DEC_PROM_MAGIC) {
+#ifdef _LP64
+		/*
+		 * Convert the call vector from using 32bit function pointers
+		 * to using 64bit function pointers.
+		 */
+		for (i = 0; i < sizeof(callvec) / sizeof(void *); i++)
+			((intptr_t *)&callvec)[i] = ((int32_t *)cv)[i];
+		callv = &callvec;
+#else
+		callv = (void *)cv;
+#endif
+	} else {
+		callv = &callvec;
+	}
 	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
@@ -284,13 +298,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 	pmax_bus_dma_init();
 
 	/* Check for direct boot from DS5000 REX monitor */
-	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
+	if (argc > 0 && strcmp(ARGV(0), "boot") == 0) {
 		argc--;
-		argv++;
+		argv32++;
 	}
 
 	/* Look at argv[0] and compute bootdev */
-	makebootdev(argv[0]);
+	makebootdev(ARGV(0));
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -300,7 +314,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	boothowto |= RB_KDB;
 #endif
 	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
+		for (cp = ARGV(i); *cp; cp++) {
 			switch (*cp) {
 			case 'a': /* autoboot */
 				boothowto &= ~RB_SINGLE;
@@ -347,7 +361,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	memset(lwp0.l_addr, 0, USPACE);
 #ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_L_SR] = MIPS_SR_KX;
+	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
 #endif
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
 #ifdef _LP64
