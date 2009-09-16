@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.954 2009/09/06 16:18:56 pooka Exp $
+#	$NetBSD: files,v 1.955 2009/09/16 15:03:56 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1405,6 +1405,7 @@ file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
 file	kern/init_sysctl.c
+file	kern/init_sysctl_base.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
