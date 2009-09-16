@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.104 2009/05/06 21:41:59 elad Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.105 2009/09/16 15:23:05 pooka Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.104 2009/05/06 21:41:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.105 2009/09/16 15:23:05 pooka Exp $");
 
 #include "opt_ipsec.h"
 
@@ -126,6 +126,8 @@ static percpu_t *rip6stat_percpu;
 
 #define	RIP6_STATINC(x)		_NET_STATINC(rip6stat_percpu, x)
 
+static void sysctl_net_inet6_raw6_setup(struct sysctllog **);
+
 /*
  * Initialize raw connection block queue.
  */
@@ -133,6 +135,7 @@ void
 rip6_init(void)
 {
 
+	sysctl_net_inet6_raw6_setup(NULL);
 	in6_pcbinit(&raw6cbtable, 1, 1);
 
 	rip6stat_percpu = percpu_alloc(sizeof(uint64_t) * RIP6_NSTATS);
@@ -870,7 +873,8 @@ sysctl_net_inet6_raw6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(rip6stat_percpu, RIP6_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
+static void
+sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
