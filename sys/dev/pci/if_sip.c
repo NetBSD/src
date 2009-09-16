@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.141 2009/09/05 14:09:55 tsutsui Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.142 2009/09/16 16:34:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.141 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.142 2009/09/16 16:34:50 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -207,6 +207,9 @@ enum sip_attach_stage {
  */
 struct sip_softc {
 	device_t sc_dev;		/* generic device information */
+	struct device_suspensor		sc_suspensor;
+	struct pmf_qual			sc_qual;
+
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_size_t sc_sz;		/* bus space size */
@@ -1009,7 +1012,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_dev = self;
 	sc->sc_gigabit = sip->sip_gigabit;
-
+	pmf_self_suspensor_init(self, &sc->sc_suspensor, &sc->sc_qual);
 	sc->sc_pc = pc;
 
 	if (sc->sc_gigabit) {
@@ -1833,7 +1836,7 @@ sipcom_intr(void *arg)
 	u_int32_t isr;
 	int handled = 0;
 
-	if (!device_is_active(sc->sc_dev))
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 		return 0;
 
 	/* Disable interrupts. */
@@ -1851,6 +1854,9 @@ sipcom_intr(void *arg)
 #endif
 
 		handled = 1;
+
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			break;
 
 		if (isr & (ISR_RXORN|ISR_RXIDLE|ISR_RXDESC)) {
 			SIP_EVCNT_INCR(&sc->sc_ev_rxintr);
@@ -2562,7 +2568,8 @@ sipcom_init(struct ifnet *ifp)
 		 * Cancel any pending I/O.
 		 */
 		sipcom_stop(ifp, 0);
-	} else if (!pmf_device_resume_self(sc->sc_dev))
+	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
+	           !device_is_active(sc->sc_dev))
 		return 0;
 
 	/*
@@ -2892,7 +2899,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	if (disable)
-		pmf_device_suspend_self(sc->sc_dev);
+		pmf_device_recursive_suspend(sc->sc_dev, &sc->sc_qual);
 
 	if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 	    (cmdsts & CMDSTS_INTR) == 0 && sc->sc_txfree != sc->sc_ntxdesc)
