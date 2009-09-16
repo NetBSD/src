@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/07 20:57:59 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/16 09:17:29 haad Exp $
 
 .include "../../Makefile.zfs"
 
@@ -7,8 +7,6 @@ MKMAN=	no
 
 DPADD=	${LIBM} ${LIBNVPAIR} ${LIBUMEM} ${LIBZPOOL} ${LIBPTHREAD} \
 	${LIBZ} ${LIBAVL}
-
-LDADD+=-Lhehehe
 
 LIBAVL_OBJDIR!=  cd ${LIBAVL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBAVL_OBJDIR} -lavl
