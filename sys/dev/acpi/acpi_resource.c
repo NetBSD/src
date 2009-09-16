@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.29 2009/07/13 12:55:21 kiyohara Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.30 2009/09/16 10:47:54 mlelstv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.29 2009/07/13 12:55:21 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.30 2009/09/16 10:47:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,42 +465,42 @@ acpi_resource_cleanup(struct acpi_resources *res)
 		struct acpi_io *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_io);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_io, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	while (!SIMPLEQ_EMPTY(&res->ar_iorange)) {
 		struct acpi_iorange *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_iorange);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_iorange, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	while (!SIMPLEQ_EMPTY(&res->ar_mem)) {
 		struct acpi_mem *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_mem);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_mem, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	while (!SIMPLEQ_EMPTY(&res->ar_memrange)) {
 		struct acpi_memrange *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_memrange);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_memrange, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	while (!SIMPLEQ_EMPTY(&res->ar_irq)) {
 		struct acpi_irq *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_irq);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_irq, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	while (!SIMPLEQ_EMPTY(&res->ar_drq)) {
 		struct acpi_drq *ar;
 		ar = SIMPLEQ_FIRST(&res->ar_drq);
 		SIMPLEQ_REMOVE_HEAD(&res->ar_drq, ar_list);
-		AcpiOsFree(ar);
+		ACPI_FREE(ar);
 	}
 
 	res->ar_nio = res->ar_niorange = res->ar_nmem =
@@ -684,7 +684,7 @@ acpi_res_parse_ioport(device_t dev, void *context, uint32_t base,
 		}
 	}
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate I/O resource %d\n",
 		    res->ar_nio);
@@ -706,7 +706,7 @@ acpi_res_parse_iorange(device_t dev, void *context, uint32_t low,
 	struct acpi_resources *res = context;
 	struct acpi_iorange *ar;
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate I/O range resource %d\n",
 		    res->ar_niorange);
@@ -730,7 +730,7 @@ acpi_res_parse_memory(device_t dev, void *context, uint32_t base,
 	struct acpi_resources *res = context;
 	struct acpi_mem *ar;
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate Memory resource %d\n",
 		    res->ar_nmem);
@@ -752,7 +752,7 @@ acpi_res_parse_memrange(device_t dev, void *context, uint32_t low,
 	struct acpi_resources *res = context;
 	struct acpi_memrange *ar;
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate Memory range resource %d\n",
 		    res->ar_nmemrange);
@@ -775,7 +775,7 @@ acpi_res_parse_irq(device_t dev, void *context, uint32_t irq, uint32_t type)
 	struct acpi_resources *res = context;
 	struct acpi_irq *ar;
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate IRQ resource %d\n",
 		    res->ar_nirq);
@@ -796,7 +796,7 @@ acpi_res_parse_drq(device_t dev, void *context, uint32_t drq)
 	struct acpi_resources *res = context;
 	struct acpi_drq *ar;
 
-	ar = AcpiOsAllocate(sizeof(*ar));
+	ar = ACPI_ALLOCATE(sizeof(*ar));
 	if (ar == NULL) {
 		aprint_error_dev(dev, "ACPI: unable to allocate DRQ resource %d\n",
 		    res->ar_ndrq);
