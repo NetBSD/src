@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.4.1 2009/09/16 03:45:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.4.1 2009/09/16 03:45:45 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	}
 
 #ifndef XEN
-	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
 		return(0);
 	}
@@ -309,12 +309,12 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	endpa = x86_round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
-	if (endpa <= pa)
+	if (endpa != 0 && endpa <= pa)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
 #ifdef XEN
-	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		sva = (vaddr_t)ISA_HOLE_VADDR(pa);
 	} else
 #endif	/* XEN */
@@ -329,7 +329,7 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	va = sva;
 	xpte = 0;
 
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+	for (; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
 		 * the mainboard has wired up device space non-cacheable
@@ -382,7 +382,8 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 	if (t == X86_BUS_SPACE_IO) {
 		bpa = bsh;
 	} else if (t == X86_BUS_SPACE_MEM) {
-		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
+		if (bsh >= atdevbase && (bsh + size) != 0 &&
+		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		} else {
 
@@ -433,7 +434,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	} else if (t == X86_BUS_SPACE_MEM) {
 		ex = iomem_ex;
 
-		if (bsh >= atdevbase &&
+		if (bsh >= atdevbase && (bsh + size) != 0 &&
 		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 			goto ok;
