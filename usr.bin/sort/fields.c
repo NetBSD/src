@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.28 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.29 2009/09/16 20:56:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.28 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.29 2009/09/16 20:56:38 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -232,21 +232,22 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
  * exponent. These have to be ordered (-ve value, decreasing exponent),
  * zero, (+ve value, increasing exponent).
  *
- * The first byte is 0x80 for zero, 0x40 for -ve with exponent 0 and
- * 0xc0 for +ve with exponent zero.
- * This only leaves 62 byte values for +ve exponents - which isn't enough.
+ * The first byte is 0x80 for zero, 0xc0 for +ve with exponent 0.
+ * -ve values are the 1's compliments (so 0x7f isn't used!).
+ *
+ * This only leaves 63 byte values for +ve exponents - which isn't enough.
  * The largest 5 exponent values are used to hold a byte count of the
  * number of following bytes that contain 7 exponent bits per byte,
+ * This lets us sort exponents from -2^31 to +2^31.
  *
  * The mantissa is stored 2 digits per byte offset by 0x40, for negative
- * numbers the order must be reversed (they are subtracted from 0x100).
+ * numbers the order must be reversed (they are bit inverted).
  *
  * Reverse sorts are done by inverting the sign of the number.
  */
 
-#define SIGNED(reverse, value) ((reverse) ? 0x100 - (value) : (value))
-
-/* Large exponents are encoded EXP_EXC_BITS per byte */
+/* Large exponents are encoded EXP_EXC_BITS per byte, MAX_EXP_ENC is the
+ * number of bytes required to contain an exponent. */
 #define EXP_ENC_BITS 7
 #define EXP_ENC_VAL  (1 << EXP_ENC_BITS)
 #define EXP_ENC_MASK (EXP_ENC_VAL - 1)
@@ -262,8 +263,12 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	char ch;
 	unsigned int val;
 	u_char *last_nz_pos;
+	u_char negate;
 
-	reverse &= R;
+	if (reverse & R)
+		negate = 0xff;
+	else
+		negate = 0;
 
 	/* Give ourselves space for the key terminator */
 	bufend--;
@@ -274,7 +279,7 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 
 	SKIP_BLANKS(line);
 	if (*line == '-') {	/* set the sign */
-		reverse ^= R;
+		negate ^= 0xff;
 		line++;
 	}
 	/* eat initial zeroes */
@@ -304,11 +309,11 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 
 	/* Maybe here we should allow for e+12 (etc) */
 
-	if (exponent < 0x3f - MAX_EXP_ENC && -exponent < 0x3f - MAX_EXP_ENC) {
+	if (exponent < 0x40 - MAX_EXP_ENC && -exponent < 0x40 - MAX_EXP_ENC) {
 		/* Value ok for simple encoding */
 		/* exponent 0 is 0xc0 for +ve numbers and 0x40 for -ve ones */
 		exponent += 0xc0;
-		*pos++ = SIGNED(reverse, exponent);
+		*pos++ = negate ^ exponent;
 	} else {
 		/* Out or range for a single byte */
 		int c, t;
@@ -326,12 +331,12 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 		if (exponent < 0)
 			t = -t;
 		t += 0xc0;
-		*pos++ = SIGNED(reverse, t);
+		*pos++ = negate ^ t;
 		/* now add each 7-bit block (offset 0x40..0xbf) */
 		for (; c >= 0; c--) {
 			t = exponent >> (c * EXP_ENC_BITS);
 			t = (t & EXP_ENC_MASK) + 0x40;
-			*pos++ = SIGNED(reverse, t);
+			*pos++ = negate ^ t;
 		}
 	}
 
@@ -360,13 +365,13 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 				val += ch - '0';
 			break;
 		}
-		*pos++ = SIGNED(reverse, val + 0x40);
+		*pos++ = negate ^ (val + 0x40);
 		if (val != 0)
 			last_nz_pos = pos;
 	}
 
 	/* Add key terminator, deleting any trailing "00" */
-	*last_nz_pos++ = SIGNED(reverse, 1);
+	*last_nz_pos++ = negate;
 
 	return (last_nz_pos);
 }
