@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.4 2004/04/23 02:48:12 simonb Exp $
+# $NetBSD: install.sh,v 1.5 2009/09/16 10:40:02 abs Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -176,7 +176,7 @@ echo -n "View the boot messages again? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		more /kern/msgbuf
+		dmesg | more
 		;;
 	*)
 		echo	""
