@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.71 2009/09/15 06:56:09 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.72 2009/09/16 05:00:30 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -5482,8 +5482,91 @@ usr.sbin/postinstall/postinstall		1.99
 	Update Postfix to version 2.6.5.
 	[tron, ticket #944]
 
+sys/arch/cobalt/cobalt/bus.c			1.36
+sys/arch/cobalt/include/bus.h			1.23
+sys/arch/dreamcast/dev/g2/g2bus_bus_mem.c	1.15
+sys/arch/dreamcast/include/bus.h		1.15
 sys/dev/pci/pci_usrreq.c			1.20-1.22 via patch
 
 	Fix various mmap() operations used by libpciaccess.
 	[mrg, ticket #952]
+
+sys/arch/x86/x86/bus_space.c			1.24
+
+	Fix a bug where mapping the very end of iomem accidentally
+	returns an address in the ISA hole. Fixes ohci on VirtualPC
+	7 for Mac, which places OHCI at base address 0xfffff000
+	size 0x1000.
+	[jmcneill, ticket #940]
+
+sys/dev/pad/padvol.c				1.4
+
+	Catch up to audio(4) device_t/softc split.
+	[jmcneill, ticket #945]
+
+sys/dev/pad/files.pad				1.4
+
+	PR# kern/39899: audio attach with pad(4) segfaults
+	Make sure pad pulls in auconv mulaw support.
+	[jmcneill, ticket #947]
+
+sys/dev/rnd.c					1.74
+
+	rnd_wakeup_readers() uses rndpool_mtx for its own consistency
+	management, so it cannot be called with the mutex held.  There
+	is no consistency requirement to synchronize over the whole
+	add-and-wakeup operation, as if data is consumed in the window
+	the mutex is locked, wakeups will simply be skipped.
+
+	Fix from Juho Salminen in PR kern/42020.
+	[pooka, ticket #948]
+
+sys/arch/alpha/alpha/cpu.c			1.86
+
+	There's now some per-cpu initialization that occurs before the
+	secondary cpus are told to begin running.  Since the seconedary
+	cpus weren't being added to the cpu_info list until then, that
+	initialization wasn't being done and resulted in crashes on the
+	secondary cpus.  Add the secondary cpus to the cpu_info_list
+	after they've been started (but waiting to be told to start
+	running).  This fixes the problem specifically stated in PR
+	port-alpha/41106.  MP alphas will now at least boot and begin
+	running, but will eventually crash in various ways later.
+	[mhitch, ticket #949]
+
+sys/arch/alpha/alpha/pmap.c			1.241
+
+	Now that secondary cpus are added the cpu_info list earlier,
+	attempt to send pmap tlb shootdowns to them cause the shootdown
+	job queue to fill up, but since the cpus aren't running yet, no
+	IPIs get sent.  When the job queue is full, the bit mask of cpus
+	to send the IPI to is not set and no shootdown IPI ever gets sent
+	after the cpu is marked running.  Always set the cpumask even
+	when the queue is full.
+	[mhitch, ticket #953]
+
+sys/arch/alpha/alpha/pmap.c			1.242
+
+	Alpha will size the mutex structure in pmap_tlb_shootdown_q to
+	16 bytes.  Change the command and pad accordingly;  now
+	pmap_tlb_shootdown_q entries really are cache-aligned.
+	[mhitch, ticket #954]
+
+sys/arch/vax/vax/clock.c			1.51
+
+	Keep track of the previous ICR value and hardclock_ticks to
+	ensure the 32 bit counter doesn't go backwards.  Also, the ICR
+	runs from -10000 to -1, so adjust the value when reading it.
+	Now mfpr works quite nicely on a 4000/90.
+	[mhitch, ticket #955]
+
+sys/arch/amiga/conf/files.amiga			1.141
+
+	Switch the amiga to the common m68k/m68k/pmap_motorola.c.
+	[mhitch, ticket #956]
+
+sys/arch/alpha/conf/GENERIC			1.329
+
+	Add the I2O iop controller, as used in the ES40 and ES45.
+	[mhitch, ticket #957]
 
