@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.26 2009/09/16 13:05:07 tsutsui Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.26 2009/09/16 13:05:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,12 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.26 2009/09/16 13:05:07 tsutsui Ex
 #include <dev/sun/cgthreevar.h>
 
 #include <dev/sbus/sbusvar.h>
-
-/* Allocate an `sbusdev' in addition to the cgthree softc */
-struct cgthree_sbus_softc {
-	struct cgthree_softc bss_softc;
-	struct sbusdev bss_sd;
-};
 
 
 /* autoconfiguration driver */
@@ -138,7 +132,6 @@ void
 cgthreeattach_sbus(device_t parent, device_t self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
-	struct sbusdev *sd = &((struct cgthree_sbus_softc *)self)->bss_sd;
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node = sa->sa_node;
@@ -193,6 +186,5 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 		fb->fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);
 	}
 
-	sbus_establish(sd, &sc->sc_dev);
 	cgthreeattach(sc, name, isconsole);
 }

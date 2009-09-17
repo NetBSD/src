@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.38 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: bpp.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.38 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -87,7 +87,6 @@ struct hwstate {
 
 struct bpp_softc {
 	struct lsi64854_softc	sc_lsi64854;	/* base device */
-	struct sbusdev	sc_sd;			/* sbus device */
 
 	size_t		sc_bufsz;		/* temp buffer */
 	uint8_t		*sc_buf;
@@ -188,10 +187,6 @@ bppattach(device_t parent, device_t self, void *aux)
 	burst &= sbusburst;
 	sc->sc_burst = (burst & SBUS_BURST_32) ? 32 :
 		       (burst & SBUS_BURST_16) ? 16 : 0;
-
-	/* Join the Sbus device family */
-	dsc->sc_sd.sd_reset = NULL;
-	sbus_establish(&dsc->sc_sd, self);
 
 	/* Initialize the DMA channel */
 	sc->sc_channel = L64854_CHANNEL_PP;

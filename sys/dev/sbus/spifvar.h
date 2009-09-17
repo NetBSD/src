@@ -1,4 +1,4 @@
-/*	$NetBSD: spifvar.h,v 1.2 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: spifvar.h,v 1.3 2009/09/17 16:28:12 tsutsui Exp $	*/
 /*	$OpenBSD: spifvar.h,v 1.3 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ struct sbpp_softc {
 
 struct spif_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	void *sc_stcih;			/* stc interrupt vector */
 	void *sc_ppcih;			/* ppc interrut vector */
 	void *sc_softih;		/* soft interrupt vector */

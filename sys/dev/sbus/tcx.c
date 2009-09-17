@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.40 2009/08/26 22:36:07 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.41 2009/09/17 16:28:13 tsutsui Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.40 2009/08/26 22:36:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.41 2009/09/17 16:28:13 tsutsui Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.40 2009/08/26 22:36:07 macallan Exp $");
 /* per-display variables */
 struct tcx_softc {
 	device_t	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	struct openprom_addr sc_physaddr[TCX_NREG];/* phys addr of h/w */
@@ -377,7 +376,6 @@ tcxattach(device_t parent, device_t self, void *args)
 	} else
 		printf("\n");
 
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 	fb_attach(&sc->sc_fb, isconsole);
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
