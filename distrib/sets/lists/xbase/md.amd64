@@ -1,0 +1,5 @@
+# $NetBSD: md.amd64,v 1.2.14.1 2009/09/17 04:24:27 snj Exp $
+./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete
+./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg

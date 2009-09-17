@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/09 03:26:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2009/09/17 04:24:40 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -20,12 +20,15 @@ LDADD=	-L${XORGOSOBJDIR} -lxorgos \
 
 DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.elif ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 LINKS=  ${X11BINDIR}/ioport ${X11BINDIR}/inb \

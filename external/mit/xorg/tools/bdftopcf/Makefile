@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.8.1 2009/09/17 04:24:42 snj Exp $
 
 NOMAN=		1
 
@@ -16,7 +16,7 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11/fonts \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.Xfont}/src/stubs \
-		-DBDFFORMAT -DPCFFORMAT -DSNFFORMAT -DX_GZIP_FONT_COMPRESSION \
+		-DBDFFORMAT -DPCFFORMAT -DSNFFORMAT -DX_GZIP_FONT_COMPRESSION -DX_BZIP2_FONT_COMPRESSION \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 
 .PATH:		${X11SRCDIR.Xfont}/src/bitmap
@@ -24,12 +24,12 @@ SRCS+=		bdfread.c bdfutils.c bitmap.c bitmaputil.c fontink.c \
 		pcfread.c pcfwrite.c
 
 .PATH:		${X11SRCDIR.Xfont}/src/fontfile
-SRCS+=		bufio.c decompress.c defaults.c fileio.c filewr.c gunzip.c
+SRCS+=		bufio.c decompress.c defaults.c fileio.c filewr.c gunzip.c bunzip2.c
 
 .PATH:		${X11SRCDIR.Xfont}/src/util
 SRCS+=		atom.c fontaccel.c miscutil.c private.c utilbitmap.c
 
-LDADD+=		-lz
+LDADD+=		-lz -lbz2
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>

@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.22.6.1 2008/12/24 16:48:25 snj Exp $
+#	$NetBSD: Makefile,v 1.22.6.2 2009/09/17 04:24:38 snj Exp $
 
-SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
+SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c loader \
 		xf86modes exa \
-		xorgos rac ramdac scanpci pcidata shadowfb vbe vgahw \
-		x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp xf86config
+		xorgos ramdac shadowfb vbe vgahw \
+		x86emu xaa xf86config xf8_16bpp
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "powerpc"
+SUBDIR+=	int10 
+.endif
 
 SUBDIR+=	.WAIT utils
 
@@ -20,7 +24,6 @@ SRCS=		xorg.c
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xorg-server}/fb \
-		-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/os \
@@ -44,7 +47,6 @@ LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
 LDADD+=	${LDADD.hw/xfree86/xorgos}
 #LDADD+=	${LDADD.osandcommon}
-LDADD+=	${LDADD.hw/xfree86/rac}
 LDADD+=	${LDADD.hw/xfree86/xf86config}
 LDADD+=	${LDADD.hw/xfree86/dixmods}
 LDADD+=	${LDADD.hw/xfree86/xf86modes}
@@ -63,19 +65,25 @@ LDADD+=	${LDADD.miext/shadow}
 LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
-LDADD+=	${LDADD.dix/xpstubs}
 LDADD+=	${LDADD.os}
+LDADD+=	${LDADD.glx}
+LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
+LDADD+=	-lpciaccess -lpci -ldrm
+LDADD+=	-lcrypto
 LDADD+=	-Wl,--no-whole-archive
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.elif ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 LDADD+=	-lm
@@ -87,7 +95,6 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.Xext} \
 	${DPADD.config} \
 	${DPADD.dbe} \
-	${DPADD.XTrap} \
 	${DPADD.record} \
 	${DPADD.render} \
 	${DPADD.randr} \
@@ -99,12 +106,12 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
 	${DPADD.os} \
+	${DPADD.glx} \
+	${DPADD.hw/xfree86/dri} \
 	${DPADD.hw/xfree86/dixmods/fb} \
-	${DPADD.dix/xpstubs} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
 	${DPADD.hw/xfree86/loader} \
-	${DPADD.hw/xfree86/rac} \
 	${DPADD.hw/xfree86/xf86config} \
 	${DPADD.hw/xfree86/dixmods} \
 	${DPADD.hw/xfree86/xf86modes} \
@@ -113,7 +120,8 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/i2c} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
-	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM}
+	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
+	${LIBCRYPTO}
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 

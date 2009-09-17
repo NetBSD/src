@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.1 2009/01/15 03:24:06 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.2 2009/09/17 04:24:28 snj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -33,6 +33,7 @@
 ./etc/defaults
 ./etc/fonts
 ./etc/fonts/conf.d
+./etc/fonts/conf.avail
 ./etc/iscsi
 ./etc/kerberosV
 ./etc/mail
@@ -364,30 +365,27 @@
 ./usr/X11R7/lib/X11/xkb/compat
 ./usr/X11R7/lib/X11/xkb/compiled
 ./usr/X11R7/lib/X11/xkb/geometry
-./usr/X11R7/lib/X11/xkb/geometry/digital
-./usr/X11R7/lib/X11/xkb/geometry/ibm
-./usr/X11R7/lib/X11/xkb/geometry/sgi
+./usr/X11R7/lib/X11/xkb/geometry/digital_vndr
+./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr
 ./usr/X11R7/lib/X11/xkb/keycodes
-./usr/X11R7/lib/X11/xkb/keycodes/digital
-./usr/X11R7/lib/X11/xkb/keycodes/sgi
+./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr
+./usr/X11R7/lib/X11/xkb/keycodes/sgi_vndr
 ./usr/X11R7/lib/X11/xkb/keymap
-./usr/X11R7/lib/X11/xkb/keymap/digital
-./usr/X11R7/lib/X11/xkb/keymap/sgi
-./usr/X11R7/lib/X11/xkb/keymap/sun
+./usr/X11R7/lib/X11/xkb/keymap/digital_vndr
+./usr/X11R7/lib/X11/xkb/keymap/sgi_vndr
+./usr/X11R7/lib/X11/xkb/keymap/sun_vndr
 ./usr/X11R7/lib/X11/xkb/rules
 ./usr/X11R7/lib/X11/xkb/semantics
 ./usr/X11R7/lib/X11/xkb/symbols
-./usr/X11R7/lib/X11/xkb/symbols/digital
-./usr/X11R7/lib/X11/xkb/symbols/fujitsu
-./usr/X11R7/lib/X11/xkb/symbols/hp
-./usr/X11R7/lib/X11/xkb/symbols/macintosh
-./usr/X11R7/lib/X11/xkb/symbols/nec
-./usr/X11R7/lib/X11/xkb/symbols/pc
-./usr/X11R7/lib/X11/xkb/symbols/sgi
-./usr/X11R7/lib/X11/xkb/symbols/sharp
-./usr/X11R7/lib/X11/xkb/symbols/sony
-./usr/X11R7/lib/X11/xkb/symbols/sun
-./usr/X11R7/lib/X11/xkb/symbols/xfree68
+./usr/X11R7/lib/X11/xkb/symbols/digital_vndr
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr
+./usr/X11R7/lib/X11/xkb/symbols/hp_vndr
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr
+./usr/X11R7/lib/X11/xkb/symbols/nec_vndr
+./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr
+./usr/X11R7/lib/X11/xkb/symbols/sony_vndr
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr
+./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr
 ./usr/X11R7/lib/X11/xkb/torture
 ./usr/X11R7/lib/X11/xkb/types
 ./usr/X11R7/lib/modules
@@ -397,6 +395,7 @@
 ./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/input
 ./usr/X11R7/lib/pkgconfig
+./usr/X11R7/lib/xorg
 ./usr/X11R7/libexec
 ./usr/X11R7/man
 ./usr/X11R7/man/cat1
@@ -417,6 +416,7 @@
 ./usr/X11R7/share
 ./usr/X11R7/share/examples
 ./usr/X11R7/share/examples/ssh-askpass
+./usr/X11R7/share/pciids
 ./usr/bin
 ./usr/games
 ./usr/games/hide		gname=games mode=0750
