@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/05 00:33:35 cube Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2009/09/17 04:24:31 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,8 @@ SRCS=	XAllowDv.c XChgDCtl.c XChgFCtl.c XChgKMap.c XChgKbd.c \
 	XGrDvKey.c XGrabDev.c XGtFocus.c XGtSelect.c XListDev.c \
 	XOpenDev.c XQueryDv.c XSelect.c XSetBMap.c XSetDVal.c \
 	XSetMMap.c XSetMode.c XSndExEv.c XStFocus.c XUngrDev.c \
-	XUngrDvB.c XUngrDvK.c
+	XUngrDvB.c XUngrDvK.c XChDProp.c XGetDProp.c XDelDProp.c \
+	XListDProp.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
@@ -29,7 +30,8 @@ MAN=	XAllowDeviceEvents.3 XChangeDeviceDontPropagateList.3 \
 	XGrabDeviceButton.3 XGrabDeviceKey.3 XListInputDevices.3 \
 	XOpenDevice.3 XQueryDeviceState.3 XSelectExtensionEvent.3 \
 	XSendExtensionEvent.3 XSetDeviceButtonMapping.3 XSetDeviceFocus.3 \
-	XSetDeviceMode.3 XSetDeviceValuators.3
+	XSetDeviceMode.3 XSetDeviceValuators.3 \
+	XGetDeviceProperty.3 XListDeviceProperties.3
 
 MLINKS=	XGetDeviceControl.3 XChangeDeviceControl.3 \
 	XGetFeedbackControl.3 XChangeFeedbackControl.3 \

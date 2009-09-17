@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2009/05/11 19:40:22 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2009/09/17 04:24:31 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ FREETYPE=	${X11SRCDIR.${LIB}}
 SUBDIR=	freetype
 
 .PATH:	${FREETYPE}/src/base
-SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
+SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c ftglyph.c \
 	ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
 
@@ -96,7 +96,7 @@ LIBDPLIBS= \
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
-PKGCONFIG_VERSION.freetype2=	9.17.3
+PKGCONFIG_VERSION.freetype2=	9.20.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

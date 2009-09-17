@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/06 04:14:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2009/09/17 04:24:38 snj Exp $
 
 .include "../Makefile.common"
 
-SUBDIR= xnest vfb xfree86
+SUBDIR= xnest vfb
+.if ${XSERVER_XFREE86} != "no"
+SUBDIR+= xfree86
+.endif
 
 .if 0
 .if ${XSERVER_X68K} != "no"

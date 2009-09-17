@@ -1,4 +1,4 @@
-# $NetBSD: ad.x86_64,v 1.5 2008/09/02 02:17:48 lukem Exp $
+# $NetBSD: ad.x86_64,v 1.5.2.1 2009/09/17 04:24:27 snj Exp $
 ./usr/X11R6/bin/inb					-unknown-	x11
 ./usr/X11R6/bin/inl					-unknown-	x11
 ./usr/X11R6/bin/inw					-unknown-	x11
@@ -6,10 +6,10 @@
 ./usr/X11R6/bin/outb					-unknown-	x11
 ./usr/X11R6/bin/outl					-unknown-	x11
 ./usr/X11R6/bin/outw					-unknown-	x11
-./usr/X11R7/bin/inb					-unknown-	xorg
-./usr/X11R7/bin/inl					-unknown-	xorg
-./usr/X11R7/bin/inw					-unknown-	xorg
-./usr/X11R7/bin/ioport					-unknown-	xorg
-./usr/X11R7/bin/outb					-unknown-	xorg
-./usr/X11R7/bin/outl					-unknown-	xorg
-./usr/X11R7/bin/outw					-unknown-	xorg
+./usr/X11R7/bin/inb					-unknown-	obsolete
+./usr/X11R7/bin/inl					-unknown-	obsolete
+./usr/X11R7/bin/inw					-unknown-	obsolete
+./usr/X11R7/bin/ioport					-unknown-	obsolete
+./usr/X11R7/bin/outb					-unknown-	obsolete
+./usr/X11R7/bin/outl					-unknown-	obsolete
+./usr/X11R7/bin/outw					-unknown-	obsolete

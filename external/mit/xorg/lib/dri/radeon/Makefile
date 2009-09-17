@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/10/13 03:19:08 mrg Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2009/09/17 04:24:30 snj Exp $
 
 MODULE=	radeon
 
@@ -13,5 +13,7 @@ SRCS=	radeon_context.c radeon_ioctl.c radeon_lock.c radeon_screen.c \
 .if ${MACHINE_ARCH} == "sparc64"
 COPTS.radeon_tcl.c=	-Wno-error
 .endif
+
+COPTS.radeon_screen.c=  -Wno-error	# XXX const
 
 .include "${.CURDIR}/../dri.mk"

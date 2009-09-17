@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2009/02/25 20:15:08 snj Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2009/09/17 04:24:41 snj Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -9,21 +9,21 @@ LIB=	xorgos
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bsd
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
 SRCS.bsd=	\
-		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_mouse.c \
-		kmod_noop.c libc_wrapper.c \
-		posix_tty.c sigio.c stdPci.c vidmem.c
+		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_pci.c \
+		kmod_noop.c \
+		posix_tty.c sigio.c vidmem.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
-.if ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "x86_64"
 SRCS.bsd+=	pm_noop.c
 .endif
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 SRCS.bsd+=	bsd_apm.c
 .endif
-.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DHAS_APERTURE_DRV
 .endif
 CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
@@ -33,13 +33,20 @@ CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endif
 
 .if ${MACHINE} == "macppc"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "alpha"
+SRCS.bsd+=	alpha_video.c bsd_ev56.c stdResource.c pm_noop.c agp_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
+.endfor
+.endif
+
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
 SRCS.bus+=	netbsdSbus.c
 .for _FN in ${SRCS.bsd}
@@ -48,7 +55,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "sgimips"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -57,7 +64,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .if ${MACHINE} == "cats" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder"
-SRCS.bsd+=      ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=      ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -69,46 +76,43 @@ CPPFLAGS.arm_video.c=	-Wno-error
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus
 SRCS.bus+=	Pci.c
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
-SRCS.bus+=	ix86Pci.c
-.endif
-
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "netwinder" || ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64"
-SRCS.bus+=	netbsdPci.c
+    ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "alpha"
+#SRCS.bus+=	netbsdPci.c
 .endif
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || \
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "powerpc"
-CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
+#CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
 .endif
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
-SRCS.misc=	xf86_Util.c Delay.c
+SRCS.misc=	Delay.c
 
 # XXX .S not built from automake either
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-#SRCS.misc+=	BUSmemcpy.S IODelay.S SlowBcopy.S
-SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
-CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
-CPPFLAGS.IODelay.S=	-DUSE_GAS
-CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
+#SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+#CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
+#CPPFLAGS.IODelay.S=	-DUSE_GAS
+#CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .endif
 
 .if     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-	${MACHINE} == "sgimips" || ${MACHINE} == "sparc64" || \
-	${MACHINE} == "sparc" || ${MACHINE} == "netwinder" || \
-	${MACHINE} == "shark" || ${MACHINE} == "ofppc"
-SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+	${MACHINE} == "sgimips" || ${MACHINE_ARCH} == "sparc64" || \
+	${MACHINE_ARCH} == "sparc" || ${MACHINE} == "netwinder" || \
+	${MACHINE} == "shark" || ${MACHINE} == "ofppc" || \
+	${MACHINE_ARCH} == "alpha"
+#SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
+SRCS.misc+=     BUSmemcpy.c SlowBcopy.c
 
 # XXX namespace collision so avoid it, only has to be done for non-i386.
-BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
-		IODelay.c CIODelay.c \
-		SlowBcopy.c CSlowBcopy.c
+#BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
+#		IODelay.c CIODelay.c \
+#		SlowBcopy.c CSlowBcopy.c
 
 SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc} xorgos.c
 
@@ -122,6 +126,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared \
 		-I${X11SRCDIR.xc}/extras/drm/shared
 .if ${X11DRI} != "no"

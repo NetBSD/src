@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.8.1 2008/12/06 21:33:48 snj Exp $
+#	$NetBSD: Makefile,v 1.6.8.2 2009/09/17 04:24:38 snj Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -9,26 +9,20 @@ LIB=	common
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/common
 SRCS.xv=	xf86xv.c xf86xvmc.c
-
-SRCS.bus=	xf86isaBus.c xf86pciBus.c xf86fbBus.c xf86noBus.c
-
-SRCS.xkb=	xf86XKB.c
-SRCS.xiso=	xf86Xinput.c xisb.c
+SRCS.bus=	xf86pciBus.c xf86fbBus.c xf86noBus.c
 SRCS.randr=	xf86RandR.c
 
-#	no xf86cvt.c - it is libxf86modes
-SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
+SRCS=	xf86Configure.c xf86ShowOpts.c xf86Bus.c xf86Config.c \
 	xf86Cursor.c xf86DGA.c xf86DPMS.c \
-	xf86DoProbe.c xf86DoScanPci.c xf86Events.c \
-	xf86Globals.c xf86AutoConfig.c \
-	xf86MiscExt.c xf86Option.c \
+	xf86Events.c xf86Globals.c xf86AutoConfig.c \
+	xf86Option.c \
 	xf86VidMode.c xf86fbman.c xf86cmap.c \
-	xf86Helper.c xf86PM.c \
-	xf86Mode.c xf86Build.h xorgHelper.c xf86Versions.c \
-	xf86DefModeSet.c ${SRCS.xv} \
-	${SRCS.xiso} ${SRCS.randr} ${SRCS.bus} ${SRCS.xkb}
+	xf86Helper.c xf86PM.c xf86RAC.c xf86Xinput.c xisb.c \
+	xf86Mode.c xorgHelper.c \
+	${SRCS.xv} ${SRCS.bus} ${SRCS.randr} \
+	xf86DefModeSet.c
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
 .endif
 
@@ -50,7 +44,8 @@ xf86DefModeSet.c:
 	cat \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/vesamodes \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/extramodes | \
-	${TOOL_AWK} -f ${.CURDIR}/modeline2c.awk > ${.TARGET}
+	${TOOL_AWK} -f ${X11SRCDIR.xorg-server}/hw/xfree86/common/modeline2c.awk > ${.TARGET}
+	@echo >> ${.TARGET}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
@@ -67,13 +62,13 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
                 -I${X11SRCDIR.xorg-server}/Xi \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/modes \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86 \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/parser \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/loader \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/vgahw \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/rac \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/scanpci \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/vbe \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/int10 \
 		-I${X11SRCDIR.xorg-server}/render \
@@ -87,7 +82,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
 		-DXVENDORNAME='"The X.Org Foundation"'
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 
@@ -96,10 +91,7 @@ OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 DRIVERS=	mga glint nv tga s3 s3virge sis rendition neomagic \
 		i740 tdfx savage cirrus vmware tseng trident chips \
 		apm i128
-.if ${MACHINE_ARCH} != "x86_64"
-DRIVERS+=	nsc
-.endif
-DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa vga \
+DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa \
 		dummy
 
 IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
@@ -127,6 +119,8 @@ COPTS.xf86AutoConfig.c=		-Wno-error
 COPTS.xf86Config.c=		-Wno-error
 COPTS.xf86Cursor.c=		-Wno-error
 COPTS.xf86RandR.c=		-Wno-error
+COPTS.xf86Helper.c=		-Wno-error
+COPTS.xf86cmap.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

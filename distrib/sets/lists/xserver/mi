@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2008/09/02 21:51:10 lukem Exp $
+# $NetBSD: mi,v 1.26.2.1 2009/09/17 04:24:28 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -48,24 +48,28 @@
 ./usr/X11R6/man/man1/vdltodmx.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/xdmxconfig.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
+./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/man/cat1/Xmark.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xnest.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xvfb.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat5/SecurityPolicy.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/SecurityPolicy.0			-unknown-	obsolete
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xmark.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xnest.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xserver.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xvfb.html				-unknown-	html,xorg
-./usr/X11R7/man/html5/SecurityPolicy.html		-unknown-	html,xorg
+./usr/X11R7/man/html5/SecurityPolicy.html		-unknown-	obsolete
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xmark.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
-./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	.man,xorg
+./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	obsolete
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg

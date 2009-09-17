@@ -1,4 +1,4 @@
-#	$NetBSD: md.sparc64,v 1.4 2008/10/24 20:38:51 macallan Exp $
+#	$NetBSD: md.sparc64,v 1.4.2.1 2009/09/17 04:24:27 snj Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/dpmsstr.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86misc.h		-unknown-	x11
@@ -82,7 +82,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapr.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapw.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	obsolete
