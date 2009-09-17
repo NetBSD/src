@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.10 2009/09/09 11:47:24 drochner Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.11 2009/09/17 18:48:47 apb Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.10 2009/09/09 11:47:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.11 2009/09/17 18:48:47 apb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -396,7 +396,7 @@ hdaudio_afg_widget_lookup(struct hdaudio_afg_softc *sc, int nid)
 		return NULL;
 	}
 	if (nid < sc->sc_startnode || nid >= sc->sc_endnode) {
-		hda_error(sc, "nid %02X out of range (%02X-%02X)\n",
+		hda_debug(sc, "nid %02X out of range (%02X-%02X)\n",
 		    nid, sc->sc_startnode, sc->sc_endnode);
 		return NULL;
 	}
@@ -471,7 +471,7 @@ hdaudio_afg_widget_connection_parse(struct hdaudio_widget *w)
 				}
 			}
 			if (cnid < sc->sc_startnode || cnid >= sc->sc_endnode)
-				hda_error(sc, "ghost nid=%02X\n", cnid);
+				hda_debug(sc, "ghost nid=%02X\n", cnid);
 			if (CONN_RANGE(res, entnum, j) == 0)
 				addcnid = cnid;
 			else if (prevcnid == 0 || prevcnid >= cnid) {
@@ -1543,18 +1543,18 @@ retry:
 			goto retry;
 		}
 		if (!res) {
-			hda_error(sc, "disable assoc %d (%d) [trace failed]\n",
+			hda_debug(sc, "disable assoc %d (%d) [trace failed]\n",
 			    j, as[j].as_index);
 			for (i = 0; i < HDAUDIO_MAXPINS; i++) {
 				if (as[j].as_pins[i] == 0)
 					continue;
-				hda_error(sc, "  assoc %d pin%d: %02X\n", j, i,
+				hda_debug(sc, "  assoc %d pin%d: %02X\n", j, i,
 				    as[j].as_pins[i]);
 			}
 			for (i = 0; i < HDAUDIO_MAXPINS; i++) {
 				if (as[j].as_dacs[i] == 0)
 					continue;
-				hda_error(sc, "  assoc %d dac%d: %02X\n", j, i,
+				hda_debug(sc, "  assoc %d dac%d: %02X\n", j, i,
 				    as[j].as_dacs[i]);
 			}
 
