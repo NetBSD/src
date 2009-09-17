@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.19 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.20 2009/09/17 09:54:27 pooka Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.19 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.20 2009/09/17 09:54:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,12 @@ BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 static int bufq_init(void);
 static void sysctl_kern_bufq_strategies_setup(struct sysctllog **);
 
+static struct sysctllog *sysctllog;
 static int
 bufq_init(void)
 {
 
-	sysctl_kern_bufq_strategies_setup(NULL);
+	sysctl_kern_bufq_strategies_setup(&sysctllog);
 	return 0;
 }
 
