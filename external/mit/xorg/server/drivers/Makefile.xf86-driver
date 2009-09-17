@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.13 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.13.4.1 2009/09/17 04:24:35 snj Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
@@ -9,6 +9,11 @@ SHLIB_MAJOR=	${PACKAGE_MAJOR}
 LIB=	${DRIVER_NAME}
 LIBDIR=	${X11USRLIBDIR}/modules/drivers
 
+# Extract version from configure script if not set in makefile.
+#
+.if defined(DRIVER_VERSION)
+PACKAGE_VERSION=	${DRIVER_VERSION}
+.else
 PRINT_PACKAGE_VERSION=	${TOOL_AWK} '/^PACKAGE_VERSION=/ {		\
 				match($$1, "[0-9]+\\.[0-9]+\\.[0-9]+");	\
 				version = substr($$1, RSTART, RLENGTH);	\
@@ -16,6 +21,7 @@ PRINT_PACKAGE_VERSION=	${TOOL_AWK} '/^PACKAGE_VERSION=/ {		\
 			${X11SRCDIR.${DRIVER}}/configure
 
 PACKAGE_VERSION!=	${PRINT_PACKAGE_VERSION}
+.endif
 
 PACKAGE_MAJOR=		${PACKAGE_VERSION:R:R}
 PACKAGE_MINOR=		${PACKAGE_VERSION:R:E}
@@ -30,6 +36,9 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		${X11FLAGS.EXTENSION} \
 		${X11FLAGS.DIX} ${X11INCS.DIX} \
 		${X11FLAGS.SERVER} \
+		-DHAVE_XORG_SERVER_1_1_0 \
+		-DSERVER_1_5 \
+		-DXSERVER_LIBPCIACCESS \
 		-DXFree86LOADER
 
 CPPFLAGS+=	-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}

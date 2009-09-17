@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.10.2.1 2008/11/19 00:36:52 snj Exp $
+#	$NetBSD: shl.mi,v 1.10.2.2 2009/09/17 04:24:27 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -99,6 +99,7 @@
 ./usr/X11R7/lib/liblisp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libmp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libpciaccess_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libre_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libxkbfile_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libxkbui_pic.a				-unknown-	xorg

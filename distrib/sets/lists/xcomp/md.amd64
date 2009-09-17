@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.13 2008/10/23 16:04:26 cube Exp $
+# $NetBSD: md.amd64,v 1.13.2.1 2009/09/17 04:24:27 snj Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -70,6 +70,11 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3		-unknown-	.man,x11
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-	.man,x11
 ./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11
+./usr/X11R7/include/intel_bufmgr.h			-unknown-	xorg
+./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
+./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg
 ./usr/X11R7/man/cat3/XF86VM.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-	.cat,xorg
@@ -149,7 +154,8 @@
 ./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	obsolete
+./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg

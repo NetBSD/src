@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2009/09/17 04:24:40 snj Exp $
 
 # XXX this one is installed in modular-xorg-server
 
@@ -11,7 +11,6 @@ LIB=	pcidata
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/scanpci
 SRCS=	xf86PciData.c
-DPSRCS+=xf86PciIds.h
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
@@ -28,6 +27,11 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/loader \
 		-I${X11SRCDIR.xorg-server}/rac \
 		-I.
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+FILES=		pci.ids
+FILESDIR=	${X11ROOTDIR}/share/pciids
+.endif
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

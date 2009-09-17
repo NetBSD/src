@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.3.2.1 2009/02/25 20:01:44 snj Exp $
+# $NetBSD: md.sgimips,v 1.3.2.2 2009/09/17 04:24:27 snj Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R7/man/cat3/XF86VM.0				-unknown-	.cat,xorg
@@ -73,7 +73,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapr.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapw.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	obsolete

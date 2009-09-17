@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.8.1 2009/09/17 04:24:42 snj Exp $
 
 NOMAN=		1
 
@@ -16,8 +16,10 @@ SRCS=		xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 SRCS+=		xkbcomp-stubs.c xkbcomp-KeyBind.c
 
 .PATH:		${X11SRCDIR.xkbfile}/src
-SRCS+=		xkbatom.c xkberrs.c xkbmisc.c xkbout.c xkmread.c xkbtext.c \
+SRCS+=		xkbatom.c xkberrs.c xkbout.c xkmread.c xkbtext.c \
 		cout.c xkmout.c
+
+SRCS+=		xkbfile-xkbmisc.c
 
 .PATH:		${X11SRCDIR.X11}/src/xkb
 SRCS+=		KeysymStr.c StrKeysym.c Quarks.c Xrm.c
@@ -31,7 +33,8 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${X11SRCDIR.X11}/src/xkb \
 		-I${X11SRCDIR.xkbfile}/include/X11/extensions \
 		-I${X11SRCDIR.${HOSTPROG}} \
-		-DDFLT_XKB_CONFIG_ROOT=\"${X11LIBDIR}/xkb\" -DXKB
+		-DDFLT_XKB_CONFIG_ROOT=\"${X11LIBDIR}/xkb\" -DXKB \
+		-DHAVE_STRCASECMP -DHAVE_STRDUP
 
 
 .include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"

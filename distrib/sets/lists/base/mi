@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.9 2009/09/15 06:01:38 snj Exp $
+# $NetBSD: mi,v 1.780.2.10 2009/09/17 04:24:26 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -89,6 +89,7 @@
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
 ./etc/fonts/conf.d				base-x11-root
+./etc/fonts/conf.avail				base-x11-root
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
@@ -591,30 +592,45 @@
 ./usr/X11R7/lib/X11/xkb/compat			base-x11-root
 ./usr/X11R7/lib/X11/xkb/compiled		base-x11-root
 ./usr/X11R7/lib/X11/xkb/geometry		base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/digital	base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/ibm		base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/digital	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/ibm		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/keycodes		base-x11-root
-./usr/X11R7/lib/X11/xkb/keycodes/digital	base-x11-root
-./usr/X11R7/lib/X11/xkb/keycodes/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/digital	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keycodes/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/keymap			base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/digital		base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/sgi		base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/sun		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/digital		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/sgi_vndr		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sun		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/sun_vndr		base-x11-root
 ./usr/X11R7/lib/X11/xkb/rules			base-x11-root
 ./usr/X11R7/lib/X11/xkb/semantics		base-x11-root
 ./usr/X11R7/lib/X11/xkb/symbols			base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/digital		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/fujitsu		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/hp		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/macintosh	base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/nec		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/pc		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sgi		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sharp		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sony		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sun		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/xfree68		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/digital		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/hp		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/hp_vndr		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/macintosh	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/nec		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/nec_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sharp		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sony		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sony_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sun		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/xfree68		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R7/lib/X11/xkb/types			base-x11-root
 ./usr/X11R7/lib/modules				base-x11-root
@@ -624,6 +640,7 @@
 ./usr/X11R7/lib/modules/fonts			base-x11-root
 ./usr/X11R7/lib/modules/input			base-x11-root
 ./usr/X11R7/lib/pkgconfig			base-x11-root
+./usr/X11R7/lib/xorg				base-x11-root
 ./usr/X11R7/libexec				base-x11-root
 ./usr/X11R7/man					base-x11-root
 ./usr/X11R7/man/cat1				base-x11-root
@@ -644,6 +661,7 @@
 ./usr/X11R7/share				base-x11-root
 ./usr/X11R7/share/examples			base-x11-root
 ./usr/X11R7/share/examples/ssh-askpass		base-x11-root
+./usr/X11R7/share/pciids			base-x11-root
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-mail-bin
 ./usr/bin/apply					base-util-bin

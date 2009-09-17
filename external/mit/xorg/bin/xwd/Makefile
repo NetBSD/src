@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.8.1 2009/09/17 04:24:29 snj Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xwd
-SRCS=	xwd.c dsimple.c list.c multiVis.c
+SRCS=	xwd.c clientwin.c dsimple.c list.c multiVis.c
 
 CPPFLAGS+=-I${X11SRCDIR./xlsfonts}
 .PATH:	${X11SRCDIR./xlsfonts}

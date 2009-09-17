@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2009/02/25 03:02:19 snj Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2009/09/17 04:24:30 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIBISMODULE=	yes
 
 SHLIB_MAJOR=	0
 
-MESA_SRC_MODULES=	main math vbo tnl shader swrast slang
+MESA_SRC_MODULES=	main math vbo tnl shader swrast slang ss
 
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \

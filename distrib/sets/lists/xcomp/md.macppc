@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.13 2008/09/12 06:54:07 mrg Exp $
+# $NetBSD: md.macppc,v 1.13.2.1 2009/09/17 04:24:27 snj Exp $
 ./usr/X11R6/include/X11/extensions/xf86dga.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h	-unknown-	x11
@@ -163,7 +163,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapr.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapw.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	obsolete

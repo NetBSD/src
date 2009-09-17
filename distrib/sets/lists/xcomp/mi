@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71.2.4 2008/11/19 00:36:52 snj Exp $
+# $NetBSD: mi,v 1.71.2.5 2009/09/17 04:24:27 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5428,10 +5428,12 @@
 ./usr/X11R7/include/X11/dri/xf86dri.h			-unknown-	xorg
 ./usr/X11R7/include/X11/dri/xf86dristr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/drm_mode.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/drm_sarea.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/i915_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/mach64_drm.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/mga_drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/nouveau_drm.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/r128_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/r300_reg.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/radeon_drm.h		-unknown-	xorg
@@ -5439,6 +5441,7 @@
 ./usr/X11R7/include/X11/drm/sis_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/via_3d_reg.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/via_drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/xgi_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/MITMisc.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Print.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Printstr.h		-unknown-	xorg
@@ -5493,6 +5496,8 @@
 ./usr/X11R7/include/X11/extensions/damagewire.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/dpms.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/dpmsstr.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/dri2proto.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/dri2tokens.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/extutil.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	xorg
@@ -5564,7 +5569,7 @@
 ./usr/X11R7/include/X11/fonts/fontenc.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontencc.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontmisc.h		-unknown-	xorg
-./usr/X11R7/include/X11/fonts/fontmod.h			-unknown-	xorg
+./usr/X11R7/include/X11/fonts/fontmod.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/fonts/fontproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontshow.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontstruct.h		-unknown-	xorg
@@ -5577,7 +5582,8 @@
 ./usr/X11R7/include/X11/keysym.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysymdef.h			-unknown-	xorg
 ./usr/X11R7/include/X11/xf86drm.h			-unknown-	xorg
-./usr/X11R7/include/X11/xf86mm.h			-unknown-	xorg
+./usr/X11R7/include/X11/xf86drmMode.h			-unknown-	xorg
+./usr/X11R7/include/X11/xf86mm.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/xpm.h				-unknown-	xorg
 ./usr/X11R7/include/expat.h				-unknown-	xorg
 ./usr/X11R7/include/expat_external.h			-unknown-	xorg
@@ -5590,6 +5596,7 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftoption.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftadvanc.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
@@ -5659,26 +5666,27 @@
 ./usr/X11R7/include/freetype2/freetype/tttags.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ttunpat.h	-unknown-	xorg
 ./usr/X11R7/include/ft2build.h				-unknown-	xorg
+./usr/X11R7/include/pciaccess.h				-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/BT.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/XIstubs.h			-unknown-	xorg
-./usr/X11R7/include/xorg/afb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/assyntax.h			-unknown-	xorg
-./usr/X11R7/include/xorg/atKeynames.h			-unknown-	xorg
+./usr/X11R7/include/xorg/afb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/assyntax.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/atKeynames.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstore.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/bstorestr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/cfb16.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb32.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb8_16.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb8_32.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbmap.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbmskbits.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbunmap.h			-unknown-	xorg
+./usr/X11R7/include/xorg/cfb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb16.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb32.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb8_16.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb8_32.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbmap.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbmskbits.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbunmap.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/closestr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/closure.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/colormap.h			-unknown-	xorg
@@ -5692,12 +5700,14 @@
 ./usr/X11R7/include/xorg/dgaproc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dix-config.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dix.h				-unknown-	xorg
+./usr/X11R7/include/xorg/dixaccess.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixevents.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixfont.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixfontstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixgrabs.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixstruct.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dri.h				-unknown-	xorg
+./usr/X11R7/include/xorg/dri2.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/dristruct.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/edid.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/exa.h				-unknown-	xorg
@@ -5708,21 +5718,22 @@
 ./usr/X11R7/include/xorg/fb.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/fbdevhw.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fboverlay.h			-unknown-	xorg
-./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	xorg
+./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	obsolete
 ./usr/X11R7/include/xorg/fbrop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/gc.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/gcstruct.h			-unknown-	xorg
+./usr/X11R7/include/xorg/geext.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/globals.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/glyphstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/hotplug.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/i2c_def.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/input.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/inputstr.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mfb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/mfbmap.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mfbunmap.h			-unknown-	xorg
+./usr/X11R7/include/xorg/mfb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/mfbmap.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/mfbunmap.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/mi.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/mibank.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/mibstore.h			-unknown-	xorg
@@ -5748,14 +5759,18 @@
 ./usr/X11R7/include/xorg/picturestr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/pixmap.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/pixmapstr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/privates.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/property.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/propertyst.h			-unknown-	xorg
+./usr/X11R7/include/xorg/ptrveloc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/randrstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/region.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/regionstr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/registry.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/renderedge.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/resource.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/rgb.h				-unknown-	xorg
+./usr/X11R7/include/xorg/rrtransform.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/sarea.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/screenint.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/scrnintstr.h			-unknown-	xorg
@@ -5781,15 +5796,15 @@
 ./usr/X11R7/include/xorg/xaaWrapper.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86DDC.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Modes.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Module.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86OSmouse.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86OSmouse.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Opt.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Optrec.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Parser.h			-unknown-	xorg
@@ -5802,12 +5817,12 @@
 ./usr/X11R7/include/xorg/xf86RandR12.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Rename.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Resources.h		-unknown-	xorg
-./usr/X11R7/include/xorg/xf86Version.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86Version.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Xinput.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86_OSlib.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86_OSproc.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86_ansic.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86_libc.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86_ansic.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf86_libc.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86cmap.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86fbman.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86i2c.h			-unknown-	xorg
@@ -5820,9 +5835,13 @@
 ./usr/X11R7/include/xorg/xisb.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xkb.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbDflts.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbfile.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbrules.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xkbsrv.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorg-server.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorgVersion.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xserver-properties.h		-unknown-	xorg
 ./usr/X11R7/include/xorg/xvdix.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xvmcext.h			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/Amoeba.cf			-unknown-	xorg
@@ -5924,7 +5943,7 @@
 ./usr/X11R7/lib/X11/config/svr4.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/ultrix.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/usl.cf			-unknown-	xorg
-./usr/X11R7/lib/X11/config/version.def			-unknown-	xorg
+./usr/X11R7/lib/X11/config/version.def			-unknown-	obsolete
 ./usr/X11R7/lib/X11/config/x386.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xf86.rules			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xf86.tmpl			-unknown-	xorg
@@ -6088,6 +6107,9 @@
 ./usr/X11R7/lib/libmp.a					-unknown-	xorg
 ./usr/X11R7/lib/libmp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libmp_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libpciaccess.a				-unknown-	xorg
+./usr/X11R7/lib/libpciaccess_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libpciaccess_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libpixman-1.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libpixman-1_p.a				-unknown-	profile,xorg
@@ -6103,6 +6125,7 @@
 ./usr/X11R7/lib/pkgconfig/bigreqsproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/compositeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/damageproto.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/dri2proto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
@@ -6122,6 +6145,7 @@
 ./usr/X11R7/lib/pkgconfig/lbxutil.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libfs.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/pciaccess.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			-unknown-	xorg
@@ -6495,6 +6519,7 @@
 ./usr/X11R7/man/cat3/XGetDeviceKeyMapping.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceModifierMapping.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetDeviceMotionEvents.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XGetDeviceProperty.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetExtensionVersion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetFeedbackControl.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XGetSelectedExtensionEvents.0	-unknown-	.cat,xorg
@@ -6520,6 +6545,7 @@
 ./usr/X11R7/man/cat3/XInternAtom.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XIntersectRegion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XKeymapEvent.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XListDeviceProperties.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XListFonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XListInputDevices.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XLoadFont.0			-unknown-	.cat,xorg
@@ -7374,6 +7400,7 @@
 ./usr/X11R7/man/html3/XGetDeviceKeyMapping.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceModifierMapping.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetDeviceMotionEvents.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XGetDeviceProperty.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetExtensionVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetFeedbackControl.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XGetSelectedExtensionEvents.html	-unknown-	html,xorg
@@ -7399,6 +7426,7 @@
 ./usr/X11R7/man/html3/XInternAtom.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XIntersectRegion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XKeymapEvent.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XListDeviceProperties.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XListFonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XListInputDevices.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XLoadFont.html			-unknown-	html,xorg
@@ -8252,6 +8280,7 @@
 ./usr/X11R7/man/man3/XGetDeviceKeyMapping.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetDeviceModifierMapping.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetDeviceMotionEvents.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XGetDeviceProperty.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetExtensionVersion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetFeedbackControl.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XGetSelectedExtensionEvents.3	-unknown-	.man,xorg
@@ -8277,6 +8306,7 @@
 ./usr/X11R7/man/man3/XInternAtom.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XIntersectRegion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XKeymapEvent.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XListDeviceProperties.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XListFonts.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XListInputDevices.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XLoadFont.3			-unknown-	.man,xorg
@@ -8989,11 +9019,11 @@
 ./usr/libdata/debug/usr/X11R7/bin/makestrs.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mkfontscale.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/oclock.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/proxymngr.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/resize.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/revpath.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/sessreg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/setxkbmap.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/showrgb.debug		-unknown-	debug,xorg
@@ -9169,6 +9199,7 @@
 ./usr/libdata/lint/llib-llisp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lmp.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-loldX.ln			-unknown-	lint,x11
+./usr/libdata/lint/llib-lpciaccess.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lpsres.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lre.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxkbfile.ln			-unknown-	lint,x11

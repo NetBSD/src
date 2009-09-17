@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/25 14:15:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2009/09/17 04:24:39 snj Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
@@ -10,4 +10,6 @@ LIB=	glx
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
 SRCS=	${SRCS.glx} glxmodule.c
 
-.include "../../../../GL/glx/Makefile.glx"
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/${LIB}
+
+.include "../../../../glx/Makefile.glx"

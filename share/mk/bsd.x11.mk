@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.70.2.1 2008/11/15 22:05:12 snj Exp $
+#	$NetBSD: bsd.x11.mk,v 1.70.2.2 2009/09/17 04:24:42 snj Exp $
 
 .include <bsd.init.mk>
 
@@ -124,13 +124,13 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 1.4.2"'
+XORG_RELEASE=		'"Release 1.6.3"'
 __XKBDEFRULES__=	'"xorg"'
 XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((6) * 100000) + ((3) * 1000) + 0)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
@@ -279,6 +279,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
 		s,@PIXMAN_CFLAGS@,,; \
 		s,@LIB_DIR@,/lib,; \
+		s,@INSTALL_LIB_DIR@,\\$$\{prefix\}/lib,; \
+		s,@INSTALL_INC_DIR@,\\$$\{prefix\}/include,; \
 		s,@XKBPROTO_REQUIRES@,kbproto,; \
 		s,@FREETYPE_REQUIRES@,freetype2,; \
 		s,@EXPAT_LIBS@,-lexpat,; \
@@ -288,6 +290,20 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@X11_EXTRA_DEPS@,,; \
 		s,@XTHREAD_CFLAGS@,-D_REENTRANT,; \
 		s,@XTHREADLIB@,-lpthread,; \
+		s,@GL_PC_REQ_PRIV@,x11 xext,; \
+		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
+		s,@GL_PC_CFLAGS@,,; \
+		s,@GLU_PC_REQ_PRIV@,,; \
+		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
+		s,@GLU_PC_CFLAGS@,,; \
+		s,@GLUT_PC_REQ_PRIV@,gl glu,; \
+		s,@GLUT_PC_LIB_PRIV@,-lglut,; \
+		s,@GLUT_PC_CFLAGS@,,; \
+		s,@abi_ansic@,0.4,; \
+		s,@abi_videodrv@,5.0,; \
+		s,@abi_xinput@,4.0,; \
+		s,@abi_extension@,2.0,; \
+		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \

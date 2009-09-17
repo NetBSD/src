@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.2.4 2009/02/25 19:59:32 snj Exp $
+#	$NetBSD: Makefile,v 1.18.2.5 2009/09/17 04:24:35 snj Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -10,14 +10,14 @@ SUBDIR= \
 SUBDIR+= \
 	xf86-input-vmmouse \
 	xf86-video-vmware \
-	xf86-video-vesa
+	xf86-video-vesa \
+	xf86-video-wsfb
 .endif
 
 .if ${MACHINE} == "macppc"
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
-	xf86-video-imstt \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -25,11 +25,13 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
+#	xf86-video-imstt
 .elif ${MACHINE} == "netwinder"
 SUBDIR+= \
 	xf86-video-wsfb
-.elif ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
+.elif ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 SUBDIR+= \
+	xf86-video-ag10e \
 	xf86-video-ati \
 	xf86-video-glint \
 	xf86-video-mach64 \
@@ -48,8 +50,7 @@ SUBDIR+= \
 	xf86-video-crime \
 	xf86-video-wsfb \
 	xf86-video-newport
-.else
-
+.elif ${MACHINE} == "alpha"
 SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
@@ -59,16 +60,11 @@ SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
-	xf86-video-cyrix \
 	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
-	xf86-video-imstt \
-	xf86-video-intel \
 	xf86-video-mach64 \
 	xf86-video-mga \
-	xf86-video-neomagic \
-	xf86-video-nsc \
 	xf86-video-nv \
 	xf86-video-r128 \
 	xf86-video-radeon \
@@ -82,11 +78,60 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
-	xf86-video-vga \
-	xf86-video-via
+	xf86-video-wsfb
+#	xf86-video-imstt
+.elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+SUBDIR+= \
+	xf86-video-apm \
+	xf86-video-ark \
+	xf86-video-ast \
+	xf86-video-ati \
+	xf86-video-chips \
+	xf86-video-cirrus \
+	xf86-video-cirrus_alpine \
+	xf86-video-cirrus_laguna \
+
+# replace with xf86-video-geode
+#	xf86-video-cyrix \
+
+SUBDIR+= \
+	xf86-video-glint \
+	xf86-video-i128 \
+	xf86-video-i740 \
+
+# needs porting for xorg-server 1.6
+#	xf86-video-imstt \
+
+SUBDIR+= \
+	xf86-video-intel \
+	xf86-video-mach64 \
+	xf86-video-mga \
+	xf86-video-neomagic \
+	xf86-video-nv \
+	xf86-video-r128 \
+	xf86-video-radeon \
+	xf86-video-radeonhd \
+	xf86-video-s3 \
+	xf86-video-s3virge \
+	xf86-video-savage \
+	xf86-video-siliconmotion \
+	xf86-video-sis \
+	xf86-video-tdfx \
+	xf86-video-tga \
+	xf86-video-trident \
+	xf86-video-tseng \
+
+# replace with xf86-video-openchrome
+#	xf86-video-via
 .endif
 
-#xf86-video-wsfb
+# broken with xorg-server 1.6
+# x86
+#	xf86-video-nsc \
+#	xf86-video-vga \
+# alpha
+#	xf86-video-vga \
+
 #xf86-video-rendition
 
 .include <bsd.subdir.mk>

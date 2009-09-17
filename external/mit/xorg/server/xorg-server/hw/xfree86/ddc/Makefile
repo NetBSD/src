@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/29 07:46:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2009/09/17 04:24:38 snj Exp $
 
 LIBISPRIVATE=yes
 
@@ -13,6 +13,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c

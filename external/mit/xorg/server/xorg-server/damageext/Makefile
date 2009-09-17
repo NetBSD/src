@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 2009/09/17 04:24:37 snj Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -16,6 +16,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
+
+COPTS.damageext.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

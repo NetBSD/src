@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.20 2009/09/15 06:04:55 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.21 2009/09/17 04:24:43 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -751,6 +751,43 @@ do_envsys()
 		sensor_drive sensor_fan sensor_indicator sensor_power \
 		sensor_resistance sensor_temperature sensor_voltage
 	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	X11 fontconfig
+#
+additem fontconfig "X11 font configuration is up to date"
+do_fontconfig()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_fontconfig fix|check"
+	op="$1"
+	failed=0
+
+	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
+	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
+		failed=1
+	fi
+
+	if [ "$op" = "check" -a "$failed" = 1 ]; then
+		msg \
+    "Broken fontconfig configuration found; please delete these files"
+		msg \
+    "in the ${DESTDIR}/etc/fonts/conf.d/ subdirectory:"
+		msg \
+    "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
+		msg \
+    "   10-sub-pixel-rgb.conf 10-sub-pixel-vbgr.conf"
+		msg \
+    "   10-sub-pixel-vrgb.conf 10-unhinted.conf 25-unhint-nonlatin.conf"
+		msg \
+    "   65-khmer.conf 70-no-bitmaps.conf 70-yes-bitmaps.conf"
+		msg \
+    "(This warning only appears if both the 10-unhinted.conf and"
+		msg \
+    "10-autohint.conf files are present."
+	fi
 
 	return ${failed}
 }

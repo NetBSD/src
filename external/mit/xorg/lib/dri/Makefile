@@ -1,17 +1,18 @@
-# $NetBSD: Makefile,v 1.2.2.5 2009/02/25 20:42:46 snj Exp $
+# $NetBSD: Makefile,v 1.2.2.6 2009/09/17 04:24:29 snj Exp $
 
-SUBDIR=	libmesa .WAIT
+SUBDIR=		libmesa .WAIT
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE_ARCH} == "alpha"
+SUBDIR+=	mach64 mga r128 r200 r300 radeon s3v savage sis tdfx trident
+.elif ${MACHINE} == "macppc"
 SUBDIR+=	mach64 mga r128 r200 r300 radeon tdfx
-.elif ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
+.elif ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 SUBDIR+=	mach64 mga r128 r200 r300 radeon
-.elif ${MACHINE} == "shark" || ${MACHINE} == "ibmnws" || \
-      ${MACHINE} == "sgimips" || ${MACHINE} == "netwinder"
-SUBDIR=
-.else
+.elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
 	savage sis tdfx trident unichrome
 .endif
+
+SUBDIR+=	swrast
 
 .include <bsd.subdir.mk>
