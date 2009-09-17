@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.28 2009/05/12 10:16:35 cegger Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.29 2009/09/17 18:09:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.28 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.29 2009/09/17 18:09:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ pcic_isapnp_match(device_t parent, cfdata_t match, void *aux)
 void
 pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcic_softc *sc = device_private(self);
 	struct pcic_isa_softc *isc = device_private(self);
+	struct pcic_softc *sc = &isc->sc_pcic;
 	struct isapnp_attach_args *ipa = aux;
 	isa_chipset_tag_t ic = ipa->ipa_ic;
 	bus_space_tag_t iot = ipa->ipa_iot;
@@ -120,16 +120,17 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	if (isapnp_config(iot, memt, ipa)) {
-		aprint_error_dev(&sc->dev, "error in region allocation\n");
+		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s", device_xname(&sc->dev), ipa->ipa_devident,
+	printf("%s: %s %s", device_xname(self), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	/* sanity check that we get at least one hunk of IO space.. */
 	if (ipa->ipa_nio < 1) {
-		aprint_error_dev(&sc->dev, "failed to get one chunk of i/o space\n");
+		aprint_error_dev(self,
+		    "failed to get one chunk of i/o space\n");
 		return;
 	}
 
