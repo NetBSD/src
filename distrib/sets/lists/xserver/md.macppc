@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.42.2.3 2009/09/17 04:24:28 snj Exp $
+# $NetBSD: md.macppc,v 1.42.2.4 2009/09/17 16:42:45 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -335,8 +335,8 @@
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so           -unknown-       xorg
@@ -523,7 +523,7 @@
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/imstt.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/imstt.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
@@ -542,7 +542,7 @@
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/imstt.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/imstt.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
