@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.30 2009/05/26 03:32:51 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.31 2009/09/17 16:28:13 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.30 2009/05/26 03:32:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.31 2009/09/17 16:28:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,6 @@ zx_attach(device_t parent, device_t self, void *args)
 		printf(" (console)");
 	printf("\n");
 
-	sbus_establish(&sc->sc_sd, sc->sc_dv);
 	if (sa->sa_nintr != 0)
 		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, zx_intr, sc);
 

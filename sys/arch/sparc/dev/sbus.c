@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.72 2009/03/18 16:00:14 cegger Exp $ */
+/*	$NetBSD: sbus.c,v 1.73 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.72 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.73 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -506,60 +506,6 @@ sbus_bus_addr(bus_space_tag_t t, u_int btype, u_int offset)
 
 	/* XXX: sbus_bus_addr should be g/c'ed */
 	return (BUS_ADDR(btype, offset));
-}
-
-
-/*
- * Each attached device calls sbus_establish after it initializes
- * its sbusdev portion.
- */
-void
-sbus_establish(struct sbusdev *sd, device_t dev)
-{
-	register struct sbus_softc *sc;
-	register device_t curdev;
-
-	/*
-	 * We have to look for the sbus by name, since it is not necessarily
-	 * our immediate parent (i.e. sun4m /iommu/sbus/espdma/esp)
-	 * We don't just use the device structure of the above-attached
-	 * sbus, since we might (in the future) support multiple sbus's.
-	 */
-	for (curdev = device_parent(dev); ; curdev = device_parent(curdev)) {
-		if ((curdev == NULL) || (device_xname(curdev) == NULL))
-			panic("sbus_establish: can't find sbus parent for %s",
-			      device_xname(dev)
-					? device_xname(dev)
-					: "<unknown>" );
-
-		if (strncmp(device_xname(curdev), "sbus", 4) == 0)
-			break;
-	}
-	sc = device_private(curdev);
-
-	sd->sd_dev = dev;
-	sd->sd_bchain = sc->sc_sbdev;
-	sc->sc_sbdev = sd;
-}
-
-/*
- * Reset the given sbus. (???)
- */
-void
-sbusreset(int sbus)
-{
-	register struct sbusdev *sd;
-	struct sbus_softc *sc = device_lookup_private(&sbus_cd, sbus);
-	device_t dev;
-
-	printf("reset %s:", device_xname(sc->sc_dev));
-	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
-		if (sd->sd_reset) {
-			dev = sd->sd_dev;
-			(*sd->sd_reset)(dev);
-			printf(" %s", device_xname(dev));
-		}
-	}
 }
 
 

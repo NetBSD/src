@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.47 2009/08/20 02:29:16 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.48 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.47 2009/08/20 02:29:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.48 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ struct pnozz_cursor {
 /* per-display variables */
 struct p9100_softc {
 	device_t	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 
 	bus_space_tag_t	sc_bustag;
@@ -396,7 +395,6 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, sc->sc_width, sc->sc_height,
 	    node);
 
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
 	    p9100_intr, sc);

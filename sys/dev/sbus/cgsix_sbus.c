@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.29 2009/05/26 03:32:51 macallan Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.30 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.29 2009/05/26 03:32:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.30 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.29 2009/05/26 03:32:51 macallan Exp
 static int	cgsixmatch(device_t, cfdata_t, void *);
 static void	cgsixattach(device_t, device_t, void *);
 
-/* Allocate an `sbusdev' in addition to the cgsix softc */
-struct cgsix_sbus_softc {
-	struct cgsix_softc bss_softc;
-	struct sbusdev bss_sd;
-};
-
-CFATTACH_DECL_NEW(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
+CFATTACH_DECL_NEW(cgsix_sbus, sizeof(struct cgsix_softc),
     cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
@@ -94,9 +88,7 @@ cgsixmatch(device_t parent, cfdata_t cf, void *aux)
 void
 cgsixattach(device_t parent, device_t self, void *aux)
 {
-	struct cgsix_sbus_softc *ssc = device_private(self);
-	struct cgsix_softc *sc = &ssc->bss_softc;
-	struct sbusdev *sd = &ssc->bss_sd;
+	struct cgsix_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node, isconsole;
@@ -172,7 +164,6 @@ cgsixattach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_fbc = (struct cg6_fbc *)bus_space_vaddr(sa->sa_bustag, bh);
 
-	sbus_establish(sd, sc->sc_dev);
 	name = prom_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);

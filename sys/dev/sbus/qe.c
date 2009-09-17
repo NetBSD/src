@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.51 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: qe.c,v 1.52 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.51 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.52 2009/09/17 16:28:12 tsutsui Exp $");
 
 #define QEDEBUG
 
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.51 2009/05/12 14:43:59 cegger Exp $");
 
 struct qe_softc {
 	struct	device	sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	bus_dmamap_t	sc_dmamap;

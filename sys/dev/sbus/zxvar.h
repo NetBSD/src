@@ -1,4 +1,4 @@
-/*	$NetBSD: zxvar.h,v 1.4 2009/04/23 20:46:49 macallan Exp $	*/
+/*	$NetBSD: zxvar.h,v 1.5 2009/09/17 16:28:13 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@
  */
 struct zx_softc {
 	device_t	sc_dv;
-	struct sbusdev	sc_sd;
 	struct fbdevice	sc_fb;
 	bus_space_tag_t	sc_bt;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.20 2009/08/20 02:29:16 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.21 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.20 2009/08/20 02:29:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.21 2009/09/17 16:28:12 tsutsui Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -85,7 +85,6 @@ static void	agten_init_screen(void *, struct vcons_screen *, int, long *);
 
 struct agten_softc {
 	device_t	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 
 	struct vcons_screen sc_console_screen;
@@ -281,8 +280,6 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	reg = prom_getpropint(node, "glint_reg_physaddr", -1);
 	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
-
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,

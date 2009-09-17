@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.52 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: magma.c,v 1.53 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.52 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.53 2009/09/17 16:28:12 tsutsui Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -453,8 +453,6 @@ magma_attach(device_t parent, device_t self, void *aux)
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
 			device_xname(self), chip, cd->cd_reg);
 	}
-
-	sbus_establish(&sc->ms_sd, &sc->ms_dev);
 
 	/* configure the children */
 	(void)config_found(self, mtty_match, NULL);

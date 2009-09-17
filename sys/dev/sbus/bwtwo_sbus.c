@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.25 2009/05/12 14:43:59 cegger Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.25 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,13 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.25 2009/05/12 14:43:59 cegger Exp $
 static void	bwtwoattach_sbus (device_t, device_t, void *);
 static int	bwtwomatch_sbus (device_t, cfdata_t, void *);
 
-/* Allocate an `sbusdev' in addition to the bwtwo softc */
-struct bwtwo_sbus_softc {
-	struct bwtwo_softc bss_softc;
-	struct sbusdev bss_sd;
-};
-
-CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_sbus_softc),
+CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_softc),
     bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL);
 
 static int	bwtwo_get_video (struct bwtwo_softc *);
@@ -137,7 +131,6 @@ void
 bwtwoattach_sbus(device_t parent, device_t self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
-	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
@@ -194,7 +187,6 @@ bwtwoattach_sbus(device_t parent, device_t self, void *args)
 		sc->sc_fb.fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);
 	}
 
-	sbus_establish(sd, &sc->sc_dev);
 	bwtwoattach(sc, name, isconsole);
 }
 

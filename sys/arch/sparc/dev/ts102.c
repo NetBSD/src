@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.13 2008/08/04 03:14:43 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.14 2009/09/17 16:28:12 tsutsui Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -137,7 +137,6 @@ struct	tslot_data {
 
 struct	tslot_softc {
 	device_t	sc_dev;
-	struct sbusdev	sc_sd;
 	
 	bus_space_tag_t	sc_bustag;		/* socket control io	*/
 	bus_space_handle_t	sc_regh;	/*  space		*/
@@ -336,8 +335,6 @@ tslot_attach(device_t parent, device_t self, void *args)
 	tag->sparc_write_2 = ts102_write_2;
 	tag->sparc_write_4 = ts102_write_4;
 	tag->sparc_write_8 = ts102_write_8;
-
-	sbus_establish(&sc->sc_sd, self);
 
 	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].oi_pri,
 	    IPL_NONE, tslot_intr, sc);
