@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.829 2009/09/08 07:08:01 skrll Exp $
+# $NetBSD: mi,v 1.830 2009/09/17 07:40:44 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -731,6 +731,7 @@
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
+./usr/include/dev/pci/hdaudio			base-c-usr
 ./usr/include/isofs				base-c-usr
 ./usr/include/isofs/cd9660			base-c-usr
 ./usr/include/kadm5				base-c-usr
