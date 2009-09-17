@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.7 2009/01/18 00:21:09 lukem Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.8 2009/09/17 10:37:28 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 /*
  * TODO
- * - implement meta data partition formatting.
+ * - implement metadata formatting for BD-R
  * - implement support for a read-only companion partition?
  */
 
