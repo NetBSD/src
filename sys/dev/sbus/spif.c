@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.23 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: spif.c,v 1.24 2009/09/17 16:39:48 tsutsui Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.23 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.24 2009/09/17 16:39:48 tsutsui Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.23 2009/05/12 14:43:59 cegger Exp $");
 #include <dev/sbus/spifvar.h>
 #include <dev/sbus/spifreg.h>
 
+#include "ioconf.h"
 
 /* Autoconfig stuff */
 
@@ -82,10 +83,6 @@ CFATTACH_DECL(stty, sizeof(struct stty_softc),
 
 CFATTACH_DECL(sbpp, sizeof(struct sbpp_softc),
     sbpp_match, sbpp_attach, NULL, NULL);
-
-extern struct cfdriver spif_cd;
-extern struct cfdriver stty_cd;
-extern struct cfdriver sbpp_cd;
 
 dev_type_open(stty_open);
 dev_type_close(stty_close);
