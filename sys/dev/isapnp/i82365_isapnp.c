@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.29 2009/09/17 18:09:51 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.30 2009/09/17 18:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.29 2009/09/17 18:09:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.30 2009/09/17 18:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ int	pcicisapnp_debug = 0 /* XXX */ ;
 #endif
 
 int pcic_isapnp_match(device_t, cfdata_t, void *);
-void	pcic_isapnp_attach(device_t, device_t, void *);
+void pcic_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(pcic_isapnp, sizeof(struct pcic_isa_softc),
     pcic_isapnp_match, pcic_isapnp_attach, NULL, NULL);
@@ -99,7 +99,7 @@ pcic_isapnp_match(device_t parent, cfdata_t match, void *aux)
 	pri = isapnp_devmatch(aux, &isapnp_pcic_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
 
 void
@@ -149,8 +149,7 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	}
 
 	msize =  0x4000;
-	if (isa_mem_alloc (memt, msize, msize, 0, 0,
-			   &maddr, &memh)) {
+	if (isa_mem_alloc(memt, msize, msize, 0, 0, &maddr, &memh)) {
 		printf(": can't alloc mem space\n");
 		return;
 	}
@@ -159,7 +158,7 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 
 	isc->sc_ic = ic;
-	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
+	sc->pct = &pcic_isa_functions;
 
 	sc->iot = iot;
 	sc->ioh = ioh;

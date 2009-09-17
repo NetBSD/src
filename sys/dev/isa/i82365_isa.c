@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.32 2009/09/14 13:41:15 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.33 2009/09/17 18:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.32 2009/09/14 13:41:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.33 2009/09/17 18:14:41 tsutsui Exp $");
 
 #define	PCICISADEBUG
 
@@ -96,21 +96,21 @@ pcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 	int val, found, msize;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_niomem < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
-		return (0);
+		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, PCIC_IOSIZE, 0, &ioh))
-		return (0);
+		return 0;
 
 	if (ia->ia_iomem[0].ir_size == ISA_UNKNOWN_IOSIZ)
 		msize = PCIC_MEMSIZE;
@@ -120,7 +120,7 @@ pcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 	    msize, 0, &memh)) {
 		bus_space_unmap(iot, ioh, PCIC_IOSIZE);
-		return (0);
+		return 0;
 	}
 
 	found = 0;
@@ -166,7 +166,7 @@ pcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 	bus_space_unmap(ia->ia_memt, memh, msize);
 
 	if (!found)
-		return (0);
+		return 0;
 
 	ia->ia_nio = 1;
 	ia->ia_io[0].ir_size = PCIC_IOSIZE;
@@ -178,7 +178,7 @@ pcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 
 	ia->ia_ndrq = 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -211,7 +211,7 @@ pcic_isa_attach(device_t parent, device_t self, void *aux)
 	    (1 << (ia->ia_iomem[0].ir_size / PCIC_MEM_PAGESIZE)) - 1;
 
 	isc->sc_ic = ic;
-	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
+	sc->pct = &pcic_isa_functions;
 
 	sc->iot = iot;
 	sc->ioh = ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.31 2009/09/14 13:41:15 tsutsui Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.32 2009/09/17 18:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.31 2009/09/14 13:41:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.32 2009/09/17 18:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,24 +90,22 @@ static void pcic_pci_callback(device_t);
 int
 pcic_pci_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = aux;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_CIRRUS:
-		switch(PCI_PRODUCT(pa->pa_id)) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_CIRRUS_CL_PD6729:
 			break;
 		default:
-			return (0);
+			return 0;
 		}
 		break;
 	default:
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
-
-void pcic_isa_config_interrupts(device_t);
 
 void
 pcic_pci_attach(device_t parent, device_t self, void *aux)
@@ -152,7 +150,7 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* end XXX */
 
-	sc->pct = (pcmcia_chipset_tag_t) & pcic_pci_functions;
+	sc->pct = &pcic_pci_functions;
 
 	sc->memt = memt;
 	sc->memh = memh;
@@ -182,7 +180,7 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 	 * we'll need to fix this.
 	 */
 	pcic_write(&sc->handle[0], PCIC_CIRRUS_EXTENDED_INDEX,
-		   PCIC_CIRRUS_EXT_CONTROL_1);
+	    PCIC_CIRRUS_EXT_CONTROL_1);
 	if ((pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
 	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK)) {
 		aprint_error_dev(self, "PCI interrupts not supported\n");
