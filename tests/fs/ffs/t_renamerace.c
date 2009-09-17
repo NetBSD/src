@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.7 2009/08/03 14:25:24 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.8 2009/09/17 13:12:51 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -29,9 +29,11 @@ ATF_TC_HEAD(renamerace, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "rename(2) race against files "
 	    "unlinked mid-operation, kern/40948");
+	/* XXX: test hangs in qemu for unknown reasons */
+	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
-int quit;
+volatile int quit;
 
 static void *
 w1(void *arg)
