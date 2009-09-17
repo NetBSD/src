@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.38 2009/09/16 11:17:19 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.38 2009/09/16 11:17:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.38 2009/09/16 11:17:19 tsutsui Exp $");
 
 struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
-	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
 	bus_dmamap_t		sc_dmamap;
@@ -81,8 +80,6 @@ struct	le_softc {
 
 int	lematch_sbus(device_t, cfdata_t, void *);
 void	leattach_sbus(device_t, device_t, void *);
-
-static void le_sbus_reset(device_t);
 
 /*
  * Media types supported.
@@ -217,9 +214,6 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	lesc->sc_sd.sd_reset = le_sbus_reset;
-	sbus_establish(&lesc->sc_sd, self);
-
 	if (sc->sc_mem == 0) {
 		bus_dma_segment_t seg;
 		int rseg, error;
@@ -289,13 +283,4 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
 					 IPL_NET, am7990_intr, sc);
-}
-
-void
-le_sbus_reset(device_t self)
-{
-	struct le_softc *lesc = device_private(self);
-	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-
-	lance_reset(sc);
 }

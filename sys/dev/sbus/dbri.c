@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.23 2009/05/16 18:24:44 martin Exp $	*/
+/*	$NetBSD: dbri.c,v 1.24 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.23 2009/05/16 18:24:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.24 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -365,8 +365,6 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	/* physical address of DMA buffer */
 	sc->sc_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_bufsiz = size;
-
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 
 	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SCHED, dbri_intr,
 	    sc);

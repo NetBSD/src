@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.61 2009/05/12 14:43:59 cegger Exp $ */
+/*	$NetBSD: stp4020.c,v 1.62 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.61 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.62 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,6 @@ struct stp4020_socket {
 
 struct stp4020_softc {
 	struct device	sc_dev;		/* Base device */
-	struct sbusdev	sc_sd;		/* SBus device */
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
 	struct lwp	*event_thread;		/* event handling thread */
@@ -450,8 +449,6 @@ stp4020attach(device_t parent, device_t self, void *aux)
 			sc->sc_socks[1].windows[i-5].winaddr = bh;
 		}
 	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* We only use one interrupt level. */
 	if (sa->sa_nintr > sbus_intno) {

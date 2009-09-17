@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.65 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: be.c,v 1.66 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.65 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.66 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.65 2009/05/12 14:43:59 cegger Exp $");
 
 struct be_softc {
 	struct	device	sc_dev;
-	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	bus_dmamap_t	sc_dmamap;

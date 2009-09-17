@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.26 2009/09/08 18:31:36 tsutsui Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.26 2009/09/08 18:31:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.26 2009/09/08 18:31:36 tsutsui 
 
 struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
-	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
@@ -84,8 +83,6 @@ struct	le_softc {
 
 int	lematch_lebuffer(device_t, cfdata_t, void *);
 void	leattach_lebuffer(device_t, device_t, void *);
-
-static void le_lebuffer_reset(device_t);
 
 /*
  * Media types supported.
@@ -175,10 +172,6 @@ leattach_lebuffer(device_t parent, device_t self, void *aux)
 	sc->sc_conf3 = prom_getpropint(sa->sa_node, "busmaster-regval",
 				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
-	/* SBus is grandparent, but sbus_establish() looks for it properly */
-	lesc->sc_sd.sd_reset = le_lebuffer_reset;
-	sbus_establish(&lesc->sc_sd, self);
-
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
 	sc->sc_defaultmedia = lemedia[0];
@@ -200,13 +193,4 @@ leattach_lebuffer(device_t parent, device_t self, void *aux)
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
 					 IPL_NET, am7990_intr, sc);
-}
-
-void
-le_lebuffer_reset(device_t self)
-{
-	struct le_softc *lesc = device_private(self);
-	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-
-	lance_reset(sc);
 }

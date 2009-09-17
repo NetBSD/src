@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.45 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.46 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.45 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.46 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -73,7 +73,6 @@ struct cs4231_sbus_softc {
 
 	void *sc_pint;
 	void *sc_rint;
-	struct sbusdev sc_sd;			/* sbus device */
 	bus_space_tag_t sc_bt;			/* DMA controller tag */
 	bus_space_handle_t sc_bh;		/* DMA controller registers */
 };
@@ -187,8 +186,6 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 
 	cs4231_common_attach(sc, bh);
 	printf("\n");
-
-	sbus_establish(&sbsc->sc_sd, &sc->sc_ad1848.sc_dev);
 
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)

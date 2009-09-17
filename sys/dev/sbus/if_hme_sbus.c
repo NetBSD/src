@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.32 2009/09/08 18:15:17 tsutsui Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.33 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.32 2009/09/08 18:15:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.33 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,13 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.32 2009/09/08 18:15:17 tsutsui Exp
 
 struct hmesbus_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
-	struct	sbusdev		hsc_sbus;	/* SBus device */
+	/* sbus specific stuff here */
 };
 
 int	hmematch_sbus(device_t, cfdata_t, void *);
 void	hmeattach_sbus(device_t, device_t, void *);
-
-static void hme_sbus_reset(device_t);
 
 CFATTACH_DECL_NEW(hme_sbus, sizeof(struct hmesbus_softc),
     hmematch_sbus, hmeattach_sbus, NULL, NULL);
@@ -88,7 +86,6 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	struct hmesbus_softc *hsc = device_private(self);
 	struct hme_softc *sc = &hsc->hsc_hme;
 	struct sbus_softc *sbsc = device_private(parent);
-	struct sbusdev *sd = &hsc->hsc_sbus;
 	uint32_t burst, sbusburst;
 	int node;
 
@@ -159,9 +156,6 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sd->sd_reset = hme_sbus_reset;
-	sbus_establish(sd, self);
-
 	prom_getether(node, sc->sc_enaddr);
 
 	/*
@@ -191,13 +185,4 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 hme_intr, sc);
-}
-
-void
-hme_sbus_reset(device_t self)
-{
-	struct hmesbus_softc *hsc = device_private(self);
-	struct hme_softc *sc = &hsc->hsc_hme;
-
-	hme_reset(sc);
 }
