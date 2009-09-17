@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.8 2009/09/14 12:49:34 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.9 2009/09/17 18:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -49,8 +49,8 @@ void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
  * Figure out how wide the ISA bus is...
  */
 
-void pcic_isa_bus_width_probe(struct pcic_softc *, bus_space_tag_t,
-				   bus_space_handle_t, bus_addr_t, uint32_t);
+void	pcic_isa_bus_width_probe(struct pcic_softc *, bus_space_tag_t,
+	    bus_space_handle_t, bus_addr_t, uint32_t);
 void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 void	pcic_isa_config_interrupts(device_t);
 void	*pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
