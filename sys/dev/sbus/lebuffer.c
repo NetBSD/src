@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.34 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.35 2009/09/17 17:51:52 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.34 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.35 2009/09/17 17:51:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ int	lebufprint(void *, const char *);
 int	lebufmatch(device_t, cfdata_t, void *);
 void	lebufattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
+CFATTACH_DECL_NEW(lebuffer, sizeof(struct lebuf_softc),
     lebufmatch, lebufattach, NULL, NULL);
 
 int
@@ -76,13 +76,15 @@ void
 lebufattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct lebuf_softc *sc = (void *)self;
+	struct lebuf_softc *sc = device_private(self);
 	struct sbus_softc *sbsc = device_private(parent);
 	int node;
 	int sbusburst;
 	bus_space_tag_t bt = sa->sa_bustag;
 	bus_dma_tag_t	dt = sa->sa_dmatag;
 	bus_space_handle_t bh;
+
+	sc->sc_dev = self;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
@@ -122,7 +124,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc,
 				       bt, dt, node, &sax);
-		(void)config_found(&sc->sc_dev, (void *)&sax, lebufprint);
+		(void)config_found(self, (void *)&sax, lebufprint);
 		sbus_destroy_attach_args(&sax);
 	}
 }
