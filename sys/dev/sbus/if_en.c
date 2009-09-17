@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.25 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: if_en.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.25 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.25 2009/05/12 14:43:59 cegger Exp $");
  */
 struct en_sbus_softc {
 	/* bus independent stuff */
-	struct en_softc	esc;		/* includes "device" structure */
+	struct en_softc	sc_en;		/* includes "device" structure */
 
 	/* sbus glue */
-	struct sbusdev	sc_sd;		/* sbus device */
 };
 
 
@@ -119,8 +118,8 @@ static void
 en_sbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct en_softc *sc = (void *)self;
-	struct en_sbus_softc *scs = (void *)self;
+	struct en_sbus_softc *ssc = (void *)self;
+	struct en_softc *sc = &ssc->sc_en;
 
 	printf("\n");
 
@@ -139,8 +138,6 @@ en_sbus_attach(device_t parent, device_t self, void *aux)
 					 IPL_NET, en_intr, sc);
 
 	sc->ipl = sa->sa_pri;	/* appropriate? */
-
-	sbus_establish(&scs->sc_sd, &sc->sc_dev);
 
 	/*
 	 * done SBUS specific stuff

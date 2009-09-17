@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.21 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: sio16.c,v 1.22 2009/09/17 16:28:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.21 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.22 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -73,7 +73,6 @@ static u_char	sio16_ackfunc(void *, int who);
  */
 struct sio16_softc {
 	struct device	sc_dev;			/* must be first */
-	struct sbusdev	sc_sd;			/* for sbus drivers */
 
 	/* sbus information */
 	bus_space_tag_t	sc_tag;			/* bus tag for below */
@@ -205,9 +204,6 @@ sio16_attach(device_t parent, device_t self, void *aux)
 		printf(", don't know model %s, bailing\n", model);
 		return;
 	}
-
-	/* set up our sbus connections */
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* establish interrupt channel */
 	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,

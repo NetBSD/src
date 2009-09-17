@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.33 2009/05/17 00:28:35 tsutsui Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.34 2009/09/17 16:28:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.33 2009/05/17 00:28:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.34 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,6 @@ lebufattach(device_t parent, device_t self, void *aux)
 
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
