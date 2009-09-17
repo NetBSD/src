@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1310 2009/09/16 22:52:40 dyoung Exp $
+#	$NetBSD: mi,v 1.1311 2009/09/17 07:40:45 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1275,6 +1275,8 @@
 ./usr/include/gssapi/gssapi_krb5.h		comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi_spnego.h		comp-krb5-include	kerberos
 ./usr/include/hesiod.h				comp-c-include
+./usr/include/dev/pci/hdaudio/hdaudioio.h	comp-c-include
+./usr/include/dev/pci/hdaudio/hdaudioreg.h	comp-c-include
 ./usr/include/histedit.h			comp-c-include
 ./usr/include/history.h				comp-obsolete		obsolete
 ./usr/include/iconv.h				comp-c-include
