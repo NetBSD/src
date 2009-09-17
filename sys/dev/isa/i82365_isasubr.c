@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.44 2009/09/14 13:41:15 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.45 2009/09/17 18:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.44 2009/09/14 13:41:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.45 2009/09/17 18:14:41 tsutsui Exp $");
 
 #define	PCICISADEBUG
 
@@ -147,7 +147,7 @@ pcic_isa_count_intr(void *arg)
 			printf(".");
 		else
 			DPRINTF(("."));
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -168,7 +168,7 @@ pcic_isa_count_intr(void *arg)
 	else
 		DPRINTF(("X"));
 #endif
-	return (cscreg ? 1 : 0);
+	return cscreg ? 1 : 0;
 }
 
 /*
@@ -373,8 +373,7 @@ pcic_isa_config_interrupts(device_t self)
  * each sub region is offset by 0x400.
  */
 void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
-				bus_space_handle_t ioh,
-				bus_addr_t base, uint32_t length)
+    bus_space_handle_t ioh, bus_addr_t base, uint32_t length)
 {
 	bus_space_handle_t ioh_high;
 	int i, iobuswidth, tmp1, tmp2;
@@ -434,7 +433,6 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
 	    device_xname(&sc->dev), (long) sc->iobase,
-
 	    (long) sc->iobase + sc->iosize));
 
 	if (pcic_isa_alloc_iobase && pcic_isa_alloc_iosize) {
@@ -442,14 +440,14 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 		sc->iosize = pcic_isa_alloc_iosize;
 
 		DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx "
-		    "(config override)\n", device_xname(&sc->dev), (long) sc->iobase,
-		    (long) sc->iobase + sc->iosize));
+		    "(config override)\n", device_xname(&sc->dev),
+		    (long) sc->iobase, (long) sc->iobase + sc->iosize));
 	}
 }
 
 void *
 pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
-	struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
+    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_isa_softc *isc = device_private(h->ph_parent);
@@ -477,7 +475,7 @@ pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
 		ist = IST_EDGE;		/* SEE COMMENT ABOVE */
 
 	if (isa_intr_alloc(ic, sc->intr_mask[h->chip], ist, &irq))
-		return (NULL);
+		return NULL;
 
 	h->ih_irq = irq;
 	if (h->flags & PCIC_FLAG_ENABLED) {
@@ -487,11 +485,11 @@ pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	}
 
 	if ((ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg)) == NULL)
-		return (NULL);
+		return NULL;
 
 	printf("%s: card irq %d\n", device_xname(h->pcmcia), irq);
 
-	return (ih);
+	return ih;
 }
 
 void
