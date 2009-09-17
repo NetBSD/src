@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.284 2009/08/10 21:27:46 matt Exp $
+#	$NetBSD: BRANCHES,v 1.285 2009/09/17 16:42:50 cube Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -296,16 +296,6 @@ Scope:		sys/arch/arm sys/arch/cats (other arm archs to follow)
 Notes:		Rework arm interrupt code to provide a shared set of interrupt
 		routines, and allow improvements to be shared across all arm
 		based hardware.
-
-Branch:		cube-autoconf
-Description:	Renovate autoconf(9) API
-Status:		Active
-Start Date:	11 Dec 2007
-End Date:
-Base Tag:	cube-autoconf-base
-Maintainer:	Quentin Garnier <cube@NetBSD.org>
-Scope:		kernel usr.bin/config (and some other userland bits)
-Notes:		Address a number of issues the current autoconf(9) API has.
 
 Branch:		gmcgarry_ctxsw
 Description:	Separate scheduler from context-switch code
@@ -796,6 +786,16 @@ Base Tag:
 Maintainer:	Curt Sampson <cjs@NetBSD.org>
 Scope:		Entire tree.
 Notes:
+
+Branch:		cube-autoconf
+Description:	Renovate autoconf(9) API
+Status:		Terminated; abandoned
+Start Date:	11 Dec 2007
+End Date:
+Base Tag:	cube-autoconf-base
+Maintainer:	Quentin Garnier <cube@NetBSD.org>
+Scope:		kernel usr.bin/config (and some other userland bits)
+Notes:		Address a number of issues the current autoconf(9) API has.
 
 Branch:		eeh-paddr_t
 Description:	use separate types for virtual vs. physical addresses
