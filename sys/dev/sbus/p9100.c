@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.48 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: p9100.c,v 1.49 2009/09/17 16:39:48 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.48 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.49 2009/09/17 16:39:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.48 2009/09/17 16:28:12 tsutsui Exp $");
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
 #include "opt_pnozz.h"
+
+#include "ioconf.h"
 
 #include "tctrl.h"
 #if NTCTRL > 0
@@ -162,8 +164,6 @@ static void	p9100unblank(device_t);
 
 CFATTACH_DECL_NEW(pnozz, sizeof(struct p9100_softc),
     p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
-
-extern struct cfdriver pnozz_cd;
 
 static dev_type_open(p9100open);
 static dev_type_ioctl(p9100ioctl);

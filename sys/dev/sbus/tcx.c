@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.41 2009/09/17 16:28:13 tsutsui Exp $ */
+/*	$NetBSD: tcx.c,v 1.42 2009/09/17 16:39:48 tsutsui Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.41 2009/09/17 16:28:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.42 2009/09/17 16:39:48 tsutsui Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.41 2009/09/17 16:28:13 tsutsui Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
+
+#include "ioconf.h"
 
 /* per-display variables */
 struct tcx_softc {
@@ -149,8 +151,6 @@ static void	tcx_unblank(device_t);
 
 CFATTACH_DECL_NEW(tcx, sizeof(struct tcx_softc),
     tcxmatch, tcxattach, NULL, NULL);
-
-extern struct cfdriver tcx_cd;
 
 dev_type_open(tcxopen);
 dev_type_close(tcxclose);

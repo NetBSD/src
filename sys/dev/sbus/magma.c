@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.53 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: magma.c,v 1.54 2009/09/17 16:39:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.53 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.54 2009/09/17 16:39:48 tsutsui Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.53 2009/09/17 16:28:12 tsutsui Exp $");
 
 #include <dev/sbus/mbppio.h>
 #include <dev/sbus/magmareg.h>
+
+#include "ioconf.h"
 
 /* supported cards
  *
@@ -175,9 +177,6 @@ CFATTACH_DECL(mtty, sizeof(struct mtty_softc),
 
 CFATTACH_DECL(mbpp, sizeof(struct mbpp_softc),
     mbpp_match, mbpp_attach, NULL, NULL);
-
-extern struct cfdriver mtty_cd;
-extern struct cfdriver mbpp_cd;
 
 dev_type_open(mttyopen);
 dev_type_close(mttyclose);

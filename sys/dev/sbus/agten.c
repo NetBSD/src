@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.21 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: agten.c,v 1.22 2009/09/17 16:39:48 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.21 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.22 2009/09/17 16:39:48 tsutsui Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.21 2009/09/17 16:28:12 tsutsui Exp $");
 #include <dev/ic/i128var.h>
 
 #include "opt_agten.h"
+#include "ioconf.h"
 
 static int	agten_match(device_t, cfdata_t, void *);
 static void	agten_attach(device_t, device_t, void *);
@@ -162,7 +163,6 @@ struct wsdisplay_accessops agten_accessops = {
 };
 
 /* /dev/fb* stuff */
-extern struct cfdriver agten_cd;
 
 static int agten_fb_open(dev_t, int, int, struct lwp *);
 static int agten_fb_close(dev_t, int, int, struct lwp *);
