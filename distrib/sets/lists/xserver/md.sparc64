@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.26.2.3 2009/09/17 04:24:28 snj Exp $	x11
+# $NetBSD: md.sparc64,v 1.26.2.4 2009/09/18 02:03:35 snj Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -302,6 +302,8 @@
 ./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ag10e_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
@@ -409,11 +411,6 @@
 ./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
@@ -470,6 +467,7 @@
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	obsolete
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	obsolete
 ./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	obsolete
+./usr/X11R7/man/cat4/ag10e.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
@@ -506,6 +504,7 @@
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	obsolete
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	obsolete
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	obsolete
+./usr/X11R7/man/man4/ag10e.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
