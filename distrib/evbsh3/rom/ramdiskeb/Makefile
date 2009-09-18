@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/07/10 10:34:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2009/09/18 09:24:59 abs Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -25,7 +25,7 @@ NEWFS?=		newfs
 UMOUNT?=	umount
 VNCONFIG?=	vnconfig
 
-LISTS=		../ramdiskcommon/list
+LISTS=		${.CURDIR}/../ramdiskcommon/list
 CRUNCHCONF=	../ramdiskcommon/${CBIN}.conf
 MTREECONF=	../ramdiskcommon/mtree.conf
 
@@ -46,8 +46,8 @@ ${IMAGE}: ${CBIN} ${MTREECONF} ${LISTS}
 	${MOUNT} ${VND_DEV} ${MOUNT_POINT}
 	${TOOL_MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-		TARGDIR=${MOUNT_POINT} ${HOST_SH} ${TOP}/runlist.sh \
-		${.CURDIR}/${LISTS}
+	    KERNOBJDIR=${KERNOBJDIR} TARGDIR=${MOUNT_POINT} ${HOST_SH} \
+	    ${NETBSDSRCDIR}/distrib/common/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
