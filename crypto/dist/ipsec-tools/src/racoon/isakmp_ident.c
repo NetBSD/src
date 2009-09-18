@@ -1,11 +1,11 @@
-/*	$NetBSD: isakmp_ident.c,v 1.12 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.13 2009/09/18 10:31:11 tteras Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -86,7 +86,7 @@
 #include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #endif
-#ifdef ENABLE_FRAG 
+#ifdef ENABLE_FRAG
 #include "isakmp_frag.h"
 #endif
 
@@ -115,13 +115,13 @@ ident_i1send(iph1, msg)
 	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
 	int i;
 #endif
-#ifdef ENABLE_HYBRID  
+#ifdef ENABLE_HYBRID
 	vchar_t *vid_xauth = NULL;
 	vchar_t *vid_unity = NULL;
 #endif
-#ifdef ENABLE_FRAG 
+#ifdef ENABLE_FRAG
 	vchar_t *vid_frag = NULL;
-#endif 
+#endif
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
@@ -152,7 +152,7 @@ ident_i1send(iph1, msg)
 
 #ifdef ENABLE_NATT
 	/* set VID payload for NAT-T if NAT-T support allowed in the config file */
-	if (iph1->rmconf->nat_traversal) 
+	if (iph1->rmconf->nat_traversal)
 		plist = isakmp_plist_append_natt_vids(plist, vid_natt);
 #endif
 #ifdef ENABLE_HYBRID
@@ -171,7 +171,7 @@ ident_i1send(iph1, msg)
 		else
 			plist = isakmp_plist_append(plist,
 			    vid_xauth, ISAKMP_NPTYPE_VID);
-			
+
 		if ((vid_unity = set_vendorid(VENDORID_UNITY)) == NULL)
 			plog(LLV_ERROR, LOCATION, NULL,
 			     "Unity vendor ID generation failed\n");
@@ -191,7 +191,7 @@ ident_i1send(iph1, msg)
 		} else {
 			vid_frag = isakmp_frag_addcap(vid_frag,
 			    VENDORID_FRAG_IDENT);
-			plist = isakmp_plist_append(plist, 
+			plist = isakmp_plist_append(plist,
 			    vid_frag, ISAKMP_NPTYPE_VID);
 		}
 	}
@@ -221,9 +221,9 @@ ident_i1send(iph1, msg)
 
 end:
 #ifdef ENABLE_FRAG
-	if (vid_frag) 
+	if (vid_frag)
 		vfree(vid_frag);
-#endif  
+#endif
 #ifdef ENABLE_NATT
 	for (i = 0; i < MAX_NATT_VID_COUNT && vid_natt[i] != NULL; i++)
 		vfree(vid_natt[i]);
@@ -482,21 +482,21 @@ ident_i3recv(iph1, msg)
 				natd_received = NULL;
 				if (isakmp_p2ph (&natd_received, pa->ptr) < 0)
 					goto end;
-                        
+
 				/* set both bits first so that we can clear them
 				   upon verifying hashes */
 				if (natd_seq == 0)
 					iph1->natt_flags |= NAT_DETECTED;
-                        
-				/* this function will clear appropriate bits bits 
+
+				/* this function will clear appropriate bits bits
 				   from iph1->natt_flags */
 				natd_verified = natt_compare_addr_hash (iph1,
 					natd_received, natd_seq++);
-                        
+
 				plog (LLV_INFO, LOCATION, NULL, "NAT-D payload #%d %s\n",
 					natd_seq - 1,
 					natd_verified ? "verified" : "doesn't match");
-                        
+
 				vfree (natd_received);
 				break;
 			}
@@ -516,7 +516,7 @@ ident_i3recv(iph1, msg)
 #ifdef ENABLE_NATT
 	if (NATT_AVAILABLE(iph1)) {
 		plog (LLV_INFO, LOCATION, NULL, "NAT %s %s%s\n",
-		      iph1->natt_flags & NAT_DETECTED ? 
+		      iph1->natt_flags & NAT_DETECTED ?
 		      		"detected:" : "not detected",
 		      iph1->natt_flags & NAT_DETECTED_ME ? "ME " : "",
 		      iph1->natt_flags & NAT_DETECTED_PEER ? "PEER" : "");
@@ -784,7 +784,7 @@ ident_i4recv(iph1, msg0)
 	 * If we got a GSS token, we need to this roundtrip again.
 	 */
 #ifdef HAVE_GSSAPI
-	iph1->status = gsstoken != 0 ? PHASE1ST_MSG3RECEIVED : 
+	iph1->status = gsstoken != 0 ? PHASE1ST_MSG3RECEIVED :
 	    PHASE1ST_MSG4RECEIVED;
 #else
 	iph1->status = PHASE1ST_MSG4RECEIVED;
@@ -967,13 +967,13 @@ ident_r1send(iph1, msg)
 #ifdef ENABLE_HYBRID
         vchar_t *vid_xauth = NULL;
         vchar_t *vid_unity = NULL;
-#endif  
+#endif
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
-#ifdef ENABLE_FRAG          
+#ifdef ENABLE_FRAG
 	vchar_t *vid_frag = NULL;
-#endif 
+#endif
 
 	/* validity check */
 	if (iph1->status != PHASE1ST_MSG1RECEIVED) {
@@ -990,7 +990,7 @@ ident_r1send(iph1, msg)
 		gss_sa = ipsecdoi_setph1proposal(iph1->rmconf, iph1->approval);
 		if (gss_sa != iph1->sa_ret)
 			free_gss_sa = 1;
-	} else 
+	} else
 #endif
 		gss_sa = iph1->sa_ret;
 
@@ -1044,7 +1044,7 @@ ident_r1send(iph1, msg)
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "Frag vendorID construction failed\n");
 		else
-			plist = isakmp_plist_append(plist, 
+			plist = isakmp_plist_append(plist,
 			     vid_frag, ISAKMP_NPTYPE_VID);
 	}
 #endif
@@ -1169,20 +1169,20 @@ ident_r2recv(iph1, msg)
 			{
 				vchar_t *natd_received = NULL;
 				int natd_verified;
-				
+
 				if (isakmp_p2ph (&natd_received, pa->ptr) < 0)
 					goto end;
-				
+
 				if (natd_seq == 0)
 					iph1->natt_flags |= NAT_DETECTED;
-				
+
 				natd_verified = natt_compare_addr_hash (iph1,
 					natd_received, natd_seq++);
-				
+
 				plog (LLV_INFO, LOCATION, NULL, "NAT-D payload #%d %s\n",
 					natd_seq - 1,
 					natd_verified ? "verified" : "doesn't match");
-				
+
 				vfree (natd_received);
 				break;
 			}
@@ -1202,7 +1202,7 @@ ident_r2recv(iph1, msg)
 #ifdef ENABLE_NATT
 	if (NATT_AVAILABLE(iph1))
 		plog (LLV_INFO, LOCATION, NULL, "NAT %s %s%s\n",
-		      iph1->natt_flags & NAT_DETECTED ? 
+		      iph1->natt_flags & NAT_DETECTED ?
 		      		"detected:" : "not detected",
 		      iph1->natt_flags & NAT_DETECTED_ME ? "ME " : "",
 		      iph1->natt_flags & NAT_DETECTED_PEER ? "PEER" : "");
@@ -1644,8 +1644,13 @@ ident_ir2mx(iph1)
 #endif
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
-		gssapi_get_token_to_send(iph1, &gsstoken);
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+		if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Failed to get gssapi token.\n");
+			goto end;
+		}
+	}
 #endif
 
 	/* create isakmp KE payload */
@@ -1689,9 +1694,9 @@ ident_ir2mx(iph1)
 		plist = isakmp_plist_append(plist, natd[1], iph1->natt_options->payload_nat_d);
 	}
 #endif
-	
+
 	buf = isakmp_plist_set_all (&plist, iph1);
-	
+
 	error = 0;
 
 end:
@@ -1768,7 +1773,7 @@ ident_ir3mx(iph1)
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
-#endif 
+#endif
 		if (oakley_getmycert(iph1) < 0)
 			goto end;
 
@@ -1800,7 +1805,11 @@ ident_ir3mx(iph1)
 			if (gsshash == NULL)
 				goto end;
 		} else {
-			gssapi_get_token_to_send(iph1, &gsstoken);
+			if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"Failed to get gssapi token.\n");
+				goto end;
+			}
 		}
 
 		if (!gssapi_id_sent(iph1)) {
@@ -1836,7 +1845,7 @@ ident_ir3mx(iph1)
 	}
 
 	buf = isakmp_plist_set_all (&plist, iph1);
-	
+
 #ifdef HAVE_PRINT_ISAKMP_C
 	isakmp_printpacket(buf, iph1->local, iph1->remote, 1);
 #endif
