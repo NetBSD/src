@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.62 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: stp4020.c,v 1.63 2009/09/18 12:23:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.62 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.63 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ void
 stp4020attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct stp4020_softc *sc = (void *)self;
+	struct stp4020_softc *sc = device_private(self);
 	bus_space_tag_t tag;
 	int rev, i, sbus_intno, hw_ipl;
 	bus_space_handle_t bh;
