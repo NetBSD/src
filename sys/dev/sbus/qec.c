@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.45 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: qec.c,v 1.46 2009/09/18 12:23:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.45 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.46 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ void
 qecattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct qec_softc *sc = (void *)self;
+	struct qec_softc *sc = device_private(self);
 	struct sbus_softc *sbsc = device_private(parent);
 	int node;
 	int sbusburst;
@@ -206,7 +206,7 @@ qecattach(device_t parent, device_t self, void *aux)
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc,
 				       sbt, sc->sc_dmatag, node, &sax);
-		(void)config_found(&sc->sc_dev, (void *)&sax, qecprint);
+		(void)config_found(self, (void *)&sax, qecprint);
 		sbus_destroy_attach_args(&sax);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.19 2009/05/12 14:43:59 cegger Exp $ */
+/*	$NetBSD: xbox.c,v 1.20 2009/09/18 12:23:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.19 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.20 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -122,7 +122,7 @@ xbox_match(device_t parent, cfdata_t cf, void *aux)
 void
 xbox_attach(device_t parent, device_t self, void *aux)
 {
-	struct xbox_softc *sc = (struct xbox_softc *)self;
+	struct xbox_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 	int node = sa->sa_node;
 	struct xbox_attach_args xa;
@@ -150,5 +150,5 @@ xbox_attach(device_t parent, device_t self, void *aux)
 	xa.xa_bustag = sa->sa_bustag;
 	xa.xa_dmatag = sa->sa_dmatag;
 
-	(void) config_found(&sc->sc_dev, (void *)&xa, xbox_print);
+	(void) config_found(self, (void *)&xa, xbox_print);
 }

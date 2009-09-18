@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.22 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: sio16.c,v 1.23 2009/09/18 12:23:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.22 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.23 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ void
 sio16_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct sio16_softc *sc = (struct sio16_softc *)self;
+	struct sio16_softc *sc = device_private(self);
 	bus_space_handle_t h;
 	char *mode, *model;
 	int i;
@@ -281,7 +281,7 @@ clcd_match(device_t parent, cfdata_t cf, void *aux)
 static void
 clcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct cd18xx_softc *sc = (struct cd18xx_softc *)self;
+	struct cd18xx_softc *sc = device_private(self);
 	struct sio16_attach_args *args = aux;
 
 	sc->sc_tag = args->cd_tag;

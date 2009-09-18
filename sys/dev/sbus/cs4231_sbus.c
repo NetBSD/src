@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.46 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.47 2009/09/18 12:23:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.46 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.47 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -154,7 +154,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	struct sbus_attach_args *sa;
 	bus_space_handle_t bh;
 
-	sbsc = (struct cs4231_sbus_softc *)self;
+	sbsc = device_private(self);
 	sc = &sbsc->sc_cs4231;
 	sa = aux;
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
@@ -193,7 +193,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 				   sa->sa_pri, IPL_SCHED,
 				   cs4231_sbus_intr, sbsc);
 
-	audio_attach_mi(&audiocs_sbus_hw_if, sbsc, &sc->sc_ad1848.sc_dev);
+	audio_attach_mi(&audiocs_sbus_hw_if, sbsc, self);
 }
 
 
