@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.46 2009/09/18 12:23:16 tsutsui Exp $ */
+/*	$NetBSD: qec.c,v 1.47 2009/09/18 12:59:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.46 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.47 2009/09/18 12:59:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,8 @@ qecattach(device_t parent, device_t self, void *aux)
 }
 
 int
-qec_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags, vaddr_t va, bus_space_handle_t *hp)
+qec_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+    vaddr_t va, bus_space_handle_t *hp)
 	/* va:	 Ignored */
 {
 	int error;
@@ -225,13 +226,9 @@ qec_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags, vaddr_
 }
 
 void *
-qec_intr_establish(t, pri, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int (*handler)(void *);
-	void *arg;
-	void (*fastvec)(void);	/* ignored */
+qec_intr_establish(bus_space_tag_t t, int pri, int level,
+    int (*handler)(void *), void *arg, void (*fastvec)(void))
+	/* (*fastvec)(void): ignored */
 {
 	struct qec_softc *sc = t->cookie;
 
