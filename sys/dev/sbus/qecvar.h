@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.12 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.13 2009/09/18 14:09:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@ struct qec_ring {
 	bus_addr_t	rb_txddma;	/* DMA address of same */
 	struct	qec_xd	*rb_rxd;	/* Receive descriptors */
 	bus_addr_t	rb_rxddma;	/* DMA address of same */
-	void *		rb_txbuf;	/* Transmit buffers */
-	void *		rb_rxbuf;	/* Receive buffers */
+	uint8_t		*rb_txbuf;	/* Transmit buffers */
+	uint8_t		*rb_rxbuf;	/* Receive buffers */
 	int		rb_ntbuf;	/* # of transmit buffers */
 	int		rb_nrbuf;	/* # of receive buffers */
 
