@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.20 2009/09/08 17:16:33 tsutsui Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.21 2009/09/18 12:40:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,5 +101,4 @@ struct hme_softc {
 
 
 void	hme_config(struct hme_softc *);
-void	hme_reset(struct hme_softc *);
 int	hme_intr(void *);

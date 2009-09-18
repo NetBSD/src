@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.81 2009/09/08 18:35:42 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.82 2009/09/18 12:40:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.81 2009/09/08 18:35:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.82 2009/09/18 12:40:15 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -95,6 +95,7 @@ static bool	hme_shutdown(device_t, int);
 static int	hme_init(struct hme_softc *);
 static void	hme_meminit(struct hme_softc *);
 static void	hme_mifinit(struct hme_softc *);
+static void	hme_reset(struct hme_softc *);  
 static void	hme_chipreset(struct hme_softc *);
 static void	hme_setladrf(struct hme_softc *);
 
