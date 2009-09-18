@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.6 2006/10/02 21:41:59 manu Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.6.6.1 2009/09/18 10:32:48 tteras Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -1721,7 +1721,11 @@ ident_ir2mx(iph1)
 
 #ifdef HAVE_GSSAPI
 	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
-		gssapi_get_token_to_send(iph1, &gsstoken);
+		if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"Failed to get gssapi token.\n");
+			goto end;
+		}
 #endif
 
 	/* create isakmp KE payload */
@@ -1891,7 +1895,11 @@ ident_ir3mx(iph1)
 			if (gsshash == NULL)
 				goto end;
 		} else {
-			gssapi_get_token_to_send(iph1, &gsstoken);
+			if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"Failed to get gssapi token.\n");
+				goto end;
+			}
 		}
 
 		if (!gssapi_id_sent(iph1)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.9 2006/09/30 21:49:37 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.9.6.1 2009/09/18 10:32:48 tteras Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -246,7 +246,11 @@ agg_i1send(iph1, msg)
 
 #ifdef HAVE_GSSAPI
 	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
-		gssapi_get_token_to_send(iph1, &gsstoken);
+		if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			     "Failed to get gssapi token.\n");
+			goto end;
+		}
 		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
 	}
 #endif
@@ -1254,7 +1258,11 @@ agg_r1send(iph1, msg)
 			    iph1->id, ISAKMP_NPTYPE_ID);
 
 			/* create GSS payload */
-			gssapi_get_token_to_send(iph1, &gsstoken);
+			if (gssapi_get_token_to_send(iph1, &gsstoken) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Failed to get gssapi token.\n");
+				goto end;
+			}
 			plist = isakmp_plist_append(plist, 
 			    gsstoken, ISAKMP_NPTYPE_GSS);
 
