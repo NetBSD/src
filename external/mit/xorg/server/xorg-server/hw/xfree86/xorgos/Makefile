@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.2 2009/09/17 04:24:41 snj Exp $
+#	$NetBSD: Makefile,v 1.10.2.3 2009/09/18 02:03:35 snj Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -47,7 +47,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
 .endif
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
 SRCS.bus+=	netbsdSbus.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
