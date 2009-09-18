@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.28 2009/09/18 12:23:16 tsutsui Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.29 2009/09/18 16:43:19 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.28 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.29 2009/09/18 16:43:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.28 2009/09/18 12:23:16 tsutsui Ex
 static int	cgthreematch_sbus(device_t, cfdata_t, void *);
 static void	cgthreeattach_sbus(device_t, device_t, void *);
 
-CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
+CFATTACH_DECL_NEW(cgthree_sbus, sizeof(struct cgthree_softc),
     cgthreematch_sbus, cgthreeattach_sbus, NULL, NULL);
 
 /*
@@ -138,6 +138,8 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 	int isconsole;
 	const char *name;
 	bus_space_handle_t bh;
+
+	sc->sc_dev = self;
 
 	/* Remember cookies for cgthree_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
