@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.35 2009/03/23 13:52:32 tsutsui Exp $ */
+/* $NetBSD: bootxx.c,v 1.36 2009/09/18 21:40:09 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -36,6 +36,7 @@
 #include <sys/disklabel.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_aout.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
