@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.67 2009/09/18 12:23:16 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.68 2009/09/18 13:45:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.67 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.68 2009/09/18 13:45:20 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -161,12 +161,13 @@ struct be_softc {
 int	bematch(device_t, cfdata_t, void *);
 void	beattach(device_t, device_t, void *);
 
-void	beinit(struct be_softc *);
+int	beinit(struct ifnet *);
 void	bestart(struct ifnet *);
-void	bestop(struct be_softc *);
+void	bestop(struct ifnet *, int);
 void	bewatchdog(struct ifnet *);
 int	beioctl(struct ifnet *, u_long, void *);
 void	bereset(struct be_softc *);
+void	behwreset(struct be_softc *);
 
 int	beintr(void *);
 int	berint(struct be_softc *);
@@ -276,8 +277,6 @@ beattach(device_t parent, device_t self, void *aux)
 	printf(" rev %x", sc->sc_rev);
 
 	callout_init(&sc->sc_tick_ch, 0);
-
-	bestop(sc);
 
 	sc->sc_channel = prom_getpropint(node, "channel#", -1);
 	if (sc->sc_channel == -1)
@@ -457,6 +456,8 @@ beattach(device_t parent, device_t self, void *aux)
 	ifp->if_start = bestart;
 	ifp->if_ioctl = beioctl;
 	ifp->if_watchdog = bewatchdog;
+	ifp->if_init = beinit;
+	ifp->if_stop = bestop;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
@@ -656,17 +657,25 @@ bestart(struct ifnet *ifp)
 }
 
 void
-bestop(struct be_softc *sc)
+bestop(struct ifnet *ifp, int disable)
 {
-	int n;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t br = sc->sc_br;
+	struct be_softc *sc = ifp->if_softc;
 
 	callout_stop(&sc->sc_tick_ch);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 	(void)be_intphy_service(sc, &sc->sc_mii, MII_DOWN);
+
+	behwreset(sc);
+}
+
+void
+behwreset(struct be_softc *sc)
+{
+	int n;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t br = sc->sc_br;
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);
@@ -691,12 +700,13 @@ bestop(struct be_softc *sc)
 void
 bereset(struct be_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
 	s = splnet();
-	bestop(sc);
+	behwreset(sc);
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0)
-		beinit(sc);
+		beinit(ifp);
 	splx(s);
 }
 
@@ -963,7 +973,7 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
-		beinit(sc);
+		beinit(ifp);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -985,7 +995,7 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			bestop(sc);
+			bestop(ifp, 0);
 			ifp->if_flags &= ~IFF_RUNNING;
 			break;
 		case IFF_UP:
@@ -993,15 +1003,15 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			beinit(sc);
+			beinit(ifp);
 			break;
 		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			bestop(sc);
-			beinit(sc);
+			bestop(ifp, 0);
+			beinit(ifp);
 			break;
 		}
 #ifdef BEDEBUG
@@ -1012,24 +1022,21 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
 			if (ifp->if_flags & IFF_RUNNING)
-				be_mcreset(sc);
-			error = 0;
+				error = beinit(ifp);
+			else
+				error = 0;
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 	splx(s);
@@ -1037,10 +1044,10 @@ beioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 
-void
-beinit(struct be_softc *sc)
+int
+beinit(struct ifnet *ifp)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct be_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 	bus_space_handle_t cr = sc->sc_cr;
@@ -1054,7 +1061,7 @@ beinit(struct be_softc *sc)
 
 	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
 
-	bestop(sc);
+	bestop(ifp, 1);
 
 	ea = sc->sc_enaddr;
 	bus_space_write_4(t, br, BE_BRI_MACADDR0, (ea[0] << 8) | ea[1]);
@@ -1137,8 +1144,11 @@ beinit(struct be_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
+
+	return 0;
 out:
 	splx(s);
+	return rc;
 }
 
 void
