@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.23 2009/05/12 14:46:39 cegger Exp $ */
+/*	$NetBSD: cgthree.c,v 1.24 2009/09/18 16:43:19 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.23 2009/05/12 14:46:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.24 2009/09/18 16:43:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 	aa.console = isconsole;
 	aa.accessops = &cgthree_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 #else
 	/* Initialize the default color map. */
 	bt_initcmap(&sc->sc_cmap, 256);
@@ -336,10 +336,11 @@ cgthreeioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgthreeunblank(device_t dev)
+cgthreeunblank(device_t self)
 {
+	struct cgthree_softc *sc = device_private(self);
 
-	cgthree_set_video(device_private(dev), 1);
+	cgthree_set_video(sc, 1);
 }
 
 static void
