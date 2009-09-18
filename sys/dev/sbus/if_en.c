@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: if_en.c,v 1.27 2009/09/18 12:23:16 tsutsui Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.26 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.27 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static void
 en_sbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct en_sbus_softc *ssc = (void *)self;
+	struct en_sbus_softc *ssc = device_private(self);
 	struct en_softc *sc = &ssc->sc_en;
 
 	printf("\n");

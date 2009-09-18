@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.66 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.67 2009/09/18 12:23:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.66 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.67 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -219,8 +219,8 @@ void
 beattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct qec_softc *qec = (struct qec_softc *)parent;
-	struct be_softc *sc = (struct be_softc *)self;
+	struct qec_softc *qec = device_private(parent);
+	struct be_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
@@ -368,7 +368,7 @@ beattach(device_t parent, device_t self, void *aux)
 
 	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
 
-		mii_attach(&sc->sc_dev, mii, 0xffffffff, BE_PHY_EXTERNAL,
+		mii_attach(self, mii, 0xffffffff, BE_PHY_EXTERNAL,
 		    MII_OFFSET_ANY, 0);
 
 		child = LIST_FIRST(&mii->mii_phys);
@@ -386,14 +386,16 @@ beattach(device_t parent, device_t self, void *aux)
 			 */
 #ifdef DIAGNOSTIC
 			if (LIST_NEXT(child, mii_list) != NULL) {
-				aprint_error_dev(&sc->sc_dev, "spurious MII device %s attached\n",
-				       device_xname(child->mii_dev));
+				aprint_error_dev(self,
+				    "spurious MII device %s attached\n",
+				    device_xname(child->mii_dev));
 			}
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
-				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
-				       " at phy %d, instance %d\n",
+				aprint_error_dev(self,
+				    "cannot accommodate MII device %s"
+				    " at phy %d, instance %d\n",
 				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 			} else {
@@ -446,11 +448,11 @@ beattach(device_t parent, device_t self, void *aux)
 			ifmedia_set(&sc->sc_media,
 				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
 		} else
-			be_mii_writereg((void *)sc,
+			be_mii_writereg(self,
 				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
 	}
 
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = bestart;
 	ifp->if_ioctl = beioctl;
@@ -603,7 +605,7 @@ be_read(struct be_softc *sc, int idx, int len)
 void
 bestart(struct ifnet *ifp)
 {
-	struct be_softc *sc = (struct be_softc *)ifp->if_softc;
+	struct be_softc *sc = ifp->if_softc;
 	struct qec_xd *txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
 	unsigned int bix, len;
@@ -710,9 +712,9 @@ bewatchdog(struct ifnet *ifp)
 }
 
 int
-beintr(void *v)
+beintr(void *arg)
 {
-	struct be_softc *sc = (struct be_softc *)v;
+	struct be_softc *sc = arg;
 	bus_space_tag_t t = sc->sc_bustag;
 	u_int32_t whyq, whyb, whyc;
 	int r = 0;
@@ -743,6 +745,7 @@ beintr(void *v)
 int
 beqint(struct be_softc *sc, u_int32_t why)
 {
+	device_t self = &sc->sc_dev;
 	int r = 0, rst = 0;
 
 	if (why & BE_CR_STAT_TXIRQ)
@@ -753,19 +756,19 @@ beqint(struct be_softc *sc, u_int32_t why)
 	if (why & BE_CR_STAT_BERROR) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "bigmac error\n");
+		aprint_error_dev(self, "bigmac error\n");
 	}
 
 	if (why & BE_CR_STAT_TXDERR) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "bogus tx descriptor\n");
+		aprint_error_dev(self, "bogus tx descriptor\n");
 	}
 
 	if (why & (BE_CR_STAT_TXLERR | BE_CR_STAT_TXPERR | BE_CR_STAT_TXSERR)) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "tx DMA error ( ");
+		aprint_error_dev(self, "tx DMA error ( ");
 		if (why & BE_CR_STAT_TXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_TXPERR)
@@ -778,19 +781,19 @@ beqint(struct be_softc *sc, u_int32_t why)
 	if (why & BE_CR_STAT_RXDROP) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "out of rx descriptors\n");
+		aprint_error_dev(self, "out of rx descriptors\n");
 	}
 
 	if (why & BE_CR_STAT_RXSMALL) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "rx descriptor too small\n");
+		aprint_error_dev(self, "rx descriptor too small\n");
 	}
 
 	if (why & (BE_CR_STAT_RXLERR | BE_CR_STAT_RXPERR | BE_CR_STAT_RXSERR)) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "rx DMA error ( ");
+		aprint_error_dev(self, "rx DMA error ( ");
 		if (why & BE_CR_STAT_RXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_RXPERR)
@@ -802,12 +805,12 @@ beqint(struct be_softc *sc, u_int32_t why)
 
 	if (!r) {
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "unexpected error interrupt %08x\n",
+		aprint_error_dev(self, "unexpected error interrupt %08x\n",
 			why);
 	}
 
 	if (rst) {
-		printf("%s: resetting\n", device_xname(&sc->sc_dev));
+		printf("%s: resetting\n", device_xname(self));
 		bereset(sc);
 	}
 
@@ -820,32 +823,33 @@ beqint(struct be_softc *sc, u_int32_t why)
 int
 beeint(struct be_softc *sc, u_int32_t why)
 {
+	device_t self = &sc->sc_dev;
 	int r = 0, rst = 0;
 
 	if (why & BE_BR_STAT_RFIFOVF) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "receive fifo overrun\n");
+		aprint_error_dev(self, "receive fifo overrun\n");
 	}
 	if (why & BE_BR_STAT_TFIFO_UND) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "transmit fifo underrun\n");
+		aprint_error_dev(self, "transmit fifo underrun\n");
 	}
 	if (why & BE_BR_STAT_MAXPKTERR) {
 		r |= 1;
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "max packet size error\n");
+		aprint_error_dev(self, "max packet size error\n");
 	}
 
 	if (!r) {
 		rst = 1;
-		aprint_error_dev(&sc->sc_dev, "unexpected error interrupt %08x\n",
+		aprint_error_dev(self, "unexpected error interrupt %08x\n",
 			why);
 	}
 
 	if (rst) {
-		printf("%s: resetting\n", device_xname(&sc->sc_dev));
+		printf("%s: resetting\n", device_xname(self));
 		bereset(sc);
 	}
 
@@ -950,8 +954,8 @@ int
 beioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct be_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = data;
+	struct ifreq *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1320,7 +1324,7 @@ be_mii_sendbits(struct be_softc *sc, int phy, u_int32_t data, int nbits)
 static int
 be_mii_readreg(device_t self, int phy, int reg)
 {
-	struct be_softc *sc = (struct be_softc *)self;
+	struct be_softc *sc = device_private(self);
 	int val = 0, i;
 
 	/*
@@ -1348,7 +1352,7 @@ be_mii_readreg(device_t self, int phy, int reg)
 void
 be_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct be_softc *sc = (struct be_softc *)self;
+	struct be_softc *sc = device_private(self);
 	int i;
 
 	/*
@@ -1370,20 +1374,21 @@ be_mii_writereg(device_t self, int phy, int reg, int val)
 int
 be_mii_reset(struct be_softc *sc, int phy)
 {
+	device_t self = &sc->sc_dev;
 	int n;
 
-	be_mii_writereg((device_t)sc, phy, MII_BMCR,
+	be_mii_writereg(self, phy, MII_BMCR,
 			BMCR_LOOP | BMCR_PDOWN | BMCR_ISO);
-	be_mii_writereg((device_t)sc, phy, MII_BMCR, BMCR_RESET);
+	be_mii_writereg(self, phy, MII_BMCR, BMCR_RESET);
 
 	for (n = 16; n >= 0; n--) {
-		int bmcr = be_mii_readreg((device_t)sc, phy, MII_BMCR);
+		int bmcr = be_mii_readreg(self, phy, MII_BMCR);
 		if ((bmcr & BMCR_RESET) == 0)
 			break;
 		DELAY(20);
 	}
 	if (n == 0) {
-		aprint_error_dev(&sc->sc_dev, "bmcr reset failed\n");
+		aprint_error_dev(self, "bmcr reset failed\n");
 		return (EIO);
 	}
 
@@ -1406,7 +1411,7 @@ be_tick(void *arg)
 void
 be_mii_statchg(device_t self)
 {
-	struct be_softc *sc = (struct be_softc *)self;
+	struct be_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 	u_int instance;
@@ -1470,6 +1475,7 @@ int
 be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	device_t self = &sc->sc_dev;
 	int bmcr, bmsr;
 	int error;
 
@@ -1490,10 +1496,9 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
-			bmcr = be_mii_readreg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR);
-			be_mii_writereg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+			bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+			be_mii_writereg(self,
+			    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 			sc->sc_mii_flags &= ~MIIF_HAVELINK;
 			sc->sc_intphy_curspeed = 0;
 			return (0);
@@ -1503,7 +1508,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		if ((error = be_mii_reset(sc, BE_PHY_INTERNAL)) != 0)
 			return (error);
 
-		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
 
 		/*
 		 * Select the new mode and take out of isolation
@@ -1528,7 +1533,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		else
 			bmcr &= ~BMCR_FDX;
 
-		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+		be_mii_writereg(self, BE_PHY_INTERNAL, MII_BMCR, bmcr);
 		break;
 
 	case MII_TICK:
@@ -1553,29 +1558,28 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 		 */
 
 		/* Read twice in case the register is latched */
-		bmsr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR) |
-		       be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR);
+		bmsr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR) |
+		       be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR);
 
 		if ((bmsr & BMSR_LINK) != 0) {
 			/* We have a carrier */
-			bmcr = be_mii_readreg((void *)sc,
-					BE_PHY_INTERNAL, MII_BMCR);
+			bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
 
 			if ((sc->sc_mii_flags & MIIF_DOINGAUTO) != 0) {
-				bmcr = be_mii_readreg((void *)sc,
-						BE_PHY_INTERNAL, MII_BMCR);
+				bmcr = be_mii_readreg(self,
+				    BE_PHY_INTERNAL, MII_BMCR);
 
 				sc->sc_mii_flags |= MIIF_HAVELINK;
 				sc->sc_intphy_curspeed = (bmcr & BMCR_S100);
 				sc->sc_mii_flags &= ~MIIF_DOINGAUTO;
 
 				bmcr &= ~BMCR_ISO;
-				be_mii_writereg((void *)sc,
-					BE_PHY_INTERNAL, MII_BMCR, bmcr);
+				be_mii_writereg(self,
+				    BE_PHY_INTERNAL, MII_BMCR, bmcr);
 
 				printf("%s: link up at %s Mbps\n",
-					device_xname(&sc->sc_dev),
-					(bmcr & BMCR_S100) ? "100" : "10");
+				    device_xname(self),
+				    (bmcr & BMCR_S100) ? "100" : "10");
 			}
 			return (0);
 		}
@@ -1584,7 +1588,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 			sc->sc_mii_flags |= MIIF_DOINGAUTO;
 			sc->sc_mii_flags &= ~MIIF_HAVELINK;
 			sc->sc_intphy_curspeed = 0;
-			printf("%s: link down\n", device_xname(&sc->sc_dev));
+			printf("%s: link down\n", device_xname(self));
 		}
 
 		/* Only retry autonegotiation every 5 seconds. */
@@ -1592,18 +1596,18 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 			return(0);
 
 		sc->sc_mii_ticks = 0;
-		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
 		/* Just flip the fast speed bit */
 		bmcr ^= BMCR_S100;
-		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+		be_mii_writereg(self, BE_PHY_INTERNAL, MII_BMCR, bmcr);
 
 		break;
 
 	case MII_DOWN:
 		/* Isolate this phy */
-		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
-		be_mii_writereg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+		bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_writereg(self,
+		    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 		return (0);
 	}
 
@@ -1612,7 +1616,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	if (sc->sc_mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)((device_t)sc);
+		(*mii->mii_statchg)(self);
 		sc->sc_mii_active = mii->mii_media_active;
 	}
 	return (0);
@@ -1625,6 +1629,7 @@ void
 be_intphy_status(struct be_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
+	device_t self = &sc->sc_dev;
 	int media_active, media_status;
 	int bmcr, bmsr;
 
@@ -1634,7 +1639,7 @@ be_intphy_status(struct be_softc *sc)
 	/*
 	 * Internal transceiver; do the work here.
 	 */
-	bmcr = be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMCR);
+	bmcr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMCR);
 
 	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
 	case (BMCR_S100 | BMCR_FDX):
@@ -1652,8 +1657,8 @@ be_intphy_status(struct be_softc *sc)
 	}
 
 	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMSR);
+	bmsr = be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR)|
+	       be_mii_readreg(self, BE_PHY_INTERNAL, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		media_status |=  IFM_ACTIVE;
 

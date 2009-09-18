@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.28 2009/09/18 12:23:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.27 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.28 2009/09/18 12:23:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ cgthreematch_sbus(device_t parent, cfdata_t cf, void *aux)
 void
 cgthreeattach_sbus(device_t parent, device_t self, void *args)
 {
-	struct cgthree_softc *sc = (struct cgthree_softc *)self;
+	struct cgthree_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node = sa->sa_node;
@@ -143,8 +143,8 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_device = self;
+	fb->fb_flags = device_cfdata(self)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 
 	fb->fb_type.fb_depth = 8;
