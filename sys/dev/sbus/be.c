@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.68 2009/09/18 13:45:20 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.69 2009/09/18 13:48:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.68 2009/09/18 13:45:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.69 2009/09/18 13:48:54 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.68 2009/09/18 13:45:20 tsutsui Exp $");
 #include <dev/sbus/bereg.h>
 
 struct be_softc {
-	struct	device	sc_dev;
+	device_t	sc_dev;
 	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	bus_dmamap_t	sc_dmamap;
@@ -205,7 +205,7 @@ void	be_intphy_status(struct be_softc *);
 int	be_intphy_service(struct be_softc *, struct mii_data *, int);
 
 
-CFATTACH_DECL(be, sizeof(struct be_softc),
+CFATTACH_DECL_NEW(be, sizeof(struct be_softc),
     bematch, beattach, NULL, NULL);
 
 int
@@ -232,6 +232,8 @@ beattach(device_t parent, device_t self, void *aux)
 	int instance;
 	int rseg, error;
 	u_int32_t v;
+
+	sc->sc_dev = self;
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
@@ -715,7 +717,7 @@ bewatchdog(struct ifnet *ifp)
 {
 	struct be_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	bereset(sc);
@@ -755,7 +757,7 @@ beintr(void *arg)
 int
 beqint(struct be_softc *sc, u_int32_t why)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int r = 0, rst = 0;
 
 	if (why & BE_CR_STAT_TXIRQ)
@@ -833,7 +835,7 @@ beqint(struct be_softc *sc, u_int32_t why)
 int
 beeint(struct be_softc *sc, u_int32_t why)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int r = 0, rst = 0;
 
 	if (why & BE_BR_STAT_RFIFOVF) {
@@ -1384,7 +1386,7 @@ be_mii_writereg(device_t self, int phy, int reg, int val)
 int
 be_mii_reset(struct be_softc *sc, int phy)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int n;
 
 	be_mii_writereg(self, phy, MII_BMCR,
@@ -1485,7 +1487,7 @@ int
 be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int bmcr, bmsr;
 	int error;
 
@@ -1639,7 +1641,7 @@ void
 be_intphy_status(struct be_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int media_active, media_status;
 	int bmcr, bmsr;
 
