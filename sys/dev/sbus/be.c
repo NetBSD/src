@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.73 2009/09/18 14:35:11 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.74 2009/09/18 14:40:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.73 2009/09/18 14:35:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.74 2009/09/18 14:40:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1151,11 +1151,9 @@ be_mcreset(struct be_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
+	uint32_t v;
 	uint32_t crc;
 	uint16_t hash[4];
-	uint8_t octet;
-	uint32_t v;
-	int i, j;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
@@ -1191,23 +1189,10 @@ be_mcreset(struct be_softc *sc)
 			goto chipit;
 		}
 
-		crc = 0xffffffff;
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			octet = enm->enm_addrlo[i];
-
-			for (j = 0; j < 8; j++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				}
-				else
-					crc >>= 1;
-				octet >>= 1;
-			}
-		}
-
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		/* Just want the 6 most significant bits. */
 		crc >>= 26;
+
 		hash[crc >> 4] |= 1 << (crc & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
