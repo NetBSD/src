@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.47 2009/09/18 12:59:47 tsutsui Exp $ */
+/*	$NetBSD: qec.c,v 1.48 2009/09/18 14:09:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.47 2009/09/18 12:59:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.48 2009/09/18 14:09:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,10 +300,10 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 {
 	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;
-	void *p;
+	uint8_t *p;
 	unsigned int ntbuf, nrbuf, i;
 
-	p = qr->rb_membase;
+	p   = qr->rb_membase;
 	dma = qr->rb_dmabase;
 
 	ntbuf = qr->rb_ntbuf;
@@ -314,7 +314,7 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 */
 	qr->rb_txd = (struct qec_xd *)p;
 	qr->rb_txddma = dma;
-	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p   += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 	/*
@@ -322,7 +322,7 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 */
 	qr->rb_rxd = (struct qec_xd *)p;
 	qr->rb_rxddma = dma;
-	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p   += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 
@@ -331,7 +331,7 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 */
 	qr->rb_txbuf = p;
 	txbufdma = dma;
-	p = (char *)p + ntbuf * pktbufsz;
+	p   += ntbuf * pktbufsz;
 	dma += ntbuf * pktbufsz;
 
 	/*
@@ -339,7 +339,7 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 */
 	qr->rb_rxbuf = p;
 	rxbufdma = dma;
-	p = (char *)p + nrbuf * pktbufsz;
+	p   += nrbuf * pktbufsz;
 	dma += nrbuf * pktbufsz;
 
 	/*

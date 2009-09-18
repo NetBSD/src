@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.70 2009/09/18 14:00:44 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.71 2009/09/18 14:09:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.70 2009/09/18 14:00:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.71 2009/09/18 14:09:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -483,7 +483,7 @@ be_put(struct be_softc *sc, int idx, struct mbuf *m)
 	int len, tlen = 0, boff = 0;
 	void *bp;
 
-	bp = (char *)sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * BE_PKT_BUF_SZ;
+	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * BE_PKT_BUF_SZ;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -514,7 +514,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 	int len, pad, boff = 0;
 	void *bp;
 
-	bp = (char *)sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * BE_PKT_BUF_SZ;
+	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * BE_PKT_BUF_SZ;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.53 2009/09/18 12:23:16 tsutsui Exp $	*/
+/*	$NetBSD: qe.c,v 1.54 2009/09/18 14:09:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.53 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.54 2009/09/18 14:09:42 tsutsui Exp $");
 
 #define QEDEBUG
 
@@ -334,7 +334,7 @@ qe_get(struct qe_softc *sc, int idx, int totlen)
 	int len, pad, boff = 0;
 	void *bp;
 
-	bp = (char *)sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
+	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -383,7 +383,7 @@ qe_put(struct qe_softc *sc, int idx, struct mbuf *m)
 	int len, tlen = 0, boff = 0;
 	void *bp;
 
-	bp = (char *)sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
+	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
 
 	for (; m; m = n) {
 		len = m->m_len;
