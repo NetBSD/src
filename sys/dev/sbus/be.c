@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.69 2009/09/18 13:48:54 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.70 2009/09/18 14:00:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.69 2009/09/18 13:48:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.70 2009/09/18 14:00:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -236,8 +236,7 @@ beattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	if (sa->sa_nreg < 3) {
-		printf("%s: only %d register sets\n",
-			device_xname(self), sa->sa_nreg);
+		printf(": only %d register sets\n", sa->sa_nreg);
 		return;
 	}
 
@@ -247,7 +246,7 @@ beattach(device_t parent, device_t self, void *aux)
 				sa->sa_reg[0].oa_base),
 			  (bus_size_t)sa->sa_reg[0].oa_size,
 			  0, &sc->sc_cr) != 0) {
-		printf("beattach: cannot map registers\n");
+		printf(": cannot map registers\n");
 		return;
 	}
 
@@ -257,7 +256,7 @@ beattach(device_t parent, device_t self, void *aux)
 				sa->sa_reg[1].oa_base),
 			  (bus_size_t)sa->sa_reg[1].oa_size,
 			  0, &sc->sc_br) != 0) {
-		printf("beattach: cannot map registers\n");
+		printf(": cannot map registers\n");
 		return;
 	}
 
@@ -267,7 +266,7 @@ beattach(device_t parent, device_t self, void *aux)
 				sa->sa_reg[2].oa_base),
 			  (bus_size_t)sa->sa_reg[2].oa_size,
 			  0, &sc->sc_tr) != 0) {
-		printf("beattach: cannot map registers\n");
+		printf(": cannot map registers\n");
 		return;
 	}
 
@@ -276,7 +275,7 @@ beattach(device_t parent, device_t self, void *aux)
 	sc->sc_qr = qec->sc_regs;
 
 	sc->sc_rev = prom_getpropint(node, "board-version", -1);
-	printf(" rev %x", sc->sc_rev);
+	printf(": rev %x,", sc->sc_rev);
 
 	callout_init(&sc->sc_tick_ch, 0);
 
