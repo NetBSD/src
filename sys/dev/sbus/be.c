@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.71 2009/09/18 14:09:42 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.72 2009/09/18 14:14:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.71 2009/09/18 14:09:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.72 2009/09/18 14:14:06 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -158,34 +158,34 @@ struct be_softc {
 #endif
 };
 
-int	bematch(device_t, cfdata_t, void *);
-void	beattach(device_t, device_t, void *);
+static int	bematch(device_t, cfdata_t, void *);
+static void	beattach(device_t, device_t, void *);
 
-int	beinit(struct ifnet *);
-void	bestart(struct ifnet *);
-void	bestop(struct ifnet *, int);
-void	bewatchdog(struct ifnet *);
-int	beioctl(struct ifnet *, u_long, void *);
-void	bereset(struct be_softc *);
-void	behwreset(struct be_softc *);
+static int	beinit(struct ifnet *);
+static void	bestart(struct ifnet *);
+static void	bestop(struct ifnet *, int);
+static void	bewatchdog(struct ifnet *);
+static int	beioctl(struct ifnet *, u_long, void *);
+static void	bereset(struct be_softc *);
+static void	behwreset(struct be_softc *);
 
-int	beintr(void *);
-int	berint(struct be_softc *);
-int	betint(struct be_softc *);
-int	beqint(struct be_softc *, u_int32_t);
-int	beeint(struct be_softc *, u_int32_t);
+static int	beintr(void *);
+static int	berint(struct be_softc *);
+static int	betint(struct be_softc *);
+static int	beqint(struct be_softc *, u_int32_t);
+static int	beeint(struct be_softc *, u_int32_t);
 
 static void	be_read(struct be_softc *, int, int);
 static int	be_put(struct be_softc *, int, struct mbuf *);
 static struct mbuf *be_get(struct be_softc *, int, int);
 
-void	be_pal_gate(struct be_softc *, int);
+static void	be_pal_gate(struct be_softc *, int);
 
 /* ifmedia callbacks */
-void	be_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-int	be_ifmedia_upd(struct ifnet *);
+static void	be_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int	be_ifmedia_upd(struct ifnet *);
 
-void	be_mcreset(struct be_softc *);
+static void	be_mcreset(struct be_softc *);
 
 /* MII methods & callbacks */
 static int	be_mii_readreg(device_t, int, int);
@@ -199,10 +199,12 @@ static int	be_mii_reset(struct be_softc *, int);
 static int	be_tcvr_read_bit(struct be_softc *, int);
 static void	be_tcvr_write_bit(struct be_softc *, int, int);
 
-void	be_tick(void *);
-void	be_intphy_auto(struct be_softc *);
-void	be_intphy_status(struct be_softc *);
-int	be_intphy_service(struct be_softc *, struct mii_data *, int);
+static void	be_tick(void *);
+#if 0
+static void	be_intphy_auto(struct be_softc *);
+#endif
+static void	be_intphy_status(struct be_softc *);
+static int	be_intphy_service(struct be_softc *, struct mii_data *, int);
 
 
 CFATTACH_DECL_NEW(be, sizeof(struct be_softc),
