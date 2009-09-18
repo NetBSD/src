@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/10/25 22:27:34 apb Exp $
+#	$NetBSD: Makefile,v 1.13 2009/09/18 09:24:59 abs Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -43,8 +43,8 @@ all: ${AUXTARGETS} ${CBIN}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${TOOL_MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} TARGDIR=${MOUNT_POINT} \
-	    ${HOST_SH} ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
+	    KERNOBJDIR=${KERNOBJDIR} TARGDIR=${MOUNT_POINT} ${HOST_SH} \
+	    ${NETBSDSRCDIR}/distrib/common/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""

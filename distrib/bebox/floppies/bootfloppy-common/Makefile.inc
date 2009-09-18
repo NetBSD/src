@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2009/04/03 22:36:34 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2009/09/18 09:24:59 abs Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -41,8 +41,8 @@ all:	netbsd.ram.gz
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} ${HOST_SH} ${TOP}/runlist.sh ${LISTS}
+	    KERNOBJDIR=${KERNOBJDIR} TARGDIR=${MOUNT_POINT} ${HOST_SH} \
+	    ${NETBSDSRCDIR}/distrib/common/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
