@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2009/04/29 18:20:03 tsutsui Exp $
+#	$NetBSD: list,v 1.7 2009/09/18 10:49:09 abs Exp $
 
 # usr.bin/less has to be first, otherwise the ramdisk.mk generation fails
 SRCDIRS usr.bin/less bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -48,7 +48,7 @@ PROG	sbin/swapctl
 PROG	sbin/umount
 
 PROG	usr/bin/ftp
-PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/gzcat
+PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/less	usr/bin/more
 PROG	usr/bin/sed
 PROG	usr/bin/tip
