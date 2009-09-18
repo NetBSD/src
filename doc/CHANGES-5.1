@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.73 2009/09/17 05:56:13 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.74 2009/09/18 02:08:16 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13320,4 +13320,10 @@ usr.sbin/postinstall/postinstall		patch
 
 	Update X.Org.
 	[mrg, ticket #958]
+
+etc/mtree/special				1.130
+
+	Remove "/etc/postfix/postfix-script" as the file was obsoleted
+	by the upgrade to Postfix 2.6.x.
+	[tron, ticket #1012]
 
