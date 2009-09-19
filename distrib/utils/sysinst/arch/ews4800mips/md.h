@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2006/02/26 10:25:53 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2009/09/19 14:57:28 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,6 +68,5 @@
  */
 #define	DISKLABEL_CMD	"disklabel -w"
 
-int ews4800mips_boot_offset(void);
-int ews4800mips_boot_size(void);
-int ews4800mips_sysvbfs_size(void);
+extern int ews4800mips_boot_size(void);
+extern int ews4800mips_sysvbfs_size(void);

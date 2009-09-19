@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2009/04/05 22:22:27 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2009/09/19 14:57:28 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,17 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+}
+
 int
 md_get_info(void)
 {
@@ -107,6 +118,24 @@ md_get_info(void)
 }
 
 /*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
+int
+md_make_bsd_partitions(void)
+{
+	return make_bsd_partitions();
+}
+
+/*
+ * any additional partition validation
+ */
+int
+md_check_partitions(void)
+{
+	return 1;
+}
+
+/*
  * hook called before writing new disklabel.
  */
 int
@@ -125,7 +154,9 @@ md_post_disklabel(void)
 }
 
 /*
- * hook called after running newfs.
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
  */
 int
 md_post_newfs(void)
@@ -146,29 +177,22 @@ md_post_newfs(void)
 	return 0;
 }
 
-/*
- * some ports use this to copy the MD filesystem, we do not.
- */
 int
-md_copy_filesystem(void)
+md_post_extract(void)
 {
 	return 0;
 }
 
-/*
- * md back-end code for menu-driven BSD disklabel editor.
- */
-int
-md_make_bsd_partitions(void)
+void
+md_cleanup_install(void)
 {
-	return make_bsd_partitions();
+#ifndef DEBUG
+	enable_rc_conf();
+#endif
 }
 
-/*
- * any additional partition validation
- */
 int
-md_check_partitions(void)
+md_pre_update(void)
 {
 	return 1;
 }
@@ -177,42 +201,6 @@ md_check_partitions(void)
 int
 md_update(void)
 {
-	/* endwin(); */
-	md_copy_filesystem();
 	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
 	return 1;
-}
-
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-}
-
-int
-md_pre_update()
-{
-	return 1;
-}
-
-void
-md_init()
-{
-}
-
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
-}
-
-int
-md_post_extract(void)
-{
-	return 0;
 }
