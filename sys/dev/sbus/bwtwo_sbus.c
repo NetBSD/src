@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.28 2009/09/19 03:49:22 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.29 2009/09/19 04:52:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.28 2009/09/19 03:49:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.29 2009/09/19 04:52:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.28 2009/09/19 03:49:22 tsutsui Exp 
 static void	bwtwoattach_sbus (device_t, device_t, void *);
 static int	bwtwomatch_sbus (device_t, cfdata_t, void *);
 
-CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_softc),
+CFATTACH_DECL_NEW(bwtwo_sbus, sizeof(struct bwtwo_softc),
     bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL);
 
 static int	bwtwo_get_video (struct bwtwo_softc *);
@@ -140,6 +140,7 @@ bwtwoattach_sbus(device_t parent, device_t self, void *args)
 	int isconsole, node;
 	const char *name;
 
+	sc->sc_dev = self;
 	node = sa->sa_node;
 
 	/* Remember cookies for bwtwo_mmap() */

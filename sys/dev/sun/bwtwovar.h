@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwovar.h,v 1.8 2009/02/23 22:44:27 jdc Exp $ */
+/*	$NetBSD: bwtwovar.h,v 1.9 2009/09/19 04:52:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 /* per-display variables */
 struct bwtwo_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
