@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.49 2009/09/19 04:48:18 tsutsui Exp $ */
+/*	$NetBSD: qec.c,v 1.50 2009/09/19 11:53:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.49 2009/09/19 04:48:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.50 2009/09/19 11:53:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ qec_init(struct qec_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t qr = sc->sc_regs;
-	u_int32_t v, burst = 0, psize;
+	uint32_t v, burst = 0, psize;
 	int i;
 
 	/* First, reset the controller */
@@ -347,8 +347,8 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 * Initialize transmit buffer descriptors
 	 */
 	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
-		qr->rb_txd[i].xd_addr = (u_int32_t)
-			(txbufdma + (i % ntbuf) * pktbufsz);
+		qr->rb_txd[i].xd_addr =
+		    (uint32_t)(txbufdma + (i % ntbuf) * pktbufsz);
 		qr->rb_txd[i].xd_flags = 0;
 	}
 
@@ -356,8 +356,8 @@ qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 	 * Initialize receive buffer descriptors
 	 */
 	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
-		qr->rb_rxd[i].xd_addr = (u_int32_t)
-			(rxbufdma + (i % nrbuf) * pktbufsz);
+		qr->rb_rxd[i].xd_addr =
+		    (uint32_t)(rxbufdma + (i % nrbuf) * pktbufsz);
 		qr->rb_rxd[i].xd_flags = (i < nrbuf)
 			? QEC_XD_OWN | (pktbufsz & QEC_XD_LENGTH)
 			: 0;

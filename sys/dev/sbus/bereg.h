@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.8 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: bereg.h,v 1.9 2009/09/19 11:53:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,54 +61,54 @@
  */
 #if 0
 struct be_bregs {
-	u_int32_t xif_cfg;		/* XIF config */
-	u_int32_t _unused[63];		/* reserved */
-	u_int32_t stat;			/* status, clear on read */
-	u_int32_t imask;		/* interrupt mask */
-	u_int32_t _unused2[64];		/* reserved */
-	u_int32_t tx_swreset;		/* tx software reset */
-	u_int32_t tx_cfg;		/* tx config */
-	u_int32_t ipkt_gap1;		/* inter-packet gap 1 */
-	u_int32_t ipkt_gap2;		/* inter-packet gap 2 */
-	u_int32_t attempt_limit;	/* tx attempt limit */
-	u_int32_t stime;		/* tx slot time */
-	u_int32_t preamble_len;		/* size of tx preamble */
-	u_int32_t preamble_pattern;	/* pattern for tx preamble */
-	u_int32_t tx_sframe_delim;	/* tx delimiter */
-	u_int32_t jsize;		/* jam length */
-	u_int32_t tx_pkt_max;		/* tx max pkt size */
-	u_int32_t tx_pkt_min;		/* tx min pkt size */
-	u_int32_t peak_attempt;		/* count of tx peak attempts */
-	u_int32_t dt_ctr;		/* tx defer timer */
-	u_int32_t nc_ctr;		/* tx normal collision cntr */
-	u_int32_t fc_ctr;		/* tx first-collision cntr */
-	u_int32_t ex_ctr;		/* tx excess-collision cntr */
-	u_int32_t lt_ctr;		/* tx late-collision cntr */
-	u_int32_t rand_seed;		/* tx random number seed */
-	u_int32_t tx_smachine;		/* tx state machine */
-	u_int32_t _unused3[44];		/* reserved */
-	u_int32_t rx_swreset;		/* rx software reset */
-	u_int32_t rx_cfg;		/* rx config register */
-	u_int32_t rx_pkt_max;		/* rx max pkt size */
-	u_int32_t rx_pkt_min;		/* rx min pkt size */
-	u_int32_t mac_addr2;		/* ethernet address 2 (MSB) */
-	u_int32_t mac_addr1;		/* ethernet address 1 */
-	u_int32_t mac_addr0;		/* ethernet address 0 (LSB) */
-	u_int32_t fr_ctr;		/* rx frame receive cntr */
-	u_int32_t gle_ctr;		/* rx giant-len error cntr */
-	u_int32_t unale_ctr;		/* rx unaligned error cntr */
-	u_int32_t rcrce_ctr;		/* rx CRC error cntr */
-	u_int32_t rx_smachine;		/* rx state machine */
-	u_int32_t rx_cvalid;		/* rx code violation */
-	u_int32_t _unused4;		/* reserved */
-	u_int32_t htable3;		/* hash table 3 */
-	u_int32_t htable2;		/* hash table 2 */
-	u_int32_t htable1;		/* hash table 1 */
-	u_int32_t htable0;		/* hash table 0 */
-	u_int32_t afilter2;		/* address filter 2 */
-	u_int32_t afilter1;		/* address filter 1 */
-	u_int32_t afilter0;		/* address filter 0 */
-	u_int32_t afilter_mask;		/* address filter mask */
+	uint32_t xif_cfg;		/* XIF config */
+	uint32_t _unused[63];		/* reserved */
+	uint32_t stat;			/* status, clear on read */
+	uint32_t imask;			/* interrupt mask */
+	uint32_t _unused2[64];		/* reserved */
+	uint32_t tx_swreset;		/* tx software reset */
+	uint32_t tx_cfg;		/* tx config */
+	uint32_t ipkt_gap1;		/* inter-packet gap 1 */
+	uint32_t ipkt_gap2;		/* inter-packet gap 2 */
+	uint32_t attempt_limit;		/* tx attempt limit */
+	uint32_t stime;			/* tx slot time */
+	uint32_t preamble_len;		/* size of tx preamble */
+	uint32_t preamble_pattern;	/* pattern for tx preamble */
+	uint32_t tx_sframe_delim;	/* tx delimiter */
+	uint32_t jsize;			/* jam length */
+	uint32_t tx_pkt_max;		/* tx max pkt size */
+	uint32_t tx_pkt_min;		/* tx min pkt size */
+	uint32_t peak_attempt;		/* count of tx peak attempts */
+	uint32_t dt_ctr;		/* tx defer timer */
+	uint32_t nc_ctr;		/* tx normal collision cntr */
+	uint32_t fc_ctr;		/* tx first-collision cntr */
+	uint32_t ex_ctr;		/* tx excess-collision cntr */
+	uint32_t lt_ctr;		/* tx late-collision cntr */
+	uint32_t rand_seed;		/* tx random number seed */
+	uint32_t tx_smachine;		/* tx state machine */
+	uint32_t _unused3[44];		/* reserved */
+	uint32_t rx_swreset;		/* rx software reset */
+	uint32_t rx_cfg;		/* rx config register */
+	uint32_t rx_pkt_max;		/* rx max pkt size */
+	uint32_t rx_pkt_min;		/* rx min pkt size */
+	uint32_t mac_addr2;		/* ethernet address 2 (MSB) */
+	uint32_t mac_addr1;		/* ethernet address 1 */
+	uint32_t mac_addr0;		/* ethernet address 0 (LSB) */
+	uint32_t fr_ctr;		/* rx frame receive cntr */
+	uint32_t gle_ctr;		/* rx giant-len error cntr */
+	uint32_t unale_ctr;		/* rx unaligned error cntr */
+	uint32_t rcrce_ctr;		/* rx CRC error cntr */
+	uint32_t rx_smachine;		/* rx state machine */
+	uint32_t rx_cvalid;		/* rx code violation */
+	uint32_t _unused4;		/* reserved */
+	uint32_t htable3;		/* hash table 3 */
+	uint32_t htable2;		/* hash table 2 */
+	uint32_t htable1;		/* hash table 1 */
+	uint32_t htable0;		/* hash table 0 */
+	uint32_t afilter2;		/* address filter 2 */
+	uint32_t afilter1;		/* address filter 1 */
+	uint32_t afilter0;		/* address filter 0 */
+	uint32_t afilter_mask;		/* address filter mask */
 };
 #endif
 /* register indices: */
@@ -207,19 +207,19 @@ struct be_bregs {
  */
 #if 0
 struct be_cregs {
-	u_int32_t ctrl;		/* control */
-	u_int32_t stat;		/* status */
-	u_int32_t rxds;		/* rx descriptor ring ptr */
-	u_int32_t txds;		/* tx descriptor ring ptr */
-	u_int32_t rimask;	/* rx interrupt mask */
-	u_int32_t timask;	/* tx interrupt mask */
-	u_int32_t qmask;	/* qec error interrupt mask */
-	u_int32_t bmask;	/* be error interrupt mask */
-	u_int32_t rxwbufptr;	/* local memory rx write ptr */
-	u_int32_t rxrbufptr;	/* local memory rx read ptr */
-	u_int32_t txwbufptr;	/* local memory tx write ptr */
-	u_int32_t txrbufptr;	/* local memory tx read ptr */
-	u_int32_t ccnt;		/* collision counter */
+	uint32_t ctrl;		/* control */
+	uint32_t stat;		/* status */
+	uint32_t rxds;		/* rx descriptor ring ptr */
+	uint32_t txds;		/* tx descriptor ring ptr */
+	uint32_t rimask;	/* rx interrupt mask */
+	uint32_t timask;	/* tx interrupt mask */
+	uint32_t qmask;		/* qec error interrupt mask */
+	uint32_t bmask;		/* be error interrupt mask */
+	uint32_t rxwbufptr;	/* local memory rx write ptr */
+	uint32_t rxrbufptr;	/* local memory rx read ptr */
+	uint32_t txwbufptr;	/* local memory tx write ptr */
+	uint32_t txrbufptr;	/* local memory tx read ptr */
+	uint32_t ccnt;		/* collision counter */
 };
 #endif
 /* register indices: */
@@ -270,8 +270,8 @@ struct be_cregs {
  */
 #if 0
 struct be_tregs {
-	u_int32_t	tcvr_pal;	/* transceiver pal */
-	u_int32_t	mgmt_pal;	/* management pal */
+	uint32_t	tcvr_pal;	/* transceiver pal */
+	uint32_t	mgmt_pal;	/* management pal */
 };
 #endif
 /* register indices: */
