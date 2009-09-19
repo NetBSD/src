@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.27 2009/09/19 04:52:44 tsutsui Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.28 2009/09/19 07:07:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.27 2009/09/19 04:52:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.28 2009/09/19 07:07:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.27 2009/09/19 04:52:44 tsutsui Exp $");
 #include "opt_wsemul.h"
 #endif
 
-extern struct cfdriver bwtwo_cd;
+#include "ioconf.h"
 
 dev_type_open(bwtwoopen);
 dev_type_ioctl(bwtwoioctl);
