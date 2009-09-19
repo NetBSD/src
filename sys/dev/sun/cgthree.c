@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.24 2009/09/18 16:43:19 tsutsui Exp $ */
+/*	$NetBSD: cgthree.c,v 1.25 2009/09/19 07:07:43 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.24 2009/09/18 16:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.25 2009/09/19 07:07:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.24 2009/09/18 16:43:19 tsutsui Exp $")
 #include "opt_wsemul.h"
 #endif
 
+#include "ioconf.h"
+
 static void	cgthreeunblank(device_t);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
-
-extern struct cfdriver cgthree_cd;
 
 dev_type_open(cgthreeopen);
 dev_type_ioctl(cgthreeioctl);
