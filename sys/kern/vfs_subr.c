@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.383 2009/06/26 18:58:14 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.384 2009/09/19 16:20:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.383 2009/06/26 18:58:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.384 2009/09/19 16:20:41 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2411,6 +2411,34 @@ vfs_shutdown1(struct lwp *l)
 }
 
 /*
+ * Print a list of supported file system types (used by vfs_mountroot)
+ */
+static void
+vfs_print_fstypes(void)
+{
+	struct vfsops *v;
+	int cnt = 0;
+
+	mutex_enter(&vfs_list_lock);
+	LIST_FOREACH(v, &vfs_list, vfs_list)
+		++cnt;
+	mutex_exit(&vfs_list_lock);
+
+	if (cnt == 0) {
+		printf("WARNING: No file system modules have been loaded.\n");
+		return;
+	}
+
+	printf("Supported file systems:");
+	mutex_enter(&vfs_list_lock);
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		printf(" %s", v->vfs_name);
+	}
+	mutex_exit(&vfs_list_lock);
+	printf("\n");
+}
+
+/*
  * Mount the root file system.  If the operator didn't specify a
  * file system to use, try all possible file systems until one
  * succeeds.
@@ -2492,6 +2520,7 @@ vfs_mountroot(void)
 	mutex_exit(&vfs_list_lock);
 
 	if (v == NULL) {
+		vfs_print_fstypes();
 		printf("no file system for %s", device_xname(root_device));
 		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%llx)", (unsigned long long)rootdev);
