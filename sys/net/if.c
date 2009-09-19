@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.237 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.238 2009/09/19 11:02:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.237 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.238 2009/09/19 11:02:07 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -193,7 +193,6 @@ ifinit(void)
 			     IPV6CTL_IFQ, &ip6intrq);}
 #endif /* INET6 */
 
-	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
 }
@@ -205,6 +204,8 @@ ifinit(void)
 void
 ifinit1(void)
 {
+
+	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
