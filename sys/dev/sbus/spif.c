@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.24 2009/09/17 16:39:48 tsutsui Exp $	*/
+/*	$NetBSD: spif.c,v 1.25 2009/09/19 11:58:06 tsutsui Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.24 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.25 2009/09/19 11:58:06 tsutsui Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -539,7 +539,7 @@ stty_param(struct tty *tp, struct termios *t)
 						      SPIF_CARD(tp->t_dev));
 	struct stty_port *sp = &st->sc_port[SPIF_PORT(tp->t_dev)];
 	struct spif_softc *sc = sp->sp_sc;
-	u_int8_t rbprl, rbprh, tbprl, tbprh;
+	uint8_t rbprl, rbprh, tbprl, tbprh;
 	int s, opt;
 
 	if (t->c_ospeed &&
@@ -714,7 +714,7 @@ int
 spif_stcintr_rxexception(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
-	u_int8_t channel, *ptr;
+	uint8_t channel, *ptr;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
 	sp = &sc->sc_ttys->sc_port[channel];
@@ -739,7 +739,7 @@ int
 spif_stcintr_rx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
-	u_int8_t channel, *ptr, cnt, rcsr;
+	uint8_t channel, *ptr, cnt, rcsr;
 	int i;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
@@ -772,7 +772,7 @@ int
 spif_stcintr_tx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
-	u_int8_t channel, ch;
+	uint8_t channel, ch;
 	int cnt = 0;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
@@ -823,7 +823,7 @@ int
 spif_stcintr_mx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
-	u_int8_t channel, mcr;
+	uint8_t channel, mcr;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
 	sp = &sc->sc_ttys->sc_port[channel];
@@ -842,7 +842,7 @@ spif_stcintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	int needsoft = 0, r = 0, i;
-	u_int8_t ar;
+	uint8_t ar;
 
 	for (i = 0; i < 8; i++) {
 		ar = ISTC_READ(sc, STC_RRAR) & CD180_GSVR_IMASK;
@@ -875,7 +875,7 @@ spif_softintr(void *vsc)
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
 	int r = 0, i, data, s, flags;
-	u_int8_t stat, msvr;
+	uint8_t stat, msvr;
 	struct stty_port *sp;
 	struct tty *tp;
 
@@ -940,7 +940,7 @@ spif_softintr(void *vsc)
 }
 
 void
-stty_write_ccr(struct spif_softc *sc, u_int8_t val)
+stty_write_ccr(struct spif_softc *sc, uint8_t val)
 {
 	int tries = 100000;
 
@@ -952,9 +952,9 @@ stty_write_ccr(struct spif_softc *sc, u_int8_t val)
 }
 
 int
-stty_compute_baud(speed_t speed, int clock, u_int8_t *bprlp, u_int8_t *bprhp)
+stty_compute_baud(speed_t speed, int clock, uint8_t *bprlp, uint8_t *bprhp)
 {
-	u_int32_t rate;
+	uint32_t rate;
 
 	rate = (2 * clock) / (16 * speed);
 	if (rate & 1)
