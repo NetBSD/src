@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.122 2009/05/14 16:23:38 sborrill Exp $ */
+/*	$NetBSD: md.c,v 1.123 2009/09/19 14:57:28 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,18 +26,17 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- Machine specific code for i386 */
+/* md.c -- i386 machine specific routines - also used by amd64 */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -49,6 +49,7 @@
 #include <stddef.h>
 #include <util.h>
 #include <dirent.h>
+
 #include "defs.h"
 #include "md.h"
 #include "endian.h"
@@ -64,11 +65,25 @@ static struct biosdisk_info *biosdisk = NULL;
 
 /* prototypes */
 
+static int get_bios_info(char *);
 static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
 
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+
+	/* Default to install same type of kernel as we are running */
+	set_kernel_set(get_bootmodel());
+}
 
 int
 md_get_info(void)
@@ -88,7 +103,7 @@ md_get_info(void)
 
 	if (read_mbr(diskdev, &mbr) < 0)
 		memset(&mbr.mbr, 0, sizeof mbr.mbr - 2);
-	md_bios_info(diskdev);
+	get_bios_info(diskdev);
 
 edit:
 	if (edit_mbr(&mbr) == 0)
@@ -220,53 +235,36 @@ edit:
 }
 
 /*
- * Read MBR code from a file.
- * The existing partition table and bootselect configuration is kept.
+ * md back-end code for menu-driven BSD disklabel editor.
  */
-static int
-md_read_bootcode(const char *path, struct mbr_sector *mbrs)
+int
+md_make_bsd_partitions(void)
 {
-	int fd;
-	struct stat st;
-	size_t len;
-	struct mbr_sector new_mbr;
-	uint32_t dsn;
+	return make_bsd_partitions();
+}
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return -1;
+/*
+ * any additional partition validation
+ */
+int
+md_check_partitions(void)
+{
+	int rval;
+	char *bootxx;
 
-	if (fstat(fd, &st) < 0 || st.st_size != sizeof *mbrs) {
-		close(fd);
-		return -1;
-	}
-
-	if (read(fd, &new_mbr, sizeof new_mbr) != sizeof new_mbr) {
-		close(fd);
-		return -1;
-	}
-	close(fd);
-
-	if (new_mbr.mbr_bootsel_magic != htole16(MBR_BS_MAGIC))
-		return -1;
-
-	if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
-		len = offsetof(struct mbr_sector, mbr_bootsel);
-	} else
-		len = offsetof(struct mbr_sector, mbr_parts);
-
-	/* Preserve the 'drive serial number' - especially for Vista */
-	dsn = mbrs->mbr_dsn;
-	memcpy(mbrs, &new_mbr, len);
-	mbrs->mbr_dsn = dsn;
-
-	/* Keep flags from object file - indicate the properties */
-	mbrs->mbr_bootsel.mbrbs_flags = new_mbr.mbr_bootsel.mbrbs_flags;
-	mbrs->mbr_magic = htole16(MBR_MAGIC);
-
+	/* check we have boot code for the root partition type */
+	bootxx = bootxx_name();
+	rval = access(bootxx, R_OK);
+	free(bootxx);
+	if (rval == 0)
+		return 1;
+	process_menu(MENU_ok, deconst(MSG_No_Bootcode));
 	return 0;
 }
 
+/*
+ * hook called before writing new disklabel.
+ */
 int
 md_pre_disklabel(void)
 {
@@ -284,6 +282,9 @@ md_pre_disklabel(void)
 	return 0;
 }
 
+/*
+ * hook called after writing disklabel to new target disk.
+ */
 int
 md_post_disklabel(void)
 {
@@ -293,6 +294,11 @@ md_post_disklabel(void)
 	return 0;
 }
 
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
 int
 md_post_newfs(void)
 {
@@ -374,17 +380,34 @@ md_post_newfs(void)
 }
 
 int
-md_copy_filesystem(void)
+md_post_extract(void)
 {
 	return 0;
 }
 
-
-int
-md_make_bsd_partitions(void)
+void
+md_cleanup_install(void)
 {
+#ifndef DEBUG
+	enable_rc_conf();
+	add_rc_conf("wscons=YES\n");
 
-	return make_bsd_partitions();
+# if defined(__i386__) && defined(SET_KERNEL_TINY)
+	/*
+	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
+	 * Otherwise, run getty on 4 VTs.
+	 */
+	if (get_kernel_set() == SET_KERNEL_TINY)
+		run_program(RUN_CHROOT,
+                            "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+			    "H;$!d;g;w /etc/wscons.conf' /etc/wscons.conf");
+	else
+# endif
+		run_program(RUN_CHROOT,
+			    "sed -an -e '/^ttyE[1-9]/s/off/on/;"
+			    "H;$!d;g;w /etc/ttys' /etc/ttys");
+
+#endif
 }
 
 int
@@ -395,100 +418,29 @@ md_pre_update(void)
 	return 1;
 }
 
-/*
- * any additional partition validation
- */
-int
-md_check_partitions(void)
-{
-	int rval;
-	char *bootxx;
-
-	/* check we have boot code for the root partition type */
-	bootxx = bootxx_name();
-	rval = access(bootxx, R_OK);
-	free(bootxx);
-	if (rval == 0)
-		return 1;
-	process_menu(MENU_ok, deconst(MSG_No_Bootcode));
-	return 0;
-}
-
-
 /* Upgrade support */
 int
 md_update(void)
 {
-	move_aout_libs();
-	/* endwin(); */
-	md_copy_filesystem();
 	md_post_newfs();
 	md_upgrade_mbrtype();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
 	return 1;
 }
 
-void
-md_upgrade_mbrtype(void)
+int
+md_check_mbr(mbr_info_t *mbri)
 {
-	struct mbr_partition *mbrp;
-	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
-
-	if (no_mbr)
-		return;
-
-	if (read_mbr(diskdev, &mbr) < 0)
-		return;
-
-	mbrp = &mbr.mbr.mbr_parts[0];
-
-	for (i = 0; i < MBR_PART_COUNT; i++) {
-		if (mbrp[i].mbrp_type == MBR_PTYPE_386BSD) {
-			oldbsdpart = i;
-			oldbsdcount++;
-		} else if (mbrp[i].mbrp_type == MBR_PTYPE_NETBSD)
-			netbsdpart = i;
-	}
-
-	if (netbsdpart == -1 && oldbsdcount == 1) {
-		mbrp[oldbsdpart].mbrp_type = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, &mbr, 0);
-	}
-}
-
-
-
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-	
-	add_rc_conf("wscons=YES\n");
-
-#if defined(__i386__) && defined(SET_KERNEL_TINY)
-	/*
-	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
-	 * Otherwise, run getty on 4 VTs.
-	 */
-	if (get_kernel_set() == SET_KERNEL_TINY)
-		run_program(RUN_CHROOT,
-                            "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
-			    "H;$!d;g;w /etc/wscons.conf' /etc/wscons.conf");
-	else
-#endif
-		run_program(RUN_CHROOT,
-			    "sed -an -e '/^ttyE[1-9]/s/off/on/;"
-			    "H;$!d;g;w /etc/ttys' /etc/ttys");
-
+	return 2;
 }
 
 int
-md_bios_info(dev)
-	char *dev;
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	return mbr_use_wholedisk(mbri);
+}
+
+static int
+get_bios_info(char *dev)
 {
 	static struct disklist *disklist = NULL;
 	static int mib[2] = {CTL_MACHDEP, CPU_DISKINFO};
@@ -568,11 +520,86 @@ nogeom:
 static int
 mbr_root_above_chs(void)
 {
-
 	return ptstart + DEFROOTSIZE * (MEG / 512) >= bcyl * bhead * bsec;
 }
 
-unsigned int
+static void
+md_upgrade_mbrtype(void)
+{
+	struct mbr_partition *mbrp;
+	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
+
+	if (no_mbr)
+		return;
+
+	if (read_mbr(diskdev, &mbr) < 0)
+		return;
+
+	mbrp = &mbr.mbr.mbr_parts[0];
+
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (mbrp[i].mbrp_type == MBR_PTYPE_386BSD) {
+			oldbsdpart = i;
+			oldbsdcount++;
+		} else if (mbrp[i].mbrp_type == MBR_PTYPE_NETBSD)
+			netbsdpart = i;
+	}
+
+	if (netbsdpart == -1 && oldbsdcount == 1) {
+		mbrp[oldbsdpart].mbrp_type = MBR_PTYPE_NETBSD;
+		write_mbr(diskdev, &mbr, 0);
+	}
+}
+
+/*
+ * Read MBR code from a file.
+ * The existing partition table and bootselect configuration is kept.
+ */
+static int
+md_read_bootcode(const char *path, struct mbr_sector *mbrs)
+{
+	int fd;
+	struct stat st;
+	size_t len;
+	struct mbr_sector new_mbr;
+	uint32_t dsn;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	if (fstat(fd, &st) < 0 || st.st_size != sizeof *mbrs) {
+		close(fd);
+		return -1;
+	}
+
+	if (read(fd, &new_mbr, sizeof new_mbr) != sizeof new_mbr) {
+		close(fd);
+		return -1;
+	}
+	close(fd);
+
+	if (new_mbr.mbr_bootsel_magic != htole16(MBR_BS_MAGIC))
+		return -1;
+
+	if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
+		len = offsetof(struct mbr_sector, mbr_bootsel);
+	} else
+		len = offsetof(struct mbr_sector, mbr_parts);
+
+	/* Preserve the 'drive serial number' - especially for Vista */
+	dsn = mbrs->mbr_dsn;
+	memcpy(mbrs, &new_mbr, len);
+	mbrs->mbr_dsn = dsn;
+
+	/* Keep flags from object file - indicate the properties */
+	mbrs->mbr_bootsel.mbrbs_flags = new_mbr.mbr_bootsel.mbrbs_flags;
+	mbrs->mbr_magic = htole16(MBR_MAGIC);
+
+	return 0;
+}
+
+static unsigned int
 get_bootmodel(void)
 {
 #if defined(__i386__)
@@ -600,34 +627,3 @@ get_bootmodel(void)
 	return SET_KERNEL_GENERIC;
 }
 
-void
-md_init(void)
-{
-}
-
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
-
-	/* Default to install same type of kernel as we are running */
-	set_kernel_set(get_bootmodel());
-}
-
-int
-md_post_extract(void)
-{
-	return 0;
-}
-
-int
-md_check_mbr(mbr_info_t *mbri)
-{
-	return 2;
-}
-
-int
-md_mbr_use_wholedisk(mbr_info_t *mbri)
-{
-	return mbr_use_wholedisk(mbri);
-}

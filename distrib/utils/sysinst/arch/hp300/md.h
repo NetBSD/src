@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2007/11/12 15:07:35 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2009/09/19 14:57:28 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,4 +96,5 @@
  */
 #define DISKLABEL_CMD "disklabel -w -r"
 
-int hp300_boot_size(void);
+extern int hp300_boot_size(void);
+

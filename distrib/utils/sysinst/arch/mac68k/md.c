@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.54 2009/05/26 20:29:04 sborrill Exp $ */
+/*	$NetBSD: md.c,v 1.55 2009/09/19 14:57:29 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,18 +26,17 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- Machine specific code for mac68k */
+/* md.c -- mac68k machine specific routines */
 
 #include <stdio.h>
 #include <util.h>
@@ -45,10 +45,24 @@
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <machine/int_fmtio.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+static int	stricmp(const char *c1, const char *c2);
+static void	setpartition(struct apple_part_map_entry *, char *, int);
+static int	getFreeLabelEntry(char *);
+static char	*getFstype(struct apple_part_map_entry *, int, char *);
+static char	*getUse(struct apple_part_map_entry *, int, char *);
+static char	*getName(struct apple_part_map_entry *, int, char *);
+static int	findStdType(int, char *, int, int *, int);
+static int	check_for_errors(void);
+static int	edit_diskmap(void);		
+#ifdef MD_DEBUG_SORT_MERGE
+static int	md_debug_dump(char *);
+#endif
 
 int blk_size;
 
@@ -89,10 +103,467 @@ struct apple_part_map_entry new_map[] =
 	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}}
 };
 
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+       struct utsname instsys;
+
+	(void)minimal;
+
+	/*
+	 * Get the name of the Install Kernel we are running under and
+	 * enable the installation of the corresponding GENERIC kernel.
+	 *
+	 * Note:  In md.h the two kernels are disabled.  If they are
+	 *        enabled there the logic here needs to be switched.
+	 */
+        uname(&instsys);
+        if (strstr(instsys.version, "(INSTALLSBC)"))
+		/*
+		 * Running the SBC Installation Kernel, so enable GENERICSBC
+		 */
+		set_kernel_set(SET_KERNEL_2);
+        else
+		/*
+		 * Running the GENERIC Installation Kernel, so enable GENERIC
+		 */
+		set_kernel_set(SET_KERNEL_1);
+}
+
+int
+md_get_info(void)
+{
+	struct disklabel disklabel;
+	int fd, i;
+	char dev_name[100];
+	struct apple_part_map_entry block;
+
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%s%c",
+		diskdev, 'a' + getrawpartition());
+
+	/*
+	 * Open the disk as a raw device
+	 */
+	fd = open(dev_name, O_RDONLY, 0);
+	if (fd < 0) {
+		endwin();
+		fprintf (stderr, "Can't open %s\n", dev_name);
+		exit(1);
+	}
+	/*
+	 * Try to get the default disklabel info for the device
+	 */
+	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
+		endwin();
+		fprintf (stderr, "Can't read disklabel on %s\n", dev_name);
+		close(fd);
+		exit(1);
+	}
+	/*
+	 * Get the disk parameters from the disk driver.  It should have
+	 *  obained them by querying the disk itself.
+	 */
+	blk_size = disklabel.d_secsize;
+	dlcyl = disklabel.d_ncylinders;
+	dlhead = disklabel.d_ntracks;
+	dlsec = disklabel.d_nsectors;
+	/*
+	 * Just in case, initialize the structures we'll need if we
+	 *  need to completely initialize the disk.
+	 */
+	dlsize = disklabel.d_secperunit;
+	for (i=0;i<NEW_MAP_SIZE;i++) {
+	   if (i > 0)
+		new_map[i].pmPyPartStart = new_map[i-1].pmPyPartStart +
+			new_map[i-1].pmPartBlkCnt;
+	   new_map[i].pmDataCnt = new_map[i].pmPartBlkCnt;
+	   if (new_map[i].pmPartBlkCnt == 0) {
+		new_map[i].pmPartBlkCnt = dlsize;
+		new_map[i].pmDataCnt = dlsize;
+		break;
+	   }
+	   dlsize -= new_map[i].pmPartBlkCnt;
+	}
+	dlsize = disklabel.d_secperunit;
+#if 0
+	msg_display(MSG_dldebug, blk_size, dlcyl, dlhead, dlsec, dlsize);
+	process_menu(MENU_ok, NULL);
+#endif
+	map.size = 0;
+	/*
+	 * Verify the disk has been initialized for MacOS use by checking
+	 *  to see if the disk have a Boot Block
+	 */
+	if (lseek(fd, (off_t)0 * blk_size, SEEK_SET) < 0 ||
+	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
+	    block.pmSig != 0x4552) {
+             process_menu(MENU_nodiskmap, NULL);
+        }
+	else {
+	   /*
+	    * Scan for the Partition Map entry that describes the Partition
+	    *  Map itself.  We need to know the number of blocks allocated
+	    *  to it and the number currently in use.
+	    */
+	   for (i=0;i<MAXMAXPARTITIONS;i++) {
+		lseek(fd, (off_t)(i+1) * blk_size, SEEK_SET);
+		read(fd, &block, sizeof(block));
+		if (stricmp("Apple_partition_map", (char *)block.pmPartType) == 0) {
+		    map.size = block.pmPartBlkCnt;
+		    map.in_use_cnt = block.pmMapBlkCnt;
+		    map.blk = (struct apple_part_map_entry *)malloc(map.size * blk_size);
+		    break;
+	        }
+            }
+	    lseek(fd, (off_t)1 * blk_size, SEEK_SET);
+	    read(fd, map.blk, map.size * blk_size);
+	}
+	close(fd);
+	/*
+	 * Setup the disktype so /etc/disktab gets proper info
+	 */
+	if (strncmp(diskdev, "sd", 2) == 0) {
+		disktype = "SCSI";
+		doessf = "sf:";
+	} else
+		disktype = "IDE";
+
+	return edit_diskmap();
+}
+
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
+int
+md_make_bsd_partitions(void)
+{
+	FILE *f;
+	int i, j, pl;
+	EBZB *bzb;
+
+	/*
+	 * Scan for any problems and report them before continuing.
+	 *  The user can abort installation and we'll take them back
+	 *  to the main menu; continue ignoring the warnings, or
+	 *  ask to reedit the Disk Partition Map.
+	 */
+	while (1) {
+	    if (check_for_errors()) {
+	        process_menu (MENU_sanity, NULL);
+	        if (yesno < 0)
+		    return 0;
+	        else if (yesno)
+		    break;
+	        edit_diskmap();
+	    } else
+		break;
+	}
+
+	/* Build standard partitions */
+	memset(&bsdlabel, 0, sizeof bsdlabel);
+
+	/*
+	 * The mac68k port has a predefined partition for "c" which
+	 *  is the size of the disk, everything else is unused.
+	 */
+	bsdlabel[RAW_PART].pi_size = dlsize;
+	/*
+	 * Now, scan through the Disk Partition Map and transfer the
+	 *  information into the incore disklabel.
+	 */
+	for (i=0;i<map.usable_cnt;i++) {
+	    j = map.mblk[i];
+	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
+	    if (bzb->flags.part) {
+		pl = bzb->flags.part - 'a';
+		switch (whichType(&map.blk[j])) {
+		    case HFS_PART:
+			bsdlabel[pl].pi_fstype = FS_HFS; 
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
+			break;
+		    case ROOT_PART:
+		    case UFS_PART:
+			bsdlabel[pl].pi_fstype = FS_BSDFFS;
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
+			bsdlabel[pl].pi_flags |= PIF_NEWFS | PIF_MOUNT;
+			break;
+		    case SWAP_PART:
+			bsdlabel[pl].pi_fstype = FS_SWAP;
+			break;
+		    case SCRATCH_PART:
+			bsdlabel[pl].pi_fstype = FS_OTHER;
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
+		    default:
+			break;
+		}
+	        if (bsdlabel[pl].pi_fstype != FS_UNUSED) {
+		    bsdlabel[pl].pi_size = map.blk[j].pmPartBlkCnt;
+		    bsdlabel[pl].pi_offset = map.blk[j].pmPyPartStart;
+		    if (bsdlabel[pl].pi_fstype != FS_SWAP) {
+		        bsdlabel[pl].pi_frag = 8;
+		        bsdlabel[pl].pi_fsize = 1024;
+		    }
+		}
+	    }
+	}
+
+	/* Disk name  - don't bother asking, just use the physical name*/
+	strcpy (bsddiskname, diskdev);
+
+#ifdef DEBUG
+	f = fopen ("/tmp/disktab", "w");
+#else
+	f = fopen ("/etc/disktab", "w");
+#endif
+	if (f == NULL) {
+		endwin();
+		(void) fprintf (stderr, "Could not open /etc/disktab");
+		exit (1);
+	}
+	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
+	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
+	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+	(void)fprintf (f, "\t:sc#%d:su#%" PRIu32 ":\\\n", dlhead*dlsec, (uint32_t)dlsize);
+	(void)fprintf (f, "\t:se#%d:%s\\\n", blk_size, doessf);
+	for (i=0; i<8; i++) {
+		if (bsdlabel[i].pi_fstype == FS_HFS)
+		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=macos:",
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
+			       'a'+i);
+		else
+		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
+			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
+			(void)fprintf (f, "b%c#%d:f%c#%d",
+			   'a'+i, bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag,
+			   'a'+i, bsdlabel[i].pi_fsize);
+		if (i < 7)
+			(void)fprintf (f, "\\\n");
+		else
+			(void)fprintf (f, "\n");
+	}
+	fclose (f);
+
+	/* Everything looks OK. */
+	return 1;
+}
+
+/*
+ * any additional partition validation
+ */
+int
+md_check_partitions(void)
+{
+	return 1;
+}
+
+/*
+ * hook called before writing new disklabel.
+ */
+int
+md_pre_disklabel(void)
+{
+    int fd;
+    char dev_name[100];
+    struct disklabel lp;
+    Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512,
+	 		 0, 0, 0, 0, 0, 0, 0, 0, {0}};
+
+    /*
+     * Danger Will Robinson!  We're about to turn that nice MacOS disk
+     *  into an expensive doorstop...
+     */
+    printf ("%s", msg_string (MSG_dodiskmap));
+
+    snprintf (dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
+    /*
+     * Open the disk as a raw device
+     */
+    if ((fd = open(dev_name, O_WRONLY, 0)) < 0) {
+	endwin();
+	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", dev_name);
+	exit (1);
+    }
+    /*
+     *  First check the pmSigPad field of the first block in the incore
+     *  Partition Map.  It should be zero, but if it's 0xa5a5 that means
+     *  we need to write out Block0 too.
+     */
+    if (map.blk[0].pmSigPad == 0xa5a5) {
+	if (lseek (fd, (off_t)0 * blk_size, SEEK_SET) < 0) {
+	    endwin();
+	    fprintf (stderr, "Can't position to write Block0\n");
+	    close (fd);
+	    exit (1);
+	}
+	new_block0.sbBlkCount = dlsize;		/* Set disk size */
+	if (write (fd, &new_block0, blk_size) != blk_size) {
+	    endwin();
+	    fprintf (stderr, "I/O error writing Block0\n");
+	    close (fd);
+	    exit (1);
+	}
+	map.blk[0].pmSigPad = 0;
+    }
+    if (lseek (fd, (off_t)1 * blk_size, SEEK_SET) < 0) {
+	endwin();
+	fprintf (stderr, "Can't position disk to rewrite Disk Map\n");
+	close (fd);
+	exit (1);
+    }
+    if (write (fd, map.blk, map.size * blk_size) != (map.size * blk_size)) {
+	endwin();
+	fprintf(stderr, "I/O error writing Disk Map\n");
+	close (fd);
+	exit (1);
+    }
+    fsync(fd);
+    /*
+     * Well, if we get here the dirty deed has been done.
+     *
+     * Now we need to force the incore disk table to get updated. This
+     * should be done by disklabel -- which is normally called right after
+     * we return -- but may be commented out for the mac68k port. We'll
+     * instead update the incore table by forcing a dummy write here. This
+     * relies on a change in the mac68k-specific writedisklabel() routine.
+     * If that change doesn't exist nothing bad happens here. If disklabel
+     * properly updates the ondisk and incore labels everything still
+     * works. Only if we fail here and if disklabel fails are we in
+     * in a state where we've updated the disk but not the incore and
+     * a reboot is necessary.
+     *
+     * First, we grab a copy of the incore label as it existed before
+     * we did anything to it. Then we invoke the "write label" ioctl to
+     * rewrite it to disk. As a result, the ondisk partition map is
+     * re-read and the incore label is reconstructed from it. If
+     * disklabel() is then called to update again, either that fails
+     * because the mac68k port doesn't support native disklabels, or it
+     * succeeds and writes out a new ondisk copy.
+     */
+    ioctl(fd, DIOCGDINFO, &lp);    /* Get the current disk label */
+    ioctl(fd, DIOCWDINFO, &lp);    /* Write it out again */
+
+    close (fd);
+    return 0;
+}
+
+/*
+ * hook called after writing disklabel to new target disk.
+ */
+int
+md_post_disklabel(void)
+{
+    struct disklabel updated_label;
+    int fd, i, no_match;
+    char dev_name[100], buf[80];
+    const char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
+			" v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
+			"9660", "boot", "ados", "hfs ", "fcor", "ex2f",
+			"ntfs", "raid", "ccd "};
+      
+    snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
+    /*
+     * Open the disk as a raw device
+     */
+    if ((fd = open(dev_name, O_RDONLY, 0)) < 0)
+       return 0;
+    /*
+     * Get the "new" label to see if we were successful.  If we aren't
+     *  we'll return an error to keep from destroying the user's disk.
+     */
+    ioctl(fd, DIOCGDINFO, &updated_label);
+    close(fd);
+    /*
+     * Make sure the in-core label matches the on-disk one
+     */
+    no_match = 0;
+    for (i=0;i<MAXPARTITIONS;i++) {
+        if (i > updated_label.d_npartitions)
+           break;
+        if (bsdlabel[i].pi_size != updated_label.d_partitions[i].p_size)
+           no_match = 1;
+        if (bsdlabel[i].pi_size) {
+           if (bsdlabel[i].pi_offset != updated_label.d_partitions[i].p_offset)
+               no_match = 1;
+           if (bsdlabel[i].pi_fstype != updated_label.d_partitions[i].p_fstype)
+               no_match = 1;
+        }
+        if (no_match)
+           break;
+    }
+    /*
+     * If the labels don't match, tell the user why
+     */
+    if (no_match) {
+       msg_clear();
+       msg_display(MSG_label_error);
+       msg_table_add(MSG_dump_line,
+           " in-core: offset      size type on-disk: offset      size type");
+       for (i=0;i<MAXPARTITIONS;i++) {
+           sprintf(buf, " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
+              bsdlabel[i].pi_offset, bsdlabel[i].pi_size,
+              fst[bsdlabel[i].pi_fstype],
+              updated_label.d_partitions[i].p_offset,
+              updated_label.d_partitions[i].p_size,
+              fst[updated_label.d_partitions[i].p_fstype]);
+           msg_table_add(MSG_dump_line, buf);
+       }
+       process_menu(MENU_ok2, NULL);
+    }
+    return no_match;
+}
+
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
+int
+md_post_newfs(void)
+{
+	return 0;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
+}
+
+void
+md_cleanup_install(void)
+{
+#ifndef DEBUG
+	enable_rc_conf();
+#endif
+}
+
+int
+md_pre_update(void)
+{
+	return 1;
+}
+
+/* Upgrade support */
+int
+md_update(void)
+{
+	md_post_newfs();
+	return 1;
+}
+
 /*
  * Compare lexigraphically two strings
  */
-int
+static int
 stricmp(s1, s2)
 	const char *s1;
 	const char *s2;
@@ -108,7 +579,7 @@ stricmp(s1, s2)
 	}
 }
 
-void
+static void
 setpartition(part, in_use, slot)
 	struct apple_part_map_entry *part;
 	char in_use[];
@@ -126,7 +597,7 @@ setpartition(part, in_use, slot)
  * Find an entry in a use array that is unused and return it or
  *  -1 if no entry is available
  */
-int
+static int
 getFreeLabelEntry(slots)
 	char *slots;
 {
@@ -197,7 +668,7 @@ whichType(part)
 	return type;
 }
 
-char *
+static char *
 getFstype(part, len_type, type)
 	struct apple_part_map_entry *part;
 	int len_type;
@@ -222,7 +693,7 @@ getFstype(part, len_type, type)
 	return (type);
 }
 
-char *
+static char *
 getUse(part, len_use, use)
 	struct apple_part_map_entry *part;
 	int len_use;
@@ -267,7 +738,7 @@ getUse(part, len_use, use)
 	return(use);
 }
 
-char *
+static char *
 getName(part, len_name, name)
 	struct apple_part_map_entry *part;
 	int len_name;
@@ -318,7 +789,7 @@ getName(part, len_name, name)
  * Find the first occurance of a Standard Type partition and
  *  mark it for use along with the default mount slot.
  */
-int
+static int
 findStdType(num_parts, in_use, type, count, alt)
 	int num_parts;
 	char in_use[];
@@ -367,7 +838,7 @@ findStdType(num_parts, in_use, type, count, alt)
  * as the one containing the system bootstrip for the volume.
  */
 void
-reset_part_flags (part)
+reset_part_flags(part)
 	struct apple_part_map_entry *part;
 {
 	EBZB *bzb;
@@ -521,7 +992,7 @@ sortmerge(void)
     if (findStdType(map.in_use_cnt, in_use, SWAP_PART, &map.swap_cnt, 0))
 	findStdType(map.in_use_cnt, in_use, SWAP_PART, &map.swap_cnt, -1);
 
-#if 0
+#ifdef MD_DEBUG_SORT_MERGE
 	md_debug_dump("After marking Standard Types");
 #endif
     /*
@@ -558,7 +1029,7 @@ sortmerge(void)
 	    }
 	}
     }
-#if 0
+#ifdef MD_DEBUG_SORT_MERGE
 	md_debug_dump("After sort merge");
 #endif
     return;
@@ -591,7 +1062,7 @@ disp_selected_part(sel)
 /*
  * check for any anomalies on the requested setup
  */
-int
+static int
 check_for_errors()
 {
     int i, j;
@@ -656,7 +1127,7 @@ report_errors()
     return;
 }
 
-int
+static int
 edit_diskmap(void)
 {
     int i;
@@ -676,7 +1147,7 @@ edit_diskmap(void)
 		process_menu (MENU_noyes, NULL);
 		if (!yesno) {
 			endwin();
-			return (0);
+			return 0;
 		}
 	    }
 	    /*
@@ -689,261 +1160,11 @@ edit_diskmap(void)
 	    sortmerge();
 	}
 	process_menu (MENU_editparttable, NULL);
-	return (1);
+	return 1;
 }
 
-int
-md_get_info()
-{
-	struct disklabel disklabel;
-	int fd, i;
-	char dev_name[100];
-	struct apple_part_map_entry block;
-
-	snprintf(dev_name, sizeof(dev_name), "/dev/r%s%c",
-		diskdev, 'a' + getrawpartition());
-
-	/*
-	 * Open the disk as a raw device
-	 */
-	fd = open(dev_name, O_RDONLY, 0);
-	if (fd < 0) {
-		endwin();
-		fprintf (stderr, "Can't open %s\n", dev_name);
-		exit(1);
-	}
-	/*
-	 * Try to get the default disklabel info for the device
-	 */
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		endwin();
-		fprintf (stderr, "Can't read disklabel on %s\n", dev_name);
-		close(fd);
-		exit(1);
-	}
-	/*
-	 * Get the disk parameters from the disk driver.  It should have
-	 *  obained them by querying the disk itself.
-	 */
-	blk_size = disklabel.d_secsize;
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	/*
-	 * Just in case, initialize the structures we'll need if we
-	 *  need to completely initialize the disk.
-	 */
-	dlsize = disklabel.d_secperunit;
-	for (i=0;i<NEW_MAP_SIZE;i++) {
-	   if (i > 0)
-		new_map[i].pmPyPartStart = new_map[i-1].pmPyPartStart +
-			new_map[i-1].pmPartBlkCnt;
-	   new_map[i].pmDataCnt = new_map[i].pmPartBlkCnt;
-	   if (new_map[i].pmPartBlkCnt == 0) {
-		new_map[i].pmPartBlkCnt = dlsize;
-		new_map[i].pmDataCnt = dlsize;
-		break;
-	   }
-	   dlsize -= new_map[i].pmPartBlkCnt;
-	}
-	dlsize = disklabel.d_secperunit;
-#if 0
-	msg_display(MSG_dldebug, blk_size, dlcyl, dlhead, dlsec, dlsize);
-	process_menu(MENU_ok, NULL);
-#endif
-	map.size = 0;
-	/*
-	 * Verify the disk has been initialized for MacOS use by checking
-	 *  to see if the disk have a Boot Block
-	 */
-	if (lseek(fd, (off_t)0 * blk_size, SEEK_SET) < 0 ||
-	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
-	    block.pmSig != 0x4552) {
-             process_menu(MENU_nodiskmap, NULL);
-        }
-	else {
-	   /*
-	    * Scan for the Partition Map entry that describes the Partition
-	    *  Map itself.  We need to know the number of blocks allocated
-	    *  to it and the number currently in use.
-	    */
-	   for (i=0;i<MAXMAXPARTITIONS;i++) {
-		lseek(fd, (off_t)(i+1) * blk_size, SEEK_SET);
-		read(fd, &block, sizeof(block));
-		if (stricmp("Apple_partition_map", (char *)block.pmPartType) == 0) {
-		    map.size = block.pmPartBlkCnt;
-		    map.in_use_cnt = block.pmMapBlkCnt;
-		    map.blk = (struct apple_part_map_entry *)malloc(map.size * blk_size);
-		    break;
-	        }
-            }
-	    lseek(fd, (off_t)1 * blk_size, SEEK_SET);
-	    read(fd, map.blk, map.size * blk_size);
-	}
-	close(fd);
-	/*
-	 * Setup the disktype so /etc/disktab gets proper info
-	 */
-	if (strncmp(diskdev, "sd", 2) == 0) {
-		disktype = "SCSI";
-		doessf = "sf:";
-	} else
-		disktype = "IDE";
-
-	return edit_diskmap();
-}
-
-int
-md_pre_disklabel()
-{
-    int fd;
-    char dev_name[100];
-    struct disklabel lp;
-    Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512,
-	 		 0, 0, 0, 0, 0, 0, 0, 0, {0}};
-
-    /*
-     * Danger Will Robinson!  We're about to turn that nice MacOS disk
-     *  into an expensive doorstop...
-     */
-    printf ("%s", msg_string (MSG_dodiskmap));
-
-    snprintf (dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
-    /*
-     * Open the disk as a raw device
-     */
-    if ((fd = open(dev_name, O_WRONLY, 0)) < 0) {
-	endwin();
-	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", dev_name);
-	exit (1);
-    }
-    /*
-     *  First check the pmSigPad field of the first block in the incore
-     *  Partition Map.  It should be zero, but if it's 0xa5a5 that means
-     *  we need to write out Block0 too.
-     */
-    if (map.blk[0].pmSigPad == 0xa5a5) {
-	if (lseek (fd, (off_t)0 * blk_size, SEEK_SET) < 0) {
-	    endwin();
-	    fprintf (stderr, "Can't position to write Block0\n");
-	    close (fd);
-	    exit (1);
-	}
-	new_block0.sbBlkCount = dlsize;		/* Set disk size */
-	if (write (fd, &new_block0, blk_size) != blk_size) {
-	    endwin();
-	    fprintf (stderr, "I/O error writing Block0\n");
-	    close (fd);
-	    exit (1);
-	}
-	map.blk[0].pmSigPad = 0;
-    }
-    if (lseek (fd, (off_t)1 * blk_size, SEEK_SET) < 0) {
-	endwin();
-	fprintf (stderr, "Can't position disk to rewrite Disk Map\n");
-	close (fd);
-	exit (1);
-    }
-    if (write (fd, map.blk, map.size * blk_size) != (map.size * blk_size)) {
-	endwin();
-	fprintf(stderr, "I/O error writing Disk Map\n");
-	close (fd);
-	exit (1);
-    }
-    fsync(fd);
-    /*
-     * Well, if we get here the dirty deed has been done.
-     *
-     * Now we need to force the incore disk table to get updated. This
-     * should be done by disklabel -- which is normally called right after
-     * we return -- but may be commented out for the mac68k port. We'll
-     * instead update the incore table by forcing a dummy write here. This
-     * relies on a change in the mac68k-specific writedisklabel() routine.
-     * If that change doesn't exist nothing bad happens here. If disklabel
-     * properly updates the ondisk and incore labels everything still
-     * works. Only if we fail here and if disklabel fails are we in
-     * in a state where we've updated the disk but not the incore and
-     * a reboot is necessary.
-     *
-     * First, we grab a copy of the incore label as it existed before
-     * we did anything to it. Then we invoke the "write label" ioctl to
-     * rewrite it to disk. As a result, the ondisk partition map is
-     * re-read and the incore label is reconstructed from it. If
-     * disklabel() is then called to update again, either that fails
-     * because the mac68k port doesn't support native disklabels, or it
-     * succeeds and writes out a new ondisk copy.
-     */
-    ioctl(fd, DIOCGDINFO, &lp);    /* Get the current disk label */
-    ioctl(fd, DIOCWDINFO, &lp);    /* Write it out again */
-
-    close (fd);
-    return 0;
-}
-
-int
-md_post_disklabel(void)
-{
-    struct disklabel updated_label;
-    int fd, i, no_match;
-    char dev_name[100], buf[80];
-    const char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
-			" v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
-			"9660", "boot", "ados", "hfs ", "fcor", "ex2f",
-			"ntfs", "raid", "ccd "};
-      
-    snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
-    /*
-     * Open the disk as a raw device
-     */
-    if ((fd = open(dev_name, O_RDONLY, 0)) < 0)
-       return 0;
-    /*
-     * Get the "new" label to see if we were successful.  If we aren't
-     *  we'll return an error to keep from destroying the user's disk.
-     */
-    ioctl(fd, DIOCGDINFO, &updated_label);
-    close(fd);
-    /*
-     * Make sure the in-core label matches the on-disk one
-     */
-    no_match = 0;
-    for (i=0;i<MAXPARTITIONS;i++) {
-        if (i > updated_label.d_npartitions)
-           break;
-        if (bsdlabel[i].pi_size != updated_label.d_partitions[i].p_size)
-           no_match = 1;
-        if (bsdlabel[i].pi_size) {
-           if (bsdlabel[i].pi_offset != updated_label.d_partitions[i].p_offset)
-               no_match = 1;
-           if (bsdlabel[i].pi_fstype != updated_label.d_partitions[i].p_fstype)
-               no_match = 1;
-        }
-        if (no_match)
-           break;
-    }
-    /*
-     * If the labels don't match, tell the user why
-     */
-    if (no_match) {
-       msg_clear();
-       msg_display(MSG_label_error);
-       msg_table_add(MSG_dump_line,
-           " in-core: offset      size type on-disk: offset      size type");
-       for (i=0;i<MAXPARTITIONS;i++) {
-           sprintf(buf, " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
-              bsdlabel[i].pi_offset, bsdlabel[i].pi_size,
-              fst[bsdlabel[i].pi_fstype],
-              updated_label.d_partitions[i].p_offset,
-              updated_label.d_partitions[i].p_size,
-              fst[updated_label.d_partitions[i].p_fstype]);
-           msg_table_add(MSG_dump_line, buf);
-       }
-       process_menu(MENU_ok2, NULL);
-    }
-    return no_match;
-}
-
-int
+#ifdef MD_DEBUG_SORT_MERGE
+static int
 md_debug_dump(title)
 	char *title;
 {
@@ -974,208 +1195,4 @@ md_debug_dump(title)
 	msg_clear();
 	return(yesno);
 }
-
-int
-md_post_newfs(void)
-{
-	return 0;
-}
-
-int
-md_copy_filesystem(void)
-{
-	if (target_already_root()) {
-		return 1;
-	}
-
-	return 0;
-}
-
-
-
-int
-md_make_bsd_partitions(void)
-{
-	FILE *f;
-	int i, j, pl;
-	EBZB *bzb;
-
-	/*
-	 * Scan for any problems and report them before continuing.
-	 *  The user can abort installation and we'll take them back
-	 *  to the main menu; continue ignoring the warnings, or
-	 *  ask to reedit the Disk Partition Map.
-	 */
-	while (1) {
-	    if (check_for_errors()) {
-	        process_menu (MENU_sanity, NULL);
-	        if (yesno < 0)
-		    return (0);
-	        else if (yesno)
-		    break;
-	        edit_diskmap();
-	    } else
-		break;
-	}
-
-	/* Build standard partitions */
-	memset(&bsdlabel, 0, sizeof bsdlabel);
-
-	/*
-	 * The mac68k port has a predefined partition for "c" which
-	 *  is the size of the disk, everything else is unused.
-	 */
-	bsdlabel[RAW_PART].pi_size = dlsize;
-	/*
-	 * Now, scan through the Disk Partition Map and transfer the
-	 *  information into the incore disklabel.
-	 */
-	for (i=0;i<map.usable_cnt;i++) {
-	    j = map.mblk[i];
-	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    if (bzb->flags.part) {
-		pl = bzb->flags.part - 'a';
-		switch (whichType(&map.blk[j])) {
-		    case HFS_PART:
-			bsdlabel[pl].pi_fstype = FS_HFS; 
-			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
-			break;
-		    case ROOT_PART:
-		    case UFS_PART:
-			bsdlabel[pl].pi_fstype = FS_BSDFFS;
-			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
-			bsdlabel[pl].pi_flags |= PIF_NEWFS | PIF_MOUNT;
-			break;
-		    case SWAP_PART:
-			bsdlabel[pl].pi_fstype = FS_SWAP;
-			break;
-		    case SCRATCH_PART:
-			bsdlabel[pl].pi_fstype = FS_OTHER;
-			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
-		    default:
-			break;
-		}
-	        if (bsdlabel[pl].pi_fstype != FS_UNUSED) {
-		    bsdlabel[pl].pi_size = map.blk[j].pmPartBlkCnt;
-		    bsdlabel[pl].pi_offset = map.blk[j].pmPyPartStart;
-		    if (bsdlabel[pl].pi_fstype != FS_SWAP) {
-		        bsdlabel[pl].pi_frag = 8;
-		        bsdlabel[pl].pi_fsize = 1024;
-		    }
-		}
-	    }
-	}
-
-	/* Disk name  - don't bother asking, just use the physical name*/
-	strcpy (bsddiskname, diskdev);
-
-	/* Create the disktab.preinstall */
-	run_program(0, "cp /etc/disktab.preinstall /etc/disktab");
-#ifdef DEBUG
-	f = fopen ("/tmp/disktab", "a");
-#else
-	f = fopen ("/etc/disktab", "a");
-#endif
-	if (f == NULL) {
-		endwin();
-		(void) fprintf (stderr, "Could not open /etc/disktab");
-		exit (1);
-	}
-	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%" PRIu32 ":\\\n", dlhead*dlsec, (uint32_t)dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", blk_size, doessf);
-	for (i=0; i<8; i++) {
-		if (bsdlabel[i].pi_fstype == FS_HFS)
-		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=macos:",
-			       'a'+i, bsdlabel[i].pi_size,
-			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i);
-		else
-		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i].pi_size,
-			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
-			(void)fprintf (f, "b%c#%d:f%c#%d",
-			   'a'+i, bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag,
-			   'a'+i, bsdlabel[i].pi_fsize);
-		if (i < 7)
-			(void)fprintf (f, "\\\n");
-		else
-			(void)fprintf (f, "\n");
-	}
-	fclose (f);
-
-	/* Everything looks OK. */
-	return (1);
-}
-
-
-/* Upgrade support */
-int
-md_update (void)
-{
-	endwin();
-	move_aout_libs();
-	md_copy_filesystem ();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
-}
-
-
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-}
-
-int
-md_pre_update()
-{
-	return 0;
-}
-
-void
-md_init()
-{
-}
-
-void
-md_init_set_status(int minimal)
-{
-       struct utsname instsys;
-
-	(void)minimal;
-
-	/*
-	 * Get the name of the Install Kernel we are running under and
-	 * enable the installation of the corresponding GENERIC kernel.
-	 *
-	 * Note:  In md.h the two kernels are disabled.  If they are
-	 *        enabled there the logic here needs to be switched.
-	 */
-        uname(&instsys);
-        if (strstr(instsys.version, "(INSTALLSBC)"))
-		/*
-		 * Running the SBC Installation Kernel, so enable GENERICSBC
-		 */
-		set_kernel_set(SET_KERNEL_2);
-        else
-		/*
-		 * Running the GENERIC Installation Kernel, so enable GENERIC
-		 */
-		set_kernel_set(SET_KERNEL_1);
-}
-
-int
-md_post_extract(void)
-{
-	return 0;
-}
+#endif /* MD_DEBUG_SORT_MERGE */

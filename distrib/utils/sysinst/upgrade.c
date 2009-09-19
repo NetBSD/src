@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.49 2006/04/05 16:55:05 garbled Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.50 2009/09/19 14:57:27 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,10 +83,18 @@ do_upgrade(void)
 	if (save_X())
 		return;
 
+#ifdef AOUT2ELF
+	move_aout_libs();
+#endif
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
 	if (!md_update())
 		return;
+
+	wrefresh(curscr);
+	wmove(stdscr, 0, 0);
+	wclear(stdscr);
+	wrefresh(stdscr);
 
 	/* Done with disks. Ready to get and unpack tarballs. */
 	if (get_and_unpack_sets(1, MSG_disksetupdoneupdate,

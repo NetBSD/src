@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.6 2009/05/16 10:40:17 nonaka Exp $ */
+/*	$NetBSD: md.c,v 1.7 2009/09/19 14:57:28 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,24 +26,24 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- Machine specific code for hpcarm */
+/* md.c -- hpcarm machine specific routines */
 
 #include <stdio.h>
 #include <util.h>
 #include <sys/param.h>
 #include <machine/cpu.h>
 #include <sys/sysctl.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -50,18 +51,44 @@
 #include "endian.h"
 #include "mbr.h"
 
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+}
 
 int
 md_get_info(void)
 {
-	read_mbr(diskdev, &mbr);
-	md_bios_info(diskdev);
-	edit_mbr(&mbr);
+	return set_bios_geom_with_mbr_guess();
+}
 
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
+int
+md_make_bsd_partitions(void)
+{
+	return make_bsd_partitions();
+}
+
+/*
+ * any additional partition validation
+ */
+int
+md_check_partitions(void)
+{
 	return 1;
 }
 
-
+/*
+ * hook called before writing new disklabel.
+ */
 int
 md_pre_disklabel(void)
 {
@@ -76,6 +103,9 @@ md_pre_disklabel(void)
 	return 0;
 }
 
+/*
+ * hook called after writing disklabel to new target disk.
+ */
 int
 md_post_disklabel(void)
 {
@@ -88,6 +118,11 @@ md_post_disklabel(void)
 	return 0;
 }
 
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
 int
 md_post_newfs(void)
 {
@@ -95,58 +130,17 @@ md_post_newfs(void)
 }
 
 int
-md_copy_filesystem(void)
+md_post_extract(void)
 {
 	return 0;
 }
-
-
-int
-md_make_bsd_partitions(void)
-{
-	return make_bsd_partitions();
-}
-
-int
-md_check_partitions(void)
-{
-	return 1;
-}
-
-
-/* Upgrade support */
-int
-md_update(void)
-{
-	endwin();
-	md_copy_filesystem();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
-}
-
 
 void
 md_cleanup_install(void)
 {
-
+#ifndef DEBUG
 	enable_rc_conf();
-}
-
-int
-md_bios_info(char *dev)
-{
-	int cyl, head;
-	daddr_t sec;
-
-	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
-		msg_display_add(MSG_biosguess, cyl, head, sec);
-	set_bios_geom(cyl, head, sec);
-	return 0;
+#endif
 }
 
 int
@@ -155,21 +149,12 @@ md_pre_update(void)
 	return 1;
 }
 
-void
-md_init(void)
-{
-}
-
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
-}
-
+/* Upgrade support */
 int
-md_post_extract(void)
+md_update(void)
 {
-	return 0;
+	md_post_newfs();
+	return 1;
 }
 
 int
