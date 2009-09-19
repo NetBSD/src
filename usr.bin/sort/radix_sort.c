@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_sort.c,v 1.3 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: radix_sort.c,v 1.4 2009/09/19 16:18:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radix_sort.c,v 1.3 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: radix_sort.c,v 1.4 2009/09/19 16:18:00 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,27 +184,29 @@ simplesort(RECHEADER **a, int n, int data_index)
 		s_len = akh->keylen;
 		for (ai = ak; ;) {
 			ai--;
-			t = (*ai)->data;
 			t_len = (*ai)->keylen;
-			for (i = data_index; ; i++) {
-				if (i >= s_len || i >= t_len) {
-					r = s_len - t_len;
+			if (t_len != -1) {
+				t = (*ai)->data;
+				for (i = data_index; ; i++) {
+					if (i >= s_len || i >= t_len) {
+						r = s_len - t_len;
+						break;
+					}
+					r =  s[i]  - t[i];
+					if (r != 0)
+						break;
+				}
+				if (r >= 0) {
+					if (r == 0 && UNIQUE) {
+						/* Put record below existing */
+						ai[1] = ai[0];
+						/* Mark as duplicate - ignore */
+						akh->keylen = -1;
+					} else {
+						ai++;
+					}
 					break;
 				}
-				r =  s[i]  - t[i];
-				if (r != 0)
-					break;
-			}
-			if (r >= 0) {
-				if (r == 0 && UNIQUE) {
-					/* Put record below existing */
-					ai[1] = ai[0];
-					/* Mark so ignored by output() */
-					akh->keylen = -1;
-				} else {
-					ai++;
-				}
-				break;
 			}
 			ai[1] = ai[0];
 			if (ai == a)
