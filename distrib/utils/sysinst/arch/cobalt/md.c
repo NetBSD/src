@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.4 2009/08/23 13:36:54 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2009/09/19 14:57:28 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,31 +26,28 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- Machine specific code for cobalt */
+/* md.c -- cobalt machine specific routines */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-
 #include <stdio.h>
 #include <util.h>
-
 #include <machine/cpu.h>
 
 #include "defs.h"
+#include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include "md.h"
 
 /*
  * Firmware reognizes only Linux Ext2 REV 0, so we have to have
@@ -58,78 +56,26 @@
 static int nobootfs = 0;
 static int bootpart_ext2fs = PART_BOOT_EXT2FS;
 
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+}
+
 int
 md_get_info(void)
 {
-
-	read_mbr(diskdev, &mbr);
-	md_bios_info(diskdev);
-	return edit_mbr(&mbr);
+	return set_bios_geom_with_mbr_guess();
 }
 
-int
-md_pre_disklabel(void)
-{
-
-	msg_display(MSG_dofdisk);
-
-	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
-		msg_display(MSG_wmbrfail);
-		process_menu(MENU_ok, NULL);
-		return 1;
-	}
-	return 0;
-}
-
-int
-md_post_disklabel(void)
-{
-
-	if (get_ramsize() <= 32)
-		set_swap(diskdev, bsdlabel);
-
-	return 0;
-}
-
-int
-md_post_newfs(void)
-{
-	static const char *kernels[] = {
-		"vmlinux-nfsroot.gz",
-		"vmlinux.gz",
-		"vmlinux_RAQ.gz",
-		"vmlinux_raq-2800.gz"
-	};
-	static const char *bootfile = "boot.gz";
-	char bootdir[64];
-	int i;
-
-	if (!nobootfs) {
-		msg_display(msg_string(MSG_copybootloader), diskdev);
-
-		snprintf(bootdir, sizeof(bootdir), "%s/boot", 
-		    target_expand(PART_BOOT_EXT2FS_PI_MOUNT));
-		run_program(0, "/bin/mkdir -p %s", bootdir);
-		run_program(0, "/bin/cp /usr/mdec/boot %s", bootdir); 
-		run_program(0, "/bin/rm -f %s/%s", bootdir, bootfile); 
-		run_program(0, "/usr/bin/gzip -9 %s/boot", bootdir);
-		for (i = 0; i < __arraycount(kernels); i++)
-			run_program(0, "/bin/ln -fs %s %s/%s",
-			    bootfile, bootdir, kernels[i]);
-	}
-
-	return 0;
-}
-
-int
-md_copy_filesystem(void)
-{
-
-	return 0;
-}
-
-
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
 int
 md_make_bsd_partitions(void)
 {
@@ -260,6 +206,9 @@ md_make_bsd_partitions(void)
 	return 1;
 }
 
+/*
+ * any additional partition validation
+ */
 int
 md_check_partitions(void)
 {
@@ -278,6 +227,84 @@ md_check_partitions(void)
 	msg_display(MSG_nobootpartdisklabel);
 	process_menu(MENU_ok, NULL);
 	return 0;
+}
+
+/*
+ * hook called before writing new disklabel.
+ */
+int
+md_pre_disklabel(void)
+{
+	msg_display(MSG_dofdisk);
+
+	/* write edited MBR onto disk. */
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok, NULL);
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * hook called after writing disklabel to new target disk.
+ */
+int
+md_post_disklabel(void)
+{
+	if (get_ramsize() <= 32)
+		set_swap(diskdev, bsdlabel);
+
+	return 0;
+}
+
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
+int
+md_post_newfs(void)
+{
+	static const char *kernels[] = {
+		"vmlinux-nfsroot.gz",
+		"vmlinux.gz",
+		"vmlinux_RAQ.gz",
+		"vmlinux_raq-2800.gz"
+	};
+	static const char *bootfile = "boot.gz";
+	char bootdir[64];
+	int i;
+
+	if (!nobootfs) {
+		msg_display(msg_string(MSG_copybootloader), diskdev);
+
+		snprintf(bootdir, sizeof(bootdir), "%s/boot", 
+		    target_expand(PART_BOOT_EXT2FS_PI_MOUNT));
+		run_program(0, "/bin/mkdir -p %s", bootdir);
+		run_program(0, "/bin/cp /usr/mdec/boot %s", bootdir); 
+		run_program(0, "/bin/rm -f %s/%s", bootdir, bootfile); 
+		run_program(0, "/usr/bin/gzip -9 %s/boot", bootdir);
+		for (i = 0; i < __arraycount(kernels); i++)
+			run_program(0, "/bin/ln -fs %s %s/%s",
+			    bootfile, bootdir, kernels[i]);
+	}
+
+	return 0;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
+}
+
+void
+md_cleanup_install(void)
+{
+#ifndef DEBUG
+	enable_rc_conf();
+#endif
 }
 
 int
@@ -312,63 +339,12 @@ md_pre_update(void)
 	return 1;
 }
 
-
 /* Upgrade support */
 int
 md_update(void)
 {
-
-	endwin();
-	md_copy_filesystem();
 	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
 	return 1;
-}
-
-
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-}
-
-int
-md_bios_info(char *dev)
-{
-	int cyl, head;
-	daddr_t sec;
-
-	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
-		msg_display_add(MSG_biosguess, cyl, head, sec);
-	set_bios_geom(cyl, head, sec);
-
-	return 0;
-}
-
-void
-md_init(void)
-{
-
-	/* Nothing to do */
-}
-
-void
-md_init_set_status(int minimal)
-{
-
-	(void)minimal;
-}
-
-int
-md_post_extract(void)
-{
-
-	return 0;
 }
 
 int

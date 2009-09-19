@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.51 2006/10/23 19:44:57 he Exp $	*/
+/*	$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.51 2006/10/23 19:44:57 he Exp $");
+__RCSID("$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $");
 #endif
 
 /*
@@ -110,8 +110,6 @@ int	target_test(unsigned int mode, const char *path);
 int	target_test_dir (const char *path);	/* deprecated */
 int	target_test_file (const char *path);	/* deprecated */
 int	target_test_symlink (const char *path);	/* deprecated */
-
-void backtowin(void);
 
 void unwind_mounts(void);
 

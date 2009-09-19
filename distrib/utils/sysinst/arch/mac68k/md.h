@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.22 2006/02/26 10:25:53 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.23 2009/09/19 14:57:29 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,25 +100,6 @@ typedef struct {
 
 MAP map;
 
-int	edit_diskmap (void);		
-void	disp_selected_part (int sel);
-int	whichType(struct apple_part_map_entry *);
-char	*getFstype(struct apple_part_map_entry *, int, char *);
-char	*getUse(struct apple_part_map_entry *, int, char *);
-char	*getName(struct apple_part_map_entry *, int, char *);
-int	stricmp(const char *c1, const char *c2);
-int	getFreeLabelEntry(char *);
-int	findStdType(int, char *, int, int *, int);
-void	setpartition(struct apple_part_map_entry *, char *, int);
-void	sortmerge(void);
-void	reset_part_flags(struct apple_part_map_entry *);
-int	check_for_errors(void);
-void	report_errors(void);
-void	set_fdisk_info (void);		/* write incore info into disk */
-int	get_diskmap_info (void);
-void	md_select_kernel(void);
-int	md_debug_dump(char *);
-
 /* constants and defines */
 
 /*
@@ -206,3 +187,9 @@ extern struct apple_part_map_entry new_map[];
 /* Definition of files to retrieve from ftp. */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERICSBC"
+
+extern void	sortmerge(void);
+extern void	disp_selected_part(int);
+extern void	reset_part_flags(struct apple_part_map_entry *);
+extern int	whichType(struct apple_part_map_entry *);
+extern void	report_errors(void);

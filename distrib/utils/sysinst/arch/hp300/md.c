@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2008/10/07 09:58:14 abs Exp $ */
+/*	$NetBSD: md.c,v 1.27 2009/09/19 14:57:28 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,17 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+}
 
 int
 md_get_info(void)
@@ -108,61 +119,6 @@ md_get_info(void)
 }
 
 /*
- * hook called before writing new disklabel.
- */
-int
-md_pre_disklabel(void)
-{
-
-	return 0;
-}
-
-/*
- * hook called after writing disklabel to new target disk.
- */
-int
-md_post_disklabel(void)
-{
-
-	if (get_ramsize() < 6)
-		set_swap(diskdev, bsdlabel);
-
-	return 0;
-}
-
-/*
- * MD hook called after upgrade() or install() has finished setting
- * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message, so that if power fails, they can
- * continue installation by booting the target disk and doing an
- * `upgrade'.
- *
- * On hp300, we use this opportunity to install the boot blocks.
- */
-int
-md_post_newfs(void)
-{
-
-	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
-	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/uboot.lif", diskdev))
-		process_menu(MENU_ok,
-		    deconst("Warning: disk is probably not bootable"));
-	return 0;
-}
-
-/*
- * some ports use this to copy the MD filesystem, we do not.
- */
-int
-md_copy_filesystem(void)
-{
-
-	return 0;
-}
-
-/*
  * md back-end code for menu-driven BSD disklabel editor.
  */
 int
@@ -208,25 +164,55 @@ md_check_partitions(void)
 	return 1;
 }
 
-/* Upgrade support */
+/*
+ * hook called before writing new disklabel.
+ */
 int
-md_update(void)
+md_pre_disklabel(void)
 {
+	return 0;
+}
 
-	endwin();
-	md_copy_filesystem();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
+/*
+ * hook called after writing disklabel to new target disk.
+ */
+int
+md_post_disklabel(void)
+{
+	if (get_ramsize() < 6)
+		set_swap(diskdev, bsdlabel);
+
+	return 0;
+}
+
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ *
+ * On hp300, we use this opportunity to install the boot blocks.
+ */
+int
+md_post_newfs(void)
+{
+	/* boot blocks ... */
+	msg_display(MSG_dobootblks, diskdev);
+	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/uboot.lif", diskdev))
+		process_menu(MENU_ok,
+		    deconst("Warning: disk is probably not bootable"));
+	return 0;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }
 
 void
 md_cleanup_install(void)
 {
-
 #ifdef notyet			/* sed is too large for ramdisk */
 	enable_rc_conf();
 #endif
@@ -235,23 +221,22 @@ md_cleanup_install(void)
 int
 md_pre_update(void)
 {
-
 	if (get_ramsize() < 6)
 		set_swap(diskdev, NULL);
 	return 1;
 }
 
-void
-md_init(void)
+/* Upgrade support */
+int
+md_update(void)
 {
+	md_post_newfs();
+	return 1;
 }
 
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
-}
-
+/*
+ * Used in bsddisklabel.c as BOOT_SIZE
+ */
 int
 hp300_boot_size(void)
 {
@@ -262,10 +247,4 @@ hp300_boot_size(void)
 		i = dlcylsize * sectorsize * 2;
 
 	return i;
-}
-
-int
-md_post_extract(void)
-{
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.144 2009/09/07 02:31:53 jnemeth Exp $	*/
+/*	$NetBSD: defs.h,v 1.145 2009/09/19 14:57:27 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -312,20 +312,23 @@ char dist_postfix[SSTRSIZE];
 void set_menu_numopts(int, int);
 
 /* Machine dependent functions .... */
-int	md_check_partitions(void);
-void	md_cleanup_install(void);
-int	md_copy_filesystem(void);
+void	md_init(void);
+void	md_init_set_status(int); /* minimal y/n */
+
+ /* MD functions if user selects install - in order called */
 int	md_get_info(void);
 int	md_make_bsd_partitions(void);
+int	md_check_partitions(void);
+int	md_pre_disklabel(void);
 int	md_post_disklabel(void);
 int	md_post_newfs(void);
-int	md_pre_disklabel(void);
+int	md_post_extract(void);
+void	md_cleanup_install(void);
+
+ /* MD functions if user selects upgrade - in order called */
 int	md_pre_update(void);
 int	md_update(void);
-int	md_post_extract(void);
-void	md_init(void);
-void	md_init_set_status(int);
-void	md_set_no_x(void);
+/* Also calls md_post_extract() */
 
 /* from main.c */
 void	toplevel(void);
@@ -424,6 +427,9 @@ void	customise_sets(void);
 void	umount_mnt2(void);
 
 /* from target.c */
+#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
+void	backtowin(void);
+#endif
 const	char *concat_paths(const char *, const char *);
 const	char *target_expand(const char *);
 void	make_target_dir(const char *);

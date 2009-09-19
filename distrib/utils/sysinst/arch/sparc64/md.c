@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2009/04/05 22:22:27 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.25 2009/09/19 14:57:30 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,19 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+static void install_bootblocks(void);
+
+void
+md_init(void)
+{
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+}
+
 int
 md_get_info(void)
 {
@@ -104,54 +117,6 @@ md_get_info(void)
 }
 
 /*
- * hook called before writing new disklabel.
- */
-int
-md_pre_disklabel(void)
-{
-	return 0;
-}
-
-/*
- * hook called after writing disklabel to new target disk.
- */
-int
-md_post_disklabel(void)
-{
-	return 0;
-}
-
-/* install/update bootblocks */
-static void
-install_bootblocks(void)
-{
-
-	/* Install boot blocks now that we have a full system ... */
-	msg_display(MSG_dobootblks, diskdev);
-	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
-	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
-}
-
-/*
- * hook called after running newfs.
- */
-int
-md_post_newfs(void)
-{
-	install_bootblocks();
-	return 0;
-}
-
-/*
- * some ports use this to copy the MD filesystem, we do not.
- */
-int
-md_copy_filesystem(void)
-{
-	return 0;
-}
-
-/*
  * md back-end code for menu-driven BSD disklabel editor.
  */
 int
@@ -169,46 +134,70 @@ md_check_partitions(void)
 	return 1;
 }
 
-/* Upgrade support */
+/*
+ * hook called before writing new disklabel.
+ */
 int
-md_update(void)
+md_pre_disklabel(void)
 {
-	/* endwin(); */
-	md_copy_filesystem();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
+	return 0;
 }
 
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-}
-
+/*
+ * hook called after writing disklabel to new target disk.
+ */
 int
-md_pre_update()
+md_post_disklabel(void)
 {
-	return 1;
+	return 0;
 }
 
-void
-md_init()
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
+int
+md_post_newfs(void)
 {
-}
-
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
+	install_bootblocks();
+	return 0;
 }
 
 int
 md_post_extract(void)
 {
 	return 0;
+}
+
+void
+md_cleanup_install(void)
+{
+#ifndef DEBUG
+	enable_rc_conf();
+#endif
+}
+
+int
+md_pre_update(void)
+{
+	return 1;
+}
+
+/* Upgrade support */
+int
+md_update(void)
+{
+	md_post_newfs();
+	return 1;
+}
+
+/* install/update bootblocks */
+static void
+install_bootblocks(void)
+{
+	/* Install boot blocks now that we have a full system ... */
+	msg_display(MSG_dobootblks, diskdev);
+	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
+	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.42 2006/04/05 16:55:01 garbled Exp $	*/
+/*	$NetBSD: install.c,v 1.43 2009/09/19 14:57:27 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,9 +105,6 @@ do_install(void)
 		return;
 
 	if (make_filesystems())
-		return;
-
-	if (md_copy_filesystem() != 0)
 		return;
 
 	if (make_fstab() != 0)

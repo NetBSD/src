@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2008/10/07 09:58:14 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2009/09/19 14:57:27 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -26,18 +26,17 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- arm32 machine specific routines */
+/* md.c -- arm32 machine specific routines  - also used by acorn26 */
 
 #include <stdio.h>
 #include <curses.h>
@@ -49,82 +48,23 @@
 #include <sys/disklabel_acorn.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-void backtowin(void);
 
-static int
-filecore_checksum(u_char *bootblock);
+static int filecore_checksum(u_char *);
 
-/*
- * static int filecore_checksum(u_char *bootblock)
- *
- * Calculates the filecore boot block checksum. This is used to validate
- * a filecore boot block on the disk.  If a boot block is validated then
- * it is used to locate the partition table. If the boot block is not
- * validated, it is assumed that the whole disk is NetBSD.
- *
- * The basic algorithm is:
- *
- *	for (each byte in block, excluding checksum) {
- *		sum += byte;
- *		if (sum > 255)
- *			sum -= 255;
- *	}
- *
- * That's equivalent to summing all of the bytes in the block
- * (excluding the checksum byte, of course), then calculating the
- * checksum as "cksum = sum - ((sum - 1) / 255) * 255)".  That
- * expression may or may not yield a faster checksum function,
- * but it's easier to reason about.
- *
- * Note that if you have a block filled with bytes of a single
- * value "X" (regardless of that value!) and calculate the cksum
- * of the block (excluding the checksum byte), you will _always_
- * end up with a checksum of X.  (Do the math; that can be derived
- * from the checksum calculation function!)  That means that
- * blocks which contain bytes which all have the same value will
- * always checksum properly.  That's a _very_ unlikely occurence
- * (probably impossible, actually) for a valid filecore boot block,
- * so we treat such blocks as invalid.
- */
+void
+md_init(void)
+{
+}
 
-static int
-filecore_checksum(u_char *bootblock)
-{  
-	u_char byte0, accum_diff;
-	u_int sum;
-	int i;
- 
-	sum = 0;
-	accum_diff = 0;
-	byte0 = bootblock[0];
- 
-	/*
-	 * Sum the contents of the block, keeping track of whether
-	 * or not all bytes are the same.  If 'accum_diff' ends up
-	 * being zero, all of the bytes are, in fact, the same.
-	 */
-	for (i = 0; i < 511; ++i) {
-		sum += bootblock[i];
-		accum_diff |= bootblock[i] ^ byte0;
-	}
-
-	/*
-	 * Check to see if the checksum byte is the same as the
-	 * rest of the bytes, too.  (Note that if all of the bytes
-	 * are the same except the checksum, a checksum compare
-	 * won't succeed, but that's not our problem.)
-	 */
-	accum_diff |= bootblock[i] ^ byte0;
-
-	/* All bytes in block are the same; call it invalid. */
-	if (accum_diff == 0)
-		return (-1);
-
-	return (sum - ((sum - 1) / 255) * 255);
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
 }
 
 int
@@ -267,62 +207,57 @@ md_get_info(void)
 	return 1;
 }
 
-int
-md_pre_disklabel(void)
-{
-	return 0;
-}
-
-int
-md_post_disklabel(void)
-{
-	return 0;
-}
-
-int
-md_post_newfs(void)
-{
-#if 0
-	/* XXX boot blocks ... */
-	printf(msg_string(MSG_dobootblks), diskdev);
-	run_program(RUN_DISPLAY, "/sbin/disklabel -B %s /dev/r%sc",
-	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-#endif
-	return 0;
-}
-
-int
-md_copy_filesystem(void)
-{
-	return 0;
-}
-
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
 int
 md_make_bsd_partitions(void)
 {
 	return make_bsd_partitions();
 }
 
-
+/*
+ * any additional partition validation
+ */
 int
 md_check_partitions(void)
 {
 	return 1;
 }
 
-/* Upgrade support */
+/*
+ * hook called before writing new disklabel.
+ */
 int
-md_update(void)
+md_pre_disklabel(void)
 {
-	move_aout_libs();
-	endwin();
-	md_copy_filesystem();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
+	return 0;
+}
+
+/*
+ * hook called after writing disklabel to new target disk.
+ */
+int
+md_post_disklabel(void)
+{
+	return 0;
+}
+
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
+int
+md_post_newfs(void)
+{
+	return 0;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }
 
 void
@@ -339,19 +274,79 @@ md_pre_update(void)
 	return 1;
 }
 
-void
-md_init(void)
-{
-}
-
-void
-md_init_set_status(int minimal)
-{
-	(void)minimal;
-}
-
+/* Upgrade support */
 int
-md_post_extract(void)
+md_update(void)
 {
-	return 0;
+	md_post_newfs();
+	return 1;
+}
+
+/*
+ * static int filecore_checksum(u_char *bootblock)
+ *
+ * Calculates the filecore boot block checksum. This is used to validate
+ * a filecore boot block on the disk.  If a boot block is validated then
+ * it is used to locate the partition table. If the boot block is not
+ * validated, it is assumed that the whole disk is NetBSD.
+ *
+ * The basic algorithm is:
+ *
+ *	for (each byte in block, excluding checksum) {
+ *		sum += byte;
+ *		if (sum > 255)
+ *			sum -= 255;
+ *	}
+ *
+ * That's equivalent to summing all of the bytes in the block
+ * (excluding the checksum byte, of course), then calculating the
+ * checksum as "cksum = sum - ((sum - 1) / 255) * 255)".  That
+ * expression may or may not yield a faster checksum function,
+ * but it's easier to reason about.
+ *
+ * Note that if you have a block filled with bytes of a single
+ * value "X" (regardless of that value!) and calculate the cksum
+ * of the block (excluding the checksum byte), you will _always_
+ * end up with a checksum of X.  (Do the math; that can be derived
+ * from the checksum calculation function!)  That means that
+ * blocks which contain bytes which all have the same value will
+ * always checksum properly.  That's a _very_ unlikely occurence
+ * (probably impossible, actually) for a valid filecore boot block,
+ * so we treat such blocks as invalid.
+ */
+
+static int
+filecore_checksum(u_char *bootblock)
+{  
+	u_char byte0, accum_diff;
+	u_int sum;
+	int i;
+ 
+	sum = 0;
+	accum_diff = 0;
+	byte0 = bootblock[0];
+ 
+	/*
+	 * Sum the contents of the block, keeping track of whether
+	 * or not all bytes are the same.  If 'accum_diff' ends up
+	 * being zero, all of the bytes are, in fact, the same.
+	 */
+	for (i = 0; i < 511; ++i) {
+		sum += bootblock[i];
+		accum_diff |= bootblock[i] ^ byte0;
+	}
+
+	/*
+	 * Check to see if the checksum byte is the same as the
+	 * rest of the bytes, too.  (Note that if all of the bytes
+	 * are the same except the checksum, a checksum compare
+	 * won't succeed, but that's not our problem.)
+	 */
+	accum_diff |= bootblock[i] ^ byte0;
+
+	/* All bytes in block are the same; call it invalid. */
+	if (accum_diff == 0)
+		return (-1);
+
+	return (sum - ((sum - 1) / 255) * 255);
 }

@@ -1,10 +1,11 @@
-/*	$NetBSD: md.c,v 1.5 2009/05/16 10:40:17 nonaka Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2009/09/19 14:57:29 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
- * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,31 +26,28 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* md.c -- Machine specific code for ofppc */
+/* md.c -- ofppc machine specific routines */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-
 #include <stdio.h>
 #include <util.h>
-
 #include <machine/cpu.h>
 
 #include "defs.h"
+#include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include "md.h"
 #include "endian.h"
 
 /* We use MBR_PTYPE_PREP like port-prep does. */
@@ -62,199 +60,26 @@ static int bootinfo_mbr = 1;
 /* bootstart/bootsize are for the fat */
 int binfostart, binfosize, bprepstart, bprepsize;
 
-int
-md_check_mbr(mbr_info_t *mbri)
+void
+md_init(void)
 {
-	mbr_info_t *ext;
-	struct mbr_partition *part;
-	int i;
-
-	for (ext = mbri; ext; ext = ext->extended) {
-		part = ext->mbr.mbr_parts;
-		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
-			if (part->mbrp_type == MBR_PTYPE_FAT12) {
-				bootstart = part->mbrp_start;
-				bootsize = part->mbrp_size;
-			} else if (part->mbrp_type == MBR_PTYPE_PREP &&
-			    part->mbrp_size < 50) {
-				/* this is the bootinfo partition */
-				binfostart = part->mbrp_start;
-				binfosize = part->mbrp_size;
-				bootinfo_mbr = i+1;
-			} else if (part->mbrp_type == MBR_PTYPE_PREP &&
-			    part->mbrp_size > 50) {
-				bprepstart = part->mbrp_start;
-				bprepsize = part->mbrp_size;
-			}
-			break;
-		}
-	}
-	
-	/* we need to either have a pair of prep partitions, or a single
-	 * fat.  if neither, things are broken. */
-	if (!(bootsize >= (MIN_FAT12_BOOT/512) ||
-		(binfosize >= (MIN_BINFO_BOOT/512) &&
-		    bprepsize >= (MIN_PREP_BOOT/512)))) {
-		msg_display(MSG_bootnotright);
-		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
-			return 0;
-		return 1;
-	}
-
-	/* check the prep partitions */
-	if ((binfosize > 0 || bprepsize > 0) &&
-	    (binfosize < (MIN_BINFO_BOOT/512) ||
-		bprepsize < (MIN_PREP_BOOT/512))) {
-		msg_display(MSG_preptoosmall);
-		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
-			return 0;
-		return 1;
-	}
-	
-	/* check the fat12 parititons */
-	if (bootsize > 0 && bootsize < (MIN_FAT12_BOOT/512)) {
-		msg_display(MSG_boottoosmall);
-		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
-			return 0;
-		return 1;
-	}
-
-	/* if both sets contain zero, thats bad */
-	if ((bootstart == 0 || bootsize == 0) &&
-	    (binfosize == 0 || binfostart == 0 ||
-		bprepsize == 0 || bprepstart == 0)) {
-		msg_display(MSG_nobootpart);
-		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
-			return 0;
-		return 1;
-	}
-	return 2;
 }
 
-/*
- * NOTE, we use a reserved partition type, because some RS/6000 machines hang
- * hard if they find a FAT12, and if we use type prep, that indicates that
- * it should be read raw.
- * One partition for FAT12 booting
- * One partition for NetBSD
- * One partition to hold the bootinfo.txt file
- * One partition to hold ofwboot
- */
-
-int
-md_mbr_use_wholedisk(mbr_info_t *mbri)
+void
+md_init_set_status(int minimal)
 {
-	struct mbr_sector *mbrs = &mbri->mbr;
-	mbr_info_t *ext;
-	struct mbr_partition *part;
-
-	part = &mbrs->mbr_parts[0];
-	/* Set the partition information for full disk usage. */
-	while ((ext = mbri->extended)) {
-		mbri->extended = ext->extended;
-		free(ext);
-	}
-	memset(part, 0, MBR_PART_COUNT * sizeof *part);
-
-	part[0].mbrp_type = MBR_PTYPE_RESERVED_x21;
-	part[0].mbrp_size = FAT12_BOOT_SIZE/512;
-	part[0].mbrp_start = bsec;
-	part[0].mbrp_flag = 0;
-
-	part[1].mbrp_type = MBR_PTYPE_NETBSD;
-	part[1].mbrp_size = dlsize - (bsec + FAT12_BOOT_SIZE/512 +
-	    BINFO_BOOT_SIZE/512 + PREP_BOOT_SIZE/512);
-	part[1].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512 +
-	    PREP_BOOT_SIZE/512;
-	part[1].mbrp_flag = MBR_PFLAG_ACTIVE;
-
-	part[2].mbrp_type = MBR_PTYPE_PREP;
-	part[2].mbrp_size = BINFO_BOOT_SIZE/512;
-	part[2].mbrp_start = bsec + FAT12_BOOT_SIZE/512;
-	part[2].mbrp_flag = 0;
-
-	part[3].mbrp_type = MBR_PTYPE_PREP;
-	part[3].mbrp_size = PREP_BOOT_SIZE/512;
-	part[3].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512;
-	part[3].mbrp_flag = 0;
-	
-	ptstart = part[1].mbrp_start;
-	ptsize = part[1].mbrp_size;
-	bootstart = part[0].mbrp_start;
-	bootsize = part[0].mbrp_size;
-	binfostart = part[2].mbrp_start;
-	binfosize= part[2].mbrp_size;
-	bprepstart = part[3].mbrp_start;
-	bprepsize = part[3].mbrp_size;
-	bootinfo_mbr = 4;
-
-	return 1;
+	(void)minimal;
 }
 
 int
 md_get_info(void)
 {
-
-	read_mbr(diskdev, &mbr);
-	md_bios_info(diskdev);
-	return edit_mbr(&mbr);
+	return set_bios_geom_with_mbr_guess();
 }
 
-int
-md_pre_disklabel(void)
-{
-
-	msg_display(MSG_dofdisk);
-
-	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
-		msg_display(MSG_wmbrfail);
-		process_menu(MENU_ok, NULL);
-		return 1;
-	}
-	return 0;
-}
-
-int
-md_post_disklabel(void)
-{
-	char bootdev[100];
-
-	if (bootstart == 0 || bootsize == 0)
-		return 0;
-	
-	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
-	    'a'+bootpart_fat12);
-	run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s", bootdev);
-	
-	return 0;
-}
-
-int
-md_post_newfs(void)
-{
-
-	/* just in case */
-	run_program(RUN_DISPLAY, "/sbin/umount /targetroot/boot");
-	return 0;
-}
-
-int
-md_copy_filesystem(void)
-{
-
-	return 0;
-}
-
-
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
 int
 md_make_bsd_partitions(void)
 {
@@ -391,9 +216,12 @@ md_make_bsd_partitions(void)
 	(void) savenewlabel(bsdlabel, maxpart);
 
 	/* Everything looks OK. */
-	return (1);
+	return 1;
 }
 
+/*
+ * any additional partition validation
+ */
 int
 md_check_partitions(void)
 {
@@ -429,77 +257,52 @@ md_check_partitions(void)
 	return 0;
 }
 
-/* Upgrade support */
+/*
+ * hook called before writing new disklabel.
+ */
 int
-md_update(void)
+md_pre_disklabel(void)
 {
+	msg_display(MSG_dofdisk);
 
-	endwin();
-	nonewfsmsdos = 1;
-	md_copy_filesystem();
-	md_post_newfs();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-	return 1;
+	/* write edited MBR onto disk. */
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok, NULL);
+		return 1;
+	}
+	return 0;
 }
 
-void
-md_cleanup_install(void)
-{
-
-	enable_rc_conf();
-}
-
+/*
+ * hook called after writing disklabel to new target disk.
+ */
 int
-md_pre_update(void)
+md_post_disklabel(void)
 {
-	struct mbr_partition *part;
-	mbr_info_t *ext;
-	int i;
+	char bootdev[100];
 
-	read_mbr(diskdev, &mbr);
-	/* do a sanity check of the partition table */
-	for (ext = &mbr; ext; ext = ext->extended) {
-		part = ext->mbr.mbr_parts;
-		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
-			if (part->mbrp_type == MBR_PTYPE_PREP &&
-			    part->mbrp_size > 50)
-				bootinfo_mbr = i+1;
-			if (part->mbrp_type == MBR_PTYPE_RESERVED_x21 &&
-			    part->mbrp_size < (MIN_FAT12_BOOT/512)) {
-				msg_display(MSG_boottoosmall);
-				msg_display_add(MSG_nobootpartdisklabel, 0);
-				process_menu(MENU_yesno, NULL);
-				if (!yesno)
-					return 0;
-				nobootfix = 1;
-			}
-		}
-	}
-
-	i = md_check_partitions();
-	switch (i) {
-	case 0: nobootfix=1; noprepfix=1; break;
-	case 1: noprepfix=1; break;
-	case 2: nobootfix=1; break;
-	default: break;
-	}
+	if (bootstart == 0 || bootsize == 0)
+		return 0;
 	
-	return 1;
+	snprintf(bootdev, sizeof bootdev, "/dev/r%s%c", diskdev,
+	    'a'+bootpart_fat12);
+	run_program(RUN_DISPLAY, "/sbin/newfs_msdos %s", bootdev);
+	
+	return 0;
 }
 
+/*
+ * hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message.
+ */
 int
-md_bios_info(char *dev)
+md_post_newfs(void)
 {
-	int cyl, head;
-	daddr_t sec;
 
-	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
-		msg_display_add(MSG_biosguess, cyl, head, sec);
-	set_bios_geom(cyl, head, sec);
+	/* just in case */
+	run_program(RUN_DISPLAY, "/sbin/umount /targetroot/boot");
 	return 0;
 }
 
@@ -562,14 +365,194 @@ md_post_extract(void)
 }
 
 void
-md_init(void)
+md_cleanup_install(void)
 {
-
-	/* Nothing to do */
+#ifndef DEBUG
+	enable_rc_conf();
+#endif
 }
 
-void
-md_init_set_status(int minimal)
+int
+md_pre_update(void)
 {
-	(void)minimal;
+	struct mbr_partition *part;
+	mbr_info_t *ext;
+	int i;
+
+	read_mbr(diskdev, &mbr);
+	/* do a sanity check of the partition table */
+	for (ext = &mbr; ext; ext = ext->extended) {
+		part = ext->mbr.mbr_parts;
+		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
+			if (part->mbrp_type == MBR_PTYPE_PREP &&
+			    part->mbrp_size > 50)
+				bootinfo_mbr = i+1;
+			if (part->mbrp_type == MBR_PTYPE_RESERVED_x21 &&
+			    part->mbrp_size < (MIN_FAT12_BOOT/512)) {
+				msg_display(MSG_boottoosmall);
+				msg_display_add(MSG_nobootpartdisklabel, 0);
+				process_menu(MENU_yesno, NULL);
+				if (!yesno)
+					return 0;
+				nobootfix = 1;
+			}
+		}
+	}
+
+	i = md_check_partitions();
+	switch (i) {
+	case 0: nobootfix=1; noprepfix=1; break;
+	case 1: noprepfix=1; break;
+	case 2: nobootfix=1; break;
+	default: break;
+	}
+	
+	return 1;
+}
+
+/* Upgrade support */
+int
+md_update(void)
+{
+	nonewfsmsdos = 1;
+	md_post_newfs();
+	return 1;
+}
+
+
+int
+md_check_mbr(mbr_info_t *mbri)
+{
+	mbr_info_t *ext;
+	struct mbr_partition *part;
+	int i;
+
+	for (ext = mbri; ext; ext = ext->extended) {
+		part = ext->mbr.mbr_parts;
+		for (i = 0; i < MBR_PART_COUNT; part++, i++) {
+			if (part->mbrp_type == MBR_PTYPE_FAT12) {
+				bootstart = part->mbrp_start;
+				bootsize = part->mbrp_size;
+			} else if (part->mbrp_type == MBR_PTYPE_PREP &&
+			    part->mbrp_size < 50) {
+				/* this is the bootinfo partition */
+				binfostart = part->mbrp_start;
+				binfosize = part->mbrp_size;
+				bootinfo_mbr = i+1;
+			} else if (part->mbrp_type == MBR_PTYPE_PREP &&
+			    part->mbrp_size > 50) {
+				bprepstart = part->mbrp_start;
+				bprepsize = part->mbrp_size;
+			}
+			break;
+		}
+	}
+	
+	/* we need to either have a pair of prep partitions, or a single
+	 * fat.  if neither, things are broken. */
+	if (!(bootsize >= (MIN_FAT12_BOOT/512) ||
+		(binfosize >= (MIN_BINFO_BOOT/512) &&
+		    bprepsize >= (MIN_PREP_BOOT/512)))) {
+		msg_display(MSG_bootnotright);
+		msg_display_add(MSG_reeditpart, 0);
+		process_menu(MENU_yesno, NULL);
+		if (!yesno)
+			return 0;
+		return 1;
+	}
+
+	/* check the prep partitions */
+	if ((binfosize > 0 || bprepsize > 0) &&
+	    (binfosize < (MIN_BINFO_BOOT/512) ||
+		bprepsize < (MIN_PREP_BOOT/512))) {
+		msg_display(MSG_preptoosmall);
+		msg_display_add(MSG_reeditpart, 0);
+		process_menu(MENU_yesno, NULL);
+		if (!yesno)
+			return 0;
+		return 1;
+	}
+	
+	/* check the fat12 parititons */
+	if (bootsize > 0 && bootsize < (MIN_FAT12_BOOT/512)) {
+		msg_display(MSG_boottoosmall);
+		msg_display_add(MSG_reeditpart, 0);
+		process_menu(MENU_yesno, NULL);
+		if (!yesno)
+			return 0;
+		return 1;
+	}
+
+	/* if both sets contain zero, thats bad */
+	if ((bootstart == 0 || bootsize == 0) &&
+	    (binfosize == 0 || binfostart == 0 ||
+		bprepsize == 0 || bprepstart == 0)) {
+		msg_display(MSG_nobootpart);
+		msg_display_add(MSG_reeditpart, 0);
+		process_menu(MENU_yesno, NULL);
+		if (!yesno)
+			return 0;
+		return 1;
+	}
+	return 2;
+}
+
+/*
+ * NOTE, we use a reserved partition type, because some RS/6000 machines hang
+ * hard if they find a FAT12, and if we use type prep, that indicates that
+ * it should be read raw.
+ * One partition for FAT12 booting
+ * One partition for NetBSD
+ * One partition to hold the bootinfo.txt file
+ * One partition to hold ofwboot
+ */
+
+int
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	struct mbr_sector *mbrs = &mbri->mbr;
+	mbr_info_t *ext;
+	struct mbr_partition *part;
+
+	part = &mbrs->mbr_parts[0];
+	/* Set the partition information for full disk usage. */
+	while ((ext = mbri->extended)) {
+		mbri->extended = ext->extended;
+		free(ext);
+	}
+	memset(part, 0, MBR_PART_COUNT * sizeof *part);
+
+	part[0].mbrp_type = MBR_PTYPE_RESERVED_x21;
+	part[0].mbrp_size = FAT12_BOOT_SIZE/512;
+	part[0].mbrp_start = bsec;
+	part[0].mbrp_flag = 0;
+
+	part[1].mbrp_type = MBR_PTYPE_NETBSD;
+	part[1].mbrp_size = dlsize - (bsec + FAT12_BOOT_SIZE/512 +
+	    BINFO_BOOT_SIZE/512 + PREP_BOOT_SIZE/512);
+	part[1].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512 +
+	    PREP_BOOT_SIZE/512;
+	part[1].mbrp_flag = MBR_PFLAG_ACTIVE;
+
+	part[2].mbrp_type = MBR_PTYPE_PREP;
+	part[2].mbrp_size = BINFO_BOOT_SIZE/512;
+	part[2].mbrp_start = bsec + FAT12_BOOT_SIZE/512;
+	part[2].mbrp_flag = 0;
+
+	part[3].mbrp_type = MBR_PTYPE_PREP;
+	part[3].mbrp_size = PREP_BOOT_SIZE/512;
+	part[3].mbrp_start = bsec + FAT12_BOOT_SIZE/512 + BINFO_BOOT_SIZE/512;
+	part[3].mbrp_flag = 0;
+	
+	ptstart = part[1].mbrp_start;
+	ptsize = part[1].mbrp_size;
+	bootstart = part[0].mbrp_start;
+	bootsize = part[0].mbrp_size;
+	binfostart = part[2].mbrp_start;
+	binfosize= part[2].mbrp_size;
+	bprepstart = part[3].mbrp_start;
+	bprepsize = part[3].mbrp_size;
+	bootinfo_mbr = 4;
+
+	return 1;
 }
