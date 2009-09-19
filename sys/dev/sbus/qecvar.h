@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.13 2009/09/18 14:09:42 tsutsui Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.14 2009/09/19 04:48:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 struct qec_softc {
-	struct device sc_dev;		/* us as a device */
+	device_t sc_dev;		/* us as a device */
 	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	struct	openprom_intr *sc_intr;	/* interrupt info */
