@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2009/04/26 20:44:50 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2009/09/19 14:18:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2009/04/26 20:44:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/09/19 14:18:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,11 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2009/04/26 20:44:50 pooka Exp $");
 
 time_t time_uptime = 0;
 
+#define SI_MPSAFE 0x01
+#define SI_ONLIST 0x02
+#define SI_KILLME 0x04
 struct softint {
 	void (*si_func)(void *);
 	void *si_arg;
-	bool si_onlist;
-	bool si_mpsafe;
+	int si_flags;
 
 	LIST_ENTRY(softint) si_entries;
 };
@@ -174,10 +176,12 @@ sithread(void *arg)
 			si = LIST_FIRST(&si_pending);
 			func = si->si_func;
 			funarg = si->si_arg;
-			mpsafe = si->si_mpsafe;
+			mpsafe = si->si_flags & SI_MPSAFE;
 
-			si->si_onlist = false;
+			si->si_flags &= ~SI_ONLIST;
 			LIST_REMOVE(si, si_entries);
+			if (si->si_flags & SI_KILLME)
+				softint_disestablish(si);
 		} else {
 			cv_wait(&si_cv, &si_mtx);
 			continue;
@@ -246,8 +250,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	si = kmem_alloc(sizeof(*si), KM_SLEEP);
 	si->si_func = func;
 	si->si_arg = arg;
-	si->si_onlist = false;
-	si->si_mpsafe = flags & SOFTINT_MPSAFE;
+	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
 
 	return si;
 }
@@ -261,13 +264,26 @@ softint_schedule(void *arg)
 		si->si_func(si->si_arg);
 	} else {
 		mutex_enter(&si_mtx);
-		if (!si->si_onlist) {
+		if (!(si->si_flags & SI_ONLIST)) {
 			LIST_INSERT_HEAD(&si_pending, si, si_entries);
-			si->si_onlist = true;
+			si->si_flags |= SI_ONLIST;
 		}
 		cv_signal(&si_cv);
 		mutex_exit(&si_mtx);
 	}
+}
+
+/* flimsy disestablish: should wait for softints to finish */
+void
+softint_disestablish(void *cook)
+{
+	struct softint *si = cook;
+
+	if (si->si_flags & SI_ONLIST) {
+		si->si_flags |= SI_KILLME;
+		return;
+	}
+	kmem_free(si, sizeof(*si));
 }
 
 bool
