@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.76 2009/09/19 20:42:06 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.77 2009/09/19 21:41:43 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.76 2009/09/19 20:42:06 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.77 2009/09/19 21:41:43 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ __RCSID("$NetBSD: spec.c,v 1.76 2009/09/19 20:42:06 apb Exp $");
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,6 +101,7 @@ static	void	set(char *, NODE *);
 static	void	unset(char *, NODE *);
 static	void	addchild(NODE *, NODE *);
 static	int	nodecmp(const NODE *, const NODE *);
+static	int	appendfield(int, const char *, ...);
 
 #define REPLACEPTR(x,v)	do { if ((x)) free((x)); (x) = (v); } while (0)
 
@@ -280,6 +282,27 @@ free_nodes(NODE *root)
 }
 
 /*
+ * appendfield --
+ *	Like printf(), but output a space either before or after
+ *	the regular output, according to the pathlast flag.
+ */
+static int
+appendfield(int pathlast, const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+
+	va_start(ap, fmt);
+	if (!pathlast)
+		printf(" ");
+	result = vprintf(fmt, ap);
+	if (pathlast)
+		printf(" ");
+	va_end(ap);
+	return result;
+}
+
+/*
  * dump_nodes --
  *	dump the NODEs from `cur', based in the directory `dir'.
  *	if pathlast is none zero, print the path last, otherwise print
@@ -304,57 +327,57 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			mtree_err("Pathname too long.");
 
 		if (!pathlast)
-			printf("%s ", vispath(path));
+			printf("%s", vispath(path));
 
 #define MATCHFLAG(f)	((keys & (f)) && (cur->flags & (f)))
 		if (MATCHFLAG(F_TYPE))
-			printf("type=%s ", nodetype(cur->type));
+			appendfield(pathlast, "type=%s", nodetype(cur->type));
 		if (MATCHFLAG(F_UID | F_UNAME)) {
 			if (keys & F_UNAME &&
 			    (name = user_from_uid(cur->st_uid, 1)) != NULL)
-				printf("uname=%s ", name);
+				appendfield(pathlast, "uname=%s", name);
 			else
-				printf("uid=%u ", cur->st_uid);
+				appendfield(pathlast, "uid=%u", cur->st_uid);
 		}
 		if (MATCHFLAG(F_GID | F_GNAME)) {
 			if (keys & F_GNAME &&
 			    (name = group_from_gid(cur->st_gid, 1)) != NULL)
-				printf("gname=%s ", name);
+				appendfield(pathlast, "gname=%s", name);
 			else
-				printf("gid=%u ", cur->st_gid);
+				appendfield(pathlast, "gid=%u", cur->st_gid);
 		}
 		if (MATCHFLAG(F_MODE))
-			printf("mode=%#o ", cur->st_mode);
+			appendfield(pathlast, "mode=%#o", cur->st_mode);
 		if (MATCHFLAG(F_DEV) &&
 		    (cur->type == F_BLOCK || cur->type == F_CHAR))
-			printf("device=%#llx ", (long long)cur->st_rdev);
+			appendfield(pathlast, "device=%#llx", (long long)cur->st_rdev);
 		if (MATCHFLAG(F_NLINK))
-			printf("nlink=%d ", cur->st_nlink);
+			appendfield(pathlast, "nlink=%d", cur->st_nlink);
 		if (MATCHFLAG(F_SLINK))
-			printf("link=%s ", vispath(cur->slink));
+			appendfield(pathlast, "link=%s", vispath(cur->slink));
 		if (MATCHFLAG(F_SIZE))
-			printf("size=%lld ", (long long)cur->st_size);
+			appendfield(pathlast, "size=%lld", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			printf("time=%lld.%ld ",
+			appendfield(pathlast, "time=%lld.%ld ",
 			    (long long)cur->st_mtimespec.tv_sec,
 			    cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
-			printf("cksum=%lu ", cur->cksum);
+			appendfield(pathlast, "cksum=%lu", cur->cksum);
 		if (MATCHFLAG(F_MD5))
-			printf("md5=%s ", cur->md5digest);
+			appendfield(pathlast, "md5=%s", cur->md5digest);
 		if (MATCHFLAG(F_RMD160))
-			printf("rmd160=%s ", cur->rmd160digest);
+			appendfield(pathlast, "rmd160=%s", cur->rmd160digest);
 		if (MATCHFLAG(F_SHA1))
-			printf("sha1=%s ", cur->sha1digest);
+			appendfield(pathlast, "sha1=%s", cur->sha1digest);
 		if (MATCHFLAG(F_SHA256))
-			printf("sha256=%s ", cur->sha256digest);
+			appendfield(pathlast, "sha256=%s", cur->sha256digest);
 		if (MATCHFLAG(F_SHA384))
-			printf("sha384=%s ", cur->sha384digest);
+			appendfield(pathlast, "sha384=%s", cur->sha384digest);
 		if (MATCHFLAG(F_SHA512))
-			printf("sha512=%s ", cur->sha512digest);
+			appendfield(pathlast, "sha512=%s", cur->sha512digest);
 		if (MATCHFLAG(F_FLAGS)) {
 			str = flags_to_string(cur->st_flags, "none");
-			printf("flags=%s ", str);
+			appendfield(pathlast, "flags=%s", str);
 			free(str);
 		}
 		if (MATCHFLAG(F_IGN))
@@ -369,7 +392,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			q = p + strlen(p);
 			while(q > p && q[-1] == ',')
 				q--;
-			printf("tags=%.*s ", (int)(q - p), p);
+			appendfield(pathlast, "tags=%.*s", (int)(q - p), p);
 		}
 		puts(pathlast ? vispath(path) : "");
 
