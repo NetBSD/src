@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.49 2009/09/17 16:39:48 tsutsui Exp $ */
+/*	$NetBSD: p9100.c,v 1.50 2009/09/19 11:58:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.49 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.50 2009/09/19 11:58:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,7 +904,7 @@ p9100unblank(device_t dev)
 static void
 p9100_set_video(struct p9100_softc *sc, int enable)
 {
-	u_int32_t v = p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1);
+	uint32_t v = p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1);
 
 	if (enable)
 		v |= VIDEO_ENABLED;

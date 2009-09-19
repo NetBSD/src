@@ -1,4 +1,4 @@
-/*	$NetBSD: zxvar.h,v 1.5 2009/09/17 16:28:13 tsutsui Exp $	*/
+/*	$NetBSD: zxvar.h,v 1.6 2009/09/19 11:55:09 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -90,8 +90,8 @@ struct zx_softc {
 	bus_space_handle_t sc_bhzcu;
 
 	int		sc_flags;
-	u_int8_t	*sc_cmap;
-	u_int32_t	*sc_pixels;
+	uint8_t		*sc_cmap;
+	uint32_t	*sc_pixels;
 	bus_addr_t	sc_paddr;
 	int		sc_shiftx;
 	int		sc_shifty;
@@ -99,8 +99,8 @@ struct zx_softc {
 	struct fbcurpos	sc_curpos;
 	struct fbcurpos	sc_curhot;
 	struct fbcurpos sc_cursize;
-	u_int8_t	sc_curcmap[8];
-	u_int32_t	sc_curbits[2][32];
+	uint8_t		sc_curcmap[8];
+	uint32_t	sc_curbits[2][32];
 
 #if NWSDISPLAY > 0	
 	uint32_t sc_width;
