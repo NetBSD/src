@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.82 2009/09/18 12:40:15 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.83 2009/09/19 04:55:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.82 2009/09/18 12:40:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.83 2009/09/19 04:55:45 tsutsui Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1561,11 +1561,9 @@ hme_setladrf(struct hme_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_char *cp;
+	uint32_t v;
 	uint32_t crc;
 	uint32_t hash[4];
-	uint32_t v;
-	int len;
 
 	/* Clear hash table */
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
@@ -1609,23 +1607,8 @@ hme_setladrf(struct hme_softc *sc)
 			goto chipit;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			int octet = *cp++;
-			int i;
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
-			for (i = 0; i < 8; i++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				} else {
-					crc >>= 1;
-				}
-				octet >>= 1;
-			}
-		}
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 
