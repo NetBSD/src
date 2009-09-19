@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.27 2009/09/18 12:23:16 tsutsui Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.28 2009/09/19 03:49:22 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.27 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.28 2009/09/19 03:49:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,10 @@ bwtwomatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0);
+	if (strcmp(cf->cf_name, sa->sa_name) == 0)
+		return 100;	/* beat genfb(4) */
+
+	return 0;
 }
 
 
