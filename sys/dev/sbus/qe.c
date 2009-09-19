@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.54 2009/09/18 14:09:42 tsutsui Exp $	*/
+/*	$NetBSD: qe.c,v 1.55 2009/09/19 11:53:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.54 2009/09/18 14:09:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.55 2009/09/19 11:53:42 tsutsui Exp $");
 
 #define QEDEBUG
 
@@ -141,7 +141,7 @@ struct qe_softc {
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 
 	/* MAC address */
-	u_int8_t sc_enaddr[6];
+	uint8_t sc_enaddr[6];
 
 #ifdef QEDEBUG
 	int	sc_debug;
@@ -159,7 +159,7 @@ int	qeioctl(struct ifnet *, u_long, void *);
 void	qereset(struct qe_softc *);
 
 int	qeintr(void *);
-int	qe_eint(struct qe_softc *, u_int32_t);
+int	qe_eint(struct qe_softc *, uint32_t);
 int	qe_rint(struct qe_softc *);
 int	qe_tint(struct qe_softc *);
 void	qe_mcreset(struct qe_softc *);
@@ -565,7 +565,7 @@ qeintr(void *arg)
 {
 	struct qe_softc *sc = arg;
 	bus_space_tag_t t = sc->sc_bustag;
-	u_int32_t qecstat, qestat;
+	uint32_t qecstat, qestat;
 	int r = 0;
 
 #if defined(SUN4U) || defined(__GNUC__)
@@ -718,7 +718,7 @@ qe_rint(struct qe_softc *sc)
  * Error interrupt.
  */
 int
-qe_eint(struct qe_softc *sc, u_int32_t why)
+qe_eint(struct qe_softc *sc, uint32_t why)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	device_t self = &sc->sc_dev;
@@ -982,8 +982,8 @@ qeinit(struct qe_softc *sc)
 	bus_space_handle_t cr = sc->sc_cr;
 	bus_space_handle_t mr = sc->sc_mr;
 	struct qec_softc *qec = sc->sc_qec;
-	u_int32_t qecaddr;
-	u_int8_t *ea;
+	uint32_t qecaddr;
+	uint8_t *ea;
 	int s;
 
 #if defined(SUN4U) || defined(__GNUC__)
@@ -999,8 +999,8 @@ qeinit(struct qe_softc *sc)
 	qec_meminit(&sc->sc_rb, QE_PKT_BUF_SZ);
 
 	/* Channel registers: */
-	bus_space_write_4(t, cr, QE_CRI_RXDS, (u_int32_t)sc->sc_rb.rb_rxddma);
-	bus_space_write_4(t, cr, QE_CRI_TXDS, (u_int32_t)sc->sc_rb.rb_txddma);
+	bus_space_write_4(t, cr, QE_CRI_RXDS, (uint32_t)sc->sc_rb.rb_rxddma);
+	bus_space_write_4(t, cr, QE_CRI_TXDS, (uint32_t)sc->sc_rb.rb_txddma);
 
 	bus_space_write_4(t, cr, QE_CRI_RIMASK, 0);
 	bus_space_write_4(t, cr, QE_CRI_TIMASK, 0);
@@ -1083,9 +1083,9 @@ qe_mcreset(struct qe_softc *sc)
 	bus_space_handle_t mr = sc->sc_mr;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t crc;
-	u_int16_t hash[4];
-	u_int8_t octet, maccc, *ladrp = (u_int8_t *)&hash[0];
+	uint32_t crc;
+	uint16_t hash[4];
+	uint8_t octet, maccc, *ladrp = (uint8_t *)&hash[0];
 	int i, j;
 
 #if defined(SUN4U) || defined(__GNUC__)
@@ -1171,7 +1171,7 @@ qe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct qe_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mr = sc->sc_mr;
-	u_int8_t v;
+	uint8_t v;
 
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;
@@ -1211,7 +1211,7 @@ qe_ifmedia_upd(struct ifnet *ifp)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mr = sc->sc_mr;
 	int newmedia = ifm->ifm_media;
-	u_int8_t plscc, phycc;
+	uint8_t plscc, phycc;
 
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;

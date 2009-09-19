@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.63 2009/09/18 12:23:16 tsutsui Exp $ */
+/*	$NetBSD: stp4020.c,v 1.64 2009/09/19 11:58:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.63 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.64 2009/09/19 11:58:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,62 +241,62 @@ stp4020_wr_winctl(struct stp4020_socket *h, int win, int idx, int v)
 
 #ifndef SUN4U	/* XXX - move to SBUS machdep function? */
 
-static	u_int16_t stp4020_read_2(bus_space_tag_t,
-				 bus_space_handle_t,
-				 bus_size_t);
-static	u_int32_t stp4020_read_4(bus_space_tag_t,
-				 bus_space_handle_t,
-				 bus_size_t);
-static	u_int64_t stp4020_read_8(bus_space_tag_t,
-				 bus_space_handle_t,
-				 bus_size_t);
+static	uint16_t stp4020_read_2(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t);
+static	uint32_t stp4020_read_4(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t);
+static	uint64_t stp4020_read_8(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t);
 static	void	stp4020_write_2(bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t,
-				u_int16_t);
+				uint16_t);
 static	void	stp4020_write_4(bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t,
-				u_int32_t);
+				uint32_t);
 static	void	stp4020_write_8(bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t,
-				u_int64_t);
+				uint64_t);
 
-static u_int16_t
+static uint16_t
 stp4020_read_2(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
-	return (le16toh(*(volatile u_int16_t *)(handle + offset)));
+	return (le16toh(*(volatile uint16_t *)(handle + offset)));
 }
 
-static u_int32_t
+static uint32_t
 stp4020_read_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
-	return (le32toh(*(volatile u_int32_t *)(handle + offset)));
+	return (le32toh(*(volatile uint32_t *)(handle + offset)));
 }
 
-static u_int64_t
+static uint64_t
 stp4020_read_8(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset)
 {
-	return (le64toh(*(volatile u_int64_t *)(handle + offset)));
+	return (le64toh(*(volatile uint64_t *)(handle + offset)));
 }
 
 static void
-stp4020_write_2(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int16_t value)
+stp4020_write_2(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint16_t value)
 {
-	(*(volatile u_int16_t *)(handle + offset)) = htole16(value);
+	(*(volatile uint16_t *)(handle + offset)) = htole16(value);
 }
 
 static void
-stp4020_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int32_t value)
+stp4020_write_4(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint32_t value)
 {
-	(*(volatile u_int32_t *)(handle + offset)) = htole32(value);
+	(*(volatile uint32_t *)(handle + offset)) = htole32(value);
 }
 
 static void
-stp4020_write_8(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, u_int64_t value)
+stp4020_write_8(bus_space_tag_t space, bus_space_handle_t handle, bus_size_t offset, uint64_t value)
 {
-	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
+	(*(volatile uint64_t *)(handle + offset)) = htole64(value);
 }
 #endif	/* SUN4U */
 
@@ -856,9 +856,9 @@ stp4020_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr
 	pcmhp->memt = h->pcmciat;
 	bus_space_subregion(h->pcmciat, h->windows[win].winaddr, card_addr, size, &pcmhp->memh);
 #ifdef SUN4U
-	if ((u_int8_t)pcmhp->memh._asi == ASI_PHYS_NON_CACHED)
+	if ((uint8_t)pcmhp->memh._asi == ASI_PHYS_NON_CACHED)
 		pcmhp->memh._asi = ASI_PHYS_NON_CACHED_LITTLE;
-	else if ((u_int8_t)pcmhp->memh._asi == ASI_PRIMARY)
+	else if ((uint8_t)pcmhp->memh._asi == ASI_PRIMARY)
 		pcmhp->memh._asi = ASI_PRIMARY_LITTLE;
 #endif
 	pcmhp->size = size;
@@ -897,9 +897,9 @@ stp4020_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, b
 	pcihp->iot = h->pcmciat;
 	bus_space_subregion(h->pcmciat, h->windows[STP_WIN_IO].winaddr, offset, size, &pcihp->ioh);
 #ifdef SUN4U
-	if ((u_int8_t)pcihp->ioh._asi == ASI_PHYS_NON_CACHED)
+	if ((uint8_t)pcihp->ioh._asi == ASI_PHYS_NON_CACHED)
 		pcihp->ioh._asi = ASI_PHYS_NON_CACHED_LITTLE;
-	else if ((u_int8_t)pcihp->ioh._asi == ASI_PRIMARY)
+	else if ((uint8_t)pcihp->ioh._asi == ASI_PRIMARY)
 		pcihp->ioh._asi = ASI_PRIMARY_LITTLE;
 #endif
 	*windowp = 0;

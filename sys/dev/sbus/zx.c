@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.32 2009/09/17 16:39:48 tsutsui Exp $	*/
+/*	$NetBSD: zx.c,v 1.33 2009/09/19 11:55:09 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.32 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.33 2009/09/19 11:55:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ zx_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 	fb->fb_pixels = (void *)bus_space_vaddr(bt, bh);
-	sc->sc_pixels = (u_int32_t *)fb->fb_pixels;
+	sc->sc_pixels = (uint32_t *)fb->fb_pixels;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LC_SS0_USR,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
@@ -766,7 +766,7 @@ zx_cursor_unblank(struct zx_softc *sc)
 static void
 zx_cursor_color(struct zx_softc *sc)
 {
-	u_int8_t tmp;
+	uint8_t tmp;
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_type, 0x50);
 
@@ -991,8 +991,8 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct zx_softc *sc = scr->scr_cookie;
 	struct wsdisplay_font *font;
-	volatile u_int32_t *dp;
-	u_int8_t *fb;
+	volatile uint32_t *dp;
+	uint8_t *fb;
 	int fs, i, ul;
 	uint32_t fg, bg;
 	
@@ -1011,10 +1011,10 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	font = ri->ri_font;
 
-	dp = (volatile u_int32_t *)sc->sc_pixels +
+	dp = (volatile uint32_t *)sc->sc_pixels +
 	    ((row * font->fontheight + ri->ri_yorigin) << 11) +
 	    (col * font->fontwidth + ri->ri_xorigin);
-	fb = (u_int8_t *)font->data + (uc - font->firstchar) *
+	fb = (uint8_t *)font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale;
 	fs = font->stride;
 
@@ -1035,7 +1035,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		for (i = font->fontheight; i != 0; i--, dp += 2048) {
-			*dp = *((u_int16_t *)fb) << 16;
+			*dp = *((uint16_t *)fb) << 16;
 			fb += fs;
 		}
 	}
