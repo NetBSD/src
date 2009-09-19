@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.577 2009/09/19 09:00:58 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.578 2009/09/19 14:53:12 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -54,7 +54,8 @@ HAVE_GDB?=	6
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "vax"
 HAVE_BINUTILS?=	219
 .else
 HAVE_BINUTILS?=	216
