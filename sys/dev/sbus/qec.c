@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.48 2009/09/18 14:09:42 tsutsui Exp $ */
+/*	$NetBSD: qec.c,v 1.49 2009/09/19 04:48:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.48 2009/09/18 14:09:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.49 2009/09/19 04:48:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static void *qec_intr_establish(
 		void *,			/*arg*/
 		void (*)(void));	/*optional fast trap handler*/
 
-CFATTACH_DECL(qec, sizeof(struct qec_softc),
+CFATTACH_DECL_NEW(qec, sizeof(struct qec_softc),
     qecmatch, qecattach, NULL, NULL);
 
 int
@@ -106,6 +106,7 @@ qecattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bh;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 	node = sa->sa_node;
@@ -239,7 +240,7 @@ qec_intr_establish(bus_space_tag_t t, int pri, int level,
 		 */
 		if (sc->sc_intr == NULL) {
 			printf("%s: warning: no interrupts\n",
-				device_xname(&sc->sc_dev));
+				device_xname(sc->sc_dev));
 			return (NULL);
 		}
 		pri = sc->sc_intr->oi_pri;
