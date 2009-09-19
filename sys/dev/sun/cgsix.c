@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.45 2009/08/20 02:49:30 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.46 2009/09/19 07:07:43 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.45 2009/08/20 02:49:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.46 2009/09/19 07:07:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,10 +116,10 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.45 2009/08/20 02:49:30 macallan Exp $");
 #include <dev/sun/cgsixreg.h>
 #include <dev/sun/cgsixvar.h>
 
+#include "ioconf.h"
+
 static void	cg6_unblank(device_t);
 static void	cg6_blank(struct cgsix_softc *, int);
-
-extern struct cfdriver cgsix_cd;
 
 dev_type_open(cgsixopen);
 dev_type_close(cgsixclose);
