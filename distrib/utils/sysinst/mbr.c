@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.80 2009/05/14 16:23:38 sborrill Exp $ */
+/*	$NetBSD: mbr.c,v 1.81 2009/09/19 14:57:27 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -186,6 +186,23 @@ dump_mbr(mbr_info_t *mbr, const char *msg)
 	} while ((mbr = mbr->extended));
 }
 #endif
+
+/*
+ * To be used only on ports which cannot provide any bios geometry
+ */
+int
+set_bios_geom_with_mbr_guess(void)
+{
+	int cyl, head;
+	daddr_t sec;
+
+	read_mbr(diskdev, &mbr);
+	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
+		msg_display_add(MSG_biosguess, cyl, head, sec);
+	set_bios_geom(cyl, head, sec);
+	return edit_mbr(&mbr);
+}
 
 /*
  * get C/H/S geometry from user via menu interface and
