@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.3 2009/04/08 19:06:30 apb Exp $
+# $NetBSD: t_mtree.sh,v 1.4 2009/09/19 20:37:05 apb Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -143,6 +143,20 @@ convert_D_S_body()
 	h_check "$(atf_get_srcdir)/d_convert_D_S.out" output
 }
 
+atf_test_case merge
+merge_head()
+{
+	atf_set "descr" "Merge records of different type"
+}
+merge_body()
+{
+	mtree -C -M -K all <"$(atf_get_srcdir)/d_merge.in" >output
+	h_check "$(atf_get_srcdir)/d_merge_C_M.out" output
+	# same again, with sorting
+	mtree -C -M -S -K all <"$(atf_get_srcdir)/d_merge.in" >output
+	h_check "$(atf_get_srcdir)/d_merge_C_M_S.out" output
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case create
@@ -151,4 +165,5 @@ atf_init_test_cases()
 	atf_add_test_case convert_C_S
 	atf_add_test_case convert_D
 	atf_add_test_case convert_D_S
+	atf_add_test_case merge
 }
