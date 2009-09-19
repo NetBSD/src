@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.16 2008/04/28 20:23:35 martin Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.17 2009/09/19 04:52:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.16 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.17 2009/09/19 04:52:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,11 +103,11 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.16 2008/04/28 20:23:35 martin Exp $
 #include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
-static void	bwtwoattach_obio (struct device *, struct device *, void *);
-static int	bwtwomatch_obio (struct device *, struct cfdata *, void *);
+static int	bwtwomatch_obio(device_t, cfdata_t, void *);
+static void	bwtwoattach_obio(device_t, device_t, void *);
 
 
-CFATTACH_DECL(bwtwo_obio, sizeof(struct bwtwo_softc),
+CFATTACH_DECL_NEW(bwtwo_obio, sizeof(struct bwtwo_softc),
     bwtwomatch_obio, bwtwoattach_obio, NULL, NULL);
 
 static int	bwtwo_get_video_sun4(struct bwtwo_softc *);
@@ -116,7 +116,7 @@ static void	bwtwo_set_video_sun4(struct bwtwo_softc *, int);
 extern int fbnode;
 
 static int
-bwtwomatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+bwtwomatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -133,9 +133,9 @@ bwtwomatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
+bwtwoattach_obio(device_t parent, device_t self, void *aux)
 {
-	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
+	struct bwtwo_softc *sc = device_private(self);
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -144,13 +144,14 @@ bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 	int constype, isconsole;
 	const char *name;
 
+	sc->sc_dev = self;
 	oba = &uoba->uoba_oba4;
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	fb->fb_flags = device_cfdata(self)->cf_flags;
 	fb->fb_type.fb_depth = 1;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
@@ -173,7 +174,7 @@ bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
 			printf("%s: cannot map pfour register\n",
-				self->dv_xname);
+			    device_xname(self));
 			return;
 		}
 		fb->fb_pfour = (uint32_t *)bh;
@@ -210,7 +211,7 @@ bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
 			printf("%s: cannot map control registers\n",
-				self->dv_xname);
+			    device_xname(self));
 			return;
 		}
 		sc->sc_reg = (struct fbcontrol *)bh;
@@ -229,7 +230,7 @@ bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 				  ramsize,
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
+			printf("%s: cannot map pixels\n", device_xname(self));
 			return;
 		}
 		sc->sc_fb.fb_pixels = (char *)bh;

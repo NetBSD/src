@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.26 2009/05/12 14:46:39 cegger Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.27 2009/09/19 04:52:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.26 2009/05/12 14:46:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.27 2009/09/19 04:52:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 
 	/* Fill in the remaining fbdevice values */
 	fb->fb_driver = &bwtwofbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUN2BW;
 	fb->fb_type.fb_cmsize = 0;
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
@@ -248,7 +248,8 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 			ovnam = "unknown";
 			break;
 		}
-		printf("%s: %s overlay plane\n", device_xname(&sc->sc_dev), ovnam);
+		printf("%s: %s overlay plane\n",
+		    device_xname(sc->sc_dev), ovnam);
 	}
 
 	/*
@@ -314,7 +315,7 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 		aa.console = isconsole;
 	aa.accessops = &bwtwo_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 #endif
 
 }
