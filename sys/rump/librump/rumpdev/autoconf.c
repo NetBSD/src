@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2009/07/20 18:04:13 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2009/09/20 23:16:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,18 +26,44 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2009/07/20 18:04:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2009/09/20 23:16:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 
-/* random stubs since we don't run config on rump yet */
-struct cfdata *cfdata;
-const short *cfroots;
-struct cfdriver * const *cfdriver_list_initial;
-struct cfattachinit *cfattachinit;
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
+
+struct mainbus_softc {
+	int mb_nada;
+};
+
+CFDRIVER_DECL(mainbus, DV_DULL, NULL);
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
+	mainbus_match, mainbus_attach, NULL, NULL);
+
+struct cfdriver * const cfdriver_list_initial[] = {
+	&mainbus_cd,
+	NULL
+};
+
+static struct cfattach * const mainbus_cfattachinit[] = {
+	&mainbus_ca, NULL
+};
+const struct cfattachinit cfattachinit[] = {
+	{ "mainbus", mainbus_cfattachinit },
+	{ NULL, NULL },
+};
+
+struct cfdata cfdata[] = {
+	{ "mainbus", "mainbus", 0, FSTATE_NOTFOUND, NULL, 0, NULL},
+};
+
+const short cfroots[] = {
+	0, /* mainbus */
+	-1
+};
 
 /* actually used */
 #define MAXPDEVS 256
@@ -66,4 +92,18 @@ rump_pdev_finalize()
 {
 
 	rump_pdev_add(NULL, 0);
+}
+
+int
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+{
+
+	return 1;
+}
+
+void
+mainbus_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	aprint_normal("\n");
 }
