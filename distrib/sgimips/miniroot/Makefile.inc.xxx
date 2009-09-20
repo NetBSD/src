@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.xxx,v 1.4 2003/11/13 14:07:38 sekiya Exp $
+#	$NetBSD: Makefile.inc.xxx,v 1.5 2009/09/20 22:46:13 abs Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
@@ -10,7 +10,6 @@ LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.iris-ansi \
 		${DESTDIR}/.profile \
-		${DESTDIR}/etc/disktab \
 		${KERNOBJDIR}/GENERIC32_IP2x/netbsd.ecoff \
 		${KERNOBJDIR}/GENERIC32_IP2x/netbsd \
 		${KERNOBJDIR}/GENERIC32_IP3x/netbsd

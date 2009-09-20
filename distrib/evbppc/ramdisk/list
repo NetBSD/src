@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2009/09/20 19:49:08 abs Exp $
+#	$NetBSD: list,v 1.11 2009/09/20 22:46:11 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -74,9 +74,6 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.src		usr/share/misc/termcap
-
-# and the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall	etc/disktab.preinstall
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile
