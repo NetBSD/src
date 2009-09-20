@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.94 2009/09/07 20:56:04 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.95 2009/09/20 23:02:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.94 2009/09/07 20:56:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.95 2009/09/20 23:02:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -81,7 +81,7 @@ struct vm_map *mb_map;
 struct timeval boottime;
 struct emul emul_netbsd;
 int cold = 1;
-int boothowto;
+int boothowto = AB_SILENT;
 struct tty *constty;
 
 char hostname[MAXHOSTNAMELEN];
