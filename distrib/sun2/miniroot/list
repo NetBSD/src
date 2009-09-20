@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.12 2009/09/20 22:46:13 abs Exp $
+# $NetBSD: list,v 1.13 2009/09/20 23:19:56 abs Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -41,7 +41,7 @@ COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
 COPY	${CURDIR}/profile		.profile
-COPY	${CURDIR}/termcap		usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
 
 COPY	${CURDIR}/install.md		install.md
 COPY	${OBJDIR}/install.sub		install.sub

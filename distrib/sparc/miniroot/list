@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.31 2009/09/20 22:46:13 abs Exp $
+#	$NetBSD: list,v 1.32 2009/09/20 23:19:55 abs Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -32,7 +32,7 @@ MTREE	./usr/mdec/binstall	mode=0555
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-COPY	${ARCHDIR}/termcap.src		usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
 
 # copy the kernel
 COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
