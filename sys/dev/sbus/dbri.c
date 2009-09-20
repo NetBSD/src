@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.24 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: dbri.c,v 1.25 2009/09/20 08:24:04 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.24 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.25 2009/09/20 08:24:04 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -105,8 +105,8 @@ static void	dbri_softint(void *);
 /* supporting subroutines */
 static int	dbri_init(struct dbri_softc *);
 static int	dbri_reset(struct dbri_softc *);
-static volatile u_int32_t *dbri_command_lock(struct dbri_softc *);
-static void	dbri_command_send(struct dbri_softc *, volatile u_int32_t *);
+static volatile uint32_t *dbri_command_lock(struct dbri_softc *);
+static void	dbri_command_send(struct dbri_softc *, volatile uint32_t *);
 static void	dbri_process_interrupt_buffer(struct dbri_softc *);
 static void	dbri_process_interrupt(struct dbri_softc *, int32_t);
 
@@ -125,8 +125,8 @@ static void	chi_reset(struct dbri_softc *, enum ms, int);
 static void	pipe_setup(struct dbri_softc *, int, int);
 static void	pipe_reset(struct dbri_softc *, int);
 static void	pipe_receive_fixed(struct dbri_softc *, int,
-    volatile u_int32_t *);
-static void	pipe_transmit_fixed(struct dbri_softc *, int, u_int32_t);
+    volatile uint32_t *);
+static void	pipe_transmit_fixed(struct dbri_softc *, int, uint32_t);
 
 static void	pipe_ts_link(struct dbri_softc *, int, enum io, int, int, int);
 static int	pipe_active(struct dbri_softc *, int);
@@ -165,7 +165,7 @@ static void	dbri_bring_up(struct dbri_softc *);
 static void	dbri_powerhook(int, void *);
 
 /* stupid support routines */
-static u_int32_t	reverse_bytes(u_int32_t, int);
+static uint32_t	reverse_bytes(uint32_t, int);
 
 struct audio_device dbri_device = {
 	"CS4215",
@@ -465,7 +465,7 @@ dbri_intr(void *hdl)
 	/* clear interrupt */
 	x = bus_space_read_4(iot, ioh, DBRI_REG1);
 	if (x & (DBRI_MRR | DBRI_MLE | DBRI_LBG | DBRI_MBE)) {
-		u_int32_t tmp;
+		uint32_t tmp;
 
 		if (x & DBRI_MRR)
 			aprint_debug_dev(sc->sc_dev,
@@ -513,8 +513,8 @@ dbri_init(struct dbri_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t reg;
-	volatile u_int32_t *cmd;
+	uint32_t reg;
+	volatile uint32_t *cmd;
 	bus_addr_t dmaaddr;
 	int n;
 
@@ -523,7 +523,7 @@ dbri_init(struct dbri_softc *sc)
 	cmd = dbri_command_lock(sc);
 
 	/* XXX: Initialize interrupt ring buffer */
-	sc->sc_dma->intr[0] = (u_int32_t)sc->sc_dmabase + dbri_dma_off(intr, 0);
+	sc->sc_dma->intr[0] = (uint32_t)sc->sc_dmabase + dbri_dma_off(intr, 0);
 	sc->sc_irqp = 1;
 
 	/* Initialize pipes */
@@ -543,7 +543,7 @@ dbri_init(struct dbri_softc *sc)
 	bus_space_write_4(iot, ioh, DBRI_REG0, reg);
 
 	/* setup interrupt queue */
-	dmaaddr = (u_int32_t)sc->sc_dmabase + dbri_dma_off(intr, 0);
+	dmaaddr = (uint32_t)sc->sc_dmabase + dbri_dma_off(intr, 0);
 	*(cmd++) = DBRI_CMD(DBRI_COMMAND_IIQ, 0, 0);
 	*(cmd++) = dmaaddr;
 
@@ -570,7 +570,7 @@ dbri_reset(struct dbri_softc *sc)
 	return (0);
 }
 
-static volatile u_int32_t *
+static volatile uint32_t *
 dbri_command_lock(struct dbri_softc *sc)
 {
 
@@ -583,7 +583,7 @@ dbri_command_lock(struct dbri_softc *sc)
 }
 
 static void
-dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
+dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 {
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -714,7 +714,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 	}
 	case DBRI_INTR_UNDR:
 	{
-		volatile u_int32_t *cmd;
+		volatile uint32_t *cmd;
 		int td = sc->sc_pipe[channel].desc;
 
 		DPRINTF("%s: DBRI_INTR_UNDR\n", device_xname(sc->sc_dev));
@@ -753,7 +753,7 @@ mmcodec_init(struct dbri_softc *sc)
 {
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
-	u_int32_t reg2;
+	uint32_t reg2;
 	int bail;
 
 	reg2 = bus_space_read_4(iot, ioh, DBRI_REG2);
@@ -822,7 +822,7 @@ mmcodec_init_data(struct dbri_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t tmp;
+	uint32_t tmp;
 	int data_width;
 
 	tmp = bus_space_read_4(iot, ioh, DBRI_REG0);
@@ -955,8 +955,8 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t val;
-	u_int32_t tmp;
+	uint32_t val;
+	uint32_t tmp;
 	int bail = 0;
 #if DBRI_SPIN
 	int i;
@@ -1055,7 +1055,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 static void
 chi_reset(struct dbri_softc *sc, enum ms ms, int bpf)
 {
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 	int val;
 	int clockrate, divisor;
 
@@ -1146,7 +1146,7 @@ pipe_reset(struct dbri_softc *sc, int pipe)
 	struct dbri_desc *dd;
 	int sdp;
 	int desc;
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX) {
 		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n", 
@@ -1184,7 +1184,7 @@ pipe_reset(struct dbri_softc *sc, int pipe)
 }
 
 static void
-pipe_receive_fixed(struct dbri_softc *sc, int pipe, volatile u_int32_t *prec)
+pipe_receive_fixed(struct dbri_softc *sc, int pipe, volatile uint32_t *prec)
 {
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
@@ -1211,9 +1211,9 @@ pipe_receive_fixed(struct dbri_softc *sc, int pipe, volatile u_int32_t *prec)
 }
 
 static void
-pipe_transmit_fixed(struct dbri_softc *sc, int pipe, u_int32_t data)
+pipe_transmit_fixed(struct dbri_softc *sc, int pipe, uint32_t data)
 {
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
 		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n",
@@ -1255,7 +1255,7 @@ static void
 setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 	int x, i;
 	int td;
 	int td_first, td_last;
@@ -1351,7 +1351,7 @@ static void
 setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 	int x, i;
 	int td_first, td_last;
 	bus_addr_t dmabuf, dmabase;
@@ -1442,7 +1442,7 @@ static void
 pipe_ts_link(struct dbri_softc *sc, int pipe, enum io dir, int basepipe,
 		int len, int cycle)
 {
-	volatile u_int32_t *cmd;
+	volatile uint32_t *cmd;
 	int prevpipe, nextpipe;
 	int val;
 
@@ -2032,8 +2032,8 @@ dbri_trigger_input(void *hdl, void *start, void *end, int blksize,
 }
 
 
-static u_int32_t
-reverse_bytes(u_int32_t b, int len)
+static uint32_t
+reverse_bytes(uint32_t b, int len)
 {
 	switch (len) {
 	case 32:
@@ -2188,7 +2188,7 @@ dbri_powerhook(int why, void *cookie)
 			aprint_verbose("resume: %d\n", sc->sc_refcount);
 			sc->sc_pmgrstate = PWR_RESUME;
 			if (sc->sc_playing) {
-				volatile u_int32_t *cmd;
+				volatile uint32_t *cmd;
 				int s;
 
 				dbri_bring_up(sc);
