@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.24 2008/04/30 13:10:48 martin Exp $
+#	$NetBSD: install.sh,v 1.25 2009/09/20 22:44:06 abs Exp $
 #
 # Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -108,9 +108,9 @@ get_timezone
 # just re-mount the root with read-write enabled.
 md_makerootwritable
 
-# Install the shadowed disktab file; lets us write to it for temporary
+# Create a disktab file; lets us write to it for temporary
 # purposes without mounting the miniroot read-write.
-cp /etc/disktab.shadow /tmp/disktab.shadow
+echo "# disktab" > /tmp/disktab.shadow
 
 test "$md_view_labels_possible" && md_view_labels
 
