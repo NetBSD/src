@@ -1,4 +1,4 @@
-#	$NetBSD: list.images,v 1.5 2009/02/02 18:38:37 abs Exp $
+#	$NetBSD: list.images,v 1.6 2009/09/20 23:19:51 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
 LIBS	libhack.o -lprop -lrmt -ledit -lz -lbz2 -lutil -lcurses -ltermcap -lcrypt -lkvm -ll -lm
@@ -11,7 +11,7 @@ COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 
 # the termcap file
-COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
 
 COPY	${CURDIR}/../common/dot.profile 	.profile
 COPY	${CURDIR}/../common/mount_gemdos	sbin/mount_gemdos	555

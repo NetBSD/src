@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.6 2009/09/20 19:49:08 abs Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.7 2009/09/20 23:19:53 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,7 +25,7 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services \
-		${NETBSDSRCDIR}/distrib/common/termcap.mini
+		${DISTRIBDIR}/common/termcap
 PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
 # This propogates through to the link of ramdiskbin

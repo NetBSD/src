@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2009/09/20 22:46:13 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2009/09/20 23:19:55 abs Exp $
 
 DBG=		-Os
 
@@ -8,7 +8,7 @@ IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
-IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.vt100 \
+IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${DISTRIBDIR}/common/termcap \
 		${DESTDIR}/.profile ${DESTDIR}/boot.pmax \
 		${KERNOBJDIR}/GENERIC/netbsd \
 		${KERNOBJDIR}/GENERIC/netbsd.ecoff \

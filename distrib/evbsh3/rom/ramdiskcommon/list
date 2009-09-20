@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2009/09/20 19:49:08 abs Exp $
+#	$NetBSD: list,v 1.9 2009/09/20 23:19:52 abs Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
@@ -12,7 +12,6 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 COPY	${CURDIR}/../ramdiskcommon/shells		etc/shells
 COPY	${CURDIR}/../../../../etc/etc.evbsh3/ttys	etc/ttys
 #COPY	${CURDIR}/dot.profile				etc/.profile
-#COPY	${CURDIR}/termcap.mini				usr/share/misc/termcap
 #COPY	${CURDIR}/kvm.db				var/db/kvm.db
 
 #SPECIAL pwd_mkdb -p -d ./ etc/master.passwd

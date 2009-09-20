@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.instfs,v 1.9 2009/09/20 22:46:13 abs Exp $
+#	$NetBSD: Makefile.instfs,v 1.10 2009/09/20 23:19:56 abs Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
@@ -15,7 +15,7 @@ MAKEDEVTARGETS=	ramdisk bpf
 PARSELISTENV=	INSTFSDIR=${INSTFSDIR:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		${INSTFSDIR}/dot.profile \
-		${INSTFSDIR}/termcap.mini \
+		${DISTRIBDIR}/common/termcap \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
