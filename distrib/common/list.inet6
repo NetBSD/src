@@ -1,4 +1,4 @@
-#	$NetBSD: list.inet6,v 1.1 2006/06/02 22:11:42 hubertf Exp $
+#	$NetBSD: list.inet6,v 1.1 2009/09/20 22:50:50 abs Exp $
 
 PROG	sbin/ping6
 PROG	sbin/rtsol
