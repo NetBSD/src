@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.1 2009/09/20 01:10:12 christos Exp $	*/
+/*	$NetBSD: toshide.c,v 1.2 2009/09/20 01:12:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.1 2009/09/20 01:10:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.2 2009/09/20 01:12:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ piccolo_setup_channel(struct ata_channel *chp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	u_int32_t idedma_ctl;
 	int drive, s;
-	pcireg_t pxdx, pxdx_prime;
+	pcireg_t pxdx;
 #ifdef TOSHIDE_DEBUG
 	pcireg_t pxdx_prime;
 #endif
