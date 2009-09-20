@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2009/09/18 10:49:09 abs Exp $
+#	$NetBSD: list,v 1.11 2009/09/20 19:29:26 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -82,8 +82,3 @@ COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
-COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
-
-# someday put in the release notes too
-#
-# COPY	${DISTRIBDIR}/notes/mipsco/INSTALL.txt	INSTALL.txt

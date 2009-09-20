@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: Makefile,v 1.4 2009/09/20 19:29:25 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,7 +20,7 @@ IMAGEENDIAN=	be
 .endif
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		disktab.preinstall dot.hdprofile dot.profile \
+		disktab.preinstall dot.profile \
 		${DESTDIR}/usr/share/misc/termcap \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \

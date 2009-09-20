@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.31 2009/09/18 10:49:08 abs Exp $
+#	$NetBSD: list,v 1.32 2009/09/20 19:29:24 abs Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -87,7 +87,6 @@ COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile			.profile
-COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 
 # old-style installation tools
 COPY	${CURDIR}/install.sh			install		555

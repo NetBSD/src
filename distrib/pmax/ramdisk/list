@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2009/04/22 11:18:29 tsutsui Exp $
+#	$NetBSD: list,v 1.22 2009/09/20 19:29:26 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -79,9 +79,3 @@ COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
-COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
-
-
-# someday put in the release notes too
-#
-# COPY	${DISTRIBDIR}/notes/pmax/INSTALL.txt	INSTALL.txt

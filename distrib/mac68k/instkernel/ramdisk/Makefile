@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2009/04/07 11:49:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2009/09/20 19:29:26 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	raminst
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		disktab.preinstall dot.hdprofile dot.profile \
+		disktab.preinstall dot.profile \
 		${DISTRIBDIR}/mac68k/miniroot/termcap \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
