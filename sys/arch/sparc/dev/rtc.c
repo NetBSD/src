@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.14 2006/09/04 23:45:30 gdamore Exp $ */
+/*	$NetBSD: rtc.c,v 1.15 2009/09/20 16:18:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.14 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2009/09/20 16:18:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,8 +61,8 @@ struct rtc_ebus_softc {
 	bus_space_handle_t	sc_bh;	/* handle for registers */
 };
 
-static int	rtcmatch_ebus(struct device *, struct cfdata *, void *);
-static void	rtcattach_ebus(struct device *, struct device *, void *);
+static int	rtcmatch_ebus(device_t, cfdata_t, void *);
+static void	rtcattach_ebus(device_t, device_t, void *);
 
 CFATTACH_DECL(rtc_ebus, sizeof(struct rtc_ebus_softc),
     rtcmatch_ebus, rtcattach_ebus, NULL, NULL);
@@ -103,7 +103,7 @@ mc146818_write(void *cookie, u_int reg, u_int datum)
 
 
 static int
-rtcmatch_ebus(struct device *parent, struct cfdata *cf, void *aux)
+rtcmatch_ebus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -111,11 +111,10 @@ rtcmatch_ebus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-rtcattach_ebus(struct device *parent, struct device *self, void *aux)
+rtcattach_ebus(device_t parent, device_t self, void *aux)
 {
-	struct rtc_ebus_softc *sc = (void *)self;
+	struct rtc_ebus_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
-
 	todr_chip_handle_t handle;
 
 	sc->sc_bt = ea->ea_bustag;
