@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.995 2009/08/01 21:40:10 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.996 2009/09/20 01:12:49 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.995 2009/08/01 21:34:21 matt Exp
+ *	NetBSD: pcidevs,v 1.996 2009/09/20 01:09:24 christos Exp
  */
 
 /*
@@ -3968,11 +3968,16 @@
 
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA2_PORTEGE	0x0001		/* Portege Notebook */
+#define	PCI_PRODUCT_TOSHIBA2_PICCOLO	0x0101		/* Piccolo IDE Controller */
+#define	PCI_PRODUCT_TOSHIBA2_PICCOLO2	0x0102		/* Piccolo 2 IDE Controller */
+#define	PCI_PRODUCT_TOSHIBA2_PICCOLO3	0x0103		/* Piccolo 3 IDE Controller */
+#define	PCI_PRODUCT_TOSHIBA2_PICCOLO5	0x0105		/* Piccolo 5 IDE Controller */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* PCI-ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95B	0x060a		/* ToPIC95B PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TOSHIBA2_SANREMO	0x0618		/* SanRemo? Triangle Host Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_SMCARD	0x0804		/* Smart Media Controller */
 #define	PCI_PRODUCT_TOSHIBA2_SDCARD	0x0805		/* Secure Digital Card Controller Type-A */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC100	0x0617		/* ToPIC100 PCI-CardBus Bridge */
