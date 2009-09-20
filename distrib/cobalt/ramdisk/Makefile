@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: Makefile,v 1.4 2009/09/20 19:49:08 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,8 +19,8 @@ MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services \
+		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services \
 		${NETBSDSRCDIR}/distrib/common/termcap.mini \
 		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
 SMALLPROG_INET6=1
