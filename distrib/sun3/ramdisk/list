@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.4 2008/05/06 15:32:07 dyoung Exp $
+#	$NetBSD: list,v 1.5 2009/09/20 19:41:35 abs Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -89,13 +89,13 @@ SPECIAL	ssh		srcdir	distrib/utils/ssh
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 # various files that we need in /etc for the install
-COPY	${CURDIR}/disktab	etc/disktab
-COPY	${CURDIR}/fstab		etc/fstab
-COPY	${CURDIR}/passwd	etc/passwd
-COPY	${CURDIR}/protocols	etc/protocols
-COPY	${CURDIR}/services	etc/services
-COPY	${CURDIR}/sshrc		.sshrc
-COPY	${CURDIR}/welcome	.welcome
+COPY	${CURDIR}/disktab		etc/disktab
+COPY	${CURDIR}/fstab			etc/fstab
+COPY	${CURDIR}/passwd		etc/passwd
+COPY	${CURDIR}/protocols		etc/protocols
+COPY	${DISTRIBDIR}/common/services	etc/services
+COPY	${CURDIR}/sshrc			.sshrc
+COPY	${CURDIR}/welcome		.welcome
 
 COPY	${NETBSDSRCDIR}/etc/netconfig	etc/netconfig
 

@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.19 2009/09/18 10:49:09 abs Exp $
+# $NetBSD: list,v 1.20 2009/09/20 19:41:35 abs Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -19,14 +19,14 @@ COPY	${DESTDIR}/usr/mdec/ufsboot	usr/mdec/ufsboot
 LINK		   usr/mdec/ufsboot	ufsboot
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group				etc/group
-COPY	${DESTDIR}/etc/master.passwd			etc/master.passwd
-COPY	${DESTDIR}/etc/netconfig			etc/netconfig
-COPY	${DESTDIR}/etc/passwd				etc/passwd
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
-COPY	${DESTDIR}/etc/pwd.db				etc/pwd.db
-COPY	${DESTDIR}/etc/spwd.db				etc/spwd.db
-COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
+COPY	${DESTDIR}/etc/netconfig	etc/netconfig
+COPY	${DESTDIR}/etc/passwd		etc/passwd
+COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DISTRIBDIR}/common/services	etc/services
 
 # some /etc files get special handling (for MFS /tmp yuck)
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
