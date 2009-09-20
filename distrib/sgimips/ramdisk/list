@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2009/09/20 22:46:13 abs Exp $
+#	$NetBSD: list,v 1.15 2009/09/20 23:19:55 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -67,11 +67,11 @@ COPY	${DESTDIR}/usr/mdec/ip3xboot		usr/mdec/ip3xboot
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${CURDIR}/../miniroot/termcap.iris-ansi	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile

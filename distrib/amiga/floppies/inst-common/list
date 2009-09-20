@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2009/09/20 19:49:07 abs Exp $
+#	$NetBSD: list,v 1.17 2009/09/20 23:19:51 abs Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -76,4 +76,4 @@ COPY	${DESTDIR}/etc/spwd.db				etc
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
-COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap

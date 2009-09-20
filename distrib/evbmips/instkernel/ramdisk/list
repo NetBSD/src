@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2009/09/20 22:46:11 abs Exp $
+#	$NetBSD: list,v 1.10 2009/09/20 23:19:52 abs Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -62,11 +62,11 @@ ARGVLN	sh -sh
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${DESTDIR}/usr/share/misc/termcap	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile			.profile

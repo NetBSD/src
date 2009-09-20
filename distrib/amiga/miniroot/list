@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2009/09/20 22:46:11 abs Exp $
+#	$NetBSD: list,v 1.21 2009/09/20 23:19:51 abs Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -25,7 +25,7 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the termcap file
-COPY	${ARCHDIR}/termcap.vt		usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
 
 # and the installation scripts
 COPY	${ARCHDIR}/install.md		install.md

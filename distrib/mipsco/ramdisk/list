@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2009/09/20 22:46:12 abs Exp $
+#	$NetBSD: list,v 1.14 2009/09/20 23:19:54 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -69,11 +69,11 @@ COPY	${DESTDIR}/usr/mdec/bootxx_ffs	usr/mdec/bootxx_ffs
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${CURDIR}/termcap.src	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils	.commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils	.instutils
 

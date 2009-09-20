@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/09/20 22:46:13 abs Exp $
+#	$NetBSD: Makefile,v 1.16 2009/09/20 23:19:55 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
-		${.CURDIR}/../miniroot/termcap.iris-ansi \
+		${DISTRIBDIR}/common/termcap \
 		${DESTDIR}/usr/mdec/aoutboot ${DESTDIR}/usr/mdec/ip2xboot \
 		${DESTDIR}/usr/mdec/ip3xboot \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
