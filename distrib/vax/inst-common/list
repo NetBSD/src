@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2009/09/20 19:49:10 abs Exp $
+#	$NetBSD: list,v 1.12 2009/09/20 23:19:56 abs Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -53,17 +53,17 @@ COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV all
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group				etc
-COPY	${DESTDIR}/etc/master.passwd			etc
-COPY	${DESTDIR}/etc/netconfig			etc
-COPY	${DESTDIR}/etc/passwd				etc
-COPY	${DISTRIBDIR}/common/protocols	etc
-COPY	${DESTDIR}/etc/pwd.db				etc
+COPY	${DESTDIR}/etc/group			etc
+COPY	${DESTDIR}/etc/master.passwd		etc
+COPY	${DESTDIR}/etc/netconfig		etc
+COPY	${DESTDIR}/etc/passwd			etc
+COPY	${DISTRIBDIR}/common/protocols		etc
+COPY	${DESTDIR}/etc/pwd.db			etc
 COPY	${DISTRIBDIR}/common/services		etc
-COPY	${DESTDIR}/etc/spwd.db				etc
+COPY	${DESTDIR}/etc/spwd.db			etc
 
 # and the common installation tools
-COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
 
 SPECIAL	strip /sys/arch/vax/compile/MINIROOT/netbsd
 COPY	/sys/arch/vax/compile/MINIROOT/netbsd	.

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2009/09/20 22:46:12 abs Exp $
+#	$NetBSD: list,v 1.4 2009/09/20 23:19:53 abs Exp $
 
 # extras in bin
 #PROG	bin/csh
@@ -27,7 +27,7 @@ PROG	usr/bin/rsh
 SYMLINK	/tmp	var/tmp
 
 # termcap file
-COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db

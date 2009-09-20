@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.34 2009/09/20 22:46:10 abs Exp $
+#	$NetBSD: list,v 1.35 2009/09/20 23:19:51 abs Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -78,7 +78,7 @@ MTREE	./etc/pwd.db	type=file uname=root gname=wheel mode=0644
 MTREE	./etc/spwd.db	type=file uname=root gname=wheel mode=0600
 
 # and the common installation tools
-COPY	${DESTDIR}/usr/share/misc/termcap	usr/share/misc/termcap
+COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils .commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils   .instutils
 
