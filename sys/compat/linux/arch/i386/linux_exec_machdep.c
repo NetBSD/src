@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.12 2009/03/29 01:02:50 mrg Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.13 2009/09/20 10:29:30 taca Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12 2009/03/29 01:02:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.13 2009/09/20 10:29:30 taca Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -137,7 +137,7 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 static __inline void
 load_gs(u_int sel)
 {
-        __asm __volatile("movl %0,%%gs" : : "rm" (sel)); 
+        __asm __volatile("movw %0,%%gs" : : "rm" ((unsigned short)sel)); 
 }
 
 
