@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2009/04/25 18:39:47 tsutsui Exp $
+#	$NetBSD: list,v 1.9 2009/09/20 19:29:25 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -72,7 +72,6 @@ COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
-COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 
 # we need the boot 
 COPY    ${DESTDIR}/usr/mdec/boot		usr/mdec/boot
