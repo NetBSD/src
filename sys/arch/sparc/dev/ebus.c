@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.30 2008/05/29 14:51:26 mrg Exp $ */
+/*	$NetBSD: ebus.c,v 1.31 2009/09/20 16:18:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.30 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.31 2009/09/20 16:18:21 tsutsui Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -83,7 +83,7 @@ static void ebus_blink(void *);
 
 struct ebus_softc {
 	struct device			sc_dev;
-	struct device			*sc_parent;	/* PCI bus */
+	device_t			sc_parent;	/* PCI bus */
 
 	int				sc_node;	/* PROM node */
 
@@ -97,8 +97,8 @@ struct ebus_softc {
 	int				sc_nreg;
 };
 
-static int	ebus_match(struct device *, struct cfdata *, void *);
-static void	ebus_attach(struct device *, struct device *, void *);
+static int	ebus_match(device_t, cfdata_t, void *);
+static void	ebus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
     ebus_match, ebus_attach, NULL, NULL);
@@ -181,7 +181,7 @@ static int ebus_init_wiring_table(struct ebus_softc *);
 
 
 static int
-ebus_match(struct device *parent, struct cfdata *match, void *aux)
+ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char name[10];
@@ -212,7 +212,7 @@ ebus_init_wiring_table(struct ebus_softc *sc)
 
 	if (wiring_map != NULL) {
 		printf("%s: global ebus wiring map already initalized\n",
-		       sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return (0);
 	}
 
@@ -238,9 +238,9 @@ ebus_init_wiring_table(struct ebus_softc *sc)
  * after the sbus code which does similar things.
  */
 static void
-ebus_attach(struct device *parent, struct device *self, void *aux)
+ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ebus_softc *sc = (struct ebus_softc *)self;
+	struct ebus_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ebus_attach_args ea;
 	bus_space_tag_t sbt;
@@ -260,7 +260,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 
 	node = PCITAG_NODE(pa->pa_tag);
 	if (node == -1)
-		panic("%s: unable to find ebus node", self->dv_xname);
+		panic("%s: unable to find ebus node", device_xname(self));
 
 	if (ebus_init_wiring_table(sc) == 0)
 		return;
@@ -298,7 +298,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 			     &sc->sc_nreg, &sc->sc_reg);
 	if (error)
 		panic("%s: unable to read ebus registers (error %d)",
-		      self->dv_xname, error);
+		    device_xname(self), error);
 
 	/*
 	 * now attach all our children
