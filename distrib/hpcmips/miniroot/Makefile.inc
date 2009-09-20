@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2009/04/07 11:49:17 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2009/09/20 22:46:12 abs Exp $
 
 DBG=		-Os
 
@@ -9,7 +9,7 @@ MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.vt100 \
-		${DESTDIR}/.profile ${DESTDIR}/etc/disktab
+		${DESTDIR}/.profile
 SMALLPROG_INET6=1
 
 .include "${DISTRIBDIR}/common/Makefile.dhcpcd"

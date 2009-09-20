@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2008/10/30 12:39:16 tsutsui Exp $
+#	$NetBSD: list,v 1.3 2009/09/20 22:46:12 abs Exp $
 
 # extras in bin
 #PROG	bin/csh
@@ -32,9 +32,6 @@ COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 LINK	etc/spwd.db			etc/pwd.db
-
-# sysinst needs disktab template
-COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile
