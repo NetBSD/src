@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2009/09/20 19:49:09 abs Exp $
+#	$NetBSD: Makefile,v 1.35 2009/09/20 22:50:50 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,7 +25,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 SMALLPROG_INET6=1
 
 .if ${USE_INET6} != "no"
-LISTS+=		${.CURDIR}/list.inet6
+LISTS+=		${DISTRIBDIR}/common/list.inet6
 .endif
 
 # Use stubs to eliminate some large stuff from libc
