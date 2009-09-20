@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.5 2009/09/16 10:40:02 abs Exp $
+# $NetBSD: install.sh,v 1.6 2009/09/20 22:44:06 abs Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -303,7 +303,7 @@ echo	""
 fragsize=1024
 blocksize=8192
 
-cat /etc/disktab.preinstall > $DT
+echo "# $DT" > $DT
 echo	"" >> $DT
 echo	"$labelname|NetBSD installation generated:\\" >> $DT
 echo	"	:dt=${type}:ty=winchester:\\" >> $DT
