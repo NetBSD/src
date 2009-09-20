@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2009/04/07 11:49:17 joerg Exp $
+#	$NetBSD: list,v 1.12 2009/09/20 22:46:12 abs Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -28,9 +28,6 @@ SYMLINK	/tmp	var/tmp
 
 # termcap file
 COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
-
-# sysinst needs disktab template
-COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile

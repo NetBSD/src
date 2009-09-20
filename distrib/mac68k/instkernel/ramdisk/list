@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2009/09/20 19:49:09 abs Exp $
+#	$NetBSD: list,v 1.25 2009/09/20 22:46:12 abs Exp $
 
 SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
 
@@ -76,9 +76,6 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
 COPY	${DISTRIBDIR}/mac68k/miniroot/termcap	usr/share/misc/termcap
-
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile			.profile

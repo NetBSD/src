@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2008/10/30 12:39:16 tsutsui Exp $
+#	$NetBSD: list,v 1.15 2009/09/20 22:46:11 abs Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -38,8 +38,6 @@ COPY	${NETBSDSRCDIR}/share/termcap/termcap.src usr/share/misc/termcap
 COPY	${KERNOBJDIR}/INSTALL/netbsd	netbsd
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
-SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.33 2009/09/20 19:49:07 abs Exp $
+#	$NetBSD: list,v 1.34 2009/09/20 22:46:10 abs Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -81,9 +81,6 @@ MTREE	./etc/spwd.db	type=file uname=root gname=wheel mode=0600
 COPY	${DESTDIR}/usr/share/misc/termcap	usr/share/misc/termcap
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils .commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils   .instutils
-
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile			.profile

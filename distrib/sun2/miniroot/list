@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.11 2009/09/20 19:41:35 abs Exp $
+# $NetBSD: list,v 1.12 2009/09/20 22:46:13 abs Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -30,8 +30,6 @@ COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${DISTRIBDIR}/common/services	etc/services
 
 # some /etc files get special handling (for MFS /tmp yuck)
-COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
-SYMLINK	/tmp/disktab.shadow		etc/disktab
 COPY	${CURDIR}/fstab			tmp/fstab.shadow
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf

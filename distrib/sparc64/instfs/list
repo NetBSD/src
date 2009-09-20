@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2009/09/20 19:49:10 abs Exp $
+#	$NetBSD: list,v 1.14 2009/09/20 22:46:13 abs Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -92,9 +92,6 @@ COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
 
 # and the common installation tools
 COPY	${INSTFSDIR}/termcap.mini		usr/share/misc/termcap
-
-# the disktab explanation file
-COPY	${INSTFSDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${INSTFSDIR}/dot.profile		.profile

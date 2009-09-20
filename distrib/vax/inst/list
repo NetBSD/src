@@ -1,7 +1,4 @@
-#	$NetBSD: list,v 1.3 1999/05/23 07:31:21 tron Exp $
-
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall	etc
+#	$NetBSD: list,v 1.4 2009/09/20 22:46:14 abs Exp $
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile		.profile

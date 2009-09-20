@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2009/06/01 13:06:03 he Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2009/09/20 22:46:13 abs Exp $
 
 IMAGESIZE=	8192k
 MAKEFS_FLAGS=   -o density=4k
@@ -7,7 +7,6 @@ MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
 		${ARCHDIR}/termcap.src \
-		${DESTDIR}/etc/disktab \
 		${DESTDIR}/usr/mdec/boot \
 		${KERNOBJDIR}/GENERIC/netbsd
 

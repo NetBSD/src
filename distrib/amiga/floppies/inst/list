@@ -1,7 +1,4 @@
-#	$NetBSD: list,v 1.5 1998/01/06 04:45:07 perry Exp $
-
-# the disktab explanation file
-COPY	disktab.preinstall		etc
+#	$NetBSD: list,v 1.6 2009/09/20 22:46:11 abs Exp $
 
 # copy the kernel
 #COPY	${CURDIR}/../../../../sys/arch/amiga/compile/GENERIC/netbsd	netbsd

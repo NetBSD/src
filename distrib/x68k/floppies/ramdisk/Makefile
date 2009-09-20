@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2009/09/20 19:49:10 abs Exp $
+#	$NetBSD: Makefile,v 1.35 2009/09/20 22:46:14 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
-		disktab.preinstall dot.profile \
+		dot.profile \
 		${DISTRIBDIR}/common/services termcap.vt \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/mboot \
 		${DESTDIR}/usr/mdec/sdboot_ufs \
