@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.3 2009/09/08 20:15:51 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.4 2009/09/20 23:16:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.3 2009/09/08 20:15:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.4 2009/09/20 23:16:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,9 @@ rump_dev_init(void)
 	rump_dev_rnd_init();
 
 	rump_pdev_finalize();
+
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("no mainbus");
 
 	config_finalize();
 }
