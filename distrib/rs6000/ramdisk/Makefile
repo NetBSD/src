@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/30 12:47:39 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/20 19:49:09 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,8 +21,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/mkbootimage \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig \
-		${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services \
+		${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services \
 		${NETBSDSRCDIR}/distrib/common/termcap.mini
 SMALLPROG_INET6=1
 

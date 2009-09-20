@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2009/04/30 12:47:39 tsutsui Exp $
+#	$NetBSD: list,v 1.2 2009/09/20 19:49:09 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -71,8 +71,8 @@ COPY	${DESTDIR}/usr/mdec/mkbootimage		usr/mdec/mkbootimage
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
-COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
 COPY	${NETBSDSRCDIR}/distrib/common/termcap.mini	usr/share/misc/termcap
