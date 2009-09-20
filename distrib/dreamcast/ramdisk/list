@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2009/04/14 12:18:56 tsutsui Exp $
+#	$NetBSD: list,v 1.10 2009/09/20 19:49:08 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -71,8 +71,8 @@ LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lprop
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
-COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/services		etc/services
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 
 # and the common installation tools

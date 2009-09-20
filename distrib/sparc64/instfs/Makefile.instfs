@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.instfs,v 1.7 2009/01/25 22:08:39 abs Exp $
+#	$NetBSD: Makefile.instfs,v 1.8 2009/09/20 19:49:10 abs Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
@@ -17,5 +17,5 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${INSTFSDIR}/disktab.preinstall ${INSTFSDIR}/dot.profile \
 		${INSTFSDIR}/termcap.mini \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services

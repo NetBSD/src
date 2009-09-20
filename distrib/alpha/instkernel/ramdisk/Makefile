@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/09/20 19:29:24 abs Exp $
+#	$NetBSD: Makefile,v 1.26 2009/09/20 19:49:07 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -22,8 +22,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DISTRIBDIR}/utils/script-installer/dot.commonutils \
 		${DISTRIBDIR}/utils/script-installer/dot.instutils \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services
 
 INSTNOTESDIR!=	cd ${DISTRIBDIR}/notes/alpha && ${PRINTOBJDIR}
 INSTALLNOTES=	${INSTNOTESDIR}/INSTALL.more

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/04/25 18:29:05 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2009/09/20 19:49:08 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,8 +20,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig \
-		${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services \
+		${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services \
 		${NETBSDSRCDIR}/distrib/common/termcap.mini \
 		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
 #SMALLPROG_INET6=1
