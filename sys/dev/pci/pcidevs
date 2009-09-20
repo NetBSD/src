@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.995 2009/08/01 21:34:21 matt Exp $
+$NetBSD: pcidevs,v 1.996 2009/09/20 01:09:24 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3961,11 +3961,16 @@ product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
 /* Toshiba products */
 product TOSHIBA2 PORTEGE	0x0001	Portege Notebook
+product TOSHIBA2 PICCOLO	0x0101	Piccolo IDE Controller
+product TOSHIBA2 PICCOLO2	0x0102	Piccolo 2 IDE Controller
+product TOSHIBA2 PICCOLO3	0x0103	Piccolo 3 IDE Controller
+product TOSHIBA2 PICCOLO5	0x0105	Piccolo 5 IDE Controller
 product TOSHIBA2 HOST		0x0601	Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602	PCI-ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 PCI-CardBus Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B PCI-CardBus Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus Bridge
+product TOSHIBA2 SANREMO	0x0618	SanRemo? Triangle Host Bridge
 product TOSHIBA2 SMCARD		0x0804	Smart Media Controller
 product TOSHIBA2 SDCARD		0x0805	Secure Digital Card Controller Type-A
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 PCI-CardBus Bridge

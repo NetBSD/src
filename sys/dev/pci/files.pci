@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.319 2009/09/06 17:25:56 sborrill Exp $
+#	$NetBSD: files.pci,v 1.320 2009/09/20 01:09:24 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -336,6 +336,11 @@ file	dev/pci/stpcide.c	stpcide
 device	ixpide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	ixpide at pci
 file	dev/pci/ixpide.c	ixpide
+
+# Toshiba PICCOLO IDE controllers
+device	toshide: ata, ata_dma, pciide_common, wdc_common
+attach	toshide at pci
+file	dev/pci/toshide.c	toshide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus
