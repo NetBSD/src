@@ -1,5 +1,4 @@
-#	$NetBSD: list,v 1.3 2009/04/07 11:49:17 joerg Exp $
-#
+#	$NetBSD: list,v 1.4 2009/09/20 22:46:12 abs Exp $
 
 PROG	bin/chio
 PROG	bin/dd
@@ -25,6 +24,3 @@ PROG	usr/bin/tip
 PROG	usr/sbin/installboot
 
 PROG	usr/sbin/wiconfig
-
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall

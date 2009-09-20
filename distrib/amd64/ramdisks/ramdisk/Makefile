@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2009/04/07 11:49:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/09/20 22:46:11 abs Exp $
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	5000k
-IMAGEDEPENDS= 	disktab.preinstall
+IMAGEDEPENDS= 	
 USE_SYSINST=	yes
 SMALLPROG_INET6=1
 

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2009/09/20 19:49:10 abs Exp $
+#	$NetBSD: list,v 1.14 2009/09/20 22:46:13 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -72,9 +72,6 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
 COPY	${CURDIR}/../miniroot/termcap.iris-ansi	usr/share/misc/termcap
-
-# the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
