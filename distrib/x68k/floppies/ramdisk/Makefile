@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2009/09/20 19:41:35 abs Exp $
+#	$NetBSD: Makefile,v 1.34 2009/09/20 19:49:10 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -23,7 +23,7 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/mboot \
 		${DESTDIR}/usr/mdec/sdboot_ufs \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols
+		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols
 SMALLPROG_INET6=1
 
 .if ${USE_INET6} != "no"

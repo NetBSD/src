@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/09/20 19:29:25 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2009/09/20 19:49:08 abs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -23,8 +23,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.profile \
 		${DESTDIR}/usr/share/misc/termcap \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
-		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/distrib/common/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
+		${DISTRIBDIR}/common/services
 
 MAKEDEVTARGETS= std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 pty0 ttyv0
 
