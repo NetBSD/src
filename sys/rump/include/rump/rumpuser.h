@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.25 2009/09/02 19:02:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.26 2009/09/21 15:29:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,11 @@
 #ifndef _RUMP_RUMPUSER_H_
 #define _RUMP_RUMPUSER_H_
 
+#ifdef _KERNEL
 #include <sys/stdint.h>
+#else
+#include <stdint.h>
+#endif
 
 struct msghdr;
 struct pollfd;
