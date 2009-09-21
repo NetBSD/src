@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.184 2009/09/16 22:45:24 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.185 2009/09/21 12:14:47 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.184 2009/09/16 22:45:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.185 2009/09/21 12:14:47 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -219,7 +219,7 @@ static int detachall = 0;
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
 
-static int config_initialized;		/* config_init() has been called. */
+static bool config_initialized = false;	/* config_init() has been called. */
 
 static int config_do_twiddle;
 static callout_t config_twiddle_ch;
@@ -237,8 +237,7 @@ config_init(void)
 	const struct cfattachinit *cfai;
 	int i, j;
 
-	if (config_initialized)
-		return;
+	KASSERT(config_initialized == false);
 
 	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&alldevs_cv, "alldevs");
@@ -268,9 +267,18 @@ config_init(void)
 
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
-	sysctl_detach_setup(NULL);
 
-	config_initialized = 1;
+	config_initialized = true;
+}
+
+void
+config_init_mi(void)
+{
+
+	if (!config_initialized)
+		config_init();
+
+	sysctl_detach_setup(NULL);
 }
 
 void

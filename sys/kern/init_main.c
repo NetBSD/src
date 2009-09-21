@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.400 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.401 2009/09/21 12:14:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.400 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.401 2009/09/21 12:14:46 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -716,7 +716,7 @@ configure(void)
 {
 
 	/* Initialize autoconf data structures. */
-	config_init();
+	config_init_mi();
 	/*
 	 * XXX
 	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
