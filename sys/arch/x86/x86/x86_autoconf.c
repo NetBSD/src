@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.44 2009/08/24 23:48:57 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.45 2009/09/21 13:23:43 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.44 2009/08/24 23:48:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.45 2009/09/21 13:23:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,19 +607,38 @@ device_register(device_t dev, void *aux)
 #endif
 
 			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
-			if (fbinfo == NULL || fbinfo->physaddr == 0)
-				return;
 			dict = device_properties(dev);
-			prop_dictionary_set_uint32(dict, "width",
-			    fbinfo->width);
-			prop_dictionary_set_uint32(dict, "height",
-			    fbinfo->height);
-			prop_dictionary_set_uint8(dict, "depth",
-			    fbinfo->depth);
-			prop_dictionary_set_uint64(dict, "address",
-			    fbinfo->physaddr);
-			prop_dictionary_set_uint16(dict, "linebytes",
-			    fbinfo->stride);
+			/*
+			 * framebuffer drivers other than genfb can work
+			 * without the address property
+			 */
+			if (fbinfo != NULL) {
+				if (fbinfo->physaddr != 0) {
+				prop_dictionary_set_uint32(dict, "width",
+				    fbinfo->width);
+				prop_dictionary_set_uint32(dict, "height",
+				    fbinfo->height);
+				prop_dictionary_set_uint8(dict, "depth",
+				    fbinfo->depth);
+				prop_dictionary_set_uint16(dict, "linebytes",
+				    fbinfo->stride);
+
+					prop_dictionary_set_uint64(dict,
+					    "address", fbinfo->physaddr);
+				}
+#if notyet
+				prop_dictionary_set_bool(dict, "splash",
+				    fbinfo->flags & BI_FB_SPLASH ?
+				     true : false);
+#endif
+				if (fbinfo->depth == 8) {
+					gfb_cb.gcc_cookie = NULL;
+					gfb_cb.gcc_set_mapreg = 
+					    x86_genfb_set_mapreg;
+					prop_dictionary_set_uint64(dict,
+					    "cmap_callback", (uint64_t)&gfb_cb);
+				}
+			}
 			prop_dictionary_set_bool(dict, "is_console", true);
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
@@ -630,12 +649,6 @@ device_register(device_t dev, void *aux)
 			prop_dictionary_set_bool(dict, "splash",
 			    fbinfo->flags & BI_FB_SPLASH ? true : false);
 #endif
-			if (fbinfo->depth == 8) {
-				gfb_cb.gcc_cookie = NULL;
-				gfb_cb.gcc_set_mapreg = x86_genfb_set_mapreg;
-				prop_dictionary_set_uint64(dict,
-				    "cmap_callback", (uint64_t)&gfb_cb);
-			}
 			pmf_cb.gpc_suspend = x86_genfb_suspend;
 			pmf_cb.gpc_resume = x86_genfb_resume;
 			prop_dictionary_set_uint64(dict,
