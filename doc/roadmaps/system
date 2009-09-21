@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.6 2009/09/15 21:07:58 agc Exp $
+$NetBSD: system,v 1.7 2009/09/21 19:41:23 agc Exp $
 
 NetBSD System Roadmap
 =====================
@@ -33,7 +33,8 @@ Some explanations
 The Unix 32-bit time_t value will overflow in 2037 - any mortgage calculations
 which use a time_t value are in danger of overflowing at the present time -
 and to address this, 64-bit time_t values will be used to contain the number
-of seconds since 1970.
+of seconds since 1970. This was completed in 5.99.7 by Christos (with no libc
+major bump - kudos and respect), and will be in 6.0.
 
 Responsible: christos
 
@@ -49,13 +50,17 @@ using modules.
 
 Responsible: ad, lukem
 
-3. Full kernel preemption for real-time threads
------------------------------------------------
+3. Full kernel preemption for real-time threads on non-x86
+----------------------------------------------------------
 
-With the revamp of the kernel concurrency model, much of the kernel is fully
-multi-threaded and can therefore be preempted at any time. In support of
-lower context switch and dispatch times for real-time threads, full kernel
-preemption is being implemented.
+With the revamp of the kernel concurrency model, much of the kernel is
+fully multi-threaded and can therefore be preempted at any time.  In
+support of lower context switch and dispatch times for real-time
+threads, full kernel preemption is being implemented.  This has been
+implemented already for i386 and x86_64 (and is in 5.0), but needs to
+be extended to support the ARM, MIPS and SuperH ports.
+
+Responsible: rmind
 
 4. POSIX shared memory
 ----------------------
@@ -71,7 +76,8 @@ Responsible: rmind
 
 In NetBSD 5.99.15, some changes were made to split the namei() routine
 up into logical parts, so that changes can be made to the constituent
-parts in a less intrusive way.
+parts in a less intrusive way. This is in the repository now, and will
+be in 6.0.
 
 Responsible: dholland
 
@@ -101,14 +107,15 @@ Responsible: rmind
 9. Incremental namei improvements, Phase 2
 ------------------------------------------
 
-Implement the rest of the changes to namei outlined in Message-ID: 
-<20080319053709.GB3951@netbsd.org>.  Simplify the locking and behavior
-of namei() calls within the kernel to resolve path names within file
-systems.
+Building on the namei() split which was introduced in 5.99.15 (see (5)
+above), further changes will be introduced:  see the changes to namei
+outlined in Message-ID:  <20080319053709.GB3951@netbsd.org> for more
+information.  This will simplify the locking and behavior of namei()
+calls within the kernel to resolve path names within file systems.
 
 Responsible: dholland
 
 
 
 Alistair Crooks
-Tue 15 Sep 2009 08:02:11 PDT
+Mon 21 Sep 2009 08:39:16 BST
