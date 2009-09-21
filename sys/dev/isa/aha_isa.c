@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.27 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.28 2009/09/21 08:12:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.27 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.28 2009/09/21 08:12:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.27 2009/05/12 09:10:15 cegger Exp $");
 int	aha_isa_probe(device_t, cfdata_t, void *);
 void	aha_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(aha_isa, sizeof(struct aha_softc),
+CFATTACH_DECL_NEW(aha_isa, sizeof(struct aha_softc),
     aha_isa_probe, aha_isa_attach, NULL, NULL);
 
 /*
@@ -121,17 +121,19 @@ void
 aha_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct aha_softc *sc = (void *)self;
+	struct aha_softc *sc = device_private(self);
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct aha_probe_data apd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	int error;
 
+	sc->sc_dev = self;
+
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AHA_ISA_IOSIZE, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
@@ -139,13 +141,14 @@ aha_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	if (!aha_find(iot, ioh, &apd)) {
-		aprint_error_dev(&sc->sc_dev, "aha_find failed\n");
+		aprint_error_dev(self, "aha_find failed\n");
 		return;
 	}
 
 	if (apd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, apd.sc_drq)) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
+			aprint_error_dev(self,
+			    "unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	}
@@ -153,7 +156,7 @@ aha_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
