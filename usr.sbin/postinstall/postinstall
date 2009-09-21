@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.103 2009/09/07 21:07:04 mrg Exp $
+# $NetBSD: postinstall,v 1.104 2009/09/21 18:03:03 njoly Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -923,8 +923,11 @@ additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_mtree  fix|check"
+	failed=0
 
 	compare_dir "$1" "${SRC_DIR}/etc/mtree" "${DEST_DIR}/etc/mtree" 444 special
+	failed=$(( ${failed} + $? ))
+
 	if ! $SOURCEMODE; then
 		MTREE_DIR="${SRC_DIR}/etc/mtree"
 	else
@@ -938,6 +941,9 @@ do_mtree()
 		MTREE_DIR="${SCRATCHDIR}"
 	fi
 	compare_dir "$1" "${MTREE_DIR}" "${DEST_DIR}/etc/mtree" 444 NetBSD.dist
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
