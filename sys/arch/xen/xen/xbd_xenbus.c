@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.41 2009/07/29 12:02:10 cegger Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.42 2009/09/21 21:59:30 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.41 2009/07/29 12:02:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.42 2009/09/21 21:59:30 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -110,6 +110,9 @@ struct xbd_xenbus_softc {
 #define BLKIF_STATE_CONNECTED    1
 #define BLKIF_STATE_SUSPENDED    2
 	int sc_shutdown;
+#define BLKIF_SHUTDOWN_RUN    0 /* no shutdown */
+#define BLKIF_SHUTDOWN_REMOTE 1 /* backend-initiated shutdown in progress */
+#define BLKIF_SHUTDOWN_LOCAL  2 /* locally-initiated shutdown in progress */
 
 	uint64_t sc_sectors; /* number of sectors for this device */
 	u_long sc_secsize; /* sector size */
@@ -140,8 +143,9 @@ static void xbd_connect(struct xbd_xenbus_softc *);
 static int  xbd_map_align(struct xbd_req *);
 static void xbd_unmap_align(struct xbd_req *);
 
-CFATTACH_DECL_NEW(xbd, sizeof(struct xbd_xenbus_softc),
-   xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL);
+CFATTACH_DECL3_NEW(xbd, sizeof(struct xbd_xenbus_softc),
+   xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL, NULL, NULL,
+   DVF_DETACH_SHUTDOWN);
 
 dev_type_open(xbdopen);
 dev_type_close(xbdclose);
@@ -249,7 +253,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_backend_status = BLKIF_STATE_DISCONNECTED;
-	sc->sc_shutdown = 1;
+	sc->sc_shutdown = BLKIF_SHUTDOWN_REMOTE;
 	/* initialise shared structures and tell backend that we are ready */
 	xbd_xenbus_resume(sc);
 
@@ -263,16 +267,31 @@ static int
 xbd_xenbus_detach(device_t dev, int flags)
 {
 	struct xbd_xenbus_softc *sc = device_private(dev);
-	int s, bmaj, cmaj, i, mn;
+	int bmaj, cmaj, i, mn, rc, s;
+
+	rc = disk_begindetach(&sc->sc_dksc.sc_dkdev, NULL, dev, flags);
+	if (rc != 0)
+		return rc;
+
 	s = splbio();
 	DPRINTF(("%s: xbd_detach\n", device_xname(dev)));
-	if (sc->sc_shutdown == 0) {
-		sc->sc_shutdown = 1;
+	if (sc->sc_shutdown == BLKIF_SHUTDOWN_RUN) {
+		sc->sc_shutdown = BLKIF_SHUTDOWN_LOCAL;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
 		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosing);
 	}
+	if ((flags & DETACH_FORCE) == 0) {
+		/* xbd_xenbus_detach already in progress */
+		wakeup(xbd_xenbus_detach);
+		splx(s);
+		return EALREADY;
+	}
+	while (xenbus_read_driver_state(sc->sc_xbusd->xbusd_otherend)
+	    != XenbusStateClosed)
+		tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach2", hz/2);
 	splx(s);
 
 	/* locate the major number */
@@ -414,12 +433,12 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		break;
 	case XenbusStateClosing:
 		s = splbio();
-		sc->sc_shutdown = 1;
+		if (sc->sc_shutdown == BLKIF_SHUTDOWN_RUN)
+			sc->sc_shutdown = BLKIF_SHUTDOWN_REMOTE;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
 		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
-			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach",
-			    hz/2);
+			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
@@ -434,7 +453,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 			return;
 
 		xbd_connect(sc);
-		sc->sc_shutdown = 0;
+		sc->sc_shutdown = BLKIF_SHUTDOWN_RUN;
 		hypervisor_enable_event(sc->sc_evtchn);
 
 		sc->sc_xbdsize =
@@ -635,7 +654,7 @@ xbdstrategy(struct buf *bp)
 	DPRINTF(("xbdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
 
-	if (sc == NULL || sc->sc_shutdown) {
+	if (sc == NULL || sc->sc_shutdown != BLKIF_SHUTDOWN_RUN) {
 		bp->b_error = EIO;
 		biodone(bp);
 		return;
@@ -659,7 +678,7 @@ xbdsize(dev_t dev)
 	DPRINTF(("xbdsize(%d)\n", dev));
 
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
-	if (sc == NULL || sc->sc_shutdown)
+	if (sc == NULL || sc->sc_shutdown != BLKIF_SHUTDOWN_RUN)
 		return -1;
 	return dk_size(sc->sc_di, &sc->sc_dksc, dev);
 }
@@ -750,7 +769,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	DPRINTF(("xbdstart(%p): b_bcount = %ld\n", bp, (long)bp->b_bcount));
 
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(bp->b_dev));
-	if (sc == NULL || sc->sc_shutdown) {
+	if (sc == NULL || sc->sc_shutdown != BLKIF_SHUTDOWN_RUN) {
 		bp->b_error = EIO;
 		goto err;
 	}
