@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.14 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.15 2009/09/22 12:56:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -115,7 +115,7 @@ struct aic_tinfo {
 };
 
 struct aic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -199,7 +199,7 @@ extern int aic_debug; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #define	AIC_ASSERT(x)	do { \
 			if (! (x)) { \
 				printf("%s at line %d: assertion failed\n", \
-				    device_xname(&sc->sc_dev), __LINE__); \
+				    device_xname(sc->sc_dev), __LINE__); \
 				Debugger(); \
 			} } while (/* CONSTCOND */ 0)
 #else
