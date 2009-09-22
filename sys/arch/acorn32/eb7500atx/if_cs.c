@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.5 2009/05/12 06:57:51 cegger Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.6 2009/09/22 14:55:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.5 2009/05/12 06:57:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.6 2009/09/22 14:55:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,12 +116,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.5 2009/05/12 06:57:51 cegger Exp $");
  */
 static struct bus_space cs_rsbus_bs_tag;
 
-int	cs_rsbus_probe(struct device *, struct cfdata *, void *);
-void	cs_rsbus_attach(struct device *, struct device *, void *);
+int	cs_rsbus_probe(device_t, cfdata_t, void *);
+void	cs_rsbus_attach(device_t, device_t, void *);
 
 static u_int8_t cs_rbus_read_1(struct cs_softc *, bus_size_t);
 
-CFATTACH_DECL(cs_rsbus, sizeof(struct cs_softc),
+CFATTACH_DECL_NEW(cs_rsbus, sizeof(struct cs_softc),
 	cs_rsbus_probe, cs_rsbus_attach, NULL, NULL);
 
 /* Available media */
@@ -131,18 +131,20 @@ int cs_rbus_media [] = {
 };
 
 int 
-cs_rsbus_probe(struct device *parent, struct cfdata *cf, void *aux)
+cs_rsbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	/* for now it'll always attach */
 	return 1;
 }
 
 void 
-cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
+cs_rsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct cs_softc *sc = (struct cs_softc *)self;
-	struct rsbus_attach_args *rs = (void *)aux;
+	struct cs_softc *sc = device_private(self);
+	struct rsbus_attach_args *rs = aux;
 	u_int iobase;
+
+	sc->sc_dev = self;
 
 	/* member copy */
 	cs_rsbus_bs_tag = *rs->sa_iot;
@@ -152,13 +154,12 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_iot = sc->sc_memt = &cs_rsbus_bs_tag;
 
-	/*
-	 * Do DMA later
+#if 0	/* Do DMA later */
 	if (ia->ia_ndrq > 0)
 		isc->sc_drq = ia->ia_drq[0].ir_drq;
 	else
 		isc->sc_drq = -1;
-	*/
+#endif
 
 	/* device always interrupts on 3 but that routes to IRQ 5 */
 	sc->sc_irq = 3;
@@ -171,15 +172,14 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	iobase = 0x03010600;
 	if (bus_space_map(sc->sc_iot, iobase, CS8900_IOSIZE * 4,
 	    0, &sc->sc_ioh)) {
-		printf("%s: unable to map i/o space\n", device_xname(&sc->sc_dev));
+		printf("%s: unable to map i/o space\n", device_xname(self));
 		return;
 	}
 
 #if 0
 	if (bus_space_map(sc->sc_memt, iobase + 0x3A00,
 				CS8900_MEMSIZE * 4, 0, &sc->sc_memh)) {
-		printf("%s: unable to map memory space\n",
-	    			device_xname(&sc->sc_dev));
+		printf("%s: unable to map memory space\n", device_xname(self));
 	} else {
 		sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA;
 		sc->sc_pktpgaddr = 1<<23;
@@ -189,7 +189,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = intr_claim(IRQ_INT5, IPL_NET, "cs", cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return;
 	}
 
