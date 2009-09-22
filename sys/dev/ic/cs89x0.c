@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.26 2009/09/22 14:55:19 tsutsui Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.27 2009/09/22 15:25:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.26 2009/09/22 14:55:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.27 2009/09/22 15:25:12 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -812,7 +812,8 @@ eeprom_bad:
 int
 cs_get_enaddr(struct cs_softc *sc)
 {
-	u_int16_t *myea;
+	uint16_t myea[ETHER_ADDR_LEN / sizeof(uint16_t)];
+	int i;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		aprint_error_dev(sc->sc_dev,
@@ -820,10 +821,7 @@ cs_get_enaddr(struct cs_softc *sc)
 		return (CS_ERROR);
 	}
 
-	myea = (u_int16_t *)sc->sc_enaddr;
-
 	/* Get Ethernet address from the EEPROM */
-	/* XXX this will likely lose on a big-endian machine. -- cgd */
 	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
 		if (cs_read_pktpg_from_eeprom(sc, PKTPG_IND_ADDR, &myea[0])
 				== CS_ERROR)
@@ -841,6 +839,11 @@ cs_get_enaddr(struct cs_softc *sc)
 			goto eeprom_bad;
 		if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
 			goto eeprom_bad;
+	}
+
+	for (i = 0; i < __arraycount(myea); i++) {
+		sc->sc_enaddr[i * 2 + 0] = myea[i];
+		sc->sc_enaddr[i * 2 + 1] = myea[i] >> 8;
 	}
 
 	return (CS_OK);
