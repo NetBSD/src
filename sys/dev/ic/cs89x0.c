@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.27 2009/09/22 15:25:12 tsutsui Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.28 2009/09/22 16:44:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.27 2009/09/22 15:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.28 2009/09/22 16:44:08 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -265,26 +265,26 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.27 2009/09/22 15:25:12 tsutsui Exp $");
 /*
  * FUNCTION PROTOTYPES
  */
-void	cs_get_default_media(struct cs_softc *);
-int	cs_get_params(struct cs_softc *);
-int	cs_get_enaddr(struct cs_softc *);
-int	cs_reset_chip(struct cs_softc *);
-void	cs_reset(struct cs_softc *);
-int	cs_ioctl(struct ifnet *, u_long, void *);
-void	cs_initChip(struct cs_softc *);
-void	cs_buffer_event(struct cs_softc *, u_int16_t);
-void	cs_transmit_event(struct cs_softc *, u_int16_t);
-void	cs_receive_event(struct cs_softc *, u_int16_t);
-void	cs_process_receive(struct cs_softc *);
-void	cs_process_rx_early(struct cs_softc *);
-void	cs_start_output(struct ifnet *);
-void	cs_copy_tx_frame(struct cs_softc *, struct mbuf *);
-void	cs_set_ladr_filt(struct cs_softc *, struct ethercom *);
-u_int16_t cs_hash_index(char *);
-void	cs_counter_event(struct cs_softc *, u_int16_t);
+static void	cs_get_default_media(struct cs_softc *);
+static int	cs_get_params(struct cs_softc *);
+static int	cs_get_enaddr(struct cs_softc *);
+static int	cs_reset_chip(struct cs_softc *);
+static void	cs_reset(struct cs_softc *);
+static int	cs_ioctl(struct ifnet *, u_long, void *);
+static void	cs_initChip(struct cs_softc *);
+static void	cs_buffer_event(struct cs_softc *, u_int16_t);
+static void	cs_transmit_event(struct cs_softc *, u_int16_t);
+static void	cs_receive_event(struct cs_softc *, u_int16_t);
+static void	cs_process_receive(struct cs_softc *);
+static void	cs_process_rx_early(struct cs_softc *);
+static void	cs_start_output(struct ifnet *);
+static void	cs_copy_tx_frame(struct cs_softc *, struct mbuf *);
+static void	cs_set_ladr_filt(struct cs_softc *, struct ethercom *);
+static u_int16_t cs_hash_index(char *);
+static void	cs_counter_event(struct cs_softc *, u_int16_t);
 
-int	cs_mediachange(struct ifnet *);
-void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
+static int	cs_mediachange(struct ifnet *);
+static void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static bool cs_shutdown(device_t, int);
 static int cs_enable(struct cs_softc *);
