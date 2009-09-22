@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.74 2009/09/18 14:40:49 tsutsui Exp $	*/
+/*	$NetBSD: be.c,v 1.75 2009/09/22 13:13:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.74 2009/09/18 14:40:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.75 2009/09/22 13:13:46 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -473,7 +473,7 @@ be_put(struct be_softc *sc, int idx, struct mbuf *m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
-	void *bp;
+	uint8_t *bp;
 
 	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * BE_PKT_BUF_SZ;
 
@@ -483,7 +483,7 @@ be_put(struct be_softc *sc, int idx, struct mbuf *m)
 			MFREE(m, n);
 			continue;
 		}
-		memcpy((char *)bp + boff, mtod(m, void *), len);
+		memcpy(bp + boff, mtod(m, void *), len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -504,7 +504,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 	struct mbuf *m;
 	struct mbuf *top, **mp;
 	int len, pad, boff = 0;
-	void *bp;
+	uint8_t *bp;
 
 	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * BE_PKT_BUF_SZ;
 
@@ -535,7 +535,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, void *), (char *)bp + boff, len);
+		memcpy(mtod(m, void *), bp + boff, len);
 		boff += len;
 		totlen -= len;
 		*mp = m;
