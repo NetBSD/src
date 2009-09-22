@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.14 2008/04/08 20:08:49 cegger Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.15 2009/09/22 15:34:22 tsutsui Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.14 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.15 2009/09/22 15:34:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,46 +69,51 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.14 2008/04/08 20:08:49 cegger Exp $"
 void
 cs_isa_dma_attach(struct cs_softc *sc)
 {
-	struct cs_softc_isa *isc = (void *)sc;
+	struct cs_softc_isa *isc = (struct cs_softc_isa *)sc;
 
 	if (isc->sc_drq == ISA_UNKNOWN_DRQ)
 		printf("%s: DMA channel unspecified, not using DMA\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	else if (isc->sc_drq < 5 || isc->sc_drq > 7)
 		printf("%s: invalid DMA channel, not using DMA\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	else {
 		bus_size_t maxsize;
 		bus_addr_t dma_addr;
 
 		maxsize = isa_dmamaxsize(isc->sc_ic, isc->sc_drq);
 		if (maxsize < CS8900_DMASIZE) {
-			printf("%s: max DMA size %lu is less than required %d\n",
-			    device_xname(&sc->sc_dev), (u_long)maxsize,
+			printf("%s: max DMA size %lu is"
+			    " less than required %d\n",
+			    device_xname(sc->sc_dev), (u_long)maxsize,
 			    CS8900_DMASIZE);
 			goto after_dma_block;
 		}
 
 		if (isa_drq_alloc(isc->sc_ic, isc->sc_drq) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to reserve drq %d\n",
+			aprint_error_dev(sc->sc_dev,
+			    "unable to reserve drq %d\n",
 			    isc->sc_drq);
 			goto after_dma_block;
 		}
 
 		if (isa_dmamap_create(isc->sc_ic, isc->sc_drq,
 		    CS8900_DMASIZE, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to create ISA DMA map\n");
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create ISA DMA map\n");
 			goto after_dma_block;
 		}
 		if (isa_dmamem_alloc(isc->sc_ic, isc->sc_drq,
 		    CS8900_DMASIZE, &dma_addr, BUS_DMA_NOWAIT) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to allocate DMA buffer\n");
+			aprint_error_dev(sc->sc_dev,
+			    "unable to allocate DMA buffer\n");
 			goto after_dma_block;
 		}
 		if (isa_dmamem_map(isc->sc_ic, isc->sc_drq, dma_addr,
 		    CS8900_DMASIZE, (void **)&isc->sc_dmabase,
 		       BUS_DMA_NOWAIT | BUS_DMA_COHERENT /* XXX */ ) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to map DMA buffer\n");
+			aprint_error_dev(sc->sc_dev,
+			    "unable to map DMA buffer\n");
 			isa_dmamem_free(isc->sc_ic, isc->sc_drq, dma_addr,
 			    CS8900_DMASIZE);
 			goto after_dma_block;
@@ -124,7 +129,7 @@ after_dma_block:
 
 void cs_isa_dma_chipinit(struct cs_softc *sc)
 {
-	struct cs_softc_isa *isc = (void *)sc;
+	struct cs_softc_isa *isc = (struct cs_softc_isa *)sc;
 
 	if (sc->sc_cfgflags & CFGFLG_DMA_MODE) {
 		/*
@@ -136,7 +141,8 @@ void cs_isa_dma_chipinit(struct cs_softc *sc)
 		    isc->sc_dmasize, NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND,
 		    BUS_DMA_NOWAIT)) {
 			/* XXX XXX XXX */
-			panic("%s: unable to start DMA", device_xname(&sc->sc_dev));
+			panic("%s: unable to start DMA",
+			    device_xname(sc->sc_dev));
 		}
 		isc->sc_dmacur = isc->sc_dmabase;
 
@@ -164,7 +170,7 @@ void cs_isa_dma_chipinit(struct cs_softc *sc)
 
 void cs_process_rx_dma(struct cs_softc *sc)
 {
-	struct cs_softc_isa *isc = (void *)sc;
+	struct cs_softc_isa *isc = (struct cs_softc_isa *)sc;
 	struct ifnet *ifp;
 	u_int16_t num_dma_frames;
 	u_int16_t pkt_length;
@@ -222,8 +228,9 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				 * should increment the error count and reset
 				 * the DMA operation.
 				 */
-				printf("%s: cs_process_rx_dma: DMA buffer out of sync about to reset\n",
-				    device_xname(&sc->sc_dev));
+				printf("%s: cs_process_rx_dma: "
+				    "DMA buffer out of sync about to reset\n",
+				    device_xname(sc->sc_dev));
 				ifp->if_ierrors++;
 
 				/* skip the rest of the DMA buffer */
@@ -238,8 +245,9 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				/* get a new mbuf */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == 0) {
-					printf("%s: cs_process_rx_dma: unable to allocate mbuf\n",
-					    device_xname(&sc->sc_dev));
+					printf("%s: cs_process_rx_dma: "
+					    "unable to allocate mbuf\n",
+					    device_xname(sc->sc_dev));
 					ifp->if_ierrors++;
 					/*
 					 * couldn't allocate an mbuf so
@@ -266,8 +274,9 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					/* couldn't allocate an mbuf cluster */
-					printf("%s: cs_process_rx_dma: unable to allocate a cluster\n",
-					    device_xname(&sc->sc_dev));
+					printf("%s: cs_process_rx_dma: "
+					    "unable to allocate a cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(m);
 
 					/* skip the frame */
