@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2009/07/30 13:56:57 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.35 2009/09/22 13:59:42 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2009/07/30 13:56:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2009/09/22 13:59:42 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -565,8 +565,6 @@ cpu_init(struct cpu_info *ci)
 	}
 
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
-
-	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 }
 
