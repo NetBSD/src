@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.12 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.13 2009/09/22 13:31:26 tsutsui Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,7 +71,6 @@ struct cs_softc {
 	struct ifmedia sc_media;	/* media control structures */
 
 	void	*sc_ih;			/* interrupt handler */
-	void 	*sc_sh;			/* shutdown hook */
 
 	bus_space_tag_t sc_iot;		/* bus space tag for IO */
 	bus_space_tag_t sc_memt;	/* bus space tag for memory mode */
@@ -112,7 +111,6 @@ struct cs_softc {
 	/* power management */
 	int (*sc_enable)(struct cs_softc *);
 	void (*sc_disable)(struct cs_softc *);
-	void *sc_powerhook;
 
 	/* DMA hooks */
 	void (*sc_dma_process_rx)(struct cs_softc *);
