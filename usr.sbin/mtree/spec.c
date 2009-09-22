@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.77 2009/09/19 21:41:43 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.78 2009/09/22 04:38:21 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.77 2009/09/19 21:41:43 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.78 2009/09/22 04:38:21 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,9 +381,9 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			free(str);
 		}
 		if (MATCHFLAG(F_IGN))
-			printf("ignore ");
+			appendfield(pathlast, "ignore");
 		if (MATCHFLAG(F_OPT))
-			printf("optional ");
+			appendfield(pathlast, "optional");
 		if (MATCHFLAG(F_TAGS)) {
 			/* don't output leading or trailing commas */
 			p = cur->tags;
