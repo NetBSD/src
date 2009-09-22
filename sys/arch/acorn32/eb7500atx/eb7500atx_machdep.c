@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.15 2009/08/11 17:04:14 matt Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.16 2009/09/22 14:49:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.15 2009/08/11 17:04:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.16 2009/09/22 14:49:28 tsutsui Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.15 2009/08/11 17:04:14 matt 
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/ksyms.h>
 
 #include <dev/cons.h>
