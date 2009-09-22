@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.24 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.25 2009/09/22 13:31:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.24 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.25 2009/09/22 13:31:26 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -269,7 +269,7 @@ void	cs_get_default_media(struct cs_softc *);
 int	cs_get_params(struct cs_softc *);
 int	cs_get_enaddr(struct cs_softc *);
 int	cs_reset_chip(struct cs_softc *);
-void	cs_reset(void *);
+void	cs_reset(struct cs_softc *);
 int	cs_ioctl(struct ifnet *, u_long, void *);
 void	cs_initChip(struct cs_softc *);
 void	cs_buffer_event(struct cs_softc *, u_int16_t);
@@ -286,10 +286,10 @@ void	cs_counter_event(struct cs_softc *, u_int16_t);
 int	cs_mediachange(struct ifnet *);
 void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
 
+static bool cs_shutdown(device_t, int);
 static int cs_enable(struct cs_softc *);
 static void cs_disable(struct cs_softc *);
 static void cs_stop(struct ifnet *, int);
-static void cs_power(int, void *);
 static int cs_scan_eeprom(struct cs_softc *);
 static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, u_int16_t *);
 
@@ -489,13 +489,6 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	if (sc->sc_dma_attach)
 		(*sc->sc_dma_attach)(sc);
 
-	sc->sc_sh = shutdownhook_establish(cs_reset, sc);
-	if (sc->sc_sh == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish shutdownhook\n");
-		cs_detach(sc);
-		return 1;
-	}
-
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -506,17 +499,18 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 #endif
 	sc->sc_cfgflags |= CFGFLG_ATTACHED;
 
+	if (pmf_device_register1(&sc->sc_dev, NULL, NULL, cs_shutdown))
+		pmf_class_network_register(&sc->sc_dev, ifp);
+	else
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
+
 	/* Reset the chip */
 	if (cs_reset_chip(sc) == CS_ERROR) {
 		aprint_error_dev(&sc->sc_dev, "reset failed\n");
 		cs_detach(sc);
 		return 1;
 	}
-
-	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
-	    cs_power, sc);
-	if (sc->sc_powerhook == 0)
-		aprint_error_dev(&sc->sc_dev, "warning: powerhook_establish failed\n");
 
 	return 0;
 }
@@ -526,11 +520,6 @@ cs_detach(struct cs_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (sc->sc_powerhook) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = 0;
-	}
-
 	if (sc->sc_cfgflags & CFGFLG_ATTACHED) {
 #if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
@@ -539,9 +528,6 @@ cs_detach(struct cs_softc *sc)
 		if_detach(ifp);
 		sc->sc_cfgflags &= ~CFGFLG_ATTACHED;
 	}
-
-	if (sc->sc_sh != NULL)
-		shutdownhook_disestablish(sc->sc_sh);
 
 #if 0
 	/*
@@ -555,7 +541,20 @@ cs_detach(struct cs_softc *sc)
 	}
 #endif
 
+	pmf_device_deregister(&sc->sc_dev);
+
 	return 0;
+}
+
+bool
+cs_shutdown(device_t self, int howto)
+{
+	struct cs_softc *sc;
+
+	sc = device_private(self);
+	cs_reset(sc);
+
+	return true;
 }
 
 void
@@ -1297,9 +1296,8 @@ cs_hash_index(char *addr)
 }
 
 void
-cs_reset(void *arg)
+cs_reset(struct cs_softc *sc)
 {
-	struct cs_softc *sc = arg;
 
 	/* Mark the interface as down */
 	sc->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
@@ -2192,30 +2190,4 @@ cs_activate(device_t self, enum devact act)
 	splx(s);
 
 	return error;
-}
-
-static void
-cs_power(int why, void *arg)
-{
-	struct cs_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		cs_stop(ifp, 0);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			cs_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
