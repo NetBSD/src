@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.210 2009/09/14 11:38:29 tsutsui Exp $
+# $NetBSD: ALL,v 1.211 2009/09/22 16:46:15 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.210 $"
+#ident 		"ALL-$Revision: 1.211 $"
 
 maxusers	32		# estimated number of users
 
@@ -978,6 +978,7 @@ tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
 an*	at isapnp?			# Aironet 802.11
+cs*	at isapnp?			# CS8900 Ethernet
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 fmv*	at isapnp?			# Fujitsu FMV-183
 le*	at isapnp?			# AMD PCnet-ISA Ethernet
