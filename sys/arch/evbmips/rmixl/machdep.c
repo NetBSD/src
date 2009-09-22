@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.4 2009/09/22 07:15:37 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.4 2009/09/22 07:15:37 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -423,7 +423,7 @@ mem_clusters_init(
 	rmixl_puthex64((uint64_t)psb_physaddr_map);
 	rmixl_puts("\r\n");
 
-	if (psb_physaddr_map != NULL)
+	if (psb_physaddr_map == NULL)
 		rmixl_puts("WARNING: no psb_physaddr_map\r\n");
 	else
 		rmixlfw_phys_mmap  = *psb_physaddr_map;
