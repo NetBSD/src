@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.34 2009/09/12 19:16:35 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.35 2009/09/22 13:26:54 tsutsui Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.34 2009/09/12 19:16:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.35 2009/09/22 13:26:54 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -49,8 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.34 2009/09/12 19:16:35 tsutsui Exp
 #endif
 
 
-static void	ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg);
-static void	ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments);
+static void	ahc_action(struct scsipi_channel *chan,
+			   scsipi_adapter_req_t req, void *arg);
+static void	ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs,
+				int nsegments);
 static int	ahc_poll(struct ahc_softc *ahc, int wait);
 static void	ahc_setup_data(struct ahc_softc *ahc,
 			       struct scsipi_xfer *xs, struct scb *scb);
@@ -184,7 +186,7 @@ ahc_platform_intr(void *arg)
 {
 	struct	ahc_softc *ahc;
 
-	ahc = (struct ahc_softc *)arg;
+	ahc = arg;
 	ahc_intr(ahc);
 }
 
@@ -294,8 +296,10 @@ static int
 ahc_ioctl(struct scsipi_channel *channel, u_long cmd, void *addr,
     int flag, struct proc *p)
 {
-	struct ahc_softc *ahc = device_private(channel->chan_adapter->adapt_dev);
+	struct ahc_softc *ahc;
 	int s, ret = ENOTTY;
+
+	ahc = device_private(channel->chan_adapter->adapt_dev);
 
 	switch (cmd) {
 	case SCBUSIORESET:
@@ -523,7 +527,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs->error = 0;
 	xs->status = 0;
 	xs->xs_status = 0;
-	ahc = device_private(xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
+	ahc = device_private(
+	    xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
 
 	if (nsegments != 0) {
 		struct ahc_dma_seg *sg;
@@ -700,7 +705,7 @@ ahc_poll(struct ahc_softc *ahc, int wait)
 		return (EIO);
 	}
 
-	ahc_intr((void *)ahc);
+	ahc_intr(ahc);
 	return (0);
 }
 
@@ -803,8 +808,8 @@ ahc_timeout(void *arg)
 	int	i;
 	char	channel;
 
-	scb = (struct scb *)arg;
-	ahc = (struct ahc_softc *)scb->ahc_softc;
+	scb = arg;
+	ahc = scb->ahc_softc;
 
 	ahc_lock(ahc, &s);
 
