@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.4 2009/09/15 10:32:41 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.5 2009/09/22 07:01:18 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.4 2009/09/15 10:32:41 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.5 2009/09/22 07:01:18 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,22 +146,40 @@ volatile uint32_t *com0addr = (uint32_t *)
 void
 rmixl_putchar_init(uint64_t io_pbase)
 {
+	int rate;
+	extern int comspeed(long, long, int);
+
 	com0addr = (uint32_t *)
 		MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
+
+	if (CONSFREQ != -1) {
+		rate = comspeed(CONSPEED, CONSFREQ, COM_TYPE_NORMAL);
+		if (rate < 0)
+			return;					/* XXX */
+
+		com0addr[com_lctl] = htobe32(LCR_DLAB);
+		com0addr[com_dlbl] = htobe32(rate & 0xff);
+		com0addr[com_dlbh] = htobe32(rate >> 8);
+		com0addr[com_lctl] = htobe32(LCR_8BITS);	/* XXX */
+		com0addr[com_mcr]  = htobe32(MCR_DTR|MCR_RTS);
+		com0addr[com_fifo] = htobe32(
+			FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_1);
+	}
 }
+
 
 void
 rmixl_putchar(char c)
 {
 	int timo = 150000;
 
-	while ((be32toh(com0addr[5]) & LSR_TXRDY) == 0)
+	while ((be32toh(com0addr[com_lsr]) & LSR_TXRDY) == 0)
 		if (--timo == 0)
 			break;
 
-	com0addr[0] = htobe32((uint32_t)c);
+	com0addr[com_data] = htobe32((uint32_t)c);
 
-	while ((be32toh(com0addr[5]) & LSR_TSRE) == 0)
+	while ((be32toh(com0addr[com_lsr]) & LSR_TSRE) == 0)
 		if (--timo == 0)
 			break;
 }
