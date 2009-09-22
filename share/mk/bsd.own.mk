@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.580 2009/09/22 01:28:50 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.581 2009/09/22 09:57:28 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -53,6 +53,7 @@ HAVE_GDB?=	6
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
