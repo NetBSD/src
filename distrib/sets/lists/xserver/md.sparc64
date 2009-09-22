@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.26.2.4 2009/09/18 02:03:35 snj Exp $	x11
+# $NetBSD: md.sparc64,v 1.26.2.5 2009/09/22 06:31:52 snj Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -383,7 +383,7 @@
 ./usr/X11R7/lib/modules/extensions/libshadow_g.a	-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libshadow_pic.a	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libxtrap.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	xorobsolete
+./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap.so.0	-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap_pic.a	-unknown-	obsolete
@@ -486,6 +486,7 @@
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	obsolete
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	obsolete
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obsolete
+./usr/X11R7/man/html4/ag10e.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
