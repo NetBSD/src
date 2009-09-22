@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.4 2009/09/22 07:15:37 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.4 2009/09/22 07:15:37 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -160,6 +160,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $"
 #include <mips/rmi/rmixl_firmware.h>
 #include <mips/rmi/rmixlreg.h>
 
+#ifndef CONSFREQ
+# define CONSFREQ -1		/* inherit from firmware */
+#endif
 #ifndef CONSPEED
 # define CONSPEED 38400
 #endif
@@ -170,9 +173,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2009/09/15 02:46:43 cliff Exp $"
 # define CONSADDR RMIXL_IO_DEV_UART_1
 #endif
 
-int		comcnfreq = -1;
-uint		comcnspeed = CONSPEED;
-uint		comcnmode  = CONMODE;
+int		comcnfreq  = CONSFREQ;
+int		comcnspeed = CONSPEED;
+tcflag_t	comcnmode  = CONMODE;
 bus_addr_t	comcnaddr  = (bus_addr_t)CONSADDR;
 
 struct rmixl_config rmixl_configuration;
@@ -180,11 +183,12 @@ struct rmixl_config rmixl_configuration;
 
 /*
  * array of tested firmware versions
- * if you fiund new ones and they work
+ * if you find new ones and they work
  * please add them
  */
 static uint64_t rmiclfw_psb_versions[] = {
 	0x4958d4fb00000056,
+	0x49a5a8fa00000056,
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
 	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
@@ -195,6 +199,7 @@ static uint64_t rmiclfw_psb_versions[] = {
 static rmixlfw_info_t rmixlfw_info;
 static rmixlfw_mmap_t rmixlfw_phys_mmap;
 static rmixlfw_mmap_t rmixlfw_avail_mmap;
+#define RMIXLFW_INFOP_LEGAL	0x8c000000
 
 
 /* For sysctl_hw. */
@@ -218,6 +223,7 @@ int mem_cluster_cnt;
 void configure(void);
 void mach_init(int, int32_t *, void *, void *);
 static u_long rmixlfw_init(void *);
+static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
 static void __attribute__((__noreturn__)) rmixl_exit(int);
 
 
@@ -235,7 +241,7 @@ extern struct user *proc0paddr;
 void
 mach_init(int argc, int32_t *argv, void *envp, void *infop)
 {
-	struct rmixl_config *rcp;
+	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend, *v;
         size_t first, last;
 	u_long memsize;
@@ -263,13 +269,11 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 
 	physmem = btoc(memsize);
 
-	rcp = &rmixl_configuration;
-	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
 	rmixl_eb_bus_mem_init(&rcp->rc_eb_memt, rcp); /* need for console */
 	rmixl_el_bus_mem_init(&rcp->rc_el_memt, rcp); /* XXX defer ? */
 
 #if NCOM > 0
-	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
+	rmixl_com_cnattach(comcnaddr, comcnspeed, -1,
 		COM_TYPE_NORMAL, comcnmode);
 #endif
 
@@ -367,12 +371,8 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 static u_long
 rmixlfw_init(void *infop)
 {
+	struct rmixl_config *rcp = &rmixl_configuration;
 	uint64_t tmp;
-	uint64_t sz;
-	uint64_t sum;
-#ifdef MEMSIZE
-	u_long memsize = MEMSIZE;
-#endif
 
 	strcpy(cpu_model, "RMI XLS616ATX VIIA");	/* XXX */
 
@@ -386,15 +386,68 @@ rmixlfw_init(void *infop)
 			goto found;
 	}
 
-	rmixl_putchar_init(MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base));
+	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(RMIXL_IO_DEV_PBASE);
+	rmixl_putchar_init(rcp->rc_io_pbase);
+
 	rmixl_puts("\r\nWARNING: untested psb_version: ");
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");
+
  found:
+	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
+	rmixl_putchar_init(rcp->rc_io_pbase);
+	rmixl_puts("\r\ninfop: ");
+	rmixl_puthex64((uint64_t)infop);
+	rmixl_puts("\r\nrecognized psb_version: ");
+	rmixl_puthex64(rmixlfw_info.psb_version);
+	rmixl_puts("\r\n");
 
-	rmixlfw_phys_mmap  = *(rmixlfw_mmap_t *)rmixlfw_info.psb_physaddr_map;
+	return mem_clusters_init(
+		(rmixlfw_mmap_t *)rmixlfw_info.psb_physaddr_map,
+		(rmixlfw_mmap_t *)rmixlfw_info.avail_mem_map);
+}
+
+static u_long
+mem_clusters_init(
+	rmixlfw_mmap_t *psb_physaddr_map,
+	rmixlfw_mmap_t *avail_mem_map)
+{
+	uint64_t tmp;
+	uint64_t sz;
+	uint64_t sum;
+#ifdef MEMSIZE
+	u_long memsize = MEMSIZE;
+#endif
+
+	rmixl_puts("psb_physaddr_map: ");
+	rmixl_puthex64((uint64_t)psb_physaddr_map);
+	rmixl_puts("\r\n");
+
+	if (psb_physaddr_map != NULL)
+		rmixl_puts("WARNING: no psb_physaddr_map\r\n");
+	else
+		rmixlfw_phys_mmap  = *psb_physaddr_map;
+
+	rmixl_puts("avail_mem_map: ");
+	rmixl_puthex64((uint64_t)avail_mem_map);
+	rmixl_puts("\r\n");
+	if (avail_mem_map == NULL) {
+#ifndef MEMSIZE
+		rmixl_puts("ERROR: no avail_mem_map, "
+			"must define MEMSIZE\r\n");
+#else
+		rmixl_puts("WARNING: no avail_mem_map, "
+			"using MEMSIZE\r\n");
+		mem_clusters[0].start = 0;
+		mem_clusters[0].size = MEMSIZE;
+		mem_cluster_cnt = 1;
+		return MEMSIZE;
+#endif
+	}
+
+	rmixl_puts("using avail_mem_map\r\n");
 	rmixlfw_avail_mmap = *(rmixlfw_mmap_t *)rmixlfw_info.avail_mem_map;
-
+	rmixl_puts("memory clusters map:\r\n");
 	sum = 0;
 	mem_cluster_cnt = 0;
 	for (uint32_t i=0; i < rmixlfw_avail_mmap.nmmaps; i++) {
@@ -546,7 +599,11 @@ rmixl_exit(int howto)
 {
 	/* use firmware callbak to reboot */
 	void (*reset)(void) = (void *)rmixlfw_info.warm_reset;
-	(*reset)();
-	printf("warm reset callback failed, spinning...\n");
+	if (reset != 0) {
+		(*reset)();
+		printf("warm reset callback failed, spinning...\n");
+	} else {
+		printf("warm reset callback absent, spinning...\n");
+	}
 	for (;;);
 }
