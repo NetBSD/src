@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.22 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.23 2009/09/22 14:04:56 tsutsui Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.22 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.23 2009/09/22 14:04:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.22 2009/05/12 09:10:15 cegger Exp $"
 int	cs_isa_probe(device_t, cfdata_t, void *);
 void	cs_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cs_isa, sizeof(struct cs_softc),
+CFATTACH_DECL(cs_isa, sizeof(struct cs_softc_isa),
     cs_isa_probe, cs_isa_attach, NULL, NULL);
 
 int
