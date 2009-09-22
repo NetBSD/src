@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.4 2009/09/22 14:55:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.4 2009/09/22 14:55:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,11 +68,11 @@ static void	cs_check_eeprom(struct cs_softc *sc);
 static int	cs_mainbus_match(struct device *, struct cfdata *, void *);
 static void	cs_mainbus_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(cs_mainbus, sizeof(struct cs_softc),
+CFATTACH_DECL_NEW(cs_mainbus, sizeof(struct cs_softc),
     cs_mainbus_match, cs_mainbus_attach, NULL, NULL);
 
 int
-cs_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+cs_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -238,21 +238,22 @@ cs_mem_write_region_2(struct cs_softc *sc, bus_size_t offs,
 }
 
 void
-cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
+cs_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct cs_softc *sc = (struct cs_softc *)self;
+	struct cs_softc *sc = device_private(self);
 	struct mainbus_attach_args *maa = aux;
 	int media[1] = { IFM_ETHER | IFM_10_T };
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = maa->mb_bt;
 	sc->sc_memt = maa->mb_bt;
 	sc->sc_irq = maa->mb_irq;
 
 	if (bus_space_map(sc->sc_iot, PMPPC_CS_IO, CS8900_IOSIZE*4,
 			  0, &sc->sc_ioh)) {
-		printf("%s: failed to map io\n", self->dv_xname);
+		printf("%s: failed to map io\n", device_xname(self));
 		return;
 	}
 
@@ -261,7 +262,7 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = intr_establish(sc->sc_irq, IST_LEVEL, IPL_NET, cs_intr, sc);
 	if (!sc->sc_ih) {
 		printf("%s: unable to establish interrupt\n",
-		       self->dv_xname);
+		    device_xname(self));
 		goto fail;
 	}
 
@@ -285,7 +286,7 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Use half duplex 10baseT. */
 	if (cs_attach(sc, NULL, media, 1, IFM_ETHER | IFM_10_T)) {
-		printf("%s: unable to attach\n", self->dv_xname);
+		printf("%s: unable to attach\n", device_xname(self));
 		goto fail;
 	}
 
@@ -348,7 +349,8 @@ cs_wr_eeprom(struct cs_softc *sc, uint16_t offset, uint16_t data)
 
 	/* Check to make sure EEPROM is ready. */
 	if (!cs_wait_eeprom_ready(sc)) {
-		printf("%s: write EEPROM not ready\n", sc->sc_dev.dv_xname);
+		printf("%s: write EEPROM not ready\n",
+		    device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -357,7 +359,8 @@ cs_wr_eeprom(struct cs_softc *sc, uint16_t offset, uint16_t data)
 
 	/* Wait for WRITE_ENABLE command to complete. */
 	if (!cs_wait_eeprom_ready(sc)) {
-		printf("%s: EEPROM WRITE_ENABLE timeout", sc->sc_dev.dv_xname);
+		printf("%s: EEPROM WRITE_ENABLE timeout",
+		    device_xname(sc->sc_dev));
 	} else {
 		/* Write data into EEPROM_DATA register. */
 		cs_writereg(sc, PKTPG_EEPROM_DATA, data);
@@ -367,7 +370,7 @@ cs_wr_eeprom(struct cs_softc *sc, uint16_t offset, uint16_t data)
 		/* Wait for WRITE_REGISTER command to complete. */
 		if (!cs_wait_eeprom_ready(sc)) {
 			printf("%s: EEPROM WRITE_REGISTER timeout\n",
-			       sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		} 
 	}
 
@@ -376,7 +379,7 @@ cs_wr_eeprom(struct cs_softc *sc, uint16_t offset, uint16_t data)
 
 	/* Wait for WRITE_DISABLE command to complete. */
 	if (!cs_wait_eeprom_ready(sc)) {
-		printf("%s: WRITE_DISABLE timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: WRITE_DISABLE timeout\n", device_xname(sc->sc_dev));
 	}
 }
 
@@ -385,13 +388,13 @@ cs_rd_eeprom(struct cs_softc *sc, uint16_t offset)
 {
 
 	if (!cs_wait_eeprom_ready(sc)) {
-		printf("%s: read EEPROM not ready\n", sc->sc_dev.dv_xname);
+		printf("%s: read EEPROM not ready\n", device_xname(sc->sc_dev));
 		return 0;
 	}
 	cs_writereg(sc, PKTPG_EEPROM_CMD, EEPROM_CMD_READ | offset);
 
 	if (!cs_wait_eeprom_ready(sc)) {
-		printf("%s: EEPROM_READ timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: EEPROM_READ timeout\n", device_xname(sc->sc_dev));
 		return 0;
 	}
 	return cs_readreg(sc, PKTPG_EEPROM_DATA);
@@ -410,10 +413,10 @@ cs_check_eeprom(struct cs_softc *sc)
 	 */
 	if (cs_readreg(sc, PKTPG_SELF_ST) & SELF_ST_EEP_OK) {
 		printf("%s: EEPROM OK, skipping initialization\n", 
-		       sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
-	printf("%s: updating EEPROM\n", sc->sc_dev.dv_xname);
+	printf("%s: updating EEPROM\n", device_xname(sc->sc_dev));
 
 	/*
 	 * Calculate the size (in bytes) of the default config array and write
