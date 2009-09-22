@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.24 2009/09/22 12:56:06 tsutsui Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.25 2009/09/22 13:18:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.24 2009/09/22 12:56:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.25 2009/09/22 13:18:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.24 2009/09/22 12:56:06 tsutsui Exp $")
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe(device_t, cfdata_t, void *);
+static int	aic_isa_probe(device_t, cfdata_t, void *);
+static void	aic_isa_attach(device_t, device_t, void *);
 
 struct aic_isa_softc {
 	struct	aic_softc sc_aic;	/* real "aic" softc */
