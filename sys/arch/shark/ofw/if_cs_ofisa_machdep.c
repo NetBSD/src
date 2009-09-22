@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.7 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.8 2009/09/22 15:04:41 tsutsui Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.7 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.8 2009/09/22 15:04:41 tsutsui Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.7 2009/03/14 21:04:16 dsl 
 #ifdef COMPAT_OLD_OFW
 
 int
-cs_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
+cs_ofisa_md_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	char type[64];
@@ -98,7 +98,8 @@ cs_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 int
-cs_ofisa_md_reg_fixup(struct device *parent, struct device *self, void *aux, struct ofisa_reg_desc *descp, int ndescs, int ndescsfilled)
+cs_ofisa_md_reg_fixup(device_t parent, device_t self, void *aux,
+    struct ofisa_reg_desc *descp, int ndescs, int ndescsfilled)
 {
 
 	if (1) {		/* XXX old firmware compat enabled */
@@ -122,7 +123,8 @@ cs_ofisa_md_reg_fixup(struct device *parent, struct device *self, void *aux, str
 }
 
 int
-cs_ofisa_md_intr_fixup(struct device *parent, struct device *self, void *aux, struct ofisa_intr_desc *descp, int ndescs, int ndescsfilled)
+cs_ofisa_md_intr_fixup(device_t parent, device_t self, void *aux,
+    struct ofisa_intr_desc *descp, int ndescs, int ndescsfilled)
 {
 
 	if (1)			/* XXX old firmware compat enabled */
@@ -132,7 +134,8 @@ cs_ofisa_md_intr_fixup(struct device *parent, struct device *self, void *aux, st
 }
 
 int *
-cs_ofisa_md_media_fixup(struct device *parent, struct device *self, void *aux, int *media, int *nmediap, int *defmediap)
+cs_ofisa_md_media_fixup(device_t parent, device_t self, void *aux, int *media,
+    int *nmediap, int *defmediap)
 {
 
 	if (1) {		/* XXX old firmware compat enabled */
@@ -150,7 +153,8 @@ cs_ofisa_md_media_fixup(struct device *parent, struct device *self, void *aux, i
 }
 
 int
-cs_ofisa_md_dma_fixup(struct device *parent, struct device *self, void *aux, struct ofisa_dma_desc *descp, int ndescs, int ndescsfilled)
+cs_ofisa_md_dma_fixup(device_t parent, device_t self, void *aux,
+    struct ofisa_dma_desc *descp, int ndescs, int ndescsfilled)
 {
 	struct ofisa_attach_args *aa = aux;
 
@@ -164,7 +168,7 @@ cs_ofisa_md_dma_fixup(struct device *parent, struct device *self, void *aux, str
 #endif /* COMPAT_OLD_OFW */
 
 int
-cs_ofisa_md_cfgflags_fixup(struct device *parent, struct device *self, void *aux)
+cs_ofisa_md_cfgflags_fixup(device_t parent, device_t self, void *aux)
 {
 
 	return (CFGFLG_USE_SA|CFGFLG_IOCHRDY|CFGFLG_NOT_EEPROM);
