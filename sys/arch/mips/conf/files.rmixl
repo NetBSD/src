@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.2 2009/09/15 02:32:01 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.3 2009/09/22 06:58:20 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -16,5 +16,5 @@ file    arch/mips/rmi/rmixl_eb_space.c		obio
 # NS16550 compatible serial ports
 attach com at obio with rmixl_com
 file	arch/mips/rmi/rmixl_com.c		rmixl_com
-defparam opt_com.h				CONSADDR CONSPEED CONMODE
+defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 
