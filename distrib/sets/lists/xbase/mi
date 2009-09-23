@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.79 2009/09/07 19:34:30 mrg Exp $
+# $NetBSD: mi,v 1.80 2009/09/23 09:18:32 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2297,7 +2297,6 @@
 ./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr		base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr/jp		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sharp			-obsolete-	obsolete
-./usr/X11R7/lib/X11/xkb/symbols/shift			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/shift			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/si			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sk			-unknown-	xorg

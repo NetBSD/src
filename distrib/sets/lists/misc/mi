@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 2009/06/23 17:58:23 tron Exp $
+# $NetBSD: mi,v 1.161 2009/09/23 09:18:32 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -359,7 +359,6 @@
 ./usr/share/doc/html/postfix/postqueue.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmqpd.8.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/qshape.1.html	misc-postfix-htmldoc	postfix,doc
