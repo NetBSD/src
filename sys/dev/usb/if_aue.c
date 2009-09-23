@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.114 2009/09/04 18:10:08 dyoung Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.115 2009/09/23 19:07:19 plunky Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.114 2009/09/04 18:10:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.115 2009/09/23 19:07:19 plunky Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -742,9 +742,10 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	sc->aue_dev = self;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

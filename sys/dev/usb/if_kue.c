@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.65 2009/09/04 18:10:08 dyoung Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.66 2009/09/23 19:07:19 plunky Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.65 2009/09/04 18:10:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.66 2009/09/23 19:07:19 plunky Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -429,8 +429,10 @@ USB_ATTACH(kue)
 
 	sc->kue_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
