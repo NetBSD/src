@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.42 2009/05/25 11:38:49 nisimura Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.43 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.42 2009/05/25 11:38:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.43 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,13 @@ USB_ATTACH(uftdi)
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
 	if (err) {
@@ -196,11 +203,6 @@ USB_ATTACH(uftdi)
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;

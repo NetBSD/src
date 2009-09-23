@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.13 2009/09/04 11:26:54 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.14 2009/09/23 19:07:19 plunky Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.13 2009/09/04 11:26:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.14 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,13 +185,15 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
-	char *devinfo;
+	char *devinfop;
 	int i;
 
-	devinfo = usbd_devinfo_alloc(dev, 0);
 	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfo);
-	usbd_devinfo_free(devinfo);
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;

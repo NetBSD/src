@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.25 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.26 2009/09/23 19:07:19 plunky Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.25 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.26 2009/09/23 19:07:19 plunky Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -189,8 +189,10 @@ USB_ATTACH(udav)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

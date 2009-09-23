@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.36 2009/08/30 18:35:53 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.37 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.36 2009/08/30 18:35:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.37 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -343,8 +343,10 @@ USB_ATTACH(ubt)
 	MBUFQ_INIT(&sc->sc_aclwr_queue);
 	MBUFQ_INIT(&sc->sc_scowr_queue);
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

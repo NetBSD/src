@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.28 2009/09/04 18:10:08 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.29 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.28 2009/09/04 18:10:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.29 2009/09/23 19:07:19 plunky Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -426,15 +426,18 @@ axe_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	int i, s;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
+	sc->axe_dev = self;
+
 	aprint_naive("\n");
 	aprint_normal("\n");
-	sc->axe_dev = self;
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-		usbd_devinfo_free(devinfop);
 		return;
 	}
 
@@ -445,7 +448,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-		usbd_devinfo_free(devinfop);
 		return;
 	}
 
@@ -454,9 +456,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	sc->axe_vendor = uaa->vendor;
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
-
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
