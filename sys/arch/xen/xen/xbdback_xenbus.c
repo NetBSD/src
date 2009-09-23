@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.24 2009/01/21 09:55:53 cegger Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.25 2009/09/23 17:48:55 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.24 2009/01/21 09:55:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.25 2009/09/23 17:48:55 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,31 @@ typedef enum {CONNECTED, DISCONNECTING, DISCONNECTED} xbdback_state_t;
  * it's finished, set xbdi->xbdi_cont (see below) to NULL and the return
  * doesn't matter.  Otherwise it's passed as the second parameter to
  * the new value of xbdi->xbdi_cont.
+ * Here's how the call graph is supposed to be for a single I/O:
+ * xbdback_co_main()   
+ *        |           |-> xbdback_co_cache_doflush() -> stall
+ *        |          xbdback_co_cache_flush2() <-  xbdback_co_flush_done() <-
+ *        |                              |                                   |
+ *        |              |-> xbdback_co_cache_flush() -> xbdback_co_flush() --
+ * xbdback_co_main_loop() -> xbdback_co_main_done() -> xbdback_co_flush()
+ *        |                              |                      |
+ *        |                  xbdback_co_main_done2() <- xbdback_co_flush_done()
+ *        |                              |
+ *        |                  xbdback_co_main() or NULL
+ *   xbdback_co_io() -> xbdback_co_main_incr() -> xbdback_co_main_loop()
+ *        |
+ *   xbdback_co_io_gotreq() -> xbdback_co_flush() -> xbdback_co_flush()
+ *        |                |                                |
+ *   xbdback_co_io_loop() ---        <---------------- xbdback_co_flush_done()
+ *        |                 |
+ *   xbdback_co_io_gotio()  |
+ *        |                 |
+ *   xbdback_co_io_gotio2()<-
+ *        |              |-------->  xbdback_co_io_gotfrag
+ *        |                              |
+ *   xbdback_co_io_gotfrag2() <----------|
+ *        |                 |--> xbdback_co_io_loop()
+ *   xbdback_co_main_incr()
  */
 typedef void *(* xbdback_cont_t)(struct xbdback_instance *, void *);
 
@@ -144,6 +169,7 @@ struct xbdback_instance {
 	grant_ref_t xbdi_thisgrt, xbdi_lastgrt; /* grants */
 	/* other state */
 	int xbdi_same_page; /* are we merging two segments on the same page? */
+	uint xbdi_pendingreqs; /* number of I/O in fly */
 };
 /* Manipulation of the above reference count. */
 /* XXXjld@panix.com: not MP-safe, and move the i386 asm elsewhere. */
@@ -180,16 +206,35 @@ struct xbdback_request {
  */
 struct xbdback_io {
 	struct work xio_work;
-	struct buf xio_buf; /* our I/O */
 	/* The instance pointer is duplicated for convenience. */
 	struct xbdback_instance *xio_xbdi; /* our xbd instance */
-	SLIST_HEAD(, xbdback_fragment) xio_rq; /* xbd requests involved */
-	vaddr_t xio_vaddr; /* the virtual address to map the request at */
-	grant_ref_t xio_gref[XENSHM_MAX_PAGES_PER_REQUEST]; /* grants to map */
-	grant_handle_t xio_gh[XENSHM_MAX_PAGES_PER_REQUEST];/* grants release */
-	uint16_t xio_nrma; /* number of guest pages */
-	uint16_t xio_mapped;
+	uint8_t xio_operation;
+	union {
+		struct {
+			struct buf xio_buf; /* our I/O */
+			/* xbd requests involved */
+			SLIST_HEAD(, xbdback_fragment) xio_rq;
+			/* the virtual address to map the request at */
+			vaddr_t xio_vaddr;
+			/* grants to map */
+			grant_ref_t xio_gref[XENSHM_MAX_PAGES_PER_REQUEST];
+			/* grants release */
+			grant_handle_t xio_gh[XENSHM_MAX_PAGES_PER_REQUEST];
+			uint16_t xio_nrma; /* number of guest pages */
+			uint16_t xio_mapped;
+		} xio_rw;
+		uint64_t xio_flush_id;
+	} u;
 };
+#define xio_buf		u.xio_rw.xio_buf
+#define xio_rq		u.xio_rw.xio_rq
+#define xio_vaddr	u.xio_rw.xio_vaddr
+#define xio_gref	u.xio_rw.xio_gref
+#define xio_gh		u.xio_rw.xio_gh
+#define xio_nrma	u.xio_rw.xio_nrma
+#define xio_mapped	u.xio_rw.xio_mapped
+
+#define xio_flush_id	u.xio_flush_id
 
 /*
  * Rather than have the xbdback_io keep an array of the
@@ -235,6 +280,10 @@ static void *xbdback_co_main_loop(struct xbdback_instance *, void *);
 static void *xbdback_co_main_incr(struct xbdback_instance *, void *);
 static void *xbdback_co_main_done(struct xbdback_instance *, void *);
 static void *xbdback_co_main_done2(struct xbdback_instance *, void *);
+
+static void *xbdback_co_cache_flush(struct xbdback_instance *, void *);
+static void *xbdback_co_cache_flush2(struct xbdback_instance *, void *);
+static void *xbdback_co_cache_doflush(struct xbdback_instance *, void *);
 
 static void *xbdback_co_io(struct xbdback_instance *, void *);
 static void *xbdback_co_io_gotreq(struct xbdback_instance *, void *);
@@ -742,6 +791,13 @@ again:
 		    xbusd->xbusd_path, err);
 		goto abort;
 	}
+	err = xenbus_printf(xbt, xbusd->xbusd_path, "feature-flush-cache",
+	    "%u", 1);
+	if (err) {
+		printf("xbdback: failed to write %s/feature-flush-cache: %d\n",
+		    xbusd->xbusd_path, err);
+		goto abort;
+	}
 	err = xenbus_transaction_end(xbt, 0);
 	if (err == EAGAIN)
 		goto again;
@@ -861,6 +917,10 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 		case BLKIF_OP_WRITE:
 			xbdi->xbdi_cont = xbdback_co_io;
 			break;
+		case BLKIF_OP_FLUSH_DISKCACHE:
+			xbdi_get(xbdi);
+			xbdi->xbdi_cont = xbdback_co_cache_flush;
+			break;
 		default:
 			printf("xbdback_evthandler domain %d: unknown "
 			    "operation %d\n", xbdi->xbdi_domid, req->operation);
@@ -908,6 +968,50 @@ xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
 	else
 		xbdi->xbdi_cont = NULL;
 	return xbdi;
+}
+
+static void *
+xbdback_co_cache_flush(struct xbdback_instance *xbdi, void *obj)
+{
+	(void)obj;
+	XENPRINTF(("xbdback_co_cache_flush %p %p\n", xbdi, obj));
+	if (xbdi->xbdi_io != NULL) {
+		xbdi->xbdi_cont = xbdback_co_flush;
+		xbdi->xbdi_cont_aux = xbdback_co_cache_flush2;
+	} else {
+		xbdi->xbdi_cont = xbdback_co_cache_flush2;
+	}
+	return xbdi;
+}
+
+static void *
+xbdback_co_cache_flush2(struct xbdback_instance *xbdi, void *obj)
+{
+	(void)obj;
+	XENPRINTF(("xbdback_co_cache_flush2 %p %p\n", xbdi, obj));
+	if (xbdi->xbdi_pendingreqs > 0) {
+		/* event or iodone will restart processing */
+		xbdi->xbdi_cont = NULL;
+		return NULL;
+	}
+	xbdi->xbdi_cont = xbdback_co_cache_doflush;
+	return xbdback_pool_get(&xbdback_io_pool, xbdi);
+}
+
+static void *
+xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
+{
+	struct xbdback_io *xbd_io;
+
+	XENPRINTF(("xbdback_co_cache_doflush %p %p\n", xbdi, obj));
+	xbd_io = xbdi->xbdi_io = obj;
+	xbd_io->xio_xbdi = xbdi;
+	xbd_io->xio_operation = xbdi->xbdi_xen_req.operation;
+	xbd_io->xio_flush_id = xbdi->xbdi_xen_req.id;
+	workqueue_enqueue(xbdback_workqueue, &xbdi->xbdi_io->xio_work, NULL);
+	/* xbdback_do_io() will advance req pointer and restart processing */
+	xbdi->xbdi_cont = xbdback_co_cache_doflush;
+	return NULL;
 }
 
 static void *
@@ -1051,7 +1155,6 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 		if (xbdi->xbdi_io == NULL) {
 			xbdi->xbdi_cont = xbdback_co_io_gotio;
 			xio = xbdback_pool_get(&xbdback_io_pool, xbdi);
-			buf_init(&xio->xio_buf);
 			return xio;
 		} else {
 			xbdi->xbdi_cont = xbdback_co_io_gotio2;
@@ -1073,12 +1176,15 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	int buf_flags;
 
 	xbdi_get(xbdi);
+	atomic_inc_uint(&xbdi->xbdi_pendingreqs);
 	
 	xbd_io = xbdi->xbdi_io = obj;
+	buf_init(&xbd_io->xio_buf);
 	xbd_io->xio_xbdi = xbdi;
 	SLIST_INIT(&xbd_io->xio_rq);
 	xbd_io->xio_nrma = 0;
 	xbd_io->xio_mapped = 0;
+	xbd_io->xio_operation = xbdi->xbdi_xen_req.operation;
 
 	start_offset = xbdi->xbdi_this_fs * VBD_BSIZE;
 	
@@ -1208,6 +1314,33 @@ xbdback_do_io(struct work *wk, void *dummy)
 	struct xbdback_io *xbd_io = (void *)wk;
 	KASSERT(&xbd_io->xio_work == wk);
 
+	if (xbd_io->xio_operation == BLKIF_OP_FLUSH_DISKCACHE) {
+		int error;
+		struct xbdback_instance *xbdi = xbd_io->xio_xbdi;
+
+		error = VOP_IOCTL(xbdi->xbdi_vp, DIOCCACHESYNC, NULL, FWRITE,
+		    kauth_cred_get());
+		if (error) {
+			aprint_error("xbdback %s: DIOCCACHESYNC returned %d\n",
+			    xbdi->xbdi_xbusd->xbusd_path, error);
+			 if (error == EOPNOTSUPP || error == ENOTTY)
+				error = BLKIF_RSP_EOPNOTSUPP;
+			 else
+				error = BLKIF_RSP_ERROR;
+		} else
+			error = BLKIF_RSP_OKAY;
+		xbdback_send_reply(xbdi, xbd_io->xio_flush_id,
+		    xbd_io->xio_operation, error);
+		xbdback_pool_put(&xbdback_io_pool, xbd_io);
+		xbdi_put(xbdi);
+		/* handle next IO */
+		xbdi->xbdi_io = NULL;
+		xbdi->xbdi_cont = xbdback_co_main_incr;
+		xbdback_trampoline(xbdi, xbdi);
+		return;
+	}
+
+	/* should be read or write */
 	xbd_io->xio_buf.b_data =
 	    (void *)((vaddr_t)xbd_io->xio_buf.b_data + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
@@ -1295,8 +1428,14 @@ xbdback_iodone(struct buf *bp)
 		xbdback_pool_put(&xbdback_request_pool, xbd_req);
 	}
 	xbdi_put(xbdi);
+	atomic_dec_uint(&xbdi->xbdi_pendingreqs);
 	buf_destroy(&xbd_io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
+	if (xbdi->xbdi_cont == NULL) {
+		/* check if there is more work to do */
+		xbdi->xbdi_cont = xbdback_co_main;
+		xbdback_trampoline(xbdi, xbdi);
+	}
 }
 
 /*
