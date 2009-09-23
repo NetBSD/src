@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.33 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: if_url.c,v 1.34 2009/09/23 19:07:19 plunky Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.33 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.34 2009/09/23 19:07:19 plunky Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -190,8 +190,10 @@ USB_ATTACH(url)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

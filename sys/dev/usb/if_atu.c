@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.32 2009/09/04 18:10:08 dyoung Exp $ */
+/*	$NetBSD: if_atu.c,v 1.33 2009/09/23 19:07:19 plunky Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.32 2009/09/04 18:10:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.33 2009/09/23 19:07:19 plunky Exp $");
 
 #include "bpfilter.h"
 
@@ -1182,9 +1182,10 @@ atu_attach(device_t parent, device_t self, void *aux)
 	sc->atu_dev = self;
 	sc->sc_state = ATU_S_UNCONFIG;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
