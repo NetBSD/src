@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1312 2009/09/17 08:55:19 sborrill Exp $
+#	$NetBSD: mi,v 1.1313 2009/09/23 09:18:31 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1277,8 +1277,6 @@
 ./usr/include/gssapi/gssapi_krb5.h		comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi_spnego.h		comp-krb5-include	kerberos
 ./usr/include/hesiod.h				comp-c-include
-./usr/include/dev/pci/hdaudio/hdaudioio.h	comp-c-include
-./usr/include/dev/pci/hdaudio/hdaudioreg.h	comp-c-include
 ./usr/include/histedit.h			comp-c-include
 ./usr/include/history.h				comp-obsolete		obsolete
 ./usr/include/iconv.h				comp-c-include
@@ -2335,7 +2333,6 @@
 ./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
 ./usr/lib/libcrypto_mdc2_g.a			-unknown-		debuglib,crypto_mdc2
 ./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		profile,crypto_mdc2
-./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
 ./usr/lib/libcrypto_rc5_g.a			-unknown-		debuglib,crypto_rc5
