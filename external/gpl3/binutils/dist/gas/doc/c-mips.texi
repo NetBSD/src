@@ -606,8 +606,8 @@ instructions are accepted) or the command-line options
 (@samp{-msoft-float} and @samp{-mhard-float}).
 
 @cindex Disable single-precision floating-point operations
-@kindex @code{.set softfloat}
-@kindex @code{.set hardfloat}
+@kindex @code{.set singlefloat}
+@kindex @code{.set doublefloat}
 The directives @code{.set singlefloat} and @code{.set doublefloat}
 provide finer control of disabling and enabling double-precision
 float-point operations.  These directives always override the default
