@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.13 2008/07/08 08:47:32 uebayasi Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.14 2009/09/23 19:07:19 plunky Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.13 2008/07/08 08:47:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.14 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,13 @@ USB_ATTACH(uipaq)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
@@ -178,11 +185,6 @@ USB_ATTACH(uipaq)
 		    devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
 

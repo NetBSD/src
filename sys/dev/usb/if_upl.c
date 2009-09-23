@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.33 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.34 2009/09/23 19:07:19 plunky Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.33 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.34 2009/09/23 19:07:19 plunky Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -232,8 +232,10 @@ USB_ATTACH(upl)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

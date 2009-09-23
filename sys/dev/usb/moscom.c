@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.1 2009/06/19 01:16:23 mrg Exp $	*/
+/*	$NetBSD: moscom.c,v 1.2 2009/09/23 19:07:19 plunky Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.1 2009/06/19 01:16:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.2 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,10 @@ USB_ATTACH(moscom)
 	usbd_status error;
 	int i;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

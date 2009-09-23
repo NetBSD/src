@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.9 2009/01/05 17:22:18 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.10 2009/09/23 19:07:19 plunky Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.9 2009/01/05 17:22:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.10 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,35 +232,35 @@ USB_ATTACH(uslsa)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname;
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
 
 	sc->sc_dev = self;
-	devname = USBDEVNAME(sc->sc_dev);
 
 	DPRINTFN(10, ("\nuslsa_attach: sc=%p\n", sc));
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, USLSA_CONFIG_INDEX, 1);
 	if (err) {
-		aprint_error("\n%s: failed to set configuration, err=%s\n",
-	 	       devname, usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration, err=%s\n",
+		   usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, USLSA_IFACE_INDEX, &iface);
 	if (err) {
-		aprint_error("\n%s: failed to get interface, err=%s\n",
-		       devname, usbd_errstr(err));
+		aprint_error_dev(self, "failed to get interface, err=%s\n",
+		   usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

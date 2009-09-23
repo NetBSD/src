@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.15 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.16 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.15 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.16 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,17 +113,19 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	int data_ifcno;
 	int i;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uaa->iface;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
+
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
 	/* Get the data interface no. */

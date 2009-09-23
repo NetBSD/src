@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.115 2009/03/09 15:59:33 uebayasi Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.116 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.115 2009/03/09 15:59:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.116 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,13 +390,14 @@ USB_ATTACH(uaudio)
 	int i, j, found;
 
 	sc->sc_dev = self;
+	sc->sc_udev = uaa->device;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	aprint_normal(": %s\n", devinfop);
-	aprint_naive("\n");
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
-
-	sc->sc_udev = uaa->device;
 
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	if (cdesc == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.102 2009/03/20 20:47:43 drochner Exp $	*/
+/*	$NetBSD: ugen.c,v 1.103 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.102 2009/03/20 20:47:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.103 2009/09/23 19:07:19 plunky Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -225,8 +225,10 @@ USB_ATTACH(ugen)
 	usbd_status err;
 	int i, dir, conf;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

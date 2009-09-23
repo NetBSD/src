@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.10 2008/05/24 16:40:58 cube Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.11 2009/09/23 19:07:19 plunky Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.10 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.11 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,12 @@ USB_ATTACH(xboxcontroller)
 	usb_endpoint_descriptor_t *ed;
 	char *devinfo;
 
-	devinfo = usbd_devinfo_alloc(dev, 0);
 	sc->sc_dev = self;
-	USB_ATTACH_SETUP;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfo = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfo);
 	usbd_devinfo_free(devinfo);
 

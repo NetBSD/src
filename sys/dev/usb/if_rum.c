@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.27 2009/08/02 20:55:45 tshiozak Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.28 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.27 2009/08/02 20:55:45 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.28 2009/09/23 19:07:19 plunky Exp $");
 
 #include "bpfilter.h"
 
@@ -311,8 +311,10 @@ USB_ATTACH(rum)
 	sc->sc_udev = uaa->device;
 	sc->sc_flags = 0;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

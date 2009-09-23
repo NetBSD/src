@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.3 2008/05/26 03:20:56 jmcneill Exp $	*/
+/*	$NetBSD: uberry.c,v 1.4 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.3 2008/05/26 03:20:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.4 2009/09/23 19:07:19 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,10 @@ USB_ATTACH(uberry)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.133 2009/09/16 22:44:19 dyoung Exp $	*/
+/*	$NetBSD: umass.c,v 1.134 2009/09/23 19:07:19 plunky Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.133 2009/09/16 22:44:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.134 2009/09/23 19:07:19 plunky Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -310,9 +310,11 @@ umass_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfop);
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;

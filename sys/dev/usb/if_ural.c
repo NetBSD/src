@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.31 2008/11/07 00:20:13 dyoung Exp $ */
+/*	$NetBSD: if_ural.c,v 1.32 2009/09/23 19:07:19 plunky Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.31 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.32 2009/09/23 19:07:19 plunky Exp $");
 
 #include "bpfilter.h"
 
@@ -377,8 +377,10 @@ USB_ATTACH(ural)
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
