@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.14 2004/05/10 16:47:11 drochner Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.15 2009/09/24 20:38:53 roy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.14 2004/05/10 16:47:11 drochner Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.15 2009/09/24 20:38:53 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,10 +64,6 @@ fgetln(fp, lenp)
 	FILE *fp;
 	size_t *lenp;
 {
-	char *cp;
-
-	FLOCKFILE(fp);
-	cp = __fgetstr(fp, lenp, '\n');
-	FUNLOCKFILE(fp);
-	return cp;
+	
+	return __fgetstr(fp, lenp, '\n');
 }

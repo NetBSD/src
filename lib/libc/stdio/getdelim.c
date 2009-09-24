@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.3 2009/07/14 18:29:41 roy Exp $ */
+/* $NetBSD: getdelim.c,v 1.4 2009/09/24 20:38:53 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.3 2009/07/14 18:29:41 roy Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.4 2009/09/24 20:38:53 roy Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 
@@ -47,12 +49,15 @@ __RCSID("$NetBSD: getdelim.c,v 1.3 2009/07/14 18:29:41 roy Exp $");
  * without the need for a realloc. */
 #define MINBUF	128
 
+/* This private function allows strings of upto SIZE_MAX - 2
+ * and returns 0 on EOF, both of which are disallowed by POSIX.
+ * Maybe this should be named fgetdelim and proposed to the OpenGroup....*/
 ssize_t
-getdelim(char **__restrict buf, size_t *__restrict buflen,
+__getdelim(char **__restrict buf, size_t *__restrict buflen,
     int sep, FILE *__restrict fp)
 {
 	unsigned char *p;
-	size_t len, off, newlen;
+	size_t len, newlen, off;
 	char *newb;
 
 	_DIAGASSERT(fp != NULL);
@@ -72,8 +77,7 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 	for (;;) {
 		/* If the input buffer is empty, refill it */
 		if (fp->_r <= 0 && __srefill(fp)) {
-			/* POSIX requires we return -1 on EOF */
-			if (off == 0 || __sferror(fp))
+			if (__sferror(fp))
 				goto error;
 			break;
 		}
@@ -85,13 +89,12 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		else
 			len = (p - fp->_p) + 1;
 
-		newlen = off + len;
-		/* Ensure that the resultant buffer length fits in ssize_t */
-		if (newlen > (size_t)SSIZE_MAX) {
+		newlen = off + len + 1;
+		/* Ensure we can handle it */
+		if (newlen < off || newlen > SIZE_MAX - 2) {
 			errno = EOVERFLOW;
 			goto error;
 		}
-		newlen++; /* reserve space for the NULL terminator */
 		if (newlen > *buflen) {
 			if (newlen < MINBUF)
 				newlen = MINBUF;
@@ -132,4 +135,22 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 error:
 	FUNLOCKFILE(fp);
 	return -1;
+}
+
+ssize_t
+getdelim(char **__restrict buf, size_t *__restrict buflen,
+    int sep, FILE *__restrict fp)
+{
+	ssize_t len;
+
+	len = __getdelim(buf, buflen, sep, fp);
+	if (len == 0) {
+		/* POSIX requires that we return -1 on EOF */
+		return -1;
+	} else if (len < -1) {
+		/* POSIX requires no string larger than SSIZE_MAX */
+		errno = EOVERFLOW;
+		return -1;
+	}
+	return len;
 }
