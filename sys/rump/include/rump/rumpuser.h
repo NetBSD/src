@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.26 2009/09/21 15:29:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.27 2009/09/24 21:30:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -184,5 +184,9 @@ enum rumpuser_getnametype { RUMPUSER_SOCKNAME, RUMPUSER_PEERNAME };
 int  rumpuser_net_getname(int, struct sockaddr *, int *,
 			      enum rumpuser_getnametype, int *);
 int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
+
+/* rumpuser dynloader */
+
+void rumpuser_dl_module_bootstrap(void);
 
 #endif /* _RUMP_RUMPUSER_H_ */
