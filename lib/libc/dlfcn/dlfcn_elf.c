@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.5 2004/07/18 17:26:19 thorpej Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.6 2009/09/24 21:21:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.5 2004/07/18 17:26:19 thorpej Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.6 2009/09/24 21:21:33 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -37,12 +37,14 @@ __RCSID("$NetBSD: dlfcn_elf.c,v 1.5 2004/07/18 17:26:19 thorpej Exp $");
 #undef dlsym
 #undef dlerror
 #undef dladdr
+#undef dfinfo
 
 #define	dlopen		___dlopen
 #define	dlclose		___dlclose
 #define	dlsym		___dlsym
 #define	dlerror		___dlerror
 #define	dladdr		___dladdr
+#define	dlinfo		___dlinfo
 
 #define ELFSIZE ARCH_ELFSIZE
 #include "rtld.h"
@@ -53,12 +55,14 @@ __weak_alias(dlclose,___dlclose)
 __weak_alias(dlsym,___dlsym)
 __weak_alias(dlerror,___dlerror)
 __weak_alias(dladdr,___dladdr)
+__weak_alias(dlinfo,___dlinfo)
 
 __weak_alias(__dlopen,___dlopen)
 __weak_alias(__dlclose,___dlclose)
 __weak_alias(__dlsym,___dlsym)
 __weak_alias(__dlerror,___dlerror)
 __weak_alias(__dladdr,___dladdr)
+__weak_alias(__dlinfo,___dlinfo)
 #endif
 
 /*
@@ -111,4 +115,12 @@ dladdr(const void *addr, Dl_info *dli)
 {
 
 	return 0;
+}
+
+/*ARGSUSED*/
+int
+dlinfo(void *handle, int req, void *v)
+{
+
+	return -1;
 }

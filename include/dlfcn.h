@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.19 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.20 2009/09/24 21:21:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ void	*dlsym(void * __restrict, const char * __restrict);
 #if defined(_NETBSD_SOURCE)
 int	dladdr(const void * __restrict, Dl_info * __restrict);
 int	dlctl(void *, int, void *);
+int	dlinfo(void *, int, void *);
 #endif
 __aconst char *dlerror(void);
 __END_DECLS
@@ -87,5 +88,24 @@ __END_DECLS
 #define DL_GETLOADADDR	x
 #endif /* 0 */
 #endif /* defined(_NETBSD_SOURCE) */
+
+/*
+ * dlinfo() commands
+ *
+ * From Solarisa: http://docs.sun.com/app/docs/doc/816-5168/dlinfo-3c?a=view
+ */
+#if defined(_NETBSD_SOURCE)
+#define RTLD_DI_LINKMAP		3
+#if 0
+#define RTLD_DI_ARGSINFO	1
+#define RTLD_DI_CONFIGADDR	2
+#define RTLD_DI_LMID		4
+#define RTLD_DI_SERINFO		5
+#define RTLD_DI_SERINFOSIZE	6
+#define RTLD_DI_ORIGIN		7
+#define RTLD_DI_GETSIGNAL	8
+#define RTLD_DI_SETSIGNAL	9
+#endif
+#endif /* _NETBSD_SOURCE */
 
 #endif /* !defined(_DLFCN_H_) */
