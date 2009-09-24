@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.2 2009/01/31 06:08:28 lukem Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.3 2009/09/24 20:38:53 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,12 +31,16 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.2 2009/01/31 06:08:28 lukem Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.3 2009/09/24 20:38:53 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <wchar.h>
 #include "reentrant.h"
 #include "local.h"
@@ -44,6 +48,37 @@ __RCSID("$NetBSD: fgetwln.c,v 1.2 2009/01/31 06:08:28 lukem Exp $");
 #ifdef __weak_alias
 __weak_alias(fgetwln,_fgetwln)
 #endif
+
+/*
+ * Expand the line buffer.  Return -1 on error.
+#ifdef notdef
+ * The `new size' does not account for a terminating '\0',
+ * so we add 1 here.
+#endif
+ */
+static int
+__slbexpand(FILE *fp, size_t newsize)
+{
+	void *p;
+
+#ifdef notdef
+	++newsize;
+#endif
+	_DIAGASSERT(fp != NULL);
+
+	/* fp->_lb._size is an int ..... */
+	if (newsize > INT_MAX) {
+		errno = EOVERFLOW;
+		return (-1);
+	}
+	if ((size_t)fp->_lb._size >= newsize)
+		return (0);
+	if ((p = realloc(fp->_lb._base, newsize)) == NULL)
+		return (-1);
+	fp->_lb._base = p;
+	fp->_lb._size = newsize;
+	return (0);
+}
 
 wchar_t *
 fgetwln(FILE * __restrict fp, size_t *lenp)
