@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2009/09/20 19:49:09 abs Exp $
+#	$NetBSD: Makefile,v 1.33 2009/09/24 21:04:46 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	floppy
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile termcap.src \
+		dot.profile \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.4 2009/09/20 19:49:09 abs Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.5 2009/09/24 21:04:46 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ LISTS=		${.CURDIR}/list ${OFPPCCOMMON}/list.ramdisk
 MTREECONF=	${DISTRIBDIR}/common/mtree.common ${.CURDIR}/../common/mtree.ramdisk
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
-		dot.profile termcap.mini \
+		dot.profile ${DISTRIBDIR}/common/termcap \
 		${DESTDIR}/usr/mdec/ofwboot \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
