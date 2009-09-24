@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: swap2,v 1.7 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: swap2,v 1.8 2009/09/24 16:45:48 apb Exp $
 #
 
 # PROVIDE: nonlocalswap
@@ -14,23 +14,32 @@ start_cmd="swap2_start"
 
 swap2_start()
 {
-	#	"Critical" file systems are now mounted.  Go ahead and swap
-	#	to files now, since they will be residing in the critical file
-	#	systems (or, at least, they should be...).
-	#	Check for no swap, and warn about it unless that is desired.
+	# "Critical" file systems are now mounted.  Go ahead and swap
+	# to files now, since they will be residing in the critical file
+	# systems (or, at least, they should be...).
 	#
-	swapctl -A -t noblk;
+	# Treat exit status 2 from swapctl(8) as successful; it means
+	# "no error, but no suitable swap devices were configured".
+	#
+	# Check for no swap, and warn about it unless that is desired.
+	#
+	local es
+	swapctl -A -t noblk
+	es=$?
+	[ $es = 2 ] && es=0
 	if ! checkyesno no_swap; then
 		if swapctl -s | grep "no swap devices configured" > /dev/null;
 		then
 			warn "No swap space configured!"
+			es=1
 		fi
 	fi
+	return $es
 }
 
 #		Remove all non-block-type swap devices
 #
-stop_cmd="swapctl -U -t noblk"
+stop_cmd="swapctl -U -t noblk || [ $? = 2 ]"
 
 load_rc_config swap
 run_rc_command "$1"
