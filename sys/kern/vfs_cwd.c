@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.1 2008/11/18 11:36:58 pooka Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.2 2009/09/24 06:14:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.1 2008/11/18 11:36:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.2 2009/09/24 06:14:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,7 +76,7 @@ cwdinit(void)
 	cwdi->cwdi_edir = copy->cwdi_edir;
 	if (cwdi->cwdi_edir)
 		VREF(cwdi->cwdi_edir);
-	cwdi->cwdi_cmask =  copy->cwdi_cmask;
+	cwdi->cwdi_cmask = copy->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 	rw_exit(&copy->cwdi_lock);
 
