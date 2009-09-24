@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.104 2009/09/24 15:36:59 pooka Exp $	*/
+/*	$NetBSD: ugen.c,v 1.105 2009/09/24 22:33:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.104 2009/09/24 15:36:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.105 2009/09/24 22:33:04 pooka Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -205,11 +205,20 @@ Static int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 
 USB_DECLARE_DRIVER(ugen);
 
+/* toggle to control attach priority. -1 means "let autoconf decide" */
+int ugen_override = -1;
+
 USB_MATCH(ugen)
 {
 	USB_MATCH_START(ugen, uaa);
+	int override;
 
-	if (match->cf_flags & 1)
+	if (ugen_override != -1)
+		override = ugen_override;
+	else
+		override = match->cf_flags & 1;
+
+	if (override)
 		return (UMATCH_HIGHEST);
 	else if (uaa->usegeneric)
 		return (UMATCH_GENERIC);
