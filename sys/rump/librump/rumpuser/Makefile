@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/03/25 14:05:03 pooka Exp $
+#	$NetBSD: Makefile,v 1.16 2009/09/24 21:30:42 pooka Exp $
 #
 
 LIB=		rumpuser
@@ -6,6 +6,7 @@ WARNS=		4
 
 SRCS=		rumpuser.c rumpuser_net.c
 SRCS+=		rumpuser_pth.c
+SRCS+=		rumpuser_dl.c
 
 CPPFLAGS+=	-D_REENTRANT
 
