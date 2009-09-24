@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.124 2009/05/19 20:44:52 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.125 2009/09/24 21:21:34 pooka Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.124 2009/05/19 20:44:52 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.125 2009/09/24 21:21:34 pooka Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -983,6 +983,47 @@ dladdr(const void *addr, Dl_info *info)
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 	return 1;
+}
+
+__strong_alias(__dlinfo,dlinfo)
+int
+dlinfo(void *handle, int req, void *v)
+{
+	const Obj_Entry *obj;
+	void *retaddr;
+
+	if (handle == RTLD_SELF) {
+#ifdef __powerpc__
+		retaddr = hackish_return_address();
+#else
+		retaddr = __builtin_return_address(0);
+#endif
+		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
+			_rtld_error("Cannot determine caller's shared object");
+			return -1;
+		}
+	} else {
+		if ((obj = _rtld_dlcheck(handle)) == NULL) {
+			_rtld_error("Invalid handle");
+			return -1;
+		}
+	}
+
+	switch (req) {
+	case RTLD_DI_LINKMAP:
+		{
+		const struct link_map **map = v;
+
+		*map = &obj->linkmap;
+		break;
+		}
+
+	default:
+		_rtld_error("Invalid request");
+		return -1;
+	}
+
+	return 0;
 }
 
 /*
