@@ -1,4 +1,4 @@
-/* $NetBSD: haltwovar.h,v 1.5 2008/08/24 13:03:39 tsutsui Exp $ */
+/* $NetBSD: haltwovar.h,v 1.6 2009/09/24 14:09:18 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -81,8 +81,6 @@ struct haltwo_softc {
 	bus_space_handle_t sc_aes_sh;
 	bus_space_handle_t sc_vol_sh;
 	bus_space_handle_t sc_syn_sh;
-
-	void *sc_sdhook;
 };
 
 #endif
