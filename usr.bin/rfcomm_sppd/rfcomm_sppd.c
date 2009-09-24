@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.11 2009/05/21 14:44:01 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.12 2009/09/24 18:30:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.11 2009/05/21 14:44:01 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.12 2009/09/24 18:30:37 plunky Exp $");
 
 #include <sys/param.h>
 
@@ -87,10 +87,10 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.11 2009/05/21 14:44:01 plunky Exp $");
 #include <netbt/rfcomm.h>
 
 int open_tty(const char *);
-int open_client(bdaddr_t *, bdaddr_t *, int, const char *);
-int open_server(bdaddr_t *, uint8_t, int, const char *);
+int open_client(bdaddr_t *, bdaddr_t *, int, uintmax_t, const char *);
+int open_server(bdaddr_t *, uint16_t, uint8_t, int, const char *);
 void copy_data(int, int);
-int channel_lookup(const bdaddr_t *, const bdaddr_t *, uint16_t, uintmax_t *);
+int service_search(const bdaddr_t *, const bdaddr_t *, uint16_t, uintmax_t *, uintmax_t *);
 void sighandler(int);
 void usage(void);
 void reset_tio(void);
@@ -121,6 +121,7 @@ main(int argc, char *argv[])
 	const char		*service;
 	char			*ep, *tty;
 	int			lm, n, rfcomm, tty_in, tty_out;
+	uint16_t		psm;
 	uint8_t			channel;
 
 	bdaddr_copy(&laddr, BDADDR_ANY);
@@ -128,10 +129,11 @@ main(int argc, char *argv[])
 	service = "SP";
 	tty = NULL;
 	channel = 0;
+	psm = L2CAP_PSM_RFCOMM;
 	lm = 0;
 
 	/* Parse command line options */
-	while ((n = getopt(argc, argv, "a:c:d:hm:s:t:")) != -1) {
+	while ((n = getopt(argc, argv, "a:c:d:hm:p:s:t:")) != -1) {
 		switch (n) {
 		case 'a': /* remote device address */
 			if (!bt_aton(optarg, &raddr)) {
@@ -167,6 +169,13 @@ main(int argc, char *argv[])
 				lm = RFCOMM_LM_SECURE;
 			else
 				errx(EXIT_FAILURE, "%s: unknown mode", optarg);
+
+			break;
+
+		case 'p': /* PSM */
+			psm = strtoul(optarg, &ep, 0);
+			if (*ep != '\0' || L2CAP_PSM_INVALID(psm))
+				errx(EXIT_FAILURE, "Invalid PSM: %s", optarg);
 
 			break;
 
@@ -210,9 +219,9 @@ main(int argc, char *argv[])
 
 	/* open RFCOMM */
 	if (channel == 0)
-		rfcomm = open_client(&laddr, &raddr, lm, service);
+		rfcomm = open_client(&laddr, &raddr, lm, psm, service);
 	else
-		rfcomm = open_server(&laddr, channel, lm, service);
+		rfcomm = open_server(&laddr, psm, channel, lm, service);
 
 	/*
 	 * now we are ready to go, so either detach or maybe turn
@@ -318,7 +327,7 @@ open_tty(const char *tty)
 }
 
 int
-open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
+open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, uintmax_t psm, const char *service)
 {
 	struct sockaddr_bt sa;
 	struct service *s;
@@ -337,7 +346,7 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 		}
 
 		if (strcasecmp(s->name, service) == 0) {
-			error = channel_lookup(laddr, raddr, s->class, &channel);
+			error = service_search(laddr, raddr, s->class, &psm, &channel);
 			if (error != 0)
 				errx(EXIT_FAILURE, "%s: %s", s->name, strerror(error));
 
@@ -347,6 +356,9 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 
 	if (channel < RFCOMM_CHANNEL_MIN || channel > RFCOMM_CHANNEL_MAX)
 		errx(EXIT_FAILURE, "Invalid channel %"PRIuMAX, channel);
+
+	if (L2CAP_PSM_INVALID(psm))
+		errx(EXIT_FAILURE, "Invalid PSM 0x%04"PRIxMAX, psm);
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
@@ -369,18 +381,19 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 	if (setsockopt(fd, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
 		err(EXIT_FAILURE, "link mode");
 
+	sa.bt_psm = psm;
 	sa.bt_channel = channel;
 	bdaddr_copy(&sa.bt_bdaddr, raddr);
 
 	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-		err(EXIT_FAILURE, "connect(%s, %"PRIuMAX")", bt_ntoa(raddr, NULL),
-						     channel);
+		err(EXIT_FAILURE, "connect(%s, 0x%04"PRIxMAX", %"PRIuMAX")",
+		    bt_ntoa(raddr, NULL), psm, channel);
 
 	return fd;
 }
 
 int
-open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
+open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *service)
 {
 	uint8_t	buffer[256];
 	struct sockaddr_bt sa;
@@ -407,11 +420,12 @@ open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
 	sa.bt_family = AF_BLUETOOTH;
+	sa.bt_psm = psm;
 	sa.bt_channel = channel;
 	bdaddr_copy(&sa.bt_bdaddr, laddr);
 	if (bind(sv, (struct sockaddr *)&sa, sizeof(sa)) < 0)
-		err(EXIT_FAILURE, "bind(%s, %d)", bt_ntoa(laddr, NULL),
-						  channel);
+		err(EXIT_FAILURE, "bind(%s, 0x%04x, %d)",
+		    bt_ntoa(laddr, NULL), psm, channel);
 
 	if (setsockopt(sv, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
 		err(EXIT_FAILURE, "link mode");
@@ -430,10 +444,14 @@ open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
 	sdp_put_seq(&rec, 3);
 	sdp_put_uuid16(&rec, s->class);
 
+	len = (psm == L2CAP_PSM_RFCOMM ? 0 : 3);
+
 	sdp_put_uint16(&rec, SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
-	sdp_put_seq(&rec, 12);
-	sdp_put_seq(&rec, 3);
+	sdp_put_seq(&rec, 12 + len);
+	sdp_put_seq(&rec, 3 + len);
 	sdp_put_uuid16(&rec, SDP_UUID_PROTOCOL_L2CAP);
+	if (len > 0)
+		sdp_put_uint16(&rec, psm);
 	sdp_put_seq(&rec, 5);
 	sdp_put_uuid16(&rec, SDP_UUID_PROTOCOL_RFCOMM);
 	sdp_put_uint8(&rec, channel);
@@ -527,8 +545,8 @@ copy_data(int src, int dst)
 }
 
 int
-channel_lookup(bdaddr_t const *laddr, bdaddr_t const *raddr,
-    uint16_t class, uintmax_t *channel)
+service_search(bdaddr_t const *laddr, bdaddr_t const *raddr,
+    uint16_t class, uintmax_t *psm, uintmax_t *channel)
 {
 	uint8_t		buffer[6];	/* SSP (3 bytes) + AIL (3 bytes) */
 	sdp_session_t	ss;
@@ -598,7 +616,8 @@ channel_lookup(bdaddr_t const *laddr, bdaddr_t const *raddr,
 	 * Each protocol stack description contains a sequence for each
 	 * protocol, where each sequence contains the protocol UUID as
 	 * the first element, and any ProtocolSpecificParameters. We are
-	 * interested in the RFCOMM channel number, stored as parameter#1.
+	 * interested in the L2CAP psm if provided, and the RFCOMM channel
+	 * number, stored as parameter#1 in each case.
 	 *
 	 *	seq
 	 *	  uuid		L2CAP
@@ -616,8 +635,10 @@ channel_lookup(bdaddr_t const *laddr, bdaddr_t const *raddr,
 
 		sdp_get_alt(&value, &value);	/* strip any alt container */
 		while (!rv && sdp_get_seq(&value, &pdl)) {
+			*psm = L2CAP_PSM_RFCOMM;
 			if (sdp_get_seq(&pdl, &seq)
 			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_L2CAP)
+			    && (sdp_get_uint(&seq, psm) || true)
 			    && sdp_get_seq(&pdl, &seq)
 			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_RFCOMM)
 			    && sdp_get_uint(&seq, channel))
@@ -649,7 +670,7 @@ usage(void)
 	const char *cmd = getprogname();
 	struct service *s;
 
-	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-s service] [-t tty]\n"
+	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-p psm] [-s service] [-t tty]\n"
 			"       %*s {-a bdaddr | -c channel}\n"
 			"\n"
 			"Where:\n"
@@ -657,6 +678,7 @@ usage(void)
 			"\t-c channel   local RFCOMM channel\n"
 			"\t-d device    local device address\n"
 			"\t-m mode      link mode\n"
+			"\t-p psm       protocol/service multiplexer\n"
 			"\t-s service   service class\n"
 			"\t-t tty       run in background using pty\n"
 			"\n", cmd, (int)strlen(cmd), "");
