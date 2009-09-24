@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.48 2009/09/24 21:21:34 pooka Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.48 2009/09/24 21:21:34 pooka Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -69,6 +69,7 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)dlsym,
 		(fptr_t)dlerror,
 		(fptr_t)dladdr,
+		(fptr_t)dlinfo,
 		NULL
 	};
 	int i;
