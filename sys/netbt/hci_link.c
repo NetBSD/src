@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.20 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.21 2009/09/24 19:35:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.20 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.21 2009/09/24 19:35:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,9 +162,8 @@ hci_acl_close(struct hci_link *link, int err)
 /*
  * Incoming ACL connection.
  *
- * For now, we accept all connections but it would be better to check
- * the L2CAP listen list and only accept when there is a listener
- * available.
+ * Check the L2CAP listeners list and only accept when there is a
+ * potential listener available.
  *
  * There should not be a link to the same bdaddr already, we check
  * anyway though its left unhandled for now.
@@ -173,10 +172,28 @@ struct hci_link *
 hci_acl_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 {
 	struct hci_link *link;
+	struct l2cap_channel *chan;
+
+	LIST_FOREACH(chan, &l2cap_listen_list, lc_ncid) {
+		if (bdaddr_same(&unit->hci_bdaddr, &chan->lc_laddr.bt_bdaddr)
+		    || bdaddr_any(&chan->lc_laddr.bt_bdaddr))
+			break;
+	}
+
+	if (chan == NULL) {
+		DPRINTF("%s: rejecting connection (no listeners)\n",
+		    device_xname(unit->hci_dev));
+
+		return NULL;
+	}
 
 	link = hci_link_lookup_bdaddr(unit, bdaddr, HCI_LINK_ACL);
-	if (link != NULL)
+	if (link != NULL) {
+		DPRINTF("%s: rejecting connection (link exists)\n",
+		    device_xname(unit->hci_dev));
+
 		return NULL;
+	}
 
 	link = hci_link_alloc(unit, bdaddr, HCI_LINK_ACL);
 	if (link != NULL) {
