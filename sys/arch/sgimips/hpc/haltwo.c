@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.16 2009/05/14 01:06:15 macallan Exp $ */
+/* $NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.16 2009/05/14 01:06:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static int haltwo_trigger_output(void *, void *, void *, int, void (*)(void *),
 	void *, const audio_params_t *);
 static int haltwo_trigger_input(void *, void *, void *, int, void (*)(void *),
 	void *, const audio_params_t *);
-static void haltwo_shutdown(void *);
+static bool haltwo_shutdown(device_t, int);
 
 static const struct audio_hw_if haltwo_hw_if = {
 	NULL, /* open */
@@ -358,10 +358,9 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&haltwo_hw_if, sc, &sc->sc_dev);
 
-	sc->sc_sdhook = shutdownhook_establish(haltwo_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
+	if (!pmf_device_register1(self, NULL, NULL, haltwo_shutdown))
 		aprint_error_dev(self,
-		    "WARNING: unable to establish shutdown hook\n");
+		    "couldn't establish power handler\n");
 }
 
 static int
@@ -815,12 +814,15 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 	return ENXIO;
 }
 
-void
-haltwo_shutdown(void *arg)
+bool
+haltwo_shutdown(device_t self, int howto)
 {
-	struct haltwo_softc *sc = arg;
+	struct haltwo_softc *sc;
 
+	sc = device_private(self);
 	haltwo_write(sc, ctl, HAL2_REG_CTL_ISR, 0);
 	haltwo_write(sc, ctl, HAL2_REG_CTL_ISR,
 	    HAL2_ISR_GLOBAL_RESET_N | HAL2_ISR_CODEC_RESET_N);
+
+	return true;
 }
