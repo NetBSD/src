@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2009/09/19 21:51:47 apb Exp $
+# $NetBSD: mi,v 1.50 2009/09/24 21:33:45 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -139,6 +139,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug	debug
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-debug debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
@@ -854,6 +857,11 @@
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests
 ./usr/tests/lib/libc/string/t_popcount		tests-lib-tests
+./usr/tests/libexec				tests-lib-tests
+./usr/tests/libexec/Atffile			tests-lib-tests
+./usr/tests/libexec/ld.elf_so			tests-libexec-tests
+./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests
+./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests
