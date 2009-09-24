@@ -1,5 +1,5 @@
 Content-Type: application/X-atf-atffile; version="1"
-X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/05/02 16:02:19 pooka Exp $"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.2 2009/09/24 21:36:42 pooka Exp $"
 
 prop: test-suite = "NetBSD"
 

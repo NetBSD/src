@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2009/09/24 21:33:45 pooka Exp $
+# $NetBSD: mi,v 1.51 2009/09/24 21:36:42 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -151,6 +151,7 @@
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
@@ -874,6 +875,7 @@
 ./usr/tests/rump/rumpkern			tests-rump-tests
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests
+./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests
