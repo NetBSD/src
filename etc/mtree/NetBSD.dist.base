@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.2 2009/09/07 21:07:03 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.3 2009/09/24 21:33:45 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -208,6 +208,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
 ./usr/libdata/debug/usr/tests/lib/libc/string
+./usr/libdata/debug/usr/tests/libexec
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
@@ -1093,6 +1095,8 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/stdlib
 ./usr/tests/lib/libc/string
+./usr/tests/libexec
+./usr/tests/libexec/ld.elf_so
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys

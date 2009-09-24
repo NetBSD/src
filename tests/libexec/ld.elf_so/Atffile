@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/09/24 21:33:45 pooka Exp $"
+
+prop: test-suite = "NetBSD"
+
+tp-glob: *
