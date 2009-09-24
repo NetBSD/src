@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.95 2009/09/20 23:02:31 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.96 2009/09/24 21:00:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.95 2009/09/20 23:02:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.96 2009/09/24 21:00:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -776,12 +776,3 @@ pmf_device_deregister(struct device *dev)
 
 	/* nada */
 }
-
-
-/* XXX: static, but not used except to make spcopy.S link */
-#ifdef __hppa__
-#undef curlwp
-struct lwp *curlwp = &lwp0;
-#endif
-
-/* make sure the above is the last entry in this file */
