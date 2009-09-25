@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.19 2009/05/12 09:29:46 cegger Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.20 2009/09/25 20:26:26 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.19 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.20 2009/09/25 20:26:26 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,6 +166,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
 	struct sysmon_pswitch *psw;
 	device_t curdev;
+	deviter_t di;
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
 	int i;
@@ -187,12 +188,15 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	sc->sc_ecdev = NULL;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list)
+	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     curdev != NULL; curdev = deviter_next(&di))
 		if (device_is_a(curdev, "acpiecdt") ||
 		    device_is_a(curdev, "acpiec")) {
 			sc->sc_ecdev = curdev;
 			break;
 		}
+	deviter_release(&di);
+
 	if (sc->sc_ecdev)
 		aprint_debug_dev(self, "using EC at %s\n",
 		    device_xname(sc->sc_ecdev));
