@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.15 2009/08/21 06:12:16 wiz Exp $
+.\"	$NetBSD: bluetooth.4,v 1.16 2009/09/25 19:47:09 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 20, 2009
+.Dd September 24, 2009
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -141,6 +141,14 @@ field in the
 .Ar sockaddr_bt
 structure to select the Protocol/Sevice Multiplexer to specify when making
 connections.
+If the special value of
+.Dv L2CAP_PSM_ANY
+is bound when the
+.Xr listen 2
+call is made, the next available PSM from the dynamic range above 0x1001
+will be selected and may be discovered using the
+.Xr getsockname 2
+call.
 .Pp
 L2CAP socket options:
 .Bl -tag -width XXX
