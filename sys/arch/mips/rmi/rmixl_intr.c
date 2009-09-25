@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.2 2009/09/25 22:22:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.2 2009/09/25 22:22:09 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -90,118 +90,231 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp
  * given hardware interrupt priority level.
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	0,					/*  0: IPL_NONE */
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0,			/*  3: IPL_VM */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_1|
-	MIPS_INT_MASK_2|
-	MIPS_INT_MASK_3|
-	MIPS_INT_MASK_4|
-	MIPS_INT_MASK_5,			/*  4: IPL_{SCHED,HIGH} */
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] =
+		MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+		MIPS_SOFT_INT_MASK_0
+	      | MIPS_SOFT_INT_MASK_1,
+	[IPL_VM] =
+		MIPS_SOFT_INT_MASK_0
+	      | MIPS_SOFT_INT_MASK_1
+	      | MIPS_INT_MASK_0,
+	[IPL_SCHED] =
+		MIPS_SOFT_INT_MASK_0
+	      | MIPS_SOFT_INT_MASK_1
+	      | MIPS_INT_MASK_0
+	      | MIPS_INT_MASK_1
+	      | MIPS_INT_MASK_2
+	      | MIPS_INT_MASK_3
+	      | MIPS_INT_MASK_4
+	      | MIPS_INT_MASK_5,
 };
 
-#define	NIRQS		32
-const char *rmixl_intrnames[NIRQS] = {
-	"irq0", /*  3 */
-	"irq1", /*  1 */
-	"irq2", /*  2 */
-	"irq3", /*  3 */
-	"irq4", /*  4 */
-	"irq5", /*  5 */
-	"irq6", /*  6 */
-	"irq7", /*  7 */
-	"irq8", /*  8 */
-	"irq9", /*  9 */
-	"irq10", /* 10 */
-	"irq11", /* 11 */
-	"irq12", /* 12 */
-	"irq13", /* 13 */
-	"irq14", /* 14 */
-	"irq15", /* 15 */
-	"irq16", /* 16 */
-	"irq17", /* 17 */
-	"irq18", /* 18 */
-	"irq19", /* 19 */
-	"irq20", /* 20 */
-	"irq21", /* 21 */
-	"irq22", /* 22 */
-	"irq23", /* 23 */
-	"irq24", /* 24 */
-	"irq25", /* 25 */
-	"irq26", /* 26 */
-	"irq27", /* 27 */
-	"irq28", /* 28 */
-	"irq29", /* 29 */
-	"irq30", /* 30 */
-	"irq31", /* 31 */
+/*
+ * 'IRQs' here are indiividual interrupt sources
+ * each has a slot in the Interrupt Redirection Table (IRT)
+ * in the order listed
+ *
+ * NOTE: many irq sources depend on the chip family
+ * XLS1xx vs. XLS2xx vs. XLS3xx vs. XLS6xx
+ * so just use generic names where they diverge
+ */
+#define	NIRQS	32
+static const char *rmixl_irqnames[NIRQS] = {
+	"int 0 (watchdog)",	/*  0 */
+	"int 1 (timer0)",	/*  1 */
+	"int 2 (timer1)",	/*  2 */
+	"int 3 (timer2)",	/*  3 */
+	"int 4 (timer3)",	/*  4 */
+	"int 5 (timer4)",	/*  5 */
+	"int 6 (timer5)",	/*  6 */
+	"int 7 (timer6)",	/*  7 */
+	"int 8 (timer7)",	/*  8 */
+	"int 9 (uart0)",	/*  9 */
+	"int 10 (uart1)",	/* 10 */
+	"int 11 (i2c0)",	/* 11 */
+	"int 12 (i2c1)",	/* 12 */
+	"int 13 (pcmcia)",	/* 13 */
+	"int 14 (gpio_a)",	/* 14 */
+	"int 15 (irq15)",	/* 15 */
+	"int 16 (bridge_tb)",	/* 16 */
+	"int 17 (gmac0)",	/* 17 */
+	"int 18 (gmac1)",	/* 18 */
+	"int 19 (gmac2)",	/* 19 */
+	"int 20 (gmac3)",	/* 20 */
+	"int 21 (irq21)",	/* 21 */
+	"int 22 (irq22)",	/* 22 */
+	"int 23 (irq23)",	/* 23 */
+	"int 24 (irq24)",	/* 24 */
+	"int 25 (bridge_err)",	/* 25 */
+	"int 26 (pcie_link0)",	/* 26 */
+	"int 27 (pcie_link1)",	/* 27 */
+	"int 28 (irq28)",	/* 28 */
+	"int 29 (irq29)",	/* 29 */
+	"int 30 (gpio_b)",	/* 30 */
+	"int 31 (usb)",		/* 31 */
 };
 
-struct rmixl_intrhead {
-	struct evcnt intr_count;
-	int intr_refcnt;
+/*
+ * per-IRQ event stats
+ */
+struct rmixl_irqtab {
+	struct evcnt irq_count;
+	void *irq_ih;
 };
-struct rmixl_intrhead rmixl_intrtab[NIRQS];
+static struct rmixl_irqtab rmixl_irqtab[NIRQS];
 
 
-#define	NINTRS			2	/* MIPS INT0 - INT1 */
-struct rmixl_cpuintr {
-	LIST_HEAD(, evbmips_intrhand) cintr_list;
-	struct evcnt cintr_count;
+/*
+ * 'vectors' here correspond to IRT Entry vector numbers
+ * - IRT Entry vector# is bit# in EIRR
+ * - note that EIRR[7:0] == CAUSE[15:8]
+ * - we actually only use the first _IPL_N bits
+ *   (less than 8)
+ * 
+ * each IRT entry gets routed to a vector
+ * (if and when that interrupt is established)
+ * the vectors are shared on a per-IPL basis
+ * which simplifies dispatch
+ *
+ * XXX use of mips64 extended IRQs is TBD
+ */
+#define	NINTRVECS	_IPL_N
+
+/*
+ * translate IPL to vector number
+ */
+static const int rmixl_iplvec[_IPL_N] = {
+	[IPL_NONE] = 		-1,	/* XXX */
+	[IPL_SOFTCLOCK] =	 0,
+	[IPL_SOFTNET] =		 1,
+	[IPL_VM] =		 2,
+	[IPL_SCHED] =		 3,
 };
-struct rmixl_cpuintr rmixl_cpuintrs[NINTRS];
 
-const char *rmixl_cpuintrnames[NINTRS] = {
-	"int 0 (irq)",
-	"int 1 (fiq)",
+/*
+ * list and ref count manage sharing of each vector
+ */
+struct rmixl_intrvec {
+	LIST_HEAD(, evbmips_intrhand) iv_list;
+	u_int iv_refcnt;
 };
+static struct rmixl_intrvec rmixl_intrvec[NINTRVECS];
 
-#define REG_READ(o) *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(ADM5120_BASE_ICU + (o)))
-#define REG_WRITE(o,v) (REG_READ(o)) = (v)
+
+/*
+ * register byte order is BIG ENDIAN regardless of code model
+ */
+#define REG_DEREF(o)					\
+	*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1( 	\
+		rmixl_configuration.rc_io_pbase 	\
+		+ RMIXL_IO_DEV_PIC + (o)))
+
+#define REG_READ(o)	be32toh(REG_DEREF(o))
+#define REG_WRITE(o,v)	REG_DEREF(o) = htobe32(v)
 
 void
 evbmips_intr_init(void)
 {
-#ifdef NOTYET
+	uint32_t r;
 	int i;
 
-	for (i = 0; i < NINTRS; i++) {
-		LIST_INIT(&rmixl_cpuintrs[i].cintr_list);
-		evcnt_attach_dynamic(&rmixl_cpuintrs[i].cintr_count,
-		    EVCNT_TYPE_INTR, NULL, "mips", rmixl_cpuintrnames[i]);
+	for (i=0; i < NIRQS; i++) {
+		evcnt_attach_dynamic(&rmixl_irqtab[i].irq_count,
+			EVCNT_TYPE_INTR, NULL, "rmixl", rmixl_irqnames[i]);
+		rmixl_irqtab[i].irq_ih = NULL;
 	}
 
-	for (i = 0; i < NIRQS; i++) {
-		/* XXX steering - use an irqmap array? */
-
-		rmixl_intrtab[i].intr_refcnt = 0;
-		evcnt_attach_dynamic(&rmixl_intrtab[i].intr_count,
-		    EVCNT_TYPE_INTR, NULL, "rmixl", rmixl_intrnames[i]);
+	for (i=0; i < NINTRVECS; i++) {
+		LIST_INIT(&rmixl_intrvec[i].iv_list);
+		rmixl_intrvec[i].iv_refcnt = 0;
 	}
 
-	/* disable all interrupts */
-	REG_WRITE(ICU_DISABLE_REG, ICU_INT_MASK);
-#endif
+	/*
+	 * disable watchdog, watchdog NMI, timers
+	 */
+	r = REG_READ(RMIXL_PIC_CONTROL);
+	r &= RMIXL_PIC_CONTROL_RESV;
+	REG_WRITE(RMIXL_PIC_CONTROL, r);
+
+	/*
+	 * invalidate all IRT Entries
+	 * permanently unmask Thread#0 in low word
+	 * (assume we only have 1 thread)
+	 */
+	for (i=0; i < NIRQS; i++) {
+
+		/* high word */
+		r = REG_READ(RMIXL_PIC_IRTENTRYC1(i));
+		r &= RMIXL_PIC_IRTENTRYC1_RESV;
+		REG_WRITE(RMIXL_PIC_IRTENTRYC1(i), r);
+
+		/* low word */
+		r = REG_READ(RMIXL_PIC_IRTENTRYC0(i));
+		r &= RMIXL_PIC_IRTENTRYC0_RESV;
+		r |= 1;					/* Thread Mask */
+		REG_WRITE(RMIXL_PIC_IRTENTRYC0(i), r);
+	} 
 }
 
 void *
-rmixl_intr_establish(int irq, int priority, int (*func)(void *), void *arg)
+rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
+	rmixl_intr_polarity_t polarity, int (*func)(void *), void *arg)
 {
-#ifdef NOTYET
 	struct evbmips_intrhand *ih;
-	uint32_t irqmask;
-	int	cpu_int, s;
+	uint32_t irtc1;
+	int vec;
+	int s;
 
+	/*
+	 * check args and assemble an IRT Entry
+	 */
 	if (irq < 0 || irq >= NIRQS)
-		panic("rmixl_intr_establish: bogus IRQ %d", irq);
+		panic("%s: irq %d out of range, max %d",
+			__func__, irq, NIRQS - 1);
+	if (ipl < 0 || ipl >= _IPL_N)
+		panic("%s: ipl %d out of range, max %d",
+			__func__, ipl, _IPL_N - 1);
+	if (rmixl_irqtab[irq].irq_ih != NULL)
+		panic("%s: irq %d busy", __func__, irq);
 
+	irtc1  = RMIXL_PIC_IRTENTRYC1_VALID;
+	irtc1 |= RMIXL_PIC_IRTENTRYC1_GL;	/* local */
+
+	switch (trigger) {
+	case RMIXL_INTR_EDGE:
+		break;
+	case RMIXL_INTR_LEVEL:
+		irtc1 |= RMIXL_PIC_IRTENTRYC1_TRG;
+		break;
+	default:
+		panic("%s: bad trigger %d\n", __func__, trigger);
+	}
+
+	switch (polarity) {
+	case RMIXL_INTR_RISING:
+	case RMIXL_INTR_HIGH:
+		break;
+	case RMIXL_INTR_FALLING:
+	case RMIXL_INTR_LOW:
+		irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
+		break;
+	default:
+		panic("%s: bad polarity %d\n", __func__, polarity);
+	}
+
+	/*
+	 * ipl determines which vector to use
+	 */
+	vec = rmixl_iplvec[ipl];
+printf("%s: ipl=%d, vec=%d\n", __func__, ipl, vec);
+	KASSERT((vec & ~RMIXL_PIC_IRTENTRYC1_INTVEC) == 0);
+	irtc1 |= vec;
+
+	/*
+	 * allocate and initialize an interrupt handle
+	 */
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return NULL;
@@ -209,107 +322,109 @@ rmixl_intr_establish(int irq, int priority, int (*func)(void *), void *arg)
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
+	ih->ih_ipl = ipl;
 
 	s = splhigh();
 
 	/*
-	 * First, link it into the tables.
-	 * XXX do we want a separate list (really, should only be one item, not
-	 *     a list anyway) per irq, not per CPU interrupt?
+	 * mark this irq as established, busy
 	 */
-
-	cpu_int = (priority == INTR_FIQ) ? 1 : 0;
-
-	LIST_INSERT_HEAD(&rmixl_cpuintrs[cpu_int].cintr_list, ih, ih_q);
+	rmixl_irqtab[irq].irq_ih = ih;
 
 	/*
-	 * Now enable it.
+	 * link this ih into the tables and bump reference count
 	 */
-	if (rmixl_intrtab[irq].intr_refcnt++ == 0) {
-		irqmask = 1 << irq;
+	LIST_INSERT_HEAD(&rmixl_intrvec[vec].iv_list, ih, ih_q);
+	rmixl_intrvec[vec].iv_refcnt++;
 
-		/* configure as IRQ or FIQ */
-		if (priority == INTR_FIQ) {
-			REG_WRITE(ICU_MODE_REG,
-			    REG_READ(ICU_MODE_REG) | irqmask);
-		} else {
-			REG_WRITE(ICU_MODE_REG,
-			    REG_READ(ICU_MODE_REG) & ~irqmask);
-		}
-		/* enable */
-		REG_WRITE(ICU_ENABLE_REG, irqmask);
-	}
+	/*
+	 * establish IRT Entry (low word only)
+	 */
+	REG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), irtc1);
+
 	splx(s);
 
 	return ih;
-#else
-	return NULL;
-#endif
 }
 
 void
 rmixl_intr_disestablish(void *cookie)
 {
-#ifdef NOTYET
 	struct evbmips_intrhand *ih = cookie;
-	int irq, s;
-	uint32_t irqmask;
+	uint32_t r;
+	int irq;
+	int vec;
+	int s;
 
 	irq = ih->ih_irq;
+	vec = rmixl_iplvec[ih->ih_ipl];
 
 	s = splhigh();
 
 	/*
-	 * First, remove it from the table.
+	 * remove from the table and adjust the reference count
 	 */
 	LIST_REMOVE(ih, ih_q);
+	rmixl_intrvec[vec].iv_refcnt--;
 
 	/*
-	 * Now, disable it, if there is nothing remaining on the
-	 * list.
+	 * disable the IRT Entry (low word only)
 	 */
-	if (rmixl_intrtab[irq].intr_refcnt-- == 1) {
-		irqmask = 1 << irq;	/* only used as a mask from here on */
+	r = REG_READ(RMIXL_PIC_IRTENTRYC1(irq));
+	r &= RMIXL_PIC_IRTENTRYC1_RESV;
+	REG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), r);
 
-		/* disable this irq in HW */
-		REG_WRITE(ICU_DISABLE_REG, irqmask);
-	}
+	/* 
+	 * this irq now disestablished, not busy
+	 */
+	rmixl_irqtab[irq].irq_ih = NULL;
 
 	splx(s);
 
 	free(ih, M_DEVBUF);
-#endif
 }
 
 void
 evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-#ifdef NOTYET
 	struct evbmips_intrhand *ih;
-	int level;
-	uint32_t irqmask, irqstat;
+	uint64_t eirr;
+	uint64_t eimr;
+	uint32_t sr;
+	int vec;
 
-	for (level = NINTRS - 1; level >= 0; level--) {
-		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
+	printf("\n%s: status: %#x, cause %#x\n", __func__, status, cause);
+	asm volatile ("mfc0 %0, $9, 6;" :"=r"(sr));
+	printf("%s:%d: SR: %#x\n", __func__, __LINE__, sr);
+	asm volatile ("dmfc0 %0, $9, 7;" :"=r"(eimr));
+	printf("%s: EIMR: %#lx\n", __func__, eimr);
+
+	for (vec = NINTRVECS - 1; vec >= 0; vec--) {
+		if ((ipending & (MIPS_SOFT_INT_MASK_0 << vec)) == 0)
 			continue;
 
-		if (level)
-			irqstat = REG_READ(ICU_FIQ_STATUS_REG);
-		else
-			irqstat = REG_READ(ICU_STATUS_REG);
+		/* ack this vec in the EIRR */
+		eirr = (1 << vec);
+		asm volatile ("dmtc0 %0, $9, 6;" :: "r"(eirr));
 
-		rmixl_cpuintrs[level].cintr_count.ev_count++;
-		LIST_FOREACH(ih, &rmixl_cpuintrs[level].cintr_list, ih_q) {
-			irqmask = 1 << ih->ih_irq;
-			if (irqmask & irqstat) {
-				rmixl_intrtab[ih->ih_irq].intr_count.ev_count++;
-				(*ih->ih_func)(ih->ih_arg);
-			}
+		LIST_FOREACH(ih, &rmixl_intrvec[vec].iv_list, ih_q) {
+			if ((*ih->ih_func)(ih->ih_arg) != 0)
+				rmixl_irqtab[ih->ih_irq].irq_count.ev_count++;
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
+		cause &= ~(MIPS_SOFT_INT_MASK_0 << vec);
 	}
 
 	/* Re-enable anything that we have processed. */
+	printf("%s:%d: re-enable: %#x\n", __func__, __LINE__,
+		MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
-#endif
+
+	asm volatile ("mfc0 %0, $9, 6;" :"=r"(sr));
+	printf("%s: SR: %#x\n", __func__, sr);
+
+	asm volatile ("dmfc0 %0, $9, 6;" :"=r"(eirr));
+	printf("%s: EIRR: %#lx\n", __func__, eirr);
+
+	asm volatile ("dmfc0 %0, $9, 7;" :"=r"(eimr));
+	printf("%s: EIMR: %#lx\n", __func__, eimr);
 }
