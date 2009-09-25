@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.5 2009/09/22 07:01:18 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.6 2009/09/25 22:22:52 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.5 2009/09/22 07:01:18 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.6 2009/09/25 22:22:52 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ rmixl_putchar_init(uint64_t io_pbase)
 		if (rate < 0)
 			return;					/* XXX */
 
+		com0addr[com_ier] = 0;
 		com0addr[com_lctl] = htobe32(LCR_DLAB);
 		com0addr[com_dlbl] = htobe32(rate & 0xff);
 		com0addr[com_dlbh] = htobe32(rate >> 8);
@@ -280,9 +281,9 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-#ifdef NOTYET
-	rmixl_intr_establish(obio->obio_intr, comintr, sc);
-#endif
+	rmixl_intr_establish(obio->obio_intr, IPL_SERIAL,
+		RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, comintr, sc);
+
 }
 
 void
