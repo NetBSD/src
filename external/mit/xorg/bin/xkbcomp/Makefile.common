@@ -1,0 +1,3 @@
+#	$NetBSD: Makefile.common,v 1.1 2009/09/25 06:07:06 mrg Exp $
+
+XKBCOMPDIR=		/var/db/xkb
