@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.199 2009/04/02 17:25:24 drochner Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.200 2009/09/25 19:21:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.199 2009/04/02 17:25:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.200 2009/09/25 19:21:09 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -116,9 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.199 2009/04/02 17:25:24 drochner Exp
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static struct device *finddevice(const char *);
-static struct device *getdisk(char *, int, int, dev_t *, int);
-static struct device *parsedisk(char *, int, int, dev_t *);
+static device_t finddevice(const char *);
+static device_t getdisk(char *, int, int, dev_t *, int);
+static device_t parsedisk(char *, int, int, dev_t *);
 static const char *getwedgename(const char *, int);
 
 /*
@@ -132,7 +132,7 @@ struct hook_desc {
 typedef LIST_HEAD(, hook_desc) hook_list_t;
 
 #ifdef TFTPROOT
-int tftproot_dhcpboot(struct device *);
+int tftproot_dhcpboot(device_t);
 #endif
 
 dev_t	dumpcdev;	/* for savecore */
@@ -490,7 +490,7 @@ doshutdownhooks(void)
 static hook_list_t mountroothook_list;
 
 void *
-mountroothook_establish(void (*fn)(struct device *), struct device *dev)
+mountroothook_establish(void (*fn)(device_t), device_t dev)
 {
 	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
 }
@@ -693,7 +693,7 @@ dopowerhooks(int why)
 }
 
 static int
-isswap(struct device *dv)
+isswap(device_t dv)
 {
 	struct dkwedge_info wi;
 	struct vnode *vn;
@@ -736,8 +736,8 @@ int md_is_root = 0;
  * The device and wedge that we booted from.  If booted_wedge is NULL,
  * the we might consult booted_partition.
  */
-struct device *booted_device;
-struct device *booted_wedge;
+device_t booted_device;
+device_t booted_wedge;
 int booted_partition;
 
 /*
@@ -749,17 +749,17 @@ int booted_partition;
 	 !device_is_a((dv), "dk"))
 
 void
-setroot(struct device *bootdv, int bootpartition)
+setroot(device_t bootdv, int bootpartition)
 {
-	struct device *dv;
+	device_t dv;
 	int len, majdev;
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
 	const char *rootdevname;
 	const char *dumpdevname;
-	struct device *rootdv = NULL;		/* XXX gcc -Wuninitialized */
-	struct device *dumpdv = NULL;
+	device_t rootdv = NULL;		/* XXX gcc -Wuninitialized */
+	device_t dumpdv = NULL;
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
@@ -820,7 +820,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  top:
 	if (boothowto & RB_ASKNAME) {
-		struct device *defdumpdv;
+		device_t defdumpdv;
 
 		for (;;) {
 			printf("root device");
@@ -1114,7 +1114,7 @@ setroot(struct device *bootdv, int bootpartition)
 	aprint_normal("\n");
 }
 
-static struct device *
+static device_t
 finddevice(const char *name)
 {
 	const char *wname;
@@ -1125,10 +1125,10 @@ finddevice(const char *name)
 	return device_find_by_xname(name);
 }
 
-static struct device *
+static device_t
 getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 {
-	struct device	*dv;
+	device_t dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -1164,10 +1164,10 @@ getwedgename(const char *name, int namelen)
 	return name + wpfxlen;
 }
 
-static struct device *
+static device_t
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
-	struct device *dv;
+	device_t dv;
 	const char *wname;
 	char *cp, c;
 	int majdev, part;
