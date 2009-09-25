@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.2 2008/05/02 01:53:33 simonb Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.3 2009/09/25 20:26:59 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.2 2008/05/02 01:53:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.3 2009/09/25 20:26:59 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -245,6 +245,7 @@ static int
 hpqlb_finalize(device_t self)
 {
 	device_t dv;
+	deviter_t di;
 	struct hpqlb_softc *sc = device_private(self);
 	static int done_once = 0;
 
@@ -255,7 +256,8 @@ hpqlb_finalize(device_t self)
 		return 0;
 	done_once = 1;
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (!device_is_a(dv, "wskbd"))
 			continue;
 
@@ -268,6 +270,7 @@ hpqlb_finalize(device_t self)
 				device_xname(dv));
 		break;
 	}
+	deviter_release(&di);
 
 	if (dv == NULL) {
 		aprint_error_dev(self, "WARNING: no matching wskbd found\n");
