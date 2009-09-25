@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.16 2008/12/02 10:06:00 hubertf Exp $
+#	$NetBSD: Makefile.bootcd,v 1.17 2009/09/25 14:09:27 christos Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -67,6 +67,7 @@ CP?=		cp
 RM?=		rm
 MKDIR?=		mkdir -p
 CHMOD?=		chmod
+ECHO?=		echo
 
 
 CLEANFILES+=	${CDBASE}.iso
