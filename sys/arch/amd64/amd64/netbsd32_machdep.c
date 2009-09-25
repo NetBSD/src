@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.58 2009/08/16 17:12:47 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.59 2009/09/25 13:56:32 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.58 2009/08/16 17:12:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.59 2009/09/25 13:56:32 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -269,6 +269,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDP_USEDFPU;
+
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~PSL_CLEARSIG;
@@ -359,6 +362,9 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
