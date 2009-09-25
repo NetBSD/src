@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.12 2009/08/30 22:30:30 hubertf Exp $
+# $NetBSD: Makefile.cdrom,v 1.13 2009/09/25 14:09:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,9 @@ CDRUNTIME+=	./usr/share/misc/termcap
 image_md_pre:
 	${MKDIR} cdrom/etc
 	${CP} ${.CURDIR}/../../ramdisks/common/dot.profile cdrom/etc/rc
+	${ECHO} "" >> cdrom/etc/rc
+	${ECHO} "# exit to single user mode" >> cdrom/etc/rc
+	${ECHO} "exit 1" >> cdrom/etc/rc
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
 	${CP} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst
