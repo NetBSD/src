@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.11 2009/09/17 18:48:47 apb Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.12 2009/09/25 19:49:31 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.11 2009/09/17 18:48:47 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.12 2009/09/25 19:49:31 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2794,11 +2794,11 @@ hdaudio_afg_bits_supported(struct hdaudio_afg_softc *sc, u_int bits)
 
 static bool
 hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
-    u_int minrate, u_int maxrate, u_int validbits, u_int precision)
+    u_int minrate, u_int maxrate, u_int validbits, u_int precision, bool force)
 {
 	struct audio_format f;
 
-	if (hdaudio_afg_bits_supported(sc, validbits) == false)
+	if (!force && hdaudio_afg_bits_supported(sc, validbits) == false)
 		return false;
 
 	memset(&f, 0, sizeof(f));
@@ -2885,16 +2885,21 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 	if (minrate != maxrate)
 		hda_print1(sc, "-%uHz", maxrate);
 
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 8, 16))
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 8, 16, false))
 		hda_print1(sc, " 8/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16))
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, false))
 		hda_print1(sc, " 16/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 20, 32))
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 20, 32, false))
 		hda_print1(sc, " 20/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 24, 32))
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 24, 32, false))
 		hda_print1(sc, " 24/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 32, 32))
+	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 32, 32, false))
 		hda_print1(sc, " 32/32");
+
+	if (sc->sc_audiodev.ad_nformats == 0) {
+		hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, true);
+		hda_print1(sc, " 16/16*");
+	}
 
 	/*
 	 * XXX JDM 20090614
