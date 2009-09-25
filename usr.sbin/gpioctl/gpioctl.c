@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.6 2009/07/25 16:18:09 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.7 2009/09/25 19:37:03 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -67,6 +67,7 @@ const struct bitstr {
 	{ GPIO_PIN_PULLDOWN, "pd" },
 	{ GPIO_PIN_INVIN, "iin" },
 	{ GPIO_PIN_INVOUT, "iout" },
+	{ GPIO_PIN_PULSE, "pulse" },
 	{ 0, NULL },
 };
 
