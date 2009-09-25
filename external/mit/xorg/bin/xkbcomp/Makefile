@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2009/08/22 01:06:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/09/25 06:07:06 mrg Exp $
 
 .include <bsd.own.mk>
+.include "Makefile.common"
 
 PROG=	xkbcomp
 SRCS=	xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
@@ -8,11 +9,9 @@ SRCS=	xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 	symbols.c geometry.c xkbpath.c listing.c \
 	xkbparse.y parseutils.c utils.c
 
-XKBCOMPDIR=		/var/db/xkb
 CPPFLAGS.xkbpath.c=	-DDFLT_XKB_CONFIG_ROOT=\"${XKBCOMPDIR}\"
 
 CPPFLAGS+=		-I${X11SRCDIR.${PROG}} -I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
-CPPFLAGS.xkbpath.c=	-DDFLT_XKB_CONFIG_ROOT=\"${X11LIBDIR}/xkb\"
 CPPFLAGS.geometry.c=	-Wno-error	# XXX
 
 FILESDIR=${X11LIBDIR}/xkb
