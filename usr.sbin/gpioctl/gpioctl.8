@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.6 2009/09/25 19:37:03 mbalmer Exp $
+.\" $NetBSD: gpioctl.8,v 1.7 2009/09/25 20:27:50 mbalmer Exp $
 .\"
 .\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -137,8 +137,8 @@ internal pull-down enabled
 invert input
 .It iout
 invert output
-.It pulse
-pulse output
+.It pulsate
+pulsate output at a hardware-defined frequency and duty cycle
 .El
 .Pp
 Note that not all the flags may be supported by the particular GPIO controller.
