@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.3 2009/09/15 02:32:02 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.4 2009/09/25 22:21:12 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,18 @@
 #include <dev/pci/pcivar.h>
 #include <machine/bus.h>
 
+typedef enum {
+	RMIXL_INTR_EDGE=0,
+	RMIXL_INTR_LEVEL,
+} rmixl_intr_trigger_t;
+
+typedef enum {
+	RMIXL_INTR_RISING=0,
+	RMIXL_INTR_HIGH,
+	RMIXL_INTR_FALLING,
+	RMIXL_INTR_LOW,
+} rmixl_intr_polarity_t;
+
 struct rmixl_config {
 	uint64_t		 rc_io_pbase;	
 	struct mips_bus_space	 rc_el_memt; 	/* little endian bus */
@@ -55,5 +67,7 @@ extern struct rmixl_config rmixl_configuration;
 extern void rmixl_el_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_eb_bus_mem_init(bus_space_tag_t, void *);
 
-extern void *rmixl_intr_establish(int, int, int (*)(void *), void *);
+extern void *rmixl_intr_establish(int, int,
+	rmixl_intr_trigger_t, rmixl_intr_polarity_t,
+	int (*)(void *), void *);
 extern void  rmixl_intr_disestablish(void *);
