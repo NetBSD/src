@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.2 2009/09/25 22:22:09 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.3 2009/09/25 22:27:02 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.2 2009/09/25 22:22:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.3 2009/09/25 22:27:02 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -389,15 +389,7 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct evbmips_intrhand *ih;
 	uint64_t eirr;
-	uint64_t eimr;
-	uint32_t sr;
 	int vec;
-
-	printf("\n%s: status: %#x, cause %#x\n", __func__, status, cause);
-	asm volatile ("mfc0 %0, $9, 6;" :"=r"(sr));
-	printf("%s:%d: SR: %#x\n", __func__, __LINE__, sr);
-	asm volatile ("dmfc0 %0, $9, 7;" :"=r"(eimr));
-	printf("%s: EIMR: %#lx\n", __func__, eimr);
 
 	for (vec = NINTRVECS - 1; vec >= 0; vec--) {
 		if ((ipending & (MIPS_SOFT_INT_MASK_0 << vec)) == 0)
@@ -415,16 +407,5 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	}
 
 	/* Re-enable anything that we have processed. */
-	printf("%s:%d: re-enable: %#x\n", __func__, __LINE__,
-		MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
-
-	asm volatile ("mfc0 %0, $9, 6;" :"=r"(sr));
-	printf("%s: SR: %#x\n", __func__, sr);
-
-	asm volatile ("dmfc0 %0, $9, 6;" :"=r"(eirr));
-	printf("%s: EIRR: %#lx\n", __func__, eirr);
-
-	asm volatile ("dmfc0 %0, $9, 7;" :"=r"(eimr));
-	printf("%s: EIMR: %#lx\n", __func__, eimr);
 }
