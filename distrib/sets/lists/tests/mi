@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.51 2009/09/24 21:36:42 pooka Exp $
+# $NetBSD: mi,v 1.52 2009/09/25 11:58:08 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -141,7 +141,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-debug debug
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
