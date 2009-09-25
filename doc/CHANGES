@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1291 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1292 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -394,7 +394,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		in rc.conf(5) or by booting in silent mode (e.g. "boot
 		netbsd -z" on i386 or amd64).  [apb 20090911]
 	pfsync(4): PFSYNC from OpenBSD 4.2 imported [degroote 20090914]
+	xen: add support for feature-flush-cache in block device backend.
+		Use it in block device frontend for DIOCCACHESYNC.
+		[bouyer 20090923]
 	gpio(4): Add the GPIO_PIN_PULSATE attribute to let a pin pulsate at
 		a hardware defined frequency and duty cycle. [mbalmer 20090925]
 	gpioctl(8): Support the new GPIO_PIN_PULSATE attribute for pins using
 		the "pulsate" keyword. [mbalmer 20090925]
+	xen: add support for request-rx-copy in the virtual network device
+		backend.  [bouyer 20090925]
