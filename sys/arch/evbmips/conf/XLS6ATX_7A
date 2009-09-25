@@ -1,11 +1,11 @@
 #
-#	$NetBSD: XLS6ATX_7A,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+#	$NetBSD: XLS6ATX_7A,v 1.1.2.2 2009/09/25 22:22:27 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"XLS6ATX_7A-$Revision: 1.1.2.1 $"
+#ident 		"XLS6ATX_7A-$Revision: 1.1.2.2 $"
 
 maxusers	32
 
@@ -139,7 +139,7 @@ config		netbsd	root on ? type ?
 mainbus0 	at root
 cpu0 		at mainbus?
 obio0		at mainbus?
-com0		at obio0	addr 0x14000 mult 4
+com0		at obio0	addr 0x14000 mult 4 intr 9
 options		COM_REGMAP
 
 # Pseudo-devices
