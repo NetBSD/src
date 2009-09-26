@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.41 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.42 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,14 +72,12 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.41 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.42 2009/09/26 21:16:55 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
-
-struct tempfile fstack[MAXFCT];
 
 #define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
@@ -96,12 +94,14 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 	get_func_t get;
 	RECHEADER *crec;
 	RECHEADER *nbuffer;
-	FILE *fp;
+	FILE *fp, *tmp_fp;
+	int file_no;
+	int max_recs = DEBUG('m') ? 16 : MAXNUM;
 
 	buffer = malloc(bufsize);
 	bufend = (u_char *)buffer + bufsize;
 	/* Allocate double length keymap for radix_sort */
-	keylist = malloc(2 * MAXNUM * sizeof(*keylist));
+	keylist = malloc(2 * max_recs * sizeof(*keylist));
 	if (buffer == NULL || keylist == NULL)
 		err(2, "failed to malloc initial buffer or keylist");
 
@@ -112,6 +112,11 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		/* Key (merged key fields) added before data */
 		get = makekey;
 
+	file_no = 0;
+	fp = fopen(filelist->names[0], "r");
+	if (fp == NULL)
+		err(2, "%s", filelist->names[0]);
+
 	/* Loop through reads of chunk of input files that get sorted
 	 * and then merged together. */
 	for (;;) {
@@ -121,21 +126,29 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 
 		/* Loop reading records */
 		for (;;) {
-			c = get(-1, 0, filelist, nfiles, crec, bufend, ftbl);
+			c = get(fp, crec, bufend, ftbl);
 			/* 'c' is 0, EOF or BUFFEND */
 			if (c == 0) {
 				/* Save start of key in input buffer */
 				*keypos++ = crec;
-				if (++nelem == MAXNUM) {
+				if (++nelem == max_recs) {
 					c = BUFFEND;
 					break;
 				}
 				crec = (RECHEADER *)(crec->data + SALIGN(crec->length));
 				continue;
 			}
-			if (c == EOF)
-				break;
-			if (nelem >= MAXNUM || bufsize >= MAXBUFSIZE)
+			if (c == EOF) {
+				/* try next file */
+				if (++file_no >= nfiles)
+					/* no more files */
+					break;
+				fp = fopen(filelist->names[file_no], "r");
+				if (fp == NULL)
+					err(2, "%s", filelist->names[file_no]);
+				continue;
+			}
+			if (nelem >= max_recs || bufsize >= MAXBUFSIZE)
 				/* Need to sort and save this lot of data */
 				break;
 
@@ -158,7 +171,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		}
 
 		/* Sort this set of records */
-		radix_sort(keylist, keylist + MAXNUM, nelem);
+		radix_sort(keylist, keylist + max_recs, nelem);
 
 		if (c == EOF && mfct == 0) {
 			/* all the data is (sorted) in the buffer */
@@ -168,24 +181,16 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		}
 
 		/* Save current data to a temporary file for a later merge */
-		fp = ftmp();
-		fstack[mfct].fp = fp;
-		append(keylist, nelem, fp, putrec);
-		mfct++;
+		tmp_fp = ftmp();
+		append(keylist, nelem, tmp_fp, putrec);
+		save_for_merge(tmp_fp, geteasy, ftbl);
+		mfct = 1;
 
 		if (c == EOF) {
 			/* merge to output file */
-			fmerge(0, filelist, mfct, geteasy, outfp,
+			merge_sort(outfp, 
 			    DEBUG('k') ? putkeydump : putline, ftbl);
 			break;
-		}
-
-		if (mfct == MERGE_FNUM) {
-			/* Merge the files we have */
-			fp = ftmp();
-			fmerge(0, filelist, mfct, geteasy, fp, putrec, ftbl);
-			mfct = 1;
-			fstack[0].fp = fp;
 		}
 	}
 

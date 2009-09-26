@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.28 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.29 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -158,8 +158,7 @@ struct filelist {
 	const char * const * names;
 };
 
-typedef int (*get_func_t)(int, int, struct filelist *, int,
-		RECHEADER *, u_char *, struct field *);
+typedef int (*get_func_t)(FILE *, RECHEADER *, u_char *, struct field *);
 typedef void (*put_func_t)(const RECHEADER *, FILE *);
 
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
@@ -181,17 +180,15 @@ length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *)
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
-void	 fmerge(int, struct filelist *, int,
-		get_func_t, FILE *, put_func_t, struct field *);
+void	 fmerge(struct filelist *, int, FILE *, struct field *);
+void	 save_for_merge(FILE *, get_func_t, struct field *);
+void	 merge_sort(FILE *, put_func_t, struct field *);
 void	 fsort(struct filelist *, int, FILE *, struct field *);
-int	 geteasy(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 makekey(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 makeline(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
+int	 geteasy(FILE *, RECHEADER *, u_char *, struct field *);
+int	 makekey(FILE *, RECHEADER *, u_char *, struct field *);
+int	 makeline(FILE *, RECHEADER *, u_char *, struct field *);
 int	 optval(int, int);
-void	 order(struct filelist *, get_func_t, struct field *);
+void	 order(struct filelist *, struct field *);
 void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
 void	 putkeydump(const RECHEADER *, FILE *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.37 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.38 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.37 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.38 2009/09/26 21:16:55 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -78,20 +78,15 @@ static ssize_t	seq(FILE *, u_char **);
  * in the first fsort pass.
  */
 int
-makeline(int flno, int top, struct filelist *filelist, int nfiles,
-    RECHEADER *recbuf, u_char *bufend, struct field *dummy2)
+makeline(FILE *fp, RECHEADER *recbuf, u_char *bufend, struct field *dummy2)
 {
-	static u_char *obufend;
+	static u_char *opos = NULL;
 	static size_t osz;
 	u_char *pos;
-	static int filenum = 0, overflow = 0;
-	static FILE *fp = 0;
 	int c;
 
-	c = 0;		/* XXXGCC -Wuninitialized [pmppc] */
-
 	pos = recbuf->data;
-	if (overflow) {
+	if (opos != NULL) {
 		/*
 		 * Buffer shortage is solved by either of two ways:
 		 * o flush previous buffered data and start using the
@@ -101,77 +96,47 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 		 * The former is preferred, realloc is only done when
 		 * there is exactly one item in buffer which does not fit. 
 		 */
-		if (bufend == obufend)
-			memmove(pos, bufend - osz, osz);
+		if (pos != opos)
+			memmove(pos, opos, osz);
 
 		pos += osz;
-		overflow = 0;
+		opos = NULL;
 	}
 
-	for (;;) {
-		if (flno >= 0 && (fp = fstack[flno].fp) == NULL)
-			return (EOF);
-		else if (fp == NULL) {
-			if (filenum  >= nfiles)
-				return (EOF);
-			if (!(fp = fopen(filelist->names[filenum], "r")))
-				err(2, "%s", filelist->names[filenum]);
-			filenum++;
+	while (pos < bufend) {
+		c = getc(fp);
+		if (c == EOF) {
+			if (pos == recbuf->data) {
+				FCLOSE(fp);
+				return EOF;
+			}
+			/* Add terminator to partial line */
+			c = REC_D;
 		}
-		while ((pos < bufend) && ((c = getc(fp)) != EOF)) {
-			*pos++ = c;
-			if (c == REC_D) {
-				recbuf->offset = 0;
-				recbuf->length = pos - recbuf->data;
-				recbuf->keylen = recbuf->length - 1;
-				return (0);
-			}
-		}
-		if (pos >= bufend) {
-			if (recbuf->data < bufend) {
-				overflow = 1;
-				obufend = bufend;
-				osz = (pos - recbuf->data);
-			}
-			return (BUFFEND);
-		} else if (c == EOF) {
-			if (recbuf->data != pos) {
-				*pos++ = REC_D;
-				recbuf->offset = 0;
-				recbuf->length = pos - recbuf->data;
-				recbuf->keylen = recbuf->length - 1;
-				return (0);
-			}
-			FCLOSE(fp);
-			fp = 0;
-			if (flno >= 0)
-				fstack[flno].fp = 0;
-		} else {
-			
-			warnx("makeline: line too long: ignoring '%.100s...'", recbuf->data);
-
-			/* Consume the rest of line from input */
-			while ((c = getc(fp)) != REC_D && c != EOF)
-				;
-
+		*pos++ = c;
+		if (c == REC_D) {
 			recbuf->offset = 0;
-			recbuf->length = 0;
-			recbuf->keylen = 0;
-
-			return (BUFFEND);
+			recbuf->length = pos - recbuf->data;
+			recbuf->keylen = recbuf->length - 1;
+			return (0);
 		}
 	}
+
+	/* Ran out of buffer space... */
+	if (recbuf->data < bufend) {
+		/* Remember where the partial record is */
+		osz = pos - recbuf->data;
+		opos = recbuf->data;
+	}
+	return (BUFFEND);
 }
 
 /*
  * This generates keys. It's only called in the first fsort pass
  */
 int
-makekey(int flno, int top, struct filelist *filelist, int nfiles,
-    RECHEADER *recbuf, u_char *bufend, struct field *ftbl)
+makekey(FILE *fp, RECHEADER *recbuf, u_char *bufend, struct field *ftbl)
 {
-	static int filenum = 0;
-	static FILE *dbdesc = 0;
 	static u_char *line_data;
 	static ssize_t line_size;
 	static int overflow = 0;
@@ -182,29 +147,10 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 		return overflow ? BUFFEND : 0;
 	}
 
-	/* Loop through files until we find a line of input */
-	for (;;) {
-		if (flno >= 0) {
-			if (!(dbdesc = fstack[flno].fp))
-				return (EOF);
-		} else if (!dbdesc) {
-			if (filenum  >= nfiles)
-				return (EOF);
-			dbdesc = fopen(filelist->names[filenum], "r");
-			if (!dbdesc)
-				err(2, "%s", filelist->names[filenum]);
-			filenum++;
-		}
-		line_size = seq(dbdesc, &line_data);
-		if (line_size != 0)
-			/* Got a line */
-			break;
-
-		/* End of file ... */
-		FCLOSE(dbdesc);
-		dbdesc = 0;
-		if (flno >= 0)
-			fstack[flno].fp = 0;
+	line_size = seq(fp, &line_data);
+	if (line_size == 0) {
+		FCLOSE(fp);
+		return EOF;
 	}
 
 	if (line_size > bufend - recbuf->data) {
@@ -299,18 +245,14 @@ putkeydump(const RECHEADER *rec, FILE *fp)
  * get a record from a temporary file. (Used by merge sort.)
  */
 int
-geteasy(int flno, int top, struct filelist *filelist, int nfiles,
-    RECHEADER *rec, u_char *end, struct field *dummy2)
+geteasy(FILE *fp, RECHEADER *rec, u_char *end, struct field *dummy2)
 {
 	int i;
-	FILE *fp;
 
-	fp = fstack[flno].fp;
 	if ((u_char *)(rec + 1) > end)
 		return (BUFFEND);
 	if (!fread(rec, 1, offsetof(RECHEADER, data), fp)) {
 		fclose(fp);
-		fstack[flno].fp = 0;
 		return (EOF);
 	}
 	if (end - rec->data < (ptrdiff_t)rec->length) {

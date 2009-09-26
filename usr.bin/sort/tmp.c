@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.14 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: tmp.c,v 1.15 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.14 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.15 2009/09/26 21:16:55 dsl Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -101,7 +101,8 @@ ftmp(void)
 		err(2, "ftmp: mkstemp(\"%s\")", path);
 	if (!(fp = fdopen(fd, "w+")))
 		err(2, "ftmp: fdopen(\"%s\")", path);
-	(void)unlink(path);
+	if (!DEBUG('t'))
+		(void)unlink(path);
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return (fp);
