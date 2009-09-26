@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.69 2009/01/13 13:35:52 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.70 2009/09/26 16:03:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2009/09/26 16:03:45 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -258,8 +258,6 @@ struct fd_softc {
 	int sc_cylin;		/* where we think the head is */
 	int sc_opts;		/* user-set options */
 
-	void	*sc_sdhook;	/* shutdownhook cookie */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct bufq_state *sc_q;/* pending I/O requests */
@@ -289,6 +287,7 @@ const struct cdevsw fd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static bool fd_shutdown(device_t, int);
 void fdgetdisklabel(dev_t);
 int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
@@ -613,7 +612,19 @@ fdattach(device_t parent, device_t self, void *aux)
 	mountroothook_establish(fd_mountroot_hook, self);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+	if (!pmf_device_register1(self, NULL, NULL, fd_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+bool
+fd_shutdown(device_t self, int howto)
+{
+	struct fd_softc *fd;
+
+	fd = device_private(self);
+	fd_motor_off(fd);
+
+	return true;
 }
 
 inline struct fd_type *
