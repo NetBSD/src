@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47.20.1 2008/12/10 22:06:42 snj Exp $ */
+/*	$NetBSD: clock.c,v 1.47.20.2 2009/09/26 18:44:59 snj Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.20.1 2008/12/10 22:06:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.20.2 2009/09/26 18:44:59 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -333,6 +333,8 @@ clk_gettick(void)
 static u_int
 clk_getcounter(struct timecounter *tc)
 {
+	static int last_hardclock_ticks;
+	static u_int last_clock_tick = 0;
 	int old_hardclock_ticks;
 	u_int clock_tick;
 
@@ -340,6 +342,19 @@ clk_getcounter(struct timecounter *tc)
 		old_hardclock_ticks = hardclock_ticks;
 		clock_tick = clk_gettick();
 	} while (old_hardclock_ticks != hardclock_ticks);
+
+	/*
+	 * Handle the situation of a wrapped interval counter, while
+	 * the hardclock() interrupt was not yet executed to update
+	 * hardclock_ticks.
+	 */
+	if (last_hardclock_ticks > old_hardclock_ticks)
+		old_hardclock_ticks = last_hardclock_ticks;
+	if (clock_tick < last_clock_tick &&
+	    old_hardclock_ticks == last_hardclock_ticks)
+		old_hardclock_ticks++;
+	last_hardclock_ticks = old_hardclock_ticks;
+	last_clock_tick = clock_tick;
 
 	return old_hardclock_ticks * amiga_clk_interval + clock_tick;
 }
