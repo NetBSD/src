@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.291.4.1 2009/07/18 21:38:09 snj Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.291.4.2 2009/09/26 18:34:29 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291.4.1 2009/07/18 21:38:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291.4.2 2009/09/26 18:34:29 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -242,6 +242,7 @@ int	tcp_log_refused;
 int	tcp_do_autorcvbuf = 0;
 int	tcp_autorcvbuf_inc = 16 * 1024;
 int	tcp_autorcvbuf_max = 256 * 1024;
+int	tcp_msl = (TCPTV_MSL / PR_SLOWHZ);
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
@@ -2488,7 +2489,8 @@ after_listen:
 			if (ourfinisacked) {
 				tp->t_state = TCPS_TIME_WAIT;
 				tcp_canceltimers(tp);
-				TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+				TCP_TIMER_ARM(tp, TCPT_2MSL, 
+						2 * PR_SLOWHZ * tcp_msl);
 				soisdisconnected(so);
 			}
 			break;
@@ -2512,7 +2514,7 @@ after_listen:
 		 * it and restart the finack timer.
 		 */
 		case TCPS_TIME_WAIT:
-			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * PR_SLOWHZ * tcp_msl);
 			goto dropafterack;
 		}
 	}
@@ -2696,7 +2698,7 @@ dodata:							/* XXX */
 		case TCPS_FIN_WAIT_2:
 			tp->t_state = TCPS_TIME_WAIT;
 			tcp_canceltimers(tp);
-			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * PR_SLOWHZ * tcp_msl);
 			soisdisconnected(so);
 			break;
 
@@ -2704,7 +2706,7 @@ dodata:							/* XXX */
 		 * In TIME_WAIT state restart the 2 MSL time_wait timer.
 		 */
 		case TCPS_TIME_WAIT:
-			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * PR_SLOWHZ * tcp_msl);
 			break;
 		}
 	}
