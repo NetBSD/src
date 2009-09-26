@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/18 20:22:14 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2009/09/26 13:58:31 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,6 @@ LDADD+=		-L${IBERTYOBJ} -liberty
 DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	${G_TEXINFOS}
-#INFOFLAGS=	-I${DIST}/gas/doc -I${.OBJDIR}/../common -I${DIST}/libiberty
 INFOFLAGS=	-I${.OBJDIR}/../common -I${DIST}/libiberty
 
 .PATH: ${DIST}/gprof
