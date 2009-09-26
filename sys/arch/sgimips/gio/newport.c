@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.10.54.3 2009/09/26 17:51:56 snj Exp $	*/
+/*	$NetBSD: newport.c,v 1.10.54.4 2009/09/26 18:11:45 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.3 2009/09/26 17:51:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.4 2009/09/26 18:11:45 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ struct newport_devconfig {
 	int			dc_font;
 	struct wsscreen_descr	*dc_screen;
 	struct wsdisplay_font	*dc_fontdata;
+	int			dc_mode;
 	struct vcons_data	dc_vd;
 };
 
@@ -117,18 +118,8 @@ static struct wsdisplay_emulops newport_textops = {
 	.allocattr	= newport_allocattr
 };
 
-static struct wsscreen_descr newport_screen_1024x768 = {
-	.name		= "1024x768",
-	.ncols		= 128,
-	.nrows		= 48,
-	.textops	= &newport_textops,
-	.fontwidth	= 8,
-	.fontheight	= 16,
-	.capabilities	= WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_REVERSE
-};
-
-static struct wsscreen_descr newport_screen_1280x1024 = {
-	.name		= "1280x1024",
+static struct wsscreen_descr newport_screen = {
+	.name		= "default",
 	.ncols		= 160,
 	.nrows		= 64,
 	.textops	= &newport_textops,
@@ -138,8 +129,7 @@ static struct wsscreen_descr newport_screen_1280x1024 = {
 };
 
 static const struct wsscreen_descr *_newport_screenlist[] = {
-	&newport_screen_1024x768,
-	&newport_screen_1280x1024
+	&newport_screen
 };
 
 static const struct wsscreen_list newport_screenlist = {
@@ -556,11 +546,9 @@ newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 	newport_get_resolution(dc);
 
 	newport_fill_rectangle(dc, 0, 0, dc->dc_xres, dc->dc_yres, 0);
-	if (dc->dc_xres == 1280) {
-		dc->dc_screen = &newport_screen_1280x1024;
-	} else
-		dc->dc_screen = &newport_screen_1024x768;
+	dc->dc_screen = &newport_screen;
 	
+	dc->dc_mode = WSDISPLAYIO_MODE_EMUL;
 }
 
 static void
@@ -614,7 +602,6 @@ newport_cnattach(struct gio_attach_args *ga)
 {
 	struct rasops_info *ri = &newport_console_screen.scr_ri;
 	long defattr = NEWPORT_ATTR_ENCODE(WSCOL_WHITE, WSCOL_BLACK);
-	const struct wsscreen_descr *screen;
 
 	if (!newport_match(NULL, NULL, ga)) {
 		return ENXIO;
@@ -622,11 +609,8 @@ newport_cnattach(struct gio_attach_args *ga)
 
 	newport_attach_common(&newport_console_dc, ga);
 
-	if (newport_console_dc.dc_xres >= 1280 &&
-	    newport_console_dc.dc_yres >= 1024)
-		screen = &newport_screen_1280x1024;
-	else
-		screen = &newport_screen_1024x768;
+	newport_screen.ncols = newport_console_dc.dc_xres / 8;
+	newport_screen.nrows = newport_console_dc.dc_yres / 16;
 
 	ri->ri_hw = &newport_console_screen;
 	ri->ri_depth = newport_console_dc.dc_depth;
@@ -646,7 +630,7 @@ newport_cnattach(struct gio_attach_args *ga)
 	newport_console_screen.scr_cookie = &newport_console_dc;
 
 	newport_putchar(ri, 3, 3, 0x41, defattr);
-	wsdisplay_cnattach(screen, ri, 0, 0, defattr);
+	wsdisplay_cnattach(&newport_screen, ri, 0, 0, defattr);
 	newport_putchar(ri, 4, 3, 0x42, defattr);
 
 	newport_is_console = 1;
@@ -897,10 +881,8 @@ newport_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_data *vd;
 	struct newport_devconfig *dc;
 	struct vcons_screen *ms;
-#if 0
-	struct wsdisplay_fbinfo *wdf;
 	int nmode;
-#endif
+
 	vd = (struct vcons_data *)v;
 	dc = (struct newport_devconfig *)vd->cookie;
 	ms = (struct vcons_screen *)vd->active;
@@ -916,6 +898,17 @@ newport_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_NEWPORT;
+		return 0;
+	case WSDISPLAYIO_SMODE:
+		nmode = *(int *)data;
+		if (nmode != dc->dc_mode) {
+			dc->dc_mode = nmode;
+			if (nmode == WSDISPLAYIO_MODE_EMUL) {
+				rex3_wait_gfifo(dc);
+				newport_setup_hw(dc);
+				vcons_redraw_screen(vd->active);
+			}
+		}
 		return 0;
 	}
 	return EPASSTHROUGH;
