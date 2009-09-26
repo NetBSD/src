@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.7 2009/09/15 21:07:58 agc Exp $
+$NetBSD: networking,v 1.8 2009/09/26 05:36:22 tsarna Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -45,7 +45,7 @@ Responsible: matt
 
 Add support for multicast DNS (name.local)
 
-Responsible: ???
+Responsible: tsarna
 
 6. tcp support in libsa
 -----------------------
