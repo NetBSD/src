@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.13 2009/09/26 11:51:29 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.14 2009/09/26 17:05:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.13 2009/09/26 11:51:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.14 2009/09/26 17:05:01 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2365,20 +2365,22 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 	int nmixers = 0;
 	int i, j, index = 0;
 	int ndac, nadc;
-	int numgpio;
-	bool needmasterctl = false;
+	int ctrlcnt[HDAUDIO_MIXER_NRDEVICES];
+
+	memset(ctrlcnt, 0, sizeof(ctrlcnt));
 
 	/* Count the number of required mixers */
 	for (i = 0; i < sc->sc_nctls; i++) {
 		ctl = &sc->sc_ctls[i];
-		if (ctl->ctl_enable == false)
+		if (ctl->ctl_enable == false ||
+		    ctl->ctl_audiomask == 0)
 			continue;
 		audiomask |= ctl->ctl_audiomask;
-	}
-	for (i = 0; i < HDAUDIO_MIXER_NRDEVICES; i++) {
-		if (audiomask & (1 << i))
+		++nmixers;
+		if (ctl->ctl_mute)
 			++nmixers;
 	}
+
 	/* XXXJDM TODO: softvol */
 	/* Declare master volume if needed */
 	if ((audiomask & (HDAUDIO_MASK(VOLUME) | HDAUDIO_MASK(PCM))) ==
@@ -2387,8 +2389,9 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		for (i = 0; i < sc->sc_nctls; i++) {
 			if (sc->sc_ctls[i].ctl_audiomask == HDAUDIO_MASK(PCM)) {
 				masterctl = &sc->sc_ctls[i];
-				needmasterctl = true;
 				++nmixers;
+				if (masterctl->ctl_mute)
+					++nmixers;
 				break;
 			}
 		}
@@ -2407,8 +2410,6 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		else if (sc->sc_assocs[i].as_dir == HDAUDIO_PINDIR_IN)
 			++nadc;
 	}
-	/* count GPIOs */
-	numgpio = COP_GPIO_COUNT_NUM_GPIO(sc->sc_p.gpio_cnt);
 
 	/* Make room for selectors */
 	if (ndac > 0)
@@ -2417,7 +2418,7 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		++nmixers;
 
 	hda_trace(sc, "  need %d mixers (3 classes%s)\n",
-	    nmixers, needmasterctl ? " + fake master" : "");
+	    nmixers, masterctl ? " + fake master" : "");
 
 	/* Allocate memory for the mixers */
 	mx = kmem_zalloc(nmixers * sizeof(*mx), KM_SLEEP);
@@ -2444,33 +2445,62 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		++index;
 	}
 
+	/* Shadow master control */
+	if (masterctl != NULL) {
+		mx[index].mx_ctl = masterctl;
+		mx[index].mx_di.index = index;
+		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
+		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
+		mx[index].mx_di.un.v.num_channels = 2;	/* XXX */
+		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
+		mx[index].mx_di.un.v.delta = 256 / (masterctl->ctl_step + 1);
+		strcpy(mx[index].mx_di.label.name, AudioNmaster);
+		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
+		hda_trace(sc, "  adding outputs.%s\n",
+		    mx[index].mx_di.label.name);
+		++index;
+		if (masterctl->ctl_mute) {
+			mx[index] = mx[index - 1];
+			mx[index].mx_di.index = index;
+			mx[index].mx_di.type = AUDIO_MIXER_ENUM;
+			mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
+			strcpy(mx[index].mx_di.label.name, AudioNmaster "." AudioNmute);
+			mx[index].mx_di.un.e.num_mem = 2;
+			strcpy(mx[index].mx_di.un.e.member[0].label.name, AudioNoff);
+			mx[index].mx_di.un.e.member[0].ord = 0;
+			strcpy(mx[index].mx_di.un.e.member[1].label.name, AudioNon);
+			mx[index].mx_di.un.e.member[1].ord = 1;
+			++index;
+		}
+	}
+
 	/* Build volume mixers */
-	for (i = 0; i < HDAUDIO_MIXER_NRDEVICES; i++) {
-		if ((audiomask & (1 << i)) == 0)
+	for (i = 0; i < sc->sc_nctls; i++) {
+		uint32_t audiodev;
+
+		ctl = &sc->sc_ctls[i];
+		if (ctl->ctl_enable == false ||
+		    ctl->ctl_audiomask == 0)
 			continue;
-		ctl = NULL;
-		for (j = 0; j < sc->sc_nctls; j++) {
-			if (sc->sc_ctls[j].ctl_enable == false)
-				continue;
-			if (sc->sc_ctls[j].ctl_audiomask & (1 << i)) {
-				ctl = &sc->sc_ctls[j];
-				break;
-			}
-		}
-		if (ctl == NULL && i == HDAUDIO_MIXER_VOLUME &&
-		    needmasterctl == true) {
-			ctl = masterctl;
-		}
-		if (ctl == NULL)
-			continue;
+		audiodev = ffs(ctl->ctl_audiomask) - 1;
 		mx[index].mx_ctl = ctl;
 		mx[index].mx_di.index = index;
 		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
 		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
 		mx[index].mx_di.un.v.num_channels = 2;	/* XXX */
 		mx[index].mx_di.un.v.delta = 256 / (ctl->ctl_step + 1);
-		strcpy(mx[index].mx_di.label.name, hdaudio_afg_mixer_names[i]);
-		switch (i) {
+		if (ctrlcnt[audiodev] > 0)
+			snprintf(mx[index].mx_di.label.name,
+			    sizeof(mx[index].mx_di.label.name),
+			    "%s%d",
+			    hdaudio_afg_mixer_names[audiodev],
+			    ctrlcnt[audiodev] + 1);
+		else
+			strcpy(mx[index].mx_di.label.name,
+			    hdaudio_afg_mixer_names[audiodev]);
+		ctrlcnt[audiodev]++;
+
+		switch (audiodev) {
 		case HDAUDIO_MIXER_VOLUME:
 		case HDAUDIO_MIXER_BASS:
 		case HDAUDIO_MIXER_TREBLE:
@@ -2497,6 +2527,23 @@ hdaudio_afg_build_mixers(struct hdaudio_afg_softc *sc)
 		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
 		
 		++index;
+
+		if (ctl->ctl_mute) {
+			mx[index] = mx[index - 1];
+			mx[index].mx_di.index = index;
+			mx[index].mx_di.type = AUDIO_MIXER_ENUM;
+			mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
+			snprintf(mx[index].mx_di.label.name,
+			    sizeof(mx[index].mx_di.label.name),
+			    "%s." AudioNmute,
+			    mx[index - 1].mx_di.label.name);
+			mx[index].mx_di.un.e.num_mem = 2;
+			strcpy(mx[index].mx_di.un.e.member[0].label.name, AudioNoff);
+			mx[index].mx_di.un.e.member[0].ord = 0;
+			strcpy(mx[index].mx_di.un.e.member[1].label.name, AudioNon);
+			mx[index].mx_di.un.e.member[1].ord = 1;
+			++index;
+		}
 	}
 
 	/* DAC selector */
@@ -3350,14 +3397,25 @@ hdaudio_afg_set_port(void *opaque, mixer_ctrl_t *mc)
 		return 0;
 	}
 
-	if (ctl->ctl_step == 0)
-		divisor = 128; /* ??? - just avoid div by 0 */
-	else
-		divisor = 255 / ctl->ctl_step;
+	switch (mx->mx_di.type) {
+	case AUDIO_MIXER_VALUE:
+		if (ctl->ctl_step == 0)
+			divisor = 128; /* ??? - just avoid div by 0 */
+		else
+			divisor = 255 / ctl->ctl_step;
 
-	hdaudio_afg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE,
-	  mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / divisor,
-	  mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / divisor);
+		hdaudio_afg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE,
+		  mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] / divisor,
+		  mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] / divisor);
+		break;
+	case AUDIO_MIXER_ENUM:
+		hdaudio_afg_control_amp_set(ctl,
+		    mc->un.ord ? HDAUDIO_AMP_MUTE_ALL : HDAUDIO_AMP_MUTE_NONE,
+		    ctl->ctl_left, ctl->ctl_right);
+		break;
+	default:
+		return ENXIO;
+	}
 	    
 	return 0;
 }
@@ -3400,13 +3458,22 @@ hdaudio_afg_get_port(void *opaque, mixer_ctrl_t *mc)
 		return 0;
 	}
 
-	if (ctl->ctl_step == 0)
-		factor = 128; /* ??? - just avoid div by 0 */
-	else
-		factor = 255 / ctl->ctl_step;
+	switch (mx->mx_di.type) {
+	case AUDIO_MIXER_VALUE:
+		if (ctl->ctl_step == 0)
+			factor = 128; /* ??? - just avoid div by 0 */
+		else
+			factor = 255 / ctl->ctl_step;
 
-	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = ctl->ctl_left * factor;
-	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = ctl->ctl_right * factor;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = ctl->ctl_left * factor;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = ctl->ctl_right * factor;
+		break;
+	case AUDIO_MIXER_ENUM:
+		mc->un.ord = (ctl->ctl_muted || ctl->ctl_forcemute) ? 1 : 0;
+		break;
+	default:
+		return ENXIO;
+	}
 	return 0;
 }
 
