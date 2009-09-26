@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.10 2007/03/04 06:00:39 christos Exp $	*/
+/*	$NetBSD: newport.c,v 1.10.54.1 2009/09/26 17:36:18 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.1 2009/09/26 17:36:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,22 @@ newport_copy_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
 	uint32_t tmp;
 
 	rex3_wait_gfifo(dc);
-	
+	if (dy > y1) {
+		/* need to copy bottom up */
+		dy += (y2 - y1);
+		tmp = y2;
+		y2 = y1;
+		y1 = tmp;
+	}
+
+	if (dx > x1) {
+		/* need to copy right to left */
+		dx += (x2 - x1);
+		tmp = x2;
+		x2 = x1;
+		x1 = tmp;
+	}
+
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_SCR2SCR |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_DOSETUP |
 	    REX3_DRAWMODE0_STOPONX | REX3_DRAWMODE0_STOPONY);
@@ -696,10 +711,10 @@ newport_cursor(void *c, int on, int row, int col)
 		    control & ~VC2_CONTROL_CURSOR_ENABLE);
 	} else {
 		/* Work around bug in some board revisions */
-		if (dc->dc_boardrev < 6)
-			x_offset = 21;
-		else if (dc->dc_vc2rev == 0) 
+		if (dc->dc_vc2rev == 0) 
 			x_offset = 29;
+		else if (dc->dc_boardrev < 6)
+			x_offset = 21;
 		else
 			x_offset = 31;
 
@@ -783,7 +798,7 @@ newport_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 	newport_copy_rectangle(dc,
 	    srccol * font->fontwidth,			/* x1 */
 	    row * font->fontheight,			/* y1 */
-	    (srccol + ncols + 1) * font->fontwidth - 1,	/* x2 */
+	    (srccol + ncols) * font->fontwidth - 1,	/* x2 */
 	    (row + 1) * font->fontheight - 1,		/* y2 */
 	    dstcol * font->fontheight,			/* dx */
 	    row * font->fontheight);			/* dy */
@@ -799,7 +814,7 @@ newport_erasecols(void *c, int row, int startcol, int ncols,
 	newport_fill_rectangle(dc,
 	    startcol * font->fontwidth,				/* x1 */
 	    row * font->fontheight,				/* y1 */
-	    (startcol + ncols + 1) * font->fontwidth - 1,	/* x2 */
+	    (startcol + ncols) * font->fontwidth - 1,		/* x2 */
 	    (row + 1) * font->fontheight - 1,			/* y2 */
 	    NEWPORT_ATTR_BG(attr));
 }
@@ -814,7 +829,7 @@ newport_copyrows(void *c, int srcrow, int dstrow, int nrows)
 	    0,							/* x1 */
 	    srcrow * font->fontheight,				/* y1 */
 	    dc->dc_xres,					/* x2 */
-	    (srcrow + nrows + 1) * font->fontheight - 1,	/* y2 */
+	    (srcrow + nrows) * font->fontheight - 1,		/* y2 */
 	    0,							/* dx */
 	    dstrow * font->fontheight);				/* dy */
 }
@@ -829,7 +844,7 @@ newport_eraserows(void *c, int startrow, int nrows, long attr)
 	    0,							/* x1 */
 	    startrow * font->fontheight,			/* y1 */
 	    dc->dc_xres,					/* x2 */
-	    (startrow + nrows + 1) * font->fontheight - 1,	/* y2 */
+	    (startrow + nrows) * font->fontheight - 1,		/* y2 */
 	    NEWPORT_ATTR_BG(attr));
 }
 
