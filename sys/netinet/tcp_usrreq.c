@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.149.4.1 2009/06/17 20:29:33 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.149.4.2 2009/09/26 18:34:29 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.149.4.1 2009/06/17 20:29:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.149.4.2 2009/09/26 18:34:29 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1698,6 +1698,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Lower limit for TCP maximum segment size"),
 		       NULL, 0, &tcp_minmss, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "msl",
+		       SYSCTL_DESCR("Maximum Segment Life"),
+		       NULL, 0, &tcp_msl, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "syn_cache_limit",
