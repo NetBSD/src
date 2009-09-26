@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.98 2009/09/06 14:10:42 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.99 2009/09/26 19:58:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.98 2009/09/06 14:10:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.99 2009/09/26 19:58:53 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -209,6 +209,7 @@ struct vr_softc {
 	uint8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
+	pcireg_t		vr_id;		/* vendor/product ID */
 	uint8_t			vr_revid;	/* Rhine chip revision */
 
 	callout_t		vr_tick_ch;	/* tick callout */
@@ -317,6 +318,7 @@ static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
 static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
     pcireg_t);
+static bool	vr_resume(device_t PMF_FN_PROTO);
 
 int	vr_copy_small = 0;
 
@@ -1457,6 +1459,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_dev = self;
 	sc->vr_pc = pa->pa_pc;
 	sc->vr_tag = pa->pa_tag;
+	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -1705,7 +1708,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 
-	if (pmf_device_register1(self, NULL, NULL, vr_shutdown))
+	if (pmf_device_register1(self, NULL, vr_resume, vr_shutdown))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -1753,4 +1756,15 @@ vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
 	PCI_CONF_WRITE(VR_PCI_LOMEM, sc->vr_save_membase);
 	PCI_CONF_WRITE(PCI_INTERRUPT_REG, sc->vr_save_irq);
 	return 0;
+}
+
+static bool
+vr_resume(device_t self PMF_FN_ARGS)
+{
+	struct vr_softc *sc = device_private(self);
+
+	if (PCI_PRODUCT(sc->vr_id) != PCI_PRODUCT_VIATECH_VT3043)
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+
+	return true;
 }
