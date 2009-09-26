@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.32 2009/09/26 15:40:02 tsutsui Exp $	*/
+/*	$NetBSD: mesh.c,v 1.33 2009/09/26 15:45:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.32 2009/09/26 15:40:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.33 2009/09/26 15:45:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -138,7 +138,7 @@ static inline void mesh_set_reg(struct mesh_softc *, int, int);
 
 int mesh_match(device_t, cfdata_t, void *);
 void mesh_attach(device_t, device_t, void *);
-void mesh_shutdownhook(void *);
+bool mesh_shutdown(device_t, int);
 int mesh_intr(void *);
 void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
 void mesh_select(struct mesh_softc *, struct mesh_scb *);
@@ -264,7 +264,8 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
 	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(mesh_shutdownhook, sc);
+	if (pmf_device_register1(self, NULL, NULL, mesh_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
@@ -287,14 +288,18 @@ mesh_set_reg(struct mesh_softc *sc, int reg, int val)
 	out8(sc->sc_reg + reg, val);
 }
 
-void
-mesh_shutdownhook(void *arg)
+bool
+mesh_shutdown(device_t self, int howto)
 {
-	struct mesh_softc *sc = arg;
+	struct mesh_softc *sc;
+
+	sc = device_private(self);
 
 	/* Set to async mode. */
 	mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
 	mesh_bus_reset(sc);
+
+	return true;
 }
 
 #ifdef MESH_DEBUG
