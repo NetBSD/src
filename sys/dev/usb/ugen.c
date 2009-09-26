@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.99.8.1 2009/03/24 20:59:29 snj Exp $	*/
+/*	$NetBSD: ugen.c,v 1.99.8.2 2009/09/26 19:00:35 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.1 2009/03/24 20:59:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.2 2009/09/26 19:00:35 snj Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -1734,6 +1734,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		int error;
 
 		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		if (cdesc == NULL)
+			return (EINVAL);
 		if (len > fd->ufd_size)
 			len = fd->ufd_size;
 		iov.iov_base = (void *)fd->ufd_data;
