@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.55 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.56 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.55 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.56 2009/09/26 21:16:55 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -121,7 +121,6 @@ int main(int argc, char **argv);
 int
 main(int argc, char *argv[])
 {
-	get_func_t get;
 	int ch, i, stdinflag = 0;
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
@@ -313,15 +312,11 @@ main(int argc, char *argv[])
 		num_input_files = argc - optind;
 	}
 
-	if (SINGL_FLD)
-		get = makeline;
-	else
-		get = makekey;
-
 	if (cflag) {
-		order(&filelist, get, fldtab);
+		order(&filelist, fldtab);
 		/* NOT REACHED */
 	}
+
 	if (!outpath) {
 		toutpath[0] = '\0';	/* path not used in this case */
 		outfile = outpath = toutpath;
@@ -356,10 +351,9 @@ main(int argc, char *argv[])
 			err(2, "output file %s", outfile);
 	}
 
-	if (mflag) {
-		fmerge(-1, &filelist, num_input_files, get, outfp, putline,
-			fldtab);
-	} else
+	if (mflag)
+		fmerge(&filelist, num_input_files, outfp, fldtab);
+	else
 		fsort(&filelist, num_input_files, outfp, fldtab);
 
 	if (outfile != outpath) {

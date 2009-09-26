@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.16 2009/09/05 12:00:25 dsl Exp $	*/
+/*	$NetBSD: fsort.h,v 1.17 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,16 +76,3 @@
  */
 #define DEFBUFSIZE	(1 << 20)	/* 1MB */
 #define MAXBUFSIZE	(8 << 20)	/* 10 MB */
-
-/*
- * Number of files merge() can merge in one pass.
- * This should be power of two so that it's possible to use this value
- * for rouding.
- */
-#define MERGE_FNUM	16
-
-/* Temporary files contian data (with record headers) in sorted order */
-struct tempfile {
-	FILE *fp;
-};
-extern struct tempfile fstack[MAXFCT];

@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.26 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.27 2009/09/26 21:16:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,127 +65,118 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.26 2009/09/10 22:02:40 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.27 2009/09/26 21:16:55 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 /* Subroutines using comparisons: merge sort and check order */
 #define DELETE (1)
 
 typedef struct mfile {
-	u_char *end;
-	int flno;
-	RECHEADER rec[1];
+	FILE         *fp;
+	get_func_t   get;
+	RECHEADER    *rec;
+	u_char       *end;
 } MFILE;
 
 static int cmp(RECHEADER *, RECHEADER *);
-static int insert(struct mfile **, struct mfile **, int, int);
-static void merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
+static int insert(struct mfile **, struct mfile *, int, int);
+
+/*
+ * Number of files merge() can merge in one pass.
+ * This should be power of two so that it's possible to use this value
+ * for rouding.
+ */
+#define MERGE_FNUM      16
+
+static struct mfile fstack[MERGE_FNUM];
+static int fstack_count;
 
 void
-fmerge(int binno, struct filelist *filelist, int nfiles,
-    get_func_t get, FILE *outfp, put_func_t fput, struct field *ftbl)
+save_for_merge(FILE *fp, get_func_t get, struct field *ftbl)
 {
-	FILE *tout;
-	int i, j, last;
-	put_func_t put;
+	FILE *mfp;
 
-	while (nfiles) {
-		put = putrec;
-		for (j = 0; j < nfiles; j += MERGE_FNUM) {
-			if (nfiles <= MERGE_FNUM) {
-				tout = outfp;
-				put = fput;
-			}
-			else
-				tout = ftmp();
-			last = min(MERGE_FNUM, nfiles - j);
-			if (binno < 0) {
-				for (i = 0; i < last; i++)
-					if (!(fstack[i+MAXFCT-1-MERGE_FNUM].fp =
-					    fopen(filelist->names[j+i], "r")))
-						err(2, "%s",
-							filelist->names[j+i]);
-				merge(MAXFCT-1-MERGE_FNUM, last, get, tout, put, ftbl);
-			} else {
-				for (i = 0; i< last; i++)
-					rewind(fstack[i+j].fp);
-				merge(j, last, get, tout, put, ftbl);
-			}
-			if (nfiles > MERGE_FNUM)
-				fstack[j/MERGE_FNUM].fp = tout;
-		}
-		nfiles = (nfiles + (MERGE_FNUM - 1)) / MERGE_FNUM;
-		if (nfiles == 1)
-			nfiles = 0;
-		if (binno < 0) {
-			binno = 0;
-			get = geteasy;
-		}
+	if (fstack_count == MERGE_FNUM) {
+		/* Must reduce the number of temporary files */
+		mfp = ftmp();
+		merge_sort(mfp, putrec, ftbl);
+		fstack[0].fp = mfp;
+		fstack[0].get = geteasy;
+		fstack_count = 1;
 	}
+
+	fstack[fstack_count].fp = fp;
+	fstack[fstack_count++].get = get;
 }
 
-static void
-merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
-    struct field *ftbl)
+void
+fmerge(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 {
-	int c, i, j, nf = nfiles;
-	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
-	size_t availsz;
-	static void *bufs[MERGE_FNUM + 1];
-	static size_t bufs_sz[MERGE_FNUM + 1];
+	get_func_t get = SINGL_FLD ? makeline : makekey;
+	FILE *fp;
+	int i;
 
-	/*
-	 * We need nfiles + 1 buffers.
-	 */
-	for (i = 0; i < nfiles + 1; i++) {
-		if (bufs[i])
-			continue;
-
-		bufs[i] = malloc(DEFLLEN);
-		if (!bufs[i])
-			err(2, "merge: malloc");
-		memset(bufs[i], 0, DEFLLEN);
-		bufs_sz[i] = DEFLLEN;
+	for (i = 0; i < nfiles; i++) {
+		fp = fopen(filelist->names[i], "r");
+		if (fp == NULL)
+			err(2, "%s", filelist->names[i]);
+		save_for_merge(fp, get, ftbl);
 	}
 
+	merge_sort(outfp, putline, ftbl);
+}
+
+void
+merge_sort(FILE *outfp, put_func_t put, struct field *ftbl)
+{
+	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
+	RECHEADER *new_rec;
+	u_char *new_end;
+	void *tmp;
+	int c, i, nfiles;
+	size_t sz;
+
 	/* Read one record from each file (read again if a duplicate) */
-	for (i = j = 0; i < nfiles; i++, j++) {
-		cfile = (struct mfile *) bufs[j];
-		cfile->flno = infl0 + j;
-		cfile->end = (u_char *) bufs[j] + bufs_sz[j];
-		for (c = 1; c == 1;) {
-			c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
-			    cfile->end, ftbl);
-			if (c == EOF) {
-				--i;
-				--nfiles;
+	for (nfiles = i = 0; i < fstack_count; i++) {
+		cfile = &fstack[i];
+		if (cfile->rec == NULL) {
+			cfile->rec = emalloc(DEFLLEN);
+			cfile->end = (u_char *)cfile->rec + DEFLLEN;
+		}
+		rewind(cfile->fp);
+
+		for (;;) {
+			c = cfile->get(cfile->fp, cfile->rec, cfile->end, ftbl);
+			if (c == EOF)
 				break;
-			}
 
 			if (c == BUFFEND) {
-				bufs_sz[j] *= 2;
-				cfile = realloc(bufs[j], bufs_sz[j]);
-				if (!cfile)
-					err(2, "merge: realloc");
-
-				bufs[j] = (void *) cfile;
-				cfile->end = (u_char *)cfile + bufs_sz[j];
-
-				c = 1;
+				/* Double buffer size */
+				sz = (cfile->end - (u_char *)cfile->rec) * 2;
+				cfile->rec = erealloc(cfile->rec, sz);
+				cfile->end = (u_char *)cfile->rec + sz;
 				continue;
 			}
 
-			if (i)
-				c = insert(flist, &cfile, i, !DELETE);
-			else
+			if (nfiles != 0) {
+				if (insert(flist, cfile, nfiles, !DELETE))
+					/* Duplicate removed */
+					continue;
+			} else
 				flist[0] = cfile;
+			nfiles++;
+			break;
 		}
 	}
+
+	if (nfiles == 0)
+		return;
 
 	/*
 	 * We now loop reading a new record from the file with the
@@ -194,86 +185,85 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 	 * output file - maintaining one record from each file in the sorted
 	 * list.
 	 */
-	cfile = (struct mfile *) bufs[nf];
-	cfile->end = (u_char *) cfile + bufs_sz[nf];
-	cfile->flno = flist[0]->flno;
+	new_rec = emalloc(DEFLLEN);
+	new_end = (u_char *)new_rec + DEFLLEN;
 	for (;;) {
-		c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
-		    cfile->end, ftbl);
+		cfile = flist[0];
+		c = cfile->get(cfile->fp, new_rec, new_end, ftbl);
 		if (c == EOF) {
 			/* Write out last record from now-empty input */
-			put(flist[0]->rec, outfp);
+			put(cfile->rec, outfp);
 			if (--nfiles == 0)
 				break;
 			/* Replace from file with now-first sorted record. */
 			/* (Moving base 'flist' saves copying everything!) */
 			flist++;
-			cfile->flno = flist[0]->flno;
 			continue;
 		}
 		if (c == BUFFEND) {
 			/* Buffer not large enough - double in size */
-			char *oldbuf = (char *) cfile;
-			availsz = (char *) cfile->end - oldbuf;
-			availsz *= 2;
-			cfile = realloc(oldbuf, availsz);
-			if (!cfile)
-				err(2, "merge: realloc");
-			cfile->end = (u_char *)cfile + availsz;
-
-			/* Update pointers we'll use for next merge */
-			for (i = 0; i < nf + 1; i++) {
-				if (bufs[i] == oldbuf) {
-					bufs[i] = (char *)cfile;
-					bufs_sz[i] = availsz;
-					break;
-				}
-			}
-			/* Read again from same file into same buffer */
+			sz = (new_end - (u_char *)new_rec) * 2;
+			new_rec = erealloc(new_rec, sz);
+			new_end = (u_char *)new_rec +sz;
 			continue;
 		}
-			
-		/* Add into sort, removing the original first entry */
-		c = insert(flist, &cfile, nfiles, DELETE);
 
-		/*
-		 * 'cfile' is now the buffer from the old record from the
-		 * file we just read, but with the file number of the
-		 * current 'first record.
-		 * (Unless we are rejecting a duplicate, when c == 1 and
-		 * it is unchanged!)
-		 */
-		if (c == 0)
-			put(cfile->rec, outfp);
+		/* Swap in new buffer, saving old */
+		tmp = cfile->rec;
+		cfile->rec = new_rec;
+		new_rec = tmp;
+		tmp = cfile->end;
+		cfile->end = new_end;
+		new_end = tmp;
+
+		/* Add into sort, removing the original first entry */
+		c = insert(flist, cfile, nfiles, DELETE);
+		if (c != 0 || (UNIQUE && cfile == flist[0]
+			    && cmp(new_rec, cfile->rec) == 0)) {
+			/* Was an unwanted duplicate, restore buffer */
+			tmp = cfile->rec;
+			cfile->rec = new_rec;
+			new_rec = tmp;
+			tmp = cfile->end;
+			cfile->end = new_end;
+			new_end = tmp;
+			continue;
+		}
+
+		/* Write out 'old' record */
+		put(new_rec, outfp);
 	}
+
+	free(new_rec);
 }
 
 /*
- * if delete: inserts *rec in flist, deletes flist[0], and leaves it in *rec;
+ * if delete: inserts rec in flist, deletes flist[0];
  * otherwise just inserts *rec in flist.
+ * Returns 1 if record is a duplicate to be ignored.
  */
 static int
-insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
+insert(struct mfile **flist, struct mfile *rec, int ttop, int delete)
 {
-	struct mfile *tmprec = *rec;
 	int mid, top = ttop, bot = 0, cmpv = 1;
 
 	for (mid = top / 2; bot + 1 != top; mid = (bot + top) / 2) {
-		cmpv = cmp(tmprec->rec, flist[mid]->rec);
+		cmpv = cmp(rec->rec, flist[mid]->rec);
 		if (cmpv == 0 ) {
 			if (UNIQUE)
 				/* Duplicate key, read another record */
+				/* NB: This doesn't guarantee to keep any
+				 * particular record. */
 				return 1;
 			/*
-			 * Apply sort by fileno, to give priority to earlier
-			 * specified files, hence providing a stable sort.
+			 * Apply sort by input file order.
 			 * We could truncate the sort is the fileno are
 			 * adjacent - but that is all too hard!
 			 * The fileno cannot be equal, since we only have one
 			 * record from each file (+ flist[0] which never
 			 * comes here).
 			 */
-			cmpv = tmprec->flno - flist[mid]->flno;
+			cmpv = rec < flist[mid] ? -1 : 1;
 			if (REVERSE)
 				cmpv = -cmpv;
 		}
@@ -286,16 +276,11 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 	/* At this point we haven't yet compared against flist[0] */
 
 	if (delete) {
-		/* flist[0] came from the same file, it cannot be earlier. */
-		if (UNIQUE && bot == 0 && cmp(tmprec->rec, flist[0]->rec) == 0)
-			/* Duplicate record (key) in original file */
-			return 1;
-		tmprec = flist[0];
-		if (bot)
-			memmove(flist, flist + 1, bot * sizeof(MFILE **));
-		flist[bot] = *rec;
-		tmprec->flno = flist[0]->flno;
-		*rec = tmprec;
+		/* flist[0] is ourselves, only the caller knows the old data */
+		if (bot != 0) {
+			memmove(flist, flist + 1, bot * sizeof(MFILE *));
+			flist[bot] = rec;
+		}
 		return 0;
 	}
 
@@ -303,7 +288,7 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 
 	if (bot == 0 && cmpv != 0) {
 		/* Doesn't match flist[1], must compare with flist[0] */
-		cmpv = cmp(tmprec->rec, flist[0]->rec);
+		cmpv = cmp(rec->rec, flist[0]->rec);
 		if (cmpv == 0 && UNIQUE)
 			return 1;
 		/* Add matching keys in file order (ie new is later) */
@@ -311,8 +296,8 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 			bot = -1;
 	}
 	bot++;
-	memmove(flist + bot + 1, flist + bot, (ttop - bot) * sizeof(MFILE **));
-	flist[bot] = *rec;
+	memmove(flist + bot + 1, flist + bot, (ttop - bot) * sizeof(MFILE *));
+	flist[bot] = rec;
 	return 0;
 }
 
@@ -320,11 +305,17 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
  * check order on one file
  */
 void
-order(struct filelist *filelist, get_func_t get, struct field *ftbl)
+order(struct filelist *filelist, struct field *ftbl)
 {
+	get_func_t get = SINGL_FLD ? makeline : makekey;
 	RECHEADER *crec, *prec, *trec;
 	u_char *crec_end, *prec_end, *trec_end;
+	FILE *fp;
 	int c;
+
+	fp = fopen(filelist->names[0], "r");
+	if (fp == NULL)
+		err(2, "%s", filelist->names[0]);
 
 	crec = malloc(offsetof(RECHEADER, data[DEFLLEN]));
 	crec_end = crec->data + DEFLLEN;
@@ -332,9 +323,9 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 	prec_end = prec->data + DEFLLEN;
 
 	/* XXX this does exit(0) for overlong lines */
-	if (get(-1, 0, filelist, 1, prec, prec_end, ftbl) != 0)
+	if (get(fp, prec, prec_end, ftbl) != 0)
 		exit(0);
-	while (get(-1, 0, filelist, 1, crec, crec_end, ftbl) == 0) {
+	while (get(fp, crec, crec_end, ftbl) == 0) {
 		if (0 < (c = cmp(prec, crec))) {
 			crec->data[crec->length-1] = 0;
 			errx(1, "found disorder: %s", crec->data+crec->offset);
