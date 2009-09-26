@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.26 2007/03/04 15:18:10 yamt Exp $ */
+/* $NetBSD: dec_6600.c,v 1.26.54.1 2009/09/26 18:41:42 snj Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.26 2007/03/04 15:18:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.26.54.1 2009/09/26 18:41:42 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.26 2007/03/04 15:18:10 yamt Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
+
+#include <dev/ic/mlxio.h>
+#include <dev/ic/mlxvar.h>
+
+#include <dev/i2o/i2o.h>
+#include <dev/i2o/iopio.h>
+#include <dev/i2o/iopvar.h>
 
 #include "pckbd.h"
 
@@ -192,6 +199,8 @@ dec_6600_device_register(dev, aux)
 
 	if (!initted) {
 		diskboot = (strcasecmp(b->protocol, "SCSI") == 0) ||
+		    (strcasecmp(b->protocol, "RAID") == 0) ||
+		    (strcasecmp(b->protocol, "I2O") == 0) ||
 		    (strcasecmp(b->protocol, "IDE") == 0);
 		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
 		    (strcasecmp(b->protocol, "MOP") == 0);
@@ -286,6 +295,44 @@ dec_6600_device_register(dev, aux)
 		if (b->channel != periph->periph_channel->chan_channel)
 			return;
 
+		/* we've found it! */
+		booted_device = dev;
+		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));
+		found = 1;
+	}
+
+	if (device_is_a(dev, "ld") && device_is_a(parent, "iop")) {
+		/*
+		 * Argh!  The attach arguments for ld devices is not
+		 * consistent, so each supported raid controller requires
+		 * different checks.
+		 */
+		struct iop_attach_args *iopa = aux;
+
+		if (parent != ctrlrdev)
+			return;
+
+		if (b->unit != iopa->ia_tid)
+			return;
+		/* we've found it! */
+		booted_device = dev;
+		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));
+		found = 1;
+	}
+
+	if (device_is_a(dev, "ld") && device_is_a(parent, "mlx")) {
+		/*
+		 * Argh!  The attach arguments for ld devices is not
+		 * consistent, so each supported raid controller requires
+		 * different checks.
+		 */
+		struct mlx_attach_args *mlxa = aux;
+
+		if (parent != ctrlrdev)
+			return;
+
+		if (b->unit != mlxa->mlxa_unit)
+			return;
 		/* we've found it! */
 		booted_device = dev;
 		DR_VERBOSE(printf("\nbooted_device = %s\n", dev->dv_xname));

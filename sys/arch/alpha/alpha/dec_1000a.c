@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.26.10.1 2009/09/26 18:41:42 snj Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26.10.1 2009/09/26 18:41:42 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.26 2008/04/28 20:23:10 martin Exp $"
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include <dev/ic/mlxio.h>
+#include <dev/ic/mlxvar.h>
 
 #include "pckbd.h"
 
@@ -257,7 +260,8 @@ dec_1000a_device_register(dev, aux)
 		return;
 
 	if (!initted) {
-		diskboot = (strcasecmp(b->protocol, "SCSI") == 0);
+		diskboot = (strcasecmp(b->protocol, "SCSI") == 0) ||
+		    (strcasecmp(b->protocol, "RAID") == 0);
 		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
 		    (strcasecmp(b->protocol, "MOP") == 0);
 #if 0
@@ -330,6 +334,27 @@ dec_1000a_device_register(dev, aux)
 		if (b->channel != periph->periph_channel->chan_channel)
 			return;
 
+		/* we've found it! */
+		booted_device = dev;
+#if 0
+		printf("\nbooted_device = %s\n", dev->dv_xname);
+#endif
+		found = 1;
+	}
+
+	if (device_is_a(dev, "ld") && device_is_a(parent, "mlx")) {
+		/*
+		 * Argh!  The attach arguments for ld devices is not
+		 * consistent, so each supported raid controller requires
+		 * different checks.
+		 */
+		struct mlx_attach_args *mlxa = aux;
+
+		if (parent != ctrlrdev)
+			return;
+
+		if (b->unit != mlxa->mlxa_unit)
+			return;
 		/* we've found it! */
 		booted_device = dev;
 #if 0
