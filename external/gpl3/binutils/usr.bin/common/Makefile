@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/09/23 19:41:24 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2009/09/26 11:45:41 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ ${TEXINFO}: bfdver.texi
 
 bfdver.texi: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 	${_MKTARGET_CREATE}
-	rm -f config.texi
+	rm -f ${.TARGET}
 	(echo "@set VERSION ${G_VERSION}"; \
 	if [ -n "$(PKGVERSION)" ]; then \
 		echo "@set VERSION_PACKAGE $(PKGVERSION)"; \
