@@ -85,22 +85,6 @@ case "${host}" in
   # No further tweaking needed
   ;;
 
-alpha*-*-netbsd* | mips*-*-netbsd* | sparc64-*-netbsd* | *-*-netbsdelf*)
-  # The new BSD `make' has a bug: it doesn't pass empty arguments in
-  # shell commands.  So we need to make this value non-empty in order
-  # for the genscripts.sh call to work.  There's nothing magic about
-  # the value `/lib'; it's just a dummy.
-  NATIVE_LIB_DIRS=/lib
-  HOSTING_CRT0='-dynamic-linker /usr/libexec/ld.elf_so /usr/lib/crt0.o /usr/lib/crtbegin.o'
-  HOSTING_LIBS="$HOSTING_LIBS /usr/lib/crtend.o"
-  ;;
-
-*-*-netbsd*)
-  # NetBSD non-ELF platforms.
-  NATIVE_LIB_DIRS=/lib
-  HOSTING_CRT0=/usr/lib/crt0.o
-  ;;
-
 am33_2.0-*-linux*)
   HOSTING_CRT0=`echo "$HOSTING_CRT0" | sed -e "s,ld\[^ \]\*,ld-linux,g"`
   ;;
