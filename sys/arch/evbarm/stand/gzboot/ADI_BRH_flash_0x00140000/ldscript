@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript,v 1.4 2005/12/11 12:17:10 christos Exp $	*/
+/*	$NetBSD: ldscript,v 1.5 2009/09/26 07:29:55 skrll Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(FLASH)
@@ -48,6 +48,7 @@ SECTIONS
   __bss_start = .;
   __bss_start__ = .;
   .sbss      :
+  AT (ADDR(.sbss))
   {
     PROVIDE (__sbss_start = .);
     PROVIDE (___sbss_start = .);
@@ -59,6 +60,7 @@ SECTIONS
     PROVIDE (___sbss_end = .);
   } > sdram
   .bss       :
+  AT (ADDR(.bss))
   {
    *(.dynbss)
    *(.bss)
