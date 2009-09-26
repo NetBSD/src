@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.1 2009/09/26 18:53:48 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.1 2009/09/26 18:53:48 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -579,6 +579,13 @@ puffs_vnop_lookup(void *v)
 	if (lookup_msg->pvnr_cn.pkcn_consume)
 		cnp->cn_consume = MIN(lookup_msg->pvnr_cn.pkcn_consume,
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
+
+	/*
+	 * We need the name in remove and rmdir (well, rename too, but
+	 * SAVESTART takes care of that)
+	 */
+	if (cnp->cn_nameiop == DELETE)
+		cnp->cn_flags |= SAVENAME;
 
  out:
 	if (cnp->cn_flags & ISDOTDOT)
@@ -1438,6 +1445,8 @@ puffs_vnop_remove(void *v)
 	RELEPN_AND_VP(vp, pn);
 
 	error = checkerr(pmp, error, __func__);
+	if (error || (cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1542,6 +1551,9 @@ puffs_vnop_rmdir(void *v)
 	/* XXX: some call cache_purge() *for both vnodes* here, investigate */
 	RELEPN_AND_VP(dvp, dpn);
 	RELEPN_AND_VP(vp, pn);
+
+	if (error || (cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
