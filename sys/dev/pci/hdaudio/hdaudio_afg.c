@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.12 2009/09/25 19:49:31 sborrill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.13 2009/09/26 11:51:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.12 2009/09/25 19:49:31 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.13 2009/09/26 11:51:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,6 +105,8 @@ static int hdaudio_afg_debug = 0;
 #define	HDAUDIO_GPIO_DATA	2
 
 #define	HDAUDIO_UNSOLTAG_EVENT_HP	0x00
+
+#define	HDAUDIO_HP_SENSE_PERIOD		(hz / 2)
 
 static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 
@@ -2932,96 +2934,56 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 	struct hdaudio_afg_softc *sc = opaque;
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
-	struct hdaudio_control *ctl;
-	uint32_t res, v;
+	uint32_t res = 0;
 	int i, j;
 
-	for (i = 0; i < sc->sc_nassocs; i++) {
-		if (as[i].as_hpredir < 0)
-			continue;
-		w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[15]);
-		if (w == NULL || w->w_enable == false)
-			continue;
-		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
-			continue;
+	for (i = 0; i < sc->sc_nassocs; i++)
+		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
+			if (w == NULL || w->w_enable == false)
+				continue;
+			if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+				continue;
+			if (COP_CFG_DEFAULT_DEVICE(w->w_pin.config) !=
+			    COP_DEVICE_HP_OUT)
+				continue;
+			res |= hdaudio_command(sc->sc_codec, as[i].as_pins[j],
+			    CORB_GET_PIN_SENSE, 0) &
+			    COP_GET_PIN_SENSE_PRESENSE_DETECT;
+		}
 
-		res = hdaudio_command(sc->sc_codec, as[i].as_pins[15],
-		    CORB_GET_PIN_SENSE, 0);
-		res = (res & COP_GET_PIN_SENSE_PRESENSE_DETECT) >> 31;
-
-		/* mute/unmute headphone pin */
-		ctl = hdaudio_afg_control_amp_get(sc, as[i].as_pins[15],
-		    HDAUDIO_PINDIR_IN, -1, 1);
-		if (ctl && ctl->ctl_mute) {
-			/* pin has muter, so use it */
-			v = (res != 0) ? 0 : 1;
-			if (v != ctl->ctl_forcemute) {
-				ctl->ctl_forcemute = v;
-				hdaudio_afg_control_amp_set(ctl,
-				    HDAUDIO_AMP_MUTE_DEFAULT,
-				    HDAUDIO_AMP_VOL_DEFAULT,
-				    HDAUDIO_AMP_VOL_DEFAULT);
-			}
-		} else {
-			/* no muter, so disable pin output */
-			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[15]);
-			if (w && w->w_type == COP_AWCAP_TYPE_PIN_COMPLEX) {
-				if (res)
-					v = w->w_pin.ctrl | COP_PWC_OUT_ENABLE;
+	for (i = 0; i < sc->sc_nassocs; i++)
+		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
+			if (w == NULL || w->w_enable == false)
+				continue;
+			if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+				continue;
+			switch (COP_CFG_DEFAULT_DEVICE(w->w_pin.config)) {
+			case COP_DEVICE_HP_OUT:
+				if (res & COP_GET_PIN_SENSE_PRESENSE_DETECT)
+					w->w_pin.ctrl |= COP_PWC_OUT_ENABLE;
 				else
-					v = w->w_pin.ctrl &= ~COP_PWC_OUT_ENABLE;
-				if (v != w->w_pin.ctrl) {
-					w->w_pin.ctrl = v;
-					hdaudio_command(sc->sc_codec, w->w_nid,
-					    CORB_SET_PIN_WIDGET_CONTROL, v);
-				}
+					w->w_pin.ctrl &= ~COP_PWC_OUT_ENABLE;
+				hdaudio_command(sc->sc_codec, w->w_nid,
+				    CORB_SET_PIN_WIDGET_CONTROL, w->w_pin.ctrl);
+				break;
+			case COP_DEVICE_LINE_OUT:
+			case COP_DEVICE_SPEAKER:
+			case COP_DEVICE_AUX:
+				if (res & COP_GET_PIN_SENSE_PRESENSE_DETECT)
+					w->w_pin.ctrl &= ~COP_PWC_OUT_ENABLE;
+				else
+					w->w_pin.ctrl |= COP_PWC_OUT_ENABLE;
+				hdaudio_command(sc->sc_codec, w->w_nid,
+				    CORB_SET_PIN_WIDGET_CONTROL, w->w_pin.ctrl);
+				break;
+			default:
+				break;
 			}
 		}
-		/* mute/unmute other pins */
-		for (j = 0; j < HDAUDIO_MAXPINS - 1; j++) {
-			int type = -1;
-			if (as[i].as_pins[j] <= 0)
-				continue;
-			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
-			if (w && w->w_type == COP_AWCAP_TYPE_PIN_COMPLEX)
-				type = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
-#if notyet
-			ctl = hdaudio_afg_control_amp_get(sc,
-			    as[i].as_pins[j], HDAUDIO_PINDIR_IN, -1, 1);
-			if (ctl && ctl->ctl_mute) {
-				/* pin has muter, so use it */
-				if (type == COP_DEVICE_HP_OUT)
-					v = (res != 0) ? 0 : 1;
-				else
-					v = (res != 0) ? 1 : 0;
-				if (v == ctl->ctl_forcemute)
-					continue;
-				ctl->ctl_forcemute = v;
-				hdaudio_afg_control_amp_set(ctl,
-				    HDAUDIO_AMP_MUTE_DEFAULT,
-				    HDAUDIO_AMP_VOL_DEFAULT,
-				    HDAUDIO_AMP_VOL_DEFAULT);
-				continue;
-			}
-#endif
-			/* no muter, so disable pin output */
-			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
-			if (w && w->w_type == COP_AWCAP_TYPE_PIN_COMPLEX) {
-				int rres = res;
-				if (type == COP_DEVICE_HP_OUT)
-					rres = !rres;
-				if (rres)
-					v = w->w_pin.ctrl &= ~COP_PWC_OUT_ENABLE;
-				else
-					v = w->w_pin.ctrl | COP_PWC_OUT_ENABLE;
-				if (v != w->w_pin.ctrl) {
-					w->w_pin.ctrl = v;
-					hdaudio_command(sc->sc_codec, w->w_nid,
-					    CORB_SET_PIN_WIDGET_CONTROL, v);
-				}
-			}
-		}
-	}
+
+	callout_schedule(&sc->sc_jack_callout, HDAUDIO_HP_SENSE_PERIOD);
 }
 
 static void
@@ -3060,12 +3022,10 @@ hdaudio_afg_hp_switch_init(struct hdaudio_afg_softc *sc)
 		    (w->w_p.aw_cap & COP_AWCAP_UNSOL_CAPABLE) ?
 		    "unsol" : "poll");
 	}
-#if notyet
 	if (enable) {
 		hdaudio_afg_hp_switch_handler(sc);
-		callout_schedule(&sc->sc_jack_callout, hz);
+		callout_schedule(&sc->sc_jack_callout, HDAUDIO_HP_SENSE_PERIOD);
 	} else
-#endif
 		hda_trace(sc, "jack detect not enabled\n");
 }
 
