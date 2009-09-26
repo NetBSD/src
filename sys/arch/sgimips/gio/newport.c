@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.10.54.2 2009/09/26 17:46:59 snj Exp $	*/
+/*	$NetBSD: newport.c,v 1.10.54.3 2009/09/26 17:51:56 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.2 2009/09/26 17:46:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.3 2009/09/26 17:51:56 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ CFATTACH_DECL_NEW(newport, sizeof(struct newport_softc),
 
 /* textops */
 static void newport_cursor(void *, int, int, int);
+static void newport_cursor_dummy(void *, int, int, int);
 static int  newport_mapchar(void *, int, unsigned int *);
 static void newport_putchar(void *, int, int, u_int, long);
 static void newport_copycols(void *, int, int, int, int);
@@ -106,7 +107,7 @@ static struct wsdisplay_accessops newport_accessops = {
 };
 
 static struct wsdisplay_emulops newport_textops = {
-	.cursor		= newport_cursor,
+	.cursor		= newport_cursor_dummy,
 	.mapchar	= newport_mapchar,
 	.putchar	= newport_putchar,
 	.copycols	= newport_copycols,
@@ -589,12 +590,15 @@ newport_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": SGI NG1 (board revision %d, cmap revision %d, xmap revision %d, vc2 revision %d), depth %d\n",
 	    sc->sc_dc->dc_boardrev, sc->sc_dc->dc_cmaprev,
 	    sc->sc_dc->dc_xmaprev, sc->sc_dc->dc_vc2rev, sc->sc_dc->dc_depth);
-	vcons_init(&sc->sc_dc->dc_vd, sc->sc_dc, sc->sc_dc->dc_screen, &newport_accessops);
+	vcons_init(&sc->sc_dc->dc_vd, sc->sc_dc, sc->sc_dc->dc_screen,
+	    &newport_accessops);
 	sc->sc_dc->dc_vd.init_screen = newport_init_screen;
 	if (newport_is_console) {
 		newport_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-		vcons_init_screen(&sc->sc_dc->dc_vd, &newport_console_screen, 1, &defattr);
-		sc->sc_dc->dc_screen->textops = &newport_console_screen.scr_ri.ri_ops;
+		vcons_init_screen(&sc->sc_dc->dc_vd, &newport_console_screen,
+		    1, &defattr);
+		sc->sc_dc->dc_screen->textops =
+		    &newport_console_screen.scr_ri.ri_ops;
 		memcpy(&newport_textops, &newport_console_screen.scr_ri.ri_ops,
 		    sizeof(struct wsdisplay_emulops));
 	}
@@ -634,7 +638,7 @@ newport_cnattach(struct gio_attach_args *ga)
 	ri->ri_ops.eraserows = newport_eraserows;
 	ri->ri_ops.copycols  = newport_copycols;
 	ri->ri_ops.erasecols = newport_erasecols;
-	ri->ri_ops.cursor    = newport_cursor;
+	ri->ri_ops.cursor    = newport_cursor_dummy;
 	ri->ri_ops.mapchar   = newport_mapchar;
 	ri->ri_ops.putchar   = newport_putchar;
 	ri->ri_ops.allocattr = newport_allocattr;
@@ -683,6 +687,11 @@ newport_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 /**** wsdisplay textops ****/
+static void
+newport_cursor_dummy(void *c, int on, int row, int col)
+{
+}
+
 static void
 newport_cursor(void *c, int on, int row, int col)
 {
