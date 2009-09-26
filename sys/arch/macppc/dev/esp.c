@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26 2008/12/16 22:35:23 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.27 2009/09/26 15:46:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.26 2008/12/16 22:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.27 2009/09/26 15:46:48 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,7 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 static int espdmaintr(struct esp_softc *);
-static void esp_shutdownhook(void *);
+static bool esp_shutdown(device_t, int);
 
 int
 espmatch(device_t parent, cfdata_t cf, void *aux)
@@ -237,9 +237,6 @@ espattach(device_t parent, device_t self, void *aux)
 	/* and the interuppts */
 	intr_establish(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc);
 
-	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(esp_shutdownhook, sc);
-
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
@@ -247,6 +244,10 @@ espattach(device_t parent, device_t self, void *aux)
 
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
+
+	/* Reset SCSI bus when halt. */
+	if (!pmf_device_register1(self, NULL, NULL, esp_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -499,10 +500,15 @@ espdmaintr(struct esp_softc *sc)
 	return 0;
 }
 
-void
-esp_shutdownhook(void *arg)
+bool
+esp_shutdown(device_t self, int howto)
 {
-	struct ncr53c9x_softc *sc = arg;
+	struct esp_softc *esc;
+	struct ncr53c9x_softc *sc;
 
+	esc = device_private(self);
+	sc = &esc->sc_ncr53c9x;
 	NCRCMD(sc, NCRCMD_RSTSCSI);
+
+	return true;
 }
