@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.10.54.1 2009/09/26 17:36:18 snj Exp $	*/
+/*	$NetBSD: newport.c,v 1.10.54.2 2009/09/26 17:46:59 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.1 2009/09/26 17:36:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.2 2009/09/26 17:46:59 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,15 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.1 2009/09/26 17:36:18 snj Exp $"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <sgimips/gio/giovar.h>
 #include <sgimips/gio/newportvar.h>
 #include <sgimips/gio/newportreg.h>
 
 struct newport_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct newport_devconfig *sc_dc;
+	
 };
 
 struct newport_devconfig {
@@ -69,13 +72,15 @@ struct newport_devconfig {
 	int			dc_depth;
 
 	int			dc_font;
+	struct wsscreen_descr	*dc_screen;
 	struct wsdisplay_font	*dc_fontdata;
+	struct vcons_data	dc_vd;
 };
 
-static int  newport_match(struct device *, struct cfdata *, void *);
-static void newport_attach(struct device *, struct device *, void *);
+static int  newport_match(device_t, struct cfdata *, void *);
+static void newport_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(newport, sizeof(struct newport_softc),
+CFATTACH_DECL_NEW(newport, sizeof(struct newport_softc),
     newport_match, newport_attach, NULL, NULL);
 
 /* textops */
@@ -88,17 +93,19 @@ static void newport_copyrows(void *, int, int, int);
 static void newport_eraserows(void *, int, int, long);
 static int  newport_allocattr(void *, int, int, int, long *);
 
+static void newport_init_screen(void *, struct vcons_screen *, int, long *);
+
 /* accessops */
 static int     newport_ioctl(void *, void *, u_long, void *, int,
     struct lwp *);
 static paddr_t newport_mmap(void *, void *, off_t, int);
-static int     newport_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
-static void    newport_free_screen(void *, void *);
-static int     newport_show_screen(void *, void *, int,
-    void (*)(void *, int, int), void *);
 
-static const struct wsdisplay_emulops newport_textops = {
+static struct wsdisplay_accessops newport_accessops = {
+	.ioctl		= newport_ioctl,
+	.mmap		= newport_mmap,
+};
+
+static struct wsdisplay_emulops newport_textops = {
 	.cursor		= newport_cursor,
 	.mapchar	= newport_mapchar,
 	.putchar	= newport_putchar,
@@ -109,15 +116,7 @@ static const struct wsdisplay_emulops newport_textops = {
 	.allocattr	= newport_allocattr
 };
 
-static const struct wsdisplay_accessops newport_accessops = {
-	.ioctl		= newport_ioctl,
-	.mmap		= newport_mmap,
-	.alloc_screen	= newport_alloc_screen,
-	.free_screen	= newport_free_screen,
-	.show_screen	= newport_show_screen,
-};
-
-static const struct wsscreen_descr newport_screen_1024x768 = {
+static struct wsscreen_descr newport_screen_1024x768 = {
 	.name		= "1024x768",
 	.ncols		= 128,
 	.nrows		= 48,
@@ -127,7 +126,7 @@ static const struct wsscreen_descr newport_screen_1024x768 = {
 	.capabilities	= WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_REVERSE
 };
 
-static const struct wsscreen_descr newport_screen_1280x1024 = {
+static struct wsscreen_descr newport_screen_1280x1024 = {
 	.name		= "1280x1024",
 	.ncols		= 160,
 	.nrows		= 64,
@@ -147,6 +146,7 @@ static const struct wsscreen_list newport_screenlist = {
 	_newport_screenlist
 };
 
+static struct vcons_screen newport_console_screen;
 static struct newport_devconfig newport_console_dc;
 static int newport_is_console = 0;
 
@@ -154,97 +154,7 @@ static int newport_is_console = 0;
 #define NEWPORT_ATTR_BG(a)		((a) & 0xff)
 #define NEWPORT_ATTR_FG(a)		(((a) >> 8) & 0xff)
 
-static const uint16_t newport_cursor_data[128] = {
-	/* Bit 0 */
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0xff00, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-
-	/* Bit 1 */
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-	0x0000, 0x0000,
-};
-
-static const uint8_t newport_defcmap[16*3] = {
-	/* Normal colors */
-	0x00, 0x00, 0x00, /* black */
-	0x7f, 0x00, 0x00, /* red */
-	0x00, 0x7f, 0x00, /* green */
-	0x7f, 0x7f, 0x00, /* brown */
-	0x00, 0x00, 0x7f, /* blue */
-	0x7f, 0x00, 0x7f, /* magenta */
-	0x00, 0x7f, 0x7f, /* cyan */
-	0xc7, 0xc7, 0xc7, /* white - XXX too dim? */
-
-	/* Hilite colors */
-	0x7f, 0x7f, 0x7f, /* black */
-	0xff, 0x00, 0x00, /* red */
-	0x00, 0xff, 0x00, /* green */
-	0xff, 0xff, 0x00, /* brown */
-	0x00, 0x00, 0xff, /* blue */
-	0xff, 0x00, 0xff, /* magenta */
-	0x00, 0xff, 0xff, /* cyan */
-	0xff, 0xff, 0xff, /* white */
-};
+extern const u_char rasops_cmap[768];
 
 /**** Low-level hardware register groveling functions ****/
 static void
@@ -327,6 +237,7 @@ vc2_read_ram(struct newport_devconfig *dc, uint16_t addr)
 	return (uint16_t)(rex3_read(dc, REX3_REG_DCBDATA0) >> 16);
 }
 
+#if 0
 static void
 vc2_write_ram(struct newport_devconfig *dc, uint16_t addr, uint16_t val)
 {
@@ -341,6 +252,7 @@ vc2_write_ram(struct newport_devconfig *dc, uint16_t addr, uint16_t val)
 
 	rex3_write(dc, REX3_REG_DCBDATA0, val << 16);
 }
+#endif
 
 static u_int32_t
 xmap9_read(struct newport_devconfig *dc, int crs)
@@ -393,6 +305,15 @@ newport_fill_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_DRAW |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_DOSETUP |
 	    REX3_DRAWMODE0_STOPONX | REX3_DRAWMODE0_STOPONY);
+	rex3_write(dc, REX3_REG_DRAWMODE1,
+	    REX3_DRAWMODE1_PLANES_CI |
+	    REX3_DRAWMODE1_DD_DD8 |
+	    REX3_DRAWMODE1_RWPACKED |
+	    REX3_DRAWMODE1_HD_HD8 |
+	    REX3_DRAWMODE1_COMPARE_LT |
+	    REX3_DRAWMODE1_COMPARE_EQ |
+	    REX3_DRAWMODE1_COMPARE_GT |
+	    REX3_DRAWMODE1_LO_SRC);
 	rex3_write(dc, REX3_REG_WRMASK, 0xffffffff);
 	rex3_write(dc, REX3_REG_COLORI, color);
 	rex3_write(dc, REX3_REG_XYSTARTI, (x1 << REX3_XYSTARTI_XSHIFT) | y1);
@@ -401,36 +322,46 @@ newport_fill_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
 }
 
 static void
-newport_copy_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
-    int y2, int dx, int dy)
+newport_bitblt(struct newport_devconfig *dc, int xs, int ys, int xd,
+    int yd, int wi, int he, int rop)
 {
+	int xe, ye;
 	uint32_t tmp;
 
 	rex3_wait_gfifo(dc);
-	if (dy > y1) {
+	if (yd > ys) {
 		/* need to copy bottom up */
-		dy += (y2 - y1);
-		tmp = y2;
-		y2 = y1;
-		y1 = tmp;
-	}
+		ye = ys;
+		yd += he - 1;
+		ys += he - 1;
+	} else
+		ye = ys + he - 1;
 
-	if (dx > x1) {
+	if (xd > xs) {
 		/* need to copy right to left */
-		dx += (x2 - x1);
-		tmp = x2;
-		x2 = x1;
-		x1 = tmp;
-	}
+		xe = xs;
+		xd += wi - 1;
+		xs += wi - 1;
+	} else
+		xe = xs + wi - 1;
 
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_SCR2SCR |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_DOSETUP |
 	    REX3_DRAWMODE0_STOPONX | REX3_DRAWMODE0_STOPONY);
-	rex3_write(dc, REX3_REG_XYSTARTI, (x1 << REX3_XYSTARTI_XSHIFT) | y1);
-	rex3_write(dc, REX3_REG_XYENDI, (x2 << REX3_XYENDI_XSHIFT) | y2);
+	rex3_write(dc, REX3_REG_DRAWMODE1,
+	    REX3_DRAWMODE1_PLANES_CI |
+	    REX3_DRAWMODE1_DD_DD8 |
+	    REX3_DRAWMODE1_RWPACKED |
+	    REX3_DRAWMODE1_HD_HD8 |
+	    REX3_DRAWMODE1_COMPARE_LT |
+	    REX3_DRAWMODE1_COMPARE_EQ |
+	    REX3_DRAWMODE1_COMPARE_GT |
+	    ((rop << 28) & REX3_DRAWMODE1_LOGICOP_MASK));
+	rex3_write(dc, REX3_REG_XYSTARTI, (xs << REX3_XYSTARTI_XSHIFT) | ys);
+	rex3_write(dc, REX3_REG_XYENDI, (xe << REX3_XYENDI_XSHIFT) | ye);
 
-	tmp = (dy - y1) & 0xffff;
-	tmp |= (dx - x1) << REX3_XYMOVE_XSHIFT;
+	tmp = (yd - ys) & 0xffff;
+	tmp |= (xd - xs) << REX3_XYMOVE_XSHIFT;
 
 	rex3_write_go(dc, REX3_REG_XYMOVE, tmp);
 }
@@ -535,17 +466,14 @@ newport_setup_hw(struct newport_devconfig *dc)
 	/* Setup cursor glyph */
 	curp = vc2_read_ireg(dc, VC2_IREG_CURSOR_ENTRY);
 
-	for (i=0; i<128; i++)
-		vc2_write_ram(dc, curp + i, newport_cursor_data[i]);
-
 	/* Setup VC2 to a known state */
 	tmp = vc2_read_ireg(dc, VC2_IREG_CONTROL) & VC2_CONTROL_INTERLACE;
 	vc2_write_ireg(dc, VC2_IREG_CONTROL, tmp |
 	    VC2_CONTROL_DISPLAY_ENABLE |
 	    VC2_CONTROL_VTIMING_ENABLE |
 	    VC2_CONTROL_DID_ENABLE |
-	    VC2_CONTROL_CURSORFUNC_ENABLE |
-	    VC2_CONTROL_CURSOR_ENABLE);
+	    VC2_CONTROL_CURSORFUNC_ENABLE /*|
+	    VC2_CONTROL_CURSOR_ENABLE*/);
 
 	/* Setup XMAP9s */
 	xmap9_write(dc, XMAP9_DCBCRS_CONFIG,
@@ -559,27 +487,18 @@ newport_setup_hw(struct newport_devconfig *dc)
 	xmap9_write(dc, XMAP9_DCBCRS_MODE_SELECT, 0);
 
 	/* Setup REX3 */
-	rex3_write(dc, REX3_REG_DRAWMODE1,
-	    REX3_DRAWMODE1_PLANES_CI |
-	    REX3_DRAWMODE1_DD_DD8 |
-	    REX3_DRAWMODE1_RWPACKED |
-	    REX3_DRAWMODE1_HD_HD8 |
-	    REX3_DRAWMODE1_COMPARE_LT |
-	    REX3_DRAWMODE1_COMPARE_EQ |
-	    REX3_DRAWMODE1_COMPARE_GT |
-	    REX3_DRAWMODE1_LO_SRC);
 	rex3_write(dc, REX3_REG_XYWIN, (4096 << 16) | 4096);
 	rex3_write(dc, REX3_REG_TOPSCAN, 0x3ff); /* XXX Why? XXX */
 
 	/* Setup CMAP */
-	for (i=0; i<16; i++)
-		newport_cmap_setrgb(dc, i, newport_defcmap[i*3],
-		    newport_defcmap[i*3 + 1], newport_defcmap[i*3 + 2]);
+	for (i = 0; i < 256; i++)
+		newport_cmap_setrgb(dc, i, rasops_cmap[i * 3],
+		    rasops_cmap[i * 3 + 1], rasops_cmap[i * 3 + 2]);
 }
 
 /**** Attach routines ****/
 static int
-newport_match(struct device *parent, struct cfdata *self, void *aux)
+newport_match(device_t parent, struct cfdata *self, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 
@@ -636,15 +555,22 @@ newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 	newport_get_resolution(dc);
 
 	newport_fill_rectangle(dc, 0, 0, dc->dc_xres, dc->dc_yres, 0);
+	if (dc->dc_xres == 1280) {
+		dc->dc_screen = &newport_screen_1280x1024;
+	} else
+		dc->dc_screen = &newport_screen_1024x768;
+	
 }
 
 static void
-newport_attach(struct device *parent, struct device *self, void *aux)
+newport_attach(device_t parent, device_t self, void *aux)
 {
 	struct gio_attach_args *ga = aux;
-	struct newport_softc *sc = (void *)self;
+	struct newport_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args wa;
+	unsigned long defattr;
 
+	sc->sc_dev = self;
 	if (newport_is_console && ga->ga_addr == newport_console_dc.dc_addr) {
 		wa.console = 1;
 		sc->sc_dc = &newport_console_dc;
@@ -663,17 +589,26 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": SGI NG1 (board revision %d, cmap revision %d, xmap revision %d, vc2 revision %d), depth %d\n",
 	    sc->sc_dc->dc_boardrev, sc->sc_dc->dc_cmaprev,
 	    sc->sc_dc->dc_xmaprev, sc->sc_dc->dc_vc2rev, sc->sc_dc->dc_depth);
-
+	vcons_init(&sc->sc_dc->dc_vd, sc->sc_dc, sc->sc_dc->dc_screen, &newport_accessops);
+	sc->sc_dc->dc_vd.init_screen = newport_init_screen;
+	if (newport_is_console) {
+		newport_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+		vcons_init_screen(&sc->sc_dc->dc_vd, &newport_console_screen, 1, &defattr);
+		sc->sc_dc->dc_screen->textops = &newport_console_screen.scr_ri.ri_ops;
+		memcpy(&newport_textops, &newport_console_screen.scr_ri.ri_ops,
+		    sizeof(struct wsdisplay_emulops));
+	}
 	wa.scrdata = &newport_screenlist;
 	wa.accessops = &newport_accessops;
-	wa.accesscookie = sc->sc_dc;
+	wa.accesscookie = &sc->sc_dc->dc_vd;
 
-	config_found(&sc->sc_dev, &wa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &wa, wsemuldisplaydevprint);
 }
 
 int
 newport_cnattach(struct gio_attach_args *ga)
 {
+	struct rasops_info *ri = &newport_console_screen.scr_ri;
 	long defattr = NEWPORT_ATTR_ENCODE(WSCOL_WHITE, WSCOL_BLACK);
 	const struct wsscreen_descr *screen;
 
@@ -689,49 +624,101 @@ newport_cnattach(struct gio_attach_args *ga)
 	else
 		screen = &newport_screen_1024x768;
 
-	wsdisplay_cnattach(screen, &newport_console_dc, 0, 0, defattr);
+	ri->ri_hw = &newport_console_screen;
+	ri->ri_depth = newport_console_dc.dc_depth;
+	ri->ri_width = newport_console_dc.dc_xres;
+	ri->ri_height = newport_console_dc.dc_yres;
+	ri->ri_stride = newport_console_dc.dc_xres; /* XXX */
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_ops.copyrows  = newport_copyrows;
+	ri->ri_ops.eraserows = newport_eraserows;
+	ri->ri_ops.copycols  = newport_copycols;
+	ri->ri_ops.erasecols = newport_erasecols;
+	ri->ri_ops.cursor    = newport_cursor;
+	ri->ri_ops.mapchar   = newport_mapchar;
+	ri->ri_ops.putchar   = newport_putchar;
+	ri->ri_ops.allocattr = newport_allocattr;
+	ri->ri_font = newport_console_dc.dc_fontdata;
+	newport_console_screen.scr_cookie = &newport_console_dc;
+
+	newport_putchar(ri, 3, 3, 0x41, defattr);
+	wsdisplay_cnattach(screen, ri, 0, 0, defattr);
+	newport_putchar(ri, 4, 3, 0x42, defattr);
 
 	newport_is_console = 1;
 
 	return 0;
 }
 
+static void
+newport_init_screen(void *cookie, struct vcons_screen *scr,
+    int existing, long *defattr)
+{
+	struct newport_devconfig *dc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+
+	ri->ri_depth = dc->dc_depth;
+	ri->ri_width = dc->dc_xres;
+	ri->ri_height = dc->dc_yres;
+	ri->ri_stride = dc->dc_xres; /* XXX */
+	ri->ri_flg = RI_CENTER;
+
+	/*&ri->ri_bits = (char *)sc->sc_fb.fb_pixels;*/
+
+	rasops_init(ri, dc->dc_yres / 8, dc->dc_xres / 8);
+	ri->ri_caps = WSSCREEN_WSCOLORS;
+
+	rasops_reconfig(ri, dc->dc_yres / ri->ri_font->fontheight,
+		    dc->dc_xres / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+	ri->ri_ops.copyrows  = newport_copyrows;
+	ri->ri_ops.eraserows = newport_eraserows;
+	ri->ri_ops.copycols  = newport_copycols;
+	ri->ri_ops.erasecols = newport_erasecols;
+	ri->ri_ops.cursor    = newport_cursor;
+	ri->ri_ops.mapchar   = newport_mapchar;
+	ri->ri_ops.putchar   = newport_putchar;
+	ri->ri_ops.allocattr = newport_allocattr;
+}
+
 /**** wsdisplay textops ****/
 static void
 newport_cursor(void *c, int on, int row, int col)
 {
-	struct newport_devconfig *dc = (void *)c;
-	uint16_t control;
-	int x_offset;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
+	int x, y, wi,he;
 
-	control = vc2_read_ireg(dc, VC2_IREG_CONTROL);
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
 
-	if (!on) {
-		vc2_write_ireg(dc, VC2_IREG_CONTROL,
-		    control & ~VC2_CONTROL_CURSOR_ENABLE);
-	} else {
-		/* Work around bug in some board revisions */
-		if (dc->dc_vc2rev == 0) 
-			x_offset = 29;
-		else if (dc->dc_boardrev < 6)
-			x_offset = 21;
-		else
-			x_offset = 31;
+	if (ri->ri_flg & RI_CURSOR) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		newport_bitblt(dc, x, y, x, y, wi, he, 12);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
 
-		vc2_write_ireg(dc, VC2_IREG_CURSOR_X,
-		    col * dc->dc_fontdata->fontwidth + x_offset);
-		vc2_write_ireg(dc, VC2_IREG_CURSOR_Y,
-		    row * dc->dc_fontdata->fontheight + 31);
-	
-		vc2_write_ireg(dc, VC2_IREG_CONTROL,
-		    control | VC2_CONTROL_CURSOR_ENABLE);
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+
+	if (on)
+	{
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		newport_bitblt(dc, x, y, x, y, wi, he, 12);
+		ri->ri_flg |= RI_CURSOR;
 	}
 }
 
 static int
 newport_mapchar(void *c, int ch, unsigned int *cp)
 {
-	struct newport_devconfig *dc = (void *)c;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
 
 	if (dc->dc_fontdata->encoding != WSDISPLAY_FONTENC_ISO) {
 		ch = wsfont_map_unichar(dc->dc_fontdata, ch);
@@ -755,20 +742,32 @@ fail:
 static void
 newport_putchar(void *c, int row, int col, u_int ch, long attr)
 {
-	struct newport_devconfig *dc = (void *)c;
-	struct wsdisplay_font *font = dc->dc_fontdata;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
+	struct wsdisplay_font *font = ri->ri_font;
 	uint8_t *bitmap = (u_int8_t *)font->data + (ch - font->firstchar) * 
 	    font->fontheight * font->stride;
 	uint32_t pattern;
 	int i;
-	int x = col * font->fontwidth;
-	int y = row * font->fontheight;
+	int x = col * font->fontwidth + ri->ri_xorigin;
+	int y = row * font->fontheight + ri->ri_yorigin;
 
 	rex3_wait_gfifo(dc);
 	
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_DRAW |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_STOPONX |
 	    REX3_DRAWMODE0_ENZPATTERN | REX3_DRAWMODE0_ZPOPAQUE);
+
+	rex3_write(dc, REX3_REG_DRAWMODE1,
+	    REX3_DRAWMODE1_PLANES_CI |
+	    REX3_DRAWMODE1_DD_DD8 |
+	    REX3_DRAWMODE1_RWPACKED |
+	    REX3_DRAWMODE1_HD_HD8 |
+	    REX3_DRAWMODE1_COMPARE_LT |
+	    REX3_DRAWMODE1_COMPARE_EQ |
+	    REX3_DRAWMODE1_COMPARE_GT |
+	    REX3_DRAWMODE1_LO_SRC);
 
 	rex3_write(dc, REX3_REG_XYSTARTI, (x << REX3_XYSTARTI_XSHIFT) | y);
 	rex3_write(dc, REX3_REG_XYENDI,
@@ -779,7 +778,7 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 
 	rex3_write(dc, REX3_REG_WRMASK, 0xffffffff);
 
-	for (i=0; i<font->fontheight; i++) {
+	for (i = 0; i < font->fontheight; i++) {
 		/* XXX Works only with font->fontwidth == 8 XXX */
 		pattern = *bitmap << 24;
 		
@@ -792,23 +791,26 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 static void
 newport_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 {
-	struct newport_devconfig *dc = (void *)c;
-	struct wsdisplay_font *font = dc->dc_fontdata;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
 
-	newport_copy_rectangle(dc,
-	    srccol * font->fontwidth,			/* x1 */
-	    row * font->fontheight,			/* y1 */
-	    (srccol + ncols) * font->fontwidth - 1,	/* x2 */
-	    (row + 1) * font->fontheight - 1,		/* y2 */
-	    dstcol * font->fontheight,			/* dx */
-	    row * font->fontheight);			/* dy */
+	xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+	xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	newport_bitblt(dc, xs, y, xd, y, width, height, 3);
 }
 
 static void
 newport_erasecols(void *c, int row, int startcol, int ncols,
     long attr)
 {
-	struct newport_devconfig *dc = (void *)c;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
 	struct wsdisplay_font *font = dc->dc_fontdata;
 
 	newport_fill_rectangle(dc,
@@ -822,22 +824,26 @@ newport_erasecols(void *c, int row, int startcol, int ncols,
 static void
 newport_copyrows(void *c, int srcrow, int dstrow, int nrows)
 {
-	struct newport_devconfig *dc = (void *)c;
-	struct wsdisplay_font *font = dc->dc_fontdata;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
 
-	newport_copy_rectangle(dc,
-	    0,							/* x1 */
-	    srcrow * font->fontheight,				/* y1 */
-	    dc->dc_xres,					/* x2 */
-	    (srcrow + nrows) * font->fontheight - 1,		/* y2 */
-	    0,							/* dx */
-	    dstrow * font->fontheight);				/* dy */
+	x = ri->ri_xorigin;
+	ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+	yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+	width = ri->ri_emuwidth;
+	height = ri->ri_font->fontheight * nrows;
+
+	newport_bitblt(dc, x, ys, x, yd, width, height, 3);
 }
 
 static void
 newport_eraserows(void *c, int startrow, int nrows, long attr)
 {
-	struct newport_devconfig *dc = (void *)c;
+	struct rasops_info *ri = c;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct newport_devconfig *dc = scr->scr_cookie;
 	struct wsdisplay_font *font = dc->dc_fontdata;
 
 	newport_fill_rectangle(dc,
@@ -876,18 +882,27 @@ newport_allocattr(void *c, int fg, int bg, int flags, long *attr)
 /**** wsdisplay accessops ****/
 
 static int
-newport_ioctl(void *c, void *vs, u_long cmd, void *data, int flag,
+newport_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
-	struct newport_softc *sc = c;
+	struct vcons_data *vd;
+	struct newport_devconfig *dc;
+	struct vcons_screen *ms;
+#if 0
+	struct wsdisplay_fbinfo *wdf;
+	int nmode;
+#endif
+	vd = (struct vcons_data *)v;
+	dc = (struct newport_devconfig *)vd->cookie;
+	ms = (struct vcons_screen *)vd->active;
 
 #define FBINFO (*(struct wsdisplay_fbinfo*)data)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GINFO:
-		FBINFO.width  = sc->sc_dc->dc_xres;
-		FBINFO.height = sc->sc_dc->dc_yres;
-		FBINFO.depth  = sc->sc_dc->dc_depth;
+		FBINFO.width  = dc->dc_xres;
+		FBINFO.height = dc->dc_yres;
+		FBINFO.depth  = dc->dc_depth;
 		FBINFO.cmsize = 1 << FBINFO.depth;
 		return 0;
 	case WSDISPLAYIO_GTYPE:
@@ -898,34 +913,16 @@ newport_ioctl(void *c, void *vs, u_long cmd, void *data, int flag,
 }
 
 static paddr_t
-newport_mmap(void *c, void *vs, off_t offset, int prot)
+newport_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct newport_devconfig *dc = c;
+	struct vcons_data *vd;
+	struct newport_devconfig *dc;
+
+	vd = (struct vcons_data *)v;
+	dc = (struct newport_devconfig *)vd->cookie;
 
 	if ( offset >= 0xfffff)
 		return -1;
 
 	return mips_btop(dc->dc_addr + offset);
-}
-
-static int
-newport_alloc_screen(void *c, const struct wsscreen_descr *type, void **cookiep,
-    int *cursxp, int *cursyp, long *attrp)
-{
-	/* This won't get called for console screen and we don't support
-	 * virtual screens */
-
-	return ENOMEM;
-}
-
-static void
-newport_free_screen(void *c, void *cookie)
-{
-	panic("newport_free_screen");
-}
-static int
-newport_show_screen(void *c, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return 0;
 }
