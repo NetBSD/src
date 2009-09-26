@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.53.2.2 2009/05/03 23:45:47 snj Exp $
+# $NetBSD: XEN2_DOM0,v 1.53.2.3 2009/09/26 19:52:09 snj Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -650,6 +650,10 @@ opl*	at eso?
 opl*	at fms?
 opl*	at sv?
 opl*	at yds?
+
+# High Definition Audio
+#hdaudio*	at pci? dev ? function ?	# High Definition Audio
+#hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
