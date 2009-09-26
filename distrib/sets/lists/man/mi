@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.7 2009/09/15 06:01:39 snj Exp $
+# $NetBSD: mi,v 1.1109.2.8 2009/09/26 19:52:08 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -934,6 +934,9 @@
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/guspnp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hcide.0			man-sys-catman		.cat
+./usr/share/man/cat4/hdafg.0			man-sys-catman		.cat
+./usr/share/man/cat4/hdaudio.0			man-sys-catman		.cat
+./usr/share/man/cat4/hdaudiobus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hifn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/apci.0		man-obsolete		obsolete
@@ -3470,6 +3473,9 @@
 ./usr/share/man/html4/gus.html			man-sys-htmlman		html
 ./usr/share/man/html4/guspnp.html		man-sys-htmlman		html
 ./usr/share/man/html4/hcide.html		man-sys-htmlman		html
+./usr/share/man/html4/hdafg.html		man-sys-htmlman		html
+./usr/share/man/html4/hdaudiobus.html		man-sys-htmlman		html
+./usr/share/man/html4/hdaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hifn.html			man-sys-htmlman		html
 ./usr/share/man/html4/hme.html			man-sys-htmlman		html
 ./usr/share/man/html4/hp300/autoconf.html	man-sys-htmlman		html
@@ -5786,6 +5792,9 @@
 ./usr/share/man/man4/gus.4			man-sys-man		.man
 ./usr/share/man/man4/guspnp.4			man-sys-man		.man
 ./usr/share/man/man4/hcide.4			man-sys-man		.man
+./usr/share/man/man4/hdafg.4			man-sys-man		.man
+./usr/share/man/man4/hdaudio.4			man-sys-man		.man
+./usr/share/man/man4/hdaudiobus.4		man-sys-man		.man
 ./usr/share/man/man4/hifn.4			man-sys-man		.man
 ./usr/share/man/man4/hme.4			man-sys-man		.man
 ./usr/share/man/man4/hp300/apci.4		man-obsolete		obsolete

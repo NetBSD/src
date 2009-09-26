@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.183.4.3 2009/09/13 22:11:14 snj Exp $
+# $NetBSD: ALL,v 1.183.4.4 2009/09/26 19:52:09 snj Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.183.4.3 $"
+#ident 		"ALL-$Revision: 1.183.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -1305,6 +1305,10 @@ opl*	at wss?
 opl*	at yds?
 opl*	at ym?
 
+# High Definition Audio
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
+
 # Audio support
 audio*	at audiobus?
 
@@ -1802,6 +1806,8 @@ options GTFDEBUG
 options HD64461PCMCIA_DEBUG
 options HD64461VIDEO_DEBUG
 options HD64465PCMCIA_DEBUG
+options HDAUDIO_DEBUG
+options HDAUDIO_AFG_DEBUG
 options HDLCDEBUG
 options HIFN_DEBUG
 options HMEDEBUG

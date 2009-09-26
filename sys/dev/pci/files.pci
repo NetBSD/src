@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308.2.2 2009/05/03 23:45:47 snj Exp $
+#	$NetBSD: files.pci,v 1.308.2.3 2009/09/26 19:52:09 snj Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -969,3 +969,5 @@ file	dev/pci/alipm.c				alipm
 #
 include "dev/pci/n8/files.n8"
 
+# High Definition Audio
+include "dev/pci/hdaudio/files.hdaudio"

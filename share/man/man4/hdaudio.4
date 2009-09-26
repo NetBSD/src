@@ -1,0 +1,123 @@
+.\"	$NetBSD: hdaudio.4,v 1.4.2.2 2009/09/26 19:52:09 snj Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Precedence Technologies Ltd
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 26, 2009
+.Dt HDAUDIO 4
+.Os
+.Sh NAME
+.Nm hdaudio
+.Nd High Definition Audio device driver
+.Sh SYNOPSIS
+.Cd "hdaudio* at pci? dev ? function ?"
+.Cd "hdafg* at hdaudiobus?"
+.Cd "audio* at audiobus?"
+.Pp
+.Cd "options HDAUDIO_DEBUG"
+.Cd "options HDAUDIO_CFG_DEBUG"
+.Sh DESCRIPTION
+The
+.Nm
+device driver is expected to support any PCI device which is
+compliant to the High Definition Audio Specification 1.0.
+It is a replacement for
+.Xr azalia 4 .
+It was written from scratch following the Intel HD Audio and Microsoft
+Universal Audio Architecture specifications.
+.Pp
+The driver consists of two interlinked components, which reflects the
+hardware design.
+The
+.Nm
+component interfaces with a PCI/PCIe bus and provides an
+.Xr hdaudiobus 4
+onto which different function groups attach.
+Each function group (e.g. audio, vendor-specific modem) is exported as a
+separate child device of the
+.Nm
+controller.
+Audio function groups (a.k.a. audio codec) are exported as
+.Xr hdafg 4
+devices.
+.Pp
+Audio codecs are available from a number of manufacturers and are made up of a
+number of widgets (e.g. audio mixer, output pin, analog-to-digital converter).
+The way the widgets are interlinked varies significantly between
+implementations.
+The tree of widgets must be parsed and mapped to
+.Xr mixer 4
+controls.
+As part of this process, loops in the inter-codec links must be detected
+and muted, bi-directional pins must be set up appropriately and the locations
+of pins determined.
+Unlike the
+.Xr azalia 4
+driver (which tends to generate a large number of unclearly named
+.Xr mixer 4
+controls),
+.Nm
+works backwards by starting with a list of desired, consistent and compatible
+.Xr mixer 4
+controls and configuring/discovering appropriate widget link routes to fit.
+.Pp
+By following the published mechanisms for common implementations of widget
+parsing, it is expected that nearly all High Definition Audio devices will
+be supported without requiring per-device quirks.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr mixer 4 ,
+.Xr pci 4 ,
+.Pa http://www.intel.com/standards/hdaudio/
+.Pa http://www.microsoft.com/whdc/device/audio/
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Jared McNeill Aq jmcneill@NetBSD.org
+under contract by
+.An Precedence Technologies Ltd Aq http://www.precedence.co.uk/ .
+The UAA-compliant widget parser is derived from the
+.Fx
+snd_hda(4) driver.
+.Sh BUGS
+The following items are not yet implemented:
+.Bl -bullet
+.It
+Improve power management support when driver is idle
+.It
+Add support for non-PCM output formats
+.It
+Handle unsolicited RIRB messages
+.It
+Modem function groups
+.El
