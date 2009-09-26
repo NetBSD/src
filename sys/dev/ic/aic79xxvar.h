@@ -1062,7 +1062,7 @@ typedef uint8_t ahd_mode_state;
 typedef void ahd_callback_t (void *);
 
 struct ahd_softc {
-	struct device 		  sc_dev;
+	device_t 		  sc_dev;
 
 	struct scsipi_channel	  sc_channel;
 	device_t 		  sc_child;
