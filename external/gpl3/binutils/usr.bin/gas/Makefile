@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/18 20:22:11 skrll Exp $
-
-# XXXNH Why not Makefile.prog?
+#	$NetBSD: Makefile,v 1.2 2009/09/26 13:58:31 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -51,7 +49,6 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	as.texinfo
 INFOFLAGS=	-I${DIST}/gas/doc -I${.OBJDIR}/../common -I${DIST}/libiberty
-#INFOFLAGS=	-I${DIST}/gas/doc -I${.OBJDIR}/../common -I${.CURDIR}
 
 .PATH: ${DIST}/gas ${DIST}/gas/config ${DIST}/gas/doc
 
