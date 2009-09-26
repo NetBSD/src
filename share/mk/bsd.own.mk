@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.581 2009/09/22 09:57:28 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.582 2009/09/26 07:28:38 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -51,6 +51,7 @@ HAVE_GDB?=	6
 # default to binutils 2.16
 .if \
     ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "armeb" || ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
