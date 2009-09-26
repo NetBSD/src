@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.74 2009/09/18 02:08:16 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.75 2009/09/26 05:25:59 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13326,4 +13326,13 @@ etc/mtree/special				1.130
 	Remove "/etc/postfix/postfix-script" as the file was obsoleted
 	by the upgrade to Postfix 2.6.x.
 	[tron, ticket #1012]
+
+xsrc/external/mit/xorg-server/dist/dix/globals.c 1.2
+xsrc/external/mit/xorg-server/dist/os/utils.c	1.2
+
+	By default, use the old X server background and cursor mode
+	(option "-retro").  Add a "-noretro" option to get the new
+	(black background and no cursor) behavior.  Addresses part
+	of PR xsrc/41870.
+	[mrg, ticket #1018]
 
