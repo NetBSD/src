@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.30 2009/09/05 12:59:24 tsutsui Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.31 2009/09/26 14:44:11 tsutsui Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.30 2009/09/05 12:59:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.31 2009/09/26 14:44:11 tsutsui Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -318,6 +318,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	const char         	*intrstr;
 	struct ahd_pci_busdata 	*bd;
 
+	ahd->sc_dev = self;
 	ahd_set_name(ahd, device_xname(self));
 	ahd->parent_dmat = pa->pa_dmat;
 
@@ -568,7 +569,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	ahd_attach(ahd);
 }
 
-CFATTACH_DECL(ahd_pci, sizeof(struct ahd_softc),
+CFATTACH_DECL_NEW(ahd_pci, sizeof(struct ahd_softc),
     ahd_pci_probe, ahd_pci_attach, NULL, NULL);
 
 /*
