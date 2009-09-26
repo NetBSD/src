@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/26 11:45:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.4 2009/09/26 11:51:34 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -21,5 +21,7 @@ bfdver.texi: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 	if [ -n "$(PKGVERSION)" ]; then \
 		echo "@set VERSION_PACKAGE $(PKGVERSION)"; \
 	fi) > ${.TARGET}
+
+CLEANFILES+=	bfdver.texi
 
 .include <bsd.info.mk>
