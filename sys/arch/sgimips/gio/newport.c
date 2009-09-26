@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.10.54.4 2009/09/26 18:11:45 snj Exp $	*/
+/*	$NetBSD: newport.c,v 1.10.54.5 2009/09/26 18:14:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.4 2009/09/26 18:11:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.10.54.5 2009/09/26 18:14:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,9 +629,7 @@ newport_cnattach(struct gio_attach_args *ga)
 	ri->ri_font = newport_console_dc.dc_fontdata;
 	newport_console_screen.scr_cookie = &newport_console_dc;
 
-	newport_putchar(ri, 3, 3, 0x41, defattr);
 	wsdisplay_cnattach(&newport_screen, ri, 0, 0, defattr);
-	newport_putchar(ri, 4, 3, 0x42, defattr);
 
 	newport_is_console = 1;
 
