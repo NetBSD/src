@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.27 2009/09/26 15:46:48 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.28 2009/09/26 15:49:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.27 2009/09/26 15:46:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.28 2009/09/26 15:49:45 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,18 +114,18 @@ CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
-void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
-int	esp_dma_isintr(struct ncr53c9x_softc *);
-void	esp_dma_reset(struct ncr53c9x_softc *);
-int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
-	    size_t *, int, size_t *);
-void	esp_dma_go(struct ncr53c9x_softc *);
-void	esp_dma_stop(struct ncr53c9x_softc *);
-int	esp_dma_isactive(struct ncr53c9x_softc *);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static int	esp_dma_isintr(struct ncr53c9x_softc *);
+static void	esp_dma_reset(struct ncr53c9x_softc *);
+static int	esp_dma_intr(struct ncr53c9x_softc *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
+		    size_t *, int, size_t *);
+static void	esp_dma_go(struct ncr53c9x_softc *);
+static void	esp_dma_stop(struct ncr53c9x_softc *);
+static int	esp_dma_isactive(struct ncr53c9x_softc *);
 
-struct ncr53c9x_glue esp_glue = {
+static struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,
 	esp_write_reg,
 	esp_dma_isintr,
