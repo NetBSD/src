@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.4 2009/05/21 01:14:44 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.5 2009/09/26 20:06:46 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.4 2009/05/21 01:13:49 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.5 2009/09/26 20:05:43 snj Exp
  */
 
 /*
@@ -4031,6 +4031,7 @@
 #define	PCI_PRODUCT_VIATECH_KT880_4	0x4269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT3351_HB_4351	0x4351		/* VT3351 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_CX700M2_IDE	0x5324		/* CX700M2/VX700 IDE Controller */
+#define	PCI_PRODUCT_VIATECH_VT8237A_SATA_2	0x5337		/* VT8237A Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT3351_IOAPIC	0x5351		/* VT3351 I/O APIC Interrupt Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8378_IG	0x7205		/* VT8378 KM400 UniChrome Integrated Graphics */
