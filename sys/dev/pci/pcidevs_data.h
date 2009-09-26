@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.4 2009/05/21 01:14:44 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.5 2009/09/26 20:06:47 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.4 2009/05/21 01:13:49 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.5 2009/09/26 20:05:43 snj Exp
  */
 
 /*
@@ -14000,6 +14000,10 @@ static const struct pci_product pci_products[] = {
 	    "CX700M2/VX700 IDE Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA_2,
+	    "VT8237A Integrated SATA Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC,
 	    "VT3351 I/O APIC Interrupt Controller",
 	},
@@ -14592,4 +14596,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3047;
+const int pci_nproducts = 3048;
