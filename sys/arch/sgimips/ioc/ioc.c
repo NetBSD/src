@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.7 2007/10/17 19:57:05 garbled Exp $	 */
+/* $NetBSD: ioc.c,v 1.7.30.1 2009/09/26 17:56:37 snj Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.7 2007/10/17 19:57:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.7.30.1 2009/09/26 17:56:37 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,10 +140,13 @@ ioc_attach(struct device * parent, struct device * self, void *aux)
 			  IOC_WRITE_ENET_AUTO | IOC_WRITE_ENET_UTP |
 			  IOC_WRITE_PC_UART2 | IOC_WRITE_PC_UART1);
 
+/* XXX: the firmware should have taken care of this already */
+#if 0
 	if (mach_subtype == MACH_SGI_IP22_GUINNESS) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOC_GCSEL, 0xff);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOC_GCREG, 0xff);
 	}
+#endif
 
 #if defined(BLINK)
 	ioc_blink(sc);
