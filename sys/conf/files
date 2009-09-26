@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.956 2009/09/26 19:01:04 jakllsch Exp $
+#	$NetBSD: files,v 1.957 2009/09/26 19:05:07 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -946,7 +946,7 @@ define	siisata
 file	dev/ic/siisata.c		siisata
 device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
 
-# Mervell Serial-ATA Host Controller
+# Marvell Serial-ATA Host Controller
 define mvsata
 file dev/ic/mvsata.c			mvsata
 device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, mvsata
