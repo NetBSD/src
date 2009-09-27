@@ -46,16 +46,16 @@ set_t *via_setInit(void)
 
 int via_setAdd(set_t * set, ITEM_TYPE item)
 {
-	int free = set->free;
-	if (free != -1) {
-		set->list[free].val = item;
-		set->free = set->list[free].free_next;
+	int sfree = set->free;
+	if (sfree != -1) {
+		set->list[sfree].val = item;
+		set->free = set->list[sfree].free_next;
 	} else {
 		return 0;
 	}
-	set->list[free].alloc_next = set->alloc;
-	set->alloc = free;
-	set->list[free].free_next = -1;
+	set->list[sfree].alloc_next = set->alloc;
+	set->alloc = sfree;
+	set->list[sfree].free_next = -1;
 	return 1;
 }
 

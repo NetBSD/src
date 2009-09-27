@@ -63,12 +63,13 @@ static void via_configure(struct drm_device *dev)
 
 	dev->driver->name		= DRIVER_NAME;
 	dev->driver->desc		= DRIVER_DESC;
-	dev->driver->date		= DRIVER_DATE;
-	dev->driver->major		= DRIVER_MAJOR;
-	dev->driver->minor		= DRIVER_MINOR;
-	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
+	dev->driver->date		= VIA_DRM_DRIVER_DATE;
+	dev->driver->major		= VIA_DRM_DRIVER_MAJOR;
+	dev->driver->minor		= VIA_DRM_DRIVER_MINOR;
+	dev->driver->patchlevel		= VIA_DRM_DRIVER_PATCHLEVEL;
 }
 
+#if defined(__FreeBSD__)
 static int
 via_probe(device_t kdev)
 {
@@ -119,3 +120,89 @@ static driver_t via_driver = {
 extern devclass_t drm_devclass;
 DRIVER_MODULE(via, pci, via_driver, drm_devclass, 0, 0);
 MODULE_DEPEND(via, drm, 1, 1, 1);
+
+#elif defined(__NetBSD__)
+
+static int
+viadrm_probe(device_t parent, cfdata_t match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, via_pciidlist);
+}
+
+static void
+viadrm_attach(device_t parent, device_t self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
+	via_configure(dev);
+
+	drm_attach(self, pa, via_pciidlist);
+}
+
+CFATTACH_DECL_NEW(viadrm, sizeof(struct drm_device),
+    viadrm_probe, viadrm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, viadrm, NULL);
+
+CFDRIVER_DECL(viadrm, DV_DULL, NULL);
+extern struct cfattach viadrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata viadrm_cfdata[] = {
+	{
+		.cf_name = "viadrm",
+		.cf_atname = "viadrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+viadrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&viadrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("viadrm", &viadrm_ca);
+		if (err) {
+			config_cfdriver_detach(&viadrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(viadrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("viadrm", &viadrm_ca);
+			config_cfdriver_detach(&viadrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(viadrm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("viadrm", &viadrm_ca);
+		config_cfdriver_detach(&viadrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
+#endif

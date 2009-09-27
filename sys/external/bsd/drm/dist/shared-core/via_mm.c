@@ -91,10 +91,10 @@ int via_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_via_fb_t *fb = data;
 
-	FBHeap = via_mmInit(fb.offset, fb.size);
+	FBHeap = via_mmInit(fb->offset, fb->size);
 
-	DRM_DEBUG("offset = %lu, size = %lu", (unsigned long)fb.offset,
-		  (unsigned long)fb.size);
+	DRM_DEBUG("offset = %lu, size = %lu", (unsigned long)fb->offset,
+		  (unsigned long)fb->size);
 
 	return 0;
 }
@@ -190,7 +190,7 @@ int via_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv
 {
 	drm_via_mem_t *mem = data;
 
-	switch (mem.type) {
+	switch (mem->type) {
 	case VIA_MEM_VIDEO:
 		if (via_fb_alloc(mem) < 0)
 			return -EFAULT;
@@ -341,7 +341,7 @@ static int via_agp_free(drm_via_mem_t * mem)
 		retval = -1;
 	}
 
-	DRM_DEBUG("free agp, free = %ld\n", agp.nfree);
+	DRM_DEBUG("free agp, free = %ld\n", agp.free);
 
 	return retval;
 }

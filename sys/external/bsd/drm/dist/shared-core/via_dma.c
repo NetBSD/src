@@ -114,7 +114,7 @@ via_cmdbuf_wait(drm_via_private_t * dev_priv, unsigned int size)
 			return -1;
 		}
 		if  ((cur_addr < hw_addr) && (next_addr >= hw_addr))
-			msleep(1);
+			delay(1000);
 	} while ((cur_addr < hw_addr) && (next_addr >= hw_addr));
 	return 0;
 }
