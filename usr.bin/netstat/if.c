@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.66 2009/09/13 21:46:23 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.67 2009/09/27 18:19:18 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.66 2009/09/13 21:46:23 pgoyette Exp $");
+__RCSID("$NetBSD: if.c,v 1.67 2009/09/27 18:19:18 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,10 +333,10 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
 #ifdef INET6
 	const int niflag = NI_NUMERICHOST;
+	struct sockaddr_in6 *sin6, *netmask6;
 #endif
 	in_addr_t netmask;
 	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6, *netmask6;
 	char *cp;
 	int n, m;
 
