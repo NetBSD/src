@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.10 2009/06/26 00:24:18 dyoung Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.11 2009/09/27 12:52:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.10 2009/06/26 00:24:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.11 2009/09/27 12:52:59 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -205,7 +205,7 @@ static int jme_intr(void *);
 static int jme_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 static int jme_mediachange(struct ifnet *);
 static void jme_ifwatchdog(struct ifnet *);
-static void jme_shutdown(void *);
+static bool jme_shutdown(device_t, int);
 
 static void jme_txeof(struct jme_softc *);
 static void jme_ifstart(struct ifnet *);
@@ -460,11 +460,6 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot.
-	 */
-	(void)shutdownhook_establish(jme_shutdown, ifp);
-
-	/*
 	 * Initialize our media structures and probe the MII.
 	 *
 	 * Note that we don't care about the media instance.  We
@@ -516,6 +511,14 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(&(sc)->jme_if, (sc)->jme_enaddr);
+
+	/*
+	 * Add shutdown hook so that DMA is disabled prior to reboot.
+	 */
+	if (pmf_device_register1(self, NULL, NULL, jme_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
@@ -630,11 +633,17 @@ jme_reset(jme_softc_t *sc)
 	bus_space_write_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_GHC, 0);
 }
 
-static void
-jme_shutdown(void *v)
+static bool
+jme_shutdown(device_t self, int howto)
 {
+	jme_softc_t *sc;
+	struct ifnet *ifp;
 
-	jme_stop(v, 1);
+	sc = device_private(self);
+	ifp = &sc->jme_if;
+	jme_stop(ifp, 1);
+
+	return true;
 }
 
 static void
