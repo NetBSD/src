@@ -117,14 +117,19 @@ CONFIGURATION
                        usefully be set inside a Makefile, including mk.conf or
                        ${MAKECONF}.
 
-     MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
-                       specified, must be an absolute path.  If this is
-                       defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the
-                       .OBJDIR for the current directory.  The current direc-
-                       tory may be read only.  MAKEOBJDIRPREFIX can be pro-
-                       vided only in the environment or via the -M flag of
-                       build.sh; it cannot usefully be set inside a Makefile,
-                       including mk.conf or ${MAKECONF}.
+     MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  The
+                       value is subjected to variable expansion by make(1).
+                       build.sh will create the ${MAKEOBJDIRPREFIX} directory
+                       if necessary, but if make(1) is used without build.sh,
+                       then rules in <bsd.obj.mk> will abort the build if the
+                       ${MAKEOBJDIRPREFIX} directory does not exist.  If the
+                       value is defined and valid, then ${MAKEOBJDIRPRE-
+                       FIX}/${.CURDIR} is used as the .OBJDIR for the current
+                       directory.  The current directory may be read only.
+                       MAKEOBJDIRPREFIX can be provided only in the environ-
+                       ment or via the -M flag of build.sh; it cannot usefully
+                       be set inside a Makefile, including mk.conf or
+                       ${MAKECONF}.
 
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
@@ -754,13 +759,21 @@ BUILDING
                ber of CPUs) and (2 * the number of CPUs) are recommended.  Use
                lower values on machines with limited memory or I/O bandwidth.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  For instance, if the source
-               directory is /usr/src, a setting of ``-M /usr/obj'' will place
-               build-time files under /usr/obj/usr/src/bin,
-               /usr/obj/usr/src/lib, /usr/obj/usr/src/usr.bin, and so forth.
-               If a relative path is specified, it will be converted to an
-               absolute path before being used.  Unsets MAKEOBJDIR.  See ``-O
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See ``-O
                -obj'' for more information.
+
+               For instance, if the source directory is /usr/src, a setting of
+               ``-M /usr/obj'' will place build-time files under
+               /usr/obj/usr/src/bin, /usr/obj/usr/src/lib,
+               /usr/obj/usr/src/usr.bin, and so forth.
+
+               If a relative path is specified, it will be converted to an
+               absolute path before being used.  build.sh imposes the restric-
+               tion that the argument to the -M option must not begin with a
+               ``$'' (dollar sign) character; otherwise it would be too diffi-
+               cult to determine whether the value is an absolute or a rela-
+               tive path.  If the directory does not already exist, build.sh
+               will create it.
 
      -m mach   Set the value of MACHINE to mach, except in some special cases
                listed below.  This will also override any value of
@@ -796,11 +809,18 @@ BUILDING
                -n''.
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  For instance, a set-
-               ting of ``-O /usr/obj'' will place build-time files under
-               /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and so forth.  If
-               a relative path is specified, it will be converted to an abso-
-               lute path before being used.  Unsets MAKEOBJDIRPREFIX.
+               place the built object files under obj.  Unsets
+               MAKEOBJDIRPREFIX.
+
+               For instance, a setting of ``-O /usr/obj'' will place build-
+               time files under /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin,
+               and so forth.
+
+               If a relative path is specified, it will be converted to an
+               absolute path before being used.  build.sh imposes the restric-
+               tion that the argument to the -O option must not contain a
+               ``$'' (dollar sign) character.  If the directory does not
+               already exist, build.sh will create it.
 
                In normal use, exactly one of the -M or -O options should be
                specified.  If neither -M nor -O is specified, then a default
