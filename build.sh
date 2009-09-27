@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.211 2009/09/27 17:55:53 apb Exp $
+#	$NetBSD: build.sh,v 1.212 2009/09/27 18:08:24 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -254,19 +254,6 @@ initdefaults()
 	# Set source directories
 	#
 	setmakeenv NETBSDSRCDIR "${TOP}"
-
-	# Determine top-level obj directory.
-	# Defaults to the top-level source directory.
-	# If $MAKEOBJDIRPREFIX is set in the environment, use it.
-	# We can't check $MAKEOBJDIR since that may be a make(1)
-	# expression that we can't evaluate at this time.
-	#
-	TOP_objdir="${TOP}"
-	if [ -n "${MAKEOBJDIRPREFIX}" ]; then
-		TOP_objdir="${MAKEOBJDIRPREFIX}${TOP}"
-	elif [ -n "${MAKEOBJDIR}" ]; then
-		warning "Can't parse \$(MAKEOBJDIR) \"$MAKEOBJDIR\" to determine top objdir"
-	fi
 
 	# Find the version of NetBSD
 	#
@@ -696,7 +683,16 @@ parseoptions()
 
 		-M)
 			eval ${optargcmd}; resolvepath OPTARG
-			TOP_objdir="${OPTARG}${TOP}"
+			case "${OPTARG}" in
+			\$*)	usage "-M argument must not begin with '$'"
+				;;
+			*\$*)	# can use resolvepath, but can't set TOP_objdir
+				resolvepath OPTARG
+				;;
+			*)	resolvepath OPTARG
+				TOP_objdir="${OPTARG}${TOP}"
+				;;
+			esac
 			unsetmakeenv MAKEOBJDIR
 			setmakeenv MAKEOBJDIRPREFIX "${OPTARG}"
 			;;
@@ -725,8 +721,14 @@ parseoptions()
 			;;
 
 		-O)
-			eval ${optargcmd}; resolvepath OPTARG
-			TOP_objdir="${OPTARG}"
+			eval ${optargcmd}
+			case "${OPTARG}" in
+			*\$*)	usage "-O argument must not contain '$'"
+				;;
+			*)	resolvepath OPTARG
+				TOP_objdir="${OPTARG}"
+				;;
+			esac
 			unsetmakeenv MAKEOBJDIRPREFIX
 			setmakeenv MAKEOBJDIR "\${.CURDIR:C,^$TOP,$OPTARG,}"
 			;;
@@ -925,7 +927,8 @@ sanitycheck()
 # * If a copy of make was found above, try to use it with
 #   nobomb_getmakevar to find the correct value for TOOLDIR;
 # * If all else fails, leave TOOLDIR unset.  Our caller is expected to
-#   be able to cope with this.
+#   be able to cope with this.  (For example, rebuildmake() handles it
+#   by building nbmake in a temporary directory.)
 #
 try_set_TOOLDIR()
 {
@@ -946,19 +949,28 @@ try_set_TOOLDIR()
 	#
 	# In the usual case (without interference from environment
 	# variables or /etc/mk.conf), <bsd.own.mk> should set TOOLDIR to
-	# "${TOP_objdir}/tooldir.${host_ostype}".  However, in practice
-	# we might have the wrong value of TOP_objdir, so we also try
-	# some other possibilities.
+	# "${_SRC_TOP_OBJ_}/tooldir.${host_ostype}".
+	#
+	# In practice it's difficult to figure out the correct value
+	# for _SRC_TOP_OBJ_.  In the easiest case, when the -M or -O
+	# options were passed to build.sh, then ${TOP_objdir} will be
+	# the correct value.  We also try a few other possibilities, but
+	# we do not replicate all the logic of <bsd.obj.mk>.
 	#
 	local possible_TOP_OBJ
 	local possible_TOOLDIR
-	for possible_TOP_OBJ in "${TOP_objdir}" "${TOP}" "${TOP}/obj" \
+	for possible_TOP_OBJ in \
+		"${TOP_objdir}" \
+		"${MAKEOBJDIRPREFIX:+${MAKEOBJDIRPREFIX}${TOP}}" \
+		"${TOP}" \
+		"${TOP}/obj" \
 		"${TOP}/obj.${MACHINE}"
 	do
+		[ -n "${possible_TOP_OBJ}" ] || continue
 		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
 		guess_make="${possible_TOOLDIR}/bin/${toolprefix}make"
 		if [ -x "${guess_make}" ]; then
-			break;
+			break
 		else
 			unset guess_make
 		fi
@@ -988,8 +1000,8 @@ rebuildmake()
 	# binary, if TOOLDIR is pre-set or if try_set_TOOLDIR can set it.
 	#
 	try_set_TOOLDIR
-	make="${TOOLDIR-nonexistent}/bin/${toolprefix}make"
-	if [ -x "${make}" ]; then
+	make="${TOOLDIR:-\$TOOLDIR}/bin/${toolprefix}make"
+	if [ -n "$TOOLDIR" ] && [ -x "${make}" ]; then
 		for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
 			if [ "${f}" -nt "${make}" ]; then
 				statusmsg "${make} outdated (older than ${f}), needs building."
@@ -1051,45 +1063,39 @@ validatemakeparams()
 	MKUPDATE=$(getmakevar MKUPDATE)
 
 	if [ "${MKOBJDIRS}" != "no" ]; then
-		# Try to create the top level object directory before
-		# running "make obj", otherwise <bsd.own.mk> will not
-		# set the correct value for _SRC_TOP_OBJ_.
+		# Create the top-level object directory.
 		#
-		# If either -M or -O was specified, then we have the
-		# directory name already.
+		# "make obj NOSUBDIR=" can handle most cases, but it
+		# can't handle the case where MAKEOBJDIRPREFIX is set
+		# while the corresponding directory does not exist
+		# (rules in <bsd.obj.mk> would abort the build).  We
+		# therefore have to handle the MAKEOBJDIRPREFIX case
+		# without invoking "make obj".  The MAKEOBJDIR case
+		# could be handled either way, but we choose to handle
+		# it similarly to MAKEOBJDIRPREFIX.
 		#
-		# If neither -M nor -O was specified, then try to get
-		# the directory name from bsd.obj.mk's __usrobjdir
-		# variable, which is set using complex rules.  This
-		# works only if TOP = /usr/src.
-		#
-		top_obj_dir="${TOP_objdir}"
-		if [ -z "${top_obj_dir}" ]; then
-			if [ "$TOP" = "/usr/src" ]; then
-				top_obj_dir="$(getmakevar __usrobjdir)"
-			# else __usrobjdir is not actually used
-			fi
-
+		if [ -n "${TOP_obj}" ]; then
+			# It must have been set by the "-M" or "-O"
+			# command line options, so there's no need to
+			# use getmakevar
+			:
+		elif [ -n "$MAKEOBJDIRPREFIX" ]; then
+			TOP_obj="$(getmakevar MAKEOBJDIRPREFIX)${TOP}"
+		elif [ -n "$MAKEOBJDIR" ]; then
+			TOP_obj="$(getmakevar MAKEOBJDIR)"
 		fi
-		case "$top_obj_dir" in
-		*/*)
-			${runcmd} mkdir -p "${top_obj_dir}" \
-			|| bomb "Can't create object" \
-				"directory ${top_obj_dir}"
-			;;
-		*)
-			# We don't know what the top level object
-			# directory should be, so we can't create it.
-			# A nonexistant directory might cause an error
-			# when we "make obj" later, but we ignore it for
-			# now.
-			;;
-		esac
+		if [ -n "$TOP_obj" ]; then
+			${runcmd} mkdir -p "${TOP_obj}" ||
+			    bomb "Can't create top level object directory" \
+					"${TOP_obj}"
+		else
+			${runcmd} "${make}" -m ${TOP}/share/mk obj NOSUBDIR= ||
+			    bomb "Can't create top level object directory" \
+					"using make obj"
+		fi
 
-		# make obj in tools to ensure that the objdir for the top-level
-		# of the source tree and for "tools" is available, in case the
-		# default TOOLDIR setting from <bsd.own.mk> is used, or the
-		# build.sh default DESTDIR and RELEASEDIR is to be used.
+		# make obj in tools to ensure that the objdir for "tools"
+		# is available.
 		#
 		${runcmd} cd tools
 		${runcmd} "${make}" -m ${TOP}/share/mk obj NOSUBDIR= ||
@@ -1098,6 +1104,7 @@ validatemakeparams()
 	fi
 
 	# Find TOOLDIR, DESTDIR, RELEASEDIR, and RELEASEMACHINEDIR.
+	# This must be done after creating the top-level object directory.
 	#
 	TOOLDIR=$(getmakevar TOOLDIR)
 	statusmsg "TOOLDIR path:     ${TOOLDIR}"
@@ -1237,7 +1244,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.211 2009/09/27 17:55:53 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.212 2009/09/27 18:08:24 apb Exp $
 # with these arguments: ${_args}
 #
 
