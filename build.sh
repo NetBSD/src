@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.212 2009/09/27 18:08:24 apb Exp $
+#	$NetBSD: build.sh,v 1.213 2009/09/27 22:02:41 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -901,19 +901,10 @@ sanitycheck()
 	esac
 }
 
-# Try to set a value for TOOLDIR.  This is difficult because of a cyclic
-# dependency: TOOLDIR may be affected by settings in /etc/mk.conf, so
-# we would like to use getmakevar to get the value of TOOLDIR, but we
-# can't use getmakevar before we have an up to date version of nbmake;
-# we might already have an up to date version of nbmake in TOOLDIR, but
-# we don't yet know where TOOLDIR is.
-#
-# In principle, we could break the cycle by building a copy of nbmake
-# in a temporary directory.  However, people who use the default value
-# of TOOLDIR do not like to have nbmake rebuilt every time they run
-# build.sh.
-#
-# We try to please everybody as follows:
+# print_tooldir_make --
+# Try to find and print a path to an existing
+# ${TOOLDIR}/bin/${toolprefix}make, for use by rebuildmake() before a
+# new version of ${toolprefix}make has been built.
 #
 # * If TOOLDIR was set in the environment or on the command line, use
 #   that value.
@@ -925,14 +916,22 @@ sanitycheck()
 #   in the PATH (this might accidentally find a non-NetBSD version of
 #   make, which will lead to failure in the next step);
 # * If a copy of make was found above, try to use it with
-#   nobomb_getmakevar to find the correct value for TOOLDIR;
-# * If all else fails, leave TOOLDIR unset.  Our caller is expected to
-#   be able to cope with this.  (For example, rebuildmake() handles it
-#   by building nbmake in a temporary directory.)
+#   nobomb_getmakevar to find the correct value for TOOLDIR, and believe the
+#   result only if it's a directory that already exists;
+# * If a value of TOOLDIR was found above, and if
+#   ${TOOLDIR}/bin/${toolprefix}make exists, print that value.
 #
-try_set_TOOLDIR()
+print_tooldir_make()
 {
-	[ -n "${TOOLDIR}" ] && return
+	local possible_TOP_OBJ
+	local possible_TOOLDIR
+	local possible_make
+	local tooldir_make
+
+	if [ -n "${TOOLDIR}" ]; then
+		echo "${TOOLDIR}/bin/${toolprefix}make"
+		return 0
+	fi
 
 	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
 	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
@@ -945,7 +944,7 @@ try_set_TOOLDIR()
 
 	# Look in a few potential locations for
 	# ${possible_TOOLDIR}/bin/${toolprefix}make.
-	# If we find it, then set guess_make.
+	# If we find it, then set possible_make.
 	#
 	# In the usual case (without interference from environment
 	# variables or /etc/mk.conf), <bsd.own.mk> should set TOOLDIR to
@@ -957,8 +956,6 @@ try_set_TOOLDIR()
 	# the correct value.  We also try a few other possibilities, but
 	# we do not replicate all the logic of <bsd.obj.mk>.
 	#
-	local possible_TOP_OBJ
-	local possible_TOOLDIR
 	for possible_TOP_OBJ in \
 		"${TOP_objdir}" \
 		"${MAKEOBJDIRPREFIX:+${MAKEOBJDIRPREFIX}${TOP}}" \
@@ -968,49 +965,93 @@ try_set_TOOLDIR()
 	do
 		[ -n "${possible_TOP_OBJ}" ] || continue
 		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
-		guess_make="${possible_TOOLDIR}/bin/${toolprefix}make"
-		if [ -x "${guess_make}" ]; then
+		possible_make="${possible_TOOLDIR}/bin/${toolprefix}make"
+		if [ -x "${possible_make}" ]; then
 			break
 		else
-			unset guess_make
+			unset possible_make
 		fi
 	done
 
 	# If the above didn't work, search the PATH for a suitable
 	# ${toolprefix}make, nbmake, bmake, or make.
 	#
-	: ${guess_make:=$(find_in_PATH ${toolprefix}make '')}
-	: ${guess_make:=$(find_in_PATH nbmake '')}
-	: ${guess_make:=$(find_in_PATH bmake '')}
-	: ${guess_make:=$(find_in_PATH make '')}
+	: ${possible_make:=$(find_in_PATH ${toolprefix}make '')}
+	: ${possible_make:=$(find_in_PATH nbmake '')}
+	: ${possible_make:=$(find_in_PATH bmake '')}
+	: ${possible_make:=$(find_in_PATH make '')}
 
-	# Use ${guess_make} with nobomb_getmakevar to try to find
-	# the value of TOOLDIR.  If this fails, unset TOOLDIR.
+	# At this point, we don't care whether possible_make is in the
+	# correct TOOLDIR or not; we simply want it to be usable by
+	# getmakevar to help us find the correct TOOLDIR.
 	#
-	unset TOOLDIR
-	if [ -x "${guess_make}" ]; then
-		TOOLDIR=$(make="${guess_make}" nobomb_getmakevar TOOLDIR)
-		[ $? -eq 0 -a -n "${TOOLDIR}" ] || unset TOOLDIR
+	# Use ${possible_make} with nobomb_getmakevar to try to find
+	# the value of TOOLDIR.  Believe the result only if it's
+	# a directory that already exists and contains bin/${toolprefix}make.
+	#
+	if [ -x "${possible_make}" ]; then
+		possible_TOOLDIR="$(
+			make="${possible_make}" nobomb_getmakevar TOOLDIR
+			)"
+		if [ $? = 0 ] && [ -n "${possible_TOOLDIR}" ] \
+		    && [ -d "${possible_TOOLDIR}" ];
+		then
+			tooldir_make="${possible_TOOLDIR}/bin/${toolprefix}make"
+			if [ -x "${tooldir_make}" ]; then
+				echo "${tooldir_make}"
+				return 0
+			fi
+		fi
 	fi
+	return 1
 }
 
+# rebuildmake --
+# Rebuild nbmake in a temporary directory if necessary.  Sets $make
+# to a path to the nbmake executable.  Sets done_rebuildmake=true
+# if nbmake was rebuilt.
+#
+# There is a cyclic dependency between building nbmake and choosing
+# TOOLDIR: TOOLDIR may be affected by settings in /etc/mk.conf, so we
+# would like to use getmakevar to get the value of TOOLDIR; but we can't
+# use getmakevar before we have an up to date version of nbmake; we
+# might already have an up to date version of nbmake in TOOLDIR, but we
+# don't yet know where TOOLDIR is.
+#
+# The default value of TOOLDIR also depends on the location of the top
+# level object directory, so $(getmakevar TOOLDIR) invoked before or
+# after making the top level object directory may produce different
+# results.
+#
+# Strictly speaking, we should do the following:
+#
+#    1. build a new version of nbmake in a temporary directory;
+#    2. use the temporary nbmake to create the top level obj directory;
+#    3. use $(getmakevar TOOLDIR) with the temporary nbmake to
+#       get the corect value of TOOLDIR;
+#    4. move the temporary nbake to ${TOOLDIR}/bin/nbmake.
+#
+# However, people don't like building nbmake unnecessarily if their
+# TOOLDIR has not changed since an earlier build.  We try to avoid
+# rebuilding a temporary version of nbmake by taking some shortcuts to
+# guess a value for TOOLDIR, looking for an existing version of nbmake
+# in that TOOLDIR, and checking whether that nbmake is newer than the
+# sources used to build it.
+#
 rebuildmake()
 {
-	# Test make source file timestamps against installed ${toolprefix}make
-	# binary, if TOOLDIR is pre-set or if try_set_TOOLDIR can set it.
-	#
-	try_set_TOOLDIR
-	make="${TOOLDIR:-\$TOOLDIR}/bin/${toolprefix}make"
-	if [ -n "$TOOLDIR" ] && [ -x "${make}" ]; then
+	make="$(print_tooldir_make)"
+	if [ -n "${make}" ] && [ -x "${make}" ]; then
 		for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
 			if [ "${f}" -nt "${make}" ]; then
-				statusmsg "${make} outdated (older than ${f}), needs building."
+				statusmsg "${make} outdated" \
+					"(older than ${f}), needs building."
 				do_rebuildmake=true
 				break
 			fi
 		done
 	else
-		statusmsg "No ${make}, needs building."
+		statusmsg "No \$TOOLDIR/bin/${toolprefix}make, needs building."
 		do_rebuildmake=true
 	fi
 
@@ -1244,7 +1285,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.212 2009/09/27 18:08:24 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.213 2009/09/27 22:02:41 apb Exp $
 # with these arguments: ${_args}
 #
 
