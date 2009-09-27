@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.207 2009/09/07 04:14:17 jnemeth Exp $
+#	$NetBSD: build.sh,v 1.208 2009/09/27 17:25:01 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -499,41 +499,41 @@ unsetmakeenv()
 	makeenv="${makeenv} $1"
 }
 
-# Convert possibly-relative paths to absolute paths by prepending
-# ${TOP} if necessary.  Also delete trailing "/", if any.
+# Given a variable name in $1, modify the variable in place as follows:
+# For each space-separated word in the variable, call resolvepath.
 resolvepaths()
 {
-	_OPTARG=
-	for oa in ${OPTARG}; do
-		case "${oa}" in
-		/)
-			;;
-		/*)
-			oa="${oa%/}"
-			;;
-		*)
-			oa="${TOP}/${oa%/}"
-			;;
-		esac
-		_OPTARG="${_OPTARG} ${oa}"
+	local var="$1"
+	local val
+	eval val=\"\${${var}}\"
+	local newval=''
+	local word
+	for word in ${val}; do
+		resolvepath word
+		newval="${newval}${newval:+ }${word}"
 	done
-	OPTARG="${_OPTARG}"
+	eval ${var}=\"\${newval}\"
 }
 
+# Given a variable name in $1, modify the variable in place as follows:
 # Convert possibly-relative path to absolute path by prepending
 # ${TOP} if necessary.  Also delete trailing "/", if any.
 resolvepath()
 {
-	case "${OPTARG}" in
+	local var="$1"
+	local val
+	eval val=\"\${${var}}\"
+	case "${val}" in
 	/)
 		;;
 	/*)
-		OPTARG="${OPTARG%/}"
+		val="${val%/}"
 		;;
 	*)
-		OPTARG="${TOP}/${OPTARG%/}"
+		val="${TOP}/${val%/}"
 		;;
 	esac
+	eval ${var}=\"\${val}\"
 }
 
 usage()
@@ -663,12 +663,12 @@ parseoptions()
 			;;
 
 		-C)
-			eval ${optargcmd}; resolvepaths
+			eval ${optargcmd}; resolvepaths OPTARG
 			iso_dir=${OPTARG}
 			;;
 
 		-D)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			setmakeenv DESTDIR "${OPTARG}"
 			;;
 
@@ -682,7 +682,7 @@ parseoptions()
 			;;
 
 		-M)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			TOP_objdir="${OPTARG}${TOP}"
 			unsetmakeenv MAKEOBJDIR
 			setmakeenv MAKEOBJDIRPREFIX "${OPTARG}"
@@ -712,7 +712,7 @@ parseoptions()
 			;;
 
 		-O)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			TOP_objdir="${OPTARG}"
 			unsetmakeenv MAKEOBJDIRPREFIX
 			setmakeenv MAKEOBJDIR "\${.CURDIR:C,^$TOP,$OPTARG,}"
@@ -723,7 +723,7 @@ parseoptions()
 			;;
 
 		-R)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			setmakeenv RELEASEDIR "${OPTARG}"
 			;;
 
@@ -738,7 +738,7 @@ parseoptions()
 			;;
 
 		-T)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			TOOLDIR="${OPTARG}"
 			export TOOLDIR
 			;;
@@ -765,12 +765,12 @@ parseoptions()
 			;;
 
 		-w)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			makewrapper="${OPTARG}"
 			;;
 
 		-X)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepath OPTARG
 			setmakeenv X11SRCDIR "${OPTARG}"
 			;;
 
@@ -1223,7 +1223,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.207 2009/09/07 04:14:17 jnemeth Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.208 2009/09/27 17:25:01 apb Exp $
 # with these arguments: ${_args}
 #
 
