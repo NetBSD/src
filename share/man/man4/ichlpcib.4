@@ -1,4 +1,4 @@
-.\"	$NetBSD: ichlpcib.4,v 1.8 2009/05/18 12:32:05 wiz Exp $
+.\"	$NetBSD: ichlpcib.4,v 1.9 2009/09/27 17:55:32 jakllsch Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Cd "ichlpcib* at pci? dev ? function ?"
 .Cd "hpet0     at ichlpcib?"
 .Cd "isa0      at ichlpcib?"
+.Cd "gpio*     at ichlpcib?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -62,8 +63,14 @@ via the
 node.
 A value of 0 will use the low frequency (low power) and a 1 will
 enable the high frequency (full power).
+.It
+General Purpose Input/Output.
+The ICH provides up to 64 I/O pins which can be accessed through the
+.Xr gpio 4
+framework.
 .El
 .Sh SEE ALSO
+.Xr gpio 4 ,
 .Xr sysctl 8 ,
 .Xr wdogctl 8
 .Sh HISTORY

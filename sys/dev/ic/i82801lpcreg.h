@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.9 2009/09/21 16:18:31 jakllsch Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.10 2009/09/27 17:55:32 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 /* GPIO config registers ICH0-ICH5 */
 #define LPCIB_PCI_GPIO_BASE	0x58
 #define LPCIB_PCI_GPIO_CNTL	0x5c
+#define LPCIB_PCI_GPIO_CNTL_EN	(1 << 4)
 #define LPCIB_PCI_PIRQA_ROUT	0x60
 #define LPCIB_PCI_PIRQB_ROUT	0x61
 #define LPCIB_PCI_PIRQC_ROUT	0x62
