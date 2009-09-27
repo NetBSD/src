@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.19 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_access.c,v 1.20 2009/09/27 18:24:23 bsh Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.19 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.20 2009/09/27 18:24:23 bsh Exp $");
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,7 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.19 2009/03/07 22:02:17 ad Exp $");
 /*
  * Access unaligned data items on aligned (longword)
  * boundaries.
+ *
+ * This file is shared by ddb and kgdb.
  */
+
+#if defined(DDB) || defined(KGDB) && defined(SOFTWARE_SSTEP)
 
 const int db_extend[] = {	/* table for sign-extending */
 	0,
@@ -91,6 +97,10 @@ db_put_value(db_addr_t addr, size_t size, db_expr_t value)
 	db_write_bytes(addr, size, data);
 }
 
+#endif	/* DDB || KGDB && SOFTWARE_SSTEP */
+
+#ifdef	DDB
+
 void *
 db_read_ptr(const char *name)
 {
@@ -120,3 +130,5 @@ db_read_int(const char *name)
 	db_read_bytes((db_addr_t)val, sizeof(p), (char *)&p);
 	return p;
 }
+
+#endif	/* DDB */
