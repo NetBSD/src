@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.210 2009/09/27 17:48:19 apb Exp $
+#	$NetBSD: build.sh,v 1.211 2009/09/27 17:55:53 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -239,6 +239,10 @@ initdefaults()
 	do_iso_image=false
 	do_iso_image_source=false
 	do_params=false
+
+	# done_{operation}=true if given operation has been done.
+	#
+	done_rebuildmake=false
 
 	# Create scratch directory
 	#
@@ -1011,6 +1015,7 @@ rebuildmake()
 		make="${tmpdir}/${toolprefix}make"
 		${runcmd} cd "${TOP}"
 		${runcmd} rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
+		done_rebuildmake=true
 	fi
 }
 
@@ -1199,7 +1204,7 @@ createmakewrapper()
 
 	# Install ${toolprefix}make if it was built.
 	#
-	if ${do_rebuildmake}; then
+	if ${done_rebuildmake}; then
 		${runcmd} rm -f "${TOOLDIR}/bin/${toolprefix}make"
 		${runcmd} cp "${make}" "${TOOLDIR}/bin/${toolprefix}make" ||
 		    bomb "Failed to install \$TOOLDIR/bin/${toolprefix}make"
@@ -1232,7 +1237,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.210 2009/09/27 17:48:19 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.211 2009/09/27 17:55:53 apb Exp $
 # with these arguments: ${_args}
 #
 
