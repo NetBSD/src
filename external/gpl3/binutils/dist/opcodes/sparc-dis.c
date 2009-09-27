@@ -957,7 +957,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		     call _printf
 		     or %o1, %lo(_foo), %o1  */
 
-		  if (memaddr >= 8 && is_delayed_branch (prev_insn))
+		  if (is_delayed_branch (prev_insn))
 		    {
 		      if (memaddr >= 8)
 			errcode = (*info->read_memory_func)
