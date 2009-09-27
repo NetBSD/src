@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2009/07/19 02:50:44 rmind Exp $
+#	$NetBSD: Makefile,v 1.32 2009/09/27 12:46:39 jmcneill Exp $
 
 # For all platforms
 
@@ -88,6 +88,7 @@ SUBDIR+=	drm
 SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
+SUBDIR+=	viadrm
 .endif
 
 .include <bsd.own.mk>
