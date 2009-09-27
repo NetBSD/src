@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.4 2009/09/27 17:19:07 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.5 2009/09/27 17:23:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.4 2009/09/27 17:19:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.5 2009/09/27 17:23:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -121,10 +121,9 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	int i, rem;
 	struct mbuf *md;
 	char *fromcp, *tocp, *cp;
-	struct iovec aiov;
-	struct uio auio;
 	struct vnode *dp;
-	int error, rdonly, linklen;
+	int error, rdonly;
+	int neverfollow;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	*retdirp = NULL;
@@ -254,111 +253,17 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	VREF(dp);
-	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-
-    for (;;) {
-	cnp->cn_nameptr = cnp->cn_pnbuf;
-	ndp->ni_startdir = dp;
+	neverfollow = !pubflag;
 
 	/*
 	 * And call lookup() to do the real work
 	 */
-	error = lookup_for_nfsd(ndp);
+	error = lookup_for_nfsd(ndp, dp, neverfollow);
 	if (error) {
-		if (ndp->ni_dvp) {
-			vput(ndp->ni_dvp);
-		}
-		PNBUF_PUT(cnp->cn_pnbuf);
 		return (error);
 	}
+	return 0;
 
-	/*
-	 * Check for encountering a symbolic link
-	 */
-	if ((cnp->cn_flags & ISSYMLINK) == 0) {
-		if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
-			if (ndp->ni_dvp == ndp->ni_vp) {
-				vrele(ndp->ni_dvp);
-			} else {
-				vput(ndp->ni_dvp);
-			}
-		}
-		if (cnp->cn_flags & (SAVENAME | SAVESTART)) {
-			cnp->cn_flags |= HASBUF;
-		} else {
-			PNBUF_PUT(cnp->cn_pnbuf);
-#if defined(DIAGNOSTIC)
-			cnp->cn_pnbuf = NULL;
-#endif /* defined(DIAGNOSTIC) */
-		}
-		return (0);
-	} else {
-		if (!pubflag) {
-			error = EINVAL;
-			break;
-		}
-		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
-			error = ELOOP;
-			break;
-		}
-		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
-			if (error != 0)
-				break;
-		}
-		if (ndp->ni_pathlen > 1)
-			cp = PNBUF_GET();
-		else
-			cp = cnp->cn_pnbuf;
-		aiov.iov_base = cp;
-		aiov.iov_len = MAXPATHLEN;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = 0;
-		auio.uio_rw = UIO_READ;
-		auio.uio_resid = MAXPATHLEN;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
-		if (error) {
-badlink:
-			if (ndp->ni_pathlen > 1)
-				PNBUF_PUT(cp);
-			break;
-		}
-		linklen = MAXPATHLEN - auio.uio_resid;
-		if (linklen == 0) {
-			error = ENOENT;
-			goto badlink;
-		}
-		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
-			error = ENAMETOOLONG;
-			goto badlink;
-		}
-		if (ndp->ni_pathlen > 1) {
-			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
-			PNBUF_PUT(cnp->cn_pnbuf);
-			cnp->cn_pnbuf = cp;
-		} else
-			cnp->cn_pnbuf[linklen] = '\0';
-		ndp->ni_pathlen += linklen;
-		vput(ndp->ni_vp);
-		dp = ndp->ni_dvp;
-
-		/*
-		 * Check if root directory should replace current directory.
-		 */
-		if (cnp->cn_pnbuf[0] == '/') {
-			vput(dp);
-			dp = ndp->ni_rootdir;
-			VREF(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-		}
-	}
-   }
-	vput(ndp->ni_dvp);
-	vput(ndp->ni_vp);
-	ndp->ni_vp = NULL;
 out:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	return (error);
