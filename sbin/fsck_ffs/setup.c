@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.88 2009/09/13 14:25:28 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.89 2009/09/27 17:13:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.88 2009/09/13 14:25:28 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.89 2009/09/27 17:13:37 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ setup(const char *dev, const char *origdev)
 			doskipclean = 0;
 		}
 		if (sblock->fs_flags & FS_DOWAPBL) {
-			if (preen) {
+			if (preen && skipclean) {
 				if (!quiet)
 					pwarn("file system is journaled; "
 					    "not checking\n");
