@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.75 2009/09/27 16:44:40 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.76 2009/09/27 17:28:38 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1358,19 +1358,25 @@ wrapper script so that the resulting name is of the form
 .Dq Sy \*[toolprefix]make-MACHINE-BUILDID .
 .
 .It Fl C Ar cdextras
-Set the value of
-.Sy CDEXTRA
-to
+Append
 .Ar cdextras 
-which is a space-separated list of files or directories which will be
-added in order to the CD-ROM image when used in conjunction with
+to the
+.Sy CDEXTRA
+variable,
+which is a space-separated list of files or directories that will be
+added to the CD-ROM image that may be create by the
 .Dq iso-image
 or
-.Dq iso-image-source .
+.Dq iso-image-source
+operations.
 Files will be added to the root of the CD-ROM image, whereas directories
 will be copied recursively.
 If relative paths are specified, they will be converted to
 absolute paths before being used.
+Multiple paths may be specified via multiple
+.Fl C
+options, or via a single option whose argument contains multiple
+space-separated paths.
 .
 .It Fl D Ar dest
 Set the value of
