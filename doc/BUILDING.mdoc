@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.74 2009/07/12 14:16:36 hubertf Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.75 2009/09/27 16:44:40 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1291,6 +1291,10 @@ This command will run
 on the kernel in question first unless the
 .Fl u
 option is given.
+.
+.It Sy modules
+This command will build kernel modules and install them into
+.Sy DESTDIR .
 .
 .It Sy releasekernel Ns = Ns Ar kconf
 Install a
