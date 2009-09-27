@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1293 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1294 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -404,3 +404,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	xen: add support for request-rx-copy in the virtual network device
 		backend.  This is required by recent Xen linux kernels.
 		[bouyer 20090925]
+	ichlpcib(4): Add gpio(4) support. [jakllsch 20090927]
