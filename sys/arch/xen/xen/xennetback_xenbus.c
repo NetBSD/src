@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.29 2009/09/25 23:11:57 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.30 2009/09/27 19:48:57 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -380,7 +380,10 @@ xennetback_xenbus_destroy(void *arg)
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 	hypervisor_mask_event(xneti->xni_evtchn);
 	event_remove_handler(xneti->xni_evtchn, xennetback_evthandler, xneti);
-	softint_disestablish(xneti->xni_softintr);
+	if (xneti->xni_softintr) {
+		softint_disestablish(xneti->xni_softintr);
+		xneti->xni_softintr = NULL;
+	}
 
 	SLIST_REMOVE(&xnetback_instances,
 	    xneti, xnetback_instance, next);
