@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.20 2009/09/27 17:55:31 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.21 2009/09/27 18:27:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.20 2009/09/27 17:55:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.21 2009/09/27 18:27:01 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -303,10 +303,12 @@ lpcibchilddet(device_t self, device_t child)
 	struct lpcib_softc *sc = device_private(self);
 	uint32_t val;
 
+#if NGPIO > 0
 	if (sc->sc_gpiobus == child) {
 		sc->sc_gpiobus = NULL;
 		return;
 	}
+#endif
 	if (sc->sc_hpetbus != child) {
 		pcibchilddet(self, child);
 		return;
