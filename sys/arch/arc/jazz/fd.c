@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 2009/01/13 13:35:51 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 2009/09/27 05:29:20 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2009/09/27 05:29:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,8 +167,6 @@ struct fd_softc {
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
 
-	void *sc_sdhook;	/* saved shutdown hook for drive. */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct bufq_state *sc_q;/* pending I/O requests */
@@ -201,6 +199,7 @@ static void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
+static bool fd_shutdown(device_t, int);
 #if 0
 static const struct fd_type *fd_nvtotype(char *, int, int);
 #endif
@@ -353,7 +352,19 @@ fdattach(device_t parent, device_t self, void *aux)
 	mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
 	/* Needed to power off if the motor is on when we halt. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+	if (!pmf_device_register1(self, NULL, NULL, fd_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+bool
+fd_shutdown(device_t self, int howto)
+{
+	struct fd_softc *fd;
+
+	fd = device_private(self);
+	fd_motor_off(fd);
+
+	return true;
 }
 
 #if 0
