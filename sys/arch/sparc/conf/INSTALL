@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.70 2009/08/06 18:28:41 macallan Exp $
+#	$NetBSD: INSTALL,v 1.71 2009/09/27 13:27:44 tsutsui Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -537,7 +537,6 @@ bwtwo*		at sbus? slot ? offset ?		#
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
 cgthree*	at sbus? slot ? offset ?
-#cgthree0	at obio? slot ? offset ?		# sun4m
 
 ## Sun "cgfour" color framebuffer with overlay plane.  See above comment
 ## regarding overlay plane.
