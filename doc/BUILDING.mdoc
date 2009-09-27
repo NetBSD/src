@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.76 2009/09/27 17:28:38 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.77 2009/09/27 18:08:24 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,8 +243,21 @@ or
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
-If specified, must be an absolute path.
-If this is defined,
+The value is subjected to variable expansion by
+.Xr make 1 .
+.Sy build.sh
+will create the
+${MAKEOBJDIRPREFIX}
+directory if necessary, but if
+.Xr make 1
+is used without
+.Sy build.sh ,
+then rules in
+.Aq bsd.obj.mk
+will abort the build if the
+${MAKEOBJDIRPREFIX}
+directory does not exist.
+If the value is defined and valid, then
 ${MAKEOBJDIRPREFIX}/${.CURDIR}
 is used as the
 .Sy .OBJDIR
@@ -1430,6 +1443,12 @@ Set
 .Sy MAKEOBJDIRPREFIX
 to
 .Ar obj .
+Unsets
+.Sy MAKEOBJDIR .
+See
+.Dq Fl O obj
+for more information.
+.Pp
 For instance, if the source directory is
 .Pa /usr/src ,
 a setting of
@@ -1439,13 +1458,20 @@ will place build-time files under
 .Pa /usr/obj/usr/src/lib ,
 .Pa /usr/obj/usr/src/usr.bin ,
 and so forth.
+.Pp
 If a relative path is specified, it will be converted to an
 absolute path before being used.
-Unsets
-.Sy MAKEOBJDIR .
-See
-.Dq Fl O obj
-for more information.
+.Sy build.sh
+imposes the restriction that the argument to the
+.Fl M
+option must not begin with a
+.Dq \&$
+(dollar sign)
+character; otherwise it would be too difficult
+to determine whether the value is an absolute or a relative path.
+If the directory does not already exist,
+.Sy build.sh
+will create it.
 .
 .It Fl m Ar mach
 Set the value of
@@ -1509,6 +1535,9 @@ Create an appropriate transform macro for
 .Sy MAKEOBJDIR
 that will place the built object files under
 .Ar obj .
+Unsets
+.Sy MAKEOBJDIRPREFIX .
+.Pp
 For instance, a setting of
 .Dq Fl O Pa /usr/obj
 will place build-time files under
@@ -1516,10 +1545,19 @@ will place build-time files under
 .Pa /usr/obj/lib ,
 .Pa /usr/obj/usr.bin ,
 and so forth.
+.Pp
 If a relative path is specified, it will be converted to an
 absolute path before being used.
-Unsets
-.Sy MAKEOBJDIRPREFIX .
+.Sy build.sh
+imposes the restriction that the argument to the
+.Fl O
+option must not contain a
+.Dq \&$
+(dollar sign)
+character.
+If the directory does not already exist,
+.Sy build.sh
+will create it.
 .Pp
 In normal use, exactly one of the
 .Fl M
