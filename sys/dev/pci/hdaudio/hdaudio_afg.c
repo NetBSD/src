@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.14 2009/09/26 17:05:01 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.15 2009/09/27 02:36:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.14 2009/09/26 17:05:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.15 2009/09/27 02:36:38 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,7 +106,7 @@ static int hdaudio_afg_debug = 0;
 
 #define	HDAUDIO_UNSOLTAG_EVENT_HP	0x00
 
-#define	HDAUDIO_HP_SENSE_PERIOD		(hz / 2)
+#define	HDAUDIO_HP_SENSE_PERIOD		hz
 
 static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 
@@ -290,6 +290,7 @@ struct hdaudio_afg_softc {
 	audio_params_t			sc_pparam, sc_rparam;
 
 	struct callout			sc_jack_callout;
+	bool				sc_jack_polling;
 
 	struct {
 		uint32_t		afg_cap;
@@ -308,6 +309,7 @@ static int	hdaudio_afg_match(device_t, cfdata_t, void *);
 static void	hdaudio_afg_attach(device_t, device_t, void *);
 static int	hdaudio_afg_detach(device_t, int);
 static void	hdaudio_afg_childdet(device_t, device_t);
+static bool	hdaudio_afg_suspend(device_t PMF_FN_PROTO);
 static bool	hdaudio_afg_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL2_NEW(
@@ -2984,6 +2986,9 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 	uint32_t res = 0;
 	int i, j;
 
+	if (!device_is_active(sc->sc_dev))
+		goto resched;
+
 	for (i = 0; i < sc->sc_nassocs; i++)
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
@@ -3030,6 +3035,7 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 			}
 		}
 
+resched:
 	callout_schedule(&sc->sc_jack_callout, HDAUDIO_HP_SENSE_PERIOD);
 }
 
@@ -3070,8 +3076,8 @@ hdaudio_afg_hp_switch_init(struct hdaudio_afg_softc *sc)
 		    "unsol" : "poll");
 	}
 	if (enable) {
+		sc->sc_jack_polling = true;
 		hdaudio_afg_hp_switch_handler(sc);
-		callout_schedule(&sc->sc_jack_callout, HDAUDIO_HP_SENSE_PERIOD);
 	} else
 		hda_trace(sc, "jack detect not enabled\n");
 }
@@ -3093,7 +3099,7 @@ hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 	callout_setfunc(&sc->sc_jack_callout,
 	    hdaudio_afg_hp_switch_handler, sc);
 
-	if (!pmf_device_register(self, NULL, hdaudio_afg_resume))
+	if (!pmf_device_register(self, hdaudio_afg_suspend, hdaudio_afg_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_config = prop_dictionary_get(args, "pin-config");
@@ -3241,6 +3247,16 @@ hdaudio_afg_childdet(device_t self, device_t child)
 }
 
 static bool
+hdaudio_afg_suspend(device_t self PMF_FN_ARGS)
+{
+	struct hdaudio_afg_softc *sc = device_private(self);
+
+	callout_halt(&sc->sc_jack_callout, NULL);
+
+	return true;
+}
+
+static bool
 hdaudio_afg_resume(device_t self PMF_FN_ARGS)
 {
 	struct hdaudio_afg_softc *sc = device_private(self);
@@ -3257,6 +3273,9 @@ hdaudio_afg_resume(device_t self PMF_FN_ARGS)
 	hdaudio_afg_commit(sc);
 	hdaudio_afg_stream_connect(sc, AUMODE_PLAY);
 	hdaudio_afg_stream_connect(sc, AUMODE_RECORD);
+
+	if (sc->sc_jack_polling)
+		hdaudio_afg_hp_switch_handler(sc);
 
 	return true;
 }
