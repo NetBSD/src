@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.147 2008/11/19 18:36:00 ad Exp $
+#	$NetBSD: files.sparc,v 1.148 2009/09/27 13:27:44 tsutsui Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -230,9 +230,6 @@ file	arch/sparc/dev/bwtwo_obio.c	bwtwo_obio & obio
 device cgtwo: fb, rasops8
 attach cgtwo at vme
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
-
-attach cgthree at obio with cgthree_obio
-file	arch/sparc/dev/cgthree_obio.c	cgthree_obio & obio
 
 device cgfour: bt_dac, fb, rasops8, pfour
 attach cgfour at obio
