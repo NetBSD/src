@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.12 2009/01/21 14:15:43 jnemeth Exp $
+# $NetBSD: acpidevs,v 1.13 2009/09/27 14:11:07 jmcneill Exp $
 #
 # Extracted from:
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
@@ -135,6 +135,7 @@ PNP0C10	ACPI system indicator device
 PNP0C11	ACPI thermal zone
 PNP0C12	Device Bay Controller
 PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
+PNP0C14	WMI mapper device
 PNP0C80	Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
