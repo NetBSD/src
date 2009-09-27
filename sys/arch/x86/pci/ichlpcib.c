@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.19 2009/08/18 17:47:46 dyoung Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.20 2009/09/27 17:55:31 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2009/08/18 17:47:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.20 2009/09/27 17:55:31 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,12 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2009/08/18 17:47:46 dyoung Exp $")
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/timetc.h>
+#include <sys/gpio.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/acpipmtimer.h>
@@ -62,6 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2009/08/18 17:47:46 dyoung Exp $")
 
 #include "hpet.h"
 #include "pcibvar.h"
+#include "gpio.h"
+
+#define LPCIB_GPIO_NPINS 64
 
 struct lpcib_softc {
 	/* we call pcibattach() which assumes this starts like this: */
@@ -85,6 +90,16 @@ struct lpcib_softc {
 #if NHPET > 0
 	/* HPET variables. */
 	uint32_t		sc_hpet_reg;
+#endif
+
+#if NGPIO > 0
+	device_t		sc_gpiobus;
+	kmutex_t		sc_gpio_mtx;
+	bus_space_tag_t		sc_gpio_iot;
+	bus_space_handle_t	sc_gpio_ioh;
+	bus_size_t		sc_gpio_ios;
+	struct gpio_chipset_tag	sc_gpio_gc;
+	gpio_pin_t		sc_gpio_pins[LPCIB_GPIO_NPINS];
 #endif
 
 	/* Speedstep */
@@ -131,6 +146,14 @@ static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 #if NHPET > 0
 static void lpcib_hpet_configure(device_t);
 static int lpcib_hpet_unconfigure(device_t, int);
+#endif
+
+#if NGPIO > 0
+static void lpcib_gpio_configure(device_t);
+static int lpcib_gpio_unconfigure(device_t, int);
+static int lpcib_gpio_pin_read(void *, int);
+static void lpcib_gpio_pin_write(void *, int, int);
+static void lpcib_gpio_pin_ctl(void *, int, int);
 #endif
 
 struct lpcib_softc *speedstep_cookie;	/* XXX */
@@ -263,6 +286,11 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	lpcib_hpet_configure(self);
 #endif
 
+#if NGPIO > 0
+	/* Set up GPIO */
+	lpcib_gpio_configure(self);
+#endif
+
 	/* Install power handler */
 	if (!pmf_device_register1(self, lpcib_suspend, lpcib_resume,
 	    lpcib_shutdown))
@@ -275,6 +303,10 @@ lpcibchilddet(device_t self, device_t child)
 	struct lpcib_softc *sc = device_private(self);
 	uint32_t val;
 
+	if (sc->sc_gpiobus == child) {
+		sc->sc_gpiobus = NULL;
+		return;
+	}
 	if (sc->sc_hpetbus != child) {
 		pcibchilddet(self, child);
 		return;
@@ -313,7 +345,7 @@ lpcibchilddet(device_t self, device_t child)
 	}
 }
 
-#if NHPET > 0
+#if NHPET > 0 || NGPIO > 0
 /* XXX share this with sys/arch/i386/pci/elan520.c */
 static bool
 ifattr_match(const char *snull, const char *t)
@@ -325,11 +357,18 @@ ifattr_match(const char *snull, const char *t)
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
-#if NHPET > 0
+#if NHPET > 0 || NGPIO > 0
 	struct lpcib_softc *sc = device_private(self);
+#endif
 
+#if NHPET > 0
 	if (ifattr_match(ifattr, "hpetichbus") && sc->sc_hpetbus == NULL)
 		lpcib_hpet_configure(self);
+#endif
+
+#if NGPIO > 0
+	if (ifattr_match(ifattr, "gpiobus") && sc->sc_gpiobus == NULL)
+		lpcib_gpio_configure(self);
 #endif
 
 	return pcibrescan(self, ifattr, locators);
@@ -345,6 +384,11 @@ lpcibdetach(device_t self, int flags)
 
 #if NHPET > 0
 	if ((rc = lpcib_hpet_unconfigure(self, flags)) != 0)
+		return rc;
+#endif
+
+#if NGPIO > 0
+	if ((rc = lpcib_gpio_unconfigure(self, flags)) != 0)
 		return rc;
 #endif
 
@@ -987,5 +1031,185 @@ lpcib_hpet_unconfigure(device_t self, int flags)
 		return rc;
 
 	return 0;
+}
+#endif
+
+#if NGPIO > 0
+static void
+lpcib_gpio_configure(device_t self)
+{
+	struct lpcib_softc *sc = device_private(self);
+	struct gpiobus_attach_args gba;
+	pcireg_t gpio_cntl;
+	uint32_t use, io, bit;
+	int pin, shift, base_reg, cntl_reg, reg;
+
+	/* this implies ICH >= 6, and thus different mapreg */
+	if (sc->sc_has_rcba) {
+		base_reg = LPCIB_PCI_GPIO_BASE_ICH6;
+		cntl_reg = LPCIB_PCI_GPIO_CNTL_ICH6;
+	} else {
+		base_reg = LPCIB_PCI_GPIO_BASE;
+		cntl_reg = LPCIB_PCI_GPIO_CNTL;
+	}
+
+	gpio_cntl = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+				  cntl_reg);
+
+	/* Is GPIO enabled? */
+	if ((gpio_cntl & LPCIB_PCI_GPIO_CNTL_EN) == 0)
+		return;
+		
+	if (pci_mapreg_map(&sc->sc_pa, base_reg, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->sc_gpio_iot, &sc->sc_gpio_ioh,
+			   NULL, &sc->sc_gpio_ios)) {
+		aprint_error_dev(self, "can't map general purpose i/o space\n");
+		return;
+	}
+
+	mutex_init(&sc->sc_gpio_mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	for (pin = 0; pin < LPCIB_GPIO_NPINS; pin++) {
+		sc->sc_gpio_pins[pin].pin_num = pin;
+
+		/* Read initial state */
+		reg = (pin < 32) ? LPCIB_GPIO_GPIO_USE_SEL : LPCIB_GPIO_GPIO_USE_SEL2;
+		use = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+		reg = (pin < 32) ? LPCIB_GPIO_GP_IO_SEL : LPCIB_GPIO_GP_IO_SEL;
+		io = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, 4);
+		shift = pin % 32;
+		bit = __BIT(shift);
+
+		if ((use & bit) != 0) {
+			sc->sc_gpio_pins[pin].pin_caps =
+			    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+			if (pin < 32)
+				sc->sc_gpio_pins[pin].pin_caps |=
+				    GPIO_PIN_PULSATE;
+			if ((io & bit) != 0)
+				sc->sc_gpio_pins[pin].pin_flags =
+				    GPIO_PIN_INPUT;
+			else
+				sc->sc_gpio_pins[pin].pin_flags =
+				    GPIO_PIN_OUTPUT;
+		} else
+			sc->sc_gpio_pins[pin].pin_caps = 0;
+
+		if (lpcib_gpio_pin_read(sc, pin) == 0)
+			sc->sc_gpio_pins[pin].pin_state = GPIO_PIN_LOW;
+		else
+			sc->sc_gpio_pins[pin].pin_state = GPIO_PIN_HIGH;
+
+	}
+
+	/* Create controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = lpcib_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = lpcib_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = lpcib_gpio_pin_ctl;
+
+	memset(&gba, 0, sizeof(gba));
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = LPCIB_GPIO_NPINS;
+
+	sc->sc_gpiobus = config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+}
+
+static int
+lpcib_gpio_unconfigure(device_t self, int flags)
+{
+	struct lpcib_softc *sc = device_private(self);
+	int rc;
+
+	if (sc->sc_gpiobus != NULL &&
+	    (rc = config_detach(sc->sc_gpiobus, flags)) != 0)
+		return rc;
+
+	mutex_destroy(&sc->sc_gpio_mtx);
+
+	bus_space_unmap(sc->sc_gpio_iot, sc->sc_gpio_ioh, sc->sc_gpio_ios);
+
+	return 0;
+}
+
+static int
+lpcib_gpio_pin_read(void *arg, int pin)
+{
+	struct lpcib_softc *sc = arg;
+	uint32_t data;
+	int reg, shift;
+	
+	reg = (pin < 32) ? LPCIB_GPIO_GP_LVL : LPCIB_GPIO_GP_LVL2;
+	shift = pin % 32;
+
+	mutex_enter(&sc->sc_gpio_mtx);
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+	mutex_exit(&sc->sc_gpio_mtx);
+	
+	return (__SHIFTOUT(data, __BIT(shift)) ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
+}
+
+static void
+lpcib_gpio_pin_write(void *arg, int pin, int value)
+{
+	struct lpcib_softc *sc = arg;
+	uint32_t data;
+	int reg, shift;
+
+	reg = (pin < 32) ? LPCIB_GPIO_GP_LVL : LPCIB_GPIO_GP_LVL2;
+	shift = pin % 32;
+
+	mutex_enter(&sc->sc_gpio_mtx);
+
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+
+	if(value)
+		data |= __BIT(shift);
+	else
+		data &= ~__BIT(shift);
+
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, data);
+
+	mutex_exit(&sc->sc_gpio_mtx);
+}
+
+static void
+lpcib_gpio_pin_ctl(void *arg, int pin, int flags)
+{
+	struct lpcib_softc *sc = arg;
+	uint32_t data;
+	int reg, shift;
+
+	shift = pin % 32;
+	reg = (pin < 32) ? LPCIB_GPIO_GP_IO_SEL : LPCIB_GPIO_GP_IO_SEL2;
+	
+	mutex_enter(&sc->sc_gpio_mtx);
+	
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+	
+	if (flags & GPIO_PIN_OUTPUT)
+		data &= ~__BIT(shift);
+
+	if (flags & GPIO_PIN_INPUT)
+		data |= __BIT(shift);
+
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, data);
+
+
+	if (pin < 32) {
+		reg = LPCIB_GPIO_GPO_BLINK;
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
+
+		if (flags & GPIO_PIN_PULSATE)
+			data |= __BIT(shift);
+		else
+			data &= ~__BIT(shift);
+
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg, data);
+	}
+
+	mutex_exit(&sc->sc_gpio_mtx);
 }
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.7 2008/08/03 19:32:03 joerg Exp $
+#	$NetBSD: files.pci,v 1.8 2009/09/27 17:55:31 jakllsch Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -33,7 +33,7 @@ file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
 define	hpetichbus {}
-device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, hpetichbus
+device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, hpetichbus, gpiobus
 attach	ichlpcib at pci
 attach	hpet at hpetichbus with ichlpcib_hpet
 
