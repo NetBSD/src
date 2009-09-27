@@ -721,13 +721,15 @@ BUILDING
                ``nbmake-MACHINE-BUILDID''.
 
      -C cdextras
-               Set the value of CDEXTRA to cdextras which is a space-separated
-               list of files or directories which will be added in order to
-               the CD-ROM image when used in conjunction with ``iso-image'' or
-               ``iso-image-source''.  Files will be added to the root of the
-               CD-ROM image, whereas directories will be copied recursively.
-               If relative paths are specified, they will be converted to
-               absolute paths before being used.
+               Append cdextras to the CDEXTRA variable, which is a space-sepa-
+               rated list of files or directories that will be added to the
+               CD-ROM image that may be create by the ``iso-image'' or
+               ``iso-image-source'' operations.  Files will be added to the
+               root of the CD-ROM image, whereas directories will be copied
+               recursively.  If relative paths are specified, they will be
+               converted to absolute paths before being used.  Multiple paths
+               may be specified via multiple -C options, or via a single
+               option whose argument contains multiple space-separated paths.
 
      -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
                fied, it will be converted to an absolute path before being

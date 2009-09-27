@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.208 2009/09/27 17:25:01 apb Exp $
+#	$NetBSD: build.sh,v 1.209 2009/09/27 17:28:38 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -580,7 +580,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
  Options:
     -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
     -B buildId  Set BUILDID to buildId.
-    -C cdextras Set CDEXTRA to cdextras
+    -C cdextras Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system.
@@ -664,7 +664,7 @@ parseoptions()
 
 		-C)
 			eval ${optargcmd}; resolvepaths OPTARG
-			iso_dir=${OPTARG}
+			CDEXTRA="${CDEXTRA}${CDEXTRA:+ }${OPTARG}"
 			;;
 
 		-D)
@@ -1223,7 +1223,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.208 2009/09/27 17:25:01 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.209 2009/09/27 17:28:38 apb Exp $
 # with these arguments: ${_args}
 #
 
@@ -1445,7 +1445,7 @@ main()
 
 		iso-image|iso-image-source)
 			${runcmd} "${makewrapper}" ${parallel} \
-			    CDEXTRA="$iso_dir" ${op} ||
+			    CDEXTRA="$CDEXTRA" ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
 			;;
