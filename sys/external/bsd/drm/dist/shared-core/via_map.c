@@ -127,7 +127,9 @@ int via_driver_load(struct drm_device *dev, unsigned long chipset)
 
 	ret = drm_vblank_init(dev, 1);
 	if (ret) {
+#ifdef VIA_HAVE_CORE_MM
 		drm_sman_takedown(&dev_priv->sman);
+#endif
 		drm_free(dev_priv, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 		return ret;
 	}
