@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2009/08/06 18:28:41 macallan Exp $
+# $NetBSD: GENERIC,v 1.216 2009/09/27 13:27:44 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 maxusers	32
 
@@ -667,7 +667,6 @@ bwtwo0		at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
 cgthree*	at sbus? slot ? offset ?
-#cgthree0	at obio? slot ? offset ?		# sun4m
 
 ## Sun "cgfour" color framebuffer with overlay plane.  See above comment
 ## regarding overlay plane.
