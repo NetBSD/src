@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.21 2009/06/29 06:02:09 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.22 2009/09/27 17:19:07 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,8 @@
 .Os
 .Sh NAME
 .Nm namei ,
-.Nm lookup ,
+.Nm lookup_for_nfsd ,
+.Nm lookup_for_nfsd_index ,
 .Nm relookup ,
 .Nm NDINIT ,
 .Nm namei_simple_kernel ,
@@ -45,7 +46,9 @@
 .Ft int
 .Fn namei "struct nameidata *ndp"
 .Ft int
-.Fn lookup "struct nameidata *ndp"
+.Fn lookup_for_nfsd "struct nameidata *ndp"
+.Ft int
+.Fn lookup_for_nfsd_index "struct nameidata *ndp"
 .Ft int
 .Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
@@ -249,21 +252,22 @@ flag set then symbolic links are followed when they
 occur at the end of the name translation process.
 Symbolic links are always followed for all other pathname components
 other than the last.
-.It Fn lookup "ndp"
-Search for a pathname.
-This is a very central and rather complicated routine.
 .Pp
-The pathname is specified by
-.Em ndp-\*[Gt]ni_dirp
-and is of length
-.Em ndp-\*[Gt]ni_pathlen .
-The starting directory is taken from
-.Em ndp-\*[Gt]ni_startdir .
-The pathname is descended until done, or a symbolic link is
-encountered.
+Historically
+.Nm
+had a sub-function called
+.Fn lookup .
+This function processed a pathname until either running out of
+material or encountering a symbolic link.
+.Nm
+worked by first setting up the start directory
+.Em ndp-\*[Gt]ni_startdir
+and then calling
+.Fn lookup
+repeatedly.
 .Pp
 The semantics of
-.Fn lookup
+.Nm
 are altered by the operation specified by
 .Em ndp-\*[Gt]ni_cnd.cn_nameiop .
 When
@@ -278,6 +282,31 @@ If the target of the pathname exists and LOCKLEAF is set, the target
 is returned locked in
 .Em ndp-\*[Gt]ni_vp ,
 otherwise it is returned unlocked.
+.Pp
+As of this writing the internal function
+.Fn do_lookup
+is comparable to the historic
+.Fn lookup
+but this code is slated for refactoring.
+.It Fn lookup_for_nfsd "ndp"
+This is a private entry point into
+.Nm
+used by the NFS server code.
+Its semantics are similar to the historic
+.Fn lookup
+function described above.
+It should not be used by new code.
+.It Fn lookup_for_nfsd_index "ndp"
+This is a (second) private entry point into
+.Nm
+used by the NFS server code.
+Its semantics are similar to the historic
+.Fn lookup
+function described above.
+It should not be used by new code.
+(For now it differs from the preceding private entry point in that it
+has a different call site with a different context and different
+custom initialization of what ought to be private namei state.)
 .It Fn relookup "dvp" "vpp" "cnp"
 Reacquire a path name component is a directory.
 This is a quicker way to lookup a pathname component when the parent
