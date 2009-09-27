@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.4 2008/10/30 23:02:12 rmind Exp $ */
+/* $NetBSD: dirhash.h,v 1.5 2009/09/27 21:50:48 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -57,10 +57,11 @@ struct dirhash {
 	TAILQ_ENTRY(dirhash) next;
 };
 
-#define	DIRH_PURGED	0x0001	/* dirhash has been purged */
-#define	DIRH_COMPLETE	0x0002	/* dirhash is complete */
-#define	DIRH_BROKEN	0x0004	/* dirhash is broken on readin */
-#define	DIRH_FLAGBITS	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
+#define	DIRH_PURGED		0x0001	/* dirhash has been purged */
+#define	DIRH_COMPLETE		0x0002	/* dirhash is complete */
+#define	DIRH_BROKEN		0x0004	/* dirhash is broken on readin */
+#define DIRH_COMPACTABLE	0x0008	/* free space can be compacted */
+#define	DIRH_FLAGBITS	"\10\1PURGED\2COMPLETE\3BROKEN\4COMPACTABLE"
 
 void	dirhash_init(void);
 /* void	dirhash_finish(void); */
