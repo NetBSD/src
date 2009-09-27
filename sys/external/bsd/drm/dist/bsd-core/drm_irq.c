@@ -225,7 +225,7 @@ int drm_irq_install(struct drm_device *dev)
 		goto err;
 	}
 	istr = pci_intr_string(dev->pa.pa_pc, ih);
-	dev->irqh = pci_intr_establish(&dev->pa.pa_pc, ih, IPL_TTY,
+	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {
 		retcode = ENOENT;
@@ -264,7 +264,7 @@ int drm_irq_uninstall(struct drm_device *dev)
 	bus_teardown_intr(dev->device, dev->irqr, dev->irqh);
 	DRM_LOCK();
 #elif   defined(__NetBSD__)
-	pci_intr_disestablish(&dev->pa.pa_pc, dev->irqh);
+	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
 #endif
 
 	return 0;
