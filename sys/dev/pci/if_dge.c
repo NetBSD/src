@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.26 2009/05/12 08:23:00 cegger Exp $ */
+/*	$NetBSD: if_dge.c,v 1.27 2009/09/27 12:52:59 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.26 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.27 2009/09/27 12:52:59 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -258,7 +258,6 @@ struct dge_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	int sc_flags;			/* flags; see below */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
@@ -618,7 +617,7 @@ static int	dge_ioctl(struct ifnet *, u_long, void *);
 static int	dge_init(struct ifnet *);
 static void	dge_stop(struct ifnet *, int);
 
-static void	dge_shutdown(void *);
+static bool	dge_shutdown(device_t, int);
 
 static void	dge_reset(struct dge_softc *);
 static void	dge_rxdrain(struct dge_softc *);
@@ -963,9 +962,11 @@ dge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(dge_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
+	if (pmf_device_register1(self, NULL, NULL, dge_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -1001,12 +1002,15 @@ dge_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-dge_shutdown(void *arg)
+static bool
+dge_shutdown(device_t self, int howto)
 {
-	struct dge_softc *sc = arg;
+	struct dge_softc *sc;
 
+	sc = device_private(self);
 	dge_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 /*
