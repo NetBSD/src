@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.209 2009/09/27 17:28:38 apb Exp $
+#	$NetBSD: build.sh,v 1.210 2009/09/27 17:48:19 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -455,6 +455,10 @@ validatearch()
 	    bomb "MACHINE_ARCH '${MACHINE_ARCH}' does not support MACHINE '${MACHINE}'"
 }
 
+# nobomb_getmakevar --
+# Given the name of a make variable in $1, print make's idea of the
+# value of that variable, or return 1 if there's an error.
+#
 nobomb_getmakevar()
 {
 	[ -x "${make}" ] || return 1
@@ -466,22 +470,27 @@ _x_:
 EOF
 }
 
-raw_getmakevar()
+# nobomb_getmakevar --
+# Given the name of a make variable in $1, print make's idea of the
+# value of that variable, or bomb if there's an error.
+#
+bomb_getmakevar()
 {
-	[ -x "${make}" ] || bomb "raw_getmakevar $1: ${make} is not executable"
-	nobomb_getmakevar "$1" || bomb "raw_getmakevar $1: ${make} failed"
+	[ -x "${make}" ] || bomb "bomb_getmakevar $1: ${make} is not executable"
+	nobomb_getmakevar "$1" || bomb "bomb_getmakevar $1: ${make} failed"
 }
 
+# nobomb_getmakevar --
+# Given the name of a make variable in $1, print make's idea of the
+# value of that variable, or print a literal '$' followed by the
+# variable name if ${make} is not executable.  This is intended for use in
+# messages that need to be readable even if $make hasn't been built,
+# such as when build.sh is run with the "-n" option.
+#
 getmakevar()
 {
-	# raw_getmakevar() doesn't work properly if $make hasn't yet been
-	# built, which can happen when running with the "-n" option.
-	# getmakevar() deals with this by emitting a literal '$'
-	# followed by the variable name, instead of trying to find the
-	# variable's value.
-	#
 	if [ -x "${make}" ]; then
-		raw_getmakevar "$1"
+		bomb_getmakevar "$1"
 	else
 		echo "\$$1"
 	fi
@@ -1011,8 +1020,8 @@ validatemakeparams()
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
 	else
-		TOOLCHAIN_MISSING=$(raw_getmakevar TOOLCHAIN_MISSING)
-		EXTERNAL_TOOLCHAIN=$(raw_getmakevar EXTERNAL_TOOLCHAIN)
+		TOOLCHAIN_MISSING=$(bomb_getmakevar TOOLCHAIN_MISSING)
+		EXTERNAL_TOOLCHAIN=$(bomb_getmakevar EXTERNAL_TOOLCHAIN)
 	fi
 	if [ "${TOOLCHAIN_MISSING}" = "yes" ] && \
 	   [ -z "${EXTERNAL_TOOLCHAIN}" ]; then
@@ -1223,7 +1232,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.209 2009/09/27 17:28:38 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.210 2009/09/27 17:48:19 apb Exp $
 # with these arguments: ${_args}
 #
 
