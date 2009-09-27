@@ -136,6 +136,9 @@ viadrm_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct drm_device *dev = device_private(self);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
 	    M_WAITOK | M_ZERO);
 
@@ -144,8 +147,16 @@ viadrm_attach(device_t parent, device_t self, void *aux)
 	drm_attach(self, pa, via_pciidlist);
 }
 
+static int
+viadrm_detach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+
+	return drm_detach(self, flags);
+}
+
 CFATTACH_DECL_NEW(viadrm, sizeof(struct drm_device),
-    viadrm_probe, viadrm_attach, drm_detach, drm_activate);
+    viadrm_probe, viadrm_attach, viadrm_detach, drm_activate);
 
 #ifdef _MODULE
 
