@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.119 2009/09/27 17:19:07 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.120 2009/09/27 17:23:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.119 2009/09/27 17:19:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.120 2009/09/27 17:23:54 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1158,14 +1158,144 @@ bad:
  */
 
 int
-lookup_for_nfsd(struct nameidata *ndp)
+lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
 {
 	struct namei_state state;
 	int error;
 
+	struct iovec aiov;
+	struct uio auio;
+	int linklen;
+	char *cp;
+
 	/* For now at least we don't have to frob the state */
 	namei_init(&state, ndp);
+
+	/*
+	 * BEGIN wodge of code from nfsd
+	 */
+
+	VREF(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+
+    for (;;) {
+
+	state.cnp->cn_nameptr = state.cnp->cn_pnbuf;
+	state.ndp->ni_startdir = dp;
+
+	/*
+	 * END wodge of code from nfsd
+	 */
+
 	error = do_lookup(&state);
+	if (error) {
+		/* BEGIN from nfsd */
+		if (ndp->ni_dvp) {
+			vput(ndp->ni_dvp);
+		}
+		PNBUF_PUT(state.cnp->cn_pnbuf);
+		/* END from nfsd */
+		namei_cleanup(&state);
+		return error;
+	}
+
+	/*
+	 * BEGIN wodge of code from nfsd
+	 */
+
+	/*
+	 * Check for encountering a symbolic link
+	 */
+	if ((state.cnp->cn_flags & ISSYMLINK) == 0) {
+		if ((state.cnp->cn_flags & LOCKPARENT) == 0 && state.ndp->ni_dvp) {
+			if (state.ndp->ni_dvp == state.ndp->ni_vp) {
+				vrele(state.ndp->ni_dvp);
+			} else {
+				vput(state.ndp->ni_dvp);
+			}
+		}
+		if (state.cnp->cn_flags & (SAVENAME | SAVESTART)) {
+			state.cnp->cn_flags |= HASBUF;
+		} else {
+			PNBUF_PUT(state.cnp->cn_pnbuf);
+#if defined(DIAGNOSTIC)
+			state.cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+		}
+		return (0);
+	} else {
+		if (neverfollow) {
+			error = EINVAL;
+			goto out;
+		}
+		if (state.ndp->ni_loopcnt++ >= MAXSYMLINKS) {
+			error = ELOOP;
+			goto out;
+		}
+		if (state.ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, state.cnp->cn_cred);
+			if (error != 0)
+				goto out;
+		}
+		if (state.ndp->ni_pathlen > 1)
+			cp = PNBUF_GET();
+		else
+			cp = state.cnp->cn_pnbuf;
+		aiov.iov_base = cp;
+		aiov.iov_len = MAXPATHLEN;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = 0;
+		auio.uio_rw = UIO_READ;
+		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
+		error = VOP_READLINK(ndp->ni_vp, &auio, state.cnp->cn_cred);
+		if (error) {
+badlink:
+			if (ndp->ni_pathlen > 1)
+				PNBUF_PUT(cp);
+			goto out;
+		}
+		linklen = MAXPATHLEN - auio.uio_resid;
+		if (linklen == 0) {
+			error = ENOENT;
+			goto badlink;
+		}
+		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
+			error = ENAMETOOLONG;
+			goto badlink;
+		}
+		if (ndp->ni_pathlen > 1) {
+			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
+			PNBUF_PUT(state.cnp->cn_pnbuf);
+			state.cnp->cn_pnbuf = cp;
+		} else
+			state.cnp->cn_pnbuf[linklen] = '\0';
+		state.ndp->ni_pathlen += linklen;
+		vput(state.ndp->ni_vp);
+		dp = state.ndp->ni_dvp;
+
+		/*
+		 * Check if root directory should replace current directory.
+		 */
+		if (state.cnp->cn_pnbuf[0] == '/') {
+			vput(dp);
+			dp = ndp->ni_rootdir;
+			VREF(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	}
+
+    }
+ out:
+	vput(state.ndp->ni_vp);
+	vput(state.ndp->ni_dvp);
+	state.ndp->ni_vp = NULL;
+	PNBUF_PUT(state.cnp->cn_pnbuf);
+
+	/*
+	 * END wodge of code from nfsd
+	 */
 	namei_cleanup(&state);
 
 	return error;
