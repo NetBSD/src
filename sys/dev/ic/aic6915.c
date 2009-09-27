@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.24 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.25 2009/09/27 10:00:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.24 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.25 2009/09/27 10:00:11 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -75,7 +75,7 @@ static int	sf_ioctl(struct ifnet *, u_long, void *);
 static int	sf_init(struct ifnet *);
 static void	sf_stop(struct ifnet *, int);
 
-static void	sf_shutdown(void *);
+static bool	sf_shutdown(device_t, int);
 
 static void	sf_txintr(struct sf_softc *);
 static void	sf_rxintr(struct sf_softc *);
@@ -291,9 +291,11 @@ sf_attach(struct sf_softc *sc)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(sf_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
+	if (pmf_device_register1(&sc->sc_dev, NULL, NULL, sf_shutdown))
+		pmf_class_network_register(&sc->sc_dev, ifp);
+	else
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
 	return;
 
 	/*
@@ -329,12 +331,15 @@ sf_attach(struct sf_softc *sc)
  *
  *	Shutdown hook -- make sure the interface is stopped at reboot.
  */
-static void
-sf_shutdown(void *arg)
+static bool
+sf_shutdown(device_t self, int howto)
 {
-	struct sf_softc *sc = arg;
+	struct sf_softc *sc;
 
+	sc = device_private(self);
 	sf_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 /*
