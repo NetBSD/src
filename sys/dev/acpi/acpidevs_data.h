@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.10 2006/03/01 09:30:22 cube Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.11 2009/09/27 14:11:58 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp
+ *	# NetBSD: acpidevs,v 1.13 2009/09/27 14:11:07 jmcneill Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -463,6 +463,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C13",
 	    "Plug and Play BIOS (used when ACPI mode cannot be used)",
+	},
+	{
+	    "PNP0C14",
+	    "WMI mapper device",
 	},
 	{
 	    "PNP0C80",
