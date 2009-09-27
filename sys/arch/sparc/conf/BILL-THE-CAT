@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.45 2009/03/06 20:31:52 joerg Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.46 2009/09/27 13:27:44 tsutsui Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -507,7 +507,6 @@ audio*		at audioamd0
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
 cgthree*	at sbus? slot ? offset ?
-#cgthree0	at obio? slot ? offset ?		# sun4m
 
 ## Sun "cgfour" color framebuffer with overlay plane.  See above comment
 ## regarding overlay plane.
