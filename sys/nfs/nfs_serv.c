@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.146 2009/05/23 15:31:21 ad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.147 2009/09/27 17:19:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.146 2009/05/23 15:31:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.147 2009/09/27 17:19:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			    nfs_pub.np_index;
 			ind.ni_startdir = nd.ni_vp;
 			VREF(ind.ni_startdir);
-			error = lookup(&ind);
+			error = lookup_for_nfsd_index(&ind);
 			if (!error) {
 				/*
 				 * Found an index file. Get rid of

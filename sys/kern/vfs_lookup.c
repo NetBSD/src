@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.118 2009/08/09 07:27:54 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.119 2009/09/27 17:19:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.118 2009/08/09 07:27:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.119 2009/09/27 17:19:07 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -546,7 +546,7 @@ do_namei(struct namei_state *state)
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = state->namei_startdir;
-		error = lookup(ndp);
+		error = do_lookup(state);
 		if (error != 0) {
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
@@ -1149,10 +1149,30 @@ bad:
 }
 
 /*
- * Externally visible interface used by nfsd (bletch, yuk, XXX)
+ * Externally visible interfaces used by nfsd (bletch, yuk, XXX)
+ *
+ * The "index" version differs from the "main" version in that it's
+ * called from a different place in a different context. For now I
+ * want to be able to shuffle code in from one call site without
+ * affecting the other.
  */
+
 int
-lookup(struct nameidata *ndp)
+lookup_for_nfsd(struct nameidata *ndp)
+{
+	struct namei_state state;
+	int error;
+
+	/* For now at least we don't have to frob the state */
+	namei_init(&state, ndp);
+	error = do_lookup(&state);
+	namei_cleanup(&state);
+
+	return error;
+}
+
+int
+lookup_for_nfsd_index(struct nameidata *ndp)
 {
 	struct namei_state state;
 	int error;

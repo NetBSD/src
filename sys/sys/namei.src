@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.11 2009/06/29 05:00:14 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.12 2009/09/27 17:19:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -228,7 +228,8 @@ int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
-int	lookup(struct nameidata *);
+int	lookup_for_nfsd(struct nameidata *);
+int	lookup_for_nfsd_index(struct nameidata *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *);
 void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1

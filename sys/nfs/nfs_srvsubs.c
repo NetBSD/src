@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.3 2009/05/04 06:05:19 yamt Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.4 2009/09/27 17:19:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.3 2009/05/04 06:05:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.4 2009/09/27 17:19:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -264,7 +264,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	/*
 	 * And call lookup() to do the real work
 	 */
-	error = lookup(ndp);
+	error = lookup_for_nfsd(ndp);
 	if (error) {
 		if (ndp->ni_dvp) {
 			vput(ndp->ni_dvp);
