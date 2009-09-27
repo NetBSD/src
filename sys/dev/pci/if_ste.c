@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.37 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.38 2009/09/27 12:52:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.37 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.38 2009/09/27 12:52:59 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -127,7 +127,6 @@ struct ste_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -203,7 +202,7 @@ static int	ste_ioctl(struct ifnet *, u_long, void *);
 static int	ste_init(struct ifnet *);
 static void	ste_stop(struct ifnet *, int);
 
-static void	ste_shutdown(void *);
+static bool	ste_shutdown(device_t, int);
 
 static void	ste_reset(struct ste_softc *, u_int32_t);
 static void	ste_setthresh(struct ste_softc *);
@@ -510,10 +509,11 @@ ste_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(ste_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    device_xname(&sc->sc_dev));
+	if (pmf_device_register1(self, NULL, NULL, ste_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -549,12 +549,15 @@ ste_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-ste_shutdown(void *arg)
+static bool
+ste_shutdown(device_t self, int howto)
 {
-	struct ste_softc *sc = arg;
+	struct ste_softc *sc;
 
+	sc = device_private(self);
 	ste_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 static void

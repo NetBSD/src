@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.34 2009/04/18 14:58:03 tsutsui Exp $ */
+/* $NetBSD: if_txp.c,v 1.35 2009/09/27 12:52:59 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.34 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.35 2009/09/27 12:52:59 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -91,7 +91,7 @@ int txp_probe(device_t, cfdata_t, void *);
 void txp_attach(device_t, device_t, void *);
 int txp_intr(void *);
 void txp_tick(void *);
-void txp_shutdown(void *);
+bool txp_shutdown(device_t, int);
 int txp_ioctl(struct ifnet *, u_long, void *);
 void txp_start(struct ifnet *);
 void txp_stop(struct txp_softc *);
@@ -345,8 +345,10 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-	shutdownhook_establish(txp_shutdown, sc);
-
+	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -907,10 +909,12 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r, struct txp_dma_alloc
 		ifp->if_timer = 0;
 }
 
-void
-txp_shutdown(void *vsc)
+bool
+txp_shutdown(device_t self, int howto)
 {
-	struct txp_softc *sc = (struct txp_softc *)vsc;
+	struct txp_softc *sc;
+
+	sc = device_private(self);
 
 	/* mask all interrupts */
 	WRITE_REG(sc, TXP_IMR,
@@ -921,6 +925,8 @@ txp_shutdown(void *vsc)
 	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
 	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
 	txp_command(sc, TXP_CMD_HALT, 0, 0, 0, NULL, NULL, NULL, 0);
+
+	return true;
 }
 
 int
