@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.7 2009/05/04 12:41:09 cegger Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.7 2009/05/04 12:41:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.8 2009/09/27 18:31:58 jakllsch Exp $");
 
 #include "gpio.h"
 
@@ -87,11 +87,13 @@ struct gcscpcib_softc {
 	struct sysmon_wdog	sc_smw;
 	int			sc_wdt_mfgpt;
 
+#if NGPIO > 0
 	/* GPIO interface */
 	bus_space_tag_t		sc_gpio_iot;
 	bus_space_handle_t	sc_gpio_ioh;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[AMD553X_GPIO_NPINS];
+#endif
 
 	/* SMbus/i2c interface */ 
 #if 0
@@ -159,7 +161,9 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcib.sc_pc = pa->pa_pc;
 	sc->sc_pcib.sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
+#if NGPIO > 0
 	sc->sc_gpio_iot = pa->pa_iot;
+#endif
 
 	/* Attach the PCI-ISA bridge at first */
 	pcibattach(parent, self, aux);
