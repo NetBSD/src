@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.76 2009/09/26 20:08:11 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.77 2009/09/28 02:17:23 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13537,4 +13537,159 @@ sys/dev/pci/hdaudio/hdaudiovar.h		1.1-1.4
 	cd /dev
 	sh MAKEDEV audio
 	[jmcneill, ticket #946]
+
+sys/conf/files					1.947, 1.956 via patch
+sys/dev/ata/files.ata				1.21
+sys/dev/ata/satafis_subr.c			1.1-1.3
+sys/dev/ata/satafisreg.h			1.1
+sys/dev/ata/satafisvar.h			1.1-1.2
+sys/dev/ic/siisata.c				1.3-1.7
+sys/dev/ic/siisatareg.h				1.3-1.4
+sys/dev/ic/siisatavar.h				1.3-1.4
+sys/dev/pci/files.pci				1.315, 1.321
+sys/dev/pci/siisata_pci.c			1.3. 1.4
+
+	Sync siisata(4) with HEAD, fixing PR kern/41579 and a number of
+	other bugs.
+	[jakllsch, ticket #1023]
+
+
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.15
+
+	Ensure that hp sensing is stopped on suspend, and restarted on
+	resume if required.
+	[jmcneill, ticket #1024]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.40
+
+	Implement DIOCGDISKINFO for xbd disk driver.
+	[bouyer, ticket #1025]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.43 via patch
+sys/arch/xen/xen/xbdback_xenbus.c		1.25
+
+	xbdback: implement and publish "feature-flush-cache".
+	xbd: if feature-flush-cache is present, use it for DIOCCACHESYNC.
+	 If not present, make DIOCCACHESYNC return EOPNOTSUPP and warn on
+	 first call.
+	Should improve WAPBL reliability of Xen guests on a NetBSD dom0.
+	Unfortunably not all linux guests seem to support this feature,
+	and using feature-write-barrier would require a B_BARRIER flag in
+	the buffer.
+	[bouyer, ticket #1026]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.36
+
+	Write a "feature-rx-notify" to the xenstore, which is used by
+	recent linux dom0 kernels. This reduces packet loss when using a
+	NetBSD domU on such linux dom0.
+	This entry is ignored by NetBSD and older linux domUs.
+	[bouyer, ticket #1027]
+
+sys/kern/kern_turnstile.c			1.25 via patch
+
+	Fix PR kern/41923.  In the for(;;) loop of turnstile_block(), the
+	lock owner can change while cur's lock is released (cur's lock is
+	also the tschain_t's mutex).  Remove the KASSERT about owner
+	being invariant and try to deal with the fact that the owner can
+	change instead.
+	[bouyer, ticket #1028]
+
+sys/ufs/ufs/ufs_ihash.c				1.27
+
+	PR kern/41147: race between nfsd and local rm.  Note that the race
+	also exists between 2 nfs client, one of them doing the rm.  In
+	ufs_ihashget(), vget() can return a vnode that has been vclean'ed
+	because vget() can sleep. After vget returns, check that vp is
+	still connected with ip, and that ip still points to the inode we
+	want.
+	[bouyer, ticket #1029]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.29 via patch, 1.30
+
+	Announce feature-rx-copy and feature-rx-flip.  Add support for
+	request-rx-copy. Tested with a Debian lenny install.  Should fix
+	PR port-xen/40650
+	[bouyer, ticket #1030]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/modes/xf86Cursors.c 1.2
+
+	Check that dixLookupPrivate() returned non-NULL before
+	dereferencing it.  Fixes a SEGV when starting ioquake3 on an X
+	server started with the "-dpi 100 -depth 16" flags.
+	[mrg, ticket #1031]
+
+external/mit/xorg/server/xorg-server/Makefile.Xserver 1.11
+
+	xorg-server servers depend upon -Wl,--export-dynamic these days.
+	Fixes at least swrast userland and Xnest.
+	[mrg, ticket #1032]
+
+external/mit/xorg/bin/xkbcomp/Makefile		1.4
+external/mit/xorg/bin/xkbcomp/Makefile.common	1.1
+external/mit/xorg/server/xorg-server/xkb/Makefile 1.6
+
+	Share XKBCOMPDIR between xkbcomp and xorg-server.
+	[mrg, ticket #1033]
+
+external/mit/xorg/bin/xterm/Makefile		1.4
+xsrc/external/mit/xterm/dist/INSTALL		patch
+xsrc/external/mit/xterm/dist/Imakefile		patch
+xsrc/external/mit/xterm/dist/MANIFEST		patch
+xsrc/external/mit/xterm/dist/Makefile.in	patch
+xsrc/external/mit/xterm/dist/Tekproc.c		patch
+xsrc/external/mit/xterm/dist/XTerm-col.ad 	patch
+xsrc/external/mit/xterm/dist/XTerm.ad		patch
+xsrc/external/mit/xterm/dist/aclocal.m4		patch
+xsrc/external/mit/xterm/dist/button.c		patch
+xsrc/external/mit/xterm/dist/cachedGCs.c	patch
+xsrc/external/mit/xterm/dist/charproc.c		patch
+xsrc/external/mit/xterm/dist/charsets.c		patch
+xsrc/external/mit/xterm/dist/config.guess	patch
+xsrc/external/mit/xterm/dist/config.sub		patch
+xsrc/external/mit/xterm/dist/configure		patch
+xsrc/external/mit/xterm/dist/configure.in	patch
+xsrc/external/mit/xterm/dist/ctlseqs.ms		patch
+xsrc/external/mit/xterm/dist/ctlseqs.txt	patch
+xsrc/external/mit/xterm/dist/cursor.c		patch
+xsrc/external/mit/xterm/dist/data.c		patch
+xsrc/external/mit/xterm/dist/data.h		patch
+xsrc/external/mit/xterm/dist/doublechr.c	patch
+xsrc/external/mit/xterm/dist/error.h		patch
+xsrc/external/mit/xterm/dist/fontutils.c	patch
+xsrc/external/mit/xterm/dist/fontutils.h	patch
+xsrc/external/mit/xterm/dist/input.c		patch
+xsrc/external/mit/xterm/dist/linedata.c		patch
+xsrc/external/mit/xterm/dist/main.c		patch
+xsrc/external/mit/xterm/dist/main.h		patch
+xsrc/external/mit/xterm/dist/menu.c		patch
+xsrc/external/mit/xterm/dist/menu.h		patch
+xsrc/external/mit/xterm/dist/minstall.sh	patch
+xsrc/external/mit/xterm/dist/misc.c		patch
+xsrc/external/mit/xterm/dist/os2main.c		patch
+xsrc/external/mit/xterm/dist/print.c		patch
+xsrc/external/mit/xterm/dist/ptydata.c		patch
+xsrc/external/mit/xterm/dist/ptyx.h		patch
+xsrc/external/mit/xterm/dist/resize.c		patch
+xsrc/external/mit/xterm/dist/resize.man		patch
+xsrc/external/mit/xterm/dist/screen.c		patch
+xsrc/external/mit/xterm/dist/scrollback.c	patch
+xsrc/external/mit/xterm/dist/scrollbar.c	patch
+xsrc/external/mit/xterm/dist/tabs.c		patch
+xsrc/external/mit/xterm/dist/termcap		patch
+xsrc/external/mit/xterm/dist/testxmc.c		patch
+xsrc/external/mit/xterm/dist/trace.c		patch
+xsrc/external/mit/xterm/dist/trace.h		patch
+xsrc/external/mit/xterm/dist/util.c		patch
+xsrc/external/mit/xterm/dist/version.h		patch
+xsrc/external/mit/xterm/dist/wcwidth.c		patch
+xsrc/external/mit/xterm/dist/xterm.h		patch
+xsrc/external/mit/xterm/dist/xterm.log.html	patch
+xsrc/external/mit/xterm/dist/xterm.man		patch
+xsrc/external/mit/xterm/dist/xtermcap.c		patch
+xsrc/external/mit/xterm/dist/xtermcap.h		patch
+xsrc/external/mit/xterm/dist/xtermcfg.hin	patch
+
+	Update xterm to 248.
+	[mrg, ticket #1034]
 
