@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308.2.4 2009/09/28 00:17:28 snj Exp $
+#	$NetBSD: files.pci,v 1.308.2.5 2009/09/28 00:27:13 snj Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -953,11 +953,8 @@ attach	lii at pci
 file	dev/pci/if_lii.c		lii
 
 # Silicon Image SteelVine SATA-II controllers
-define siisata
-file dev/ic/siisata.c atapibus & atabus & siisata
-device siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
-attach siisata at pci with siisata_pci
-file dev/pci/siisata_pci.c siisata_pci
+attach	siisata at pci with siisata_pci
+file	dev/pci/siisata_pci.c		siisata_pci
 
 # Acer Labs M7101 power management controller
 device	alipm: i2cbus
