@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.3.2.2 2009/09/28 00:13:02 snj Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.3.2.3 2009/09/28 00:13:52 snj Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -56,9 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.3.2.2 2009/09/28 00:13:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.3.2.3 2009/09/28 00:13:52 snj Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <sys/disklabel.h>
 
@@ -75,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.3.2.2 2009/09/28 00:13:02 snj Exp
 void
 satafis_rhd_construct_cmd(struct ata_command *ata_c, uint8_t *fis)
 {
+	memset(fis, 0, RHD_FISLEN);
+
 	fis[fis_type] = RHD_FISTYPE;
 	fis[rhd_cdpmp] = 0x80; /* xxx magic */
 	fis[rhd_command] = ata_c->r_command;
@@ -96,6 +99,8 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 	int nblks;
 
 	nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
+
+	memset(fis, 0, RHD_FISLEN);
 
 	fis[fis_type] = RHD_FISTYPE;
 	fis[rhd_cdpmp] = 0x80; /* xxx magic */
@@ -128,6 +133,8 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 void
 satafis_rhd_construct_atapi(struct ata_xfer *xfer, uint8_t *fis)
 {
+	memset(fis, 0, RHD_FISLEN);
+
 	fis[fis_type] = RHD_FISTYPE;
 	fis[rhd_cdpmp] = 0x80; /* xxx magic */
 	fis[rhd_command] = ATAPI_PKT_CMD;
