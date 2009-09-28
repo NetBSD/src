@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2.4.4 2009/09/28 00:21:13 snj Exp $ */
+/* $NetBSD: siisata.c,v 1.2.4.5 2009/09/28 00:24:52 snj Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -64,7 +64,7 @@
  */
 
 /*-
- * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
+ * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -479,13 +479,13 @@ siisata_intr_port(struct siisata_channel *schp)
 
 		ec = PRREAD(sc, PRX(chp->ch_channel, PRO_PCE));
 		if (ec <= PR_PCE_DATAFISERROR) {
-			if (ec != PR_PCE_DATAFISERROR) {
+			if (ec == PR_PCE_DEVICEERROR) {
 				/* read in specific information about error */
 				prbfis = bus_space_read_stream_4(
 				    sc->sc_prt, sc->sc_prh,
 		    		    PRSX(chp->ch_channel, slot, PRSO_FIS));
 				/* set ch_status and ch_error */
-				satafis_sdb_parse(chp, (uint8_t *)&prbfis);
+				satafis_rdh_parse(chp, (uint8_t *)&prbfis);
 			}
 			siisata_reinit_port(chp);
 		} else {
@@ -774,6 +774,9 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	SIISATA_DEBUG_PRINT(("%s: %s port %d, slot %d\n",
 	    SIISATANAME(sc), __func__, chp->ch_channel, slot), DEBUG_FUNCS);
 
+	chp->ch_status = 0;
+	chp->ch_error = 0;
+
 	prb = schp->sch_prb[slot];
 	memset(prb, 0, sizeof(struct siisata_prb));
 
@@ -977,6 +980,9 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    ("%s: %s port %d, slot %d\n",
 	    SIISATANAME(sc), __func__, chp->ch_channel, slot),
 	    DEBUG_FUNCS);
+
+	chp->ch_status = 0;
+	chp->ch_error = 0;
 
 	prb = schp->sch_prb[slot];
 	memset(prb, 0, sizeof(struct siisata_prb));
@@ -1514,6 +1520,9 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    SIISATANAME(sc), chp->ch_channel,
 	    chp->ch_drive[xfer->c_drive].drive, sc_xfer->xs_control),
 	    DEBUG_XFERS);
+
+	chp->ch_status = 0;
+	chp->ch_error = 0;
 
 	prbp = schp->sch_prb[slot];
 	memset(prbp, 0, sizeof(struct siisata_prb));
