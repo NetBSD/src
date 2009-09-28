@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.2 2008/09/08 23:36:54 gmcgarry Exp $ */
+/* $NetBSD: siisatareg.h,v 1.2.4.1 2009/09/28 00:17:28 snj Exp $ */
 /* Id: siisatareg.h,v 1.10 2008/05/21 15:51:36 jakllsch Exp  */
 
 /*-
@@ -33,7 +33,7 @@
 
 /* the SiI3124 has 4 ports, all others so far have less */
 #define SIISATA_MAX_PORTS 4
-/* the so far all parts have a full complement of slots */
+/* all parts have a full complement of slots (so far) */
 #define SIISATA_MAX_SLOTS 31
 
 /* structures */
