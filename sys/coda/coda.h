@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.14 2007/03/04 06:01:11 christos Exp $ */
+/* $NetBSD: coda.h,v 1.15 2009/09/28 10:51:35 blymn Exp $ */
 
 /*
 
@@ -272,7 +272,7 @@ struct coda_vattr {
 	short		va_nlink;	/* number of references to file */
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
-	long		va_fileid;	/* file id */
+	u_long		va_fileid;	/* file id */
 	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
 	struct timespec	va_atime;	/* time of last access */
