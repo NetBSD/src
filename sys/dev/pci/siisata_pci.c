@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.1.14.1 2009/01/09 03:40:44 snj Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.1.14.2 2009/09/28 00:17:28 snj Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -76,10 +76,12 @@ struct siisata_pci_softc {
 	struct siisata_softc si_sc;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
+	void * sc_ih;
 };
 
 static int siisata_pci_match(device_t, cfdata_t, void *);
 static void siisata_pci_attach(device_t, device_t, void *);
+static int siisata_pci_detach(device_t, int);
 static bool siisata_pci_resume(device_t PMF_FN_PROTO);
 
 static const struct siisata_pci_product {
@@ -108,7 +110,7 @@ static const struct siisata_pci_product {
 };
 
 CFATTACH_DECL_NEW(siisata_pci, sizeof(struct siisata_pci_softc),
-    siisata_pci_match, siisata_pci_attach, NULL, NULL);
+    siisata_pci_match, siisata_pci_attach, siisata_pci_detach, NULL);
 
 static const struct siisata_pci_product *
 siisata_pci_lookup(const struct pci_attach_args * pa)
@@ -134,20 +136,6 @@ siisata_pci_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-static bool
-siisata_pci_resume(device_t dv PMF_FN_ARGS)
-{
-	struct siisata_pci_softc *psc = device_private(dv);
-	struct siisata_softc *sc = &psc->si_sc;
-	int s;
-
-	s = splbio();
-	siisata_resume(sc);
-	splx(s);
-	
-	return true;
-}
-
 static void
 siisata_pci_attach(device_t parent, device_t self, void *aux)
 {
@@ -156,10 +144,9 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	struct siisata_softc *sc = &psc->si_sc;
 	char devinfo[256];
 	const char *intrstr;
-	pci_intr_handle_t intrhandle;
 	pcireg_t csr, memtype;
 	const struct siisata_pci_product *spp;
-	void *ih;
+	pci_intr_handle_t intrhandle;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	uint32_t gcreg;
@@ -193,6 +180,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	if (memh_valid) {
 		sc->sc_grt = memt;
 		sc->sc_grh = memh;
+		sc->sc_grs = grsize;
 	} else {
 		aprint_error("%s: unable to map device global registers\n",
 		    SIISATANAME(sc));
@@ -217,6 +205,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	if (memh_valid) {
 		sc->sc_prt = memt;
 		sc->sc_prh = memh;
+		sc->sc_prs = prsize;
 	} else {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		aprint_error("%s: unable to map device port registers\n",
@@ -241,9 +230,9 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	ih = pci_intr_establish(pa->pa_pc, intrhandle,
+	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle,
 	    IPL_BIO, siisata_intr, sc);
-	if (ih == NULL) {
+	if (psc->sc_ih == NULL) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
 		aprint_error("%s: couldn't establish interrupt"
@@ -305,3 +294,37 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
+static int
+siisata_pci_detach(device_t dv, int flags)
+{
+	struct siisata_pci_softc *psc = device_private(dv);
+	struct siisata_softc *sc = &psc->si_sc;
+	int rv;
+
+	rv = siisata_detach(sc, flags);
+	if (rv)
+		return rv;
+
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	}
+
+	bus_space_unmap(sc->sc_prt, sc->sc_prh, sc->sc_prs);
+	bus_space_unmap(sc->sc_grt, sc->sc_grh, sc->sc_grs);
+	
+	return 0;
+}
+
+static bool
+siisata_pci_resume(device_t dv PMF_FN_ARGS)
+{
+	struct siisata_pci_softc *psc = device_private(dv);
+	struct siisata_softc *sc = &psc->si_sc;
+	int s;
+
+	s = splbio();
+	siisata_resume(sc);
+	splx(s);
+	
+	return true;
+}
