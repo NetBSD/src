@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.28 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.29 2009/09/28 10:22:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.28 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.29 2009/09/28 10:22:07 pooka Exp $");
 
 #include "bpfilter.h"
 
@@ -107,6 +107,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
+	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWA111 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWI05GS },
 	{ USB_VENDOR_GIGASET,		USB_PRODUCT_GIGASET_RT2573 },
