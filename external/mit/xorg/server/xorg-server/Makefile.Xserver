@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.7.6.2 2009/09/17 04:24:37 snj Exp $
+#	$NetBSD: Makefile.Xserver,v 1.7.6.3 2009/09/28 01:54:16 snj Exp $
 
 .for _SL in \
 	mi \
@@ -70,6 +70,9 @@ DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 
 LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
 DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
+
+# X servers need all symbols exported
+LDFLAGS+=	-Wl,--export-dynamic
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
