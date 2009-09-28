@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2.4.1 2009/09/28 00:17:28 snj Exp $ */
+/* $NetBSD: siisata.c,v 1.2.4.2 2009/09/28 00:18:39 snj Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -876,8 +876,10 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 int
 siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 {
-	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct ata_command *ata_c = xfer->c_cmd;
+#ifdef SIISATA_DEBUG
+	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
+#endif
 	
 	SIISATA_DEBUG_PRINT(
 	    ("%s: %s\n", SIISATANAME(sc), __func__), DEBUG_FUNCS);
