@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.924.4.3 2009/09/28 00:13:02 snj Exp $
+#	$NetBSD: files,v 1.924.4.4 2009/09/28 00:27:13 snj Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -931,6 +931,11 @@ file	dev/ic/lpt_upc.c		lpt_upc
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
 device ahcisata: ata, ata_dma, ata_udma, sata, ahcisata_core
+
+# Silicon Image SteelVine SATA-II controllers
+define	siisata
+file	dev/ic/siisata.c		siisata
+device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
