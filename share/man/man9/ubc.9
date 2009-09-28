@@ -1,4 +1,4 @@
-.\"	$NetBSD: ubc.9,v 1.2 2009/08/03 19:18:27 rmind Exp $
+.\"	$NetBSD: ubc.9,v 1.3 2009/09/28 14:11:56 joerg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -32,16 +32,13 @@
 .Nd unified buffer cache
 .Sh SYNOPSIS
 .In uvm/uvm.h
-.Bl -ohang
-.It Ft void *
+.Ft void *
 .Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" \
 "int advice" "int flags"
-.It Ft void
+.Ft void
 .Fn ubc_release "void *va" "int flags"
-.It Ft int
-.Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
-"int advice" "int flags"
-.El
+.Ft int
+.Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" "int advice" "int flags"
 .Sh DESCRIPTION
 .Fn ubc_alloc
 creates a kernel mapping of
