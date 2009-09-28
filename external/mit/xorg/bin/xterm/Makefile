@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.2.4.1 2009/04/20 23:20:57 snj Exp $
+#	$NetBSD: Makefile,v 1.2.4.2 2009/09/28 02:02:50 snj Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xterm
 SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
-	fontutils.c input.c menu.c misc.c print.c ptydata.c screen.c \
-	scrollbar.c tabs.c util.c xstrings.c TekPrsTbl.c Tekproc.c VTPrsTbl.c \
-	main.c charclass.c precompose.c wcwidth.c xutf8.c cachedGCs.c \
-	xtermcap.c
+	fontutils.c input.c linedata.c menu.c misc.c print.c ptydata.c \
+	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
+	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
+	wcwidth.c xutf8.c cachedGCs.c xtermcap.c
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
