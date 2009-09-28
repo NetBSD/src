@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.38 2009/09/26 21:16:55 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.39 2009/09/28 20:30:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.38 2009/09/26 21:16:55 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.39 2009/09/28 20:30:01 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -77,30 +77,36 @@ static ssize_t	seq(FILE *, u_char **);
  * this is called when there is no special key. It's only called
  * in the first fsort pass.
  */
+
+static u_char *opos;
+static size_t osz;
+
+void
+makeline_copydown(RECHEADER *recbuf)
+{
+	memmove(recbuf->data, opos, osz);
+}
+
 int
 makeline(FILE *fp, RECHEADER *recbuf, u_char *bufend, struct field *dummy2)
 {
-	static u_char *opos = NULL;
-	static size_t osz;
 	u_char *pos;
 	int c;
 
 	pos = recbuf->data;
-	if (opos != NULL) {
+	if (osz != 0) {
 		/*
 		 * Buffer shortage is solved by either of two ways:
 		 * o flush previous buffered data and start using the
-		 *   buffer from start (see fsort())
-		 * o realloc buffer and bump bufend
+		 *   buffer from start.
+		 *   makeline_copydown() above must be called.
+		 * o realloc buffer
 		 * 
-		 * The former is preferred, realloc is only done when
-		 * there is exactly one item in buffer which does not fit. 
+		 * This code has relied on realloc changing 'bufend',
+		 * but that isn't necessarily true.
 		 */
-		if (pos != opos)
-			memmove(pos, opos, osz);
-
 		pos += osz;
-		opos = NULL;
+		osz = 0;
 	}
 
 	while (pos < bufend) {

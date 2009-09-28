@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.42 2009/09/26 21:16:55 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.43 2009/09/28 20:30:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.42 2009/09/26 21:16:55 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.43 2009/09/28 20:30:01 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		keypos = keylist;
 		nelem = 0;
 		crec = buffer;
+		makeline_copydown(crec);
 
 		/* Loop reading records */
 		for (;;) {
