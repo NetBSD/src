@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.2.4.1 2009/09/28 00:17:28 snj Exp $ */
+/* $NetBSD: siisatavar.h,v 1.2.4.2 2009/09/28 00:22:36 snj Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -33,7 +33,7 @@
  */
 
 /*-
- * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
+ * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,9 +105,6 @@ struct siisata_softc {
 
 		uint32_t sch_active_slots;
 	} sc_channels[SIISATA_MAX_PORTS];
-
-	int sc_have_dma64;	/* 64-bit DMA available */
-	int sc_chip;		/* chip number */
 };
 
 #define SIISATANAME(sc) (device_xname((sc)->sc_atac.atac_dev))
