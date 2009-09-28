@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2.4.2 2009/09/28 00:18:39 snj Exp $ */
+/* $NetBSD: siisata.c,v 1.2.4.3 2009/09/28 00:19:37 snj Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -524,7 +524,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags)
 	wait = wait ? wait : 1;
 
 	/* wait for ready */
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) & PR_PS_PORT_READY))
+	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
 		DELAY(10);
 
 	prb = schp->sch_prb[slot];
@@ -593,7 +593,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		/* XXX and then ? */
 	}
 	/* wait for ready */
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) & PR_PS_PORT_READY))
+	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
 		DELAY(10);
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
@@ -656,7 +656,7 @@ siisata_probe_drive(struct ata_channel *chp)
 		schp->sch_sstatus)) {
 	case SStatus_DET_DEV:
 		/* wait for ready */
-		while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PCS))
+		while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS))
 		    & PR_PS_PORT_READY))
 			DELAY(10);
 
@@ -889,7 +889,6 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 		ata_c->flags |= AT_TIMEOU;
 	else
 		callout_stop(&chp->ch_callout);
-
 
 	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
 		siisata_cmd_kill_xfer(chp, xfer, KILL_GONE);
@@ -1254,9 +1253,8 @@ siisata_reinit_port(struct ata_channel *chp)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 
-	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS),
-	    PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) | PR_PC_PORT_INITIALIZE);
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) & PR_PS_PORT_READY))
+	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS), PR_PC_PORT_INITIALIZE);
+	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
 		DELAY(10);
 }
 
@@ -1265,9 +1263,8 @@ siisata_device_reset(struct ata_channel *chp)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 
-	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS),
-	    PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) | PR_PC_DEVICE_RESET);
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PCS)) & PR_PS_PORT_READY))
+	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS), PR_PC_DEVICE_RESET);
+	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
 		DELAY(10);
 }
 
@@ -1441,9 +1438,12 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		
 			/* configure port for packet length */
 			PRWRITE(siic, PRX(chp->ch_channel, PRO_PCS),
-			    PRREAD(siic, PRX(chp->ch_channel, PRO_PCS)) |
+			    PR_PC_PACKET_LENGTH);
+		} else {
+			PRWRITE(siic, PRX(chp->ch_channel, PRO_PCC),
 			    PR_PC_PACKET_LENGTH);
 		}
+
 		/* XXX This is gross. */
 		periph->periph_cap |= (id->atap_config & ATAPI_CFG_DRQ_MASK);
 
