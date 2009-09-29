@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.69 2009/01/03 17:44:20 christos Exp $
+.\"	$NetBSD: audio.4,v 1.70 2009/09/29 15:58:54 sborrill Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 3, 2009
+.Dd September 29, 2009
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -243,6 +243,10 @@ the device can be used with
 .It Dv AUDIO_PROP_INDEPENDENT
 the device can set the playing and recording encoding parameters
 independently.
+.It Dv AUDIO_PROP_PLAYBACK
+the device is capable of audio playback.
+.It Dv AUDIO_PROP_CAPTURE
+the device is capable of audio capture.
 .El
 .It Dv AUDIO_GETIOFFS (audio_offset_t)
 .It Dv AUDIO_GETOOFFS (audio_offset_t)
