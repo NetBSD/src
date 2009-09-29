@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.252 2009/09/08 07:08:03 skrll Exp $
+#	$NetBSD: bsd.README,v 1.253 2009/09/29 23:56:34 tsarna Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -240,6 +240,10 @@ MKMAN		If "no", don't build or install the man or catman pages,
 
 MKMANZ		If not "no", compress manual pages at installation time.
 		Default: no
+
+MKMDNS		If "no", disables building of mDNS infrastructure
+		(libraries and support programs).
+		Default: yes
 
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
