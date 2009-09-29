@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1313 2009/09/23 09:18:31 njoly Exp $
+#	$NetBSD: mi,v 1.1314 2009/09/29 23:56:26 tsarna Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -609,6 +609,7 @@
 ./usr/include/dirent.h				comp-c-include
 ./usr/include/disktab.h				comp-c-include
 ./usr/include/dlfcn.h				comp-c-include
+./usr/include/dns_sd.h				comp-mdns-include	mdns
 ./usr/include/elf.h				comp-c-include
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
@@ -2349,6 +2350,9 @@
 ./usr/lib/libdns.a				comp-bind-lib
 ./usr/lib/libdns_g.a				-unknown-		debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
+./usr/lib/libdns_sd.a				comp-mdns-lib		mdns
+./usr/lib/libdns_sd_g.a				-unknown-		debuglib,mdns
+./usr/lib/libdns_sd_p.a				comp-mdns-proflib	profile,mdns
 ./usr/lib/libedit.a				comp-c-lib
 ./usr/lib/libedit_g.a				-unknown-		debuglib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
@@ -3594,6 +3598,7 @@
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint

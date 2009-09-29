@@ -20,6 +20,7 @@ _proxy:*:21:
 _timedc:*:22:
 _sdpd:*:23:
 _httpd:*:24:
+_mdnsd:*:25:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:
