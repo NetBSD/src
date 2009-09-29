@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.10.1 2009/09/29 23:53:14 snj Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.10.2 2009/09/29 23:54:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  * Bus address and size types
  */
 typedef paddr_t bus_addr_t;
-typedef paddr_t bus_size_t;
+typedef size_t bus_size_t;
 
 typedef	int bus_space_tag_t;
 typedef	vaddr_t bus_space_handle_t;
