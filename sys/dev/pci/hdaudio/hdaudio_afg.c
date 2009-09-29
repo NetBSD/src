@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.15 2009/09/27 02:36:38 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.16 2009/09/29 15:58:54 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.15 2009/09/27 02:36:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.16 2009/09/29 15:58:54 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3323,13 +3323,11 @@ hdaudio_afg_round_blocksize(void *opaque, int blksize, int mode,
 	int bufsize;
 
 	st = (mode == AUMODE_PLAY) ? ad->ad_playback : ad->ad_capture;
-#ifdef DIAGNOSTIC
 	if (st == NULL) {
-		hda_error(ad->ad_sc,
+		hda_trace(ad->ad_sc,
 		    "round_blocksize called for invalid stream\n");
-		return 256;
+		return 128;
 	}
-#endif
 
 	/* Multiple of 128 */
 	blksize &= ~128;
@@ -3583,8 +3581,21 @@ hdaudio_afg_mappage(void *opaque, void *addr, off_t off, int prot)
 static int
 hdaudio_afg_get_props(void *opaque)
 {
+	struct hdaudio_audiodev *ad = opaque;
+	int props = 0;
+
+	if (ad->ad_playback)
+		props |= AUDIO_PROP_PLAYBACK;
+	if (ad->ad_capture)
+		props |= AUDIO_PROP_CAPTURE;
+	if (ad->ad_playback && ad->ad_capture) {
+		props |= AUDIO_PROP_FULLDUPLEX;
+		props |= AUDIO_PROP_INDEPENDENT;
+	}
+
 	/* TODO: AUDIO_PROP_MMAP */
-	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+
+	return props;
 }
 
 static int
