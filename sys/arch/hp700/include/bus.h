@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.12.54.1 2009/09/29 22:56:48 snj Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -64,6 +64,7 @@ struct hppa_bus_space_tag {
 	void (*hbt_barrier)(void *v, bus_space_handle_t h,
 				 bus_size_t o, bus_size_t l, int op);
 	void *(*hbt_vaddr)(void *, bus_space_handle_t);
+	paddr_t (*hbt_mmap)(void *, bus_addr_t, off_t, int, int);
 
 	u_int8_t  (*hbt_r1)(void *, bus_space_handle_t, bus_size_t);
 	u_int16_t (*hbt_r2)(void *, bus_space_handle_t, bus_size_t);
@@ -198,6 +199,8 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
 #define	bus_space_vaddr(t,h) \
 	(((t)->hbt_vaddr)((t)->hbt_cookie,(h)))
+#define bus_space_mmap(t, a, o, p, f) \
+	(*(t)->hbt_mmap)((t)->hbt_cookie, (a), (o), (p), (f))
 
 #define	bus_space_read_1(t,h,o) (((t)->hbt_r1)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_2(t,h,o) (((t)->hbt_r2)((t)->hbt_cookie,(h),(o)))
