@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.18 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.18.10.1 2009/09/29 23:59:45 snj Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.18 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.18.10.1 2009/09/29 23:59:45 snj Exp $");
 
 #undef TRISADEBUG
 
@@ -107,7 +107,7 @@ bus_space_handle_t *pioh, *mmioh;
 	mmio = ((s & 0xfc) << 11) + TR_MMIO_OFFSET;
 	if (bus_space_map(ia->ia_memt, mmio, TR_MMIO_SIZE, 0, mmioh)) {
 		printf("tr_isa_map_io: can't map MMIO region 0x%05lx/%d\n",
-			mmio, TR_MMIO_SIZE);
+			(u_long)mmio, TR_MMIO_SIZE);
 		bus_space_unmap(ia->ia_iot, *pioh, ia->ia_io[0].ir_size);
 		return 1;
 	}
