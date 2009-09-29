@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.401 2009/09/21 12:14:46 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.402 2009/09/29 22:40:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.401 2009/09/21 12:14:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.402 2009/09/29 22:40:15 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.401 2009/09/21 12:14:46 pooka Exp $"
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 
+#include "drvctl.h"
 #include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
