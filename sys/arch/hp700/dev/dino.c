@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.6.4.1 2009/09/29 22:56:48 snj Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6.4.1 2009/09/29 22:56:48 snj Exp $");
 
 /* #include "cardbus.h" */
 
@@ -160,6 +160,8 @@ void dino_unmap(void *, bus_space_handle_t, bus_size_t);
 void dino_free(void *, bus_space_handle_t, bus_size_t);
 void dino_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
 void *dino_vaddr(void *, bus_space_handle_t);
+paddr_t dino_mmap(void *, bus_addr_t, off_t, int, int);
+
 u_int8_t dino_r1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t dino_r2(void *, bus_space_handle_t, bus_size_t);
 u_int32_t dino_r4(void *, bus_space_handle_t, bus_size_t);
@@ -566,6 +568,12 @@ dino_vaddr(void *v, bus_space_handle_t h)
 	struct dino_softc *sc = v;
 
 	return bus_space_vaddr(sc->sc_bt, h);
+}
+
+paddr_t
+dino_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+	return -1;
 }
 
 u_int8_t
@@ -1399,7 +1407,7 @@ const struct hppa_bus_space_tag dino_iomemt = {
 	NULL,
 
 	NULL, dino_unmap, dino_subregion, NULL, dino_free,
-	dino_barrier, dino_vaddr,
+	dino_barrier, dino_vaddr, dino_mmap,
 	dino_r1,    dino_r2,    dino_r4,    dino_r8,
 	dino_w1,    dino_w2,    dino_w4,    dino_w8,
 	dino_rm_1,  dino_rm_2,  dino_rm_4,  dino_rm_8,
