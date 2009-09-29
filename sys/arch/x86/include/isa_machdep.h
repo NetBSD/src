@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6 2008/06/27 11:03:13 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6.6.1 2009/09/29 23:53:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -202,19 +202,19 @@ extern struct x86_bus_dma_tag isa_bus_dma_tag;
  * function definitions, invoked through the softc.
  */
 
-extern u_long atdevbase;           /* kernel virtual address of "hole" */
+extern vaddr_t atdevbase;         /* kernel virtual address of "hole" */
 
 /*
  * Given a kernel virtual address for some location
  * in the "hole" I/O space, return a physical address.
  */
-#define ISA_PHYSADDR(v) ((void *) ((u_long)(v) - atdevbase + IOM_BEGIN))
+#define ISA_PHYSADDR(v) ((bus_addr_t)(v) - atdevbase + IOM_BEGIN)
 
 /*
  * Given a physical address in the "hole",
  * return a kernel virtual address.
  */
-#define ISA_HOLE_VADDR(p)  ((void *) ((u_long)(p) - IOM_BEGIN + atdevbase))
+#define ISA_HOLE_VADDR(p)  ((void *) ((vaddr_t)(p) - IOM_BEGIN + atdevbase))
 
 
 /*
