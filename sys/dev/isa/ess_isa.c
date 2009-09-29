@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.22 2009/05/05 12:07:15 cegger Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.23 2009/09/29 11:01:39 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.22 2009/05/05 12:07:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.23 2009/09/29 11:01:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,9 @@ ess_isa_attach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 	ia = aux;
 	enablejoy = 0;
-	printf("\n");
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
@@ -148,7 +150,7 @@ ess_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_audio2.drq = ia->ia_ndrq > 1 ? ia->ia_drq[1].ir_drq : -1;
 
 #if NJOY_ESS > 0
-	if (device_cfdata(&sc->sc_dev)->cf_flags & 1) {
+	if (device_cfdata(self)->cf_flags & 1) {
 		sc->sc_joy_iot = ia->ia_iot;
 		if (!bus_space_map(sc->sc_joy_iot, 0x201, 1, 0,
 				   &sc->sc_joy_ioh))
@@ -156,7 +158,7 @@ ess_isa_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	printf("%s", device_xname(&sc->sc_dev));
+	aprint_normal_dev(self, "");
 
 	essattach(sc, enablejoy);
 }
