@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.35 2009/08/04 12:37:14 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.36 2009/09/29 11:17:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -308,7 +308,9 @@ ukfs_release(struct ukfs *fs, int flags)
 		mntflag = 0;
 		if (flags & UKFS_RELFLAG_FORCE)
 			mntflag = MNT_FORCE;
+		rump_setup_curlwp(nextpid(fs), 1, 1);
 		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
+		rump_clear_curlwp();
 		if (rv) {
 			ukfs_chdir(fs, fs->ukfs_mountpath);
 			errno = rv;
