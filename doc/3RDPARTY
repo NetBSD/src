@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.717 2009/09/04 19:37:16 jmcneill Exp $
+#	$NetBSD: 3RDPARTY,v 1.718 2009/09/29 23:56:27 tsarna Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -608,6 +608,19 @@ Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
 under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
+
+Package:	mDNSResponder
+Version:	212.1
+Current Vers:	212.1
+Maintainer:	Apple
+Archive Site:	http://www.opensource.apple.com/tarballs/mDNSResponder/
+Home Page:	http://developer.apple.com/opensource/internet/bonjour.html
+Mailing List:	bonjour-dev@lists.apple.com
+License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
+		BSD 3-clause like (dns-sd)
+Responsible:	tsarna
+Notes:
+The sources were integrated into src/sys/external/apache2/mDNSResponder/dist.
 
 Package:	mesa-drm
 Version:	git 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c

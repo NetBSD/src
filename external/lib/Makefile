@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2009/06/25 13:59:02 agc Exp $
+#	$NetBSD: Makefile,v 1.12 2009/09/29 23:56:34 tsarna Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -10,6 +10,10 @@
 
 .if (${MKATF} != "no")
 SUBDIR+= ../bsd/atf/lib
+.endif
+
+.if (${MKMDNS} != "no")
+SUBDIR+= ../apache2/mDNSResponder/lib
 .endif
 
 .if (${MKCRYPTO} != "no")

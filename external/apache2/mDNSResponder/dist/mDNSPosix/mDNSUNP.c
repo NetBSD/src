@@ -188,8 +188,10 @@ First checkin
     #include <net/if_dl.h>
 #endif
 
-#if defined(AF_INET6) && HAVE_IPV6 && !HAVE_LINUX
+#if defined(AF_INET6) && HAVE_IPV6 && !HAVE_LINUX && !defined(sun)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <net/if_var.h>
+#endif
 #include <netinet/in_var.h>
 // Note: netinet/in_var.h implicitly includes netinet6/in6_var.h for us
 #endif

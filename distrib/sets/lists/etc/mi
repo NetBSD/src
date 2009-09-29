@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.212 2009/07/25 16:22:59 mbalmer Exp $
+# $NetBSD: mi,v 1.213 2009/09/29 23:56:26 tsarna Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -218,6 +218,7 @@
 ./etc/rc.d/local				etc-sys-rc
 ./etc/rc.d/lpd					etc-lpr-rc
 ./etc/rc.d/lvm					etc-sys-rc
+./etc/rc.d/mdnsd				etc-mdns-rc
 ./etc/rc.d/mixerctl				etc-audio-rc
 ./etc/rc.d/mopd					etc-bootserver-rc
 ./etc/rc.d/motd					etc-sys-rc

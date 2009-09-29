@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.49 2009/09/08 07:54:49 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.50 2009/09/29 23:56:34 tsarna Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -486,6 +486,12 @@ Indicates whether manual pages should be compressed with
 .Xr gzip 1
 at installation time.
 .DFLTn
+.
+.It Sy MKMDNS
+.YorN
+Indicates whether the mDNS (Multicast DNS) infrastructure
+(libraries and support programs) is built and installed.
+.DFLTy
 .
 .It Sy MKNLS
 .YorN

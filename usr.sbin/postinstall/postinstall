@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.104 2009/09/21 18:03:03 njoly Exp $
+# $NetBSD: postinstall,v 1.105 2009/09/29 23:56:35 tsarna Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -805,7 +805,7 @@ do_gid()
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
 	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd
+	    _sdpd _httpd _mdnsd
 }
 
 #
@@ -1058,8 +1058,8 @@ do_rc()
 		irdaattach iscsi_target isdnd \
 		kdc \
 		ldconfig local lpd lvm\
-		mixerctl mopd motd mountall mountcritlocal mountcritremote \
-		mountd moused mrouted \
+		mdnsd mixerctl mopd motd mountall mountcritlocal \
+		mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
@@ -1357,7 +1357,7 @@ do_uid()
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
 	    named ntpd postfix sshd _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd
+	    _sdpd _httpd _mdnsd
 }
 
 

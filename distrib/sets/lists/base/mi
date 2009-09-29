@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.830 2009/09/17 07:40:44 mrg Exp $
+# $NetBSD: mi,v 1.831 2009/09/29 23:56:26 tsarna Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -472,6 +472,7 @@
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
+./usr/bin/dns-sd				base-mdns-bin		mdns
 ./usr/bin/merge					base-util-bin
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
@@ -1119,6 +1120,7 @@
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
 ./usr/sbin/mdconfig				base-sysutil-bin
+./usr/sbin/mdnsd				base-mdns-bin		mdns
 ./usr/sbin/mdsetimage				base-sysutil-bin	binutils
 ./usr/sbin/mk-amd-map				base-amd-bin
 ./usr/sbin/mkalias				base-nis-bin		yp

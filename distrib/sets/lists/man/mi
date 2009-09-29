@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158 2009/09/14 10:36:49 degroote Exp $
+# $NetBSD: mi,v 1.1159 2009/09/29 23:56:27 tsarna Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -127,6 +127,7 @@
 ./usr/share/man/cat1/dig.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/dirname.0			man-util-catman		.cat
 ./usr/share/man/cat1/dirs.0			man-util-catman		.cat
+./usr/share/man/cat1/dns-sd.0			man-mdns-catman		mdns,.cat
 ./usr/share/man/cat1/dnskeygen.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
@@ -2262,6 +2263,7 @@
 ./usr/share/man/cat8/mbr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mdnsd.0			man-mdns-catman		mdns,.cat
 ./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman	binutils,.cat
 ./usr/share/man/cat8/mfs.0			man-sys-catman		.cat
 ./usr/share/man/cat8/mipsco/MAKEDEV.0		man-obsolete		obsolete
@@ -2825,6 +2827,7 @@
 ./usr/share/man/html1/dig.html			man-netutil-htmlman	html
 ./usr/share/man/html1/dirname.html		man-util-htmlman	html
 ./usr/share/man/html1/dirs.html			man-util-htmlman	html
+./usr/share/man/html1/dns-sd.html			man-mdns-htmlman	mdns,html
 ./usr/share/man/html1/domainname.html		man-nis-htmlman		html
 ./usr/share/man/html1/download-vulnerability-list.html	man-obsolete		obsolete
 ./usr/share/man/html1/dtmfdecode.html		man-isdn-htmlman	html
@@ -4682,6 +4685,7 @@
 ./usr/share/man/html8/master.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/mbrlabel.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mdconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mdnsd.html		man-mdns-htmlman	mdns,html
 ./usr/share/man/html8/mdsetimage.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/mfs.html			man-sys-htmlman		html
 ./usr/share/man/html8/mk-amd-map.html		man-amd-htmlman		html
@@ -5139,6 +5143,7 @@
 ./usr/share/man/man1/dig.1			man-netutil-man		.man
 ./usr/share/man/man1/dirname.1			man-util-man		.man
 ./usr/share/man/man1/dirs.1			man-util-man		.man
+./usr/share/man/man1/dns-sd.1			man-mdns-man		mdns,.man
 ./usr/share/man/man1/dnskeygen.1		man-obsolete		obsolete
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
@@ -7274,6 +7279,7 @@
 ./usr/share/man/man8/mbr.8			man-obsolete		obsolete
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man		.man
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/mdnsd.8			man-mdns-man		mdns,.man
 ./usr/share/man/man8/mdsetimage.8		man-sysutil-man		binutils,.man
 ./usr/share/man/man8/mfs.8			man-sys-man		.man
 ./usr/share/man/man8/mipsco/MAKEDEV.8		man-obsolete		obsolete

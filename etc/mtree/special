@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.130 2009/09/17 11:52:02 tron Exp $
+#	$NetBSD: special,v 1.131 2009/09/29 23:56:27 tsarna Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -406,6 +406,7 @@
 ./var/mail			type=dir  mode=1777 ignore
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
+./var/run/mdnsd			type=dir  mode=0755 optional
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755

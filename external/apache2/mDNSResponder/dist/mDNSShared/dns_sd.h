@@ -2339,6 +2339,7 @@ DNSServiceErrorType DNSSD_API DNSServiceSetDefaultDomainForUser
 
 #endif //__APPLE_API_PRIVATE
 
+#if !defined(__NetBSD__)
 /* Some C compiler cleverness. We can make the compiler check certain things for us,
  * and report errors at compile-time if anything is wrong. The usual way to do this would
  * be to use a run-time "if" statement or the conventional run-time "assert" mechanism, but
@@ -2350,6 +2351,7 @@ struct CompileTimeAssertionChecks_DNS_SD
     {
     char assert0[(sizeof(union _TXTRecordRef_t) == 16) ? 1 : -1];
     };
+#endif
 
 #ifdef  __cplusplus
     }

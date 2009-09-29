@@ -37,7 +37,7 @@
 .\"
 .Dd April 2004              \" Date
 .Dt dns-sd 1                \" Document Title
-.Os Darwin                  \" Operating System
+.Os NetBSD                  \" Operating System
 .\"
 .Sh NAME
 .Nm dns-sd
@@ -64,11 +64,6 @@ The library API that
 .Nm
 uses is documented in
 .Pa /usr/include/dns_sd.h .
-The
-.Nm
-command replaces the older
-.Xr mDNS 1
-command.
 .Pp
 The
 .Nm
@@ -202,14 +197,11 @@ window.
 .Pa /usr/bin/dns-sd \" Pathname
 .\"
 .Sh SEE ALSO
-.Xr mDNS 1
-.Xr mDNSResponder 8
-.\"
-.Sh BUGS
-.Nm
-bugs are tracked in Apple Radar component "mDNSResponder".
+.Xr mdnsd 8
 .\"
 .Sh HISTORY
 The
 .Nm
-command first appeared in Mac OS X 10.4 (Tiger).
+command first appeared in
+.Nx 6.0 ,
+having originated in Mac OS X 10.4 (Tiger). 
