@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.2 2009/09/17 04:24:28 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.3 2009/09/29 23:30:04 snj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -859,18 +859,26 @@
 ./usr/share/locale/fr_BE.ISO8859-1/LC_MESSAGES
 ./usr/share/locale/fr_BE.ISO8859-15
 ./usr/share/locale/fr_BE.ISO8859-15/LC_MESSAGES
+./usr/share/locale/fr_BE.UTF-8
+./usr/share/locale/fr_BE.UTF-8/LC_MESSAGES
 ./usr/share/locale/fr_CA.ISO8859-1
 ./usr/share/locale/fr_CA.ISO8859-1/LC_MESSAGES
 ./usr/share/locale/fr_CA.ISO8859-15
 ./usr/share/locale/fr_CA.ISO8859-15/LC_MESSAGES
+./usr/share/locale/fr_CA.UTF-8
+./usr/share/locale/fr_CA.UTF-8/LC_MESSAGES
 ./usr/share/locale/fr_CH.ISO8859-1
 ./usr/share/locale/fr_CH.ISO8859-1/LC_MESSAGES
 ./usr/share/locale/fr_CH.ISO8859-15
 ./usr/share/locale/fr_CH.ISO8859-15/LC_MESSAGES
+./usr/share/locale/fr_CH.UTF-8
+./usr/share/locale/fr_CH.UTF-8/LC_MESSAGES
 ./usr/share/locale/fr_FR.ISO8859-1
 ./usr/share/locale/fr_FR.ISO8859-1/LC_MESSAGES
 ./usr/share/locale/fr_FR.ISO8859-15
 ./usr/share/locale/fr_FR.ISO8859-15/LC_MESSAGES
+./usr/share/locale/fr_FR.UTF-8
+./usr/share/locale/fr_FR.UTF-8/LC_MESSAGES
 ./usr/share/locale/gl
 ./usr/share/locale/gl/LC_MESSAGES
 ./usr/share/locale/he
