@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.6.1 2009/09/29 22:46:56 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.6.2 2009/09/29 22:50:11 snj Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.6.1 2009/09/29 22:46:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.6.2 2009/09/29 22:50:11 snj Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1148,13 +1148,10 @@ audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case AUDIO_DEVICE:
 	case AUDIOCTL_DEVICE:
 		device_active(sc->dev, DVA_SYSTEM);
-		error = audio_ioctl(sc, cmd, addr, flag, l);
-		/*
-		 * OSS audio allows mixer operations on sound devices
-		 * so pass through if command isn't a valid audio operation
-		 */
-		if (error == EINVAL)
+		if (IOCGROUP(cmd) == IOCGROUP(AUDIO_MIXER_READ))
 			error = mixer_ioctl(sc, cmd, addr, flag, l);
+		else
+			error = audio_ioctl(sc, cmd, addr, flag, l);
 		break;
 	case MIXER_DEVICE:
 		error = mixer_ioctl(sc, cmd, addr, flag, l);
