@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.73 2009/09/16 10:47:54 mlelstv Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.74 2009/09/29 21:41:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.73 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.74 2009/09/29 21:41:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,6 +784,9 @@ acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 	struct timeval tv, tmp;
+
+	if (!ABAT_ISSET(sc, ABAT_F_PRESENT))
+		acpibat_battery_present(dv);
 
 	if (ABAT_ISSET(sc, ABAT_F_PRESENT)) {
 		tmp.tv_sec = 5;
