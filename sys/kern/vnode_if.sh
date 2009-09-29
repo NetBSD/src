@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.51 2008/11/19 14:10:49 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.52 2009/09/29 11:51:02 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -51,6 +51,9 @@ out_c=vnode_if.c
 out_rumpc=../rump/librump/rumpvfs/rumpvnode_if.c
 out_h=../sys/vnode_if.h
 out_rumph=../rump/include/rump/rumpvnode_if.h
+
+# generate VNODE_LOCKDEBUG checks (not fully functional)
+lockdebug=0
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -196,10 +199,12 @@ echo -n "$copyright"
 echo ''
 echo "#ifndef _${SYS}VNODE_IF_H_"
 echo "#define _${SYS}VNODE_IF_H_"
-echo ''
-echo '#ifdef _KERNEL_OPT'
-echo '#include "opt_vnode_lockdebug.h"'
-echo '#endif /* _KERNEL_OPT */'
+if [ ${lockdebug} -ne 0 ] ; then
+	echo ''
+	echo '#ifdef _KERNEL_OPT'
+	echo '#include "opt_vnode_lockdebug.h"'
+	echo '#endif /* _KERNEL_OPT */'
+fi
 echo "
 extern const struct vnodeop_desc ${rump}vop_default_desc;
 "
@@ -279,11 +284,10 @@ echo ""
 echo -n "$copyright"
 echo "
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, \"\$NetBSD\$\");
-"
+__KERNEL_RCSID(0, \"\$NetBSD\$\");"
 
-echo '
-#include "opt_vnode_lockdebug.h"'
+[ ${lockdebug} -ne 0 ] && echo && echo '#include "opt_vnode_lockdebug.h"'
+
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -306,7 +310,7 @@ echo '	0,
 '
 
 # Body stuff
-sed -e "$sed_prep" $src | $awk -v rump=${rump} '
+sed -e "$sed_prep" $src | $awk -v rump=${rump} -v lockdebug=${lockdebug} '
 function do_offset(typematch) {
 	for (i=0; i<argc; i++) {
 		if (argtype[i] == typematch) {
@@ -376,16 +380,18 @@ function doit() {
 	}
 	printf(")\n");
 	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n", name);
-	printf("#ifdef VNODE_LOCKDEBUG\n");
-	for (i=0; i<argc; i++) {
-		if (lockstate[i] != -1)
-			printf("\tint islocked_%s;\n", argname[i]);
+	if (lockdebug) {
+		printf("#ifdef VNODE_LOCKDEBUG\n");
+		for (i=0; i<argc; i++) {
+			if (lockstate[i] != -1)
+				printf("\tint islocked_%s;\n", argname[i]);
+		}
+		printf("#endif\n");
 	}
-	printf("#endif\n");
 	printf("\ta.a_desc = VDESC(%s);\n", name);
 	for (i=0; i<argc; i++) {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
-		if (lockstate[i] != -1) {
+		if (lockdebug && lockstate[i] != -1) {
 			printf("#ifdef VNODE_LOCKDEBUG\n");
 			printf("\tislocked_%s = (%s->v_vflag & VV_LOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
 			    argname[i], argname[i], argname[i], lockstate[i]);
