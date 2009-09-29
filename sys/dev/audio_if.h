@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.65 2008/03/04 18:23:44 cube Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.66 2009/09/29 15:58:54 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -86,13 +86,15 @@ typedef struct audio_stream {
 static __inline int
 audio_stream_get_space(const audio_stream_t *s)
 {
-	return (s->end - s->start) - s->used;
+	if (s)
+		return (s->end - s->start) - s->used;
+	return 0;
 }
 
 static __inline int
 audio_stream_get_used(const audio_stream_t *s)
 {
-	return s->used;
+	return s ? s->used : 0;
 }
 
 static __inline uint8_t *
