@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.213 2009/09/27 12:53:46 tsutsui Exp $
+# $NetBSD: ALL,v 1.214 2009/09/29 11:58:18 pooka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.213 $"
+#ident 		"ALL-$Revision: 1.214 $"
 
 maxusers	32		# estimated number of users
 
@@ -194,7 +194,6 @@ options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options 	VNODE_LOCKDEBUG
 
 # Networking options
 options 	GATEWAY		# packet forwarding
