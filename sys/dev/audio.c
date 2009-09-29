@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.247 2009/09/24 16:03:11 sborrill Exp $	*/
+/*	$NetBSD: audio.c,v 1.248 2009/09/29 15:58:54 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.247 2009/09/24 16:03:11 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.248 2009/09/29 15:58:54 sborrill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -192,6 +192,10 @@ static void	audio_volume_toggle(device_t);
 static void	audio_mixer_capture(struct audio_softc *);
 static void	audio_mixer_restore(struct audio_softc *);
 
+static int	audio_get_props(struct audio_softc *);
+static bool	audio_can_playback(struct audio_softc *);
+static bool	audio_can_capture(struct audio_softc *);
+
 static void	audio_softintr_rd(void *);
 static void	audio_softintr_wr(void *);
 
@@ -315,22 +319,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	props = hwp->get_props(hdlp);
-
-	aprint_naive("\n");
-
-	if (props & AUDIO_PROP_FULLDUPLEX)
-		aprint_normal(": full duplex");
-	else
-		aprint_normal(": half duplex");
-
-	if (props & AUDIO_PROP_MMAP)
-		aprint_normal(", mmap");
-	if (props & AUDIO_PROP_INDEPENDENT)
-		aprint_normal(", independent");
-
-	aprint_normal("\n");
-
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
@@ -338,18 +326,44 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_writing = sc->sc_waitcomp = 0;
 	sc->sc_lastinfovalid = false;
 
-	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
-	if (error) {
-		sc->hw_if = NULL;
-		aprint_error("audio: could not allocate play buffer\n");
-		return;
+	props = audio_get_props(sc);
+
+	if (props & AUDIO_PROP_FULLDUPLEX)
+		aprint_normal(": full duplex");
+	else
+		aprint_normal(": half duplex");
+
+	if (props & AUDIO_PROP_PLAYBACK)
+		aprint_normal(", playback");
+	if (props & AUDIO_PROP_CAPTURE)
+		aprint_normal(", capture");
+	if (props & AUDIO_PROP_MMAP)
+		aprint_normal(", mmap");
+	if (props & AUDIO_PROP_INDEPENDENT)
+		aprint_normal(", independent");
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	if (audio_can_playback(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_pr,
+		    AUMODE_PLAY, AU_RING_SIZE);
+		if (error) {
+			sc->hw_if = NULL;
+			aprint_error("audio: could not allocate play buffer\n");
+			return;
+		}
 	}
-	error = audio_alloc_ring(sc, &sc->sc_rr, AUMODE_RECORD, AU_RING_SIZE);
-	if (error) {
-		audio_free_ring(sc, &sc->sc_pr);
-		sc->hw_if = NULL;
-		aprint_error("audio: could not allocate record buffer\n");
-		return;
+	if (audio_can_capture(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_rr,
+		    AUMODE_RECORD, AU_RING_SIZE);
+		if (error) {
+			if (sc->sc_pr.s.start != 0)
+				audio_free_ring(sc, &sc->sc_pr);
+			sc->hw_if = NULL;
+			aprint_error("audio: could not allocate record buffer\n");
+			return;
+		}
 	}
 
 	sc->sc_lastgain = 128;
@@ -742,6 +756,8 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 void
 audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 {
+	if (r->s.start == 0)
+		return;
 
 	if (sc->hw_if->freem)
 		sc->hw_if->freem(sc->hw_hdl, r->s.start, M_DEVBUF);
@@ -1301,41 +1317,49 @@ audio_initbufs(struct audio_softc *sc)
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
 	hw = sc->hw_if;
-	audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
-	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
-		error = hw->init_input(sc->hw_hdl, sc->sc_rr.s.start,
+	if (audio_can_capture(sc)) {
+		audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
+		if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
+			error = hw->init_input(sc->hw_hdl, sc->sc_rr.s.start,
 				       sc->sc_rr.s.end - sc->sc_rr.s.start);
-		if (error)
-			return error;
+			if (error)
+				return error;
+		}
 	}
 
-	audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
-	sc->sc_sil_count = 0;
-	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
-		error = hw->init_output(sc->hw_hdl, sc->sc_pr.s.start,
+	if (audio_can_playback(sc)) {
+		audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
+		sc->sc_sil_count = 0;
+		if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
+			error = hw->init_output(sc->hw_hdl, sc->sc_pr.s.start,
 					sc->sc_pr.s.end - sc->sc_pr.s.start);
-		if (error)
-			return error;
+			if (error)
+				return error;
+		}
 	}
 
 #ifdef AUDIO_INTR_TIME
 #define double u_long
-	sc->sc_pnintr = 0;
-	sc->sc_pblktime = (u_long)(
-	    (double)sc->sc_pr.blksize * 100000 /
-	    (double)(sc->sc_pparams.precision / NBBY *
-		     sc->sc_pparams.channels *
-		     sc->sc_pparams.sample_rate)) * 10;
-	DPRINTF(("audio: play blktime = %lu for %d\n",
-		 sc->sc_pblktime, sc->sc_pr.blksize));
-	sc->sc_rnintr = 0;
-	sc->sc_rblktime = (u_long)(
-	    (double)sc->sc_rr.blksize * 100000 /
-	    (double)(sc->sc_rparams.precision / NBBY *
-		     sc->sc_rparams.channels *
-		     sc->sc_rparams.sample_rate)) * 10;
-	DPRINTF(("audio: record blktime = %lu for %d\n",
-		 sc->sc_rblktime, sc->sc_rr.blksize));
+	if (audio_can_playback(sc)) {
+		sc->sc_pnintr = 0;
+		sc->sc_pblktime = (u_long)(
+		    (double)sc->sc_pr.blksize * 100000 /
+		    (double)(sc->sc_pparams.precision / NBBY *
+			     sc->sc_pparams.channels *
+			     sc->sc_pparams.sample_rate)) * 10;
+		DPRINTF(("audio: play blktime = %lu for %d\n",
+			 sc->sc_pblktime, sc->sc_pr.blksize));
+	}
+	if (audio_can_capture(sc)) {
+		sc->sc_rnintr = 0;
+		sc->sc_rblktime = (u_long)(
+		    (double)sc->sc_rr.blksize * 100000 /
+		    (double)(sc->sc_rparams.precision / NBBY *
+			     sc->sc_rparams.channels *
+			     sc->sc_rparams.sample_rate)) * 10;
+		DPRINTF(("audio: record blktime = %lu for %d\n",
+			 sc->sc_rblktime, sc->sc_rr.blksize));
+	}
 #undef double
 #endif
 
@@ -1347,18 +1371,24 @@ audio_calcwater(struct audio_softc *sc)
 {
 
 	/* set high at 100% */
-	sc->sc_pr.usedhigh = sc->sc_pustream->end - sc->sc_pustream->start;
-	/* set low at 75% of usedhigh */
-	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;
-	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
-		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
+	if (audio_can_playback(sc)) {
+		sc->sc_pr.usedhigh =
+		    sc->sc_pustream->end - sc->sc_pustream->start;
+		/* set low at 75% of usedhigh */
+		sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;
+		if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
+			sc->sc_pr.usedlow -= sc->sc_pr.blksize;
+	}
 
-	sc->sc_rr.usedhigh = sc->sc_rustream->end - sc->sc_rustream->start
-		- sc->sc_rr.blksize;
-	sc->sc_rr.usedlow = 0;
-	DPRINTF(("%s: plow=%d phigh=%d rlow=%d rhigh=%d\n", __func__,
-		 sc->sc_pr.usedlow, sc->sc_pr.usedhigh,
-		 sc->sc_rr.usedlow, sc->sc_rr.usedhigh));
+	if (audio_can_capture(sc)) {
+		sc->sc_rr.usedhigh =
+		    sc->sc_rustream->end - sc->sc_rustream->start -
+		    sc->sc_rr.blksize;
+		sc->sc_rr.usedlow = 0;
+		DPRINTF(("%s: plow=%d phigh=%d rlow=%d rhigh=%d\n", __func__,
+			 sc->sc_pr.usedlow, sc->sc_pr.usedhigh,
+			 sc->sc_rr.usedlow, sc->sc_rr.usedhigh));
+	}
 }
 
 static inline int
@@ -1436,7 +1466,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	sc->sc_full_duplex = 
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
-		(hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX);
+		(audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX);
 
 	mode = 0;
 	if (flags & FREAD) {
@@ -2251,7 +2281,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
 		fd = *(int *)addr;
-		if (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) {
+		if (audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX) {
 			if (hw->setfd)
 				error = hw->setfd(sc->hw_hdl, fd);
 			else
@@ -2268,7 +2298,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_GETPROPS:
 		DPRINTF(("AUDIO_GETPROPS\n"));
-		*(int *)addr = hw->get_props(sc->hw_hdl);
+		*(int *)addr = audio_get_props(sc);
 		break;
 
 	default:
@@ -2439,7 +2469,7 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 
 	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 	hw = sc->hw_if;
-	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
+	if (!(audio_get_props(sc) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;
 #if 0
 /* XXX
@@ -2498,6 +2528,9 @@ audiostartr(struct audio_softc *sc)
 		 sc->sc_rr.s.start, audio_stream_get_used(&sc->sc_rr.s),
 		 sc->sc_rr.usedhigh, sc->sc_rr.mmapped));
 
+	if (!audio_can_capture(sc))
+		return EINVAL;
+
 	if (sc->hw_if->trigger_input)
 		error = sc->hw_if->trigger_input(sc->hw_hdl, sc->sc_rr.s.start,
 		    sc->sc_rr.s.end, sc->sc_rr.blksize,
@@ -2523,6 +2556,9 @@ audiostartp(struct audio_softc *sc)
 	DPRINTF(("audiostartp: start=%p used=%d(hi=%d blk=%d) mmapped=%d\n",
 		 sc->sc_pr.s.start, used, sc->sc_pr.usedhigh,
 		 sc->sc_pr.blksize, sc->sc_pr.mmapped));
+
+	if (!audio_can_playback(sc))
+		return EINVAL;
 
 	if (!sc->sc_pr.mmapped && used < sc->sc_pr.blksize) {
 		wakeup(&sc->sc_wchan);
@@ -3331,6 +3367,12 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		rp.channels = r->channels;
 		nr++;
 	}
+
+	if (!audio_can_capture(sc))
+		nr = 0;
+	if (!audio_can_playback(sc))
+		np = 0;
+
 #ifdef AUDIO_DEBUG
 	if (audiodebug && nr > 0)
 	    audio_print_params("audiosetinfo() Setting record params:", &rp);
@@ -3382,7 +3424,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (modechange) {
 		int indep;
 
-		indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
+		indep = audio_get_props(sc) & AUDIO_PROP_INDEPENDENT;
 		if (!indep) {
 			if (setmode == AUMODE_RECORD)
 				pp = rp;
@@ -3716,12 +3758,15 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int buf_only_mode)
 	p->active = sc->sc_pbus;
 	r->active = sc->sc_rbus;
 
-	p->buffer_size = sc->sc_pustream->bufsize;
-	r->buffer_size = sc->sc_rustream->bufsize;
+	p->buffer_size = sc->sc_pustream ? sc->sc_pustream->bufsize : 0;
+	r->buffer_size = sc->sc_rustream ? sc->sc_rustream->bufsize : 0;
 
 	ai->blocksize = sc->sc_pr.blksize;
-	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
-	ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
+	if (sc->sc_pr.blksize > 0) {
+		ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
+		ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
+	} else
+		ai->hiwat = ai->lowat = 0;
 	ai->mode = sc->sc_mode;
 
 	return 0;
@@ -4135,6 +4180,37 @@ audio_volume_toggle(device_t dv)
 		newgain = sc->sc_lastgain;
 	au_set_gain(sc, &sc->sc_outports, newgain, balance);
 	splx(s);
+}
+
+static int
+audio_get_props(struct audio_softc *sc)
+{
+	const struct audio_hw_if *hw;
+	int props;
+
+	hw = sc->hw_if;
+	props = hw->get_props(sc->hw_hdl);
+
+	/*
+	 * if neither playback nor capture properties are reported,
+	 * assume both are supported by the device driver
+	 */
+	if ((props & (AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE)) == 0)
+		props |= (AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE);
+
+	return props;
+}
+
+static bool
+audio_can_playback(struct audio_softc *sc)
+{
+	return audio_get_props(sc) & AUDIO_PROP_PLAYBACK ? true : false;
+}
+
+static bool
+audio_can_capture(struct audio_softc *sc)
+{
+	return audio_get_props(sc) & AUDIO_PROP_CAPTURE ? true : false;
 }
 
 #endif /* NAUDIO > 0 */
