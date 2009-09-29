@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.38 2008/07/03 15:44:19 drochner Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.38.6.1 2009/09/29 23:55:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.38 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.38.6.1 2009/09/29 23:55:49 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -281,7 +281,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 
 	ioapic_add(sc);
 
-	aprint_verbose(": pa 0x%lx", aaa->apic_address);
+	aprint_verbose(": pa 0x%jx", (uintmax_t)aaa->apic_address);
 #ifndef _IOAPIC_CUSTOM_RW
 	{
 	bus_space_handle_t bh;
