@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.20 2009/05/05 12:10:07 cegger Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.21 2009/09/29 11:01:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.20 2009/05/05 12:10:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.21 2009/09/29 11:01:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,12 @@ ess_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	ipa = aux;
-	printf("\n");
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
+		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
@@ -118,11 +120,11 @@ ess_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_audio2.drq = ipa->ipa_drq[1].num;
 
 	if (!essmatch(sc)) {
-		aprint_error_dev(&sc->sc_dev, "essmatch failed\n");
+		aprint_error_dev(self, "essmatch failed\n");
 		return;
 	}
 
-	printf("%s", device_xname(&sc->sc_dev));
+	aprint_normal_dev(self, "");
 
 	essattach(sc, 0);
 }
