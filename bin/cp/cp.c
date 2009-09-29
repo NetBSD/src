@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.51 2008/07/20 00:52:39 lukem Exp $ */
+/* $NetBSD: cp.c,v 1.52 2009/09/29 13:30:17 pooka Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.51 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: cp.c,v 1.52 2009/09/29 13:30:17 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
 int 	main(int, char *[]);
 int 	copy(char *[], enum op, int);
-int 	mastercmp(const FTSENT **, const FTSENT **);
 
 int
 main(int argc, char *argv[])
@@ -295,7 +294,7 @@ copy(char *argv[], enum op type, int fts_options)
 	dne = 0;
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
-	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
+	if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL)
 		err(EXIT_FAILURE, "%s", argv[0]);
 		/* NOTREACHED */
 	for (any_failed = 0; (curr = fts_read(ftsp)) != NULL;) {
@@ -514,30 +513,4 @@ copy(char *argv[], enum op type, int fts_options)
 	}
 	(void)fts_close(ftsp);
 	return (any_failed);
-}
-
-/*
- * mastercmp --
- *	The comparison function for the copy order.  The order is to copy
- *	non-directory files before directory files.  The reason for this
- *	is because files tend to be in the same cylinder group as their
- *	parent directory, whereas directories tend not to be.  Copying the
- *	files first reduces seeking.
- */
-int
-mastercmp(const FTSENT **a, const FTSENT **b)
-{
-	int a_info, b_info;
-
-	a_info = (*a)->fts_info;
-	if (a_info == FTS_ERR || a_info == FTS_NS || a_info == FTS_DNR)
-		return (0);
-	b_info = (*b)->fts_info;
-	if (b_info == FTS_ERR || b_info == FTS_NS || b_info == FTS_DNR)
-		return (0);
-	if (a_info == FTS_D)
-		return (-1);
-	if (b_info == FTS_D)
-		return (1);
-	return (0);
 }
