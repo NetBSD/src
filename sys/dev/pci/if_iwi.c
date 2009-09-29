@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.74.2.3 2009/01/14 17:57:39 snj Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.74.2.4 2009/09/29 23:57:41 snj Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74.2.3 2009/01/14 17:57:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74.2.4 2009/09/29 23:57:41 snj Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -102,7 +102,7 @@ static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
 static void	iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 static void	iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 static int	iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
-    int, bus_addr_t, bus_size_t);
+    int, bus_size_t, bus_size_t);
 static void	iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 static void	iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 static struct mbuf *
@@ -2018,7 +2018,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	int ntries, nsegs, error;
 	int sn;
 
-	nsegs = atop((char*)fw+size-1) - atop((char *)fw) + 1;
+	nsegs = atop((vaddr_t)fw+size-1) - atop((vaddr_t)fw) + 1;
 
 	/* Create a DMA map for the firmware image */
 	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, size, 0,
