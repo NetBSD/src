@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.13 2009/09/25 14:09:27 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.14 2009/09/30 00:32:08 ahoka Exp $
 
 .include <bsd.own.mk>
 
@@ -55,3 +55,4 @@ image_md_pre:
 	${CP} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst
 	${CP} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
+	${MKDIR} cdrom/var
