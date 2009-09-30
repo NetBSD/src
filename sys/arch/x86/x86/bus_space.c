@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20.4.2 2009/09/29 23:53:14 snj Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.4.3 2009/09/30 00:06:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.4.2 2009/09/29 23:53:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.4.3 2009/09/30 00:06:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 		int cacheable, bus_space_handle_t *bshp)
 {
-	u_long pa, endpa;
+	paddr_t pa, endpa;
 	vaddr_t va, sva;
 	pt_entry_t *pte, xpte;
 
