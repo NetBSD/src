@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.59 2008/05/11 12:31:45 chris Exp $
+#	$NetBSD: Makefile.inc,v 1.59.2.1 2009/09/30 00:05:07 snj Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -11,6 +11,7 @@ KERNEL_SETS+=	XEN2_DOM0
 KERNEL_SETS+=	XEN2_DOMU
 KERNEL_SETS+=	XEN3_DOM0
 KERNEL_SETS+=	XEN3_DOMU
+KERNEL_SETS+=	XEN3PAE_DOM0
 KERNEL_SETS+=	XEN3PAE_DOMU
 # KERNEL_SETS+=	GENERIC_TINY
 # KERNEL_SETS+=	GENERIC_PS2TINY
