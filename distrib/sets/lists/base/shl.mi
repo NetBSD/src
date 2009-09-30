@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.492 2009/09/29 23:56:26 tsarna Exp $
+# $NetBSD: shl.mi,v 1.493 2009/09/30 03:41:12 tsarna Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -69,7 +69,7 @@
 ./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
 ./usr/lib/libdns.so.4.0				base-bind-shlib
-./usr/lib/libdns_sd.so.1.0			base-mdns-shlib		mdns
+./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
 ./usr/lib/libedit.so.3.0			base-sys-shlib
 ./usr/lib/libevent.so.3.1			base-sys-shlib
 ./usr/lib/libfetch.so.3.0			base-sys-shlib
