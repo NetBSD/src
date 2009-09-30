@@ -1,5 +1,5 @@
 Intel Wireless WiFi Link 4965AGN Adapter
-Copyright (C) 2006 - 2007 Intel Corporation.  All rights reserved.
+Copyright (C) 2006 - 2009 Intel Corporation.  All rights reserved.
 
 Microcode Package README.iwlwifi-4965-ucode
 
@@ -12,11 +12,11 @@ INDEX
 
 1. OVERVIEW
 
-The file iwlwifi-4965-1.ucode provided in this package must be 
+The file iwlwifi-4965-2.ucode provided in this package must be 
 present on your system in order for the Intel Wireless WiFi Link
 4965AGN driver for Linux (iwlwifi-4965) to operate on your system.
 
-The "-1" in the filename reflects an interface/architecture version number.
+The "-2" in the filename reflects an interface/architecture version number.
 It will change only when changes in new uCode releases make the new uCode
 incompatible with earlier drivers.
 
@@ -30,7 +30,7 @@ interest given the current operating mode of the device.
 
 2. INSTALLATION
 
-The iwlwifi-4965 driver will look for the file iwlwifi-4965-1.ucode using the 
+The iwlwifi-4965 driver will look for the file iwlwifi-4965-2.ucode using the 
 kernel's firmware_loader infrastructure.  In order to function 
 correctly, you need to have this support enabled in your kernel.  When 
 you configure the kernel, you can find this option in the following 
@@ -68,7 +68,7 @@ If it lists more than one directory, you only need to put the
 microcode in one of them.  In the above example, installation is 
 simply:
 
-	% cp iwlwifi-4965-1.ucode /lib/firmware
+	% cp iwlwifi-4965-2.ucode /lib/firmware
 
 You can now load the driver (see the INSTALL and README.iwlwifi provided with
 the iwlwifi package for information on building and using that driver.)
