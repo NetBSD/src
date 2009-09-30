@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.8 2009/09/18 13:05:19 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.9 2009/09/30 10:04:54 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.8 2009/09/18 13:05:19 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.9 2009/09/30 10:04:54 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -865,7 +865,9 @@ unzip(const char *fn)
 	ac(archive_read_support_format_zip(a));
 	ac(archive_read_open_fd(a, fd, 8192));
 
-	printf("Archive:  %s\n", fn);
+	if (!q_opt)
+	    printf("Archive:  %s\n", fn);
+
 	if (v_opt == 1) {
 		printf("  Length     Date   Time    Name\n");
 		printf(" --------    ----   ----    ----\n");
