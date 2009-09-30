@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.129 2009/04/01 15:55:27 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.130 2009/09/30 04:30:50 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.129 2009/04/01 15:55:27 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.130 2009/09/30 04:30:50 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -912,10 +912,9 @@ parse(char *l)
   [addr=0x####,|symbol=...|value=...]
 
   size is optional for some types.  type must be set before anything
-  else.  nodes can have [r12whp], but nothing else applies.  if no
+  else.  nodes can have [rwhp], but nothing else applies.  if no
   size or type is given, node is asserted.  writeable is the default,
-  with [r12w] being read-only, writeable below securelevel 1,
-  writeable below securelevel 2, and unconditionally writeable
+  with [rw] being read-only and unconditionally writeable
   respectively.  if you specify addr, it is assumed to be the name of
   a kernel symbol, if value, CTLFLAG_OWNDATA will be asserted for
   strings, CTLFLAG_IMMEDIATE for ints and u_quad_ts.  you cannot
