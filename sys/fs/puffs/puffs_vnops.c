@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.134 2009/09/30 18:19:17 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.135 2009/09/30 18:22:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.134 2009/09/30 18:19:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.135 2009/09/30 18:22:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -157,11 +157,11 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_mknod_desc, spec_mknod },		/* genfs_badop */
 	{ &vop_open_desc, spec_open },			/* spec_open */
 	{ &vop_close_desc, spec_close },		/* spec_close */
-	{ &vop_access_desc, puffs_vnop_checkop },		/* access */
-	{ &vop_getattr_desc, puffs_vnop_checkop },		/* getattr */
-	{ &vop_setattr_desc, puffs_vnop_checkop },		/* setattr */
-	{ &vop_read_desc, puffs_vnop_spec_read },		/* update, read */
-	{ &vop_write_desc, puffs_vnop_spec_write },		/* update, write */
+	{ &vop_access_desc, puffs_vnop_checkop },	/* access */
+	{ &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
+	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
+	{ &vop_read_desc, puffs_vnop_spec_read },	/* update, read */
+	{ &vop_write_desc, puffs_vnop_spec_write },	/* update, write */
 	{ &vop_ioctl_desc, spec_ioctl },		/* spec_ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, spec_poll },			/* spec_poll */
@@ -179,14 +179,14 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* genfs_badop */
 	{ &vop_readlink_desc, spec_readlink },		/* genfs_badop */
 	{ &vop_abortop_desc, spec_abortop },		/* genfs_badop */
-	{ &vop_inactive_desc, puffs_vnop_inactive },		/* REAL inactive */
-	{ &vop_reclaim_desc, puffs_vnop_reclaim },		/* REAL reclaim */
-	{ &vop_lock_desc, puffs_vnop_lock },			/* REAL lock */
-	{ &vop_unlock_desc, puffs_vnop_unlock },		/* REAL unlock */
+	{ &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
+	{ &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
+	{ &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
+	{ &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* dummy */
 	{ &vop_strategy_desc, spec_strategy },		/* dev strategy */
 	{ &vop_print_desc, puffs_vnop_print },		/* REAL print */
-	{ &vop_islocked_desc, puffs_vnop_islocked },		/* REAL islocked */
+	{ &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* lf_advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -214,11 +214,11 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_mknod_desc, fifo_mknod },		/* genfs_badop */
 	{ &vop_open_desc, fifo_open },			/* open */
 	{ &vop_close_desc, fifo_close },		/* close */
-	{ &vop_access_desc, puffs_vnop_checkop },		/* access */
-	{ &vop_getattr_desc, puffs_vnop_checkop },		/* getattr */
-	{ &vop_setattr_desc, puffs_vnop_checkop },		/* setattr */
-	{ &vop_read_desc, puffs_vnop_fifo_read },		/* read, update */
-	{ &vop_write_desc, puffs_vnop_fifo_write },		/* write, update */
+	{ &vop_access_desc, puffs_vnop_checkop },	/* access */
+	{ &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
+	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
+	{ &vop_read_desc, puffs_vnop_fifo_read },	/* read, update */
+	{ &vop_write_desc, puffs_vnop_fifo_write },	/* write, update */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
@@ -236,14 +236,14 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_readdir_desc, fifo_readdir },		/* genfs_badop */
 	{ &vop_readlink_desc, fifo_readlink },		/* genfs_badop */
 	{ &vop_abortop_desc, fifo_abortop },		/* genfs_badop */
-	{ &vop_inactive_desc, puffs_vnop_inactive },		/* REAL inactive */
-	{ &vop_reclaim_desc, puffs_vnop_reclaim },		/* REAL reclaim */
-	{ &vop_lock_desc, puffs_vnop_lock },			/* REAL lock */
-	{ &vop_unlock_desc, puffs_vnop_unlock },		/* REAL unlock */
+	{ &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
+	{ &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
+	{ &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
+	{ &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* dummy */
 	{ &vop_strategy_desc, fifo_strategy },		/* genfs_badop */
 	{ &vop_print_desc, puffs_vnop_print },		/* REAL print */
-	{ &vop_islocked_desc, puffs_vnop_islocked },		/* REAL islocked */
+	{ &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* genfs_einval */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -266,29 +266,29 @@ const struct vnodeopv_desc puffs_fifoop_opv_desc =
 int (**puffs_msgop_p)(void *);
 const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_create_desc, puffs_vnop_create },		/* create */
+	{ &vop_create_desc, puffs_vnop_create },	/* create */
         { &vop_mknod_desc, puffs_vnop_mknod },		/* mknod */
-        { &vop_open_desc, puffs_vnop_open },			/* open */
+        { &vop_open_desc, puffs_vnop_open },		/* open */
         { &vop_close_desc, puffs_vnop_close },		/* close */
-        { &vop_access_desc, puffs_vnop_access },		/* access */
-        { &vop_getattr_desc, puffs_vnop_getattr },		/* getattr */
-        { &vop_setattr_desc, puffs_vnop_setattr },		/* setattr */
-        { &vop_read_desc, puffs_vnop_read },			/* read */
+        { &vop_access_desc, puffs_vnop_access },	/* access */
+        { &vop_getattr_desc, puffs_vnop_getattr },	/* getattr */
+        { &vop_setattr_desc, puffs_vnop_setattr },	/* setattr */
+        { &vop_read_desc, puffs_vnop_read },		/* read */
         { &vop_write_desc, puffs_vnop_write },		/* write */
-        { &vop_seek_desc, puffs_vnop_seek },			/* seek */
-        { &vop_remove_desc, puffs_vnop_remove },		/* remove */
-        { &vop_link_desc, puffs_vnop_link },			/* link */
-        { &vop_rename_desc, puffs_vnop_rename },		/* rename */
+        { &vop_seek_desc, puffs_vnop_seek },		/* seek */
+        { &vop_remove_desc, puffs_vnop_remove },	/* remove */
+        { &vop_link_desc, puffs_vnop_link },		/* link */
+        { &vop_rename_desc, puffs_vnop_rename },	/* rename */
         { &vop_mkdir_desc, puffs_vnop_mkdir },		/* mkdir */
         { &vop_rmdir_desc, puffs_vnop_rmdir },		/* rmdir */
-        { &vop_symlink_desc, puffs_vnop_symlink },		/* symlink */
-        { &vop_readdir_desc, puffs_vnop_readdir },		/* readdir */
-        { &vop_readlink_desc, puffs_vnop_readlink },		/* readlink */
+        { &vop_symlink_desc, puffs_vnop_symlink },	/* symlink */
+        { &vop_readdir_desc, puffs_vnop_readdir },	/* readdir */
+        { &vop_readlink_desc, puffs_vnop_readlink },	/* readlink */
         { &vop_print_desc, puffs_vnop_print },		/* print */
-        { &vop_islocked_desc, puffs_vnop_islocked },		/* islocked */
-        { &vop_pathconf_desc, puffs_vnop_pathconf },		/* pathconf */
-        { &vop_advlock_desc, puffs_vnop_advlock },		/* advlock */
-        { &vop_getpages_desc, puffs_vnop_getpages },		/* getpages */
+        { &vop_islocked_desc, puffs_vnop_islocked },	/* islocked */
+        { &vop_pathconf_desc, puffs_vnop_pathconf },	/* pathconf */
+        { &vop_advlock_desc, puffs_vnop_advlock },	/* advlock */
+        { &vop_getpages_desc, puffs_vnop_getpages },	/* getpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc puffs_msgop_opv_desc =
