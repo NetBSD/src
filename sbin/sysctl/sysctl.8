@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.160 2009/04/01 15:55:27 christos Exp $
+.\"	$NetBSD: sysctl.8,v 1.161 2009/09/30 04:30:50 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd April 1, 2009
+.Dd September 30, 2009
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -376,16 +376,6 @@ This is the default for nodes that instrument data.
 .Dq Writable .
 The data instrumented by the given node is writable at any time.
 This is the default for nodes that can have children.
-.It 1
-.Dq Read-only at securelevel 1 .
-The data instrumented by this node is writable until the securelevel
-reaches or passes securelevel 1.
-Examples of this include some network tunables.
-.It 2
-.Dq Read-only at securelevel 2 .
-The data instrumented by this node is writable until the securelevel
-reaches or passes securelevel 2.
-An example of this is the per-process core filename setting.
 .El
 .Pp
 .It
@@ -527,8 +517,7 @@ sysctl -w //destroy=local
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr ksyms 4 ,
-.Xr sysctl 7 ,
-.Xr secmodel_securelevel 9
+.Xr sysctl 7
 .Sh HISTORY
 .Nm sysctl
 first appeared in
