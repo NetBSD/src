@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.498 2009/09/06 17:25:55 sborrill Exp $
+#	$NetBSD: Makefile,v 1.499 2009/09/30 22:32:04 jmcneill Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
@@ -59,7 +59,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
 	ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 unix.4 userconf.4 \
 	veriexec.4 vga.4 vge.4 viaide.4 video.4 vlan.4 vmmon.4 vmnet.4 \
 	vnd.4 vr.4 \
-	wapbl.4 wd.4 wdc.4 wi.4 wm.4 wpi.4 wscons.4 wsdisplay.4 wsfont.4 \
+	wapbl.4 wb.4 wd.4 wdc.4 wi.4 wm.4 wpi.4 wscons.4 wsdisplay.4 wsfont.4 \
 	wskbd.4 wsmouse.4 wsmux.4 \
 	xbox.4 xge.4 \
 	yds.4 ym.4 \
