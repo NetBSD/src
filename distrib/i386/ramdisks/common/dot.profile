@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.3 2008/11/25 14:25:59 ad Exp $
+#	$NetBSD: dot.profile,v 1.4 2009/09/30 00:32:08 ahoka Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -57,7 +57,11 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	stty newcrt werase ^W intr ^C kill ^U erase ^H
 	mount -t tmpfs tmpfs /tmp
+	mount -t tmpfs tmpfs /var
 	mount -t tmpfs -o union tmpfs /etc
+
+	mkdir -p /var/run /var/db
+	echo > /tmp/dhcpcd-lease
 
 	grep() sed -n "/$1/p"
 
