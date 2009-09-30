@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1294 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1295 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -405,3 +405,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		backend.  This is required by recent Xen linux kernels.
 		[bouyer 20090925]
 	ichlpcib(4): Add gpio(4) support. [jakllsch 20090927]
+	wb(4): Add a driver for Winbond W83L518D SD/MMC readers.
+		[jmcneill 20090930]
