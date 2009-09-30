@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1159 2009/09/29 23:56:27 tsarna Exp $
+# $NetBSD: mi,v 1.1160 2009/09/30 22:32:04 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1669,6 +1669,7 @@
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wapbl.0			man-sys-catman		.cat
+./usr/share/man/cat4/wb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wds.0			man-sys-catman		.cat
@@ -4208,6 +4209,7 @@
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
 ./usr/share/man/html4/wapbl.html		man-sys-htmlman		html
+./usr/share/man/html4/wb.html			man-sys-htmlman		html
 ./usr/share/man/html4/wd.html			man-sys-htmlman		html
 ./usr/share/man/html4/wdc.html			man-sys-htmlman		html
 ./usr/share/man/html4/wds.html			man-sys-htmlman		html
@@ -6685,6 +6687,7 @@
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
 ./usr/share/man/man4/wapbl.4			man-sys-man		.man
+./usr/share/man/man4/wb.4			man-sys-man		.man
 ./usr/share/man/man4/wd.4			man-sys-man		.man
 ./usr/share/man/man4/wdc.4			man-sys-man		.man
 ./usr/share/man/man4/wds.4			man-sys-man		.man
