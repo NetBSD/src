@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.29 2008/04/08 20:08:50 cegger Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.29.14.1 2009/09/30 00:01:19 snj Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.29 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.29.14.1 2009/09/30 00:01:19 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ lemac_isa_find(sc, ia, attach)
 	int attach;
 {
 	bus_addr_t maddr;
-	bus_addr_t msiz;
+	bus_size_t msiz;
 	int rv = 0, irq;
 
 	if (ia->ia_nio < 1)
