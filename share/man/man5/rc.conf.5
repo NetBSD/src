@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.136 2009/09/14 12:37:08 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.137 2009/09/30 18:17:22 apb Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 14, 2009
+.Dd September 30, 2009
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -829,6 +829,15 @@ Boolean value.
 Run
 .Xr wpa_supplicant 8 ,
 WPA/802.11i Supplicant for wireless network devices.
+If you set
+.Sy wpa_suplicant
+true, then
+.Pa /usr
+must be in
+.Sy critical_filesystems_local ,
+or
+.Pa /usr
+must be on the root file system.
 .El
 .Ss Daemons required by other daemons
 .Bl -tag -width net_interfaces
