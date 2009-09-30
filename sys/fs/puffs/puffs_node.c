@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.13 2008/05/06 12:33:16 ad Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.14 2009/09/30 18:19:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.13 2008/05/06 12:33:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.14 2009/09/30 18:19:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -223,7 +223,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		if (pnc->pnc_cookie == ck) {
 			mutex_exit(&pmp->pmp_lock);
 			puffs_senderr(pmp, PUFFS_ERR_MAKENODE, EEXIST,
-			    "cookie exists", ck);
+			    "newcookie exists", ck);
 			return EPROTO;
 		}
 	}
@@ -260,7 +260,6 @@ puffs_putvnode(struct vnode *vp)
 		panic("puffs_putvnode: %p not a puffs vnode", vp);
 #endif
 
-	LIST_REMOVE(pnode, pn_hashent);
 	genfs_node_destroy(vp);
 	puffs_releasenode(pnode);
 	vp->v_data = NULL;
@@ -336,6 +335,9 @@ puffs_makeroot(struct puffs_mount *pmp)
 	 */
 	mutex_enter(&pmp->pmp_lock);
 	if (pmp->pmp_root) {
+		struct puffs_node *pnode = vp->v_data;
+
+		LIST_REMOVE(pnode, pn_hashent);
 		mutex_exit(&pmp->pmp_lock);
 		puffs_putvnode(vp);
 		goto retry;
