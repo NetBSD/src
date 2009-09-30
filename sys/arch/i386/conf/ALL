@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.214 2009/09/29 11:58:18 pooka Exp $
+# $NetBSD: ALL,v 1.215 2009/09/30 20:47:09 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.214 $"
+#ident 		"ALL-$Revision: 1.215 $"
 
 maxusers	32		# estimated number of users
 
@@ -368,6 +368,7 @@ pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.253 2009/09/20 01:14:31 christos Exp $
+# $NetBSD: GENERIC,v 1.254 2009/09/30 20:48:09 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.253 $"
+#ident 		"GENERIC-$Revision: 1.254 $"
 
 maxusers	64		# estimated number of users
 
@@ -298,6 +298,7 @@ spic* 		at acpi?		# Sony Programmable I/O Controller
 wsmouse* 	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 #apm0	at mainbus0			# Advanced power management
