@@ -1,0 +1,5 @@
+# $NetBSD: XEN3PAE_DOM0,v 1.1.8.2 2009/09/30 00:08:03 snj Exp $
+
+include "arch/i386/conf/XEN3_DOM0"
+
+options 	 PAE

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.29.4.1 2009/04/04 23:36:27 snj Exp $      */
+/*      $NetBSD: xenevt.c,v 1.29.4.2 2009/09/30 00:08:03 snj Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.29.4.1 2009/04/04 23:36:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.29.4.2 2009/09/30 00:08:03 snj Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -373,7 +373,7 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 		if (off != 0)
 			return -1;
 		return x86_btop(
-		    xpmap_mtop(xen_start_info.store_mfn << PAGE_SHIFT));
+		   xpmap_mtop((paddr_t)xen_start_info.store_mfn << PAGE_SHIFT));
 	}
 #endif
 	return -1;
