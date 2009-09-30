@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.78 2009/09/28 18:45:31 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.79 2009/09/30 00:30:34 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13692,4 +13692,54 @@ xsrc/external/mit/xterm/dist/xtermcfg.hin	patch
 
 	Update xterm to 248.
 	[mrg, ticket #1034]
+
+sys/dev/audio.c					1.246, 1.247
+
+	OSS audio allows mixer operations on the dsp device. NetBSD would
+	return EINVAL in these circumstances. This can break audio in apps
+	running under Linux emulation.  Select whether to call
+	mixer_ioctl() or audio_ioctl() based on whether the command smells
+	like a mixer ioctl or not.
+	[sborrill, ticket #1016]
+
+sys/arch/hp700/dev/dino.c			1.14 via patch
+sys/arch/hp700/hp700/mainbus.c			1.53
+sys/arch/hp700/include/bus.h			1.14
+
+	Provide bus_space_mmap. Still needs implementing.
+	[skrll, ticket #1035]
+
+distrib/sets/lists/base/mi			1.811
+etc/mtree/NetBSD.dist				1.403
+share/locale/Makefile.locale			1.2
+share/locale/ctype/Makefile			1.29
+share/locale/messages/Makefile			1.6
+share/locale/monetary/Makefile			1.6
+share/locale/numeric/Makefile			1.5
+share/locale/time/Makefile			1.6
+
+	Add support for fr_*.UTF-8 locale. Setting LANG to fr_*.UTF-8
+	won't get the message catalog right (they're encoded in
+	iso-8859-1), but other locale functions should work right.
+	[bouyer, ticket #1037]
+
+etc/etc.i386/Makefile.in			1.60
+sys/dev/isa/if_lc_isa.c				1.30
+sys/dev/isa/if_tr_isa.c				1.19
+sys/dev/pci/if_dge.c				1.23
+sys/dev/pci/if_iwi.c				1.79
+sys/dev/pci/pccbb.c				1.183
+sys/arch/i386/conf/XEN3PAE_DOM0			1.1
+sys/arch/i386/i386/db_memrw.c			1.25
+sys/arch/i386/include/param.h			1.71
+sys/arch/xen/include/xenpmap.h			1.22
+sys/arch/xen/xen/xenevt.c			1.31
+sys/arch/x86/include/bus.h			1.18, 1.19
+sys/arch/x86/include/isa_machdep.h		1.7
+sys/arch/x86/x86/bus_space.c			1.21, 1.22
+sys/arch/x86/x86/ioapic.c			1.39 
+sys/arch/x86/x86/mpbios.c			1.53
+
+	Add i386PAE support to Xen3 dom0.
+	[bouyer, ticket #1040]
 
