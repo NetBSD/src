@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.957 2009/09/26 19:05:07 jakllsch Exp $
+#	$NetBSD: files,v 1.958 2009/09/30 20:44:49 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1146,6 +1146,11 @@ file	dev/usb/hid.c			hid
 # SD Host controller
 device sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc			needs-flag
+
+# Winbond Integrated Media Reader
+device	wb: sdmmcbus
+file	dev/ic/w83l518d.c		wb
+file	dev/ic/w83l518d_sdmmc.c		wb
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
