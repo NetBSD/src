@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.67.30.3 2009/02/16 03:06:21 snj Exp $	*/
+/*	$NetBSD: param.h,v 1.67.30.4 2009/09/30 00:08:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -161,9 +161,9 @@
 #define	x86_trunc_pdr(x)	((unsigned long)(x) & ~(NBPD_L2 - 1))
 #define	x86_btod(x)		((unsigned long)(x) >> L2_SHIFT)
 #define	x86_dtob(x)		((unsigned long)(x) << L2_SHIFT)
-#define	x86_round_page(x)	((((unsigned long)(x)) + PGOFSET) & ~PGOFSET)
-#define	x86_trunc_page(x)	((unsigned long)(x) & ~PGOFSET)
-#define	x86_btop(x)		((unsigned long)(x) >> PGSHIFT)
-#define	x86_ptob(x)		((unsigned long)(x) << PGSHIFT)
+#define	x86_round_page(x)	((((paddr_t)(x)) + PGOFSET) & ~PGOFSET)
+#define	x86_trunc_page(x)	((paddr_t)(x) & ~PGOFSET)
+#define	x86_btop(x)		((paddr_t)(x) >> PGSHIFT)
+#define	x86_ptob(x)		((paddr_t)(x) << PGSHIFT)
 
 #endif /* _I386_PARAM_H_ */

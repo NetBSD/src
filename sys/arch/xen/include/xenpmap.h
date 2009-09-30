@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.21 2008/10/24 22:06:06 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21.4.1 2009/09/30 00:08:03 snj Exp $	*/
 
 /*
  *
@@ -71,15 +71,17 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
-	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
-	    XPMAP_OFFSET) | (mpa & ~PG_FRAME);
+	return (
+	    ((paddr_t)machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT)
+	    + XPMAP_OFFSET) | (mpa & ~PG_FRAME);
 }
 
 static __inline paddr_t
 xpmap_mtop_masked(paddr_t mpa)
 {
-	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
-	    XPMAP_OFFSET);
+	return (
+	    ((paddr_t)machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT)
+	    + XPMAP_OFFSET);
 }
 
 static __inline paddr_t
