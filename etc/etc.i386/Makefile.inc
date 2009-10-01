@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.63 2009/07/16 10:43:23 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.64 2009/10/01 11:51:04 tron Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -7,6 +7,7 @@
 # to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=	GENERIC
+KERNEL_SETS+=	MONOLITHIC
 KERNEL_SETS+=	XEN3_DOM0
 KERNEL_SETS+=	XEN3_DOMU
 KERNEL_SETS+=	XEN3PAE_DOM0
