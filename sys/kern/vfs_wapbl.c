@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.27 2009/10/01 07:42:45 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.28 2009/10/01 12:28:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.27 2009/10/01 07:42:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.28 2009/10/01 12:28:34 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -784,16 +784,20 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		   wl->wl_bufbytes_max / 2) ||
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
-		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2);
+		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
+		  (wl->wl_dealloccnt >=
+		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
 		WAPBL_PRINTF(WAPBL_PRINT_FLUSH,
 		    ("force flush lockcnt=%d bufbytes=%zu "
-		    "(max=%zu) bufcount=%zu (max=%zu)\n",
+		    "(max=%zu) bufcount=%zu (max=%zu) "
+		    "dealloccnt %d (lim=%d)\n",
 		    lockcount, wl->wl_bufbytes,
 		    wl->wl_bufbytes_max, wl->wl_bufcount,
-		    wl->wl_bufcount_max));
+		    wl->wl_bufcount_max,
+		    wl->wl_dealloccnt, wl->wl_dealloclim));
 	}
 
 	if (doflush) {
