@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.25 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: kill.c,v 1.26 2009/10/01 09:24:38 spz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.25 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: kill.c,v 1.26 2009/10/01 09:24:38 spz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: kill.c,v 1.25 2008/07/20 00:52:40 lukem Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <inttypes.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -69,7 +71,8 @@ int main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int errors, numsig, pid;
+	int errors;
+	intmax_t numsig, pid;
 	char *ep;
 
 	setprogname(argv[0]);
@@ -87,17 +90,19 @@ main(int argc, char *argv[])
 		if (argc == 1) {
 			if (isdigit((unsigned char)**argv) == 0)
 				usage();
-			numsig = strtol(*argv, &ep, 10);
-			if (*ep != '\0') {
+			numsig = strtoimax(*argv, &ep, 10);
+			/* check for correctly parsed number */
+			if (*ep != '\0' || numsig == INTMAX_MIN || numsig == INTMAX_MAX) {
 				errx(EXIT_FAILURE, "illegal signal number: %s",
 						*argv);
 				/* NOTREACHED */
 			}
 			if (numsig >= 128)
 				numsig -= 128;
+			/* and whether it fits into signals range */
 			if (numsig <= 0 || numsig >= NSIG)
 				nosig(*argv);
-			printf("%s\n", sys_signame[numsig]);
+			printf("%s\n", sys_signame[(int) numsig]);
 			exit(0);
 		}
 		printsignals(stdout);
@@ -122,12 +127,14 @@ main(int argc, char *argv[])
 			if ((numsig = signame_to_signum(sn)) < 0)
 				nosig(sn);
 		} else if (isdigit((unsigned char)*sn)) {
-			numsig = strtol(sn, &ep, 10);
-			if (*ep) {
+			numsig = strtoimax(sn, &ep, 10);
+			/* check for correctly parsed number */
+			if (*ep || numsig == INTMAX_MIN || numsig == INTMAX_MAX ) {
 				errx(EXIT_FAILURE, "illegal signal number: %s",
 						sn);
 				/* NOTREACHED */
 			}
+			/* and whether it fits into signals range */
 			if (numsig < 0 || numsig >= NSIG)
 				nosig(sn);
 		} else
@@ -151,14 +158,17 @@ main(int argc, char *argv[])
 		} else 
 #endif
 		{
-			pid = strtol(*argv, &ep, 10);
-			if (!**argv || *ep) {
+			pid = strtoimax(*argv, &ep, 10);
+			/* make sure the pid is a number and fits into pid_t */
+			if (!**argv || *ep || pid == INTMAX_MIN ||
+				pid == INTMAX_MAX || pid != (pid_t) pid) {
+
 				warnx("illegal process id: %s", *argv);
 				errors = 1;
 				continue;
 			}
 		}
-		if (kill(pid, numsig) == -1) {
+		if (kill((pid_t) pid, (int) numsig) == -1) {
 			warn("%s", *argv);
 			errors = 1;
 		}
@@ -166,7 +176,7 @@ main(int argc, char *argv[])
 		/* Wakeup the process if it was suspended, so it can
 		   exit without an explicit 'fg'. */
 		if (numsig == SIGTERM || numsig == SIGHUP)
-			kill(pid, SIGCONT);
+			kill((pid_t) pid, SIGCONT);
 #endif
 	}
 
