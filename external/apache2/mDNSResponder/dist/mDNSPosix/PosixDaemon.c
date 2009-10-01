@@ -101,7 +101,12 @@ Only use mallocL/freeL debugging routines when building mDNSResponder, not dnsex
 #include "mDNSPosix.h"
 #include "mDNSUNP.h"		// For daemon()
 #include "uds_daemon.h"
+#include "DNSCommon.h"
 #include "PlatformCommon.h"
+
+#ifndef MDNSD_USER
+#define MDNSD_USER "nobody"
+#endif
 
 #define CONFIG_FILE "/etc/mdnsd.conf"
 static domainname DynDNSZone;                // Default wide-area zone for service registration
@@ -143,8 +148,10 @@ static void Reconfigure(mDNS *m)
 	mDNSAddr DynDNSIP;
 	const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 1, 1, 1, 1 } } } };;
 	mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
+        mDNS_Lock(m);
 	if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
 		LogMsg("Unable to parse DNS server list. Unicast DNS-SD unavailable");
+        mDNS_Unlock(m);
 	ReadDDNSSettingsFromConfFile(m, CONFIG_FILE, &DynDNSHostname, &DynDNSZone, NULL);
 	mDNSPlatformSourceAddrForDest(&DynDNSIP, &dummy);
 	if (DynDNSHostname.c[0]) mDNS_AddDynDNSHostName(m, &DynDNSHostname, NULL, NULL);
@@ -175,8 +182,26 @@ mDNSlocal void ParseCmdLinArgs(int argc, char **argv)
 mDNSlocal void DumpStateLog(mDNS *const m)
 // Dump a little log of what we've been up to.
 	{
+	DNSServer *s;
+
 	LogMsg("---- BEGIN STATE LOG ----");
 	udsserver_info(m);
+
+        LogMsgNoIdent("--------- DNS Servers ----------");
+        if (!mDNSStorage.DNSServers) LogMsgNoIdent("<None>");
+        else
+                {               
+                for (s = m->DNSServers; s; s = s->next)
+                        {
+                        LogMsgNoIdent("DNS Server %##s %#a:%d %s",
+                                s->domain.c, &s->addr, mDNSVal16(s->port),
+                                s->teststate == DNSServer_Untested ? "(Untested)" :
+                                s->teststate == DNSServer_Passed   ? ""           :
+                                s->teststate == DNSServer_Failed   ? "(Failed)"   :
+                                s->teststate == DNSServer_Disabled ? "(Disabled)" : "(Unknown state)");
+                        }
+                }               
+
 	LogMsg("----  END STATE LOG  ----");
 	}
 
@@ -241,11 +266,21 @@ int main(int argc, char **argv)
 	// Now that we're finished with anything privileged, switch over to running as "nobody"
 	if (mStatus_NoError == err)
 		{
-		const struct passwd *pw = getpwnam("nobody");
+		const struct passwd *pw = getpwnam(MDNSD_USER);
 		if (pw != NULL)
+		        {
+			setgid(pw->pw_gid);
 			setuid(pw->pw_uid);
+		        }
 		else
-			LogMsg("WARNING: mdnsd continuing as root because user \"nobody\" does not exist");
+#ifdef MDNSD_NOROOT
+                        {
+    			LogMsg("WARNING: mdnsd exiting because user \""MDNSD_USER"\" does not exist");
+                        err = mStatus_Invalid;
+                        }
+#else
+    			LogMsg("WARNING: mdnsd continuing as root because user \""MDNSD_USER"\" does not exist");
+#endif
 		}
 
 	if (mStatus_NoError == err)
