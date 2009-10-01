@@ -1083,7 +1083,10 @@ typedef struct reply_state
 
 // globals
 mDNSexport mDNS mDNSStorage;
-mDNSexport const char ProgramName[] = "mDNSResponder";
+#ifndef PROGRAM_NAME
+#define PROGRAM_NAME "mDNSResponder"
+#endif
+mDNSexport const char ProgramName[] = PROGRAM_NAME;
 
 static dnssd_sock_t listenfd = dnssd_InvalidSocket;
 static request_state *all_requests = NULL;
