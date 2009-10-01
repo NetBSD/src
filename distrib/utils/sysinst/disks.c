@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.106 2009/08/23 18:43:33 jmcneill Exp $ */
+/*	$NetBSD: disks.c,v 1.107 2009/10/01 10:41:03 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -287,6 +287,8 @@ get_descr(struct disk_desc *dd)
 	fd = opendisk(dd->dd_name, O_RDONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
 		goto done;
+
+	dd->dd_descr[0] = '\0';
 
 	/* try ATA */
 	if (get_descr_ata(dd, fd))
