@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.26 2009/07/14 20:59:00 apb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.27 2009/10/01 07:42:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.26 2009/07/14 20:59:00 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.27 2009/10/01 07:42:45 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -1668,8 +1668,14 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wapbl_jlock_assert(wl);
 
 	/* XXX should eventually instead tie this into resource estimation */
-	/* XXX this KASSERT needs locking/mutex analysis */
-	KASSERT(wl->wl_dealloccnt < wl->wl_dealloclim);
+	/*
+	 * XXX this panic needs locking/mutex analysis and the
+	 * ability to cope with the failure.
+	 */
+	/* XXX this XXX doesn't have enough XXX */
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
+		panic("wapbl_register_deallocation: out of resources");
+
 	wl->wl_deallocblks[wl->wl_dealloccnt] = blk;
 	wl->wl_dealloclens[wl->wl_dealloccnt] = len;
 	wl->wl_dealloccnt++;
