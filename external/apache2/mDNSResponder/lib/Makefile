@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/29 23:56:28 tsarna Exp $
+#	$NetBSD: Makefile,v 1.2 2009/10/01 09:35:08 tron Exp $
 
 .include <bsd.init.mk>
 
@@ -6,6 +6,8 @@ LIB=	dns_sd
 
 SRCS=	dnssd_clientlib.c dnssd_clientstub.c dnssd_ipc.c  
 CPPFLAGS+=-I${DIST}/mDNSShared
+
+COPTS.dnssd_clientstub.c += -Wno-stack-protector
 
 INCS=	dns_sd.h
 INCSDIR=/usr/include
