@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.9 2009/08/20 02:40:57 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.9 2009/08/20 02:40:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ r128fb_match(device_t parent, cfdata_t match, void *aux)
 	/* only cards tested on so far - likely need a list */
 	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE1AGP4XT) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE3AGP4XT) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGEGLPCI) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP))
 		return 100;
 	return (0);
