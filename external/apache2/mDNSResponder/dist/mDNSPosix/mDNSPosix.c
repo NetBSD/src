@@ -600,6 +600,7 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 			numOfServers++;
 			}
 		}  
+	fclose(fp);
 	return (numOfServers > 0) ? 0 : -1;
 	}
 
