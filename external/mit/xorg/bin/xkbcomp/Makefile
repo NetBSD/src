@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/09/25 06:07:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/10/01 02:27:59 mrg Exp $
 
 .include <bsd.own.mk>
 .include "Makefile.common"
@@ -17,7 +17,8 @@ CPPFLAGS.geometry.c=	-Wno-error	# XXX
 FILESDIR=${X11LIBDIR}/xkb
 FILES=	README README.config README.enhancing
 
-SYMLINKS+=${BINDIR}/xkbcomp ${X11LIBDIR}/xkb/xkbcomp
+SYMLINKS+=	${BINDIR}/xkbcomp ${X11LIBDIR}/xkb/xkbcomp
+SYMLINKS+=	${XKBCOMPDIR} ${X11LIBDIR}/xkb/compiled
 
 LDADD+=	-lxkbfile -lXext -lX11
 DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
