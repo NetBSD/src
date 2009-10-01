@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.161 2009/09/08 17:29:20 sjg Exp $
+.\"	$NetBSD: make.1,v 1.162 2009/10/01 21:40:31 dsl Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 7, 2009
+.Dd October 1, 2009
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1061,8 +1061,11 @@ otherwise return the
 Since the variable name is used as the expression, \&:\&? must be the
 first modifier after the variable name itself - which will, of course,
 usually contain variable expansions.
-If the expression is a single token, it will likely be treated as a check
-for the name being defined.
+A common error is trying to use expressions like
+.Dl ${NUMBERS:M42:?match:no}
+which actually tests defined(NUMBERS),
+to determine is any words match "42" you need to use something like:
+.Dl ${${NUMBERS:M42} != "":?match:no} .
 .It Ar :old_string=new_string
 This is the
 .At V
