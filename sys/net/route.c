@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.118 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.119 2009/10/02 23:16:21 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.118 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.119 2009/10/02 23:16:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.118 2009/09/16 15:23:04 pooka Exp $");
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -137,6 +138,8 @@ struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 #ifdef RTFLUSH_DEBUG
 static int _rtcache_debug = 0;
 #endif /* RTFLUSH_DEBUG */
+
+static kauth_listener_t route_listener;
 
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct rtentry *, void *);
@@ -260,6 +263,22 @@ rtable_init(void **table)
 			    dom->dom_rtoffset);
 }
 
+static int
+route_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct rt_msghdr *rtm;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	rtm = arg1;
+
+	if (rtm->rtm_type == RTM_GET)
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 void
 route_init(void)
 {
@@ -276,6 +295,9 @@ route_init(void)
 	rt_init();
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
+
+	route_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    route_listener_cb, NULL);
 }
 
 void
