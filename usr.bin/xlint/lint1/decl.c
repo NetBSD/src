@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.48 2009/10/02 19:01:13 christos Exp $ */
+/* $NetBSD: decl.c,v 1.49 2009/10/02 20:45:06 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.48 2009/10/02 19:01:13 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.49 2009/10/02 20:45:06 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -254,8 +254,10 @@ void
 addtype(type_t *tp)
 {
 	tspec_t	t;
-//	char buf[1024];
-// printf("addtype %s\n", tyname(buf, sizeof(buf), tp));
+#ifdef DEBUG
+	char buf[1024];
+	printf("addtype %s\n", tyname(buf, sizeof(buf), tp));
+#endif
 	if (tp->t_typedef) {
 		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
 		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC) {
@@ -516,9 +518,9 @@ setpackedsize(type_t *tp)
 void
 addpacked(void)
 {
-	if (dcs->d_type == NULL) {
+	if (dcs->d_type == NULL)
 		dcs->d_ispacked = 1;
-	} else
+	else
 		setpackedsize(dcs->d_type);
 }
 
@@ -1639,6 +1641,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		tag->s_scl = scl;
 		tag->s_blklev = -1;
 		tag->s_type = tp = getblk(sizeof (type_t));
+		tp->t_ispacked = dcs->d_ispacked;
 		dcs->d_nxt->d_nedecl = 1;
 	}
 
