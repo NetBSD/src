@@ -1,8 +1,7 @@
-/* 
+/*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
- * All rights reserved
-
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,58 +24,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
-#include <stdio.h>
-#include <time.h>
+#define PACKAGE			"dhcpcd"
+#define VERSION			"5.1.1"
 
-#include "config.h"
-#include "defs.h"
-
-#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
-
-#define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
-#define timernorm(tvp)							\
-	do {								\
-		while ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (0 /* CONSTCOND */);
-
-#if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# define _noreturn __attribute__((__noreturn__))
-# define _packed   __attribute__((__packed__))
-# define _unused   __attribute__((__unused__))
-#else
-# define _noreturn
-# define _packed
-# define _unused
+#ifndef CONFIG
+# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
 #endif
-
-/* We don't really need this as our supported systems define __restrict
- * automatically for us, but it is here for completeness. */
-#ifndef __restrict
-# if defined(__lint__)
-#  define __restrict
-# elif __STDC_VERSION__ >= 199901L
-#  define __restrict restrict
-# elif !(2 < __GNUC__ || (2 == __GNU_C && 95 <= __GNUC_VERSION__))
-#  define __restrict
-# endif
+#ifndef SCRIPT
+# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
 #endif
-
-int set_cloexec(int);
-int set_nonblock(int);
-char *get_line(FILE * __restrict);
-extern int clock_monotonic;
-int get_monotonic(struct timeval *);
-time_t uptime(void);
-int writepid(int, pid_t);
-void *xrealloc(void *, size_t);
-void *xmalloc(size_t);
-void *xzalloc(size_t);
-char *xstrdup(const char *);
+#ifndef DUID
+# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
+#endif
+#ifndef LEASEFILE
+# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
+#endif
+#ifndef PIDFILE
+# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
+#endif
+#ifndef CONTROLSOCKET
+# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
+#endif
 
 #endif
