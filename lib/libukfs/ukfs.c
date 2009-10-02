@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.36 2009/09/29 11:17:00 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.37 2009/10/02 09:32:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@
 struct ukfs {
 	struct mount *ukfs_mp;
 	struct vnode *ukfs_rvp;
+	void *ukfs_specific;
 
 	pthread_spinlock_t ukfs_spin;
 	pid_t ukfs_nextpid;
@@ -96,6 +97,20 @@ ukfs_getrvp(struct ukfs *ukfs)
 	rump_vp_incref(rvp);
 
 	return rvp;
+}
+
+void
+ukfs_setspecific(struct ukfs *ukfs, void *priv)
+{
+
+	ukfs->ukfs_specific = priv;
+}
+
+void *
+ukfs_getspecific(struct ukfs *ukfs)
+{
+
+	return ukfs->ukfs_specific;
 }
 
 #ifdef DONT_WANT_PTHREAD_LINKAGE
@@ -302,20 +317,25 @@ ukfs_release(struct ukfs *fs, int flags)
 {
 
 	if ((flags & UKFS_RELFLAG_NOUNMOUNT) == 0) {
-		int rv, mntflag;
+		int rv, mntflag, error;
 
 		ukfs_chdir(fs, "/");
 		mntflag = 0;
 		if (flags & UKFS_RELFLAG_FORCE)
 			mntflag = MNT_FORCE;
 		rump_setup_curlwp(nextpid(fs), 1, 1);
+		rump_vp_rele(fs->ukfs_rvp);
+		fs->ukfs_rvp = NULL;
 		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
-		rump_clear_curlwp();
-		if (rv) {
+		if (rv == -1) {
+			error = errno;
+			rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+			rump_clear_curlwp();
 			ukfs_chdir(fs, fs->ukfs_mountpath);
-			errno = rv;
+			errno = error;
 			return -1;
 		}
+		rump_clear_curlwp();
 	}
 
 	if (fs->ukfs_devpath) {
