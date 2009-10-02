@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  */
 
+/* Needed define to get at getline for glibc and FreeBSD */
+#define _GNU_SOURCE
+
 #include <sys/cdefs.h>
 
 #ifdef __APPLE__
@@ -35,7 +38,9 @@
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #ifdef BSD
 #  include <paths.h>
 #endif
@@ -56,15 +61,18 @@
 int clock_monotonic;
 static char *lbuf;
 static size_t lbuf_len;
+#ifdef DEBUG_MEMORY
+static char lbuf_set;
+#endif
 
 #ifdef DEBUG_MEMORY
 static void
 free_lbuf(void)
 {
 	free(lbuf);
+	lbuf = NULL;
 }
 #endif
-
 
 /* Handy routine to read very long lines in text files.
  * This means we read the whole line and avoid any nasty buffer overflows.
@@ -74,106 +82,27 @@ free_lbuf(void)
 char *
 get_line(FILE * __restrict fp)
 {
-	char *p, *e;
-	size_t last;
-
-again:
-	if (feof(fp))
-		return NULL;
+	char *p;
+	ssize_t bytes;
 
 #ifdef DEBUG_MEMORY
-	if (lbuf == NULL)
+	if (lbuf_set == 0) {
 		atexit(free_lbuf);
+		lbuf_set = 1;
+	}
 #endif
 
-	last = 0;
 	do {
-		if (lbuf == NULL || last != 0) {
-			lbuf_len += BUFSIZ;
-			lbuf = xrealloc(lbuf, lbuf_len);
-		}
-		p = lbuf + last;
-		memset(p, 0, BUFSIZ);
-		if (fgets(p, BUFSIZ, fp) == NULL)
-			break;
-		last += strlen(p);
-		if (last != 0 && lbuf[last - 1] == '\n') {
-			lbuf[last - 1] = '\0';
-			break;
-		}
-	} while(!feof(fp));
-	if (last == 0)
-		return NULL;
-
-	e = p + last - 1;
-	for (p = lbuf; p < e; p++) {
-		if (*p != ' ' && *p != '\t')
-			break;
-	}
-	if (p == e || *p == '#' || *p == ';')
-		goto again;
+		bytes = getline(&lbuf, &lbuf_len, fp);
+		if (bytes == -1)
+			return NULL;
+		for (p = lbuf; *p == ' ' || *p == '\t'; p++)
+			;
+	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
+	if (lbuf[--bytes] == '\n')
+		lbuf[bytes] = '\0';
 	return p;
 }
-
-/* Simple hack to return a random number without arc4random */
-#ifndef HAVE_ARC4RANDOM
-uint32_t arc4random(void)
-{
-	int fd;
-	static unsigned long seed;
-
-	if (seed == 0) {
-		fd = open("/dev/urandom", 0);
-		if (fd == -1 || read(fd,  &seed, sizeof(seed)) == -1)
-			seed = time(0);
-		if (fd >= 0)
-			close(fd);
-		srandom(seed);
-	}
-
-	return (uint32_t)random();
-}
-#endif
-
-/* strlcpy is nice, shame glibc does not define it */
-#if HAVE_STRLCPY
-#else
-size_t
-strlcpy(char *dst, const char *src, size_t size)
-{
-	const char *s = src;
-	size_t n = size;
-
-	if (n && --n)
-		do {
-			if (!(*dst++ = *src++))
-				break;
-		} while (--n);
-
-	if (!n) {
-		if (size)
-			*dst = '\0';
-		while (*src++);
-	}
-
-	return src - s - 1;
-}
-#endif
-
-#if HAVE_CLOSEFROM
-#else
-int
-closefrom(int fd)
-{
-	int max = getdtablesize();
-	int i;
-	int r = 0;
-
-	for (i = fd; i < max; i++)
-		r += close(i);
-	return r;
-}
-#endif
 
 int
 set_cloexec(int fd)

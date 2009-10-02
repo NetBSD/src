@@ -25,58 +25,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef GETLINE_H
+#define GETLINE_H
 
+#include <sys/types.h>
 #include <stdio.h>
-#include <time.h>
 
-#include "config.h"
-#include "defs.h"
-
-#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
-
-#define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
-#define timernorm(tvp)							\
-	do {								\
-		while ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (0 /* CONSTCOND */);
-
-#if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# define _noreturn __attribute__((__noreturn__))
-# define _packed   __attribute__((__packed__))
-# define _unused   __attribute__((__unused__))
-#else
-# define _noreturn
-# define _packed
-# define _unused
-#endif
-
-/* We don't really need this as our supported systems define __restrict
- * automatically for us, but it is here for completeness. */
-#ifndef __restrict
-# if defined(__lint__)
-#  define __restrict
-# elif __STDC_VERSION__ >= 199901L
-#  define __restrict restrict
-# elif !(2 < __GNUC__ || (2 == __GNU_C && 95 <= __GNUC_VERSION__))
-#  define __restrict
-# endif
-#endif
-
-int set_cloexec(int);
-int set_nonblock(int);
-char *get_line(FILE * __restrict);
-extern int clock_monotonic;
-int get_monotonic(struct timeval *);
-time_t uptime(void);
-int writepid(int, pid_t);
-void *xrealloc(void *, size_t);
-void *xmalloc(size_t);
-void *xzalloc(size_t);
-char *xstrdup(const char *);
-
+ssize_t getline(char ** __restrict buf, size_t * __restrict buflen,
+    FILE * __restrict fp);
 #endif
