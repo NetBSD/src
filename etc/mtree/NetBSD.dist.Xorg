@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.1 2009/09/07 19:34:30 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.2 2009/10/02 00:00:59 mrg Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -116,7 +116,6 @@
 ./usr/X11R7/lib/X11/xedit/lisp/progmodes
 ./usr/X11R7/lib/X11/xkb
 ./usr/X11R7/lib/X11/xkb/compat
-./usr/X11R7/lib/X11/xkb/compiled
 ./usr/X11R7/lib/X11/xkb/geometry
 ./usr/X11R7/lib/X11/xkb/geometry/digital_vndr
 ./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr
