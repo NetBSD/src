@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.46 2009/04/15 01:20:57 christos Exp $ */
+/* $NetBSD: decl.c,v 1.47 2009/10/02 15:03:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.46 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.47 2009/10/02 15:03:45 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -484,6 +484,41 @@ settdsym(type_t *tp, sym_t *sym)
 	}
 }
 
+void
+addpacked(void)
+{
+	str_t *sp;
+	sym_t *mem;
+	type_t *tp = dcs->d_type;
+	char buf[256];
+
+	if (tp == NULL)
+		LERROR("no type attr");
+
+	tp->t_ispacked = 1;
+
+	switch (tp->t_tspec) {
+	case STRUCT:
+		sp = tp->t_str;
+		sp->size = 0;
+		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt)
+			sp->size += size(mem->s_type->t_tspec);
+		break;
+	case UNION:
+		sp = tp->t_str;
+		sp->size = 0;
+		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt) {
+			size_t x = size(mem->s_type->t_tspec);
+			if (x > sp->size)
+				sp->size = x;
+		}
+		break;
+	default:
+		warning(326, "packed", tyname(buf, sizeof(buf), tp));
+		break;
+	}
+}
+
 /*
  * Remember a qualifier which is part of the declaration specifiers
  * (and not the declarator) in the top element of the declaration stack.
@@ -522,15 +557,15 @@ pushdecl(scl_t sc)
 {
 	dinfo_t	*di;
 
-	if (dflag)
-		(void)printf("pushdecl(%d)\n", (int)sc);
-
 	/* put a new element on the declaration stack */
 	di = xcalloc(1, sizeof (dinfo_t));
 	di->d_nxt = dcs;
 	dcs = di;
 	di->d_ctx = sc;
 	di->d_ldlsym = &di->d_dlsyms;
+	if (dflag)
+		(void)printf("pushdecl(%p %d)\n", dcs, (int)sc);
+
 }
 
 /*
@@ -542,7 +577,7 @@ popdecl(void)
 	dinfo_t	*di;
 
 	if (dflag)
-		(void)printf("popdecl(%d)\n", (int)dcs->d_ctx);
+		(void)printf("popdecl(%p %d)\n", dcs, (int)dcs->d_ctx);
 
 	if (dcs->d_nxt == NULL)
 		LERROR("popdecl()");
@@ -1617,7 +1652,6 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		/* ist unvollstaendiger Typ */
 		setcompl(tp, 1);
 	}
-
 	return (tp);
 }
 
