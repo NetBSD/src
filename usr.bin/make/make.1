@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.162 2009/10/01 21:40:31 dsl Exp $
+.\"	$NetBSD: make.1,v 1.163 2009/10/02 07:43:15 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -663,10 +663,10 @@ Each makefile is recorded only once, regardless of the number of times read.
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
-The initial instance of 
+The initial instance of
 .Nm
 will be 0, and an incremented value is put into the environment
-to be seen by the next generation.  
+to be seen by the next generation.
 This allows tests like:
 .Li .if ${.MAKE.LEVEL} == 0
 to protect things which should only be evaluated in the initial instance of
