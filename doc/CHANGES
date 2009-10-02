@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1297 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1298 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -174,8 +174,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		pciback.hide boot parameter will attach.
 		DomU kernels gets a xpci device, to which PCI buses
 		will attach.  [bouyer 20090305]
-	xen: Add XEN3PAE_DOM0, a i386 domain0 kernel with PAE support.
-		requires a i386PAE or x86_64 hypervisor.  [bouyer 20090305]
+	xen: Add XEN3PAE_DOM0, an i386 domain0 kernel with PAE support.
+		requires an i386PAE or x86_64 hypervisor.  [bouyer 20090305]
 	ar(1): Add support to ar(1) for 'deterministic mode'.
 		[christos 20090306]
 	kernel: Compute kern.ipc.shmmaxpgs on startup based on physical
