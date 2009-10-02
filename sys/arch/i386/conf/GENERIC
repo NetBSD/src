@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.947 2009/09/30 22:19:00 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.948 2009/10/02 16:47:52 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.947 $"
+#ident 		"GENERIC-$Revision: 1.948 $"
 
 maxusers	64		# estimated number of users
 
@@ -361,6 +361,7 @@ acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
 aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
