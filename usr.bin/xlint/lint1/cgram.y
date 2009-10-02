@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.44 2009/05/02 16:10:49 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.45 2009/10/02 15:03:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.44 2009/05/02 16:10:49 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.45 2009/10/02 15:03:45 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -182,6 +182,18 @@ static inline void RESTORE(const char *file, size_t line)
 %token			T_RETURN
 %token			T_ASM
 %token			T_SYMBOLRENAME
+%token			T_PACKED
+/* Type Attributes */
+%token <y_type>		T_ATTRIBUTE
+%token <y_type>		T_AT_ALIGNED
+%token <y_type>		T_AT_DEPRECATED
+%token <y_type>		T_AT_MAY_ALIAS
+%token <y_type>		T_AT_PACKED
+%token <y_type>		T_AT_TUINION
+%token <y_type>		T_AT_TUNION
+%token <y_type>		T_AT_UNUSED
+
+
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -212,6 +224,8 @@ static inline void RESTORE(const char *file, size_t line)
 %type	<y_type>	notype_typespec
 %type	<y_type>	struct_spec
 %type	<y_type>	enum_spec
+%type	<y_type>	type_attribute
+%type	<y_type>	type_attribute_spec
 %type	<y_sym>		struct_tag
 %type	<y_sym>		enum_tag
 %type	<y_tspec>	struct
@@ -454,6 +468,24 @@ declaration:
 	| error T_SEMI
 	;
 
+type_attribute_spec:
+	  T_AT_DEPRECATED
+	| T_AT_ALIGNED T_LPARN constant T_RPARN
+	| T_AT_MAY_ALIAS
+	| T_AT_PACKED {
+		addpacked();
+	}
+	| T_AT_TUNION
+	| T_AT_UNUSED
+	;
+
+type_attribute:
+	  T_ATTRIBUTE T_LPARN T_LPARN type_attribute_spec T_RPARN T_RPARN
+	| T_PACKED {
+		addpacked();
+	}
+	;
+
 clrtyp:
 	  {
 		clrtyp();
@@ -473,6 +505,7 @@ declspecs:
 	| declmods typespec {
 		addtype($2);
 	  }
+	| declspecs type_attribute
 	| declspecs declmod
 	| declspecs notype_typespec {
 		addtype($2);
