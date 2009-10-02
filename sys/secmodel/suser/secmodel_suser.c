@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.12 2009/10/02 23:24:15 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.13 2009/10/02 23:50:16 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.12 2009/10/02 23:24:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.13 2009/10/02 23:50:16 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.12 2009/10/02 23:24:15 elad Exp
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
-#include <net/route.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/uidinfo.h>
@@ -864,55 +863,29 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_DROP:
-			/*
-			 * The superuser can drop any connection.  Normal users
-			 * can only drop their own connections.
-			 */
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			else {
-				struct socket *so = (struct socket *)arg1;
-				uid_t sockuid = so->so_uidinfo->ui_uid;
-
-				if (sockuid == kauth_cred_getuid(cred) ||
-				    sockuid == kauth_cred_geteuid(cred))
-					result = KAUTH_RESULT_ALLOW;
-			}
-
-			
-			break;
-
 		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
-			if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
-				result = KAUTH_RESULT_ALLOW;
-			else if ((u_long)arg2 == SOCK_RAW) {
-				if (isroot)
-					result = KAUTH_RESULT_ALLOW;
-			} else
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
 		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
+		case KAUTH_REQ_NETWORK_SOCKET_SETPRIV:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 			break;
 
 		case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
+			if (isroot) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
 			if (secmodel_bsd44_curtain) {
 				uid_t so_uid;
 
 				so_uid =
 				    ((struct socket *)arg1)->so_uidinfo->ui_uid;
-				if (isroot ||
-				    kauth_cred_geteuid(cred) == so_uid)
+				if (kauth_cred_geteuid(cred) == so_uid)
 					result = KAUTH_RESULT_ALLOW;
 			} else
 				result = KAUTH_RESULT_ALLOW;
-			break;
 
-		case KAUTH_REQ_NETWORK_SOCKET_SETPRIV:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
 			break;
 
 		default:
