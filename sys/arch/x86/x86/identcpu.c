@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.16 2009/04/30 00:07:23 rmind Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17 2009/10/02 18:50:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.16 2009/04/30 00:07:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17 2009/10/02 18:50:03 jmcneill Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_intel_coretemp.h"
+#include "opt_via_c7temp.h"
 #include "opt_powernow_k8.h"
 #include "opt_xen.h"
 #ifdef i386	/* XXX */
@@ -749,6 +750,18 @@ cpu_identify(struct cpu_info *ci)
 #ifdef INTEL_CORETEMP
 	if (cpu_vendor == CPUVENDOR_INTEL && cpuid_level >= 0x06)
 		coretemp_register(ci);
+#endif
+
+#ifdef VIA_C7TEMP
+	if (cpu_vendor == CPUVENDOR_IDT &&
+	    CPUID2FAMILY(ci->ci_signature) == 6 &&
+	    CPUID2MODEL(ci->ci_signature) >= 0x9) {
+		uint32_t descs[4];
+
+		x86_cpuid(0xc0000000, descs);
+		if (descs[0] >= 0xc0000002)	/* has temp sensor */
+			viac7temp_register(ci);
+	}
 #endif
 
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
