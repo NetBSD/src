@@ -99,7 +99,7 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 	if (ocets > 0) {
 		memset(&addr->s_addr, 255, (size_t)ocets - 1);
 	
-	memset((unsigned char *)&addr->s_addr + (ocets - 1),
+		memset((unsigned char *)&addr->s_addr + (ocets - 1),
 		    (256 - (1 << (32 - cidr) % 8)), 1);
 	}
 
@@ -218,21 +218,20 @@ init_interface(const char *ifname)
 			goto eexit;
 	}
 
-	if (up_interface(ifname) != 0)
-		goto eexit;
 	snprintf(iface->leasefile, sizeof(iface->leasefile),
 	    LEASEFILE, ifname);
 	/* 0 is a valid fd, so init to -1 */
 	iface->raw_fd = -1;
 	iface->udp_fd = -1;
 	iface->arp_fd = -1;
-	close(s);
-	return iface;
+	goto exit;
 
 eexit:
 	free(iface);
+	iface = NULL;
+exit:
 	close(s);
-	return NULL;
+	return iface;
 }
 
 void
@@ -308,6 +307,11 @@ discover_interfaces(int argc, char * const *argv)
 				continue;
 			p = argv[i];
 		} else {
+			/* -1 means we're discovering against a specific
+			 * interface, but we still need the below rules
+			 * to apply. */
+			if (argc == -1 && strcmp(argv[0], ifa->ifa_name) != 0)
+				continue;
 			for (i = 0; i < ifdc; i++)
 				if (!fnmatch(ifdv[i], ifa->ifa_name, 0))
 					break;
@@ -322,6 +326,15 @@ discover_interfaces(int argc, char * const *argv)
 		}
 		if ((ifp = init_interface(p)) == NULL)
 			continue;
+
+		/* Bring the interface up */
+		if (!(ifp->flags & IFF_UP) && up_interface(p) != 0)
+			/* Some drivers return ENODEV here when they are disabled by a switch.
+			 * We just blunder on as the carrier will be down anyway.
+			 * When the switch is enabled, it should bring the interface up.
+			 * Then we'll spot the carrier and start working. */
+			syslog(LOG_ERR, "%s: up_interface: %m", p);
+
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
 			if (argc == 0 && ifac == 0) {
@@ -351,6 +364,22 @@ discover_interfaces(int argc, char * const *argv)
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
 #endif
+
+		}
+
+		if (!(ifp->flags & IFF_POINTOPOINT)) {
+			switch(ifp->family) {
+			case ARPHRD_ETHER: /* FALLTHROUGH */
+			case ARPHRD_IEEE1394:
+				break;
+			default:
+				if (argc == 0 && ifac == 0) {
+					free_interface(ifp);
+					continue;
+				}
+				syslog(LOG_WARNING,
+				    "%s: unknown hardware family", p);
+			}
 		}
 		if (ifl)
 			ifl->next = ifp; 
@@ -383,7 +412,7 @@ do_address(const char *ifname,
 		n = (const struct sockaddr_in *)(void *)ifa->ifa_netmask;
 		if (ifa->ifa_flags & IFF_POINTOPOINT)
 			d = (const struct sockaddr_in *)(void *)
-				ifa->ifa_dstaddr;
+			    ifa->ifa_dstaddr;
 		else
 			d = NULL;
 		if (act == 1) {
