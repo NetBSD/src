@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.73 2007/01/27 22:27:35 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.74 2009/10/02 06:49:23 cegger Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.73 2007/01/27 22:27:35 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.74 2009/10/02 06:49:23 cegger Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -573,7 +573,7 @@ gethostbyname_internal(const char *name, int af, res_state res)
 	host.h_length = size;
 
 	/*
-	 * if there aren't any dots, it could be a user-level alias.
+	 * if there aren't any dots, it could be an user-level alias.
 	 * this is also done in res_nquery() since we are not the only
 	 * function that looks up host names.
 	 */
