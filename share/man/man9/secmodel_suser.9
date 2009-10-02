@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_suser.9,v 1.2 2009/10/02 19:50:37 elad Exp $
+.\" $NetBSD: secmodel_suser.9,v 1.3 2009/10/02 20:31:19 elad Exp $
 .\"
 .\" Copyright (c) 2009 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -41,6 +41,43 @@ The
 .Em super-user
 is the host administrator, considered to have higher privileges than other
 users.
+.Pp
+The following
+.Xr sysctl 3
+variables are exported:
+.Bl -tag -width compact
+.It security.models.suser.curtain
+If non-zero, will filter returned objects according to the user-id
+requesting information about them, preventing from users any access to
+objects they don't own.
+.Pp
+At the moment, it affects
+.Xr ps 1 ,
+.Xr netstat 1
+(for
+.Dv PF_INET ,
+.Dv PF_INET6 ,
+and
+.Dv PF_UNIX
+PCBs), and
+.Xr w 1 .
+.It security.models.suser.usermount
+Allow non-superuser mounts.
+.Pp
+If non-zero, file-systems are allowed to be mounted by an ordinary user who
+owns the point
+.Ar node
+and has at least read access to the 
+.Ar special
+device 
+.Xr mount 8
+arguments.
+Finally, the flags
+.Cm nosuid
+and
+.Cm nodev
+must be given for non-superuser mounts.
+.El
 .Sh SEE ALSO
 .Xr kauth 9 ,
 .Xr secmodel 9 ,
