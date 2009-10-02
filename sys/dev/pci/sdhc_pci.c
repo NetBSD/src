@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.2 2009/06/29 11:05:12 hubertf Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.3 2009/10/02 04:38:47 uebayasi Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.2 2009/06/29 11:05:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.3 2009/10/02 04:38:47 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -221,7 +221,7 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SDMMC, sdhc_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SDMMC, sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto err;
