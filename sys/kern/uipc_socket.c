@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.190 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.191 2009/10/02 23:50:16 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.190 2009/09/11 22:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.191 2009/10/02 23:50:16 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -150,6 +150,8 @@ static struct mbuf *so_pendfree;
 int somaxkva = SOMAXKVA;
 static int socurkva;
 static kcondvar_t socurkva_cv;
+
+static kauth_listener_t socket_listener;
 
 #define	SOCK_LOAN_CHUNK		65536
 
@@ -428,6 +430,53 @@ getsombuf(struct socket *so, int type)
 	return m;
 }
 
+static int
+socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg0;
+
+	if (action != KAUTH_NETWORK_SOCKET)
+		return result;
+
+	switch (req) {
+	case KAUTH_REQ_NETWORK_SOCKET_DROP: {
+		/* Normal users can only drop their own connections. */
+		struct socket *so = (struct socket *)arg1;
+		uid_t sockuid = so->so_uidinfo->ui_uid;
+
+		if (sockuid == kauth_cred_getuid(cred) ||
+		    sockuid == kauth_cred_geteuid(cred))
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
+
+	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
+		/* We allow "raw" routing/bluetooth sockets to anyone. */
+		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
+			result = KAUTH_RESULT_ALLOW;
+		else {
+			/* Privileged, let secmodel handle this. */
+			if ((u_long)arg2 == SOCK_RAW)
+				break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
 void
 soinit(void)
 {
@@ -445,6 +494,9 @@ soinit(void)
 
 	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
 	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
+
+	socket_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    socket_listener_cb, NULL);
 }
 
 /*
@@ -499,6 +551,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
+	/* so->so_cred = kauth_cred_dup(l->l_cred); */
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	so->so_egid = kauth_cred_getegid(l->l_cred);
@@ -641,6 +694,7 @@ sofree(struct socket *so)
 	/* Remove acccept filter if one is present. */
 	if (so->so_accf != NULL)
 		(void)accept_filt_clear(so);
+	/* kauth_cred_free(so->so_cred); */
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
