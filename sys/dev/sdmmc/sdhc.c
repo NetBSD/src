@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.2 2009/05/17 14:36:46 cegger Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.3 2009/10/02 04:33:58 uebayasi Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.2 2009/05/17 14:36:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.3 2009/10/02 04:33:58 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	cv_init(&hp->intr_cv, "sdhcintr");
 
 	/*
-	 * eset the host controller and enable interrupts.
+	 * Reset the host controller and enable interrupts.
 	 */
 	(void)sdhc_host_reset(hp);
 
