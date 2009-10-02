@@ -28,12 +28,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-/* string.h pulls in features.h so the below define checks work */
-#include <sys/types.h>
-#include <sys/time.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
+#include <time.h>
+
+#include "config.h"
+#include "defs.h"
 
 #define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
 
@@ -66,34 +65,6 @@
 # elif !(2 < __GNUC__ || (2 == __GNU_C && 95 <= __GNUC_VERSION__))
 #  define __restrict
 # endif
-#endif
-
-#ifndef HAVE_ARC4RANDOM
-# ifdef __GLIBC__
-uint32_t arc4random(void);
-#else
-# define HAVE_ARC4RANDOM
-# endif
-#endif
-
-#ifndef HAVE_STRLCPY
-#  define HAVE_STRLCPY 1
-#endif
-/* Only GLIBC doesn't support strlcpy */
-#ifdef __GLIBC__
-#  if !defined(__UCLIBC__) && !defined (__dietlibc__)
-#    undef HAVE_STRLCPY
-size_t strlcpy(char *, const char *, size_t);
-#  endif
-#endif
-
-#ifndef HAVE_CLOSEFROM
-# if defined(__NetBSD__) || defined(__OpenBSD__)
-#  define HAVE_CLOSEFROM 1
-# endif
-#endif
-#ifndef HAVE_CLOSEFROM
-int closefrom(int);
 #endif
 
 int set_cloexec(int);
