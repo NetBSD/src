@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.2 2009/09/11 22:32:50 mrg Exp $
+# $NetBSD: mi,v 1.3 2009/10/02 18:50:15 elad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -88,8 +88,16 @@
 ./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/putter				base-kernel-modules	kmod
 ./@MODULEDIR@/putter/putter.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_overlay			base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/securelevel			base-kernel-modules	kmod
+./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/suser				base-kernel-modules	kmod
+./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tmpfs				base-kernel-modules	kmod

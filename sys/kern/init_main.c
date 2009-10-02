@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.402 2009/09/29 22:40:15 dyoung Exp $	*/
+/*	$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.402 2009/09/29 22:40:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -231,8 +231,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.402 2009/09/29 22:40:15 dyoung Exp $
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-#include <secmodel/secmodel.h>
-
 #include <prop/proplib.h>
 
 #ifdef COMPAT_50
@@ -269,14 +267,6 @@ static void start_init(void *);
 static void configure(void);
 static void configure2(void);
 void main(void);
-
-void __secmodel_none(void);
-__weak_alias(secmodel_start,__secmodel_none);
-void
-__secmodel_none(void)
-{
-	return;
-}
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -343,6 +333,9 @@ main(void)
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
+	/* Start module system. */
+	module_init();
+
 	/*
 	 * Initialize the kernel authorization subsystem and start the
 	 * default security model, if any. We need to do this early
@@ -352,7 +345,7 @@ main(void)
 	 * any process is created, specifically proc0.
 	 */
 	kauth_init();
-	secmodel_start();
+	module_init_class(MODULE_CLASS_SECMODEL);
 
 	/* Initialize the buffer cache */
 	bufinit();
@@ -423,8 +416,8 @@ main(void)
 	/* Initialize the log device. */
 	loginit();
 
-	/* Start module system. */
-	module_init();
+	/* Second part of module system initialization. */
+	module_init2();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT

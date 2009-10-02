@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1315 2009/10/02 02:45:29 tsarna Exp $
+#	$NetBSD: mi,v 1.1316 2009/10/02 18:50:14 elad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9067,6 +9067,7 @@
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_overlay.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_securelevel.0	comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_suser.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/seldestroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/select.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/selinit.0			comp-sys-catman		.cat
@@ -14446,6 +14447,7 @@
 ./usr/share/man/html9/secmodel_bsd44.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_overlay.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_securelevel.html	comp-sys-htmlman	html
+./usr/share/man/html9/secmodel_suser.html	comp-sys-htmlman	html
 ./usr/share/man/html9/seldestroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/select.html		comp-sys-htmlman	html
 ./usr/share/man/html9/selinit.html		comp-sys-htmlman	html
@@ -20022,6 +20024,7 @@
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_overlay.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_securelevel.9	comp-sys-man		.man
+./usr/share/man/man9/secmodel_suser.9		comp-sys-man		.man
 ./usr/share/man/man9/seldestroy.9		comp-sys-man		.man
 ./usr/share/man/man9/select.9			comp-sys-man		.man
 ./usr/share/man/man9/selinit.9			comp-sys-man		.man
