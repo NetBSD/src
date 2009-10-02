@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.48 2009/09/16 15:10:23 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.49 2009/10/02 15:51:26 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -35,9 +35,10 @@ SRCS+=	init_sysctl_base.c kern_auth.c kern_descrip.c kern_event.c	\
 	sys_descrip.c sys_generic.c syscalls.c
 
 # sys/kern subr (misc)
-SRCS+=	subr_devsw.c subr_callback.c subr_evcnt.c subr_hash.c		\
-	subr_iostat.c subr_kobj.c subr_log.c subr_once.c subr_prf.c	\
-	subr_specificdata.c subr_time.c subr_workqueue.c
+SRCS+=	subr_devsw.c subr_callback.c subr_evcnt.c subr_extent.c		\
+	subr_hash.c subr_humanize.c subr_iostat.c subr_kobj.c		\
+	subr_log.c subr_once.c subr_prf.c subr_specificdata.c		\
+	subr_time.c subr_workqueue.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
 SRCS+=	secmodel_bsd44.c secmodel_bsd44_logic.c secmodel_bsd44_suser.c
