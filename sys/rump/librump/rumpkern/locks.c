@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.27 2009/02/07 01:50:29 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.28 2009/10/02 09:56:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.27 2009/02/07 01:50:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.28 2009/10/02 09:56:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -235,6 +235,8 @@ void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 
+	if (rump_threads == 0)
+		panic("cv_wait without threads");
 	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 }
 
