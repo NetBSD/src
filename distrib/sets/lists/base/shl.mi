@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.493 2009/09/30 03:41:12 tsarna Exp $
+# $NetBSD: shl.mi,v 1.494 2009/10/02 02:45:28 tsarna Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,7 +13,7 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.170				base-sys-shlib		dynamicroot
+./lib/libc.so.12.171				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so.6.0				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
@@ -61,7 +61,7 @@
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
-./usr/lib/libc.so.12.170			base-sys-shlib
+./usr/lib/libc.so.12.171			base-sys-shlib
 ./usr/lib/libcom_err.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so.6.0			base-crypto-shlib	crypto
