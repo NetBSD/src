@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.6 2009/09/03 04:45:28 elad Exp $ */
+/* $NetBSD: suser.h,v 1.1 2009/10/02 18:50:13 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -26,31 +26,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SECMODEL_BSD44_SUSER_H_
-#define	_SECMODEL_BSD44_SUSER_H_
+#ifndef _SECMODEL_SUSER_SUSER_H_
+#define	_SECMODEL_SUSER_SUSER_H_
 
-extern int secmodel_bsd44_curtain;
-extern int dovfsusermount;
+void secmodel_suser_init(void);
+void secmodel_suser_start(void);
+void secmodel_suser_stop(void);
 
-void secmodel_bsd44_suser_start(void);
+void sysctl_security_suser_setup(struct sysctllog **);
 
-#if defined(_LKM)
-void secmodel_bsd44_suser_stop(void);
-#endif /* _LKM */
-
-int secmodel_bsd44_suser_generic_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_generic_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_system_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_process_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_process_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_network_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_network_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_machdep_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_machdep_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_device_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_device_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_suser_vnode_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_suser_vnode_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
-#endif /* !_SECMODEL_BSD44_SUSER_H_ */
+#endif /* !_SECMODEL_SUSER_SUSER_H_ */

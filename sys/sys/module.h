@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.15 2009/06/09 20:35:02 jnemeth Exp $	*/
+/*	$NetBSD: module.h,v 1.16 2009/10/02 18:50:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@ typedef enum modclass {
 	MODULE_CLASS_MISC,
 	MODULE_CLASS_VFS,
 	MODULE_CLASS_DRIVER,
-	MODULE_CLASS_EXEC
+	MODULE_CLASS_EXEC,
+	MODULE_CLASS_SECMODEL
 } modclass_t;
 
 /* Module sources: where did it come from? */
@@ -115,6 +116,7 @@ extern struct modlist	module_list;
 extern u_int		module_gen;
 
 void	module_init(void);
+void	module_init2(void);
 void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
