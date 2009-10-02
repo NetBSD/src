@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.200 2009/09/25 19:21:09 dyoung Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.201 2009/10/02 15:48:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.200 2009/09/25 19:21:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.201 2009/10/02 15:48:41 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1217,78 +1217,6 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	*cp = c;
 	return (dv);
-}
-
-/*
- * snprintf() `bytes' into `buf', reformatting it so that the number,
- * plus a possible `x' + suffix extension) fits into len bytes (including
- * the terminating NUL).
- * Returns the number of bytes stored in buf, or -1 if there was a problem.
- * E.g, given a len of 9 and a suffix of `B':
- *	bytes		result
- *	-----		------
- *	99999		`99999 B'
- *	100000		`97 kB'
- *	66715648	`65152 kB'
- *	252215296	`240 MB'
- */
-int
-humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
-    int divisor)
-{
-       	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
-	const char *prefixes;
-	int		r;
-	uint64_t	umax;
-	size_t		i, suffixlen;
-
-	if (buf == NULL || suffix == NULL)
-		return (-1);
-	if (len > 0)
-		buf[0] = '\0';
-	suffixlen = strlen(suffix);
-	/* check if enough room for `x y' + suffix + `\0' */
-	if (len < 4 + suffixlen)
-		return (-1);
-
-	if (divisor == 1024) {
-		/*
-		 * binary multiplies
-		 * XXX IEC 60027-2 recommends Ki, Mi, Gi...
-		 */
-		prefixes = " KMGTPE";
-	} else
-		prefixes = " kMGTPE"; /* SI for decimal multiplies */
-
-	umax = 1;
-	for (i = 0; i < len - suffixlen - 3; i++) {
-		umax *= 10;
-		if (umax > bytes)
-			break;
-	}
-	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
-		bytes /= divisor;
-
-	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
-	    i == 0 ? "" : " ", prefixes[i], suffix);
-
-	return (r);
-}
-
-int
-format_bytes(char *buf, size_t len, uint64_t bytes)
-{
-	int	rv;
-	size_t	nlen;
-
-	rv = humanize_number(buf, len, bytes, "B", 1024);
-	if (rv != -1) {
-			/* nuke the trailing ` B' if it exists */
-		nlen = strlen(buf) - 2;
-		if (strcmp(&buf[nlen], " B") == 0)
-			buf[nlen] = '\0';
-	}
-	return (rv);
 }
 
 /*
