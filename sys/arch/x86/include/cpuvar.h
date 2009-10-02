@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.29 2009/08/05 20:15:36 jym Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.30 2009/10/02 15:05:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ void clockmod_init(void);
 #ifdef ENHANCED_SPEEDSTEP
 void	est_init(int);
 int	via_get_bus_clock(struct cpu_info *);
+int	viac7_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
