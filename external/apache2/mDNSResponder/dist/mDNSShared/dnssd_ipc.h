@@ -234,7 +234,10 @@ Update to APSL 2.0
 // structures correctly anyway, so a plain "struct" is usually fine. In the event that structures are not packed
 // correctly, our compile-time assertion checks will catch it and prevent inadvertent generation of non-working code.
 #ifndef packedstruct
- #if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
+ #ifdef __packed
+  #define packedstruct struct __packed
+  #define packedunion  union  __packed
+ #elif ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
   #define packedstruct struct __attribute__((__packed__))
   #define packedunion  union  __attribute__((__packed__))
  #else
