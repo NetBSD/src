@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.147 2009/06/28 11:42:07 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.148 2009/10/02 22:18:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.147 2009/06/28 11:42:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.148 2009/10/02 22:18:57 elad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -141,6 +141,80 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.147 2009/06/28 11:42:07 yamt Exp $
 #include <machine/reg.h>
 
 #ifdef PTRACE
+static kauth_listener_t ptrace_listener;
+
+static int
+ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	if (action != KAUTH_PROCESS_PTRACE)
+		return result;
+
+	switch ((u_long)arg1) {
+	case PT_TRACE_ME:
+	case PT_ATTACH:
+	case PT_WRITE_I:
+	case PT_WRITE_D:
+	case PT_READ_I:
+	case PT_READ_D:
+	case PT_IO:
+#ifdef PT_GETREGS
+	case PT_GETREGS:
+#endif
+#ifdef PT_SETREGS
+	case PT_SETREGS:
+#endif
+#ifdef PT_GETFPREGS
+	case PT_GETFPREGS:
+#endif
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+#endif
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+#endif
+		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
+		    ISSET(p->p_flag, PK_SUGID)) {
+			break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
+
+	break;
+
+#ifdef PT_STEP
+	case PT_STEP:
+#endif
+	case PT_CONTINUE:
+	case PT_KILL:
+	case PT_DETACH:
+	case PT_LWPINFO:
+	case PT_SYSCALL:
+	case PT_DUMPCORE:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+ptrace_init(void)
+{
+
+	ptrace_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    ptrace_listener_cb, NULL);
+}
+
 /*
  * Process debugging system call.
  */
@@ -958,3 +1032,4 @@ process_stoptrace(void)
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */
+

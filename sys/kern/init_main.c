@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.404 2009/10/02 22:18:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.404 2009/10/02 22:18:57 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $")
 #include "opt_pax.h"
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
+#include "opt_ptrace.h"
 
 #include "drvctl.h"
 #include "ksyms.h"
@@ -201,6 +202,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.403 2009/10/02 18:50:14 elad Exp $")
 #include <sys/savar.h>
 #endif
 #include <net80211/ieee80211_netbsd.h>
+#ifdef PTRACE
+#include <sys/ptrace.h>
+#endif /* PTRACE */
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -549,6 +553,11 @@ main(void)
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
+
+#ifdef PTRACE
+	/* Initialize ptrace. */
+	ptrace_init();
+#endif /* PTRACE */
 
 	/* Initialize the UUID system calls. */
 	uuid_init();
