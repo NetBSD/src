@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.22 2009/06/08 16:55:30 christos Exp $
+.\"	$NetBSD: resolver.3,v 1.23 2009/10/02 06:49:23 cegger Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -317,7 +317,7 @@ record would be removed and the header updated.
 .It Dv RES_NOTLDQUERY
 This option causes
 .Fn res_nsearch
-to not attempt to resolve a unqualified name as if it were a top level
+to not attempt to resolve an unqualified name as if it were a top level
 domain (TLD).
 This option can cause problems if the site has "localhost" as a TLD rather
 than having localhost on one or more elements of the search list.

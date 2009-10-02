@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.47 2009/10/02 02:45:29 tsarna Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.48 2009/10/02 06:49:23 cegger Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -260,7 +260,7 @@ on the link associated with the
 interface
 .Dc .
 .Pp
-The current implementation assumes a one-to-one relationship between
+The current implementation assumes an one-to-one relationship between
 the interface and link, which is not necessarily true from the specification.
 .Pp
 All of the information returned by
@@ -280,7 +280,7 @@ is released by the
 function.
 The
 .Fa ai
-pointer should be a
+pointer should be an
 .Li addrinfo
 structure created by a call to
 .Fn getaddrinfo
