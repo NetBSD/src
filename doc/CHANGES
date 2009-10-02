@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1296 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1297 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -408,3 +408,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wb(4): Add a driver for Winbond W83L518D SD/MMC readers.
 		[jmcneill 20090930]
 	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 212.1
+		[tsarna 20090929]
