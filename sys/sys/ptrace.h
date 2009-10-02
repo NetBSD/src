@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.40 2008/01/05 12:41:43 dsl Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.41 2009/10/02 22:18:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -98,6 +98,8 @@ struct fpreg;
 #define process_fpreg64 struct fpreg
 #endif
 #endif
+
+void	ptrace_init(void);
 
 int	process_doregs(struct lwp *, struct lwp *, struct uio *);
 int	process_validregs(struct lwp *);

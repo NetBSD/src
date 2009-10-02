@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.4 2009/10/02 22:05:52 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.5 2009/10/02 22:18:57 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.4 2009/10/02 22:05:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.5 2009/10/02 22:18:57 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -640,63 +640,11 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_PTRACE: {
-		switch ((u_long)arg1) {
-		case PT_TRACE_ME:
-		case PT_ATTACH:
-		case PT_WRITE_I:
-		case PT_WRITE_D:
-		case PT_READ_I:
-		case PT_READ_D:
-		case PT_IO:
-#ifdef PT_GETREGS
-		case PT_GETREGS:
-#endif
-#ifdef PT_SETREGS
-		case PT_SETREGS:
-#endif
-#ifdef PT_GETFPREGS
-		case PT_GETFPREGS:
-#endif
-#ifdef PT_SETFPREGS
-		case PT_SETFPREGS:
-#endif
-#ifdef __HAVE_PTRACE_MACHDEP
-		PTRACE_MACHDEP_REQUEST_CASES
-#endif
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if (kauth_cred_getuid(cred) !=
-			    kauth_cred_getuid(p->p_cred) ||
-			    ISSET(p->p_flag, PK_SUGID)) {
-				break;
-			}
-
+	case KAUTH_PROCESS_PTRACE:
+		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
-			break;
-
-#ifdef PT_STEP
-		case PT_STEP:
-#endif
-		case PT_CONTINUE:
-		case PT_KILL:
-		case PT_DETACH:
-		case PT_LWPINFO:
-		case PT_SYSCALL:
-		case PT_DUMPCORE:
-			result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-	        	result = KAUTH_RESULT_DEFER;
-		        break;
-		}
 
 		break;
-		}
 
 	case KAUTH_PROCESS_CORENAME:
 		if (isroot || proc_uidmatch(cred, p->p_cred) == 0)
