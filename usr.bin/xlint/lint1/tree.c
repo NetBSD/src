@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.61 2009/10/02 19:02:16 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.62 2009/10/02 21:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.61 2009/10/02 19:02:16 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.62 2009/10/02 21:04:03 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3030,14 +3030,26 @@ foldflt(tnode_t *tn)
 	return (getcnode(tn->tn_type, v));
 }
 
+
 /*
  * Create a constant node for sizeof.
  */
 tnode_t *
 bldszof(type_t *tp)
 {
-	int	elem, elsz;
 	tspec_t	st;
+#if SIZEOF_IS_ULONG
+	st = ULONG;
+#else
+	st = UINT;
+#endif
+	return getinode(st, tsize(tp) / CHAR_BIT);
+}
+
+int64_t
+tsize(type_t *tp)
+{
+	int	elem, elsz;
 
 	elem = 1;
 	while (tp->t_tspec == ARRAY) {
@@ -3088,12 +3100,7 @@ bldszof(type_t *tp)
 		break;
 	}
 
-#if SIZEOF_IS_ULONG
-	st = ULONG;
-#else
-	st = UINT;
-#endif
-	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
+	return (int64_t)(elem * elsz);
 }
 
 /*
