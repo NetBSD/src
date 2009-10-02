@@ -30,6 +30,7 @@ const char copyright[] = "Copyright (c) 2006-2009 Roy Marples";
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -1187,7 +1188,7 @@ void
 handle_interface(int action, const char *ifname)
 {
 	struct interface *ifs, *ifp, *ifn, *ifl = NULL;
-	const char * const argv[] = { "dhcpcd", ifname };
+	const char * const argv[] = { ifname }; 
 	int i;
 
 	if (action == -1) {
@@ -1209,23 +1210,24 @@ handle_interface(int action, const char *ifname)
 			return;
 	}
 
-	if ((ifs = discover_interfaces(2, UNCONST(argv)))) {
-		for (ifp = ifs; ifp; ifp = ifp->next) {
-			/* Check if we already have the interface */
-			for (ifn = ifaces; ifn; ifn = ifn->next) {
-				if (strcmp(ifn->name, ifp->name) == 0)
-					break;
-				ifl = ifn;
-			}
-			if (ifn)
-				continue;
-			init_state(ifp, 2, UNCONST(argv));
-			if (ifl)
-				ifl->next = ifp;
-			else
-				ifaces = ifp;
-			start_interface(ifp);
+	ifs = discover_interfaces(-1, UNCONST(argv));
+	for (ifp = ifs; ifp; ifp = ifp->next) {
+		if (strcmp(ifp->name, ifname) != 0)
+			continue;
+		/* Check if we already have the interface */
+		for (ifn = ifaces; ifn; ifn = ifn->next) {
+			if (strcmp(ifn->name, ifp->name) == 0)
+				break;
+			ifl = ifn;
 		}
+		if (ifn)
+			continue;
+		init_state(ifp, 0, NULL);
+		if (ifl)
+			ifl->next = ifp;
+		else
+			ifaces = ifp;
+		start_interface(ifp);
 	}
 }
 
@@ -1752,7 +1754,7 @@ main(int argc, char **argv)
 	    (ifc == 0 && options & DHCPCD_LINK && options & DHCPCD_DAEMONISE))
 	{
 		daemonise();
-	} else if (options & DHCPCD_DAEMONISE) {
+	} else if (options & DHCPCD_DAEMONISE && ifo->timeout > 0) {
 		oi = ifo->timeout;
 		if (ifo->options & DHCPCD_IPV4LL)
 			oi += 10;
