@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.26 2009/04/12 22:37:50 elad Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.27 2009/10/02 22:05:52 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.26 2009/04/12 22:37:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.27 2009/10/02 22:05:52 elad Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -70,6 +70,8 @@ static char ipkdbkey[] = IPKDBKEY;
 
 static struct ipkdb_if ipkdb_if;
 
+static kauth_listener_t ipkdb_listener;
+
 static u_char *ipkdbaddr(u_char *, int *, void **);
 static void peekmem(struct ipkdb_if *, u_char *, void *, long);
 static void pokemem(struct ipkdb_if *, u_char *, void *, long);
@@ -89,6 +91,25 @@ static int check_ipkdb(struct ipkdb_if *, struct in_addr *, char *, int);
 static int connectipkdb(struct ipkdb_if *, char *, int);
 static int hmac_init(void);
 
+static int
+ipkdb_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	enum kauth_system_req req;
+	int result;
+
+	req = (enum kauth_system_req)arg0;
+	result = KAUTH_RESULT_DEFER;
+
+	if ((action != KAUTH_SYSTEM_DEBUG) ||
+	    (req != KAUTH_REQ_SYSTEM_DEBUG_IPKDB))
+		return result;
+
+	result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 void
 ipkdb_init(void)
 {
@@ -100,6 +121,9 @@ ipkdb_init(void)
 		printf("IPKDB: No interface found!\n");
 		boothowto &= ~RB_KDB;
 	}
+
+	ipkdb_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    ipkdb_listener_cb, NULL);
 }
 
 void

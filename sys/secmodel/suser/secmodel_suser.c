@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.3 2009/10/02 21:56:28 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.4 2009/10/02 22:05:52 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.3 2009/10/02 21:56:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.4 2009/10/02 22:05:52 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -469,17 +469,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_SYSTEM_MKNOD:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	case KAUTH_SYSTEM_DEBUG:
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-		default:
-			/* Decisions are root-agnostic. */
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
 		break;
 
 	case KAUTH_SYSTEM_CHSYSFLAGS:
