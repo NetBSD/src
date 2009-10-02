@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.152 2009/05/26 06:57:38 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.153 2009/10/02 22:38:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.152 2009/05/26 06:57:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.153 2009/10/02 22:38:45 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,43 @@ rlim_t maxsmap = MAXSSIZ;
 static pool_cache_t	plimit_cache;
 static pool_cache_t	pstats_cache;
 
+static kauth_listener_t	rlimit_listener;
+
+static int
+rlimit_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+	enum kauth_process_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+	req = (enum kauth_process_req)(unsigned long)arg1;
+
+	if (action != KAUTH_PROCESS_RLIMIT)
+		return result;
+
+	if (req == KAUTH_REQ_PROCESS_RLIMIT_SET) {
+		struct rlimit *new_rlimit;
+		u_long which;
+
+		if ((p != curlwp->l_proc) &&
+		    (proc_uidmatch(cred, p->p_cred) != 0))
+			return result;
+
+		new_rlimit = arg2;
+		which = (u_long)arg3;
+
+		if (new_rlimit->rlim_max <= p->p_rlimit[which].rlim_max)
+			result = KAUTH_RESULT_ALLOW;
+	} else if (req == KAUTH_REQ_PROCESS_RLIMIT_GET) {
+		result = KAUTH_RESULT_ALLOW;
+	}
+
+	return result;
+}
+
 void
 resource_init(void)
 {
@@ -77,6 +114,9 @@ resource_init(void)
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+
+	rlimit_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    rlimit_listener_cb, NULL);
 }
 
 /*

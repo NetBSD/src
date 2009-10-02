@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.148 2009/10/02 22:18:57 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.149 2009/10/02 22:38:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.148 2009/10/02 22:18:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.149 2009/10/02 22:38:45 elad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -1032,4 +1032,39 @@ process_stoptrace(void)
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */
+
+/*
+ * common code for corename, rlimit, and stopflag.
+ */
+int
+proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
+{
+	int r = 0;
+
+	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
+	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
+		r = EPERM;
+	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
+		r = EPERM;
+	} else {
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
+		int ismember = 0;
+
+		if (kauth_cred_ismember_gid(cred,
+		    kauth_cred_getgid(target), &ismember) != 0 ||
+		    !ismember)
+			r = EPERM;
+	}
+
+	return (r);
+}
 

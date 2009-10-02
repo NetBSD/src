@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.290 2009/05/27 12:15:11 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.291 2009/10/02 22:38:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -510,6 +510,7 @@ void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int, int);
+int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.5 2009/10/02 22:18:57 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.6 2009/10/02 22:38:45 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.5 2009/10/02 22:18:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.6 2009/10/02 22:38:45 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -504,41 +504,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 }
 
 /*
- * common code for corename, rlimit, and stopflag.
- */
-static int
-proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
-{
-	int r = 0;
-
-	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
-	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
-		/*
-		 * suid proc of ours or proc not ours
-		 */
-		r = EPERM;
-	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
-		/*
-		 * sgid proc has sgid back to us temporarily
-		 */
-		r = EPERM;
-	} else {
-		/*
-		 * our rgid must be in target's group list (ie,
-		 * sub-processes started by a sgid process)
-		 */
-		int ismember = 0;
-
-		if (kauth_cred_ismember_gid(cred,
-		    kauth_cred_getgid(target), &ismember) != 0 ||
-		    !ismember)
-			r = EPERM;
-	}
-
-	return (r);
-}
-
-/*
  * kauth(9) listener
  *
  * Security model: Traditional NetBSD
@@ -698,37 +663,16 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_PROCESS_RLIMIT: {
-		unsigned long req;
+		enum kauth_process_req req;
 
-		req = (unsigned long)arg1;
+		req = (enum kauth_process_req)(unsigned long)arg1;
 
 		switch (req) {
-		case KAUTH_REQ_PROCESS_RLIMIT_SET: {
-			struct rlimit *new_rlimit;
-			u_long which;
-
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if ((p != curlwp->l_proc) &&
-			    (proc_uidmatch(cred, p->p_cred) != 0)) {
-				break;
-			}
-
-			new_rlimit = arg2;
-			which = (u_long)arg3;
-
-			if (new_rlimit->rlim_max <=
-			    p->p_rlimit[which].rlim_max)
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-			}
-
+		case KAUTH_REQ_PROCESS_RLIMIT_SET:
 		case KAUTH_REQ_PROCESS_RLIMIT_GET:
-			result = KAUTH_RESULT_ALLOW;
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
 			break;
 
 		default:
