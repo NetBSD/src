@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.44 2009/05/02 16:10:49 christos Exp $ */
+/* $NetBSD: scan.l,v 1.45 2009/10/02 15:03:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.44 2009/05/02 16:10:49 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.45 2009/10/02 15:03:45 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -193,7 +193,21 @@ static	struct	kwtab {
 	u_int	kw_c99;		/* c99 keyword */
 	u_int	kw_gcc;		/* GCC keyword */
 } kwtab[] = {
-	{ "__alignof__",T_ALIGNOF,	0,	0,	0,	  0, 0, 0 },
+	{ "__alignof__", T_ALIGNOF,	0,	0,	0,	  0, 0, 0 },
+	{ "__attribute__",T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1 },
+	{ "attribute",	T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1 },
+	{ "__packed__",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1 },
+	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1 },
+	{ "__aligned__",T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1 },
+	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1 },
+	{ "__transparent_union__",T_AT_TUNION,0,0,	0,	  0, 0, 1 },
+	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0, 0, 1 },
+	{ "__unused__",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1 },
+	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1 },
+	{ "__deprecated__",T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1 },
+	{ "deprecated",	T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1 },
+	{ "__may_alias__",T_AT_MAY_ALIAS,0,	0,	0,	  0, 0, 1 },
+	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0, 0, 1 },
 	{ "asm",	T_ASM,		0,	0,	0,	  0, 0, 1 },
 	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0, 0 },
 	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0, 0 },
@@ -228,6 +242,7 @@ static	struct	kwtab {
 	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0 },
 	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 1, 0 },
 	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0 },
+	{ "__packed",	T_PACKED,	0,	0,	0,	  0, 0, 0 },
 	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0 },
 	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0, 0 },
 	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0 },

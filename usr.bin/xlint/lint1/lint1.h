@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.22 2008/12/10 16:12:39 joerg Exp $ */
+/* $NetBSD: lint1.h,v 1.23 2009/10/02 15:03:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -143,6 +143,7 @@ struct type {
 	u_int	t_typedef : 1;	/* type defined with typedef */
 	u_int	t_isfield : 1;	/* type is bitfield */
 	u_int	t_isenum : 1;	/* type is (or was) enum (t_enum valid) */
+	u_int	t_ispacked : 1;	/* type is packed */
 	union {
 		int	_t_dim;		/* dimension */
 		str_t	*_t_str;	/* struct/union tag */

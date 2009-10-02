@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.27 2009/05/02 16:10:49 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.28 2009/10/02 15:03:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -141,6 +141,7 @@ extern	void	setcompl(type_t *, int);
 extern	void	addscl(scl_t);
 extern	void	addtype(type_t *);
 extern	void	addqual(tqual_t);
+extern	void	addpacked(void);
 extern	void	pushdecl(scl_t);
 extern	void	popdecl(void);
 extern	void	setasm(void);

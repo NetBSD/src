@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.42 2009/05/02 16:10:49 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.43 2009/10/02 15:03:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.42 2009/05/02 16:10:49 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.43 2009/10/02 15:03:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -385,6 +385,7 @@ const	char *msgs[] = {
 	"continue in 'do ... while (0)' loop",			      /* 323 */
 	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */
 	"variable declaration in for loop", 			      /* 325 */
+	"%s attribute ignored for %s",				      /* 326 */
 };
 
 /*
