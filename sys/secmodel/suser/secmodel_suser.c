@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.11 2009/10/02 23:18:12 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.12 2009/10/02 23:24:15 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.11 2009/10/02 23:18:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.12 2009/10/02 23:24:15 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -513,16 +513,11 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	p = arg0;
 
 	switch (action) {
-	case KAUTH_PROCESS_SIGNAL: {
-		int signum;
-
-		signum = (int)(unsigned long)arg1;
-
-		if (isroot || kauth_cred_uidmatch(cred, p->p_cred) ||
-		    (signum == SIGCONT && (curproc->p_session == p->p_session)))
+	case KAUTH_PROCESS_SIGNAL:
+		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
+
 		break;
-		}
 
 	case KAUTH_PROCESS_CANSEE: {
 		unsigned long req;
