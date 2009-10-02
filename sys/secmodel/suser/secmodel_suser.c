@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.7 2009/10/02 22:46:18 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.8 2009/10/02 23:00:02 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.7 2009/10/02 22:46:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.8 2009/10/02 23:00:02 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -574,36 +574,11 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 
-	case KAUTH_PROCESS_PROCFS: {
-		enum kauth_process_req req = (enum kauth_process_req)arg2;
-		struct pfsnode *pfs = arg1;
-
-		if (isroot) {
+	case KAUTH_PROCESS_PROCFS:
+		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
-		if (req == KAUTH_REQ_PROCESS_PROCFS_CTL) {
-			break;
-		}
-
-		switch (pfs->pfs_type) {
-		case PFSregs:
-		case PFSfpregs:
-		case PFSmem:
-			if (kauth_cred_getuid(cred) !=
-			    kauth_cred_getuid(p->p_cred) ||
-			    ISSET(p->p_flag, PK_SUGID)) {
-				break;
-			}
-			/*FALLTHROUGH*/
-		default:
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
 
 		break;
-		}
 
 	case KAUTH_PROCESS_PTRACE:
 		if (isroot)
