@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.27 2009/10/01 09:15:19 skrll Exp $
+#	$NetBSD: Makefile.amd64,v 1.28 2009/10/02 10:14:20 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -66,7 +66,7 @@ spl.o: ${AMD64}/amd64/spl.S assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	0xffffffff80100000
-EXTRA_LINKFLAGS=	-z maxpagesize=0x100000
+EXTRA_LINKFLAGS=	-z max-page-size=0x100000
 LINKFLAGS_NORMAL=	-X
 KERN_LDSCRIPT?= kern.ldscript
 LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
