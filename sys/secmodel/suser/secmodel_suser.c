@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.8 2009/10/02 23:00:02 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.9 2009/10/02 23:06:33 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.8 2009/10/02 23:00:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.9 2009/10/02 23:06:33 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,8 +232,7 @@ suser_modcmd(modcmd_t cmd, void *arg)
  */
 int
 secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1,
-    void *arg2, void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	bool isroot;
 	int result;
@@ -256,7 +255,6 @@ secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -272,8 +270,7 @@ secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1,
-    void *arg2, void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	bool isroot;
 	int result;
@@ -392,7 +389,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
@@ -439,7 +435,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
@@ -496,7 +491,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -695,7 +689,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -711,8 +704,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2,
-    void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	bool isroot;
 	int result;
@@ -742,7 +734,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
@@ -803,7 +794,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
@@ -870,7 +860,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
@@ -950,7 +939,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -966,8 +954,7 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2,
-    void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
         bool isroot;
         int result;
@@ -994,7 +981,6 @@ secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -1010,8 +996,7 @@ secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2,
-    void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	struct tty *tty;
         bool isroot;
@@ -1100,7 +1085,6 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
