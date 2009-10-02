@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.30 2009/10/02 15:05:42 jmcneill Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.31 2009/10/02 18:50:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct cpu_attach_args {
 #ifndef XEN
 #include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
+#include "opt_via_c7temp.h"
 #endif
 #endif /* defined(_KERNEL_OPT) */
 
@@ -116,6 +117,10 @@ void x86_cpu_idle_halt(void);
 void x86_cpu_idle_mwait(void);
 #ifdef XEN
 void x86_cpu_idle_xen(void);
+#endif
+
+#ifdef VIA_C7TEMP
+void viac7temp_register(struct cpu_info *);
 #endif
 
 #ifdef INTEL_CORETEMP
