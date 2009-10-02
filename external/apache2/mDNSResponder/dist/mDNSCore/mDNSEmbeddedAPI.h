@@ -1040,7 +1040,10 @@ Fixes to avoid code generation warning/error on FreeBSD 7
 // In the event that structures are not packed correctly, mDNS_Init() will detect this and report an error, so the
 // developer will know what's wrong, and can investigate what needs to be done on that compiler to provide proper packing.
 #ifndef packedstruct
- #if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
+ #ifdef __packed
+  #define packedstruct struct __packed
+  #define packedunion  union __packed
+ #elif ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
   #define packedstruct struct __attribute__((__packed__))
   #define packedunion  union  __attribute__((__packed__))
  #else
