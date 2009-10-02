@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.94 2009/10/02 06:49:23 cegger Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.94 2009/10/02 06:49:23 cegger Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.95 2009/10/02 07:41:08 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1027,7 +1027,7 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6, u_int32_t *scopeid)
 
 	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
 		/*
-		 * We currently assume an one-to-one mapping between links
+		 * We currently assume a one-to-one mapping between links
 		 * and interfaces, so we simply use interface indices for
 		 * like-local scopes.
 		 */
@@ -1799,7 +1799,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 		trailing_dot++;
 
 	/*
-	 * if there aren't any dots, it could be an user-level alias
+	 * if there aren't any dots, it could be a user-level alias
 	 */
 	if (!dots && (cp = __hostalias(name)) != NULL) {
 		ret = res_queryN(cp, target, res);
