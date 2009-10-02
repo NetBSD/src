@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.6 2009/10/01 21:43:29 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.7 2009/10/02 11:01:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.6 2009/10/01 21:43:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.7 2009/10/02 11:01:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,8 @@ rump_dev_init(void)
 {
 	extern int cold;
 
+	KERNEL_LOCK(1, curlwp);
+
 	config_init_mi();
 
 	rump_dev_cgd_init();
@@ -65,6 +67,8 @@ rump_dev_init(void)
 		panic("no mainbus");
 
 	config_finalize();
+
+	KERNEL_UNLOCK_LAST(curlwp);
 }
 
 #ifdef __HAVE_DEVICE_REGISTER
