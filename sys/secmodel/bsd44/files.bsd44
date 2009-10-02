@@ -1,8 +1,6 @@
-# $NetBSD: files.bsd44,v 1.2 2007/11/21 22:49:07 elad Exp $
+# $NetBSD: files.bsd44,v 1.3 2009/10/02 18:50:13 elad Exp $
 
 defflag secmodel_bsd44_logic
-defflag secmodel_bsd44 : secmodel_bsd44_logic, secmodel_securelevel
+defflag secmodel_bsd44 : secmodel_bsd44_logic, secmodel_suser, secmodel_securelevel
 
 file	secmodel/bsd44/secmodel_bsd44.c			secmodel_bsd44
-file	secmodel/bsd44/secmodel_bsd44_logic.c		secmodel_bsd44_logic
-file	secmodel/bsd44/secmodel_bsd44_suser.c		secmodel_bsd44_logic

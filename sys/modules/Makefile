@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2009/09/27 12:46:39 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.33 2009/10/02 18:50:12 elad Exp $
 
 # For all platforms
 
@@ -41,8 +41,12 @@ SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	miniroot
+SUBDIR+=	secmodel_bsd44
+SUBDIR+=	secmodel_overlay
+SUBDIR+=	securelevel
 SUBDIR+=	smbfs
 SUBDIR+=	sysvbfs
+SUBDIR+=	suser
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap

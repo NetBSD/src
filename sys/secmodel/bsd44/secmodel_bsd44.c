@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.12 2009/05/03 21:25:44 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.13 2009/10/02 18:50:13 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.12 2009/05/03 21:25:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.13 2009/10/02 18:50:13 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,14 +36,18 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.12 2009/05/03 21:25:44 elad Exp
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 
-#include <secmodel/secmodel.h>
+#include <sys/module.h>
 
 #include <secmodel/bsd44/bsd44.h>
-#include <secmodel/bsd44/suser.h>
+#include <secmodel/suser/suser.h>
 #include <secmodel/securelevel/securelevel.h>
 
-SYSCTL_SETUP(sysctl_security_bsd44_setup,
-    "sysctl security bsd44 setup")
+MODULE(MODULE_CLASS_SECMODEL, secmodel_bsd44, "suser,securelevel");
+
+static struct sysctllog *sysctl_bsd44_log;
+
+void
+sysctl_security_bsd44_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
@@ -53,12 +57,6 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 		       NULL, 0, NULL, 0,
 		       CTL_SECURITY, CTL_EOL);
 
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "curtain", NULL,
-		       NULL, 0, &secmodel_bsd44_curtain, 0,
-		       CTL_CREATE, CTL_EOL);
-
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
@@ -67,94 +65,64 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "bsd44",
-		       SYSCTL_DESCR("Traditional NetBSD Security model, " \
-			   "derived from 4.4BSD"),
+		       CTLTYPE_NODE, "bsd44", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "name", NULL,
-		       NULL, 0, __UNCONST("Traditional NetBSD (4.4BSD)"), 0,
+		       NULL, 0, __UNCONST("Traditional NetBSD (derived from 4.4BSD)"), 0,
 		       CTL_CREATE, CTL_EOL);
+}
 
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "securelevel",
-		       SYSCTL_DESCR("System security level"),
-		       secmodel_securelevel_sysctl, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "curtain",
-		       SYSCTL_DESCR("Curtain information about objects to "
-				    "users not owning them."),
-		       NULL, 0, &secmodel_bsd44_curtain, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       NULL, 0, &dovfsusermount, 0,
-		       CTL_CREATE, CTL_EOL);
-
-
-	/*
-	 * For compatibility, create the "dovfsusermount" variable in its
-	 * original location.
-	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic",
-		       SYSCTL_DESCR("Non-specific vfs related information"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       NULL, 0, &dovfsusermount, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
+void
+secmodel_bsd44_init(void)
+{
+	secmodel_suser_init();
+	secmodel_securelevel_init();
 }
 
 void
 secmodel_bsd44_start(void)
 {
-	secmodel_bsd44_init();
-
-	secmodel_bsd44_suser_start();
+	secmodel_suser_start();
 	secmodel_securelevel_start();
 
-	secmodel_register();
+	/* secmodel_register(); */
 }
 
-#if defined(_LKM)
 void
 secmodel_bsd44_stop(void)
 {
-	secmodel_bsd44_suser_stop();
+	secmodel_suser_stop();
 	secmodel_securelevel_stop();
 
-	secmodel_deregister();
+	/* secmodel_deregister(); */
 }
-#endif /* _LKM */
 
-#if !defined(_LKM)
-void
-secmodel_start(void)
+static int
+secmodel_bsd44_modcmd(modcmd_t cmd, void *arg)
 {
-	secmodel_bsd44_start();
-}
-#endif /* !_LKM */
+	int error = 0;
 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		secmodel_bsd44_init();
+		secmodel_bsd44_start();
+		sysctl_security_bsd44_setup(&sysctl_bsd44_log);
+		break;
+
+	case MODULE_CMD_FINI:
+		sysctl_teardown(&sysctl_bsd44_log);
+		secmodel_bsd44_stop();
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
+}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.49 2009/06/17 21:04:25 dyoung Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.50 2009/10/02 18:50:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.49 2009/06/17 21:04:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.50 2009/10/02 18:50:14 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -142,7 +142,6 @@ void
 module_init(void)
 {
 	extern struct vm_map *module_map;
-	int error;
 
 	if (module_map == NULL) {
 		module_map = kernel_map;
@@ -162,6 +161,17 @@ module_init(void)
 	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
+}
+
+/*
+ * module_init2:
+ *
+ *	Start the auto unload kthread.
+ */
+void
+module_init2(void)
+{
+	int error;
 
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, module_thread,
 	    NULL, NULL, "modunload");
@@ -543,6 +553,8 @@ module_do_builtin(const char *name, module_t **modp)
 		kmem_free(mod, sizeof(*mod));
 		return error;
 	}
+	if (mi->mi_class == MODULE_CLASS_SECMODEL)
+		secmodel_register();
 	mod->mod_info = mi;
 	mod->mod_source = MODULE_SOURCE_KERNEL;
 	module_enqueue(mod);
@@ -826,6 +838,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		    error, mi->mi_name);
 		goto fail;
 	}
+	if (mi->mi_class == MODULE_CLASS_SECMODEL)
+		secmodel_register();
 
 	/*
 	 * Good, the module loaded successfully.  Put it onto the
@@ -892,6 +906,8 @@ module_do_unload(const char *name)
 		    error);
 		return error;
 	}
+	if (mod->mod_info->mi_class == MODULE_CLASS_SECMODEL)
+		secmodel_deregister();
 	module_count--;
 	TAILQ_REMOVE(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
