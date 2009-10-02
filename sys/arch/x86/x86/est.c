@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.11 2009/03/25 22:53:51 dyoung Exp $	*/
+/*	$NetBSD: est.c,v 1.12 2009/10/02 15:05:42 jmcneill Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.11 2009/03/25 22:53:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12 2009/10/02 15:05:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1089,9 +1089,17 @@ est_init_main(int vendor)
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());
 	else if (CPUID2FAMILY(curcpu()->ci_signature) == 6) {
-		if (vendor == CPUVENDOR_IDT)
-			bus_clock = via_get_bus_clock(curcpu());
-		else
+		if (vendor == CPUVENDOR_IDT) {
+			switch (CPUID2MODEL(curcpu()->ci_signature)) {
+			case 0xa: /* C7 Esther */
+			case 0xd: /* C7 Esther */
+				bus_clock = viac7_get_bus_clock(curcpu());
+				break;
+			default:
+				bus_clock = via_get_bus_clock(curcpu());
+				break;
+			}
+		} else
 			bus_clock = p3_get_bus_clock(curcpu());
 	}
 
