@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.201 2009/07/18 09:50:32 dsl Exp $
+$NetBSD: UPDATING,v 1.202 2009/10/02 03:13:23 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20091001:
+	An error will create a ./usr/X11R7/lib/X11/xkb/compiled/xkb
+	symlink, failing the build.  Delete the link, and the subdir
+	it is in, and retry your build.
 
 20090718:
 	libc build changed so that strchr() provides the extra entry
