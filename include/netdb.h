@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.61 2009/04/12 17:07:33 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.62 2009/10/02 02:45:29 tsarna Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -343,6 +343,7 @@ int		getaddrinfo(const char * __restrict, const char * __restrict,
 int		getnameinfo(const struct sockaddr * __restrict, socklen_t,
 				 char * __restrict, socklen_t,
 				 char * __restrict, socklen_t, int);
+struct addrinfo *allocaddrinfo(socklen_t);
 void		freeaddrinfo(struct addrinfo *);
 const char	*gai_strerror(int);
 #endif

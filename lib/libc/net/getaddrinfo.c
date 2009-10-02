@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.92 2009/01/23 00:48:57 tls Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.93 2009/10/02 02:45:29 tsarna Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.92 2009/01/23 00:48:57 tls Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.93 2009/10/02 02:45:29 tsarna Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -847,26 +847,43 @@ get_canonname(const struct addrinfo *pai, struct addrinfo *ai, const char *str)
 	return 0;
 }
 
+struct addrinfo *
+allocaddrinfo(socklen_t addrlen)
+{
+	struct addrinfo *ai;
+
+	ai = calloc(sizeof(struct addrinfo) + addrlen, 1);
+	if (ai) {
+		ai->ai_addr = (void *)(ai+1);
+		ai->ai_addrlen = ai->ai_addr->sa_len = addrlen;
+	}
+
+	return ai;
+}
+
 static struct addrinfo *
 get_ai(const struct addrinfo *pai, const struct afd *afd, const char *addr)
 {
 	char *p;
 	struct addrinfo *ai;
+	struct sockaddr *save;
 
 	_DIAGASSERT(pai != NULL);
 	_DIAGASSERT(afd != NULL);
 	_DIAGASSERT(addr != NULL);
 
-	ai = (struct addrinfo *)malloc(sizeof(struct addrinfo)
-		+ (afd->a_socklen));
+	ai = allocaddrinfo((socklen_t)afd->a_socklen);
 	if (ai == NULL)
 		return NULL;
 
+        save = ai->ai_addr;
 	memcpy(ai, pai, sizeof(struct addrinfo));
-	ai->ai_addr = (struct sockaddr *)(void *)(ai + 1);
-	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
-	ai->ai_addr->sa_len = afd->a_socklen;
-	ai->ai_addrlen = afd->a_socklen;
+
+        /* since we just overwrote all of ai, we have
+           to restore ai_addr and ai_addrlen */
+        ai->ai_addr = save;
+        ai->ai_addrlen = (socklen_t)afd->a_socklen;
+        
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(void *)(ai->ai_addr);
 	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);

@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.214 2009/08/16 19:33:38 christos Exp $
+#	$NetBSD: shlib_version,v 1.215 2009/10/02 02:45:29 tsarna Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -35,4 +35,4 @@
 #   it's insufficient bitwidth to implement all ctype class.
 #   see isblank's comment in ctype.h.
 major=12
-minor=170
+minor=171
