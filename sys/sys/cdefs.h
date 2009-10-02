@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.77 2009/08/08 21:23:15 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.78 2009/10/02 21:05:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -228,7 +228,11 @@
 #define	__used		__unused
 #endif
 
-#if __GNUC_PREREQ__(2, 7)
+#if defined(__lint__)
+#define	__packed	__packed
+#define	__aligned(x)	/* delete */
+#define	__section(x)	/* delete */
+#elif __GNUC_PREREQ__(2, 7)
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
@@ -236,10 +240,6 @@
 #define	__packed	_Pragma("packed 1")
 #define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
-#elif defined(__lint__)
-#define	__packed	/* delete */
-#define	__aligned(x)	/* delete */
-#define	__section(x)	/* delete */
 #else
 #define	__packed	error: no __packed for this compiler
 #define	__aligned(x)	error: no __aligned for this compiler
