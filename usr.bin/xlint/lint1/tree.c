@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.59 2009/05/02 16:10:49 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.60 2009/10/02 19:01:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.59 2009/05/02 16:10:49 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.60 2009/10/02 19:01:14 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3093,7 +3093,7 @@ bldszof(type_t *tp)
 #else
 	st = UINT;
 #endif
-
+printf("size %p = %ld\n", tp, (int64_t)(elem * elsz / CHAR_BIT));
 	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
 }
 

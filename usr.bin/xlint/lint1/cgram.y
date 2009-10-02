@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.45 2009/10/02 15:03:45 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.46 2009/10/02 19:01:13 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.45 2009/10/02 15:03:45 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.46 2009/10/02 19:01:13 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -591,7 +591,8 @@ struct_spec:
 	;
 
 struct:
-	  T_SOU {
+	  struct type_attribute
+	| T_SOU {
 		symtyp = FTAG;
 		pushdecl($1 == STRUCT ? MOS : MOU);
 		dcs->d_offset = 0;

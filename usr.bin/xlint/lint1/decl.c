@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.47 2009/10/02 15:03:45 christos Exp $ */
+/* $NetBSD: decl.c,v 1.48 2009/10/02 19:01:13 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.47 2009/10/02 15:03:45 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.48 2009/10/02 19:01:13 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -484,18 +484,12 @@ settdsym(type_t *tp, sym_t *sym)
 	}
 }
 
-void
-addpacked(void)
+static void
+setpackedsize(type_t *tp)
 {
 	str_t *sp;
 	sym_t *mem;
-	type_t *tp = dcs->d_type;
 	char buf[256];
-
-	if (tp == NULL)
-		LERROR("no type attr");
-
-	tp->t_ispacked = 1;
 
 	switch (tp->t_tspec) {
 	case STRUCT:
@@ -517,6 +511,15 @@ addpacked(void)
 		warning(326, "packed", tyname(buf, sizeof(buf), tp));
 		break;
 	}
+}
+
+void
+addpacked(void)
+{
+	if (dcs->d_type == NULL) {
+		dcs->d_ispacked = 1;
+	} else
+		setpackedsize(dcs->d_type);
 }
 
 /*
@@ -1624,6 +1627,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 		if (tag->s_scl == NOSCL) {
 			tag->s_scl = scl;
 			tag->s_type = tp = getblk(sizeof (type_t));
+			tp->t_ispacked = dcs->d_ispacked;
 		} else {
 			tp = tag->s_type;
 		}
@@ -1733,7 +1737,6 @@ scltoa(scl_t sc)
 }
 
 /*
- * Completes the type of a tag in a struct/union/enum declaration.
  * tp points to the type of the, tag, fmem to the list of members/enums.
  */
 type_t *
@@ -1751,8 +1754,11 @@ compltag(type_t *tp, sym_t *fmem)
 		align(dcs->d_stralign, 0);
 		sp = tp->t_str;
 		sp->align = dcs->d_stralign;
-		sp->size = dcs->d_offset;
 		sp->memb = fmem;
+		if (tp->t_ispacked)
+			setpackedsize(tp);
+		else
+			sp->size = dcs->d_offset;
 		if (sp->size == 0) {
 			/* zero sized %s */
 			(void)c99ism(47, ttab[t].tt_name);
