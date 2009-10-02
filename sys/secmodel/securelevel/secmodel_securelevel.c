@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.14 2009/10/02 18:50:14 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.15 2009/10/02 20:15:07 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.14 2009/10/02 18:50:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.15 2009/10/02 20:15:07 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -116,6 +116,13 @@ sysctl_security_securelevel_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "name", NULL,
 		       NULL, 0, __UNCONST("Traditional NetBSD: Securelevel"), 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "securelevel",
+		       SYSCTL_DESCR("System security level"),
+		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	/* Compatibility: kern.securelevel */
