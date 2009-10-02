@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.6 2009/10/02 07:17:16 cegger Exp $
+$NetBSD: storage,v 1.7 2009/10/02 07:43:01 cegger Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -114,7 +114,7 @@ Responsible: jmcneill
 9. In-kernel iSCSI Initiator
 ----------------------------
 
-NetBSD has had an userland implementation of an iSCSI initiator since
+NetBSD has had a userland implementation of an iSCSI initiator since
 NetBSD 4.99.35, based on ReFUSE.  There is a possibility that an
 in-kernel initiator may be available - please contact core if you are
 interested in this functionality.

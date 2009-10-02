@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.96 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.97 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1608,7 +1608,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		counts (e.g. isofs). [mycroft 19941026]
 	Reworked part of the `mcd' driver to make it more reliable. [mycroft
 		19941026]
-	Made fork(2)ing with an user-defined LDT work (and not panic). [mycroft
+	Made fork(2)ing with a user-defined LDT work (and not panic). [mycroft
 		19941031]
 	upgraded diff, diff3, and sdiff to version 2.7. (jtc)
 	lorder(1): Fixed lorder manpage. From Brad Parker. (jtc)
@@ -2644,7 +2644,7 @@ Changes from NetBSD 1.1 to NetBSD 1.2:
 		underlying device and a printable "external name"
 		(name + unit number), thus eliminating if_name and if_unit.
 		Updated interface to (*if_watchdog)() and (*if_reset)()
-		to take a struct ifnet *, rather than an unit number.
+		to take a struct ifnet *, rather than a unit number.
 		[thorpej 19960506]
 	ethernet: made the MI LANCE driver standalone, using cfattach to
 		resolve naming conflicts on ports which can have more
@@ -3512,7 +3512,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		new bus dma framework.	[thorpej 19970606]
 	alpha: Add support for SGMAP-mapped DMA, using new bus dma
 		framework, allowing ISA DMA to function.  [thorpej 19970606]
-	isa: convert isadma.c to be an user of new bus dma framework,
+	isa: convert isadma.c to be a user of new bus dma framework,
 		and convert all drivers that use it to the new API.
 		[thorpej 19970606]
 	New sysctl hw.machine_arch which returns the CPU class of a machine.
@@ -4307,7 +4307,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		Sweep inspired by a discussion of a bug introduced in
 		OpenBSD on Bugtraq.  [thorpej 19980728]
 	libedit: add 'edit on|off' editrc command, which is used to advise
-		invoking programs if an user's does or doesn't want editline
+		invoking programs if a user's does or doesn't want editline
 		support. Modify ftp(1) to honour this.	[lukem 19980729]
 	tftpd(8): add support for -u user and -g group, which specify the user
 		and group to run as. Fixes PR #4218.  [lukem 19980729]
@@ -4498,7 +4498,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 	newsmips: Switch to UVM by default on newsmips. [tsubai 19981116]
 	i386: Switch to gas.new on i386. [kristerw 19981116]
 	sparc: Switch to gas.new on sparc. [kristerw 19981116]
-	mbrlabel(8): Add an utility to access partitions on MBR labeled
+	mbrlabel(8): Add a utility to access partitions on MBR labeled
 		disks like those transferred from a DOS machine [ws 19981116]
 	pmax:  Add crunched miniroot distribution media [jonathan 19981116]
 	kernel: Add support for detaching and activating/deactivating devices.
@@ -4749,7 +4749,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		[bad 19990323]
 	dump(8): Add read cache. Speeds up dump operations in most cases
 		[bouyer,mjl 19990323]
-	net: prevent bind(2)ing to an unicast address/port if the uids of the
+	net: prevent bind(2)ing to a unicast address/port if the uids of the
 		socket creators are different and the new bind(2) is not done
 		by root.  [luke 19990324]
 	vm: delete Mach VM.  [mrg 19990324]
@@ -4821,7 +4821,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		[augustss 19990512]
 	ftp(1): support `[user[:password]@]' in http URLs and $http_proxy.
 		[lukem 19990513]
-	kernel: Allow an user-specified stack to be used in the child after a
+	kernel: Allow a user-specified stack to be used in the child after a
 		fork operation, allow an alternate exit signal to be specified,
 		and allow more things (cwd info, file tables, signal handlers)
 		to be shared between the parent and child.  [thorpej 19990513]
@@ -4835,7 +4835,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		sessions eventually close down). add transfer time to
 		syslog messages for get/put. other cleanups.  [lukem 19990518]
 	whois(1): imported client from RIPE WHOIS Tools 2.4. [tron 19990518]
-	net: Make layer 2 protocol input routines private, and with an uniform
+	net: Make layer 2 protocol input routines private, and with a uniform
 		footprint.  Add an (*if_input)() entry to the ifnet structure.
 		These routines now expect the protocol header to be included
 		with the packet, not stripped off.  [thorpej 19990518]
@@ -5632,7 +5632,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 	i386: utilize uvm_pagezeroidle.  [thorpej 20000424]
 	poweroff: Powers down the system equivalent to "halt -p", but 
 		allows powering down the system from an exec(2) call, e.g.
-		via an user which has "poweroff" as login shell. The command
+		via a user which has "poweroff" as login shell. The command
 		name is modeled after Solaris. [hubertf 20000425]
 	libc, libresolv: synchronize resolver functions to BIND 4.9.7.
 		boundary checking code in BIND 4.9.7 are now active.
@@ -8704,7 +8704,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[msaitoh 20070130]
 	uplcom(4): Add support for Willcom WS002IN PHS device
 		(Prolific Technology PL2303X). [msaitoh 20070131]
-	zaurus: Updates to allow Zaurus screen to rotate 90 degrees to an usable
+	zaurus: Updates to allow Zaurus screen to rotate 90 degrees to a usable
 		state with the keyboard. From OpenBSD. [ober,peter 20070202]
 	security(8): Add support for per-user /tmp. [elad 20070204]
 	ugensa(4): Add support Novatel Merlin, used in VZ V620.
@@ -9725,7 +9725,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	wm(4): Add support for more Ethernet ICH9 devices. [bouyer 20081015]
 	rump: Add networking support to rump.  Support is available in
 		libraries prefixed with librumpnet.  [pooka 20081016]
-	rump_nfs(8): Add support for an userspace NFS client.  [pooka 20081016]
+	rump_nfs(8): Add support for a userspace NFS client.  [pooka 20081016]
 	thinkpad(4): Add fan sensor support, from Thomas E. Spanjaard.
 		[jmcneill 20081018]
 	ps(1): Use 'O' for LSONPROC like solaris instead of bundling LSIDL,
