@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.948 2009/10/02 16:47:52 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.949 2009/10/02 18:50:49 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.948 $"
+#ident 		"GENERIC-$Revision: 1.949 $"
 
 maxusers	64		# estimated number of users
 
@@ -621,6 +621,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
+
+# VIA C7 Temperature sensor
+options 	VIA_C7TEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
