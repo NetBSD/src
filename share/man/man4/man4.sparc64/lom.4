@@ -1,0 +1,61 @@
+.\"     $NetBSD: lom.4,v 1.1 2009/10/02 15:09:16 nakayama Exp $
+.\"     $OpenBSD: lom.4,v 1.4 2009/09/23 22:08:07 kettenis Exp $
+.\"
+.\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 2 2009 $
+.Dt LOM 4 sparc64
+.Os
+.Sh NAME
+.Nm lom
+.Nd lights out management
+.Sh SYNOPSIS
+.Cd "lom* at ebus?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the LOMlite lights out management module
+found on Sun Netra t1 systems and the LOMlite2 module found on Sun
+Fire V100/V120 and Sun Netra T1/X1 systems.
+Temperature readings, PSU status and fan status provided by the LOM
+are made available through the
+.Xr envstat 8
+interface.
+The integrated watchdog timer can be configured through the
+.Xr wdogctl 8
+interface.
+The watchdog timer supports timeouts between 1 and 126 seconds.
+.Pp
+The
+.Nm
+driver will update the hostname stored in the LOM whenever the
+system's hostname is changed.
+.Sh SEE ALSO
+.Xr hostname 1 ,
+.Xr envsys 4 ,
+.Xr envstat 8 ,
+.Xr wdogctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.7
+and was then ported to
+.Nx 5.1 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Mark Kettenis Aq kettenis@openbsd.org .

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2009/03/06 20:31:52 joerg Exp $
+# $NetBSD: GENERIC,v 1.111 2009/10/02 15:09:16 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	64
 
@@ -884,6 +884,7 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
 envctrl*	at ebus?		# Ultra E450 environmental monitoring
+lom*		at ebus?		# LOMlite lights out management
 
 # Netra X1 / T1 style environmental monitoring
 alipm*		at pci?
