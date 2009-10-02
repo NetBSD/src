@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1314 2009/09/29 23:56:26 tsarna Exp $
+#	$NetBSD: mi,v 1.1315 2009/10/02 02:45:29 tsarna Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4636,6 +4636,7 @@
 ./usr/share/man/cat3/aio_write.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alarm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/alloca.0			comp-c-catman		.cat
+./usr/share/man/cat3/allocaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alphasort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/arc4random.0		comp-c-catman		.cat
 ./usr/share/man/cat3/archive.0			comp-c-catman		.cat
@@ -10215,6 +10216,7 @@
 ./usr/share/man/html3/aio_write.html		comp-c-htmlman		html
 ./usr/share/man/html3/alarm.html		comp-c-htmlman		html
 ./usr/share/man/html3/alloca.html		comp-c-htmlman		html
+./usr/share/man/html3/allocaddrinfo.html	comp-c-htmlman		html
 ./usr/share/man/html3/alphasort.html		comp-c-htmlman		html
 ./usr/share/man/html3/arc4random.html		comp-c-htmlman		html
 ./usr/share/man/html3/archive.html		comp-c-htmlman		html
@@ -15594,6 +15596,7 @@
 ./usr/share/man/man3/aio_write.3		comp-c-man		.man
 ./usr/share/man/man3/alarm.3			comp-c-man		.man
 ./usr/share/man/man3/alloca.3			comp-c-man		.man
+./usr/share/man/man3/allocaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/alphasort.3		comp-c-man		.man
 ./usr/share/man/man3/arc4random.3		comp-c-man		.man
 ./usr/share/man/man3/archive.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.77 2009/06/08 17:18:11 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.78 2009/10/02 02:45:29 tsarna Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -114,6 +114,7 @@ MAN+=	gai_strerror.3 getaddrinfo.3 getnameinfo.3 if_indextoname.3 \
 	inet6_option_space.3 inet6_rthdr_space.3 \
 	inet6_opt_init.3 inet6_rth_space.3
 MLINKS+=getaddrinfo.3 freeaddrinfo.3 \
+	getaddrinfo.3 allocaddrinfo.3 \
 	getifaddrs.3 freeifaddrs.3 \
 	if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3 \
