@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.28 2009/10/02 15:03:45 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.29 2009/10/02 21:04:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -210,6 +210,7 @@ extern	void	expr(tnode_t *, int, int, int);
 extern	void	chkmisc(tnode_t *, int, int, int, int, int, int);
 extern	int	conaddr(tnode_t *, sym_t **, ptrdiff_t *);
 extern	strg_t	*catstrg(strg_t *, strg_t *);
+extern  int64_t tsize(type_t *);
 
 /*
  * func.c

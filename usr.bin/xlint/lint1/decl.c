@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.49 2009/10/02 20:45:06 christos Exp $ */
+/* $NetBSD: decl.c,v 1.50 2009/10/02 21:04:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.49 2009/10/02 20:45:06 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.50 2009/10/02 21:04:03 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -497,14 +497,16 @@ setpackedsize(type_t *tp)
 	case STRUCT:
 		sp = tp->t_str;
 		sp->size = 0;
-		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt)
-			sp->size += size(mem->s_type->t_tspec);
+		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt) {
+			size_t x = (size_t)tsize(mem->s_type);
+			sp->size += x;
+		}
 		break;
 	case UNION:
 		sp = tp->t_str;
 		sp->size = 0;
 		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt) {
-			size_t x = size(mem->s_type->t_tspec);
+			size_t x = (size_t)tsize(mem->s_type);
 			if (x > sp->size)
 				sp->size = x;
 		}
