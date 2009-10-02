@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.12 2009/03/03 21:55:06 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.13 2009/10/02 21:56:28 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.12 2009/03/03 21:55:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.13 2009/10/02 21:56:28 elad Exp $");
 
 #include <sys/param.h>
 
@@ -56,11 +56,36 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.12 2009/03/03 21:55:06 rmind Exp $");
 static pset_info_t **	psets;
 static u_int		psets_max;
 static u_int		psets_count;
+static kauth_listener_t	psets_listener;
 
 static int	psets_realloc(int);
 static int	psid_validate(psetid_t, bool);
 static int	kern_pset_create(psetid_t *);
 static int	kern_pset_destroy(psetid_t);
+
+static int
+psets_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	psetid_t id;
+	enum kauth_system_req req;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_system_req)arg0;
+	id = (psetid_t)(unsigned long)arg1;
+
+	if (action != KAUTH_SYSTEM_PSET)
+		return result;
+
+	if ((req == KAUTH_REQ_SYSTEM_PSET_ASSIGN) ||
+	    (req == KAUTH_REQ_SYSTEM_PSET_BIND)) {
+		if (id == PS_QUERY)
+			result = KAUTH_RESULT_ALLOW;
+	}
+
+	return result;
+}
 
 /*
  * Initialization of the processor-sets.
@@ -72,6 +97,9 @@ psets_init(void)
 	psets_max = max(MAXCPUS, 32);
 	psets = kmem_zalloc(psets_max * sizeof(void *), KM_SLEEP);
 	psets_count = 0;
+
+	psets_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    psets_listener_cb, NULL);
 }
 
 /*
