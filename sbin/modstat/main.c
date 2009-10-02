@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2008/11/16 11:30:55 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2009/10/02 18:50:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2008/11/16 11:30:55 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2009/10/02 18:50:14 elad Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -49,6 +49,7 @@ static const char *classes[] = {
 	"vfs",
 	"driver",
 	"exec",
+	"secmodel",
 };
 
 static const char *sources[] = {

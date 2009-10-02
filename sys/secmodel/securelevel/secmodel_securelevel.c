@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.13 2009/09/03 04:45:28 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.14 2009/10/02 18:50:14 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.13 2009/09/03 04:45:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.14 2009/10/02 18:50:14 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -49,15 +49,20 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.13 2009/09/03 04:45:28 el
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
 #include <secmodel/securelevel/securelevel.h>
 
+MODULE(MODULE_CLASS_SECMODEL, securelevel, NULL);
+
 static int securelevel;
 
 static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
     l_vnode;
+
+static struct sysctllog *securelevel_sysctl_log;
 
 /*
  * sysctl helper routine for securelevel. ensures that the value
@@ -85,21 +90,35 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 }
 
 void
-secmodel_securelevel_init(void)
+sysctl_security_securelevel_setup(struct sysctllog **clog)
 {
-#ifdef INSECURE
-	securelevel = -1;
-#else
-	securelevel = 0;
-#endif /* INSECURE */
-}
+	const struct sysctlnode *rnode;
 
-SYSCTL_SETUP(sysctl_security_securelevel_setup,
-    "sysctl security securelevel setup")
-{
-	/*
-	 * For compatibility, we create a kern.securelevel variable.
-	 */
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "models", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "securelevel", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "name", NULL,
+		       NULL, 0, __UNCONST("Traditional NetBSD: Securelevel"), 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: kern.securelevel */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
@@ -112,6 +131,16 @@ SYSCTL_SETUP(sysctl_security_securelevel_setup,
 		       SYSCTL_DESCR("System security level"),
 		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
+}
+
+void
+secmodel_securelevel_init(void)
+{
+#ifdef INSECURE
+	securelevel = -1;
+#else
+	securelevel = 0;
+#endif /* INSECURE */
 }
 
 void
@@ -131,7 +160,6 @@ secmodel_securelevel_start(void)
 	    secmodel_securelevel_vnode_cb, NULL);
 }
 
-#if defined(_LKM)
 void
 secmodel_securelevel_stop(void)
 {
@@ -142,7 +170,35 @@ secmodel_securelevel_stop(void)
 	kauth_unlisten_scope(l_device);
 	kauth_unlisten_scope(l_vnode);
 }
-#endif /* _LKM */
+
+static int
+securelevel_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		secmodel_securelevel_init();
+		secmodel_securelevel_start();
+		sysctl_security_securelevel_setup(&securelevel_sysctl_log);
+		break;
+
+	case MODULE_CMD_FINI:
+		sysctl_teardown(&securelevel_sysctl_log);
+		secmodel_securelevel_stop();
+		break;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		error = EPERM;
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return (error);
+}
 
 /*
  * kauth(9) listener

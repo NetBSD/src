@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.71 2009/09/03 04:45:28 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.1 2009/10/02 18:50:13 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.71 2009/09/03 04:45:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.1 2009/10/02 18:50:13 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,38 +57,133 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.71 2009/09/03 04:45:28 el
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/uidinfo.h>
+#include <sys/module.h>
 
 #include <miscfs/procfs/procfs.h>
 
-#include <secmodel/bsd44/suser.h>
+#include <secmodel/suser/suser.h>
 
-extern int dovfsusermount;
+MODULE(MODULE_CLASS_SECMODEL, suser, NULL);
+
+static int secmodel_bsd44_curtain;
+/* static */ int dovfsusermount;
 
 static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
     l_device, l_vnode;
 
+static struct sysctllog *suser_sysctl_log;
+
 void
-secmodel_bsd44_suser_start(void)
+sysctl_security_suser_setup(struct sysctllog **clog)
 {
-	l_generic = kauth_listen_scope(KAUTH_SCOPE_GENERIC,
-	    secmodel_bsd44_suser_generic_cb, NULL);
-	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
-	    secmodel_bsd44_suser_system_cb, NULL);
-	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-	    secmodel_bsd44_suser_process_cb, NULL);
-	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
-	    secmodel_bsd44_suser_network_cb, NULL);
-	l_machdep = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
-	    secmodel_bsd44_suser_machdep_cb, NULL);
-	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
-	    secmodel_bsd44_suser_device_cb, NULL);
-	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
-	    secmodel_bsd44_suser_vnode_cb, NULL);
+	const struct sysctlnode *rnode;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "models", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "suser", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "name", NULL,
+		       NULL, 0, __UNCONST("Traditional NetBSD: Superuser"), 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects to "\
+		       		    "users not owning them."),
+		       NULL, 0, &secmodel_bsd44_curtain, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: security.curtain */
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects to "\
+		       		    "users not owning them."),
+		       NULL, 0, &secmodel_bsd44_curtain, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	/* Compatibility: vfs.generic.usermount */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "generic",
+		       SYSCTL_DESCR("Non-specific vfs related information"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 }
 
-#if defined(_LKM)
 void
-secmodel_bsd44_suser_stop(void)
+secmodel_suser_init(void)
+{
+	secmodel_bsd44_curtain = 0;
+	dovfsusermount = 0;
+}
+
+void
+secmodel_suser_start(void)
+{
+	l_generic = kauth_listen_scope(KAUTH_SCOPE_GENERIC,
+	    secmodel_suser_generic_cb, NULL);
+	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    secmodel_suser_system_cb, NULL);
+	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    secmodel_suser_process_cb, NULL);
+	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    secmodel_suser_network_cb, NULL);
+	l_machdep = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	    secmodel_suser_machdep_cb, NULL);
+	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    secmodel_suser_device_cb, NULL);
+	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
+	    secmodel_suser_vnode_cb, NULL);
+}
+
+void
+secmodel_suser_stop(void)
 {
 	kauth_unlisten_scope(l_generic);
 	kauth_unlisten_scope(l_system);
@@ -98,7 +193,35 @@ secmodel_bsd44_suser_stop(void)
 	kauth_unlisten_scope(l_device);
 	kauth_unlisten_scope(l_vnode);
 }
-#endif /* _LKM */
+
+static int
+suser_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		secmodel_suser_init();
+		secmodel_suser_start();
+		sysctl_security_suser_setup(&suser_sysctl_log);
+		break;
+
+	case MODULE_CMD_FINI:
+		sysctl_teardown(&suser_sysctl_log);
+		secmodel_suser_stop();
+		break;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		error = EPERM;
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return (error);
+}
 
 /*
  * kauth(9) listener
@@ -108,7 +231,7 @@ secmodel_bsd44_suser_stop(void)
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1,
     void *arg2, void *arg3)
 {
@@ -148,7 +271,7 @@ secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1,
     void *arg2, void *arg3)
 {
@@ -444,7 +567,7 @@ proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	struct proc *p;
@@ -775,7 +898,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2,
     void *arg3)
 {
@@ -1030,7 +1153,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2,
     void *arg3)
 {
@@ -1074,7 +1197,7 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Superuser access
  */
 int
-secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2,
     void *arg3)
 {
@@ -1173,7 +1296,7 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 }
 
 int
-secmodel_bsd44_suser_vnode_cb(kauth_cred_t cred, kauth_action_t action,
+secmodel_suser_vnode_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	bool isroot;

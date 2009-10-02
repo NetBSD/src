@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.22 2009/05/02 14:16:52 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.23 2009/10/02 18:50:15 elad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.22 2009/05/02 14:16:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.23 2009/10/02 18:50:15 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.22 2009/05/02 14:16:52 pooka Exp $")
 #include <sys/systm.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
-
-#include <secmodel/securelevel/securelevel.h>
 
 #ifdef __sparc__
  /* 
@@ -113,24 +111,3 @@ xc_wait(uint64_t where)
 
 }
 
-/*
- * XXX: bsd44 secmodel depends on securelevel
- */
-int
-secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
-{
-
-	return 0;
-}
-
-void
-secmodel_securelevel_init()
-{
-
-}
-
-void
-secmodel_securelevel_start()
-{
-
-}

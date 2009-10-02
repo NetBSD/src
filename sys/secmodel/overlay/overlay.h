@@ -1,4 +1,4 @@
-/* $NetBSD: overlay.h,v 1.3 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: overlay.h,v 1.4 2009/10/02 18:50:13 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -31,6 +31,9 @@
 
 void secmodel_overlay_init(void);
 void secmodel_overlay_start(void);
+void secmodel_overlay_stop(void);
+
+void sysctl_security_overlay_setup(struct sysctllog **);
 
 int secmodel_overlay_generic_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
@@ -43,6 +46,8 @@ int secmodel_overlay_network_cb(kauth_cred_t, kauth_action_t, void *,
 int secmodel_overlay_machdep_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 int secmodel_overlay_device_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
+int secmodel_overlay_vnode_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
 #endif /* !_SECMODEL_OVERLAY_OVERLAY_H_ */
