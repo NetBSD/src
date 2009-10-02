@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1299 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1300 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -411,3 +411,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsarna 20090929]
 	lom(4), sparc64: Add a driver for LOMlite lights out management
 		hardware monitor and watchdog timer. [nakayama 20091002]
+	i386: Add support for enhanced speedstep on VIA C7 Esther CPUs.
+		[jmcneill 20091002]
