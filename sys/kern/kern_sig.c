@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.298 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.299 2009/10/02 23:24:15 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.298 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.299 2009/10/02 23:24:15 elad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -140,6 +140,29 @@ static	const char logcoredump[] =
 static	const char lognocoredump[] =
     "pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
+static kauth_listener_t signal_listener;
+
+static int
+signal_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result, signum;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+	signum = (int)(unsigned long)arg1;
+
+	if (action != KAUTH_PROCESS_SIGNAL)
+		return result;
+
+	if (kauth_cred_uidmatch(cred, p->p_cred) ||
+	    (signum == SIGCONT && (curproc->p_session == p->p_session)))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * signal_init:
  *
@@ -165,6 +188,9 @@ signal_init(void)
 
 	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
+
+	signal_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    signal_listener_cb, NULL);
 }
 
 /*
