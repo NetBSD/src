@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+
 #include "config.h"
 #include "dhcpcd.h"
 #include "if-pref.h"

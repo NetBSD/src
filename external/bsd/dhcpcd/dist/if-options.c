@@ -203,20 +203,24 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 		}
 		if (*str == '\\') {
 			str++;
-			switch(*str++) {
+			switch(*str) {
 			case '\0':
 				break;
 			case 'b':
 				*sbuf++ = '\b';
+				str++;
 				break;
 			case 'n':
 				*sbuf++ = '\n';
+				str++;
 				break;
 			case 'r':
 				*sbuf++ = '\r';
+				str++;
 				break;
 			case 't':
 				*sbuf++ = '\t';
+				str++;
 				break;
 			case 'x':
 				/* Grab a hex code */
@@ -254,8 +258,10 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 		} else
 			*sbuf++ = *str++;
 	}
-	if (punt_last)
+	if (punt_last) {
 		*--sbuf = '\0';
+		l--;
+	}
 	return l;
 }
 
@@ -450,6 +456,27 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			syslog(LOG_ERR, "invalid vendor format");
 			return -1;
 		}
+
+		/* If vendor starts with , then it is not encapsulated */
+		if (p == arg) {
+			arg++;
+			s = parse_string((char *)ifo->vendor + 1,
+			    VENDOR_MAX_LEN, arg);
+			if (s == -1) {
+				syslog(LOG_ERR, "vendor: %m");
+				return -1;
+			}
+			ifo->vendor[0] = (uint8_t)s;
+			ifo->options |= DHCPCD_VENDORRAW;
+			break;
+		}
+
+		/* Encapsulated vendor options */
+		if (ifo->options & DHCPCD_VENDORRAW) {
+			ifo->options &= ~DHCPCD_VENDORRAW;
+			ifo->vendor[0] = 0;
+		}
+
 		*p = '\0';
 		i = atoint(arg);
 		arg = p + 1;
@@ -810,7 +837,7 @@ read_config(const char *file,
 	}
 
 	/* Terminate the encapsulated options */
-	if (ifo && ifo->vendor[0]) {
+	if (ifo && ifo->vendor[0] && !(ifo->options & DHCPCD_VENDORRAW)) {
 		ifo->vendor[0]++;
 		ifo->vendor[ifo->vendor[0]] = DHO_END;
 	}
@@ -830,7 +857,7 @@ add_options(struct if_options *ifo, int argc, char **argv)
 			break;
 	}
 	/* Terminate the encapsulated options */
-	if (r == 1 && ifo->vendor[0]) {
+	if (r == 1 && ifo->vendor[0] && !(ifo->options & DHCPCD_VENDORRAW)) {
 		ifo->vendor[0]++;
 		ifo->vendor[ifo->vendor[0]] = DHO_END;
 	}
