@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.83 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.84 2009/10/02 23:00:02 elad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.83 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.84 2009/10/02 23:00:02 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -109,6 +109,8 @@ MODULE(MODULE_CLASS_VFS, procfs, NULL);
 VFS_PROTOS(procfs);
 
 static struct sysctllog *procfs_sysctl_log;
+
+static kauth_listener_t procfs_listener;
 
 /*
  * VFS Operations.
@@ -305,6 +307,45 @@ struct vfsops procfs_vfsops = {
 };
 
 static int
+procfs_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	struct pfsnode *pfs;
+	enum kauth_process_req req;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+	pfs = arg1;
+	req = (enum kauth_process_req)(unsigned long)arg2;
+
+	if (action != KAUTH_PROCESS_PROCFS)
+		return result;
+
+	/* Privileged; let secmodel handle that. */
+	if (req == KAUTH_REQ_PROCESS_PROCFS_CTL)
+		return result;
+
+	switch (pfs->pfs_type) {
+	case PFSregs:
+	case PFSfpregs:
+	case PFSmem:
+		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
+		    ISSET(p->p_flag, PK_SUGID))
+			break;
+
+		/*FALLTHROUGH*/
+	default:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+	}
+
+	return result;
+}
+
+
+static int
 procfs_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
@@ -330,12 +371,17 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		 * one more instance of the "number to vfs" mapping problem,
 		 * but "12" is the order as taken from sys/mount.h
 		 */
+
+		procfs_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+		    procfs_listener_cb, NULL);
+
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&procfs_vfsops);
 		if (error != 0)
 			break;
 		sysctl_teardown(&procfs_sysctl_log);
+		kauth_unlisten_scope(procfs_listener);
 		break;
 	default:
 		error = ENOTTY;
