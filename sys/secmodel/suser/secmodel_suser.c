@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.1 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.2 2009/10/02 21:47:35 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.1 2009/10/02 18:50:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.2 2009/10/02 21:47:35 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -624,33 +624,11 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_KTRACE: {
-		enum kauth_process_req req;
-
-		req = (enum kauth_process_req)(unsigned long)arg1;
-
-		if (isroot) {
+	case KAUTH_PROCESS_KTRACE:
+		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
-			break;
-		} else if (req == KAUTH_REQ_PROCESS_KTRACE_PERSISTENT) {
-			break;
-		}
-
-		if ((p->p_traceflag & KTRFAC_PERSISTENT) ||
-		    (p->p_flag & PK_SUGID)) {
-			break;
-		}
-
-		if (kauth_cred_geteuid(cred) == kauth_cred_getuid(p->p_cred) &&
-		    kauth_cred_getuid(cred) == kauth_cred_getsvuid(p->p_cred) &&
-		    kauth_cred_getgid(cred) == kauth_cred_getgid(p->p_cred) &&
-		    kauth_cred_getgid(cred) == kauth_cred_getsvgid(p->p_cred)) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
 
 		break;
-		}
 
 	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req = (enum kauth_process_req)arg2;

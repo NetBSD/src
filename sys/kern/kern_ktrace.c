@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.149 2009/08/05 19:53:42 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.150 2009/10/02 21:47:35 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.149 2009/08/05 19:53:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.150 2009/10/02 21:47:35 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,8 @@ int ktrace_on;
 static TAILQ_HEAD(, ktr_desc) ktdq = TAILQ_HEAD_INITIALIZER(ktdq);
 static pool_cache_t kte_cache;
 
+static kauth_listener_t ktrace_listener;
+
 static void
 ktd_wakeup(struct ktr_desc *ktd)
 {
@@ -237,6 +239,39 @@ ktrexit(lwp_t *l)
 	l->l_pflag &= ~LP_KTRACTIVE;
 }
 
+static int
+ktrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+	enum kauth_process_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	if (action != KAUTH_PROCESS_KTRACE)
+		return result;
+
+	req = (enum kauth_process_req)(unsigned long)arg1;
+
+	/* Privileged; secmodel should handle these. */
+	if (req == KAUTH_REQ_PROCESS_KTRACE_PERSISTENT)
+		return result;
+
+	if ((p->p_traceflag & KTRFAC_PERSISTENT) ||
+	    (p->p_flag & PK_SUGID))
+		return result;
+
+	if (kauth_cred_geteuid(cred) == kauth_cred_getuid(p->p_cred) &&
+	    kauth_cred_getuid(cred) == kauth_cred_getsvuid(p->p_cred) &&
+	    kauth_cred_getgid(cred) == kauth_cred_getgid(p->p_cred) &&
+	    kauth_cred_getgid(cred) == kauth_cred_getsvgid(p->p_cred))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * Initialise the ktrace system.
  */
@@ -247,6 +282,9 @@ ktrinit(void)
 	mutex_init(&ktrace_lock, MUTEX_DEFAULT, IPL_NONE);
 	kte_cache = pool_cache_init(sizeof(struct ktrace_entry), 0, 0, 0,
 	    "ktrace", &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
+
+	ktrace_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    ktrace_listener_cb, NULL); 
 }
 
 /*
