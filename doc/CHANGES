@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1300 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1301 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -412,4 +412,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	lom(4), sparc64: Add a driver for LOMlite lights out management
 		hardware monitor and watchdog timer. [nakayama 20091002]
 	i386: Add support for enhanced speedstep on VIA C7 Esther CPUs.
+		[jmcneill 20091002]
+	acpiwmi(4): Add a driver for the ACPI WMI Mapper interface.
 		[jmcneill 20091002]
