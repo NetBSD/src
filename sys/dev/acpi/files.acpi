@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.59 2009/09/30 20:44:50 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.60 2009/10/02 16:47:52 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -145,3 +145,8 @@ file	dev/acpi/dalb_acpi.c		acpidalb
 # Winbond Integrated Media Reader
 attach	wb at acpinodebus with wb_acpi
 file	dev/acpi/wb_acpi.c		wb_acpi
+
+# ACPI-WMI Mapper
+device	acpiwmi
+attach	acpiwmi at acpinodebus
+file	dev/acpi/wmi_acpi.c		acpiwmi
