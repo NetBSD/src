@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.1 2009/10/02 15:35:46 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.2 2009/10/03 19:07:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -60,11 +60,8 @@
  * It's still somewhat under the hammer ....
  */
 
-/* hardcoded /dev/ugenN for now */
-#define UGENDEV 2
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.1 2009/10/02 15:35:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.2 2009/10/03 19:07:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,11 +106,11 @@ static const struct cfiattrdata *const rumpusbhc_attrs[] = {
 	NULL,
 };
 
-static int	rumpusbhc_match(struct device *, struct cfdata *, void *);
+static int	rumpusbhc_probe(struct device *, struct cfdata *, void *);
 static void	rumpusbhc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL_NEW(rumpusbhc, sizeof(struct rumpusbhc_softc),
-	rumpusbhc_match, rumpusbhc_attach, NULL, NULL);
+	rumpusbhc_probe, rumpusbhc_attach, NULL, NULL);
 CFDRIVER_DECL(rumpusbhc, DV_DULL, rumpusbhc_attrs);
 
 struct cfparent rumpusbhcpar = {
@@ -122,18 +119,22 @@ struct cfparent rumpusbhcpar = {
 	DVUNIT_ANY
 };
 
+/* probe ugen0 through ugen3 */
 struct cfdata rumpusbhc_cfdata[] = {
-	{ "rumpusbhc", "rumpusbhc", 0, FSTATE_STAR, NULL, 0, &rumpusbhcpar},
+	{ "rumpusbhc", "rumpusbhc", 0, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+	{ "rumpusbhc", "rumpusbhc", 1, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 };
 
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
 static void
-makeugendevstr(struct rumpusbhc_softc *sc, int endpoint, char *buf)
+makeugendevstr(int devnum, int endpoint, char *buf)
 {
 
 	CTASSERT(UGENDEV_BUFSIZE > sizeof(UGENDEV_BASESTR)+sizeof("0.00")+1);
-	sprintf(buf, "%s%d.%02d", UGENDEV_BASESTR, sc->sc_devnum, endpoint);
+	sprintf(buf, "%s%d.%02d", UGENDEV_BASESTR, devnum, endpoint);
 }
 
 /*
@@ -722,7 +723,7 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 				oflags = O_RDWR;
 			}
 
-			makeugendevstr(sc, endpt, buf);
+			makeugendevstr(sc->sc_devnum, endpt, buf);
 			fd = rumpuser_open(buf, oflags, &error);
 			if (fd == -1)
 				return USBD_INVAL; /* XXX: no mapping */
@@ -813,15 +814,24 @@ rump_dev_rumpusbhc_init()
 }
 
 static int
-rumpusbhc_match(struct device *parent, struct cfdata *match, void *aux)
+rumpusbhc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
+	char buf[UGENDEV_BUFSIZE];
+	int fd, error;
 
+	makeugendevstr(match->cf_unit, 0, buf);
+	fd = rumpuser_open(buf, O_RDWR, &error);
+	if (fd == -1)
+		return 0;
+
+	rumpuser_close(fd, &error);
 	return 1;
 }
 
 static void
 rumpusbhc_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct mainbus_attach_args *maa = aux;
 	struct rumpusbhc_softc *sc = device_private(self);
 	char buf[UGENDEV_BUFSIZE];
 	int error;
@@ -832,14 +842,13 @@ rumpusbhc_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_ugenfd, -1, sizeof(sc->sc_ugenfd));
 	memset(&sc->sc_fdmodes, -1, sizeof(sc->sc_fdmodes));
 
-	sc->sc_devnum = UGENDEV;
-
 	sc->sc_bus.usbrev = USBREV_2_0;
 	sc->sc_bus.methods = &rumpusbhc_bus_methods;
 	sc->sc_bus.hci_private = sc;
 	sc->sc_bus.pipe_size = sizeof(struct rumpusbhc_pipe);
+	sc->sc_devnum = maa->maa_unit;
 
-	makeugendevstr(sc, 0, buf);
+	makeugendevstr(sc->sc_devnum, 0, buf);
 	sc->sc_ugenfd[UGEN_EPT_CTRL] = rumpuser_open(buf, O_RDWR, &error);
 	if (error)
 		panic("rumpusbhc_attach: failed to open ctrl ept %s\n", buf);
