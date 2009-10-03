@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.42.4.1 2009/01/22 20:17:13 snj Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42.4.2 2009/10/03 23:54:05 snj Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.1 2009/01/22 20:17:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42.4.2 2009/10/03 23:54:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
+#ifdef DOM0OPS
+	if (xendomain_is_privileged()) {
+		xenkernfs_init();
+	}
+#endif
 
 	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
 	hac.hac_vcaa.vcaa_name = "vcpu";
@@ -281,6 +286,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NPCI > 0
 #ifdef XEN3
+#ifdef DOM0OPS
 #if NACPI > 0
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
@@ -320,6 +326,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	if (mp_verbose)
 		acpi_pci_link_state();
 #endif
+#endif /* DOM0OPS */
 #else /* !XEN3 */
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
@@ -371,7 +378,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #ifdef DOM0OPS
 	if (xendomain_is_privileged()) {
-		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
 #ifndef XEN3
