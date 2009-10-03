@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129.4.1 2009/09/26 18:53:48 snj Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.2 2009/10/03 23:11:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.1 2009/09/26 18:53:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.2 2009/10/03 23:11:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -644,16 +644,7 @@ puffs_vnop_create(void *v)
 	create_msg->pvnr_va = *ap->a_vap;
 	puffs_msg_setinfo(park_create, PUFFSOP_VN,
 	    PUFFS_VN_CREATE, VPTOPNC(dvp));
-
-	/*
-	 * Do the dance:
-	 * + insert into queue ("interlock")
-	 * + unlock vnode
-	 * + wait for response
-	 */
-	puffs_msg_enqueue(pmp, park_create);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
-	error = puffs_msg_wait2(pmp, park_create, dpn, NULL);
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_create, dvp->v_data, NULL, error);
 
 	error = checkerr(pmp, error, __func__);
 	if (error)
@@ -666,10 +657,10 @@ puffs_vnop_create(void *v)
 		    create_msg->pvnr_newnode, cnp);
 
  out:
+	vput(dvp);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
 
-	RELEPN_AND_VP(dvp, dpn);
 	DPRINTF(("puffs_create: return %d\n", error));
 	PUFFS_MSG_RELEASE(create);
 	return error;
@@ -700,9 +691,7 @@ puffs_vnop_mknod(void *v)
 	puffs_msg_setinfo(park_mknod, PUFFSOP_VN,
 	    PUFFS_VN_MKNOD, VPTOPNC(dvp));
 
-	puffs_msg_enqueue(pmp, park_mknod);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
-	error = puffs_msg_wait2(pmp, park_mknod, dpn, NULL);
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_mknod, dvp->v_data, NULL, error);
 
 	error = checkerr(pmp, error, __func__);
 	if (error)
@@ -716,10 +705,10 @@ puffs_vnop_mknod(void *v)
 		    mknod_msg->pvnr_newnode, cnp);
 
  out:
+	vput(dvp);
 	PUFFS_MSG_RELEASE(mknod);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	RELEPN_AND_VP(dvp, dpn);
 	return error;
 }
 
@@ -1073,6 +1062,8 @@ puffs_vnop_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	struct puffs_node *pnode = vp->v_data;
+	bool notifyserver = true;
 
 	/*
 	 * first things first: check if someone is trying to reclaim the
@@ -1085,14 +1076,23 @@ puffs_vnop_reclaim(void *v)
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
 		mutex_exit(&pmp->pmp_lock);
-		goto out;
+		notifyserver = false;
 	}
 
-	callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp));
-
- out:
+	/*
+	 * purge info from kernel before issueing FAF, since we
+	 * don't really know when we'll get around to it after
+	 * that and someone might race us into node creation
+	 */
+	mutex_enter(&pmp->pmp_lock);
+	LIST_REMOVE(pnode, pn_hashent);
+	mutex_exit(&pmp->pmp_lock);
 	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_purge(vp);
+
+	if (notifyserver)
+		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp));
+
 	puffs_putvnode(vp);
 
 	return 0;
@@ -1475,9 +1475,7 @@ puffs_vnop_mkdir(void *v)
 	puffs_msg_setinfo(park_mkdir, PUFFSOP_VN,
 	    PUFFS_VN_MKDIR, VPTOPNC(dvp));
 
-	puffs_msg_enqueue(pmp, park_mkdir);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
-	error = puffs_msg_wait2(pmp, park_mkdir, dpn, NULL);
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_mkdir, dvp->v_data, NULL, error);
 
 	error = checkerr(pmp, error, __func__);
 	if (error)
@@ -1490,10 +1488,10 @@ puffs_vnop_mkdir(void *v)
 		    mkdir_msg->pvnr_newnode, cnp);
 
  out:
+	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	RELEPN_AND_VP(dvp, dpn);
 	return error;
 }
 
@@ -1636,9 +1634,7 @@ puffs_vnop_symlink(void *v)
 	puffs_msg_setinfo(park_symlink, PUFFSOP_VN,
 	    PUFFS_VN_SYMLINK, VPTOPNC(dvp));
 
-	puffs_msg_enqueue(pmp, park_symlink);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
-	error = puffs_msg_wait2(pmp, park_symlink, dpn, NULL);
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_symlink, dvp->v_data, NULL, error);
 
 	error = checkerr(pmp, error, __func__);
 	if (error)
@@ -1651,10 +1647,10 @@ puffs_vnop_symlink(void *v)
 		    symlink_msg->pvnr_newnode, cnp);
 
  out:
+	vput(dvp);
 	PUFFS_MSG_RELEASE(symlink);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	RELEPN_AND_VP(dvp, dpn);
 
 	return error;
 }
