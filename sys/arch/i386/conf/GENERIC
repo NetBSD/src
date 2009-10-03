@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.949 2009/10/02 18:50:49 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.950 2009/10/03 13:37:27 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.949 $"
+#ident 		"GENERIC-$Revision: 1.950 $"
 
 maxusers	64		# estimated number of users
 
@@ -464,8 +464,8 @@ gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
-#viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
-#iic*	at viapcib?
+viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
+iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -487,7 +487,7 @@ isa0 	at gcscpcib?
 isa0	at ichlpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
-#isa0	at viapcib?
+isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
