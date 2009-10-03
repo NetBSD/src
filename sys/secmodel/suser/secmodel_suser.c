@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.23 2009/10/03 02:06:11 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.24 2009/10/03 03:02:55 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.23 2009/10/03 02:06:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.24 2009/10/03 03:02:55 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.23 2009/10/03 02:06:11 elad Exp
 #include <sys/proc.h>
 #include <sys/uidinfo.h>
 #include <sys/module.h>
-
-#include <miscfs/procfs/procfs.h>
 
 #include <secmodel/suser/suser.h>
 
