@@ -213,6 +213,10 @@ mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
 	mDNSPosixListenForSignalInEventLoop(SIGINT);
 	mDNSPosixListenForSignalInEventLoop(SIGTERM);
 	mDNSPosixListenForSignalInEventLoop(SIGUSR1);
+#ifdef HAVE_SIGINFO
+	mDNSPosixListenForSignalInEventLoop(SIGUSR2);
+	mDNSPosixListenForSignalInEventLoop(SIGINFO);
+#endif
 	mDNSPosixListenForSignalInEventLoop(SIGPIPE);
 	mDNSPosixListenForSignalInEventLoop(SIGHUP) ;
 
@@ -239,7 +243,22 @@ mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
 		(void) mDNSPosixRunEventLoopOnce(m, &timeout, &signals, &gotData);
 
 		if (sigismember(&signals, SIGHUP )) Reconfigure(m);
+#ifdef HAVE_SIGINFO
+                /* use OSX-compatible signals since we can, and gain enhanced debugging */
+		if (sigismember(&signals, SIGINFO)) DumpStateLog(m);
+		if (sigismember(&signals, SIGUSR1))
+			{
+		        mDNS_LoggingEnabled = mDNS_LoggingEnabled ? 0 : 1;
+		        LogMsg("SIGUSR1: Logging %s", mDNS_LoggingEnabled ? "Enabled" : "Disabled");
+			}
+		if (sigismember(&signals, SIGUSR2))
+			{
+			mDNS_PacketLoggingEnabled = mDNS_PacketLoggingEnabled ? 0 : 1;
+			LogMsg("SIGUSR2: Packet Logging %s", mDNS_PacketLoggingEnabled ? "Enabled" : "Disabled");
+			}
+#else
 		if (sigismember(&signals, SIGUSR1)) DumpStateLog(m);
+#endif
 		// SIGPIPE happens when we try to write to a dead client; death should be detected soon in request_callback() and cleaned up.
 		if (sigismember(&signals, SIGPIPE)) LogMsg("Received SIGPIPE - ignoring");
 		if (sigismember(&signals, SIGINT) || sigismember(&signals, SIGTERM)) break;
