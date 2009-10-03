@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2009/10/01 15:21:38 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2009/10/03 19:06:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2009/10/01 15:21:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2009/10/03 19:06:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,9 +125,11 @@ static int
 mainbus_search(struct device *parent, struct cfdata *cf,
 	const int *ldesc, void *aux)
 {
+	struct mainbus_attach_args maa;
 
-	if (config_match(parent, cf, NULL) > 0)
-		config_attach(parent, cf, NULL, NULL);
+	maa.maa_unit = cf->cf_unit;
+	if (config_match(parent, cf, &maa) > 0)
+		config_attach(parent, cf, &maa, NULL);
 
 	return 0;
 }
