@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.13 2008/08/10 08:53:29 cegger Exp $
+# $NetBSD: XEN3_DOMU,v 1.13.4.1 2009/10/03 23:55:43 snj Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -157,6 +157,11 @@ xennet*		at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
 
 xencons*	at hypervisor?		# Xen virtual console
+
+# PCI pass-through support: 
+#xpci* at xenbus ?			#Xen3 PCI front end driver
+#pci* at xpci ?
+# you then need to add your PCI devices drivers below.
 
 cinclude "arch/amd64/conf/GENERIC.local"
 
