@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.1 2009/10/02 16:47:52 jmcneill Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.2 2009/10/03 15:49:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.1 2009/10/02 16:47:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.2 2009/10/03 15:49:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,7 +84,6 @@ struct acpi_wmi_softc {
 	device_t	      sc_dev;
 	struct acpi_devnode  *sc_node;
 	struct wmi_t         *sc_wmi;
-	bool                  sc_event;
 };
 
 static SIMPLEQ_HEAD(, wmi_t) wmi_head =
@@ -121,8 +120,8 @@ static void        acpi_wmi_dump(const char * const);
 #endif
 
 static ACPI_STATUS acpi_wmi_guid_get(const u_char * const, struct wmi_t **);
-static bool        acpi_wmi_event_add(struct acpi_wmi_softc *);
-static bool        acpi_wmi_event_del(struct acpi_wmi_softc *);
+static void        acpi_wmi_event_add(struct acpi_wmi_softc *);
+static void        acpi_wmi_event_del(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
 static bool        acpi_wmi_suspend(device_t PMF_FN_PROTO);
 static bool        acpi_wmi_resume(device_t PMF_FN_PROTO);
@@ -177,7 +176,7 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	 * registers an external event handler with us, we
 	 * will forward events through this.
 	 */
-	sc->sc_event = acpi_wmi_event_add(sc);
+	acpi_wmi_event_add(sc);
 
 	if (pmf_device_register(sc->sc_dev,
 		acpi_wmi_suspend, acpi_wmi_resume) != true)
@@ -316,8 +315,6 @@ acpi_wmi_guid_get(const u_char * const src, struct wmi_t **out)
 	const char *ptr;
 	uint8_t i;
 
-	KASSERT(src != NULL);
-
 	if (ACPI_STRLEN(src) != 36)
 		return AE_BAD_PARAMETER;
 
@@ -377,7 +374,7 @@ acpi_wmi_guid_match(const u_char const * guid)
 /*
  * Adds internal event handler.
  */
-static bool
+static void
 acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
@@ -389,7 +386,7 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(sc->sc_dev, "failed to install notify "
 		    "handler: %s\n", AcpiFormatException(rv));
-		return false;
+		return;
 	}
 
 	/* Enable possible expensive events. */
@@ -410,27 +407,23 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 			    "expensive WExx: %s\n", AcpiFormatException(rv));
 		}
 	}
-
-	return true;
 }
 /*
  * Removes the internal event handler.
  */
-static bool
+static void
 acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 	ACPI_STATUS rv;
 
-	KASSERT(sc->sc_event != false);
-
 	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpi_wmi_event_handler);
 
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "failed to remove notify "
+		aprint_debug_dev(sc->sc_dev, "failed to remove notify "
 		    "handler: %s\n", AcpiFormatException(rv));
-		return false;
+		return;
 	}
 
 	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
@@ -451,8 +444,40 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		aprint_error_dev(sc->sc_dev, "failed to disable "
 		    "expensive WExx: %s\n", AcpiFormatException(rv));
 	}
+}
+/*
+ * Returns extra information possibly associated with an event.
+ */
+ACPI_STATUS
+acpi_wmi_event_get(const uint32_t event, ACPI_BUFFER *obuf)
+{
+	struct wmi_t *wmi;
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj;
 
-	return true;
+	if (obuf == NULL)
+		return AE_BAD_PARAMETER;
+	if (wmi_handler == NULL)
+		return AE_ABORT_METHOD;
+
+	obj.Type = ACPI_TYPE_INTEGER;
+	obj.Integer.Value = event;
+
+	arg.Count = 0x01;
+	arg.Pointer = &obj;
+
+	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+
+		if (!(wmi->guid.flags & ACPI_WMI_FLAG_EVENT))
+			continue;
+
+		if (wmi->guid.nid != event)
+			continue;
+
+		return AcpiEvaluateObject(wmi->handle, "_WED", &arg, obuf);
+	}
+
+	return AE_NOT_FOUND;
 }
 
 static void
@@ -495,11 +520,7 @@ acpi_wmi_suspend(device_t self PMF_FN_ARGS)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 
-	if (sc->sc_event != true)
-		return true;
-
-	if (acpi_wmi_event_del(sc) != false)
-		sc->sc_event = false;
+	acpi_wmi_event_del(sc);
 
 	return true;
 }
@@ -509,13 +530,7 @@ acpi_wmi_resume(device_t self PMF_FN_ARGS)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 
-	if (sc->sc_event != false) {
-		aprint_debug_dev(sc->sc_dev, "event handler enabled?\n");
-		return true;
-	}
-
-	if (acpi_wmi_event_add(sc) != false)
-		sc->sc_event = true;
+	acpi_wmi_event_add(sc);
 
 	return true;
 }
@@ -612,6 +627,9 @@ acpi_wmi_data_write(const u_char * const guid,
 	char path[5] = "WS";
 	ACPI_STATUS rv;
 
+	if (guid == NULL || ibuf == NULL)
+		return AE_BAD_PARAMETER;
+
 	rv = acpi_wmi_guid_get(guid, &wmi);
 
 	if (ACPI_FAILURE(rv))
@@ -630,8 +648,6 @@ acpi_wmi_data_write(const u_char * const guid,
 
 	obj[0].Integer.Value = idx;
 	obj[0].Type = ACPI_TYPE_INTEGER;
-
-	KASSERT(ibuf != NULL);
 
 	obj[1].Buffer.Length = ibuf->Length;
 	obj[1].Buffer.Pointer = ibuf->Pointer;
@@ -657,6 +673,9 @@ acpi_wmi_method(const u_char * const guid, const uint8_t idx,
 	char path[5] = "WM";
 	ACPI_STATUS rv;
 
+	if (guid == NULL || ibuf == NULL || obuf == NULL)
+		return AE_BAD_PARAMETER;
+
 	rv = acpi_wmi_guid_get(guid, &wmi);
 
 	if (ACPI_FAILURE(rv))
@@ -676,8 +695,6 @@ acpi_wmi_method(const u_char * const guid, const uint8_t idx,
 	obj[0].Integer.Value = idx;
 	obj[1].Integer.Value = mid;
 	obj[0].Type = obj[1].Type = ACPI_TYPE_INTEGER;
-
-	KASSERT(ibuf != NULL);
 
 	obj[2].Buffer.Length = ibuf->Length;
 	obj[2].Buffer.Pointer = ibuf->Pointer;
