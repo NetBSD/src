@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.4.10 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.11 2009/10/03 23:49:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.10 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.11 2009/10/03 23:49:50 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -513,7 +513,7 @@ cpu_startup()
 	printf("avail memory = %s\n", pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	x86_bus_space_mallocok();
 #endif
 
@@ -580,21 +580,20 @@ i386_switch_context(lwp_t *l)
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-	if (xendomain_is_privileged()) {
-		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
-	        struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = iopl;
-		HYPERVISOR_physdev_op(&physop);
+	struct physdev_op physop;
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 #else
+	if (xendomain_is_privileged()) {
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = iopl;
+		op.u.iopl.iopl = pcb->pcb_iopl;
 		HYPERVISOR_dom0_op(&op);
-#endif
 	}
+#endif
 }
 #endif /* XEN */
 
