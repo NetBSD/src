@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.161 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.162 2009/10/03 20:48:42 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.161 2009/09/13 18:45:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.162 2009/10/03 20:48:42 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1460,4 +1460,30 @@ timer_intr(void *cookie)
 	}
 	mutex_spin_exit(&timer_lock);
 	mutex_exit(proc_lock);
+}
+
+/*
+ * Check if the time will wrap if set to ts.
+ *
+ * ts - timespec describing the new time
+ * delta - the delta between the current time and ts
+ */
+bool
+time_wraps(struct timespec *ts, struct timespec *delta)
+{
+
+	/*
+	 * Don't allow the time to be set forward so far it
+	 * will wrap and become negative, thus allowing an
+	 * attacker to bypass the next check below.  The
+	 * cutoff is 1 year before rollover occurs, so even
+	 * if the attacker uses adjtime(2) to move the time
+	 * past the cutoff, it will take a very long time
+	 * to get to the wrap point.
+	 */
+	if ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
+	    (delta->tv_sec < 0 || delta->tv_nsec < 0))
+		return true;
+
+	return false;
 }
