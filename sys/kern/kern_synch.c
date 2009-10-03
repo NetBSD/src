@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.269 2009/10/03 21:21:56 elad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.270 2009/10/03 22:32:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.269 2009/10/03 21:21:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.270 2009/10/03 22:32:56 elad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.269 2009/10/03 21:21:56 elad Exp $"
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/simplelock.h>
-#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -128,8 +127,6 @@ callout_t 	sched_pstats_ch;
 unsigned	sched_pstats_ticks;
 kcondvar_t	lbolt;			/* once a second sleep address */
 
-static kauth_listener_t	sched_listener;
-
 /* Preemption event counters */
 static struct evcnt kpreempt_ev_crit;
 static struct evcnt kpreempt_ev_klock;
@@ -145,57 +142,8 @@ static struct evcnt kpreempt_ev_immed;
  */
 int	safepri;
 
-static int
-sched_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
-    void *arg0, void *arg1, void *arg2, void *arg3)
-{
-	struct proc *p;
-	int result;
-
-	result = KAUTH_RESULT_DEFER;
-	p = arg0;
-
-	switch (action) {
-	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
-		if (kauth_cred_uidmatch(cred, p->p_cred))
-			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
-		if (kauth_cred_uidmatch(cred, p->p_cred)) {
-			struct lwp *l;
-			int policy;
-			pri_t priority;
-
-			l = arg1;
-			policy = (int)(unsigned long)arg2;
-			priority = (pri_t)(unsigned long)arg3;
-
-			if ((policy == l->l_class ||
-			    (policy != SCHED_FIFO && policy != SCHED_RR)) &&
-			    priority <= l->l_priority)
-				result = KAUTH_RESULT_ALLOW;
-		}
-
-		break;
-
-	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
-		result = KAUTH_RESULT_ALLOW;
-		break;
-
-	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
-		/* Privileged; we let the secmodel handle this. */
-		break;
-
-	default:
-		break;
-	}
-
-	return result;
-}
-
 void
-sched_init(void)
+synch_init(void)
 {
 
 	cv_init(&lbolt, "lbolt");
@@ -210,9 +158,6 @@ sched_init(void)
 	   "kpreempt", "immediate");
 
 	sched_pstats(NULL);
-
-	sched_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-	    sched_listener_cb, NULL);
 }
 
 /*
