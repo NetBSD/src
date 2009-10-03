@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.16 2009/10/03 00:14:07 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.17 2009/10/03 00:37:01 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.16 2009/10/03 00:14:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.17 2009/10/03 00:37:01 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,25 +731,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			break;
-		}
-		break;
-
-	case KAUTH_NETWORK_FIREWALL:
-		switch (req) {
-		case KAUTH_REQ_NETWORK_FIREWALL_FW:
-		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
-			/*
-			 * Decisions are root-agnostic.
-			 *
-			 * Both requests are issued from the context of a
-			 * device with permission bits acting as access
-			 * control.
-			 */
-			result = KAUTH_RESULT_ALLOW;
 			break;
 
 		default:
