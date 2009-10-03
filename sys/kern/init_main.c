@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.404 2009/10/02 22:18:57 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.405 2009/10/03 22:32:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.404 2009/10/02 22:18:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.405 2009/10/03 22:32:56 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -397,6 +397,8 @@ main(void)
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
+
+	sched_init();
 
 	/* Initialize processor-sets */
 	psets_init();
@@ -780,7 +782,7 @@ configure2(void)
 
 	/* Setup the runqueues and scheduler. */
 	runq_init();
-	sched_init();
+	synch_init();
 
 	/*
 	 * Bus scans can make it appear as if the system has paused, so

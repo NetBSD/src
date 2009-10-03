@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.33 2009/03/03 21:55:06 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.34 2009/10/03 22:32:56 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.33 2009/03/03 21:55:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.34 2009/10/03 22:32:56 elad Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.33 2009/03/03 21:55:06 rmind Exp $")
 #include <sys/unistd.h>
 
 #include "opt_sa.h"
+
+static struct sysctllog *sched_sysctl_log;
+static kauth_listener_t sched_listener;
 
 /*
  * Convert user priority or the in-kernel priority or convert the current
@@ -528,7 +531,8 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 /*
  * Sysctl nodes and initialization.
  */
-SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
+static void
+sysctl_sched_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node = NULL;
 
@@ -567,4 +571,63 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 		SYSCTL_DESCR("Maximal POSIX real-time priority"),
 		NULL, SCHED_PRI_MAX, NULL, 0,
 		CTL_CREATE, CTL_EOL);
+}
+
+static int
+sched_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	switch (action) {
+	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
+		if (kauth_cred_uidmatch(cred, p->p_cred))
+			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
+		if (kauth_cred_uidmatch(cred, p->p_cred)) {
+			struct lwp *l;
+			int policy;
+			pri_t priority;
+
+			l = arg1;
+			policy = (int)(unsigned long)arg2;
+			priority = (pri_t)(unsigned long)arg3;
+
+			if ((policy == l->l_class ||
+			    (policy != SCHED_FIFO && policy != SCHED_RR)) &&
+			    priority <= l->l_priority)
+				result = KAUTH_RESULT_ALLOW;
+		}
+
+		break;
+
+	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
+		/* Privileged; we let the secmodel handle this. */
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+sched_init(void)
+{
+
+	sysctl_sched_setup(&sched_sysctl_log);
+
+	sched_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    sched_listener_cb, NULL);
 }
