@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.112 2009/07/02 09:59:00 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.113 2009/10/03 23:49:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.112 2009/07/02 09:59:00 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.113 2009/10/03 23:49:50 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -353,23 +353,17 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 */
 	if (!PTQ_EMPTY(&pthread__deadqueue)) {
 		pthread_mutex_lock(&pthread__deadqueue_lock);
-		newthread = PTQ_FIRST(&pthread__deadqueue);
-		if (newthread != NULL) {
-			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
-			pthread_mutex_unlock(&pthread__deadqueue_lock);
+		PTQ_FOREACH(newthread, &pthread__deadqueue, pt_deadq) {
 			/* Still running? */
-			if (newthread->pt_lwpctl->lc_curcpu !=
-			    LWPCTL_CPU_EXITED &&
-			    (_lwp_kill(newthread->pt_lid, 0) == 0 ||
-			    errno != ESRCH)) {
-				pthread_mutex_lock(&pthread__deadqueue_lock);
-				PTQ_INSERT_TAIL(&pthread__deadqueue,
-				    newthread, pt_deadq);
-				pthread_mutex_unlock(&pthread__deadqueue_lock);
-				newthread = NULL;
-			}
-		} else
-			pthread_mutex_unlock(&pthread__deadqueue_lock);
+			if (newthread->pt_lwpctl->lc_curcpu ==
+			    LWPCTL_CPU_EXITED ||
+			    (_lwp_kill(newthread->pt_lid, 0) == -1 &&
+			    errno == ESRCH))
+				break;
+		}
+		if (newthread)
+			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
+		pthread_mutex_unlock(&pthread__deadqueue_lock);
 	}
 
 	/*
