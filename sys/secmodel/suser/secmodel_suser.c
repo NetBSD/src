@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.20 2009/10/03 01:46:39 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.21 2009/10/03 01:52:14 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.20 2009/10/03 01:46:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.21 2009/10/03 01:52:14 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.20 2009/10/03 01:46:39 elad Exp
 
 MODULE(MODULE_CLASS_SECMODEL, suser, NULL);
 
-static int secmodel_bsd44_curtain;
+static int secmodel_suser_curtain;
 /* static */ int dovfsusermount;
 
 static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
@@ -101,7 +101,7 @@ sysctl_security_suser_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "curtain",
 		       SYSCTL_DESCR("Curtain information about objects to "\
 		       		    "users not owning them."),
-		       NULL, 0, &secmodel_bsd44_curtain, 0,
+		       NULL, 0, &secmodel_suser_curtain, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -124,7 +124,7 @@ sysctl_security_suser_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "curtain",
 		       SYSCTL_DESCR("Curtain information about objects to "\
 		       		    "users not owning them."),
-		       NULL, 0, &secmodel_bsd44_curtain, 0,
+		       NULL, 0, &secmodel_suser_curtain, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	/* Compatibility: vfs.generic.usermount */
@@ -153,7 +153,7 @@ sysctl_security_suser_setup(struct sysctllog **clog)
 void
 secmodel_suser_init(void)
 {
-	secmodel_bsd44_curtain = 0;
+	secmodel_suser_curtain = 0;
 	dovfsusermount = 0;
 }
 
@@ -241,7 +241,7 @@ secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_GENERIC_CANSEE:     
-		if (!secmodel_bsd44_curtain)
+		if (!secmodel_suser_curtain)
 			result = KAUTH_RESULT_ALLOW;
 		else if (isroot || kauth_cred_uidmatch(cred, arg0))
 			result = KAUTH_RESULT_ALLOW;
@@ -525,7 +525,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
-			if (!secmodel_bsd44_curtain)
+			if (!secmodel_suser_curtain)
 				result = KAUTH_RESULT_ALLOW;
 			else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 				result = KAUTH_RESULT_ALLOW;
@@ -816,7 +816,7 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 				break;
 			}
 
-			if (secmodel_bsd44_curtain) {
+			if (secmodel_suser_curtain) {
 				struct socket *so;
 				uid_t so_uid;
 
