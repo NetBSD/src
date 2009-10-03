@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.4.6.2 2009/10/03 23:54:05 snj Exp $      */
+/*      $NetBSD: pciback.c,v 1.4.6.3 2009/10/03 23:56:43 snj Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.2 2009/10/03 23:54:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.3 2009/10/03 23:56:43 snj Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -105,6 +105,8 @@ struct pciback_pci_softc {
 	} sc_bars[PCI_NBARS];
 	pci_intr_handle_t sc_intrhandle;
 	int  sc_irq;
+	pcireg_t sc_id;
+	pcireg_t sc_subid;
 	char sc_kernfsname[16];
 };
 
@@ -187,7 +189,7 @@ struct pb_xenbus_instance {
 	SLIST_ENTRY(pb_xenbus_instance) pbx_next; /* list of backend instances*/
 	struct xenbus_device *pbx_xbusd;
 	domid_t pbx_domid;
-	struct pciback_pci_devlist pbx_pb_pci_dev; /* list of exported PCi devices */
+	struct pciback_pci_devlist pbx_pb_pci_dev; /* list of exported PCI devices */
 	/* communication with the domU */
         unsigned int pbx_evtchn; /* our even channel */
         struct xen_pci_sharedinfo *pbx_sh_info;
@@ -237,6 +239,9 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pb->pb_pc = pa->pa_pc;
 	sc->sc_pb->pb_tag = pa->pa_tag;
 
+	sc->sc_id = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
+	sc->sc_subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
 	for (i = 0; i < PCI_NBARS;) {
 		sc->sc_bars[i].b_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
 		    PCI_MAPREG_START + i * 4);
@@ -267,11 +272,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr ? intrstr : "unknown interrupt");
 	}
-	if (sc->sc_intrhandle.pirq & APIC_INT_VIA_APIC) {
-		sc->sc_irq = APIC_IRQ_PIN(sc->sc_intrhandle.pirq);
-	} else {
-		sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
-	}
+	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
 	/* XXX should be done elsewhere ? */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
 	reg &= ~ (PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
@@ -314,6 +315,12 @@ pciback_kernfs_read(void *v)
 
 	off = uio->uio_offset;
 	len = 0;
+	len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+	    "vendor: 0x%04x\nproduct: 0x%04x\n",
+	    PCI_VENDOR(sc->sc_id), PCI_PRODUCT(sc->sc_id));
+	len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+	    "subsys_vendor: 0x%04x\nsubsys_product: 0x%04x\n",
+	    PCI_VENDOR(sc->sc_subid), PCI_PRODUCT(sc->sc_subid));
 	for(i = 0; i < PCI_NBARS; i++) {
 		if (sc->sc_bars[i].b_valid) {
 			len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
@@ -776,6 +783,7 @@ pciback_xenbus_evthandler(void * arg)
 			op->err = XEN_PCI_ERR_invalid_offset;
 			break;
 		}
+		break;
 	default:
 		aprint_error("pciback: unknown cmd %d\n", op->cmd);
 		op->err = XEN_PCI_ERR_not_implemented;
