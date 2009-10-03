@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.18 2008/05/09 10:59:55 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.18.8.1 2009/10/03 23:44:07 snj Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.18 2008/05/09 10:59:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.18.8.1 2009/10/03 23:44:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,8 @@ panel_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_lcd.sc_iot, sc->sc_lcd.sc_ioir, DATA_OFFSET,
 	    1, &sc->sc_lcd.sc_iodr);
 
+	printf("\n");
+
 	sc->sc_lcd.sc_dev_ok = 1;
 	sc->sc_lcd.sc_cols = PANEL_COLS;
 	sc->sc_lcd.sc_vcols = PANEL_VCOLS;
@@ -169,8 +171,6 @@ panel_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_callout, 0);
 	selinit(&sc->sc_selq);
-
-	printf("\n");
 }
 
 static void
