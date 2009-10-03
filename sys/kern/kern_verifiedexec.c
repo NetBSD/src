@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.115 2009/06/29 05:08:18 dholland Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.116 2009/10/03 21:03:55 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.115 2009/06/29 05:08:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.116 2009/10/03 21:03:55 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1094,7 +1094,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		}
 
 		/*
-		 * XXX: See vfs_mountedon() comment in secmodel/bsd44.
+		 * XXX: See vfs_mountedon() comment in secmodel/securelevel.
 		 */
 		vte = veriexec_table_lookup(bvp->v_mount);
 		if (vte == NULL) {
