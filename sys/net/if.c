@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.238 2009/09/19 11:02:07 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.239 2009/10/03 01:46:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.238 2009/09/19 11:02:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.239 2009/10/03 01:46:39 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -166,12 +166,34 @@ static kmutex_t index_gen_mtx;
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
 #endif
 
+static kauth_listener_t if_listener;
+
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 
 static void sysctl_net_ifq_setup(struct sysctllog **, int, const char *,
 				 int, const char *, int, struct ifqueue *);
+
+static int
+if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg1;
+
+	if (action != KAUTH_NETWORK_INTERFACE)
+		return result;
+
+	if ((req == KAUTH_REQ_NETWORK_INTERFACE_GET) ||
+	    (req == KAUTH_REQ_NETWORK_INTERFACE_SET))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
 
 /*
  * Network interface utility routines.
@@ -195,6 +217,9 @@ ifinit(void)
 
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+
+	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    if_listener_cb, NULL);
 }
 
 /*
