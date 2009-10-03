@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.191 2009/10/02 23:50:16 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.192 2009/10/03 01:41:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.191 2009/10/02 23:50:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.192 2009/10/03 01:41:39 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -466,6 +466,11 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 				break;
 		}
 
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
 		result = KAUTH_RESULT_ALLOW;
 
 		break;
