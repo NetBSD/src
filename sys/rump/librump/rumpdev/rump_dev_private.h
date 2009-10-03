@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev_private.h,v 1.5 2009/10/01 21:43:29 pooka Exp $	*/
+/*	$NetBSD: rump_dev_private.h,v 1.6 2009/10/03 19:06:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,5 +40,9 @@ void 	rump_dev_rnd_init(void);
 void	rump_dev_rumpusbhc_init(void);
 
 void	rump_device_configuration(void);
+
+struct mainbus_attach_args {
+	int maa_unit;
+};
 
 #endif /* _SYS_RUMP_DEV_PRIVATE_H_ */
