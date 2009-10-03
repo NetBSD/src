@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.213 2009/09/27 22:02:41 apb Exp $
+#	$NetBSD: build.sh,v 1.214 2009/10/03 19:19:59 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1029,7 +1029,7 @@ print_tooldir_make()
 #    2. use the temporary nbmake to create the top level obj directory;
 #    3. use $(getmakevar TOOLDIR) with the temporary nbmake to
 #       get the corect value of TOOLDIR;
-#    4. move the temporary nbake to ${TOOLDIR}/bin/nbmake.
+#    4. move the temporary nbmake to ${TOOLDIR}/bin/nbmake.
 #
 # However, people don't like building nbmake unnecessarily if their
 # TOOLDIR has not changed since an earlier build.  We try to avoid
@@ -1250,6 +1250,19 @@ createmakewrapper()
 	${runcmd} mkdir -p "${TOOLDIR}/bin" ||
 	    bomb "mkdir of '${TOOLDIR}/bin' failed"
 
+	# If we did not previously rebuild ${toolprefix}make, then
+	# check whether $make is still valid and the same as the output
+	# from print_tooldir_make.  If not, then rebuild make now.  A
+	# possible reason for this being necessary is that the actual
+	# value of TOOLDIR might be different from the value guessed
+	# before the top level obj dir was created.
+	#
+	if ! ${done_rebuildmake} && \
+	    ( [ ! -x "$make" ] || [ "$make" != "$(print_tooldir_make)" ] )
+	then
+		rebuildmake
+	fi
+
 	# Install ${toolprefix}make if it was built.
 	#
 	if ${done_rebuildmake}; then
@@ -1285,7 +1298,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.213 2009/09/27 22:02:41 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.214 2009/10/03 19:19:59 apb Exp $
 # with these arguments: ${_args}
 #
 
