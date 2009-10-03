@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.22 2009/10/03 02:01:12 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.23 2009/10/03 02:06:11 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.22 2009/10/03 02:01:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.23 2009/10/03 02:06:11 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -444,6 +444,8 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_SYSTEM_CHROOT:
 	case KAUTH_SYSTEM_FILEHANDLE:
 	case KAUTH_SYSTEM_MKNOD:
+	case KAUTH_SYSTEM_SETIDCORE:
+	case KAUTH_SYSTEM_MODULE:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
@@ -454,18 +456,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		 * append-only flags (usually). Should be handled differently.
 		 * Infects ufs, ext2fs, tmpfs, and rump.
 		 */
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_SYSTEM_SETIDCORE:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_SYSTEM_MODULE:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
@@ -499,6 +489,15 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 	switch (action) {
 	case KAUTH_PROCESS_SIGNAL:
+	case KAUTH_PROCESS_KTRACE:
+	case KAUTH_PROCESS_PROCFS:
+	case KAUTH_PROCESS_PTRACE:
+	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
+	case KAUTH_PROCESS_SETID:
+	case KAUTH_PROCESS_KEVENT_FILTER:
+	case KAUTH_PROCESS_NICE:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
@@ -538,24 +537,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_KTRACE:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_PROCESS_PROCFS:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_PROCESS_PTRACE:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
 	case KAUTH_PROCESS_CORENAME:
 		if (isroot || proc_uidmatch(cred, p->p_cred) == 0)
 			result = KAUTH_RESULT_ALLOW;
@@ -578,18 +559,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_KEVENT_FILTER:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_PROCESS_NICE:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
 	case KAUTH_PROCESS_RLIMIT: {
 		enum kauth_process_req req;
 
@@ -609,19 +578,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 		}
-
-	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
-	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
-	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_PROCESS_SETID:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-		break;
 
 	case KAUTH_PROCESS_STOPFLAG:
 		if (isroot || proc_uidmatch(cred, p->p_cred) == 0) {
@@ -698,6 +654,7 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_FORWSRCRT:
+	case KAUTH_NETWORK_ROUTE:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
@@ -780,12 +737,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		default:
 			break;
 		}
-		break;
-
-	case KAUTH_NETWORK_ROUTE:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
 		break;
 
 	case KAUTH_NETWORK_SOCKET:
@@ -893,6 +844,12 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_DEVICE_BLUETOOTH_SETPRIV:
 	case KAUTH_DEVICE_BLUETOOTH_SEND:
 	case KAUTH_DEVICE_BLUETOOTH_RECV:
+	case KAUTH_DEVICE_TTY_OPEN:
+	case KAUTH_DEVICE_TTY_PRIVSET:
+	case KAUTH_DEVICE_TTY_STI:
+	case KAUTH_DEVICE_RND_ADDDATA:
+	case KAUTH_DEVICE_RND_GETPRIV:
+	case KAUTH_DEVICE_RND_SETPRIV:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
@@ -925,31 +882,6 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		 * permission bits.
 		 */
 		result = KAUTH_RESULT_ALLOW;
-		break;
-
-	case KAUTH_DEVICE_TTY_OPEN:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_DEVICE_TTY_PRIVSET:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_DEVICE_TTY_STI:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_DEVICE_RND_ADDDATA:
-	case KAUTH_DEVICE_RND_GETPRIV:
-	case KAUTH_DEVICE_RND_SETPRIV:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_DEVICE_GPIO_PINSET:
