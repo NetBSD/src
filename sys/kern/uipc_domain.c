@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.84 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.85 2009/10/03 20:24:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.84 2009/09/11 22:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.85 2009/10/03 20:24:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -455,13 +455,13 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
 		    fp->f_data == NULL)
 			continue;
-		if (kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
-			continue;
 		so = (struct socket *)fp->f_data;
 		if (so->so_type != type)
 			continue;
 		if (so->so_proto->pr_domain->dom_family != pf)
+			continue;
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, so, NULL, NULL) != 0)
 			continue;
 		if (len >= elem_size && elem_count > 0) {
 			mutex_enter(&fp->f_lock);
