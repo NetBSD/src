@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.67.2.1 2009/01/15 04:21:26 snj Exp $
+#	$NetBSD: configure.ac,v 1.67.2.1.2.1 2009/10/03 21:30:36 snj Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.67.2.1 2009/01/15 04:21:26 snj Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.67.2.1.2.1 2009/10/03 21:30:36 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -69,7 +69,7 @@ AC_CHECK_LIB(z, gzdopen,,
 # Make sure certain required headers are available.
 # These are not necessarily required by the code, but they are not
 # currently conditionalized.
-AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
+AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 	sys/socket.h sys/stat.h sys/time.h sys/types.h sys/utsname.h \
 	sys/wait.h assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
 	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
@@ -78,7 +78,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
+AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h stddef.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h \
