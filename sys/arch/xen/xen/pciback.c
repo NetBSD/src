@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.4.6.3 2009/10/03 23:56:43 snj Exp $      */
+/*      $NetBSD: pciback.c,v 1.4.6.4 2009/10/03 23:58:47 snj Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.3 2009/10/03 23:56:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.4 2009/10/03 23:58:47 snj Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -272,6 +272,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr ? intrstr : "unknown interrupt");
 	}
+	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq));
 	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
 	/* XXX should be done elsewhere ? */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
@@ -700,6 +701,7 @@ pciback_xenbus_export_roots(struct pb_xenbus_instance *pbxi)
 				    err);
 			}
 			num_roots++;
+			bus[pbd->pb_bus]++;
 		}
 	}
 	err = xenbus_printf(NULL, pbxi->pbx_xbusd->xbusd_path, "root_num",
