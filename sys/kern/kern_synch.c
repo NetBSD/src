@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.268 2009/10/03 01:30:25 elad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.269 2009/10/03 21:21:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.268 2009/10/03 01:30:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.269 2009/10/03 21:21:56 elad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -128,7 +128,7 @@ callout_t 	sched_pstats_ch;
 unsigned	sched_pstats_ticks;
 kcondvar_t	lbolt;			/* once a second sleep address */
 
-kauth_listener_t	sched_listener;
+static kauth_listener_t	sched_listener;
 
 /* Preemption event counters */
 static struct evcnt kpreempt_ev_crit;
