@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.85.4.1 2009/10/03 23:05:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.85.4.1 2009/10/03 23:05:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -236,6 +236,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_cred scred;
+	struct vnode *smbfs_rootvp = SMBTOV(smp->sm_root);
 	int error, flags;
 
 	SMBVDEBUG("smbfs_unmount: flags=%04x\n", mntflags);
@@ -244,11 +245,8 @@ smbfs_unmount(struct mount *mp, int mntflags)
 		flags |= FORCECLOSE;
 #ifdef QUOTA
 #endif
-	/* Drop the extra reference to root vnode. */
-	if (smp->sm_root) {
-		vrele(SMBTOV(smp->sm_root));
-		smp->sm_root = NULL;
-	}
+	if (smbfs_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+		return EBUSY;
 
 	/* Flush all vnodes.
 	 * Keep trying to flush the vnode list for the mount while 
@@ -259,8 +257,12 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	 * sufficient in this case. */
 	do {
 		smp->sm_didrele = 0;
-		error = vflush(mp, NULLVP, flags);
+		error = vflush(mp, smbfs_rootvp, flags);
 	} while (error == EBUSY && smp->sm_didrele != 0);
+	if (error)
+		return error;
+
+	vgone(smbfs_rootvp);
 
 	smb_makescred(&scred, l, l->l_cred);
 	smb_share_lock(smp->sm_share);
@@ -270,7 +272,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
 	FREE(smp, M_SMBFSDATA);
-	return error;
+	return 0;
 }
 
 /*
