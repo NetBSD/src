@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.15 2009/10/03 00:06:37 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.16 2009/10/03 00:14:07 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.15 2009/10/03 00:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.16 2009/10/03 00:14:07 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -591,12 +591,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 	case KAUTH_PROCESS_KEVENT_FILTER:
-		if ((kauth_cred_getuid(p->p_cred) !=
-		     kauth_cred_getuid(cred) ||
-		     ISSET(p->p_flag, PK_SUGID)) &&
-		    !isroot)
-			break;
-		else
+		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
 		break;
