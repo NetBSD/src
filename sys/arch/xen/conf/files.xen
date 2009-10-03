@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.88.4.4 2009/06/19 21:22:11 snj Exp $
+#	$NetBSD: files.xen,v 1.88.4.5 2009/10/03 23:54:04 snj Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -67,7 +67,7 @@ file	crypto/des/arch/i386/des_cbc.S		des
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 elifdef amd64
-file	arch/amd64/amd64/busfunc.S		dom0ops
+file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
@@ -216,6 +216,11 @@ file	arch/xen/xen/xbd_xenbus.c	xbd_xenbus
 #file	arch/xen/xen/xbd.c		xbd | xbd_hypervisor | xbd_xenbus needs-flag
 file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
 
+# PCI frontend
+device xpci: pcibus
+attach xpci at xenbus with xpci_xenbus
+file	arch/xen/xen/xpci_xenbus.c	xpci_xenbus
+
 # Non-Xen specific devices and options
 
 include	"dev/pckbport/files.pckbport"
@@ -227,6 +232,11 @@ include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/xen/xen/pciide_machdep.c	pciide_common
+
+device	pciback {unit = -1}
+attach	pciback at pci
+file	arch/xen/xen/pciback.c		pciback
+
 
 # x86 specific PCI hardware
 include "arch/x86/pci/files.pci"
@@ -381,7 +391,7 @@ file 	arch/xen/x86/xen_shm_machdep.c	dom0ops | xen3
 file	arch/xen/xen/xbdback.c		dom0ops & !xen3
 file	arch/xen/xen/xennetback.c	dom0ops & !xen3
 file	arch/xen/xen/pci_machdep.c	hypervisor & pci & !xen3
-file	arch/x86/pci/pci_machdep.c	hypervisor & pci & xen3
+file	arch/x86/pci/pci_machdep.c	hypervisor & pci & xen3 & dom0ops
 file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops

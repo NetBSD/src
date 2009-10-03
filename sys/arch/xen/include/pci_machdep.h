@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.10 2008/05/30 16:22:51 cegger Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.10.8.1 2009/10/03 23:54:05 snj Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,6 +64,8 @@
 
 #include "opt_xen.h"
 
+struct pci_attach_args;
+
 extern struct x86_bus_dma_tag pci_bus_dma_tag;
 #ifdef _LP64
 extern struct x86_bus_dma_tag pci_bus_dma64_tag;
@@ -84,6 +86,12 @@ union x86_pci_tag_u {
 };
 
 typedef union x86_pci_tag_u pcitag_t;
+
+#ifndef DOM0OPS
+int		xpci_enumerate_bus(struct pci_softc *, const int *,
+		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+#define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
+#endif
 
 #else /* XEN3 */
 
