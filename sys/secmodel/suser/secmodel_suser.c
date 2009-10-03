@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.24 2009/10/03 03:02:55 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.25 2009/10/03 03:38:31 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.24 2009/10/03 03:02:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.25 2009/10/03 03:38:31 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -496,6 +496,9 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_KEVENT_FILTER:
 	case KAUTH_PROCESS_NICE:
+	case KAUTH_PROCESS_FORK:
+	case KAUTH_PROCESS_CORENAME:
+	case KAUTH_PROCESS_STOPFLAG:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
@@ -510,20 +513,20 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
-			if (!secmodel_suser_curtain)
+			if (isroot) {
 				result = KAUTH_RESULT_ALLOW;
-			else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
-				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
+			if (secmodel_suser_curtain) {
+				if (kauth_cred_uidmatch(cred, p->p_cred) != 0)
+					result = KAUTH_RESULT_DENY;
+			}
+
 			break;
 
 		case KAUTH_REQ_PROCESS_CANSEE_ENV:
-			if (!isroot &&
-			    (kauth_cred_getuid(cred) !=
-			     kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(cred) !=
-			     kauth_cred_getsvuid(p->p_cred)))
-				break;
-			else
+			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 
 			break;
@@ -531,28 +534,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		default:
 			break;
 		}
-
-		break;
-		}
-
-	case KAUTH_PROCESS_CORENAME:
-		if (isroot || proc_uidmatch(cred, p->p_cred) == 0)
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
-	case KAUTH_PROCESS_FORK: {
-		int lnprocs = (int)(unsigned long)arg2;
-
-		/*
-		 * Don't allow a nonprivileged user to use the last few
-		 * processes. The variable lnprocs is the current number of
-		 * processes, maxproc is the limit.
-		 */
-		if (__predict_false((lnprocs >= maxproc - 5) && !isroot))
-			break;
-		else
-			result = KAUTH_RESULT_ALLOW;
 
 		break;
 		}
@@ -576,13 +557,6 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 		}
-
-	case KAUTH_PROCESS_STOPFLAG:
-		if (isroot || proc_uidmatch(cred, p->p_cred) == 0) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-		break;
 
 	default:
 		break;
