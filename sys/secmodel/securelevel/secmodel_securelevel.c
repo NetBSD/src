@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.15 2009/10/02 20:15:07 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.16 2009/10/03 20:48:42 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.15 2009/10/02 20:15:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.16 2009/10/03 20:48:42 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.15 2009/10/02 20:15:07 el
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/module.h>
+#include <sys/timevar.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -242,19 +243,9 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 			struct timespec *ts = arg1;
 			struct timespec *delta = arg2;
 
-			/*
-			 * Don't allow the time to be set forward so far it
-			 * will wrap and become negative, thus allowing an
-			 * attacker to bypass the next check below.  The
-			 * cutoff is 1 year before rollover occurs, so even
-			 * if the attacker uses adjtime(2) to move the time
-			 * past the cutoff, it will take a very long time
-			 * to get to the wrap point.
-			 */
-			if (securelevel > 1 &&
-			    ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
-			     (delta->tv_sec < 0 || delta->tv_nsec < 0)))
+			if (securelevel > 1 && time_wraps(ts, delta))
 				result = KAUTH_RESULT_DENY;
+
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.25 2009/03/29 19:21:20 christos Exp $	*/
+/*	$NetBSD: timevar.h,v 1.26 2009/10/03 20:48:42 elad Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -178,6 +178,7 @@ int	gettimeleft(struct timespec *, struct timespec *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
 void	time_init2(void);
+bool	time_wraps(struct timespec *, struct timespec *);
 
 extern time_t time_second;	/* current second in the epoch */
 extern time_t time_uptime;	/* system uptime in seconds */

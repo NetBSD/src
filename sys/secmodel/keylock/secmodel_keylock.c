@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.3 2009/10/03 20:48:42 elad Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.3 2009/10/03 20:48:42 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2 2009/08/15 09:43:59 mbalmer
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/timevar.h>
 
 #include <dev/keylock.h>
 
@@ -176,18 +177,7 @@ secmodel_keylock_system_cb(kauth_cred_t cred,
 			struct timespec *ts = arg1;
 			struct timespec *delta = arg2;
 
-			/*
-			 * Don't allow the time to be set forward so far it
-			 * will wrap and become negative, thus allowing an
-			 * attacker to bypass the next check below.  The
-			 * cutoff is 1 year before rollover occurs, so even
-			 * if the attacker uses adjtime(2) to move the time
-			 * past the cutoff, it will take a very long time
-			 * to get to the wrap point.
-			 */
-			if (keylock_position() > 1 &&
-			    ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
-			     (delta->tv_sec < 0 || delta->tv_nsec < 0)))
+			if (keylock_position() > 1 && time_wraps(ts, delta))
 				result = KAUTH_RESULT_DENY;
 			break;
 		}
