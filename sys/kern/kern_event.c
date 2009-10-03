@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.65 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.66 2009/10/03 00:14:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.65 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.66 2009/10/03 00:14:07 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,30 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
 static krwlock_t	kqueue_filter_lock;	/* lock on filter lists */
 static kmutex_t		kqueue_misc_lock;	/* miscellaneous */
 
+static kauth_listener_t	kqueue_listener;
+
+static int
+kqueue_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	if (action != KAUTH_PROCESS_KEVENT_FILTER)
+		return result;
+
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(cred) ||
+	    ISSET(p->p_flag, PK_SUGID)))
+		return result;
+
+	result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * Initialize the kqueue subsystem.
  */
@@ -182,6 +206,9 @@ kqueue_init(void)
 
 	rw_init(&kqueue_filter_lock);
 	mutex_init(&kqueue_misc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	kqueue_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    kqueue_listener_cb, NULL);
 }
 
 /*
