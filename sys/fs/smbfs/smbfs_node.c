@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.39 2008/06/24 17:04:11 cegger Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.39.6.1 2009/10/03 23:05:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.39 2008/06/24 17:04:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.39.6.1 2009/10/03 23:05:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +243,6 @@ smbfs_reclaim(void *v)
 		vprint("smbfs_reclaim(): pushing active", vp);
 
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
-
-	KASSERT((np->n_flag & NOPEN) == 0);
 
 	mutex_enter(&smp->sm_hashlock);
 
