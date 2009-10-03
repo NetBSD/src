@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.18 2009/10/03 01:30:25 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.19 2009/10/03 01:41:39 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.18 2009/10/03 01:30:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.19 2009/10/03 01:41:39 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -822,14 +822,14 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			}
 
 			if (secmodel_bsd44_curtain) {
+				struct socket *so;
 				uid_t so_uid;
 
-				so_uid =
-				    ((struct socket *)arg1)->so_uidinfo->ui_uid;
-				if (kauth_cred_geteuid(cred) == so_uid)
-					result = KAUTH_RESULT_ALLOW;
-			} else
-				result = KAUTH_RESULT_ALLOW;
+				so = (struct socket *)arg1;
+				so_uid = so->so_uidinfo->ui_uid;
+				if (kauth_cred_geteuid(cred) != so_uid)
+					result = KAUTH_RESULT_DENY;
+			}
 
 			break;
 
