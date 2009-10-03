@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2009/10/02 18:50:14 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2009/10/03 02:27:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2009/10/02 18:50:14 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2009/10/03 02:27:43 elad Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -99,7 +99,8 @@ main(int argc, char **argv)
 		len = iov.iov_len;
 	}
 
-	printf("NAME\t\tCLASS\tSOURCE\tREFS\tSIZE\tREQUIRES\n");
+	printf("%-16s %-10s %-10s %-5s %-8s %s\n",
+	    "NAME", "CLASS", "SOURCE", "REFS", "SIZE", "REQUIRES");
 	len = iov.iov_len / sizeof(modstat_t);
 	qsort(iov.iov_base, len, sizeof(modstat_t), modstatcmp);
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
@@ -116,7 +117,7 @@ main(int argc, char **argv)
 		} else {
 			snprintf(sbuf, sizeof(sbuf), "%u", ms->ms_size);
 		}
-		printf("%-16s%s\t%s\t%d\t%s\t%s\n",
+		printf("%-16s %-10s %-10s %-5d %-8s %s\n",
 		    ms->ms_name, classes[ms->ms_class], sources[ms->ms_source],
 		    ms->ms_refcnt, sbuf, ms->ms_required);
 	}
