@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.33.4.2 2009/09/26 19:52:09 snj Exp $
+# $NetBSD: XEN3_DOM0,v 1.33.4.3 2009/10/03 23:57:54 snj Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -227,6 +227,14 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
+
+# pci backend devices, used for PCI pass-through. To export a PCI device
+# to a domU, the device has to be attached to the pciback driver in the dom0.
+# you can force a device to attach to the pciback driver in dom0 passing
+# pciback.hide=(bus:dev.fun)(bus:dev.func) to the dom0 kernel boot parameters.
+# bus and dev are 2-digits hex number, func is a single-digit number:
+# pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
+pciback* at pci?                        #pci backend device
 
 # PCI bridges
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.10 2008/05/18 22:05:59 cegger Exp $
+#	$NetBSD: XEN3_DOM0,v 1.10.8.1 2009/10/03 23:57:54 snj Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -13,6 +13,14 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
+
+# pci backend devices, used for PCI pass-through. To export a PCI device
+# to a domU, the device has to be attached to the pciback driver in the dom0.
+# you can force a device to attach to the pciback driver in dom0 passing
+# pciback.hide=(bus:dev.fun)(bus:dev.func) to the dom0 kernel boot parameters.
+# bus and dev are 2-digits hex number, func is a single-digit number:
+# pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
+pciback* at pci?                        #pci backend device
 
 acpi0 		at hypervisor?
 options 	MPBIOS
