@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.4.6.4 2009/10/03 23:58:47 snj Exp $      */
+/*      $NetBSD: pciback.c,v 1.4.6.5 2009/10/03 23:59:32 snj Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.4 2009/10/03 23:58:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.4.6.5 2009/10/03 23:59:32 snj Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -739,7 +739,7 @@ pciback_xenbus_evthandler(void * arg)
 			break;
 	}
 	if (pbd == NULL) {
-		aprint_error("pciback: %02x:%02x.%x not found\n",
+		aprint_debug("pciback: %02x:%02x.%x not found\n",
 		    bus, dev, func);
 		op->err = XEN_PCI_ERR_dev_not_found;
 		goto end;
