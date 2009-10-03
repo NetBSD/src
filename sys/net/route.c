@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.119 2009/10/02 23:16:21 elad Exp $	*/
+/*	$NetBSD: route.c,v 1.120 2009/10/03 02:22:22 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.119 2009/10/02 23:16:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.120 2009/10/03 02:22:22 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -272,6 +272,9 @@ route_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	result = KAUTH_RESULT_DEFER;
 	rtm = arg1;
+
+	if (action != KAUTH_NETWORK_ROUTE)
+		return result;
 
 	if (rtm->rtm_type == RTM_GET)
 		result = KAUTH_RESULT_ALLOW;
