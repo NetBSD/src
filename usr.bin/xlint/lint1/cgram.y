@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.46 2009/10/02 19:01:13 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.47 2009/10/03 01:35:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.46 2009/10/02 19:01:13 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.47 2009/10/03 01:35:20 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -684,6 +684,7 @@ noclass_declspecs:
 	| noclass_declmods typespec {
 		addtype($2);
 	  }
+	| noclass_declspecs type_attribute
 	| noclass_declspecs T_QUAL {
 		addqual($2);
 	  }
