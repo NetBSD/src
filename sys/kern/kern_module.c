@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.50 2009/10/02 18:50:14 elad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.51 2009/10/03 00:06:37 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.50 2009/10/02 18:50:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.51 2009/10/03 00:06:37 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -77,6 +77,8 @@ u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
 static int	module_thread_ticks;
+
+static kauth_listener_t	module_listener;
 
 /* Ensure that the kernel's link set isn't empty. */
 static modinfo_t module_dummy;
@@ -163,6 +165,23 @@ module_init(void)
 #endif
 }
 
+static int
+module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if (action != KAUTH_SYSTEM_MODULE)
+		return result;
+
+	if ((uintptr_t)arg2 != 0)	/* autoload */
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * module_init2:
  *
@@ -177,6 +196,9 @@ module_init2(void)
 	    NULL, NULL, "modunload");
 	if (error != 0)
 		panic("module_init: %d", error);
+
+	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    module_listener_cb, NULL);
 }
 
 SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
