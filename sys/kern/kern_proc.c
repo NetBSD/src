@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.152 2009/05/23 18:28:06 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.153 2009/10/03 03:38:31 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.152 2009/05/23 18:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.153 2009/10/03 03:38:31 elad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -235,6 +235,80 @@ static specificdata_domain_t proc_specificdata_domain;
 
 static pool_cache_t proc_cache;
 
+static kauth_listener_t proc_listener;
+
+static int
+proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	switch (action) {
+	case KAUTH_PROCESS_CANSEE: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
+		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
+		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_CANSEE_ENV:
+			if (kauth_cred_getuid(cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(cred) !=
+			    kauth_cred_getsvuid(p->p_cred))
+				break;
+
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+		}
+
+	case KAUTH_PROCESS_FORK: {
+		int lnprocs = (int)(unsigned long)arg2;
+
+		/*
+		 * Don't allow a nonprivileged user to use the last few
+		 * processes. The variable lnprocs is the current number of
+		 * processes, maxproc is the limit.
+		 */
+		if (__predict_false((lnprocs >= maxproc - 5)))
+			break;
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
+
+	case KAUTH_PROCESS_CORENAME:
+	case KAUTH_PROCESS_STOPFLAG:
+		if (proc_uidmatch(cred, p->p_cred) == 0)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
 /*
  * Initialize global process hashing structures.
  */
@@ -272,6 +346,9 @@ procinit(void)
 
 	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
 	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
+
+	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    proc_listener_cb, NULL);
 }
 
 /*
