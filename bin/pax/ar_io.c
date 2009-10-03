@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $	*/
+/*	$netbsd: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.48.20.1 2009/10/03 21:30:36 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
 #include <sys/wait.h>
@@ -99,7 +99,7 @@ static pid_t zpid = -1;			/* pid of child process */
 time_t starttime;			/* time the run started */
 int force_one_volume;			/* 1 if we ignore volume changes */
 
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 static int get_phys(void);
 #endif
 extern sigset_t s_mask;
@@ -129,7 +129,7 @@ static int rmtwrite_with_restart(int, void *, int);
 int
 ar_open(const char *name)
 {
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 	struct mtget mb;
 #endif
 
@@ -220,7 +220,7 @@ ar_open(const char *name)
 	}
 
 	if (S_ISCHR(arsb.st_mode)) {
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 		artyp = ioctl(arfd, MTIOCGET, &mb) ? ISCHR : ISTAPE;
 #else
 		tty_warn(1, "System does not have tape support");
@@ -941,7 +941,7 @@ ar_rdsync(void)
 	long fsbz;
 	off_t cpos;
 	off_t mpos;
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 	struct mtop mb;
 #endif
 
@@ -965,7 +965,7 @@ ar_rdsync(void)
 	case ISRMT:
 #endif /* SUPPORT_RMT */
 	case ISTAPE:
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 		/*
 		 * if the last i/o was a successful data transfer, we assume
 		 * the fault is just a bad record on the tape that we are now
@@ -1109,7 +1109,7 @@ int
 ar_rev(off_t sksz)
 {
 	off_t cpos;
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 	int phyblk;
 	struct mtop mb;
 #endif
@@ -1180,7 +1180,7 @@ ar_rev(off_t sksz)
 #ifdef SUPPORT_RMT
 	case ISRMT:
 #endif /* SUPPORT_RMT */
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 		/*
 		 * Calculate and move the proper number of PHYSICAL tape
 		 * blocks. If the sksz is not an even multiple of the physical
@@ -1242,7 +1242,7 @@ ar_rev(off_t sksz)
 	return 0;
 }
 
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 /*
  * get_phys()
  *	Determine the physical block size on a tape drive. We need the physical

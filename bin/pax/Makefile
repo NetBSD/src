@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2008/02/24 20:42:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.37.10.1 2009/10/03 21:30:36 snj Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -25,12 +25,13 @@ LDADD+= -lutil
 
 MAN=	pax.1 tar.1 cpio.1
 
-# XXX: Interix does not have it; we need a conditional for it.
-CPPFLAGS+=	-DHAVE_MTIO_H
-
 .if defined(HOSTPROG)
 CPPFLAGS+=	-DHOSTPROG
 .else	# {	! HOSTPROG
+
+# XXX: Interix does not have it; we need a conditional for it.
+CPPFLAGS+=	-DHAVE_SYS_MTIO_H
+
 LINKS+=	${BINDIR}/pax ${BINDIR}/tar
 SYMLINKS+=${BINDIR}/tar /usr/bin/tar
 
