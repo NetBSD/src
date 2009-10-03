@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.17 2009/10/03 00:37:01 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.18 2009/10/03 01:30:25 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.17 2009/10/03 00:37:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.18 2009/10/03 01:30:25 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -623,36 +623,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
-		if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
-
 	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
-		else if (kauth_cred_uidmatch(cred, p->p_cred)) {
-			struct lwp *l;
-			int policy;
-			pri_t priority;
-
-			l = arg1;
-			policy = (int)(unsigned long)arg2;
-			priority = (pri_t)(unsigned long)arg3;
-
-			if ((policy == l->l_class ||
-			    (policy != SCHED_FIFO && policy != SCHED_RR)) &&
-			    priority <= l->l_priority)
-				result = KAUTH_RESULT_ALLOW;
-		}
-
-		break;
-
-	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
-		result = KAUTH_RESULT_ALLOW;
-
-		break;
-
 	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
