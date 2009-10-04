@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfsync.4,v 1.3 2009/09/14 11:45:01 degroote Exp $
+.\"	$NetBSD: pfsync.4,v 1.4 2009/10/04 18:07:26 joerg Exp $
 .\"	$OpenBSD: pfsync.4,v 1.25 2007/05/31 19:19:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
@@ -125,7 +125,8 @@ be trivial to spoof packets which create states, bypassing the pf ruleset.
 Either run the pfsync protocol on a trusted network \- ideally  a network
 dedicated to pfsync messages such as a crossover cable between two firewalls,
 or specify a peer address and protect the traffic with
-.Xr ipsec 4 (it is not supported at the moment on
+.Xr ipsec 4
+(it is not supported at the moment on
 .Nx
 due to the lack of any encapsulation pseudo-device).
 .Pp
