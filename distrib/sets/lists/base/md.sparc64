@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.62 2009/10/02 02:45:28 tsarna Exp $
+# $NetBSD: md.sparc64,v 1.63 2009/10/04 22:06:34 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -125,7 +125,7 @@
 ./usr/lib/sparc/liblwres.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblwres.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libm.so.0.6			base-compat-shlib	compat,pic
+./usr/lib/sparc/libm.so.0.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmagic.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6			base-compat-shlib	compat,pic
