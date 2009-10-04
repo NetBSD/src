@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63.2.1 2008/11/15 22:05:11 snj Exp $
+#	$NetBSD: Makefile,v 1.63.2.2 2009/10/04 11:48:39 bouyer Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -135,7 +135,7 @@ maketarsetup: .EXEC
 	${MAKE} checkflist
 .endif
 	mkdir -p ${TARDIR}
-	for i in BSDSUM CKSUM MD5 SHA512 SYSVSUM; do \
+	for i in MD5 SHA512; do \
 		rm -f ${TARDIR}/$$i ${TARDIR}/$$i.tmp; \
 	done
 
@@ -164,7 +164,7 @@ makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
 
 makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 		${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
-	for i in BSDSUM CKSUM MD5 SHA512 SYSVSUM; do \
+	for i in MD5 SHA512; do \
 		mv ${TARDIR}/$$i.tmp ${TARDIR}/$$i; \
 	done
 
@@ -172,7 +172,7 @@ makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 do-sum-${tar}: .PHONY do-${tar}
 	${_MKMSG_CREATE} "${tar} checksums"
 	${MAKESUMS} -t ${TARDIR} ${tar}.tgz
-	for i in BSDSUM CKSUM MD5 SHA512 SYSVSUM; do \
+	for i in MD5 SHA512; do \
 		${TOOL_CAT} ${TARDIR}/$$i >> ${TARDIR}/$$i.tmp; \
 	done
 .endfor
