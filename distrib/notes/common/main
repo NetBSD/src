@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.5.2.1 2009/07/29 22:28:46 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.5.2.2 2009/10/04 11:50:26 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2417,46 +2417,21 @@ with the command:
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:
-.(tag SYSVSUM -offset indent
-.It Li BSDSUM
-Historic
-.Bx
-checksums for the various files
-in that directory, in the format produced by the command:
-.br
-.Ic cksum -o 1 Ar file .
-.It Li CKSUM
-.Tn POSIX
-checksums for the various files in that
-directory, in the format produced by the command:
-.br
-.Ic cksum Ar file .
+.(tag SHA512 -offset indent
 .It Li MD5
 .Tn MD5
-digests for the various files in that
-directory, in the format produced by the command:
+digests in the format produced by the command:
 .br
 .Ic cksum -a MD5 Ar file .
 .It Li SHA512
 .Tn SHA512
-digests for the various files in that
-directory, in the format produced by the command:
+digests in the format produced by the command:
 .br
 .Ic cksum -a SHA512 Ar file .
-.It Li SYSVSUM
-Historic AT\*[Am]T System V
-.Ux
-checksums for the various files in that directory, in the format produced by
-the command:
-.br
-.Ic cksum -o 2 Ar file .
 .tag)
 .Pp
-The SHA512 digest is the safest checksum, followed by the MD5 digest,
-and finally the POSIX checksum.
-The other two checksums are provided only to ensure
-that the widest possible range of systems can check the integrity
-of the release files.
+The SHA512 digest is safer, but MD5 checksums are provided so that a wider
+range of operating systems can check the integrity of the release files.
 .\}
 .el \{\
 .Pp
