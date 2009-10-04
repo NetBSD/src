@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.242 2009/09/10 22:27:11 mhitch Exp $ */
+/* $NetBSD: pmap.c,v 1.243 2009/10/04 17:00:31 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2009/09/10 22:27:11 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.243 2009/10/04 17:00:31 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,7 +962,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		mutex_init(&pmap_tlb_shootdown_q[i].pq_lock, MUTEX_DEFAULT,
-		    IPL_VM);
+		    IPL_SCHED);
 	}
 #endif
 
