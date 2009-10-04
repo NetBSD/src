@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.15 2009/10/04 00:57:06 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.16 2009/10/04 11:51:12 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -299,4 +299,16 @@ tools/compat/configure.ac			1.69
 
 	Do not require sys/mtio.h for a tools build of pax.
 	[apb, ticket #1020]
+
+distrib/cdrom/hide-hfs.lst			1.5
+distrib/mac68k/stand/Makefile			1.6
+distrib/notes/common/main			1.451
+distrib/sets/Makefile				1.70
+distrib/sets/makesrctars			1.37
+distrib/sets/makesums				1.16
+share/man/man7/release.7			1.31 via patch
+
+	Sync release(7) with reality.
+	Only generate SHA512 and MD5 checksums for releases.
+	[snj, ticket #1066]
 
