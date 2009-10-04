@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.13.2.3 2009/05/18 19:43:55 bouyer Exp $	*/
+/*	$NetBSD: i386.c,v 1.13.2.4 2009/10/04 00:16:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.13.2.3 2009/05/18 19:43:55 bouyer Exp $");
+__RCSID("$NetBSD: i386.c,v 1.13.2.4 2009/10/04 00:16:53 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -546,8 +546,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, "C3 Samuel",
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
-				"C3 Nehemiah", "C7 Esther", 0, 0, 0, 0, 0,
-				"C3"	/* Default */
+				"C3 Nehemiah", "C7 Esther", 0, 0, "C7 Esther",
+				0, "VIA Nano",
+				"Unknown VIA/IDT"	/* Default */
 			},
 			NULL,
 			via_cpu_probe,
