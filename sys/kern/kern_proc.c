@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.153 2009/10/03 03:38:31 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.154 2009/10/04 03:15:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.153 2009/10/03 03:38:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.154 2009/10/04 03:15:08 elad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1436,3 +1436,36 @@ proc_setspecific(struct proc *p, specificdata_key_t key, void *data)
 	specificdata_setspecific(proc_specificdata_domain,
 				 &p->p_specdataref, key, data);
 }
+
+int
+proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
+{
+	int r = 0;
+
+	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
+	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
+		r = EPERM;
+	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
+		r = EPERM;
+	} else {
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
+		int ismember = 0;
+
+		if (kauth_cred_ismember_gid(cred,
+		    kauth_cred_getgid(target), &ismember) != 0 ||
+		    !ismember)
+			r = EPERM;
+	}
+
+	return (r);
+}
+
