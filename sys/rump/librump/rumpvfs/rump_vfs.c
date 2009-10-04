@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.25 2009/10/02 18:50:15 elad Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.26 2009/10/04 13:29:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.25 2009/10/02 18:50:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.26 2009/10/04 13:29:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.25 2009/10/02 18:50:15 elad Exp $");
 #include "rump_private.h"
 #include "rump_vfs_private.h"
 
-static struct cwdinfo rump_cwdi;
+struct cwdinfo cwdi0;
 
 static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
@@ -103,10 +103,10 @@ rump_vfs_init(void)
 	rump_proc_vfs_release = pvfs_rele;
 
 	/* bootstrap cwdi */
-	rw_init(&rump_cwdi.cwdi_lock);
-	rump_cwdi.cwdi_cdir = rootvnode;
-	vref(rump_cwdi.cwdi_cdir);
-	proc0.p_cwdi = &rump_cwdi;
+	rw_init(&cwdi0.cwdi_lock);
+	cwdi0.cwdi_cdir = rootvnode;
+	vref(cwdi0.cwdi_cdir);
+	proc0.p_cwdi = &cwdi0;
 	proc0.p_cwdi = cwdinit();
 
 	if (rump_threads) {
@@ -175,9 +175,9 @@ rump_mnt_destroy(struct mount *mp)
 {
 
 	/* See rcvp XXX above */
-	rump_cwdi.cwdi_rdir = NULL;
+	cwdi0.cwdi_rdir = NULL;
 	vref(rootvnode);
-	rump_cwdi.cwdi_cdir = rootvnode;
+	cwdi0.cwdi_cdir = rootvnode;
 
 	mount_finispecific(mp);
 	kmem_free(mp, sizeof(*mp));
