@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.79 2009/09/30 00:30:34 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.80 2009/10/04 00:54:16 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13742,4 +13742,184 @@ sys/arch/x86/x86/mpbios.c			1.53
 
 	Add i386PAE support to Xen3 dom0.
 	[bouyer, ticket #1040]
+
+bin/pax/Makefile				1.38
+bin/pax/ar_io.c					1.49
+tools/compat/configure				1.69
+tools/compat/configure.ac			1.69
+
+	Do not require sys/mtio.h for a tools build of pax.
+	[apb, ticket #1020]
+
+sys/dev/pci/if_vr.c				1.98-1.99
+
+	Replace shutdownhook_establish(9) with pmf_device_register1(9).
+	Tested VIA VT86C100A (which is probed as VT3043).
+	--
+	Add suspend/resume support.
+	[jmcneill, ticket #1022]
+
+sbin/fsck_ffs/extern.h				1.25 via patch
+sbin/fsck_ffs/setup.c				1.88 via patch
+sbin/fsck_ffs/wapbl.c				1.4 via patch 
+sbin/tunefs/tunefs.c				1.41 via patch
+sys/ufs/ffs/ffs_vfsops.c			1.252 via patch
+sys/ufs/ffs/ffs_wapbl.c				1.13 via patch
+
+	Allow tunefs to clear any type of WAPBL log, not only
+	in-filesystem ones.
+	--
+	Do some basic checks of the WAPBL journal, to abort the boot
+	before the kernel refuse to mount a filesystem read-write
+	(booting a system multiuser with critical filesystems read-only
+	is bad): Add a check_wapbl() which will check some WAPBL values
+	in the superblock, and try to read the journal via
+	wapbl_replay_start() if there is one.  pfatal() if one of these
+	fail (abort boot if in preen mode, as "CONTINUE" otherwise). In
+	non-preen mode the bogus journal will be cleared.
+	check_wapbl() is always called if the superblock supports WAPBL.
+	Even if FS_DOWAPBL is not there, there could be flags asking the
+	kernel to clear or create a log with bogus values which would
+	cause the kernel refuse to mount the filesystem.
+	--
+	If the WAPBL journal can't be read (ffs_wapbl_replay_start() fails),
+	mount the filesystem anyway if MNT_FORCE is present.
+	This allows to still boot single-user a system with a corrupted
+	WAPBL on /, and so get a chance to run fsck to fix it.
+	[bouyer, ticket #1036]
+
+sys/fs/smbfs/smbfs_node.c			1.41 via patch
+sys/fs/smbfs/smbfs_vfsops.c			1.88 via patch
+
+	Fix some panics while trying to umount a smbfs share.
+	Be sure that no other active vnodes remains, before trying to
+	release the root one. Likewise, do not destroy the smbmount
+	specific structure if the umount will fail (busy conditions).
+	[njoly, ticket #1041]
+
+sys/fs/puffs/puffs_node.c			1.14
+sys/fs/puffs/puffs_vnops.c			1.134
+
+	Fix a race introduced almost two years ago in rev 1.116:
+	operations creating a node cannot be considered outgoing
+	operations, since after return from userspace they modify file
+	system state by creating a new node.  If we do not protect the
+	file system by holding the directory lock, a lookup operation
+	might race us into the kernel and create the node earlier.
+	Remove pnode from hashlish before sending the reclaim faf off to
+	userspace.  Also, hold pmp_lock while frobbing the list.
+	[pooka, ticket #1042]
+
+bin/kill/kill.c					1.26
+
+	Make sure that numerical signals and pids are in range for their
+	types.  Fixes PR bin/42143.
+	[spz, ticket #1043]
+
+distrib/utils/sysinst/disks.c			1.107
+
+	In get_descr(), initialize dd_descr to an empty string before
+	probing ATA and SCSI identification. Fixes issues with xbd and
+	raid.
+	[jmcneill, ticket #1046]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.59
+
+	Ensure FP state is reset, if FP is used in a signal handler.
+	Fixes PR kern/39299 for 32bit code.
+	[mlelstv, ticket #1048]
+
+sys/arch/amiga/dev/clock.c			1.49
+
+	Related to ticket #1011: we have a full 32-bit counter, so the
+	masking is not needed.
+	[mhitch, ticket #1049]
+
+sys/arch/i386/include/npx.h			1.23
+
+	The FPU Tag word is a 16bit register, in FPU (387) mode it
+	defines 2-bit tags for each FPU data register, in MMX mode it
+	defines 1-bit tags for each data register. The single bit
+	tags are stored in the lower 8 bits and thus in the first byte
+	of the save frame.
+	[mlelstv, ticket #1050]
+
+sys/arch/cobalt/dev/panel.c			1.19-1.20
+
+	Adjust attach message for failure path (found on gxemul).
+	Replace shutdownhook_establish(9) with pmf_device_register1(9).
+	Also check howto to print appropriate "Rebooting..." or
+	"Halting..." messages.
+	[tsutsui, ticket #1053]
+
+sys/arch/amd64/amd64/machdep.c			1.124
+sys/arch/amd64/conf/XEN3_DOMU			1.16
+sys/arch/amd64/conf/XEN3_DOM0			1.37
+sys/arch/i386/i386/machdep.c			1.660
+sys/arch/i386/conf/XEN3_DOMU			1.12
+sys/arch/i386/conf/XEN3_DOM0			1.12
+sys/arch/xen/conf/files.xen			1.93
+sys/arch/xen/include/pci_machdep.h		1.11
+sys/arch/xen/include/xen.h			1.31
+sys/arch/xen/xen/hypervisor.c			1.44, 1.45
+sys/arch/xen/x86/intr.c				1.22
+sys/arch/xen/xen/isa_machdep.c			1.14
+sys/arch/xen/xen/pci_intr_machdep.c		1.8-1.10
+sys/arch/xen/xen/pciback.c			1.1-1.4
+sys/arch/xen/xen/pciide_machdep.c		1.12
+sys/arch/xen/xen/xen_machdep.c			1.5
+sys/arch/xen/xen/xpci_xenbus.c			1.1, 1.2
+sys/dev/usb/uhci.c				1.225
+
+	Add Xen3 PCI pass-through support.
+	[bouyer, ticket #1054]
+
+usr.sbin/cpuctl/arch/i386.c			1.20
+
+	- Add newer VIA C7 core and VIA Nano.
+	- When printing an unknown VIA CPU, default to 'Unknown IDT/VIA'
+	instead of 'C3'
+	[jmcneill, ticket #1055]
+
+share/man/man8/man8.atari/binpatch.8		1.6-1.8
+sys/arch/atari/stand/binpatch/Makefile		1.6
+sys/arch/atari/stand/binpatch/binpatch.c	1.5, 1.6
+usr.sbin/mdsetimage/exec_aout.c			1.7
+usr.sbin/mdsetimage/exec_coff.c			1.6
+usr.sbin/mdsetimage/exec_ecoff.c		1.6
+usr.sbin/mdsetimage/exec_elf32.c		1.10, 1.11
+usr.sbin/mdsetimage/mdsetimage.c		1.19
+
+	Rewrite binpatch(8) utility to add support for ELF binaries,
+	using implementation of old src/usr.sbin/mdsetimage sources
+	which supports misc executable formats without LGPL'ed libbfd.
+	[tsutsui, ticket #1056]
+
+sys/arch/atari/dev/clock.c			1.47
+
+	Add a workaround for annoying "WARNING: negative runtime;
+	monotonic clock has gone backwards" message.
+	[tsutsui, ticket #1057]
+
+sys/arch/atari/dev/fd.c				1.71
+
+	Read AD_CFG_SWITCH via volatile pointer so that
+	the default density is detected correctly.
+	[tsutsui, ticket #1058]
+
+etc/mtree/NetBSD.dist				patch
+external/mit/xorg/bin/xkbcomp/Makefile		1.5
+external/mit/xorg/bin/xkbcomp/Makefile.common	1.2
+
+	properly fix the xkbcomp output, and make compiled a symlink.
+	[mrg, ticket #1062]
+
+sys/arch/landisk/dev/obio.c			1.7
+sys/arch/landisk/include/bus.h			1.5
+sys/arch/landisk/landisk/shpcic_machdep.c	1.2
+sys/arch/sh3/dev/shpcic.c			1.13
+sys/arch/sh3/dev/shpcicvar.h			1.7
+
+	Fix build after ticket 952.
+	[mrg, ticket #1063]
 
