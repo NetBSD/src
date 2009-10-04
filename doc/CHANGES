@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1303 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1304 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -417,3 +417,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20091002]
 	i386: Add support for VIA C7 temperature sensors. [jmcneill 20091002]
 	dhcpcd(8): Import dhcpcd-5.1.1. [roy 20091002]
+	libm(3): Add f{dim,max,min}{,f,l} from FreeBSD [christos 20091004]
