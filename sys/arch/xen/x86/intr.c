@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2008/09/05 13:37:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.4.1 2009/10/04 00:03:19 snj Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -268,12 +268,14 @@ xen_intr_map(int *pirq, int type)
 		irq = vect2irq[ioapic->sc_pins[pin].ip_vector];
 		if (ioapic->sc_pins[pin].ip_vector == 0 || irq == 0) {
 			/* allocate IRQ */
-			irq = xen_next_irq--;
+			irq = APIC_IRQ_LEGACY_IRQ(*pirq);
+			if (irq <= 0 || irq > 15)
+				irq = xen_next_irq--;
 			/* allocate vector and route interrupt */
 			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
 			op.u.irq_op.irq = irq;
 			if (HYPERVISOR_physdev_op(&op) < 0)
-				panic("PHYSDEVOP_ASSIGN_VECTOR");
+				panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
 			irq2vect[irq] = op.u.irq_op.vector;
 			vect2irq[op.u.irq_op.vector] = irq;
 			pic->pic_addroute(pic, &phycpu_info_primary, pin,
