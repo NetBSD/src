@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1316 2009/10/02 18:50:14 elad Exp $
+#	$NetBSD: mi,v 1.1317 2009/10/04 22:10:42 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5451,6 +5451,9 @@
 ./usr/share/man/cat3/fabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fabsf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fclose.0			comp-c-catman		.cat
+./usr/share/man/cat3/fdim.0			comp-c-catman		.cat
+./usr/share/man/cat3/fdimf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fdiml.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdopendir.0		comp-c-catman		.cat
 ./usr/share/man/cat3/feof.0			comp-c-catman		.cat
@@ -5493,6 +5496,12 @@
 ./usr/share/man/cat3/floorf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushinp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushok.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmax.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmaxf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmaxl.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmin.0			comp-c-catman		.cat
+./usr/share/man/cat3/fminf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fminl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmod.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmodf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmtcheck.0			comp-c-catman		.cat
@@ -10977,6 +10986,9 @@
 ./usr/share/man/html3/fabs.html			comp-c-htmlman		html
 ./usr/share/man/html3/fabsf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fclose.html		comp-c-htmlman		html
+./usr/share/man/html3/fdim.html			comp-c-htmlman		html
+./usr/share/man/html3/fdimf.html		comp-c-htmlman		html
+./usr/share/man/html3/fdiml.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
@@ -11018,6 +11030,12 @@
 ./usr/share/man/html3/floorf.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushinp.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushok.html		comp-c-htmlman		html
+./usr/share/man/html3/fmax.html			comp-c-htmlman		html
+./usr/share/man/html3/fmaxf.html		comp-c-htmlman		html
+./usr/share/man/html3/fmaxl.html		comp-c-htmlman		html
+./usr/share/man/html3/fmin.html			comp-c-htmlman		html
+./usr/share/man/html3/fminf.html		comp-c-htmlman		html
+./usr/share/man/html3/fminl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmod.html			comp-c-htmlman		html
 ./usr/share/man/html3/fmodf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmtcheck.html		comp-c-htmlman		html
@@ -16413,6 +16431,9 @@
 ./usr/share/man/man3/fabs.3			comp-c-man		.man
 ./usr/share/man/man3/fabsf.3			comp-c-man		.man
 ./usr/share/man/man3/fclose.3			comp-c-man		.man
+./usr/share/man/man3/fdim.3			comp-c-man		.man
+./usr/share/man/man3/fdimf.3			comp-c-man		.man
+./usr/share/man/man3/fdiml.3			comp-c-man		.man
 ./usr/share/man/man3/fdopen.3			comp-c-man		.man
 ./usr/share/man/man3/fdopendir.3		comp-c-man		.man
 ./usr/share/man/man3/feof.3			comp-c-man		.man
@@ -16455,6 +16476,12 @@
 ./usr/share/man/man3/floorf.3			comp-c-man		.man
 ./usr/share/man/man3/flushinp.3			comp-c-man		.man
 ./usr/share/man/man3/flushok.3			comp-c-man		.man
+./usr/share/man/man3/fmax.3			comp-c-man		.man
+./usr/share/man/man3/fmaxf.3			comp-c-man		.man
+./usr/share/man/man3/fmaxl.3			comp-c-man		.man
+./usr/share/man/man3/fmin.3			comp-c-man		.man
+./usr/share/man/man3/fminf.3			comp-c-man		.man
+./usr/share/man/man3/fminl.3			comp-c-man		.man
 ./usr/share/man/man3/fmod.3			comp-c-man		.man
 ./usr/share/man/man3/fmodf.3			comp-c-man		.man
 ./usr/share/man/man3/fmtcheck.3			comp-c-man		.man
