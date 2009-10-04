@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.22 2009/06/13 05:25:08 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.23 2009/10/04 21:55:55 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -3306,7 +3306,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
  */
 
 int 
-__ops_parse(__ops_stream_t *stream, int perrors)
+__ops_parse(__ops_stream_t *stream, const int perrors)
 {
 	unsigned long   pktlen;
 	int             r;

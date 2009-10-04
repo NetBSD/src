@@ -134,7 +134,7 @@ __ops_cb_ret_t __ops_stacked_callback(const __ops_packet_t *,
 					__ops_cbdata_t *);
 __ops_reader_t *__ops_readinfo(__ops_stream_t *);
 
-int __ops_parse(__ops_stream_t *, int);
+int __ops_parse(__ops_stream_t *, const int);
 
 /** Used to specify whether subpackets should be returned raw, parsed
 * or ignored.  */
