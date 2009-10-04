@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.12 2008/03/27 02:05:43 uwe Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.12.14.1 2009/10/04 00:45:35 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.12 2008/03/27 02:05:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.12.14.1 2009/10/04 00:45:35 snj Exp $");
 
 #include "opt_pci.h"
 
@@ -422,6 +422,13 @@ shpcic_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* Nothing to do */
+}
+
+paddr_t
+shpcic_iomem_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+
+	return (paddr_t)-1;
 }
 
 /*
