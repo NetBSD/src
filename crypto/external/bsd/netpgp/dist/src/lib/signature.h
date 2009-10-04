@@ -144,9 +144,6 @@ typedef enum {
 
 #define CRC24_INIT 0xb704ceL
 
-unsigned __ops_writer_push_clearsigned(__ops_output_t *,
-					__ops_create_sig_t *);
-void __ops_writer_push_armor_msg(__ops_output_t *);
 unsigned __ops_writer_use_armored_sig(__ops_output_t *);
 
 void __ops_writer_push_armoured(__ops_output_t *, __ops_armor_type_t);
