@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.3 2009/10/03 20:46:49 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.4 2009/10/04 10:44:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.3 2009/10/03 20:46:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.4 2009/10/04 10:44:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -470,6 +470,24 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(0xfe, UT_READ_CLASS_INTERFACE):
 		/* XXX: what is this? */
 		totlen = 0;
+		break;
+
+	/*
+	 * XXX: don't wildcard these yet.  I want to better figure
+	 * out what to trap here
+	 */
+	case C(0x07, UT_READ_VENDOR_DEVICE):
+	case C(0x09, UT_READ_VENDOR_DEVICE):
+		{
+		struct usb_ctl_request ucr;
+
+		memcpy(&ucr.ucr_request, req, sizeof(ucr.ucr_request));
+		ucr.ucr_data = buf;
+		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		    USB_DO_REQUEST, &ucr, &ru_error) == -1) {
+			panic("request failed");
+		}
+		}
 		break;
 
 	default:
