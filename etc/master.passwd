@@ -14,6 +14,6 @@ _proxy:*:21:21::0:0:Proxy Services:/nonexistent:/sbin/nologin
 _timedc:*:22:22::0:0:& pseudo-user:/nonexistent:/sbin/nologin
 _sdpd:*:23:23::0:0:& pseudo-user:/nonexistent:/sbin/nologin
 _httpd:*:24:24::0:0:& pseudo-user:/var/www:/sbin/nologin
-_mdnsd:*:25:25::0:0:& pseudo-user:/var/www:/sbin/nologin
+_mdnsd:*:25:25::0:0:& pseudo-user:/nonexistent:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/nonexistent:/sbin/nologin
 nobody:*:32767:39::0:0:Unprivileged user:/nonexistent:/sbin/nologin
