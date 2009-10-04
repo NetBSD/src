@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.4 2009/10/04 10:44:31 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.4 2009/10/04 10:44:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -476,6 +476,8 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	 * XXX: don't wildcard these yet.  I want to better figure
 	 * out what to trap here
 	 */
+	case C(0x01, UT_WRITE_VENDOR_DEVICE):
+	case C(0x06, UT_WRITE_VENDOR_DEVICE):
 	case C(0x07, UT_READ_VENDOR_DEVICE):
 	case C(0x09, UT_READ_VENDOR_DEVICE):
 		{
@@ -649,6 +651,12 @@ static usbd_status
 rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
+
+	/* XXX: lie about supporting async transfers */
+	if ((xfer->flags & USBD_SYNCHRONOUS) == 0) {
+		printf("rumpusbhc does not support async transfers. LIAR!\n");
+		return USBD_IN_PROGRESS;
+	}
 
 	err = usb_insert_transfer(xfer);
 	if (err)
