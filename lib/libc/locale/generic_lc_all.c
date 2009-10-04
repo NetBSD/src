@@ -1,4 +1,4 @@
-/* $NetBSD: generic_lc_all.c,v 1.2 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: generic_lc_all.c,v 1.3 2009/10/04 21:05:18 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: generic_lc_all.c,v 1.2 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: generic_lc_all.c,v 1.3 2009/10/04 21:05:18 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,10 +56,11 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 	_locale_category_t *l;
 	char head[_LOCALENAME_LEN_MAX * (_LC_LAST - 1)], *tail;
 	const char *tokens[_LC_LAST], *s, *t;
-	int i, j;
+	int load_locale_success, i, j;
 
 	l = _find_category(1);
 	_DIAGASSERT(l != NULL);
+	load_locale_success = 0;
 	if (name != NULL) {
 		strlcpy(&head[0], name, sizeof(head));
 		tokens[1] = &head[0];
@@ -78,10 +79,11 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 			}
 			tokens[_LC_LAST - 1] = (const char *)tail;
 			tail = strchr(tokens[i], '/');
-			if (tail == NULL)
+			if (tail != NULL)
 				return NULL;
 		}
-		(*l->setlocale)(tokens[1], locale);
+		if ((*l->setlocale)(tokens[1], locale) != NULL)
+			load_locale_success = 1;
 	}
 	s = (*l->setlocale)(NULL, locale);
 	_DIAGASSERT(s != NULL);
@@ -89,8 +91,10 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 	for (i = 2, j = 0; i < _LC_LAST; ++i) {
 		l = _find_category(i);
 		_DIAGASSERT(l != NULL);
-		if (name != NULL)
-			(*l->setlocale)(tokens[1], locale);
+		if (name != NULL) {
+			if ((*l->setlocale)(tokens[i], locale) != NULL)
+				load_locale_success = 1;
+		}
 		t = (*l->setlocale)(NULL, locale);
 		_DIAGASSERT(t != NULL);
 		if (j == 0) {
@@ -106,6 +110,8 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 		strlcat(&locale->query[0], "/", sizeof(locale->query));
 		strlcat(&locale->query[0], t, sizeof(locale->query));
 	}
+	if (name != NULL && !load_locale_success)
+		return NULL;
 	return (const char *)&locale->query[0];
 }
 
