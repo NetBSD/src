@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.3 2009/09/29 23:30:04 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.4 2009/10/04 00:42:21 snj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -363,7 +363,6 @@
 ./usr/X11R7/lib/X11/xedit/lisp/progmodes
 ./usr/X11R7/lib/X11/xkb
 ./usr/X11R7/lib/X11/xkb/compat
-./usr/X11R7/lib/X11/xkb/compiled
 ./usr/X11R7/lib/X11/xkb/geometry
 ./usr/X11R7/lib/X11/xkb/geometry/digital_vndr
 ./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr
