@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.89 2009/01/18 20:42:11 he Exp $
+#  $NetBSD: Makefile,v 1.90 2009/10/04 22:04:30 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -136,7 +136,9 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c
+	llroundf.c \
+	s_fmax.c s_fmaxf.c s_fmaxl.c s_fmin.c s_fminf.c s_fminl.c s_fdim.c
+
 # Also in libc.
 #COMMON_SRCS += s_frexp.c s_ldexp.c s_modf.c
 
@@ -186,7 +188,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 frexp.3 hypot.3 ieee.3 \
 	ieee_test.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
 	math.3 modf.3 rint.3 round.3 sin.3 sinh.3 \
-	sqrt.3 tan.3 tanh.3 trunc.3
+	sqrt.3 tan.3 tanh.3 trunc.3 fmax.3 fdim.3
 
 MLINKS+=acos.3 acosf.3
 MLINKS+=acosh.3 acoshf.3
@@ -227,6 +229,13 @@ MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 MLINKS+=round.3 roundf.3
 MLINKS+=trunc.3 truncf.3
+MLINKS+=fmax.3 fmaxl.3
+MLINKS+=fmax.3 fmaxf.3
+MLINKS+=fmax.3 fmin.3
+MLINKS+=fmax.3 fminl.3
+MLINKS+=fmax.3 fminf.3
+MLINKS+=fdim.3 fdiml.3
+MLINKS+=fdim.3 fdimf.3
 
 .if (${MKCOMPLEX} != "no")
 .include "${.CURDIR}/complex/Makefile.inc"
