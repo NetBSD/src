@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.124 2009/04/25 15:06:32 rmind Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.125 2009/10/04 06:23:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.124 2009/04/25 15:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.125 2009/10/04 06:23:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -405,11 +405,20 @@ spec_open(void *v)
 			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
 		do {
+			const struct cdevsw *cdev;
+
 			gen = module_gen;
 			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 			if (error != ENXIO)
 				break;
 			
+			/* Check if we already have a valid driver */
+			mutex_enter(&device_lock);
+			cdev = cdevsw_lookup(dev);
+			mutex_exit(&device_lock);
+			if (cdev != NULL)
+				break;
+
 			/* Get device name from devsw_conv array */
 			if ((name = cdevsw_getname(major(dev))) == NULL)
 				break;
@@ -447,9 +456,18 @@ spec_open(void *v)
 		sd->sd_bdevvp = vp;
 		mutex_exit(&device_lock);
 		do {
+			const struct bdevsw *bdev;
+
 			gen = module_gen;
 			error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
 			if (error != ENXIO)
+				break;
+
+			/* Check if we already have a valid driver */
+			mutex_enter(&device_lock);
+			bdev = bdevsw_lookup(dev);
+			mutex_exit(&device_lock);
+			if (bdev != NULL)
 				break;
 
 			/* Get device name from devsw_conv array */
