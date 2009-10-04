@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.12 2009/06/09 00:51:01 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.13 2009/10/04 21:58:25 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -191,7 +191,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 			(void) fprintf(stderr, "Out of memory in buffer\n");
 			return 0;
 		}
-		len = z->zstream.next_out - &z->out[z->offset];
+		len = (size_t)(z->zstream.next_out - &z->out[z->offset]);
 		if (len > length) {
 			len = length;
 		}
@@ -275,7 +275,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 			(void) fprintf(stderr, "Out of bz memroy\n");
 			return 0;
 		}
-		len = bz->bzstream.next_out - &bz->out[bz->offset];
+		len = (size_t)(bz->bzstream.next_out - &bz->out[bz->offset]);
 		if (len > length) {
 			len = length;
 		}
@@ -417,8 +417,8 @@ __ops_writez(const unsigned char *data,
 		     __ops_output_t *out)
 {
 	compress_t	*zip = calloc(1, sizeof(compress_t));
-	size_t		 sz_in = 0;
-	size_t		 sz_out = 0;
+	size_t		 sz_in;
+	size_t		 sz_out;
 	int              r = 0;
 
 	/* compress the data */
@@ -442,7 +442,7 @@ __ops_writez(const unsigned char *data,
 	}
 
 	sz_in = len * sizeof(unsigned char);
-	sz_out = (sz_in * 1.01) + 12;	/* from zlib webpage */
+	sz_out = ((101 * sz_in) / 100) + 12;	/* from zlib webpage */
 	zip->src = calloc(1, sz_in);
 	zip->dst = calloc(1, sz_out);
 	(void) memcpy(zip->src, data, len);
