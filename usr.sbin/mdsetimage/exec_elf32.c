@@ -1,4 +1,4 @@
-/* $NetBSD: exec_elf32.c,v 1.9 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: exec_elf32.c,v 1.9.40.1 2009/10/04 00:20:59 snj Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.9 2001/10/01 23:32:34 cgd Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.9.40.1 2009/10/04 00:20:59 snj Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -58,14 +58,14 @@ ELFNAMEEND(check)(mappedfile, mappedsize)
 	const char *mappedfile;
 	size_t mappedsize;
 {
-	Elf_Ehdr *ehdrp;
+	const Elf_Ehdr *ehdrp;
 	int rv;
 
 	rv = 0;
 
 	if (check(0, sizeof *ehdrp))
 		BAD;
-	ehdrp = (Elf_Ehdr *)&mappedfile[0];
+	ehdrp = (const Elf_Ehdr *)&mappedfile[0];
 
 	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
@@ -88,8 +88,8 @@ ELFNAMEEND(findoff)(mappedfile, mappedsize, vmaddr, fileoffp)
 	size_t mappedsize, *fileoffp;
 	u_long vmaddr;
 {
-	Elf_Ehdr *ehdrp;
-	Elf_Shdr *shdrp;
+	const Elf_Ehdr *ehdrp;
+	const Elf_Shdr *shdrp;
 	Elf_Off shdr_off;
 	Elf_Word shdr_size;
 #if (ELFSIZE == 32)
@@ -101,15 +101,15 @@ ELFNAMEEND(findoff)(mappedfile, mappedsize, vmaddr, fileoffp)
 
 	rv = 0;
 
-	ehdrp = (Elf_Ehdr *)&mappedfile[0];
+	ehdrp = (const Elf_Ehdr *)&mappedfile[0];
 	nshdr = ehdrp->e_shnum;
 	shdr_off = ehdrp->e_shoff;
 	shdr_size = ehdrp->e_shentsize * nshdr;
 
-	if (check(shdr_off, shdr_size) ||
+	if (check(0, shdr_size + shdr_off) ||
 	    (sizeof *shdrp != ehdrp->e_shentsize))
 		BAD;
-	shdrp = (Elf_Shdr *)&mappedfile[shdr_off];
+	shdrp = (const Elf_Shdr *)&mappedfile[shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
 		if (shdrp[i].sh_addr <= vmaddr &&
