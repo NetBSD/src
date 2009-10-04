@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.2.6.2 2009/10/03 23:54:05 snj Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.2.6.3 2009/10/04 00:00:14 snj Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.2.6.2 2009/10/03 23:54:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.2.6.3 2009/10/04 00:00:14 snj Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -336,7 +336,7 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 	char node[10];
 	u_long busn;
 	int i;
-	int s, oldcold;
+	int s;
 
 	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	   "root_num", &num_roots, 10);
@@ -372,10 +372,7 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 				   "%s is not a number\n", bus);
 			else {
 				s = splhigh();
-				oldcold = cold;
-				cold = 1;
 				xpci_attach_pcibus(0, busn);
-				cold = oldcold;
 				splx(s);
 			}
 		}
