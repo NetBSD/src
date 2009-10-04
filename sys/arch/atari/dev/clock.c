@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41.6.1 2008/11/06 00:15:55 snj Exp $	*/
+/*	$NetBSD: clock.c,v 1.41.6.2 2009/10/04 00:31:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41.6.1 2008/11/06 00:15:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41.6.2 2009/10/04 00:31:52 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -319,21 +319,29 @@ statintr(frame)
 static u_int
 clk_getcounter(struct timecounter *tc)
 {
-	u_int delta;
-	u_char ipra, tadr;
-	int s, cur_hardclock;
+	uint32_t delta, count, cur_hardclock;
+	uint8_t ipra, tadr;
+	int s;
+	static uint32_t lastcount;
 
 	s = splhigh();
+	cur_hardclock = hardclock_ticks;
 	ipra = MFP->mf_ipra;
 	tadr = MFP->mf_tadr;
 	delta = divisor - tadr;
 
 	if (ipra & IA_TIMA)
 		delta += divisor;
-	cur_hardclock = hardclock_ticks;
 	splx(s);
 
-	return (divisor - tadr) + divisor * cur_hardclock;
+	count = (divisor * cur_hardclock) + delta;
+	if ((int32_t)(count - lastcount) < 0) {
+		/* XXX wrapped; maybe hardclock() is blocked more than 2/HZ */
+		count = lastcount + 1;
+	}
+	lastcount = count;
+
+	return count;
 }
 
 #define TIMB_FREQ	614400
