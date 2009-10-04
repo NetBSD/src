@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.14 2009/09/16 04:58:53 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.15 2009/10/04 00:57:06 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -291,4 +291,12 @@ sys/arch/vax/vax/clock.c			1.51
 	-10000 to -1, so adjust the value when reading it.  Now mfpr works
 	quite nicely on a 4000/90.
 	[mhitch, ticket #955]
+
+bin/pax/Makefile				1.38
+bin/pax/ar_io.c					1.49
+tools/compat/configure				1.69
+tools/compat/configure.ac			1.69
+
+	Do not require sys/mtio.h for a tools build of pax.
+	[apb, ticket #1020]
 
