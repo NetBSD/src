@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.80 2009/10/04 00:54:16 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.81 2009/10/04 11:49:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13922,4 +13922,16 @@ sys/arch/sh3/dev/shpcicvar.h			1.7
 
 	Fix build after ticket 952.
 	[mrg, ticket #1063]
+
+distrib/cdrom/hide-hfs.lst			1.5
+distrib/mac68k/stand/Makefile			1.6
+distrib/notes/common/main			1.451
+distrib/sets/Makefile				1.70
+distrib/sets/makesrctars			1.37
+distrib/sets/makesums				1.16
+share/man/man7/release.7			1.31 via patch
+
+	Sync release(7) with reality.
+	Only generate SHA512 and MD5 checksums for releases.
+	[snj, ticket #1066]
 
