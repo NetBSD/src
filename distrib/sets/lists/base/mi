@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.831 2009/09/29 23:56:26 tsarna Exp $
+# $NetBSD: mi,v 1.832 2009/10/05 22:32:58 haad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -301,6 +301,8 @@
 ./sbin/vinum					base-obsolete		obsolete
 ./sbin/wdogctl					base-sysutil-root
 ./sbin/wsconsctl				base-sysutil-root
+./sbin/zpool					base-zfs-bin            zfs
+./sbin/zfs					base-zfs-bin            zfs
 ./stand						base-sys-root
 ./tmp						base-sys-root
 ./usr						base-sys-root
@@ -667,6 +669,7 @@
 ./usr/bin/zgrep					base-util-bin
 ./usr/bin/zmore					base-util-bin
 ./usr/bin/znew					base-util-bin
+./usr/bin/ztest					base-zfs-bin		zfs
 ./usr/games					base-games-usr
 ./usr/games/hide				base-games-usr
 ./usr/include					base-c-usr
@@ -1329,6 +1332,7 @@
 ./usr/sbin/ypxfr				base-nis-bin		yp
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
+./usr/sbin/zdb					base-zfs-bin		zfs
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share
 ./usr/share/atf/atf-run.hooks			base-atf-bin		share

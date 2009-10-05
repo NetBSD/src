@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1161 2009/10/02 15:09:16 nakayama Exp $
+# $NetBSD: mi,v 1.1162 2009/10/05 22:32:58 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2740,6 +2740,9 @@
 ./usr/share/man/cat8/zdump.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/zic.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/zzz.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/zdb.0			man-zfs-man		zfs
+./usr/share/man/cat8/zfs.0			man-zfs-man             zfs 
+./usr/share/man/cat8/zpool.0			man-zfs-man             zfs 
 ./usr/share/man/cat9/boot.0			man-obsolete		obsolete
 ./usr/share/man/html1/Mail.html			man-mail-htmlman	html
 ./usr/share/man/html1/[.html			man-util-htmlman	html
@@ -5058,6 +5061,9 @@
 ./usr/share/man/html8/zdump.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/zic.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
+./usr/share/man/html8/zdb.html			man-zfs-man		zfs
+./usr/share/man/html8/zfs.html			man-zfs-man             zfs
+./usr/share/man/html8/zpool.html		man-zfs-man             zfs
 ./usr/share/man/man1/Mail.1			man-mail-man		.man
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
@@ -7758,6 +7764,9 @@
 ./usr/share/man/man8/yptest.8			man-nis-man		yp,.man
 ./usr/share/man/man8/ypxfr.8			man-nis-man		yp,.man
 ./usr/share/man/man8/zdump.8			man-sysutil-man		.man
+./usr/share/man/man8/zdb.8			man-zfs-man		zfs
+./usr/share/man/man8/zfs.8			man-zfs-man		zfs
+./usr/share/man/man8/zpool.8			man-zfs-man		zfs
 ./usr/share/man/man8/zic.8			man-sysutil-man		.man
 ./usr/share/man/man8/zzz.8			man-sysutil-man		.man
 ./usr/share/man/man9/boot.9			man-obsolete		obsolete
