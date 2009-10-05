@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.247 2009/07/29 18:47:15 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.248 2009/10/05 19:04:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.247 2009/07/29 18:47:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.248 2009/10/05 19:04:14 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -252,6 +252,37 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 	return NULL;
 }
 
+static void
+trap_print(int type, struct trapframe *frame)
+{
+	if (frame->tf_trapno < trap_types)
+		printf("fatal %s", trap_type[frame->tf_trapno]);
+	else
+		printf("unknown trap %d", frame->tf_trapno);
+	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
+	    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+	    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
+}
+
+static void
+check_dr0(void)
+{
+#ifdef KSTACK_CHECK_DR0
+	u_int mask, dr6 = rdr6();
+
+	mask = 1 << 0; /* dr0 */
+	if (dr6 & mask) {
+		panic("trap on DR0: maybe kernel stack overflow\n");
+#if 0
+		dr6 &= ~mask;
+		ldr6(dr6);
+		return;
+#endif
+	}
+#endif
+}
+
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
@@ -314,29 +345,10 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-#ifdef KSTACK_CHECK_DR0
-		if (type == T_TRCTRAP) {
-			u_int mask, dr6 = rdr6();
-
-			mask = 1 << 0; /* dr0 */
-			if (dr6 & mask) {
-				panic("trap on DR0: maybe kernel stack overflow\n");
-#if 0
-				dr6 &= ~mask;
-				ldr6(dr6);
-				return;
-#endif
-			}
-		}
-#endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
+		if (type == T_TRCTRAP)
+			check_dr0();
 		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
+			trap_print(type, frame);
 #ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
