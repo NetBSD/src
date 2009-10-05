@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.18 2008/01/23 19:46:45 bouyer Exp $
+#	$NetBSD: files.compat,v 1.18.20.1 2009/10/05 11:57:41 sborrill Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -66,6 +66,9 @@ defflag	opt_enhanced_speedstep.h XXXENHANCED_SPEEDSTEP
 defflag opt_est.h		XXXEST_FREQ_USERWRITE
 
 defflag opt_powernow_k7.h XXXPOWERNOW_K7
+
+# VIA C7 Temperature sensor
+defflag	opt_via_c7temp.h		XXXVIA_CORETEMP
 
 # Multiboot support
 defflag 	opt_multiboot.h		XXXMULTIBOOT
