@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.117 2009/10/02 18:50:15 elad Exp $	*/
+/*	$NetBSD: rump.c,v 1.118 2009/10/05 09:09:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.117 2009/10/02 18:50:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.118 2009/10/05 09:09:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -235,6 +235,7 @@ rump__init(int rump_version)
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
+	l->l_cpu = &rump_cpu;
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
