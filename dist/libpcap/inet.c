@@ -34,7 +34,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/inet.c,v 1.2 2006/02/27 15:53:24 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/inet.c,v 1.2.26.1 2009/10/05 11:16:11 sborrill Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -573,6 +573,12 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 	}
 	sin4 = (struct sockaddr_in *)&ifr.ifr_addr;
 	*netp = sin4->sin_addr.s_addr;
+	memset(&ifr, 0, sizeof(ifr));
+#ifdef linux
+	/* XXX Work around Linux kernel bug */
+	ifr.ifr_addr.sa_family = AF_INET;
+#endif
+	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCGIFNETMASK, (char *)&ifr) < 0) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 		    "SIOCGIFNETMASK: %s: %s", device, pcap_strerror(errno));
