@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.27.8.1 2009/10/05 10:34:07 sborrill Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.27.8.2 2009/10/05 11:37:14 sborrill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ struct cpu_attach_args {
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
+#include "opt_via_c7temp.h"
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -114,6 +115,10 @@ void x86_cpu_idle_halt(void);
 void x86_cpu_idle_mwait(void);
 #ifdef XEN
 void x86_cpu_idle_xen(void);
+#endif
+
+#ifdef VIA_C7TEMP
+void viac7temp_register(struct cpu_info *);
 #endif
 
 #ifdef INTEL_CORETEMP
