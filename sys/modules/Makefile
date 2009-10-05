@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2009/10/02 18:50:12 elad Exp $
+#	$NetBSD: Makefile,v 1.34 2009/10/05 22:32:58 haad Exp $
 
 # For all platforms
 
@@ -100,6 +100,12 @@ SUBDIR+=	viadrm
 # we need our device mapper for LVM
 .if (${MKLVM} != "no")
 SUBDIR+= 	dm
+.endif
+
+# we need solaris and zfs modules for ZFS
+.if (${MKZFS} != "no")
+SUBDIR+=        solaris
+SUBDIR+=	zfs
 .endif
 
 .include <bsd.subdir.mk>

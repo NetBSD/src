@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.496 2009/10/05 03:54:17 tsarna Exp $
+# $NetBSD: shl.mi,v 1.497 2009/10/05 22:32:58 haad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -55,6 +55,12 @@
 ./usr/lib/libamu.so.4.0				base-amd-shlib
 ./usr/lib/libarchive.so.3.0			base-sys-shlib
 ./usr/lib/libasn1.so.8.0			base-krb5-shlib		kerberos
+./usr/lib/libavl.so				base-zfs-shlib 		zfs,dynamicroot
+./usr/lib/libavl.so.0		 		base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libavl.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libavl_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libavl_pic.a		       		base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libbfd.so.10.0			base-sys-shlib		binutils=216
 ./usr/lib/libbfd.so.11.0			base-sys-shlib		binutils=219
 ./usr/lib/libbind9.so.4.0			base-bind-shlib
@@ -100,6 +106,12 @@
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
 ./usr/lib/libnetpgp.so.2.0			base-crypto-shlib	crypto
+./usr/lib/libnvpair.so				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libnvpair.so.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libnvpair.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libnvpair.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libnvpair_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libnvpair_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
@@ -162,10 +174,34 @@
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
 ./usr/lib/libukfs.so.1.0			base-sys-shlib
+./usr/lib/libumem.so				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libumem.so.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libumem.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libumem.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libumem_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libumem_pic.a				base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so.7.17			base-sys-shlib
+./usr/lib/libuutil.so				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libuutil.so.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libuutil.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libuutil.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libuutil_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libuutil_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libwrap.so.1.0			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
+./usr/lib/libzfs.so				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzfs.so.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzfs.so.0.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzfs.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzfs_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzfs_pic.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool.so				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool.so.0				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool_p.a				base-zfs-shlib		zfs,dynamicroot
+./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/nss_mdns.so.0				base-mdns-shlib		mdns
 ./usr/lib/security/pam_afslog.so.3		base-sys-shlib		kerberos,pam
 ./usr/lib/security/pam_chroot.so.3		base-sys-shlib		pam
