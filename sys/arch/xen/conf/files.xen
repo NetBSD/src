@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.104 2009/08/16 15:35:52 manu Exp $
+#	$NetBSD: files.xen,v 1.105 2009/10/05 23:59:31 rmind Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -292,8 +292,6 @@ device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
-
-file	arch/x86/x86/msr_ipifuncs.c
 
 #
 # Compatibility modules
