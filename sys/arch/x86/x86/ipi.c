@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: ipi.c,v 1.16 2009/10/05 23:59:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16 2009/10/05 23:59:31 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $");
 #include <machine/i82489var.h>
 #include <machine/mtrr.h>
 #include <machine/gdt.h>
-
-#include <x86/cpu_msr.h>
 
 #include "acpica.h"
 
@@ -94,7 +92,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_ipi_synch_fpu,
 	x86_ipi_reload_mtrr,
 	gdt_reload_cpu,
-	msr_write_ipi,
+	NULL,
 	acpi_cpu_sleep,
 	x86_ipi_kpreempt
 };

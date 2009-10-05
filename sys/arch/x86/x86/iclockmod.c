@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.12 2008/05/11 14:44:54 ad Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.13 2009/10/05 23:59:31 rmind Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.12 2008/05/11 14:44:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.13 2009/10/05 23:59:31 rmind Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.12 2008/05/11 14:44:54 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
+#include <sys/xcall.h>
 
 #include <machine/cpu.h>
 #include <machine/cpuvar.h>
@@ -60,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.12 2008/05/11 14:44:54 ad Exp $");
 #define ODCM_REGOFFSET		1
 #define ODCM_MAXSTATES		8
 
-static struct msr_cpu_broadcast mcb;
 static int clockmod_level;
 static int clockmod_state_target;
 static int clockmod_state_current;
@@ -111,6 +111,8 @@ clockmod_getstate(void)
 static void
 clockmod_setstate(int level)
 {
+	struct msr_rw_info msr;
+	uint64_t where;
 	int i;
 
 	for (i = 0; i < __arraycount(state); i++) {
@@ -119,16 +121,17 @@ clockmod_setstate(int level)
 	}
 	KASSERT(i != __arraycount(state));
 
-	mcb.msr_read = true;
-	mcb.msr_type = MSR_THERM_CONTROL;
-	mcb.msr_mask = 0x1e;
+	msr.msr_read = true;
+	msr.msr_type = MSR_THERM_CONTROL;
+	msr.msr_mask = 0x1e;
 
 	if (state[i].reg != 0)	/* bit 0 reserved */
-		mcb.msr_value = (state[i].reg << ODCM_REGOFFSET) | ODCM_ENABLE;
+		msr.msr_value = (state[i].reg << ODCM_REGOFFSET) | ODCM_ENABLE;
 	else
-		mcb.msr_value = 0; /* max state */
+		msr.msr_value = 0; /* max state */
 
-	msr_cpu_broadcast(&mcb);
+	where = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(where);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.33 2009/08/05 20:15:36 jym Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.34 2009/10/05 23:59:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.33 2009/08/05 20:15:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.34 2009/10/05 23:59:31 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.33 2009/08/05 20:15:36 jym Exp $")
 #include <sys/sysctl.h>
 #include <sys/extent.h>
 
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
@@ -122,15 +121,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
-}
-
-/*
- * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
- */
-void
-x86_init(void)
-{
-	msr_cpu_broadcast_initmtx();
 }
 
 #ifdef MODULAR
