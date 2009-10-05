@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.8 2009/07/19 02:41:27 rmind Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.9 2009/10/05 23:49:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.8 2009/07/19 02:41:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.9 2009/10/05 23:49:47 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -538,10 +538,9 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
 #ifdef MQUEUE
-	int t;
-	int error;
 	struct timespec50 ts50;
-	struct timespec ts;
+	struct timespec ts, *tsp;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
@@ -549,14 +548,13 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 		if (error)
 			return error;
 		timespec50_to_timespec(&ts50, &ts);
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t);
+	return mq_send1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp);
 #else
 	return ENOSYS;
 #endif
@@ -574,10 +572,10 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
 #ifdef MQUEUE
-	int error, t;
-	ssize_t mlen;
-	struct timespec ts;
+	struct timespec ts, *tsp;
 	struct timespec50 ts50;
+	ssize_t mlen;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
@@ -586,14 +584,13 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 			return error;
 
 		timespec50_to_timespec(&ts50, &ts);
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-	error = mq_receive1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t, &mlen);
+	error = mq_recv1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp, &mlen);
 	if (error == 0)
 		*retval = mlen;
 
