@@ -1,10 +1,10 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.1 2009/10/01 21:46:30 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.2 2009/10/05 08:34:53 pooka Exp $	*/
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/stat.h>
 
 /*
  * sd @ scsibus @ umass @ usb
@@ -116,6 +116,7 @@ struct cfdata sd_cfdata[] = {
 };
 
 #include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
 #define FLAWLESSCALL(call)						\
 do {									\
@@ -129,6 +130,9 @@ rump_device_configuration(void)
 {
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, umass_ca;
 	extern struct cfattach scsibus_ca, sd_ca;
+	extern struct bdevsw sd_bdevsw;
+	extern struct cdevsw sd_cdevsw;
+	devmajor_t bmaj, cmaj;
 
 	FLAWLESSCALL(config_cfdriver_attach(&usb_cd));
 	FLAWLESSCALL(config_cfattach_attach("usb", &usb_ca));
@@ -151,4 +155,9 @@ rump_device_configuration(void)
 	FLAWLESSCALL(config_cfdata_attach(sd_cfdata, 0));
 
 	FLAWLESSCALL(config_cfattach_attach("uhub", &uroothub_ca));
+
+	bmaj = cmaj = -1;
+	FLAWLESSCALL(devsw_attach("sd", &sd_bdevsw, &bmaj, &sd_cdevsw, &cmaj));
+
+	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "sd0", 'a', bmaj, 0, 8));
 }
