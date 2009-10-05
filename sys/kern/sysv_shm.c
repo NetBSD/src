@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.116 2009/03/06 20:31:54 joerg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.117 2009/10/05 23:47:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.116 2009/03/06 20:31:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117 2009/10/05 23:47:04 rmind Exp $");
 
 #define SYSVSHM
 
@@ -800,11 +800,6 @@ shmexit(struct vmspace *vm)
 {
 	struct shmmap_state *shmmap_s;
 	struct shmmap_entry *shmmap_se;
-	struct uvm_object **uobj;
-	size_t *size;
-	u_int i, n;
-
-	SLIST_HEAD(, shmmap_entry) tmp_entries;
 
 	mutex_enter(&shm_lock);
 	shmmap_s = (struct shmmap_state *)vm->vm_shm;
@@ -812,62 +807,54 @@ shmexit(struct vmspace *vm)
 		mutex_exit(&shm_lock);
 		return;
 	}
-
 	vm->vm_shm = NULL;
 
 	if (--shmmap_s->nrefs > 0) {
 		SHMPRINTF(("shmexit: vm %p drop ref (%d entries), refs = %d\n",
 		    vm, shmmap_s->nitems, shmmap_s->nrefs));
-		SLIST_FOREACH(shmmap_se, &shmmap_s->entries, next)
+		SLIST_FOREACH(shmmap_se, &shmmap_s->entries, next) {
 			shmsegs[IPCID_TO_IX(shmmap_se->shmid)].shm_nattch--;
+		}
 		mutex_exit(&shm_lock);
 		return;
 	}
 
-	KASSERT(shmmap_s->nrefs == 0);
-	n = shmmap_s->nitems;
-	SHMPRINTF(("shmexit: vm %p cleanup (%d entries)\n", vm, n));
-	mutex_exit(&shm_lock);
-	if (n == 0) {
+	SHMPRINTF(("shmexit: vm %p cleanup (%d entries)\n", vm, shmmap_s->nitems));
+	if (shmmap_s->nitems == 0) {
+		mutex_exit(&shm_lock);
 		kmem_free(shmmap_s, sizeof(struct shmmap_state));
 		return;
 	}
 
-	/* Allocate the arrays */
-	SLIST_INIT(&tmp_entries);
-	uobj = kmem_zalloc(n * sizeof(void *), KM_SLEEP);
-	size = kmem_zalloc(n * sizeof(size_t), KM_SLEEP);
-
-	/* Delete the entry from shm map */
-	i = 0;
-	mutex_enter(&shm_lock);
-	while (!SLIST_EMPTY(&shmmap_s->entries)) {
+	/*
+	 * Delete the entry from shm map.
+	 */
+	for (;;) {
 		struct shmid_ds *shmseg;
+		struct uvm_object *uobj;
+		size_t sz;
 
 		shmmap_se = SLIST_FIRST(&shmmap_s->entries);
+		KASSERT(shmmap_se != NULL);
+
 		shmseg = &shmsegs[IPCID_TO_IX(shmmap_se->shmid)];
-		size[i] = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
-		uobj[i] = shm_delete_mapping(shmmap_s, shmmap_se);
-		SLIST_INSERT_HEAD(&tmp_entries, shmmap_se, next);
-		i++;
-	}
-	mutex_exit(&shm_lock);
+		sz = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+		/* shm_delete_mapping() removes from the list. */
+		uobj = shm_delete_mapping(shmmap_s, shmmap_se);
+		mutex_exit(&shm_lock);
 
-	/* Unmap all segments, free the entries */
-	i = 0;
-	while (!SLIST_EMPTY(&tmp_entries)) {
-		KASSERT(i < n);
-		shmmap_se = SLIST_FIRST(&tmp_entries);
-		SLIST_REMOVE(&tmp_entries, shmmap_se, shmmap_entry, next);
-		uvm_deallocate(&vm->vm_map, shmmap_se->va, size[i]);
-		if (uobj[i] != NULL)
-			uao_detach(uobj[i]);
+		uvm_deallocate(&vm->vm_map, shmmap_se->va, sz);
+		if (uobj != NULL) {
+			uao_detach(uobj);
+		}
 		pool_put(&shmmap_entry_pool, shmmap_se);
-		i++;
-	}
 
-	kmem_free(uobj, n * sizeof(void *));
-	kmem_free(size, n * sizeof(size_t));
+		if (SLIST_EMPTY(&shmmap_s->entries)) {
+			break;
+		}
+		mutex_enter(&shm_lock);
+		KASSERT(!SLIST_EMPTY(&shmmap_s->entries));
+	}
 	kmem_free(shmmap_s, sizeof(struct shmmap_state));
 }
 
