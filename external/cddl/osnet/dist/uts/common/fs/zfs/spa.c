@@ -4252,6 +4252,7 @@ spa_has_active_shared_spare(spa_t *spa)
 void
 spa_event_notify(spa_t *spa, vdev_t *vd, const char *name)
 {
+#ifndef __NetBSD__	
 #ifdef _KERNEL
 	sysevent_t		*ev;
 	sysevent_attr_list_t	*attr = NULL;
@@ -4298,4 +4299,5 @@ done:
 		sysevent_free_attr(attr);
 	sysevent_free(ev);
 #endif
+#endif /* __NetBSD__ */
 }
