@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.h,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
+/*	$NetBSD: bthcid.h,v 1.4 2009/10/05 12:34:26 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -42,7 +42,7 @@ int		 send_client_request	(bdaddr_t *, bdaddr_t *, int);
 uint8_t		*lookup_pin		(bdaddr_t *, bdaddr_t *);
 
 /* hci.c */
-int		 init_hci		(bdaddr_t *);
+int		 init_hci		(const char *);
 int		 send_pin_code_reply	(int, struct sockaddr_bt *, bdaddr_t *, uint8_t *);
 
 #endif	/* _BTHCID_H_ */
