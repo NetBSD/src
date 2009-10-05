@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.253 2009/09/29 23:56:34 tsarna Exp $
+#	$NetBSD: bsd.README,v 1.254 2009/10/05 22:32:58 haad Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -338,6 +338,11 @@ MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
 		Default: yes
+
+MKZFS		If "no", do not build and install utilities and libraries 
+		used to manage ZFS file system. Do not build zfs and solaris 
+		compatibility kernel modules.
+		Default: no
 
 USE_HESIOD	If "no", disables building Hesiod support into
 		various system utilities/libraries that support it.
