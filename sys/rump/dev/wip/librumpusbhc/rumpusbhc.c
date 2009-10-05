@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.6 2009/10/05 13:00:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.6 2009/10/05 13:00:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $");
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -78,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.5 2009/10/04 17:46:58 pooka Exp $");
 
 #include <rump/rumpuser.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 
 #define UGEN_NEPTS 16
@@ -119,12 +122,20 @@ struct cfparent rumpusbhcpar = {
 	DVUNIT_ANY
 };
 
+struct rusb_xfer {
+	struct usbd_xfer rusb_xfer;
+	int rusb_status; /* now this is a cheap trick */
+};
+#define RUSB(x) ((struct rusb_xfer *)x)
+
 /* probe ugen0 through ugen3 */
 struct cfdata rumpusbhc_cfdata[] = {
+#if 0
 	{ "rumpusbhc", "rumpusbhc", 0, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 	{ "rumpusbhc", "rumpusbhc", 1, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+#endif
+	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 };
 
 #define UGENDEV_BASESTR "/dev/ugen"
@@ -465,10 +476,6 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
 		printf("clear feature UNIMPL\n");
-		break;
-
-	case C(0xfe, UT_READ_CLASS_INTERFACE):
-		/* XXX: what is this? */
 		totlen = 0;
 		break;
 
@@ -480,6 +487,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(0x06, UT_WRITE_VENDOR_DEVICE):
 	case C(0x07, UT_READ_VENDOR_DEVICE):
 	case C(0x09, UT_READ_VENDOR_DEVICE):
+	case C(0xfe, UT_READ_CLASS_INTERFACE):
 		{
 		struct usb_ctl_request ucr;
 
@@ -631,20 +639,44 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	len = xfer->length;
 	buf = KERNADDR(&xfer->dmabuf, 0);
 
-	if (isread) {
-		n = rumpuser_read(sc->sc_ugenfd[endpt], buf, len, &error);
-		if (n != len)
-			n = 0;
-	} else {
-		n = rumpuser_write(sc->sc_ugenfd[endpt], buf, len, &error);
-		if (n != len)
-			panic("short write");
+	while (RUSB(xfer)->rusb_status == 0) {
+		if (isread) {
+			n = rumpuser_read(sc->sc_ugenfd[endpt],
+			    buf, len, &error);
+			if (n == len)
+				break;
+			if (error != EAGAIN) {
+				n = 0;
+				break;
+			}
+		} else {
+			n = rumpuser_write(sc->sc_ugenfd[endpt],
+			    buf, len, &error);
+			if (n == len)
+				break;
+			else
+				panic("short write");
+		}
 	}
 
-	xfer->actlen = n;
-	xfer->status = USBD_NORMAL_COMPLETION;
+	if (RUSB(xfer)->rusb_status == 0) {
+		xfer->actlen = n;
+		xfer->status = USBD_NORMAL_COMPLETION;
+	} else {
+		xfer->status = USBD_CANCELLED;
+		RUSB(xfer)->rusb_status = 2;
+	}
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
+}
+
+static void
+doxfer_kth(void *arg)
+{
+	usbd_xfer_handle xfer = arg;
+
+	rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	kthread_exit(0);
 }
 
 static usbd_status
@@ -652,23 +684,42 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
 
-	/* XXX: lie about supporting async transfers */
-	if ((xfer->flags & USBD_SYNCHRONOUS) == 0) {
-		printf("rumpusbhc does not support async transfers. LIAR!\n");
+	if (!rump_threads) {
+		/* XXX: lie about supporting async transfers */
+		if ((xfer->flags & USBD_SYNCHRONOUS) == 0) {
+			printf("non-threaded rump does not support "
+			    "async transfers.\n");
+			return USBD_IN_PROGRESS;
+		}
+
+		err = usb_insert_transfer(xfer);
+		if (err)
+			return err;
+
+		return rumpusb_device_bulk_start(
+		    SIMPLEQ_FIRST(&xfer->pipe->queue));
+	} else {
+		/* biglocked */
+		err = usb_insert_transfer(xfer);
+		if (err)
+			return err;
+		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer, NULL,
+		    "rusbhcxf");
+
 		return USBD_IN_PROGRESS;
 	}
-
-	err = usb_insert_transfer(xfer);
-	if (err)
-		return (err);
-
-	return (rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
+/* wait for transfer to abort.  yea, this is cheesy (from a spray can) */
 static void
 rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
 {
+	struct rusb_xfer *rx = RUSB(xfer);
 
+	rx->rusb_status = 1;
+	while (rx->rusb_status < 2) {
+		kpause("jopo", false, hz/10, NULL);
+	}
 }
 
 static void
@@ -708,7 +759,7 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	char buf[UGENDEV_BUFSIZE];
 	int endpt, oflags, error;
-	int fd;
+	int fd, val;
 
 	sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
 	    | UPS_PORT_ENABLED | UPS_PORT_POWER | UPS_HIGH_SPEED;
@@ -755,6 +806,10 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 			fd = rumpuser_open(buf, oflags, &error);
 			if (fd == -1)
 				return USBD_INVAL; /* XXX: no mapping */
+			val = 100;
+			if (rumpuser_ioctl(fd, USB_SET_TIMEOUT, &val,
+			    &error) == -1)
+				panic("timeout set failed");
 			sc->sc_ugenfd[endpt] = fd;
 			sc->sc_fdmodes[endpt] = oflags;
 			break;
@@ -885,4 +940,6 @@ rumpusbhc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* whoah, like extreme XXX, bro */
 	rhscintr();
+	if (!rump_threads)
+		config_pending_decr();
 }
