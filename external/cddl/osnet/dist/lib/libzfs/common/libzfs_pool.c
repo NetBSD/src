@@ -2092,20 +2092,23 @@ zpool_iter_zvol(zpool_handle_t *zhp, int (*cb)(const char *, void *),
 	libzfs_handle_t *hdl = zhp->zpool_hdl;
 	char (*paths)[MAXPATHLEN];
 	size_t size = 4;
-	int curr, fd, base, ret = 0;
+	int curr, base, ret = 0;
+#ifdef PORT_NETBSD
+	int fd;
 	DIR *dirp;
 	struct dirent *dp;
+#endif	
 	struct stat st;
 
 	if ((base = open("/dev/zvol/dsk", O_RDONLY)) < 0)
 		return (errno == ENOENT ? 0 : -1);
-
+#ifdef PORT_NETBSD
 	if (fstatat(base, zhp->zpool_name, &st, 0) != 0) {
 		int err = errno;
 		(void) close(base);
 		return (err == ENOENT ? 0 : -1);
 	}
-
+#endif
 	/*
 	 * Oddly this wasn't a directory -- ignore that failure since we
 	 * know there are no links lower in the (non-existant) hierarchy.
@@ -2122,7 +2125,8 @@ zpool_iter_zvol(zpool_handle_t *zhp, int (*cb)(const char *, void *),
 
 	(void) strlcpy(paths[0], zhp->zpool_name, sizeof (paths[0]));
 	curr = 0;
-
+	
+#ifdef PORT_NETBSD	
 	while (curr >= 0) {
 		if (fstatat(base, paths[curr], &st, AT_SYMLINK_NOFOLLOW) != 0)
 			goto err;
@@ -2171,7 +2175,8 @@ zpool_iter_zvol(zpool_handle_t *zhp, int (*cb)(const char *, void *),
 
 		curr--;
 	}
-
+#endif /* PORT_NETBSD */
+	
 	free(paths);
 	(void) close(base);
 
