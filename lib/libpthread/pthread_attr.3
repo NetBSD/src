@@ -1,7 +1,8 @@
-.\" $NetBSD: pthread_attr.3,v 1.10 2009/04/11 16:51:39 wiz Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.11 2009/10/05 23:37:01 rmind Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -10,6 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -50,28 +52,29 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_attr.3,v 1.11 2002/09/16 19:29:28 mini Exp $
-.Dd March 21, 2007
+.\"
+.Dd October 6, 2009
 .Dt PTHREAD_ATTR 3
 .Os
 .Sh NAME
 .Nm pthread_attr_init ,
 .Nm pthread_attr_destroy ,
-.\" .Nm pthread_attr_setstacksize ,
-.\" .Nm pthread_attr_getstacksize ,
-.\" .Nm pthread_attr_setguardsize ,
-.\" .Nm pthread_attr_getguardsize ,
-.\" .Nm pthread_attr_setstackaddr ,
-.\" .Nm pthread_attr_getstackaddr ,
+.Nm pthread_attr_setstacksize ,
+.Nm pthread_attr_getstacksize ,
+.Nm pthread_attr_setguardsize ,
+.Nm pthread_attr_getguardsize ,
+.Nm pthread_attr_setstackaddr ,
+.Nm pthread_attr_getstackaddr ,
 .Nm pthread_attr_setdetachstate ,
 .Nm pthread_attr_getdetachstate ,
-.\" .Nm pthread_attr_setinheritsched ,
-.\" .Nm pthread_attr_getinheritsched ,
+.Nm pthread_attr_setinheritsched ,
+.Nm pthread_attr_getinheritsched ,
 .Nm pthread_attr_setschedparam ,
 .Nm pthread_attr_getschedparam
-.\" .Nm pthread_attr_setschedpolicy ,
-.\" .Nm pthread_attr_getschedpolicy ,
-.\" .Nm pthread_attr_setscope ,
-.\" .Nm pthread_attr_getscope
+.Nm pthread_attr_setschedpolicy ,
+.Nm pthread_attr_getschedpolicy ,
+.Nm pthread_attr_setscope ,
+.Nm pthread_attr_getscope
 .Nd thread attribute operations
 .Sh LIBRARY
 .Lb libpthread
@@ -81,38 +84,38 @@
 .Fn pthread_attr_init "pthread_attr_t *attr"
 .Ft int
 .Fn pthread_attr_destroy "pthread_attr_t *attr"
-.\" .Ft int
-.\" .Fn pthread_attr_setstacksize "pthread_attr_t *attr" "size_t stacksize"
-.\" .Ft int
-.\" .Fn pthread_attr_getstacksize "const pthread_attr_t * restrict attr" "size_t * restrict stacksize"
-.\" .Ft int
-.\" .Fn pthread_attr_setguardsize "pthread_attr_t *attr" "size_t guardsize"
-.\" .Ft int
-.\" .Fn pthread_attr_getguardsize "const pthread_attr_t * restrict attr" "size_t * restrict guardsize"
-.\" .Ft int
-.\" .Fn pthread_attr_setstackaddr "pthread_attr_t *attr" "void *stackaddr"
-.\" .Ft int
-.\" .Fn pthread_attr_getstackaddr "const pthread_attr_t * restrict attr" "void ** restrict stackaddr"
+.Ft int
+.Fn pthread_attr_setstacksize "pthread_attr_t *attr" "size_t stacksize"
+.Ft int
+.Fn pthread_attr_getstacksize "const pthread_attr_t * restrict attr" "size_t * restrict stacksize"
+.Ft int
+.Fn pthread_attr_setguardsize "pthread_attr_t *attr" "size_t guardsize"
+.Ft int
+.Fn pthread_attr_getguardsize "const pthread_attr_t * restrict attr" "size_t * restrict guardsize"
+.Ft int
+.Fn pthread_attr_setstackaddr "pthread_attr_t *attr" "void *stackaddr"
+.Ft int
+.Fn pthread_attr_getstackaddr "const pthread_attr_t * restrict attr" "void ** restrict stackaddr"
 .Ft int
 .Fn pthread_attr_setdetachstate "pthread_attr_t *attr" "int detachstate"
 .Ft int
 .Fn pthread_attr_getdetachstate "const pthread_attr_t *attr" "int *detachstate"
-.\" .Ft int
-.\" .Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
-.\" .Ft int
-.\" .Fn pthread_attr_getinheritsched "const pthread_attr_t * restrict attr" "int * restrict inheritsched"
+.Ft int
+.Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
+.Ft int
+.Fn pthread_attr_getinheritsched "const pthread_attr_t * restrict attr" "int * restrict inheritsched"
 .Ft int
 .Fn pthread_attr_setschedparam "pthread_attr_t * restrict attr" "const struct sched_param * restrict param"
 .Ft int
 .Fn pthread_attr_getschedparam "const pthread_attr_t * restrict attr" "struct sched_param * restrict param"
-.\" .Ft int
-.\" .Fn pthread_attr_setschedpolicy "pthread_attr_t *attr" "int policy"
-.\" .Ft int
-.\" .Fn pthread_attr_getschedpolicy "const pthread_attr_t * restrict attr" "int * restrict policy"
-.\" .Ft int
-.\" .Fn pthread_attr_setscope "pthread_attr_t *attr" "int contentionscope"
-.\" .Ft int
-.\" .Fn pthread_attr_getscope "const pthread_attr_t * restrict attr" "int * restrict contentionscope"
+.Ft int
+.Fn pthread_attr_setschedpolicy "pthread_attr_t *attr" "int policy"
+.Ft int
+.Fn pthread_attr_getschedpolicy "const pthread_attr_t * restrict attr" "int * restrict policy"
+.Ft int
+.Fn pthread_attr_setscope "pthread_attr_t *attr" "int contentionscope"
+.Ft int
+.Fn pthread_attr_getscope "const pthread_attr_t * restrict attr" "int * restrict contentionscope"
 .Sh DESCRIPTION
 Thread attributes are used to specify parameters to
 .Fn pthread_create .
@@ -161,7 +164,7 @@ If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_attr_init
-shall fail if:
+should fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Out of memory.
@@ -176,17 +179,17 @@ The value specified by
 is invalid.
 .El
 .Pp
-.\" .Fn pthread_attr_setstacksize
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" .Fa stacksize
-.\" is less than
-.\" .Dv PTHREAD_STACK_MIN .
-.\" .El
-.\" .Pp
+.Fn pthread_attr_setstacksize
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa stacksize
+is less than
+.Dv PTHREAD_STACK_MIN .
+.El
+.Pp
 .Fn pthread_attr_setdetachstate
-shall fail if:
+should fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The value specified by
@@ -194,14 +197,14 @@ The value specified by
 is invalid.
 .El
 .Pp
-.\" Fn pthread_attr_setinheritsched
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr .
-.\" .El
-.\" .Pp
+Fn pthread_attr_setinheritsched
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr .
+.El
+.Pp
 .Fn pthread_attr_setschedparam
 may fail if:
 .Bl -tag -width Er
@@ -214,50 +217,50 @@ The value specified by
 .Fa param
 is invalid.
 .El
-.\" .Pp
-.\" .Fn pthread_attr_setschedpolicy
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr .
-.\" .It Bq Er ENOTSUP
-.\" Invalid or unsupported value for
-.\" .Fa policy .
-.\" .El
-.\" .Pp
-.\" .Fn pthread_attr_setscope
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr .
-.\" .It Bq Er ENOTSUP
-.\" Invalid or unsupported value for
-.\" .Fa contentionscope .
-.\" .El
+.Pp
+.Fn pthread_attr_setschedpolicy
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr .
+.It Bq Er ENOTSUP
+Invalid or unsupported value for
+.Fa policy .
+.El
+.Pp
+.Fn pthread_attr_setscope
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr .
+.It Bq Er ENOTSUP
+Invalid or unsupported value for
+.Fa contentionscope .
+.El
 .Sh SEE ALSO
 .Xr pthread_create 3 ,
 .Xr pthread_join 3
 .Sh STANDARDS
 .Fn pthread_attr_init ,
 .Fn pthread_attr_destroy ,
-.\" .Fn pthread_attr_setstacksize ,
-.\" .Fn pthread_attr_getstacksize ,
-.\" .Fn pthread_attr_setstackaddr ,
-.\" .Fn pthread_attr_getstackaddr ,
+.Fn pthread_attr_setstacksize ,
+.Fn pthread_attr_getstacksize ,
+.Fn pthread_attr_setstackaddr ,
+.Fn pthread_attr_getstackaddr ,
 .Fn pthread_attr_setdetachstate ,
 .Fn pthread_attr_getdetachstate ,
-.\" .Fn pthread_attr_setinheritsched ,
-.\" .Fn pthread_attr_getinheritsched ,
-.\" .Fn pthread_attr_setschedparam ,
+.Fn pthread_attr_setinheritsched ,
+.Fn pthread_attr_getinheritsched ,
+.Fn pthread_attr_setschedparam ,
 .Fn pthread_attr_setschedparam ,
 and
 .Fn pthread_attr_getschedparam
-.\" .Fn pthread_attr_setschedpolicy ,
-.\" .Fn pthread_attr_getschedpolicy ,
-.\" .Fn pthread_attr_setscope ,
-.\" and
-.\" .Fn pthread_attr_getscope
+.Fn pthread_attr_setschedpolicy ,
+.Fn pthread_attr_getschedpolicy ,
+.Fn pthread_attr_setscope ,
+and
+.Fn pthread_attr_getscope
 conform to
 .St -p1003.1-96 .
