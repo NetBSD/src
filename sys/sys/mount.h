@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.191 2009/07/18 16:31:43 reinoud Exp $	*/
+/*	$NetBSD: mount.h,v 1.192 2009/10/05 04:20:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -432,6 +432,8 @@ void 	mount_initspecific(struct mount *);
 void 	mount_finispecific(struct mount *);
 void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
+
+int	usermount_common_policy(struct mount *, u_long);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.44 2009/05/03 21:25:44 elad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.45 2009/10/05 04:20:13 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.44 2009/05/03 21:25:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.45 2009/10/05 04:20:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.44 2009/05/03 21:25:44 elad Exp $");
 #include <sys/module.h>
 #include <sys/dirhash.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -118,6 +119,8 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 
 struct vfs_list_head vfs_list =			/* vfs list */
     LIST_HEAD_INITIALIZER(vfs_list);
+
+static kauth_listener_t mount_listener;
 
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
@@ -332,6 +335,56 @@ vfs_op_check(void)
 #endif /* DEBUG */
 
 /*
+ * Common routine to check if an unprivileged mount is allowed.
+ *
+ * We export just this part (i.e., without the access control) so that if a
+ * secmodel wants to implement finer grained user mounts it can do so without
+ * copying too much code. More elaborate policies (i.e., specific users allowed
+ * to also create devices and/or introduce set-id binaries, or export
+ * file-systems) will require a different implementation.
+ *
+ * This routine is intended to be called from listener context, and as such
+ * does not take credentials as an argument.
+ */
+int
+usermount_common_policy(struct mount *mp, u_long flags)
+{
+
+	/* No exporting if unprivileged. */
+	if (flags & MNT_EXPORTED)
+		return EPERM;
+
+	/* Must have 'nosuid' and 'nodev'. */
+	if ((flags & MNT_NODEV) == 0 || (flags & MNT_NOSUID) == 0)
+		return EPERM;
+
+	/* Retain 'noexec'. */
+	if ((mp->mnt_flag & MNT_NOEXEC) && (flags & MNT_NOEXEC) == 0)
+		return EPERM;
+
+	return 0;
+}
+
+static int
+mount_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_system_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_system_req)arg0;
+
+	if ((action != KAUTH_SYSTEM_MOUNT) ||
+	    (req != KAUTH_REQ_SYSTEM_MOUNT_GET))
+		return result;
+
+	result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
+/*
  * Initialize the vnode structures and initialize each file system type.
  */
 void
@@ -381,6 +434,9 @@ vfsinit(void)
 	 * Initialise VFS hooks.
 	 */
 	vfs_hooks_init();
+
+	mount_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    mount_listener_cb, NULL);
 
 	/*
 	 * Establish each file system which was statically
