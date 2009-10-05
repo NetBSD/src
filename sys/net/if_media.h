@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.52 2009/08/12 11:17:17 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.53 2009/10/05 21:27:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
 void	ifmedia_delete_instance(struct ifmedia *, u_int);
 
 /* Compute baudrate for a given media. */
-u_quad_t	ifmedia_baudrate(int);
+uint64_t	ifmedia_baudrate(int);
 
 /* Remove all media */
 void		ifmedia_removeall(struct ifmedia *);
@@ -536,7 +536,7 @@ struct ifmedia_description {
  */
 struct ifmedia_baudrate {
 	int	ifmb_word;		/* media word */
-	u_quad_t	ifmb_baudrate;		/* corresponding baudrate */
+	uint64_t	ifmb_baudrate;		/* corresponding baudrate */
 };
 
 #define	IFM_BAUDRATE_DESCRIPTIONS {					\

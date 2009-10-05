@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.15 2008/08/22 12:13:18 martin Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.16 2009/10/05 21:27:36 dyoung Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -89,7 +89,7 @@ struct sppp {
 	u_int	pp_maxalive;	/* number or echo req. w/o reply */
 	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
 	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
-	u_quad_t	pp_saved_mtu;	/* saved MTU value */
+	uint64_t	pp_saved_mtu;	/* saved MTU value */
 	time_t	pp_last_receive;	/* peer's last "sign of life" */
 	time_t	pp_max_noreceive;	/* seconds since last receive before
 					   we start to worry and send echo
