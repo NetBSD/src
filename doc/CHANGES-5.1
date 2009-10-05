@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.82 2009/10/05 10:13:06 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.83 2009/10/05 10:34:33 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13942,4 +13942,13 @@ sys/dev/acpi/acpi_bat.c				1.74
 	status immediately at boot and doesn't issue a subsequent notify
 	when the information becomes available.
 	[jmcneill, ticket #1067]
+
+sys/arch/x86/include/cpuvar.h			1.30
+sys/arch/x86/x86/est.c				1.12
+sys/arch/x86/x86/intel_busclock.c		1.8
+
+	Use the TSC and current multiplier to calculate bus clock on VIA
+	C7 Esther. Probably needed for all C7 and Nano processors, but
+	to be safe only use this alternate method on Esther for now.
+	[jmcneill, ticket #1059]
 
