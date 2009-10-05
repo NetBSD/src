@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.146 2009/04/11 23:05:26 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.147 2009/10/05 17:58:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.146 2009/04/11 23:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.147 2009/10/05 17:58:15 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -342,14 +342,14 @@ bpf_detachd(struct bpf_d *d)
 		 */
   		error = ifpromisc(bp->bif_ifp, 0);
 		if (error && error != EINVAL)
-			panic("bpf: ifpromisc failed");
+			panic("%s: ifpromisc failed: %d", __func__, error);
 	}
 	/* Remove d from the interface's descriptor list. */
 	p = &bp->bif_dlist;
 	while (*p != d) {
 		p = &(*p)->bd_next;
 		if (*p == 0)
-			panic("bpf_detachd: descriptor not in list");
+			panic("%s: descriptor not in list", __func__);
 	}
 	*p = (*p)->bd_next;
 	if (bp->bif_dlist == 0)
