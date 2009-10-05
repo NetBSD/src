@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.85 2009/01/11 02:45:53 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.86 2009/10/05 23:46:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.85 2009/01/11 02:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.86 2009/10/05 23:46:02 rmind Exp $");
 
 #define SYSVSEM
 
@@ -279,72 +279,48 @@ sys_semconfig(struct lwp *l, const struct sys_semconfig_args *uap, register_t *r
 }
 
 /*
- * Allocate a new sem_undo structure for a process
- * (returns ptr to structure or NULL if no more room)
+ * Allocate a new sem_undo structure for a process.
+ * => Returns NULL on failure.
  */
-
 struct sem_undo *
 semu_alloc(struct proc *p)
 {
+	struct sem_undo *suptr, **supptr;
+	bool attempted = false;
 	int i;
-	struct sem_undo *suptr;
-	struct sem_undo **supptr;
-	int attempt;
 
 	KASSERT(mutex_owned(&semlock));
+again:
+	/* Look for a free structure. */
+	for (i = 0; i < seminfo.semmnu; i++) {
+		suptr = SEMU(semu, i);
+		if (suptr->un_proc == NULL) {
+			/* Found.  Fill it in and return. */
+			suptr->un_next = semu_list;
+			semu_list = suptr;
+			suptr->un_cnt = 0;
+			suptr->un_proc = p;
+			return suptr;
+		}
+	}
 
-	/*
-	 * Try twice to allocate something.
-	 * (we'll purge any empty structures after the first pass so
-	 * two passes are always enough)
-	 */
+	/* Not found.  Attempt to free some structures. */
+	if (!attempted) {
+		bool freed = false;
 
-	for (attempt = 0; attempt < 2; attempt++) {
-		/*
-		 * Look for a free structure.
-		 * Fill it in and return it if we find one.
-		 */
-
-		for (i = 0; i < seminfo.semmnu; i++) {
-			suptr = SEMU(semu, i);
-			if (suptr->un_proc == NULL) {
-				suptr->un_next = semu_list;
-				semu_list = suptr;
-				suptr->un_cnt = 0;
-				suptr->un_proc = p;
-				return (suptr);
+		attempted = true;
+		supptr = &semu_list;
+		while ((suptr = *supptr) != NULL) {
+			if (suptr->un_cnt == 0)  {
+				suptr->un_proc = NULL;
+				*supptr = suptr->un_next;
+				freed = true;
+			} else {
+				supptr = &suptr->un_next;
 			}
 		}
-
-		/*
-		 * We didn't find a free one, if this is the first attempt
-		 * then try to free some structures.
-		 */
-
-		if (attempt == 0) {
-			/* All the structures are in use - try to free some */
-			int did_something = 0;
-
-			supptr = &semu_list;
-			while ((suptr = *supptr) != NULL) {
-				if (suptr->un_cnt == 0)  {
-					suptr->un_proc = NULL;
-					*supptr = suptr->un_next;
-					did_something = 1;
-				} else
-					supptr = &suptr->un_next;
-			}
-
-			/* If we didn't free anything then just give-up */
-			if (!did_something)
-				return (NULL);
-		} else {
-			/*
-			 * The second pass failed even though we freed
-			 * something after the first pass!
-			 * This is IMPOSSIBLE!
-			 */
-			panic("semu_alloc - second attempt failed");
+		if (freed) {
+			goto again;
 		}
 	}
 	return NULL;
