@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2009/10/05 23:59:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2009/10/05 23:59:30 rmind Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -180,7 +180,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2009/08/18 16:41:02 jmcneill Exp $
 #include <machine/mpbiosvar.h>
 
 #include <x86/cputypes.h>
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/machdep.h>
 
@@ -1534,8 +1533,6 @@ init_x86_64(paddr_t first_avail)
 
 	splraise(IPL_HIGH);
 	x86_enable_intr();
-
-	x86_init();
 
 #ifdef DDB
 	if (boothowto & RB_KDB)

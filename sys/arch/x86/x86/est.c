@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.12 2009/10/02 15:05:42 jmcneill Exp $	*/
+/*	$NetBSD: est.c,v 1.13 2009/10/05 23:59:31 rmind Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12 2009/10/02 15:05:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.13 2009/10/05 23:59:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: est.c,v 1.12 2009/10/02 15:05:42 jmcneill Exp $");
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
+#include <sys/xcall.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
@@ -1009,7 +1010,6 @@ static void		est_init_main(int);
 static int
 est_sysctl_helper(SYSCTLFN_ARGS)
 {
-	struct msr_cpu_broadcast mcb;
 	struct sysctlnode	node;
 	int			fq, oldfq, error;
 
@@ -1033,17 +1033,22 @@ est_sysctl_helper(SYSCTLFN_ARGS)
 
 	/* support writing to ...frequency.target */
 	if (rnode->sysctl_num == est_node_target && fq != oldfq) {
-		int		i;
+		struct msr_rw_info msr;
+		uint64_t where;
+		int i;
 
 		for (i = est_fqlist->n - 1; i > 0; i--)
 			if (MSR2MHZ(est_fqlist->table[i], bus_clock) >= fq)
 				break;
 		fq = MSR2MHZ(est_fqlist->table[i], bus_clock);
-		mcb.msr_read = true;
-		mcb.msr_type = MSR_PERF_CTL;
-		mcb.msr_mask = 0xffffULL;
-		mcb.msr_value = est_fqlist->table[i];
-		msr_cpu_broadcast(&mcb);
+
+		msr.msr_read = true;
+		msr.msr_type = MSR_PERF_CTL;
+		msr.msr_mask = 0xffffULL;
+		msr.msr_value = est_fqlist->table[i];
+
+		where = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+		xc_wait(where);
 	}
 
 	return 0;

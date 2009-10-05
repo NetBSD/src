@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.25 2009/08/23 16:02:50 ahoka Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.25 2009/08/23 16:02:50 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.25 2009/08/23 16:02:50 ahoka Exp $
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
+#include <sys/xcall.h>
 
 #include <x86/cpu_msr.h>
 #include <x86/powernow.h>
@@ -78,23 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.25 2009/08/23 16:02:50 ahoka Exp $
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-#define WRITE_FIDVID(fid, vid, ctrl)		\
-	mcb.msr_read = false;			\
-	mcb.msr_value = (((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)); \
-	mcb.msr_type = MSR_AMDK7_FIDVID_CTL;	\
-	msr_cpu_broadcast(&mcb);
-
 #ifdef _MODULE
 static struct sysctllog *sysctllog;
 #define SYSCTLLOG	&sysctllog
 #else
 #define SYSCTLLOG	NULL
 #endif
-
-#define READ_PENDING_WAIT(status)				\
-	do {							\
-		(status) = rdmsr(MSR_AMDK7_FIDVID_STATUS);	\
-	} while (PN8_STA_PENDING(status))
 
 static struct powernow_cpu_state *k8pnow_current_state;
 static unsigned int cur_freq;
@@ -109,6 +99,26 @@ static int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
 static int k8_powernow_setperf(unsigned int);
 static int k8_powernow_init_once(void);
 static void k8_powernow_init_main(void);
+
+static uint64_t
+k8pnow_wr_fidvid(u_int fid, uint64_t vid, uint64_t ctrl)
+{
+	struct msr_rw_info msr;
+	uint64_t where, status;
+
+	msr.msr_read = false;
+	msr.msr_value = (ctrl << 32) | (1ULL << 16) | (vid << 8) | fid;
+	msr.msr_type = MSR_AMDK7_FIDVID_CTL;
+
+	where = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(where);
+
+	do {
+		status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
+	} while (PN8_STA_PENDING(status));
+
+	return status;
+}
 
 static int
 k8pnow_sysctl_helper(SYSCTLFN_ARGS)
@@ -151,7 +161,6 @@ k8_powernow_setperf(unsigned int freq)
 	int cfid, cvid, fid = 0, vid = 0;
 	int rvo;
 	struct powernow_cpu_state *cstate;
-	struct msr_cpu_broadcast mcb;
 
 	/*
 	 * We dont do a k8pnow_read_pending_wait here, need to ensure that the
@@ -186,8 +195,7 @@ k8_powernow_setperf(unsigned int freq)
 	 */
 	while (cvid > vid) {
 		val = cvid - (1 << cstate->mvs);
-		WRITE_FIDVID(cfid, (val > 0) ? val : 0, 1ULL);
-		READ_PENDING_WAIT(status);
+		status = k8pnow_wr_fidvid(cfid, (val > 0) ? val : 0, 1ULL);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -197,8 +205,7 @@ k8_powernow_setperf(unsigned int freq)
 		/* XXX It's not clear from spec if we have to do that
 		 * in 0.25 step or in MVS.  Therefore do it as it's done
 		 * under Linux */
-		WRITE_FIDVID(cfid, cvid - 1, 1ULL);
-		READ_PENDING_WAIT(status);
+		status = k8pnow_wr_fidvid(cfid, cvid - 1, 1ULL);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -218,24 +225,23 @@ k8_powernow_setperf(unsigned int freq)
 					val = FID_TO_VCO_FID(cfid) + 2;
 			} else
 				val = cfid - 2;
-			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
-			READ_PENDING_WAIT(status);
+			status = k8pnow_wr_fidvid(val, cvid,
+			    (uint64_t)cstate->pll * 1000 / 5);
 			cfid = PN8_STA_CFID(status);
 			COUNT_OFF_IRT(cstate->irt);
 
 			vco_cfid = FID_TO_VCO_FID(cfid);
 		}
 
-		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
-		READ_PENDING_WAIT(status);
+		status = k8pnow_wr_fidvid(fid, cvid,
+		    (uint64_t)cstate->pll * 1000 / 5);
 		cfid = PN8_STA_CFID(status);
 		COUNT_OFF_IRT(cstate->irt);
 	}
 
 	/* Phase 3: change to requested voltage */
 	if (cvid != vid) {
-		WRITE_FIDVID(cfid, vid, 1ULL);
-		READ_PENDING_WAIT(status);
+		status = k8pnow_wr_fidvid(cfid, vid, 1ULL);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
