@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.584 2009/10/01 09:12:44 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.585 2009/10/05 22:32:58 haad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -701,7 +701,7 @@ ${var}?=	yes
 #
 .for var in \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKLVM \
+	MKLVM MKZFS \
 	MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \

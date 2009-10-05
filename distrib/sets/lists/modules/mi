@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.3 2009/10/02 18:50:15 elad Exp $
+# $NetBSD: mi,v 1.4 2009/10/05 22:32:58 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -96,6 +96,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/solaris				base-kernel-modules     kmod,zfs
+./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,zfs
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
@@ -112,3 +114,5 @@
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
+./@MODULEDIR@/zfs				base-kernel-modules     kmod,zfs
+./@MODULEDIR@/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
