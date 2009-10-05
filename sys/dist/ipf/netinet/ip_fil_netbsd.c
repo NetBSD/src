@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.52 2009/10/03 00:37:02 elad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.53 2009/10/05 03:44:01 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.52 2009/10/03 00:37:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53 2009/10/05 03:44:01 elad Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.66 2009/05/17 17:45:26 darrenr Exp";
@@ -340,6 +340,12 @@ ipfilterattach(int count)
 	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
 	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 # endif
+
+#if (__NetBSD_Version__ >= 599002000)
+	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    ipf_listener_cb, NULL);
+#endif
+
 }
 #endif
 
@@ -479,11 +485,6 @@ int ipfattach(void)
 		     fr_slowtimer, NULL);
 #else
 	timeout(fr_slowtimer, NULL, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT);
-#endif
-
-#if (__NetBSD_Version__ >= 599002000)
-	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
-	    ipf_listener_cb, NULL);
 #endif
 
 	return 0;
