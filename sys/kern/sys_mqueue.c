@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.24 2009/07/19 02:50:44 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.25 2009/10/05 23:49:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.24 2009/07/19 02:50:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.25 2009/10/05 23:49:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -295,20 +295,26 @@ mqueue_linear_insert(struct mqueue *mq, struct mq_msg *msg)
 }
 
 /*
- * Converter from struct timespec to the ticks.
+ * Calculate delta and convert from struct timespec to the ticks.
  * Used by mq_timedreceive(), mq_timedsend().
  */
 int
 abstimeout2timo(struct timespec *ts, int *timo)
 {
+	struct timespec tsd;
 	int error;
 
-	/*
-	 * According to POSIX, validation check is needed only in case of
-	 * blocking.  Thus, set the invalid value right now, and fail latter.
-	 */
-	error = itimespecfix(ts);
-	*timo = (error == 0) ? tstohz(ts) : -1;
+	getnanotime(&tsd);
+	timespecsub(ts, &tsd, &tsd);
+	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
+		return ETIMEDOUT;
+	}
+	error = itimespecfix(&tsd);
+	if (error) {
+		return error;
+	}
+	*timo = tstohz(&tsd);
+	KASSERT(*timo != 0);
 
 	return 0;
 }
@@ -609,11 +615,11 @@ sys_mq_close(struct lwp *l, const struct sys_mq_close_args *uap,
 }
 
 /*
- * Primary mq_receive1() function.
+ * Primary mq_recv1() function.
  */
 int
-mq_receive1(lwp_t *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
-    unsigned *msg_prio, int t, ssize_t *mlen)
+mq_recv1(mqd_t mqdes, void *msg_ptr, size_t msg_len, u_int *msg_prio,
+    struct timespec *ts, ssize_t *mlen)
 {
 	file_t *fp = NULL;
 	struct mqueue *mq;
@@ -643,12 +649,14 @@ mq_receive1(lwp_t *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 
 	/* Check if queue is empty */
 	while (mqattr->mq_curmsgs == 0) {
+		int t;
+
 		if (mqattr->mq_flags & O_NONBLOCK) {
 			error = EAGAIN;
 			goto error;
 		}
-		if (t < 0) {
-			error = EINVAL;
+		error = abstimeout2timo(ts, &t);
+		if (error) {
 			goto error;
 		}
 		/*
@@ -720,11 +728,11 @@ sys_mq_receive(struct lwp *l, const struct sys_mq_receive_args *uap,
 		syscallarg(size_t) msg_len;
 		syscallarg(unsigned *) msg_prio;
 	} */
-	int error;
 	ssize_t mlen;
+	int error;
 
-	error = mq_receive1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), 0, &mlen);
+	error = mq_recv1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), NULL, &mlen);
 	if (error == 0)
 		*retval = mlen;
 
@@ -742,24 +750,22 @@ sys___mq_timedreceive50(struct lwp *l,
 		syscallarg(unsigned *) msg_prio;
 		syscallarg(const struct timespec *) abs_timeout;
 	} */
-	int error, t;
+	struct timespec ts, *tsp;
 	ssize_t mlen;
-	struct timespec ts;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
 		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
 		if (error)
 			return error;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
-
-	error = mq_receive1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t, &mlen);
+	error = mq_recv1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp, &mlen);
 	if (error == 0)
 		*retval = mlen;
 
@@ -770,8 +776,8 @@ sys___mq_timedreceive50(struct lwp *l,
  * Primary mq_send1() function.
  */
 int
-mq_send1(lwp_t *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
-    unsigned msg_prio, int t)
+mq_send1(mqd_t mqdes, const char *msg_ptr, size_t msg_len, u_int msg_prio,
+    struct timespec *ts)
 {
 	file_t *fp = NULL;
 	struct mqueue *mq;
@@ -828,12 +834,14 @@ mq_send1(lwp_t *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 
 	/* Check if queue is full */
 	while (mqattr->mq_curmsgs >= mqattr->mq_maxmsg) {
+		int t;
+
 		if (mqattr->mq_flags & O_NONBLOCK) {
 			error = EAGAIN;
 			goto error;
 		}
-		if (t < 0) {
-			error = EINVAL;
+		error = abstimeout2timo(ts, &t);
+		if (error) {
 			goto error;
 		}
 		/* Block until queue becomes available */
@@ -904,8 +912,8 @@ sys_mq_send(struct lwp *l, const struct sys_mq_send_args *uap,
 		syscallarg(unsigned) msg_prio;
 	} */
 
-	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), 0);
+	return mq_send1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), NULL);
 }
 
 int
@@ -919,8 +927,7 @@ sys___mq_timedsend50(struct lwp *l, const struct sys___mq_timedsend50_args *uap,
 		syscallarg(unsigned) msg_prio;
 		syscallarg(const struct timespec *) abs_timeout;
 	} */
-	int t;
-	struct timespec ts;
+	struct timespec ts, *tsp;
 	int error;
 
 	/* Get and convert time value */
@@ -928,14 +935,13 @@ sys___mq_timedsend50(struct lwp *l, const struct sys___mq_timedsend50_args *uap,
 		error = copyin(SCARG(uap, abs_timeout), &ts, sizeof(ts));
 		if (error)
 			return error;
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t);
+	return mq_send1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp);
 }
 
 int
