@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.c,v 1.2 2007/01/25 20:33:41 plunky Exp $	*/
+/*	$NetBSD: hci.c,v 1.3 2009/10/05 12:34:26 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hci.c,v 1.2 2007/01/25 20:33:41 plunky Exp $");
+__RCSID("$NetBSD: hci.c,v 1.3 2009/10/05 12:34:26 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -89,32 +89,21 @@ static char dev_name[HCI_DEVNAME_SIZE];
 
 /* Initialise HCI Events */
 int
-init_hci(bdaddr_t *bdaddr)
+init_hci(const char *device)
 {
-	struct sockaddr_bt	sa;
-	struct hci_filter	filter;
+	struct bt_devfilter	filter;
 	int			hci;
 
-	hci = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
+	hci = bt_devopen(device, 0);
 	if (hci < 0)
 		return -1;
 
-	memset(&sa, 0, sizeof(sa));
-	sa.bt_len = sizeof(sa);
-	sa.bt_family = AF_BLUETOOTH;
-	bdaddr_copy(&sa.bt_bdaddr, bdaddr);
-	if (bind(hci, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		close(hci);
-		return -1;
-	}
-
 	memset(&filter, 0, sizeof(filter));
-	hci_filter_set(HCI_EVENT_PIN_CODE_REQ, &filter);
-	hci_filter_set(HCI_EVENT_LINK_KEY_REQ, &filter);
-	hci_filter_set(HCI_EVENT_LINK_KEY_NOTIFICATION, &filter);
-
-	if (setsockopt(hci, BTPROTO_HCI, SO_HCI_EVT_FILTER,
-			(const void *)&filter, sizeof(filter)) < 0) {
+	bt_devfilter_pkt_set(&filter, HCI_EVENT_PKT);
+	bt_devfilter_evt_set(&filter, HCI_EVENT_PIN_CODE_REQ);
+	bt_devfilter_evt_set(&filter, HCI_EVENT_LINK_KEY_REQ);
+	bt_devfilter_evt_set(&filter, HCI_EVENT_LINK_KEY_NOTIFICATION);
+	if (bt_devfilter(hci, &filter, NULL) < 0) {
 		close(hci);
 		return -1;
 	}
