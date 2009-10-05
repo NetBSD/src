@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1317 2009/10/04 22:10:42 christos Exp $
+#	$NetBSD: mi,v 1.1318 2009/10/05 14:52:36 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2887,6 +2887,7 @@
 ./usr/libdata/debug/usr/bin/diff3.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/dirname.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/dns-sd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/bin/du.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eject.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/env.debug		comp-util-debug		debug
@@ -3418,6 +3419,7 @@
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/mdnsd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/sbin/mdsetimage.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/mk-amd-map.debug	comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/mkalias.debug	comp-nis-debug		yp,debug
