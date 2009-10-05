@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.5.10.2 2009/10/05 10:34:07 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.2 2009/10/05 10:34:07 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,21 @@ via_get_bus_clock(struct cpu_info *ci)
 	}
 
 	return bus_clock;
+}
+
+int
+viac7_get_bus_clock(struct cpu_info *ci)
+{
+	uint64_t msr;
+	int mult;
+
+	msr = rdmsr(MSR_PERF_STATUS);
+	mult = (msr >> 8) & 0xff;
+	if (mult == 0)
+		return 0;
+
+	return ((ci->ci_data.cpu_cc_freq + 10000000) / 10000000 * 10000000) /
+		 mult / 10000;
 }
 
 int
