@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.81 2009/10/04 11:49:23 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.82 2009/10/05 10:13:06 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13934,4 +13934,12 @@ share/man/man7/release.7			1.31 via patch
 	Sync release(7) with reality.
 	Only generate SHA512 and MD5 checksums for releases.
 	[snj, ticket #1066]
+
+sys/dev/acpi/acpi_bat.c				1.74
+
+	If the driver thinks a battery is not present, poll for present
+	status.Workaround for firmware that doesn't report battery present
+	status immediately at boot and doesn't issue a subsequent notify
+	when the information becomes available.
+	[jmcneill, ticket #1067]
 
