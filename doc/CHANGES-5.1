@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.83 2009/10/05 10:34:33 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.84 2009/10/05 11:16:38 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13951,4 +13951,10 @@ sys/arch/x86/x86/intel_busclock.c		1.8
 	C7 Esther. Probably needed for all C7 and Nano processors, but
 	to be safe only use this alternate method on Esther for now.
 	[jmcneill, ticket #1059]
+
+dist/libpcap/inet.c				1.3
+
+	Fix pcap_lookupnet(): reset ifr before SIOCGIFNETMASK. Without it
+	we get back a bogus netmask.
+	[bouyer, ticket #1039]
 
