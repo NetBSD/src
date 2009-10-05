@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1318 2009/10/05 14:52:36 njoly Exp $
+#	$NetBSD: mi,v 1.1319 2009/10/05 23:44:10 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8392,6 +8392,12 @@
 ./usr/share/man/cat9/cache_purge.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_purgevfs.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_revlookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/callback.0			comp-sys-catman		.cat
+./usr/share/man/cat9/callback_head_init.0	comp-sys-catman		.cat
+./usr/share/man/cat9/callback_head_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/callback_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/callback_run_roundrobin.0	comp-sys-catman		.cat
+./usr/share/man/cat9/callback_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/callout.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_ack.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_active.0		comp-obsolete		obsolete
@@ -13824,6 +13830,12 @@
 ./usr/share/man/html9/cache_purge.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cache_purgevfs.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cache_revlookup.html	comp-sys-htmlman	html
+./usr/share/man/html9/callback.html		comp-sys-htmlman	html
+./usr/share/man/html9/callback_head_init.html	comp-sys-htmlman	html
+./usr/share/man/html9/callback_head_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/callback_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/callback_run_roundrobin.html	comp-sys-htmlman	html
+./usr/share/man/html9/callback_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/callout.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_ack.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_destroy.html	comp-sys-htmlman	html
@@ -19367,6 +19379,12 @@
 ./usr/share/man/man9/cache_purge.9		comp-sys-man		.man
 ./usr/share/man/man9/cache_purgevfs.9		comp-sys-man		.man
 ./usr/share/man/man9/cache_revlookup.9		comp-sys-man		.man
+./usr/share/man/man9/callback.9			comp-sys-man		.man
+./usr/share/man/man9/callback_head_init.9	comp-sys-man		.man
+./usr/share/man/man9/callback_head_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/callback_register.9	comp-sys-man		.man
+./usr/share/man/man9/callback_run_roundrobin.9	comp-sys-man		.man
+./usr/share/man/man9/callback_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/callout.9			comp-sys-man		.man
 ./usr/share/man/man9/callout_ack.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_active.9		comp-obsolete		obsolete
