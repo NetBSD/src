@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.293 2009/10/02 18:50:13 elad Exp $
+#       $NetBSD: Makefile,v 1.294 2009/10/05 23:44:10 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -6,8 +6,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bluetooth.9 boothowto.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
-	callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 cons.9 copy.9 \
-	coredump_write.9 \
+	callback.9 callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 \
+	cons.9 copy.9 coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 \
 	cpu_lwp_fork.9 \
 	cpu_idle.9 cpu_initclocks.9 cpu_need_resched.9 \
@@ -159,6 +159,9 @@ MLINKS+=byteorder.9 bswap16.9 byteorder.9 bswap32.9 byteorder.9 bswap64.9 \
 	byteorder.9 le16dec.9 byteorder.9 le32dec.9 byteorder.9 le64dec.9 \
 	byteorder.9 be16enc.9 byteorder.9 be32enc.9 byteorder.9 be64enc.9 \
 	byteorder.9 le16enc.9 byteorder.9 le32enc.9 byteorder.9 le64enc.9
+MLINKS+=callback.9 callback_head_init.9 callback.9 callback_head_destroy.9 \
+        callback.9 callback_register.9 callback.9 callback_unregister.9 \
+        callback.9 callback_run_roundrobin.9
 MLINKS+=callout.9 callout_init.9 callout.9 callout_destroy.9 \
 	callout.9 callout_reset.9 callout.9 callout_schedule.9 \
 	callout.9 callout_setfunc.9 callout.9 callout_stop.9 \
