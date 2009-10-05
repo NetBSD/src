@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.495 2009/10/04 22:06:34 christos Exp $
+# $NetBSD: shl.mi,v 1.496 2009/10/05 03:54:17 tsarna Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -166,6 +166,7 @@
 ./usr/lib/libutil.so.7.17			base-sys-shlib
 ./usr/lib/libwrap.so.1.0			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
+./usr/lib/nss_mdns.so.0				base-mdns-shlib		mdns
 ./usr/lib/security/pam_afslog.so.3		base-sys-shlib		kerberos,pam
 ./usr/lib/security/pam_chroot.so.3		base-sys-shlib		pam
 ./usr/lib/security/pam_deny.so.3		base-sys-shlib		pam
