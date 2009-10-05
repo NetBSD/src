@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.38 2009/05/06 10:34:33 cegger Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.39 2009/10/05 20:03:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -165,6 +165,9 @@ struct pciide_product_desc {
 	const char *ide_name;
 	/* map and setup chip, probe drives */
 	void (*chip_map)(struct pciide_softc*, struct pci_attach_args*);
+#if 0
+	void (*chip_unmap)(struct pciide_softc *);
+#endif
 };
 
 /* Flags for ide_flags */
