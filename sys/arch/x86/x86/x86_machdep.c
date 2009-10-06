@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.34 2009/10/05 23:59:31 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.35 2009/10/06 21:07:05 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.34 2009/10/05 23:59:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.35 2009/10/06 21:07:05 elad Exp $");
 
 #include "opt_modular.h"
 
@@ -73,6 +73,8 @@ int check_pa_acc(paddr_t, vm_prot_t);
 struct bootinfo bootinfo;
 
 /* --------------------------------------------------------------------- */
+
+static kauth_listener_t x86_listener;
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -815,4 +817,36 @@ x86_reset(void)
 		outb(0x92, b | 0x1);
 		DELAY(500000);  /* wait 0.5 sec to see if that did it */
 	}
+}
+
+static int
+x86_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	switch (action) {
+	case KAUTH_MACHDEP_IOPERM_GET:
+	case KAUTH_MACHDEP_LDT_GET:
+	case KAUTH_MACHDEP_LDT_SET:
+	case KAUTH_MACHDEP_MTRR_GET:
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+machdep_init(void)
+{
+
+	x86_listener = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	    x86_listener_cb, NULL);
 }
