@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.27 2009/10/05 04:20:13 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.28 2009/10/06 20:34:22 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.27 2009/10/05 04:20:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.28 2009/10/06 20:34:22 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,6 +304,14 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_SYSTEM_MOUNT:
 		switch (req) {
+		case KAUTH_REQ_SYSTEM_MOUNT_GET:
+			if (isroot) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
+			break;
+
 		case KAUTH_REQ_SYSTEM_MOUNT_NEW: {
 			struct mount *mp = ((struct vnode *)arg1)->v_mount;
 			u_long flags = (u_long)arg2;
@@ -437,6 +445,20 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_ALLOW;
 		break;
 
+	case KAUTH_SYSTEM_DEBUG:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
 	case KAUTH_SYSTEM_CHSYSFLAGS:
 		/*
 		 * Needs to be checked in conjunction with the immutable and
@@ -481,6 +503,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_PTRACE:
 	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
 	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
 	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
 	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_KEVENT_FILTER:
@@ -600,9 +623,24 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_NETWORK_BIND:
 		switch (req) {
+		case KAUTH_REQ_NETWORK_BIND_PORT:
 		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case KAUTH_NETWORK_FIREWALL:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_FIREWALL_FW:
+		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
 			break;
 
 		default:
@@ -619,6 +657,8 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_NETWORK_INTERFACE:
 		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_GET:
+		case KAUTH_REQ_NETWORK_INTERFACE_SET:
 		case KAUTH_REQ_NETWORK_INTERFACE_GETPRIV:
 		case KAUTH_REQ_NETWORK_INTERFACE_SETPRIV:
 			if (isroot)
