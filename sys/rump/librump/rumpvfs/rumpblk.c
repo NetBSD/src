@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.25 2009/08/03 16:22:00 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.26 2009/10/06 13:05:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.25 2009/08/03 16:22:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.26 2009/10/06 13:05:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,13 +93,13 @@ static struct rblkdev {
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
+	uint64_t rblk_size;
 
 	/* for mmap */
 	int rblk_mmflags;
 	kmutex_t rblk_memmtx;
 	kcondvar_t rblk_memcv;
 	TAILQ_HEAD(winlru, blkwin) rblk_lruq;
-	size_t rblk_size;
 	bool rblk_waiting;
 
 	struct partition *rblk_curpi;
