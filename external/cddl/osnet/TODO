@@ -38,19 +38,18 @@ DONE		device properties for disk partitions.
 DONE		changes to newfs fsck for zvols.
 DONE		re-read zpool.cache and reconfigure pools.
 DONE		successful unload of the module.
-PDONE		implement basic getpages/putpages.
+DONE		implement basic getpages/putpages.
 DONE		callbacks into arc, for reclaim of memory or kernel virual space.
 DONE		prevent module loading if less than 512MB RAM.
 -		maybe changing the order of arguments for pool_cache constructors.
--		check ioctl handlers for safety (for patch to allow old-style unix ioctl)
+DONE		check ioctl handlers for safety (for patch to allow old-style unix ioctl)
 PDONE		port ZFS ACL stuff, enough for POSIX.
 DONE		port zfs_replay.c to NetBSD
 DONE		successfully compile a kernel.
 -		stress testing.
-PDONE		rc.d integration for zfs.
+DONE		rc.d integration for zfs.
 DONE 		fix dangling vnode panic, get zfs unmount to work
 DONE		fix zfs_rename bug -> fix should be sent back to sun 
-- 		implement lookupnameat(), fstatat() and openat() correctly.
 DONE		syncer/atime issues
 
 Post-integration tasks.
@@ -62,6 +61,7 @@ Post-integration tasks.
 -		 zfs/iscsi integration.
 -		 native getpages/putpages.
 -		 update ZFS to latest.
+-		 Implement *at syscalls correctly.
 
 
 PDONE = Partialy done.
