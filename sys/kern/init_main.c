@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.405 2009/10/03 22:32:56 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.406 2009/10/06 21:07:05 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.405 2009/10/03 22:32:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.406 2009/10/06 21:07:05 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -568,6 +568,8 @@ main(void)
 	/* Initialize write-ahead physical block logging. */
 	wapbl_init();
 #endif
+
+	machdep_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
