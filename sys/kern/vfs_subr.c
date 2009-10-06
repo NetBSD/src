@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.384 2009/09/19 16:20:41 jmcneill Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.385 2009/10/06 04:28:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.384 2009/09/19 16:20:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.385 2009/10/06 04:28:10 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -3289,3 +3289,76 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 }
 #endif /* DDB || DEBUGPRINT */
 
+/*
+ * Check if a device pointed to by vp is mounted.
+ *
+ * Returns:
+ *   EINVAL	if it's not a disk
+ *   EBUSY	if it's a disk and mounted
+ *   0		if it's a disk and not mounted
+ */
+int
+rawdev_mounted(struct vnode *vp, struct vnode **bvpp)
+{
+	struct vnode *bvp;
+	dev_t dev;
+	int d_type;
+
+	bvp = NULL;
+	dev = vp->v_rdev;
+	d_type = D_OTHER;
+
+	if (iskmemvp(vp))
+		return EINVAL;
+
+	switch (vp->v_type) {
+	case VCHR: {
+		const struct cdevsw *cdev;
+
+		cdev = cdevsw_lookup(dev);
+		if (cdev != NULL) {
+			dev_t blkdev;
+
+			blkdev = devsw_chr2blk(dev);
+			if (blkdev != NODEV) {
+				vfinddev(blkdev, VBLK, &bvp);
+				if (bvp != NULL)
+					d_type = (cdev->d_flag & D_TYPEMASK);
+			}
+		}
+
+		break;
+		}
+
+	case VBLK: {
+		const struct bdevsw *bdev;
+
+		bdev = bdevsw_lookup(dev);
+		if (bdev != NULL)
+			d_type = (bdev->d_flag & D_TYPEMASK);
+
+		bvp = vp;
+
+		break;
+		}
+
+	default:
+		break;
+	}
+
+	if (d_type != D_DISK)
+		return EINVAL;
+
+	if (bvpp != NULL)
+		*bvpp = bvp;
+
+	/*
+	 * XXX: This is bogus. We should be failing the request
+	 * XXX: not only if this specific slice is mounted, but
+	 * XXX: if it's on a disk with any other mounted slice.
+	 */
+	if (vfs_mountedon(bvp))
+		return EBUSY;
+
+	return 0;
+}

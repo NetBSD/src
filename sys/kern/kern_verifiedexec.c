@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.116 2009/10/03 21:03:55 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.117 2009/10/06 04:28:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.116 2009/10/03 21:03:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.117 2009/10/06 04:28:10 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1030,8 +1030,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
 		struct vnode *vp, *bvp;
-		dev_t dev;
-		int d_type;
+		int error;
 
 		if (req == KAUTH_REQ_DEVICE_RAWIO_SPEC_READ) {
 			result = KAUTH_RESULT_DEFER;
@@ -1041,60 +1040,22 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		vp = arg1;
 		KASSERT(vp != NULL);
 
-		dev = vp->v_rdev;
-		d_type = D_OTHER;
-		bvp = NULL;
-
 		/* Handle /dev/mem and /dev/kmem. */
-		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+		if (iskmemvp(vp)) {
 			if (veriexec_strict < VERIEXEC_IPS)
 				result = KAUTH_RESULT_DEFER;
 
 			break;
 		}
 
-		switch (vp->v_type) {
-		case VCHR: {
-			const struct cdevsw *cdev;
-
-			cdev = cdevsw_lookup(dev);
-			if (cdev != NULL) {
-				dev_t blkdev;
-
-				blkdev = devsw_chr2blk(dev);
-				if (blkdev != NODEV) {
-					vfinddev(blkdev, VBLK, &bvp);
-					if (bvp != NULL)
-						d_type = cdev->d_flag &
-						    D_TYPEMASK;
-				}
-			}
-
-			break;
-			}
-		case VBLK: {
-			const struct bdevsw *bdev;
-
-			bdev = bdevsw_lookup(dev);
-			if (bdev != NULL)
-				d_type = bdev->d_flag & D_TYPEMASK;
-
-			bvp = vp;
-
-			break;
-			}
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-
-		if (d_type != D_DISK) {
+		error = rawdev_mounted(vp, &bvp);
+		if (error == EINVAL) {
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
 		/*
-		 * XXX: See vfs_mountedon() comment in secmodel/securelevel.
+		 * XXX: See vfs_mountedon() comment in rawdev_mounted().
 		 */
 		vte = veriexec_table_lookup(bvp->v_mount);
 		if (vte == NULL) {

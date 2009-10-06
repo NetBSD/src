@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.37 2008/12/29 17:41:19 pooka Exp $	*/
+/*	$NetBSD: specdev.h,v 1.38 2009/10/06 04:28:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -154,5 +154,7 @@ int	spec_advlock(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
+
+bool	iskmemvp(struct vnode *);
 
 #endif /* _MISCFS_SPECFS_SPECDEV_H_ */
