@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.235 2009/03/29 10:58:28 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.236 2009/10/06 21:07:05 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -396,6 +396,8 @@ void	cpu_dumpconf(void);
 #ifdef GPROF
 void	kmstartup(void);
 #endif
+
+void	machdep_init(void);
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
