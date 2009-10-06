@@ -331,6 +331,7 @@ typedef struct {
  * \see RFC4880 9.1
  */
 typedef enum {
+	OPS_PKA_NOTHING	= 0,	/* No PKA */
 	OPS_PKA_RSA = 1,	/* RSA (Encrypt or Sign) */
 	OPS_PKA_RSA_ENCRYPT_ONLY = 2,	/* RSA Encrypt-Only (deprecated -
 					 * \see RFC4880 13.5) */
