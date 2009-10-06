@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkbuiltins,v 1.21 2004/06/06 07:03:11 christos Exp $
+#	$NetBSD: mkbuiltins,v 1.22 2009/10/06 19:56:58 apb Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 #	@(#)mkbuiltins	8.2 (Berkeley) 5/4/95
 
 havehist=1
-if [ "X$1" = "X-h" ]; then
+if [ x"$1" = x"-h" ]; then
 	havehist=0
 	shift
 fi
@@ -89,10 +89,10 @@ do
 		echo $line >&4
 		continue
 		;;
+	\#*)
+		continue
+		;;
 	esac
-	l1="${line###}"
-	[ "$l1" != "$line" ] && continue
-
 
 	func=$1
 	shift
@@ -106,14 +106,14 @@ do
 	}
 	echo 'int '"$func"'(int, char **);' >&4
 	while
-		[ $# != 0 -a "$1" != '#' ]
+		[ $# != 0 ] && [ x"$1" != x'#' ]
 	do
-		[ "$1" = '-s' ] && {
+		[ x"$1" = x'-s' ] && {
 			specials="$specials $2 $func"
 			shift 2
 			continue;
 		}
-		[ "$1" = '-u' ] && shift
+		[ x"$1" = x'-u' ] && shift
 		echo '	{ "'$1'",	'"$func"' },' >&3
 		shift
 	done
