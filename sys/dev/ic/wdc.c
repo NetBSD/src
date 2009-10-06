@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.257 2008/12/08 11:23:39 pooka Exp $ */
+/*	$NetBSD: wdc.c,v 1.258 2009/10/06 13:45:01 sborrill Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.257 2008/12/08 11:23:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.258 2009/10/06 13:45:01 sborrill Exp $");
 
 #include "opt_ata.h"
 
@@ -209,7 +209,7 @@ void
 wdc_sataprobe(struct ata_channel *chp)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-	uint16_t scnt, sn, cl, ch;
+	uint8_t st = 0, sc, sn, cl, ch;
 	int i, s;
 
 	/* XXX This should be done by other code. */
@@ -222,23 +222,34 @@ wdc_sataprobe(struct ata_channel *chp)
 	switch (sata_reset_interface(chp, wdr->sata_iot, wdr->sata_control,
 	    wdr->sata_status)) {
 	case SStatus_DET_DEV:
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		scnt = bus_space_read_2(wdr->cmd_iot,
+		/* wait 5s for BSY to clear */
+		for (i = 0; i < WDC_PROBE_WAIT * hz; i++) {
+			bus_space_write_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_sdh], 0, WDSD_IBM);
+			delay(10);      /* 400ns delay */
+			st = bus_space_read_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_status], 0);
+			if ((st & WDCS_BSY) == 0)
+				break;
+			tsleep(&chp, PRIBIO, "sataprb", 1);
+		}
+		if (i == WDC_PROBE_WAIT * hz)
+			aprint_error_dev(chp->ch_atac->atac_dev,
+			    "BSY never cleared, status 0x%02x\n", st);
+		sc = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_seccnt], 0);
-		sn = bus_space_read_2(wdr->cmd_iot,
+		sn = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_sector], 0);
-		cl = bus_space_read_2(wdr->cmd_iot,
+		cl = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_cyl_lo], 0);
-		ch = bus_space_read_2(wdr->cmd_iot,
+		ch = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_cyl_hi], 0);
-		ATADEBUG_PRINT(("%s: port %d: scnt=0x%x sn=0x%x "
+		ATADEBUG_PRINT(("%s: port %d: sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
 		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
-		    scnt, sn, cl, ch), DEBUG_PROBE);
+		    sc, sn, cl, ch), DEBUG_PROBE);
 		/*
-		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
+		 * sc and sn are supposed to be 0x1 for ATAPI, but in some
 		 * cases we get wrong values here, so ignore it.
 		 */
 		s = splbio();
