@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.20 2009/06/11 04:57:52 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.21 2009/10/06 02:26:05 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -123,14 +123,14 @@ __ops_keydata_free(__ops_key_t *keydata)
 	for (n = 0; n < keydata->uidc; ++n) {
 		__ops_userid_free(&keydata->uids[n]);
 	}
-	(void) free(keydata->uids);
+	free(keydata->uids);
 	keydata->uids = NULL;
 	keydata->uidc = 0;
 
 	for (n = 0; n < keydata->packetc; ++n) {
 		__ops_subpacket_free(&keydata->packets[n]);
 	}
-	(void) free(keydata->packets);
+	free(keydata->packets);
 	keydata->packets = NULL;
 	keydata->packetc = 0;
 
@@ -140,7 +140,7 @@ __ops_keydata_free(__ops_key_t *keydata)
 		__ops_seckey_free(&keydata->key.seckey);
 	}
 
-	(void) free(keydata);
+	free(keydata);
 }
 
 /**
@@ -394,7 +394,7 @@ __ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 	size_t          len = strlen((char *) src->userid);
 
 	if (dst->userid) {
-		(void) free(dst->userid);
+		free(dst->userid);
 	}
 	dst->userid = calloc(1, len + 1);
 	(void) memcpy(dst->userid, src->userid, len);
@@ -413,7 +413,7 @@ static __ops_subpacket_t *
 __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 {
 	if (dst->raw) {
-		(void) free(dst->raw);
+		free(dst->raw);
 	}
 	dst->raw = calloc(1, src->length);
 	dst->length = src->length;
@@ -431,7 +431,7 @@ __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 __ops_userid_t  *
 __ops_add_userid(__ops_key_t *key, const __ops_userid_t *userid)
 {
-	__ops_userid_t  *uidp = NULL;
+	__ops_userid_t  *uidp;
 
 	EXPAND_ARRAY(key, uid);
 	/* initialise new entry in array */
@@ -451,7 +451,7 @@ __ops_add_userid(__ops_key_t *key, const __ops_userid_t *userid)
 __ops_subpacket_t   *
 __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 {
-	__ops_subpacket_t   *subpktp = NULL;
+	__ops_subpacket_t   *subpktp;
 
 	EXPAND_ARRAY(keydata, packet);
 
@@ -475,8 +475,8 @@ __ops_add_signed_userid(__ops_key_t *keydata,
 		const __ops_userid_t *userid,
 		const __ops_subpacket_t *sigpacket)
 {
-	__ops_subpacket_t	*pkt = NULL;
-	__ops_userid_t		*uid = NULL;
+	__ops_subpacket_t	*pkt;
+	__ops_userid_t		*uid;
 
 	uid = __ops_add_userid(keydata, userid);
 	pkt = __ops_add_subpacket(keydata, sigpacket);
@@ -503,7 +503,7 @@ __ops_add_signed_userid(__ops_key_t *keydata,
 unsigned 
 __ops_add_selfsigned_userid(__ops_key_t *keydata, __ops_userid_t *userid)
 {
-	__ops_create_sig_t	*sig = NULL;
+	__ops_create_sig_t	*sig;
 	__ops_subpacket_t	 sigpacket;
 	__ops_memory_t		*mem_userid = NULL;
 	__ops_output_t		*useridoutput = NULL;
@@ -704,9 +704,9 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 				const unsigned armour,
 				__ops_memory_t *mem)
 {
-	__ops_stream_t	*stream = NULL;
-	const unsigned		 noaccum = 0;
-	unsigned		 res = 1;
+	__ops_stream_t	*stream;
+	const unsigned	 noaccum = 0;
+	unsigned	 res;
 
 	stream = __ops_new(sizeof(*stream));
 	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
@@ -715,7 +715,7 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 	if (armour) {
 		__ops_reader_push_dearmour(stream);
 	}
-	res = __ops_parse_and_accumulate(keyring, stream);
+	res = (unsigned)__ops_parse_and_accumulate(keyring, stream);
 	__ops_print_errors(__ops_stream_get_errors(stream));
 	if (armour) {
 		__ops_reader_pop_dearmour(stream);
@@ -851,7 +851,7 @@ __ops_getkeybyname(__ops_io_t *io,
 	unsigned int    	 i = 0;
 	size_t          	 len;
 	char	                *cp;
-	unsigned             	 n = 0;
+	unsigned             	 n;
 
 	if (!keyring) {
 		return NULL;
@@ -862,7 +862,7 @@ __ops_getkeybyname(__ops_io_t *io,
 		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(io->outs,
-					"[%d][%d] name %s, last '%d'\n",
+					"[%u][%u] name %s, last '%d'\n",
 					n, i, uidp->userid,
 					uidp->userid[len]);
 			}
@@ -950,7 +950,7 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 	__ops_key_t		*key;
 	unsigned		 n;
 
-	(void) fprintf(io->res, "%d keys\n", keyring->keyc);
+	(void) fprintf(io->res, "%u keys\n", keyring->keyc);
 	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
 			__ops_print_seckeydata(io, key);

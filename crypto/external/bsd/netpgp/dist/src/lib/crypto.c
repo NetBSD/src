@@ -54,15 +54,11 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.16 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.17 2009/10/06 02:26:05 agc Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -99,7 +95,7 @@ __ops_decrypt_decode_mpi(unsigned char *buf,
 	int             n;
 	int             i;
 
-	mpisize = BN_num_bytes(encmpi);
+	mpisize = (unsigned)BN_num_bytes(encmpi);
 	/* MPI can't be more than 65,536 */
 	if (mpisize > sizeof(encmpibuf)) {
 		(void) fprintf(stderr, "mpisize too big %u\n", mpisize);
@@ -163,7 +159,7 @@ __ops_decrypt_decode_mpi(unsigned char *buf,
 
 	/* this is the unencoded m buf */
 	if ((unsigned) (n - i) <= buflen) {
-		(void) memcpy(buf, mpibuf + i, (unsigned)(n - i));
+		(void) memcpy(buf, mpibuf + i, (unsigned)(n - i)); /* XXX - Flexelint */
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -189,9 +185,9 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 {
 
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
-	int             n = 0;
+	int             n;
 
-	if (sz_encoded_m_buf != (size_t) BN_num_bytes(pubkey->key.rsa.n)) {
+	if (sz_encoded_m_buf != (size_t)BN_num_bytes(pubkey->key.rsa.n)) {
 		(void) fprintf(stderr, "sz_encoded_m_buf wrong\n");
 		return 0;
 	}
@@ -242,7 +238,7 @@ __ops_encrypt_file(__ops_io_t *io,
 {
 	__ops_output_t	*output;
 	__ops_memory_t	*inmem;
-	int		 fd_out = 0;
+	int		 fd_out;
 
 	__OPS_USED(io);
 	inmem = __ops_memory_new();
@@ -297,8 +293,8 @@ __ops_decrypt_file(__ops_io_t *io,
 	__ops_stream_t	*parse = NULL;
 	const int		 printerrors = 1;
 	char			*filename = NULL;
-	int			 fd_in = 0;
-	int			 fd_out = 0;
+	int			 fd_in;
+	int			 fd_out;
 
 	/* setup for reading from given input file */
 	fd_in = __ops_setup_file_read(io, &parse, infile,
@@ -326,7 +322,11 @@ __ops_decrypt_file(__ops_io_t *io,
 		if (strcmp(suffix, ".gpg") == 0 ||
 		    strcmp(suffix, ".asc") == 0) {
 			filenamelen = strlen(infile) - strlen(suffix);
-			filename = calloc(1, filenamelen + 1);
+			if ((filename = calloc(1, filenamelen + 1)) == NULL) {
+				(void) fprintf(stderr, "can't allocate %" PRIsize "d bytes\n",
+					(size_t)(filenamelen + 1));
+				return 0;
+			}
 			(void) strncpy(filename, infile, filenamelen);
 			filename[filenamelen] = 0x0;
 		}
@@ -335,12 +335,9 @@ __ops_decrypt_file(__ops_io_t *io,
 					filename, allow_overwrite);
 		if (fd_out < 0) {
 			perror(filename);
-			(void) free(filename);
+			free(filename);
 			__ops_teardown_file_read(parse, fd_in);
 			return 0;
-		}
-		if (filename) {
-			(void) free(filename);
 		}
 	}
 
@@ -368,6 +365,7 @@ __ops_decrypt_file(__ops_io_t *io,
 
 	if (filename) {
 		__ops_teardown_file_write(parse->cbinfo.output, fd_out);
+		free(filename);
 	}
 	__ops_teardown_file_read(parse, fd_in);
 	/* \todo cleardown crypt */
@@ -379,7 +377,7 @@ static __ops_cb_ret_t
 callback_write_parsed(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
-	static unsigned		 skipping;
+	static unsigned		 skipping;	/* XXX - put skipping into pkt? */
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("callback_write_parsed: ");

@@ -57,13 +57,12 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.19 2009/06/13 05:25:08 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.20 2009/10/06 02:26:05 agc Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -104,7 +103,7 @@ __ops_write_ss_header(__ops_output_t *output,
 {
 	return __ops_write_length(output, length) &&
 		__ops_write_scalar(output, (unsigned)(type -
-				OPS_PTAG_SIG_SUBPKT_BASE), 1);
+				(unsigned)OPS_PTAG_SIG_SUBPKT_BASE), 1);
 }
 
 /*
@@ -166,7 +165,7 @@ __ops_write_userid(const unsigned char *userid, __ops_output_t *output)
 static unsigned 
 mpi_length(const BIGNUM *bn)
 {
-	return 2 + (BN_num_bits(bn) + 7) / 8;
+	return (unsigned)(2 + (BN_num_bits(bn) + 7) / 8);
 }
 
 static unsigned 
@@ -194,7 +193,7 @@ seckey_length(const __ops_seckey_t *key)
 		len = mpi_length(key->key.rsa.d) + mpi_length(key->key.rsa.p) +
 			mpi_length(key->key.rsa.q) + mpi_length(key->key.rsa.u);
 
-		return len + pubkey_length(&key->pubkey);
+		return (unsigned)(len + pubkey_length(&key->pubkey));
 	default:
 		(void) fprintf(stderr,
 			"seckey_length: unknown key algorithm\n");
@@ -213,7 +212,7 @@ void
 __ops_fast_create_rsa_pubkey(__ops_pubkey_t *key, time_t t,
 			       BIGNUM *n, BIGNUM *e)
 {
-	key->version = 4;
+	key->version = OPS_V4;
 	key->birthtime = t;
 	key->alg = OPS_PKA_RSA;
 	key->key.rsa.n = n;
@@ -362,10 +361,9 @@ write_seckey_body(const __ops_seckey_t *key,
 	case OPS_S2KS_SALTED:
 		/* RFC4880: section 3.7.1.1 and 3.7.1.2 */
 
-		done = 0;
-		for (i = 0; done < CAST_KEY_LENGTH; i++) {
-			unsigned int    j = 0;
+		for (done = 0, i = 0; done < CAST_KEY_LENGTH; i++) {
 			unsigned char   zero = 0;
+			unsigned 	j;
 			int             needed;
 			int             size;
 
@@ -397,9 +395,9 @@ write_seckey_body(const __ops_seckey_t *key,
 			 * if more in hash than is needed by session key, use
 			 * the leftmost octets
 			 */
-			(void) memcpy(sesskey + (i * OPS_SHA1_HASH_SIZE),
+			(void) memcpy(&sesskey[i * OPS_SHA1_HASH_SIZE],
 					hashed, (unsigned)size);
-			done += size;
+			done += (unsigned)size;
 			if (done > CAST_KEY_LENGTH) {
 				(void) fprintf(stderr,
 					"write_seckey_body: short add\n");
@@ -429,7 +427,7 @@ write_seckey_body(const __ops_seckey_t *key,
 	__ops_encrypt_init(&crypted);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i2 = 0;
+		unsigned	i2;
 
 		(void) fprintf(stderr, "\nWRITING:\niv=");
 		for (i2 = 0; i2 < __ops_block_size(key->alg); i2++) {
@@ -520,7 +518,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 			const __ops_key_t *keydata,
 			const unsigned armoured)
 {
-	unsigned int    i = 0, j = 0;
+	unsigned int    i, j;
 
 	if (armoured) {
 		__ops_writer_push_armoured(output, OPS_PGP_PUBLIC_KEY_BLOCK);
@@ -588,7 +586,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 				const size_t pplen,
 				unsigned armoured)
 {
-	unsigned	i = 0, j = 0;
+	unsigned	i, j;
 
 	if (armoured) {
 		__ops_writer_push_armoured(output, OPS_PGP_PRIVATE_KEY_BLOCK);
@@ -794,12 +792,12 @@ __ops_write_struct_seckey(const __ops_seckey_t *key,
 	}
 	/* checksum or hash */
 	switch (key->s2k_usage) {
-	case 0:
-	case 255:
+	case OPS_S2KU_NONE:
+	case OPS_S2KU_ENCRYPTED:
 		length += 2;
 		break;
 
-	case 254:
+	case OPS_S2KU_ENCRYPTED_AND_HASHED:
 		length += OPS_CHECKHASH_SIZE;
 		break;
 
@@ -810,7 +808,7 @@ __ops_write_struct_seckey(const __ops_seckey_t *key,
 	}
 
 	/* secret key and public key MPIs */
-	length += seckey_length(key);
+	length += (unsigned)seckey_length(key);
 
 	return __ops_write_ptag(output, OPS_PTAG_CT_SECRET_KEY) &&
 		/* __ops_write_length(output,1+4+1+1+seckey_length(key)+2) && */
@@ -846,7 +844,7 @@ void
 __ops_output_delete(__ops_output_t *output)
 {
 	writer_info_delete(&output->writer);
-	(void) free(output);
+	free(output);
 }
 
 /**
@@ -859,8 +857,8 @@ __ops_output_delete(__ops_output_t *output)
 unsigned 
 __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
 {
-	unsigned int    i = 0;
 	unsigned long   checksum = 0;
+	unsigned int    i;
 
 	if (!__ops_is_sa_supported(sesskey->symm_alg)) {
 		return 0;
@@ -885,7 +883,7 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
 static unsigned 
 create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, unsigned char *m_buf)
 {
-	int             i = 0;
+	int             i;
 
 	/* m_buf is the buffer which will be encoded in PKCS#1 block */
 	/* encoding to form the "m" value used in the  */
@@ -902,6 +900,7 @@ create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, unsigned char *m_buf)
 		return 0;
 	}
 	for (i = 0; i < CAST_KEY_LENGTH; i++) {
+		/* XXX - Flexelint - Warning 679: Suspicious Truncation in arithmetic expression combining with pointer */
 		m_buf[1 + i] = sesskey->key[i];
 	}
 
@@ -933,7 +932,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 		return 0;
 	}
 
-	k = BN_num_bytes(pubkey->key.rsa.n);
+	k = (unsigned)BN_num_bytes(pubkey->key.rsa.n);
 	if (mLen > k - 11) {
 		(void) fprintf(stderr, "encode_m_buf: message too long\n");
 		return 0;
@@ -943,7 +942,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 	EM[1] = 0x02;
 
 	/* add non-zero random bytes of length k - mLen -3 */
-	for (i = 2; i < k - mLen - 1; ++i) {
+	for (i = 2; i < (k - mLen) - 1; ++i) {
 		do {
 			__ops_random(EM + i, 1);
 		} while (EM[i] == 0);
@@ -959,7 +958,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 	(void) memcpy(EM + i, M, mLen);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i2 = 0;
+		unsigned int    i2;
 
 		(void) fprintf(stderr, "Encoded Message: \n");
 		for (i2 = 0; i2 < mLen; i2++) {
@@ -992,13 +991,26 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
          * can be any, we're hardcoding RSA for now
          */
 
-	const __ops_pubkey_t *pubkey = __ops_get_pubkey(key);
-#define SZ_UNENCODED_M_BUF CAST_KEY_LENGTH+1+2
-	unsigned char   unencoded_m_buf[SZ_UNENCODED_M_BUF];
-	const size_t    sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
-	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
+#define SZ_UNENCODED_M_BUF (CAST_KEY_LENGTH + 1 + 2)
 
-	__ops_pk_sesskey_t *sesskey = calloc(1, sizeof(*sesskey));
+	const __ops_pubkey_t	*pubkey;
+	__ops_pk_sesskey_t	*sesskey;
+	unsigned char		 unencoded_m_buf[SZ_UNENCODED_M_BUF];
+	unsigned char		*encoded_m_buf;
+	size_t			 sz_encoded_m_buf;
+
+	pubkey = __ops_get_pubkey(key);
+	sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
+	if ((encoded_m_buf = calloc(1, sz_encoded_m_buf)) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_create_pk_sesskey: can't allocate\n");
+		return NULL;
+	}
+	if ((sesskey = calloc(1, sizeof(*sesskey))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_create_pk_sesskey: can't allocate\n");
+		return NULL;
+	}
 	if (key->type != OPS_PTAG_CT_PUBLIC_KEY) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: bad type\n");
@@ -1009,7 +1021,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 			sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned int    i;
 
 		(void) fprintf(stderr, "Encrypting for RSA key id : ");
 		for (i = 0; i < sizeof(sesskey->key_id); i++) {
@@ -1029,7 +1041,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	__ops_random(sesskey->key, CAST_KEY_LENGTH);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned int    i;
 
 		(void) fprintf(stderr,
 			"CAST5 session key created (len=%d):\n ",
@@ -1040,11 +1052,11 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		(void) fprintf(stderr, "\n");
 	}
 	if (create_unencoded_m_buf(sesskey, &unencoded_m_buf[0]) == 0) {
-		(void) free(encoded_m_buf);
+		free(encoded_m_buf);
 		return NULL;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned int    i;
 
 		printf("unencoded m buf:\n");
 		for (i = 0; i < SZ_UNENCODED_M_BUF; i++) {
@@ -1058,10 +1070,10 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	/* and encrypt it */
 	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
 			&sesskey->params)) {
-		(void) free(encoded_m_buf);
+		free(encoded_m_buf);
 		return NULL;
 	}
-	(void) free(encoded_m_buf);
+	free(encoded_m_buf);
 	return sesskey;
 }
 
@@ -1075,6 +1087,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 unsigned 
 __ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 {
+	/* XXX - Flexelint - Pointer parameter 'pksk' (line 1076) could be declared as pointing to const */
 	if (pksk == NULL) {
 		(void) fprintf(stderr,
 			"__ops_write_pk_sesskey: NULL pksk\n");
@@ -1157,7 +1170,7 @@ __ops_fileread_litdata(const char *filename,
 				 const __ops_litdata_type_t type,
 				 __ops_output_t *output)
 {
-	__ops_memory_t	*mem = NULL;
+	__ops_memory_t	*mem;
 	unsigned   	 ret;
 	size_t		 len;
 
@@ -1192,8 +1205,8 @@ int
 __ops_filewrite(const char *filename, const char *buf,
 			const size_t len, const unsigned overwrite)
 {
-	int		flags = 0;
-	int		fd = 0;
+	int		flags;
+	int		fd;
 
 	flags = O_WRONLY | O_CREAT;
 	if (overwrite) {
@@ -1206,7 +1219,7 @@ __ops_filewrite(const char *filename, const char *buf,
 #endif
 	fd = open(filename, flags, 0600);
 	if (fd < 0) {
-		perror(NULL);
+		(void) fprintf(stderr, "can't open '%s'\n", filename);
 		return 0;
 	}
 	if (write(fd, buf, len) != (int)len) {
@@ -1233,15 +1246,19 @@ __ops_write_symm_enc_data(const unsigned char *data,
 			/* buffer to write encrypted data to */
 	unsigned char  *encrypted = (unsigned char *) NULL;
 	__ops_crypt_t	crypt_info;
-	size_t		encrypted_sz = 0;	/* size of encrypted data */
+	size_t		encrypted_sz;	/* size of encrypted data */
 	int             done = 0;
 
 	/* \todo assume AES256 for now */
 	__ops_crypt_any(&crypt_info, OPS_SA_AES_256);
 	__ops_encrypt_init(&crypt_info);
 
-	encrypted_sz = len + crypt_info.blocksize + 2;
-	encrypted = calloc(1, encrypted_sz);
+	encrypted_sz = (size_t)(len + crypt_info.blocksize + 2);
+	if ((encrypted = calloc(1, encrypted_sz)) == NULL) {
+		(void) fprintf(stderr, "can't allocate %" PRIsize "d\n",
+			encrypted_sz);
+		return 0;
+	}
 
 	done = __ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
 	if (done != len) {
