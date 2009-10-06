@@ -860,7 +860,10 @@ zpool_find_import_impl(libzfs_handle_t *hdl, int argc, char **argv,
 			    (name[1] == 0 || (name[1] == '.' && name[2] == 0)))
 				continue;
 
-			if ((fd = openat64(dfd, name, O_RDONLY)) < 0)
+			(void)snprintf(path, sizeof (path), "%s/%s",
+			    rdsk, dp->d_name);
+			
+			if ((fd = open(path, O_RDONLY)) < 0)
 				continue;
 
 			/*
