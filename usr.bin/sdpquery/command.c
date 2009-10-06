@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.1 2009/05/12 18:37:50 plunky Exp $	*/
+/*	$NetBSD: command.c,v 1.2 2009/10/06 19:21:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: command.c,v 1.1 2009/05/12 18:37:50 plunky Exp $");
+__RCSID("$NetBSD: command.c,v 1.2 2009/10/06 19:21:17 plunky Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -129,7 +129,7 @@ do_sdp_record(int argc, const char **argv)
 		if (*argv[0] == '\0' || *ep != '\0' || handle > UINT32_MAX)
 			errx(EXIT_FAILURE, "Invalid handle: %s\n", *argv);
 
-		rv = sdp_service_attribute(ss, handle, NULL, &rsp);
+		rv = sdp_service_attribute(ss, (uint32_t)handle, NULL, &rsp);
 		if (!rv)
 			warn("%s", *argv);
 		else
@@ -205,36 +205,42 @@ open_session(void)
 static void
 build_ssp(sdp_data_t *ssp, int argc, const char **argv)
 {
-	static uint8_t	data[36];	/* 12 * sizeof(uuid16) */
+	static uint8_t	data[12 * sizeof(uuid_t)];
 	char *		ep;
-	unsigned long	uuid;
+	uintmax_t	umax;
+	uuid_t		uuid;
+	uint32_t	status;
 	int		i;
 
 	ssp->next = data;
 	ssp->end = data + sizeof(data);
 
 	for (; argc-- > 0; argv++) {
-		uuid = strtoul(*argv, &ep, 0);
-		if (*argv[0] == '\0' || *ep != '\0') {
-			for (i = 0;; i++) {
-				if (i == __arraycount(aliases))
-					errx(EXIT_FAILURE,
-					    "Unknown alias \"%s\"", *argv);
+		uuid_from_string(*argv, &uuid, &status);
+		if (status != uuid_s_ok) {
+			umax = strtoumax(*argv, &ep, 0);
+			if (*argv[0] == '\0' || *ep != '\0') {
+				for (i = 0;; i++) {
+					if (i == __arraycount(aliases))
+						errx(EXIT_FAILURE,
+						    "%s: Bad UUID", *argv);
 
-				if (strcasecmp(aliases[i].name, *argv) == 0)
-					break;
-			}
+					if (strcasecmp(aliases[i].name,
+					    *argv) == 0)
+						break;
+				}
 
-			uuid = aliases[i].uuid;
+				umax = aliases[i].uuid;
+			} else if (umax > UINT32_MAX)
+				errx(EXIT_FAILURE, "%s: Bad UUID", *argv);
+
+			uuid = BLUETOOTH_BASE_UUID;
+			uuid.time_low = (uint32_t)umax;
 		}
 
-		if (uuid > UINT16_MAX)
-			errx(EXIT_FAILURE, "%s: Not 16-bit UUID", *argv);
-
-		sdp_put_uuid16(ssp, uuid);
+		sdp_put_uuid(ssp, &uuid);
 	}
 
 	ssp->end = ssp->next;
 	ssp->next = data;
-	return;
 }
