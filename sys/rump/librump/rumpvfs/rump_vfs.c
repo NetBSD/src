@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.26 2009/10/04 13:29:36 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.27 2009/10/06 16:23:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.26 2009/10/04 13:29:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.27 2009/10/06 16:23:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -193,7 +193,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags | HASBUF;
+	cnp->cn_flags = flags;
 
 	cnp->cn_pnbuf = PNBUF_GET();
 	strcpy(cnp->cn_pnbuf, name);
@@ -213,13 +213,21 @@ rump_freecn(struct componentname *cnp, int flags)
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
-	if (cnp->cn_flags & SAVENAME) {
-		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
-			PNBUF_PUT(cnp->cn_pnbuf);
-	} else {
+	if ((cnp->cn_flags & SAVENAME) == 0 || flags & RUMPCN_FORCEFREE)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	}
 	kmem_free(cnp, sizeof(*cnp));
+}
+
+int
+rump_checksavecn(struct componentname *cnp)
+{
+
+	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
+		return 0;
+	} else {
+		cnp->cn_flags |= HASBUF;
+		return 1;
+	}
 }
 
 /* hey baby, what's your namei? */

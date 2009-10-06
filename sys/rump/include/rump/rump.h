@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.24 2009/08/03 14:23:30 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.25 2009/10/06 16:23:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -85,8 +85,9 @@ void		rump_mnt_destroy(struct mount *);
 struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 				     kauth_cred_t, struct lwp *);
 void			rump_freecn(struct componentname *, int);
-#define RUMPCN_ISLOOKUP 0x01
-#define RUMPCN_FREECRED 0x02
+#define RUMPCN_FREECRED  0x02
+#define RUMPCN_FORCEFREE 0x04
+int			rump_checksavecn(struct componentname *);
 int			rump_namei(uint32_t, uint32_t, const char *,
 				   struct vnode **, struct vnode **,
 				   struct componentname **);
