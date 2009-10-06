@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.23 2009/10/04 21:55:55 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.24 2009/10/06 05:54:24 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -72,8 +72,6 @@ __RCSID("$NetBSD: packet-parse.c,v 1.23 2009/10/04 21:55:55 agc Exp $");
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#include <errno.h>
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -156,7 +154,7 @@ static int
 read_unsig_str(unsigned char **str, __ops_region_t *subregion,
 		     __ops_stream_t *stream)
 {
-	size_t	len = 0;
+	size_t	len;
 
 	len = subregion->length - subregion->readc;
 	if ((*str = calloc(1, len + 1)) == NULL) {
@@ -242,7 +240,7 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 		if (r == 0) {
 			break;
 		}
-		n += r;
+		n += (unsigned)r;
 	}
 
 	if (n == 0) {
@@ -254,9 +252,16 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 			return 0;
 		}
 		if (readinfo->alength + n > readinfo->asize) {
-			readinfo->asize = readinfo->asize * 2 + n;
-			readinfo->accumulated = realloc(readinfo->accumulated,
-							readinfo->asize);
+			unsigned char	*temp;
+
+			readinfo->asize = (readinfo->asize * 2) + n;
+			temp = realloc(readinfo->accumulated, readinfo->asize);
+			if (temp == NULL) {
+				(void) fprintf(stderr,
+					"sub_base_read: bad alloc\n");
+				return 0;
+			}
+			readinfo->accumulated = temp;
 		}
 		if (readinfo->asize < readinfo->alength + n) {
 			(void) fprintf(stderr, "sub_base_read: bad realloc\n");
@@ -313,7 +318,7 @@ full_read(unsigned char *dest,
 			*last_read = r;
 			return t;
 		}
-		t += r;
+		t += (size_t)r;
 	}
 
 	*last_read = r;
@@ -592,7 +597,7 @@ limited_read_time(time_t *dest, __ops_region_t *region,
 {
 	unsigned char   c;
 	time_t          mytime = 0;
-	int             i = 0;
+	int             i;
 
 	/*
          * Cannot assume that time_t is 4 octets long -
@@ -645,10 +650,10 @@ limread_mpi(BIGNUM **pbn, __ops_region_t *region, __ops_stream_t *stream)
 					 * the buffer is NETPGP_BUFSIZ bytes. */
 	unsigned        length;
 	unsigned        nonzero;
-	unsigned   		ret;
+	unsigned	ret;
 
 	stream->reading_mpi_len = 1;
-	ret = limread_scalar(&length, 2, region, stream);
+	ret = (unsigned)limread_scalar(&length, 2, region, stream);
 
 	stream->reading_mpi_len = 0;
 	if (!ret)
@@ -779,7 +784,7 @@ limited_read_new_length(unsigned *length, __ops_region_t *region,
 static void 
 data_free(__ops_data_t *data)
 {
-	(void) free(data->contents);
+	free(data->contents);
 	data->contents = NULL;
 	data->len = 0;
 }
@@ -791,7 +796,7 @@ data_free(__ops_data_t *data)
 static void 
 string_free(char **str)
 {
-	(void) free(*str);
+	free(*str);
 	*str = NULL;
 }
 
@@ -803,7 +808,7 @@ string_free(char **str)
 void 
 __ops_subpacket_free(__ops_subpacket_t *packet)
 {
-	(void) free(packet->raw);
+	free(packet->raw);
 	packet->raw = NULL;
 }
 
@@ -817,10 +822,10 @@ __ops_headers_free(__ops_headers_t *headers)
 	unsigned        n;
 
 	for (n = 0; n < headers->headerc; ++n) {
-		(void) free(headers->headers[n].key);
-		(void) free(headers->headers[n].value);
+		free(headers->headers[n].key);
+		free(headers->headers[n].value);
 	}
-	(void) free(headers->headers);
+	free(headers->headers);
 	headers->headers = NULL;
 }
 
@@ -831,7 +836,7 @@ __ops_headers_free(__ops_headers_t *headers)
 static void 
 cleartext_trailer_free(__ops_cleartext_trailer_t *trailer)
 {
-	(void) free(trailer->hash);
+	free(trailer->hash);
 	trailer->hash = NULL;
 }
 
@@ -843,7 +848,7 @@ static void
 __ops_cmd_get_passphrase_free(__ops_seckey_passphrase_t *skp)
 {
 	if (skp->passphrase && *skp->passphrase) {
-		(void) free(*skp->passphrase);
+		free(*skp->passphrase);
 		*skp->passphrase = NULL;
 	}
 }
@@ -1282,7 +1287,7 @@ __ops_pubkey_free(__ops_pubkey_t *p)
 		free_BN(&p->key.elgamal.y);
 		break;
 
-	case 0:
+	case OPS_PKA_NOTHING:
 		/* nothing to free */
 		break;
 
@@ -1305,12 +1310,16 @@ parse_pubkey_data(__ops_pubkey_t *key, __ops_region_t *region,
 		(void) fprintf(stderr, "parse_pubkey_data: bad length\n");
 		return 0;
 	}
-
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	key->version = c;
-	if (key->version < 2 || key->version > 4) {
+	key->version = (__ops_version_t)c;
+	switch (key->version) {
+	case OPS_V2:
+	case OPS_V3:
+	case OPS_V4:
+		break;
+	default:
 		OPS_ERROR_1(&stream->errors, OPS_E_PROTO_BAD_PUBLIC_KEY_VRSN,
 			    "Bad public key version (0x%02x)", key->version);
 		return 0;
@@ -1458,7 +1467,7 @@ parse_userattr(__ops_region_t *region, __ops_stream_t *stream)
 void 
 __ops_userid_free(__ops_userid_t *id)
 {
-	(void) free(id->userid);
+	free(id->userid);
 	id->userid = NULL;
 }
 
@@ -1492,8 +1501,10 @@ parse_userid(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 
-	/* XXX should we not like check malloc's return value? */
-	pkt.u.userid.userid = calloc(1, region->length + 1);
+	if ((pkt.u.userid.userid = calloc(1, region->length + 1)) == NULL) {
+		(void) fprintf(stderr, "parse_userid: bad alloc\n");
+		return 0;
+	}
 
 	if (region->length &&
 	    !limread(pkt.u.userid.userid, region->length, region,
@@ -1539,7 +1550,7 @@ parse_v3_sig(__ops_region_t *region,
 		   __ops_stream_t *stream)
 {
 	__ops_packet_t	pkt;
-	unsigned char		c = 0x0;
+	unsigned char	c = 0x0;
 
 	/* clear signature */
 	(void) memset(&pkt.u.sig, 0x0, sizeof(pkt.u.sig));
@@ -1557,7 +1568,7 @@ parse_v3_sig(__ops_region_t *region,
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.type = c;
+	pkt.u.sig.info.type = (__ops_sig_type_t)c;
 	/* XXX: check signature type */
 
 	if (!limited_read_time(&pkt.u.sig.info.birthtime, region, stream)) {
@@ -1574,13 +1585,13 @@ parse_v3_sig(__ops_region_t *region,
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.key_alg = c;
+	pkt.u.sig.info.key_alg = (__ops_pubkey_alg_t)c;
 	/* XXX: check algorithm */
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.hash_alg = c;
+	pkt.u.sig.info.hash_alg = (__ops_hash_alg_t)c;
 	/* XXX: check algorithm */
 
 	if (!limread(pkt.u.sig.hash2, 2, region, stream)) {
@@ -1681,7 +1692,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	t7 = 1 << (c & 7);
 
 	pkt.critical = (unsigned)c >> 7;
-	pkt.tag = OPS_PTAG_SIG_SUBPKT_BASE + (c & 0x7f);
+	pkt.tag = (__ops_content_tag_t)(OPS_PTAG_SIG_SUBPKT_BASE + (c & 0x7f));
 
 	/* Application wants it delivered raw */
 	if (stream->ss_raw[t8] & t7) {
@@ -2020,7 +2031,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.type = c;
+	pkt.u.sig.info.type = (__ops_sig_type_t)c;
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "signature type=%d (%s)\n",
 			pkt.u.sig.info.type,
@@ -2031,7 +2042,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.key_alg = c;
+	pkt.u.sig.info.key_alg = (__ops_pubkey_alg_t)c;
 	/* XXX: check algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "key_alg=%d (%s)\n",
@@ -2041,7 +2052,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.sig.info.hash_alg = c;
+	pkt.u.sig.info.hash_alg = (__ops_hash_alg_t)c;
 	/* XXX: check algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "hash_alg=%d %s\n",
@@ -2059,7 +2070,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 
 	/* copy hashed subpackets */
 	if (pkt.u.sig.info.v4_hashed) {
-		(void) free(pkt.u.sig.info.v4_hashed);
+		free(pkt.u.sig.info.v4_hashed);
 	}
 	pkt.u.sig.info.v4_hashed = calloc(1, pkt.u.sig.info.v4_hashlen);
 
@@ -2195,13 +2206,13 @@ static int
 parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 {
 	__ops_packet_t	pkt;
-	unsigned char		c = 0x0;
+	unsigned char	c = 0x0;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
 
-	pkt.u.compressed.type = c;
+	pkt.u.compressed.type = (__ops_compression_type_t)c;
 
 	CALLBACK(OPS_PTAG_CT_COMPRESSED, &stream->cbinfo, &pkt);
 
@@ -2252,17 +2263,17 @@ parse_one_pass(__ops_region_t * region, __ops_stream_t * stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.one_pass_sig.sig_type = c;
+	pkt.u.one_pass_sig.sig_type = (__ops_sig_type_t)c;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.one_pass_sig.hash_alg = c;
+	pkt.u.one_pass_sig.hash_alg = (__ops_hash_alg_t)c;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.one_pass_sig.key_alg = c;
+	pkt.u.one_pass_sig.key_alg = (__ops_pubkey_alg_t)c;
 
 	if (!limread(pkt.u.one_pass_sig.keyid,
 			  sizeof(pkt.u.one_pass_sig.keyid), region, stream)) {
@@ -2321,7 +2332,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.litdata_header.format = c;
+	pkt.u.litdata_header.format = (__ops_litdata_type_t)c;
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
@@ -2336,7 +2347,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 	CALLBACK(OPS_PTAG_CT_LITDATA_HEADER, &stream->cbinfo, &pkt);
 	mem = pkt.u.litdata_body.mem = __ops_memory_new();
 	__ops_memory_init(pkt.u.litdata_body.mem,
-			(unsigned)(region->length * 1.01) + 12);
+			(unsigned)((region->length * 101) / 100) + 12);
 	pkt.u.litdata_body.data = mem->buf;
 
 	while (region->readc < region->length) {
@@ -2387,7 +2398,7 @@ __ops_seckey_free(__ops_seckey_t *key)
 			key->pubkey.alg,
 			__ops_show_pka(key->pubkey.alg));
 	}
-	(void) free(key->checkhash);
+	free(key->checkhash);
 	__ops_pubkey_free(&key->pubkey);
 }
 
@@ -2437,7 +2448,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "\n---------\nparse_seckey:\n");
 		fprintf(stderr,
-			"region length=%d, readc=%d, remainder=%d\n",
+			"region length=%u, readc=%u, remainder=%u\n",
 			region->length, region->readc,
 			region->length - region->readc);
 	}
@@ -2449,23 +2460,23 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		fprintf(stderr, "parse_seckey: public key parsed\n");
 		__ops_print_pubkey(&pkt.u.seckey.pubkey);
 	}
-	stream->reading_v3_secret = pkt.u.seckey.pubkey.version != OPS_V4;
+	stream->reading_v3_secret = (pkt.u.seckey.pubkey.version != OPS_V4);
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.seckey.s2k_usage = c;
+	pkt.u.seckey.s2k_usage = (__ops_s2k_usage_t)c;
 
 	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED ||
 	    pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		if (!limread(&c, 1, region, stream)) {
 			return 0;
 		}
-		pkt.u.seckey.alg = c;
+		pkt.u.seckey.alg = (__ops_symm_alg_t)c;
 		if (!limread(&c, 1, region, stream)) {
 			return 0;
 		}
-		pkt.u.seckey.s2k_specifier = c;
+		pkt.u.seckey.s2k_specifier = (__ops_s2k_specifier_t)c;
 		switch (pkt.u.seckey.s2k_specifier) {
 		case OPS_S2KS_SIMPLE:
 		case OPS_S2KS_SALTED:
@@ -2479,7 +2490,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		if (!limread(&c, 1, region, stream)) {
 			return 0;
 		}
-		pkt.u.seckey.hash_alg = c;
+		pkt.u.seckey.hash_alg = (__ops_hash_alg_t)c;
 		if (pkt.u.seckey.s2k_specifier != OPS_S2KS_SIMPLE &&
 		    !limread(pkt.u.seckey.salt, 8, region, stream)) {
 			return 0;
@@ -2495,7 +2506,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		}
 	} else if (pkt.u.seckey.s2k_usage != OPS_S2KU_NONE) {
 		/* this is V3 style, looks just like a V4 simple hash */
-		pkt.u.seckey.alg = c;
+		pkt.u.seckey.alg = (__ops_symm_alg_t)c;
 		pkt.u.seckey.s2k_usage = OPS_S2KU_ENCRYPTED;
 		pkt.u.seckey.s2k_specifier = OPS_S2KS_SIMPLE;
 		pkt.u.seckey.hash_alg = OPS_HASH_MD5;
@@ -2603,7 +2614,8 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 						j - OPS_SALT_SIZE);
 					}
 				}
-
+			default:
+				break;
 			}
 		}
 
@@ -2622,15 +2634,15 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned int    i = 0;
+			unsigned	i;
+
 			fprintf(stderr, "\nREADING:\niv=");
 			for (i = 0;
 			     i < __ops_block_size(pkt.u.seckey.alg);
 			     i++) {
 				fprintf(stderr, "%02x ", pkt.u.seckey.iv[i]);
 			}
-			fprintf(stderr, "\n");
-			fprintf(stderr, "key=");
+			fprintf(stderr, "\nkey=");
 			for (i = 0; i < CAST_KEY_LENGTH; i++) {
 				fprintf(stderr, "%02x ", key[i]);
 			}
@@ -2743,6 +2755,10 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	if (crypted && pkt.u.seckey.pubkey.version == OPS_V4) {
 		__ops_reader_pop_decrypt(stream);
 	}
+	if (region == NULL) {
+		(void) fprintf(stderr, "parse_seckey: NULL region\n");
+		return 0;
+	}
 	if (ret && region->readc != region->length) {
 		(void) fprintf(stderr, "parse_seckey: bad length\n");
 		return 0;
@@ -2783,7 +2799,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.pk_sesskey.version = c;
+	pkt.u.pk_sesskey.version = (__ops_pk_sesskey_version_t)c;
 	if (pkt.u.pk_sesskey.version != OPS_PKSK_V3) {
 		OPS_ERROR_1(&stream->errors, OPS_E_PROTO_BAD_PKSK_VRSN,
 			"Bad public-key encrypted session key version (%d)",
@@ -2807,7 +2823,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.pk_sesskey.alg = c;
+	pkt.u.pk_sesskey.alg = (__ops_pubkey_alg_t)c;
 	switch (pkt.u.pk_sesskey.alg) {
 	case OPS_PKA_RSA:
 		if (!limread_mpi(&pkt.u.pk_sesskey.params.rsa.encrypted_m,
@@ -2856,7 +2872,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	}
 
 	/* PKA */
-	pkt.u.pk_sesskey.symm_alg = unencoded_m_buf[0];
+	pkt.u.pk_sesskey.symm_alg = (__ops_symm_alg_t)unencoded_m_buf[0];
 
 	if (!__ops_is_sa_supported(pkt.u.pk_sesskey.symm_alg)) {
 		/* ERR1P */
@@ -2883,7 +2899,7 @@ parse_pk_sesskey(__ops_region_t *region,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    j;
-		printf("session key recovered (len=%d):\n", k);
+		printf("session key recovered (len=%u):\n", k);
 		for (j = 0; j < k; j++)
 			printf("%2x ", pkt.u.pk_sesskey.key[j]);
 		printf("\n");
@@ -2913,7 +2929,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	stream->decrypt.set_iv(&stream->decrypt, iv);
 	stream->decrypt.set_crypt_key(&stream->decrypt, pkt.u.pk_sesskey.key);
 	__ops_encrypt_init(&stream->decrypt);
-	(void) free(iv);
+	free(iv);
 	return 1;
 }
 
@@ -3053,7 +3069,7 @@ parse_se_ip_data(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.se_ip_data_header.version = c;
+	pkt.u.se_ip_data_header.version = (__ops_se_ip_version_t)c;
 
 	if (pkt.u.se_ip_data_header.version != OPS_SE_IP_V1) {
 		(void) fprintf(stderr, "parse_se_ip_data: bad version\n");
@@ -3078,12 +3094,15 @@ parse_mdc(__ops_region_t *region, __ops_stream_t *stream)
 	__ops_packet_t pkt;
 
 	pkt.u.mdc.length = OPS_SHA1_HASH_SIZE;
-	pkt.u.mdc.data = calloc(1, OPS_SHA1_HASH_SIZE);
+	if ((pkt.u.mdc.data = calloc(1, OPS_SHA1_HASH_SIZE)) == NULL) {
+		(void) fprintf(stderr, "parse_mdc: bad alloc\n");
+		return 0;
+	}
 	if (!limread(pkt.u.mdc.data, OPS_SHA1_HASH_SIZE, region, stream)) {
 		return 0;
 	}
 	CALLBACK(OPS_PTAG_CT_MDC, &stream->cbinfo, &pkt);
-	(void) free(pkt.u.mdc.data);
+	free(pkt.u.mdc.data);
 	return 1;
 }
 
@@ -3131,7 +3150,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 	}
 	pkt.u.ptag.new_format = !!(ptag & OPS_PTAG_NEW_FORMAT);
 	if (pkt.u.ptag.new_format) {
-		pkt.u.ptag.type = ptag & OPS_PTAG_NF_CONTENT_TAG_MASK;
+		pkt.u.ptag.type = (ptag & OPS_PTAG_NF_CONTENT_TAG_MASK);
 		pkt.u.ptag.length_type = 0;
 		if (!read_new_length(&pkt.u.ptag.length, stream)) {
 			return 0;
@@ -3174,7 +3193,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 	region.length = pkt.u.ptag.length;
 	region.indeterminate = indeterminate;
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "__ops_parse_packet: type %d\n",
+		(void) fprintf(stderr, "__ops_parse_packet: type %u\n",
 			       pkt.u.ptag.type);
 	}
 	switch (pkt.u.ptag.type) {
@@ -3335,7 +3354,8 @@ __ops_parse_options(__ops_stream_t *stream,
 		  __ops_content_tag_t tag,
 		  __ops_parse_type_t type)
 {
-	int             t8, t7;
+	unsigned	t7;
+	unsigned	t8;
 
 	if (tag == OPS_PTAG_SS_ALL) {
 		int             n;
@@ -3384,16 +3404,16 @@ __ops_stream_delete(__ops_stream_t *stream)
 
 	for (cbinfo = stream->cbinfo.next; cbinfo; cbinfo = next) {
 		next = cbinfo->next;
-		(void) free(cbinfo);
+		free(cbinfo);
 	}
 	if (stream->readinfo.destroyer) {
 		stream->readinfo.destroyer(&stream->readinfo);
 	}
 	__ops_free_errors(stream->errors);
 	if (stream->readinfo.accumulated) {
-		(void) free(stream->readinfo.accumulated);
+		free(stream->readinfo.accumulated);
 	}
-	(void) free(stream);
+	free(stream);
 }
 
 /**
