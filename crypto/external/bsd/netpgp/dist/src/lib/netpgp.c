@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.27 2009/07/07 01:13:07 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.28 2009/10/06 02:46:17 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,10 +44,6 @@ __RCSID("$NetBSD: netpgp.c,v 1.27 2009/07/07 01:13:07 agc Exp $");
 
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#endif
-
-#ifdef HAVE_OPENSSL_CAST_H
-#include <openssl/cast.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -308,17 +304,17 @@ netpgp_end(netpgp_t *netpgp)
 
 	for (i = 0 ; i < netpgp->c ; i++) {
 		if (netpgp->name[i] != NULL) {
-			(void) free(netpgp->name[i]);
+			free(netpgp->name[i]);
 		}
 		if (netpgp->value[i] != NULL) {
-			(void) free(netpgp->value[i]);
+			free(netpgp->value[i]);
 		}
 	}
 	if (netpgp->name != NULL) {
-		(void) free(netpgp->name);
+		free(netpgp->name);
 	}
 	if (netpgp->value != NULL) {
-		(void) free(netpgp->value);
+		free(netpgp->value);
 	}
 	if (netpgp->pubring != NULL) {
 		__ops_keyring_free(netpgp->pubring);
@@ -326,7 +322,7 @@ netpgp_end(netpgp_t *netpgp)
 	if (netpgp->secring != NULL) {
 		__ops_keyring_free(netpgp->secring);
 	}
-	(void) free(netpgp->io);
+	free(netpgp->io);
 	return 1;
 }
 
@@ -582,7 +578,7 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 			in);
 	} else {
 		(void) fprintf(io->errs,
-"\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n",
+"\"%s\": verification failure: %u invalid signatures, %u unknown signatures\n",
 			in, result.invalidc, result.unknownc);
 	}
 	return 0;
@@ -658,7 +654,7 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 	} else {
 		/* replace the element in the array */
 		if (netpgp->value[i]) {
-			(void) free(netpgp->value[i]);
+			free(netpgp->value[i]);
 			netpgp->value[i] = NULL;
 		}
 	}
