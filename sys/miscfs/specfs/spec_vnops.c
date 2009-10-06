@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.125 2009/10/04 06:23:58 tsutsui Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.126 2009/10/06 04:28:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.125 2009/10/04 06:23:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.126 2009/10/06 04:28:10 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,6 +150,13 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
+
+/* Returns true if vnode is /dev/mem or /dev/kmem. */
+bool
+iskmemvp(struct vnode *vp)
+{
+	return ((vp->v_type == VCHR) && iskmemdev(vp->v_rdev));
+}
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
