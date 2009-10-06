@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.20 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.21 2009/10/06 02:39:53 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "Creating key %d - tag %d\n",
+			(void) fprintf(stderr, "Creating key %u - tag %u\n",
 				keyring->keyc, pkt->tag);
 		}
 		EXPAND_ARRAY(keyring, key);
@@ -325,7 +325,7 @@ __ops_push_error(__ops_error_t **errstack, __ops_errcode_t errcode,
 
 	/* alloc a new error and add it to the top of the stack */
 
-	if ((err = calloc(1, sizeof(__ops_error_t))) == NULL) {
+	if ((err = calloc(1, sizeof(*err))) == NULL) {
 		(void) fprintf(stderr, "calloc comment failure\n");
 		return;
 	}
@@ -406,8 +406,8 @@ __ops_free_errors(__ops_error_t *errstack)
 
 	while (errstack != NULL) {
 		next = errstack->next;
-		(void) free(errstack->comment);
-		(void) free(errstack);
+		free(errstack->comment);
+		free(errstack);
 		errstack = next;
 	}
 }
@@ -441,17 +441,25 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		__ops_hash_md5(&md5);
 		md5.init(&md5);
 
-		n = BN_num_bytes(key->key.rsa.n);
-		bn = calloc(1, n);
+		n = (size_t) BN_num_bytes(key->key.rsa.n);
+		if ((bn = calloc(1, n)) == NULL) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad bn alloc\n");
+			return;
+		}
 		BN_bn2bin(key->key.rsa.n, bn);
 		md5.add(&md5, bn, n);
-		(void) free(bn);
+		free(bn);
 
-		n = BN_num_bytes(key->key.rsa.e);
-		bn = calloc(1, n);
+		n = (size_t) BN_num_bytes(key->key.rsa.e);
+		if ((bn = calloc(1, n)) == NULL) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad bn alloc 2\n");
+			return;
+		}
 		BN_bn2bin(key->key.rsa.e, bn);
 		md5.add(&md5, bn, n);
-		(void) free(bn);
+		free(bn);
 
 		md5.finish(&md5, fp->fingerprint);
 		fp->length = 16;
@@ -496,8 +504,9 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char   bn[NETPGP_BUFSIZ];
-		unsigned        n = BN_num_bytes(key->key.rsa.n);
+		unsigned        n;
 
+		n = (unsigned) BN_num_bytes(key->key.rsa.n);
 		if (n > sizeof(bn)) {
 			(void) fprintf(stderr, "__ops_keyid: bad num bytes\n");
 			return;
@@ -678,21 +687,21 @@ void
 __ops_calc_mdc_hash(const unsigned char *preamble,
 			const size_t sz_preamble,
 			const unsigned char *plaintext,
-			const unsigned int sz_plaintext,
+			const unsigned sz_plaintext,
 			unsigned char *hashed)
 {
 	unsigned char	c;
 	__ops_hash_t	hash;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned	i;
 
 		(void) fprintf(stderr, "__ops_calc_mdc_hash():\n");
 		(void) fprintf(stderr, "\npreamble: ");
 		for (i = 0; i < sz_preamble; i++)
 			(void) fprintf(stderr, " 0x%02x", preamble[i]);
 		(void) fprintf(stderr, "\n");
-		(void) fprintf(stderr, "\nplaintext (len=%d): ", sz_plaintext);
+		(void) fprintf(stderr, "\nplaintext (len=%u): ", sz_plaintext);
 		for (i = 0; i < sz_plaintext; i++)
 			(void) fprintf(stderr, " 0x%02x", plaintext[i]);
 		(void) fprintf(stderr, "\n");
@@ -716,7 +725,7 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 	hash.finish(&hash, hashed);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned	i;
 
 		(void) fprintf(stderr, "\nhashed (len=%d): ",
 				OPS_SHA1_HASH_SIZE);
@@ -854,7 +863,7 @@ __ops_memory_release(__ops_memory_t *mem)
 	if (mem->mmapped) {
 		(void) munmap(mem->buf, mem->length);
 	} else {
-		(void) free(mem->buf);
+		free(mem->buf);
 	}
 	mem->buf = NULL;
 	mem->length = 0;
@@ -913,7 +922,7 @@ void
 __ops_memory_free(__ops_memory_t *mem)
 {
 	__ops_memory_release(mem);
-	(void) free(mem);
+	free(mem);
 }
 
 /**
@@ -954,7 +963,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 	(void) fstat(fileno(fp), &st);
 	mem->allocated = (size_t)st.st_size;
 	mem->buf = mmap(NULL, mem->allocated, PROT_READ,
-				MAP_FILE | MAP_PRIVATE, fileno(fp), 0);
+				MAP_PRIVATE | MAP_FILE, fileno(fp), 0);
 	if (mem->buf == MAP_FAILED) {
 		/* mmap failed for some reason - try to allocate memory */
 		if ((mem->buf = calloc(1, mem->allocated)) == NULL) {
@@ -1080,7 +1089,7 @@ sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
 static void 
 sum16_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -1198,7 +1207,7 @@ netpgp_log(const char *fmt, ...)
 	cp = ctime(&t);
 	cc = snprintf(buf, sizeof(buf), "%.24s: netpgp: ", cp);
 	va_start(vp, fmt);
-	(void) vsnprintf(&buf[cc], sizeof(buf) - cc, fmt, vp);
+	(void) vsnprintf(&buf[cc], sizeof(buf) - (size_t)cc, fmt, vp);
 	va_end(vp);
 	/* do something with message */
 	/* put into log buffer? */
