@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.16 2009/10/03 20:48:42 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.17 2009/10/06 04:28:10 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.16 2009/10/03 20:48:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.17 2009/10/06 04:28:10 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -480,22 +480,16 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
-		struct vnode *vp, *bvp;
+		struct vnode *vp;
 		enum kauth_device_req req;
-		dev_t dev;
-		int d_type;
 
 		req = (enum kauth_device_req)arg0;
 		vp = arg1;
 
 		KASSERT(vp != NULL);
 
-		dev = vp->v_rdev;
-		d_type = D_OTHER;
-		bvp = NULL;
-
 		/* Handle /dev/mem and /dev/kmem. */
-		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+		if (iskmemvp(vp)) {
 			switch (req) {
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
 				break;
@@ -504,6 +498,7 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
 				if (securelevel > 0)
 					result = KAUTH_RESULT_DENY;
+
 				break;
 
 			default:
@@ -518,57 +513,23 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 			break;
 
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
-		case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
-			switch (vp->v_type) {
-			case VCHR: {
-				const struct cdevsw *cdev;
+		case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW: {
+			int error;
 
-				cdev = cdevsw_lookup(dev);
-				if (cdev != NULL) {
-					dev_t blkdev;
+			error = rawdev_mounted(vp, NULL);
 
-					blkdev = devsw_chr2blk(dev);
-					if (blkdev != NODEV) {
-						vfinddev(blkdev, VBLK, &bvp);
-						if (bvp != NULL)
-							d_type = (cdev->d_flag
-							    & D_TYPEMASK);
-					}
-				}
-
-				break;
-				}
-			case VBLK: {
-				const struct bdevsw *bdev;
-
-				bdev = bdevsw_lookup(dev);
-				if (bdev != NULL)
-					d_type = (bdev->d_flag & D_TYPEMASK);
-
-				bvp = vp;
-
-				break;
-				}
-
-			default:
-				break;
-			}
-
-			if (d_type != D_DISK)
+			/* Not a disk. */
+			if (error == EINVAL)
 				break;
 
-			/*
-			 * XXX: This is bogus. We should be failing the request
-			 * XXX: not only if this specific slice is mounted, but
-			 * XXX: if it's on a disk with any other mounted slice.
-			 */
-			if (vfs_mountedon(bvp) && (securelevel > 0))
-				break;
+			if (error && securelevel > 0)
+				result = KAUTH_RESULT_DENY;
 
 			if (securelevel > 1)
 				result = KAUTH_RESULT_DENY;
 
 			break;
+			}
 
 		default:
 			break;

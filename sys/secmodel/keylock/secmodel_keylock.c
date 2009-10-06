@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.3 2009/10/03 20:48:42 elad Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.4 2009/10/06 04:28:10 elad Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.3 2009/10/03 20:48:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.4 2009/10/06 04:28:10 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -421,22 +421,16 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
-		struct vnode *vp, *bvp;
+		struct vnode *vp;
 		enum kauth_device_req req;
-		dev_t dev;
-		int d_type;
 
 		req = (enum kauth_device_req)arg0;
 		vp = arg1;
 
 		KASSERT(vp != NULL);
 
-		dev = vp->v_rdev;
-		d_type = D_OTHER;
-		bvp = NULL;
-
 		/* Handle /dev/mem and /dev/kmem. */
-		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+		if (iskmemvp(vp)) {
 			switch (req) {
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
 				break;
@@ -458,49 +452,12 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
 
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
-			switch (vp->v_type) {
-			case VCHR: {
-				const struct cdevsw *cdev;
+			error = rawdev_mounted(vp, NULL);
 
-				cdev = cdevsw_lookup(dev);
-				if (cdev != NULL) {
-					dev_t blkdev;
-
-					blkdev = devsw_chr2blk(dev);
-					if (blkdev != NODEV) {
-						vfinddev(blkdev, VBLK, &bvp);
-						if (bvp != NULL)
-							d_type = (cdev->d_flag
-							    & D_TYPEMASK);
-					}
-				}
-
-				break;
-				}
-			case VBLK: {
-				const struct bdevsw *bdev;
-
-				bdev = bdevsw_lookup(dev);
-				if (bdev != NULL)
-					d_type = (bdev->d_flag & D_TYPEMASK);
-
-				bvp = vp;
-
-				break;
-				}
-			default:
-				break;
-			}
-
-			if (d_type != D_DISK)
+			if (error == EINVAL)
 				break;
 
-			/*
-			 * XXX: This is bogus. We should be failing the request
-			 * XXX: not only if this specific slice is mounted, but
-			 * XXX: if it's on a disk with any other mounted slice.
-			 */
-			if (vfs_mountedon(bvp) && (kstate != KEYLOCK_OPEN))
+			if (error && (kstate != KEYLOCK_OPEN))
 				break;
 
 			if (kstate == KEYLOCK_CLOSE)
