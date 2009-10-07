@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.46 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.47 2009/10/07 20:34:02 pooka Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.46 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.47 2009/10/07 20:34:02 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ mount_msdos_parseargs(int argc, char **argv,
 	pathadj(dev, canon_dev);
 	pathadj(dir, canon_dir);
 
-	args->fspec = dev;
+	args->fspec = canon_dev;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);
