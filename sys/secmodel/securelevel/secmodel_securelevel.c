@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.19 2009/10/06 05:03:58 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.20 2009/10/07 01:06:57 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.19 2009/10/06 05:03:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.20 2009/10/07 01:06:57 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -66,8 +66,8 @@ static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
 static struct sysctllog *securelevel_sysctl_log;
 
 /*
- * sysctl helper routine for securelevel. ensures that the value
- * only rises unless the caller has pid 1 (assumed to be init).
+ * Sysctl helper routine for securelevel. Ensures that the value only rises
+ * unless the caller is init.
  */
 int
 secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
@@ -82,7 +82,7 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
         
-	if (newsecurelevel < securelevel && l && l->l_proc->p_pid != 1)
+	if ((newsecurelevel < securelevel) && (l->l_proc != initproc))
 		return (EPERM);
 
 	securelevel = newsecurelevel;
