@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.29 2009/10/06 21:07:06 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.30 2009/10/07 01:31:41 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.29 2009/10/06 21:07:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.30 2009/10/07 01:31:41 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,6 +252,64 @@ secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
 	return (result);
 }
 
+static int
+suser_usermount_policy(kauth_cred_t cred, enum kauth_system_req req, void *arg1,
+    void *arg2)
+{
+	struct mount *mp;
+	u_long flags;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if (!dovfsusermount)
+		return result;
+
+	switch (req) {
+	case KAUTH_REQ_SYSTEM_MOUNT_NEW:
+		mp = ((struct vnode *)arg1)->v_mount;
+		flags= (u_long)arg2;
+
+		if (usermount_common_policy(mp, flags) != 0)
+			break;
+
+		result = KAUTH_RESULT_ALLOW;
+			
+		break;
+
+	case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
+		mp = arg1;
+
+		/* Must own the mount. */
+		if (mp->mnt_stat.f_owner != kauth_cred_geteuid(cred))
+			break;
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
+		mp = arg1;
+		flags = (u_long)arg2;
+
+		/* Must own the mount. */
+		if (mp->mnt_stat.f_owner != kauth_cred_geteuid(cred))
+			break;
+
+		if (usermount_common_policy(mp, flags) != 0)
+			break;
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
 /*
  * kauth(9) listener
  *
@@ -312,69 +370,17 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 			break;
 
-		case KAUTH_REQ_SYSTEM_MOUNT_NEW: {
-			struct mount *mp = ((struct vnode *)arg1)->v_mount;
-			u_long flags = (u_long)arg2;
-
+		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
+		case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
+		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
 			if (isroot) {
 				result = KAUTH_RESULT_ALLOW;
 				break;
 			}
 
-			if (!dovfsusermount)
-				break;
-
-			if (usermount_common_policy(mp, flags) != 0)
-				break;
-
-			result = KAUTH_RESULT_ALLOW;
-			
-			break;
-			}
-
-		case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT: {
-			struct mount *mp = arg1;
-
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if (!dovfsusermount)
-				break;
-
-			/* Must own the mount. */
-			if (mp->mnt_stat.f_owner != kauth_cred_geteuid(cred))
-				break;
-
-			result = KAUTH_RESULT_ALLOW;
+			result = suser_usermount_policy(cred, req, arg1, arg2);
 
 			break;
-			}
-
-		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE: {
-			struct mount *mp = arg1;
-			u_long flags = (u_long)arg2;
-
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if (!dovfsusermount)
-				break;
-
-			/* Must own the mount. */
-			if (mp->mnt_stat.f_owner != kauth_cred_geteuid(cred))
-				break;
-
-			if (usermount_common_policy(mp, flags) != 0)
-				break;
-
-			result = KAUTH_RESULT_ALLOW;
-
-			break;
-			}
 
 		default:
 			break;
