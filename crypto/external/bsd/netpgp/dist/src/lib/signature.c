@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.20 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -924,11 +924,15 @@ open_output_file(__ops_output_t **output,
 		unsigned        flen = strlen(inname) + 4 + 1;
 		char           *f = NULL;
 
-		f = calloc(1, flen);
-		(void) snprintf(f, flen, "%s.%s", inname,
+		if ((f = calloc(1, flen)) == NULL) {
+			(void) fprintf(stderr, "open_output_file: bad alloc\n");
+			fd = -1;
+		} else {
+			(void) snprintf(f, flen, "%s.%s", inname,
 					(armored) ? "asc" : "gpg");
-		fd = __ops_setup_file_write(output, f, overwrite);
-		(void) free(f);
+			fd = __ops_setup_file_write(output, f, overwrite);
+			free(f);
+		}
 	}
 	return fd;
 }
