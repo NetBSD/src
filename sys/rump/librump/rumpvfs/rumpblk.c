@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.26 2009/10/06 13:05:44 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.27 2009/10/07 09:17:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.26 2009/10/06 13:05:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.27 2009/10/07 09:17:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -94,6 +94,8 @@ static struct rblkdev {
 	int rblk_dfd;
 #endif
 	uint64_t rblk_size;
+	uint64_t rblk_hostoffset;
+	int rblk_ftype;
 
 	/* for mmap */
 	int rblk_mmflags;
@@ -327,14 +329,24 @@ rumpblk_init(void)
 
 /* XXX: no deregister */
 int
-rumpblk_register(const char *path, devminor_t *dmin)
+rumpblk_register(const char *path, devminor_t *dmin,
+	uint64_t offset, uint64_t size)
 {
+	struct rblkdev *rblk;
 	uint64_t flen;
 	size_t len;
-	int ftype, error, i;
+	int ftype, error, dummy, i;
+	int fd;
 
-	if (rumpuser_getfileinfo(path, &flen, &ftype, &error))
+	/* devices might not report correct size unless they're open */
+	fd = rumpuser_open(path, O_RDONLY, &error);
+	if (fd == -1)
 		return error;
+	rumpuser_getfileinfo(path, &flen, &ftype, &error);
+	rumpuser_close(fd, &dummy);
+	if (error)
+		return error;
+
 	/* verify host file is of supported type */
 	if (!(ftype == RUMPUSER_FT_REG
 	   || ftype == RUMPUSER_FT_BLK
@@ -358,10 +370,20 @@ rumpblk_register(const char *path, devminor_t *dmin)
 		return EBUSY;
 	}
 
+	rblk = &minors[i];
 	len = strlen(path);
-	minors[i].rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
-	strcpy(minors[i].rblk_path, path);
-	minors[i].rblk_fd = -1;
+	rblk->rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
+	strcpy(rblk->rblk_path, path);
+	rblk->rblk_fd = -1;
+	rblk->rblk_hostoffset = offset;
+	if (size == RUMPBLK_SIZENOTSET) {
+		KASSERT(size + offset <= flen);
+		rblk->rblk_size = size;
+	} else {
+		KASSERT(offset < flen);
+		rblk->rblk_size = flen - offset;
+	}
+	rblk->rblk_ftype = ftype;
 	mutex_exit(&rumpblk_lock);
 
 	*dmin = i;
@@ -373,19 +395,17 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
 	uint64_t fsize;
-	int ft, dummy;
+	int dummy;
 	int error, fd;
+
+	if (rblk->rblk_path == NULL)
+		return ENXIO;
 
 	if (rblk->rblk_fd != -1)
 		return 0; /* XXX: refcount, open mode */
 	fd = rumpuser_open(rblk->rblk_path, OFLAGS(flag), &error);
 	if (error)
 		return error;
-
-	if (rumpuser_getfileinfo(rblk->rblk_path, &fsize, &ft, &error) == -1) {
-		rumpuser_close(fd, &dummy);
-		return error;
-	}
 
 #ifdef HAS_ODIRECT
 	rblk->rblk_dfd = rumpuser_open(rblk->rblk_path,
@@ -394,7 +414,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		return error;
 #endif
 
-	if (ft == RUMPUSER_FT_REG) {
+	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
 		struct blkwin *win;
 		int i, winsize;
 
@@ -413,7 +433,6 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		}
 
 		TAILQ_INIT(&rblk->rblk_lruq);
-		rblk->rblk_size = fsize;
 		rblk->rblk_fd = fd;
 
 		for (i = 0; i < memwincnt && i * memwinsize < fsize; i++) {
@@ -541,13 +560,14 @@ dostrategy(struct buf *bp)
 	}
 
 	off = bp->b_blkno << DEV_BSHIFT;
+	off += rblk->rblk_hostoffset;
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This
 	 * is bad(tm) especially on mmapped images.  This is essentially
 	 * the kernel bounds_check() routines.
 	 */
-	if (rblk->rblk_size && off + bp->b_bcount > rblk->rblk_size) {
+	if (off + bp->b_bcount > rblk->rblk_size) {
 		int64_t sz = rblk->rblk_size - off;
 
 		/* EOF */

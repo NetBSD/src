@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.24 2009/10/04 16:31:08 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.25 2009/10/07 09:17:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.24 2009/10/04 16:31:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.25 2009/10/07 09:17:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -199,9 +199,9 @@ etfs_find(const char *key, struct rumpfs_node **rnp)
 	return rv;
 }
 
-int
-rump_etfs_register(const char *key, const char *hostpath, 
-	enum rump_etfs_type ftype)
+static int
+doregister(const char *key, const char *hostpath, 
+	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
 	struct etfs *et;
 	struct rumpfs_node *rn_dummy;
@@ -213,8 +213,16 @@ rump_etfs_register(const char *key, const char *hostpath,
 	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
 		return error;
 
+	/* check that we give sensible arguments */
+	if (begin > fsize)
+		return EINVAL;
+	if (size == RUMP_ETFS_SIZE_ENDOFF)
+		size = fsize - begin;
+	if (begin + size > fsize)
+		return EINVAL;
+
 	if (ftype == RUMP_ETFS_BLK || ftype == RUMP_ETFS_CHR) {
-		error = rumpblk_register(hostpath, &dmin);
+		error = rumpblk_register(hostpath, &dmin, begin, size);
 		if (error != 0) {
 			return error;
 		}
@@ -224,7 +232,7 @@ rump_etfs_register(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = makeprivate(ettype_to_vtype(ftype), rdev, fsize, hostpath);
+	et->et_rn = makeprivate(ettype_to_vtype(ftype), rdev, size, hostpath);
 
 	mutex_enter(&etfs_lock);
 	if (etfs_find(key, &rn_dummy)) {
@@ -237,6 +245,33 @@ rump_etfs_register(const char *key, const char *hostpath,
 	mutex_exit(&etfs_lock);
 
 	return 0;
+}
+
+int
+rump_etfs_register(const char *key, const char *hostpath,
+	enum rump_etfs_type ftype)
+{
+
+	return doregister(key, hostpath, ftype, 0, RUMP_ETFS_SIZE_ENDOFF);
+}
+
+int
+rump_etfs_register_withsize(const char *key, const char *hostpath,
+	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
+{
+
+	/*
+	 * Check that we're mapping at block offsets.  I guess this
+	 * is not technically necessary except for BLK/CHR backends
+	 * (i.e. what getfileinfo() returns, not ftype) and can be
+	 * removed later if there are problems.
+	 */
+	if ((begin & (DEV_BSIZE-1)) != 0)
+		return EINVAL;
+	if (size != RUMP_ETFS_SIZE_ENDOFF && (size & (DEV_BSIZE-1)) != 0)
+		return EINVAL;
+
+	return doregister(key, hostpath, ftype, begin, size);
 }
 
 int
@@ -687,6 +722,8 @@ rumpfs_init(void)
 {
 	struct rumpfs_node *rn;
 	int rv;
+
+	CTASSERT(RUMP_ETFS_SIZE_ENDOFF == RUMPBLK_SIZENOTSET);
 
 	mutex_init(&reclock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&etfs_lock, MUTEX_DEFAULT, IPL_NONE);
