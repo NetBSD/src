@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.13 2009/10/04 21:58:25 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.14 2009/10/07 04:56:51 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -416,14 +416,20 @@ __ops_writez(const unsigned char *data,
 		     const unsigned int len,
 		     __ops_output_t *out)
 {
-	compress_t	*zip = calloc(1, sizeof(compress_t));
+	compress_t	*zip;
 	size_t		 sz_in;
 	size_t		 sz_out;
+	int              ret;
 	int              r = 0;
 
 	/* compress the data */
 	const int       level = Z_DEFAULT_COMPRESSION;	/* \todo allow varying
 							 * levels */
+
+	if ((zip = calloc(1, sizeof(*zip))) == NULL) {
+		(void) fprintf(stderr, "__ops_writez: bad alloc\n");
+		return 0;
+	}
 	zip->stream.zalloc = Z_NULL;
 	zip->stream.zfree = Z_NULL;
 	zip->stream.opaque = NULL;
@@ -443,8 +449,17 @@ __ops_writez(const unsigned char *data,
 
 	sz_in = len * sizeof(unsigned char);
 	sz_out = ((101 * sz_in) / 100) + 12;	/* from zlib webpage */
-	zip->src = calloc(1, sz_in);
-	zip->dst = calloc(1, sz_out);
+	if ((zip->src = calloc(1, sz_in)) == NULL) {
+		free(zip);
+		(void) fprintf(stderr, "__ops_writez: bad alloc2\n");
+		return 0;
+	}
+	if ((zip->dst = calloc(1, sz_out)) == NULL) {
+		free(zip->src);
+		free(zip);
+		(void) fprintf(stderr, "__ops_writez: bad alloc3\n");
+		return 0;
+	}
 	(void) memcpy(zip->src, data, len);
 
 	/* setup stream */
@@ -461,8 +476,13 @@ __ops_writez(const unsigned char *data,
 	} while (r != Z_STREAM_END);
 
 	/* write it out */
-	return (__ops_write_ptag(out, OPS_PTAG_CT_COMPRESSED) &&
+	ret = __ops_write_ptag(out, OPS_PTAG_CT_COMPRESSED) &&
 		__ops_write_length(out, (unsigned)(zip->stream.total_out + 1))&&
 		__ops_write_scalar(out, OPS_C_ZLIB, 1) &&
-		__ops_write(out, zip->dst, (unsigned)zip->stream.total_out));
+		__ops_write(out, zip->dst, (unsigned)zip->stream.total_out);
+
+	free(zip->src);
+	free(zip->dst);
+	free(zip);
+	return ret;
 }
