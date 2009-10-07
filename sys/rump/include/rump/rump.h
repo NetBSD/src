@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.26 2009/10/07 09:17:54 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.27 2009/10/07 09:50:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -78,10 +78,6 @@ int	rump_module_fini(struct modinfo *);
 int		rump__init(int);
 int		rump_getversion(void);
 
-struct mount	*rump_mnt_init(struct vfsops *, int);
-int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
-void		rump_mnt_destroy(struct mount *);
-
 struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 				     kauth_cred_t, struct lwp *);
 void			rump_freecn(struct componentname *, int);
@@ -112,8 +108,6 @@ void		rump_vattr_free(struct vattr *);
 
 void		rump_vp_incref(struct vnode *);
 int		rump_vp_getref(struct vnode *);
-void		rump_vp_decref(struct vnode *);
-void		rump_vp_recycle_nokidding(struct vnode *);
 void		rump_vp_rele(struct vnode *);
 
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
@@ -122,7 +116,7 @@ size_t		rump_uio_getresid(struct uio *);
 off_t		rump_uio_getoff(struct uio *);
 size_t		rump_uio_free(struct uio *);
 
-void	rump_vp_interlock(struct vnode *);
+void		rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
 kauth_cred_t	rump_cred_suserget(void);
