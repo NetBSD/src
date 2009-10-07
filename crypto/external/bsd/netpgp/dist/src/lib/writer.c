@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.14 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.15 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1375,7 +1375,12 @@ __ops_push_checksum_writer(__ops_output_t *output, __ops_seckey_t *seckey)
 		sum->hashed = seckey->checkhash;
 		/* init the hash */
 		__ops_hash_any(&sum->hash, sum->hash_alg);
-		sum->hash.init(&sum->hash);
+		if (!sum->hash.init(&sum->hash)) {
+			(void) fprintf(stderr,
+				"__ops_push_checksum_writer: bad hash init\n");
+			/* just continue and die */
+			/* XXX - agc - no way to return failure */
+		}
 		__ops_writer_push(output, skey_checksum_writer,
 			skey_checksum_finaliser, skey_checksum_destroyer, sum);
 	}
@@ -1629,7 +1634,12 @@ stream_write_se_ip_first(__ops_output_t *output,
 	preamble[blocksize] = preamble[blocksize - 2];
 	preamble[blocksize + 1] = preamble[blocksize - 1];
 	__ops_hash_any(&se_ip->hash, OPS_HASH_SHA1);
-	se_ip->hash.init(&se_ip->hash);
+	if (!se_ip->hash.init(&se_ip->hash)) {
+		free(preamble);
+		(void) fprintf(stderr,
+			"stream_write_se_ip_first: bad hash init\n");
+		return 0;
+	}
 	__ops_write(output, preamble, sz_preamble);
 	se_ip->hash.add(&se_ip->hash, preamble, sz_preamble);
 	__ops_write(output, data, sz_pd - sz_preamble - 1);

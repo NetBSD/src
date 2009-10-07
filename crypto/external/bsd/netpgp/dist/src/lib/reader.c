@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.24 2009/10/07 04:56:51 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.25 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -593,7 +593,11 @@ process_dash_escaped(dearmour_t *dearmour,
 		__ops_hash_md5(hash);
 	}
 
-	hash->init(hash);
+	if (!hash->init(hash)) {
+		OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
+			"can't initialise hash");
+		return -1;
+	}
 
 	body->length = 0;
 	total = 0;
@@ -1587,7 +1591,11 @@ se_ip_data_reader(void *dest_,
 		size_t          sz_plaintext;
 
 		__ops_hash_any(&hash, OPS_HASH_SHA1);
-		hash.init(&hash);
+		if (!hash.init(&hash)) {
+			(void) fprintf(stderr,
+				"se_ip_data_reader: can't init hash\n");
+			return -1;
+		}
 
 		__ops_init_subregion(&decrypted_region, NULL);
 		decrypted_region.length =
@@ -2307,7 +2315,11 @@ hash_reader(void *dest,
 void 
 __ops_reader_push_hash(__ops_stream_t *stream, __ops_hash_t *hash)
 {
-	hash->init(hash);
+	if (!hash->init(hash)) {
+		(void) fprintf(stderr, "__ops_reader_push_hash: can't init hash\n");
+		/* just continue and die */
+		/* XXX - agc - no way to return failure */
+	}
 	__ops_reader_push(stream, hash_reader, NULL, hash);
 }
 

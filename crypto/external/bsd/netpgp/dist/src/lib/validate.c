@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.20 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,7 +104,10 @@ check_binary_sig(const unsigned len,
 
 	__OPS_USED(signer);
 	__ops_hash_any(&hash, sig->info.hash_alg);
-	hash.init(&hash);
+	if (!hash.init(&hash)) {
+		(void) fprintf(stderr, "check_binary_sig: bad hash init\n");
+		return 0;
+	}
 	hash.add(&hash, data, len);
 	switch (sig->info.version) {
 	case OPS_V3:
