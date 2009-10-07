@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.6 2009/08/06 16:55:25 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.7 2009/10/07 13:19:42 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.6 2009/08/06 16:55:25 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.7 2009/10/07 13:19:42 joerg Exp $");
 
 /*
  *
@@ -34,9 +34,6 @@ __RCSID("$NetBSD: main.c,v 1.1.1.6 2009/08/06 16:55:25 joerg Exp $");
 #include <sys/ioctl.h>
 #endif
 
-#if HAVE_TERMIOS_H
-#include <termios.h>
-#endif
 #if HAVE_ERR_H
 #include <err.h>
 #endif
@@ -52,7 +49,6 @@ Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
 const char   *InfoPrefix = "";
 const char   *BuildInfoVariable = "";
-size_t  termwidth = 0;
 lpkg_head_t pkgs;
 
 static void
@@ -323,17 +319,6 @@ main(int argc, char **argv)
 	/* If no packages, yelp */
 	if (TAILQ_FIRST(&pkgs) == NULL && Which == WHICH_LIST && !CheckPkg)
 		warnx("missing package name(s)"), usage();
-
-	if (isatty(STDOUT_FILENO)) {
-		const char *p;
-		struct winsize win;
-
-		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			termwidth = win.ws_col;
-	}
 
 	rc = pkg_perform(&pkgs);
 	exit(rc);
