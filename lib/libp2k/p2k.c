@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19 2009/10/07 20:55:25 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.20 2009/10/07 20:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -739,6 +739,10 @@ p2k_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	kauth_cred_t cred;
 	struct vattr *va_x;
 	int rv;
+
+	/* "deadfs" */
+	if (!vp)
+		return 0;
 
 	if (needcompat()) {
 		va_x = rump_vattr_init();
