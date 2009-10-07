@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.89 2009/10/07 15:44:41 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.90 2009/10/07 19:09:57 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14005,4 +14005,9 @@ sys/dev/sdmmc/sdmmcvar.h			1.1
 
 	Add sdmmc framework
 	[jmcneill, ticket #1044]
+
+lib/libc/locale/generic_lc_all.c				1.3
+
+	Fix lib/42124: setlocale(3) never returns NULL with nonexistent locale.
+	[tnozaki, ticket #1069]
 
