@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_install.conf.5.in,v 1.1.1.7 2009/08/21 15:19:18 joerg Exp $
+.\"	$NetBSD: pkg_install.conf.5.in,v 1.1.1.8 2009/10/07 13:19:44 joerg Exp $
 .\"
 .\" Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,7 +146,7 @@ URL which is used for updating the local
 file when running
 .Dl Ic pkg_admin fetch-pkg-vulnerabilities
 The default is
-.Pa ftp://ftp.NetBSD.org/pub/NetBSD/packages/vulns/pkg-vulnerabilities.gz
+.Pa http://ftp.NetBSD.org/pub/NetBSD/packages/vulns/pkg-vulnerabilities.gz
 .Em Note :
 Usually, only the compression type should be changed.
 Currently supported are uncompressed files and files compressed by
