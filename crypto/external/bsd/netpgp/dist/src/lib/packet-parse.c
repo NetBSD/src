@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.24 2009/10/06 05:54:24 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.25 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2237,7 +2237,11 @@ parse_hash_init(__ops_stream_t *stream, __ops_hash_alg_t type,
 	hash = &stream->hashes[stream->hashc++];
 
 	__ops_hash_any(&hash->hash, type);
-	hash->hash.init(&hash->hash);
+	if (!hash->hash.init(&hash->hash)) {
+		(void) fprintf(stderr, "parse_hash_init: bad alloc\n");
+		/* just continue and die here */
+		/* XXX - agc - no way to return failure */
+	}
 	(void) memcpy(hash->keyid, keyid, sizeof(hash->keyid));
 }
 
@@ -2573,7 +2577,11 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 			__ops_hash_any(&hashes[n],
 				pkt.u.seckey.hash_alg);
-			hashes[n].init(&hashes[n]);
+			if (!hashes[n].init(&hashes[n])) {
+				(void) fprintf(stderr,
+					"parse_seckey: bad alloc\n");
+				return 0;
+			}
 			/* preload hashes with zeroes... */
 			for (i = 0; i < n; ++i) {
 				hashes[n].add(&hashes[n],
