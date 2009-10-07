@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.27 2009/10/07 09:17:54 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.28 2009/10/07 09:23:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.27 2009/10/07 09:17:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.28 2009/10/07 09:23:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -394,7 +394,7 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	uint64_t fsize;
+	uint64_t fsize, off;
 	int dummy;
 	int error, fd;
 
@@ -413,6 +413,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (error)
 		return error;
 #endif
+
+	fsize = rblk->rblk_size;
+	off = rblk->rblk_hostoffset;
 
 	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
 		struct blkwin *win;
@@ -435,7 +438,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		TAILQ_INIT(&rblk->rblk_lruq);
 		rblk->rblk_fd = fd;
 
-		for (i = 0; i < memwincnt && i * memwinsize < fsize; i++) {
+		for (i = 0; i < memwincnt && off + i*memwinsize < fsize; i++) {
 			win = kmem_zalloc(sizeof(*win), KM_SLEEP);
 			WINVALIDATE(win);
 			TAILQ_INSERT_TAIL(&rblk->rblk_lruq, win, win_lru);
@@ -446,7 +449,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 			 * necessary VA available
 			 */
 			winsize = 1;
-			win = getwindow(rblk, i*memwinsize, &winsize, &error); 
+			win = getwindow(rblk, off + i*memwinsize, &winsize,
+			    &error); 
 			if (win) {
 				putwindow(rblk, win);
 			} else {
