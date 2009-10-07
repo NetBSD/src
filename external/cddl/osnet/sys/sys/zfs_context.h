@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.2 2009/10/07 08:47:12 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -499,7 +499,10 @@ struct file {
 #define	ERESTART	(-1)
 #endif
 
+#ifdef ptob
+#undef ptob
 size_t	ptob(size_t);
+#endif
 
 typedef struct ksiddomain {
 	uint_t	kd_ref;
