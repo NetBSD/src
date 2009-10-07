@@ -1,9 +1,10 @@
-/*	$NetBSD: p2k.c,v 1.18 2009/10/06 16:57:54 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19 2009/10/07 20:55:25 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -245,10 +246,12 @@ allocp2m(struct ukfs *ukfs)
 	ukfs_setspecific(ukfs, p2m);
 }
 
-int
-p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
-	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
+static int
+runfs(const char *vfsname, const char *devpath, int partition,
+	const char *mountpath, int mntflags, void *arg, size_t alen,
+	uint32_t puffs_flags)
 {
+	char partpath[UKFS_PARTITION_MAXPATHLEN];
 	char typebuf[PUFFS_TYPELEN];
 	struct puffs_ops *pops;
 	struct puffs_usermount *pu = NULL;
@@ -322,7 +325,17 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 		strlcat(typebuf, vfsname, sizeof(typebuf));
 	}
 
-	pu = puffs_init(pops, devpath, typebuf, NULL, puffs_flags);
+	if (UKFS_USEPARTITION(partition)) {
+		char partbuf[UKFS_PARTITION_MAGICLEN+1];
+
+		strlcpy(partpath, devpath, sizeof(partpath));
+		snprintf(partbuf, sizeof(partbuf), "%s%c%%",
+		    UKFS_PARTITION_SCANMAGIC, partition + 'a');
+		strlcat(partpath, partbuf, sizeof(partpath));
+	} else {
+		strlcpy(partpath, devpath, sizeof(partpath));
+	}
+	pu = puffs_init(pops, partpath, typebuf, NULL, puffs_flags);
 	if (pu == NULL)
 		goto out;
 
@@ -331,7 +344,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 
 	if (ukfs_init() == -1)
 		return -1;
-	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
+	if (partition != UKFS_PARTITION_NA)
+		ukfs = ukfs_mount_disk(vfsname, devpath, partition,
+		    mountpath, mntflags, arg, alen);
+	else
+		ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags,
+		    arg, alen);
 	if (ukfs == NULL)
 		goto out;
 	allocp2m(ukfs);
@@ -368,6 +386,26 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	}
 
 	return rv;
+}
+
+
+int
+p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
+	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
+{
+
+	return runfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	    mntflags, arg, alen, puffs_flags);
+}
+
+int
+p2k_run_diskfs(const char *vfsname, const char *devpath, int partition,
+	const char *mountpath, int mntflags, void *arg, size_t alen,
+	uint32_t puffs_flags)
+{
+
+	return runfs(vfsname, devpath, partition, mountpath, mntflags,
+	    arg, alen, puffs_flags);
 }
 
 int
