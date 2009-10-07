@@ -58,18 +58,10 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.13 2009/06/13 05:25:09 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.14 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
-
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -290,9 +282,11 @@ __ops_writer_push(__ops_output_t *output,
 		__ops_writer_destroyer_t *destroyer,
 		void *arg)
 {
-	__ops_writer_t *copy = calloc(1, sizeof(*copy));
+	__ops_writer_t *copy;
 
-	if (output->writer.writer == NULL) {
+	if ((copy = calloc(1, sizeof(*copy))) == NULL) {
+		(void) fprintf(stderr, "__ops_writer_push: bad alloc\n");
+	} else if (output->writer.writer == NULL) {
 		(void) fprintf(stderr, "__ops_writer_push: no orig writer\n");
 	} else {
 		*copy = output->writer;
@@ -386,7 +380,7 @@ __ops_stacked_write(const void *src, unsigned len,
 static void 
 generic_destroyer(__ops_writer_t *writer)
 {
-	(void) free(__ops_writer_get_arg(writer));
+	free(__ops_writer_get_arg(writer));
 }
 
 /**
@@ -428,7 +422,7 @@ dash_esc_writer(const unsigned char *src,
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
 
-		(void) fprintf(stderr, "dash_esc_writer writing %d:\n", len);
+		(void) fprintf(stderr, "dash_esc_writer writing %u:\n", len);
 		for (i = 0; i < len; i++) {
 			fprintf(stderr, "0x%02x ", src[i]);
 			if (((i + 1) % 16) == 0) {
@@ -491,7 +485,7 @@ dash_escaped_destroyer(__ops_writer_t *writer)
 
 	dash = __ops_writer_get_arg(writer);
 	__ops_memory_free(dash->trailing);
-	(void) free(dash);
+	free(dash);
 }
 
 /**
@@ -505,10 +499,15 @@ __ops_writer_push_clearsigned(__ops_output_t *output, __ops_create_sig_t *sig)
 {
 	static const char     header[] =
 		"-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
-	const char     *hash = __ops_text_from_hash(__ops_sig_get_hash(sig));
-	dashesc_t      *dash = calloc(1, sizeof(*dash));
+	const char     *hash;
+	dashesc_t      *dash;
 	unsigned	ret;
 
+	hash = __ops_text_from_hash(__ops_sig_get_hash(sig));
+	if ((dash = calloc(1, sizeof(*dash))) == NULL) {
+		OPS_ERROR(&output->errors, OPS_E_W, "Bad alloc");
+		return 0;
+	}
 	ret = (__ops_write(output, header, sizeof(header) - 1) &&
 		__ops_write(output, hash, strlen(hash)) &&
 		__ops_write(output, "\r\n\r\n", 4));
@@ -682,7 +681,8 @@ __ops_writer_use_armored_sig(__ops_output_t *output)
 			"\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: "
 			NETPGP_VERSION_STRING
 			"\r\n\r\n";
-	base64_t   *base64;
+	linebreak_t	*linebreak;
+	base64_t   	*base64;
 
 	__ops_writer_pop(output);
 	if (__ops_write(output, header, sizeof(header) - 1) == 0) {
@@ -690,9 +690,14 @@ __ops_writer_use_armored_sig(__ops_output_t *output)
 			"Error switching to armoured signature");
 		return 0;
 	}
+	if ((linebreak = calloc(1, sizeof(*linebreak))) == NULL) {
+		OPS_ERROR(&output->errors, OPS_E_W,
+			"__ops_writer_use_armored_sig: Bad alloc");
+		return 0;
+	}
 	__ops_writer_push(output, linebreak_writer, NULL,
 			generic_destroyer,
-			calloc(1, sizeof(linebreak_t)));
+			linebreak);
 	base64 = calloc(1, sizeof(*base64));
 	if (!base64) {
 		OPS_MEMORY_ERROR(&output->errors);
@@ -758,10 +763,14 @@ __ops_writer_push_armor_msg(__ops_output_t *output)
 
 	__ops_write(output, header, sizeof(header) - 1);
 	__ops_write(output, "\r\n", 2);
-	base64 = calloc(1, sizeof(*base64));
-	base64->checksum = CRC24_INIT;
-	__ops_writer_push(output, base64_writer, armoured_message_finaliser,
-		generic_destroyer, base64);
+	if ((base64 = calloc(1, sizeof(*base64))) == NULL) {
+		(void) fprintf(stderr, "__ops_writer_push_armor_msg: bad alloc\n");
+	} else {
+		base64->checksum = CRC24_INIT;
+		__ops_writer_push(output, base64_writer,
+			armoured_message_finaliser, generic_destroyer,
+			base64);
+	}
 }
 
 static unsigned 
@@ -854,6 +863,7 @@ __ops_writer_push_armoured(__ops_output_t *output, __ops_armor_type_t type)
 	unsigned int    sz_hdr = 0;
 	unsigned	(*finaliser) (__ops_error_t **, __ops_writer_t *);
 	base64_t	*base64;
+	linebreak_t	*linebreak;
 	char           *header = NULL;
 
 	finaliser = NULL;
@@ -875,11 +885,20 @@ __ops_writer_push_armoured(__ops_output_t *output, __ops_armor_type_t type)
 			"__ops_writer_push_armoured: unusual type\n");
 		return;
 	}
+	if ((linebreak = calloc(1, sizeof(*linebreak))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_writer_push_armoured: bad alloc\n");
+		return;
+	}
 	__ops_write(output, header, sz_hdr);
 	__ops_writer_push(output, linebreak_writer, NULL,
 			generic_destroyer,
-			calloc(1, sizeof(linebreak_t)));
-	base64 = calloc(1, sizeof(*base64));
+			linebreak);
+	if ((base64 = calloc(1, sizeof(*base64))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_writer_push_armoured: bad alloc\n");
+		return;
+	}
 	base64->checksum = CRC24_INIT;
 	__ops_writer_push(output, base64_writer, finaliser,
 			generic_destroyer, base64);
@@ -955,9 +974,9 @@ encrypt_destroyer(__ops_writer_t *writer)
 	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(writer);
 
 	if (pgp_encrypt->free_crypt) {
-		(void) free(pgp_encrypt->crypt);
+		free(pgp_encrypt->crypt);
 	}
-	(void) free(pgp_encrypt);
+	free(pgp_encrypt);
 }
 
 /**
@@ -971,13 +990,16 @@ __ops_push_enc_crypt(__ops_output_t *output, __ops_crypt_t *pgp_crypt)
 	/* Remember to free this in the destroyer */
 	crypt_t    *pgp_encrypt;
 
-	pgp_encrypt = calloc(1, sizeof(*pgp_encrypt));
-	/* Setup the encrypt */
-	pgp_encrypt->crypt = pgp_crypt;
-	pgp_encrypt->free_crypt = 0;
-	/* And push writer on stack */
-	__ops_writer_push(output, encrypt_writer, NULL, encrypt_destroyer,
-			pgp_encrypt);
+	if ((pgp_encrypt = calloc(1, sizeof(*pgp_encrypt))) == NULL) {
+		(void) fprintf(stderr, "__ops_push_enc_crypt: bad alloc\n");
+	} else {
+		/* Setup the encrypt */
+		pgp_encrypt->crypt = pgp_crypt;
+		pgp_encrypt->free_crypt = 0;
+		/* And push writer on stack */
+		__ops_writer_push(output, encrypt_writer, NULL,
+			encrypt_destroyer, pgp_encrypt);
+	}
 }
 
 /**************************************************************************/
@@ -1001,23 +1023,35 @@ static void     encrypt_se_ip_destroyer(__ops_writer_t *);
 void 
 __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 {
-	unsigned char	*iv = NULL;
+	unsigned char	*iv;
 	__ops_crypt_t	*encrypted;
-
 	/* Create se_ip to be used with this writer */
 	/* Remember to free this in the destroyer */
-	encrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
-
+	encrypt_se_ip_t *se_ip;
 	__ops_pk_sesskey_t *encrypted_pk_sesskey;
+
+	if ((se_ip = calloc(1, sizeof(*se_ip))) == NULL) {
+		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
+		return;
+	}
 
 	/* Create and write encrypted PK session key */
 	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey);
 	__ops_write_pk_sesskey(output, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
-	encrypted = calloc(1, sizeof(*encrypted));
+	if ((encrypted = calloc(1, sizeof(*encrypted))) == NULL) {
+		free(se_ip);
+		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
+		return;
+	}
 	__ops_crypt_any(encrypted, encrypted_pk_sesskey->symm_alg);
-	iv = calloc(1, encrypted->blocksize);
+	if ((iv = calloc(1, encrypted->blocksize)) == NULL) {
+		free(se_ip);
+		free(encrypted);
+		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
+		return;
+	}
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_crypt_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
@@ -1028,8 +1062,8 @@ __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 	__ops_writer_push(output, encrypt_se_ip_writer, NULL,
 			encrypt_se_ip_destroyer, se_ip);
 	/* tidy up */
-	(void) free(encrypted_pk_sesskey);
-	(void) free(iv);
+	free(encrypted_pk_sesskey);
+	free(iv);
 }
 
 static unsigned 
@@ -1090,8 +1124,8 @@ encrypt_se_ip_destroyer(__ops_writer_t *writer)
 	encrypt_se_ip_t	*se_ip;
 
 	se_ip = __ops_writer_get_arg(writer);
-	(void) free(se_ip->crypt);
-	(void) free(se_ip);
+	free(se_ip->crypt);
+	free(se_ip);
 }
 
 unsigned 
@@ -1109,7 +1143,10 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	size_t		 sz_buf;
 
 	sz_preamble = crypted->blocksize + 2;
-	preamble = calloc(1, sz_preamble);
+	if ((preamble = calloc(1, sz_preamble)) == NULL) {
+		(void) fprintf(stderr, "__ops_write_se_ip_pktset: bad alloc\n");
+		return 0;
+	}
 	sz_buf = sz_preamble + len + sz_mdc;
 
 	if (!__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA) ||
@@ -1123,7 +1160,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	preamble[crypted->blocksize + 1] = preamble[crypted->blocksize - 1];
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned int    i;
 
 		fprintf(stderr, "\npreamble: ");
 		for (i = 0; i < sz_preamble; i++) {
@@ -1138,10 +1175,10 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	__ops_write_mdc(hashed, mdcoutput);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i = 0;
+		unsigned int    i;
 		size_t          sz_plaintext = len;
 		size_t          sz_mdc2 = 1 + 1 + OPS_SHA1_HASH_SIZE;
-		unsigned char  *digest = NULL;
+		unsigned char  *digest;
 
 		(void) fprintf(stderr, "\nplaintext: ");
 		for (i = 0; i < sz_plaintext; i++) {
@@ -1161,7 +1198,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	__ops_push_enc_crypt(output, crypted);
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,
-			"writing %" PRIsize "u + %d + %" PRIsize "u\n",
+			"writing %" PRIsize "u + %u + %" PRIsize "u\n",
 			sz_preamble, len, __ops_mem_len(mdc));
 	}
 	if (!__ops_write(output, preamble, sz_preamble) ||
@@ -1175,7 +1212,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 
 	/* cleanup  */
 	__ops_teardown_memory_write(mdcoutput, mdc);
-	(void) free(preamble);
+	free(preamble);
 
 	return 1;
 }
@@ -1210,7 +1247,7 @@ fd_writer(const unsigned char *src, unsigned len,
 static void 
 writer_fd_destroyer(__ops_writer_t *writer)
 {
-	(void) free(__ops_writer_get_arg(writer));
+	free(__ops_writer_get_arg(writer));
 }
 
 /**
@@ -1231,9 +1268,12 @@ __ops_writer_set_fd(__ops_output_t *output, int fd)
 {
 	writer_fd_t	*writer;
 
-	writer = calloc(1, sizeof(*writer));
-	writer->fd = fd;
-	__ops_writer_set(output, fd_writer, NULL, writer_fd_destroyer, writer);
+	if ((writer = calloc(1, sizeof(*writer))) == NULL) {
+		(void) fprintf(stderr, "__ops_writer_set_fd: bad alloc\n");
+	} else {
+		writer->fd = fd;
+		__ops_writer_set(output, fd_writer, NULL, writer_fd_destroyer, writer);
+	}
 }
 
 static unsigned 
@@ -1313,7 +1353,7 @@ skey_checksum_destroyer(__ops_writer_t *writer)
 	skey_checksum_t *sum;
 
 	sum = __ops_writer_get_arg(writer);
-	(void) free(sum);
+	free(sum);
 }
 
 /**
@@ -1327,15 +1367,18 @@ __ops_push_checksum_writer(__ops_output_t *output, __ops_seckey_t *seckey)
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
 	skey_checksum_t *sum;
 
-	sum = calloc(1, sizeof(*sum));
-	/* configure the arg */
-	sum->hash_alg = seckey->hash_alg;
-	sum->hashed = seckey->checkhash;
-	/* init the hash */
-	__ops_hash_any(&sum->hash, sum->hash_alg);
-	sum->hash.init(&sum->hash);
-	__ops_writer_push(output, skey_checksum_writer,
-		skey_checksum_finaliser, skey_checksum_destroyer, sum);
+	if ((sum = calloc(1, sizeof(*sum))) == NULL) {
+		(void) fprintf(stderr, "__ops_push_checksum_writer: bad alloc\n");
+	} else {
+		/* configure the arg */
+		sum->hash_alg = seckey->hash_alg;
+		sum->hashed = seckey->checkhash;
+		/* init the hash */
+		__ops_hash_any(&sum->hash, sum->hash_alg);
+		sum->hash.init(&sum->hash);
+		__ops_writer_push(output, skey_checksum_writer,
+			skey_checksum_finaliser, skey_checksum_destroyer, sum);
+	}
 }
 
 /**************************************************************************/
@@ -1377,17 +1420,33 @@ __ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 {
 	__ops_pk_sesskey_t	*encrypted_pk_sesskey;
 	const unsigned int	 bufsz = 1024;
-	str_enc_se_ip_t		*se_ip = calloc(1, sizeof(*se_ip));
+	str_enc_se_ip_t		*se_ip;
 	__ops_crypt_t		*encrypted;
-	unsigned char		*iv = NULL;
+	unsigned char		*iv;
 
+	if ((se_ip = calloc(1, sizeof(*se_ip))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_push_stream_enc_se_ip: bad alloc\n");
+		return;
+	}
 	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey);
 	__ops_write_pk_sesskey(output, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
-	encrypted = calloc(1, sizeof(*encrypted));
+	if ((encrypted = calloc(1, sizeof(*encrypted))) == NULL) {
+		free(se_ip);
+		(void) fprintf(stderr,
+			"__ops_push_stream_enc_se_ip: bad alloc\n");
+		return;
+	}
 	__ops_crypt_any(encrypted, encrypted_pk_sesskey->symm_alg);
-	iv = calloc(1, encrypted->blocksize);
+	if ((iv = calloc(1, encrypted->blocksize)) == NULL) {
+		free(encrypted);
+		free(se_ip);
+		(void) fprintf(stderr,
+			"__ops_push_stream_enc_se_ip: bad alloc\n");
+		return;
+	}
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_crypt_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
@@ -1408,8 +1467,8 @@ __ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 			str_enc_se_ip_finaliser,
 			str_enc_se_ip_destroyer, se_ip);
 	/* tidy up */
-	(void) free(encrypted_pk_sesskey);
-	(void) free(iv);
+	free(encrypted_pk_sesskey);
+	free(iv);
 }
 
 
@@ -1549,9 +1608,14 @@ stream_write_se_ip_first(__ops_output_t *output,
 	blocksize = se_ip->crypt->blocksize;
 	sz_preamble = blocksize + 2;
 	sz_towrite = sz_preamble + 1 + len;
-	preamble = calloc(1, sz_preamble);
+	if ((preamble = calloc(1, sz_preamble)) == NULL) {
+		(void) fprintf(stderr,
+			"stream_write_se_ip_first: bad alloc\n");
+		return 0;
+	}
 	sz_pd = __ops_partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
+		free(preamble);
 		(void) fprintf(stderr,
 			"stream_write_se_ip_first: bad sz_pd\n");
 		return 0;
@@ -1574,7 +1638,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 	sz_towrite -= sz_pd;
 	__ops_writer_pop(output);
 	stream_write_se_ip(output, data, sz_towrite, se_ip);
-	(void) free(preamble);
+	free(preamble);
 	return 1;
 }
 
@@ -1723,6 +1787,6 @@ str_enc_se_ip_destroyer(__ops_writer_t *writer)
 
 	se_ip->crypt->decrypt_finish(se_ip->crypt);
 
-	(void) free(se_ip->crypt);
-	(void) free(se_ip);
+	free(se_ip->crypt);
+	free(se_ip);
 }

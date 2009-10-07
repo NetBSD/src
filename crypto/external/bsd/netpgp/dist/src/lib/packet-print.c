@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.18 2009/06/10 16:36:23 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.19 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <string.h>
@@ -84,7 +84,7 @@ static int      indent = 0;
 static void 
 print_indent(void)
 {
-	int             i = 0;
+	int             i;
 
 	for (i = 0; i < indent; i++) {
 		printf("  ");
@@ -105,7 +105,7 @@ print_hexdump(const char *name, const unsigned char *data, unsigned int len)
 {
 	print_name(name);
 
-	printf("len=%d, data=0x", len);
+	printf("len=%u, data=0x", len);
 	hexdump(stdout, data, len, "");
 	printf("\n");
 }
@@ -124,7 +124,7 @@ static void
 print_uint(const char *name, unsigned int val)
 {
 	print_name(name);
-	printf("%d\n", val);
+	printf("%u\n", val);
 }
 
 static void 
@@ -494,13 +494,13 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 		printf("Symmetric algorithm: %d (%s)\n", seckey->alg,
 		       __ops_show_symm_alg(seckey->alg));
 		printf("Hash algorithm: %d (%s)\n", seckey->hash_alg,
-		       __ops_show_hash_alg(seckey->hash_alg));
+		       __ops_show_hash_alg((unsigned char)seckey->hash_alg));
 		if (seckey->s2k_specifier != OPS_S2KS_SIMPLE) {
 			print_hexdump("Salt", seckey->salt,
 					sizeof(seckey->salt));
 		}
 		if (seckey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED) {
-			printf("Octet count: %d\n", seckey->octetc);
+			printf("Octet count: %u\n", seckey->octetc);
 		}
 		print_hexdump("IV", seckey->iv, __ops_block_size(seckey->alg));
 	}
@@ -578,7 +578,7 @@ start_subpacket(int type)
 	indent++;
 	print_indent();
 	printf("-- %s (type 0x%02x)\n",
-	       __ops_show_ss_type(type),
+	       __ops_show_ss_type((__ops_ss_type_t)type),
 	       type - OPS_PTAG_SIG_SUBPKT_BASE);
 }
 
@@ -606,7 +606,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 	}
 	if (pkt->tag == OPS_PARSER_PTAG) {
 		printf("=> OPS_PARSER_PTAG: %s\n",
-			__ops_show_packet_tag(content->ptag.type));
+			__ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
 	} else {
 		printf("=> %s\n", __ops_show_packet_tag(pkt->tag));
 	}
@@ -632,13 +632,13 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		}
 		printf("\n");
 		print_indent();
-		printf("==== ptag new_format=%d type=%d length_type=%d"
-		       " length=0x%x (%d) position=0x%x (%d)\n",
+		printf("==== ptag new_format=%u type=%u length_type=%d"
+		       " length=0x%x (%u) position=0x%x (%u)\n",
 		       content->ptag.new_format,
 		       content->ptag.type, content->ptag.length_type,
 		       content->ptag.length, content->ptag.length,
 		       content->ptag.position, content->ptag.position);
-		print_tagname(__ops_show_packet_tag(content->ptag.type));
+		print_tagname(__ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
 		break;
 
 	case OPS_PTAG_CT_SE_DATA_HEADER:
@@ -654,7 +654,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_SE_IP_DATA_BODY:
 		print_tagname(
 			"SYMMETRIC ENCRYPTED INTEGRITY PROTECTED DATA BODY");
-		printf("  data body length=%d\n",
+		printf("  data body length=%u\n",
 		       content->se_data_body.length);
 		printf("    data=");
 		hexdump(stdout, content->se_data_body.data,
@@ -704,8 +704,9 @@ __ops_print_packet(const __ops_packet_t *pkt)
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
 		print_string_and_value("Hash Algorithm",
-			__ops_show_hash_alg(content->sig.info.hash_alg),
-			content->sig.info.hash_alg);
+			__ops_show_hash_alg((unsigned char)
+				content->sig.info.hash_alg),
+			(unsigned char)content->sig.info.hash_alg);
 		print_uint("Hashed data len",
 			content->sig.info.v4_hashlen);
 		print_indent();
@@ -751,8 +752,8 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		    __ops_show_sig_type(content->one_pass_sig.sig_type),
 				       content->one_pass_sig.sig_type);
 		print_string_and_value("Hash Algorithm",
-			__ops_show_hash_alg(content->one_pass_sig.hash_alg),
-			content->one_pass_sig.hash_alg);
+			__ops_show_hash_alg((unsigned char)content->one_pass_sig.hash_alg),
+			(unsigned char)content->one_pass_sig.hash_alg);
 		print_string_and_value("Public Key Algorithm",
 			__ops_show_pka(content->one_pass_sig.key_alg),
 			content->one_pass_sig.key_alg);
@@ -777,7 +778,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		start_subpacket(pkt->tag);
 		print_uint("Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
-		   	OPS_PTAG_SIG_SUBPKT_BASE));
+		   	(unsigned)OPS_PTAG_SIG_SUBPKT_BASE));
 		print_hexdump("Raw Data",
 			      content->ss_raw.raw,
 			      content->ss_raw.length);
@@ -1016,7 +1017,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 
 	case OPS_PTAG_CT_LITDATA_BODY:
 		print_tagname("LITERAL DATA BODY");
-		printf("  literal data body length=%d\n",
+		printf("  literal data body length=%u\n",
 		       content->litdata_body.length);
 		printf("    data=");
 		print_escaped(content->litdata_body.data,
@@ -1045,8 +1046,8 @@ __ops_print_packet(const __ops_packet_t *pkt)
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
 		print_string_and_value("Hash Algorithm",
-			__ops_show_hash_alg(content->sig.info.hash_alg),
-			content->sig.info.hash_alg);
+			__ops_show_hash_alg((unsigned char)content->sig.info.hash_alg),
+			(unsigned char)content->sig.info.hash_alg);
 
 		break;
 
@@ -1190,7 +1191,7 @@ __ops_list_packets(__ops_io_t *io,
 	__ops_stream_t	*stream = NULL;
 	const unsigned		 accumulate = 1;
 	const int		 printerrors = 1;
-	int			 fd = 0;
+	int			 fd;
 
 	fd = __ops_setup_file_read(io, &stream, filename, NULL, cb_list_packets,
 				accumulate);

@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.20 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ check_binary_sig(const unsigned len,
 	unsigned char   trailer[6];
 	unsigned int    hashedlen;
 	__ops_hash_t	hash;
-	unsigned	n = 0;
+	unsigned	n;
 
 	__OPS_USED(signer);
 	__ops_hash_any(&hash, sig->info.hash_alg);
@@ -180,30 +180,40 @@ keydata_reader(void *dest, size_t length, __ops_error_t **errors,
 static void 
 free_sig_info(__ops_sig_info_t *sig)
 {
-	(void) free(sig->v4_hashed);
-	(void) free(sig);
+	free(sig->v4_hashed);
+	free(sig);
 }
 
 static void 
 copy_sig_info(__ops_sig_info_t *dst, const __ops_sig_info_t *src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
-	dst->v4_hashed = calloc(1, src->v4_hashlen);
-	(void) memcpy(dst->v4_hashed, src->v4_hashed, src->v4_hashlen);
+	if ((dst->v4_hashed = calloc(1, src->v4_hashlen)) == NULL) {
+		(void) fprintf(stderr, "copy_sig_info: bad alloc\n");
+	} else {
+		(void) memcpy(dst->v4_hashed, src->v4_hashed, src->v4_hashlen);
+	}
 }
 
-static void 
+static int 
 add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 			unsigned *count)
 {
+	__ops_sig_info_t	*newsigs;
+
 	if (*count == 0) {
-		*sigs = calloc(*count + 1, sizeof(__ops_sig_info_t));
+		newsigs = calloc(*count + 1, sizeof(__ops_sig_info_t));
 	} else {
-		*sigs = realloc(*sigs,
+		newsigs = realloc(*sigs,
 				(*count + 1) * sizeof(__ops_sig_info_t));
 	}
-	copy_sig_info(&(*sigs)[*count], sig);
-	*count += 1;
+	if (newsigs != NULL) {
+		*sigs = newsigs;
+		copy_sig_info(&(*sigs)[*count], sig);
+		*count += 1;
+		return 1;
+	}
+	return 0;
 }
 
 
@@ -275,9 +285,13 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		signer = __ops_getkeybyid(io, key->keyring,
 					 content->sig.info.signer_id);
 		if (!signer) {
-			add_sig_to_list(&content->sig.info,
-					&key->result->unknown_sigs,
-					&key->result->unknownc);
+			if (!add_sig_to_list(&content->sig.info,
+				&key->result->unknown_sigs,
+				&key->result->unknownc)) {
+					(void) fprintf(io->errs,
+					"__ops_validate_key_cb: user attribute length 0");
+					return OPS_FINISHED;
+			}
 			break;
 		}
 		switch (content->sig.info.type) {
@@ -340,14 +354,20 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 
 		if (valid) {
-			add_sig_to_list(&content->sig.info,
+			if (!add_sig_to_list(&content->sig.info,
 				&key->result->valid_sigs,
-				&key->result->validc);
+				&key->result->validc)) {
+				OPS_ERROR(errors, OPS_E_UNIMPLEMENTED,
+				    "Can't add good sig to list\n");
+			}
 		} else {
 			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Sig");
-			add_sig_to_list(&content->sig.info,
-					&key->result->invalid_sigs,
-					&key->result->invalidc);
+			if (!add_sig_to_list(&content->sig.info,
+				&key->result->invalid_sigs,
+				&key->result->invalidc)) {
+				OPS_ERROR(errors, OPS_E_UNIMPLEMENTED,
+				    "Can't add good sig to list\n");
+			}
 		}
 		break;
 
@@ -435,9 +455,12 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
 					"Unknown Signer");
-			add_sig_to_list(&content->sig.info,
+			if (!add_sig_to_list(&content->sig.info,
 					&data->result->unknown_sigs,
-					&data->result->unknownc);
+					&data->result->unknownc)) {
+				OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
+					"Can't add unknown sig to list");
+			}
 			break;
 		}
 		switch (content->sig.info.type) {
@@ -468,15 +491,21 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 
 		if (valid) {
-			add_sig_to_list(&content->sig.info,
+			if (!add_sig_to_list(&content->sig.info,
 					&data->result->valid_sigs,
-					&data->result->validc);
+					&data->result->validc)) {
+				OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+					"Can't add good sig to list");
+			}
 		} else {
 			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
 					"Bad Signature");
-			add_sig_to_list(&content->sig.info,
+			if (!add_sig_to_list(&content->sig.info,
 					&data->result->invalid_sigs,
-					&data->result->invalidc);
+					&data->result->invalidc)) {
+				OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+					"Can't add good sig to list");
+			}
 		}
 		break;
 
@@ -501,18 +530,22 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 static void 
 keydata_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 void 
 __ops_keydata_reader_set(__ops_stream_t *stream, const __ops_key_t *key)
 {
-	validate_reader_t *data = calloc(1, sizeof(*data));
+	validate_reader_t *data;
 
-	data->key = key;
-	data->packet = 0;
-	data->offset = 0;
-	__ops_reader_set(stream, keydata_reader, keydata_destroyer, data);
+	if ((data = calloc(1, sizeof(*data))) == NULL) {
+		(void) fprintf(stderr, "__ops_keydata_reader_set: bad alloc\n");
+	} else {
+		data->key = key;
+		data->packet = 0;
+		data->offset = 0;
+		__ops_reader_set(stream, keydata_reader, keydata_destroyer, data);
+	}
 }
 
 /**
@@ -624,8 +657,8 @@ __ops_validate_result_free(__ops_validation_t *result)
 		if (result->unknown_sigs) {
 			free_sig_info(result->unknown_sigs);
 		}
-		(void) free(result);
-		result = NULL;
+		free(result);
+		/* result = NULL; - XXX unnecessary */
 	}
 }
 
@@ -652,7 +685,7 @@ __ops_validate_file(__ops_io_t *io,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_stream_t	*parse = NULL;
+	__ops_stream_t		*parse = NULL;
 	struct stat		 st;
 	const int		 printerrors = 1;
 	unsigned		 ret;

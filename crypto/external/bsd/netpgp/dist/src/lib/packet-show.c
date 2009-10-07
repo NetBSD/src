@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.12 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.13 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -151,7 +151,6 @@ static __ops_map_t packet_tag_map[] =
 
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t packet_tag_map_t;
 
 static __ops_map_t ss_type_map[] =
 {
@@ -176,7 +175,6 @@ static __ops_map_t ss_type_map[] =
 	{OPS_PTAG_SS_FEATURES, "Features"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t ss_type_map_t;
 
 
 static __ops_map_t ss_rr_code_map[] =
@@ -188,7 +186,6 @@ static __ops_map_t ss_rr_code_map[] =
 	{0x20, "User ID information is no longer valid"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t ss_rr_code_map_t;
 
 static __ops_map_t sig_type_map[] =
 {
@@ -209,7 +206,6 @@ static __ops_map_t sig_type_map[] =
 	{OPS_SIG_3RD_PARTY, "Third-Party Confirmation signature"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t sig_type_map_t;
 
 static __ops_map_t pubkey_alg_map[] =
 {
@@ -235,7 +231,6 @@ static __ops_map_t pubkey_alg_map[] =
 	{OPS_PKA_PRIVATE10, "Private/Experimental"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
-typedef __ops_map_t pubkey_alg_map_t;
 
 static __ops_map_t symm_alg_map[] =
 {
@@ -349,29 +344,27 @@ list_resize(__ops_list_t *list)
 	 * We only resize in one direction - upwards. Algorithm used : double
 	 * the current size then add 1
 	 */
+	char	**newstrings;
+	int	  newsize;
 
-	int             newsize = 0;
-
-	newsize = list->size * 2 + 1;
-	list->strings = realloc(list->strings, newsize * sizeof(char *));
-	if (list->strings) {
+	newsize = (list->size * 2) + 1;
+	newstrings = realloc(list->strings, newsize * sizeof(char *));
+	if (newstrings) {
+		list->strings = newstrings;
 		list->size = newsize;
 		return 1;
-	} else {
-		/* xxx - realloc failed. error message? - rachel */
-		return 0;
 	}
+	/* xxx - realloc failed. error message? - rachel */
+	return 0;
 }
 
 static unsigned int 
 add_str(__ops_list_t *list, const char *str)
 {
-	if (list->size == list->used)
-		if (!list_resize(list))
-			return 0;
-
-	list->strings[list->used] = __UNCONST(str);
-	list->used++;
+	if (list->size == list->used && !list_resize(list)) {
+		return 0;
+	}
+	list->strings[list->used++] = __UNCONST(str);
 	return 1;
 }
 
@@ -414,7 +407,7 @@ __ops_text_free(__ops_text_t *text)
 	list_free_strings(&text->unknown);
 	list_free(&text->unknown);
 
-	(void) free(text);
+	free(text);
 }
 
 /* XXX: should this (and many others) be unsigned? */
@@ -437,11 +430,15 @@ add_str_from_octet_map(__ops_text_t *map, char *str, unsigned char octet)
 		unsigned        len = 2 + 2 + 1;	/* 2 for "0x", 2 for
 							 * single octet in hex
 							 * format, 1 for NUL */
-		str = calloc(1, len);
+		if ((str = calloc(1, len)) == NULL) {
+			(void) fprintf(stderr, "add_str_from_octet_map: bad alloc\n");
+			return 0;
+		}
 		(void) snprintf(str, len, "0x%x", octet);
 		if (!add_str(&map->unknown, str)) {
 			return 0;
 		}
+		free(str);
 	}
 	return 1;
 }
@@ -467,13 +464,18 @@ add_bitmap_entry(__ops_text_t *map, const char *str, unsigned char bit)
 		 * be replaced in the output by 2 chars of hex, so the length
 		 * will be correct
 		 */
-		unsigned        len = strlen(fmt_unknown) + 1;
+		unsigned         len = strlen(fmt_unknown) + 1;
+		char		*newstr;
 
-		str = calloc(1, len);
-		(void) snprintf(__UNCONST(str), len, fmt_unknown, bit);
-		if (!add_str(&map->unknown, str)) {
+		if ((newstr = calloc(1, len)) == NULL) {
+			(void) fprintf(stderr, "add_bitmap_entry: bad alloc\n");
 			return 0;
 		}
+		(void) snprintf(newstr, len, fmt_unknown, bit);
+		if (!add_str(&map->unknown, newstr)) {
+			return 0;
+		}
+		free(newstr);
 	}
 	return 1;
 }
@@ -490,17 +492,15 @@ static __ops_text_t *
 text_from_bytemapped_octets(__ops_data_t *data,
 			    const char *(*text_fn)(unsigned char octet))
 {
-
-	__ops_text_t     *text = NULL;
-	const char     *str;
-	unsigned        i;
+	__ops_text_t	*text;
+	const char	*str;
+	unsigned	 i;
 
 	/*
 	 * ! allocate and initialise __ops_text_t structure to store derived
 	 * strings
 	 */
-	text = calloc(1, sizeof(__ops_text_t));
-	if (!text) {
+	if ((text = calloc(1, sizeof(*text))) == NULL) {
 		return NULL;
 	}
 
@@ -536,7 +536,7 @@ showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map,
 		    size_t nmap)
 {
 	unsigned char	 mask, bit;
-	__ops_text_t	*text = NULL;
+	__ops_text_t	*text;
 	const char	*str;
 	unsigned         i;
 	int              j = 0;
@@ -545,8 +545,7 @@ showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map,
 	 * ! allocate and initialise __ops_text_t structure to store derived
 	 * strings
 	 */
-	text = calloc(1, sizeof(__ops_text_t));
-	if (!text) {
+	if ((text = calloc(1, sizeof(__ops_text_t))) == NULL) {
 		return NULL;
 	}
 
@@ -762,13 +761,12 @@ __ops_text_t     *
 __ops_showall_ss_features(__ops_ss_features_t ss_features)
 {
 	unsigned char	 mask, bit;
-	__ops_text_t	*text = NULL;
+	__ops_text_t	*text;
 	const char	*str;
 	unsigned	 i;
-	int		 j = 0;
+	int		 j;
 
-	text = calloc(1, sizeof(__ops_text_t));
-	if (!text) {
+	if ((text = calloc(1, sizeof(*text))) == NULL) {
 		return NULL;
 	}
 
@@ -815,12 +813,11 @@ __ops_text_t     *
 __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 {
 	unsigned char    mask, bit;
-	__ops_text_t	*text = NULL;
+	__ops_text_t	*text;
 	const char	*str;
-	int              i = 0;
+	int              i;
 
-	text = calloc(1, sizeof(__ops_text_t));
-	if (!text) {
+	if ((text = calloc(1, sizeof(*text))) == NULL) {
 		return NULL;
 	}
 
@@ -871,12 +868,11 @@ __ops_text_t     *
 __ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
 {
 	unsigned char	 mask, bit;
-	__ops_text_t	*text = NULL;
+	__ops_text_t	*text;
 	const char	*str;
 	int              i = 0;
 
-	text = calloc(1, sizeof(__ops_text_t));
-	if (!text) {
+	if ((text = calloc(1, sizeof(*text))) == NULL) {
 		return NULL;
 	}
 

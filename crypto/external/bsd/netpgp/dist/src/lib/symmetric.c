@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.7 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.8 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -126,7 +126,7 @@ static void
 cast5_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
-		(void) free(crypt->encrypt_key);
+		free(crypt->encrypt_key);
 	}
 	crypt->encrypt_key = calloc(1, sizeof(CAST_KEY));
 	CAST_set_key(crypt->encrypt_key, (int)crypt->keysize, crypt->key);
@@ -191,7 +191,7 @@ idea_init(__ops_crypt_t *crypt)
 	}
 
 	if (crypt->encrypt_key) {
-		(void) free(crypt->encrypt_key);
+		free(crypt->encrypt_key);
 	}
 	crypt->encrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
 
@@ -199,7 +199,7 @@ idea_init(__ops_crypt_t *crypt)
 	idea_set_encrypt_key(crypt->key, crypt->encrypt_key);
 
 	if (crypt->decrypt_key) {
-		(void) free(crypt->decrypt_key);
+		free(crypt->decrypt_key);
 	}
 	crypt->decrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
 
@@ -260,7 +260,7 @@ static void
 aes128_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
-		(void) free(crypt->encrypt_key);
+		free(crypt->encrypt_key);
 	}
 	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
 	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES128,
@@ -269,7 +269,7 @@ aes128_init(__ops_crypt_t *crypt)
 	}
 
 	if (crypt->decrypt_key) {
-		(void) free(crypt->decrypt_key);
+		free(crypt->decrypt_key);
 	}
 	crypt->decrypt_key = calloc(1, sizeof(AES_KEY));
 	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES128,
@@ -331,7 +331,7 @@ static void
 aes256_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
-		(void) free(crypt->encrypt_key);
+		free(crypt->encrypt_key);
 	}
 	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
 	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES256,
@@ -374,7 +374,7 @@ tripledes_init(__ops_crypt_t *crypt)
 	int             n;
 
 	if (crypt->encrypt_key) {
-		(void) free(crypt->encrypt_key);
+		free(crypt->encrypt_key);
 	}
 	keys = crypt->encrypt_key = calloc(1, 3 * sizeof(DES_key_schedule));
 
@@ -542,7 +542,7 @@ __ops_decrypt_se(__ops_crypt_t *decrypt, void *outvoid, const void *invoid,
 		*out++ = t ^ (decrypt->civ[decrypt->num++] = *in++);
 	}
 
-	return saved;
+	return (size_t)saved;
 }
 
 size_t 
@@ -570,7 +570,7 @@ __ops_encrypt_se(__ops_crypt_t *encrypt, void *outvoid, const void *invoid,
 		++encrypt->num;
 	}
 
-	return saved;
+	return (size_t)saved;
 }
 
 /**
