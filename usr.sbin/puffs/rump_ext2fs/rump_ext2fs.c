@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_ext2fs.c,v 1.4 2008/11/26 19:41:11 pooka Exp $	*/
+/*	$NetBSD: rump_ext2fs.c,v 1.5 2009/10/07 20:11:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,12 +36,8 @@
 #include <unistd.h>
 
 #include <rump/p2k.h>
-#include <rump/ukfs.h>
 
 #include "mount_ext2fs.h"
-
-/* XXX */
-#define EXT2FSLIB "/usr/lib/librumpfs_ext2fs.so"
 
 int
 main(int argc, char *argv[])
@@ -52,10 +48,6 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
-	ukfs_init();
-	if (ukfs_modload(EXT2FSLIB) < 1)
-		err(1, "failed to load ext2fs support");
-
 	mount_ext2fs_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
 	rv = p2k_run_fs(MOUNT_EXT2FS, canon_dev, canon_dir, mntflags, 
