@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.88 2009/10/06 23:58:58 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.89 2009/10/07 15:44:41 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13977,4 +13977,32 @@ lib/libutil/opendisk.c				1.11
 	Add opendisk1(), which functions like opendisk(), but takes a
 	function pointer to the routine to be used for open().
 	[pooka, ticket #1047]
+
+distrib/sets/lists/man/mi			patch
+share/man/man4/Makefile				patch
+share/man/man4/sdmmc.4				1.1-1.4
+sys/arch/amd64/conf/files.amd64			1.67
+sys/arch/i386/conf/files.i386			1.349
+sys/conf/files					1.945
+sys/dev/sdmmc/Makefile.sdmmcdevs		1.1
+sys/dev/sdmmc/devlist2h.awk			1.1
+sys/dev/sdmmc/files.sdmmc			1.1-1.2
+sys/dev/sdmmc/ld_sdmmc.c			1.1-1.3
+sys/dev/sdmmc/sbt.c				1.1-1.2
+sys/dev/sdmmc/sdhc.c				1.1-1.3
+sys/dev/sdmmc/sdhcreg.h				1.1
+sys/dev/sdmmc/sdhcvar.h				1.1
+sys/dev/sdmmc/sdmmc.c				1.1
+sys/dev/sdmmc/sdmmc_cis.c			1.1
+sys/dev/sdmmc/sdmmc_io.c			1.1
+sys/dev/sdmmc/sdmmc_ioreg.h			1.1
+sys/dev/sdmmc/sdmmc_mem.c			1.1-1.2
+sys/dev/sdmmc/sdmmcchip.h			1.1
+sys/dev/sdmmc/sdmmcdevs				1.1
+sys/dev/sdmmc/sdmmcdevs.h			1.1-1.2
+sys/dev/sdmmc/sdmmcreg.h			1.1-1.3
+sys/dev/sdmmc/sdmmcvar.h			1.1
+
+	Add sdmmc framework
+	[jmcneill, ticket #1044]
 
