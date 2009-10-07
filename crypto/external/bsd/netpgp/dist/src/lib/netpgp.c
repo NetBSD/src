@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.28 2009/10/06 02:46:17 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.29 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -153,20 +153,40 @@ resultp(__ops_io_t *io,
 }
 
 /* check there's enough space in the arrays */
-static void
+static int
 size_arrays(netpgp_t *netpgp, unsigned needed)
 {
+	char	**temp;
+
 	if (netpgp->size == 0) {
 		/* only get here first time around */
 		netpgp->size = needed;
-		netpgp->name = calloc(sizeof(char *), needed);
-		netpgp->value = calloc(sizeof(char *), needed);
+		if ((netpgp->name = calloc(sizeof(char *), needed)) == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		if ((netpgp->value = calloc(sizeof(char *), needed)) == NULL) {
+			free(netpgp->name);
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
 	} else if (netpgp->c == netpgp->size) {
 		/* only uses 'needed' when filled array */
 		netpgp->size += needed;
-		netpgp->name = realloc(netpgp->name, sizeof(char *) * needed);
-		netpgp->value = realloc(netpgp->value, sizeof(char *) * needed);
+		temp = realloc(netpgp->name, sizeof(char *) * needed);
+		if (temp == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		netpgp->name = temp;
+		temp = realloc(netpgp->value, sizeof(char *) * needed);
+		if (temp == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		netpgp->value = temp;
 	}
+	return 1;
 }
 
 /* find the name in the array */
@@ -195,8 +215,12 @@ readkeyring(netpgp_t *netpgp, const char *name)
 		(void) snprintf(f, sizeof(f), "%s/%s.gpg", homedir, name);
 		filename = f;
 	}
-	keyring = calloc(1, sizeof(*keyring));
+	if ((keyring = calloc(1, sizeof(*keyring))) == NULL) {
+		(void) fprintf(stderr, "readkeyring: bad alloc\n");
+		return NULL;
+	}
 	if (!__ops_keyring_fileread(keyring, noarmor, filename)) {
+		free(keyring);
 		(void) fprintf(stderr, "Can't read %s %s\n", name, filename);
 		return NULL;
 	}
@@ -236,7 +260,10 @@ netpgp_init(netpgp_t *netpgp)
 #else
 	coredumps = 1;
 #endif
-	io = calloc(1, sizeof(*io));
+	if ((io = calloc(1, sizeof(*io))) == NULL) {
+		(void) fprintf(stderr, "netpgp_init: bad alloc\n");
+		return 0;
+	}
 	io->outs = stdout;
 	if ((stream = netpgp_getvar(netpgp, "stdout")) != NULL &&
 	    strcmp(stream, "stderr") == 0) {
@@ -616,6 +643,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	__ops_io_t	*io;
 	char		 ringname[MAXPATHLEN];
 	char		*homedir;
+	int		 ret;
 
 	io = netpgp->io;
 	if (f == NULL) {
@@ -628,17 +656,23 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 				"%s/pubring.gpg", homedir);
 		pubringname = ringname;
 	}
-	keyring = calloc(1, sizeof(*keyring));
+	if ((keyring = calloc(1, sizeof(*keyring))) == NULL) {
+		(void) fprintf(io->errs, "netpgp_list_packets: bad alloc\n");
+		return 0;
+	}
 	if (!__ops_keyring_fileread(keyring, noarmor, pubringname)) {
+		free(keyring);
 		(void) fprintf(io->errs, "Cannot read pub keyring %s\n",
 			pubringname);
 		return 0;
 	}
 	netpgp->pubring = keyring;
 	netpgp_setvar(netpgp, "pubring", pubringname);
-	return __ops_list_packets(io, f, (unsigned)armour, keyring,
+	ret = __ops_list_packets(io, f, (unsigned)armour, keyring,
 					netpgp->passfp,
 					get_passphrase_cb);
+	free(keyring);
+	return ret;
 }
 
 /* set a variable */
@@ -649,8 +683,9 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 
 	if ((i = findvar(netpgp, name)) < 0) {
 		/* add the element to the array */
-		size_arrays(netpgp, netpgp->size + 15);
-		netpgp->name[i = netpgp->c++] = strdup(name);
+		if (size_arrays(netpgp, netpgp->size + 15)) {
+			netpgp->name[i = netpgp->c++] = strdup(name);
+		}
 	} else {
 		/* replace the element in the array */
 		if (netpgp->value[i]) {

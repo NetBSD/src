@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.22 2009/06/13 05:25:09 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.23 2009/10/07 04:18:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,7 +101,6 @@ __RCSID("$NetBSD: reader.c,v 1.22 2009/06/13 05:25:09 agc Exp $");
 #endif
 
 #include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -132,7 +131,6 @@ __RCSID("$NetBSD: reader.c,v 1.22 2009/06/13 05:25:09 agc Exp $");
 #include "keyring.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
-#include "version.h"
 #include "netpgpdigest.h"
 
 
@@ -212,7 +210,7 @@ __ops_reader_pop(__ops_stream_t *stream)
 	__ops_reader_t *next = stream->readinfo.next;
 
 	stream->readinfo = *next;
-	(void) free(next);
+	free(next);
 }
 
 /**
@@ -231,6 +229,23 @@ __ops_reader_get_arg(__ops_reader_t *readinfo)
 
 #define CRC24_POLY 0x1864cfbL
 
+enum {
+	NONE = 0,
+	BEGIN_PGP_MESSAGE,
+	BEGIN_PGP_PUBLIC_KEY_BLOCK,
+	BEGIN_PGP_PRIVATE_KEY_BLOCK,
+	BEGIN_PGP_MULTI,
+	BEGIN_PGP_SIGNATURE,
+
+	END_PGP_MESSAGE,
+	END_PGP_PUBLIC_KEY_BLOCK,
+	END_PGP_PRIVATE_KEY_BLOCK,
+	END_PGP_MULTI,
+	END_PGP_SIGNATURE,
+
+	BEGIN_PGP_SIGNED_MESSAGE
+};
+
 /**
  * \struct dearmour_t
  */
@@ -240,22 +255,7 @@ typedef struct {
 		BASE64,
 		AT_TRAILER_NAME
 	} state;
-	enum {
-		NONE = 0,
-		BEGIN_PGP_MESSAGE,
-		BEGIN_PGP_PUBLIC_KEY_BLOCK,
-		BEGIN_PGP_PRIVATE_KEY_BLOCK,
-		BEGIN_PGP_MULTI,
-		BEGIN_PGP_SIGNATURE,
-
-		END_PGP_MESSAGE,
-		END_PGP_PUBLIC_KEY_BLOCK,
-		END_PGP_PRIVATE_KEY_BLOCK,
-		END_PGP_MULTI,
-		END_PGP_SIGNATURE,
-
-		BEGIN_PGP_SIGNED_MESSAGE
-	} lastseen;
+	int		lastseen;
 	__ops_stream_t *parse_info;
 	unsigned	seen_nl:1;
 	unsigned	prev_nl:1;
@@ -300,7 +300,7 @@ push_back(dearmour_t *dearmour, const unsigned char *buf,
 	} else {
 		dearmour->pushback = calloc(1, length);
 		for (n = 0; n < length; ++n) {
-			dearmour->pushback[n] = buf[length - n - 1];
+			dearmour->pushback[n] = buf[(length - n) - 1];
 		}
 		dearmour->pushbackc = length;
 	}
@@ -425,7 +425,7 @@ read_char(dearmour_t *dearmour,
 		if (dearmour->pushbackc) {
 			c = dearmour->pushback[--dearmour->pushbackc];
 			if (dearmour->pushbackc == 0) {
-				(void) free(dearmour->pushback);
+				free(dearmour->pushback);
 				dearmour->pushback = NULL;
 			}
 		} else if (__ops_stacked_read(&c, 1, errors, readinfo,
@@ -565,13 +565,13 @@ process_dash_escaped(dearmour_t *dearmour,
 
 		alg = __ops_str_to_hash_alg(hashstr);
 		if (!__ops_is_hash_alg_supported(&alg)) {
-			(void) free(hash);
+			free(hash);
 			OPS_ERROR_1(errors, OPS_E_R_BAD_FORMAT,
 				"Unsupported hash algorithm '%s'", hashstr);
 			return -1;
 		}
 		if (alg == OPS_HASH_UNKNOWN) {
-			(void) free(hash);
+			free(hash);
 			OPS_ERROR_1(errors, OPS_E_R_BAD_FORMAT,
 				"Unknown hash algorithm '%s'", hashstr);
 			return -1;
@@ -687,6 +687,10 @@ add_header(dearmour_t *dearmour, const char *key, const char *value)
 		n = dearmour->headers.headerc;
 		dearmour->headers.headers = realloc(dearmour->headers.headers,
 				(n + 1) * sizeof(*dearmour->headers.headers));
+		if (dearmour->headers.headers == NULL) {
+			(void) fprintf(stderr, "add_header: bad alloc\n");
+			return 0;
+		}
 		dearmour->headers.headers[n].key = strdup(key);
 		dearmour->headers.headers[n].value = strdup(value);
 		dearmour->headers.headerc = n + 1;
@@ -702,13 +706,16 @@ parse_headers(dearmour_t *dearmour, __ops_error_t **errors,
 {
 	unsigned        nbuf;
 	unsigned        size;
+	unsigned	first = 1;
 	char           *buf;
-	unsigned   		first = 1;
 	int             ret = 1;
 
-	buf = NULL;
-	nbuf = size = 0;
-
+	nbuf = 0;
+	size = 80;
+	if ((buf = calloc(1, size)) == NULL) {
+		(void) fprintf(stderr, "parse_headers: bad calloc\n");
+		return -1;
+	}
 	for (;;) {
 		int             c;
 
@@ -731,8 +738,7 @@ parse_headers(dearmour_t *dearmour, __ops_error_t **errors,
 			}
 			buf[nbuf] = '\0';
 
-			s = strchr(buf, ':');
-			if (!s) {
+			if ((s = strchr(buf, ':')) == NULL) {
 				if (!first && !dearmour->allow_headers_without_gap) {
 					/*
 					 * then we have seriously malformed
@@ -776,13 +782,18 @@ parse_headers(dearmour_t *dearmour, __ops_error_t **errors,
 			if (size <= nbuf + 1) {
 				size += size + 80;
 				buf = realloc(buf, size);
+				if (buf == NULL) {
+					(void) fprintf(stderr, "bad alloc\n");
+					ret = -1;
+					goto end;
+				}
 			}
 			buf[nbuf++] = c;
 		}
 	}
 
 end:
-	(void) free(buf);
+	free(buf);
 
 	return ret;
 }
@@ -806,11 +817,11 @@ read4(dearmour_t *dearmour, __ops_error_t **errors,
 		}
 		l <<= 6;
 		if (c >= 'A' && c <= 'Z') {
-			l += c - 'A';
+			l += (unsigned long)(c - 'A');
 		} else if (c >= 'a' && c <= 'z') {
-			l += c - 'a' + 26;
+			l += (unsigned long)(c - 'a') + 26;
 		} else if (c >= '0' && c <= '9') {
-			l += c - '0' + 52;
+			l += (unsigned long)(c - '0') + 52;
 		} else if (c == '+') {
 			l += 62;
 		} else if (c == '/') {
@@ -1121,8 +1132,8 @@ got_minus:
 
 			if (strcmp(buf, "BEGIN PGP SIGNED MESSAGE") == 0) {
 				__ops_dup_headers(
-				&content.u.cleartext_head.headers,
-				&dearmour->headers);
+					&content.u.cleartext_head.headers,
+					&dearmour->headers);
 				CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
 					cbinfo,
 					&content);
@@ -1132,6 +1143,8 @@ got_minus:
 					return ret;
 				}
 			} else {
+				/* XXX Flexelint -  Assigning address of auto variable 'buf' to outer
+				    scope symbol 'content'*/
 				content.u.armour_header.type = buf;
 				content.u.armour_header.headers =
 						dearmour->headers;
@@ -1271,7 +1284,7 @@ reloop:
 static void 
 armoured_data_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -1326,7 +1339,7 @@ __ops_reader_pop_dearmour(__ops_stream_t *stream)
 	dearmour_t *dearmour;
 
 	dearmour = __ops_reader_get_arg(__ops_readinfo(stream));
-	(void) free(dearmour);
+	free(dearmour);
 	__ops_reader_pop(stream);
 }
 
@@ -1470,7 +1483,7 @@ encrypted_data_reader(void *dest,
 static void 
 encrypted_data_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -1504,7 +1517,7 @@ __ops_reader_pop_decrypt(__ops_stream_t *stream)
 
 	encrypted = __ops_reader_get_arg(__ops_readinfo(stream));
 	encrypted->decrypt->decrypt_finish(encrypted->decrypt);
-	(void) free(encrypted);
+	free(encrypted);
 	__ops_reader_pop(stream);
 }
 
@@ -1513,12 +1526,12 @@ __ops_reader_pop_decrypt(__ops_stream_t *stream)
 typedef struct {
 	/* boolean: 0 once we've done the preamble/MDC checks */
 	/* and are reading from the plaintext */
-	int             passed_checks;
-	unsigned char  *plaintext;
-	size_t          plaintext_available;
-	size_t          plaintext_offset;
-	__ops_region_t   *region;
-	__ops_crypt_t    *decrypt;
+	int              passed_checks;
+	unsigned char	*plaintext;
+	size_t           plaintext_available;
+	size_t           plaintext_offset;
+	__ops_region_t	*region;
+	__ops_crypt_t	*decrypt;
 } decrypt_se_ip_t;
 
 /*
@@ -1541,17 +1554,17 @@ se_ip_data_reader(void *dest_,
 	se_ip = __ops_reader_get_arg(readinfo);
 	if (!se_ip->passed_checks) {
 		unsigned char  *buf = NULL;
-		__ops_hash_t      hash;
 		unsigned char   hashed[OPS_SHA1_HASH_SIZE];
+		unsigned char  *preamble;
+		unsigned char  *plaintext;
+		unsigned char  *mdc;
+		unsigned char  *mdc_hash;
+		__ops_hash_t	hash;
 		size_t          b;
 		size_t          sz_preamble;
 		size_t          sz_mdc_hash;
 		size_t          sz_mdc;
 		size_t          sz_plaintext;
-		unsigned char  *preamble;
-		unsigned char  *plaintext;
-		unsigned char  *mdc;
-		unsigned char  *mdc_hash;
 
 		__ops_hash_any(&hash, OPS_HASH_SHA1);
 		hash.init(&hash);
@@ -1564,11 +1577,11 @@ se_ip_data_reader(void *dest_,
 		/* read entire SE IP packet */
 		if (!__ops_stacked_limited_read(buf, decrypted_region.length,
 				&decrypted_region, errors, readinfo, cbinfo)) {
-			(void) free(buf);
+			free(buf);
 			return -1;
 		}
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned int    i = 0;
+			unsigned	i;
 
 			fprintf(stderr, "\n\nentire SE IP packet (len=%d):\n",
 					decrypted_region.length);
@@ -1583,7 +1596,8 @@ se_ip_data_reader(void *dest_,
 		/* verify leading preamble */
 
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned int    i = 0;
+			unsigned	i;
+
 			fprintf(stderr, "\npreamble: ");
 			for (i = 0; i < se_ip->decrypt->blocksize + 2; i++)
 				fprintf(stderr, " 0x%02x", buf[i]);
@@ -1596,7 +1610,7 @@ se_ip_data_reader(void *dest_,
 				buf[b - 2], buf[b - 1], buf[b], buf[b + 1]);
 			OPS_ERROR(errors, OPS_E_PROTO_BAD_SYMMETRIC_DECRYPT,
 			"Bad symmetric decrypt when parsing SE IP packet");
-			(void) free(buf);
+			free(buf);
 			return -1;
 		}
 		/* Verify trailing MDC hash */
@@ -1604,7 +1618,7 @@ se_ip_data_reader(void *dest_,
 		sz_preamble = se_ip->decrypt->blocksize + 2;
 		sz_mdc_hash = OPS_SHA1_HASH_SIZE;
 		sz_mdc = 1 + 1 + sz_mdc_hash;
-		sz_plaintext = decrypted_region.length - sz_preamble - sz_mdc;
+		sz_plaintext = (decrypted_region.length - sz_preamble) - sz_mdc;
 
 		preamble = buf;
 		plaintext = buf + sz_preamble;
@@ -1612,7 +1626,7 @@ se_ip_data_reader(void *dest_,
 		mdc_hash = mdc + 2;
 
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned int    i = 0;
+			unsigned	i;
 
 			fprintf(stderr, "\nplaintext (len=%" PRIsize "u): ",
 				sz_plaintext);
@@ -1631,7 +1645,7 @@ se_ip_data_reader(void *dest_,
 		if (memcmp(mdc_hash, hashed, OPS_SHA1_HASH_SIZE) != 0) {
 			OPS_ERROR(errors, OPS_E_V_BAD_HASH,
 					"Bad hash in MDC packet");
-			(void) free(buf);
+			free(buf);
 			return 0;
 		}
 		/* all done with the checks */
@@ -1647,7 +1661,7 @@ se_ip_data_reader(void *dest_,
 
 		se_ip->passed_checks = 1;
 
-		(void) free(buf);
+		free(buf);
 	}
 	n = len;
 	if (n > se_ip->plaintext_available) {
@@ -1657,7 +1671,7 @@ se_ip_data_reader(void *dest_,
 	memcpy(dest_, se_ip->plaintext + se_ip->plaintext_offset, n);
 	se_ip->plaintext_available -= n;
 	se_ip->plaintext_offset += n;
-	len -= n;
+	/* len -= n; - not used at all, for info only */
 
 	return n;
 }
@@ -1668,8 +1682,8 @@ se_ip_data_destroyer(__ops_reader_t *readinfo)
 	decrypt_se_ip_t	*se_ip;
 
 	se_ip = __ops_reader_get_arg(readinfo);
-	(void) free(se_ip->plaintext);
-	(void) free(se_ip);
+	free(se_ip->plaintext);
+	free(se_ip);
 }
 
 /**
@@ -1697,7 +1711,7 @@ __ops_reader_pop_se_ip_data(__ops_stream_t *stream)
 	 * decrypt_se_ip_t
 	 * *se_ip=__ops_reader_get_arg(__ops_readinfo(stream));
 	 */
-	/* (void) free(se_ip); */
+	/* free(se_ip); */
 	__ops_reader_pop(stream);
 }
 
@@ -1751,7 +1765,7 @@ fd_reader(void *dest, size_t length, __ops_error_t **errors,
 static void 
 reader_fd_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -1803,7 +1817,7 @@ mem_reader(void *dest, size_t length, __ops_error_t **errors,
 static void 
 mem_destroyer(__ops_reader_t *readinfo)
 {
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /**
@@ -2078,8 +2092,8 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		/* if writer enabled, use it */
 		if (cbinfo->output) {
 			if (__ops_get_debug_level(__FILE__)) {
-				printf("litdata_cb: length is %d\n",
-				  content->litdata_body.length);
+				printf("litdata_cb: length is %u\n",
+					content->litdata_body.length);
 			}
 			__ops_write(cbinfo->output,
 					content->litdata_body.data,
@@ -2117,7 +2131,7 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		if (!cbinfo->cryptinfo.keyring) {
 			(void) fprintf(io->errs,
 				"pk_sesskey_cb: bad keyring\n");
-			return 0;
+			return (__ops_cb_ret_t)0;
 		}
 		cbinfo->cryptinfo.keydata =
 			__ops_getkeybyid(io, cbinfo->cryptinfo.keyring,
@@ -2167,7 +2181,7 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				content->get_seckey.pk_sesskey->key_id);
 		if (!cbinfo->cryptinfo.keydata ||
 		    !__ops_is_key_secret(cbinfo->cryptinfo.keydata)) {
-			return 0;
+			return (__ops_cb_ret_t)0;
 		}
 
 		keypair = cbinfo->cryptinfo.keydata;
@@ -2296,7 +2310,7 @@ mmap_destroyer(__ops_reader_t *readinfo)
 
 	(void) munmap(mem->mem, (unsigned)mem->size);
 	(void) close(mem->fd);
-	(void) free(__ops_reader_get_arg(readinfo));
+	free(__ops_reader_get_arg(readinfo));
 }
 
 /* set up the file to use mmap-ed memory if available, file IO otherwise */
@@ -2307,11 +2321,11 @@ __ops_reader_set_mmap(__ops_stream_t *stream, int fd)
 	struct stat	 st;
 
 	if (fstat(fd, &st) == 0) {
-		mem->size = st.st_size;
+		mem->size = (uint64_t)st.st_size;
 		mem->offset = 0;
 		mem->fd = fd;
 		mem->mem = mmap(NULL, (size_t)st.st_size, PROT_READ,
-				MAP_FILE | MAP_PRIVATE, fd, 0);
+				MAP_PRIVATE | MAP_FILE, fd, 0);
 		if (mem->mem == MAP_FAILED) {
 			__ops_reader_set(stream, fd_reader, reader_fd_destroyer,
 					mem);
