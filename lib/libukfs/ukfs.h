@@ -1,7 +1,7 @@
-/*	$NetBSD: ukfs.h,v 1.10 2009/10/02 09:32:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.11 2009/10/07 20:51:00 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Finnish Cultural Foundation.
@@ -55,7 +55,9 @@ __BEGIN_DECLS
 
 int		_ukfs_init(int);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
-			  int, void *, size_t);
+			    int, void *, size_t);
+struct ukfs	*ukfs_mount_disk(const char *, const char *, int,
+				 const char *, int, void *, size_t);
 int		ukfs_release(struct ukfs *, int);
 
 int		ukfs_opendir(struct ukfs *, const char *,
@@ -110,6 +112,22 @@ struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
 void		ukfs_setspecific(struct ukfs *, void *);
 void *		ukfs_getspecific(struct ukfs *);
+
+/* partition magic in device names */
+#define UKFS_PARTITION_SCANMAGIC "%PART:"
+#define UKFS_PARTITION_MAGICLEN (sizeof(UKFS_PARTITION_SCANMAGIC "a%")-1)
+#define UKFS_PARTITION_MAXPATHLEN (MAXPATHLEN+UKFS_PARTITION_MAGICLEN)
+#define UKFS_PARTITION_NONE (-1)
+#define UKFS_PARTITION_NA (-2)
+#define UKFS_USEPARTITION(a)						\
+	((a) != UKFS_PARTITION_NONE && (a) != UKFS_PARTITION_NA)
+#define UKFS_PARTITION_ARGVPROBE(part)					\
+do {									\
+	if (argc >= 3)							\
+		ukfs_partition_probe(argv[argc-2], &part);		\
+} while (/*CONSTCOND*/0)
+
+int		ukfs_partition_probe(char *, int *);
 
 /* dynamic loading of library modules */
 int		ukfs_modload(const char *);
