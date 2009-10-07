@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.29 2009/09/16 20:56:38 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.30 2009/10/07 21:02:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.29 2009/09/16 20:56:38 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.30 2009/10/07 21:02:57 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -236,8 +236,8 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
  * -ve values are the 1's compliments (so 0x7f isn't used!).
  *
  * This only leaves 63 byte values for +ve exponents - which isn't enough.
- * The largest 5 exponent values are used to hold a byte count of the
- * number of following bytes that contain 7 exponent bits per byte,
+ * The largest 4 exponent values are used to hold a byte count of the
+ * number of following bytes that contain 8 exponent bits per byte,
  * This lets us sort exponents from -2^31 to +2^31.
  *
  * The mantissa is stored 2 digits per byte offset by 0x40, for negative
@@ -245,13 +245,7 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
  *
  * Reverse sorts are done by inverting the sign of the number.
  */
-
-/* Large exponents are encoded EXP_EXC_BITS per byte, MAX_EXP_ENC is the
- * number of bytes required to contain an exponent. */
-#define EXP_ENC_BITS 7
-#define EXP_ENC_VAL  (1 << EXP_ENC_BITS)
-#define EXP_ENC_MASK (EXP_ENC_VAL - 1)
-#define MAX_EXP_ENC  ((int)(sizeof(int) * 8 + (EXP_ENC_BITS-1))/EXP_ENC_BITS)
+#define MAX_EXP_ENC  ((int)sizeof(int))
 
 static u_char *
 number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
@@ -318,29 +312,24 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 		/* Out or range for a single byte */
 		int c, t;
 		t = exponent > 0 ? exponent : -exponent;
-		/* Count how many 7-bit blocks are needed */
+		/* Count how many 8-bit bytes are needed */
 		for (c = 0; ; c++) {
-			t /= EXP_ENC_VAL;
+			t >>= 8;
 			if (t == 0)
 				break;
 		}
-		/* 'c' better be 0..4 here - but probably 0..2 */
-		t = c;
+		/* 'c' better be 0..3 here - but probably 0..1 */
 		/* Offset just outside valid range */
-		t += 0x40 - MAX_EXP_ENC;
+		t = c + 0x40 - MAX_EXP_ENC;
 		if (exponent < 0)
 			t = -t;
-		t += 0xc0;
-		*pos++ = negate ^ t;
-		/* now add each 7-bit block (offset 0x40..0xbf) */
-		for (; c >= 0; c--) {
-			t = exponent >> (c * EXP_ENC_BITS);
-			t = (t & EXP_ENC_MASK) + 0x40;
-			*pos++ = negate ^ t;
-		}
+		*pos++ = negate ^ (t + 0xc0);
+		/* now add each byte, most significant first */
+		for (; c >= 0; c--)
+			*pos++ = negate ^ (exponent >> (c * 8));
 	}
 
-	/* Now add mantissa, 2 digits per byte */
+	/* Finally add mantissa, 2 digits per byte */
 	for (last_nz_pos = pos; line < lineend; ) {
 		if (pos >= bufend)
 			return NULL;
