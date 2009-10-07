@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.6 2009/08/06 01:00:04 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.7 2009/10/07 20:59:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,7 @@ cleaner(void *arg)
 	the_argv[1] = "-D"; /* don't fork() & detach */
 	the_argv[2] = arg;
 
-	sleep(1); /* XXXtehsuck: wait until mount is complete is other thread */
+	sleep(1); /* XXXtehsuck: wait until mount is complete in other thread */
 	lfs_cleaner_main(3, __UNCONST(the_argv));
 
 	return NULL;
@@ -61,9 +61,10 @@ int
 main(int argc, char *argv[])
 {
 	struct ufs_args args;
-	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN], rawdev[MAXPATHLEN];
+	char canon_dev[UKFS_PARTITION_MAXPATHLEN], canon_dir[MAXPATHLEN];
+	char rawdev[MAXPATHLEN];
 	pthread_t cleanerthread;
-	int mntflags;
+	int mntflags, part;
 	int rv;
 
 	setprogname(argv[0]);
@@ -78,6 +79,10 @@ main(int argc, char *argv[])
 	if (ukfs_modload("librumpfs_lfs.so") != 1)
 		err(1, "modload lfs");
 
+	UKFS_PARTITION_ARGVPROBE(part);
+	if (part != UKFS_PARTITION_NONE) {
+		errx(1, "lfs does not currently support embedded partitions");
+	}
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 
 	/*
@@ -107,7 +112,7 @@ main(int argc, char *argv[])
 	cleaner(canon_dir);
 #endif
 
-	rv = p2k_run_fs(MOUNT_LFS, canon_dev, canon_dir, mntflags,
+	rv = p2k_run_diskfs(MOUNT_LFS, canon_dev, part, canon_dir, mntflags,
 	    &args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");
