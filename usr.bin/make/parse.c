@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.157 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2590,15 +2590,30 @@ Parse_File(const char *name, int fd)
 	    /*
 	     * For some reason - probably to make the parser impossible -
 	     * a ';' can be used to separate commands from dependencies.
-	     * No attempt is made to avoid ';' inside substitution patterns.
+	     * Attempt to avoid ';' inside substitution patterns.
 	     */
-	    for (cp = line; *cp != 0; cp++) {
-		if (*cp == '\\' && cp[1] != 0) {
-		    cp++;
-		    continue;
+	    {
+		int level = 0;
+
+		for (cp = line; *cp != 0; cp++) {
+		    if (*cp == '\\' && cp[1] != 0) {
+			cp++;
+			continue;
+		    }
+		    if (*cp == '$' &&
+			(cp[1] == '(' || cp[1] == '{')) {
+			level++;
+			continue;
+		    }
+		    if (level > 0) {
+			if (*cp == ')' || *cp == '}') {
+			    level--;
+			    continue;
+			}
+		    } else if (*cp == ';') {
+			break;
+		    }
 		}
-		if (*cp == ';')
-		    break;
 	    }
 	    if (*cp != 0)
 		/* Terminate the dependency list at the ';' */

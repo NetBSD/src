@@ -67,6 +67,7 @@ make: Graph cycles through `cycle.2.98'
 make: Graph cycles through `cycle.2.97'
 cycle.1.99
 cycle.1.99
+.for with :S;... OK
 Expect: Unknown modifier 'Z'
 make: Unknown modifier 'Z'
 VAR:Z=
