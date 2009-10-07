@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.28 2009/10/07 09:23:03 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.29 2009/10/07 09:42:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,10 +40,19 @@
  * I/O operation.  It also gives finer-grained control of how to
  * flush data.  Additionally, in case the rump kernel dumps core,
  * we get way less carnage.
+ *
+ * However, it is quite costly in writing large amounts of
+ * file data, since old contents cannot merely be overwritten, but
+ * must be paged in first before replacing (i.e. r/m/w).  Ideally,
+ * we should use directio.  The problem is that directio can fail
+ * silently causing improper file system semantics (i.e. unflushed
+ * data).  Therefore, default to mmap for now.  Even so, directio
+ * _should_ be safe and can be enabled by compiling this module
+ * with -DHAS_DIRECTIO.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.28 2009/10/07 09:23:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.29 2009/10/07 09:42:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -448,7 +457,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 			 * make sure a) we can mmap at all b) we have the
 			 * necessary VA available
 			 */
-			winsize = 1;
+			winsize = memwinsize;
 			win = getwindow(rblk, off + i*memwinsize, &winsize,
 			    &error); 
 			if (win) {
