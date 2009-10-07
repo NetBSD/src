@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_ext2fs.c,v 1.5 2009/10/07 20:11:05 pooka Exp $	*/
+/*	$NetBSD: rump_ext2fs.c,v 1.6 2009/10/07 20:59:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include <rump/p2k.h>
+#include <rump/ukfs.h> 
 
 #include "mount_ext2fs.h"
 
@@ -43,14 +44,16 @@ int
 main(int argc, char *argv[])
 {
 	struct ufs_args args;
-	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
-	int mntflags;
+	char canon_dev[UKFS_PARTITION_MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags, part;
 	int rv;
 
 	setprogname(argv[0]);
+
+	UKFS_PARTITION_ARGVPROBE(part);
 	mount_ext2fs_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
-	rv = p2k_run_fs(MOUNT_EXT2FS, canon_dev, canon_dir, mntflags, 
+	rv = p2k_run_diskfs(MOUNT_EXT2FS, canon_dev, part, canon_dir, mntflags, 
 		&args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");
