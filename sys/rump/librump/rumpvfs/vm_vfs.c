@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.11 2009/10/05 09:11:29 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.12 2009/10/07 10:23:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.11 2009/10/05 09:11:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.12 2009/10/07 10:23:50 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -77,28 +77,6 @@ uvm_aio_biodone(struct buf *bp)
 {
 
 	uvm_aio_aiodone(bp);
-}
-
-struct uvm_ractx *
-uvm_ra_allocctx(void)
-{
-
-	return NULL;
-}
-
-void
-uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
-	off_t reqoff, size_t reqsize)
-{
-
-	return;
-}
-
-void
-uvm_ra_freectx(struct uvm_ractx *ra)
-{
-
-	return;
 }
 
 /*
