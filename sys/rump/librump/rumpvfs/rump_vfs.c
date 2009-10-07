@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.27 2009/10/06 16:23:03 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.28 2009/10/07 09:50:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.27 2009/10/06 16:23:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.28 2009/10/07 09:50:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -118,69 +118,6 @@ rump_vfs_init(void)
 	} else {
 		syncdelay = 0;
 	}
-}
-
-struct mount *
-rump_mnt_init(struct vfsops *vfsops, int mntflags)
-{
-	struct mount *mp;
-
-	mp = kmem_zalloc(sizeof(struct mount), KM_SLEEP);
-
-	mp->mnt_op = vfsops;
-	mp->mnt_flag = mntflags;
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_unmounting);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	mp->mnt_refcnt = 1;
-	mp->mnt_vnodecovered = rootvnode;
-
-	mount_initspecific(mp);
-
-	return mp;
-}
-
-int
-rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
-{
-	struct vnode *rvp;
-	int rv;
-
-	rv = VFS_MOUNT(mp, path, data, dlen);
-	if (rv)
-		return rv;
-
-	(void) VFS_STATVFS(mp, &mp->mnt_stat);
-	rv = VFS_START(mp, 0);
-	if (rv) {
-		VFS_UNMOUNT(mp, MNT_FORCE);
-		return rv;
-	}
-
-	/*
-	 * XXX: set a root for lwp0.  This is strictly not correct,
-	 * but makes things work for single fs case without having
-	 * to manually call rump_rcvp_set().
-	 */
-	VFS_ROOT(mp, &rvp);
-	rump_rcvp_lwpset(rvp, rvp, &lwp0);
-	vput(rvp);
-
-	return rv;
-}
-
-void
-rump_mnt_destroy(struct mount *mp)
-{
-
-	/* See rcvp XXX above */
-	cwdi0.cwdi_rdir = NULL;
-	vref(rootvnode);
-	cwdi0.cwdi_cdir = rootvnode;
-
-	mount_finispecific(mp);
-	kmem_free(mp, sizeof(*mp));
 }
 
 struct componentname *
@@ -370,40 +307,6 @@ rump_vp_getref(struct vnode *vp)
 {
 
 	return vp->v_usecount;
-}
-
-void
-rump_vp_decref(struct vnode *vp)
-{
-
-	mutex_enter(&vp->v_interlock);
-	--vp->v_usecount;
-	mutex_exit(&vp->v_interlock);
-}
-
-/*
- * Really really recycle with a cherry on top.  We should be
- * extra-sure we can do this.  For example with p2k there is
- * no problem, since puffs in the kernel takes care of refcounting
- * for us.
- */
-void
-rump_vp_recycle_nokidding(struct vnode *vp)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_usecount = 1;
-	/*
-	 * XXX: NFS holds a reference to the root vnode, so don't clean
-	 * it out.  This is very wrong, but fixing it properly would
-	 * take too much effort for now
-	 */
-	if (vp->v_tag == VT_NFS && vp->v_vflag & VV_ROOT) {
-		mutex_exit(&vp->v_interlock);
-		return;
-	}
-	vclean(vp, DOCLOSE);
-	vrelel(vp, 0);
 }
 
 void
