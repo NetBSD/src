@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.38 2009/10/07 20:51:00 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.39 2009/10/07 20:53:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -323,10 +323,14 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 	const char *mountpath, int mntflags, void *arg, size_t alen)
 {
 	struct ukfs *fs = NULL;
-	int rv = 0, devfd;
+	int rv = 0, devfd = -1;
 	uint64_t devoff, devsize;
 	int mounted = 0;
 	int regged = 0;
+
+	/* XXX: gcc whine */
+	devoff = 0;
+	devsize = 0;
 
 	if (partition != UKFS_PARTITION_NA)
 		process_diskdevice(devpath, partition, mntflags & MNT_RDONLY,
