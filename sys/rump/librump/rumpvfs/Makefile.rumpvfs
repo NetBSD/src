@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.14 2009/10/04 13:29:36 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.15 2009/10/07 09:24:27 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -45,7 +45,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 
 # dev
 # firmload is technically part of rumpdev, but it's pure vfs in nature.
-SRCS+= firmload.c
+SRCS+=	firmload.c
 
 # compat syscalls
 SRCS+=	vfs_syscalls_50.c compat.c
