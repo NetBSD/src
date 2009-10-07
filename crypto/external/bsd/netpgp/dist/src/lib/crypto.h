@@ -61,7 +61,7 @@
 
 #define OPS_MIN_HASH_SIZE	16
 
-typedef void __ops_hash_init_t(__ops_hash_t *);
+typedef int __ops_hash_init_t(__ops_hash_t *);
 typedef void __ops_hash_add_t(__ops_hash_t *, const unsigned char *, unsigned);
 typedef unsigned __ops_hash_finish_t(__ops_hash_t *, unsigned char *);
 

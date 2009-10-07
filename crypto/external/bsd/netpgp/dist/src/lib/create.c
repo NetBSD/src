@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.20 2009/10/06 02:26:05 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -371,7 +371,10 @@ write_seckey_body(const __ops_seckey_t *key,
 			size = MIN(needed, OPS_SHA1_HASH_SIZE);
 
 			__ops_hash_any(&hash, key->hash_alg);
-			hash.init(&hash);
+			if (!hash.init(&hash)) {
+				(void) fprintf(stderr, "write_seckey_body: bad alloc\n");
+				return 0;
+			}
 
 			/* preload if iterating  */
 			for (j = 0; j < i; j++) {

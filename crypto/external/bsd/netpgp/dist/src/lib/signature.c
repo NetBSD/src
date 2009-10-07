@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.20 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -378,7 +378,12 @@ static void
 initialise_hash(__ops_hash_t *hash, const __ops_sig_t *sig)
 {
 	__ops_hash_any(hash, sig->info.hash_alg);
-	hash->init(hash);
+	if (!hash->init(hash)) {
+		(void) fprintf(stderr,
+			"initialise_hash: bad hash init\n");
+		/* just continue and die */
+		/* XXX - agc - no way to return failure */
+	}
 }
 
 static void 

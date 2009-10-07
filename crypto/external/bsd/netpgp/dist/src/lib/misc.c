@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.21 2009/10/06 02:39:53 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -439,7 +439,11 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		}
 
 		__ops_hash_md5(&md5);
-		md5.init(&md5);
+		if (!md5.init(&md5)) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad md5 alloc\n");
+				return;
+		}
 
 		n = (size_t) BN_num_bytes(key->key.rsa.n);
 		if ((bn = calloc(1, n)) == NULL) {
@@ -474,7 +478,11 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 			fprintf(stderr, "-> creating key fingerprint\n");
 		}
 		__ops_hash_sha1(&sha1);
-		sha1.init(&sha1);
+		if (!sha1.init(&sha1)) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad sha1 alloc\n");
+			return;
+		}
 
 		len = __ops_mem_len(mem);
 
@@ -669,7 +677,11 @@ __ops_hash(unsigned char *out, __ops_hash_alg_t alg, const void *in,
 	__ops_hash_t      hash;
 
 	__ops_hash_any(&hash, alg);
-	hash.init(&hash);
+	if (!hash.init(&hash)) {
+		(void) fprintf(stderr, "__ops_hash: bad alloc\n");
+		/* we'll just continue here - don't want to return a 0 hash */
+		/* XXX - agc - no way to return failure */
+	}
 	hash.add(&hash, in, length);
 	return hash.finish(&hash, out);
 }
@@ -708,7 +720,11 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 	}
 	/* init */
 	__ops_hash_any(&hash, OPS_HASH_SHA1);
-	hash.init(&hash);
+	if (!hash.init(&hash)) {
+		(void) fprintf(stderr, "__ops_calc_mdc_hash: bad alloc\n");
+		/* we'll just continue here - it will die anyway */
+		/* agc - XXX - no way to return failure */
+	}
 
 	/* preamble */
 	hash.add(&hash, preamble, sz_preamble);
@@ -771,16 +787,25 @@ __ops_random(void *dest, size_t length)
 void 
 __ops_memory_init(__ops_memory_t *mem, size_t needed)
 {
+	unsigned char	*temp;
+
 	mem->length = 0;
 	if (mem->buf) {
 		if (mem->allocated < needed) {
-			mem->buf = realloc(mem->buf, needed);
+			if ((temp = realloc(mem->buf, needed)) == NULL) {
+				(void) fprintf(stderr, "__ops_memory_init: bad alloc\n");
+			} else {
+				mem->buf = temp;
+				mem->allocated = needed;
+			}
+		}
+	} else {
+		if ((mem->buf = calloc(1, needed)) == NULL) {
+			(void) fprintf(stderr, "__ops_memory_init: bad alloc\n");
+		} else {
 			mem->allocated = needed;
 		}
-		return;
 	}
-	mem->buf = calloc(1, needed);
-	mem->allocated = needed;
 }
 
 /**
@@ -1100,9 +1125,13 @@ sum16_destroyer(__ops_reader_t *readinfo)
 void 
 __ops_reader_push_sum16(__ops_stream_t *stream)
 {
-	sum16_t    *arg = calloc(1, sizeof(*arg));
+	sum16_t    *arg;
 
-	__ops_reader_push(stream, sum16_reader, sum16_destroyer, arg);
+	if ((arg = calloc(1, sizeof(*arg))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_push_sum16: bad alloc\n");
+	} else {
+		__ops_reader_push(stream, sum16_reader, sum16_destroyer, arg);
+	}
 }
 
 /**
