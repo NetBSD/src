@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.16 2009/10/06 03:30:59 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.17 2009/10/07 16:19:51 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -102,14 +102,18 @@ test_seckey(const __ops_seckey_t *seckey)
 	RSA_free(test);
 }
 
-static void 
+static int 
 md5_init(__ops_hash_t *hash)
 {
 	if (hash->data) {
 		(void) fprintf(stderr, "md5_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(MD5_CTX));
+	if ((hash->data = calloc(1, sizeof(MD5_CTX))) == NULL) {
+		(void) fprintf(stderr, "md5_init: bad alloc\n");
+		return 0;
+	}
 	MD5_Init(hash->data);
+	return 1;
 }
 
 static void 
@@ -148,7 +152,7 @@ __ops_hash_md5(__ops_hash_t *hash)
 	*hash = md5;
 }
 
-static void 
+static int 
 sha1_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
@@ -157,8 +161,12 @@ sha1_init(__ops_hash_t *hash)
 	if (hash->data) {
 		(void) fprintf(stderr, "sha1_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(SHA_CTX));
+	if ((hash->data = calloc(1, sizeof(SHA_CTX))) == NULL) {
+		(void) fprintf(stderr, "sha1_init: bad alloc\n");
+		return 0;
+	}
 	SHA1_Init(hash->data);
+	return 1;
 }
 
 static void 
@@ -219,7 +227,7 @@ __ops_hash_sha1(__ops_hash_t *hash)
 	*hash = sha1;
 }
 
-static void 
+static int 
 sha256_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
@@ -228,8 +236,12 @@ sha256_init(__ops_hash_t *hash)
 	if (hash->data) {
 		(void) fprintf(stderr, "sha256_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(SHA256_CTX));
+	if ((hash->data = calloc(1, sizeof(SHA256_CTX))) == NULL) {
+		(void) fprintf(stderr, "sha256_init: bad alloc\n");
+		return 0;
+	}
 	SHA256_Init(hash->data);
+	return 1;
 }
 
 static void 
@@ -287,7 +299,7 @@ __ops_hash_sha256(__ops_hash_t *hash)
 /*
  * SHA384
  */
-static void 
+static int 
 sha384_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
@@ -296,8 +308,12 @@ sha384_init(__ops_hash_t *hash)
 	if (hash->data) {
 		(void) fprintf(stderr, "sha384_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(SHA512_CTX));
+	if ((hash->data = calloc(1, sizeof(SHA512_CTX))) == NULL) {
+		(void) fprintf(stderr, "sha512_init: bad alloc\n");
+		return 0;
+	}
 	SHA384_Init(hash->data);
+	return 1;
 }
 
 static void 
@@ -355,7 +371,7 @@ __ops_hash_sha384(__ops_hash_t *hash)
 /*
  * SHA512
  */
-static void 
+static int 
 sha512_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
@@ -364,8 +380,12 @@ sha512_init(__ops_hash_t *hash)
 	if (hash->data) {
 		(void) fprintf(stderr, "sha512_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(SHA512_CTX));
+	if ((hash->data = calloc(1, sizeof(SHA512_CTX))) == NULL) {
+		(void) fprintf(stderr, "sha512_init: bad alloc\n");
+		return 0;
+	}
 	SHA512_Init(hash->data);
+	return 1;
 }
 
 static void 
@@ -424,7 +444,7 @@ __ops_hash_sha512(__ops_hash_t *hash)
  * SHA224
  */
 
-static void 
+static int 
 sha224_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
@@ -433,8 +453,12 @@ sha224_init(__ops_hash_t *hash)
 	if (hash->data) {
 		(void) fprintf(stderr, "sha224_init: hash data non-null\n");
 	}
-	hash->data = calloc(1, sizeof(SHA256_CTX));
+	if ((hash->data = calloc(1, sizeof(SHA256_CTX))) == NULL) {
+		(void) fprintf(stderr, "sha256_init: bad alloc\n");
+		return 0;
+	}
 	SHA224_Init(hash->data);
+	return 1;
 }
 
 static void 
