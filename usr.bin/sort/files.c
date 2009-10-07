@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.39 2009/09/28 20:30:01 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.40 2009/10/07 21:03:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,11 +65,14 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.39 2009/09/28 20:30:01 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.40 2009/10/07 21:03:29 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <string.h>
+
+/* Align records in temporary files to avoid misaligned copies */
+#define REC_ROUNDUP(n) (((n) + sizeof (long) - 1) & ~(sizeof (long) - 1))
 
 static ssize_t	seq(FILE *, u_char **);
 
@@ -226,7 +229,7 @@ seq(FILE *fp, u_char **line)
 void
 putrec(const RECHEADER *rec, FILE *fp)
 {
-	EWRITE(rec, 1, offsetof(RECHEADER, data) + rec->length, fp);
+	EWRITE(rec, 1, REC_ROUNDUP(offsetof(RECHEADER, data) + rec->length), fp);
 }
 
 /*
@@ -244,7 +247,7 @@ putline(const RECHEADER *rec, FILE *fp)
 void
 putkeydump(const RECHEADER *rec, FILE *fp)
 {
-	EWRITE(rec, 1, offsetof(RECHEADER, data) + rec->offset, fp);
+	EWRITE(rec, 1, REC_ROUNDUP(offsetof(RECHEADER, data) + rec->offset), fp);
 }
 
 /*
@@ -253,19 +256,24 @@ putkeydump(const RECHEADER *rec, FILE *fp)
 int
 geteasy(FILE *fp, RECHEADER *rec, u_char *end, struct field *dummy2)
 {
+	length_t file_len;
 	int i;
+
+	(void)sizeof (char[offsetof(RECHEADER, length) == 0 ? 1 : -1]);
 
 	if ((u_char *)(rec + 1) > end)
 		return (BUFFEND);
-	if (!fread(rec, 1, offsetof(RECHEADER, data), fp)) {
+	if (!fread(&rec->length, 1, sizeof rec->length, fp)) {
 		fclose(fp);
 		return (EOF);
 	}
-	if (end - rec->data < (ptrdiff_t)rec->length) {
-		for (i = offsetof(RECHEADER, data) - 1; i >= 0;  i--)
+	file_len = REC_ROUNDUP(offsetof(RECHEADER, data) + rec->length);
+	if (end - rec->data < (ptrdiff_t)file_len) {
+		for (i = sizeof rec->length - 1; i >= 0;  i--)
 			ungetc(*((char *) rec + i), fp);
 		return (BUFFEND);
 	}
-	fread(rec->data, rec->length, 1, fp);
+
+	fread(&rec->length + 1, file_len - sizeof rec->length, 1, fp);
 	return (0);
 }
