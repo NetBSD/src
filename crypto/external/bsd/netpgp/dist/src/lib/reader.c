@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.23 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.24 2009/10/07 04:56:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -186,17 +186,21 @@ __ops_reader_push(__ops_stream_t *stream,
 		__ops_reader_destroyer_t *destroyer,
 		void *vp)
 {
-	__ops_reader_t *readinfo = calloc(1, sizeof(*readinfo));
+	__ops_reader_t *readinfo;
 
-	*readinfo = stream->readinfo;
-	(void) memset(&stream->readinfo, 0x0, sizeof(stream->readinfo));
-	stream->readinfo.next = readinfo;
-	stream->readinfo.parent = stream;
+	if ((readinfo = calloc(1, sizeof(*readinfo))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_push: bad alloc\n");
+	} else {
+		*readinfo = stream->readinfo;
+		(void) memset(&stream->readinfo, 0x0, sizeof(stream->readinfo));
+		stream->readinfo.next = readinfo;
+		stream->readinfo.parent = stream;
 
-	/* should copy accumulate flags from other reader? RW */
-	stream->readinfo.accumulate = readinfo->accumulate;
+		/* should copy accumulate flags from other reader? RW */
+		stream->readinfo.accumulate = readinfo->accumulate;
 
-	__ops_reader_set(stream, reader, destroyer, vp);
+		__ops_reader_set(stream, reader, destroyer, vp);
+	}
 }
 
 /**
@@ -297,8 +301,9 @@ push_back(dearmour_t *dearmour, const unsigned char *buf,
 
 	if (dearmour->pushback) {
 		(void) fprintf(stderr, "push_back: already pushed back\n");
+	} else if ((dearmour->pushback = calloc(1, length)) == NULL) {
+		(void) fprintf(stderr, "push_back: bad alloc\n");
 	} else {
-		dearmour->pushback = calloc(1, length);
 		for (n = 0; n < length; ++n) {
 			dearmour->pushback[n] = buf[(length - n) - 1];
 		}
@@ -532,11 +537,14 @@ __ops_dup_headers(__ops_headers_t *dest, const __ops_headers_t *src)
 {
 	unsigned        n;
 
-	dest->headers = calloc(src->headerc, sizeof(*dest->headers));
-	dest->headerc = src->headerc;
-	for (n = 0; n < src->headerc; ++n) {
-		dest->headers[n].key = strdup(src->headers[n].key);
-		dest->headers[n].value = strdup(src->headers[n].value);
+	if ((dest->headers = calloc(src->headerc, sizeof(*dest->headers))) == NULL) {
+		(void) fprintf(stderr, "__ops_dup_headers: bad alloc\n");
+	} else {
+		dest->headerc = src->headerc;
+		for (n = 0; n < src->headerc; ++n) {
+			dest->headers[n].key = strdup(src->headers[n].key);
+			dest->headers[n].value = strdup(src->headers[n].value);
+		}
 	}
 }
 
@@ -558,7 +566,11 @@ process_dash_escaped(dearmour_t *dearmour,
 	__ops_hash_t     *hash;
 	int             total;
 
-	hash = calloc(1, sizeof(*hash));
+	if ((hash = calloc(1, sizeof(*hash))) == NULL) {
+		OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
+			"process_dash_escaped: bad alloc");
+		return -1;
+	}
 	hashstr = __ops_find_header(&dearmour->headers, "Hash");
 	if (hashstr) {
 		__ops_hash_alg_t alg;
@@ -1012,13 +1024,15 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
 		     __ops_reader_t *readinfo,
 		     __ops_cbdata_t *cbinfo)
 {
-	dearmour_t *dearmour = __ops_reader_get_arg(readinfo);
-	__ops_packet_t content;
-	int             ret;
-	unsigned   first;
-	unsigned char  *dest = dest_;
-	int             saved = length;
+	__ops_packet_t	 content;
+	unsigned char	*dest = dest_;
+	dearmour_t	*dearmour;
+	unsigned	 first;
+	int		 saved;
+	int              ret;
 
+	dearmour = __ops_reader_get_arg(readinfo);
+	saved = length;
 	if (dearmour->eof64 && !dearmour->buffered) {
 		if (dearmour->state != OUTSIDE_BLOCK &&
 		    dearmour->state != AT_TRAILER_NAME) {
@@ -1313,18 +1327,21 @@ __ops_reader_push_dearmour(__ops_stream_t *parse_info)
 {
 	dearmour_t *dearmour;
 
-	dearmour = calloc(1, sizeof(*dearmour));
-	dearmour->seen_nl = 1;
-	/*
-	    dearmour->allow_headers_without_gap=without_gap;
-	    dearmour->allow_no_gap=no_gap;
-	    dearmour->allow_trailing_whitespace=trailing_whitespace;
-	*/
-	dearmour->expect_sig = 0;
-	dearmour->got_sig = 0;
+	if ((dearmour = calloc(1, sizeof(*dearmour))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_push_dearmour: bad alloc\n");
+	} else {
+		dearmour->seen_nl = 1;
+		/*
+		    dearmour->allow_headers_without_gap=without_gap;
+		    dearmour->allow_no_gap=no_gap;
+		    dearmour->allow_trailing_whitespace=trailing_whitespace;
+		*/
+		dearmour->expect_sig = 0;
+		dearmour->got_sig = 0;
 
-	__ops_reader_push(parse_info, armoured_data_reader,
+		__ops_reader_push(parse_info, armoured_data_reader,
 			armoured_data_destroyer, dearmour);
+	}
 }
 
 /**
@@ -1497,12 +1514,15 @@ __ops_reader_push_decrypt(__ops_stream_t *stream, __ops_crypt_t *decrypt,
 {
 	encrypted_t	*encrypted;
 	
-	encrypted = calloc(1, sizeof(*encrypted));
-	encrypted->decrypt = decrypt;
-	encrypted->region = region;
-	__ops_decrypt_init(encrypted->decrypt);
-	__ops_reader_push(stream, encrypted_data_reader,
+	if ((encrypted = calloc(1, sizeof(*encrypted))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_push_decrypted: bad alloc\n");
+	} else {
+		encrypted->decrypt = decrypt;
+		encrypted->region = region;
+		__ops_decrypt_init(encrypted->decrypt);
+		__ops_reader_push(stream, encrypted_data_reader,
 			encrypted_data_destroyer, encrypted);
+	}
 }
 
 /**
@@ -1572,7 +1592,10 @@ se_ip_data_reader(void *dest_,
 		__ops_init_subregion(&decrypted_region, NULL);
 		decrypted_region.length =
 			se_ip->region->length - se_ip->region->readc;
-		buf = calloc(1, decrypted_region.length);
+		if ((buf = calloc(1, decrypted_region.length)) == NULL) {
+			(void) fprintf(stderr, "se_ip_data_reader: bad alloc\n");
+			return -1;
+		}
 
 		/* read entire SE IP packet */
 		if (!__ops_stacked_limited_read(buf, decrypted_region.length,
@@ -1590,8 +1613,7 @@ se_ip_data_reader(void *dest_,
 				if (!((i + 1) % 8))
 					fprintf(stderr, "\n");
 			}
-			fprintf(stderr, "\n");
-			fprintf(stderr, "\n");
+			fprintf(stderr, "\n\n");
 		}
 		/* verify leading preamble */
 
@@ -1655,7 +1677,11 @@ se_ip_data_reader(void *dest_,
 				"se_ip_data_reader: bad plaintext\n");
 			return 0;
 		}
-		se_ip->plaintext = calloc(1, sz_plaintext);
+		if ((se_ip->plaintext = calloc(1, sz_plaintext)) == NULL) {
+			(void) fprintf(stderr,
+				"se_ip_data_reader: bad alloc\n");
+			return 0;
+		}
 		memcpy(se_ip->plaintext, plaintext, sz_plaintext);
 		se_ip->plaintext_available = sz_plaintext;
 
@@ -1693,12 +1719,16 @@ void
 __ops_reader_push_se_ip_data(__ops_stream_t *stream, __ops_crypt_t *decrypt,
 			   __ops_region_t * region)
 {
-	decrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
+	decrypt_se_ip_t *se_ip;
 
-	se_ip->region = region;
-	se_ip->decrypt = decrypt;
-	__ops_reader_push(stream, se_ip_data_reader, se_ip_data_destroyer,
+	if ((se_ip = calloc(1, sizeof(*se_ip))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_push_se_ip_data: bad alloc\n");
+	} else {
+		se_ip->region = region;
+		se_ip->decrypt = decrypt;
+		__ops_reader_push(stream, se_ip_data_reader, se_ip_data_destroyer,
 				se_ip);
+	}
 }
 
 /**
@@ -1776,10 +1806,14 @@ reader_fd_destroyer(__ops_reader_t *readinfo)
 void 
 __ops_reader_set_fd(__ops_stream_t *stream, int fd)
 {
-	mmap_reader_t *reader = calloc(1, sizeof(*reader));
+	mmap_reader_t *reader;
 
-	reader->fd = fd;
-	__ops_reader_set(stream, fd_reader, reader_fd_destroyer, reader);
+	if ((reader = calloc(1, sizeof(*reader))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_set_fd: bad alloc\n");
+	} else {
+		reader->fd = fd;
+		__ops_reader_set(stream, fd_reader, reader_fd_destroyer, reader);
+	}
 }
 
 /**************************************************************************/
@@ -1829,12 +1863,16 @@ void
 __ops_reader_set_memory(__ops_stream_t *stream, const void *buffer,
 		      size_t length)
 {
-	reader_mem_t *mem = calloc(1, sizeof(*mem));
+	reader_mem_t *mem;
 
-	mem->buffer = buffer;
-	mem->length = length;
-	mem->offset = 0;
-	__ops_reader_set(stream, mem_reader, mem_destroyer, mem);
+	if ((mem = calloc(1, sizeof(*mem))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_set_memory: bad alloc\n");
+	} else {
+		mem->buffer = buffer;
+		mem->length = length;
+		mem->offset = 0;
+		__ops_reader_set(stream, mem_reader, mem_destroyer, mem);
+	}
 }
 
 /**************************************************************************/
@@ -2317,10 +2355,14 @@ mmap_destroyer(__ops_reader_t *readinfo)
 void 
 __ops_reader_set_mmap(__ops_stream_t *stream, int fd)
 {
-	mmap_reader_t	*mem = calloc(1, sizeof(*mem));
+	mmap_reader_t	*mem;
 	struct stat	 st;
 
-	if (fstat(fd, &st) == 0) {
+	if (fstat(fd, &st) != 0) {
+		(void) fprintf(stderr, "__ops_reader_set_mmap: can't fstat\n");
+	} else if ((mem = calloc(1, sizeof(*mem))) == NULL) {
+		(void) fprintf(stderr, "__ops_reader_set_mmap: bad alloc\n");
+	} else {
 		mem->size = (uint64_t)st.st_size;
 		mem->offset = 0;
 		mem->fd = fd;

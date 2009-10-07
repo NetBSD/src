@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.21 2009/10/06 02:26:05 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.22 2009/10/07 04:56:51 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -267,7 +267,10 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return OPS_FINISHED;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		decrypt->seckey = calloc(1, sizeof(*decrypt->seckey));
+		if ((decrypt->seckey = calloc(1, sizeof(*decrypt->seckey))) == NULL) {
+			(void) fprintf(stderr, "decrypt_cb: bad alloc\n");
+			return OPS_FINISHED;
+		}
 		decrypt->seckey->checkhash = calloc(1, OPS_CHECKHASH_SIZE);
 		*decrypt->seckey = content->seckey;
 		return OPS_KEEP_MEMORY;
@@ -396,8 +399,11 @@ __ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 	if (dst->userid) {
 		free(dst->userid);
 	}
-	dst->userid = calloc(1, len + 1);
-	(void) memcpy(dst->userid, src->userid, len);
+	if ((dst->userid = calloc(1, len + 1)) == NULL) {
+		(void) fprintf(stderr, "__ops_copy_userid: bad alloc\n");
+	} else {
+		(void) memcpy(dst->userid, src->userid, len);
+	}
 	return dst;
 }
 
@@ -415,9 +421,12 @@ __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 	if (dst->raw) {
 		free(dst->raw);
 	}
-	dst->raw = calloc(1, src->length);
-	dst->length = src->length;
-	(void) memcpy(dst->raw, src->raw, src->length);
+	if ((dst->raw = calloc(1, src->length)) == NULL) {
+		(void) fprintf(stderr, "__ops_copy_packet: bad alloc\n");
+	} else {
+		dst->length = src->length;
+		(void) memcpy(dst->raw, src->raw, src->length);
+	}
 	return dst;
 }
 
