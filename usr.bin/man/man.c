@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.38 2009/10/06 06:43:15 cegger Exp $	*/
+/*	$NetBSD: man.c,v 1.39 2009/10/07 08:30:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.38 2009/10/06 06:43:15 cegger Exp $");
+__RCSID("$NetBSD: man.c,v 1.39 2009/10/07 08:30:31 cegger Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,6 +472,39 @@ main(int argc, char **argv)
 	exit(cleanup());
 }
 
+static int
+manual_find_buildkeyword(char *escpage, const char *fmt,
+	struct manstate *mp, glob_t *pg, size_t cnt)
+{
+	ENTRY *suffix;
+	int found;
+	char *p, buf[MAXPATHLEN];
+
+	found = 0;
+	/* Try the _build key words next. */
+	TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
+		for (p = suffix->s;
+		    *p != '\0' && !isspace((unsigned char)*p);
+		    ++p)
+			continue;
+		if (*p == '\0')
+			continue;
+
+		*p = '\0';
+		(void)snprintf(buf, sizeof(buf), fmt, escpage, suffix->s);
+		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
+			if (!mp->where)
+				build_page(p + 1, &pg->gl_pathv[cnt], mp);
+			*p = ' ';
+			found = 1;
+			break;
+		}      
+		*p = ' ';
+	}
+
+	return found;
+}
+
 /*
  * manual --
  *	Search the manuals for the pages.
@@ -509,6 +542,63 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 	}
 
 	*eptr = '\0';
+
+	/*
+	 * If 'page' is given with a full or relative path
+	 * then interpret it as a file specification.
+	 */
+	if ((page[0] == '/') || (page[0] == '.')) {
+		/* check if file actually exists */
+		(void)strlcpy(buf, escpage, sizeof(buf));
+		error = glob(buf, GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT, NULL, pg);
+		if (error != 0) {
+			if (error == GLOB_NOMATCH) {
+				goto notfound;
+			} else {
+				errx(EXIT_FAILURE, "glob failed");
+			}
+		}
+
+		if (pg->gl_matchc == 0)
+			goto notfound;
+
+		/* clip suffix for the suffix check below */
+		p = strrchr(escpage, '.');
+		if (p && p[0] == '.' && isdigit((unsigned char)p[1]))
+			p[0] = '\0';
+
+		found = 0;
+		for (cnt = pg->gl_pathc - pg->gl_matchc;
+		    cnt < pg->gl_pathc; ++cnt)
+		{
+			found = manual_find_buildkeyword(escpage, "%s%s",
+				mp, pg, cnt);
+			if (found) {
+				anyfound = 1;
+				if (!mp->all) {
+					/* Delete any other matches. */
+					while (++cnt< pg->gl_pathc)
+						pg->gl_pathv[cnt] = "";
+					break;
+				}
+				continue;
+			}
+
+			/* It's not a man page, forget about it. */
+			pg->gl_pathv[cnt] = "";
+		}
+
+  notfound:
+		if (!anyfound) {
+			if (addentry(mp->missinglist, page, 0) < 0) {
+				warn("malloc");
+				(void)cleanup();
+				exit(EXIT_FAILURE);
+			}
+		}
+		free(escpage);
+		return anyfound;
+	}
 
 	/* For each man directory in mymanpath ... */
 	TAILQ_FOREACH(mdir, &mp->mymanpath->entrylist, q) {
@@ -576,28 +666,8 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 				goto next;
 
 			/* Try the _build key words next. */
-			found = 0;
-			TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
-				for (p = suffix->s;
-				    *p != '\0' && !isspace((unsigned char)*p);
-				    ++p)
-					continue;
-				if (*p == '\0')
-					continue;
-				*p = '\0';
-				(void)snprintf(buf,
-				     sizeof(buf), "*/%s%s", escpage,
-				     suffix->s);
-				if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
-					if (!mp->where)
-						build_page(p + 1,
-						    &pg->gl_pathv[cnt], mp);
-					*p = ' ';
-					found = 1;
-					break;
-				}
-				*p = ' ';
-			}
+			found = manual_find_buildkeyword(escpage, "*/%s%s",
+				mp, pg, cnt);
 			if (found) {
 next:				anyfound = 1;
 				if (!mp->all) {
