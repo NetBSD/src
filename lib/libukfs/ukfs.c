@@ -1,7 +1,7 @@
-/*	$NetBSD: ukfs.c,v 1.37 2009/10/02 09:32:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.38 2009/10/07 20:51:00 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Finnish Cultural Foundation.
@@ -62,6 +62,8 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+
+#include "ukfs_int_disklabel.h"
 
 #define UKFS_MODE_DEFAULT 0555
 
@@ -187,62 +189,148 @@ rumpmkdir(struct ukfs *dummy, const char *path, mode_t mode)
 	return rump_sys_mkdir(path, mode);
 }
 
-struct ukfs *
-ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
-	int mntflags, void *arg, size_t alen)
+int
+ukfs_partition_probe(char *devpath, int *partition)
 {
-	struct stat sb;
-	struct ukfs *fs = NULL;
-	int rv = 0, devfd = -1, rdonly;
-	int mounted = 0;
-	int regged = 0;
-	int doreg = 0;
+	char *p;
+	int rv = 0;
 
 	/*
-	 * Try open and lock the device.  if we can't open it, assume
-	 * it's a file system which doesn't use a real device and let
-	 * it slide.  The mount will fail anyway if the fs requires a
-	 * device.
-	 *
-	 * XXX: strictly speaking this is not 100% correct, as virtual
-	 * file systems can use a device path which does exist and can
-	 * be opened.  E.g. tmpfs should be mountable multiple times
-	 * with "device" path "/swap", but now isn't.  But I think the
-	 * chances are so low that it's currently acceptable to let
-	 * this one slip.
+	 * Check for disklabel magic in pathname:
+	 * /regularpath%PART:<char>%\0
 	 */
-	rdonly = mntflags & MNT_RDONLY;
+#define MAGICADJ(p, n) (p+sizeof(UKFS_PARTITION_SCANMAGIC)-1+n)
+	if ((p = strstr(devpath, UKFS_PARTITION_SCANMAGIC)) != NULL
+	    && strlen(p) == UKFS_PARTITION_MAGICLEN
+	    && *(MAGICADJ(p,1)) == '%') {
+		if (*(MAGICADJ(p,0)) >= 'a' &&
+		    *(MAGICADJ(p,0)) < 'a' + UKFS_MAXPARTITIONS) {
+			*partition = *(MAGICADJ(p,0)) - 'a';
+			*p = '\0';
+		} else {
+			rv = EINVAL;
+		}
+	} else {
+		*partition = UKFS_PARTITION_NONE;
+	}
+
+	return rv;
+}
+
+/*
+ * Open the disk file and flock it.  Also, if we are operation on
+ * an embedded partition, find the partition offset and size from
+ * the disklabel.
+ *
+ * We hard-fail only in two cases:
+ *  1) we failed to get the partition info out (don't know what offset
+ *     to mount from)
+ *  2) we failed to flock the source device (i.e. flock() fails,
+ *     not e.g. open() before it)
+ *
+ * Otherwise we let the code proceed to mount and let the file system
+ * throw the proper error.  The only questionable bit is that if we
+ * soft-fail before flock() and mount does succeed...
+ *
+ * Returns: -1 error (errno reports error code)
+ *           0 success
+ *
+ * dfdp: -1  device is not open
+ *        n  device is open
+ */
+static int
+process_diskdevice(const char *devpath, int partition, int rdonly,
+	int *dfdp, uint64_t *devoff, uint64_t *devsize)
+{
+	char buf[65536];
+	struct stat sb;
+	struct ukfs_disklabel dl;
+	struct ukfs_partition *pp;
+	int rv = 0, devfd;
+
+	/* defaults */
+	*devoff = 0;
+	*devsize = RUMP_ETFS_SIZE_ENDOFF;
+	*dfdp = -1;
+
 	devfd = open(devpath, rdonly ? O_RDONLY : O_RDWR);
-	if (devfd != -1) {
-		if (fstat(devfd, &sb) == -1) {
-			close(devfd);
-			devfd = -1;
+	if (devfd == -1) {
+		if (UKFS_USEPARTITION(partition))
+			rv = errno;
+		goto out;
+	}
+
+	/*
+	 * Locate the disklabel and find the partition in question.
+	 */
+	if (UKFS_USEPARTITION(partition)) {
+		if (pread(devfd, buf, sizeof(buf), 0) == -1) {
 			rv = errno;
 			goto out;
 		}
 
-		/*
-		 * We do this only for non-block device since the
-		 * (NetBSD) kernel allows block device open only once.
-		 */
-		if (!S_ISBLK(sb.st_mode)) {
-			if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX))
-			    == -1) {
-				warnx("ukfs_mount: cannot get %s lock on "
-				    "device", rdonly ? "shared" : "exclusive");
-				close(devfd);
-				devfd = -1;
-				rv = errno;
-				goto out;
-			}
-		} else {
-			close(devfd);
-			devfd = -1;
+		if (ukfs_disklabel_scan(&dl, buf, sizeof(buf)) != 0) {
+			rv = ENOENT;
+			goto out;
 		}
-		doreg = 1;
-	} else if (errno != ENOENT) {
-		doreg = 1;
+
+		if (dl.d_npartitions < partition) {
+			rv = ENOENT;
+			goto out;
+		}
+
+		pp = &dl.d_partitions[partition];
+		*devoff = pp->p_offset << DEV_BSHIFT;
+		*devsize = pp->p_size << DEV_BSHIFT;
 	}
+
+	if (fstat(devfd, &sb) == -1) {
+		rv = errno;
+		goto out;
+	}
+
+	/*
+	 * We do this only for non-block device since the
+	 * (NetBSD) kernel allows block device open only once.
+	 * We also need to close the device for fairly obvious reasons.
+	 */
+	if (!S_ISBLK(sb.st_mode)) {
+		if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX)) == -1) {
+			warnx("ukfs_mount: cannot get %s lock on "
+			    "device", rdonly ? "shared" : "exclusive");
+			rv = errno;
+			goto out;
+		}
+	} else {
+		close(devfd);
+		devfd = -1;
+	}
+	*dfdp = devfd;
+
+ out:
+	if (rv) {
+		if (devfd != -1)
+			close(devfd);
+		errno = rv;
+		rv = -1;
+	}
+
+	return rv;
+}
+
+static struct ukfs *
+doukfsmount(const char *vfsname, const char *devpath, int partition,
+	const char *mountpath, int mntflags, void *arg, size_t alen)
+{
+	struct ukfs *fs = NULL;
+	int rv = 0, devfd;
+	uint64_t devoff, devsize;
+	int mounted = 0;
+	int regged = 0;
+
+	if (partition != UKFS_PARTITION_NA)
+		process_diskdevice(devpath, partition, mntflags & MNT_RDONLY,
+		    &devfd, &devoff, &devsize);
 
 	fs = malloc(sizeof(struct ukfs));
 	if (fs == NULL) {
@@ -259,13 +347,15 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		}
 	}
 
-	if (doreg) {
-		rv = rump_etfs_register(devpath, devpath, RUMP_ETFS_BLK);
+	if (partition != UKFS_PARTITION_NA) {
+		rv = rump_etfs_register_withsize(devpath, devpath,
+		    RUMP_ETFS_BLK, devoff, devsize);
 		if (rv) {
 			goto out;
 		}
 		regged = 1;
 	}
+
 	rv = rump_sys_mount(vfsname, mountpath, mntflags, arg, alen);
 	if (rv) {
 		rv = errno;
@@ -310,6 +400,24 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	}
 
 	return fs;
+}
+
+struct ukfs *
+ukfs_mount(const char *vfsname, const char *devpath,
+	const char *mountpath, int mntflags, void *arg, size_t alen)
+{
+
+	return doukfsmount(vfsname, devpath, UKFS_PARTITION_NA,
+	    mountpath, mntflags, arg, alen);
+}
+
+struct ukfs *
+ukfs_mount_disk(const char *vfsname, const char *devpath, int partition,
+	const char *mountpath, int mntflags, void *arg, size_t alen)
+{
+
+	return doukfsmount(vfsname, devpath, partition,
+	    mountpath, mntflags, arg, alen);
 }
 
 int
