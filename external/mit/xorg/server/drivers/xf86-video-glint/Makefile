@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/06/10 02:00:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/08 19:06:50 snj Exp $
 
 DRIVER=		xf86-video-glint
 DRIVER_NAME=	glint_drv
@@ -20,6 +20,6 @@ CPPFLAGS+=	-DPPC_MMIO_IS_BE
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 
 .include "../Makefile.xf86-driver"

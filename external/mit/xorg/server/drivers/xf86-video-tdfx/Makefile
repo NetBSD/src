@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/08/27 04:33:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2009/10/08 19:06:51 snj Exp $
 
 DRIVER=		xf86-video-tdfx
 DRIVER_NAME=	tdfx_drv
@@ -10,7 +10,7 @@ MAN=		tdfx.4
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 
 COPTS.tdfx_driver.c=      -Wno-error	# XXX deprecated
 
