@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.92 2009/10/08 09:48:44 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.93 2009/10/08 10:02:55 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14035,4 +14035,10 @@ sys/dev/ic/w83l518dvar.h.c			1.1
 
 	wb(4): Add a driver for Winbond W83L518D SD/MMC readers.
 	[jmcneill, ticket #1045]
+
+usr.sbin/postinstall/postinstall				1.98
+
+	Make the makedev step fail if either MAKEDEV or MAKEDEV.local
+	need to be updated.
+	[taca, ticket #1077]
 
