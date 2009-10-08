@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.118 2009/10/05 09:09:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.119 2009/10/08 00:36:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.118 2009/10/05 09:09:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.119 2009/10/08 00:36:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -256,7 +256,6 @@ rump__init(int rump_version)
 	module_init();
 	softint_init(&rump_cpu);
 	devsw_init();
-	secmodel_suser_start();
 
 	/* these do nothing if not present */
 	rump_vfs_init();
