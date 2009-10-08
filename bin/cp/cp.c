@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.52 2009/09/29 13:30:17 pooka Exp $ */
+/* $NetBSD: cp.c,v 1.53 2009/10/08 20:36:41 pooka Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.52 2009/09/29 13:30:17 pooka Exp $");
+__RCSID("$NetBSD: cp.c,v 1.53 2009/10/08 20:36:41 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: cp.c,v 1.52 2009/09/29 13:30:17 pooka Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
@@ -280,6 +281,26 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
+static int dnestack[MAXPATHLEN]; /* unlikely we'll have more nested dirs */
+static ssize_t dnesp;
+static void
+pushdne(int dne)
+{
+
+	dnestack[dnesp++] = dne;
+	assert(dnesp < MAXPATHLEN);
+}
+
+static int
+popdne(void)
+{
+	int rv;
+
+	rv = dnestack[--dnesp];
+	assert(dnesp >= 0);
+	return rv;
+}
+
 int
 copy(char *argv[], enum op type, int fts_options)
 {
@@ -291,7 +312,6 @@ copy(char *argv[], enum op type, int fts_options)
 	size_t nlen;
 	char *p, *target_mid;
 
-	dne = 0;
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
 	if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL)
@@ -398,8 +418,7 @@ copy(char *argv[], enum op type, int fts_options)
 				this_failed = any_failed = 1;
 				continue;
 			}
-			if (!S_ISDIR(curr->fts_statp->st_mode))
-				dne = 0;
+			dne = 0;
 		}
 
 		switch (curr->fts_statp->st_mode & S_IFMT) {
@@ -439,6 +458,7 @@ copy(char *argv[], enum op type, int fts_options)
 				 * 555) and not causing a permissions race.  If the
 				 * umask blocks owner writes, we fail..
 				 */
+				pushdne(dne);
 				if (dne) {
 					if (mkdir(to.p_path, 
 					    curr->fts_statp->st_mode | S_IRWXU) < 0)
@@ -462,16 +482,9 @@ copy(char *argv[], enum op type, int fts_options)
 				 */
 				if (pflag && setfile(curr->fts_statp, 0))
 					this_failed = any_failed = 1;
-				else if (dne)
+				else if ((dne = popdne()))
 					(void)chmod(to.p_path, 
 					    curr->fts_statp->st_mode);
-
-				/*
-				 * Since this is the second pass, we already
-				 * noted (and acted on) the existence of the
-				 * directory.
-				 */
-				dne = 0;
 			}
 			else
 			{
