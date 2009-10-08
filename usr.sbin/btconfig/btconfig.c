@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.20 2009/10/08 19:31:41 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.21 2009/10/08 19:50:03 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.20 2009/10/08 19:31:41 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.21 2009/10/08 19:50:03 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -47,15 +47,6 @@ __RCSID("$NetBSD: btconfig.c,v 1.20 2009/10/08 19:31:41 plunky Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-
-/* inquiry results storage */
-struct result {
-	bdaddr_t	bdaddr;
-	uint8_t		page_scan_rep_mode;
-	uint8_t		uclass[HCI_CLASS_SIZE];
-	uint16_t	clock_offset;
-	int8_t		rssi;
-};
 
 int main(int, char *[]);
 void badarg(const char *);
@@ -74,13 +65,12 @@ void tag(const char *);
 void print_features(const char *, uint8_t, uint8_t *);
 void print_features0(uint8_t *);
 void print_features1(uint8_t *);
+void print_result(int, struct bt_devinquiry *);
 void do_inquiry(void);
-void print_result(int, struct result *, int);
 
 void hci_req(uint16_t, uint8_t , void *, size_t, void *, size_t);
-#define save_value(opcode, cbuf, clen)	hci_req(opcode, 0, cbuf, clen, NULL, 0)
-#define load_value(opcode, rbuf, rlen)	hci_req(opcode, 0, NULL, 0, rbuf, rlen)
-#define hci_cmd(opcode, cbuf, clen)	hci_req(opcode, 0, cbuf, clen, NULL, 0)
+void save_value(uint16_t, void *, size_t);
+void load_value(uint16_t, void *, size_t);
 
 #define MAX_STR_SIZE	0xff
 
@@ -152,7 +142,7 @@ int opt_pin = 0;
 int opt_rssi = 0;			/* inquiry_with_rssi (obsolete flag) */
 int opt_imode = 0;			/* inquiry mode */
 int opt_inquiry = 0;
-#define INQUIRY_LENGTH		10	/* about 12 seconds */
+#define INQUIRY_LENGTH		10	/* seconds */
 #define INQUIRY_MAX_RESPONSES	10
 const char *imodes[] = { "std", "rssi", "ext", NULL };
 
@@ -391,88 +381,53 @@ tag(const char *f)
 }
 
 /*
- * basic HCI cmd request function with argument return.
- *
- * Normally, this will return on COMMAND_STATUS or COMMAND_COMPLETE for the given
- * opcode, but if event is given then it will ignore COMMAND_STATUS (unless error)
- * and wait for the specified event.
- *
- * if rbuf/rlen is given, results will be copied into the result buffer for
- * COMMAND_COMPLETE/event responses.
+ * basic HCI request wrapper with error check
  */
 void
-hci_req(uint16_t opcode, uint8_t event, void *cbuf, size_t clen, void *rbuf, size_t rlen)
+hci_req(uint16_t opcode, uint8_t event, void *cbuf, size_t clen,
+    void *rbuf, size_t rlen)
 {
-	uint8_t msg[sizeof(hci_cmd_hdr_t) + HCI_CMD_PKT_SIZE];
-	hci_event_hdr_t *ep;
-	hci_cmd_hdr_t *cp;
+	struct bt_devreq req;
 
-	cp = (hci_cmd_hdr_t *)msg;
-	cp->type = HCI_CMD_PKT;
-	cp->opcode = opcode = htole16(opcode);
-	cp->length = clen = MIN(clen, sizeof(msg) - sizeof(hci_cmd_hdr_t));
+	req.opcode = opcode;
+	req.event = event;
+	req.cparam = cbuf;
+	req.clen = clen;
+	req.rparam = rbuf;
+	req.rlen = rlen;
 
-	if (clen) memcpy((cp + 1), cbuf, clen);
+	if (bt_devreq(hci, &req, 10) == -1)
+		err(EXIT_FAILURE, "cmd (%02x|%03x)",
+		    HCI_OGF(opcode), HCI_OCF(opcode));
 
-	if (send(hci, msg, sizeof(hci_cmd_hdr_t) + clen, 0) < 0)
-		err(EXIT_FAILURE, "HCI Send");
+	if (event == 0 && rlen > 0 && ((uint8_t *)rbuf)[0] != 0)
+		errx(EXIT_FAILURE, "cmd (%02x|%03x): status 0x%02x",
+		    HCI_OGF(opcode), HCI_OCF(opcode), ((uint8_t *)rbuf)[0]);
+}
 
-	ep = (hci_event_hdr_t *)msg;
-	for(;;) {
-		if (recv(hci, msg, sizeof(msg), 0) < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
+/*
+ * write value to device with opcode.
+ * provide a small response buffer so that the status can be checked
+ */
+void
+save_value(uint16_t opcode, void *cbuf, size_t clen)
+{
+	uint8_t buf[1];
 
-			err(EXIT_FAILURE, "HCI Recv");
-		}
+	hci_req(opcode, 0, cbuf, clen, buf, sizeof(buf));
+}
 
-		if (ep->event == HCI_EVENT_COMMAND_STATUS) {
-			hci_command_status_ep *cs;
+/*
+ * read value from device with opcode.
+ * use our own buffer and only return the value from the response packet
+ */
+void
+load_value(uint16_t opcode, void *rbuf, size_t rlen)
+{
+	uint8_t buf[UINT8_MAX];
 
-			cs = (hci_command_status_ep *)(ep + 1);
-			if (cs->opcode != opcode)
-				continue;
-
-			if (cs->status)
-				errx(EXIT_FAILURE,
-				    "HCI cmd (%4.4x) failed (status %d)",
-				    opcode, cs->status);
-
-			if (event == 0)
-				break;
-
-			continue;
-		}
-
-		if (ep->event == HCI_EVENT_COMMAND_COMPL) {
-			hci_command_compl_ep *cc;
-			uint8_t *ptr;
-
-			cc = (hci_command_compl_ep *)(ep + 1);
-			if (cc->opcode != opcode)
-				continue;
-
-			if (rbuf == NULL)
-				break;
-
-			ptr = (uint8_t *)(cc + 1);
-			if (*ptr)
-				errx(EXIT_FAILURE,
-				    "HCI cmd (%4.4x) failed (status %d)",
-				    opcode, *ptr);
-
-			memcpy(rbuf, ++ptr, rlen);
-			break;
-		}
-
-		if (ep->event == event) {
-			if (rbuf == NULL)
-				break;
-
-			memcpy(rbuf, (ep + 1), rlen);
-			break;
-		}
-	}
+	hci_req(opcode, 0, NULL, 0, buf, sizeof(buf));
+	memcpy(rbuf, buf + 1, rlen);
 }
 
 int
@@ -520,7 +475,7 @@ config_unit(void)
 	}
 
 	if (opt_reset) {
-		hci_cmd(HCI_CMD_RESET, NULL, 0);
+		hci_req(HCI_CMD_RESET, 0, NULL, 0, NULL, 0);
 
 		btr.btr_flags |= BTF_INIT;
 		if (ioctl(hci, SIOCSBTFLAGS, &btr) < 0)
@@ -531,9 +486,9 @@ config_unit(void)
 		 * carry out these commands, we do them manually
 		 * just so we can wait for completion.
 		 */
-		hci_cmd(HCI_CMD_READ_BDADDR, NULL, 0);
-		hci_cmd(HCI_CMD_READ_BUFFER_SIZE, NULL, 0);
-		hci_cmd(HCI_CMD_READ_LOCAL_FEATURES, NULL, 0);
+		hci_req(HCI_CMD_READ_BDADDR, 0, NULL, 0, NULL, 0);
+		hci_req(HCI_CMD_READ_BUFFER_SIZE, 0, NULL, 0, NULL, 0);
+		hci_req(HCI_CMD_READ_LOCAL_FEATURES, 0, NULL, 0, NULL, 0);
 
 		if (set_unit(SIOCGBTINFO) < 0)
 			err(EXIT_FAILURE, "%s", btr.btr_name);
@@ -790,15 +745,17 @@ print_info(int level)
 	if ((buf[7] & HCI_LMP_EXTENDED_FEATURES) == 0) {
 		print_features("\tfeatures:", 0, buf);
 	} else {
-		buf[0] = 0;
+		hci_read_local_extended_features_rp rp;
+
+		rp.page = 0;
 
 		do {
 			hci_req(HCI_CMD_READ_LOCAL_EXTENDED_FEATURES, 0,
-				buf, 1,
-				buf, HCI_FEATURES_SIZE + 2);
+			    &rp.page, sizeof(rp.page), &rp, sizeof(rp));
 
-			print_features("\tfeatures page#%d:", buf[0], buf + 2);
-		} while (buf[0]++ < buf[1]);
+			print_features("\tfeatures (page %d):",
+			    rp.page, rp.features);
+		} while (rp.page++ < rp.max_page);
 	}
 }
 
@@ -1122,15 +1079,13 @@ print_voice(int level)
 }
 
 void
-print_result(int num, struct result *r, int rssi)
+print_result(int num, struct bt_devinquiry *r)
 {
 	hci_remote_name_req_cp ncp;
 	hci_remote_name_req_compl_ep nep;
 	struct hostent *hp;
 
-	printf("%3d: bdaddr %s",
-			num,
-			bt_ntoa(&r->bdaddr, NULL));
+	printf("%3d: bdaddr %s", num, bt_ntoa(&r->bdaddr, NULL));
 
 	hp = bt_gethostbyaddr((const char *)&r->bdaddr, sizeof(bdaddr_t), AF_BLUETOOTH);
 	if (hp != NULL)
@@ -1140,7 +1095,7 @@ print_result(int num, struct result *r, int rssi)
 
 	memset(&ncp, 0, sizeof(ncp));
 	bdaddr_copy(&ncp.bdaddr, &r->bdaddr);
-	ncp.page_scan_rep_mode = r->page_scan_rep_mode;
+	ncp.page_scan_rep_mode = r->pscan_rep_mode;
 	ncp.clock_offset = r->clock_offset;
 
 	hci_req(HCI_CMD_REMOTE_NAME_REQ,
@@ -1149,25 +1104,18 @@ print_result(int num, struct result *r, int rssi)
 		&nep, sizeof(nep));
 
 	printf("   : name \"%s\"\n", nep.name);
-	print_class("   : class", r->uclass);
-	printf("   : page scan rep mode 0x%02x\n", r->page_scan_rep_mode);
+	print_class("   : class", r->dev_class);
+	printf("   : page scan rep mode 0x%02x\n", r->pscan_rep_mode);
 	printf("   : clock offset %d\n", le16toh(r->clock_offset));
-
-	if (rssi)
-		printf("   : rssi %d\n", r->rssi);
-
+	printf("   : rssi %d\n", r->rssi);
 	printf("\n");
 }
 
 void
 do_inquiry(void)
 {
-	uint8_t buf[HCI_EVENT_PKT_SIZE];
-	struct result result[INQUIRY_MAX_RESPONSES];
-	hci_inquiry_cp inq;
-	struct hci_filter f;
-	hci_event_hdr_t *hh;
-	int i, j, num, rssi;
+	struct bt_devinquiry *result;
+	int i, num;
 
 	if (opt_inquiry == 0)
 		return;
@@ -1175,97 +1123,18 @@ do_inquiry(void)
 	printf("Device Discovery from device: %s ...", btr.btr_name);
 	fflush(stdout);
 
-	memset(&f, 0, sizeof(f));
-	hci_filter_set(HCI_EVENT_COMMAND_STATUS, &f);
-	hci_filter_set(HCI_EVENT_COMMAND_COMPL, &f);
-	hci_filter_set(HCI_EVENT_INQUIRY_RESULT, &f);
-	hci_filter_set(HCI_EVENT_RSSI_RESULT, &f);
-	hci_filter_set(HCI_EVENT_INQUIRY_COMPL, &f);
-	hci_filter_set(HCI_EVENT_REMOTE_NAME_REQ_COMPL, &f);
-	hci_filter_set(HCI_EVENT_READ_REMOTE_FEATURES_COMPL, &f);
-	if (setsockopt(hci, BTPROTO_HCI, SO_HCI_EVT_FILTER, &f, sizeof(f)) < 0)
-		err(EXIT_FAILURE, "Can't set event filter");
+	num = bt_devinquiry(btr.btr_name, INQUIRY_LENGTH,
+	    INQUIRY_MAX_RESPONSES, &result);
 
-	/* General Inquiry LAP is 0x9e8b33 */
-	inq.lap[0] = 0x33;
-	inq.lap[1] = 0x8b;
-	inq.lap[2] = 0x9e;
-	inq.inquiry_length = INQUIRY_LENGTH;
-	inq.num_responses = INQUIRY_MAX_RESPONSES;
-
-	hci_cmd(HCI_CMD_INQUIRY, &inq, sizeof(inq));
-
-	num = 0;
-	rssi = 0;
-	hh = (hci_event_hdr_t *)buf;
-
-	for (;;) {
-		if (recv(hci, buf, sizeof(buf), 0) <= 0)
-			err(EXIT_FAILURE, "recv");
-
-		if (hh->event == HCI_EVENT_INQUIRY_COMPL)
-			break;
-
-		if (hh->event == HCI_EVENT_INQUIRY_RESULT) {
-			hci_inquiry_result_ep *ep = (hci_inquiry_result_ep *)(hh + 1);
-			hci_inquiry_response *ir = (hci_inquiry_response *)(ep + 1);
-
-			for (i = 0 ; i < ep->num_responses ; i++) {
-				if (num == INQUIRY_MAX_RESPONSES)
-					break;
-
-				/* some devices keep responding, ignore dupes */
-				for (j = 0 ; j < num ; j++)
-					if (bdaddr_same(&result[j].bdaddr, &ir[i].bdaddr))
-						break;
-
-				if (j < num)
-					continue;
-
-				bdaddr_copy(&result[num].bdaddr, &ir[i].bdaddr);
-				memcpy(&result[num].uclass, &ir[i].uclass, HCI_CLASS_SIZE);
-				result[num].page_scan_rep_mode = ir[i].page_scan_rep_mode;
-				result[num].clock_offset = ir[i].clock_offset;
-				result[num].rssi = 0;
-				num++;
-				printf(".");
-				fflush(stdout);
-			}
-			continue;
-		}
-
-		if (hh->event == HCI_EVENT_RSSI_RESULT) {
-			hci_rssi_result_ep *ep = (hci_rssi_result_ep *)(hh + 1);
-			hci_rssi_response *rr = (hci_rssi_response *)(ep + 1);
-
-			for (i = 0 ; i < ep->num_responses ; i++) {
-				if (num == INQUIRY_MAX_RESPONSES)
-					break;
-
-				/* some devices keep responding, ignore dupes */
-				for (j = 0 ; j < num ; j++)
-					if (bdaddr_same(&result[j].bdaddr, &rr[i].bdaddr))
-						break;
-
-				if (j < num)
-					continue;
-
-				bdaddr_copy(&result[num].bdaddr, &rr[i].bdaddr);
-				memcpy(&result[num].uclass, &rr[i].uclass, HCI_CLASS_SIZE);
-				result[num].page_scan_rep_mode = rr[i].page_scan_rep_mode;
-				result[num].clock_offset = rr[i].clock_offset;
-				result[num].rssi = rr[i].rssi;
-				rssi = 1;
-				num++;
-				printf(".");
-				fflush(stdout);
-			}
-			continue;
-		}
+	if (num == -1) {
+		printf("failed\n");
+		err(EXIT_FAILURE, "%s", btr.btr_name);
 	}
 
 	printf(" %d response%s\n", num, (num == 1 ? "" : "s"));
 
 	for (i = 0 ; i < num ; i++)
-		print_result(i + 1, &result[i], rssi);
+		print_result(i + 1, &result[i]);
+
+	free(result);
 }
