@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.158 2009/10/01 11:51:03 tron Exp $
+.\"	$NetBSD: contents,v 1.159 2009/10/08 05:28:22 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,24 +212,44 @@ A kernel suitable for booting on O2.
 .\}
 .
 .if \n[evbppc] \{\
-.			It Pa netbsd-OPENBLOCKS266.gz
-A gzipped
-.Nx
-kernel (in ELF format) for the Plat'Home OpenBlockS266 microserver.
-.			It Pa netbsd-WALNUT.gz
-A gzipped
-.Nx
-kernel (in ELF format) for the IBM PowerPC 405GP based Walnut evaluation board.
-.			It Pa netbsd.img-WALNUT.gz
+.			It Pa netbsd-EV64260.gz
+A gzipped kernel (in ELF format) for the Marvell EV-64260.
+.			It Pa netbsd.img-EV64260.gz
 Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-EXPLORA451.gz
+A gzipped kernel (in ELF format) for the NCD Explora451 NC.
+.			It Pa netbsd.img-EXPLORA451.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-INSTALL_OPENBLOCKS266.gz
+A gzipped install kernel (in ELF format) for the Plat'Home OpenBlockS266
+microserver.
+.			It Pa netbsd-INSTALL_OPENBLOCKS266.img.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-INSTALL_OPENBLOCKS266.symbols.gz
+Symbols for
+.Pa netbsd-INSTALL_OPENBLOCKS266.gz .
 .			It Pa netbsd-INSTALL_WALNUT.gz
-A gzipped
-.Nx
-kernel (ELF format) containing code for everything supported in this
-release.
-It also includes a RAM-disk installer with
-.Ic sysinst .
+A gzipped install kernel (in ELF format) for the IBM PowerPC 405GP Walnut
+evaluation board.
 .			It Pa netbsd-INSTALL_WALNUT.img.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-INSTALL_WALNUT.symbols.gz
+Symbols for
+.Pa netbsd-INSTALL_WALNUT.gz .
+.			It Pa netbsd-OPENBLOCKS200.gz
+A gzipped kernel (in ELF format) for the Plat'Home OpenBlockS200.
+.			It Pa netbsd.img-OPENBLOCKS200.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-OPENBLOCKS266.gz
+A gzipped kernel (in ELF format) for the Plat'Home OpenBlockS266 microserver.
+.			It Pa netbsd.img-OPENBLOCKS266.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd-PMPPC.gz
+A gzipped kernel (in ELF format) for Artesyn PM/PPC boards.
+.			It Pa netbsd-WALNUT.gz
+A gzipped kernel (in ELF format) for the IBM PowerPC 405GP Walnut
+evaluation board.
+.			It Pa netbsd.img-WALNUT.gz
 Same as the above, but in the format expected by the firmware.
 .\}
 .
@@ -883,6 +903,26 @@ kernel, which will use multiple processors (if present), named
 .\}
 .el \{\
 .ie \n[evbppc] \{\
+.It Sy kern-EV64260
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+These kernels are specific to the Marvell EV-64260.
+.showsize 4 8
+.It Sy kern-EXPLORA451
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+These kernels are specific to the NCD Explora451 NC.
+.showsize 4 8
 .It Sy kern-OPENBLOCKS266
 This set contains a
 .Nx*M
@@ -892,6 +932,16 @@ kernel in ELF format named
 and the same kernel in the format needed by the bootloader as
 .Pa /netbsd.img .
 These kernels are specific to the Plat'Home OpenBlockS266 microserver.
+.showsize 4 8
+.It Sy kern-PMPPC
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+These kernels are specific to Artesyn PM/PPC boards.
 .showsize 4 8
 .It Sy kern-WALNUT
 This set contains a
