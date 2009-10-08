@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.1 2009/09/24 21:30:42 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.2 2009/10/08 00:34:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.1 2009/09/24 21:30:42 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.2 2009/10/08 00:34:54 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -61,15 +61,16 @@ process(const char *soname)
 
 	mi = dlsym(handle, "__start_link_set_modules");
 	if (!mi)
-		return;
+		goto out;
 	mi_end = dlsym(handle, "__stop_link_set_modules");
 	if (!mi_end)
-		return;
+		goto out;
 
 	for (; mi < mi_end; mi++)
 		rump_module_init(*mi, NULL);
 	assert(mi == mi_end);
 
+ out:
 	dlclose(handle);
 }
 
