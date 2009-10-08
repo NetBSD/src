@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.23 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: atexit.c,v 1.24 2009/10/08 16:33:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.23 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.24 2009/10/08 16:33:45 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -219,13 +219,11 @@ again:
 		} else
 			prevp = &ah->ah_next;
 	}
-
 	call_depth--;
+	mutex_unlock(&atexit_mutex);
 
 	if (call_depth > 0)
 		return;
-
-	mutex_unlock(&atexit_mutex);
 
 	/*
 	 * Now free any dead handlers.  Do this even if we're about to
