@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.91 2009/10/08 08:15:57 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.92 2009/10/08 09:48:44 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14016,4 +14016,23 @@ usr.bin/man/man.c				1.39
 
 	Allow man(1) to accept a pathname to a man file (e.g. man ./man.1)
 	[cegger, ticket #1076]
+
+distrib/sets/lists/man/mi			1.1160
+share/man/man4/Makefile	 			1.499
+share/man/man4/wb.4				1.1-1.2
+share/man/man4/ld.4				1.17
+sys/arch/i386/conf/ALL				1.215-1.216 + patch
+sys/arch/i386/conf/GENERIC			1.946-1.947 + patch
+sys/arch/amd64/conf/GENERIC			1.254-1.256 + patch
+sys/conf/files					1.958
+sys/dev/acpi/files.acpi	 			1.59
+sys/dev/acpi/wb_acpi.c				1.1
+sys/dev/ic/w83l518d.c				1.1
+sys/dev/ic/w83l518d_sdmmc.c			1.1
+sys/dev/ic/w83l518d_sdmmc.h			1.1
+sys/dev/ic/w83l518dreg.h			1.1
+sys/dev/ic/w83l518dvar.h.c			1.1
+
+	wb(4): Add a driver for Winbond W83L518D SD/MMC readers.
+	[jmcneill, ticket #1045]
 
