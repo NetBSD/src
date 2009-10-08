@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.33 2009/09/05 14:09:55 tsutsui Exp $ */
+/*	$NetBSD: if_age.c,v 1.34 2009/10/08 08:57:19 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.33 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.34 2009/10/08 08:57:19 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1052,6 +1052,7 @@ age_start(struct ifnet *ifp)
 		if (age_encap(sc, &m_head)) {
 			if (m_head == NULL)
 				break;
+			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1204,30 +1205,12 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	if (error == EFBIG) {
 		error = 0;
 
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
+		*m_head = m_pullup(*m_head, MHLEN);
+		if (*m_head == NULL) {
 			printf("%s: can't defrag TX mbuf\n", 
 			    device_xname(sc->sc_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
 			return ENOBUFS;
 		}
-
-		M_COPY_PKTHDR(m, *m_head);
-		if ((*m_head)->m_pkthdr.len > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
-				m_freem(*m_head);
-				m_freem(m);
-				*m_head = NULL;
-				return ENOBUFS;
-			}
-		}
-		m_copydata(*m_head, 0, (*m_head)->m_pkthdr.len,
-		    mtod(m, void *));
-		m_freem(*m_head);
-		m->m_len = m->m_pkthdr.len;
-		*m_head = m;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
 		  	    BUS_DMA_NOWAIT);
@@ -1235,10 +1218,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 		if (error != 0) {
 			printf("%s: could not load defragged TX mbuf\n",
 			    device_xname(sc->sc_dev));
-			if (!error) {
-				bus_dmamap_unload(sc->sc_dmat, map);
-				error = EFBIG;
-			}
 			m_freem(*m_head);
 			*m_head = NULL;
 			return error;
