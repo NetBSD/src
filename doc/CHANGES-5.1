@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.90 2009/10/07 19:09:57 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.91 2009/10/08 08:15:57 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14006,8 +14006,14 @@ sys/dev/sdmmc/sdmmcvar.h			1.1
 	Add sdmmc framework
 	[jmcneill, ticket #1044]
 
-lib/libc/locale/generic_lc_all.c				1.3
+lib/libc/locale/generic_lc_all.c		1.3
 
 	Fix lib/42124: setlocale(3) never returns NULL with nonexistent locale.
 	[tnozaki, ticket #1069]
+
+usr.bin/man/man.1				1.21
+usr.bin/man/man.c				1.39
+
+	Allow man(1) to accept a pathname to a man file (e.g. man ./man.1)
+	[cegger, ticket #1076]
 
