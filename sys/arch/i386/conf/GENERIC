@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.915.2.8 2009/10/05 11:37:13 sborrill Exp $
+# $NetBSD: GENERIC,v 1.915.2.9 2009/10/08 09:47:09 sborrill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.915.2.8 $"
+#ident 		"GENERIC-$Revision: 1.915.2.9 $"
 
 maxusers	64		# estimated number of users
 
@@ -373,6 +373,8 @@ pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -1251,6 +1253,9 @@ ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
+# SD/MMC/SDIO Controller and Device support
+
+ld*    at sdmmc?
 
 # Audio Devices
 
