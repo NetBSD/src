@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: hardware,v 1.6 2009/10/08 05:28:23 snj Exp $
 .
 .Nx*M
 is a port of
@@ -6,13 +6,17 @@ is a port of
 to PowerPC based evaluation boards.
 At the present time, the following boards are supported:
 .(bullet
+Artesyn's PM/PPC board
+.It
 IBM PowerPC 405GP based Walnut
 .It
 Marvell PowerPC 750 based EV-64260
 .It
 NCD Explora451 NC
 .It
-Plat'Home OpenBlockS266  microserver
+Plat'Home OpenBlockS200
+.It
+Plat'Home OpenBlockS266 microserver
 .bullet)
 .Pp
 However, this documentation is specific to installing
