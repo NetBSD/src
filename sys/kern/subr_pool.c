@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.174 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.175 2009/10/08 21:54:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.174 2009/09/13 18:45:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.175 2009/10/08 21:54:45 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -188,6 +188,7 @@ static bool	pool_cache_get_slow(pool_cache_cpu_t *, int,
 				    void **, paddr_t *, int);
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
+static void	pool_cache_invalidate_cpu(pool_cache_t, u_int);
 static void	pool_cache_xcall(pool_cache_t);
 
 static int	pool_catchup(struct pool *);
@@ -2122,9 +2123,7 @@ void
 pool_cache_destroy(pool_cache_t pc)
 {
 	struct pool *pp = &pc->pc_pool;
-	pool_cache_cpu_t *cc;
-	pcg_t *pcg;
-	int i;
+	u_int i;
 
 	/* Remove it from the global list. */
 	mutex_enter(&pool_head_lock);
@@ -2142,20 +2141,8 @@ pool_cache_destroy(pool_cache_t pc)
 	mutex_exit(&pp->pr_lock);
 
 	/* Destroy per-CPU data */
-	for (i = 0; i < MAXCPUS; i++) {
-		if ((cc = pc->pc_cpus[i]) == NULL)
-			continue;
-		if ((pcg = cc->cc_current) != &pcg_dummy) {
-			pcg->pcg_next = NULL;
-			pool_cache_invalidate_groups(pc, pcg);
-		}
-		if ((pcg = cc->cc_previous) != &pcg_dummy) {
-			pcg->pcg_next = NULL;
-			pool_cache_invalidate_groups(pc, pcg);
-		}
-		if (cc != &pc->pc_cpu0)
-			pool_put(&cache_cpu_pool, cc);
-	}
+	for (i = 0; i < MAXCPUS; i++)
+		pool_cache_invalidate_cpu(pc, i);
 
 	/* Finally, destroy it. */
 	mutex_destroy(&pc->pc_lock);
@@ -2323,6 +2310,54 @@ pool_cache_invalidate(pool_cache_t pc)
 	pool_cache_invalidate_groups(pc, full);
 	pool_cache_invalidate_groups(pc, empty);
 	pool_cache_invalidate_groups(pc, part);
+}
+
+/*
+ * pool_cache_invalidate_local:
+ *
+ *	Invalidate all local ('current CPU') cached objects in
+ *	pool cache.
+ *	It is caller's responsibility to ensure that no operation is
+ *	taking place on this pool cache while doing the local invalidation.
+ */
+void
+pool_cache_invalidate_local(pool_cache_t pc)
+{
+	pool_cache_invalidate_cpu(pc, curcpu()->ci_index);
+}
+
+/*
+ * pool_cache_invalidate_cpu:
+ *
+ *	Invalidate all CPU-bound cached objects in pool cache, the CPU being
+ *	identified by its associated index.
+ *	It is caller's responsibility to ensure that no operation is
+ *	taking place on this pool cache while doing this invalidation.
+ *	WARNING: as no inter-CPU locking is enforced, trying to invalidate
+ *	pool cached objects from a CPU different from the one currently running
+ *	may result in an undefined behaviour.
+ */
+static void
+pool_cache_invalidate_cpu(pool_cache_t pc, u_int index)
+{
+
+	pool_cache_cpu_t *cc;
+	pcg_t *pcg;
+
+	if ((cc = pc->pc_cpus[index]) == NULL)
+		return;
+
+	if ((pcg = cc->cc_current) != &pcg_dummy) {
+		pcg->pcg_next = NULL;
+		pool_cache_invalidate_groups(pc, pcg);
+	}
+	if ((pcg = cc->cc_previous) != &pcg_dummy) {
+		pcg->pcg_next = NULL;
+		pool_cache_invalidate_groups(pc, pcg);
+	}
+	if (cc != &pc->pc_cpu0)
+		pool_put(&cache_cpu_pool, cc);
+
 }
 
 void

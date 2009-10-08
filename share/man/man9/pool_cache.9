@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.10 2009/09/06 19:46:24 jym Exp $
+.\"	$NetBSD: pool_cache.9,v 1.11 2009/10/08 21:54:45 jym Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -67,6 +67,7 @@
 .Nm pool_cache_put ,
 .Nm pool_cache_destruct_object ,
 .Nm pool_cache_invalidate ,
+.Nm pool_cache_invalidate_local ,
 .Nm pool_cache_sethiwat ,
 .Nm pool_cache_setlowat
 .Nd resource-pool cache manager
@@ -107,6 +108,10 @@
 .Ft void
 .Fn pool_cache_invalidate \
 "pool_cache_t pc"
+.Ft void
+.Fn pool_cache_invalidate_local \
+"pool_cache_t pc"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_sethiwat \
 "pool_cache_t pc" "int nitems"
@@ -279,6 +284,17 @@ Per-CPU caches will not be invalidated by this call, meaning that it
 is still possible to allocate "stale" items from the cache.
 If relevant, the user must check for this condition when allocating
 items.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Fn pool_cache_invalidate_local "pc"
+.Pp
+Invalidate local, current CPU pool cache
+.Fa pc .
+Destruct and release all objects in the local, current CPU cache.
+Only the Per-CPU caches associated to the current CPU calling the routine
+will be invalidated, meaning that stale items can still be allocated from
+other CPUs or the global cache.
+It is the caller's responsibility to ensure that such conditions do
+not occur.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_sethiwat "pc" "nitems"
 .Pp
