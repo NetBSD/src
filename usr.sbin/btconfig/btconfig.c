@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.19 2009/10/08 19:29:42 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.20 2009/10/08 19:31:41 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.19 2009/10/08 19:29:42 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.20 2009/10/08 19:31:41 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -67,7 +67,8 @@ void config_unit(void);
 void print_val(const char *, const char **, int);
 void print_info(int);
 void print_stats(void);
-void print_class(const char *);
+void print_class(const char *, uint8_t *);
+void print_class0(void);
 void print_voice(int);
 void tag(const char *);
 void print_features(const char *, uint8_t, uint8_t *);
@@ -713,8 +714,7 @@ print_info(int level)
 	}
 
 	load_value(HCI_CMD_READ_UNIT_CLASS, buf, HCI_CLASS_SIZE);
-	class = (buf[2] << 16) | (buf[1] << 8) | (buf[0]);
-	print_class("\t");
+	print_class("\tclass:", buf);
 
 	load_value(HCI_CMD_READ_LOCAL_NAME, buf, HCI_UNIT_NAME_SIZE);
 	printf("\tname: \"%s\"\n", buf);
@@ -934,30 +934,39 @@ print_features1(uint8_t *f)
 }
 
 void
-print_class(const char *str)
+print_class(const char *str, uint8_t *uclass)
 {
-	int major, minor;
 
-	major = (class & 0x1f00) >> 8;
-	minor = (class & 0x00fc) >> 2;
+	class = (uclass[2] << 16) | (uclass[1] << 8) | uclass[0];
+	width = printf("%s [0x%06x]", str, class);
 
-	width = printf("%sclass: [0x%6.6x]", str, class);
+	switch(__SHIFTOUT(class, __BITS(0, 1))) {
+	case 0:	print_class0();		break;
+	default:			break;
+	}
 
-	switch (major) {
+	tag(NULL);
+}
+
+void
+print_class0(void)
+{
+
+	switch (__SHIFTOUT(class, __BITS(8, 12))) {
 	case 1:	/* Computer */
-		switch (minor) {
-		case 1: tag("Desktop");				break;
-		case 2: tag("Server");				break;
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
+		case 1: tag("Desktop workstation");		break;
+		case 2: tag("Server-class computer");		break;
 		case 3: tag("Laptop");				break;
-		case 4: tag("Handheld");			break;
-		case 5: tag("Palm Sized");			break;
-		case 6: tag("Wearable");			break;
+		case 4: tag("Handheld PC/PDA");			break;
+		case 5: tag("Palm Sized PC/PDA");		break;
+		case 6: tag("Wearable computer");		break;
+		default: tag("Computer");			break;
 		}
-		tag("Computer");
 		break;
 
 	case 2:	/* Phone */
-		switch (minor) {
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
 		case 1: tag("Cellular Phone");			break;
 		case 2: tag("Cordless Phone");			break;
 		case 3: tag("Smart Phone");			break;
@@ -969,7 +978,7 @@ print_class(const char *str)
 
 	case 3:	/* LAN */
 		tag("LAN");
-		switch ((minor & 0x38) >> 3) {
+		switch (__SHIFTOUT(class, __BITS(5, 7))) {
 		case 0: tag("[Fully available]");		break;
 		case 1: tag("[1-17% utilised]");		break;
 		case 2: tag("[17-33% utilised]");		break;
@@ -982,7 +991,7 @@ print_class(const char *str)
 		break;
 
 	case 4:	/* Audio/Visual */
-		switch (minor) {
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
 		case 1: tag("Wearable Headset");		break;
 		case 2: tag("Hands-free Audio");		break;
 		case 4: tag("Microphone");			break;
@@ -1004,7 +1013,7 @@ print_class(const char *str)
 		break;
 
 	case 5:	/* Peripheral */
-		switch (minor & 0x0f) {
+		switch (__SHIFTOUT(class, __BITS(2, 5))) {
 		case 1: tag("Joystick");			break;
 		case 2: tag("Gamepad");				break;
 		case 3: tag("Remote Control");			break;
@@ -1014,20 +1023,20 @@ print_class(const char *str)
 		default: tag("Peripheral");			break;
 		}
 
-		if (minor & 0x10) tag("Keyboard");
-		if (minor & 0x20) tag("Mouse");
+		if (class & __BIT(6)) tag("Keyboard");
+		if (class & __BIT(7)) tag("Mouse");
 		break;
 
 	case 6:	/* Imaging */
-		if (minor & 0x20) tag("Printer");
-		if (minor & 0x10) tag("Scanner");
-		if (minor & 0x08) tag("Camera");
-		if (minor & 0x04) tag("Display");
-		if ((minor & 0x3c) == 0) tag("Imaging");
+		if (class & __BIT(4)) tag("Display");
+		if (class & __BIT(5)) tag("Camera");
+		if (class & __BIT(6)) tag("Scanner");
+		if (class & __BIT(7)) tag("Printer");
+		if ((class & __BITS(4, 7)) == 0) tag("Imaging");
 		break;
 
 	case 7:	/* Wearable */
-		switch (minor) {
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
 		case 1: tag("Wrist Watch");			break;
 		case 2: tag("Pager");				break;
 		case 3: tag("Jacket");				break;
@@ -1038,7 +1047,7 @@ print_class(const char *str)
 		break;
 
 	case 8:	/* Toy */
-		switch (minor) {
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
 		case 1: tag("Robot");				break;
 		case 2: tag("Vehicle");				break;
 		case 3: tag("Doll / Action Figure");		break;
@@ -1048,20 +1057,32 @@ print_class(const char *str)
 		}
 		break;
 
+	case 9: /* Health */
+		switch (__SHIFTOUT(class, __BITS(2, 7))) {
+		case 1:	tag("Blood Pressure Monitor");		break;
+		case 2:	tag("Thermometer");			break;
+		case 3:	tag("Weighing Scale");			break;
+		case 4:	tag("Glucose Meter");			break;
+		case 5:	tag("Pulse Oximeter");			break;
+		case 6:	tag("Heart/Pulse Rate Monitor");	break;
+		case 7:	tag("Health Data Display");		break;
+		default: tag("Health");				break;
+		}
+		break;
+
 	default:
 		break;
 	}
 
-	if (class & 0x002000)	tag("<Limited Discoverable>");
-	if (class & 0x010000)	tag("<Positioning>");
-	if (class & 0x020000)	tag("<Networking>");
-	if (class & 0x040000)	tag("<Rendering>");
-	if (class & 0x080000)	tag("<Capturing>");
-	if (class & 0x100000)	tag("<Object Transfer>");
-	if (class & 0x200000)	tag("<Audio>");
-	if (class & 0x400000)	tag("<Telephony>");
-	if (class & 0x800000)	tag("<Information>");
-	tag(NULL);
+	if (class & __BIT(13))	tag("<Limited Discoverable>");
+	if (class & __BIT(16))	tag("<Positioning>");
+	if (class & __BIT(17))	tag("<Networking>");
+	if (class & __BIT(18))	tag("<Rendering>");
+	if (class & __BIT(19))	tag("<Capturing>");
+	if (class & __BIT(20))	tag("<Object Transfer>");
+	if (class & __BIT(21))	tag("<Audio>");
+	if (class & __BIT(22))	tag("<Telephony>");
+	if (class & __BIT(23))	tag("<Information>");
 }
 
 void
@@ -1128,10 +1149,7 @@ print_result(int num, struct result *r, int rssi)
 		&nep, sizeof(nep));
 
 	printf("   : name \"%s\"\n", nep.name);
-
-	class = (r->uclass[2] << 16) | (r->uclass[1] << 8) | (r->uclass[0]);
-	print_class("   : ");
-
+	print_class("   : class", r->uclass);
 	printf("   : page scan rep mode 0x%02x\n", r->page_scan_rep_mode);
 	printf("   : clock offset %d\n", le16toh(r->clock_offset));
 
