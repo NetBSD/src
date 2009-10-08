@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.10 2009/10/07 13:19:40 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.11 2009/10/08 16:19:59 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.10 2009/10/07 13:19:40 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.11 2009/10/08 16:19:59 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ rebuild(void)
 	iterate_pkg_db(add_pkg, &count);
 
 	printf("\n");
-	printf("Stored %zu file%s and %zu explizit director%s"
+	printf("Stored %zu file%s and %zu explicit director%s"
 	    " from %zu package%s in %s.\n",
 	    count.files, count.files == 1 ? "" : "s",
 	    count.directories, count.directories == 1 ? "y" : "ies",
@@ -517,8 +517,14 @@ main(int argc, char *argv[])
 		pkgdb_dump();
 
 	} else if (strcasecmp(argv[0], "add") == 0) {
+		struct pkgdb_count count;
+
+		count.files = 0;
+		count.directories = 0;
+		count.packages = 0;
+
 		for (++argv; *argv != NULL; ++argv)
-			add_pkg(*argv, NULL);
+			add_pkg(*argv, &count);
 	} else if (strcasecmp(argv[0], "delete") == 0) {
 		argv++;		/* "delete" */
 		while (*argv != NULL) {
