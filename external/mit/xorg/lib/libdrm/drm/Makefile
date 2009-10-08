@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2009/06/09 03:05:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/10/08 19:06:50 snj Exp $
 
-# install include/X11/drm files
+# install include/drm files
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ INCS=	drm.h drm_sarea.h drm_mode.h \
 	r128_drm.h r300_reg.h radeon_drm.h \
 	savage_drm.h sis_drm.h via_3d_reg.h via_drm.h \
 	xgi_drm.h
-INCSDIR=${X11INCDIR}/X11/drm
+INCSDIR=${X11INCDIR}/drm
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

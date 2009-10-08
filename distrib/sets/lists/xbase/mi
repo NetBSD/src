@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.80 2009/09/23 09:18:32 njoly Exp $
+# $NetBSD: mi,v 1.81 2009/10/08 19:06:49 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1495,7 +1495,7 @@
 ./usr/X11R7/include/X11/Xtrans				base-x11-root	xorg
 ./usr/X11R7/include/X11/bitmaps				base-x11-root	xorg
 ./usr/X11R7/include/X11/dri				base-x11-root	xorg
-./usr/X11R7/include/X11/drm				base-x11-root	xorg
+./usr/X11R7/include/X11/drm				base-x11-root	obsolete
 ./usr/X11R7/include/X11/extensions			base-x11-root	xorg
 ./usr/X11R7/include/X11/fonts				base-x11-root	xorg
 ./usr/X11R7/include/X11/pixmaps				base-x11-root	xorg
@@ -1504,6 +1504,7 @@
 ./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
+./usr/X11R7/include/drm					base-x11-root	xorg
 ./usr/X11R7/include/fontconfig				base-x11-root	xorg
 ./usr/X11R7/include/freetype2				base-x11-root	xorg
 ./usr/X11R7/include/freetype2/freetype			base-x11-root	xorg

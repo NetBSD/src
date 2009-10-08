@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/06/09 03:05:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/08 19:06:50 snj Exp $
 
 DRIVER=		xf86-video-intel
 DRIVER_NAME=	intel_drv
@@ -17,7 +17,7 @@ MAN=		intel.4
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/drm
 CPPFLAGS+=	-DI830_XV -DI830_USE_XAA -DI830_USE_EXA
 
 LDADD+=		-ldrm_intel

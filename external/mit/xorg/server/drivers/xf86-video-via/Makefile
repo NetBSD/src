@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/27 15:47:46 reinoud Exp $
+#	$NetBSD: Makefile,v 1.5 2009/10/08 19:06:51 snj Exp $
 
 DRIVER=		xf86-video-via
 DRIVER_NAME=	via_drv
@@ -12,7 +12,7 @@ MAN=		via.4
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src
 
 .include "../Makefile.xf86-driver"
