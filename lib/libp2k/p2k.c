@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.20 2009/10/07 20:56:29 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.21 2009/10/09 16:37:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,8 @@ LIST_HEAD(p2k_vp_hash, p2k_node);
 #define NHASHBUCK (1<<16)
 struct p2k_mount {
 	struct vnode *p2m_rvp;
+	struct puffs_usermount *p2m_pu;
+	struct ukfs *p2m_ukfs;
 	struct p2k_vp_hash p2m_vphash[NHASHBUCK];
 	int p2m_nvnodes;
 };
@@ -240,14 +242,15 @@ allocp2m(struct ukfs *ukfs)
 	int i;
 
 	p2m = malloc(sizeof(*p2m));
-	p2m->p2m_nvnodes = 0;
+	memset(p2m, 0, sizeof(*p2m));
+
 	for (i = 0; i < NHASHBUCK; i++)
 		LIST_INIT(&p2m->p2m_vphash[i]);
 	ukfs_setspecific(ukfs, p2m);
 }
 
-static int
-runfs(const char *vfsname, const char *devpath, int partition,
+static struct p2k_mount *
+setupfs(const char *vfsname, const char *devpath, int partition,
 	const char *mountpath, int mntflags, void *arg, size_t alen,
 	uint32_t puffs_flags)
 {
@@ -343,7 +346,7 @@ runfs(const char *vfsname, const char *devpath, int partition,
 		puffs_daemon(pu, 1, 1);
 
 	if (ukfs_init() == -1)
-		return -1;
+		goto out;
 	if (partition != UKFS_PARTITION_NA)
 		ukfs = ukfs_mount_disk(vfsname, devpath, partition,
 		    mountpath, mntflags, arg, alen);
@@ -354,6 +357,8 @@ runfs(const char *vfsname, const char *devpath, int partition,
 		goto out;
 	allocp2m(ukfs);
 	p2m = ukfs_getspecific(ukfs);
+	p2m->p2m_ukfs = ukfs;
+	p2m->p2m_pu = pu;
 
 	p2m->p2m_rvp = ukfs_getrvp(ukfs);
 	p2n_root = getp2n(p2m, p2m->p2m_rvp, true, NULL);
@@ -366,36 +371,51 @@ runfs(const char *vfsname, const char *devpath, int partition,
 	puffs_setspecific(pu, ukfs);
 	if ((rv = puffs_mount(pu, mountpath, mntflags, p2n_root))== -1)
 		goto out;
-	rv = puffs_mainloop(pu);
-	puffs_exit(pu, 1);
-	pu = NULL;
-	ukfs = NULL;
-	p2m = NULL;
 
  out:
 	sverrno = errno;
-	if (p2m)
-		free(p2m);
-	if (ukfs)
-		ukfs_release(ukfs, UKFS_RELFLAG_FORCE);
-	if (pu)
-		puffs_cancel(pu, sverrno);
 	if (rv) {
+		if (ukfs)
+			ukfs_release(p2m->p2m_ukfs, UKFS_RELFLAG_FORCE);
+		if (pu)
+			puffs_cancel(pu, sverrno);
+		if (p2m)
+			free(p2m);
 		errno = sverrno;
-		rv = -1;
+		p2m = NULL;
 	}
 
-	return rv;
+	return p2m;
 }
 
+int
+p2k_mainloop(struct p2k_mount *p2m)
+{
+	int rv, sverrno;
+
+	rv = puffs_mainloop(p2m->p2m_pu);
+	sverrno = errno;
+	puffs_exit(p2m->p2m_pu, 1);
+	if (p2m->p2m_ukfs)
+		ukfs_release(p2m->p2m_ukfs, UKFS_RELFLAG_FORCE);
+	free(p2m);
+
+	if (rv == -1)
+		errno = sverrno;
+	return rv;
+}
 
 int
 p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
 {
+	struct p2k_mount *p2m;
 
-	return runfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	p2m = setupfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
 	    mntflags, arg, alen, puffs_flags);
+	if (p2m == NULL)
+		return -1;
+	return p2k_mainloop(p2m);
 }
 
 int
@@ -403,8 +423,31 @@ p2k_run_diskfs(const char *vfsname, const char *devpath, int partition,
 	const char *mountpath, int mntflags, void *arg, size_t alen,
 	uint32_t puffs_flags)
 {
+	struct p2k_mount *p2m;
 
-	return runfs(vfsname, devpath, partition, mountpath, mntflags,
+	p2m = setupfs(vfsname, devpath, partition, mountpath, mntflags,
+	    arg, alen, puffs_flags);
+	if (p2m == NULL)
+		return -1;
+	return p2k_mainloop(p2m);
+}
+
+struct p2k_mount *
+p2k_setup_fs(const char *vfsname, const char *devpath, const char *mountpath,
+	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
+{
+
+	return setupfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	    mntflags, arg, alen, puffs_flags);
+}
+
+struct p2k_mount *
+p2k_setup_diskfs(const char *vfsname, const char *devpath, int partition,
+	const char *mountpath, int mntflags, void *arg, size_t alen,
+	uint32_t puffs_flags)
+{
+
+	return setupfs(vfsname, devpath, partition, mountpath, mntflags,
 	    arg, alen, puffs_flags);
 }
 
@@ -431,7 +474,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 		ukfs_release(fs, UKFS_RELFLAG_FORCE);
 		error = 0;
 	}
-	free(p2m);
+	p2m->p2m_ukfs = NULL;
 
 	rump_setup_curlwp(0, 1, 1);
 	return error;
