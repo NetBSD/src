@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2009/09/22 02:50:11 isaki Exp $
+#	$NetBSD: Makefile,v 1.38 2009/10/09 15:59:27 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,6 +20,7 @@ MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		dot.profile \
 		${DISTRIBDIR}/common/services \
+		${DISTRIBDIR}/common/termcap \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/mboot \
 		${DESTDIR}/usr/mdec/sdboot_ufs \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
