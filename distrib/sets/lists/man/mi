@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1162 2009/10/05 22:32:58 haad Exp $
+# $NetBSD: mi,v 1.1163 2009/10/09 00:48:35 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5061,9 +5061,9 @@
 ./usr/share/man/html8/zdump.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/zic.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
-./usr/share/man/html8/zdb.html			man-zfs-man		zfs
-./usr/share/man/html8/zfs.html			man-zfs-man             zfs
-./usr/share/man/html8/zpool.html		man-zfs-man             zfs
+./usr/share/man/html8/zdb.html			man-zfs-man		zfs,html
+./usr/share/man/html8/zfs.html			man-zfs-man             zfs,html
+./usr/share/man/html8/zpool.html		man-zfs-man             zfs,html
 ./usr/share/man/man1/Mail.1			man-mail-man		.man
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
