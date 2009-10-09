@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.44 2009/10/09 20:23:19 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.45 2009/10/09 20:32:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.44 2009/10/09 20:23:19 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.45 2009/10/09 20:32:57 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -149,7 +149,8 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 					err(2, "%s", filelist->names[file_no]);
 				continue;
 			}
-			if (nelem >= max_recs || bufsize >= MAXBUFSIZE)
+			if (nelem >= max_recs
+			    || (bufsize >= MAXBUFSIZE && nelem > 8))
 				/* Need to sort and save this lot of data */
 				break;
 
