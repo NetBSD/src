@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1323 2009/10/09 16:38:01 njoly Exp $
+#	$NetBSD: mi,v 1.1324 2009/10/09 16:55:40 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2414,10 +2414,10 @@
 ./usr/lib/libisc_p.a				comp-bind-lib		profile
 ./usr/lib/libisccc.a				comp-bind-lib
 ./usr/lib/libisccc_g.a				-unknown-		debuglib
-./usr/lib/libisccc_p.a				comp-bind-profilb	profile
+./usr/lib/libisccc_p.a				comp-bind-proflib	profile
 ./usr/lib/libisccfg.a				comp-bind-lib
 ./usr/lib/libisccfg_g.a				-unknown-		debuglib
-./usr/lib/libisccfg_p.a				comp-bind-profilb	profile
+./usr/lib/libisccfg_p.a				comp-bind-proflib	profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
 ./usr/lib/libiscsi_g.a				-unknown-		debuglib,iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
@@ -2458,7 +2458,7 @@
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
-./usr/lib/liblwres_p.a				comp-bind-profilb	profile
+./usr/lib/liblwres_p.a				comp-bind-proflib	profile
 ./usr/lib/libm.a				comp-c-lib
 ./usr/lib/libm387_g.a				-unknown-		debuglib
 ./usr/lib/libm_g.a				-unknown-		debuglib
