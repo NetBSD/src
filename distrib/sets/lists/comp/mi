@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1322 2009/10/09 13:44:59 tron Exp $
+#	$NetBSD: mi,v 1.1323 2009/10/09 16:38:01 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2836,6 +2836,8 @@
 ./usr/libdata/debug/sbin/veriexecctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wsconsctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/zfs.debug		comp-zfs-debug		zfs,debug
+./usr/libdata/debug/sbin/zpool.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
@@ -3199,6 +3201,7 @@
 ./usr/libdata/debug/usr/bin/ypcat.debug		comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/bin/ypmatch.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/bin/ypwhich.debug	comp-nis-debug		yp,debug
+./usr/libdata/debug/usr/bin/ztest.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/games/adventure.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/arithmetic.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/atc.debug		comp-games-debug	debug
@@ -3594,6 +3597,7 @@
 ./usr/libdata/debug/usr/sbin/ypset.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/yptest.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
+./usr/libdata/debug/usr/sbin/zdb.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
 ./usr/libdata/ldscripts/kmodule			comp-util-share		binutils
