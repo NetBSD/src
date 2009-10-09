@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.h,v 1.3 2009/10/07 20:55:25 pooka Exp $	*/
+/*	$NetBSD: p2k.h,v 1.4 2009/10/09 16:37:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,12 +32,21 @@
 
 #include <sys/types.h>
 
+struct p2k_mount;
+
 __BEGIN_DECLS
 
 int p2k_run_fs(const char *, const char *, const char *, int,
 	       void *, size_t, uint32_t);
 int p2k_run_diskfs(const char *, const char *, int, const char *, int,
 		   void *, size_t, uint32_t);
+
+struct p2k_mount *p2k_setup_fs(const char *, const char *, const char *, int,
+			       void *, size_t, uint32_t);
+struct p2k_mount *p2k_setup_diskfs(const char *, const char *, int,
+				   const char *, int, void *, size_t, uint32_t);
+
+int p2k_mainloop(struct p2k_mount *);
 
 __END_DECLS
 
