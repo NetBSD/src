@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.27 2009/09/26 21:16:55 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.28 2009/10/09 20:29:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.27 2009/09/26 21:16:55 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.28 2009/10/09 20:29:43 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -86,29 +86,49 @@ typedef struct mfile {
 
 static int cmp(RECHEADER *, RECHEADER *);
 static int insert(struct mfile **, struct mfile *, int, int);
+static void merge_sort_fstack(FILE *, put_func_t, struct field *);
 
 /*
  * Number of files merge() can merge in one pass.
- * This should be power of two so that it's possible to use this value
- * for rouding.
  */
 #define MERGE_FNUM      16
 
 static struct mfile fstack[MERGE_FNUM];
-static int fstack_count;
+static struct mfile fstack_1[MERGE_FNUM];
+static struct mfile fstack_2[MERGE_FNUM];
+static int fstack_count, fstack_1_count, fstack_2_count;
 
 void
 save_for_merge(FILE *fp, get_func_t get, struct field *ftbl)
 {
-	FILE *mfp;
+	FILE *mfp, *mfp1, *mfp2;
 
 	if (fstack_count == MERGE_FNUM) {
 		/* Must reduce the number of temporary files */
 		mfp = ftmp();
-		merge_sort(mfp, putrec, ftbl);
-		fstack[0].fp = mfp;
-		fstack[0].get = geteasy;
-		fstack_count = 1;
+		merge_sort_fstack(mfp, putrec, ftbl);
+		/* Save output in next layer */
+		if (fstack_1_count == MERGE_FNUM) {
+			mfp1 = ftmp();
+			memcpy(fstack, fstack_1, sizeof fstack);
+			merge_sort_fstack(mfp1, putrec, ftbl);
+			if (fstack_2_count == MERGE_FNUM) {
+				/* More than 4096 files! */
+				mfp2 = ftmp();
+				memcpy(fstack, fstack_2, sizeof fstack);
+				merge_sort_fstack(mfp2, putrec, ftbl);
+				fstack_2[0].fp = mfp2;
+				fstack_2_count = 1;
+			}
+			fstack_2[fstack_2_count].fp = mfp1;
+			fstack_2[fstack_2_count].get = geteasy;
+			fstack_2_count++;
+			fstack_1_count = 0;
+		}
+		fstack_1[fstack_1_count].fp = mfp;
+		fstack_1[fstack_1_count].get = geteasy;
+		fstack_1_count++;
+		fstack_count = 0;
 	}
 
 	fstack[fstack_count].fp = fp;
@@ -134,6 +154,49 @@ fmerge(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 
 void
 merge_sort(FILE *outfp, put_func_t put, struct field *ftbl)
+{
+	int count = fstack_1_count + fstack_2_count;
+	FILE *mfp;
+	int i;
+
+	if (count == 0) {
+		/* All files in initial array */
+		merge_sort_fstack(outfp, put, ftbl);
+		return;
+	}
+
+	count += fstack_count;
+
+	/* Too many files for one merge sort */
+	for (;;) {
+		/* Sort latest 16 files */
+		i = count;
+		if (i > MERGE_FNUM)
+			i = MERGE_FNUM;
+		while (fstack_count > 0)
+			fstack[--i] = fstack[--fstack_count];
+		while (i > 0 && fstack_1_count > 0)
+			fstack[--i] = fstack_1[--fstack_1_count];
+		while (i > 0)
+			fstack[--i] = fstack_2[--fstack_2_count];
+		if (count <= MERGE_FNUM) {
+			/* Got all the data */
+			fstack_count = count;
+			merge_sort_fstack(outfp, put, ftbl);
+			return;
+		}
+		mfp = ftmp();
+		fstack_count = count > MERGE_FNUM ? MERGE_FNUM : count;
+		merge_sort_fstack(mfp, putrec, ftbl);
+		fstack[0].fp = mfp;
+		fstack[0].get = geteasy;
+		fstack_count = 1;
+		count -= MERGE_FNUM - 1;
+	}
+}
+
+static void
+merge_sort_fstack(FILE *outfp, put_func_t put, struct field *ftbl)
 {
 	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
 	RECHEADER *new_rec;
