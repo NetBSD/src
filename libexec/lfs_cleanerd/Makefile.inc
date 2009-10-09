@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/08/06 00:51:55 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/10/09 20:19:44 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=3		# XXX: too many sign-compare issues
@@ -12,8 +12,8 @@ SRCS+=	bufcache.c vnode.c lfs.c kernelops.c # segwrite.c
 	${NETBSDSRCDIR}/libexec/lfs_cleanerd
 
 FSCK_LFS= ${NETBSDSRCDIR}/sbin/fsck_lfs
-DPADD=  ${LIBUTIL}
-LDADD=  -lutil
+DPADD+=  ${LIBUTIL}
+LDADD+=  -lutil
 CPPFLAGS+=-I${FSCK_LFS} -I${NETBSDSRCDIR}/sbin/mount_lfs # -DUSE_CLIENT_SERVER 
 CPPFLAGS+="-Dmutex_enter(x)=" "-Dmutex_exit(x)="
 CPPFLAGS+="-DKASSERT(x)="
