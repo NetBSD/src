@@ -1071,9 +1071,13 @@ int __ops_print_packet(const __ops_packet_t *);
 
 #define EXPAND_ARRAY(str, arr) do {					\
 	if (str->arr##c == str->arr##vsize) {				\
+		void	*__newarr;					\
 		str->arr##vsize = (str->arr##vsize * 2) + 10; 		\
-		str->arr##s = realloc(str->arr##s,			\
-			str->arr##vsize * sizeof(*str->arr##s));	\
+		if ((__newarr = realloc(str->arr##s,			\
+			str->arr##vsize * sizeof(*str->arr##s))) == NULL) { \
+			(void) fprintf(stderr, "EXPAND_ARRAY - bad realloc\n"); \
+		}							\
+		str->arr##s = __newarr;					\
 	}								\
 } while(/*CONSTCOND*/0)
 
