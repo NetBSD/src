@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.89 2009/09/29 23:56:26 tsarna Exp $
+# $NetBSD: shl.mi,v 1.90 2009/10/09 00:48:35 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8,6 +8,7 @@
 ./usr/lib/libatf_pic.a				comp-obsolete		obsolete
 ./usr/lib/libatf-c_pic.a			comp-atf-piclib
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib
+./usr/lib/libavl_pic.a				comp-zfs-piclib		zfs
 ./usr/lib/libbind9_pic.a			comp-bind-piclib
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
@@ -61,6 +62,7 @@
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
+./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.3			comp-c-shlib		binutils=216
 ./usr/lib/libopcodes.so.3.0			comp-c-shlib		binutils=216
@@ -127,7 +129,10 @@
 ./usr/lib/libtermcap_pic.a			comp-c-piclib
 ./usr/lib/libtermlib_pic.a			comp-c-piclib
 ./usr/lib/libukfs_pic.a				comp-c-piclib
+./usr/lib/libumem_pic.a				comp-zfs-piclib		zfs
 ./usr/lib/libusbhid_pic.a			comp-c-piclib
 ./usr/lib/libutil_pic.a				comp-c-piclib
+./usr/lib/libuutil_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libwrap_pic.a				comp-c-piclib
 ./usr/lib/libz_pic.a				comp-c-piclib
+./usr/lib/libzfs_pic.a				comp-zfs-piclib		zfs
