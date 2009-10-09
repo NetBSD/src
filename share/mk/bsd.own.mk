@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.585 2009/10/05 22:32:58 haad Exp $
+#	$NetBSD: bsd.own.mk,v 1.586 2009/10/09 00:26:53 haad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -701,7 +701,7 @@ ${var}?=	yes
 #
 .for var in \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKLVM MKZFS \
+	MKLVM \
 	MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
@@ -723,6 +723,15 @@ ${var}?=no
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
+.endif
+
+#
+# We want to build zfs only for i386 and amd64 by default for now.
+#
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+MKZFS?=		yes
+.else
+MKZFS?=		no
 .endif
 
 #
