@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1324 2009/10/09 16:55:40 njoly Exp $
+#	$NetBSD: mi,v 1.1325 2009/10/09 21:06:01 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2698,7 +2698,7 @@
 ./usr/lib/libzfs.a				comp-zfs-lib		zfs
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libzpool.a				comp-zfs-lib		zfs
-./usr/lib/libzpool_p.a				comp-zfs-proflib	zfs
+./usr/lib/libzpool_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
