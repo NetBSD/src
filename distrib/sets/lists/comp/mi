@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1320 2009/10/09 00:48:34 haad Exp $
+#	$NetBSD: mi,v 1.1321 2009/10/09 09:34:22 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9011,6 +9011,7 @@
 ./usr/share/man/cat9/pool_cache_get_paddr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_invalidate.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_invalidate_local.0	comp-sys-catman         .cat 
 ./usr/share/man/cat9/pool_cache_put.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_put_paddr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman		.cat
@@ -14420,6 +14421,7 @@
 ./usr/share/man/html9/pool_cache_get_paddr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_invalidate.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_invalidate_local.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_put.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_put_paddr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_create.html		comp-sys-htmlman	html
@@ -19998,6 +20000,7 @@
 ./usr/share/man/man9/pool_cache_get_paddr.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_init.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_invalidate.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_invalidate_local.9	comp-sys-man            .man
 ./usr/share/man/man9/pool_cache_put.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_put_paddr.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_create.9		comp-sys-man		.man
