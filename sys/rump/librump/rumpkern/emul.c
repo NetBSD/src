@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.97 2009/10/03 22:55:48 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.98 2009/10/09 14:41:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.97 2009/10/03 22:55:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.98 2009/10/09 14:41:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -549,7 +549,7 @@ void
 suspendsched(void)
 {
 
-	panic("%s: not implemented", __func__);
+	/* we don't control scheduling currently, can't do anything now */
 }
 
 u_int
@@ -731,7 +731,10 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 
-	rumpuser_panic();
+	rump_reboot(howto);
+
+	/* this function is __dead, we must exit */
+	rumpuser_exit(0);
 }
 
 /*

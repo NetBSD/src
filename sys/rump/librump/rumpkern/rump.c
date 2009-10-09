@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.120 2009/10/08 00:47:47 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.121 2009/10/09 14:41:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.120 2009/10/08 00:47:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.121 2009/10/09 14:41:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.120 2009/10/08 00:47:47 pooka Exp $");
 #include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
 #include <sys/resourcevar.h>
 #include <sys/select.h>
 #include <sys/sysctl.h>
@@ -121,6 +122,8 @@ __weak_alias(rump_net_init,rump__unavailable);
 __weak_alias(rump_vfs_init,rump__unavailable);
 __weak_alias(rump_dev_init,rump__unavailable);
 
+__weak_alias(rump_vfs_fini,rump__unavailable);
+
 __weak_alias(biodone,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
@@ -178,10 +181,13 @@ rump__init(int rump_version)
 	struct lwp *l;
 	int error;
 
-	/* XXX */
+	/* not reentrant */
 	if (rump_inited)
 		return 0;
-	rump_inited = 1;
+	else if (rump_inited == -1)
+		panic("rump_init: host process restart required");
+	else
+		rump_inited = 1;
 
 	/*
 	 * Seed arc4random() with a "reasonable" amount of randomness.
@@ -287,6 +293,34 @@ rump__init(int rump_version)
 	rumpuser_dl_module_bootstrap();
 
 	return 0;
+}
+
+/* maybe support sys_reboot some day for remote shutdown */
+void
+rump_reboot(int howto)
+{
+
+	/* dump means we really take the dive here */
+	if ((howto & RB_DUMP) || panicstr) {
+		rumpuser_exit(RUMPUSER_PANIC);
+		/*NOTREACHED*/
+	}
+
+	/* try to sync */
+	if (!((howto & RB_NOSYNC) || panicstr)) {
+		rump_vfs_fini();
+	}
+
+	/* your wish is my command */
+	if (howto & RB_HALT) {
+		for (;;) {
+			uint64_t sec = 5, nsec = 0;
+			int error;
+
+			rumpuser_nanosleep(&sec, &nsec, &error);
+		}
+	}
+	rump_inited = -1;
 }
 
 struct uio *
