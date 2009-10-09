@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.13 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.14 2009/10/09 06:02:55 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -354,7 +354,7 @@ list_resize(__ops_list_t *list)
 		list->size = newsize;
 		return 1;
 	}
-	/* xxx - realloc failed. error message? - rachel */
+	(void) fprintf(stderr, "list_resize - bad alloc\n");
 	return 0;
 }
 

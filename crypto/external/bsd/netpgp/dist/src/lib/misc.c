@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.22 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2009/10/09 06:02:55 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -817,13 +817,20 @@ __ops_memory_init(__ops_memory_t *mem, size_t needed)
 void 
 __ops_memory_pad(__ops_memory_t *mem, size_t length)
 {
+	unsigned char	*temp;
+
 	if (mem->allocated < mem->length) {
 		(void) fprintf(stderr, "__ops_memory_pad: bad alloc in\n");
 		return;
 	}
 	if (mem->allocated < mem->length + length) {
 		mem->allocated = mem->allocated * 2 + length;
-		mem->buf = realloc(mem->buf, mem->allocated);
+		temp = realloc(mem->buf, mem->allocated);
+		if (temp == NULL) {
+			(void) fprintf(stderr, "__ops_memory_pad: bad alloc\n");
+		} else {
+			mem->buf = temp;
+		}
 	}
 	if (mem->allocated < mem->length + length) {
 		(void) fprintf(stderr, "__ops_memory_pad: bad alloc out\n");
