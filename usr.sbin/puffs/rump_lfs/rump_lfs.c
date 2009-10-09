@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.7 2009/10/07 20:59:09 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.8 2009/10/09 16:38:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,6 @@ cleaner(void *arg)
 	the_argv[1] = "-D"; /* don't fork() & detach */
 	the_argv[2] = arg;
 
-	sleep(1); /* XXXtehsuck: wait until mount is complete in other thread */
 	lfs_cleaner_main(3, __UNCONST(the_argv));
 
 	return NULL;
@@ -63,6 +62,7 @@ main(int argc, char *argv[])
 	struct ufs_args args;
 	char canon_dev[UKFS_PARTITION_MAXPATHLEN], canon_dir[MAXPATHLEN];
 	char rawdev[MAXPATHLEN];
+	struct p2k_mount *p2m;
 	pthread_t cleanerthread;
 	int mntflags, part;
 	int rv;
@@ -100,22 +100,28 @@ main(int argc, char *argv[])
 	 *
 	 * opt for "2" for now
 	 */
+#ifdef CLEANER_TESTING
+	ukfs_mount(MOUNT_LFS, canon_dev, canon_dir, mntflags,
+	    &args, sizeof(args));
+	cleaner(canon_dir);
+#endif
+
+	p2m = p2k_setup_diskfs(MOUNT_LFS, canon_dev, part, canon_dir, mntflags,
+	    &args, sizeof(args), 0);
+	if (!p2m)
+		err(1, "mount");
+
 #ifndef CLEANER_TESTING
 	if ((mntflags & MNT_RDONLY) == 0) {
 		if (pthread_create(&cleanerthread, NULL,
 		    cleaner, canon_dir) == -1)
 			err(1, "cannot start cleaner");
 	}
-#else
-	ukfs_mount(MOUNT_LFS, canon_dev, canon_dir, mntflags,
-	    &args, sizeof(args));
-	cleaner(canon_dir);
 #endif
 
-	rv = p2k_run_diskfs(MOUNT_LFS, canon_dev, part, canon_dir, mntflags,
-	    &args, sizeof(args), 0);
-	if (rv)
-		err(1, "mount");
+	rv = p2k_mainloop(p2m);
+	if (rv == -1)
+		err(1, "fs service");
 
 	return 0;
 }
