@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.43 2009/09/28 20:30:01 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.44 2009/10/09 20:23:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.43 2009/09/28 20:30:01 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.44 2009/10/09 20:23:19 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -182,9 +182,11 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		}
 
 		/* Save current data to a temporary file for a later merge */
-		tmp_fp = ftmp();
-		append(keylist, nelem, tmp_fp, putrec);
-		save_for_merge(tmp_fp, geteasy, ftbl);
+		if (nelem != 0) {
+			tmp_fp = ftmp();
+			append(keylist, nelem, tmp_fp, putrec);
+			save_for_merge(tmp_fp, geteasy, ftbl);
+		}
 		mfct = 1;
 
 		if (c == EOF) {
