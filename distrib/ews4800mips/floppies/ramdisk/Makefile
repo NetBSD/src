@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/09/20 19:49:08 abs Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/09 15:56:25 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,12 +17,13 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile termcap.src ${DESTDIR} \
+		dot.profile ${DESTDIR} \
 		${DESTDIR}/usr/mdec/boot \
 		${DESTDIR}/usr/mdec/bootxx_ustarfs \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
-		${DISTRIBDIR}/common/services
+		${DISTRIBDIR}/common/services \
+		${DISTRIBDIR}/common/termcap
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
