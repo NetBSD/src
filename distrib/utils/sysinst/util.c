@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.151.14.2 2009/02/18 01:17:23 snj Exp $	*/
+/*	$NetBSD: util.c,v 1.151.14.3 2009/10/09 08:09:24 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -674,6 +674,14 @@ extract_file(distinfo *dist, int update, int verbose)
 		target_chdir_or_die("/.sysinst");
 	} else
 		target_chdir_or_die("/");
+
+	/*
+	 * /usr/X11R7/lib/X11/xkb/symbols/pc was a directory in 5.0
+	 * but is a file in 5.1 and beyond, so on upgrades we need to
+	 * delete it before extracting the xbase set.
+	 */
+	if (update && dist->set == SET_X11_BASE)
+		run_program(0, "rm -rf usr/X11R7/lib/X11/xkb/symbols/pc");
 
 	/* now extract set files into "./". */
 	if (verbose == 0)
