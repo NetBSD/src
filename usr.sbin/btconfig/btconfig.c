@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.21 2009/10/08 19:50:03 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.22 2009/10/09 12:58:28 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.21 2009/10/08 19:50:03 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.22 2009/10/09 12:58:28 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -628,7 +628,6 @@ void
 print_info(int level)
 {
 	uint8_t version, val, buf[MAX_STR_SIZE];
-	uint16_t val16;
 
 	if (lflag) {
 		tag(btr.btr_name);
@@ -735,8 +734,8 @@ print_info(int level)
 	if ((ptype & HCI_PKT_3MBPS_DH5) == 0)	tag("3-DH5");
 	tag(NULL);
 
-	load_value(HCI_CMD_READ_PAGE_TIMEOUT, &val16, sizeof(val16));
-	printf("\tpage timeout: %d ms\n", val16 * 5 / 8);
+	load_value(HCI_CMD_READ_PAGE_TIMEOUT, buf, sizeof(uint16_t));
+	printf("\tpage timeout: %d ms\n", le16dec(buf) * 5 / 8);
 
 	if (level-- < 1)
 		return;
