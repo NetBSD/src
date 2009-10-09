@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1321 2009/10/09 09:34:22 haad Exp $
+#	$NetBSD: mi,v 1.1322 2009/10/09 13:44:59 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2698,6 +2698,7 @@
 ./usr/lib/libzfs.a				comp-zfs-lib		zfs
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libzpool.a				comp-zfs-lib		zfs
+./usr/lib/libzpool_p.a				comp-zfs-proflib	zfs
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
