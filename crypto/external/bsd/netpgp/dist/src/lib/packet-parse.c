@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.25 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.26 2009/10/09 06:02:55 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -1699,6 +1699,10 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		pkt.u.ss_raw.tag = pkt.tag;
 		pkt.u.ss_raw.length = subregion.length - 1;
 		pkt.u.ss_raw.raw = calloc(1, pkt.u.ss_raw.length);
+		if (pkt.u.ss_raw.raw == NULL) {
+			(void) fprintf(stderr, "parse_one_sig_subpacket: bad alloc\n");
+			return 0;
+		}
 		if (!limread(pkt.u.ss_raw.raw, pkt.u.ss_raw.length,
 				&subregion, stream)) {
 			return 0;
@@ -2073,6 +2077,10 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 		free(pkt.u.sig.info.v4_hashed);
 	}
 	pkt.u.sig.info.v4_hashed = calloc(1, pkt.u.sig.info.v4_hashlen);
+	if (pkt.u.sig.info.v4_hashed == NULL) {
+		(void) fprintf(stderr, "parse_v4_sig: bad alloc\n");
+		return 0;
+	}
 
 	if (!stream->readinfo.accumulate) {
 		/* We must accumulate, else we can't check the signature */
@@ -2232,8 +2240,15 @@ parse_hash_init(__ops_stream_t *stream, __ops_hash_alg_t type,
 {
 	__ops_hashtype_t *hash;
 
-	stream->hashes = realloc(stream->hashes,
+	hash = realloc(stream->hashes,
 			      (stream->hashc + 1) * sizeof(*stream->hashes));
+	if (hash == NULL) {
+		(void) fprintf(stderr, "parse_hash_init: bad alloc 0\n");
+		/* just continue and die here */
+		/* XXX - agc - no way to return failure */
+	} else {
+		stream->hashes = hash;
+	}
 	hash = &stream->hashes[stream->hashc++];
 
 	__ops_hash_any(&hash->hash, type);
@@ -2678,6 +2693,10 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	}
 	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		pkt.u.seckey.checkhash = calloc(1, OPS_CHECKHASH_SIZE);
+		if (pkt.u.seckey.checkhash == NULL) {
+			(void) fprintf(stderr, "parse_seckey: bad alloc\n");
+			return 0;
+		}
 		__ops_hash_sha1(&checkhash);
 		__ops_reader_push_hash(stream, &checkhash);
 	} else {
@@ -2934,6 +2953,10 @@ parse_pk_sesskey(__ops_region_t *region,
 
 	__ops_crypt_any(&stream->decrypt, pkt.u.pk_sesskey.symm_alg);
 	iv = calloc(1, stream->decrypt.blocksize);
+	if (iv == NULL) {
+		(void) fprintf(stderr, "parse_pk_sesskey: bad alloc\n");
+		return 0;
+	}
 	stream->decrypt.set_iv(&stream->decrypt, iv);
 	stream->decrypt.set_crypt_key(&stream->decrypt, pkt.u.pk_sesskey.key);
 	__ops_encrypt_init(&stream->decrypt);
@@ -3458,8 +3481,12 @@ __ops_set_callback(__ops_stream_t *stream, __ops_cbfunc_t *cb, void *arg)
 void 
 __ops_callback_push(__ops_stream_t *stream, __ops_cbfunc_t *cb, void *arg)
 {
-	__ops_cbdata_t *cbinfo = calloc(1, sizeof(*cbinfo));
+	__ops_cbdata_t	*cbinfo;
 
+	if ((cbinfo = calloc(1, sizeof(*cbinfo))) == NULL) {
+		(void) fprintf(stderr, "__ops_callback_push: bad alloc\n");
+		return;
+	}
 	(void) memcpy(cbinfo, &stream->cbinfo, sizeof(*cbinfo));
 	cbinfo->io = stream->io;
 	stream->cbinfo.next = cbinfo;
