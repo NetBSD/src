@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.21 2009/08/06 00:51:55 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.22 2009/10/09 16:35:17 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1549,9 +1549,17 @@ lfs_cleaner_main(int argc, char **argv)
 		} while(cleaned_one);
 		tv.tv_sec = segwait_timeout;
 		tv.tv_usec = 0;
+		/* XXX: why couldn't others work if fsp socket is shutdown? */
 		error = kops.ko_fcntl(fsp[0]->clfs_ifilefd,LFCNSEGWAITALL,&tv);
-		if (error)
-			err(1, "LFCNSEGWAITALL");
+		if (error) {
+			if (errno == ESHUTDOWN) {
+				for (i = 0; i < nfss; i++) {
+					handle_error(fsp, i);
+					assert(nfss == 0);
+				}
+			} else
+				err(1, "LFCNSEGWAITALL");
+		}
 	}
 
 	/* NOTREACHED */
