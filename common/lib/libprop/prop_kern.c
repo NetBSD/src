@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_kern.c,v 1.10 2009/09/13 18:45:10 pooka Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.11 2009/10/10 18:06:54 bad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
 #include <stdio.h>
 
 static int
-_prop_object_pack_pref(prop_object_t obj, struct plistref *pref, char **bufp)
+_prop_object_externalize_to_pref(prop_object_t obj, struct plistref *pref, char **bufp)
 {
 	char *buf;
 
@@ -70,6 +70,38 @@ _prop_object_pack_pref(prop_object_t obj, struct plistref *pref, char **bufp)
 	return (0);
 }
 
+/*
+ * prop_array_externalize_to_pref --
+ *	Externalize an array into a plistref for sending to the kernel.
+ */
+bool
+prop_array_externalize_to_pref(prop_array_t array, struct plistref *prefp)
+{
+	char *buf;
+	int rv;
+
+	rv = _prop_object_externalize_to_pref(array, prefp, &buf);
+	if (rv != 0)
+		errno = rv;	/* pass up error value in errno */
+	return (rv == 0);
+}
+
+/*
+ * prop_dictionary_externalize_to_pref --
+ *	Externalize an dictionary into a plistref for sending to the kernel.
+ */
+bool
+prop_dictionary_externalize_to_pref(prop_dictionary_t dict, struct plistref *prefp)
+{
+	char *buf;
+	int rv;
+
+	rv = _prop_object_externalize_to_pref(dict, prefp, &buf);
+	if (rv != 0)
+		errno = rv;	/* pass up error value in errno */
+	return (rv == 0);
+}
+
 static int
 _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 {
@@ -77,7 +109,7 @@ _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
 	char *buf;
 	int error;
 
-	error = _prop_object_pack_pref(obj, &pref, &buf);
+	error = _prop_object_externalize_to_pref(obj, &pref, &buf);
 	if (error)
 		return (error);
 
@@ -114,7 +146,7 @@ prop_dictionary_send_ioctl(prop_dictionary_t dict, int fd, unsigned long cmd)
 }
 
 static int
-_prop_object_unpack_pref(const struct plistref *pref, prop_type_t type,
+_prop_object_internalize_from_pref(const struct plistref *pref, prop_type_t type,
 			 prop_object_t *objp)
 {
 	prop_object_t obj = NULL;
@@ -164,7 +196,7 @@ prop_array_recv_ioctl(int fd, unsigned long cmd, prop_array_t *arrayp)
 	if (ioctl(fd, cmd, &pref) == -1)
 		return (errno);
 	
-	return (_prop_object_unpack_pref(&pref, PROP_TYPE_ARRAY,
+	return (_prop_object_internalize_from_pref(&pref, PROP_TYPE_ARRAY,
 					 (prop_object_t *)arrayp));
 }
 
@@ -180,7 +212,7 @@ prop_dictionary_recv_ioctl(int fd, unsigned long cmd, prop_dictionary_t *dictp)
 	if (ioctl(fd, cmd, &pref) == -1)
 		return (errno);
 
-	return (_prop_object_unpack_pref(&pref, PROP_TYPE_DICTIONARY,
+	return (_prop_object_internalize_from_pref(&pref, PROP_TYPE_DICTIONARY,
 					 (prop_object_t *)dictp));
 }
 
@@ -197,7 +229,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 	char *buf;
 	int error;
 
-	error = _prop_object_pack_pref(dict, &pref, &buf);
+	error = _prop_object_externalize_to_pref(dict, &pref, &buf);
 	if (error)
 		return (error);
 
@@ -211,7 +243,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 	if (error)
 		return (error);
 
-	return (_prop_object_unpack_pref(&pref, PROP_TYPE_DICTIONARY,
+	return (_prop_object_internalize_from_pref(&pref, PROP_TYPE_DICTIONARY,
 			    (prop_object_t *)dictp));
 }
 #endif /* !_KERNEL && !_STANDALONE */
@@ -246,15 +278,12 @@ prop_kern_init(void)
 }
 
 static int
-_prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
-			  const u_long cmd, prop_object_t *objp)
+_prop_object_copyin(const struct plistref *pref, const prop_type_t type,
+			  prop_object_t *objp)
 {
 	prop_object_t obj = NULL;
 	char *buf;
 	int error;
-
-	if ((cmd & IOC_IN) == 0)
-		return (EFAULT);
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
@@ -291,6 +320,40 @@ _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
 	}
 	return (error);
 }
+
+
+static int
+_prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
+			  const u_long cmd, prop_object_t *objp)
+{
+	if ((cmd & IOC_IN) == 0)
+		return (EFAULT);
+
+	return _prop_object_copyin(pref, type, objp);
+}
+
+/*
+ * prop_array_copyin --
+ *	Copy in an array passed as a syscall arg.
+ */
+int
+prop_array_copyin(const struct plistref *pref, prop_array_t *arrayp)
+{
+	return (_prop_object_copyin(pref, PROP_TYPE_ARRAY,
+					  (prop_object_t *)arrayp));
+}
+
+/*
+ * prop_dictionary_copyin --
+ *	Copy in a dictionary passed as a syscall arg.
+ */
+int
+prop_dictionary_copyin(const struct plistref *pref, prop_dictionary_t *dictp)
+{
+	return (_prop_object_copyin(pref, PROP_TYPE_DICTIONARY,
+					  (prop_object_t *)dictp));
+}
+
 
 /*
  * prop_array_copyin_ioctl --

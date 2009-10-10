@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/06/03 20:18:24 haad Exp $
+#	$NetBSD: Makefile,v 1.17 2009/10/10 18:06:54 bad Exp $
 
 .include <bsd.own.mk>
 
@@ -66,6 +66,7 @@ MLINKS+= prop_array.3 prop_array_ensure_capacity.3
 MLINKS+= prop_array.3 prop_array_equals.3
 MLINKS+= prop_array.3 prop_array_externalize.3
 MLINKS+= prop_array.3 prop_array_externalize_to_file.3
+MLINKS+= prop_array.3 prop_array_externalize_to_pref.3
 MLINKS+= prop_array.3 prop_array_get.3
 MLINKS+= prop_array.3 prop_array_internalize.3
 MLINKS+= prop_array.3 prop_array_internalize_from_file.3
@@ -123,6 +124,7 @@ MLINKS+= prop_dictionary.3 prop_dictionary_ensure_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize_to_file.3
+MLINKS+= prop_dictionary.3 prop_dictionary_externalize_to_pref.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize.3
