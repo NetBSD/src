@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.94 2009/10/09 08:09:48 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.95 2009/10/10 18:17:29 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14044,8 +14044,13 @@ usr.sbin/postinstall/postinstall		1.98
 
 distrib/utils/sysinst/util.c			1.160
 
-	usr/X11R7/lib/X11/xkb/symbols/pc went from a directory to a
+	/usr/X11R7/lib/X11/xkb/symbols/pc went from a directory to a
 	file, so on upgrades we need to remove it before extracting
 	the xbase set.
 	[snj, ticket #1081]
+
+usr.sbin/acpitools/aml/aml_name.c		1.4
+
+	Check validity of parent and so fix potential segfault.
+	[cegger, ticket #1078]
 
