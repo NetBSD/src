@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2009/09/17 04:24:36 snj Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2009/10/10 19:53:23 sborrill Exp $
 
 DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
@@ -14,7 +14,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 
 # XXX
 COPTS.sis_driver.c=	-Wno-error

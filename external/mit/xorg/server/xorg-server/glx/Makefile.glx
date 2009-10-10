@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.3.2.2 2009/09/17 04:24:38 snj Exp $
+#	$NetBSD: Makefile.glx,v 1.3.2.3 2009/10/10 19:53:24 sborrill Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -52,7 +52,7 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
 	-I${DESTDIR}${X11INCDIR}/X11 \
-	-I${DESTDIR}${X11INCDIR}/X11/drm \
+	-I${DESTDIR}${X11INCDIR}/drm \
 	-I${DESTDIR}${X11INCDIR}/xorg \
 	-I${DESTDIR}${X11INCDIR}/pixman-1
 
