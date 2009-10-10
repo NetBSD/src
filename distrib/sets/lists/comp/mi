@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1325 2009/10/09 21:06:01 njoly Exp $
+#	$NetBSD: mi,v 1.1326 2009/10/10 18:06:53 bad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7059,6 +7059,7 @@
 ./usr/share/man/cat3/prop_array_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_externalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_externalize_to_file.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_externalize_to_pref.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get_bool.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get_cstring.0	comp-c-catman		.cat
@@ -7117,6 +7118,7 @@
 ./usr/share/man/cat3/prop_dictionary_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_externalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_externalize_to_file.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_externalize_to_pref.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_bool.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_cstring.0	comp-c-catman		.cat
@@ -12559,6 +12561,7 @@
 ./usr/share/man/html3/prop_array_equals.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_externalize.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_externalize_to_file.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_array_externalize_to_pref.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_get.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_get_bool.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_get_cstring.html	comp-c-htmlman		html
@@ -12617,6 +12620,7 @@
 ./usr/share/man/html3/prop_dictionary_equals.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_externalize.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_externalize_to_file.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_dictionary_externalize_to_pref.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_get.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_get_bool.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_get_cstring.html	comp-c-htmlman		html
@@ -18053,6 +18057,7 @@
 ./usr/share/man/man3/prop_array_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_externalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_externalize_to_file.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_externalize_to_pref.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_get.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_get_bool.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_get_cstring.3	comp-c-man		.man
@@ -18111,6 +18116,7 @@
 ./usr/share/man/man3/prop_dictionary_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_externalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_externalize_to_file.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_externalize_to_pref.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_get.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_get_bool.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_get_cstring.3	comp-c-man		.man
