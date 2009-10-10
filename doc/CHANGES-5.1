@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.97 2009/10/10 20:23:09 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.98 2009/10/10 20:35:55 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14095,4 +14095,13 @@ distrib/utils/sysinst/util.c			1.161
 	after extracting etc, which meant that /var/db/obsolete/ was
 	not fully populated.
 	[snj, ticket #1082]
+
+sys/dev/usb/uftdi.c			1.41-42
+share/man/man4/uftdi.4			1.15
+sys/dev/usb/usbdevs			1.527
+
+	Add support for multiple channel cards, specifically quad
+	channel FT4232H. Plus fix minor format nit and legacy title
+	comment removal.
+	[snj, ticket #1083]
 
