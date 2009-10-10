@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.8.2 2009/09/17 04:24:36 snj Exp $
+#	$NetBSD: Makefile,v 1.4.8.3 2009/10/10 19:53:23 sborrill Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ CPPFLAGS+=	-DUSE_XAA
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 
 CPPFLAGS.mga_driver.c=	-Wno-error	# XXX fix me please
 CPPFLAGS.mga_dacG.c=	-Wno-error	# XXX fix me please

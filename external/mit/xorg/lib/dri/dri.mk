@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.3.4.3 2009/09/17 04:24:29 snj Exp $
+# $NetBSD: dri.mk,v 1.3.4.4 2009/10/10 19:53:22 sborrill Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/${MODULE}/server \
 		-I${X11SRCDIR.MesaLib}/src/mesa \
 		-I${X11SRCDIR.MesaLib}/include \
-		-I${DESTDIR}${X11INCDIR}/X11/drm \
+		-I${DESTDIR}${X11INCDIR}/drm \
 		-I${DESTDIR}${X11INCDIR}/X11
 
 CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 \

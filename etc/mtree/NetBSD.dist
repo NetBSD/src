@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.4 2009/10/04 00:42:21 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.5 2009/10/10 19:53:24 sborrill Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -252,7 +252,6 @@
 ./usr/X11R7/include/GL
 ./usr/X11R7/include/GL/internal
 ./usr/X11R7/include/X11
-./usr/X11R7/include/X11/drm
 ./usr/X11R7/include/X11/dri
 ./usr/X11R7/include/X11/ICE
 ./usr/X11R7/include/X11/PM
@@ -268,6 +267,7 @@
 ./usr/X11R7/include/X11/extensions
 ./usr/X11R7/include/X11/fonts
 ./usr/X11R7/include/X11/pixmaps
+./usr/X11R7/include/drm
 ./usr/X11R7/include/fontconfig
 ./usr/X11R7/include/freetype2
 ./usr/X11R7/include/freetype2/freetype
