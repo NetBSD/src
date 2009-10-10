@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.35 2009/07/07 10:50:51 mbalmer Exp $
+#	$NetBSD: airport,v 1.36 2009/10/10 17:17:37 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -6442,7 +6442,7 @@ QSN:San Nicolas de Bari, Cuba
 QSO:Sousse, Tunisia
 QSP:Sancti Spiritu, Cuba
 QSR:Salerno, Italy
-QSS:Alhegro/Sassari, Sardinia, Italy
+QSS:Alghero/Sassari, Sardinia, Italy
 QSZ:Shizuoka City, Japan
 QTA:Atibaia, SP, Brazil
 QTD:Timbauba, PE, Brazil
