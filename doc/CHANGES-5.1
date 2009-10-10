@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.96 2009/10/10 19:54:28 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.97 2009/10/10 20:23:09 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14087,4 +14087,12 @@ external/mit/xorg/server/xorg-server/hw/xfree86/dri2/Makefile		1.4
 	libdrm.pc.
 	Fixes PR xsrc/42126.
 	[snj, ticket #1079]
+
+distrib/utils/sysinst/util.c			1.161
+	Don't extract xetc to /, but rather in /.sysinst (like etc) so
+	we don't blow away existing config files. Wait until all sets
+	have been unpacked to run postinstall.  Previously we ran it
+	after extracting etc, which meant that /var/db/obsolete/ was
+	not fully populated.
+	[snj, ticket #1082]
 
