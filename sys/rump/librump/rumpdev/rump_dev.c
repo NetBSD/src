@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.7 2009/10/02 11:01:53 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.8 2009/10/10 21:10:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.7 2009/10/02 11:01:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.8 2009/10/10 21:10:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,8 @@ __weak_alias(rump_dev_rnd_init,nocomponent);
 __weak_alias(rump_dev_rumpusbhc_init,nocomponent);
 
 __weak_alias(rump_device_configuration,nocomponent);
+
+const char *rootspec = "rump0a"; /* usually comes from config */
 
 void
 rump_dev_init(void)
@@ -69,6 +71,13 @@ rump_dev_init(void)
 	config_finalize();
 
 	KERNEL_UNLOCK_LAST(curlwp);
+}
+
+void
+cpu_rootconf(void)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 #ifdef __HAVE_DEVICE_REGISTER
