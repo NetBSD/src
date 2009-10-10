@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_name.c,v 1.3 2008/01/15 19:08:00 jmcneill Exp $	*/
+/*	$NetBSD: aml_name.c,v 1.3.10.1 2009/10/10 18:16:25 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -31,7 +31,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_name.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_name.c,v 1.3 2008/01/15 19:08:00 jmcneill Exp $");
+__RCSID("$NetBSD: aml_name.c,v 1.3.10.1 2009/10/10 18:16:25 sborrill Exp $");
 
 #include <sys/param.h>
 
@@ -283,11 +283,12 @@ aml_new_name(struct aml_name *parent, const u_int8_t *name)
 	newname->parent = parent;
 	newname->child = NULL;
 	newname->property = NULL;
-	if (parent->child)
+	if (parent && parent->child)
 		newname->brother = parent->child;
 	else
 		newname->brother = NULL;
-	parent->child = newname;
+	if (parent)
+		parent->child = newname;
 
 	newname->chain = name_group_list->head;
 	name_group_list->head = newname;
