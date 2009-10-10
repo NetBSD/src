@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.58 2009/09/11 23:04:16 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.59 2009/10/10 08:07:23 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -869,4 +869,15 @@ xfree/xc/extras/expat/lib/xmltok_impl.c		1.2
 
 	Apply revisions 1.14 and 1.15 from expat CVS to fix SA36425.
 	[snj, ticket #1359]
+
+share/man/man7/release.7			1.31 via patch
+distrib/cdrom/hide-hfs.lst			1.5
+distrib/mac68k/stand/Makefile			1.6 via patch
+distrib/notes/common/main			1.451
+distrib/sets/Makefile				1.70
+distrib/sets/makesrctars			1.37
+distrib/sets/makesums				1.16
+
+	Only generate SHA512 and MD5 checksums for releases.
+	[snj, ticket #1365]
 
