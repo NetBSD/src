@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.3.10.1 2007/05/30 18:25:03 riz Exp $
+#       $NetBSD: Makefile,v 1.3.10.1.2.1 2009/10/10 08:06:28 sborrill Exp $
 #
 
 .include <bsd.own.mk>
@@ -18,7 +18,7 @@ release: ${UUDECODE_FILES}
 	${RELEASE_INSTALL} ${DISTRIBDIR}/mac68k/stand/extensions.map \
 	  ${RELEASEDIR}/${MACHINE}/installation/misc
 	rm -f \
-	  ${RELEASEDIR}/${MACHINE}/installation/misc/{BSDSUM,CKSUM,MD5,SYSVSUM}
+	  ${RELEASEDIR}/${MACHINE}/installation/misc/{MD5,SHA512}
 	for i in BSD_Mac68k_Booter.bin Mkfs.sea.hqx Booter-HTML-manual-12.tar \
 	  Mkfs_1.47.sea.bin Mkfs_1.47.sea.hqx Booter2.0.0.sea \
 	  BooterManual.stxt.bin NetBSD_ROM.sit.hqx Installer.sea.hqx \
@@ -31,31 +31,22 @@ release: ${UUDECODE_FILES}
 	do \
 	  ${RELEASE_INSTALL} $$i ${RELEASEDIR}/${MACHINE}/installation/misc ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
-	    ${TOOL_CKSUM} -o1 `basename $$i` >> BSDSUM) ; \
-	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
-	    ${TOOL_CKSUM}     `basename $$i` >> CKSUM) ; \
-	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
 	    ${TOOL_CKSUM} -a MD5 `basename $$i` >> MD5) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc ; \
-	    ${TOOL_CKSUM} -o2 `basename $$i` >> SYSVSUM) ; \
+	    ${TOOL_CKSUM} -a SHA512 `basename $$i` >> SHA512) ; \
 	done
 	${INSTALL} -d ${RELEASEDIR}/${MACHINE}/installation/misc/src
 	rm -f \
-	  ${RELEASEDIR}/${MACHINE}/installation/misc/src/{BSDSUM,CKSUM,MD5}
-	rm -f ${RELEASEDIR}/${MACHINE}/installation/misc/src/SYSVSUM
+	  ${RELEASEDIR}/${MACHINE}/installation/misc/src/{MD5,SHA512}
 	for i in Booter2.0.0-src.sea Mkfs_1.47src.sea.hqx \
 	  Installer_1.1g.src.sea.hqx Installer_1.1h.src.sea.hqx ; \
 	do \
 	  ${RELEASE_INSTALL} $$i \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
-	    ${TOOL_CKSUM} -o1 `basename $$i` >> BSDSUM) ; \
-	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
-	    ${TOOL_CKSUM}     `basename $$i` >> CKSUM) ; \
-	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
 	    ${TOOL_CKSUM} -a MD5 `basename $$i` >> MD5) ; \
 	  (cd ${RELEASEDIR}/${MACHINE}/installation/misc/src ; \
-	    ${TOOL_CKSUM} -o2 `basename $$i` >> SYSVSUM) ; \
+	    ${TOOL_CKSUM} -a SHA512 `basename $$i` >> SHA512) ; \
 	done
 
 .include <bsd.files.mk>
