@@ -372,7 +372,8 @@ CONFIGURATION
                  an absolute path.  The main X11R6 source is found in
                  X11SRCDIR/xfree/xc.
 
-                 Default: ``/usr/xsrc''
+                 Default: NETBSDRCDIR/../xsrc, if that exists; otherwise
+                 /usr/xsrc.
 
      X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
                  ``XFree86''.

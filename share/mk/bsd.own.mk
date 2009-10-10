@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.586 2009/10/09 00:26:53 haad Exp $
+#	$NetBSD: bsd.own.mk,v 1.587 2009/10/10 19:05:29 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -850,7 +850,14 @@ ${var}?= yes
 #
 # Where X11 sources are and where it is installed to.
 #
-X11SRCDIR?=		/usr/xsrc
+.if !defined(X11SRCDIR)
+.if exists(${NETBSDSRCDIR}/../xsrc)
+X11SRCDIR!=		cd ${NETBSDSRCDIR}/../xsrc && pwd
+.else
+X11SRCDIR=		/usr/xsrc
+.endif
+.endif # !defined(X11SRCDIR)
+
 X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
 .if ${X11FLAVOUR} == "Xorg"
