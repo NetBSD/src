@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.95 2009/10/10 18:17:29 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.96 2009/10/10 19:54:28 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14053,4 +14053,38 @@ usr.sbin/acpitools/aml/aml_name.c		1.4
 
 	Check validity of parent and so fix potential segfault.
 	[cegger, ticket #1078]
+
+distrib/sets/lists/base/mi			patch
+etc/mtree/NetBSD.dist				patch
+distrib/sets/lists/xcomp/mi			1.100
+external/mit/xorg/lib/dri/dri.mk		1.8
+external/mit/xorg/lib/dri/libmesa/Makefile	1.4
+external/mit/xorg/lib/libGL/Makefile		1.10
+external/mit/xorg/lib/libdrm/Makefile		1.5
+external/mit/xorg/lib/libdrm/drm/Makefile	1.3
+external/mit/xorg/lib/libdrm_intel/Makefile	1.3
+external/mit/xorg/server/drivers/Makefile.xf86-driver			1.16
+external/mit/xorg/server/drivers/xf86-video-glint/Makefile		1.7
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile		1.7
+external/mit/xorg/server/drivers/xf86-video-intel/ch7017/Makefile	1.2
+external/mit/xorg/server/drivers/xf86-video-intel/ch7xxx/Makefile	1.2
+external/mit/xorg/server/drivers/xf86-video-intel/ivch/Makefile		1.2
+external/mit/xorg/server/drivers/xf86-video-intel/sil164/Makefile	1.2
+external/mit/xorg/server/drivers/xf86-video-intel/tfp410/Makefile	1.2
+external/mit/xorg/server/drivers/xf86-video-mga/Makefile		1.7
+external/mit/xorg/server/drivers/xf86-video-radeon/Makefile		1.5
+external/mit/xorg/server/drivers/xf86-video-savage/Makefile		1.7
+external/mit/xorg/server/drivers/xf86-video-sis/Makefile		1.7
+external/mit/xorg/server/drivers/xf86-video-tdfx/Makefile		1.6
+external/mit/xorg/server/drivers/xf86-video-via/Makefile		1.5
+external/mit/xorg/server/xorg-server/GL/glx/Makefile.glx		1.5
+external/mit/xorg/server/xorg-server/glx/Makefile.glx			1.4
+external/mit/xorg/server/xorg-server/hw/xfree86/dri/Makefile		1.7
+external/mit/xorg/server/xorg-server/hw/xfree86/dri2/Makefile		1.4
+
+	Move libdrm headers up one level (out of the X11 directory)
+	to match the rest of the world and fix the inconsistency with
+	libdrm.pc.
+	Fixes PR xsrc/42126.
+	[snj, ticket #1079]
 
