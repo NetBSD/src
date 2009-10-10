@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/10/10 10:21:22 skrll Exp $
+#	$NetBSD: Makefile,v 1.15 2009/10/10 14:46:02 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ GNUHOSTDIST=	${.CURDIR}/../../external/gpl3/binutils/dist
 
 BRANDING?=	\
 	--with-pkgversion="NetBSD" \
-	--with-bugurl="http://www.NetBSD.org/Misc/send-pr.html"
+	--with-bugurl="http://www.NetBSD.org/support/send-pr.html"
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
