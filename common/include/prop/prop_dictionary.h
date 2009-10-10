@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_dictionary.h,v 1.9 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.10 2009/10/10 21:26:16 bad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,10 @@ bool		prop_dictionary_keysym_equals(prop_dictionary_keysym_t,
 					      prop_dictionary_keysym_t);
 
 #if defined(__NetBSD__)
+struct plistref;
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+bool		prop_dictionary_externalize_to_pref(prop_dictionary_t, struct plistref *);
 int		prop_dictionary_send_ioctl(prop_dictionary_t, int,
 					   unsigned long);
 int		prop_dictionary_recv_ioctl(int, unsigned long,
@@ -91,8 +94,8 @@ int		prop_dictionary_sendrecv_ioctl(prop_dictionary_t,
 					       int, unsigned long,
 					       prop_dictionary_t *);
 #elif defined(_KERNEL)
-struct plistref;
-
+int		prop_dictionary_copyin(const struct plistref *,
+				       prop_dictionary_t *);
 int		prop_dictionary_copyin_ioctl(const struct plistref *,
 					     const u_long,
 					     prop_dictionary_t *);
