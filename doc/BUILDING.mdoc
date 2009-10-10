@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.79 2009/10/02 07:43:01 cegger Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.80 2009/10/10 19:05:29 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -669,7 +669,9 @@ If specified, must be an absolute path.
 The main X11R6 source is found in
 .Sy X11SRCDIR Ns Pa /xfree/xc .
 .DFLT
-.Dq /usr/xsrc
+.Sy NETBSDRCDIR Ns Pa /../xsrc ,
+if that exists; otherwise
+.Pa /usr/xsrc .
 .
 .It Sy X11FLAVOUR
 The style of X11 cross-built, set to either
