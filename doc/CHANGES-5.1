@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.98 2009/10/10 20:35:55 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.99 2009/10/10 21:09:08 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14089,6 +14089,7 @@ external/mit/xorg/server/xorg-server/hw/xfree86/dri2/Makefile		1.4
 	[snj, ticket #1079]
 
 distrib/utils/sysinst/util.c			1.161
+
 	Don't extract xetc to /, but rather in /.sysinst (like etc) so
 	we don't blow away existing config files. Wait until all sets
 	have been unpacked to run postinstall.  Previously we ran it
@@ -14096,12 +14097,19 @@ distrib/utils/sysinst/util.c			1.161
 	not fully populated.
 	[snj, ticket #1082]
 
-sys/dev/usb/uftdi.c			1.41-42
-share/man/man4/uftdi.4			1.15
-sys/dev/usb/usbdevs			1.527
+sys/dev/usb/uftdi.c				1.41-42
+share/man/man4/uftdi.4				1.15
+sys/dev/usb/usbdevs				1.527
 
 	Add support for multiple channel cards, specifically quad
 	channel FT4232H. Plus fix minor format nit and legacy title
 	comment removal.
 	[snj, ticket #1083]
+
+lib/libc/arch/m68k/sys/cerror.S			1.15
+
+	Ensure functions like mmap(2), mremap(2), shmat(2) or sbrk(2)
+	return -1 in case of an error. A side benefit of this is to
+	fix a segfault caused by jemalloc when mmap() failed.
+	[phx, ticket #1085]
 
