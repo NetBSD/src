@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.151.14.3 2009/10/09 08:09:24 sborrill Exp $	*/
+/*	$NetBSD: util.c,v 1.151.14.4 2009/10/10 20:22:34 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -669,7 +669,7 @@ extract_file(distinfo *dist, int update, int verbose)
 
 	tarstats.nfound++;	
 	/* cd to the target root. */
-	if (update && dist->set == SET_ETC) {
+	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
 		make_target_dir("/.sysinst");
 		target_chdir_or_die("/.sysinst");
 	} else
@@ -708,23 +708,6 @@ extract_file(distinfo *dist, int update, int verbose)
 	if (fetch_fn != NULL && clean_xfer_dir) {
 		run_program(0, "rm %s", path);
 		/* Plausibly we should unlink an empty xfer_dir as well */
-	}
-
-	if (update && dist->set == SET_ETC) {
-		int oldsendmail;
-		oldsendmail = run_program(RUN_DISPLAY | RUN_CHROOT |
-					  RUN_ERROR_OK | RUN_PROGRESS,
-					  "/usr/sbin/postinstall -s /.sysinst -d / check mailerconf");
-		if (oldsendmail == 1) {
-			msg_display(MSG_oldsendmail);
-			process_menu(MENU_yesno, NULL);
-			if (yesno) {
-				run_program(RUN_DISPLAY | RUN_CHROOT,
-					    "/usr/sbin/postinstall -s /.sysinst -d / fix mailerconf");
-			}
-		}
-		run_program(RUN_DISPLAY | RUN_CHROOT,
-			"/usr/sbin/postinstall -s /.sysinst -d / fix");
 	}
 
 	set_status[dist->set] |= SET_INSTALLED;
@@ -845,6 +828,28 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
 		process_menu(MENU_ok, NULL);
 		msg_clear();
+	}
+
+	/*
+	 * postinstall needs to be run after extracting all sets, because
+	 * otherwise /var/db/obsolete will only have current information
+	 * from the base, comp, and etc sets.
+	 */
+	if (update && (set_status[SET_ETC] & SET_INSTALLED)) {
+		int oldsendmail;
+		oldsendmail = run_program(RUN_DISPLAY | RUN_CHROOT |
+					  RUN_ERROR_OK | RUN_PROGRESS,
+					  "/usr/sbin/postinstall -s /.sysinst -d / check mailerconf");
+		if (oldsendmail == 1) {
+			msg_display(MSG_oldsendmail);
+			process_menu(MENU_yesno, NULL);
+			if (yesno) {
+				run_program(RUN_DISPLAY | RUN_CHROOT,
+					    "/usr/sbin/postinstall -s /.sysinst -d / fix mailerconf");
+			}
+		}
+		run_program(RUN_DISPLAY | RUN_CHROOT,
+			"/usr/sbin/postinstall -s /.sysinst -d / fix");
 	}
 
 	/* Configure the system */
