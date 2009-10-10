@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.254 2009/10/05 22:32:58 haad Exp $
+#	$NetBSD: bsd.README,v 1.255 2009/10/10 19:05:29 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -510,7 +510,8 @@ NLSOWN		Native Language Support files owner.  [root]
 
 NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 
-X11SRCDIR	The path to the xsrc tree.  [/usr/xsrc]
+X11SRCDIR	The path to the xsrc tree.  [${NETBSDSRCDIR}/../xsrc,
+		if that exists; otherwise /usr/xsrc]
 
 X11SRCDIR.xc	The path to the (old) X11 xc src tree.  [${X11SRCDIR}/xfree/xc]
 
