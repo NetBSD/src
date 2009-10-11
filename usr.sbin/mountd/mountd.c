@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.119 2009/04/17 13:56:33 lukem Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.120 2009/10/11 16:30:19 pooka Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.119 2009/04/17 13:56:33 lukem Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.120 2009/10/11 16:30:19 pooka Exp $");
 #endif
 #endif				/* not lint */
 
@@ -709,13 +709,13 @@ xdr_mlist(xdrsp, cp)
 	caddr_t cp;
 {
 	struct mountlist *mlp;
-	int true = 1;
-	int false = 0;
+	int trueval = 1;
+	int falseval = 0;
 	char *strp;
 
 	mlp = mlhead;
 	while (mlp) {
-		if (!xdr_bool(xdrsp, &true))
+		if (!xdr_bool(xdrsp, &trueval))
 			return (0);
 		strp = &mlp->ml_host[0];
 		if (!xdr_string(xdrsp, &strp, RPCMNT_NAMELEN))
@@ -725,7 +725,7 @@ xdr_mlist(xdrsp, cp)
 			return (0);
 		mlp = mlp->ml_next;
 	}
-	if (!xdr_bool(xdrsp, &false))
+	if (!xdr_bool(xdrsp, &falseval))
 		return (0);
 	return (1);
 }
@@ -739,7 +739,7 @@ xdr_explist(xdrsp, cp)
 	caddr_t cp;
 {
 	struct exportlist *ep;
-	int false = 0;
+	int falseval = 0;
 	int putdef;
 	sigset_t sighup_mask;
 
@@ -757,7 +757,7 @@ xdr_explist(xdrsp, cp)
 		ep = ep->ex_next;
 	}
 	(void)sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
-	if (!xdr_bool(xdrsp, &false))
+	if (!xdr_bool(xdrsp, &falseval))
 		return (0);
 	return (1);
 errout:
@@ -778,15 +778,15 @@ put_exlist(dp, xdrsp, adp, putdefp)
 {
 	struct grouplist *grp;
 	struct hostlist *hp;
-	int true = 1;
-	int false = 0;
+	int trueval = 1;
+	int falseval = 0;
 	int gotalldir = 0;
 	char *strp;
 
 	if (dp) {
 		if (put_exlist(dp->dp_left, xdrsp, adp, putdefp))
 			return (1);
-		if (!xdr_bool(xdrsp, &true))
+		if (!xdr_bool(xdrsp, &trueval))
 			return (1);
 		strp = dp->dp_dirp;
 		if (!xdr_string(xdrsp, &strp, RPCMNT_PATHLEN))
@@ -801,7 +801,7 @@ put_exlist(dp, xdrsp, adp, putdefp)
 			while (hp) {
 				grp = hp->ht_grp;
 				if (grp->gr_type == GT_HOST) {
-					if (!xdr_bool(xdrsp, &true))
+					if (!xdr_bool(xdrsp, &trueval))
 						return (1);
 					strp =
 					  grp->gr_ptr.gt_addrinfo->ai_canonname;
@@ -809,7 +809,7 @@ put_exlist(dp, xdrsp, adp, putdefp)
 							RPCMNT_NAMELEN))
 						return (1);
 				} else if (grp->gr_type == GT_NET) {
-					if (!xdr_bool(xdrsp, &true))
+					if (!xdr_bool(xdrsp, &trueval))
 						return (1);
 					strp = grp->gr_ptr.gt_net.nt_name;
 					if (!xdr_string(xdrsp, &strp,
@@ -823,7 +823,7 @@ put_exlist(dp, xdrsp, adp, putdefp)
 				}
 			}
 		}
-		if (!xdr_bool(xdrsp, &false))
+		if (!xdr_bool(xdrsp, &falseval))
 			return (1);
 		if (put_exlist(dp->dp_right, xdrsp, adp, putdefp))
 			return (1);
