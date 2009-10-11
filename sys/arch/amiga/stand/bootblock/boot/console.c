@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.11 2009/03/18 10:22:23 cegger Exp $ */
+/* $NetBSD: console.c,v 1.12 2009/10/11 10:00:10 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,9 +178,10 @@ void
 putchar(int c)
 {
 	struct Console *mc = ConsoleBase;
+	char buf = c;
 
 	mc->cnior->length = 1;
-	mc->cnior->buf = &c;
+	mc->cnior->buf = &buf;
 	mc->cnior->cmd = Cmd_Wr;
 	(void)DoIO(mc->cnior);
 }
