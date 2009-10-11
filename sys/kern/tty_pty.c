@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.117 2009/06/12 09:26:50 plunky Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.118 2009/10/11 08:08:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.117 2009/06/12 09:26:50 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.118 2009/10/11 08:08:32 dsl Exp $");
 
 #include "opt_ptm.h"
 
@@ -584,6 +584,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = pti->pt_tty;
 	u_char bf[BUFSIZ];
 	int error = 0, cc;
+	int c;
 
 	/*
 	 * We want to block until the slave
@@ -594,9 +595,10 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	mutex_spin_enter(&tty_lock);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
-			if (pti->pt_flags & PF_PKT && pti->pt_send) {
+			if (pti->pt_flags & PF_PKT && (c = pti->pt_send)) {
+				pti->pt_send = 0;
 				mutex_spin_exit(&tty_lock);
-				error = ureadc((int)pti->pt_send, uio);
+				error = ureadc(c, uio);
 				if (error)
 					return (error);
 				/*
@@ -611,15 +613,14 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 					uiomove((void *) &tp->t_termios,
 						cc, uio);
 				}
-				pti->pt_send = 0;
 				return (0);
 			}
-			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
+			if (pti->pt_flags & PF_UCNTL && (c = pti->pt_ucntl)) {
+				pti->pt_ucntl = 0;
 				mutex_spin_exit(&tty_lock);
-				error = ureadc((int)pti->pt_ucntl, uio);
+				error = ureadc(c, uio);
 				if (error)
 					return (error);
-				pti->pt_ucntl = 0;
 				return (0);
 			}
 			if (tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP))
