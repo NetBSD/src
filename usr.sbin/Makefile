@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.242 2009/06/25 18:41:21 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.243 2009/10/11 08:57:54 sborrill Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -8,7 +8,8 @@ SUBDIR=	ac accton acpitools altq apm apmd arp bad144 bootp \
 	chown chroot chrtbl cnwctl cpuctl crash cron dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig etcupdate extattrctl fssconfig fusermount fwctl \
-	gpioctl grfconfig grfinfo gspa hilinfo ifwatchd inetd installboot \
+	gpioctl grfconfig grfinfo gspa hdaudioctl hilinfo ifwatchd inetd \
+	installboot \
 	iopctl iostat ipwctl irdaattach isdn iteconfig iwictl\
 	kgmon lastlogin link lmcconfig lockstat lpr mailwrapper makefs \
 	map-mbone mdconfig memswitch mlxctl mmcformat mopd mountd moused \
