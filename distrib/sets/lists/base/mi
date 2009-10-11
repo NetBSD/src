@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.832 2009/10/05 22:32:58 haad Exp $
+# $NetBSD: mi,v 1.833 2009/10/11 08:57:54 sborrill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1068,6 +1068,7 @@
 ./usr/sbin/groupdel				base-sysutil-bin
 ./usr/sbin/groupinfo				base-sysutil-bin
 ./usr/sbin/groupmod				base-sysutil-bin
+./usr/sbin/hdaudioctl				base-sysutil-bin
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
 ./usr/sbin/hostapd				base-sysutil-bin
