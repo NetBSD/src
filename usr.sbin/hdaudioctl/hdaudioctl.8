@@ -1,4 +1,4 @@
-.\"	$NetBSD: hdaudioctl.8,v 1.1 2009/10/11 08:57:54 sborrill Exp $
+.\"	$NetBSD: hdaudioctl.8,v 1.2 2009/10/11 09:25:19 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
 .\" All rights reserved.
@@ -73,15 +73,20 @@ of the widgets that form the chosen
 .Xr hdafg 4
 codec.
 .El
-.Sh CAVEATS
-When a plist is loaded and the
-.Xr hdafg 4
-codec reattaches, all mixer controls will be returned to their default values.
 .Sh FILES
 .Bl -tag -width /dev/hdaudioX -compact
 .It Pa /dev/hdaudioX
 control devices
 .El
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr hdaudio 4 ,
+.Pa pkgsrc/graphics/graphviz
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 5.1 .
 .Sh AUTHORS
 .Nm
 is based on two separate programs written by
@@ -89,13 +94,8 @@ is based on two separate programs written by
 under contract by
 .An Precedence Technologies Ltd Aq http://www.precedence.co.uk/ .
 Integration into one program and writing this manual page was done by
-.An Stephen Borrill Aq sborrill@NetBSD.org
-.Sh SEE ALSO
-.Xr hdaudio 4
-.Xr audio 4
-.Xr pkgsrc/graphics/graphviz
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 5.1 .
+.An Stephen Borrill Aq sborrill@NetBSD.org .
+.Sh CAVEATS
+When a plist is loaded and the
+.Xr hdafg 4
+codec reattaches, all mixer controls will be returned to their default values.
