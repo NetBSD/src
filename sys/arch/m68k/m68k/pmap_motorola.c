@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.46 2009/08/26 00:30:02 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.47 2009/10/11 20:37:47 mhitch Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.46 2009/08/26 00:30:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.47 2009/10/11 20:37:47 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2885,9 +2885,8 @@ pmap_pvdump(paddr_t pa)
 	printf("pa %lx", pa);
 	pvh = pa_to_pvh(pa);
 	for (pv = &pvh->pvh_first; pv; pv = pv->pv_next)
-		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p, flags %x",
-		    pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap,
-		    pv->pv_flags);
+		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p",
+		    pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap);
 	printf("\n");
 }
 
