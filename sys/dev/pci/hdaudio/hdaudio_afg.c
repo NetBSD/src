@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.16 2009/09/29 15:58:54 sborrill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.17 2009/10/11 08:50:11 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.16 2009/09/29 15:58:54 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.17 2009/10/11 08:50:11 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3644,19 +3644,71 @@ hdaudio_afg_trigger_input(void *opaque, void *start, void *end, int blksize,
 	return 0;
 }
 
+int
+hdaudio_afg_widget_info(void *opaque, prop_dictionary_t request,
+    prop_dictionary_t response)
+{
+	struct hdaudio_afg_softc *sc = opaque;
+	struct hdaudio_widget *w;
+	prop_array_t connlist;
+	uint32_t config, wcap;
+	uint16_t index;
+	int nid;
+	int i;
+
+	if (prop_dictionary_get_uint16(request, "index", &index) == false)
+		return EINVAL;
+
+	nid = sc->sc_startnode + index;
+	if (nid >= sc->sc_endnode)
+		return EINVAL;
+
+	w = hdaudio_afg_widget_lookup(sc, nid);
+	if (w == NULL)
+		return ENXIO;
+	wcap = hda_get_wparam(w, PIN_CAPABILITIES);
+	config = hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_GET_CONFIGURATION_DEFAULT, 0);
+	prop_dictionary_set_cstring_nocopy(response, "name", w->w_name);
+	prop_dictionary_set_bool(response, "enable", w->w_enable);
+	prop_dictionary_set_uint8(response, "nid", w->w_nid);
+	prop_dictionary_set_uint8(response, "type", w->w_type);
+	prop_dictionary_set_uint32(response, "config", config);
+	prop_dictionary_set_uint32(response, "cap", wcap);
+	if (w->w_nconns == 0)
+		return 0;
+	connlist = prop_array_create();
+	for (i = 0; i < w->w_nconns; i++) {
+		if (w->w_conns[i] == 0)
+			continue;
+		prop_array_add(connlist,
+		    prop_number_create_unsigned_integer(w->w_conns[i]));
+	}
+	prop_dictionary_set(response, "connlist", connlist);
+	prop_object_release(connlist);
+	return 0;
+}
+
+int
+hdaudio_afg_codec_info(void *opaque, prop_dictionary_t request,
+    prop_dictionary_t response)
+{
+	struct hdaudio_afg_softc *sc = opaque;
+	prop_dictionary_set_uint16(response, "vendor-id",
+	    sc->sc_vendor);
+	prop_dictionary_set_uint16(response, "product-id",
+	    sc->sc_product);
+	return 0;
+}
+
 static int
 hdaudio_afg_dev_ioctl(void *opaque, u_long cmd, void *addr, int flag, lwp_t *l)
 {
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_afg_softc *sc = ad->ad_sc;
 	struct plistref *pref = addr;
-	struct hdaudio_widget *w;
 	prop_dictionary_t request, response;
-	prop_array_t connlist;
-	uint32_t config, wcap;
-	uint16_t index;
-	int err, nid;
-	int i;
+	int err;
 
 	response = prop_dictionary_create();
 	if (response == NULL)
@@ -3667,60 +3719,22 @@ hdaudio_afg_dev_ioctl(void *opaque, u_long cmd, void *addr, int flag, lwp_t *l)
 		prop_object_release(response);
 		return err;
 	}
-
-	if (prop_dictionary_get_uint16(request, "index", &index) == false) {
-		err = EINVAL;
-		goto out;
-	}
-
-	nid = sc->sc_startnode + index;
-	if (nid >= sc->sc_endnode) {
-		err = EINVAL;
-		goto out;
-	}
-
+	err = 0;
 	switch (cmd) {
 	case HDAUDIO_AFG_WIDGET_INFO:
-		w = hdaudio_afg_widget_lookup(sc, nid);
-		if (w == NULL) {
-			err = ENXIO;
-			goto out;
-		}
-		wcap = hda_get_wparam(w, PIN_CAPABILITIES);
-		config = hdaudio_command(sc->sc_codec, w->w_nid,
-		    CORB_GET_CONFIGURATION_DEFAULT, 0);
-		prop_dictionary_set_cstring_nocopy(response, "name", w->w_name);
-		prop_dictionary_set_bool(response, "enable", w->w_enable);
-		prop_dictionary_set_uint8(response, "nid", w->w_nid);
-		prop_dictionary_set_uint8(response, "type", w->w_type);
-		prop_dictionary_set_uint32(response, "config", config);
-		prop_dictionary_set_uint32(response, "cap", wcap);
-		if (w->w_nconns == 0)
-			break;
-		connlist = prop_array_create();
-		for (i = 0; i < w->w_nconns; i++) {
-			if (w->w_conns[i] == 0)
-				continue;
-			prop_array_add(connlist,
-			    prop_number_create_unsigned_integer(w->w_conns[i]));
-		}
-		prop_dictionary_set(response, "connlist", connlist);
-		prop_object_release(connlist);
+		err = hdaudio_afg_widget_info(sc, request, response);
 		break;
 	case HDAUDIO_AFG_CODEC_INFO:
-		prop_dictionary_set_uint16(response, "vendor-id",
-		    sc->sc_vendor);
-		prop_dictionary_set_uint16(response, "product-id",
-		    sc->sc_product);
+		err = hdaudio_afg_codec_info(sc, request, response);
 		break;
 	default:
 		err = EINVAL;
-		goto out;
+		break;
 	}
 
-	err = prop_dictionary_copyout_ioctl(pref, cmd, response);
+	if (!err)
+		err = prop_dictionary_copyout_ioctl(pref, cmd, response);
 
-out:
 	if (response)
 		prop_object_release(response);
 	prop_object_release(request);
