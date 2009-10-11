@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.4 2009/09/07 16:21:08 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.5 2009/10/11 08:50:12 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -177,5 +177,8 @@ void	hdaudio_stream_stop(struct hdaudio_stream *);
 void	hdaudio_stream_reset(struct hdaudio_stream *);
 int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
+
+int	hdaudio_afg_widget_info(void *, prop_dictionary_t, prop_dictionary_t);
+int	hdaudio_afg_codec_info(void *, prop_dictionary_t, prop_dictionary_t);
 
 #endif /* !_HDAUDIOVAR_H */
