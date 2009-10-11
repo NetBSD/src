@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.99 2009/10/10 21:09:08 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.100 2009/10/11 18:04:30 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14112,4 +14112,10 @@ lib/libc/arch/m68k/sys/cerror.S			1.15
 	return -1 in case of an error. A side benefit of this is to
 	fix a segfault caused by jemalloc when mmap() failed.
 	[phx, ticket #1085]
+
+sys/kern/tty.c					1.234
+
+	Check for zero length read here - and return zero. Without
+	this there is a simple local-user panic in ureadc().
+	[dsl, ticket #1087]
 
