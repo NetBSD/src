@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.233 2009/10/02 23:58:53 elad Exp $	*/
+/*	$NetBSD: tty.c,v 1.234 2009/10/11 17:20:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.233 2009/10/02 23:58:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234 2009/10/11 17:20:48 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1668,6 +1668,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	int		c, first, error, has_stime, last_cc;
 	long		lflag, slp;
 	struct timeval	now, stime;
+
+	if (uio->uio_resid == 0)
+		return 0;
 
 	stime.tv_usec = 0;	/* XXX gcc */
 	stime.tv_sec = 0;	/* XXX gcc */
