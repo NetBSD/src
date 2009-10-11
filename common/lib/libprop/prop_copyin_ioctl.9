@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.5 2009/10/10 18:06:54 bad Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.6 2009/10/11 01:55:28 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,35 +81,8 @@ pointer to a
 This structure encapsulates the reference to the property list in externalized
 form.
 .Sh RETURN VALUES
-If successful, functions return zero. Otherwise, an error number will be returned to indicate the error.
-.Sh ERRORS
-.Fn prop_array_copyin_ioctl
-and
-.Fn prop_dictionary_copyin_ioctl
-will fail if:
-.Bl -tag -width Er
-.It Bq Er EFAULT
-Bad address
-.It Bq Er EIO
-Input/output error
-.It Bq Er ENOMEM
-Cannot allocate memory
-.It Bq Er ENOTSUP
-Not supported
-.El
-.Pp
-.Fn prop_array_copyout_ioctl
-and
-.Fn prop_dictionary_copyout_ioctl
-will fail if:
-.Bl -tag -width Er
-.It Bq Er EFAULT
-Bad address
-.It Bq Er ENOMEM
-Cannot allocate memory
-.It Bq Er ENOTSUP
-Not supported
-.El
+If successful, functions return zero.
+Otherwise, an error number will be returned to indicate the error.
 .Sh EXAMPLES
 The following
 .Pq simplified
@@ -170,6 +143,34 @@ foocopyin(const struct plistref *pref))
     ...
 }
 .Ed
+.Sh ERRORS
+.Fn prop_array_copyin_ioctl
+and
+.Fn prop_dictionary_copyin_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er EIO
+Input/output error
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Pp
+.Fn prop_array_copyout_ioctl
+and
+.Fn prop_dictionary_copyout_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
 .Sh SEE ALSO
 .Xr prop_array 3 ,
 .Xr prop_dictionary 3 ,
