@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.26 2009/10/11 17:54:22 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.27 2009/10/11 18:12:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.26 2009/10/11 17:54:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.27 2009/10/11 18:12:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -129,6 +129,7 @@ struct rumpfs_node {
 			char *hostpath;		/* VREG */
 			int readfd;
 			int writefd;
+			uint64_t offset;
 		} reg;
 		LIST_HEAD(, rumpfs_dent) dir;	/* VDIR */
 	} rn_u;
@@ -136,9 +137,10 @@ struct rumpfs_node {
 #define rn_hostpath	rn_u.reg.hostpath
 #define rn_readfd	rn_u.reg.readfd
 #define rn_writefd	rn_u.reg.writefd
+#define rn_offset	rn_u.reg.offset
 #define rn_dir		rn_u.dir
 
-static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, const char *);
+static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t);
 
 /*
  * Extra Terrestrial stuff.  We map a given key (pathname) to a file on
@@ -206,7 +208,7 @@ doregister(const char *key, const char *hostpath,
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
 	struct etfs *et;
-	struct rumpfs_node *rn_dummy;
+	struct rumpfs_node *rn_dummy, *rn;
 	uint64_t fsize;
 	dev_t rdev = NODEV;
 	devminor_t dmin;
@@ -234,7 +236,14 @@ doregister(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = makeprivate(ettype_to_vtype(ftype), rdev, size, hostpath);
+	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size);
+	if (ftype == RUMP_ETFS_REG) {
+		size_t len = strlen(hostpath)+1;
+
+		rn->rn_hostpath = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		memcpy(rn->rn_hostpath, hostpath, len);
+		rn->rn_offset = begin;
+	}
 
 	mutex_enter(&etfs_lock);
 	if (etfs_find(key, &rn_dummy)) {
@@ -306,7 +315,7 @@ static int lastino = 1;
 static kmutex_t reclock;
 
 static struct rumpfs_node *
-makeprivate(enum vtype vt, dev_t rdev, off_t size, const char *hostpath)
+makeprivate(enum vtype vt, dev_t rdev, off_t size)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
@@ -321,8 +330,6 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size, const char *hostpath)
 	case VREG:
 		rn->rn_readfd = -1;
 		rn->rn_writefd = -1;
-		rn->rn_hostpath = malloc(strlen(hostpath)+1, M_TEMP, M_WAITOK);
-		strcpy(rn->rn_hostpath, hostpath);
 		break;
 	default:
 		break;
@@ -509,7 +516,7 @@ rump_vop_mkdir(void *v)
 	struct rumpfs_dent *rdent;
 	int rv = 0;
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, NULL);
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
 	rv = makevnode(rn, vpp);
 	mutex_exit(&reclock);
@@ -545,7 +552,7 @@ rump_vop_mknod(void *v)
 	struct rumpfs_dent *rdent;
 	int rv;
 
-	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, NULL);
+	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
 	mutex_enter(&reclock);
 	rv = makevnode(rn, vpp);
 	mutex_exit(&reclock);
@@ -586,7 +593,7 @@ rump_vop_create(void *v)
 		rv = EOPNOTSUPP;
 		goto out;
 	}
-	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE, NULL);
+	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
 	rv = makevnode(rn, vpp);
 	mutex_exit(&reclock);
@@ -655,7 +662,8 @@ rump_vop_read(void *v)
 
 	bufsize = uio->uio_resid;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-	if (rumpuser_read(rn->rn_readfd, buf, bufsize, &error) == -1)
+	if (rumpuser_pread(rn->rn_readfd, buf, bufsize,
+	    uio->uio_offset + rn->rn_offset, &error) == -1)
 		goto out;
 	error = uiomove(buf, bufsize, uio);
 
@@ -686,7 +694,8 @@ rump_vop_write(void *v)
 	if (error)
 		goto out;
 	KASSERT(uio->uio_resid == 0);
-	rumpuser_write(rn->rn_writefd, buf, bufsize, &error);
+	rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
+	    uio->uio_offset + rn->rn_offset, &error);
 
  out:
 	kmem_free(buf, bufsize);
@@ -779,7 +788,7 @@ rumpfs_init(void)
 	TAILQ_INIT(&rump_mnt.mnt_vnodelist);
 
 	vfs_opv_init(rump_opv_descs);
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, NULL);
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
 	rv = makevnode(rn, &rootvnode);
 	mutex_exit(&reclock);
