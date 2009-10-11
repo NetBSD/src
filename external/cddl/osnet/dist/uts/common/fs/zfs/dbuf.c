@@ -237,13 +237,13 @@ dbuf_init(void)
 	uint64_t hsize = 1ULL << 16;
 	dbuf_hash_table_t *h = &dbuf_hash_table;
 	int i;
-
+	
 	/*
 	 * The hash table is big enough to fill all of physical memory
 	 * with an average 4K block size.  The table will take up
 	 * totalmem*sizeof(void*)/4K (i.e. 2MB/GB with 8-byte pointers).
 	 */
-	while (hsize * 4096 < physmem * PAGESIZE)
+	while (hsize * 4096 < (uint64_t)physmem * PAGESIZE)
 		hsize <<= 1;
 
 retry:
