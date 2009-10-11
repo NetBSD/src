@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.25 2009/10/07 09:17:54 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.26 2009/10/11 17:54:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.25 2009/10/07 09:17:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.26 2009/10/11 17:54:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -59,6 +59,7 @@ static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
 static int rump_vop_mkdir(void *);
 static int rump_vop_mknod(void *);
+static int rump_vop_create(void *);
 static int rump_vop_inactive(void *);
 static int rump_vop_reclaim(void *);
 static int rump_vop_success(void *);
@@ -82,6 +83,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_getattr_desc, rump_vop_getattr },
 	{ &vop_mkdir_desc, rump_vop_mkdir },
 	{ &vop_mknod_desc, rump_vop_mknod },
+	{ &vop_create_desc, rump_vop_create },
 	{ &vop_access_desc, rump_vop_success },
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
@@ -371,7 +373,8 @@ makevnode(struct rumpfs_node *rn, struct vnode **vpp)
 		vpops = rump_vnodeop_p;
 	}
 	if (vpops != rump_specop_p && va->va_type != VDIR
-	    && !(va->va_type == VREG && rn->rn_hostpath != NULL))
+	    && !(va->va_type == VREG && rn->rn_hostpath != NULL)
+	    && va->va_type != VSOCK)
 		return EOPNOTSUPP;
 
 	rv = getnewvnode(VT_RUMP, &rump_mnt, vpops, &vp);
@@ -553,6 +556,47 @@ rump_vop_mknod(void *v)
 	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
 	rdent->rd_node = (*vpp)->v_data;
 	rdent->rd_node->rn_va.va_rdev = va->va_rdev;
+	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
+
+	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+
+ out:
+	vput(dvp);
+	return rv;
+}
+
+static int
+rump_vop_create(void *v)
+{
+	struct vop_create_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	}; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
+	struct rumpfs_node *rnd = dvp->v_data, *rn;
+	struct rumpfs_dent *rdent;
+	int rv;
+
+	if (va->va_type != VSOCK) {
+		rv = EOPNOTSUPP;
+		goto out;
+	}
+	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE, NULL);
+	mutex_enter(&reclock);
+	rv = makevnode(rn, vpp);
+	mutex_exit(&reclock);
+	if (rv)
+		goto out;
+
+	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
+	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
+	rdent->rd_node = (*vpp)->v_data;
+	rdent->rd_node->rn_va.va_rdev = NODEV;
 	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
 
 	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
