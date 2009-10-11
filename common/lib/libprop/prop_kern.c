@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.12 2009/10/10 21:27:46 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.13 2009/10/11 12:13:45 bad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -332,7 +332,6 @@ _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
 	return _prop_object_copyin(pref, type, objp);
 }
 
-#ifdef notyet
 /*
  * prop_array_copyin --
  *	Copy in an array passed as a syscall arg.
@@ -354,7 +353,6 @@ prop_dictionary_copyin(const struct plistref *pref, prop_dictionary_t *dictp)
 	return (_prop_object_copyin(pref, PROP_TYPE_DICTIONARY,
 					  (prop_object_t *)dictp));
 }
-#endif
 
 
 /*
