@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.28 2009/10/09 14:41:36 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.29 2009/10/11 23:23:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -182,7 +182,9 @@ void		rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
 #define getsockname(a,b,c) rump_sys_getsockname(a,b,c)
 #define listen(a,b) rump_sys_listen(a,b)
 #define recvfrom(a,b,c,d,e,f) rump_sys_recvfrom(a,b,c,d,e,f)
+#define recvmsg(a,b,c) rump_sys_recvmsg(a,b,c)
 #define sendto(a,b,c,d,e,f) rump_sys_sendto(a,b,c,d,e,f)
+#define sendmsg(a,b,c) rump_sys_sendmsg(a,b,c)
 #define getsockopt(a,b,c,d,e) rump_sys_getsockopt(a,b,c,d,e)
 #define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
 #define shutdown(a,b) rump_sys_shutdown(a,b)
