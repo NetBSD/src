@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.2 2009/10/11 10:54:52 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -51,7 +51,7 @@ lookupname(char *dirname, enum uio_seg seg, vnode_t **dirvpp, vnode_t **compvpp)
 
 	KASSERT(dirvpp == NULL);
 
-	namei_simple_kernel(dirname,  NSM_FOLLOW_NOEMULROOT, compvpp);
+	error = namei_simple_kernel(dirname,  NSM_FOLLOW_NOEMULROOT, compvpp);
 	
 	return error;
 }
