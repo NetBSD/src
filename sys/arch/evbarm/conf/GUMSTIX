@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.37 2009/08/09 07:10:13 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.38 2009/10/11 16:20:22 bsh Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -104,6 +104,7 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
