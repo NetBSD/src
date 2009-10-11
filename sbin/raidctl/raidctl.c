@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.40 2009/01/26 11:34:12 tron Exp $   */
+/*      $NetBSD: raidctl.c,v 1.41 2009/10/11 12:14:05 pooka Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.40 2009/01/26 11:34:12 tron Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.41 2009/10/11 12:14:05 pooka Exp $");
 #endif
 
 
@@ -57,6 +57,9 @@ __RCSID("$NetBSD: raidctl.c,v 1.40 2009/01/26 11:34:12 tron Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -116,6 +119,10 @@ main(int argc,char *argv[])
 	serial_number = 0;
 	force = 0;
 	openmode = O_RDWR;	/* default to read/write */
+
+#ifdef RUMP_ACTION
+	rump_init();
+#endif
 
 	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv")) 
 	       != -1)
@@ -236,7 +243,12 @@ main(int argc,char *argv[])
 		usage();
 
 	strlcpy(name, argv[0], sizeof(name));
+#ifdef RUMP_ACTION
+	fd = opendisk1(name, openmode, dev_name, sizeof(dev_name), 0,
+	    rump_sys_open);
+#else
 	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
+#endif
 	if (fd == -1) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
 			getprogname(), name);
