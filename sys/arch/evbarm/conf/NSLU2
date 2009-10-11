@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.14 2009/03/06 20:31:48 joerg Exp $
+#	$NetBSD: NSLU2,v 1.15 2009/10/11 16:20:22 bsh Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -82,6 +82,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
