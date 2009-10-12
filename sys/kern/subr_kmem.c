@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.28 2009/06/03 22:54:51 jnemeth Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.29 2009/10/12 23:35:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.28 2009/06/03 22:54:51 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.29 2009/10/12 23:35:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -256,17 +256,15 @@ kmem_free(void *p, size_t size)
 	KASSERT(p != NULL);
 	KASSERT(size > 0);
 
-	size += SIZE_SIZE;
-	p = (uint8_t *)p - SIZE_SIZE;
-	kmem_size_check(p, size + REDZONE_SIZE);
-
 #ifdef KMEM_GUARD
 	if (size <= kmem_guard_size) {
 		uvm_kmguard_free(&kmem_guard, size, p);
 		return;
 	}
 #endif
-
+	size += SIZE_SIZE;
+	p = (uint8_t *)p - SIZE_SIZE;
+	kmem_size_check(p, size + REDZONE_SIZE);
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
 	kmem_poison_check((char *)p + size,
