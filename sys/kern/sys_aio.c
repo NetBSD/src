@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.26 2009/10/12 23:36:56 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.27 2009/10/12 23:38:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.26 2009/10/12 23:36:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.27 2009/10/12 23:38:08 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -609,7 +609,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
  */
 
 int
-sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap, register_t *retval)
+sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fildes;
@@ -718,7 +719,8 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap, register_t 
 }
 
 int
-sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap, register_t *retval)
+sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const struct aiocb *) aiocbp;
@@ -744,7 +746,8 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap, register_t *r
 }
 
 int
-sys_aio_fsync(struct lwp *l, const struct sys_aio_fsync_args *uap, register_t *retval)
+sys_aio_fsync(struct lwp *l, const struct sys_aio_fsync_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) op;
@@ -761,7 +764,8 @@ sys_aio_fsync(struct lwp *l, const struct sys_aio_fsync_args *uap, register_t *r
 }
 
 int
-sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap, register_t *retval)
+sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct aiocb *) aiocbp;
@@ -771,7 +775,8 @@ sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap, register_t *ret
 }
 
 int
-sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap, register_t *retval)
+sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct aiocb *) aiocbp;
@@ -909,7 +914,8 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 }
 
 int
-sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap, register_t *retval)
+sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct aiocb *) aiocbp;
@@ -919,7 +925,8 @@ sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap, register_t *r
 }
 
 int
-sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap, register_t *retval)
+sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) mode;
