@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.9 2009/10/05 23:49:47 rmind Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.10 2009/10/12 23:41:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.9 2009/10/05 23:49:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.10 2009/10/12 23:41:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -386,13 +386,13 @@ compat_50_sys_aio_suspend(struct lwp *l,
 			return error;
 		timespec50_to_timespec(&ts50, &ts);
 	}
-	list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
-	error = copyin(SCARG(uap, list), list, nent * sizeof(struct aiocb));
+	list = kmem_alloc(nent * sizeof(*list), KM_SLEEP);
+	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
 	if (error)
 		goto out;
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 out:
-	kmem_free(list, nent * sizeof(struct aio_job));
+	kmem_free(list, nent * sizeof(*list));
 	return error;
 #else
 	return ENOSYS;
