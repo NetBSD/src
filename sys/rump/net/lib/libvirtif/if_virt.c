@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.11 2009/09/16 13:29:42 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.12 2009/10/12 02:25:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.11 2009/09/16 13:29:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.12 2009/10/12 02:25:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -237,13 +237,15 @@ virtif_worker(void *arg)
 	panic("virtif_workin is a lazy boy %d\n", error);
 }
 
+/* lazy bum stetson-harrison magic value */
+#define LB_SH 32
 static void
 virtif_sender(void *arg)
 {
 	struct ifnet *ifp = arg;
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
-	struct rumpuser_iovec io[16];
+	struct rumpuser_iovec io[LB_SH];
 	int i, error;
 
 	mutex_enter(&sc->sc_sendmtx);
@@ -256,12 +258,12 @@ virtif_sender(void *arg)
 		mutex_exit(&sc->sc_sendmtx);
 
 		m = m0;
-		for (i = 0; i < 16 && m; i++) {
+		for (i = 0; i < LB_SH && m; i++) {
 			io[i].iov_base = mtod(m, void *);
 			io[i].iov_len = m->m_len;
 			m = m->m_next;
 		}
-		if (i == 16)
+		if (i == LB_SH)
 			panic("lazy bum");
 		rumpuser_writev(sc->sc_tapfd, io, i, &error);
 		m_freem(m0);
