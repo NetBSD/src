@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.4 2009/10/11 22:17:57 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.5 2009/10/12 10:05:29 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -499,9 +499,12 @@ struct file {
 #define	ERESTART	(-1)
 #endif
 
-#ifndef ptob
-size_t	ptob(size_t);
+#ifdef ptob
+#undef ptob
 #endif
+
+size_t	ptob(size_t);
+
 
 typedef struct ksiddomain {
 	uint_t	kd_ref;
@@ -613,9 +616,12 @@ extern struct utsname utsname;
 #define issig(x)		(sigispending(curlwp, 0))
 #define	ISSIG(thr, why)		(sigispending(thr, 0))
 #define	fm_panic		panic
-#ifndef ptob
+
+#ifdef ptob
+#undef ptob
+#endif
 #define ptob(x)			((x) * PAGE_SIZE)
-#endif /* ptob */
+
 #define	strncat(a, b, c)	strlcat(a, b, c)
 #define	tsd_get(x)		lwp_getspecific(x)
 #define	tsd_set(x, y)		(lwp_setspecific(x, y), 0)
