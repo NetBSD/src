@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.27 2009/10/12 23:38:08 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.28 2009/10/12 23:43:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.27 2009/10/12 23:38:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.28 2009/10/12 23:43:13 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -831,13 +831,13 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 		if (error)
 			return error;
 	}
-	list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
-	error = copyin(SCARG(uap, list), list, nent * sizeof(struct aiocb));
+	list = kmem_alloc(nent * sizeof(*list), KM_SLEEP);
+	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
 	if (error)
 		goto out;
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 out:
-	kmem_free(list, nent * sizeof(struct aio_job));
+	kmem_free(list, nent * sizeof(*list));
 	return error;
 }
 
@@ -991,9 +991,9 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 	}
 
 	/* Get the list from user-space */
-	aiocbp_list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
+	aiocbp_list = kmem_alloc(nent * sizeof(*aiocbp_list), KM_SLEEP);
 	error = copyin(SCARG(uap, list), aiocbp_list,
-	    nent * sizeof(struct aiocb));
+	    nent * sizeof(*aiocbp_list));
 	if (error) {
 		mutex_enter(&aio->aio_mtx);
 		goto err;
@@ -1038,7 +1038,7 @@ err:
 		aio_sendsig(p, &lio->sig);
 		pool_put(&aio_lio_pool, lio);
 	}
-	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
+	kmem_free(aiocbp_list, nent * sizeof(*aiocbp_list));
 	return error;
 }
 
