@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.185 2009/09/21 12:14:47 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.186 2009/10/12 23:33:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.185 2009/09/21 12:14:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.186 2009/10/12 23:33:02 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "drvctl.h"
 #endif
 
 #include <sys/param.h>
