@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.153 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.154 2009/10/12 22:32:23 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.153 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.154 2009/10/12 22:32:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2380,12 +2380,15 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	 * we almost always ask for an mbuf cluster for simplicity.
 	 * (MHLEN < IPV6_MMTU is almost always true)
 	 */
-#if IPV6_MMTU >= MCLBYTES
-# error assumption failed about IPV6_MMTU and MCLBYTES
-#endif
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
-	if (m && IPV6_MMTU >= MHLEN)
+	if (m && IPV6_MMTU >= MHLEN) {
+#if IPV6_MMTU >= MCLBYTES
+		_MCLGET(m, &mclpool_cache, IPV6_MMTU, M_DONTWAIT);
+#else
 		MCLGET(m, M_DONTWAIT);
+#endif
+	}
+
 	if (!m)
 		goto fail;
 	m->m_pkthdr.rcvif = NULL;
