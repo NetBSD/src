@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.25 2009/10/12 23:31:59 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.26 2009/10/12 23:36:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.25 2009/10/12 23:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.26 2009/10/12 23:36:56 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -78,7 +78,7 @@ static struct pool aio_lio_pool;
 static void *aio_ehook;
 
 /* Prototypes */
-void aio_worker(void *);
+static void aio_worker(void *);
 static void aio_process(struct aio_job *);
 static void aio_sendsig(struct proc *, struct sigevent *);
 static int aio_enqueue_job(int, void *, struct lio_req *);
@@ -261,7 +261,7 @@ aio_exit(struct proc *p, void *cookie)
 /*
  * AIO worker thread and processor.
  */
-void
+static void
 aio_worker(void *arg)
 {
 	struct proc *p = curlwp->l_proc;
