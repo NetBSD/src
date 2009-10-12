@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.29 2009/10/12 23:35:09 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.30 2009/10/12 23:36:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.29 2009/10/12 23:35:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.30 2009/10/12 23:36:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -126,7 +126,7 @@ static void kmem_poison_check(void *, size_t);
 #if defined(KMEM_SIZE)
 #define	SIZE_SIZE	(max(KMEM_QUANTUM_SIZE, sizeof(size_t)))
 static void kmem_size_set(void *, size_t);
-static void kmem_size_check(void *, size_t);
+static void kmem_size_check(const void *, size_t);
 #else
 #define	SIZE_SIZE	0
 #define	kmem_size_set(p, sz)	/* nothing */
@@ -447,14 +447,14 @@ kmem_size_set(void *p, size_t sz)
 }
 
 static void
-kmem_size_check(void *p, size_t sz)
+kmem_size_check(const void *p, size_t sz)
 {
 	size_t psz;
 
 	memcpy(&psz, p, sizeof(psz));
 	if (psz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu",
-		    (uint8_t*)p + SIZE_SIZE, sz - SIZE_SIZE, psz);
+		    (const uint8_t *)p + SIZE_SIZE, sz - SIZE_SIZE, psz);
 	}
 }
 #endif	/* defined(KMEM_SIZE) */
