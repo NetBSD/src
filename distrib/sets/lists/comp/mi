@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1327 2009/10/11 11:26:40 pooka Exp $
+#	$NetBSD: mi,v 1.1328 2009/10/12 18:04:55 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3388,6 +3388,7 @@
 ./usr/libdata/debug/usr/sbin/getencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gpioctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gspa.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/sbin/hdaudioctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/hlfsd.debug	comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/hostapd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/hostapd_cli.debug	comp-sysutil-debug	debug
