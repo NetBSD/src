@@ -182,7 +182,7 @@
 #define HAVE_GETCWD 1
 
 /* Define to 1 if you have the `getdelim' function. */
-/* #undef HAVE_GETDELIM */
+#define HAVE_GETDELIM 1
 
 /* Define to 1 if you have the `getegid' function. */
 #define HAVE_GETEGID 1
