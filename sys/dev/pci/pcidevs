@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.998 2009/10/13 10:45:14 cegger Exp $
+$NetBSD: pcidevs,v 1.999 2009/10/13 11:55:54 cegger Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -89,7 +89,7 @@ vendor AMI		0x101e	American Megatrends
 vendor PICTURETEL	0x101f	PictureTel
 vendor HITACHICOMP	0x1020	Hitachi Computer Products
 vendor OKI		0x1021	OKI Electric Industry
-vendor AMD		0x1022	Advanced Micro Devices
+vendor AMD		0x1022	AMD
 vendor TRIDENT		0x1023	Trident Microsystems
 vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
@@ -962,8 +962,8 @@ product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
 product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
-product AMD HUDSON2_IDE		0x780c	AMD HUDSON-2 IDE Controller
-product AMD HUDSON2_SATA	0x7800	AMD HUDSON-2 SATA Controller
+product AMD HUDSON2_IDE		0x780c	HUDSON-2 IDE Controller
+product AMD HUDSON2_SATA	0x7800	HUDSON-2 SATA Controller
 
 /* American Megatrends products */
 product AMI MEGARAID		0x9010	MegaRAID
