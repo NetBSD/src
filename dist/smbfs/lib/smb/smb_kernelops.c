@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_kernelops.c,v 1.1 2009/09/06 18:38:17 pooka Exp $	*/
+/*	$NetBSD: smb_kernelops.c,v 1.2 2009/10/13 22:04:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smb_kernelops.c,v 1.1 2009/09/06 18:38:17 pooka Exp $");
+__RCSID("$NetBSD: smb_kernelops.c,v 1.2 2009/10/13 22:04:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -41,8 +41,8 @@ __RCSID("$NetBSD: smb_kernelops.c,v 1.1 2009/09/06 18:38:17 pooka Exp $");
 #include "smb_kernelops.h"
 
 const struct smb_kernelops smb_kops = {
-	.ko_open = (void *)open, /* XXX: rump_syscalls prototype */
-	.ko_ioctl = (void *)ioctl,
+	.ko_open = open,
+	.ko_ioctl = ioctl,
 	.ko_close = close,
 
 	.ko_socket = socket,

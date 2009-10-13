@@ -1,4 +1,4 @@
-/*      $NetBSD: smb_kernelops.h,v 1.1 2009/09/06 18:38:17 pooka Exp $        */
+/*      $NetBSD: smb_kernelops.h,v 1.2 2009/10/13 22:04:31 pooka Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include <fcntl.h>
 
 struct smb_kernelops {
-	int (*ko_open)(const char *, int, mode_t);
-	int (*ko_ioctl)(int, unsigned long, void *);
+	int (*ko_open)(const char *, int, ...);
+	int (*ko_ioctl)(int, unsigned long, ...);
 	int (*ko_close)(int);
 
 	int (*ko_socket)(int, int, int);
