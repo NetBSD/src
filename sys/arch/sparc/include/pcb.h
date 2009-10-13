@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 2007/03/04 06:00:44 christos Exp $ */
+/*	$NetBSD: pcb.h,v 1.9 2009/10/13 22:41:57 pooka Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SPARC_PCB_H_
+#define _SPARC_PCB_H_
 
 #include <machine/reg.h>
 
@@ -113,3 +116,5 @@ struct md_coredump {
 	struct	trapframe md_tf;
 	struct	fpstate md_fpstate;
 };
+
+#endif /* _SPARC_PCB_H_ */
