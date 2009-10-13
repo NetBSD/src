@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 2007/03/04 06:00:49 christos Exp $ */
+/*	$NetBSD: pcb.h,v 1.16 2009/10/13 22:41:57 pooka Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,9 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SPARC64_PCB_H_
+#define _SPARC64_PCB_H_
 
 #include <machine/reg.h>
 
@@ -187,3 +190,5 @@ struct md_coredump {
 #define pcb_psr	pcb_pstate
 #define pcb_wim	pcb_cwp
 #endif /* _KERNEL */
+
+#endif /* _SPARC64_PCB_H_ */
