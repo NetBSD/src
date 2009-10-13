@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.21 2009/10/09 16:37:30 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.22 2009/10/13 20:06:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -126,7 +126,7 @@ makecn(const struct puffs_cn *pcn, int myflags)
 	cred = cred_create(pcn->pcn_cred);
 	/* LINTED: prehistoric types in first two args */
 	return rump_makecn(pcn->pcn_nameiop, pcn->pcn_flags | myflags,
-	    pcn->pcn_name, pcn->pcn_namelen, cred, curlwp);
+	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_get_curlwp());
 }
 
 static __inline void
