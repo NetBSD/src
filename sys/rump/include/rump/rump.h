@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.29 2009/10/11 23:23:09 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.30 2009/10/13 20:08:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -61,10 +61,6 @@ struct modinfo;
 
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
-
-#ifndef curlwp
-#define curlwp rump_get_curlwp()
-#endif
 
 /*
  * Something like rump capabilities would be nicer, but let's
