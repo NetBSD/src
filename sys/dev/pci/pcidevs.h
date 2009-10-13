@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.998 2009/10/13 10:46:05 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.999 2009/10/13 11:56:16 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.998 2009/10/13 10:45:14 cegger Exp
+ *	NetBSD: pcidevs,v 1.999 2009/10/13 11:55:54 cegger Exp
  */
 
 /*
@@ -96,7 +96,7 @@
 #define	PCI_VENDOR_PICTURETEL	0x101f		/* PictureTel */
 #define	PCI_VENDOR_HITACHICOMP	0x1020		/* Hitachi Computer Products */
 #define	PCI_VENDOR_OKI	0x1021		/* OKI Electric Industry */
-#define	PCI_VENDOR_AMD	0x1022		/* Advanced Micro Devices */
+#define	PCI_VENDOR_AMD	0x1022		/* AMD */
 #define	PCI_VENDOR_TRIDENT	0x1023		/* Trident Microsystems */
 #define	PCI_VENDOR_ZENITH	0x1024		/* Zenith Data Systems */
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
@@ -969,8 +969,8 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* AMD HUDSON-2 IDE Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* AMD HUDSON-2 SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* HUDSON-2 IDE Controller */
+#define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* HUDSON-2 SATA Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
