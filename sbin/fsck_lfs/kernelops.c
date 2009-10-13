@@ -1,4 +1,4 @@
-/*	$NetBSD: kernelops.c,v 1.2 2009/08/06 00:55:08 pooka Exp $	*/
+/*	$NetBSD: kernelops.c,v 1.3 2009/10/13 22:04:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: kernelops.c,v 1.2 2009/08/06 00:55:08 pooka Exp $");
+__RCSID("$NetBSD: kernelops.c,v 1.3 2009/10/13 22:04:31 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -68,8 +68,8 @@ const struct kernelops kops = {
 #else
 
 const struct kernelops kops = {
-	.ko_open = (void *)open, /* XXX: fix rump_syscalls */
-	.ko_fcntl = (void *)fcntl,
+	.ko_open = open,
+	.ko_fcntl = fcntl,
 	.ko_statvfs = statvfs1,
 	.ko_fhopen = fhopen,
 	.ko_close = close,

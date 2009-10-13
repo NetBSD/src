@@ -8,9 +8,9 @@
 #include <unistd.h>
 
 struct kernelops {
-	int (*ko_open)(const char *, int, mode_t);
+	int (*ko_open)(const char *, int, ...);
 	int (*ko_statvfs)(const char *, struct statvfs *, int);
-	int (*ko_fcntl)(int, int, void *);
+	int (*ko_fcntl)(int, int, ...);
 	int (*ko_fhopen)(const void *, size_t, int);
 	int (*ko_close)(int);
 
