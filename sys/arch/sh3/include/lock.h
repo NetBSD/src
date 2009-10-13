@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.15 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: lock.h,v 1.16 2009/10/13 12:55:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -81,11 +81,11 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
 	 __asm volatile(
-		"1:	tas.b	%0	\n"
+		"1:	tas.b	@%0	\n"
 		"	bf	1b	\n"
-		: "=m" (*alp)
-		: /* no inputs */
-		: "cc");
+		: /* no outputs */
+		: "r" (alp)
+		: "cc", "memory");
 }
 
 static __inline int
@@ -94,11 +94,11 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	int __rv;
 
 	__asm volatile(
-		"	tas.b	%0	\n"
-		"	movt	%1	\n"
-		: "=m" (*alp), "=r" (__rv)
-		: /* no inputs */
-		: "cc");
+		"	tas.b	@%1	\n"
+		"	movt	%0	\n"
+		: "=r" (__rv)
+		: "r" (alp)
+		: "cc", "memory");
 
 	return (__rv);
 }
