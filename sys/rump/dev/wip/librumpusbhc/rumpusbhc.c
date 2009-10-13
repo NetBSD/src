@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.6 2009/10/05 13:00:37 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.7 2009/10/13 18:36:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.6 2009/10/05 13:00:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.7 2009/10/13 18:36:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -481,13 +481,14 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 	/*
 	 * XXX: don't wildcard these yet.  I want to better figure
-	 * out what to trap here
+	 * out what to trap here.  This is kinda silly, though ...
 	 */
 	case C(0x01, UT_WRITE_VENDOR_DEVICE):
 	case C(0x06, UT_WRITE_VENDOR_DEVICE):
 	case C(0x07, UT_READ_VENDOR_DEVICE):
 	case C(0x09, UT_READ_VENDOR_DEVICE):
 	case C(0xfe, UT_READ_CLASS_INTERFACE):
+	case C(0xff, UT_WRITE_CLASS_INTERFACE):
 		{
 		struct usb_ctl_request ucr;
 
