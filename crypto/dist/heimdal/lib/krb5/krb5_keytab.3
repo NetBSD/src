@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $Heimdal: krb5_keytab.3 22071 2007-11-14 20:04:50Z lha $
-.\" $NetBSD: krb5_keytab.3,v 1.9 2008/03/22 08:37:14 mlelstv Exp $
+.\" $NetBSD: krb5_keytab.3,v 1.10 2009/10/13 22:50:17 joerg Exp $
 .\"
 .Dd August 12, 2005
 .Dt KRB5_KEYTAB 3
@@ -204,7 +204,7 @@ The residual part is a filename.
 For compatibility with other Kerberos implemtation
 .Li WRFILE
 and
-.LI JAVA14
+.Li JAVA14
 is also accepted.
 .Li WRFILE
 has the same format as
@@ -380,7 +380,7 @@ When comparing an entry in the keytab to determine a match, the
 function
 .Fn krb5_kt_compare
 is used, so the wildcard rules applies to the argument of
-.F krb5_kt_get_entry
+.Fn krb5_kt_get_entry
 too.
 On success the returne entry must be freed with
 .Fn krb5_kt_free_entry .
