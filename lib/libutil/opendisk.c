@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.11 2009/09/08 21:34:57 pooka Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.12 2009/10/13 22:00:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.11 2009/09/08 21:34:57 pooka Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.12 2009/10/13 22:00:31 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: opendisk.c,v 1.11 2009/09/08 21:34:57 pooka Exp $");
 
 static int
 __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
-	int (*ofn)(const char *, int, mode_t))
+	int (*ofn)(const char *, int, ...))
 {
 	int f, rawpart;
 
@@ -92,12 +92,12 @@ int
 opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 {
 
-	return __opendisk(path, flags, buf, buflen, iscooked, (void *)open);
+	return __opendisk(path, flags, buf, buflen, iscooked, open);
 }
 
 int
 opendisk1(const char *path, int flags, char *buf, size_t buflen, int iscooked,
-	int (*ofn)(const char *, int, mode_t))
+	int (*ofn)(const char *, int, ...))
 {
 
 	return __opendisk(path, flags, buf, buflen, iscooked, ofn);

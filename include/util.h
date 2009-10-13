@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.52 2009/09/08 21:34:57 pooka Exp $	*/
+/*	$NetBSD: util.h,v 1.53 2009/10/13 22:00:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -83,7 +83,7 @@ void		logwtmp(const char *, const char *, const char *);
 void		logwtmpx(const char *, const char *, const char *, int, int);
 int		opendisk(const char *, int, char *, size_t, int);
 int		opendisk1(const char *, int, char *, size_t, int,
-			  int (*)(const char *, int, mode_t));
+			  int (*)(const char *, int, ...));
 int		openpty(int *, int *, char *, struct termios *,
     struct winsize *);
 #ifndef __LIBC12_SOURCE__
