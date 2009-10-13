@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: tpfmt.sh,v 1.2 2008/01/14 12:49:54 yamt Exp $
+#	$NetBSD: tpfmt.sh,v 1.3 2009/10/13 00:49:38 yamt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -36,5 +36,5 @@ fi
 hexdump -v -e "/${SIZEOF_PTR} \"%x\n\""|sort|uniq -c|sort -nr|
 while read x y;do 
 	printf "$x\t$y\t"
-	objdump -d --start-address=0x$y /netbsd|head -6|sed -ne '/.*<\(.*\)>:/{s//\1/;p;}'
+	objdump -d --start-address=0x$y /netbsd|head -7|sed -ne '/.*<\(.*\)>:/{s//\1/;p;}'
 done
