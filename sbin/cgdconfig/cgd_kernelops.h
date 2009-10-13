@@ -1,4 +1,4 @@
-/*      $NetBSD: cgd_kernelops.h,v 1.2 2009/09/10 09:10:29 pooka Exp $	*/
+/*      $NetBSD: cgd_kernelops.h,v 1.3 2009/10/13 22:04:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include <fcntl.h>
 
 struct cgd_kernelops {
-	int (*ko_open)(const char *, int, mode_t);
-	int (*ko_ioctl)(int, unsigned long, void *);
+	int (*ko_open)(const char *, int, ...);
+	int (*ko_ioctl)(int, unsigned long, ...);
 	int (*ko_close)(int);
 	ssize_t (*ko_pread)(int, void *, size_t, off_t);
 };
