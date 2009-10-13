@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.266 2009/07/23 21:58:06 dyoung Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.267 2009/10/13 22:46:28 pooka Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.266 2009/07/23 21:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.267 2009/10/13 22:46:28 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -163,7 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.266 2009/07/23 21:58:06 dyoung 
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
 
