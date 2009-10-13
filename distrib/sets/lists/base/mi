@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.834 2009/10/12 09:33:34 tron Exp $
+# $NetBSD: mi,v 1.835 2009/10/13 10:18:35 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -116,7 +116,7 @@
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
-./etc/zfs					base-zfs-root		zfs
+./etc/zfs					base-zfs-root
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
