@@ -1,4 +1,4 @@
-/*	$NetBSD: sdread.c,v 1.1 2009/10/05 13:05:31 pooka Exp $	*/
+/*	$NetBSD: sdread.c,v 1.2 2009/10/13 18:41:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #include <sys/dirent.h>
 #include <sys/mount.h>
 
+#include <ufs/ufs/ufsmount.h>
 #include <msdosfs/msdosfsmount.h>
 
 #include <rump/rump.h>
@@ -54,6 +55,7 @@ main(int argc, char *argv[])
 {
 	char buf[2048];
 	struct msdosfs_args args;
+	struct ufs_args uargs;
 	struct dirent *dp;
 	const char *msg = NULL;
 	int fd, n, fd_h, sverrno;
@@ -67,13 +69,20 @@ main(int argc, char *argv[])
 	args.fspec = strdup("/dev/sd0e");
 	args.version = MSDOSFSMNT_VERSION;
 
+	memset(&uargs, 0, sizeof(uargs));
+	uargs.fspec = strdup("/dev/sd0e");
+
 	rump_init();
 
 	if (rump_sys_mkdir("/mp", 0777) == -1)
 		err(1, "mkdir");
 	if (rump_sys_mount(MOUNT_MSDOS, "/mp", MNT_RDONLY,
-	    &args, sizeof(args)) == -1)
-		err(1, "mount");
+	    &args, sizeof(args)) == -1) {
+		if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_RDONLY,
+		    &uargs, sizeof(uargs)) == -1) {
+			err(1, "mount");
+		}
+	}
 
 	fd = rump_sys_open("/mp", O_RDONLY, 0);
 	if (fd == -1) {
