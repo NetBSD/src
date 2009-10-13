@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.63 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.64 2009/10/13 12:37:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.63 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.64 2009/10/13 12:37:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,11 +446,12 @@ fss_softc_alloc(struct fss_softc *sc)
 		sc->sc_indir_data = NULL;
 	}
 
-	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0)
-		return error;
-
 	sc->sc_flags |= FSS_BS_THREAD;
+	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
+	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0) {
+		sc->sc_flags &= ~FSS_BS_THREAD;
+		return error;
+	}
 
 	disk_attach(sc->sc_dkdev);
 
