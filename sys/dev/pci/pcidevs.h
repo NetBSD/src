@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.997 2009/10/05 12:53:37 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.998 2009/10/13 10:46:05 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.997 2009/10/05 12:52:03 cegger Exp
+ *	NetBSD: pcidevs,v 1.998 2009/10/13 10:45:14 cegger Exp
  */
 
 /*
@@ -969,8 +969,8 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
-#define	PCI_PRODUCT_AMD_SB900_IDE	0x780c		/* AMD SB900 IDE Controller */
-#define	PCI_PRODUCT_AMD_SB900_SATA	0x7800		/* AMD SB900 SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* AMD HUDSON-2 IDE Controller */
+#define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* AMD HUDSON-2 SATA Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
