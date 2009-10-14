@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/10/14 17:29:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/14 17:34:08 pooka Exp $
 #
 
 PROG=	rumptest_net
@@ -12,7 +12,5 @@ CPPFLAGS+=	-DFULL_NETWORK_STACK
 
 # use protocol families provided by host kernel sockets
 #LDADD=	-lrump -lrumpnet -lrumpnet_sockin -lrumpuser -lpthread
-
-LDADD+= -lrumpvfs
 
 .include <bsd.prog.mk>
