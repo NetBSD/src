@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.28 2008/05/08 13:01:42 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.29 2009/10/14 17:24:03 joerg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
 .\" The NetBSD Foundation, Inc.
@@ -67,7 +67,8 @@ is passed to each callback function to use as necessary
 is an array of
 .Fa ns_dtab
 structures, which have the following format:
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Bd -literal
 typedef struct {
 	const char *src;
@@ -75,7 +76,7 @@ typedef struct {
 	void *cb_data;
 } ns_dtab;
 .Ed
-.Pp
+.It
 The
 .Fa dtab
 array should consist of one entry for each source type that has a
@@ -96,9 +97,8 @@ values for
 .Fa cb ,
 and
 .Fa cb_data .
-.Pp
+.It
 The callback function signature is described by the typedef:
-.Pp
 .Bd -ragged -offset indent
 .Ft typedef int
 .Fo \*(lp*nss_method\*(rp
@@ -106,7 +106,6 @@ The callback function signature is described by the typedef:
 .Fa "void *cbdata"
 .Fa "va_list ap"
 .Fc ;
-.Pp
 .Bl -tag -width cbdata
 .It Fa cbrv
 The
@@ -131,7 +130,7 @@ converted to a
 .Ft va_list .
 .El
 .Ed
-.Ed
+.El
 .Pp
 .Fa database
 and
@@ -155,14 +154,15 @@ or if there isn't a relevant entry for
 It is an array of
 .Fa ns_src
 structures, which have the following format:
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Bd -literal
 typedef struct {
 	const char *src;
 	uint32_t flags;
 } ns_src;
 .Ed
-.Pp
+.It
 The
 .Fa defaults
 array should consist of one entry for each source to consult by default
@@ -185,7 +185,7 @@ set to
 and
 .Fa flags
 set to 0.
-.Pp
+.It
 Some invokers of
 .Fn nsdispatch
 (such as
@@ -202,13 +202,13 @@ before invoking
 The return value of
 .Fn nsdispatch
 will be the result of the final callback function invoked.
-.Pp
+.It
 For convenience, a global variable defined as:
 .Dl extern const ns_src __nsdefaultsrc[];
 exists which contains a single default entry for
 .Sq files
 for use by callers which don't require complicated default rules.
-.Ed
+.El
 .Pp
 .Fa ...
 are optional extra arguments, which
@@ -229,7 +229,8 @@ The
 .Fn nsdispatch
 function loads callback functions from the run-time link-editor's search
 path using the following naming convention:
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Bd -literal
 nss_\*[Lt]source\*[Gt].so.\*[Lt]version\*[Gt]
 .Ed
@@ -243,7 +244,7 @@ module interface version, which is defined by the integer
 .Dv NSS_MODULE_INTERFACE_VERSION ,
 which has the value 0.
 .El
-.Ed
+.El
 .Pp
 When a module is loaded,
 .Fn nsdispatch
@@ -317,7 +318,8 @@ if there was a failure.
 The
 .Ft ns_mtab
 structures have the following format:
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Bd -literal
 typedef struct {
 	const char *database;
@@ -326,7 +328,7 @@ typedef struct {
 	void *mdata;
 } ns_mtab;
 .Ed
-.Pp
+.It
 The
 .Fa mtab
 array should consist of one entry for each callback function (method)
@@ -344,13 +346,13 @@ callback function that implements the method, and
 as a pointer to arbitrary data to be passed to the callback function as its
 .Fa cbdata
 argument.
-.Ed
+.El
 .\"
 .Ss Valid source types
 While there is support for arbitrary sources, the following
 #defines for commonly implemented sources are provided:
 .Bl -column NSSRC_COMPAT COMPAT -offset indent
-.Sy #define	Value
+.It Sy #define	Value
 .It NSSRC_FILES	"files"
 .It NSSRC_DNS	"dns"
 .It NSSRC_NIS	"nis"
@@ -365,7 +367,7 @@ for a complete description of what each source type is.
 While there is support for arbitrary databases, the following
 #defines for currently implemented system databases are provided:
 .Bl -column NSDB_PASSWD_COMPAT PASSWD_COMPAT -offset indent
-.Sy #define	Value
+.It Sy #define	Value
 .It NSDB_HOSTS	"hosts"
 .It NSDB_GROUP	"group"
 .It NSDB_GROUP_COMPAT	"group_compat"
@@ -384,7 +386,7 @@ for a complete description of what each database is.
 The callback functions should return one of the following values
 depending upon status of the lookup:
 .Bl -column NS_NOTFOUND -offset indent
-.Sy "Return value"	Status code
+.It Sy "Return value"	Status code
 .It NS_SUCCESS	The requested entry was found.
 .It NS_NOTFOUND	The entry is not present at this source.
 .It NS_TRYAGAIN	The source is busy, and may respond to retries.
