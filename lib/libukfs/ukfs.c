@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.39 2009/10/07 20:53:38 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.40 2009/10/14 18:22:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -96,7 +96,7 @@ ukfs_getrvp(struct ukfs *ukfs)
 	struct vnode *rvp;
 
 	rvp = ukfs->ukfs_rvp;
-	rump_vp_incref(rvp);
+	rump_pub_vp_incref(rvp);
 
 	return rvp;
 }
@@ -141,13 +141,13 @@ precall(struct ukfs *ukfs)
 {
 	struct vnode *rvp, *cvp;
 
-	rump_setup_curlwp(nextpid(ukfs), 1, 1);
+	rump_pub_setup_curlwp(nextpid(ukfs), 1, 1);
 	rvp = ukfs_getrvp(ukfs);
 	pthread_spin_lock(&ukfs->ukfs_spin);
 	cvp = ukfs->ukfs_cdir;
 	pthread_spin_unlock(&ukfs->ukfs_spin);
-	rump_rcvp_set(rvp, cvp); /* takes refs */
-	rump_vp_rele(rvp);
+	rump_pub_rcvp_set(rvp, cvp); /* takes refs */
+	rump_pub_vp_rele(rvp);
 }
 
 static void
@@ -156,9 +156,9 @@ postcall(struct ukfs *ukfs)
 	struct vnode *rvp;
 
 	rvp = ukfs_getrvp(ukfs);
-	rump_rcvp_set(NULL, rvp);
-	rump_vp_rele(rvp);
-	rump_clear_curlwp();
+	rump_pub_rcvp_set(NULL, rvp);
+	rump_pub_vp_rele(rvp);
+	rump_pub_clear_curlwp();
 }
 
 int
@@ -352,7 +352,7 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 	}
 
 	if (partition != UKFS_PARTITION_NA) {
-		rv = rump_etfs_register_withsize(devpath, devpath,
+		rv = rump_pub_etfs_register_withsize(devpath, devpath,
 		    RUMP_ETFS_BLK, devoff, devsize);
 		if (rv) {
 			goto out;
@@ -366,11 +366,11 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 		goto out;
 	}
 	mounted = 1;
-	rv = rump_vfs_getmp(mountpath, &fs->ukfs_mp);
+	rv = rump_pub_vfs_getmp(mountpath, &fs->ukfs_mp);
 	if (rv) {
 		goto out;
 	}
-	rv = rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+	rv = rump_pub_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
 	if (rv) {
 		goto out;
 	}
@@ -388,14 +388,14 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 	if (rv) {
 		if (fs) {
 			if (fs->ukfs_rvp)
-				rump_vp_rele(fs->ukfs_rvp);
+				rump_pub_vp_rele(fs->ukfs_rvp);
 			free(fs);
 			fs = NULL;
 		}
 		if (mounted)
 			rump_sys_unmount(mountpath, MNT_FORCE);
 		if (regged)
-			rump_etfs_remove(devpath);
+			rump_pub_etfs_remove(devpath);
 		if (devfd != -1) {
 			flock(devfd, LOCK_UN);
 			close(devfd);
@@ -435,23 +435,23 @@ ukfs_release(struct ukfs *fs, int flags)
 		mntflag = 0;
 		if (flags & UKFS_RELFLAG_FORCE)
 			mntflag = MNT_FORCE;
-		rump_setup_curlwp(nextpid(fs), 1, 1);
-		rump_vp_rele(fs->ukfs_rvp);
+		rump_pub_setup_curlwp(nextpid(fs), 1, 1);
+		rump_pub_vp_rele(fs->ukfs_rvp);
 		fs->ukfs_rvp = NULL;
 		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
 		if (rv == -1) {
 			error = errno;
-			rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
-			rump_clear_curlwp();
+			rump_pub_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+			rump_pub_clear_curlwp();
 			ukfs_chdir(fs, fs->ukfs_mountpath);
 			errno = error;
 			return -1;
 		}
-		rump_clear_curlwp();
+		rump_pub_clear_curlwp();
 	}
 
 	if (fs->ukfs_devpath) {
-		rump_etfs_remove(fs->ukfs_devpath);
+		rump_pub_etfs_remove(fs->ukfs_devpath);
 		free(fs->ukfs_devpath);
 	}
 	free(fs->ukfs_mountpath);
@@ -481,7 +481,7 @@ ukfs_opendir(struct ukfs *ukfs, const char *dirname, struct ukfs_dircookie **c)
 	int rv;
 
 	precall(ukfs);
-	rv = rump_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
+	rv = rump_pub_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
 	    NULL, &vp, NULL);
 	postcall(ukfs);
 
@@ -505,13 +505,13 @@ getmydents(struct vnode *vp, off_t *off, uint8_t *buf, size_t bufsize)
 	int rv, eofflag;
 	kauth_cred_t cred;
 	
-	uio = rump_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
-	cred = rump_cred_suserget();
+	uio = rump_pub_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
+	cred = rump_pub_cred_suserget();
 	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
-	rump_cred_suserput(cred);
+	rump_pub_cred_put(cred);
 	RUMP_VOP_UNLOCK(vp, 0);
-	*off = rump_uio_getoff(uio);
-	resid = rump_uio_free(uio);
+	*off = rump_pub_uio_getoff(uio);
+	resid = rump_pub_uio_free(uio);
 
 	if (rv) {
 		errno = rv;
@@ -542,7 +542,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	int rv;
 
 	precall(ukfs);
-	rv = rump_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
+	rv = rump_pub_namei(RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF, dirname,
 	    NULL, &vp, NULL);
 	postcall(ukfs);
 	if (rv) {
@@ -551,7 +551,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	}
 
 	rv = getmydents(vp, off, buf, bufsize);
-	rump_vp_rele(vp);
+	rump_pub_vp_rele(vp);
 	return rv;
 }
 
@@ -561,7 +561,7 @@ ukfs_closedir(struct ukfs *ukfs, struct ukfs_dircookie *c)
 {
 
 	/*LINTED*/
-	rump_vp_rele((struct vnode *)c);
+	rump_pub_vp_rele((struct vnode *)c);
 	return 0;
 }
 
@@ -754,13 +754,13 @@ ukfs_chdir(struct ukfs *ukfs, const char *path)
 	if (rv == -1)
 		goto out;
 
-	newvp = rump_cdir_get();
+	newvp = rump_pub_cdir_get();
 	pthread_spin_lock(&ukfs->ukfs_spin);
 	oldvp = ukfs->ukfs_cdir;
 	ukfs->ukfs_cdir = newvp;
 	pthread_spin_unlock(&ukfs->ukfs_spin);
 	if (oldvp)
-		rump_vp_rele(oldvp);
+		rump_pub_vp_rele(oldvp);
 
  out:
 	postcall(ukfs);
@@ -785,7 +785,7 @@ needcompat(void)
 #ifdef __NetBSD__
 	/*LINTED*/
 	return __NetBSD_Version__ < VERS_TIMECHANGE
-	    && rump_getversion() >= VERS_TIMECHANGE;
+	    && rump_pub_getversion() >= VERS_TIMECHANGE;
 #else
 	return 0;
 #endif
@@ -798,7 +798,7 @@ ukfs_stat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 
 	precall(ukfs);
 	if (needcompat())
-		rv = rump_sys___stat30(filename, file_stat);
+		rv = rump_pub_sys___stat30(filename, file_stat);
 	else
 		rv = rump_sys_stat(filename, file_stat);
 	postcall(ukfs);
@@ -813,7 +813,7 @@ ukfs_lstat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 
 	precall(ukfs);
 	if (needcompat())
-		rv = rump_sys___lstat30(filename, file_stat);
+		rv = rump_pub_sys___lstat30(filename, file_stat);
 	else
 		rv = rump_sys_lstat(filename, file_stat);
 	postcall(ukfs);
@@ -908,7 +908,7 @@ ukfs_modload(const char *fname)
 
 	mi = dlsym(handle, "__start_link_set_modules");
 	if (mi) {
-		error = rump_module_init(*mi, NULL);
+		error = rump_pub_module_init(*mi, NULL);
 		if (error)
 			goto errclose;
 		return 1;

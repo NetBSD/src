@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.8 2009/10/09 16:38:21 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.9 2009/10/14 18:22:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	 * obviously FIXXXME along with the cleaner.
 	 */
 	sprintf(rawdev, "/dev/r%s", canon_dev+5);
-	rump_etfs_register(rawdev, canon_dev, RUMP_ETFS_CHR);
+	rump_pub_etfs_register(rawdev, canon_dev, RUMP_ETFS_CHR);
 
 	/*
 	 * We basically have two choices:
