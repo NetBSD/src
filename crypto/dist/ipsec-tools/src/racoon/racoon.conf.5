@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.58 2009/09/01 12:22:09 tteras Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.59 2009/10/14 18:22:04 joerg Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -375,11 +375,7 @@ This problem is known to be fixed in Linux 2.6.25 and later.
 .\"
 .Ss Remote Nodes Specifications
 .Bl -tag -width Ds -compact
-.It Xo
-.Ic remote Ar name
-.Bq Ic inherit Ar parent_name
-.Ic { Ar statements Ic }
-.Xc
+.It Ic remote Ar name Bo Ic inherit Ar parent_name Bc Ic { Ar statements Ic }
 Specifies the IKE phase 1 parameters for each remote node.
 .Pp
 If connection is initiated using racoonctl, a unique match using the
@@ -394,7 +390,7 @@ When acting as responder, racoon picks the first proposal that has one
 or more acceptable remote configurations.
 When determining if a remote
 specification is matching the following information is checked:
-.Bl -bullet -tag -width Ds -compact
+.Bl -bullet -width Ds -compact
 .It
 The remote IP is checked against
 .Ic remote_address .
@@ -457,10 +453,7 @@ You can omit this statement.
 Means to use SIT_IDENTITY_ONLY as specified in RFC 2407.
 You can omit this statement.
 .\"
-.It Xo
-.Ic my_identifier Bq Ar qualifier
-.Ar idtype ... ;
-.Xc
+.It Ic my_identifier Bo Ar qualifier Bc Ar idtype ... ;
 Specifies the identifier sent to the remote host
 and the type to use in the phase 1 negotiation.
 .Ic address, fqdn , user_fqdn , keyid ,
@@ -485,10 +478,7 @@ This is the default type if you do not specify an identifier to use.
 The type is a USER_FQDN (user fully-qualified domain name).
 .It Ic my_identifier Ic fqdn Ar string ;
 The type is a FQDN (fully-qualified domain name).
-.It Xo
-.Ic my_identifier Ic keyid Bq Ic file
-.Ar file ;
-.Xc
+.It Ic my_identifier Ic keyid Bo Ic file Bc Ar file ;
 The type is a KEY_ID, read from the file.
 .It Ic my_identifier Ic keyid Ic tag Ar string ;
 The type is a KEY_ID, specified in the quoted string.
@@ -904,9 +894,7 @@ An optional number to identify the remote proposal and to link it
 only with sainfos who have the same number.
 Defaults to 0.
 .\"
-.It Xo
-.Ic proposal { Ar sub-substatements Ic }
-.Xc
+.It Ic proposal { Ar sub-substatements Ic }
 .Bl -tag -width Ds -compact
 .\"
 .It Ic encryption_algorithm Ar algorithm ;
@@ -970,12 +958,8 @@ command.
 .El
 .El
 .Pp
-.It Xo
-.Ic remote ( Ar address | Ic anonymous )
-.Bq Bq Ar port
-.Bq Ic inherit Ar parent
-.Ic { Ar statements Ic }
-.Xc
+.It Ic remote Po Ar address | Ic anonymous Pc Bo Bo Ar port Bc Bc \
+Bo Ic inherit Ar parent Bc Ic { Ar statements Ic }
 Deprecated format of specifying a remote block.
 This will be removed in future.
 It is a remnant from time when remote block was decided
@@ -991,10 +975,10 @@ remote "address" [inherit "parent-address"] {
 .\"
 .Ss Sainfo Specifications
 .Bl -tag -width Ds -compact
-.It Xo
-.Ic sainfo ( Ar local_id | Ic anonymous ) ( Ar remote_id | Ic clientaddr | Ic anonymous ) [ from Ar idtype [ Ar string ] ] [ Ic group Ar string ]
-.Ic { Ar statements Ic }
-.Xc
+.It Ic sainfo Po Ar local_id | Ic anonymous Pc \
+Po Ar remote_id | Ic clientaddr | Ic anonymous Pc \
+Bo Ic from Ar idtype Bo Ar string Bc Bc Bo Ic group Ar string Bc \
+Ic { Ar statements Ic }
 Defines the parameters of the IKE phase 2 (IPsec-SA establishment).
 .Pp
 The
