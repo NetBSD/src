@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.102 2009/10/14 09:18:32 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.103 2009/10/14 09:32:05 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14130,4 +14130,18 @@ crypto/dist/heimdal/lib/krb5/krb5_get_in_cred.3	1.2
 
 	Fix man page markup.
 	[joerg, ticket #1090]
+
+include/dlfcn.h					1.20
+lib/libc/dlfcn/dlfcn_elf.c			1.6
+libexec/ld.elf_so/reloc.c			1.97
+libexec/ld.elf_so/rtld.c			1.125
+libexec/ld.elf_so/rtld.h			1.81
+libexec/ld.elf_so/symbol.c			1.48
+
+	Add Solarisa-like dlinfo() interface to the ELF dynamic
+	linker. Implement RTLD_DI_LINKMAP which returns a pointer
+	to the linkmap chain at the given object.  Other Solaris
+	queries are currently unimplemented.
+
+	[pooka, ticket #1088]
 
