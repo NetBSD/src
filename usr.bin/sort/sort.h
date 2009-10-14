@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.19 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: sort.h,v 1.19.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,11 +65,11 @@
 
 #include <sys/param.h>
 
-#include <db.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,18 +77,19 @@
 #define NBINS		256
 
 /* values for masks, weights, and other flags. */
-#define I 1		/* mask out non-printable characters */
-#define D 2		/* sort alphanumeric characters only */
-#define N 4		/* Field is a number */
-#define F 8		/* weight lower and upper case the same */
-#define R 16		/* Field is reversed with respect to the global weight */
+/* R and F get used to index weight_tables[] */
+#define R 1		/* Field is reversed */
+#define F 2		/* weight lower and upper case the same */
+#define I 4		/* mask out non-printable characters */
+#define D 8		/* sort alphanumeric characters only */
+#define N 16		/* Field is a number */
 #define BI 32		/* ignore blanks in icol */
 #define BT 64		/* ignore blanks in tcol */
 
 /* masks for delimiters: blanks, fields, and termination. */
-#define BLANK 1		/* ' ', '\t'; '\n' if -T is invoked */
+#define BLANK 1		/* ' ', '\t'; '\n' if -R is invoked */
 #define FLD_D 2		/* ' ', '\t' default; from -t otherwise */
-#define REC_D_F 4	/* '\n' default; from -T otherwise */
+#define REC_D_F 4	/* '\n' default; from -R otherwise */
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -103,22 +104,21 @@
 		 err(2, NULL);						\
 }
 
-/* length of record is currently limited to maximum string length (size_t) */
-typedef size_t length_t;
+/* Records are limited to MAXBUFSIZE (8MB) and less if you want to sort
+ * in a sane way.
+ * Anyone who wants to sort data records longer than 2GB definitely needs a
+ * different program! */
+typedef unsigned int length_t;
 
-/* a record is a key/line pair starting at rec.data. It has a total length
+/* A record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.
  */
 typedef struct recheader {
-	length_t length;
-	length_t offset;
-	u_char data[1];
+	length_t length;	/* total length of key and line */
+	length_t offset;	/* to line */
+	int      keylen;	/* length of key */
+	u_char   data[];	/* key then line */
 } RECHEADER;
-
-typedef struct trecheader {
-	length_t length;
-	length_t offset;
-} TRECHEADER;
 
 /* This is the column as seen by struct field.  It is used by enterfield.
  * They are matched with corresponding coldescs during initialization.
@@ -142,6 +142,9 @@ typedef struct coldesc {
  * implies the end of the line.  Flags regulate omission of blanks and
  * numerical sorts; mask determines which characters are ignored (from -i, -d);
  * weights determines the sort weights of a character (from -f, -r).
+ *
+ * The first field contain the global flags etc.
+ * The list terminates when icol = 0.
  */
 struct field {
 	struct column icol;
@@ -155,46 +158,42 @@ struct filelist {
 	const char * const * names;
 };
 
-typedef int (*get_func_t)(int, int, struct filelist *, int,
-		RECHEADER *, u_char *, struct field *);
-typedef void (*put_func_t)(const struct recheader *, FILE *);
+typedef int (*get_func_t)(FILE *, RECHEADER *, u_char *, struct field *);
+typedef void (*put_func_t)(const RECHEADER *, FILE *);
 
-extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
+extern u_char *const weight_tables[4];   /* ascii, Rascii, Ftable, RFtable */
 extern u_char d_mask[NBINS];
-extern int SINGL_FLD, SEP_FLAG, UNIQUE;
+extern int SINGL_FLD, SEP_FLAG, UNIQUE, REVERSE;
+extern int posix_sort;
 extern int REC_D;
 extern const char *tmpdir;
-extern int stable_sort;
-extern u_char gweights[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
 
-void	 append(const u_char **, int, int, FILE *,
-	    void (*)(const RECHEADER *, FILE *), struct field *);
+#define DEBUG(ch) (debug_flags & (1 << ((ch) & 31)))
+extern unsigned int debug_flags;
+
+void	 append(RECHEADER **, int, FILE *, void (*)(const RECHEADER *, FILE *));
 void	 concat(FILE *, FILE *);
-length_t enterkey(RECHEADER *, DBT *, int, struct field *);
+length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
-void	 fmerge(int, int, struct filelist *, int,
-		get_func_t, FILE *, put_func_t, struct field *);
-void	 fsort(int, int, int, struct filelist *, int, FILE *,
-		struct field *);
-int	 geteasy(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 getnext(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 makekey(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 makeline(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-void	 num_init(void);
-void	 onepass(const u_char **, int, long, long *, u_char *, FILE *);
+void	 fmerge(struct filelist *, int, FILE *, struct field *);
+void	 save_for_merge(FILE *, get_func_t, struct field *);
+void	 merge_sort(FILE *, put_func_t, struct field *);
+void	 fsort(struct filelist *, int, FILE *, struct field *);
+int	 geteasy(FILE *, RECHEADER *, u_char *, struct field *);
+int	 makekey(FILE *, RECHEADER *, u_char *, struct field *);
+int	 makeline(FILE *, RECHEADER *, u_char *, struct field *);
+void	 makeline_copydown(RECHEADER *);
 int	 optval(int, int);
-void	 order(struct filelist *, get_func_t, struct field *);
+void	 order(struct filelist *, struct field *);
 void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
+void	 putkeydump(const RECHEADER *, FILE *);
 void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
+void	 radix_sort(RECHEADER **, RECHEADER **, int);
 int	 setfield(const char *, struct field *, int);
-void	 settables(int);
+void	 settables(void);
