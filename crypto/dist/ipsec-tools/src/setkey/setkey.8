@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.20 2006/10/06 12:02:27 manu Exp $
+.\"	$NetBSD: setkey.8,v 1.21 2009/10/14 18:34:14 joerg Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -160,98 +160,51 @@ Lines starting with hash signs
 .Pq Sq #
 are treated as comment lines.
 .Bl -tag -width Ds
-.It Xo
-.Li add
-.Op Fl 46n
-.Ar src Ar dst Ar protocol Ar spi
-.Op Ar extensions
-.Ar algorithm ...
-.Li ;
-.Xc
+.It Li add Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+Oo Ar extensions Oc Ar algorithm ... Li ;
 Add an SAD entry.
 .Li add
 can fail for multiple reasons, including when the key length does
 not match the specified algorithm.
 .\"
-.It Xo
-.Li get
-.Op Fl 46n
-.Ar src Ar dst Ar protocol Ar spi
-.Li ;
-.Xc
+.It Li get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
 Show an SAD entry.
 .\"
-.It Xo
-.Li delete
-.Op Fl 46n
-.Ar src Ar dst Ar protocol Ar spi
-.Li ;
-.Xc
+.It Li delete Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
 Remove an SAD entry.
 .\"
-.It Xo
-.Li deleteall
-.Op Fl 46n
-.Ar src Ar dst Ar protocol
-.Li ;
-.Xc
+.It Li deleteall Oo Fl 46n Oc Ar src Ar dst Ar protocol Li ;
 Remove all SAD entries that match the specification.
 .\"
-.It Xo
-.Li flush
-.Op Ar protocol
-.Li ;
-.Xc
+.It Li flush Oo Ar protocol Oc Li ;
 Clear all SAD entries matched by the options.
 .Fl F
 on the command line achieves the same functionality.
 .\"
-.It Xo
-.Li dump
-.Op Ar protocol
-.Li ;
-.Xc
+.It Li dump Oo Ar protocol Oc Li ;
 Dumps all SAD entries matched by the options.
 .Fl D
 on the command line achieves the same functionality.
 .\"
-.It Xo
-.Li spdadd
-.Op Fl 46n
-.Ar src_range Ar dst_range Ar upperspec Ar label Ar policy
-.Li ;
-.Xc
+.It Li spdadd Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+Ar label Ar policy Li ;
 Add an SPD entry.
 .\"
-.It Xo
-.Li spdadd tagged
-.Ar tag Ar policy
-.Li ;
-.Xc
+.It Li spdadd tagged Ar tag Ar policy Li ;
 Add an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
-.It Xo
-.Li spddelete
-.Op Fl 46n
-.Ar src_range Ar dst_range Ar upperspec Fl P Ar direction
-.Li ;
-.Xc
+.It Li spddelete Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+Fl P Ar direction Li ;
 Delete an SPD entry.
 .\"
-.It Xo
-.Li spdflush
-.Li ;
-.Xc
+.It Li spdflush Li ;
 Clear all SPD entries.
 .Fl FP
 on the command line achieves the same functionality.
 .\"
-.It Xo
-.Li spddump
-.Li ;
-.Xc
+.It Li spddump Li ;
 Dumps all SPD entries.
 .Fl DP
 on the command line achieves the same functionality.
@@ -391,10 +344,7 @@ The string representation of the label that is interpreted by the LSM.
 Specify an encryption algorithm
 .Ar ealgo
 for ESP.
-.It Xo
-.Fl E Ar ealgo Ar key
-.Fl A Ar aalgo Ar key
-.Xc
+.It Fl E Ar ealgo Ar key Fl A Ar aalgo Ar key
 Specify an encryption algorithm
 .Ar ealgo ,
 as well as a payload authentication algorithm
@@ -526,13 +476,15 @@ The string representation of the label that is interpreted by the LSM.
 .It Ar policy
 .Ar policy
 is in one of the following three formats:
-.Bd -literal -offset indent
-.It Fl P Ar direction [priority specification] Li discard
-.It Fl P Ar direction [priority specification] Li none
-.It Xo Fl P Ar direction [priority specification] Li ipsec
+.Bl -item -compact
+.It
+.Fl P Ar direction [priority specification] Li discard
+.It
+.Fl P Ar direction [priority specification] Li none
+.It
+.Fl P Ar direction [priority specification] Li ipsec
 .Ar protocol/mode/src-dst/level Op ...
-.Xc
-.Ed
+.El
 .Pp
 You must specify the direction of its policy as
 .Ar direction .
@@ -559,14 +511,10 @@ If the kernel does not support priorities, a warning message will
 be printed the first time a priority specification is used.
 Policy priority takes one of the following formats:
 .Bl -tag  -width "discard"
-.It Xo
-.Ar {priority,prio} offset
-.Xc
+.It Ar {priority,prio} offset
 .Ar offset
 is an integer in the range from \-2147483647 to 214783648.
-.It Xo
-.Ar {priority,prio} base {+,\-} offset
-.Xc
+.It Ar {priority,prio} base {+,\-} offset
 .Ar base
 is either
 .Li low (\-1073741824) ,
