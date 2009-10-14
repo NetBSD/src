@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.3 2009/05/24 20:10:50 mlelstv Exp $	*/
+/*	$NetBSD: compat.c,v 1.4 2009/10/14 17:29:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3 2009/05/24 20:10:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.4 2009/10/14 17:29:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3 2009/05/24 20:10:50 mlelstv Exp $");
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
+
+#include "rump_vfs_private.h"
 
 /*
  * XXX: these are handwritten for now.  They provide compat for
@@ -78,7 +80,7 @@ struct vattr50 {
 };
 
 int
-rump_sys___stat30(const char *path, struct stat *sb)
+rumppriv_sys___stat30(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___stat30_args args;
 	register_t retval = 0;
@@ -96,7 +98,7 @@ rump_sys___stat30(const char *path, struct stat *sb)
 }
 
 int
-rump_sys___lstat30(const char *path, struct stat *sb)
+rumppriv_sys___lstat30(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___lstat30_args args;
 	register_t retval = 0;
@@ -118,7 +120,7 @@ rump_sys___lstat30(const char *path, struct stat *sb)
  * the userspace namespace too
  */
 void
-rump_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
+rumppriv_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
 {
 	const struct vattr50 *va50 = (const struct vattr50 *)_va50;
 
@@ -144,7 +146,7 @@ rump_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
 }
 
 void
-rump_vattr_to_vattr50(const struct vattr *va, struct vattr *_va50)
+rumppriv_vattr_to_vattr50(const struct vattr *va, struct vattr *_va50)
 {
 	struct vattr50 *va50 = (struct vattr50 *)_va50;
 

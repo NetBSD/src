@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net_private.h,v 1.3 2009/05/28 00:02:16 pooka Exp $	*/
+/*	$NetBSD: rump_net_private.h,v 1.4 2009/10/14 17:29:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -45,5 +45,7 @@ void 		rump_net_sockin_init(void);
 void 		rump_net_virtif_init(void);
 
 void		rump_dummyif_create(void);
+
+#include "rumpnet_if_priv.h"
 
 #endif /* _SYS_RUMP_NET_PRIVATE_H_ */

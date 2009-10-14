@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.30 2009/10/13 20:08:08 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.31 2009/10/14 17:29:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -62,108 +62,43 @@ struct modinfo;
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
 
+/* rumpkern */
+enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
+typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
+#define rump_cred_suserput(c)	rump_cred_put(c)
+/* COMPAT_NETHACK */
+#define WizardMode()		rump_cred_suserget()
+#define YASD(cred)		rump_cred_suserput(cred)
+
+/* rumpvfs */
+#define RUMPCN_FREECRED  0x02
+#define RUMPCN_FORCEFREE 0x04
+#define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
+enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
+
 /*
  * Something like rump capabilities would be nicer, but let's
  * do this for a start.
  */
 #define RUMP_VERSION	01
 #define rump_init()	rump__init(RUMP_VERSION)
-int	rump_module_init(struct modinfo *, prop_dictionary_t props);
-int	rump_module_fini(struct modinfo *);
 
-int		rump__init(int);
-void		rump_reboot(int);
-int		rump_getversion(void);
+/* um, what's the point ?-) */
+#ifdef _BEGIN_DECLS
+_BEGIN_DECLS
+#endif
 
-struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
-				     kauth_cred_t, struct lwp *);
-void			rump_freecn(struct componentname *, int);
-#define RUMPCN_FREECRED  0x02
-#define RUMPCN_FORCEFREE 0x04
-int			rump_checksavecn(struct componentname *);
-int			rump_namei(uint32_t, uint32_t, const char *,
-				   struct vnode **, struct vnode **,
-				   struct componentname **);
+int rump__init(int);
 
-void 	rump_getvninfo(struct vnode *, enum vtype *, off_t * /*XXX*/, dev_t *);
+#ifndef _RUMPKERNEL
+#include <rump/rumpkern_if_pub.h>
+#include <rump/rumpvfs_if_pub.h>
+#include <rump/rumpnet_if_pub.h>
+#endif
 
-enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
-#define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
-int	rump_etfs_register(const char *, const char *, enum rump_etfs_type);
-int	rump_etfs_register_withsize(const char *, const char *,
-				    enum rump_etfs_type, uint64_t, uint64_t);
-int	rump_etfs_remove(const char *);
-
-struct vfsops	*rump_vfslist_iterate(struct vfsops *);
-struct vfsops	*rump_vfs_getopsbyname(const char *);
-
-struct vattr	*rump_vattr_init(void);
-void		rump_vattr_settype(struct vattr *, enum vtype);
-void		rump_vattr_setmode(struct vattr *, mode_t);
-void		rump_vattr_setrdev(struct vattr *, dev_t);
-void		rump_vattr_free(struct vattr *);
-
-void		rump_vp_incref(struct vnode *);
-int		rump_vp_getref(struct vnode *);
-void		rump_vp_rele(struct vnode *);
-
-enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
-struct uio	*rump_uio_setup(void *, size_t, off_t, enum rump_uiorw);
-size_t		rump_uio_getresid(struct uio *);
-off_t		rump_uio_getoff(struct uio *);
-size_t		rump_uio_free(struct uio *);
-
-void		rump_vp_interlock(struct vnode *);
-
-kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
-kauth_cred_t	rump_cred_suserget(void);
-void		rump_cred_put(kauth_cred_t);
-
-#define rump_cred_suserput(c)	rump_cred_put(c)
-/* COMPAT_NETHACK */
-#define WizardMode()		rump_cred_suserget()
-#define YASD(cred)		rump_cred_suserput(cred)
-
-int	rump_vfs_unmount(struct mount *, int);
-int	rump_vfs_root(struct mount *, struct vnode **, int);
-int	rump_vfs_statvfs(struct mount *, struct statvfs *);
-int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
-int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
-void	rump_vfs_syncwait(struct mount *);
-int	rump_vfs_getmp(const char *, struct mount **);
-
-struct lwp	*rump_newproc_switch(void);
-struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
-struct lwp	*rump_get_curlwp(void);
-void		rump_set_curlwp(struct lwp *);
-void		rump_clear_curlwp(void);
-
-void		rump_rcvp_set(struct vnode *, struct vnode *);
-struct vnode 	*rump_cdir_get(void);
-
-/* I picked the wrong header to stop sniffin' glue */
-int rump_syspuffs_glueinit(int, int *);
-
-int rump_virtif_create(int);
-
-typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
-int		rump_sysproxy_set(rump_sysproxy_t, void *);
-int		rump_sysproxy_socket_setup_client(int);
-int		rump_sysproxy_socket_setup_server(int);
-
-/*
- * compat syscalls.  these are currently hand-"generated"
- */
-int		rump_sys___stat30(const char *, struct stat *);
-int		rump_sys___lstat30(const char *, struct stat *);
-
-/*
- * Other compat glue (for sniffing purposes)
- * XXX: (lack of) types
- */
-void		rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
-void		rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
+#ifdef _END_DECLS
+_END_DECLS
+#endif
 
 /*
  * Begin rump syscall conditionals.  Yes, something a little better
