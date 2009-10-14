@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.22 2009/02/05 03:22:37 lukem Exp $	*/
+/*	$NetBSD: fgets.c,v 1.23 2009/10/14 21:25:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.22 2009/02/05 03:22:37 lukem Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.23 2009/10/14 21:25:52 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ fgets(buf, n, fp)
 	_SET_ORIENTATION(fp, -1);
 	s = buf;
 	n--;			/* leave space for NUL */
-	while (n != 0) {
+	do {
 		/*
 		 * If the buffer is empty, refill it.
 		 */
@@ -114,7 +114,7 @@ fgets(buf, n, fp)
 		(void)memcpy((void *)s, (void *)p, len);
 		s += len;
 		n -= len;
-	}
+	} while (n != 0);
 	*s = 0;
 	FUNLOCKFILE(fp);
 	return (buf);
