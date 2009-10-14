@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.105 2009/10/14 18:17:01 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.106 2009/10/14 18:33:48 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14128,6 +14128,8 @@ lib/libutil/opendisk.c				1.12
 	[pooka, ticket #1089]
 
 crypto/dist/heimdal/lib/krb5/krb5_get_in_cred.3	1.2
+crypto/dist/heimdal/lib/krb5/krb5_keytab.3	1.10
+crypto/dist/heimdal/lib/krb5/krb5_get_creds.3	1.2
 
 	Fix man page markup.
 	[joerg, ticket #1090]
@@ -14143,7 +14145,6 @@ libexec/ld.elf_so/symbol.c			1.48
 	linker. Implement RTLD_DI_LINKMAP which returns a pointer
 	to the linkmap chain at the given object.  Other Solaris
 	queries are currently unimplemented.
-
 	[pooka, ticket #1088]
 
 usr.bin/printf/printf.c				1.34
