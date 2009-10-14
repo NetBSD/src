@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.27 2009/10/11 18:12:51 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.28 2009/10/14 17:29:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.27 2009/10/11 18:12:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.28 2009/10/14 17:29:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -259,7 +259,7 @@ doregister(const char *key, const char *hostpath,
 }
 
 int
-rump_etfs_register(const char *key, const char *hostpath,
+rumppriv_etfs_register(const char *key, const char *hostpath,
 	enum rump_etfs_type ftype)
 {
 
@@ -267,7 +267,7 @@ rump_etfs_register(const char *key, const char *hostpath,
 }
 
 int
-rump_etfs_register_withsize(const char *key, const char *hostpath,
+rumppriv_etfs_register_withsize(const char *key, const char *hostpath,
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
 
@@ -286,7 +286,7 @@ rump_etfs_register_withsize(const char *key, const char *hostpath,
 }
 
 int
-rump_etfs_remove(const char *key)
+rumppriv_etfs_remove(const char *key)
 {
 	struct etfs *et;
 	size_t keylen = strlen(key);
