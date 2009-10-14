@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.7 2009/10/13 18:36:48 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.8 2009/10/14 23:29:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.7 2009/10/13 18:36:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.8 2009/10/14 23:29:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,12 +130,10 @@ struct rusb_xfer {
 
 /* probe ugen0 through ugen3 */
 struct cfdata rumpusbhc_cfdata[] = {
-#if 0
 	{ "rumpusbhc", "rumpusbhc", 0, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 	{ "rumpusbhc", "rumpusbhc", 1, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-#endif
 	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 };
 
 #define UGENDEV_BASESTR "/dev/ugen"
