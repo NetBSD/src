@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.7 2009/05/15 15:54:03 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.8 2009/10/14 18:22:50 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -118,10 +118,10 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail_errno("socket 1 listen");
 
 	/* store our current lwp/proc */
-	l1 = rump_get_curlwp();
+	l1 = rump_pub_get_curlwp();
 
 	/* create new process */
-	l2 = rump_newproc_switch();
+	l2 = rump_pub_newproc_switch();
 
 	/* connect to unix domain socket */
 	memset(&sun, 0, sizeof(sun));
