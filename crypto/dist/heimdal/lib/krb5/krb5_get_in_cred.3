@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $Heimdal: krb5_get_in_cred.3 17593 2006-05-29 14:55:18Z lha $
-.\" $NetBSD: krb5_get_in_cred.3,v 1.1 2008/03/22 08:37:14 mlelstv Exp $
+.\" $NetBSD: krb5_get_in_cred.3,v 1.1.8.1 2009/10/14 09:17:13 sborrill Exp $
 .\"
 .Dd May 31, 2003
 .Dt KRB5_GET_IN_TKT 3
@@ -170,7 +170,7 @@ but are more specialized.
 .Nm krb5_get_in_tkt_with_password
 uses the clients password to authenticate.
 If the password argument is
-.DV NULL
+.Dv NULL
 the user user queried with the default password query function.
 .Pp
 .Nm krb5_get_in_tkt_with_keytab
