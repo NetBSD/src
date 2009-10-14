@@ -1,0 +1,35 @@
+;	$NetBSD: rumpkern.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp $
+
+NAME|kern
+PUBHDR|include/rump/rumpkern_if_pub.h
+PRIVHDR|librump/rumpkern/rumpkern_if_priv.h
+WRAPPERS|librump/rumpkern/rumpkern_if_wrappers.c
+
+; type		| name		| args
+;
+
+void		|reboot		|int
+int		|getversion	|void
+
+int		|module_init	|struct modinfo *, prop_dictionary_t
+int		|module_fini	|struct modinfo *
+
+struct uio *	|uio_setup	|void *, size_t, off_t, enum rump_uiorw
+size_t		|uio_getresid	|struct uio *
+off_t		|uio_getoff	|struct uio *
+size_t		|uio_free	|struct uio *
+
+kauth_cred_t	|cred_create	|uid_t, gid_t, size_t, gid_t *
+kauth_cred_t	|cred_suserget	|void
+void		|cred_put	|kauth_cred_t
+
+; lwp interfaces.  these need much love
+struct lwp *	|newproc_switch	|void
+struct lwp *	|setup_curlwp	|pid_t, lwpid_t, int
+struct lwp *	|get_curlwp	|void
+void		|set_curlwp	|struct lwp *
+void		|clear_curlwp	|void
+
+int		|sysproxy_set			|rump_sysproxy_t, void *
+int		|sysproxy_socket_setup_client	|int
+int		|sysproxy_socket_setup_server	|int
