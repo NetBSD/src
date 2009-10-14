@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.33 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: printf.c,v 1.33.4.1 2009/10/14 18:12:55 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.33 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: printf.c,v 1.33.4.1 2009/10/14 18:12:55 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 	gargv = ++argv;
 
 #define SKIP1	"#-+ 0"
-#define SKIP2	"*0123456789"
+#define SKIP2	"0123456789"
 	do {
 		/*
 		 * Basic algorithm is to scan the format string for conversion
@@ -185,13 +185,23 @@ int main(int argc, char *argv[])
 
 			/* skip to field width */
 			fmt += strspn(fmt, SKIP1);
-			fieldwidth = *fmt == '*' ? getwidth() : -1;
+			if (*fmt == '*') {
+				fmt++;
+				fieldwidth = getwidth();
+			} else
+				fieldwidth = -1;
 
 			/* skip to possible '.', get following precision */
 			fmt += strspn(fmt, SKIP2);
-			if (*fmt == '.')
-				++fmt;
-			precision = *fmt == '*' ? getwidth() : -1;
+			if (*fmt == '.') {
+				fmt++;
+				if (*fmt == '*') {
+					fmt++;
+					precision = getwidth();
+				} else
+					precision = -1;
+			} else
+				precision = -1;
 
 			fmt += strspn(fmt, SKIP2);
 
