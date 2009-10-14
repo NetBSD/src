@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.43 2009/06/13 16:08:25 pgoyette Exp $
+.\"	$NetBSD: envsys.4,v 1.44 2009/10/14 23:18:39 joerg Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ The following
 .Xr ioctl 2
 types are available:
 .Pp
-.Bl -tag -width XX -compact
+.Bl -tag -width XX
 .It Dv ENVSYS_GETDICTIONARY Pq prop_dictionary_t
 .Pp
 This
@@ -236,9 +236,9 @@ ioctl.
 The values will be set to defaults, the ones that the driver uses.
 .Pp
 Only one object is allowed on this dictionary:
-.Bd -literal -offset -ident
-	\*[Lt]key\*[Gt]envsys-remove-props\*[Lt]/key\*[Gt]
-	\*[Lt]true/\*[Gt]
+.Bd -literal -offset ident
+\*[Lt]key\*[Gt]envsys-remove-props\*[Lt]/key\*[Gt]
+\*[Lt]true/\*[Gt]
 .Ed
 .Pp
 It is a boolean object and must be set to
