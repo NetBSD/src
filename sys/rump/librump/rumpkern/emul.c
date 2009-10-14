@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.99 2009/10/14 17:29:19 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.100 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.99 2009/10/14 17:29:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.100 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -439,7 +439,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rumppriv_setup_curlwp(0, rump_nextlid(), 0);
+	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
@@ -457,7 +457,7 @@ kthread_exit(int ecode)
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_ONE(NULL);
-	rumppriv_clear_curlwp();
+	rump_clear_curlwp();
 	rumpuser_thread_exit();
 }
 
@@ -731,7 +731,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 
-	rumppriv_reboot(howto);
+	rump_reboot(howto);
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
