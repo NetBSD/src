@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.8 2009/09/17 13:12:51 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.9 2009/10/14 18:22:50 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -92,7 +92,7 @@ ATF_TC_BODY(renamerace, tc)
 	rump_init();
 	if (rump_sys_mkdir("/mp", 0777) == -1)
 		atf_tc_fail_errno("cannot create mountpoint");
-	rump_etfs_register(FAKEBLK, image, RUMP_ETFS_BLK);
+	rump_pub_etfs_register(FAKEBLK, image, RUMP_ETFS_BLK);
 	if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_LOG, &args, sizeof(args))==-1)
 		atf_tc_fail_errno("rump_sys_mount failed");
 
