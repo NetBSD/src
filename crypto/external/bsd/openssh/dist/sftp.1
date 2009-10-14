@@ -1,4 +1,4 @@
-.\"	$NetBSD: sftp.1,v 1.2 2009/06/07 22:38:47 christos Exp $
+.\"	$NetBSD: sftp.1,v 1.3 2009/10/14 17:33:20 joerg Exp $
 .\" $OpenBSD: sftp.1,v 1.69 2008/12/09 15:35:00 sobrado Exp $
 .\"
 .\" Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -274,10 +274,7 @@ may contain
 characters and may match multiple files.
 .Ar own
 must be a numeric UID.
-.It Xo Ic df
-.Op Fl hi
-.Op Ar path
-.Xc
+.It Ic df Oo Fl hi Oc Oo Ar path Oc
 Display usage information for the filesystem holding the current directory
 (or
 .Ar path
@@ -295,11 +292,7 @@ extension.
 .It Ic exit
 Quit
 .Nm sftp .
-.It Xo Ic get
-.Op Fl P
-.Ar remote-path
-.Op Ar local-path
-.Xc
+.It Ic get Oo Fl P Oc Ar remote-path Oo Ar local-path Oc
 Retrieve the
 .Ar remote-file
 and store it on the local machine.
@@ -348,10 +341,7 @@ to
 .Ar newpath .
 .It Ic lpwd
 Print local working directory.
-.It Xo Ic ls
-.Op Fl 1aflnrSt
-.Op Ar path
-.Xc
+.It Ic ls Oo Fl 1aflnrSt Oc Oo Ar path Oc
 Display a remote directory listing of either
 .Ar path
 or the current directory if
@@ -395,11 +385,7 @@ Create remote directory specified by
 .Ar path .
 .It Ic progress
 Toggle display of progress meter.
-.It Xo Ic put
-.Op Fl P
-.Ar local-path
-.Op Ar remote-path
-.Xc
+.It Ic put Oo Fl P Oc Ar local-path Oo Ar remote-path Oc
 Upload
 .Ar local-path
 and store it on the remote machine.
