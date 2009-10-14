@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.22 2008/11/18 13:04:04 reed Exp $
+.\"	$NetBSD: login.conf.5,v 1.23 2009/10/14 23:40:05 joerg Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ file are either boolean or use a `=' to separate the capability
 from the value.
 The types are described after the capability table.
 .Bl -column minpasswordlen program default
-.Sy Name	Type	Default	Description
+.It Sy Name	Type	Default	Description
 .\"
 .sp
 .It Sy copyright Ta file Ta "" Ta
@@ -116,7 +116,7 @@ Access is instead denied from any hosts preceded
 by
 .Sq Li \&! .
 Patterns can contain the
-.Xr sh 1 -style
+.Xr sh 1 Ns -style
 .Sq Li *
 and
 .Sq Li \&?
