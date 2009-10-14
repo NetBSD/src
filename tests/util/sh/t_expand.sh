@@ -1,6 +1,6 @@
-# $NetBSD: t_expand.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_expand.sh,v 1.3 2009/10/14 13:02:03 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,19 @@
 # This file tests the functions in expand.c.
 #
 
+delim_argv() {
+	str=
+	while [ $# -gt 0 ]; do
+		if [ -z "${str}" ]; then
+			str=">$1<"
+		else
+			str="${str} >$1<"
+		fi
+                shift
+	done
+	echo ${str}
+}
+
 atf_test_case dollar_at
 dollar_at_head() {
 	atf_set "descr" "Somewhere between 2.0.2 and 3.0 the expansion" \
@@ -50,6 +63,23 @@ dollar_at_body() {
 	n_arg() { echo $#; }
 	n_args=`n_arg "$@"`
 	atf_check_equal '0' '$n_args'
+}
+
+atf_test_case dollar_at_with_text
+dollar_at_with_text_head() {
+	atf_set "descr" "Test \$@ expansion when it is surrounded by text" \
+	                "within the quotes.  PR bin/33956."
+}
+dollar_at_with_text_body() {
+	set --
+	atf_check_equal '' "$(delim_argv "$@")"
+	atf_check_equal '>foobar<' "$(delim_argv "foo$@bar")"
+	atf_check_equal '>foo  bar<' "$(delim_argv "foo $@ bar")"
+
+	set -- a b c
+	atf_check_equal '>a< >b< >c<' "$(delim_argv "$@")"
+	atf_check_equal '>fooa< >b< >cbar<' "$(delim_argv "foo$@bar")"
+	atf_check_equal '>foo a< >b< >c bar<' "$(delim_argv "foo $@ bar")"
 }
 
 atf_test_case strip
@@ -79,6 +109,7 @@ arithmetic_body() {
 
 atf_init_test_cases() {
 	atf_add_test_case dollar_at
+	atf_add_test_case dollar_at_with_text
 	atf_add_test_case strip
 	atf_add_test_case arithmetic
 }
