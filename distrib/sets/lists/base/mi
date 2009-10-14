@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.13 2009/10/10 19:53:24 sborrill Exp $
+# $NetBSD: mi,v 1.780.2.14 2009/10/14 18:10:21 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -591,7 +591,6 @@
 ./usr/X11R7/lib/X11/xedit/lisp/progmodes	base-x11-root
 ./usr/X11R7/lib/X11/xkb				base-x11-root
 ./usr/X11R7/lib/X11/xkb/compat			base-x11-root
-./usr/X11R7/lib/X11/xkb/compiled		base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/geometry		base-x11-root
 ./usr/X11R7/lib/X11/xkb/geometry/digital	-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/digital_vndr	base-x11-root
