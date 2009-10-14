@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE. 
 .\" 
 .\" $Heimdal: string2key.8 11648 2003-02-16 21:10:32Z lha $
-.\" $NetBSD: string2key.8,v 1.7 2008/03/22 08:37:03 mlelstv Exp $
+.\" $NetBSD: string2key.8,v 1.8 2009/10/14 23:37:33 joerg Exp $
 .\"
 .Dd March  4, 2000
 .Dt STRING2KEY 8
@@ -66,46 +66,21 @@ performs the string-to-key function.
 This is useful when you want to handle the raw key instead of the password.
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl 5 ,
-.Fl -version5
-.Xc
+.It Fl 5 , Fl -version5
 Output Kerberos v5 string-to-key
-.It Xo
-.Fl 4 ,
-.Fl -version4
-.Xc
+.It Fl 4 , Fl -version4
 Output Kerberos v4 string-to-key
-.It Xo
-.Fl a ,
-.Fl -afs
-.Xc
+.It Fl a , Fl -afs
 Output AFS string-to-key
-.It Xo
-.Fl c Ar cell ,
-.Fl -cell= Ns Ar cell
-.Xc
+.It Fl c Ar cell , Fl -cell= Ns Ar cell
 AFS cell to use
-.It Xo
-.Fl w Ar password ,
-.Fl -password= Ns Ar password
-.Xc
+.It Fl w Ar password , Fl -password= Ns Ar password
 Password to use
-.It Xo
-.Fl p Ar principal ,
-.Fl -principal= Ns Ar principal
-.Xc
+.It Fl p Ar principal , Fl -principal= Ns Ar principal
 Kerberos v5 principal to use
-.It Xo
-.Fl k Ar string ,
-.Fl -keytype= Ns Ar string
-.Xc
+.It Fl k Ar string , Fl -keytype= Ns Ar string
 Keytype
-.It Xo
-.Fl -version
-.Xc
+.It Fl -version
 print version
-.It Xo
-.Fl -help
-.Xc
+.It Fl -help
 .El

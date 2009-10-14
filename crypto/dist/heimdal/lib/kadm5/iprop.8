@@ -1,5 +1,5 @@
 .\" $Heimdal: iprop.8 21940 2007-09-28 22:28:09Z lha $
-.\" $NetBSD: iprop.8,v 1.1 2008/03/22 08:37:12 mlelstv Exp $
+.\" $NetBSD: iprop.8,v 1.2 2009/10/14 23:37:34 joerg Exp $
 .\" 
 .\" Copyright (c) 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -137,78 +137,37 @@ file (e.g.\&
 Supported options for
 .Nm ipropd-master :
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar string ,
-.Fl -config-file= Ns Ar string
-.Xc
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
-.It Xo
-.Fl k Ar kspec ,
-.Fl -keytab= Ns Ar kspec
-.Xc
+.It Fl c Ar string , Fl -config-file= Ns Ar string
+.It Fl r Ar string , Fl -realm= Ns Ar string
+.It Fl k Ar kspec , Fl -keytab= Ns Ar kspec
 keytab to get authentication from
-.It Xo
-.Fl d Ar file ,
-.Fl -database= Ns Ar file
-.Xc
+.It Fl d Ar file , Fl -database= Ns Ar file
 Database (default per KDC)
-.It Xo
-.Fl -slave-stats-file= Ns Ar file
-.Xc
+.It Fl -slave-stats-file= Ns Ar file
 file for slave status information
-.It Xo
-.Fl -time-missing= Ns Ar time
-.Xc
+.It Fl -time-missing= Ns Ar time
 time before slave is polled for presence (default 2 min)
-.It Xo
-.Fl -time-gone= Ns Ar time
-.Xc
+.It Fl -time-gone= Ns Ar time
 time of inactivity after which a slave is considered gone (default 5 min)
-.It Xo
-.Fl -detach
-.Xc
+.It Fl -detach
 detach from console
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl -help
-.Xc
+.It Fl -version
+.It Fl -help
 .El
 .Pp
 Supported options for
 .Nm ipropd-slave :
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar string ,
-.Fl -config-file= Ns Ar string
-.Xc
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
-.It Xo
-.Fl k Ar kspec ,
-.Fl -keytab= Ns Ar kspec
-.Xc
+.It Fl c Ar string , Fl -config-file= Ns Ar string
+.It Fl r Ar string , Fl -realm= Ns Ar string
+.It Fl k Ar kspec , Fl -keytab= Ns Ar kspec
 keytab to get authentication from
-.It Xo
-.Fl -time-lost= Ns Ar time
-.Xc
+.It Fl -time-lost= Ns Ar time
 time before server is considered lost (default 5 min)
-.It Xo
-.Fl -detach
-.Xc
+.It Fl -detach
 detach from console
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl -help
-.Xc
+.It Fl -version
+.It Fl -help
 .El
 Time arguments for the relevant options above may be specified in forms
 like 5 min, 300 s, or simply a number of seconds.
