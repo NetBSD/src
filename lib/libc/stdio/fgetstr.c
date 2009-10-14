@@ -1,4 +1,4 @@
-/* $NetBSD: fgetstr.c,v 1.6 2009/09/24 20:38:53 roy Exp $	*/
+/* $NetBSD: fgetstr.c,v 1.7 2009/10/14 20:54:51 roy Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetstr.c,v 1.6 2009/09/24 20:38:53 roy Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.7 2009/10/14 20:54:51 roy Exp $");
 
 #include "namespace.h"
 
@@ -64,7 +64,10 @@ __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 		errno = EOVERFLOW;
 		goto error;
 	}
+	fp->_lb._base = (unsigned char *)p;
 	fp->_lb._size = (int)size;
+	if (*lenp == 0)
+		return NULL;
 	if (*lenp < SIZE_MAX)
 		return p;
 error:
