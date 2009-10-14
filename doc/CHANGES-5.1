@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.100 2009/10/11 18:04:30 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.101 2009/10/14 09:14:16 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14118,4 +14118,11 @@ sys/kern/tty.c					1.234
 	Check for zero length read here - and return zero. Without
 	this there is a simple local-user panic in ureadc().
 	[dsl, ticket #1087]
+
+include/util.h					1.53
+lib/libutil/opendisk.c				1.12
+
+	Fix the open routine function pointer prototype of opendisk1()
+	to match the prototype of open().
+	[pooka, ticket #1089]
 
