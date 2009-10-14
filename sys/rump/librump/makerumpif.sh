@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.2 2009/10/14 17:26:09 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -67,9 +67,9 @@ sed -e '
 ' ${1} | awk -F\| -v rumptop=${RUMPTOP} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.2 2009/10/14 17:26:09 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.2 2009/10/14 17:26:09 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -154,8 +154,8 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 	funargs = $3
 	sub("[ \t]*$", "", funargs)
 
-	printf("%s rump_%s(%s);\n", funtype, funname, funargs) > pubhdr
-	printf("%s rumppriv_%s(%s);\n", funtype, funname, funargs) > privhdr
+	printf("%s rump_pub_%s(%s);\n", funtype, funname, funargs) > pubhdr
+	printf("%s rump_%s(%s);\n", funtype, funname, funargs) > privhdr
 
 	if (funtype == "void")
 		voidret = 1
@@ -166,7 +166,7 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 	else
 		voidarg = 0
 
-	printf("\n%s\nrump_%s(", funtype, funname) > gencalls
+	printf("\n%s\nrump_pub_%s(", funtype, funname) > gencalls
 	if (!voidarg) {
 		narg = split(funargs, argv, ",")
 		for (i = 1; i <= narg; i++) {
@@ -190,7 +190,7 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 	printf("\n\t") > gencalls
 	if (!voidret)
 		printf("rv = ") > gencalls
-	printf("rumppriv_%s(", funname) > gencalls
+	printf("rump_%s(", funname) > gencalls
 	for (i = 1; i <= narg; i++) {
 		printf("arg%i", i) > gencalls
 		if (i < narg)
@@ -201,6 +201,6 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 		printf("\n\treturn rv;\n") > gencalls
 	printf("}\n") > gencalls
 	if (isweak)
-		printf("__weak_alias(rumppriv_%s,rump_%s_unavailable);\n", \
+		printf("__weak_alias(rump_%s,rump_%s_unavailable);\n", \
 		    funname, myname) > gencalls
 }'
