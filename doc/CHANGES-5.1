@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.103 2009/10/14 09:32:05 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.104 2009/10/14 18:13:21 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14144,4 +14144,9 @@ libexec/ld.elf_so/symbol.c			1.48
 	queries are currently unimplemented.
 
 	[pooka, ticket #1088]
+
+usr.bin/printf/printf.c				1.34
+
+	Avoid segv on "printf '%*********s' 666".
+	[christos, ticket #1091]
 
