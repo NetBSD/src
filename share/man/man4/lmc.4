@@ -53,224 +53,34 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.16 2009/05/27 19:23:59 snj Exp $
+.\" $NetBSD: lmc.4,v 1.17 2009/10/14 23:32:42 joerg Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
 .Os
-.\" Os sets \*(oS or \*[operating-system]
-.\" substring works differently before Groff version 1.19
-.ie (\n(.y < 19) .nr ssfix 1
-.el .nr ssfix 0
-.\" Is the OS name FreeBSD?
-.ie "\*[operating-system]"" .ds aa \*(oS
-.el .ds aa \*[operating-system]
-.substring aa (0+\n[ssfix] (6+\n[ssfix])
-.ie "\*(aa"FreeBSD" .nr fbsd 1
-.el .nr fbsd 0
-.\" Is the OS name NetBSD?
-.ie "\*[operating-system]"" .ds aa \*(oS
-.el .ds aa \*[operating-system]
-.substring aa (0+\n[ssfix]) (5+\n[ssfix])
-.ie "\*(aa"NetBSD" .nr nbsd 1
-.el .nr nbsd 0
-.\" Is the OS name OpenBSD?
-.ie "\*[operating-system]"" .ds aa \*(oS
-.el .ds aa \*[operating-system]
-.substring aa (0+\n[ssfix]) (7+\n[ssfix])
-.ie "\*(aa"OpenBSD" .nr obsd 1
-.el .nr obsd 0
-.\" Is the OS name BSDI?
-.ie "\*[operating-system]"" .ds aa \*(oS
-.el .ds aa \*[operating-system]
-.substring aa (0+\n[ssfix]) (4+\n[ssfix])
-.ie "\*(aa"BSDI" .nr bsdi 1
-.el .nr bsdi 0
-.\" Is the OS name BSD (i.e. Linux)?
-.ie "\*[operating-system]"" .ds aa \*(oS
-.el .ds aa \*[operating-system]
-.ie "\*(aa"BSD" .nr linux 1
-.el .nr linux 0
-.\" If no operating system matched then select all OSs.
-.if !(\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi] : \n[linux]) \{\
-.nr allos 1
-.nr fbsd  1
-.nr nbsd  1
-.nr obsd  1
-.nr bsdi  1
-.nr linux 1 \}
-.\"
 .Sh NAME
-.\"
 .Nm lmc
 .Nd device driver for
 .Tn LMC
 (and some
 .Tn SBE )
 wide-area network interface cards
-.\"
 .Sh SYNOPSIS
-.if \n[allos] .Ss FreeBSD Synopsis
-.if \n[fbsd] \{\
-The driver can be loaded into a kernel at boot-time by adding
-.Bd -unfilled -offset indent -compact
-.Cd if_lmc_load="YES"
-.Ed
-to
-.Pa /boot/loader.conf ;
-see
-.Xr loader.conf 5 .
-.Pp
-The driver can be loaded into a running kernel after boot-time with
-.Xr kldload 8 .
-.Bd -unfilled -offset indent -compact
-.Ic kldload if_lmc
-.Ed
-.Ic securelevel
-must be 0 to load modules after boot-time; see
-.Xr init 8 .
-.Pp
-The driver can be built into a kernel by adding the following to
-.Pa /sys/ARCH/conf/YOURKERNEL :
-.Bd -unfilled -offset indent -compact
-.Cd device	lmc
-.Cd device	sppp
-.Cd device	bpf
-.Cd device	pf	# for altq
-.Cd options	ALTQ
-.Cd options	ALTQ_HFSC # for altq example
-.Cd options	NETGRAPH
-.Cd options	DEVICE_POLLING
-.Ed
-.Pp
-The driver can send and receive raw IP packets even if
-neither SPPP nor Netgraph are configured into the kernel.
-.\} \" FreeBSD Synopsis
-.if \n[allos] .Ss NetBSD & OpenBSD Synopsis
-.if (\n[nbsd] : \n[obsd]) \{\
 This driver is built into the GENERIC kernel so it should "just work".
 .Pp
 The driver can be built into a kernel by adding the following to
 .Pa /sys/arch/ARCH/conf/YOURKERNEL :
 .Bd -unfilled -offset indent -compact
 .Cd lmc*		at pci?
-.if \n[nbsd] \{\
 .Cd options	ALTQ
-.Cd options	ALTQ_HFSC  # for altq example\}
-.if \n[obsd] \{\
-.Cd option	ALTQ
-.Cd option	ALTQ_HFSC  # for altq example\}
+.Cd options	ALTQ_HFSC  # for altq example
 .Cd pseudo-device sppp
 .Cd pseudo-device bpfilter
 .Ed
 .Pp
 The driver can send and receive raw IP packets even if
 SPPP is not configured into the kernel.
-.\} \" NetBSD & OpenBSD Synopsis
-.if \n[allos] .Ss BSD/OS Synopsis
-.if \n[bsdi] \{\
-The driver can be built into a custom kernel by adding the following to
-.Pa /sys/i386/conf/YOURKERNEL :
-.Bd -unfilled -offset indent -compact
-.Cd lmc*	at pci?
-.Cd options	PPP
-.Cd options	FR
-.Cd options	CISCO_HDLC
-.Cd pseudo-device bpfilter 16
-.Ed
-.Pp
-The driver can send and receive raw IP packets even if
-P2P is not configured into the kernel.
-.\} \" BSD/OS Synopsis
-.if \n[allos] .Ss Linux Synopsis
-.if \n[linux] \{\
-Configure the driver and line protocol for your kernel with
-.Bd -unfilled -offset indent -compact
-.Ic make menuconfig
-.Ed
-Navigating through the menus, select this device driver and the
-GenericHDLC layer as loadable kernel modules or built into the kernel:
-.Bd -unfilled -offset indent -compact
-.Ic Device Drivers --->
-.Ic Networking Support --->
-.Ic Wan interfaces --->
-.Ed
-.Pp
-Selecting LanMedia support selects the GenericHDLC and SyncPPP layers:
-.Bd -unfilled -offset indent -compact
-.Ic <M> LanMedia (and some SBE) WAN card support
-.Ic [*] Use NAPI to prevent livelock
-.Ic [*] Use the Generic HDLC layer
-.Ic [*] Use the SyncPPP layer
-.Ed
-.Pp
-Selecting the GenericHDLC layer selects these protocols:
-.Bd -unfilled -offset indent -compact
-.Ic <M> Generic HDLC layer
-.Ic [*]  Synchronous Point-to-Point Protocol (PPP) support
-.Ic [*]  Cisco-HDLC support
-.Ic [*]  Frame Relay support
-.Ic [*]  Raw HDLC support
-.Ic [*]  Raw HDLC Ethernet device support
-.Ed
-.Pp
-Selecting the SyncPPP layer includes support
-for PPP and Cisco-HDLC protocols.
-.Bd -unfilled -offset indent -compact
-.Ic <M> SyncPPP layer
-.Ed
-.Pp
-If configured as above, the kernel will recognize an LMC card
-when it boots and load this driver and the GenericHDLC code.
-Messages similar to the following will appear in
-.Pa /var/log/messages :
-.Bd -unfilled -offset indent -compact
-.Ic Cronyx Ltd, Synchronous PPP and CISCO HDLC (c) 1994
-.Ic Linux port (c) 1998 Building Number Three Ltd & Jan 'Yenya' Kasprzak.
-.Ic HDLC support module revision 1.18
-.Ic LMC Driver version 2006/1/20; Options NAPI GEN_HDLC SYNC_PPP.
-.Ic hdlc0: <LMC T3 card> at pci 0000:00:13.0 irq 11
-.Ed
-.Pp
-The driver can send and receive raw IP packets even if
-neither SyncPPP nor GenericHDLC are configured into the kernel.
-The device name will be
-.Ic hdlc<n>
-if GenericHDLC layer is configured, or
-.Ic lmc<n>
-otherwise.
-.Pp
-The driver accepts two optional parameters:
-.Bl -tag -width "verbose" -offset indent
-.It Va debug
-Sets the driver's
-.Sy debug
-flag at initialization time\[em]earlier
-than it can be set using
-.Ic lmcconfig
-or
-.Ic ifconfig .
-.It Va verbose
-Enables additional log messages describing the
-hardware while booting or module-loading.
-.El
-.Pp
-If the driver is built into the kernel,
-parameters are passed on the kernel command line:
-.Bd -unfilled -offset indent -compact
-.Ic if_lmc.debug=1
-.Ed
-If the driver is loaded into the kernel as a module,
-parameters are passed in the
-.Xr modprobe 8
-command:
-.Bd -unfilled -offset indent -compact
-.Ic modprobe if_lmc debug=1
-.Ed
-.\} \" linux Synopsis
-.\"
 .Sh DESCRIPTION
-.\"
 This is an open-source
 .Tn Unix
 device driver for PCI-bus wide-area network interface cards.
@@ -378,34 +188,9 @@ They typically encapsulate packets in HDLC frames and deal with
 higher-level issues like protocol multiplexing and security.
 The driver is compatible with several line protocol stacks:
 .Bl -tag -width "GenericHDLC" -offset indent
-.if \n[fbsd] \{\
-.It Sy Netgraph
-.Xr Netgraph 4
-implements many basic packet-handling functions as kernel loadable modules.
-They can be interconnected in a graph to implement many protocols.
-Configuration is done from userland without rebuilding the kernel.
-ASCII configuration control messages are
-.Em not
-currently supported. \}
-.if \n[fbsd] \{\
 .It Sy SPPP
 .Xr sppp 4
-implements Synchronous-PPP, Cisco-HDLC and Frame-Relay in the kernel. \}
-.if (\n[nbsd] : \n[obsd]) \{\
-.It Sy SPPP
-.Xr sppp 4
-implements Synchronous-PPP and Cisco-HDLC in the kernel. \}
-.if \n[bsdi] \{\
-.It Sy P2P
-.Xr p2p 4
-implements Synchronous-PPP, Cisco-HDLC and Frame-Relay in the kernel. \}
-.if \n[linux] \{\
-.It Sy GenericHDLC
-implements Synchronous-PPP, Cisco-HDLC, Frame-Relay,
-Ether-in-HDLC, IPv4-in-HDLC, and X.25 in the kernel.
-.It Sy SyncPPP
 implements Synchronous-PPP and Cisco-HDLC in the kernel.
-GenericHDLC uses SyncPPP as it's in-kernel PPP implementation. \}
 .It Sy RawIP
 The null line protocol, built into the driver, sends and receives
 raw IPv4 and IPv6 packets in HDLC frames with no extra bytes of
@@ -431,31 +216,10 @@ displays interface configuration and status.
 .Ic lmcconfig lmc0 -X 1
 .Ed
 selects the built-in RawIP line protocol stack.
-.if (\n[fbsd] : \n[nbsd] : \n[obsd]) \{\
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 2 -x 2
 .Ed
-selects the SPPP stack and the PPP protocol. \}
-.if \n[bsdi] \{\
-.Bd -unfilled -offset indent
-.Ic lmcconfig lmc0 -X 3 -x 2
-.Ed
-selects the P2P stack and the PPP protocol. \}
-.if \n[linux] \{\
-.Bd -unfilled -offset indent
-.Ic lmcconfig lmc0 -X 4 -x 2
-.Ed
-selects the GenericHDLC stack and the PPP protocol.
-.Bd -unfilled -offset indent
-.Ic lmcconfig lmc0 -X 5 -x 2
-.Ed
-selects the SyncPPP stack and the PPP protocol. \}
-.if (\n[fbsd] \{\
-.Bd -unfilled -offset indent
-.Ic lmcconfig lmc0 -X 6
-.Ed
-selects the Netgraph stack. \}
-.if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) \{\
+selects the SPPP stack and the PPP protocol.
 .Pp
 Some configuration options are available through
 .Ic ifconfig
@@ -474,19 +238,6 @@ This loopback uses a path present in every card type.
 .Ic lmcconfig
 can select card-specific loopbacks, such as outbound payload loopback.
 .Pp
-.if \n[obsd] \{\
-.Bd -unfilled -offset indent
-.Ic ifconfig lmc0 media e1 timeslot all
-.Ed
-selects E1 format using all 32 timeslots.
-.Bd -unfilled -offset indent
-.Ic ifconfig lmc0 mediaopt ppp
-.Ed
-selects Point-to-Point Protocol.
-.Bd -unfilled -offset indent
-.Ic ifconfig lmc0 mediaopt master
-.Ed
-selects the on-board crystal oscillator as the transmitter clock. \} \}
 .Bd -unfilled -offset indent
 .Ic ifconfig lmc0 debug
 .Ed
@@ -505,80 +256,7 @@ when
 things go very wrong, a torrent of debugging messages
 can swamp the console and bring a machine to its knees.
 .\"
-.ie \n[allos] .Ss FreeBSD Operation
-.el .Ss Operation
-.\}
-.if \n[fbsd] \{\
-Configure a PPP link using SPPP and Netgraph with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 6
-.Ic ngctl mkpeer lmc0: sppp rawdata downstream
-.Ic ifconfig sppp0 10.0.0.1 10.0.0.2
-.Ed
-.Pp
-Configure a PPP link using only SPPP with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 2 -x 2
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-.Pp
-Configure a Cisco-HDLC link using SPPP and Netgraph with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 6
-.Ic ngctl mkpeer lmc0: sppp rawdata downstream
-.Ic ifconfig sppp0 10.0.0.1 10.0.0.2 link2
-.Ed
-.Pp
-Configure a Cisco-HDLC link using only SPPP with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 2 -x 3
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-.Pp
-Configure a Cisco-HDLC link using only Netgraph with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 6
-.Ic ngctl mkpeer lmc0: cisco rawdata downstream
-.Ic ngctl mkpeer lmc0:rawdata iface inet inet
-.Ic ifconfig ng0 10.0.0.1 10.0.0.2
-.Ed
-.Pp
-Configure a Frame-Relay DTE link using SPPP with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 2 -x 4
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-SPPP implements the ANSI
-link management interface (LMI).
-.Pp
-Configure a Frame-Relay DTE link using Netgraph with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 6
-.Ic ngctl mkpeer  lmc0: frame_relay rawdata downstream
-.Ic ngctl mkpeer  lmc0:rawdata lmi dlci0 auto0
-.Ic ngctl connect lmc0:rawdata dlci0 dlci1023 auto1023
-.Ic ngctl mkpeer  lmc0:rawdata rfc1490 dlci500 downstream
-.Ic ngctl mkpeer  lmc0:rawdata.dlci500 iface inet inet
-.Ic ifconfig ng0 10.0.0.1 10.0.0.2
-.Ed
-Netgraph implements ANSI, ITU, and FRIF
-link management interfaces (LMIs).
-.Pp
-Configure a RAWIP link using only the driver with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 1
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-.Pp
-Configure a RAWIP link using Netgraph with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 6
-.Ic ngctl mkpeer lmc0: iface rawdata inet
-.Ic ifconfig ng0 10.0.0.1 10.0.0.2
-.Ed
-.\} \" FreeBSD operation
-.if \n[allos] .Ss NetBSD & OpenBSD Operation
-.if (\n[nbsd] : \n[obsd]) \{\
+.Ss Operation
 Configure a PPP link using SPPP with
 .Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 2 -x 2
@@ -596,138 +274,8 @@ Configure a RAWIP link with
 .Ic lmcconfig lmc0 -X 1
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ed
-.\} \" NetBSD & OpenBSD operation
-.if \n[allos] .Ss BSD/OS Operation
-.if \n[bsdi] \{\
-Configure a PPP link using P2P by creating file
-.Pa /etc/ppp.sys
-containing
-.Bd -unfilled -offset indent -compact
-.Ic Plmc0:	:device=lmc0:
-.Ic 		:local-addr=10.0.0.1:
-.Ic 		:remote-addr=10.0.0.2:
-.Ic 		:immediate:dialout:direct:
-.Ic 		:-pfc:-acfc:-tcpc:
-.Ed
-Then run
-.Xr ppp 8 :
-.Bd -unfilled -offset indent -compact
-.Ic ppp -bd Plmc0
-.Ed
-Add
-.Ic -X debug-all
-to watch protocol events happen.
-.Pp
-Configure a Cisco-HDLC link by setting LINKTYPE with
-.Bd -unfilled -offset indent -compact
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2 linktype chdlc
-.Ed
-.Pp
-Configure a Fame-Relay link with
-.Bd -unfilled -offset indent -compact
-.Ic ifconfig lmc0 linktype fr
-.Ic frconfig lmc0 lmi ansi [type dce]
-.Ic frconfig lmc0 dlci 500 10.0.0.2
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-Adding
-.Dq "type dce"
-after
-.Dq "ansi"
-configures it as a DCE (switch).
-P2P implements ANSI, ITU and FRIF
-link management interfaces (LMIs).
-.Pp
-Configure a RAWIP link with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 1
-.Ic ifconfig lmc0 10.0.0.1 10.0.0.2
-.Ed
-.\} \" BSD/OS operation
-.if \n[allos] .Ss Linux operation
-.if \n[linux] \{\
-The
-.Ic sethdlc
-program configures the GenericHDLC code.
-.Bd -filled -offset indent -compact
-.Ic sethdlc hdlc0
-(or
-.Ic pvc0
-for frame relay)
-.Ed
-displays the current settings of a given device.
-Note that
-.Ic sethdlc
-must be run before
-.Ic ifconfig .
-.Ic Sethdlc
-and the GenericHDLC kernel code are documented in
-.Pa /usr/src/linux/Documentation/networking/generic-hdlc.txt
-and at
-.Pa http://www.kernel.org:/pub/linux/utils/net/hdlc
-.Pp
-Configure a PPP link using GenericHDLC with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 4 -x 2
-.Ic sethdlc hdlc0 ppp
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.Pp
-Configure a PPP link using SyncPPP with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig hdlc0 -X 5 -x 2
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.Pp
-Configure a Cisco-HDLC link using GenericHDLC with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 4
-.Ic sethdlc hdlc0 cisco
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.Pp
-Configure a Cisco-HDLC link using SyncPPP with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig hdlc0 -X 5 -x 3
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.Pp
-Configure a Frame-Relay DTE link using GenericHDLC with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 4
-.Ic sethdlc hdlc0 fr lmi ansi [dce]
-.Ic sethdlc hdlc0 create 500
-.Ic ifconfig hdlc0 up
-.Ic ifconfig pvc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-Adding
-.Dq dce
-after
-.Dq ansi
-configures it as a DCE (switch).
-GenericHDLC implements ANSI and ITU
-link management interfaces (LMIs).
-.Pp
-Configure a RAWIP link using GenericHDLC with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig lmc0 -X 4
-.Ic sethdlc hdlc0 hdlc
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.Pp
-Configure a RAWIP link using only the driver with
-.Bd -unfilled -offset indent -compact
-.Ic lmcconfig hdlc0 -X 1
-.Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
-.Ed
-.\} \" Linux Operation
-.\"
 .Sh TESTING
-.\"
-.if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) \{\
-.\"
 .Ss Testing with Loopbacks
-.\"
 Testing with loopbacks requires only one card and
 can test everything on that card.
 Packets can be looped back at many points: in the PCI chip,
@@ -790,10 +338,7 @@ Cards can generate signals to loopback remote equipment
 so that complete circuits can be tested; see
 .Xr lmcconfig 8
 for details.
-.\} \" Testing with Loopbacks
-.\"
 .Ss Testing with a Modem
-.\"
 Testing with a modem requires two cards of different types.
 The cards can be in the same machine or different machines.
 .Pp
@@ -941,20 +486,10 @@ This can be changed with
 .Bd -unfilled -offset indent -compact
 .Ic ifconfig lmc0 mtu 2000
 .Ed
-.if (\n[fbsd] : \n[nbsd] : \n[obsd]) \{\
-SPPP enforces an MTU of 1500 bytes for PPP and Cisco-HDLC. \}
-.if \n[bsdi] \{\
-P2P enforces an MTU of 1500 bytes for PPP and Cisco-HDLC,
-and 4000 bytes for Frame Relay. \}
-.if \n[linux] \{\
-GenericHDLC enforces an MTU range of (68..1500) bytes. \}
+SPPP enforces an MTU of 1500 bytes for PPP and Cisco-HDLC.
 RAWIP sets the default MTU to 4032 bytes,
 but allows it to be changed to anything.
-.\"
-.if (\n[fbsd] : \n[nbsd] : \n[obsd]) \{\
-.\"
 .Ss ALTQ: Alternate Output Queue Disciplines
-.\"
 The driver has hooks for
 .Xr altq 9 ,
 the Alternate Queueing package.
@@ -964,27 +499,6 @@ Without ALTQ, the speeds of the three connections will vary chaotically.
 Enable ALTQ and two of the connections will run at about 20 Mb/s and
 the third will run at about 2 Mb/s.
 .Pp
-.if \n[allos] .Ss FreeBSD ALTQ example
-.if \n[fbsd] \{\
-Enable
-.Xr pf 4
-and add the following lines to
-.Pa /etc/pf.conf :
-.Bd -unfilled -offset indent -compact
-.Ic altq on lmc0 bandwidth 44Mb hfsc queue { a b c }
-.Ic queue a\0 on lmc0 bandwidth 48%
-.Ic pass in\0 on lmc0 queue a from 10.0.0.2 port 12345 to 10.0.0.1
-.Ic pass out on lmc0 queue a from 10.0.0.1 to 10.0.0.2 port 12345
-.Ic queue b\0 on lmc0 bandwidth 48%
-.Ic pass in\0 on lmc0 queue b from 10.0.0.2 port 12346 to 10.0.0.1
-.Ic pass out on lmc0 queue b from 10.0.0.1 to 10.0.0.2 port 12346
-.Ic queue c\0 on lmc0 bandwidth  4% hfsc(default)
-.Ic pass in\0 on lmc0 queue c from 10.0.0.2 port 12347 to 10.0.0.1
-.Ic pass out on lmc0 queue c from 10.0.0.1 to 10.0.0.2 port 12347
-.Ed
-.\} \" FreeBSD altq configuration
-.if \n[allos] .Ss NetBSD and OpenBSD ALTQ example
-.if (\n[nbsd] : \n[obsd]) \{\
 Enable
 .Xr altqd 8
 and add the following lines to
@@ -1001,33 +515,17 @@ and add the following lines to
 .Ic filter lmc0 c 10.0.0.2 12347 10.0.0.1 0 6
 .Ic filter lmc0 c 10.0.0.1 0 10.0.0.2 12347 6
 .Ed
-.\} \" NetBSD and OpenBSD altq configuration
 .Pp
-The example above requires
-.ie \n[fbsd] \{\
-the Packet Filter
-.Xr pf 4
-and \}
-the
+The example above requires the
 .Xr altq 4
 Hierarchical Fair Service Curve
 queue discipline to be configured in
 .Pa conf/YOURKERNEL :
 .Bd -unfilled -offset indent -compact
-.if \n[fbsd] .Ic device pf
-.if \n[obsd] \{\
-.Ic option ALTQ
-.Ic option ALTQ_HFSC . \}
-.if (\n[nbsd] : \n[fbsd]) \{\
 .Ic options ALTQ
-.Ic options ALTQ_HFSC . \}
+.Ic options ALTQ_HFSC .
 .Ed
-.\} \" ALTQ
-.\"
-.if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) \{\
-.\"
 .Ss BPF: Berkeley Packet Filter
-.\"
 The driver has hooks for
 .Xr bpf 4 ,
 the Berkeley Packet Filter, a protocol-independent
@@ -1055,69 +553,9 @@ ping packets occasionally.
 .Pp
 The kernel must be configured with
 .Bd -unfilled -offset indent -compact
-.if \n[fbsd] .Ic device bpf
-.if \n[nbsd] .Ic options bpfilter
-.if \n[obsd] .Ic option bpfilter
-.if \n[bsdi] .Ic pseudo-device bpfilter
+.Ic options bpfilter
 .Ed
-.\} \" Berkeley Packet Filter
-.\"
-.if \n[linux] \{\
-.\"
-.Ss Device Polling
-.\"
-A T3 receiver can generate over 100K interrupts per second,
-This can cause a system to
-.Dq live-lock :
-spend all of its time servicing interrupts.
-.Tn Linux Ns 's
-polling mechanism disables a card's interrupt when it interrupts,
-calls the card's interrupt service routine with kernel interrupts
-enabled, and then reenables the card's interrupt.
-The driver is permitted to process a limited number of packets
-each time it is called by the kernel.
-Card interrupts are left disabled if more packets arrive than are
-permitted to be processed, which in extreme cases will result in
-packets being dropped in hardware at no cost to software.
-.Pp
-Polling is enabled using
-.Ic menuconfig
-by selecting
-.Bd -unfilled -offset indent -compact
-.Ic <M> LanMedia (and some SBE) WAN card support
-.Ic [*] Use NAPI to prevent livelock
-.Ed
-.\} \" Linux Device Polling
-.\"
-.if \n[fbsd] \{\
-.\"
-.Ss Device Polling
-.\"
-A T3 receiver can generate over 100K interrupts per second,
-This can cause a system to
-.Dq live-lock :
-spend all of its time servicing interrupts.
-.Fx Ns 's
-.Xr polling 4
-mechanism permanently disables interrupts from the card
-and instead the card's interrupt service routine is polled each
-time the kernel is entered (syscall, timer interrupt, etc.\&)
-and from the kernel idle loop; this adds some latency.
-The driver is permitted to process a limited number of packets
-each time it is called by the kernel.
-.Pp
-Polling is enabled with
-.Bd -unfilled -offset indent -compact
-.Ic ifconfig lmc0 polling
-.Ed
-The kernel must be configured with
-.Bd -unfilled -offset indent -compact
-.Ic options DEVICE_POLLING
-.Ed
-.\} \" FreeBSD Device Polling
-.\"
 .Ss SNMP: Simple Network Management Protocol
-.\"
 The driver is aware of what is required to be a Network Interface
 Object managed by an Agent of the Simple Network Management Protocol.
 The driver exports SNMP-formatted configuration and status
@@ -1136,8 +574,6 @@ information sufficient for an SNMP Agent to create MIBs for:
 An SNMP Agent is a user program, not a kernel function.
 Agents can retrieve configuration and status information
 by using
-.if \n[fbsd] \{\
-Netgraph control messages or \}
 .Xr ioctl 2
 system calls.
 User programs should poll
@@ -1201,112 +637,26 @@ of time slots for whatever frame format is selected.
 56 Kb/s time slots are
 .Em not
 supported.
-.if 0 \{\
-.\"
-.Ss HSSI and SSI Transmit Clocks
-.\"
-Synchronous interfaces use two transmit clocks to eliminate
-.Em skew
-caused by speed-of-light delays in the modem cable.
-DCEs (modems) drive ST, Send Timing, the first transmit clock.
-DTEs (hosts) receive ST and use it to clock transmit data, TD,
-onto the modem cable.
-DTEs also drive a copy of ST back towards the DCE and call it TT,
-Transmit Timing, the second transmit clock.
-DCEs receive TT and TD and use TT to clock TD into a flip flop.
-TT experiences the same delay as (and has minimal
-.Em skew
-relative to) TD.
-Thus, cable length does not affect data/clock timing.
-.\}
-.if 0 \{\
-.\"
-.Ss T1 Raw Mode
-.\"
-Special gate array microcode exists for the T1/E1 card.
-Each T1 frame of 24 bytes is treated as a packet.
-A raw T1 byte stream can be delivered to main memory
-and transmitted from main memory.
-The T1 card adds or deletes framing bits but does not
-touch the data.
-ATM cells can be transmitted and received this way, with
-the software doing all the work.
-But that is not hard; after all it is only 1.5 Mb/s second!
-.\}
-.if 0 \{\
-.\"
-.Ss T3 Circuit Emulation Mode
-.\"
-Special gate array microcode exists for the T3 card.
-Each T3 frame of 595 bytes is treated as a packet.
-A raw T3 signal can be
-.Em packetized ,
-transported through a
-packet network (using some protocol) and then
-.Em reconstituted
-as a T3 signal at the far end.
-The output transmitter's bit rate can be
-controlled from software so that it can be
-.Em frequency locked
-to the distant input signal.
-.\}
 .\"
 .Sh SEE ALSO
-.\"
-.if \n[fbsd] .Xr tcpdump 1 ,
-.if \n[nbsd] .Xr tcpdump 1 ,
-.if \n[obsd] .Xr tcpdump 1 ,
-.if \n[bsdi] .Xr tcpdump 1 ,
+.Xr tcpdump 1 ,
 .Xr ioctl 2 ,
-.if \n[fbsd] .Xr bpf 4 ,
-.if \n[nbsd] .Xr bpf 4 ,
-.if \n[obsd] .Xr bpf 4 ,
-.if \n[bsdi] .Xr bpf 4 ,
-.if \n[fbsd] .Xr de 4 ,
-.if \n[nbsd] .Xr de 4 ,
-.if \n[obsd] .Xr de 4 ,
-.if \n[bsdi] .Xr de 4 ,
-.if \n[fbsd] .Xr kld 4 ,
-.if \n[fbsd] .Xr netgraph 4 ,
-.if \n[bsdi] .Xr p2p 4 ,
-.if \n[fbsd] .Xr pf 4 ,
-.if \n[fbsd] .Xr polling 4 ,
-.if \n[fbsd] .Xr sppp 4 ,
-.if \n[nbsd] .Xr sppp 4 ,
-.if \n[obsd] .Xr sppp 4 ,
-.if \n[nbsd] .Xr altq.conf 5 ,
-.if \n[obsd] .Xr altq.conf 5 ,
-.if \n[fbsd] .Xr loader.conf 5 ,
-.if \n[fbsd] .Xr pf.conf 5 ,
-.if \n[obsd] .Xr altqd 8 ,
-.if \n[nbsd] .Xr altqd 8 ,
-.if \n[bsdi] .Xr frconfig 8 ,
+.Xr bpf 4 ,
+.Xr de 4 ,
+.Xr sppp 4 ,
+.Xr altq.conf 5 ,
+.Xr altqd 8 ,
 .Xr ifconfig 8 ,
-.if \n[fbsd] .Xr init 8 ,
-.if \n[nbsd] .Xr init 8 ,
-.if \n[obsd] .Xr init 8 ,
-.if \n[fbsd] .Xr kldload 8 ,
+.Xr init 8 ,
 .Xr lmcconfig 8 ,
-.if \n[nbsd] .Xr modload 8 ,
-.if \n[obsd] .Xr modload 8 ,
-.if \n[linux] .Xr modprobe 8 ,
-.if \n[fbsd] .Xr ngctl 8 ,
+.Xr modload 8 ,
 .Xr ping 8 ,
-.if \n[bsdi] .Xr ppp 8 ,
 .Xr tcpdump 8 ,
-.if \n[fbsd] .Xr altq 9 ,
-.if \n[nbsd] .Xr altq 9 ,
-.if \n[obsd] .Xr altq 9 ,
-.if \n[fbsd] .Xr ifnet 9
-.if \n[nbsd] .Xr ifnet 9
-.if \n[obsd] .Xr ifnet 9
-.if \n[bsdi] .Xr ifnet 9
+.Xr altq 9 ,
+.Xr ifnet 9
 .Pp
 .Bd -unfilled
 .Pa http://www.sbei.net/
-.if \n[linux] \{\
-.Pa http://www.kernel.org:/pub/linux/utils/net/hdlc
-.Pa file://usr/src/linux/Documentation/networking/generic-hdlc.txt \}
 .Ed
 .\"
 .Sh HISTORY
