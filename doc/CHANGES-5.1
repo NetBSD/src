@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.104 2009/10/14 18:13:21 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.105 2009/10/14 18:17:01 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13908,11 +13908,12 @@ sys/arch/atari/dev/fd.c				1.71
 	[tsutsui, ticket #1058]
 
 distrib/sets/lists/base/mi			patch
+distrib/sets/lists/xbase/mi			patch
 etc/mtree/NetBSD.dist				patch
 external/mit/xorg/bin/xkbcomp/Makefile		1.5
 external/mit/xorg/bin/xkbcomp/Makefile.common	1.2
 
-	properly fix the xkbcomp output, and make compiled a symlink.
+	Properly fix the xkbcomp output, and make compiled a symlink.
 	[mrg, ticket #1062]
 
 sys/arch/landisk/dev/obio.c			1.7
@@ -14138,7 +14139,7 @@ libexec/ld.elf_so/rtld.c			1.125
 libexec/ld.elf_so/rtld.h			1.81
 libexec/ld.elf_so/symbol.c			1.48
 
-	Add Solarisa-like dlinfo() interface to the ELF dynamic
+	Add Solaris-like dlinfo() interface to the ELF dynamic
 	linker. Implement RTLD_DI_LINKMAP which returns a pointer
 	to the linkmap chain at the given object.  Other Solaris
 	queries are currently unimplemented.
