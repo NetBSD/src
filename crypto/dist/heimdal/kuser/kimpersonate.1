@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE. 
 .\" 
 .\" $Heimdal: kimpersonate.1 20259 2007-02-17 23:49:54Z lha $
-.\" $NetBSD: kimpersonate.1,v 1.1 2008/03/22 08:37:03 mlelstv Exp $
+.\" $NetBSD: kimpersonate.1,v 1.2 2009/10/14 23:37:33 joerg Exp $
 .\"
 .Dd September 18, 2006
 .Dt KERBEROS 1
@@ -41,28 +41,14 @@
 impersonate a user when there exist a srvtab, keyfile or KeyFile
 .Sh SYNOPSIS
 .Nm
-.Oo Fl s Ar string \*(Ba Xo
-.Fl -server= Ns Ar string Oc
-.Xc
-.Oo Fl c Ar string \*(Ba Xo
-.Fl -client= Ns Ar string Oc
-.Xc
-.Oo Fl k Ar string \*(Ba Xo
-.Fl -keytab= Ns Ar string Oc
-.Xc
+.Op Fl s Ar string \*(Ba Fl -server= Ns Ar string
+.Op Fl c Ar string \*(Ba Fl -client= Ns Ar string
+.Op Fl k Ar string \*(Ba Fl -keytab= Ns Ar string
 .Op Fl 5 | Fl -krb5
-.Oo Fl e Ar integer \*(Ba Xo
-.Fl -expire-time= Ns Ar integer Oc
-.Xc
-.Oo Fl a Ar string \*(Ba Xo
-.Fl -client-address= Ns Ar string Oc
-.Xc
-.Oo Fl t Ar string \*(Ba Xo
-.Fl -enc-type= Ns Ar string Oc
-.Xc
-.Oo Fl f Ar string \*(Ba Xo
-.Fl -ticket-flags= Ns Ar string Oc
-.Xc
+.Op Fl e Ar integer \*(Ba Fl -expire-time= Ns Ar integer
+.Op Fl a Ar string \*(Ba Fl -client-address= Ns Ar string
+.Op Fl t Ar string \*(Ba Fl -enc-type= Ns Ar string
+.Op Fl f Ar string \*(Ba Fl -ticket-flags= Ns Ar string
 .Op Fl -verbose
 .Op Fl -version
 .Op Fl -help
@@ -74,57 +60,27 @@ The service key can be read from a Kerberos 5 keytab, AFS KeyFile or
 (if compiled with support for Kerberos 4) a Kerberos 4 srvtab.
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl s Ar string Ns ,
-.Fl -server= Ns Ar string
-.Xc
+.It Fl s Ar string Ns , Fl -server= Ns Ar string
 name of server principal
-.It Xo
-.Fl c Ar string Ns ,
-.Fl -client= Ns Ar string
-.Xc
+.It Fl c Ar string Ns , Fl -client= Ns Ar string
 name of client principal
-.It Xo
-.Fl k Ar string Ns ,
-.Fl -keytab= Ns Ar string
-.Xc
+.It Fl k Ar string Ns , Fl -keytab= Ns Ar string
 name of keytab file
-.It Xo
-.Fl 5 Ns ,
-.Fl -krb5
-.Xc
+.It Fl 5 Ns , Fl -krb5
 create a Kerberos 5 ticket
-.It Xo
-.Fl e Ar integer Ns ,
-.Fl -expire-time= Ns Ar integer
-.Xc
+.It Fl e Ar integer Ns , Fl -expire-time= Ns Ar integer
 lifetime of ticket in seconds
-.It Xo
-.Fl a Ar string Ns ,
-.Fl -client-address= Ns Ar string
-.Xc
+.It Fl a Ar string Ns , Fl -client-address= Ns Ar string
 address of client
-.It Xo
-.Fl t Ar string Ns ,
-.Fl -enc-type= Ns Ar string
-.Xc
+.It Fl t Ar string Ns , Fl -enc-type= Ns Ar string
 encryption type
-.It Xo
-.Fl f Ar string Ns ,
-.Fl -ticket-flags= Ns Ar string
-.Xc
+.It Fl f Ar string Ns , Fl -ticket-flags= Ns Ar string
 ticket flags for krb5 ticket
-.It Xo
-.Fl -verbose
-.Xc
+.It Fl -verbose
 Verbose output
-.It Xo
-.Fl -version
-.Xc
+.It Fl -version
 Print version
-.It Xo
-.Fl -help
-.Xc
+.It Fl -help
 .El
 .Sh FILES
 Uses
