@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.49.12.1 2009/10/05 11:46:21 sborrill Exp $	*/
+/*	$NetBSD: util.h,v 1.49.12.2 2009/10/14 09:13:54 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -81,7 +81,7 @@ void		logwtmp(const char *, const char *, const char *);
 void		logwtmpx(const char *, const char *, const char *, int, int);
 int		opendisk(const char *, int, char *, size_t, int);
 int		opendisk1(const char *, int, char *, size_t, int,
-			  int (*)(const char *, int, mode_t));
+			  int (*)(const char *, int, ...));
 int		openpty(int *, int *, char *, struct termios *,
 		    struct winsize *);
 time_t		parsedate(const char *, const time_t *, const int *);
