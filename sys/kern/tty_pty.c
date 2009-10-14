@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.118 2009/10/11 08:08:32 dsl Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.119 2009/10/14 19:25:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.118 2009/10/11 08:08:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.119 2009/10/14 19:25:39 dsl Exp $");
 
 #include "opt_ptm.h"
 
@@ -585,6 +585,9 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	u_char bf[BUFSIZ];
 	int error = 0, cc;
 	int c;
+
+	if (uio->uio_resid <= 0)
+		return EINVAL;
 
 	/*
 	 * We want to block until the slave
