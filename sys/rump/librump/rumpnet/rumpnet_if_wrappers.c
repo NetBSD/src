@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpnet_if_wrappers.c,v 1.1 2009/10/14 17:28:14 pooka Exp $	*/
+/*	$NetBSD: rumpnet_if_wrappers.c,v 1.2 2009/10/14 18:16:41 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpnet.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.2 2009/10/14 17:26:09 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -23,12 +23,12 @@ rump_net_unavailable(void)
 }
 
 int
-rump_virtif_create(int arg1)
+rump_pub_virtif_create(int arg1)
 {
 	int rv;
 
-	rv = rumppriv_virtif_create(arg1);
+	rv = rump_virtif_create(arg1);
 
 	return rv;
 }
-__weak_alias(rumppriv_virtif_create,rump_net_unavailable);
+__weak_alias(rump_virtif_create,rump_net_unavailable);
