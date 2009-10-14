@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/10/12 08:00:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.17 2009/10/14 07:30:47 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -6,11 +6,13 @@ MODULE=		binutils
 
 .if $(HAVE_BINUTILS) == "219"
 GNUHOSTDIST=	${.CURDIR}/../../external/gpl3/binutils/dist
-.endif
 
 BRANDING?=	\
 	--with-pkgversion="NetBSD Binutils" \
 	--with-bugurl="http://www.NetBSD.org/support/send-pr.html"
+.else
+BRANDING?=	
+.endif
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
