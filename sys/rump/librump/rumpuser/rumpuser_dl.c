@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.2 2009/10/08 00:34:54 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.3 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.2 2009/10/08 00:34:54 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.3 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -67,7 +67,7 @@ process(const char *soname)
 		goto out;
 
 	for (; mi < mi_end; mi++)
-		rump_module_init(*mi, NULL);
+		rump_pub_module_init(*mi, NULL);
 	assert(mi == mi_end);
 
  out:

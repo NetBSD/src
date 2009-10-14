@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.13 2009/10/14 17:29:20 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.14 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.13 2009/10/14 17:29:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.14 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -98,7 +98,7 @@ configaddr(struct ifnet *ifp, struct ifaliasreq *ia)
 #endif
 
 int
-rumppriv_virtif_create(int num)
+rump_virtif_create(int num)
 {
 	struct virtif_sc *sc;
 	struct ifnet *ifp;

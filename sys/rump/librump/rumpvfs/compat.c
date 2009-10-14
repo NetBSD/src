@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.4 2009/10/14 17:29:20 pooka Exp $	*/
+/*	$NetBSD: compat.c,v 1.5 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.4 2009/10/14 17:29:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -80,7 +80,7 @@ struct vattr50 {
 };
 
 int
-rumppriv_sys___stat30(const char *path, struct stat *sb)
+rump_sys___stat30(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___stat30_args args;
 	register_t retval = 0;
@@ -98,7 +98,7 @@ rumppriv_sys___stat30(const char *path, struct stat *sb)
 }
 
 int
-rumppriv_sys___lstat30(const char *path, struct stat *sb)
+rump_sys___lstat30(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___lstat30_args args;
 	register_t retval = 0;
@@ -120,7 +120,7 @@ rumppriv_sys___lstat30(const char *path, struct stat *sb)
  * the userspace namespace too
  */
 void
-rumppriv_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
+rump_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
 {
 	const struct vattr50 *va50 = (const struct vattr50 *)_va50;
 
@@ -146,7 +146,7 @@ rumppriv_vattr50_to_vattr(const struct vattr *_va50, struct vattr *va)
 }
 
 void
-rumppriv_vattr_to_vattr50(const struct vattr *va, struct vattr *_va50)
+rump_vattr_to_vattr50(const struct vattr *va, struct vattr *_va50)
 {
 	struct vattr50 *va50 = (struct vattr50 *)_va50;
 

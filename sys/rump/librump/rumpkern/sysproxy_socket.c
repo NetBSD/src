@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.3 2009/10/14 17:29:19 pooka Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.4 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.3 2009/10/14 17:29:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.4 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -386,14 +386,14 @@ handle_syscall(void *arg)
 	}
 
 	callp = rump_sysent + req->rpc_sysnum;
-	mylwp = rumppriv_newproc_switch();
+	mylwp = rump_newproc_switch();
 	rump_set_vmspace(&rump_sysproxy_vmspace);
 	l = curlwp;
 
 	resp.rpc_retval = 0; /* default */
 	resp.rpc_error = callp->sy_call(l, (void *)req->rpc_data,
 	    &resp.rpc_retval);
-	rumppriv_clear_curlwp();
+	rump_clear_curlwp();
 	rumpuser_set_curlwp(mylwp);
 	kmem_free(req, req->rpc_head.rpch_flen);
 
@@ -575,7 +575,7 @@ rump_sysproxy_socket(int num, void *arg, uint8_t *data, size_t dlen,
 }
 
 int
-rumppriv_sysproxy_socket_setup_client(int s)
+rump_sysproxy_socket_setup_client(int s)
 {
 	int error;
 
@@ -587,7 +587,7 @@ rumppriv_sysproxy_socket_setup_client(int s)
 	mutex_init(&wrkmtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sendmtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&recvmtx, MUTEX_DEFAULT, IPL_NONE);
-	error = rumppriv_sysproxy_set(rump_sysproxy_socket,
+	error = rump_sysproxy_set(rump_sysproxy_socket,
 	    (void *)(uintptr_t)s);
 	/* XXX: handle */
 
@@ -597,7 +597,7 @@ rumppriv_sysproxy_socket_setup_client(int s)
 }
 
 int
-rumppriv_sysproxy_socket_setup_server(int s)
+rump_sysproxy_socket_setup_server(int s)
 {
 	int error;
 
