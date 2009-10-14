@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.214 2009/10/03 19:19:59 apb Exp $
+#	$NetBSD: build.sh,v 1.215 2009/10/14 19:03:12 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1144,23 +1144,38 @@ validatemakeparams()
 		${runcmd} cd "${TOP}"
 	fi
 
-	# Find TOOLDIR, DESTDIR, RELEASEDIR, and RELEASEMACHINEDIR.
+	# Find TOOLDIR, DESTDIR, and RELEASEDIR, according to getmakevar,
+	# and bomb if they have changed from the values we had from the
+	# command line or environment.
+	#
 	# This must be done after creating the top-level object directory.
 	#
-	TOOLDIR=$(getmakevar TOOLDIR)
-	statusmsg "TOOLDIR path:     ${TOOLDIR}"
-	DESTDIR=$(getmakevar DESTDIR)
-	RELEASEDIR=$(getmakevar RELEASEDIR)
+	for var in TOOLDIR DESTDIR RELEASEDIR
+	do
+		eval oldval=\"\$${var}\"
+		newval="$(getmakevar $var)"
+		if ! $do_expertmode; then
+			: ${__SRC_TOP_OBJ__:=$(getmakevar __SRC_TOP_OBJ__)}
+			case "$var" in
+			DESTDIR)
+				: ${newval:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
+				;;
+			RELEASEDIR)
+				: ${newval:=${_SRC_TOP_OBJ_}/releasedir}
+				;;
+			esac
+		fi
+		if [ -n "$oldval" ] && [ "$oldval" != "$newval" ]; then
+			bomb "Value of ${var} has changed" \
+				"(was \"${oldval}\", now \"${newval}\")"
+		fi
+		eval ${var}=\"\${newval}\"
+		eval export ${var}
+		statusmsg "${var} path:     ${newval}"
+	done
+
+	# RELEASEMACHINEDIR is just a subdir name, e.g. "i386".
 	RELEASEMACHINEDIR=$(getmakevar RELEASEMACHINEDIR)
-	if ! $do_expertmode; then
-		_SRC_TOP_OBJ_=$(getmakevar _SRC_TOP_OBJ_)
-		: ${DESTDIR:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
-		: ${RELEASEDIR:=${_SRC_TOP_OBJ_}/releasedir}
-		makeenv="${makeenv} DESTDIR RELEASEDIR"
-	fi
-	export TOOLDIR DESTDIR RELEASEDIR
-	statusmsg "DESTDIR path:     ${DESTDIR}"
-	statusmsg "RELEASEDIR path:  ${RELEASEDIR}"
 
 	# Check validity of TOOLDIR and DESTDIR.
 	#
@@ -1298,7 +1313,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.214 2009/10/03 19:19:59 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.215 2009/10/14 19:03:12 apb Exp $
 # with these arguments: ${_args}
 #
 
