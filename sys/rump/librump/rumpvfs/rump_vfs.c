@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.31 2009/10/14 17:29:20 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.32 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.31 2009/10/14 17:29:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.32 2009/10/14 18:18:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -128,7 +128,7 @@ rump_vfs_fini(void)
 }
 
 struct componentname *
-rumppriv_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
+rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	kauth_cred_t creds, struct lwp *l)
 {
 	struct componentname *cnp;
@@ -151,11 +151,11 @@ rumppriv_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 }
 
 void
-rumppriv_freecn(struct componentname *cnp, int flags)
+rump_freecn(struct componentname *cnp, int flags)
 {
 
 	if (flags & RUMPCN_FREECRED)
-		rumppriv_cred_put(cnp->cn_cred);
+		rump_cred_put(cnp->cn_cred);
 
 	if ((cnp->cn_flags & SAVENAME) == 0 || flags & RUMPCN_FORCEFREE)
 		PNBUF_PUT(cnp->cn_pnbuf);
@@ -163,7 +163,7 @@ rumppriv_freecn(struct componentname *cnp, int flags)
 }
 
 int
-rumppriv_checksavecn(struct componentname *cnp)
+rump_checksavecn(struct componentname *cnp)
 {
 
 	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
@@ -176,7 +176,7 @@ rumppriv_checksavecn(struct componentname *cnp)
 
 /* hey baby, what's your namei? */
 int
-rumppriv_namei(uint32_t op, uint32_t flags, const char *namep,
+rump_namei(uint32_t op, uint32_t flags, const char *namep,
 	struct vnode **dvpp, struct vnode **vpp, struct componentname **cnpp)
 {
 	struct nameidata nd;
@@ -219,7 +219,7 @@ rumppriv_namei(uint32_t op, uint32_t flags, const char *namep,
 }
 
 void
-rumppriv_getvninfo(struct vnode *vp, enum vtype *vtype,
+rump_getvninfo(struct vnode *vp, enum vtype *vtype,
 	voff_t *vsize, dev_t *vdev)
 {
 
@@ -232,7 +232,7 @@ rumppriv_getvninfo(struct vnode *vp, enum vtype *vtype,
 }
 
 struct vfsops *
-rumppriv_vfslist_iterate(struct vfsops *ops)
+rump_vfslist_iterate(struct vfsops *ops)
 {
 
 	if (ops == NULL)
@@ -242,14 +242,14 @@ rumppriv_vfslist_iterate(struct vfsops *ops)
 }
 
 struct vfsops *
-rumppriv_vfs_getopsbyname(const char *name)
+rump_vfs_getopsbyname(const char *name)
 {
 
 	return vfs_getopsbyname(name);
 }
 
 int
-rumppriv_vfs_getmp(const char *path, struct mount **mpp)
+rump_vfs_getmp(const char *path, struct mount **mpp)
 {
 	struct vnode *vp;
 	int rv;
@@ -263,7 +263,7 @@ rumppriv_vfs_getmp(const char *path, struct mount **mpp)
 }
 
 struct vattr*
-rumppriv_vattr_init(void)
+rump_vattr_init(void)
 {
 	struct vattr *vap;
 
@@ -274,63 +274,63 @@ rumppriv_vattr_init(void)
 }
 
 void
-rumppriv_vattr_settype(struct vattr *vap, enum vtype vt)
+rump_vattr_settype(struct vattr *vap, enum vtype vt)
 {
 
 	vap->va_type = vt;
 }
 
 void
-rumppriv_vattr_setmode(struct vattr *vap, mode_t mode)
+rump_vattr_setmode(struct vattr *vap, mode_t mode)
 {
 
 	vap->va_mode = mode;
 }
 
 void
-rumppriv_vattr_setrdev(struct vattr *vap, dev_t dev)
+rump_vattr_setrdev(struct vattr *vap, dev_t dev)
 {
 
 	vap->va_rdev = dev;
 }
 
 void
-rumppriv_vattr_free(struct vattr *vap)
+rump_vattr_free(struct vattr *vap)
 {
 
 	kmem_free(vap, sizeof(*vap));
 }
 
 void
-rumppriv_vp_incref(struct vnode *vp)
+rump_vp_incref(struct vnode *vp)
 {
 
 	vref(vp);
 }
 
 int
-rumppriv_vp_getref(struct vnode *vp)
+rump_vp_getref(struct vnode *vp)
 {
 
 	return vp->v_usecount;
 }
 
 void
-rumppriv_vp_rele(struct vnode *vp)
+rump_vp_rele(struct vnode *vp)
 {
 
 	vrele(vp);
 }
 
 void
-rumppriv_vp_interlock(struct vnode *vp)
+rump_vp_interlock(struct vnode *vp)
 {
 
 	mutex_enter(&vp->v_interlock);
 }
 
 int
-rumppriv_vfs_unmount(struct mount *mp, int mntflags)
+rump_vfs_unmount(struct mount *mp, int mntflags)
 {
 #if 0
 	struct evcnt *ev;
@@ -344,7 +344,7 @@ rumppriv_vfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-rumppriv_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
+rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 {
 	int rv;
 
@@ -359,28 +359,28 @@ rumppriv_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 }
 
 int
-rumppriv_vfs_statvfs(struct mount *mp, struct statvfs *sbp)
+rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
 	return VFS_STATVFS(mp, sbp);
 }
 
 int
-rumppriv_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred)
+rump_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred)
 {
 
 	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, cred);
 }
 
 int
-rumppriv_vfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
+rump_vfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 {
 
 	return VFS_FHTOVP(mp, fid, vpp);
 }
 
 int
-rumppriv_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
+rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 {
 
 	return VFS_VPTOFH(vp, fid, fidsize);
@@ -388,7 +388,7 @@ rumppriv_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 
 /*ARGSUSED*/
 void
-rumppriv_vfs_syncwait(struct mount *mp)
+rump_vfs_syncwait(struct mount *mp)
 {
 	int n;
 
@@ -430,14 +430,14 @@ rump_rcvp_lwpset(struct vnode *rvp, struct vnode *cvp, struct lwp *l)
 }
 
 void
-rumppriv_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
 {
 
 	rump_rcvp_lwpset(rvp, cvp, curlwp);
 }
 
 struct vnode *
-rumppriv_cdir_get(void)
+rump_cdir_get(void)
 {
 	struct vnode *vp;
 	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;

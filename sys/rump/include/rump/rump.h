@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.31 2009/10/14 17:29:19 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.32 2009/10/14 18:18:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -65,10 +65,6 @@ struct modinfo;
 /* rumpkern */
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
-#define rump_cred_suserput(c)	rump_cred_put(c)
-/* COMPAT_NETHACK */
-#define WizardMode()		rump_cred_suserget()
-#define YASD(cred)		rump_cred_suserput(cred)
 
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
