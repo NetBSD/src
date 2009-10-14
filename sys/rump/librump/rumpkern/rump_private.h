@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.28 2009/04/29 17:51:47 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.29 2009/10/14 17:29:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,30 @@
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
+
+#include "rumpkern_if_priv.h"
+
+/*
+ * Public interface implementation: create a function which calls
+ * the scheduler and then the private interface.
+ */
+#define RUMP_PUB_INTERFACE_VOIDARG(type, name, dummy)			\
+type rump_ ## name (void);						\
+type rump_ ## name (void)						\
+{									\
+	type rv;							\
+	rv = rumpint_ ## name();					\
+	return rv;							\
+}									\
+type rumpint_ ## name(void)
+
+#define RUMP_PUB_INTERFACE_VOIDTYPE(dummy, name, args)			\
+void rump_ ## name args;						\
+void rump_ ## name args							\
+{									\
+	rumpint_ ## name args;						\
+}									\
+type rumpint_ ## name(void)
 
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
