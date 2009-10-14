@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.18 2003/12/10 12:06:25 agc Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.19 2009/10/14 23:49:50 joerg Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -60,26 +60,20 @@ have a right to use the required files on your machine.
 On your
 .Nx
 machine, do the following:
-.Pp
-.Bl -enum -offset 123 -compact
+.Bl -enum -offset 123
 .It
 .Li mkdir -p /emul/sunos/usr/lib /emul/sunos/usr/5lib
-.fi
-.Pp
 .It
 .Li cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
-.Pp
 .It
 .Li cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
-.Pp
 .It
 .Li cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
-.Pp
 .It
 If you ever expect to use YP, you will want to create a link:
-.nf
-.Li ln -s /var/run/ypbind.lock /etc/ypbind.lock
-.fi
+.Bd -literal -compact
+ln -s /var/run/ypbind.lock /etc/ypbind.lock
+.Ed
 .El
 .Pp
 Alternatively, you can use an NFS mount to accomplish the same
@@ -87,15 +81,11 @@ effect.
 On your
 .Nx
 machine, do the following:
-.Pp
-.Bl -enum -offset 123 -compact
-.Pp
+.Bl -enum -offset 123
 .It
 .Li mkdir -p /emul/sunos/usr
-.Pp
 .It
 .Li mount SunOS:/usr /emul/sunos/usr
-.fi
 .El
 .Pp
 This will place the
