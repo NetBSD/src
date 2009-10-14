@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/13 18:41:06 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2009/10/14 23:51:52 pooka Exp $
 #
 
 PROG=	sdread
@@ -10,5 +10,6 @@ LDADD+=	-lrumpuser -lpthread
 
 DBG=	-g
 NOMAN=	
+WARNS=	4
 
 .include <bsd.prog.mk>
