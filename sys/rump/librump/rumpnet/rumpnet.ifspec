@@ -1,0 +1,11 @@
+;       $NetBSD: rumpnet.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp $
+
+NAME|net
+PUBHDR|include/rump/rumpnet_if_pub.h
+PRIVHDR|librump/rumpnet/rumpnet_if_priv.h
+WRAPPERS|librump/rumpnet/rumpnet_if_wrappers.c
+
+; type          | name          | args		| attrs
+;
+
+int		|virtif_create	|int		|WEAK
