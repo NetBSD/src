@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.62 2009/08/10 02:56:23 yamt Exp $
+.\"	$NetBSD: fdisk.8,v 1.63 2009/10/14 22:00:55 joerg Exp $
 .\"
 .Dd August 10, 2009
 .Dt FDISK 8
@@ -429,17 +429,11 @@ to list the known partition types.
 .It Em bootmenu
 is the menu prompt output by the interactive boot code for this partition.
 This line is omitted if the prompt is not defined.
-.It Xo
-.Em start ,
-.Em size
-.Xc
+.It Em start , Em size
 are the start address and size of the partition in sectors.
 .It Em MB
 is the size of the partition in megabytes.
-.It Xo
-.Em first ,
-.Em next
-.Xc
+.It Em first , Em next
 are the bounds of this partition displayed as cylinder/head/sector.
 If the partition starts (or ends) on a cylinder boundary the head and
 sector values are omitted.
@@ -472,11 +466,7 @@ sector
 .Em sector
 .in -4
 .Bl -tag -width "bootmenu"
-.It Xo
-.Em "cylinder" ,
-.Em "head" ,
-.Em "sector"
-.Xc
+.It Em "cylinder" , Em "head" , Em "sector"
 are the beginning or ending address of a partition.
 .Pp
 .Em "Note:"
