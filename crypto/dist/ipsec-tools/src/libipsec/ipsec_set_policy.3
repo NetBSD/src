@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_set_policy.3,v 1.13 2006/09/09 16:22:09 manu Exp $
+.\"	$NetBSD: ipsec_set_policy.3,v 1.14 2009/10/14 23:36:55 joerg Exp $
 .\"
 .\"	$KAME: ipsec_set_policy.3,v 1.16 2003/01/06 21:59:03 sumikawa Exp $
 .\"
@@ -124,14 +124,10 @@ be specified when libipsec has been compiled against kernel headers that
 support policy priorities (Linux \*[Gt]= 2.6.6).
 It takes one of the following formats:
 .Bl -tag  -width "discard"
-.It Xo
-.Ar {priority,prio} offset
-.Xc
+.It Ar {priority,prio} offset
 .Ar offset
 is an integer in the range -2147483647..214783648.
-.It Xo
-.Ar {priority,prio} base {+,-} offset
-.Xc
+.It Ar {priority,prio} base {+,-} offset
 .Ar base
 is either
 .Li low (-1073741824) ,
@@ -162,12 +158,7 @@ means to consult the SPD defined by
 means to bypass the IPsec processing.
 .Pq the packet will be transmitted in clear .
 This is for privileged sockets.
-.It Xo
-.Ar direction
-.Bq Ar priority specification
-.Li ipsec
-.Ar request ...
-.Xc
+.It Ar direction Bo Ar priority specification Bc Li ipsec Ar request ...
 .Li ipsec
 means that the matching packets are subject to IPsec processing.
 .Li ipsec
@@ -175,16 +166,7 @@ can be followed by one or more
 .Ar request
 strings, which are formatted as below:
 .Bl -tag  -width "discard"
-.It Xo
-.Ar protocol
-.Li /
-.Ar mode
-.Li /
-.Ar src
-.Li -
-.Ar dst
-.Op Ar /level
-.Xc
+.It Ar protocol Li / Ar mode Li / Ar src Li - Ar dst Op Ar /level
 .Ar protocol
 is either
 .Li ah ,
