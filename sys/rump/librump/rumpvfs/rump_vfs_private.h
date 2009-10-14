@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.6 2009/10/09 14:41:36 pooka Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.7 2009/10/14 17:29:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -44,5 +44,11 @@ void	rump_biodone(void *, size_t, int);
 
 int     rump_vfs_makedevnodes(dev_t, const char *, char,
 			      devmajor_t, devminor_t, int);
+
+#include <sys/mount.h>
+#include <sys/vnode.h>
+#include <rump/rump.h>
+
+#include "rumpvfs_if_priv.h"
 
 #endif /* _SYS_RUMP_VFS_PRIVATE_H_ */

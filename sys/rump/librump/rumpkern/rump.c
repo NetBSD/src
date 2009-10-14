@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.121 2009/10/09 14:41:36 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.122 2009/10/14 17:29:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.121 2009/10/09 14:41:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.122 2009/10/14 17:29:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -226,7 +226,7 @@ rump__init(int rump_version)
 	loginit();
 
 	kauth_init();
-	rump_susercred = rump_cred_create(0, 0, 0, NULL);
+	rump_susercred = rumppriv_cred_create(0, 0, 0, NULL);
 
 	l = &lwp0;
 	p = &proc0;
@@ -238,7 +238,7 @@ rump__init(int rump_version)
 	p->p_vmspace = &rump_vmspace;
 	p->p_emul = &emul_rump;
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	l->l_cred = rump_cred_suserget();
+	l->l_cred = rumppriv_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
 	l->l_cpu = &rump_cpu;
@@ -297,7 +297,7 @@ rump__init(int rump_version)
 
 /* maybe support sys_reboot some day for remote shutdown */
 void
-rump_reboot(int howto)
+rumppriv_reboot(int howto)
 {
 
 	/* dump means we really take the dive here */
@@ -324,7 +324,7 @@ rump_reboot(int howto)
 }
 
 struct uio *
-rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
+rumppriv_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 {
 	struct uio *uio;
 	enum uio_rw uiorw;
@@ -356,21 +356,21 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 }
 
 size_t
-rump_uio_getresid(struct uio *uio)
+rumppriv_uio_getresid(struct uio *uio)
 {
 
 	return uio->uio_resid;
 }
 
 off_t
-rump_uio_getoff(struct uio *uio)
+rumppriv_uio_getoff(struct uio *uio)
 {
 
 	return uio->uio_offset;
 }
 
 size_t
-rump_uio_free(struct uio *uio)
+rumppriv_uio_free(struct uio *uio)
 {
 	size_t resid;
 
@@ -384,7 +384,7 @@ rump_uio_free(struct uio *uio)
 /* public interface */
 static pid_t nextpid = 1;
 struct lwp *
-rump_newproc_switch()
+rumppriv_newproc_switch()
 {
 	struct lwp *oldlwp = curlwp;
 	pid_t mypid;
@@ -394,14 +394,14 @@ rump_newproc_switch()
 		mypid = atomic_inc_uint_nv(&nextpid);
 
 	rumpuser_set_curlwp(NULL);
-	rump_setup_curlwp(mypid, 0, 1);
+	rumppriv_setup_curlwp(mypid, 0, 1);
 
 	return oldlwp;
 }
 
 /* rump private */
 struct lwp *
-rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+rumppriv_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -420,7 +420,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 		p = &proc0;
 	}
 
-	l->l_cred = rump_cred_suserget();
+	l->l_cred = rumppriv_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
@@ -443,7 +443,7 @@ rump_set_vmspace(struct vmspace *vm)
 }
 
 void
-rump_clear_curlwp(void)
+rumppriv_clear_curlwp(void)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -454,7 +454,7 @@ rump_clear_curlwp(void)
 		mutex_obj_free(p->p_lock);
 		fd_free();
 		rump_proc_vfs_release(p);
-		rump_cred_put(l->l_cred);
+		rumppriv_cred_put(l->l_cred);
 		kmem_free(p, sizeof(*p));
 	}
 	kmem_free(l, sizeof(*l));
@@ -462,7 +462,7 @@ rump_clear_curlwp(void)
 }
 
 struct lwp *
-rump_get_curlwp(void)
+rumppriv_get_curlwp(void)
 {
 	struct lwp *l;
 
@@ -474,7 +474,7 @@ rump_get_curlwp(void)
 }
 
 void
-rump_set_curlwp(struct lwp *l)
+rumppriv_set_curlwp(struct lwp *l)
 {
 
 	/* clear current */
@@ -484,7 +484,7 @@ rump_set_curlwp(struct lwp *l)
 }
 
 kauth_cred_t
-rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
+rumppriv_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -505,14 +505,14 @@ rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 }
 
 void
-rump_cred_put(kauth_cred_t cred)
+rumppriv_cred_put(kauth_cred_t cred)
 {
 
 	kauth_cred_free(cred);
 }
 
 kauth_cred_t
-rump_cred_suserget(void)
+rumppriv_cred_suserget(void)
 {
 
 	kauth_cred_hold(rump_susercred);
@@ -542,7 +542,7 @@ rump_nextlid(void)
 }
 
 int
-rump_module_init(struct modinfo *mi, prop_dictionary_t props)
+rumppriv_module_init(struct modinfo *mi, prop_dictionary_t props)
 {
 	int rv;
 
@@ -557,7 +557,7 @@ rump_module_init(struct modinfo *mi, prop_dictionary_t props)
 }
 
 int
-rump_module_fini(struct modinfo *mi)
+rumppriv_module_fini(struct modinfo *mi)
 {
 	int rv;
 
@@ -568,17 +568,8 @@ rump_module_fini(struct modinfo *mi)
 	return rv;
 }
 
-int _syspuffs_stub(int, int *);
-int
-_syspuffs_stub(int fd, int *newfd)
-{
-
-	return ENODEV;
-}
-__weak_alias(rump_syspuffs_glueinit,_syspuffs_stub);
-
 static int
-rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
+rumppriv_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 	register_t *retval)
 {
 	struct lwp *l;
@@ -592,7 +583,7 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 	return callp->sy_call(l, (void *)data, retval);
 }
 
-rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
+rump_sysproxy_t rump_sysproxy = rumppriv_sysproxy_local;
 void *rump_sysproxy_arg;
 
 /*
@@ -602,7 +593,7 @@ void *rump_sysproxy_arg;
  * set in stone.
  */
 int
-rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
+rumppriv_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 {
 
 	if (rump_sysproxy_arg)
@@ -615,7 +606,7 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 }
 
 int
-rump_getversion()
+rumppriv_getversion()
 {
 
 	return __NetBSD_Version__;
