@@ -1,4 +1,4 @@
-.\"	$NetBSD: hexdump.1,v 1.18 2003/08/07 11:14:03 agc Exp $
+.\"	$NetBSD: hexdump.1,v 1.19 2009/10/14 17:44:59 joerg Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -251,13 +251,9 @@ are as follows:
 .Bl -tag -width  "Xc,_Xc,_Xc,_Xc,_Xc,_Xc" -offset indent
 .It Li \&%_c , \&%_p , \&%_u , \&%c
 One byte counts only.
-.It Xo
-.Li \&%d , \&%i , \&%o , \&%u , \&%X , \&%x
-.Xc
+.It Li \&%d , \&%i , \&%o , \&%u , \&%X , \&%x
 Four byte default, one, two, four and eight byte counts supported.
-.It Xo
-.Li \&%E , \&%e , \&%f , \&%G , \&%g
-.Xc
+.It Li \&%E , \&%e , \&%f , \&%G , \&%g
 Eight byte default, four byte counts supported.
 .El
 .Pp
