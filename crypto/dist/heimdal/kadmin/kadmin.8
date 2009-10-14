@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $Heimdal: kadmin.8 21739 2007-07-31 15:55:32Z lha $
-.\" $NetBSD: kadmin.8,v 1.9 2008/03/22 08:37:02 mlelstv Exp $
+.\" $NetBSD: kadmin.8,v 1.10 2009/10/14 23:37:33 joerg Exp $
 .\"
 .Dd Feb  22, 2007
 .Dt KADMIN 8
@@ -41,34 +41,13 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Oo Fl p Ar string \*(Ba Xo
-.Fl -principal= Ns Ar string
-.Xc
-.Oc
-.Oo Fl K Ar string \*(Ba Xo
-.Fl -keytab= Ns Ar string
-.Xc
-.Oc
-.Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
-.Xc
-.Oc
-.Oo Fl k Ar file \*(Ba Xo
-.Fl -key-file= Ns Ar file
-.Xc
-.Oc
-.Oo Fl r Ar realm \*(Ba Xo
-.Fl -realm= Ns Ar realm
-.Xc
-.Oc
-.Oo Fl a Ar host \*(Ba Xo
-.Fl -admin-server= Ns Ar host
-.Xc
-.Oc
-.Oo Fl s Ar port number \*(Ba Xo
-.Fl -server-port= Ns Ar port number
-.Xc
-.Oc
+.Op Fl p Ar string \*(Ba Fl -principal= Ns Ar string
+.Op Fl K Ar string \*(Ba Fl -keytab= Ns Ar string
+.Op Fl c Ar file \*(Ba Fl -config-file= Ns Ar file
+.Op Fl k Ar file \*(Ba Fl -key-file= Ns Ar file
+.Op Fl r Ar realm \*(Ba Fl -realm= Ns Ar realm
+.Op Fl a Ar host \*(Ba Fl -admin-server= Ns Ar host
+.Op Fl s Ar port number \*(Ba Fl -server-port= Ns Ar port number
 .Op Fl l | Fl -local
 .Op Fl h | Fl -help
 .Op Fl v | Fl -version
@@ -85,45 +64,21 @@ option).
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl p Ar string ,
-.Fl -principal= Ns Ar string
-.Xc
+.It Fl p Ar string , Fl -principal= Ns Ar string
 principal to authenticate as
-.It Xo
-.Fl K Ar string ,
-.Fl -keytab= Ns Ar string
-.Xc
+.It Fl K Ar string , Fl -keytab= Ns Ar string
 keytab for authentication principal
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 location of config file
-.It Xo
-.Fl k Ar file ,
-.Fl -key-file= Ns Ar file
-.Xc
+.It Fl k Ar file , Fl -key-file= Ns Ar file
 location of master key file
-.It Xo
-.Fl r Ar realm ,
-.Fl -realm= Ns Ar realm
-.Xc
+.It Fl r Ar realm , Fl -realm= Ns Ar realm
 realm to use
-.It Xo
-.Fl a Ar host ,
-.Fl -admin-server= Ns Ar host
-.Xc
+.It Fl a Ar host , Fl -admin-server= Ns Ar host
 server to contact
-.It Xo
-.Fl s Ar port number ,
-.Fl -server-port= Ns Ar port number
-.Xc
+.It Fl s Ar port number , Fl -server-port= Ns Ar port number
 port to use
-.It Xo
-.Fl l ,
-.Fl -local
-.Xc
+.It Fl l , Fl -local
 local admin mode
 .El
 .Pp
@@ -145,14 +100,12 @@ matching principals.
 Commands include:
 .\" not using a list here, since groff apparently gets confused
 .\" with nested Xo/Xc
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Nm add
 .Op Fl r | Fl -random-key
 .Op Fl -random-password
-.Oo Fl p Ar string \*(Ba Xo
-.Fl -password= Ns Ar string
-.Xc
-.Oc
+.Op Fl p Ar string \*(Ba Fl -password= Ns Ar string
 .Op Fl -key= Ns Ar string
 .Op Fl -max-ticket-life= Ns Ar lifetime
 .Op Fl -max-renewable-life= Ns Ar lifetime
@@ -165,7 +118,7 @@ Commands include:
 Adds a new principal to the database. The options not passed on the
 command line will be promped for.
 .Ed
-.Pp
+.It
 .Nm add_enctype
 .Op Fl r | Fl -random-key
 .Ar principal enctypes...
@@ -174,14 +127,14 @@ command line will be promped for.
 Adds a new encryption type to the principal, only random key are
 supported.
 .Ed
-.Pp
+.It
 .Nm delete
 .Ar principal...
 .Pp
 .Bd -ragged -offset indent
 Removes a principal.
 .Ed
-.Pp
+.It
 .Nm del_enctype
 .Ar principal enctypes...
 .Pp
@@ -190,7 +143,7 @@ Removes some enctypes from a principal; this can be useful if the
 service belonging to the principal is known to not handle certain
 enctypes.
 .Ed
-.Pp
+.It
 .Nm ext_keytab
 .Oo Fl k Ar string \*(Ba Xo
 .Fl -keytab= Ns Ar string
@@ -201,7 +154,7 @@ enctypes.
 .Bd -ragged -offset indent
 Creates a keytab with the keys of the specified principals.
 .Ed
-.Pp
+.It
 .Nm get
 .Op Fl l | Fl -long
 .Op Fl s | Fl -short
@@ -243,7 +196,7 @@ Possible column names include:
 and
 .Li keytypes .
 .Ed
-.Pp
+.It
 .Nm modify
 .Oo Fl a Ar attributes \*(Ba Xo
 .Fl -attributes= Ns Ar attributes
@@ -281,7 +234,7 @@ Attributes may be negated with a "-", e.g.,
 .Pp 
 kadmin -l modify -a -disallow-proxiable user
 .Ed
-.Pp
+.It
 .Nm passwd
 .Op Fl r | Fl -random-key
 .Op Fl -random-password
@@ -295,7 +248,7 @@ kadmin -l modify -a -disallow-proxiable user
 .Bd -ragged -offset indent
 Changes the password of an existing principal.
 .Ed
-.Pp
+.It
 .Nm password-quality
 .Ar principal
 .Ar password
@@ -307,7 +260,7 @@ process to verify that your configuration file is correct.
 The verification is done locally, if kadmin is run in remote mode,
 no rpc call is done to the server.
 .Ed
-.Pp
+.It
 .Nm privileges
 .Pp
 .Bd -ragged -offset indent
@@ -322,7 +275,7 @@ Lists the operations you are allowed to perform. These include
 and
 .Li modify .
 .Ed
-.Pp
+.It
 .Nm rename
 .Ar from to
 .Pp
@@ -332,7 +285,7 @@ salted with the principal name, they will have a non-standard salt,
 and clients which are unable to cope with this will fail. Kerberos 4
 suffers from this.
 .Ed
-.Pp
+.It
 .Nm check
 .Op Ar realm
 .Pp
@@ -340,11 +293,11 @@ suffers from this.
 Check database for strange configurations on important principals. If
 no realm is given, the default realm is used.
 .Ed
-.Pp
-.Ed
+.El
 .Pp
 When running in local mode, the following commands can also be used:
-.Bd -ragged -offset indent
+.Bl -item -offset indent
+.It
 .Nm dump
 .Op Fl d | Fl -decrypt
 .Op Ar dump-file
@@ -357,7 +310,7 @@ encrypted, the dump will also have encrypted keys, unless
 .Fl -decrypt
 is used.
 .Ed
-.Pp
+.It
 .Nm init
 .Op Fl -realm-max-ticket-life= Ns Ar string
 .Op Fl -realm-max-renewable-life= Ns Ar string
@@ -367,7 +320,7 @@ is used.
 Initializes the Kerberos database with entries for a new realm. It's
 possible to have more than one realm served by one server.
 .Ed
-.Pp
+.It
 .Nm load
 .Ar file
 .Pp
@@ -375,7 +328,7 @@ possible to have more than one realm served by one server.
 Reads a previously dumped database, and re-creates that database from
 scratch.
 .Ed
-.Pp
+.It
 .Nm merge
 .Ar file
 .Pp
@@ -384,7 +337,7 @@ Similar to
 .Nm load
 but just modifies the database with the entries in the dump file.
 .Ed
-.Pp
+.It
 .Nm stash
 .Oo Fl e Ar enctype \*(Ba Xo
 .Fl -enctype= Ns Ar enctype
@@ -401,7 +354,7 @@ but just modifies the database with the entries in the dump file.
 Writes the Kerberos master key to a file used by the KDC.
 .Ed
 .Pp
-.Ed
+.El
 .\".Sh ENVIRONMENT
 .\".Sh FILES
 .\".Sh EXAMPLES

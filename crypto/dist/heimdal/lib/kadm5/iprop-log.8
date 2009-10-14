@@ -1,5 +1,5 @@
 .\" $Heimdal: iprop-log.8 21713 2007-07-27 14:38:49Z lha $
-.\" $NetBSD: iprop-log.8,v 1.1 2008/03/22 08:37:12 mlelstv Exp $
+.\" $NetBSD: iprop-log.8,v 1.2 2009/10/14 23:37:34 joerg Exp $
 .\" 
 .\" Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 .\" SUCH DAMAGE. 
 .\"
-.\"	$Id: iprop-log.8,v 1.1 2008/03/22 08:37:12 mlelstv Exp $
+.\"	$Id: iprop-log.8,v 1.2 2009/10/14 23:37:34 joerg Exp $
 .\"
 .Dd February 18, 2007
 .Dt IPROP-LOG 8
@@ -84,28 +84,17 @@ maintain the iprop log file
 .Sh DESCRIPTION
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl h ,
-.Fl -help
-.Xc
+.It Fl -version
+.It Fl h , Fl -help
 .El
 .Pp
 command can be one of the following:
 .Bl -tag -width truncate
 .It truncate
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
@@ -114,38 +103,22 @@ last entry of the old log.  If the log is truncted by emptying the
 file, the log will start over at the first version (0).
 .It dump
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
 Print out all entires in the log to standard output.
 .It replay
 .Bl -tag -width Ds
-.It Xo
-.Fl -start-version= Ns Ar version-number
-.Xc
+.It Fl -start-version= Ns Ar version-number
 start replay with this version
-.It Xo
-.Fl -end-version= Ns Ar version-number
-.Xc
+.It Fl -end-version= Ns Ar version-number
 end replay with this version
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
@@ -153,15 +126,9 @@ Replay the changes from specified entries (or all if none is
 specified) in the transaction log to the database.
 .It last-version
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp

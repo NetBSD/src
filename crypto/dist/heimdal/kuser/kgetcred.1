@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE. 
 .\" 
 .\" $Heimdal: kgetcred.1 14090 2004-08-05 18:49:47Z lha $
-.\" $NetBSD: kgetcred.1,v 1.7 2008/03/22 08:37:03 mlelstv Exp $
+.\" $NetBSD: kgetcred.1,v 1.8 2009/10/14 23:37:33 joerg Exp $
 .\"
 .Dd March 12, 2004
 .Dt KGETCRED 1
@@ -62,30 +62,16 @@ ticket or of a special type.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -canonicalize
-.Xc
+.It Fl -canonicalize
 requests that the KDC canonicalize the principal.
-.It Xo
-.Fl c Ar cache ,
-.Fl -cache= Ns Ar cache
-.Xc
+.It Fl c Ar cache , Fl -cache= Ns Ar cache
 the credential cache to use.
-.It Xo
-.Fl e Ar enctype ,
-.Fl -enctype= Ns Ar enctype
-.Xc
+.It Fl e Ar enctype , Fl -enctype= Ns Ar enctype
 encryption type to use.
-.It Xo
-.Fl -no-transit-check
-.Xc
+.It Fl -no-transit-check
 requests that the KDC doesn't do trasnit checking.
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl -help
-.Xc
+.It Fl -version
+.It Fl -help
 .El
 .Sh SEE ALSO
 .Xr kinit 1 ,
