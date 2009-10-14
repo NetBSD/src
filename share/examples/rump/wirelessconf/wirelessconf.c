@@ -1,4 +1,4 @@
-/*	$NetBSD: wirelessconf.c,v 1.1 2009/10/05 13:07:28 pooka Exp $	*/
+/*	$NetBSD: wirelessconf.c,v 1.2 2009/10/14 23:51:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -46,7 +46,7 @@
 
 #define RUMFW "/libdata/firmware/rum/rum-rt2573"
 int
-main()
+main(void)
 {
 	extern int rumpns_boothowto;
 	struct ifreq ifr;
@@ -57,7 +57,7 @@ main()
 	printf("\ndevice autoconfiguration finished\n");
 
 	printf("tira-if-su ...\n");
-	if (rump_etfs_register(RUMFW, RUMFW, RUMP_ETFS_REG) != 0)
+	if (rump_pub_etfs_register(RUMFW, RUMFW, RUMP_ETFS_REG) != 0)
 		errx(1, "firmware etfs registration failed");
 
 	/* rum?  shouldn't that be marsala? */
