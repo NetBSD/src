@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.107 2009/10/14 20:06:27 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.108 2009/10/14 20:42:42 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14153,4 +14153,29 @@ usr.bin/printf/printf.c				1.34
 
 	Avoid segv on "printf '%*********s' 666".
 	[christos, ticket #1091]
+
+usr.bin/sort/Makefile				1.6-1.8
+usr.bin/sort/append.c				1.15-1.22
+usr.bin/sort/fields.c				1.20-1.30
+usr.bin/sort/files.c				1.27-1.40
+usr.bin/sort/fsort.c				1.33-1.45
+usr.bin/sort/fsort.h				1.14-1.17
+usr.bin/sort/init.c				1.19-1.23
+usr.bin/sort/msort.c				1.19-1.28
+usr.bin/sort/radix_sort.c			1.1-1.4
+usr.bin/sort/sort.1				1.27-1.29
+usr.bin/sort/sort.c				1.47-1.56
+usr.bin/sort/sort.h				1.20-1.30
+usr.bin/sort/tmp.c				1.14-1.15
+
+	Only use radix sort for in-memory sort, always merge temporary files.
+	Use a local radixsort() function so we can pass record length.
+	Avoid use of weight tables for key compares.
+	Fix generation of keys for numbers, negate value for reverse sort.
+	Write file in reverse-key order for 'sort -n'.
+	'sort -S' now does a posix sort (sort matching keys by record data).
+	Ensure merge sort doesn't have too many temporary files open.
+	Fixes: PR#18614 PR#27257 PR#25551 PR#22182 PR#31095 PR#30504
+	PR#36816 PR#37860 PR#39308 PR#42094
+	[dsl, ticket #1084]
 
