@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69.2.4 2009/09/17 04:24:27 snj Exp $
+# $NetBSD: mi,v 1.69.2.5 2009/10/14 18:10:21 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1568,6 +1568,7 @@
 ./usr/X11R7/lib/X11/xkb/compat/pc98			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/xfree86			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/xtest			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/compiled			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry.dir			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/amiga			-unknown-	xorg
