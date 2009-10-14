@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.10 2009/03/27 13:46:34 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.11 2009/10/14 19:14:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,7 @@ configure_interface(void)
 	uint8_t *bp = &m_rtmsg.m_space;
 	int s, rv;
 
-	if ((rv = rump_virtif_create(0)) != 0) {
+	if ((rv = rump_pub_virtif_create(0)) != 0) {
 		printf("could not configure interface %d\n", rv);
 		exit(1);
 	}
