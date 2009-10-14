@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.13 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: fsort.h,v 1.13.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,27 +76,3 @@
  */
 #define DEFBUFSIZE	(1 << 20)	/* 1MB */
 #define MAXBUFSIZE	(8 << 20)	/* 10 MB */
-
-/*
- * Number of files merge() can merge in one pass.
- * This should be power of two so that it's possible to use this value
- * for rouding.
- */
-#define MERGE_FNUM	16
-
-extern u_char *buffer, *linebuf;
-extern size_t bufsize, linebuf_size;
-
-/* temp files in the stack have a file descriptor, a largest bin (maxb)
- * which becomes the last non-empty bin (lastb) when the actual largest
- * bin is smaller than max(half the total file, BUFSIZE)
- * Max_o is the offset of maxb so it can be sought after the other bins
- * are sorted.
-*/
-struct tempfile {
-	FILE *fp;
-	u_char maxb;
-	u_char lastb;
-	off_t max_o;
-};
-extern struct tempfile fstack[MAXFCT];

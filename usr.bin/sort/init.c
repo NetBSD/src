@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.18 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: init.c,v 1.18.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,22 +64,20 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.18 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: init.c,v 1.18.6.1 2009/10/14 20:41:53 sborrill Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <string.h>
 
-static void insertcol __P((struct field *));
-static const char *setcolumn __P((const char *, struct field *, int));
-
-u_char gweights[NBINS];
+static void insertcol(struct field *);
+static const char *setcolumn(const char *, struct field *);
 
 /*
- * masks of ignored characters.  Alltable is 256 ones.
+ * masks of ignored characters.
  */
-static u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
+static u_char dtable[NBINS], itable[NBINS];
 
 /*
  * parsed key options
@@ -97,8 +95,7 @@ int ncols = 0;
  * keep clist in order--inserts a column in a sorted array
  */
 static void
-insertcol(field)
-	struct field *field;
+insertcol(struct field *field)
 {
 	int i;
 	struct coldesc *p;
@@ -134,8 +131,7 @@ insertcol(field)
  * matches fields with the appropriate columns--n^2 but who cares?
  */
 void
-fldreset(fldtab)
-	struct field *fldtab;
+fldreset(struct field *fldtab)
 {
 	int i;
 
@@ -156,10 +152,7 @@ fldreset(fldtab)
  * interprets a column in a -k field
  */
 static const char *
-setcolumn(pos, cur_fld, gflag)
-	const char *pos;
-	struct field *cur_fld;
-	int gflag;
+setcolumn(const char *pos, struct field *cur_fld)
 {
 	struct column *col;
 	char *npos;
@@ -188,61 +181,49 @@ setcolumn(pos, cur_fld, gflag)
 }
 
 int
-setfield(pos, cur_fld, gflag)
-	const char *pos;
-	struct field *cur_fld;
-	int gflag;
+setfield(const char *pos, struct field *cur_fld, int gflag)
 {
-	int tmp;
+	cur_fld->mask = NULL;
 
-	cur_fld->weights = ascii;
-	cur_fld->mask = alltable;
-
-	pos = setcolumn(pos, cur_fld, gflag);
+	pos = setcolumn(pos, cur_fld);
 	if (*pos == '\0')			/* key extends to EOL. */
 		cur_fld->tcol.num = 0;
 	else {
 		if (*pos != ',')
 			errx(2, "illegal field descriptor");
-		setcolumn((++pos), cur_fld, gflag);
+		setcolumn((++pos), cur_fld);
 	}
 	if (!cur_fld->flags)
 		cur_fld->flags = gflag;
-	tmp = cur_fld->flags;
+	if (REVERSE)
+		/* A local 'r' doesn't invert the global one */
+		cur_fld->flags &= ~R;
 
-	/*
-	 * Assign appropriate mask table and weight table.
-	 * If the global weights are reversed, the local field
-	 * must be "re-reversed".
-	 */
-	if (((tmp & R) ^ (gflag & R)) && (tmp & F))
-		cur_fld->weights = RFtable;
-	else if (tmp & F)
-		cur_fld->weights = Ftable;
-	else if ((tmp & R) ^ (gflag & R))
-		cur_fld->weights = Rascii;
-
-	if (tmp & I)
+	/* Assign appropriate mask table and weight table. */
+	cur_fld->weights = weight_tables[cur_fld->flags & (R | F)];
+	if (cur_fld->flags & I)
 		cur_fld->mask = itable;
-	else if (tmp & D)
+	else if (cur_fld->flags & D)
 		cur_fld->mask = dtable;
 
 	cur_fld->flags |= (gflag & (BI | BT));
 	if (!cur_fld->tcol.indent)	/* BT has no meaning at end of field */
 		cur_fld->flags &= ~BT;
 
-	if (cur_fld->tcol.num && !(!(cur_fld->flags & BI)
-	    && cur_fld->flags & BT) && (cur_fld->tcol.num <= cur_fld->icol.num
-	    && cur_fld->tcol.indent != 0 /* == 0 -> end of field, i.e. okay */
-	    && cur_fld->tcol.indent < cur_fld->icol.indent))
+	if (cur_fld->tcol.num
+	    && !(!(cur_fld->flags & BI) && cur_fld->flags & BT)
+	    && (cur_fld->tcol.num <= cur_fld->icol.num
+		    /* indent if 0 -> end of field, i.e. okay */
+		    && cur_fld->tcol.indent != 0
+		    && cur_fld->tcol.indent < cur_fld->icol.indent))
 		errx(2, "fields out of order");
+
 	insertcol(cur_fld);
 	return (cur_fld->tcol.num);
 }
 
 int
-optval(desc, tcolflag)
-	int desc, tcolflag;
+optval(int desc, int tcolflag)
 {
 	switch(desc) {
 		case 'b':
@@ -263,9 +244,7 @@ optval(desc, tcolflag)
  * Replace historic +SPEC arguments with appropriate -kSPEC.
  */ 
 void
-fixit(argc, argv)
-	int *argc;
-	char **argv;
+fixit(int *argc, char **argv)
 {
 	int i, j, fplus=0;
 	char *vpos, *tpos, spec[20];
@@ -336,72 +315,65 @@ fixit(argc, argv)
 
 /*
  * ascii, Rascii, Ftable, and RFtable map
- * REC_D -> REC_D;  {not REC_D} -> {not REC_D}.
- * gweights maps REC_D -> (0 or 255); {not REC_D} -> {not gweights[REC_D]}.
- * Note: when sorting in forward order, to encode character zero in a key,
- * use \001\001; character 1 becomes \001\002.  In this case, character 0
- * is reserved for the field delimiter.  Analagously for -r (fld_d = 255).
+ *
+ * Sorting 'weight' tables.
+ * Convert 'ascii' characters into their sort order.
+ * The 'F' variants fold lower case to upper equivalent
+ * The 'R' variants are for reverse sorting.
+ *
+ * The record separator (REC_D) never needs a weight, this frees one
+ * byte value as an 'end of key' marker. This must be 0 for normal
+ * weight tables, and 0xff for reverse weight tables - and is used
+ * to terminate keys so that short keys sort before (after if reverse)
+ * longer keys.
+ *
+ * The field separator has a normal weight - although it cannot occur
+ * within a key unless it is the default (space+tab).
+ *
+ * All other bytes map to the appropriate value for the sort order.
+ * Numeric sorts don't need any tables, they are reversed by negation.
+ *
+ * Global reverse sorts are done by writing the sorted keys in reverse
+ * order - the sort itself is stil forwards.
+ * This means that weights are only ever used when generating keys, any
+ * sort of the original data bytes is always forwards and unweighted.
+ *
  * Note: this is only good for ASCII sorting.  For different LC 's,
- * all bets are off.  See also num_init in number.c
+ * all bets are off.
+ *
+ * itable[] and dtable[] are the masks for -i (ignore non-printables)
+ * and -d (only sort blank and alphanumerics).
  */
 void
-settables(gflags)
-	int gflags;
+settables(void)
 {
-	u_char *wts;
-	int i, incr;
-	for (i=0; i < 256; i++) {
-		ascii[i] = i;
-		if (i > REC_D && i < 255 - REC_D+1)
-			Rascii[i] = 255 - i + 1;
-		else
-			Rascii[i] = 255 - i;
-		if (islower(i)) {
-			Ftable[i] = Ftable[toupper(i)];
-			RFtable[i] = RFtable[toupper(i)];
-		} else if (REC_D>= 'A' && REC_D < 'Z' && i < 'a' && i > REC_D) {
-			Ftable[i] = i + 1;
-			RFtable[i] = Rascii[i] - 1;
-		} else {
-			Ftable[i] = i;
-			RFtable[i] = Rascii[i];
+	int i;
+	int next_weight = 1;
+	int rev_weight = 254;
+
+	ascii[REC_D] = 0;
+	Rascii[REC_D] = 255;
+	Ftable[REC_D] = 0;
+	RFtable[REC_D] = 255;
+
+	for (i = 0; i < 256; i++) {
+		if (i == REC_D)
+			continue;
+		ascii[i] = next_weight;
+		Rascii[i] = rev_weight;
+		if (Ftable[i] == 0) {
+			Ftable[i] = next_weight;
+			RFtable[i] = rev_weight;
+			Ftable[tolower(i)] = next_weight;
+			RFtable[tolower(i)] = rev_weight;
 		}
-		alltable[i] = 1;
+		next_weight++;
+		rev_weight--;
 
 		if (i == '\n' || isprint(i))
 			itable[i] = 1;
-		else
-			itable[i] = 0;
 
 		if (i == '\n' || i == '\t' || i == ' ' || isalnum(i))
 			dtable[i] = 1;
-		else
-			dtable[i] = 0;
-	}
-
-	Rascii[REC_D] = RFtable[REC_D] = REC_D;
-	if (isupper(REC_D))
-		Ftable[tolower(REC_D)]++;
-
-	if ((gflags & R) && !((gflags & F) && SINGL_FLD))
-		wts = Rascii;
-	else if (!((gflags & F) && SINGL_FLD))
-		wts = ascii;
-	else if (gflags & R)
-		wts = RFtable;
-	else
-		wts = Ftable;
-
-	memmove(gweights, wts, sizeof(gweights));
-	incr = (gflags & R) ? -1 : 1;
-	for (i = 0; i < REC_D; i++)
-		gweights[i] += incr;
-	gweights[REC_D] = ((gflags & R) ? 255 : 0);
-	if (SINGL_FLD && (gflags & F)) {
-		for (i = 0; i < REC_D; i++) {
-			ascii[i] += incr;
-			Rascii[i] += incr;
-		}
-		ascii[REC_D] = Rascii[REC_D] = gweights[REC_D];
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.14 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: append.c,v 1.14.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,166 +64,34 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.14 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: append.c,v 1.14.6.1 2009/10/14 20:41:53 sborrill Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
-#include <string.h>
-
-#define OUTPUT {							\
-	if ((n = cpos - ppos) > 1) {					\
-		for (; ppos < cpos; ++ppos)				\
-			*ppos -= odepth;				\
-		ppos -= n;						\
-		if (stable_sort)					\
-			sradixsort(ppos, n, wts1, REC_D);		\
-		else							\
-			radixsort(ppos, n, wts1, REC_D);		\
-		for (; ppos < cpos; ppos++) {				\
-			prec = (const RECHEADER *) (*ppos - sizeof(TRECHEADER));\
-			put(prec, fp);					\
-		}							\
-	} else put(prec, fp);						\
-}
 
 /*
- * copy sorted lines to output; check for uniqueness
+ * copy sorted lines to output
+ * Ignore duplicates (marked with -ve keylen)
  */
 void
-append(keylist, nelem, depth, fp, put, ftbl)
-	const u_char **keylist;
-	int nelem;
-	int depth;
-	FILE *fp;
-	put_func_t put;
-	struct field *ftbl;
+append(RECHEADER **keylist, int nelem, FILE *fp, put_func_t put)
 {
-	u_char *wts, *wts1;
-	int n, odepth = depth;
-	const u_char **cpos, **ppos, **lastkey;
-	const u_char *cend, *pend, *start;
-	const struct recheader *crec, *prec;
+	RECHEADER **cpos, **lastkey;
+	RECHEADER *crec;
 
-	if (*keylist == '\0' && UNIQUE)
-		return;
-	wts1 = wts = ftbl[0].weights;
-	if ((!UNIQUE) && SINGL_FLD) {
-		if ((ftbl[0].flags & F) && (ftbl[0].flags & R))
-			wts1 = Rascii;
-		else if (ftbl[0].flags & F)
-			wts1 = ascii;
-	}
 	lastkey = keylist + nelem;
-	depth += sizeof(TRECHEADER);
-	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
-		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - depth);
-		if (UNIQUE)
-			put(prec, fp);
-		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - depth);
-			if (crec->length  == prec->length) {
-				/*
-				 * Set pend and cend so that trailing NUL and
-				 * record separator is ignored.
-				 */
-				pend = (const u_char *) &prec->data + prec->length - 2;
-				cend = (const u_char *) &crec->data + crec->length - 2;
-				for (start = *cpos; cend >= start; cend--) {
-					if (wts[*cend] != wts[*pend])
-						break;
-					pend--;
-				}
-				if (pend + 1 != *ppos) {
-					if (!UNIQUE) {
-						OUTPUT;
-					} else
-						put(crec, fp);
-					ppos = cpos;
-					prec = crec;
-				}
-			} else {
-				if (!UNIQUE) {
-					OUTPUT;
-				} else
-					put(crec, fp);
-				ppos = cpos;
-				prec = crec;
-			}
+	if (REVERSE) {
+		for (cpos = lastkey; cpos-- > keylist;) {
+			crec = *cpos;
+			if (crec->keylen >= 0)
+				put(crec, fp);
 		}
-		if (!UNIQUE)  { OUTPUT; }
-	} else if (UNIQUE) {
-		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - depth);
-		put(prec, fp);
-		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - depth);
-			if (crec->offset == prec->offset) {
-				/*
-				 * Set pend and cend so that trailing NUL and
-				 * record separator is ignored.
-				 */
-				pend = (const u_char *) &prec->data + prec->offset - 2;
-				cend = (const u_char *) &crec->data + crec->offset - 2;
-				for (start = *cpos; cend >= start; cend--) {
-					if (wts[*cend] != wts[*pend])
-						break;
-					pend--;
-				}
-				if (pend + 1 != *ppos) {
-					ppos = cpos;
-					prec = crec;
-					put(prec, fp);
-				}
-			} else {
-				ppos = cpos;
-				prec = crec;
-				put(prec, fp);
-			}
-		}
-	} else for (cpos = keylist; cpos < lastkey; cpos++) {
-		crec = (const RECHEADER *) (*cpos - depth);
-		put(crec, fp);
-	}
-}
-
-/*
- * output the already sorted eol bin.
- */
-void
-rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
-	u_char *buffer;
-	int infl0;
-	int binno, nfiles;
-	FILE *outfp;
-	u_char *bufend;
-{
-	RECHEADER *rec;
-
-	rec = (RECHEADER *) buffer;
-	if (!getnext(binno, infl0, NULL, nfiles,
-			(RECHEADER *) buffer, bufend, 0)) {
-		putline(rec, outfp);
-		while (getnext(binno, infl0, NULL, nfiles, (RECHEADER *) buffer,
-			bufend, 0) == 0) {
-			if (!UNIQUE)
-				putline(rec, outfp);
+	} else {
+		for (cpos = keylist; cpos < lastkey; cpos++) {
+			crec = *cpos;
+			if (crec->keylen >= 0)
+				put(crec, fp);
 		}
 	}
-}
-
-/*
- * append plain text--used after sorting the biggest bin.
- */
-void
-concat(a, b)
-	FILE *a, *b;
-{
-        int nread;
-        char buffer[4096];
-
-	rewind(b);
-        while ((nread = fread(buffer, 1, 4096, b)) > 0)
-                EWRITE(buffer, 1, nread, a);
 }
