@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.66 2009/10/08 21:54:45 jym Exp $	*/
+/*	$NetBSD: pool.h,v 1.67 2009/10/15 20:50:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -321,7 +321,6 @@ void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
 void		pool_cache_put_paddr(pool_cache_t, void *, paddr_t);
 void		pool_cache_destruct_object(pool_cache_t, void *);
 void		pool_cache_invalidate(pool_cache_t);
-void		pool_cache_invalidate_local(pool_cache_t);
 bool		pool_cache_reclaim(pool_cache_t);
 void		pool_cache_set_drain_hook(pool_cache_t,
 		    void (*)(void *, int), void *);
