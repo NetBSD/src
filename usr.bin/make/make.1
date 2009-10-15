@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.163 2009/10/02 07:43:15 wiz Exp $
+.\"	$NetBSD: make.1,v 1.164 2009/10/15 02:27:44 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -947,10 +947,7 @@ words delimited by white space.
 See also
 .Ql Cm \&:[@] .
 .Sm off
-.It Cm \&:S No \&/ Ar old_string Xo
-.No \&/ Ar new_string
-.No \&/ Op Cm 1gW
-.Xc
+.It Cm \&:S No \&/ Ar old_string No \&/ Ar new_string No \&/ Op Cm 1gW
 .Sm on
 Modify the first occurrence of
 .Ar old_string
@@ -1005,10 +1002,7 @@ of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm \&:C No \&/ Ar pattern Xo
-.No \&/ Ar replacement
-.No \&/ Op Cm 1gW
-.Xc
+.It Cm \&:C No \&/ Ar pattern No \&/ Ar replacement No \&/ Op Cm 1gW
 .Sm on
 The
 .Cm \&:C
@@ -1096,10 +1090,8 @@ expansion of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm \&:@ Ar temp Cm @ Xo
-.Ar string Cm @
+.It Cm \&:@ Ar temp Cm @ Ar string Cm @
 .Sm on
-.Xc
 This is the loop expansion mechanism from the OSF Development
 Environment (ODE) make.
 Unlike
@@ -1296,79 +1288,39 @@ is equivalent to exporting a variable.
 .It Ic .undef Ar variable
 Un-define the specified global variable.
 Only global variables may be un-defined.
-.It Xo
-.Ic \&.if
-.Oo \&! Oc Ns Ar expression
-.Op Ar operator expression ...
-.Xc
+.It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
 Test the value of an expression.
-.It Xo
-.Ic .ifdef
-.Oo \&! Oc Ns Ar variable
-.Op Ar operator variable ...
-.Xc
+.It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 Test the value of a variable.
-.It Xo
-.Ic .ifndef
-.Oo \&! Oc Ns Ar variable
-.Op Ar operator variable ...
-.Xc
+.It Ic .ifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 Test the value of a variable.
-.It Xo
-.Ic .ifmake
-.Oo \&! Oc Ns Ar target
-.Op Ar operator target ...
-.Xc
+.It Ic .ifmake Oo \&! Oc Ns Ar target Op Ar operator target ...
 Test the target being built.
-.It Xo
-.Ic .ifnmake
-.Oo \&! Ns Oc Ar target
-.Op Ar operator target ...
-.Xc
+.It Ic .ifnmake Oo \&! Ns Oc Ar target Op Ar operator target ...
 Test the target being built.
 .It Ic .else
 Reverse the sense of the last conditional.
-.It Xo
-.Ic .elif
-.Oo \&! Ns Oc Ar expression
-.Op Ar operator expression ...
-.Xc
+.It Ic .elif Oo \&! Ns Oc Ar expression Op Ar operator expression ...
 A combination of
 .Ql Ic .else
 followed by
 .Ql Ic .if .
-.It Xo
-.Ic .elifdef
-.Oo \&! Oc Ns Ar variable
-.Op Ar operator variable ...
-.Xc
+.It Ic .elifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 A combination of
 .Ql Ic .else
 followed by
 .Ql Ic .ifdef .
-.It Xo
-.Ic .elifndef
-.Oo \&! Oc Ns Ar variable
-.Op Ar operator variable ...
-.Xc
+.It Ic .elifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 A combination of
 .Ql Ic .else
 followed by
 .Ql Ic .ifndef .
-.It Xo
-.Ic .elifmake
-.Oo \&! Oc Ns Ar target
-.Op Ar operator target ...
-.Xc
+.It Ic .elifmake Oo \&! Oc Ns Ar target Op Ar operator target ...
 A combination of
 .Ql Ic .else
 followed by
 .Ql Ic .ifmake .
-.It Xo
-.Ic .elifnmake
-.Oo \&! Oc Ns Ar target
-.Op Ar operator target ...
-.Xc
+.It Ic .elifnmake Oo \&! Oc Ns Ar target Op Ar operator target ...
 A combination of
 .Ql Ic .else
 followed by
@@ -1488,13 +1440,7 @@ For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
 .Pp
 .Bl -tag -compact -width Ds
-.It Xo
-.Ic \&.for
-.Ar variable
-.Op Ar variable ...
-.Ic in
-.Ar expression
-.Xc
+.It Ic \&.for Ar variable Oo Ar variable ... Oc Ic in Ar expression
 .It Aq make-rules
 .It Ic \&.endfor
 .El
