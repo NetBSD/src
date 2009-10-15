@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.40 2009/10/14 18:22:50 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.41 2009/10/15 16:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -141,7 +141,7 @@ precall(struct ukfs *ukfs)
 {
 	struct vnode *rvp, *cvp;
 
-	rump_pub_setup_curlwp(nextpid(ukfs), 1, 1);
+	rump_pub_lwp_alloc_and_switch(nextpid(ukfs), 1);
 	rvp = ukfs_getrvp(ukfs);
 	pthread_spin_lock(&ukfs->ukfs_spin);
 	cvp = ukfs->ukfs_cdir;
@@ -158,7 +158,7 @@ postcall(struct ukfs *ukfs)
 	rvp = ukfs_getrvp(ukfs);
 	rump_pub_rcvp_set(NULL, rvp);
 	rump_pub_vp_rele(rvp);
-	rump_pub_clear_curlwp();
+	rump_pub_lwp_release(rump_pub_lwp_curlwp());
 }
 
 int
@@ -435,19 +435,19 @@ ukfs_release(struct ukfs *fs, int flags)
 		mntflag = 0;
 		if (flags & UKFS_RELFLAG_FORCE)
 			mntflag = MNT_FORCE;
-		rump_pub_setup_curlwp(nextpid(fs), 1, 1);
+		rump_pub_lwp_alloc_and_switch(nextpid(fs), 1);
 		rump_pub_vp_rele(fs->ukfs_rvp);
 		fs->ukfs_rvp = NULL;
 		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
 		if (rv == -1) {
 			error = errno;
 			rump_pub_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
-			rump_pub_clear_curlwp();
+			rump_pub_lwp_release(rump_pub_lwp_curlwp());
 			ukfs_chdir(fs, fs->ukfs_mountpath);
 			errno = error;
 			return -1;
 		}
-		rump_pub_clear_curlwp();
+		rump_pub_lwp_release(rump_pub_lwp_curlwp());
 	}
 
 	if (fs->ukfs_devpath) {
