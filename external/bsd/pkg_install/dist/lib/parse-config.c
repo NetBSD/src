@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.7 2009/10/07 13:19:44 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.8 2009/10/15 13:01:26 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.7 2009/10/07 13:19:44 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.8 2009/10/15 13:01:26 joerg Exp $");
 
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -54,6 +54,7 @@ char fetch_flags[10] = ""; /* Workaround Mac OS X linker issues with BSS */
 static const char *active_ftp;
 static const char *verbose_netio;
 static const char *ignore_proxy;
+const char *cache_index = "yes";
 const char *cert_chain_file;
 const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
@@ -79,6 +80,7 @@ static struct config_variable {
 } config_variables[] = {
 	{ "ACCEPTABLE_LICENSES", &acceptable_licenses },
 	{ "ACTIVE_FTP", &active_ftp },
+	{ "CACHE_INDEX", &cache_index },
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
@@ -152,6 +154,7 @@ parse_pkg_install_conf(void)
 void
 pkg_install_config(void)
 {
+	int do_cache_index;
 	char *value;
 	parse_pkg_install_conf();
 
@@ -175,7 +178,17 @@ pkg_install_config(void)
 	if ((value = getenv("PKG_PATH")) != NULL)
 		config_pkg_path = value;
 
-	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s",
+	if (strcasecmp(cache_index, "yes") == 0)
+		do_cache_index = 1;
+	else {
+		if (strcasecmp(cache_index, "no"))
+			warnx("Invalid value for configuration option "
+			    "CACHE_INDEX");
+		do_cache_index = 0;
+	}
+
+	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s%s",
+	    (do_cache_index) ? "c" : "",
 	    (verbose_netio && *verbose_netio) ? "v" : "",
 	    (active_ftp && *active_ftp) ? "a" : "",
 	    (ignore_proxy && *ignore_proxy) ? "d" : "");
