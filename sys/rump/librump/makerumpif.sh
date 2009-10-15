@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -67,9 +67,9 @@ sed -e '
 ' ${1} | awk -F\| -v rumptop=${RUMPTOP} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -138,6 +138,7 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 		printf("#include <sys/systm.h>\n") > gencalls
 		printf("\n#include <rump/rump.h>\n") > gencalls
 		printf("#include <rump/%s>\n\n", pubfile) > gencalls
+		printf("#include \"rump_private.h\"\n", privfile) > gencalls
 		printf("#include \"%s\"\n\n", privfile) > gencalls
 		printf("void __dead rump_%s_unavailable(void);\n",	\
 		    myname) > gencalls
@@ -187,7 +188,7 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 	if (!voidret) {
 		printf("\t%s rv;\n", funtype) > gencalls
 	}
-	printf("\n\t") > gencalls
+	printf("\n\trump_schedule();\n\t") > gencalls
 	if (!voidret)
 		printf("rv = ") > gencalls
 	printf("rump_%s(", funname) > gencalls
@@ -196,7 +197,7 @@ $1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
 		if (i < narg)
 			printf(", ") > gencalls
 	}
-	printf(");\n") > gencalls
+	printf(");\n\trump_unschedule();\n") > gencalls
 	if (!voidret)
 		printf("\n\treturn rv;\n") > gencalls
 	printf("}\n") > gencalls
