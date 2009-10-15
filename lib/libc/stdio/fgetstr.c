@@ -1,4 +1,4 @@
-/* $NetBSD: fgetstr.c,v 1.7 2009/10/14 20:54:51 roy Exp $	*/
+/* $NetBSD: fgetstr.c,v 1.8 2009/10/15 00:36:24 roy Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetstr.c,v 1.7 2009/10/14 20:54:51 roy Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.8 2009/10/15 00:36:24 roy Exp $");
 
 #include "namespace.h"
 
@@ -58,17 +58,15 @@ __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 	p = (char *)fp->_lb._base;
 	size = fp->_lb._size;
 	*lenp = __getdelim(&p, &size, sep, fp);
+	fp->_lb._base = (unsigned char *)p;
 	/* The struct size variable is only an int ..... */
 	if (size > INT_MAX) {
 		fp->_lb._size = INT_MAX;
 		errno = EOVERFLOW;
 		goto error;
 	}
-	fp->_lb._base = (unsigned char *)p;
 	fp->_lb._size = (int)size;
-	if (*lenp == 0)
-		return NULL;
-	if (*lenp < SIZE_MAX)
+	if (*lenp != 0 && *lenp < SIZE_MAX - 1)
 		return p;
 error:
 	*lenp = 0;
