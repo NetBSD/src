@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.175 2009/10/08 21:54:45 jym Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.176 2009/10/15 20:50:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.175 2009/10/08 21:54:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.176 2009/10/15 20:50:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2289,11 +2289,33 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
  *
  *	Invalidate a pool cache (destruct and release all of the
  *	cached objects).  Does not reclaim objects from the pool.
+ *
+ *	Note: For pool caches that provide constructed objects, there
+ *	is an assumption that another level of synchronization is occurring
+ *	between the input to the constructor and the cache invalidation.
  */
 void
 pool_cache_invalidate(pool_cache_t pc)
 {
 	pcg_t *full, *empty, *part;
+	uint64_t where;
+
+	if (ncpu < 2) {
+		/*
+		 * We might be called early enough in the boot process
+		 * for the CPU data structures to not be fully initialized.
+		 * In this case, simply gather the local CPU's cache now
+		 * since it will be the only one running.
+		 */
+		pool_cache_xcall(pc);
+	} else {
+		/*
+		 * Gather all of the CPU-specific caches into the
+		 * global cache.
+		 */
+		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
+		xc_wait(where);
+	}
 
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
@@ -2310,20 +2332,6 @@ pool_cache_invalidate(pool_cache_t pc)
 	pool_cache_invalidate_groups(pc, full);
 	pool_cache_invalidate_groups(pc, empty);
 	pool_cache_invalidate_groups(pc, part);
-}
-
-/*
- * pool_cache_invalidate_local:
- *
- *	Invalidate all local ('current CPU') cached objects in
- *	pool cache.
- *	It is caller's responsibility to ensure that no operation is
- *	taking place on this pool cache while doing the local invalidation.
- */
-void
-pool_cache_invalidate_local(pool_cache_t pc)
-{
-	pool_cache_invalidate_cpu(pc, curcpu()->ci_index);
 }
 
 /*
