@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.1 2009/10/15 00:28:46 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.2 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.1 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.2 2009/10/15 16:39:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/select.h>
@@ -82,8 +83,24 @@ rump_scheduler_init()
 void
 rump_schedule()
 {
+	struct lwp *l = rumpuser_get_curlwp();
+
+	/*
+	 * If there is no dedicated lwp, allocate a temp one and
+	 * set it to be free'd upon unschedule().
+	 */
+	if (l == NULL) {
+		l = rump_lwp_alloc(0, rump_nextlid());
+		rumpuser_set_curlwp(l);
+		rump_lwp_release(l);
+	}
+	rump_schedule_cpu(l);
+}
+
+void
+rump_schedule_cpu(struct lwp *l)
+{
 	struct rumpcpu *rcpu;
-	struct lwp *l = curlwp;
 
 	KASSERT(l->l_cpu == NULL);
 	rumpuser_mutex_enter_nowrap(schedmtx);
@@ -91,21 +108,30 @@ rump_schedule()
 		rumpuser_cv_wait_nowrap(schedcv, schedmtx);
 	SLIST_REMOVE_HEAD(&cpu_freelist, rcpu_entries);
 	rumpuser_mutex_exit(schedmtx);
-
 	l->l_cpu = rcpu->rcpu_ci;
 }
 
 void
 rump_unschedule()
 {
-	struct rumpcpu *rcpu;
-	struct cpu_info *ci;
 	struct lwp *l;
 
-	l = curlwp;
+	l = rumpuser_get_curlwp();
+	rump_unschedule_cpu(l);
+	if (l->l_flag & LW_WEXIT) {
+		kmem_free(l, sizeof(*l));
+		rumpuser_set_curlwp(NULL);
+	}
+}
+
+void
+rump_unschedule_cpu(struct lwp *l)
+{
+	struct rumpcpu *rcpu;
+	struct cpu_info *ci;
+
 	ci = l->l_cpu;
 	l->l_cpu = NULL;
-
 	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
 	KASSERT(rcpu->rcpu_ci == ci);
 

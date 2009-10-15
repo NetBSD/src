@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.31 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.32 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -69,6 +69,7 @@ void		rumpvm_flushva(struct uvm_object *);
 void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
 
+void		rump_lwp_free(struct lwp *);
 lwpid_t		rump_nextlid(void);
 void		rump_set_vmspace(struct vmspace *);
 
@@ -88,6 +89,9 @@ int		rump_sysproxy_copyin(const void *, void *, size_t);
 void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
+void	rump_schedule_cpu(struct lwp *);
+void	rump_unschedule_cpu(struct lwp *);
+
 void	rump_user_schedule(int);
 void	rump_user_unschedule(int, int *);
 

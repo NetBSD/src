@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.101 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.102 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.101 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.102 2009/10/15 16:39:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -442,7 +442,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
+	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
@@ -460,7 +460,7 @@ kthread_exit(int ecode)
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_ONE(NULL);
-	rump_clear_curlwp();
+	rump_lwp_release(curlwp);
 	rump_unschedule();
 	rumpuser_thread_exit();
 }

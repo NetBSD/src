@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.124 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.125 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.124 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.125 2009/10/15 16:39:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -388,34 +388,43 @@ rump_uio_free(struct uio *uio)
 	return resid;
 }
 
-/* public interface */
 static pid_t nextpid = 1;
 struct lwp *
 rump_newproc_switch()
 {
-	struct lwp *oldlwp = curlwp;
+	struct lwp *l;
 	pid_t mypid;
 
 	mypid = atomic_inc_uint_nv(&nextpid);
 	if (__predict_false(mypid == 0))
 		mypid = atomic_inc_uint_nv(&nextpid);
 
-	rumpuser_set_curlwp(NULL);
-	rump_setup_curlwp(mypid, 0, 1);
+	l = rump_lwp_alloc(mypid, 0);
+	rump_lwp_switch(l);
 
-	return oldlwp;
+	return l;
 }
 
-/* rump private */
 struct lwp *
-rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+rump_lwp_alloc_and_switch(pid_t pid, lwpid_t lid)
+{
+	struct lwp *l;
+
+	l = rump_lwp_alloc(pid, lid);
+	rump_lwp_switch(l);
+
+	return l;
+}
+
+struct lwp *
+rump_lwp_alloc(pid_t pid, lwpid_t lid)
 {
 	struct lwp *l;
 	struct proc *p;
 
-	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
+	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	if (pid != 0) {
-		p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
+		p = kmem_zalloc(sizeof(*p), KM_SLEEP);
 		rump_proc_vfs_init(p);
 		p->p_stats = &rump_stats;
 		p->p_limit = &rump_limits;
@@ -431,18 +440,60 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
-	l->l_mutex = RUMP_LMUTEX_MAGIC;
+	l->l_mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cpu = NULL;
 
-	/* give current cpu to new lwp */
-	if (set) {
-		struct cpu_info *saveci = curlwp->l_cpu;
+	return l;
+}
 
-		curlwp->l_cpu = NULL;
-		rumpuser_set_curlwp(l);
-		curlwp->l_cpu = saveci;
+void
+rump_lwp_switch(struct lwp *newlwp)
+{
+	struct lwp *l = curlwp;
+
+	rumpuser_set_curlwp(NULL);
+	newlwp->l_cpu = l->l_cpu;
+	rumpuser_set_curlwp(newlwp);
+	if (l->l_flag & LW_WEXIT)
+		rump_lwp_free(l);
+}
+
+/* XXX: this has effect only on non-pid0 lwps */
+void
+rump_lwp_release(struct lwp *l)
+{
+	struct proc *p;
+
+	p = l->l_proc;
+	if (p->p_pid != 0) {
+		mutex_obj_free(p->p_lock);
+		fd_free();
+		rump_proc_vfs_release(p);
+		rump_cred_put(l->l_cred);
+		kmem_free(p, sizeof(*p));
 	}
+	KASSERT((l->l_flag & LW_WEXIT) == 0);
+	l->l_flag |= LW_WEXIT;
+}
 
+void
+rump_lwp_free(struct lwp *l)
+{
+
+	KASSERT(l->l_flag & LW_WEXIT);
+	KASSERT(l != rumpuser_get_curlwp());
+	rump_cred_put(l->l_cred);
+	mutex_obj_free(l->l_mutex);
+	kmem_free(l, sizeof(*l));
+}
+
+struct lwp *
+rump_lwp_curlwp(void)
+{
+	struct lwp *l = curlwp;
+
+	if (l->l_flag & LW_WEXIT)
+		return NULL;
 	return l;
 }
 
@@ -453,53 +504,6 @@ rump_set_vmspace(struct vmspace *vm)
 	struct proc *p = curproc;
 
 	p->p_vmspace = vm;
-}
-
-void
-rump_clear_curlwp(void)
-{
-	struct cpu_info *ci;
-	struct lwp *l;
-	struct proc *p;
-
-	l = rumpuser_get_curlwp();
-	ci = l->l_cpu;
-	KASSERT(ci);
-	p = l->l_proc;
-	if (p->p_pid != 0) {
-		mutex_obj_free(p->p_lock);
-		fd_free();
-		rump_proc_vfs_release(p);
-		rump_cred_put(l->l_cred);
-		kmem_free(p, sizeof(*p));
-	}
-	kmem_free(l, sizeof(*l));
-
-	/* lwp0 inherits current cpu.  quite XXX */
-	rumpuser_set_curlwp(NULL);
-	lwp0.l_cpu = ci; 
-}
-
-struct lwp *
-rump_get_curlwp(void)
-{
-	struct lwp *l;
-
-	l = rumpuser_get_curlwp();
-	if (l == NULL)
-		l = &lwp0;
-
-	return l;
-}
-
-void
-rump_set_curlwp(struct lwp *l)
-{
-
-	/* clear current */
-	rumpuser_set_curlwp(NULL);
-	/* set new */
-	rumpuser_set_curlwp(l);
 }
 
 kauth_cred_t
@@ -598,9 +602,9 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 	if (__predict_false(num >= SYS_NSYSENT))
 		return ENOSYS;
 
-	l = curlwp;
 	callp = rump_sysent + num;
 	rump_schedule();
+	l = curlwp;
 	rv = callp->sy_call(l, (void *)data, retval);
 	rump_unschedule();
 

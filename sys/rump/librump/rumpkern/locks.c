@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.29 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.30 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.29 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.30 2009/10/15 16:39:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -343,9 +343,11 @@ _kernel_lock(int nlocks)
 
 	while (nlocks--) {
 		if (!rumpuser_mutex_tryenter(rump_giantlock)) {
-			rump_unschedule();
+			struct lwp *l = curlwp;
+
+			rump_unschedule_cpu(l);
 			rumpuser_mutex_enter_nowrap(rump_giantlock);
-			rump_schedule();
+			rump_schedule_cpu(l);
 		}
 		lockcnt++;
 	}
@@ -382,14 +384,14 @@ rump_user_unschedule(int nlocks, int *countp)
 {
 
 	_kernel_unlock(nlocks, countp);
-	rump_unschedule();
+	rump_unschedule_cpu(curlwp);
 }
 
 void
 rump_user_schedule(int nlocks)
 {
 
-	rump_schedule();
+	rump_schedule_cpu(curlwp);
 
 	if (nlocks)
 		_kernel_lock(nlocks);

@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.2 2009/10/15 16:39:22 pooka Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -24,11 +24,12 @@ kauth_cred_t	|cred_suserget	|void
 void		|cred_put	|kauth_cred_t
 
 ; lwp interfaces.  these need much love
-struct lwp *	|newproc_switch	|void
-struct lwp *	|setup_curlwp	|pid_t, lwpid_t, int
-struct lwp *	|get_curlwp	|void
-void		|set_curlwp	|struct lwp *
-void		|clear_curlwp	|void
+struct lwp *	|newproc_switch		|void
+struct lwp *	|lwp_alloc		|pid_t, lwpid_t
+struct lwp *	|lwp_alloc_and_switch	|pid_t, lwpid_t
+struct lwp *	|lwp_curlwp		|void
+void		|lwp_switch		|struct lwp *
+void		|lwp_release		|struct lwp *
 
 int		|sysproxy_set			|rump_sysproxy_t, void *
 int		|sysproxy_socket_setup_client	|int
