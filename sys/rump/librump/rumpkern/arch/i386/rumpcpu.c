@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.6 2009/10/15 00:28:47 pooka Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.7 2009/10/15 16:39:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.6 2009/10/15 00:28:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.7 2009/10/15 16:39:22 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -57,7 +57,7 @@ struct lwp *
 x86_curlwp()
 {
 
-	return rump_get_curlwp();
+	return rumpuser_get_curlwp();
 }
 
 void
