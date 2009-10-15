@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.123 2009/03/20 02:53:47 mike Exp $ */
+/* $NetBSD: user.c,v 1.124 2009/10/15 23:03:02 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.123 2009/03/20 02:53:47 mike Exp $");
+__RCSID("$NetBSD: user.c,v 1.124 2009/10/15 23:03:02 hubertf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -908,7 +908,7 @@ typedef struct passwd_type_t {
 
 static passwd_type_t	passwd_types[] = {
 	{ "$sha1",	5,	28,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* SHA1 */
-	{ "$2a",	3,	54,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
+	{ "$2a",	3,	53,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
 	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
 	{ "",		0,	DES_Len,NULL,				0 },	/* standard DES */
 	{ NULL,		(size_t)~0,	(size_t)~0,	NULL,		0 }
@@ -932,7 +932,7 @@ valid_password_length(char *newpasswd)
 			if (regexec(&r, newpasswd, 10, matchv, 0) == 0) {
 				regfree(&r);
 				return (int)(matchv[pwtp->re_sub].rm_eo -
-				    matchv[pwtp->re_sub].rm_so + 1) ==
+				    matchv[pwtp->re_sub].rm_so) ==
 				    pwtp->length;
 			}
 			regfree(&r);
