@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2009/10/15 01:50:08 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2009/10/15 16:46:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -72,8 +72,8 @@ static __inline void cpu_handle_ipi(void) {}
 void __syncicache(void *, size_t);
 #endif
 
-struct lwp *rump_get_curlwp(void); /* XXX */
-#define curlwp rump_get_curlwp()
+struct lwp *rumpuser_get_curlwp(void);
+#define curlwp rumpuser_get_curlwp()
 
 #define curcpu() (curlwp->l_cpu)
 #define cpu_number() 0 /* XXX: not good enuf */
