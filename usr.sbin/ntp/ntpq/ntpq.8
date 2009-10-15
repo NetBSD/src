@@ -17,7 +17,7 @@ ntpq \- standard NTP query program
 .SH "DESCRIPTION"
 This manual page documents, briefly, the \fBntpq\fP command.
 The
-[= prog-name =]
+ntpq
 utility program is used to query NTP servers which
 implement the standard NTP mode 6 control message formats defined
 in Appendix B of the NTPv3 specification RFC1305, requesting
@@ -31,31 +31,31 @@ Requests to read and write arbitrary
 variables can be assembled, with raw and pretty-printed output
 options being available.
 The
-[= prog-name =]
+ntpq
 utility can also obtain and print a
 list of peers in a common format by sending multiple queries to the
 server.
 
 If one or more request options is included on the command line
 when
-[= prog-name =]
+ntpq
 is executed, each of the requests will be sent
 to the NTP servers running on each of the hosts given as command
 line arguments, or on localhost by default.
 If no request options
 are given,
-[= prog-name =]
+ntpq
 will attempt to read commands from the
 standard input and execute these on the NTP server running on the
 first host given on the command line, again defaulting to localhost
 when no other host is specified.
 The
-[= prog-name =]
+ntpq
 utility will prompt for
 commands if the standard input is a terminal device.
 
 The
-[= prog-name =]
+ntpq
 utility uses NTP mode 6 packets to communicate with the
 NTP server, and hence can be used to query any compatible server on
 the network which permits it.
@@ -63,7 +63,7 @@ Note that since NTP is a UDP protocol
 this communication will be somewhat unreliable, especially over
 large distances in terms of network topology.
 The
-[= prog-name =]
+ntpq
 utility makes
 one attempt to retransmit requests, and will time requests out if
 the remote host is not heard from within a suitable timeout
@@ -78,7 +78,7 @@ will
 cause the specified query (queries) to be sent to the indicated
 host(s) immediately.
 Otherwise,
-[= prog-name =]  
+ntpq  
 will attempt to read
 interactive format commands from the standard input.
 .Ss "Internal Commands"
@@ -90,7 +90,7 @@ uniquely identify the command need be typed.
 A
 number of interactive format commands are executed entirely within
 the
-[= prog-name =]
+ntpq
 utility itself and do not result in NTP mode 6
 requests being sent to a server.
 These are described following.
@@ -99,14 +99,14 @@ These are described following.
 A `\&?'
 by itself will print a list of all the command
 keywords known to this incarnation of
-[= prog-name =] .
+ntpq.
 A
 .Ql \&?
 followed by a command keyword will print function and usage
 information about the command.
 This command is probably a better
 source of information about
-[= prog-name =]
+ntpq
 than this manual
 page.
 .sp
@@ -125,7 +125,7 @@ where the
 is ignored, and can be omitted,
 in requests to the server to read variables.
 The
-[= prog-name =]
+ntpq
 utility maintains an internal list in which data to be included in control
 messages can be assembled, and sent using the
 .Ic readlist
@@ -148,13 +148,13 @@ list.
 .sp
 .IR "authenticate [ yes | no ]"
 Normally
-[= prog-name =]
+ntpq
 does not authenticate requests unless
 they are write requests.
 The command
 .Ql authenticate yes
 causes
-[= prog-name =]
+ntpq
 to send authentication with all requests it
 makes.
 Authenticated requests causes some servers to handle
@@ -165,19 +165,19 @@ display.
 The command
 .Ql authenticate
 causes
-[= prog-name =]
+ntpq
 to display whether or not
-[= prog-name =]
+ntpq
 is currently autheinticating requests.
 .sp
 .IR "cooked"
 Causes output from query commands to be "cooked", so that
 variables which are recognized by
-[= prog-name =]
+ntpq
 will have their
 values reformatted for human consumption.
 Variables which
-[= prog-name =]
+ntpq
 thinks should have a decodable value but didn't are
 marked with a trailing
 .Ql \&? .
@@ -236,7 +236,7 @@ purpose.
 ]
 .Xc
 Sets the NTP version number which
-[= prog-name =]
+ntpq
 claims in
 packets.
 Defaults to 3, Note that mode 6 control messages (and
@@ -248,7 +248,7 @@ when communicating with servers.
 .sp
 .IR "quit"
 Exit
-[= prog-name =] .
+ntpq.
 .sp
 .IR "passwd"
 This command prompts you to type in a password (which will not
@@ -270,7 +270,7 @@ Specify a timeout period for responses to server queries.
 The
 default is about 5000 milliseconds.
 Note that since
-[= prog-name =]
+ntpq
 retries each query once after a timeout, the total waiting time for
 a timeout will be twice the timeout value set.
 .br
