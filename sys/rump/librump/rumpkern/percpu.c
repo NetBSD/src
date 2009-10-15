@@ -1,4 +1,4 @@
-/*	$NetBSD: percpu.c,v 1.5 2009/03/18 10:22:44 cegger Exp $	*/
+/*	$NetBSD: percpu.c,v 1.6 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.5 2009/03/18 10:22:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: percpu.c,v 1.6 2009/10/15 00:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -83,5 +83,5 @@ void
 percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
 {
 
-	cb(pc, arg, &rump_cpu);
+	cb(pc, arg, rump_cpu);
 }

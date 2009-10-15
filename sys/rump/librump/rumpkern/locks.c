@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.28 2009/10/02 09:56:08 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.29 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.28 2009/10/02 09:56:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.29 2009/10/15 00:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -300,12 +300,53 @@ cv_has_waiters(kcondvar_t *cv)
  */
 
 static volatile int lockcnt;
+
+bool
+kernel_biglocked()
+{
+
+	return rumpuser_mutex_held(rump_giantlock) && lockcnt > 0;
+}
+
+void
+kernel_unlock_allbutone(int *countp)
+{
+	int minusone = lockcnt-1;
+
+	KASSERT(kernel_biglocked());
+	if (minusone) {
+		_kernel_unlock(minusone, countp);
+	}
+	KASSERT(lockcnt == 1);
+	*countp = minusone;
+
+	/*
+	 * We drop lockcnt to 0 since rumpuser doesn't know that the
+	 * kernel biglock is being used as the interlock for cv in
+	 * tsleep.
+	 */
+	lockcnt = 0;
+}
+
+void
+kernel_ununlock_allbutone(int nlocks)
+{
+
+	KASSERT(rumpuser_mutex_held(rump_giantlock) && lockcnt == 0);
+	lockcnt = 1;
+	_kernel_lock(nlocks);
+}
+
 void
 _kernel_lock(int nlocks)
 {
 
 	while (nlocks--) {
-		rumpuser_mutex_enter(rump_giantlock);
+		if (!rumpuser_mutex_tryenter(rump_giantlock)) {
+			rump_unschedule();
+			rumpuser_mutex_enter_nowrap(rump_giantlock);
+			rump_schedule();
+		}
 		lockcnt++;
 	}
 }
@@ -334,6 +375,24 @@ _kernel_unlock(int nlocks, int *countp)
 		lockcnt--;
 		rumpuser_mutex_exit(rump_giantlock);
 	}
+}
+
+void
+rump_user_unschedule(int nlocks, int *countp)
+{
+
+	_kernel_unlock(nlocks, countp);
+	rump_unschedule();
+}
+
+void
+rump_user_schedule(int nlocks)
+{
+
+	rump_schedule();
+
+	if (nlocks)
+		_kernel_lock(nlocks);
 }
 
 struct kmutexobj {
