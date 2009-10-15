@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.51 2009/10/14 17:29:19 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.52 2009/10/15 00:28:46 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,7 +15,7 @@ LIB=		rump
 # Source modules, first the ones specifically implemented for librump.
 # 
 SRCS=	rump.c emul.c intr.c locks.c ltsleep.c percpu.c pool.c	\
-	sleepq.c sysproxy_socket.c vm.c
+	scheduler.c sleepq.c sysproxy_socket.c vm.c
 
 SRCS+=	rumpkern_if_wrappers.c
 
@@ -71,8 +71,9 @@ AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 #
 # If archdir exists, it is required to provide:
 # 1) kobj_reloc() and kobj_machdep()
-# 2) ...?
-# 3) PROFIT!
+# 2) rump_cpu_bootstrap()
+# 3) ...?
+# 4) PROFIT!
 #
 
 #
@@ -90,7 +91,7 @@ ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
 .include "${ARCHDIR}/Makefile.inc"
 .PATH:	${ARCHDIR}
 .else
-SRCS+=	kobj_stubs.c
+SRCS+=	kobj_stubs.c rumpcpu_generic.c
 .endif
 
 # include libkern source files
