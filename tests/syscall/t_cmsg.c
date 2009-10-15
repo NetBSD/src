@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.8 2009/10/14 18:22:50 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.9 2009/10/15 16:47:23 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -104,6 +104,9 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	if (rump_sys_mount(MOUNT_TMPFS, "/", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("mount tmpfs");
 
+	/* store our current lwp/proc */
+	l1 = rump_pub_newproc_switch();
+
 	/* create unix socket and bind it to a path */
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
@@ -116,9 +119,6 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail_errno("socket 1 bind");
 	if (rump_sys_listen(s1, 1) == -1)
 		atf_tc_fail_errno("socket 1 listen");
-
-	/* store our current lwp/proc */
-	l1 = rump_pub_get_curlwp();
 
 	/* create new process */
 	l2 = rump_pub_newproc_switch();
@@ -166,7 +166,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail_errno("sendmsg failed");
 
 	/* switch back to original proc */
-	rump_set_curlwp(l1);
+	rump_pub_lwp_switch(l1);
 
 	/* accept connection and read fd */
 	sl = sizeof(sun);
