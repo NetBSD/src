@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.52 2009/09/29 11:51:02 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.53 2009/10/15 00:29:40 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -294,7 +294,8 @@ echo '
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>'
-[ ! -z "${rump}" ] && echo '#include <rump/rumpvnode_if.h>'
+[ ! -z "${rump}" ] && echo '#include <rump/rumpvnode_if.h>'		\
+	&& echo '#include "rump_private.h"'
 
 echo "
 const struct vnodeop_desc ${rump}vop_default_desc = {"
@@ -402,10 +403,14 @@ function doit() {
 		}
 	}
 	printf("\tmpsafe = (%s%s->v_vflag & VV_MPSAFE);\n", argname[0], arg0special);
+	if (rump)
+		printf("\trump_schedule();\n");
 	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
 	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
 	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
+	if (rump)
+		printf("\trump_unschedule();\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
 		printf("\tif (error == 0)\n"				\
