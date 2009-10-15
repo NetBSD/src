@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.28 2009/10/09 14:41:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.29 2009/10/15 00:33:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -120,6 +120,7 @@ struct rumpuser_mtx;
 void rumpuser_mutex_init(struct rumpuser_mtx **);
 void rumpuser_mutex_recursive_init(struct rumpuser_mtx **);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
+void rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
@@ -141,6 +142,7 @@ struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
 void rumpuser_cv_destroy(struct rumpuser_cv *);
 void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
+void rumpuser_cv_wait_nowrap(struct rumpuser_cv *, struct rumpuser_mtx *);
 int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *,
 			   struct timespec *);
 void rumpuser_cv_signal(struct rumpuser_cv *);
