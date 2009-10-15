@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.96 2009/10/13 12:38:14 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.97 2009/10/15 10:05:48 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.96 2009/10/13 12:38:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97 2009/10/15 10:05:48 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -76,6 +76,14 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.96 2009/10/13 12:38:14 hannken Ex
 
 #include <uvm/uvm.h>
 
+struct snap_info {
+	kmutex_t si_lock;			/* Lock this snapinfo */
+	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
+	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
+	daddr_t *si_snapblklist;		/* Snapshot block hints list */
+	uint32_t si_gen;			/* Incremented on change */
+};
+
 #if !defined(FFS_NO_SNAPSHOT)
 typedef int (*acctfunc_t)
     (struct vnode *, void *, int, int, struct fs *, daddr_t, int);
@@ -107,20 +115,13 @@ static int rwfsblk(struct vnode *, int, void *, daddr_t);
 static int syncsnap(struct vnode *);
 static int wrsnapblk(struct vnode *, void *, daddr_t);
 
+static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
 static inline void db_assign(struct inode *, int, daddr_t);
 static inline daddr_t ib_get(struct inode *, int);
 static inline void ib_assign(struct inode *, int, daddr_t);
 static inline daddr_t idb_get(struct inode *, void *, int);
 static inline void idb_assign(struct inode *, void *, int, daddr_t);
-
-struct snap_info {
-	kmutex_t si_lock;			/* Lock this snapinfo */
-	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
-	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
-	daddr_t *si_snapblklist;		/* Snapshot block hints list */
-	uint32_t si_gen;			/* Incremented on change */
-};
 
 #ifdef DEBUG
 static int snapdebug = 0;
@@ -277,7 +278,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	fs->fs_snapinum[snaploc] = ip->i_number;
 
 	mutex_enter(&si->si_lock);
-	if (ip->i_nextsnap.tqe_prev != 0)
+	if (is_active_snapshot(si, ip))
 		panic("ffs_snapshot: %"PRIu64" already on list", ip->i_number);
 	TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 	if (TAILQ_FIRST(&si->si_snapshots) == ip) {
@@ -1318,10 +1319,9 @@ ffs_snapremove(struct vnode *vp)
 	 *
 	 * Clear copy-on-write flag if last snapshot.
 	 */
-	if (ip->i_nextsnap.tqe_prev != 0) {
-		mutex_enter(&si->si_lock);
+	mutex_enter(&si->si_lock);
+	if (is_active_snapshot(si, ip)) {
 		TAILQ_REMOVE(&si->si_snapshots, ip, i_nextsnap);
-		ip->i_nextsnap.tqe_prev = 0;
 		if (TAILQ_FIRST(&si->si_snapshots) != 0) {
 			/* Roll back the list of preallocated blocks. */
 			xp = TAILQ_LAST(&si->si_snapshots, inodelst);
@@ -1338,7 +1338,8 @@ ffs_snapremove(struct vnode *vp)
 			free(ip->i_snapblklist, M_UFSMNT);
 			ip->i_snapblklist = NULL;
 		}
-	}
+	} else
+		mutex_exit(&si->si_lock);
 	/*
 	 * Clear all BLK_NOCOPY fields. Pass any block claims to other
 	 * snapshots that want them (see ffs_snapblkfree below).
@@ -1678,9 +1679,9 @@ ffs_snapshot_mount(struct mount *mp)
 		/*
 		 * Link it onto the active snapshot list.
 		 */
-		if (ip->i_nextsnap.tqe_prev != 0)
-			panic("ffs_snapshot_mount: %llu already on list",
-			    (unsigned long long)ip->i_number);
+		if (is_active_snapshot(si, ip))
+			panic("ffs_snapshot_mount: %"PRIu64" already on list",
+			    ip->i_number);
 		else
 			TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 		vp->v_vflag |= VV_SYSTEM;
@@ -1720,7 +1721,6 @@ ffs_snapshot_unmount(struct mount *mp)
 	while ((xp = TAILQ_FIRST(&si->si_snapshots)) != 0) {
 		vp = ITOV(xp);
 		TAILQ_REMOVE(&si->si_snapshots, xp, i_nextsnap);
-		xp->i_nextsnap.tqe_prev = 0;
 		if (xp->i_snapblklist == si->si_snapblklist)
 			si->si_snapblklist = NULL;
 		free(xp->i_snapblklist, M_UFSMNT);
@@ -2118,6 +2118,23 @@ wrsnapblk(struct vnode *vp, void *data, daddr_t lbn)
 		bawrite(bp);
 
 	return error;
+}
+
+/*
+ * Check if this inode is present on the active snapshot list.
+ * Must be called with snapinfo locked.
+ */
+static inline bool
+is_active_snapshot(struct snap_info *si, struct inode *ip)
+{
+	struct inode *xp;
+
+	KASSERT(mutex_owned(&si->si_lock));
+
+	TAILQ_FOREACH(xp, &si->si_snapshots, i_nextsnap)
+		if (xp == ip)
+			return true;
+	return false;
 }
 
 /*
