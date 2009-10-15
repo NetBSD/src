@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.18 2009/10/14 18:40:01 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.19 2009/10/15 08:22:31 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -322,4 +322,11 @@ usr.bin/printf/printf.c				1.34
 
 	Avoid segv on "printf '%*********s' 666".
 	[christos, ticket #1091]
+
+etc/Makefile					1.365
+etc/audit-packages.conf				removed
+
+	Retire audit-packages.conf, it was obsoleted by the
+	merge of pkg_install-20090201.
+	[joerg, ticket #784]
 
