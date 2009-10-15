@@ -94,7 +94,17 @@ AC_CHECK_FUNC([mkdtemp],
               [Define to 1 if you have the `mkdtemp' function.]))
 
 # Check whether fopen64 is available and whether _LARGEFILE64_SOURCE
-# needs to be defined for it
+# needs to be defined for it.
+#
+# If off_t is 64-bit, then we don't need to bother.  It's important to
+# try and avoid these calls if we can because some platforms that have
+# them (e.g. Mac OS X 10.6) mark them as deprecated and they cause
+# fatal (due to -Werror) warnings.
+AC_CHECK_SIZEOF(off_t)
+if test x"${ac_cv_sizeof_off_t}" = x8; then
+  bu_cv_have_fopen64=no
+  bu_cv_have_stat64=no
+fi
 AC_MSG_CHECKING([for fopen64])
 AC_CACHE_VAL(bu_cv_have_fopen64,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>], [FILE *f = fopen64 ("/tmp/foo","r");])],
