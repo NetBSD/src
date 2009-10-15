@@ -108,6 +108,9 @@ SSYYNNOOPPSSIISS
      _v_o_i_d
      ffeettcchhIInniittUURRLLLLiisstt(_s_t_r_u_c_t _u_r_l___l_i_s_t _*_u_l);
 
+     _i_n_t
+     ffeettcchhAAppppeennddUURRLLLLiisstt(_s_t_r_u_c_t _u_r_l___l_i_s_t _*_d_s_t, _c_o_n_s_t _s_t_r_u_c_t _u_r_l___l_i_s_t _*_s_r_c);
+
      _v_o_i_d
      ffeettcchhFFrreeeeUURRLLLLiisstt(_s_t_r_u_c_t _u_r_l___l_i_s_t _*_u_l);
 
@@ -204,7 +207,10 @@ DDEESSCCRRIIPPTTIIOONN
      };
 
      The list should be initialized by calling ffeettcchhIInniittUURRLLLLiisstt() and the
-     entries be freed by calling ffeettcchhFFrreeeeUURRLLLLiisstt().
+     entries be freed by calling ffeettcchhFFrreeeeUURRLLLLiisstt().  The functio
+     ffeettcchhAAppppeennddUURRLLLLiisstt() can be used to append one URL lists to another.  If
+     the `c' (cache result) flag is specified, the library is allowed to
+     internally cache the result.
 
      ffeettcchhSSttrriinnggiiffyyUURRLL() returns the URL as string.  ffeettcchhUUnnqquuootteePPaatthh()
      returns the path name part of the URL with any quoting undone.  Query

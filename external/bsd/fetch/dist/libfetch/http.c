@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.5 2009/04/04 23:26:06 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.6 2009/10/15 13:00:00 joerg Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -1122,7 +1122,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 
 	if (conn->err == HTTP_NOT_MODIFIED) {
 		http_seterr(HTTP_NOT_MODIFIED);
-		return (NULL);
+		goto ouch;
 	}
 
 	/* wrap it up in a fetchIO */
@@ -1223,7 +1223,7 @@ struct index_parser {
 	enum http_states state;
 };
 
-static size_t
+static ssize_t
 parse_index(struct index_parser *parser, const char *buf, size_t len)
 {
 	char *end_attr, p = *buf;
@@ -1352,11 +1352,20 @@ parse_index(struct index_parser *parser, const char *buf, size_t len)
 			return 0;
 		*end_attr = '\0';
 		parser->state = ST_TAGA;
-		fetch_add_entry(parser->ue, parser->url, buf, 1);
+		if (fetch_add_entry(parser->ue, parser->url, buf, 1))
+			return -1;
 		return end_attr + 1 - buf;
 	}
 	abort();
 }
+
+struct http_index_cache {
+	struct http_index_cache *next;
+	struct url *location;
+	struct url_list ue;
+};
+
+static struct http_index_cache *index_cache;
 
 /*
  * List a directory
@@ -1366,17 +1375,53 @@ fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern, const c
 {
 	fetchIO *f;
 	char buf[2 * PATH_MAX];
-	size_t buf_len, processed, sum_processed;
-	ssize_t read_len;
+	size_t buf_len, sum_processed;
+	ssize_t read_len, processed;
 	struct index_parser state;
+	struct http_index_cache *cache = NULL;
+	int do_cache, ret;
+
+	do_cache = CHECK_FLAG('c');
+
+	if (do_cache) {
+		for (cache = index_cache; cache != NULL; cache = cache->next) {
+			if (strcmp(cache->location->scheme, url->scheme))
+				continue;
+			if (strcmp(cache->location->user, url->user))
+				continue;
+			if (strcmp(cache->location->pwd, url->pwd))
+				continue;
+			if (strcmp(cache->location->host, url->host))
+				continue;
+			if (cache->location->port != url->port)
+				continue;
+			if (strcmp(cache->location->doc, url->doc))
+				continue;
+			return fetchAppendURLList(ue, &cache->ue);
+		}
+
+		cache = malloc(sizeof(*cache));
+		fetchInitURLList(&cache->ue);
+		cache->location = fetchCopyURL(url);
+	}
+
+	f = fetchGetHTTP(url, flags);
+	if (f == NULL) {
+		if (do_cache) {
+			fetchFreeURLList(&cache->ue);
+			fetchFreeURL(cache->location);
+			free(cache);
+		}
+		return -1;
+	}
 
 	state.url = url;
 	state.state = ST_NONE;
-	state.ue = ue;
-
-	f = fetchGetHTTP(url, flags);
-	if (f == NULL)
-		return -1;
+	if (do_cache) {
+		state.ue = &cache->ue;
+	} else {
+		state.ue = ue;
+	}
 
 	buf_len = 0;
 
@@ -1385,12 +1430,31 @@ fetchListHTTP(struct url_list *ue, struct url *url, const char *pattern, const c
 		sum_processed = 0;
 		do {
 			processed = parse_index(&state, buf + sum_processed, buf_len);
+			if (processed == -1)
+				break;
 			buf_len -= processed;
 			sum_processed += processed;
 		} while (processed != 0 && buf_len > 0);
+		if (processed == -1) {
+			read_len = -1;
+			break;
+		}
 		memmove(buf, buf + sum_processed, buf_len);
 	}
 
 	fetchIO_close(f);
-	return read_len < 0 ? -1 : 0;
+
+	ret = read_len < 0 ? -1 : 0;
+
+	if (do_cache) {
+		if (ret == 0) {
+			cache->next = index_cache;
+			index_cache = cache;
+		}
+
+		if (fetchAppendURLList(ue, &cache->ue))
+			ret = -1;
+	}
+
+	return ret;
 }
