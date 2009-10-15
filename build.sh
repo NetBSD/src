@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.215 2009/10/14 19:03:12 apb Exp $
+#	$NetBSD: build.sh,v 1.216 2009/10/15 03:21:45 enami Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1155,7 +1155,7 @@ validatemakeparams()
 		eval oldval=\"\$${var}\"
 		newval="$(getmakevar $var)"
 		if ! $do_expertmode; then
-			: ${__SRC_TOP_OBJ__:=$(getmakevar __SRC_TOP_OBJ__)}
+			: ${_SRC_TOP_OBJ_:=$(getmakevar _SRC_TOP_OBJ_)}
 			case "$var" in
 			DESTDIR)
 				: ${newval:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
@@ -1313,7 +1313,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.215 2009/10/14 19:03:12 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.216 2009/10/15 03:21:45 enami Exp $
 # with these arguments: ${_args}
 #
 
