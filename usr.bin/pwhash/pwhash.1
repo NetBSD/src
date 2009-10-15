@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwhash.1,v 1.5 2004/11/17 14:57:48 wiz Exp $
+.\"	$NetBSD: pwhash.1,v 1.6 2009/10/15 23:12:53 hubertf Exp $
 .\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 12, 2004
+.Dd October 16, 2009
 .Dt PWHASH 1
 .Os
 .Sh NAME
@@ -52,8 +52,9 @@ Encrypt the string using Blowfish hashing with the specified
 .It Fl k
 Run in
 .Xr makekey 8
-compatible mode; a single combined key and salt are read from standard
-input and the DES encrypted result is written to standard output without a
+compatible mode.
+A single combined key (eight chars) and salt (two chars) with no intermediate space
+are read from standard input and the DES encrypted result is written to standard output without a
 terminating newline.
 .It Fl m
 Encrypt the string using MD5.
