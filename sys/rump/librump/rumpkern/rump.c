@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.123 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.124 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.123 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.124 2009/10/15 00:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -85,7 +85,6 @@ struct pgrp rump_pgrp = {
 };
 struct pstats rump_stats;
 struct plimit rump_limits;
-struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
@@ -206,7 +205,8 @@ rump__init(int rump_version)
 	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
 		rump_threads = *buf != '0';
 	}
-	rumpuser_thrinit(_kernel_lock, _kernel_unlock, rump_threads);
+	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
+	    rump_threads);
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
@@ -241,7 +241,6 @@ rump__init(int rump_version)
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
-	l->l_cpu = &rump_cpu;
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -250,8 +249,11 @@ rump__init(int rump_version)
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
+	rump_scheduler_init();
+	rump_schedule();
+
 	callout_startup();
-	callout_init_cpu(&rump_cpu);
+	callout_init_cpu(rump_cpu);
 
 	sysctl_init();
 	kqueue_init();
@@ -260,7 +262,7 @@ rump__init(int rump_version)
 	percpu_init();
 	fd_sys_init();
 	module_init();
-	softint_init(&rump_cpu);
+	softint_init(rump_cpu);
 	devsw_init();
 
 	/* these do nothing if not present */
@@ -290,6 +292,11 @@ rump__init(int rump_version)
 		vmem_rehash_start();
 #endif
 
+	/*
+	 * Module bootstrap makes calls back into rump, so
+	 * unschedule before calling.
+	 */
+	rump_unschedule();
 	rumpuser_dl_module_bootstrap();
 
 	return 0;
@@ -425,10 +432,16 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_mutex = RUMP_LMUTEX_MAGIC;
-	l->l_cpu = &rump_cpu;
+	l->l_cpu = NULL;
 
-	if (set)
+	/* give current cpu to new lwp */
+	if (set) {
+		struct cpu_info *saveci = curlwp->l_cpu;
+
+		curlwp->l_cpu = NULL;
 		rumpuser_set_curlwp(l);
+		curlwp->l_cpu = saveci;
+	}
 
 	return l;
 }
@@ -445,10 +458,13 @@ rump_set_vmspace(struct vmspace *vm)
 void
 rump_clear_curlwp(void)
 {
+	struct cpu_info *ci;
 	struct lwp *l;
 	struct proc *p;
 
 	l = rumpuser_get_curlwp();
+	ci = l->l_cpu;
+	KASSERT(ci);
 	p = l->l_proc;
 	if (p->p_pid != 0) {
 		mutex_obj_free(p->p_lock);
@@ -458,7 +474,10 @@ rump_clear_curlwp(void)
 		kmem_free(p, sizeof(*p));
 	}
 	kmem_free(l, sizeof(*l));
+
+	/* lwp0 inherits current cpu.  quite XXX */
 	rumpuser_set_curlwp(NULL);
+	lwp0.l_cpu = ci; 
 }
 
 struct lwp *
@@ -574,13 +593,18 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 {
 	struct lwp *l;
 	struct sysent *callp;
+	int rv;
 
 	if (__predict_false(num >= SYS_NSYSENT))
 		return ENOSYS;
 
 	l = curlwp;
 	callp = rump_sysent + num;
-	return callp->sy_call(l, (void *)data, retval);
+	rump_schedule();
+	rv = callp->sy_call(l, (void *)data, retval);
+	rump_unschedule();
+
+	return rv;
 }
 
 rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
@@ -606,7 +630,7 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 }
 
 int
-rump_getversion()
+rump_getversion(void)
 {
 
 	return __NetBSD_Version__;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.3 2009/01/07 22:50:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.4 2009/10/15 00:28:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,8 +36,7 @@ do {									\
 	int nlocks;							\
 	rumpuser__kunlock(0, &nlocks);					\
 	a;								\
-	if (nlocks)							\
-		rumpuser__klock(nlocks);				\
+	rumpuser__klock(nlocks);					\
 } while (/*CONSTCOND*/0)
 
 #define DOCALL(rvtype, call)						\
@@ -54,8 +53,7 @@ do {									\
 	int nlocks;							\
 	rumpuser__kunlock(0, &nlocks);					\
 	rv = call;							\
-	if (nlocks)							\
-		rumpuser__klock(nlocks);				\
+	rumpuser__klock(nlocks);					\
 	if (rv == -1)							\
 		*error = errno;						\
 	else								\
