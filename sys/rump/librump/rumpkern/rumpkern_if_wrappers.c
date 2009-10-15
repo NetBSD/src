@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.3 2009/10/15 00:31:25 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.4 2009/10/15 16:40:15 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.2 2009/10/15 16:39:22 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -162,44 +162,56 @@ rump_pub_newproc_switch(void)
 }
 
 struct lwp *
-rump_pub_setup_curlwp(pid_t arg1, lwpid_t arg2, int arg3)
+rump_pub_lwp_alloc(pid_t arg1, lwpid_t arg2)
 {
 	struct lwp * rv;
 
 	rump_schedule();
-	rv = rump_setup_curlwp(arg1, arg2, arg3);
+	rv = rump_lwp_alloc(arg1, arg2);
 	rump_unschedule();
 
 	return rv;
 }
 
 struct lwp *
-rump_pub_get_curlwp(void)
+rump_pub_lwp_alloc_and_switch(pid_t arg1, lwpid_t arg2)
 {
 	struct lwp * rv;
 
 	rump_schedule();
-	rv = rump_get_curlwp();
+	rv = rump_lwp_alloc_and_switch(arg1, arg2);
+	rump_unschedule();
+
+	return rv;
+}
+
+struct lwp *
+rump_pub_lwp_curlwp(void)
+{
+	struct lwp * rv;
+
+	rump_schedule();
+	rv = rump_lwp_curlwp();
 	rump_unschedule();
 
 	return rv;
 }
 
 void
-rump_pub_set_curlwp(struct lwp *arg1)
+rump_pub_lwp_switch(struct lwp *arg1)
 {
 
 	rump_schedule();
-	rump_set_curlwp(arg1);
+	rump_lwp_switch(arg1);
 	rump_unschedule();
 }
 
 void
-rump_pub_clear_curlwp(void)
+rump_pub_lwp_release(struct lwp *arg1)
 {
 
 	rump_schedule();
-	rump_clear_curlwp();
+	rump_lwp_release(arg1);
 	rump_unschedule();
 }
 
