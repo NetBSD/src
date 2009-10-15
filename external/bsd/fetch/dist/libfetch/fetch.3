@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.1.1.6 2009/04/04 23:26:04 joerg Exp $
+.\" $NetBSD: fetch.3,v 1.1.1.7 2009/10/15 12:59:58 joerg Exp $
 .\"
 .Dd February 4, 2009
 .Dt FETCH 3
@@ -131,6 +131,8 @@
 .Fn fetchListFTP "struct url_list *list" "struct url *u" "const char *flags"
 .Ft void
 .Fn fetchInitURLList "struct url_list *ul"
+.Ft int
+.Fn fetchAppendURLList "struct url_list *dst" "const struct url_list *src"
 .Ft void
 .Fn fetchFreeURLList "struct url_list *ul"
 .Ft char *
@@ -281,6 +283,13 @@ The list should be initialized by calling
 .Fn fetchInitURLList
 and the entries be freed by calling
 .Fn fetchFreeURLList .
+The function
+.Fn fetchAppendURLList
+can be used to append one URL lists to another.
+If the
+.Ql c
+(cache result) flag is specified, the library is allowed to internally
+cache the result.
 .Pp
 .Fn fetchStringifyURL
 returns the URL as string.

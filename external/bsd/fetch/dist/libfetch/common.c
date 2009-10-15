@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.6 2009/08/21 15:12:24 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.7 2009/10/15 12:59:57 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -751,6 +751,40 @@ fetchInitURLList(struct url_list *ue)
 {
 	ue->length = ue->alloc_size = 0;
 	ue->urls = NULL;
+}
+
+int
+fetchAppendURLList(struct url_list *dst, const struct url_list *src)
+{
+	size_t i, j, len;
+
+	len = dst->length + src->length;
+	if (len > dst->alloc_size) {
+		struct url *tmp;
+
+		tmp = realloc(dst->urls, len * sizeof(*tmp));
+		if (tmp == NULL) {
+			errno = ENOMEM;
+			fetch_syserr();
+			return (-1);
+		}
+		dst->alloc_size = len;
+		dst->urls = tmp;
+	}
+
+	for (i = 0, j = dst->length; i < src->length; ++i, ++j) {
+		dst->urls[j] = src->urls[i];
+		dst->urls[j].doc = strdup(src->urls[i].doc);
+		if (dst->urls[j].doc == NULL) {
+			while (i-- > 0)
+				free(dst->urls[j].doc);
+			fetch_syserr();
+			return -1;
+		}
+	}
+	dst->length = len;
+
+	return 0;
 }
 
 void
