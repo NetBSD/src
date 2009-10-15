@@ -176,13 +176,11 @@ order they would be used:
 Allocates and initializes a
 .Tn struct archive
 object suitable for reading from an archive.
-.It Xo
-.Fn archive_read_support_compression_all ,
-.Fn archive_read_support_compression_bzip2 ,
-.Fn archive_read_support_compression_compress ,
-.Fn archive_read_support_compression_gzip ,
-.Fn archive_read_support_compression_none
-.Xc
+.It Fn archive_read_support_compression_all , \
+Fn archive_read_support_compression_bzip2 , \
+Fn archive_read_support_compression_compress , \
+Fn archive_read_support_compression_gzip , \
+Fn archive_read_support_compression_none
 Enables auto-detection code and decompression support for the
 specified compression.
 Note that
@@ -196,14 +194,12 @@ Data is fed through the specified external program before being dearchived.
 Note that this disables automatic detection of the compression format,
 so it makes no sense to specify this in conjunction with any other
 decompression option.
-.It Xo
-.Fn archive_read_support_format_all ,
-.Fn archive_read_support_format_cpio ,
-.Fn archive_read_support_format_empty ,
-.Fn archive_read_support_format_iso9660 ,
-.Fn archive_read_support_format_tar ,
-.Fn archive_read_support_format_zip
-.Xc
+.It Fn archive_read_support_format_all , \
+Fn archive_read_support_format_cpio , \
+Fn archive_read_support_format_empty , \
+Fn archive_read_support_format_iso9660 , \
+Fn archive_read_support_format_tar , \
+Fn archive_read_support_format_zip
 Enables support---including auto-detection code---for the
 specified archive format.
 For example,
