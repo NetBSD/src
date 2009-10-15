@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.2 2009/10/15 16:39:22 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.3 2009/10/15 23:15:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.2 2009/10/15 16:39:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.3 2009/10/15 23:15:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,7 +53,9 @@ int ncpu = 1;
 
 static SLIST_HEAD(,rumpcpu) cpu_freelist = SLIST_HEAD_INITIALIZER(cpu_freelist);
 static struct rumpuser_mtx *schedmtx;
-static struct rumpuser_cv *schedcv;
+static struct rumpuser_cv *schedcv, *lwp0cv;
+
+static bool lwp0busy = false;
 
 struct cpu_info *
 cpu_lookup(u_int index)
@@ -71,6 +73,7 @@ rump_scheduler_init()
 
 	rumpuser_mutex_init(&schedmtx);
 	rumpuser_cv_init(&schedcv);
+	rumpuser_cv_init(&lwp0cv);
 	for (i = 0; i < ncpu; i++) {
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
@@ -83,32 +86,57 @@ rump_scheduler_init()
 void
 rump_schedule()
 {
-	struct lwp *l = rumpuser_get_curlwp();
+	struct cpu_info *ci;
+	struct lwp *l;
 
 	/*
 	 * If there is no dedicated lwp, allocate a temp one and
-	 * set it to be free'd upon unschedule().
+	 * set it to be free'd upon unschedule().  Use lwp0 context
+	 * for reserving the necessary resources.
 	 */
+	l = rumpuser_get_curlwp();
 	if (l == NULL) {
+		/* busy lwp0 */
+		rumpuser_mutex_enter_nowrap(schedmtx);
+		while (lwp0busy)
+			rumpuser_cv_wait_nowrap(lwp0cv, schedmtx);
+		lwp0busy = true;
+		rumpuser_mutex_exit(schedmtx);
+
+		/* schedule cpu and use lwp0 */
+		ci = rump_schedule_cpu();
+		lwp0.l_cpu = ci;
+		rumpuser_set_curlwp(&lwp0);
 		l = rump_lwp_alloc(0, rump_nextlid());
-		rumpuser_set_curlwp(l);
+
+		/* release lwp0 */
+		rump_lwp_switch(l);
+		rumpuser_mutex_enter_nowrap(schedmtx);
+		lwp0busy = false;
+		rumpuser_cv_signal(lwp0cv);
+		rumpuser_mutex_exit(schedmtx);
+
+		/* mark new lwp as dead-on-exit */
 		rump_lwp_release(l);
+	} else {
+		KASSERT(l->l_cpu == NULL);
+		ci = rump_schedule_cpu();
+		l->l_cpu = ci;
 	}
-	rump_schedule_cpu(l);
 }
 
-void
-rump_schedule_cpu(struct lwp *l)
+struct cpu_info *
+rump_schedule_cpu()
 {
 	struct rumpcpu *rcpu;
 
-	KASSERT(l->l_cpu == NULL);
 	rumpuser_mutex_enter_nowrap(schedmtx);
 	while ((rcpu = SLIST_FIRST(&cpu_freelist)) == NULL)
 		rumpuser_cv_wait_nowrap(schedcv, schedmtx);
 	SLIST_REMOVE_HEAD(&cpu_freelist, rcpu_entries);
 	rumpuser_mutex_exit(schedmtx);
-	l->l_cpu = rcpu->rcpu_ci;
+
+	return rcpu->rcpu_ci;
 }
 
 void
