@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.100 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.101 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.100 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.101 2009/10/15 00:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -73,7 +73,6 @@ struct device *root_device;
 dev_t rootdev;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
-int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
@@ -370,14 +369,18 @@ threadbouncer(void *arg)
 	void (*f)(void *);
 	void *thrarg;
 
+	/* schedule ourselves first */
 	f = k->f;
 	thrarg = k->arg;
 	rumpuser_set_curlwp(k->mylwp);
-	kmem_free(k, sizeof(struct kthdesc));
+	rump_schedule();
 
+	kmem_free(k, sizeof(struct kthdesc));
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
+
 	f(thrarg);
+
 	panic("unreachable, should kthread_exit()");
 }
 
@@ -458,6 +461,7 @@ kthread_exit(int ecode)
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_ONE(NULL);
 	rump_clear_curlwp();
+	rump_unschedule();
 	rumpuser_thread_exit();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.30 2009/10/14 17:30:52 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.31 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -77,12 +77,24 @@ typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
 rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
 
-extern struct cpu_info rump_cpu;
+extern struct cpu_info *rump_cpu;
 
 extern rump_sysproxy_t rump_sysproxy;
 extern void *rump_sysproxy_arg;
 
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
+
+void	rump_scheduler_init(void);
+void	rump_schedule(void);
+void	rump_unschedule(void);
+void	rump_user_schedule(int);
+void	rump_user_unschedule(int, int *);
+
+void	rump_cpu_bootstrap(struct cpu_info *);
+
+bool	kernel_biglocked(void);
+void	kernel_unlock_allbutone(int *);
+void	kernel_ununlock_allbutone(int);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

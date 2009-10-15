@@ -1,0 +1,116 @@
+/*      $NetBSD: scheduler.c,v 1.1 2009/10/15 00:28:46 pooka Exp $	*/
+
+/*
+ * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by
+ * The Finnish Cultural Foundation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.1 2009/10/15 00:28:46 pooka Exp $");
+
+#include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/select.h>
+
+#include <rump/rumpuser.h>
+
+#include "rump_private.h"
+
+/* should go for MAXCPUS at some point */
+static struct cpu_info rump_cpus[1];
+static struct rumpcpu {
+	struct cpu_info *rcpu_ci;
+	SLIST_ENTRY(rumpcpu) rcpu_entries;
+} rcpu_storage[1];
+struct cpu_info *rump_cpu = &rump_cpus[0];
+int ncpu = 1;
+
+static SLIST_HEAD(,rumpcpu) cpu_freelist = SLIST_HEAD_INITIALIZER(cpu_freelist);
+static struct rumpuser_mtx *schedmtx;
+static struct rumpuser_cv *schedcv;
+
+struct cpu_info *
+cpu_lookup(u_int index)
+{
+
+	return &rump_cpus[index];
+}
+
+void
+rump_scheduler_init()
+{
+	struct rumpcpu *rcpu;
+	struct cpu_info *ci;
+	int i;
+
+	rumpuser_mutex_init(&schedmtx);
+	rumpuser_cv_init(&schedcv);
+	for (i = 0; i < ncpu; i++) {
+		rcpu = &rcpu_storage[i];
+		ci = &rump_cpus[i];
+		rump_cpu_bootstrap(ci);
+		rcpu->rcpu_ci = ci;
+		SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
+	}
+}
+
+void
+rump_schedule()
+{
+	struct rumpcpu *rcpu;
+	struct lwp *l = curlwp;
+
+	KASSERT(l->l_cpu == NULL);
+	rumpuser_mutex_enter_nowrap(schedmtx);
+	while ((rcpu = SLIST_FIRST(&cpu_freelist)) == NULL)
+		rumpuser_cv_wait_nowrap(schedcv, schedmtx);
+	SLIST_REMOVE_HEAD(&cpu_freelist, rcpu_entries);
+	rumpuser_mutex_exit(schedmtx);
+
+	l->l_cpu = rcpu->rcpu_ci;
+}
+
+void
+rump_unschedule()
+{
+	struct rumpcpu *rcpu;
+	struct cpu_info *ci;
+	struct lwp *l;
+
+	l = curlwp;
+	ci = l->l_cpu;
+	l->l_cpu = NULL;
+
+	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
+	KASSERT(rcpu->rcpu_ci == ci);
+
+	rumpuser_mutex_enter_nowrap(schedmtx);
+	SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
+	rumpuser_cv_signal(schedcv);
+	rumpuser_mutex_exit(schedmtx);
+}

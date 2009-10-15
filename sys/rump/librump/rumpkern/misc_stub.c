@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.23 2009/10/02 18:50:15 elad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.24 2009/10/15 00:28:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.23 2009/10/02 18:50:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.24 2009/10/15 00:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,14 +66,6 @@ preempt(void)
 
 	/* see yield */
 	return;
-}
-
-struct cpu_info *
-cpu_lookup(u_int index)
-{
-	extern struct cpu_info rump_cpu;
-
-	return &rump_cpu;
 }
 
 int

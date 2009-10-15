@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.35 2009/09/08 20:04:03 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.36 2009/10/15 00:28:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.35 2009/09/08 20:04:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.36 2009/10/15 00:28:47 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -291,7 +291,16 @@ void
 rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
-	KLOCK_WRAP(NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx)));
+	if (pthread_mutex_trylock(&mtx->pthmtx) != 0)
+		KLOCK_WRAP(NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx)));
+	mtxenter(mtx);
+}
+
+void
+rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *mtx)
+{
+
+	NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx));
 	mtxenter(mtx);
 }
 
@@ -347,10 +356,14 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int iswrite)
 {
 
 	if (iswrite) {
-		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw)));
+		if (pthread_rwlock_trywrlock(&rw->pthrw) != 0)
+			KLOCK_WRAP(NOFAIL_ERRNO(
+			    pthread_rwlock_wrlock(&rw->pthrw)));
 		RURW_SETWRITE(rw);
 	} else {
-		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw)));
+		if (pthread_rwlock_tryrdlock(&rw->pthrw) != 0)
+			KLOCK_WRAP(NOFAIL_ERRNO(
+			    pthread_rwlock_rdlock(&rw->pthrw)));
 		RURW_INCREAD(rw);
 	}
 }
@@ -439,6 +452,18 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 	assert(mtx->recursion == 1);
 	mtxexit(mtx);
 	KLOCK_WRAP(NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx)));
+	mtxenter(mtx);
+	cv->nwaiters--;
+}
+
+void
+rumpuser_cv_wait_nowrap(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
+{
+
+	cv->nwaiters++;
+	assert(mtx->recursion == 1);
+	mtxexit(mtx);
+	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);
 	cv->nwaiters--;
 }
