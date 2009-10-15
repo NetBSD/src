@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.2 2009/10/14 18:16:41 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3 2009/10/15 00:31:25 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
  * from: NetBSD: rumpvfs.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.3 2009/10/14 18:14:48 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -12,6 +12,7 @@
 #include <rump/rump.h>
 #include <rump/rumpvfs_if_pub.h>
 
+#include "rump_private.h"
 #include "rumpvfs_if_priv.h"
 
 void __dead rump_vfs_unavailable(void);
@@ -26,7 +27,9 @@ void
 rump_pub_getvninfo(struct vnode *arg1, enum vtype *arg2, off_t *arg3, dev_t *arg4)
 {
 
+	rump_schedule();
 	rump_getvninfo(arg1, arg2, arg3, arg4);
+	rump_unschedule();
 }
 
 struct vfsops *
@@ -34,7 +37,9 @@ rump_pub_vfslist_iterate(struct vfsops *arg1)
 {
 	struct vfsops * rv;
 
+	rump_schedule();
 	rv = rump_vfslist_iterate(arg1);
+	rump_unschedule();
 
 	return rv;
 }
@@ -44,7 +49,9 @@ rump_pub_vfs_getopsbyname(const char *arg1)
 {
 	struct vfsops * rv;
 
+	rump_schedule();
 	rv = rump_vfs_getopsbyname(arg1);
+	rump_unschedule();
 
 	return rv;
 }
@@ -54,7 +61,9 @@ rump_pub_vattr_init(void)
 {
 	struct vattr * rv;
 
+	rump_schedule();
 	rv = rump_vattr_init();
+	rump_unschedule();
 
 	return rv;
 }
@@ -63,35 +72,45 @@ void
 rump_pub_vattr_settype(struct vattr *arg1, enum vtype arg2)
 {
 
+	rump_schedule();
 	rump_vattr_settype(arg1, arg2);
+	rump_unschedule();
 }
 
 void
 rump_pub_vattr_setmode(struct vattr *arg1, mode_t arg2)
 {
 
+	rump_schedule();
 	rump_vattr_setmode(arg1, arg2);
+	rump_unschedule();
 }
 
 void
 rump_pub_vattr_setrdev(struct vattr *arg1, dev_t arg2)
 {
 
+	rump_schedule();
 	rump_vattr_setrdev(arg1, arg2);
+	rump_unschedule();
 }
 
 void
 rump_pub_vattr_free(struct vattr *arg1)
 {
 
+	rump_schedule();
 	rump_vattr_free(arg1);
+	rump_unschedule();
 }
 
 void
 rump_pub_vp_incref(struct vnode *arg1)
 {
 
+	rump_schedule();
 	rump_vp_incref(arg1);
+	rump_unschedule();
 }
 
 int
@@ -99,7 +118,9 @@ rump_pub_vp_getref(struct vnode *arg1)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vp_getref(arg1);
+	rump_unschedule();
 
 	return rv;
 }
@@ -108,14 +129,18 @@ void
 rump_pub_vp_rele(struct vnode *arg1)
 {
 
+	rump_schedule();
 	rump_vp_rele(arg1);
+	rump_unschedule();
 }
 
 void
 rump_pub_vp_interlock(struct vnode *arg1)
 {
 
+	rump_schedule();
 	rump_vp_interlock(arg1);
+	rump_unschedule();
 }
 
 int
@@ -123,7 +148,9 @@ rump_pub_etfs_register(const char *arg1, const char *arg2, enum rump_etfs_type a
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_etfs_register(arg1, arg2, arg3);
+	rump_unschedule();
 
 	return rv;
 }
@@ -133,7 +160,9 @@ rump_pub_etfs_register_withsize(const char *arg1, const char *arg2, enum rump_et
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_etfs_register_withsize(arg1, arg2, arg3, arg4, arg5);
+	rump_unschedule();
 
 	return rv;
 }
@@ -143,7 +172,9 @@ rump_pub_etfs_remove(const char *arg1)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_etfs_remove(arg1);
+	rump_unschedule();
 
 	return rv;
 }
@@ -152,7 +183,9 @@ void
 rump_pub_freecn(struct componentname *arg1, int arg2)
 {
 
+	rump_schedule();
 	rump_freecn(arg1, arg2);
+	rump_unschedule();
 }
 
 int
@@ -160,7 +193,9 @@ rump_pub_checksavecn(struct componentname *arg1)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_checksavecn(arg1);
+	rump_unschedule();
 
 	return rv;
 }
@@ -170,7 +205,9 @@ rump_pub_namei(uint32_t arg1, uint32_t arg2, const char *arg3, struct vnode **ar
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_namei(arg1, arg2, arg3, arg4, arg5, arg6);
+	rump_unschedule();
 
 	return rv;
 }
@@ -180,7 +217,9 @@ rump_pub_makecn(u_long arg1, u_long arg2, const char *arg3, size_t arg4, kauth_c
 {
 	struct componentname * rv;
 
+	rump_schedule();
 	rv = rump_makecn(arg1, arg2, arg3, arg4, arg5, arg6);
+	rump_unschedule();
 
 	return rv;
 }
@@ -190,7 +229,9 @@ rump_pub_vfs_unmount(struct mount *arg1, int arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_unmount(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -200,7 +241,9 @@ rump_pub_vfs_root(struct mount *arg1, struct vnode **arg2, int arg3)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_root(arg1, arg2, arg3);
+	rump_unschedule();
 
 	return rv;
 }
@@ -210,7 +253,9 @@ rump_pub_vfs_statvfs(struct mount *arg1, struct statvfs *arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_statvfs(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -220,7 +265,9 @@ rump_pub_vfs_sync(struct mount *arg1, int arg2, kauth_cred_t arg3)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_sync(arg1, arg2, arg3);
+	rump_unschedule();
 
 	return rv;
 }
@@ -230,7 +277,9 @@ rump_pub_vfs_fhtovp(struct mount *arg1, struct fid *arg2, struct vnode **arg3)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_fhtovp(arg1, arg2, arg3);
+	rump_unschedule();
 
 	return rv;
 }
@@ -240,7 +289,9 @@ rump_pub_vfs_vptofh(struct vnode *arg1, struct fid *arg2, size_t *arg3)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_vptofh(arg1, arg2, arg3);
+	rump_unschedule();
 
 	return rv;
 }
@@ -249,7 +300,9 @@ void
 rump_pub_vfs_syncwait(struct mount *arg1)
 {
 
+	rump_schedule();
 	rump_vfs_syncwait(arg1);
+	rump_unschedule();
 }
 
 int
@@ -257,7 +310,9 @@ rump_pub_vfs_getmp(const char *arg1, struct mount **arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_vfs_getmp(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -266,7 +321,9 @@ void
 rump_pub_rcvp_set(struct vnode *arg1, struct vnode *arg2)
 {
 
+	rump_schedule();
 	rump_rcvp_set(arg1, arg2);
+	rump_unschedule();
 }
 
 struct vnode *
@@ -274,7 +331,9 @@ rump_pub_cdir_get(void)
 {
 	struct vnode * rv;
 
+	rump_schedule();
 	rv = rump_cdir_get();
+	rump_unschedule();
 
 	return rv;
 }
@@ -284,7 +343,9 @@ rump_pub_syspuffs_glueinit(int arg1, int *arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_syspuffs_glueinit(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -295,7 +356,9 @@ rump_pub_sys___stat30(const char *arg1, struct stat *arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_sys___stat30(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -305,7 +368,9 @@ rump_pub_sys___lstat30(const char *arg1, struct stat *arg2)
 {
 	int rv;
 
+	rump_schedule();
 	rv = rump_sys___lstat30(arg1, arg2);
+	rump_unschedule();
 
 	return rv;
 }
@@ -314,12 +379,16 @@ void
 rump_pub_vattr50_to_vattr(const struct vattr *arg1, struct vattr *arg2)
 {
 
+	rump_schedule();
 	rump_vattr50_to_vattr(arg1, arg2);
+	rump_unschedule();
 }
 
 void
 rump_pub_vattr_to_vattr50(const struct vattr *arg1, struct vattr *arg2)
 {
 
+	rump_schedule();
 	rump_vattr_to_vattr50(arg1, arg2);
+	rump_unschedule();
 }
