@@ -167,14 +167,12 @@ functions, this function can be called after the archive is opened.
 .It Fn archive_write_get_bytes_in_last_block
 Retrieve the currently-set value for last block size.
 A value of -1 here indicates that the library should use default values.
-.It Xo
-.Fn archive_write_set_format_cpio ,
-.Fn archive_write_set_format_pax ,
-.Fn archive_write_set_format_pax_restricted ,
-.Fn archive_write_set_format_shar ,
-.Fn archive_write_set_format_shar_binary ,
-.Fn archive_write_set_format_ustar
-.Xc
+.It Fn archive_write_set_format_cpio , \
+Fn archive_write_set_format_pax , \
+Fn archive_write_set_format_pax_restricted , \
+Fn archive_write_set_format_shar , \
+Fn archive_write_set_format_shar_binary , \
+Fn archive_write_set_format_ustar
 Sets the format that will be used for the archive.
 The library can write
 POSIX octet-oriented cpio format archives,
@@ -198,12 +196,10 @@ filenames, linknames, uids, sizes, etc.
 is the library default; this is the same as pax format, but suppresses
 the pax extended header for most normal files.
 In most cases, this will result in ordinary ustar archives.
-.It Xo
-.Fn archive_write_set_compression_bzip2 ,
-.Fn archive_write_set_compression_compress ,
-.Fn archive_write_set_compression_gzip ,
-.Fn archive_write_set_compression_none
-.Xc
+.It Fn archive_write_set_compression_bzip2 , \
+Fn archive_write_set_compression_compress , \
+Fn archive_write_set_compression_gzip , \
+Fn archive_write_set_compression_none
 The resulting archive will be compressed as specified.
 Note that the compressed output is always properly blocked.
 .It Fn archive_write_set_compression_program
