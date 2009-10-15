@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.23 2009/10/14 18:22:50 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.24 2009/10/15 16:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -126,7 +126,7 @@ makecn(const struct puffs_cn *pcn, int myflags)
 	cred = cred_create(pcn->pcn_cred);
 	/* LINTED: prehistoric types in first two args */
 	return rump_pub_makecn(pcn->pcn_nameiop, pcn->pcn_flags | myflags,
-	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_pub_get_curlwp());
+	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_pub_lwp_curlwp());
 }
 
 static __inline void
@@ -143,7 +143,7 @@ makelwp(struct puffs_usermount *pu)
 	lwpid_t lid;
 
 	puffs_cc_getcaller(puffs_cc_getcc(pu), &pid, &lid);
-	rump_pub_setup_curlwp(pid, lid, 1);
+	rump_pub_lwp_alloc_and_switch(pid, lid);
 }
 
 /*ARGSUSED*/
@@ -151,7 +151,7 @@ static void
 clearlwp(struct puffs_usermount *pu)
 {
 
-	rump_pub_clear_curlwp();
+	rump_pub_lwp_release(rump_pub_lwp_curlwp());
 }
 
 static __inline struct p2k_vp_hash *
@@ -467,7 +467,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 	struct p2k_mount *p2m = ukfs_getspecific(fs);
 	int error = 0;
 
-	rump_pub_clear_curlwp(); /* ukfs does its own curlwp tricks */
+	rump_pub_lwp_release(rump_pub_lwp_curlwp()); /* ukfs & curlwp tricks */
 
 	rump_pub_vp_rele(p2m->p2m_rvp);
 	if (ukfs_release(fs, 0) != 0) {
@@ -476,7 +476,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 	}
 	p2m->p2m_ukfs = NULL;
 
-	rump_pub_setup_curlwp(0, 1, 1);
+	rump_pub_lwp_alloc_and_switch(0, 0);
 	return error;
 }
 
