@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-cache.c,v 1.2 2008/12/22 00:56:58 haad Exp $	*/
+/*	$NetBSD: dev-cache.c,v 1.3 2009/10/16 21:00:41 joerg Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -435,11 +435,14 @@ static int _insert(const char *path, int rec)
 		 * raw and block. I can insert only  existing
 		 * raw and block device.
 		 */
-		if (nbsd_check_dev(MAJOR(info.st_rdev),path) < 0) {
-			log_debug("%s: Not a block device.", path);
+		if (S_ISBLK(info.st_mode)) {
+			log_debug("%s: Not a raw device", path);
 			return_0;
 		}
-
+		if (nbsd_check_dev(MAJOR(info.st_rdev),path) < 0) {
+			log_debug("%s: Not a known raw device", path);
+			return_0;
+		}
 #else
 		if (!S_ISBLK(info.st_mode))
 			log_debug("%s: Not a block device", path);
