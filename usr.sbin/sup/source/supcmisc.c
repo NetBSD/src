@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.19 2009/01/15 15:58:42 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.20 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -264,7 +264,7 @@ ugconvert(char *uname, char *gname, int *uid, int *gid, int *mode)
  *********************************************/
 
 void
-notify(char *fmt, ...)
+notify(const char *fmt, ...)
 {				/* record error message */
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];

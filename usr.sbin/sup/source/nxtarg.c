@@ -1,4 +1,4 @@
-/*	$NetBSD: nxtarg.c,v 1.5 2002/07/10 20:19:41 wiz Exp $	*/
+/*	$NetBSD: nxtarg.c,v 1.6 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -27,8 +27,8 @@
 /*
  *  nxtarg -- strip off arguments from a string
  *
- *  Usage:  p = nxtarg (&q,brk);
- *	char *p,*q,*brk;
+ *  Usage:  p = nxtarg (&q,sep);
+ *	char *p,*q,*sep;
  *	extern char _argbreak;
  *
  *	q is pointer to next argument in string
@@ -36,12 +36,12 @@
  *	q points to remainder of string
  *
  *  Leading blanks and tabs are skipped; the argument ends at the
- *  first occurence of one of the characters in the string "brk".
+ *  first occurence of one of the characters in the string "sep".
  *  When such a character is found, it is put into the external
  *  variable "_argbreak", and replaced by a null character; if the
  *  arg string ends before that, then the null character is
  *  placed into _argbreak;
- *  If "brk" is 0, then " " is substituted.
+ *  If "sep" is 0, then " " is substituted.
  *
  *  HISTORY
  * 01-Jul-83  Steven Shafer (sas) at Carnegie-Mellon University
@@ -60,7 +60,7 @@
 char _argbreak;
 
 char *
-nxtarg(char **q, char *brk)
+nxtarg(char **q, const char *sep)
 {
 	char *front, *back;
 	front = *q;		/* start of string */
@@ -68,9 +68,9 @@ nxtarg(char **q, char *brk)
 	while (*front && (*front == ' ' || *front == '\t'))
 		front++;
 	/* find break character at end */
-	if (brk == 0)
-		brk = " ";
-	back = skipto(front, brk);
+	if (sep == 0)
+		sep = " ";
+	back = skipto(front, sep);
 	_argbreak = *back;
 	*q = (*back ? back + 1 : back);	/* next arg start loc */
 	/* elim trailing blanks and tabs */
