@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.35 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.36 2009/10/16 22:45:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1483,7 +1483,7 @@ done(int value, const char *fmt, ...)
 }
 
 void
-goaway(char *fmt, ...)
+goaway(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;

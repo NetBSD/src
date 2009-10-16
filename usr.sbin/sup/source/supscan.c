@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.16 2007/12/20 20:17:52 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.17 2009/10/16 22:45:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -393,7 +393,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 }
 
 void
-goaway(char *fmt, ...)
+goaway(const char *fmt, ...)
 {
 	va_list ap;
 
