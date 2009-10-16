@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92.4.1 2009/10/16 12:07:23 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92.4.1 2009/10/16 12:07:23 sborrill Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -266,6 +266,13 @@ puffs_getspecific(struct puffs_usermount *pu)
 {
 
 	return pu->pu_privdata;
+}
+
+void
+puffs_setspecific(struct puffs_usermount *pu, void *privdata)
+{
+
+	pu->pu_privdata = privdata;
 }
 
 size_t
