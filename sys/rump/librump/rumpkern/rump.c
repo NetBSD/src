@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.125 2009/10/15 16:39:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.126 2009/10/16 00:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.125 2009/10/15 16:39:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.126 2009/10/16 00:14:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -115,8 +115,8 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 static int rump_inited;
 static struct emul emul_rump;
 
-void rump__unavailable(void);
-void rump__unavailable() {}
+int rump__unavailable(void);
+int rump__unavailable() {return EOPNOTSUPP;}
 __weak_alias(rump_net_init,rump__unavailable);
 __weak_alias(rump_vfs_init,rump__unavailable);
 __weak_alias(rump_dev_init,rump__unavailable);
@@ -124,6 +124,7 @@ __weak_alias(rump_dev_init,rump__unavailable);
 __weak_alias(rump_vfs_fini,rump__unavailable);
 
 __weak_alias(biodone,rump__unavailable);
+__weak_alias(sopoll,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
@@ -254,6 +255,7 @@ rump__init(int rump_version)
 
 	callout_startup();
 	callout_init_cpu(rump_cpu);
+	selsysinit(rump_cpu);
 
 	sysctl_init();
 	kqueue_init();
@@ -440,7 +442,6 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
-	l->l_mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cpu = NULL;
 
 	return l;
@@ -453,6 +454,9 @@ rump_lwp_switch(struct lwp *newlwp)
 
 	rumpuser_set_curlwp(NULL);
 	newlwp->l_cpu = l->l_cpu;
+	newlwp->l_mutex = l->l_mutex;
+	l->l_mutex = NULL;
+	l->l_cpu = NULL;
 	rumpuser_set_curlwp(newlwp);
 	if (l->l_flag & LW_WEXIT)
 		rump_lwp_free(l);
@@ -481,9 +485,8 @@ rump_lwp_free(struct lwp *l)
 {
 
 	KASSERT(l->l_flag & LW_WEXIT);
-	KASSERT(l != rumpuser_get_curlwp());
+	KASSERT(l->l_mutex == NULL);
 	rump_cred_put(l->l_cred);
-	mutex_obj_free(l->l_mutex);
 	kmem_free(l, sizeof(*l));
 }
 
