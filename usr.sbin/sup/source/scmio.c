@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.16 2006/05/25 02:10:53 christos Exp $	*/
+/*	$NetBSD: scmio.c,v 1.17 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -199,7 +199,7 @@ struct buf {
 	char *b_ptr;		/* pointer to end of buffer */
 	int b_cnt;		/* number of bytes in buffer */
 }   buffers[2];
-struct buf *bufptr;		/* buffer pointer */
+struct buf *gblbufptr;		/* buffer pointer */
 
 static int writedata(int, char *);
 static int writeblock(int, char *);
@@ -217,22 +217,22 @@ writedata(int count, char *data)
 	int x, tries;
 	struct buf *bp;
 
-	if (bufptr) {
-		if (bufptr->b_cnt + count <= FILEXFER) {
-			memcpy(bufptr->b_ptr, data, count);
-			bufptr->b_cnt += count;
-			bufptr->b_ptr += count;
+	if (gblbufptr) {
+		if (gblbufptr->b_cnt + count <= FILEXFER) {
+			memcpy(gblbufptr->b_ptr, data, count);
+			gblbufptr->b_cnt += count;
+			gblbufptr->b_ptr += count;
 			return (SCMOK);
 		}
-		bp = (bufptr == buffers) ? &buffers[1] : buffers;
+		bp = (gblbufptr == buffers) ? &buffers[1] : buffers;
 		memcpy(bp->b_data, data, count);
 		bp->b_cnt = count;
 		bp->b_ptr = bp->b_data + count;
-		data = bufptr->b_data;
-		count = bufptr->b_cnt;
-		bufptr->b_cnt = 0;
-		bufptr->b_ptr = bufptr->b_data;
-		bufptr = bp;
+		data = gblbufptr->b_data;
+		count = gblbufptr->b_cnt;
+		gblbufptr->b_cnt = 0;
+		gblbufptr->b_ptr = gblbufptr->b_data;
+		gblbufptr = bp;
 	}
 	tries = 0;
 	for (;;) {
@@ -278,11 +278,11 @@ writemsg(int msg)
 
 	if (scmdebug > 1)
 		loginfo("SCM Writing message %d", msg);
-	if (bufptr)
+	if (gblbufptr)
 		return (scmerr(-1, "Buffering already enabled"));
-	bufptr = buffers;
-	bufptr->b_ptr = bufptr->b_data;
-	bufptr->b_cnt = 0;
+	gblbufptr = buffers;
+	gblbufptr->b_ptr = gblbufptr->b_data;
+	gblbufptr->b_cnt = 0;
 	x = byteswap(msg);
 	return (writedata(sizeof(int), (char *) &x));
 }
@@ -298,15 +298,15 @@ writemend(void)
 	x = writedata(sizeof(int), (char *) &x);
 	if (x != SCMOK)
 		return (x);
-	if (bufptr == NULL)
+	if (gblbufptr == NULL)
 		return (scmerr(-1, "Buffering already disabled"));
-	if (bufptr->b_cnt == 0) {
-		bufptr = NULL;
+	if (gblbufptr->b_cnt == 0) {
+		gblbufptr = NULL;
 		return (SCMOK);
 	}
-	data = bufptr->b_data;
-	count = bufptr->b_cnt;
-	bufptr = NULL;
+	data = gblbufptr->b_data;
+	count = gblbufptr->b_cnt;
+	gblbufptr = NULL;
 	return (writedata(count, data));
 }
 

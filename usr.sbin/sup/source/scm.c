@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.26 2009/01/15 15:58:42 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.27 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -373,7 +373,7 @@ dobackoff(int *t, int *b)
 	if (*b < 32)
 		*b <<= 1;
 	if (*t != -1) {
-		if (s > *t)
+		if (s > (unsigned) *t)
 			s = *t;
 		*t -= s;
 	}
@@ -486,7 +486,7 @@ myhost(void)
 	return (name);
 }
 
-char *
+const char *
 remotehost(void)
 {				/* remote host name (if known) */
 	char h1[NI_MAXHOST];
@@ -652,7 +652,7 @@ matchhost(char *name)
 }
 
 int 
-scmerr(int error, char *fmt, ...)
+scmerr(int error, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -692,7 +692,7 @@ byteswap(int in)
 		return (in);
 	x.ui = in;
 	iy = sizeof(int);
-	for (ix = 0; ix < sizeof(int); ix++) {
+	for (ix = 0; ix < (int) sizeof(int); ix++) {
 		--iy;
 		y.uc[iy] = x.uc[ix];
 	}
