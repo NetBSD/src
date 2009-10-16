@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.108 2009/10/14 20:42:42 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.109 2009/10/16 07:09:33 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14178,4 +14178,116 @@ usr.bin/sort/tmp.c				1.14-1.15
 	Fixes: PR#18614 PR#27257 PR#25551 PR#22182 PR#31095 PR#30504
 	PR#36816 PR#37860 PR#39308 PR#42094
 	[dsl, ticket #1084]
+
+share/man/man4/audio.4				1.70 via patch
+sys/dev/audio.c					1.248
+sys/dev/audio_if.h				1.66
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.16
+sys/sys/audioio.h				1.33
+
+	Add support for playback- or capture-only devices.
+	Fixes PR 42050.
+	[sborrill, ticket #1038]
+
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.146-1.148
+
+	Pull in a fix for mount function from ffs_vfsops.c rev1.186:
+	Change ffs_mount, in MNT_UPDATE case, to check dev_t's for equality
+	instead of just vnode pointers.  Fixes erroneous "does not match
+	mounted device" errors from mount(8) in the presence of MFS /dev,
+	init.root, &c.
+	--
+	Pull in a fix from ffs_vfsops.c rev 1.248:
+	Fix bug introduced in revision 1.174(*) where a NULL fspec with an
+	MNT_UPDATE command would always return EINVAL. This broke fsck on
+	root, where fsck'ing a dirty root would always return an error
+	causing rc to resort in a reboot.
+	--
+	Add a missed brelse(9) call after bread(9) in ext2fs_reload().
+	Addresses PR kern/28712 (ext2fs hang on mount after fsck).
+	[tsutsui, ticket #1060]
+
+distrib/sets/lists/xserver/md.sparc64		1.40
+external/mit/xorg/server/drivers/Makefile	1.32
+external/mit/xorg/server/drivers/xf86-video-sunleo/Makefile 1.1
+xsrc/external/mit/xf86-video-crime/dist/src/crime.h	1.7
+xsrc/external/mit/xf86-video-crime/dist/src/crime_accel.c 1.11
+xsrc/external/mit/xf86-video-crime/dist/src/crime_driver.c 1.4
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaaGC.c 1.2
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaalocal.h 1.4
+
+	Build the sunleo driver on sparc64.
+	--
+	xf86-video-crime: clean up debugging code. While there:
+	* use a fake framebuffer like newport does to hide software
+	  rendering artifacts
+	* only map the framebuffer when debugging, and actually unmap
+	  it too
+	--
+	xorg-server: don't fall back to software rendering when drawing
+	  into the screen pixmap this takes care of visible artifacts
+	  with non-mappable framebuffers like newport and crime
+	[macallan, ticket #1052]
+
+sys/arch/sparc/conf/GENERIC			1.214
+sys/arch/sparc/conf/KRUPS			1.50
+sys/arch/sparc/conf/MRCOFFEE			1.28
+sys/arch/sparc/conf/TADPOLE3GX			1.47
+
+	Enable ddb(4) for sparc GENERIC-like kernels.
+	[tsutsui, ticket #1065]
+
+sys/dev/pci/pucdata.c				1.57
+
+	Add support for Oxford Semiconductor OXmPCI952 2 port UARTs.
+	Also update URL of Oxford UART chips.
+	[tsutsui, ticket #1070]
+
+sys/kern/sys_mqueue.c				1.25 via patch
+sys/sys/mqueue.h				1.11 via patch
+
+	mq_timedsend/mq_timedreceive: timeout value is absolute, not
+	relative.
+	[rmind, ticket #1071]
+
+sys/arch/alpha/alpha/pmap.c			1.243
+
+	IPI interrupts occur above IPL_VM, so using IPL_VM in for the
+	tlb shootdown queue mutex doesn't work very well. Change to
+	IPL_SCHED [IPL_CLOCK] to block IPI interrupts while the cpu is
+	mucking with the shootdown queue.
+	[mhitch, ticket #1073]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaaGC.c 1.3
+xsrc/external/mit/xorg-server/dist/hw/xfree86/xaa/xaalocal.h 1.5
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86Configure.c 1.3
+xsrc/external/mit/xf86-video-crime/dist/src/crime_accel.c 1.12
+xsrc/external/mit/xf86-video-crime/dist/src/crime_driver.c 1.5, 1.6
+xsrc/external/mit/xf86-video-newport/dist/src/newport_cmap.c 1.2
+xsrc/external/mit/xf86-video-newport/dist/src/newport_driver.c 1.5
+xsrc/external/mit/xf86-video-newport/dist/src/newport_regs.c 1.2
+xsrc/external/mit/xf86-video-newport/dist/src/newport_regs.h 1.2
+
+
+	xorg-server:
+	* simplify PIXMAP_IS_SCREEN()
+	* let xf86AddBusDeviceToConfigure() accept BUS_ISA and BUS_NONE
+	--
+	xf86-video-crime:
+	* use PIXMAP_IS_SCREEN()
+	* make X -configure work
+	* remove debug spam
+	--
+	xf86-video-newport: make this work in the New Order Of Things:
+	* make Xorg -configure work again
+	* fix the DCB timing when talking to XMAP9 to the values used by
+	the kernel
+	[macallan, ticket 1092]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.26
+
+	Don't pass a NULL arg to DIOCCACHESYNC, sd(4) dereferences it.
+	Pass a pointer to a int initialized to 1, so that a DIOCCACHESYNC
+	will be forced on sd(4).
+	[bouyer, ticket #1093]
 
