@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.8 2009/06/27 16:10:25 jakllsch Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.9 2009/10/16 21:23:08 joerg Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENOENT;
 			
-		aprint_normal("DIOCGWEDGEINFO ioctl called\n");
+		aprint_debug("DIOCGWEDGEINFO ioctl called\n");
 		
 		strlcpy(dkw->dkw_devname, dmv->name, 16);
 		strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
