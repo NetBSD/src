@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.61 2009/08/04 23:58:29 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.62 2009/10/16 00:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.61 2009/08/04 23:58:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.62 2009/10/16 00:14:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -714,4 +714,11 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+void
+uvm_kick_scheduler(void)
+{
+
+	/* ouch */
 }

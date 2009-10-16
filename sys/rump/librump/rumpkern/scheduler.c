@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.3 2009/10/15 23:15:55 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.4 2009/10/16 00:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.3 2009/10/15 23:15:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.4 2009/10/16 00:14:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -78,6 +78,8 @@ rump_scheduler_init()
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		rump_cpu_bootstrap(ci);
+		ci->ci_schedstate.spc_mutex =
+		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		rcpu->rcpu_ci = ci;
 		SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
 	}
@@ -86,7 +88,6 @@ rump_scheduler_init()
 void
 rump_schedule()
 {
-	struct cpu_info *ci;
 	struct lwp *l;
 
 	/*
@@ -104,8 +105,7 @@ rump_schedule()
 		rumpuser_mutex_exit(schedmtx);
 
 		/* schedule cpu and use lwp0 */
-		ci = rump_schedule_cpu();
-		lwp0.l_cpu = ci;
+		rump_schedule_cpu(&lwp0);
 		rumpuser_set_curlwp(&lwp0);
 		l = rump_lwp_alloc(0, rump_nextlid());
 
@@ -119,14 +119,12 @@ rump_schedule()
 		/* mark new lwp as dead-on-exit */
 		rump_lwp_release(l);
 	} else {
-		KASSERT(l->l_cpu == NULL);
-		ci = rump_schedule_cpu();
-		l->l_cpu = ci;
+		rump_schedule_cpu(l);
 	}
 }
 
-struct cpu_info *
-rump_schedule_cpu()
+void
+rump_schedule_cpu(struct lwp *l)
 {
 	struct rumpcpu *rcpu;
 
@@ -135,8 +133,9 @@ rump_schedule_cpu()
 		rumpuser_cv_wait_nowrap(schedcv, schedmtx);
 	SLIST_REMOVE_HEAD(&cpu_freelist, rcpu_entries);
 	rumpuser_mutex_exit(schedmtx);
-
-	return rcpu->rcpu_ci;
+	KASSERT(l->l_cpu == NULL);
+	l->l_cpu = rcpu->rcpu_ci;
+	l->l_mutex = rcpu->rcpu_ci->ci_schedstate.spc_mutex;
 }
 
 void
@@ -145,7 +144,9 @@ rump_unschedule()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
+	KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex);
 	rump_unschedule_cpu(l);
+	l->l_mutex = NULL;
 	if (l->l_flag & LW_WEXIT) {
 		kmem_free(l, sizeof(*l));
 		rumpuser_set_curlwp(NULL);

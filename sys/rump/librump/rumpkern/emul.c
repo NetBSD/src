@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.102 2009/10/15 16:39:22 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.103 2009/10/16 00:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.102 2009/10/15 16:39:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.103 2009/10/16 00:14:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -93,7 +93,6 @@ const char kernel_ident[] = "RUMP-ROAST";
 const char *domainname;
 int domainnamelen;
 
-const struct filterops seltrue_filtops;
 const struct filterops sig_filtops;
 
 #define DEVSW_SIZE 255
@@ -487,7 +486,7 @@ psignal(struct proc *p, int signo)
 	case SIGSYS:
 		break;
 	default:
-		panic("unhandled signal %d", signo);
+		panic("unhandled signal %d\n", signo);
 	}
 }
 
@@ -575,32 +574,6 @@ calc_cache_size(struct vm_map *map, int pct, int va_pct)
 		panic("%s: needs tweak", __func__);
 	}
 	return t;
-}
-
-int
-seltrue(dev_t dev, int events, struct lwp *l)
-{
-        return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-}
-
-void
-selrecord(lwp_t *selector, struct selinfo *sip)
-{
-}
-
-void
-selinit(struct selinfo *sip)
-{
-}
-
-void
-selnotify(struct selinfo *sip, int events, long knhint)
-{
-}
-
-void
-seldestroy(struct selinfo *sip)
-{
 }
 
 const char *
@@ -739,39 +712,6 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
-}
-
-/*
- * XXX: from sys_select.c, see that file for license.
- * (these will go away really soon in favour of the real sys_select.c)
- * ((really, the select code just needs cleanup))
- * (((seriously)))
- */
-int
-inittimeleft(struct timespec *ts, struct timespec *sleepts)
-{
-	if (itimespecfix(ts))
-		return -1;
-	getnanouptime(sleepts);
-	return 0;
-}
-
-int
-gettimeleft(struct timespec *ts, struct timespec *sleepts)
-{
-	/*
-	 * We have to recalculate the timeout on every retry.
-	 */
-	struct timespec sleptts;
-	/*
-	 * reduce ts by elapsed time
-	 * based on monotonic time scale
-	 */
-	getnanouptime(&sleptts);
-	timespecadd(ts, sleepts, ts);
-	timespecsub(ts, &sleptts, ts);
-	*sleepts = sleptts;
-	return tstohz(ts);
 }
 
 bool
