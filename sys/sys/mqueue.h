@@ -1,7 +1,7 @@
-/*	$NetBSD: mqueue.h,v 1.4.16.1 2009/01/22 20:45:46 snj Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.4.16.2 2009/10/16 06:37:51 snj Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ struct mq_msg {
 	TAILQ_ENTRY(mq_msg)	msg_queue;
 	size_t			msg_len;
 	u_int			msg_prio;
-	int8_t			msg_ptr[1];
+	uint8_t			msg_ptr[1];
 };
 
 /* Prototypes */
