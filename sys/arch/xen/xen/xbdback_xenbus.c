@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.1 2009/09/28 01:25:22 snj Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.2 2009/10/16 07:04:37 snj Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.1 2009/09/28 01:25:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.2 2009/10/16 07:04:37 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1313,9 +1313,10 @@ xbdback_do_io(struct work *wk, void *dummy)
 
 	if (xbd_io->xio_operation == BLKIF_OP_FLUSH_DISKCACHE) {
 		int error;
+		int force = 1;
 		struct xbdback_instance *xbdi = xbd_io->xio_xbdi;
 
-		error = VOP_IOCTL(xbdi->xbdi_vp, DIOCCACHESYNC, NULL, FWRITE,
+		error = VOP_IOCTL(xbdi->xbdi_vp, DIOCCACHESYNC, &force, FWRITE,
 		    kauth_cred_get());
 		if (error) {
 			aprint_error("xbdback %s: DIOCCACHESYNC returned %d\n",
