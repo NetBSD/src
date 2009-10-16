@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.51 2009/10/03 00:06:37 elad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.52 2009/10/16 00:27:07 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.51 2009/10/03 00:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.52 2009/10/16 00:27:07 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1251,6 +1251,10 @@ module_merge_dicts(prop_dictionary_t existing_dict,
 	prop_object_t props_obj;
 	const char *props_key;
 	bool error;
+
+	if (new_dict == NULL) {			/* nothing to merge */
+		return true;
+	}
 
 	error = false;
 	props_iter = prop_dictionary_iterator(new_dict);
