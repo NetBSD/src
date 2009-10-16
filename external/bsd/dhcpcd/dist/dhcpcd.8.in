@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 16, 2009
+.Dd October 16, 2009
 .Dt DHCPCD 8 SMM
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 .Nd an RFC 2131 compliant DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdgknpqABDEGKLTV
+.Op Fl bdgknpqwABDEGKLTV
 .Op Fl c , -script Ar script
 .Op Fl e , -env Ar value
 .Op Fl f , -config Ar file
@@ -88,7 +88,7 @@ is YES or TRUE or 1 then
 sets the hostname to the one supplied by the DHCP server.
 .Nm
 then daemonises and waits for the lease renewal time to lapse.
-It will then attempts to renew its lease and reconfigure if the new lease
+It will then attempt to renew its lease and reconfigure if the new lease
 changes.
 .Pp
 .Nm
@@ -172,9 +172,6 @@ instead of the default
 .Pa @SCRIPT@ .
 .It Fl d , -debug
 Echo debug messages to the stderr and syslog.
-Subsequent debug options stop
-.Nm
-from daemonising.
 .It Fl e , -env Ar value
 Push
 .Ar value
@@ -326,14 +323,21 @@ default, without having to know things like hardware address or hostname.
 Add an enscapulated vendor option.
 .Ar code
 should be between 1 and 254 inclusive.
+To add a raw vendor string, omit
+.Ar code
+but keep the comma.
 Examples.
 .Pp
 Set the vendor option 01 with an IP address.
 .D1 dhcpcd \-v 01,192.168.0.2 eth0
 Set the vendor option 02 with a hex code.
 .D1 dhcpcd \-v 02,01:02:03:04:05 eth0
-Do the above and set a third option with a string and not an IP address.
-.D1 dhcpcd \-v 01,192.168.0.2 \-v 02,01:02:03:04:05 \-v 03,\e"192.168.0.2\e" eth0
+Set the vendor option 03 with an IP address as a string.
+.D1 dhcpcd \-v 03,\e"192.168.0.2\e" eth0
+Set un-encapulated vendor option to hello world.
+.D1 dhcpcd \-v ,"hello world" eth0
+.It Fl w , -waitip
+Wait for an address to be assigned before forking to the background.
 .It Fl x , -exit
 This will signal an existing
 .Nm
