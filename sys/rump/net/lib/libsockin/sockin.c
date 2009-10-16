@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.16 2009/09/02 19:04:51 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.17 2009/10/16 23:17:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.16 2009/09/02 19:04:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.17 2009/10/16 23:17:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -352,6 +352,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ATTACH:
 	{
 		int news, dummy;
+		int sbsize;
 
 		sosetlock(so);
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -364,6 +365,16 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    0, &error);
 		if (news == -1)
 			break;
+
+		/* for UDP sockets, make sure we can send&recv max */
+		if (so->so_proto->pr_type == SOCK_DGRAM) {
+			sbsize = SOCKIN_SBSIZE;
+			rumpuser_net_setsockopt(news, SOL_SOCKET, SO_SNDBUF,
+			    &sbsize, sizeof(sbsize), &error);
+			sbsize = SOCKIN_SBSIZE;
+			rumpuser_net_setsockopt(news, SOL_SOCKET, SO_RCVBUF,
+			    &sbsize, sizeof(sbsize), &error);
+		}
 
 		if ((error = registersock(so, news)) != 0)
 			rumpuser_close(news, &dummy);
@@ -410,7 +421,6 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			iov[i].iov_base = m2->m_data;
 			iov[i].iov_len = m2->m_len;
 			tot += m2->m_len;
-
 		}
 		mhdr.msg_iov = iov;
 		mhdr.msg_iovlen = i;
