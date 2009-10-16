@@ -1,4 +1,4 @@
-/*      $NetBSD: dev.c,v 1.1 2008/12/22 00:56:59 haad Exp $        */
+/*      $NetBSD: dev.c,v 1.2 2009/10/16 21:00:41 joerg Exp $        */
 
 /*
  * NetBSD specific device routines are added to this file.
@@ -61,11 +61,7 @@ nbsd_check_dev(int major, const char *path)
 		if (kd[i].d_cmajor != -1 && kd[i].d_bmajor != -1) {
 			
 			if (kd[i].d_cmajor == major)
-				return kd[i].d_bmajor;
-			
-			if (kd[i].d_bmajor == major)
-				return kd[i].d_cmajor;
-			
+				return 0;
 		}
 	
 	return LVM_FAILURE;
