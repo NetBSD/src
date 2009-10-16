@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.110 2009/10/16 11:57:47 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.111 2009/10/16 12:07:45 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14302,4 +14302,12 @@ sys/dev/DEVNAMES				1.252
 	Add a driver for LOMlite lights out management hardware monitor
 	and watchdog timer.
 	[nakayama, ticket #1064]
+
+lib/libpuffs/puffs.3				1.45
+lib/libpuffs/puffs.c				1.93
+lib/libpuffs/puffs.h				1.109
+
+	Add function puffs_setspecific(pu, private) which can be used
+	to set the specific data after the call to puffs_init().
+	[pooka, ticket #1094]
 
