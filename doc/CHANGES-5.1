@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.112 2009/10/16 12:11:18 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.113 2009/10/16 14:51:32 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14317,4 +14317,12 @@ lib/libpuffs/puffs.h				1.110
 	Add puffs_cancel(), which allows to back down after
 	puffs_init() and before puffs_mount().
 	[pooka, ticket #1095]
+
+usr.sbin/user/user.c				1.124
+
+	Fix -p flag. 
+	- rm_eo is the first character *after* the match, so
+	no need for a +1.
+	- Blowfish hashes are only 53 chars long, not 54.
+	[hubertf, ticket #1096
 
