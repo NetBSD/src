@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.180 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.181 2009/10/16 23:36:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.180 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.181 2009/10/16 23:36:05 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -523,7 +523,7 @@ nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top, struct nfsreq *r
 				 */
 				if (rep->r_flags & R_SOFTTERM)
 					error = EINTR;
-				else
+				else if (error != EMSGSIZE)
 					rep->r_flags |= R_MUSTRESEND;
 			}
 		} else {
@@ -540,7 +540,8 @@ nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top, struct nfsreq *r
 		 * Handle any recoverable (soft) socket errors here. (? ? ?)
 		 */
 		if (error != EINTR && error != ERESTART &&
-			error != EWOULDBLOCK && error != EPIPE)
+		    error != EWOULDBLOCK && error != EPIPE &&
+		    error != EMSGSIZE)
 			error = 0;
 	}
 	return (error);
