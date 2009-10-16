@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.20 2009/01/15 15:58:42 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.21 2009/10/16 12:41:37 christos Exp $	*/
 
 struct stat;
 
@@ -16,16 +16,16 @@ int filecopy(int, int );
 
 /* log.c */
 void logopen(char *);
-void logquit(int, char *, ...)
+void logquit(int, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-void logerr(char *, ...)
+void logerr(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2))) ;
-void loginfo(char *, ...)
+void loginfo(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 #ifdef LIBWRAP
-void logdeny(char *, ...)
+void logdeny(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-void logallow(char *, ...)
+void logallow(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 #endif
 
@@ -36,13 +36,13 @@ void decode(char *, char *, int);
 void encode(char *, char *, int);
 
 /* nxtarg.c */
-char *nxtarg(char **, char *);
+char *nxtarg(char **, const char *);
 
 /* path.c */
 void path(char *, char *, char *);
 
 /* quit.c */
-void quit(int, char *, ...)
+void quit(int, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
 
 /* read_line.c */
@@ -74,11 +74,11 @@ int serviceend(void);
 int dobackoff(int *, int *);
 int request(char *, char *, int *);
 int requestend(void);
-char *remotehost(void);
+const char *remotehost(void);
 int thishost(char *);
 int samehost(void);
 int matchhost(char *);
-int scmerr(int, char *, ...)
+int scmerr(int, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
 int byteswap(int);
 
@@ -105,14 +105,14 @@ int readmstr(int, char **);
 void crosspatch(void);
 
 /* skipto.c */
-char *skipto(char *, char *);
-char *skipover(char *, char *);
+char *skipto(const char *, const char *);
+char *skipover(const char *, const char *);
 
 /* stree.c */
 void Tfree(TREE **);
-TREE *Tinsert(TREE **, char *, int);
-TREE *Tsearch(TREE *, char *);
-TREE *Tlookup(TREE *, char *);
+TREE *Tinsert(TREE **, const char *, int);
+TREE *Tsearch(TREE *, const char *);
+TREE *Tlookup(TREE *, const char *);
 int Trprocess(TREE *, int (*)(TREE *, void *), void *);
 int Tprocess(TREE *, int (*)(TREE *, void *), void *);
 void Tprint(TREE *, char *);
@@ -132,9 +132,9 @@ int recvsym(TREE *, int, struct stat *);
 int recvreg(TREE *, int, struct stat *);
 int copyfile(char *, char *);
 void finishup(int);
-void done(int, char *, ...)
+void done(int, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-void goaway(char *, ...)
+void goaway(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 
 /* supcmisc.c */
@@ -143,7 +143,7 @@ int establishdir(char *);
 int makedir(char *, unsigned int, struct stat *);
 int estabd(char *, char *);
 void ugconvert(char *, char *, int *, int *, int *);
-void notify(char *, ...)
+void notify(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 void lockout(int);
 char *fmttime(time_t);
