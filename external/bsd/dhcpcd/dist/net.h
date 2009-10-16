@@ -87,6 +87,8 @@ struct rt {
 	struct rt *next;
 };
 
+extern int socket_afnet;
+
 uint32_t get_netmask(uint32_t);
 char *hwaddr_ntoa(const unsigned char *, size_t);
 size_t hwaddr_aton(unsigned char *, const char *);
@@ -102,7 +104,7 @@ int do_mtu(const char *, short int);
 int inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 
-int up_interface(const char *);
+int up_interface(struct interface *);
 int do_address(const char *,
     struct in_addr *, struct in_addr *, struct in_addr *, int);
 int if_address(const struct interface *,
@@ -130,7 +132,7 @@ int if_route(const struct interface *, const struct in_addr *,
 void free_routes(struct rt *);
 
 int open_udp_socket(struct interface *);
-const size_t udp_dhcp_len;
+extern const size_t udp_dhcp_len;
 ssize_t make_udp_packet(uint8_t **, const uint8_t *, size_t,
     struct in_addr, struct in_addr);
 ssize_t get_udp_data(const uint8_t **, const uint8_t *);
@@ -143,8 +145,8 @@ ssize_t send_raw_packet(const struct interface *, int,
     const void *, ssize_t);
 ssize_t get_raw_packet(struct interface *, int, void *, ssize_t);
 
-int init_socket(void);
+int init_sockets(void);
 int open_link_socket(void);
 int manage_link(int);
-int carrier_status(const char *);
+int carrier_status(struct interface *);
 #endif
