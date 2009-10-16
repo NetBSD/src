@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.34 2009/10/16 06:01:16 snj Exp $	x11
+# $NetBSD: md.sgimips,v 1.35 2009/10/16 06:05:47 snj Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -571,7 +571,7 @@
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
-./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obslete
+./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/crime.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
