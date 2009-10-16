@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.19 2009/10/15 08:22:31 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.20 2009/10/16 06:48:50 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -329,4 +329,12 @@ etc/audit-packages.conf				removed
 	Retire audit-packages.conf, it was obsoleted by the
 	merge of pkg_install-20090201.
 	[joerg, ticket #784]
+
+sys/arch/alpha/alpha/pmap.c			1.243
+
+	IPI interrupts occur above IPL_VM, so using IPL_VM in for the
+	tlb shootdown queue mutex doesn't work very well.  Change to
+	IPL_SCHED [IPL_CLOCK] to block IPI interrupts while the cpu is
+	mucking with the shootdown queue.
+	[mhitch, ticket #1073]
 
