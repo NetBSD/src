@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.42.4.1 2009/02/24 03:45:56 snj Exp $
+.\"	$NetBSD: puffs.3,v 1.42.4.2 2009/10/16 12:07:23 sborrill Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -61,6 +61,8 @@
 .Fn puffs_getroot "struct puffs_usermount *pu"
 .Ft void *
 .Fn puffs_getspecific "struct puffs_usermount *pu"
+.Ft void
+.Fn puffs_setspecific "struct puffs_usermount *pu" "void *private"
 .Ft void
 .Fn puffs_setmaxreqlen "struct puffs_usermount *pu" "size_t maxreqlen"
 .Ft size_t
@@ -297,6 +299,9 @@ Returns the root node set earlier.
 Returns the
 .Fa private
 argument of
+.Fn puffs_init .
+.It Fn puffs_setspecific "pu" "private"
+Can be used to set the specific data after the call to
 .Fn puffs_init .
 .It Fn puffs_setmaxreqlen "pu" "maxreqlen"
 In case the file system desires a maximum buffer length different from
