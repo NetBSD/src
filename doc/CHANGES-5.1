@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.114 2009/10/16 14:53:21 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.115 2009/10/16 14:57:09 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14325,4 +14325,9 @@ usr.sbin/user/user.c				1.124
 	no need for a +1.
 	- Blowfish hashes are only 53 chars long, not 54.
 	[hubertf, ticket #1096]
+
+usr.bin/pwhash/pwhash.1				1.6
+
+	Make the format for -k flag clearer.
+	[hubertf, ticket #1097]
 
