@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.242.4.1 2009/01/09 03:38:18 snj Exp $
+#	$NetBSD: DEVNAMES,v 1.242.4.2 2009/10/16 11:56:11 sborrill Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -729,6 +729,7 @@ lmc			MI
 lms			bebox
 lms			i386
 lockstat		MI
+lom			sparc64
 lp			atari
 lp			vax
 lpa			vax
