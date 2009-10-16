@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.199 2009/09/01 21:46:07 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.200 2009/10/16 00:45:26 enami Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.199 2009/09/01 21:46:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.200 2009/10/16 00:45:26 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,7 +701,7 @@ ohci_init(ohci_softc_t *sc)
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 	rev = OREAD4(sc, OHCI_REVISION);
-	aprint_normal(" OHCI version %d.%d%s\n",
+	aprint_normal("OHCI version %d.%d%s\n",
 	    OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	    OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
 
