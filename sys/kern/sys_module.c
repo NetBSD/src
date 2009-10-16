@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.9 2009/04/28 17:57:00 skrll Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.10 2009/10/16 00:27:07 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.9 2009/04/28 17:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.10 2009/10/16 00:27:07 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,29 +63,38 @@ handle_modctl_load(modctl_load_t *ml)
 	if (error != 0)
 		goto out2;
 
-	propslen = ml->ml_propslen + 1;
-	props = (char *)kmem_alloc(propslen, KM_SLEEP);
-	if (props == NULL) {
-		error = ENOMEM;
-		goto out2;
-	}
+	if (ml->ml_props != NULL) {
+		propslen = ml->ml_propslen + 1;
+		props = (char *)kmem_alloc(propslen, KM_SLEEP);
+		if (props == NULL) {
+			error = ENOMEM;
+			goto out2;
+		}
 
-	error = copyinstr(ml->ml_props, props, propslen, NULL);
-	if (error != 0)
-		goto out3;
+		error = copyinstr(ml->ml_props, props, propslen, NULL);
+		if (error != 0)
+			goto out3;
 
-	dict = prop_dictionary_internalize(props);
-	if (dict == NULL) {
-		error = EINVAL;
-		goto out3;
+		dict = prop_dictionary_internalize(props);
+		if (dict == NULL) {
+			error = EINVAL;
+			goto out3;
+		}
+	} else {
+		dict = NULL;
+		props = NULL;
 	}
 
 	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY);
 
-	prop_object_release(dict);
+	if (dict != NULL) {
+		prop_object_release(dict);
+	}
 
 out3:
-	kmem_free(props, propslen);
+	if (props != NULL) {
+		kmem_free(props, propslen);
+	}
 out2:
 	PNBUF_PUT(path);
 out1:
