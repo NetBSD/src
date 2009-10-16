@@ -72,6 +72,7 @@ const struct option cf_options[] = {
 	{"timeout",         required_argument, NULL, 't'},
 	{"userclass",       required_argument, NULL, 'u'},
 	{"vendor",          required_argument, NULL, 'v'},
+	{"waitip",          no_argument,       NULL, 'w'},
 	{"exit",            no_argument,       NULL, 'x'},
 	{"allowinterfaces", required_argument, NULL, 'z'},
 	{"reboot",          required_argument, NULL, 'y'},
@@ -506,6 +507,9 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			ifo->vendor[ifo->vendor[0] + 2] = s;
 			ifo->vendor[0] += s + 2;
 		}
+		break;
+	case 'w':
+		ifo->options |= DHCPCD_WAITIP;
 		break;
 	case 'y':
 		ifo->reboot = atoint(arg);
