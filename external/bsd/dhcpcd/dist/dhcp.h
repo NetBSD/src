@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 
+#include "common.h"
+
 /* Max MTU - defines dhcp option length */
 #define MTU_MAX             1500
 #define MTU_MIN             576

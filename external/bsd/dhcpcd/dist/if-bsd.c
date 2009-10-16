@@ -70,15 +70,14 @@
 	    ?								      \
 	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
 
-static int a_fd = -1;
 static int r_fd = -1;
 
 int
-init_socket(void)
+init_sockets(void)
 {
-	if ((a_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+	if ((socket_afnet = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		return -1;
-	set_cloexec(a_fd);
+	set_cloexec(socket_afnet);
 	if ((r_fd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		return -1;
 	set_cloexec(r_fd);
@@ -102,7 +101,7 @@ getifssid(const char *ifname, char *ssid)
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	memset(&nwid, 0, sizeof(nwid));
 	ifr.ifr_data = (void *)&nwid;
-	if (ioctl(a_fd, SIOCG80211NWID, &ifr) == 0) {
+	if (ioctl(socket_afnet, SIOCG80211NWID, &ifr) == 0) {
 		retval = nwid.i_len;
 		memcpy(ssid, nwid.i_nwid, nwid.i_len);
 		ssid[nwid.i_len] = '\0';
@@ -113,7 +112,7 @@ getifssid(const char *ifname, char *ssid)
 	ireq.i_type = IEEE80211_IOC_SSID;
 	ireq.i_val = -1;
 	ireq.i_data = &nwid;
-	if (ioctl(a_fd, SIOCG80211, &ireq) == 0) {
+	if (ioctl(socket_afnet, SIOCG80211, &ireq) == 0) {
 		retval = ireq.i_len;
 		memcpy(ssid, nwid, ireq.i_len);
 		ssid[ireq.i_len] = '\0';
@@ -152,9 +151,9 @@ if_address(const struct interface *iface, const struct in_addr *address,
 #undef ADDADDR
 
 	if (action < 0)
-		retval = ioctl(a_fd, SIOCDIFADDR, &ifa);
+		retval = ioctl(socket_afnet, SIOCDIFADDR, &ifa);
 	else
-		retval = ioctl(a_fd, SIOCAIFADDR, &ifa);
+		retval = ioctl(socket_afnet, SIOCAIFADDR, &ifa);
 	return retval;
 }
 

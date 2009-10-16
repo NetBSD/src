@@ -71,6 +71,8 @@
 
 static char hwaddr_buffer[(HWADDR_LEN * 3) + 1];
 
+int socket_afnet = -1;
+
 int
 inet_ntocidr(struct in_addr address)
 {
@@ -183,18 +185,12 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 struct interface *
 init_interface(const char *ifname)
 {
-	int s;
 	struct ifreq ifr;
 	struct interface *iface = NULL;
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return NULL;
-
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1)
+	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == -1)
 		goto eexit;
 
 	iface = xzalloc(sizeof(*iface));
@@ -208,13 +204,13 @@ init_interface(const char *ifname)
 		iface->metric += 100;
 	}
 
-	if (ioctl(s, SIOCGIFMTU, &ifr) == -1)
+	if (ioctl(socket_afnet, SIOCGIFMTU, &ifr) == -1)
 		goto eexit;
 	/* Ensure that the MTU is big enough for DHCP */
 	if (ifr.ifr_mtu < MTU_MIN) {
 		ifr.ifr_mtu = MTU_MIN;
 		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+		if (ioctl(socket_afnet, SIOCSIFMTU, &ifr) == -1)
 			goto eexit;
 	}
 
@@ -230,7 +226,6 @@ eexit:
 	free(iface);
 	iface = NULL;
 exit:
-	close(s);
 	return iface;
 }
 
@@ -248,6 +243,72 @@ free_interface(struct interface *iface)
 	}
 	free(iface->clientid);
 	free(iface);
+}
+
+int
+carrier_status(struct interface *iface)
+{
+	int ret;
+	struct ifreq ifr;
+#ifdef SIOCGIFMEDIA
+	struct ifmediareq ifmr;
+#endif
+#ifdef __linux__
+	char *p;
+#endif
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
+#ifdef __linux__
+	/* We can only test the real interface up */
+	if ((p = strchr(ifr.ifr_name, ':')))
+		*p = '\0';
+#endif
+
+	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == -1)
+		return -1;
+	iface->flags = ifr.ifr_flags;
+
+	ret = -1;
+#ifdef SIOCGIFMEDIA
+	memset(&ifmr, 0, sizeof(ifmr));
+	strlcpy(ifmr.ifm_name, iface->name, sizeof(ifmr.ifm_name));
+	if (ioctl(socket_afnet, SIOCGIFMEDIA, &ifmr) != -1 &&
+	    ifmr.ifm_status & IFM_AVALID)
+		ret = (ifmr.ifm_status & IFM_ACTIVE) ? 1 : 0;
+#endif
+	if (ret == -1)
+		ret = (ifr.ifr_flags & IFF_RUNNING) ? 1 : 0;
+	return ret;
+}
+
+int
+up_interface(struct interface *iface)
+{
+	struct ifreq ifr;
+	int retval = -1;
+#ifdef __linux__
+	char *p;
+#endif
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
+#ifdef __linux__
+	/* We can only bring the real interface up */
+	if ((p = strchr(ifr.ifr_name, ':')))
+		*p = '\0';
+#endif
+	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == 0) {
+		if ((ifr.ifr_flags & IFF_UP))
+			retval = 0;
+		else {
+			ifr.ifr_flags |= IFF_UP;
+			if (ioctl(socket_afnet, SIOCSIFFLAGS, &ifr) == 0)
+				retval = 0;
+		}
+		iface->flags = ifr.ifr_flags;
+	}
+	return retval;
 }
 
 struct interface *
@@ -327,13 +388,13 @@ discover_interfaces(int argc, char * const *argv)
 		if ((ifp = init_interface(p)) == NULL)
 			continue;
 
-		/* Bring the interface up */
-		if (!(ifp->flags & IFF_UP) && up_interface(p) != 0)
-			/* Some drivers return ENODEV here when they are disabled by a switch.
-			 * We just blunder on as the carrier will be down anyway.
-			 * When the switch is enabled, it should bring the interface up.
-			 * Then we'll spot the carrier and start working. */
-			syslog(LOG_ERR, "%s: up_interface: %m", p);
+		/* Bring the interface up if not already */
+		if (!(ifp->flags & IFF_UP) &&
+#ifdef SIOCGIFMEDIA
+		    carrier_status(ifp) != -1 &&
+#endif
+		    up_interface(ifp) != 0)
+			syslog(LOG_ERR, "%s: up_interface: %m", ifp->name);
 
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
@@ -364,22 +425,19 @@ discover_interfaces(int argc, char * const *argv)
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
 #endif
-
 		}
 
-		if (!(ifp->flags & IFF_POINTOPOINT)) {
-			switch(ifp->family) {
-			case ARPHRD_ETHER: /* FALLTHROUGH */
-			case ARPHRD_IEEE1394:
-				break;
-			default:
-				if (argc == 0 && ifac == 0) {
-					free_interface(ifp);
-					continue;
-				}
+		/* We only work on ethernet by default */
+		if (!(ifp->flags & IFF_POINTOPOINT) &&
+		    ifp->family != ARPHRD_ETHER)
+		{
+			if (argc == 0 && ifac == 0) {
+				free_interface(ifp);
+				continue;
+			}
+			if (ifp->family != ARPHRD_IEEE1394)
 				syslog(LOG_WARNING,
 				    "%s: unknown hardware family", p);
-			}
 		}
 		if (ifl)
 			ifl->next = ifp; 
@@ -433,98 +491,17 @@ do_address(const char *ifname,
 	freeifaddrs(ifaddrs);
 	return retval;
 }
-	
-int
-up_interface(const char *ifname)
-{
-	int s;
-	struct ifreq ifr;
-	int retval = -1;
-#ifdef __linux__
-	char *p;
-#endif
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-#ifdef __linux__
-	/* We can only bring the real interface up */
-	if ((p = strchr(ifr.ifr_name, ':')))
-		*p = '\0';
-#endif
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
-		if ((ifr.ifr_flags & IFF_UP))
-			retval = 0;
-		else {
-			ifr.ifr_flags |= IFF_UP;
-			if (ioctl(s, SIOCSIFFLAGS, &ifr) == 0)
-				retval = 0;
-		}
-	}
-	close(s);
-	return retval;
-}
-
-int
-carrier_status(const char *ifname)
-{
-	int s;
-	struct ifreq ifr;
-	int retval = -1;
-#ifdef SIOCGIFMEDIA
-	struct ifmediareq ifmr;
-#endif
-#ifdef __linux__
-	char *p;
-#endif
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-#ifdef __linux__
-	/* We can only test the real interface up */
-	if ((p = strchr(ifr.ifr_name, ':')))
-		*p = '\0';
-#endif
-	if ((retval = ioctl(s, SIOCGIFFLAGS, &ifr)) == 0) {
-		if (ifr.ifr_flags & IFF_UP && ifr.ifr_flags & IFF_RUNNING)
-			retval = 1;
-		else
-			retval = 0;
-	}
-
-#ifdef SIOCGIFMEDIA
-	if (retval == 1) {
-		memset(&ifmr, 0, sizeof(ifmr));
-		strlcpy(ifmr.ifm_name, ifr.ifr_name, sizeof(ifmr.ifm_name));
-		retval = -1;
-		if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1 &&
-		    ifmr.ifm_status & IFM_AVALID)
-			retval = (ifmr.ifm_status & IFM_ACTIVE) ? 1 : 0;
-	}
-#endif
-	close(s);
-	return retval;
-}
-
 
 int
 do_mtu(const char *ifname, short int mtu)
 {
 	struct ifreq ifr;
 	int r;
-	int s;
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	r = ioctl(s, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
-	close(s);
+	r = ioctl(socket_afnet, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
 	if (r == -1)
 		return -1;
 	return ifr.ifr_mtu;
