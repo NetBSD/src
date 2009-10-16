@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.28 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.29 2009/10/16 22:45:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -599,7 +599,7 @@ init(int argc, char **argv)
 	char buf[STRINGLENGTH], *p;
 	const char *u;
 	char username[STRINGLENGTH];
-	char *supfname, **arg;
+	char *supfname, *arg;
 	COLLECTION *c, *lastC;
 	FILE *f;
 	int bogus;
