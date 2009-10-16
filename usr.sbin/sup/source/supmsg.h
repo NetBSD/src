@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.h,v 1.6 2001/01/16 02:50:32 cgd Exp $	*/
+/*	$NetBSD: supmsg.h,v 1.7 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -109,7 +109,7 @@
 #ifdef	MSGSUBR
 
 /* used in all msg routines */
-extern int	server;			/* true if we are the server */
+extern int	isserver;		/* true if we are the server */
 extern int	protver;		/* protocol version of partner */
 
 #else	/* MSGSUBR */
@@ -121,7 +121,7 @@ extern int	protver;		/* protocol version of partner */
 #endif	/* MSGFILE */
 
 /* used in all msg routines */
-EXTERN	int	server;			/* true if we are the server */
+EXTERN	int	isserver;		/* true if we are the server */
 
 /* msggoaway */
 EXTERN	char	*goawayreason;		/* reason for goaway */

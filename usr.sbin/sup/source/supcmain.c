@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.27 2009/07/17 20:31:20 jakllsch Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.28 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -361,14 +361,16 @@ int
 main(int argc, char **argv)
 {
 	char *progname, *supfname;
-	int restart, sfdev = 0, sfino = 0;
+	int restart;
+	dev_t sfdev = 0;
+	ino_t sfino = 0;
 	time_t sfmtime = 0;
 	struct stat sbuf;
 	struct sigaction ign;
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;/* export version number */
-	server = FALSE;		/* export that we're not a server */
+	isserver = FALSE;	/* export that we're not a server */
 	collname = NULL;	/* no current collection yet */
 	dontjump = TRUE;	/* clear setjmp buffer */
 	progname = estrdup(argv[0]);
@@ -597,7 +599,7 @@ init(int argc, char **argv)
 	char buf[STRINGLENGTH], *p;
 	const char *u;
 	char username[STRINGLENGTH];
-	char *supfname, *arg;
+	char *supfname, **arg;
 	COLLECTION *c, *lastC;
 	FILE *f;
 	int bogus;

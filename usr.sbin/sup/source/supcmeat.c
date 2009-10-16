@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.34 2009/01/16 10:24:20 junyoung Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.35 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1457,7 +1457,7 @@ finishone(TREE * t, void *fv)
 }
 
 void
-done(int value, char *fmt, ...)
+done(int value, const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;

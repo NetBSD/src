@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.9 2007/12/20 20:17:52 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.10 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -64,7 +64,7 @@ logopen(char *program)
 }
 
 void
-logquit(int retval, char *fmt, ...)
+logquit(int retval, const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
@@ -81,7 +81,7 @@ logquit(int retval, char *fmt, ...)
 }
 
 void
-logerr(char *fmt, ...)
+logerr(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
@@ -98,7 +98,7 @@ logerr(char *fmt, ...)
 }
 
 void
-loginfo(char *fmt, ...)
+loginfo(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
@@ -131,7 +131,7 @@ int allow_severity = LIBWRAP_ALLOW_FACILITY | LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY | LIBWRAP_DENY_SEVERITY;
 
 void
-logdeny(char *fmt, ...)
+logdeny(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
@@ -148,7 +148,7 @@ logdeny(char *fmt, ...)
 }
 
 void
-logallow(char *fmt, ...)
+logallow(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;

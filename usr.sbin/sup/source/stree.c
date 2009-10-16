@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.12 2007/12/20 20:17:52 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.13 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -59,13 +59,13 @@
 #include "libc.h"
 #include "c.h"
 
-static TREE *Tmake(char *);
+static TREE *Tmake(const char *);
 static TREE *Trotll(TREE *, TREE *);
 static TREE *Trotlh(TREE *, TREE *);
 static TREE *Trothl(TREE *, TREE *);
 static TREE *Trothh(TREE *, TREE *);
 static void Tbalance(TREE **);
-static TREE *Tinsertavl(TREE **, char *, int, int *);
+static TREE *Tinsertavl(TREE **, const char *, int, int *);
 static int Tsubprocess(TREE *, int, int (*f) (TREE *, void *), void *);
 static int Tprintone(TREE *, void *);
 
@@ -94,7 +94,7 @@ Tfree(TREE ** t)
 }
 
 static TREE *
-Tmake(char *p)
+Tmake(const char *p)
 {
 	TREE *t;
 	t = (TREE *) malloc(sizeof(TREE));
@@ -192,7 +192,7 @@ Tbalance(TREE ** t)
 }
 
 static TREE *
-Tinsertavl(TREE ** t, char *p, int find, int *dh)
+Tinsertavl(TREE ** t, const char *p, int find, int *dh)
 {
 	TREE *newt;
 	int cmp;
@@ -225,7 +225,7 @@ Tinsertavl(TREE ** t, char *p, int find, int *dh)
 }
 
 TREE *
-Tinsert(TREE ** t, char *p, int find)
+Tinsert(TREE ** t, const char *p, int find)
 {
 	int deltah;
 
@@ -240,7 +240,7 @@ Tinsert(TREE ** t, char *p, int find)
 }
 
 TREE *
-Tsearch(TREE * t, char *p)
+Tsearch(TREE * t, const char *p)
 {
 	TREE *x;
 	int cmp;
@@ -259,10 +259,11 @@ Tsearch(TREE * t, char *p)
 }
 
 TREE *
-Tlookup(TREE * t, char *p)
+Tlookup(TREE * t, const char *p)
 {
 	TREE *x;
 	char buf[MAXPATHLEN + 1];
+	char *q;
 
 	if (p == NULL)
 		return (NULL);
@@ -279,16 +280,16 @@ Tlookup(TREE * t, char *p)
 		return (x);
 	(void) strncpy(buf, p, sizeof(buf) - 1);
 	buf[MAXPATHLEN] = '\0';
-	while ((p = rindex(buf, '/')) != NULL) {
-		while (p >= buf && *(p - 1) == '/')
-			p--;
-		if (p == buf)
-			*(p + 1) = '\0';
+	while ((q = rindex(buf, '/')) != NULL) {
+		while (q >= buf && *(q - 1) == '/')
+			q--;
+		if (q == buf)
+			*(q + 1) = '\0';
 		else
-			*p = '\0';
+			*q = '\0';
 		if ((x = Tsearch(t, buf)) != NULL)
 			return (x);
-		if (p == buf)
+		if (q == buf)
 			break;
 	}
 	return (NULL);

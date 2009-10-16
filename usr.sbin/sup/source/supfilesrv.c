@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.41 2007/12/20 20:17:52 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.42 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -363,7 +363,7 @@ TREE *linkcheck(TREE *, int, int);
 char *uconvert(int);
 char *gconvert(int);
 char *changeuid(char *, char *, int, int);
-void goaway(char *, ...);
+void goaway(const char *, ...);
 char *fmttime(time_t);
 int local_file(int, struct stat *);
 int stat_info_ok(struct stat *, struct stat *);
@@ -387,7 +387,7 @@ main(int argc, char **argv)
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;/* export version number */
-	server = TRUE;		/* export that we're not a server */
+	isserver = TRUE;	/* export that we're not a server */
 	collname = NULL;	/* no current collection yet */
 	maxchildren = MAXCHILDREN;	/* defined in sup.h */
 
@@ -593,7 +593,7 @@ init(int argc, char **argv)
 			uidH[i] = gidH[i] = inodeH[i] = NULL;
 		return;
 	}
-	server = FALSE;
+	isserver = FALSE;
 	if (argc < 1)
 		usage();
 	f = fopen(cryptkey, "r");
@@ -1777,7 +1777,7 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 }
 
 void
-goaway(char *fmt, ...)
+goaway(const char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;

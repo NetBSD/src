@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.5 2002/07/10 20:19:41 wiz Exp $	*/
+/*	$NetBSD: quit.c,v 1.6 2009/10/16 12:41:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -49,7 +49,7 @@
 #include "supextern.h"
 
 void
-quit(int status, char *fmt, ...)
+quit(int status, const char *fmt, ...)
 {
 	va_list args;
 
