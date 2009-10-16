@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.122 2009/04/07 11:49:18 joerg Exp $	*/
+/*	$NetBSD: net.c,v 1.123 2009/10/16 19:01:03 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -932,7 +932,7 @@ ftp_fetch(const char *set_name)
 	const char *ftp_opt;
 	char ftp_user_encoded[STRSIZE];
 	char ftp_dir_encoded[STRSIZE];
-	char *cp;
+	char *cp, *set_dir2;
 	int rval;
 
 	/*
@@ -965,9 +965,14 @@ ftp_fetch(const char *set_name)
 	cp = url_encode(ftp_dir_encoded, ftp.dir,
 			ftp_dir_encoded + sizeof ftp_dir_encoded - 1,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1);
-	if (set_dir[0] != '/')
+	if (cp != ftp_dir_encoded && cp[-1] != '/')
 		*cp++ = '/';
-	url_encode(cp, set_dir,
+
+	set_dir2 = set_dir;
+	while (*set_dir2 == '/')
+		++set_dir2;
+
+	url_encode(cp, set_dir2,
 			ftp_dir_encoded + sizeof ftp_dir_encoded,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
