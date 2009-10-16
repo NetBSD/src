@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1306 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1307 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -421,3 +421,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	man(1): Display manpage when specified with a path [cegger 20091007]
 	hdaudioctl(8): Add tool to manipulate hdaudio(4) devices
 		[sborrill 20091011]
+	dhcpcd(8): Import dhcpcd-5.1.2. [roy 20091016]
+
