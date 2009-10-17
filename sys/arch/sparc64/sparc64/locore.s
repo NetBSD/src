@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.291 2009/05/30 16:52:32 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.292 2009/10/17 20:03:06 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1165,6 +1165,7 @@ TABLE(syscall):
 	UTRAP(0x1f0); UTRAP(0x1f1); UTRAP(0x1f2); UTRAP(0x1f3); UTRAP(0x1f4); UTRAP(0x1f5); UTRAP(0x1f6); UTRAP(0x1f7)
 	UTRAP(0x1f8); UTRAP(0x1f9); UTRAP(0x1fa); UTRAP(0x1fb); UTRAP(0x1fc); UTRAP(0x1fd); UTRAP(0x1fe); UTRAP(0x1ff)
 
+#if 0
 /*
  * If the cleanwin trap handler detects an overfow we come here.
  * We need to fix up the window registers, switch to the interrupt
@@ -1190,6 +1191,7 @@ cleanwin_overflow:
 	.asciz	"Kernel stack overflow!"
 	_ALIGN
 	.text
+#endif
 
 #ifdef DEBUG
 #define CHKREG(r) \
@@ -4155,7 +4157,6 @@ sparc_intr_retry:
 	bne,pn	CCCR, 1b
 	 EMPTY
 2:
-
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
 	membar	#LoadStore
