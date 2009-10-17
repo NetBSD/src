@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.66 2009/01/12 18:48:35 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.67 2009/10/17 23:16:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -102,7 +102,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	27
+#define PUFFSVERSION	28
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -561,6 +561,13 @@ struct puffs_vnmsg_mmap {
 
 	vm_prot_t		pvnr_prot;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
+};
+
+struct puffs_vnmsg_abortop {
+	struct puffs_req	pvn_pr;
+
+	struct puffs_kcn	pvnr_cn;		/* OUT	*/
+	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
 };
 
 
