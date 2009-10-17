@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.135 2009/09/30 18:22:29 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.136 2009/10/17 23:16:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.135 2009/09/30 18:22:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.136 2009/10/17 23:16:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,6 +82,7 @@ int	puffs_vnop_strategy(void *);
 int	puffs_vnop_bmap(void *);
 int	puffs_vnop_mmap(void *);
 int	puffs_vnop_getpages(void *);
+int	puffs_vnop_abortop(void *);
 
 int	puffs_vnop_spec_read(void *);
 int	puffs_vnop_spec_write(void *);
@@ -130,7 +131,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_advlock_desc, puffs_vnop_checkop },	/* advlock */
         { &vop_strategy_desc, puffs_vnop_strategy },	/* REAL strategy */
         { &vop_revoke_desc, genfs_revoke },		/* REAL revoke */
-        { &vop_abortop_desc, genfs_abortop },		/* REAL abortop */
+        { &vop_abortop_desc, puffs_vnop_abortop },	/* REAL abortop */
         { &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
         { &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
         { &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
@@ -2104,6 +2105,33 @@ puffs_vnop_advlock(void *v)
  out:
 	PUFFS_MSG_RELEASE(advlock);
 	return error;
+}
+
+int
+puffs_vnop_abortop(void *v)
+{
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	}; */ *ap = v;
+	PUFFS_MSG_VARS(vn, abortop);
+	struct vnode *dvp = ap->a_dvp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct componentname *cnp = ap->a_cnp;
+	int error;
+
+	if (EXISTSOP(pmp, ABORTOP)) {
+		PUFFS_MSG_ALLOC(vn, abortop);
+		puffs_makecn(&abortop_msg->pvnr_cn, &abortop_msg->pvnr_cn_cred,
+		    cnp, PUFFS_USE_FULLPNBUF(pmp));
+		puffs_msg_setinfo(park_abortop, PUFFSOP_VN,
+		    PUFFS_VN_ABORTOP, VPTOPNC(dvp));
+
+		PUFFS_MSG_ENQUEUEWAIT(pmp, park_abortop, error);
+		PUFFS_MSG_RELEASE(abortop);
+	}
+
+	return genfs_abortop(v);
 }
 
 #define BIOASYNC(bp) (bp->b_flags & B_ASYNC)
