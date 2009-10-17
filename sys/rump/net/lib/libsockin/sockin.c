@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.17 2009/10/16 23:17:46 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.18 2009/10/17 20:35:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.17 2009/10/16 23:17:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.18 2009/10/17 20:35:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -407,7 +407,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	{
 		struct sockaddr *saddr;
 		struct msghdr mhdr;
-		struct iovec iov[16];
+		struct iovec iov[32];
 		struct mbuf *m2;
 		size_t tot;
 		int i, s;
@@ -416,7 +416,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		tot = 0;
 		for (i = 0, m2 = m; m2; m2 = m2->m_next, i++) {
-			if (i > 16)
+			if (i >= 32)
 				panic("lazy bum");
 			iov[i].iov_base = m2->m_data;
 			iov[i].iov_len = m2->m_len;
