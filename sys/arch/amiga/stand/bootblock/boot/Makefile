@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2009/01/12 07:42:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.40 2009/10/17 11:18:17 mlelstv Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -51,6 +51,7 @@ OBJS=	$(SOBJS) $(COBJS)
 #XX#DEFS = -D_STANDALONE -DINSECURE -DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR 
 DEFS = -D_STANDALONE -DINSECURE 
 DEFS += -D__INTERNAL_LIBSA_CREAD
+#DEFS += -DSERCONSOLE
 SOBJS += cread.o
 
 #XX#SOBJS += adler32.o crc32.o inflate.o trees.o \
