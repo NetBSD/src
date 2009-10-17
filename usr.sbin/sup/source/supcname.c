@@ -1,4 +1,4 @@
-/*	$NetBSD: supcname.c,v 1.6 2002/07/10 20:19:45 wiz Exp $	*/
+/*	$NetBSD: supcname.c,v 1.7 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -82,9 +82,9 @@ getnams(void)
 	if (f == NULL)
 		logquit(1, "Can't open %s", buf);
 	while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-		if ((q = index(p, '\n')) != NULL)
+		if ((q = strchr(p, '\n')) != NULL)
 			*q = '\0';
-		if (index("#;:", *p))
+		if (strchr("#;:", *p))
 			continue;
 		q = nxtarg(&p, "= \t");
 		p = skipover(p, " \t");
