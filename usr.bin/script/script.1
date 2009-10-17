@@ -1,4 +1,4 @@
-.\"	$NetBSD: script.1,v 1.11 2009/10/17 19:05:54 christos Exp $
+.\"	$NetBSD: script.1,v 1.12 2009/10/17 22:28:33 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,7 +66,7 @@ or
 .Pa typescript ,
 retaining the prior contents.
 .It Fl c Ar command
-Run the named 
+Run the named
 .Ar command
 instead of the shell.
 Useful for capturing the output of a program that behaves differently when
@@ -74,8 +74,8 @@ associated with a tty.
 .It Fl d
 Don't sleep between records when playing back a timestamped session.
 .It Fl f
-Flush output after each write. This is useful for watching the script
-output in real time.
+Flush output after each write.
+This is useful for watching the script output in real time.
 .It Fl p
 Play back a recorded session in real time.
 .It Fl q
@@ -116,10 +116,12 @@ If the variable
 .Ev SHELL
 exists, the shell forked by
 .Nm
-will be that shell. If
+will be that shell.
+If
 .Ev SHELL
 is not set, the Bourne shell
-is assumed. (Most shells set this variable automatically).
+is assumed.
+(Most shells set this variable automatically).
 .El
 .Sh SEE ALSO
 .Xr csh 1
