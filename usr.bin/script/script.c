@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.17 2009/04/13 07:15:32 lukem Exp $	*/
+/*	$NetBSD: script.c,v 1.18 2009/10/17 19:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.17 2009/04/13 07:15:32 lukem Exp $");
+__RCSID("$NetBSD: script.c,v 1.18 2009/10/17 19:05:54 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,13 +78,14 @@ int	master, slave;
 int	child, subchild;
 int	outcc;
 int	usesleep, rawout;
+int	quiet, flush;
 const char *fname;
 
 struct	termios tt;
 
 void	done(void);
 void	dooutput(void);
-void	doshell(void);
+void	doshell(const char *);
 void	fail(void);
 void	finish(int);
 int	main(int, char **);
@@ -101,28 +102,42 @@ main(int argc, char *argv[])
 	struct winsize win;
 	int aflg, pflg, ch;
 	char ibuf[BUFSIZ];
+	const char *command;
 
 	aflg = 0;
 	pflg = 0;
 	usesleep = 1;
 	rawout = 0;
-	while ((ch = getopt(argc, argv, "adpr")) != -1)
+	quiet = 0;
+	flush = 0;
+	command = NULL;
+	while ((ch = getopt(argc, argv, "ac:dfpqr")) != -1)
 		switch(ch) {
 		case 'a':
 			aflg = 1;
 			break;
+		case 'c':
+			command = optarg;
+			break;
 		case 'd':
 			usesleep = 0;
 			break;
+		case 'f':
+			flush = 1;
+			break;
 		case 'p':
 			pflg = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'r':
 			rawout = 1;
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: %s [-adpr] [file]\n",
+			(void)fprintf(stderr,
+			    "Usage: %s [-c <command>][-adfpqr] [file]\n",
 			    getprogname());
 			exit(1);
 		}
@@ -145,7 +160,8 @@ main(int argc, char *argv[])
 	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
 		err(1, "openpty");
 
-	(void)printf("Script started, output file is %s\n", fname);
+	if (!quiet)
+		(void)printf("Script started, output file is %s\n", fname);
 	rtt = tt;
 	cfmakeraw(&rtt);
 	rtt.c_lflag &= ~ECHO;
@@ -166,7 +182,7 @@ main(int argc, char *argv[])
 		if (child)
 			dooutput();
 		else
-			doshell();
+			doshell(command);
 	}
 
 	if (!rawout)
@@ -196,7 +212,7 @@ finish(int signo)
 }
 
 void
-dooutput()
+dooutput(void)
 {
 	struct itimerval value;
 	int cc;
@@ -207,7 +223,7 @@ dooutput()
 	tvec = time(NULL);
 	if (rawout)
 		record(fscript, NULL, 0, 's');
-	else
+	else if (!quiet)
 		(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
 
 	(void)signal(SIGALRM, scriptflush);
@@ -225,6 +241,8 @@ dooutput()
 		else
 			(void)fwrite(obuf, 1, cc, fscript);
 		outcc += cc;
+		if (flush)
+			(void)fflush(fscript);
 	}
 	done();
 }
@@ -239,19 +257,23 @@ scriptflush(int signo)
 }
 
 void
-doshell()
+doshell(const char *command)
 {
 	const char *shell;
-
-	shell = getenv("SHELL");
-	if (shell == NULL)
-		shell = _PATH_BSHELL;
 
 	(void)close(master);
 	(void)fclose(fscript);
 	login_tty(slave);
-	execl(shell, shell, "-i", NULL);
-	warn("execl %s", shell);
+	if (command == NULL) {
+		shell = getenv("SHELL");
+		if (shell == NULL)
+			shell = _PATH_BSHELL;
+		execl(shell, shell, "-i", NULL);
+		command = shell;
+	} else
+		execlp(command, command, NULL);
+
+	warn("execl %s", command);
 	fail();
 }
 
@@ -272,14 +294,15 @@ done()
 		tvec = time(NULL);
 		if (rawout)
 			record(fscript, NULL, 0, 'e');
-		else
+		else if (!quiet)
 			(void)fprintf(fscript,"\nScript done on %s",
 			    ctime(&tvec));
 		(void)fclose(fscript);
 		(void)close(master);
 	} else {
 		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
-		(void)printf("Script done, output file is %s\n", fname);
+		if (!quiet)
+			(void)printf("Script done, output file is %s\n", fname);
 	}
 	exit(0);
 }
@@ -370,12 +393,16 @@ playback(FILE *fp)
 
 		switch (stamp.scr_direction) {
 		case 's':
-			(void)printf("Script started on %s", ctime(&tclock));
+			if (!quiet)
+			    (void)printf("Script started on %s",
+				ctime(&tclock));
 			tsi = tso;
 			(void)consume(fp, stamp.scr_len, buf, reg);
 			break;
 		case 'e':
-			(void)printf("\nScript done on %s", ctime(&tclock));
+			if (!quiet)
+				(void)printf("\nScript done on %s",
+				    ctime(&tclock));
 			(void)consume(fp, stamp.scr_len, buf, reg);
 			break;
 		case 'i':
