@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.157 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.158 2009/10/17 08:50:49 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2009/05/16 19:15:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2009/10/17 08:50:49 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -608,12 +608,14 @@ badtrap:
 #endif
 
 	case T_AST:
-#if 1
-		if (want_resched)
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
+		}
+		while (want_resched)
 			preempt();
 		want_ast = 0;
-#endif
-		break;	/* the work is all in userret() */
+		break;
 
 	case T_ILLINST:
 	case T_INST_EXCEPT:
