@@ -1,4 +1,12 @@
-#	$NetBSD: shlib_version,v 1.2 2009/01/11 03:07:49 christos Exp $
+#	$NetBSD: shlib_version,v 1.3 2009/10/17 21:36:02 pooka Exp $
+#
+
+#
+# NOTE!
+#
+#  next time major is bumped:
+#    1) enable puffs_ops_spare
+#    2) get rid of PUFFS_DEVEL_LIBVERSION
 #
 major=1
 minor=0
