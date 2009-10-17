@@ -1,4 +1,4 @@
-/*	$NetBSD: ffilecopy.c,v 1.9 2008/05/30 14:19:57 christos Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.10 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -44,7 +44,7 @@
 # define FBUF_HACK(here,there) \
 	do { \
 		if ((here)->_r > 0) { \
-			i = write(therefile, (here)->_p, (here)->_r); \
+			i = write(therefile, (here)->_p, (size_t)(here)->_r); \
 			if (i != (here)->_r) \
 				return EOF; \
 			(here)->_p = (here)->_bf._base; \
