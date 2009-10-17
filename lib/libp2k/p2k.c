@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.24 2009/10/15 16:41:08 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.25 2009/10/17 23:20:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -300,6 +300,7 @@ setupfs(const char *vfsname, const char *devpath, int partition,
 
 	PUFFSOP_SET(pops, p2k, node, inactive);
 	PUFFSOP_SET(pops, p2k, node, reclaim);
+	PUFFSOP_SET(pops, p2k, node, abortop);
 
 	dodaemon = true;
 	if (getenv("P2K_DEBUG") != NULL) {
@@ -887,6 +888,29 @@ p2k_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred_destroy(cred);
 
 	return rv;
+}
+
+int
+p2k_node_abortop(struct puffs_usermount *pu, puffs_cookie_t opc,
+	const struct puffs_cn *pcn)
+{
+	struct p2k_node *p2n_dir = opc;
+	struct componentname *cnp;
+
+	if ((cnp = p2n_dir->p2n_cn) != NULL) {
+		freecn(cnp, 0);
+		p2n_dir->p2n_cn = NULL;
+	}
+	if ((cnp = p2n_dir->p2n_cn_ren_src) != NULL) {
+		freecn(cnp, RUMPCN_FORCEFREE);
+		p2n_dir->p2n_cn_ren_src = NULL;
+	}
+	if ((cnp = p2n_dir->p2n_cn_ren_targ) != NULL) {
+		freecn(cnp, RUMPCN_FORCEFREE);
+		p2n_dir->p2n_cn_ren_targ = NULL;
+	}
+
+	return 0;
 }
 
 static int
