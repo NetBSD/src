@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.17 2009/10/13 12:11:19 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.18 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -97,7 +97,7 @@ static int match(char *, char *);
 static int amatch(char *, char *);
 static void addone(char *, const char *);
 static int addpath(char);
-static int gethdir(char *, int);
+static int gethdir(char *, size_t);
 
 int 
 expand(char *spec, char **buffer, int bufsize)
@@ -392,7 +392,7 @@ addpath(char c)
 }
 
 static int 
-gethdir(char *home, int homelen)
+gethdir(char *home, size_t homelen)
 {
 	struct passwd *pp = getpwnam(home);
 
