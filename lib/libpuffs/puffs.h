@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.110 2008/12/12 19:45:16 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.111 2009/10/17 23:19:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -218,10 +218,13 @@ struct puffs_ops {
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 	int (*puffs_node_write)(struct puffs_usermount *, puffs_cookie_t,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
+	int (*puffs_node_abortop)(struct puffs_usermount *, puffs_cookie_t,
+	    const struct puffs_cn *);
 
-	/* XXX: this shouldn't be here */
-	void (*puffs_cache_write)(struct puffs_usermount *,
-	    puffs_cookie_t, size_t, struct puffs_cacherun *);
+#if 0
+	/* enable next time this structure is changed */
+	void *puffs_ops_spare[32];
+#endif
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -354,8 +357,8 @@ enum {
 	int fsname##_node_write(struct puffs_usermount *,		\
 	    puffs_cookie_t, uint8_t *, off_t, size_t *,			\
 	    const struct puffs_cred *, int);				\
-	int fsname##_cache_write(struct puffs_usermount *,		\
-	    puffs_cookie_t, size_t, struct puffs_cacheinfo *);
+	int fsname##_node_abortop(struct puffs_usermount *,		\
+	    puffs_cookie_t, const struct puffs_cn *);
 
 #define PUFFSOP_INIT(ops)						\
     ops = malloc(sizeof(struct puffs_ops));				\
