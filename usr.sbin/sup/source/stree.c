@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.14 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.15 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -338,6 +338,7 @@ Tprocess(TREE * t, int (*f) (TREE *, void *), void *args)
 }
 
 static int 
+/*ARGSUSED*/
 Tprintone(TREE * t, void *v __unused)
 {
 	int i;
