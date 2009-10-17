@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.27 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.28 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -263,7 +263,7 @@ servicesetup(char *server, int af)
 			continue;
 		}
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-			(char *) &one, sizeof(int)) < 0) {
+		    &one, sizeof(int)) < 0) {
 			cause = "setsockopt(SO_REUSEADDR)";
 			close(sock);
 			continue;
@@ -296,7 +296,7 @@ service(void)
 	remotename = NULL;
 	len = sizeof(from);
 	do {
-		netfile = accept(sock, (struct sockaddr *) & from, &len);
+		netfile = accept(sock, (struct sockaddr *)(void *)&from, &len);
 	} while (netfile < 0 && errno == EINTR);
 	if (netfile < 0)
 		return (scmerr(errno, "Can't accept connections"));
@@ -305,7 +305,7 @@ service(void)
 		return (scmerr(errno, "Can't accept connections"));
 	}
 	memcpy(&remoteaddr, &from, len);
-	if (read(netfile, (char *) &x, sizeof(int)) != sizeof(int))
+	if (read(netfile, &x, sizeof(int)) != sizeof(int))
 		return (scmerr(errno, "Can't transmit data on connection"));
 	if (x == 0x01020304)
 		swapmode = 0;
@@ -369,7 +369,7 @@ dobackoff(int *t, int *b)
 		return (0);
 	s = *b * 30;
 	if (gettimeofday(&tt, (struct timezone *) NULL) >= 0)
-		s += (tt.tv_usec >> 8) % s;
+		s += ((uint32_t)tt.tv_usec >> 8) % s;
 	if (*b < 32)
 		*b <<= 1;
 	if (*t != -1) {
@@ -411,7 +411,7 @@ request(char *server, char *hostname, int *retry)
 				gai_strerror(error)));
 	}
 	backoff = 1;
-	while (1) {
+	for (;;) {
 		netfile = -1;
 		for (res = res0; res; res = res->ai_next) {
 			if (res->ai_addrlen > sizeof(remoteaddr))
@@ -445,7 +445,7 @@ request(char *server, char *hostname, int *retry)
 	memcpy(&remoteaddr, res->ai_addr, res->ai_addrlen);
 	remotename = estrdup(hostname);
 	x = 0x01020304;
-	(void) write(netfile, (char *) &x, sizeof(int));
+	(void) write(netfile, &x, sizeof(int));
 	swapmode = 0;		/* swap only on server, not client */
 	freeaddrinfo(res0);
 	return (SCMOK);
@@ -492,9 +492,9 @@ remotehost(void)
 	char h1[NI_MAXHOST];
 
 	if (remotename == NULL) {
-		if (getnameinfo((struct sockaddr *) & remoteaddr,
+		if (getnameinfo((struct sockaddr *)(void *)&remoteaddr,
 #ifdef BSD4_4
-			remoteaddr.ss_len,
+			(socklen_t)remoteaddr.ss_len,
 #else
 			sizeof(struct sockaddr),
 #endif
@@ -586,9 +586,9 @@ samehost(void)
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	const int niflags = NI_NUMERICHOST;
 
-	if (getnameinfo((struct sockaddr *) &remoteaddr,
+	if (getnameinfo((struct sockaddr *)(void *)&remoteaddr,
 #ifdef BSD4_4
-	    remoteaddr.ss_len,
+	    (socklen_t)remoteaddr.ss_len,
 #else
 	    sizeof(struct sockaddr),
 #endif
@@ -601,7 +601,7 @@ samehost(void)
 			continue;
 		if (getnameinfo(ifa->ifa_addr,
 #ifdef BSD4_4
-		    ifa->ifa_addr->sa_len,
+		    (socklen_t)ifa->ifa_addr->sa_len,
 #else
 		    sizeof(struct sockaddr),
 #endif
@@ -623,9 +623,9 @@ matchhost(char *name)
 	const int niflags = NI_NUMERICHOST;
 	struct addrinfo hints, *res0, *res;
 
-	if (getnameinfo((struct sockaddr *) & remoteaddr,
+	if (getnameinfo((struct sockaddr *)(void *)&remoteaddr,
 #ifdef BSD4_4
-	    remoteaddr.ss_len,
+	    (socklen_t)remoteaddr.ss_len,
 #else
 	    sizeof(struct sockaddr),
 #endif

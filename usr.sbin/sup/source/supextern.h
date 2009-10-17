@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.21 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.22 2009/10/17 22:26:13 christos Exp $	*/
 
 struct stat;
 
@@ -9,10 +9,10 @@ unsigned int atoo(char *);
 int expand(char *, char **, int);
 
 /* ffilecopy.c */
-int ffilecopy(FILE *, FILE *);
+ssize_t ffilecopy(FILE *, FILE *);
 
 /* filecopy.c */
-int filecopy(int, int );
+ssize_t filecopy(int, int );
 
 /* log.c */
 void logopen(char *);

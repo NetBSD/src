@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.16 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.17 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -323,6 +323,7 @@ msglogack(void)
 extern TREE *refuseT;		/* tree of files to refuse */
 
 static int 
+/*ARGSUSED*/
 refuseone(TREE * t, void *v __unused)
 {
 	return (writestring(t->Tname));
@@ -365,6 +366,7 @@ extern TREE *listT;		/* tree of files to list */
 extern time_t scantime;		/* time that collection was scanned */
 
 static int 
+/*ARGSUSED*/
 listone(TREE * t, void *v __unused)
 {
 	int x;
@@ -430,6 +432,7 @@ msglist(void)
 extern TREE *needT;		/* tree of files to need */
 
 static int 
+/*ARGSUSED*/
 needone(TREE * t, void *v __unused)
 {
 	int x;
@@ -481,6 +484,7 @@ msgneed(void)
 extern TREE *denyT;		/* tree of files to deny */
 
 static int 
+/*ARGSUSED*/
 denyone(TREE * t, void *v __unused)
 {
 	return (writestring(t->Tname));
@@ -532,6 +536,7 @@ msgsend(void)
 extern TREE *upgradeT;		/* pointer to file being upgraded */
 
 static int 
+/*ARGSUSED*/
 writeone(TREE * t, void *v __unused)
 {
 	return (writestring(t->Tname));

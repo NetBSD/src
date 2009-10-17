@@ -1,4 +1,4 @@
-/*	$NetBSD: netcryptvoid.c,v 1.9 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: netcryptvoid.c,v 1.10 2009/10/17 22:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -68,6 +68,7 @@ netcrypt(char *pword)
 }
 
 int 
+/*ARGSUSED*/
 getcryptbuf(int x __unused)
 {
 	if (cryptflag == 0) {
@@ -77,12 +78,14 @@ getcryptbuf(int x __unused)
 }
 
 void 
+/*ARGSUSED*/
 decode(char *in __unused, char *out __unused, int count __unused)
 {
 }
 
 
 void 
+/*ARGSUSED*/
 encode(char *in __unused, char *out __unused, int count __unused)
 {
 }
