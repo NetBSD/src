@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.26 2007/12/20 20:15:59 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.27 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -297,10 +297,10 @@ getrelease(char *release)
 				rewound = TRUE;
 				continue;
 			}
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			q = nxtarg(&p, " \t");
 			if (strcmp(q, release) != 0)
@@ -357,10 +357,10 @@ makescanlists(void)
 	f = fopen(buf, "r");
 	if (f != NULL) {
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			q = nxtarg(&p, " \t");
 			(void) parserelease(&tl, q, p);
@@ -481,9 +481,9 @@ readlistfile(char *fname)
 		goaway("Can't read list file %s", fname);
 	cdprefix(prefix);
 	while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-		if ((q = index(p, '\n')) != NULL)
+		if ((q = strchr(p, '\n')) != NULL)
 			*q = '\0';
-		if (index("#;:", *p))
+		if (strchr("#;:", *p))
 			continue;
 		q = nxtarg(&p, " \t");
 		if (*q == '\0')
@@ -851,7 +851,7 @@ getscanfile(char *scanfile)
 		(void) fclose(f);
 		return (FALSE);
 	}
-	if ((q = index(p, '\n')) != NULL)
+	if ((q = strchr(p, '\n')) != NULL)
 		*q = '\0';
 	if (*p++ != 'V') {
 		(void) fclose(f);
@@ -869,7 +869,7 @@ getscanfile(char *scanfile)
 	}
 	notwanted = FALSE;
 	while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-		q = index(p, '\n');
+		q = strchr(p, '\n');
 		if (q)
 			*q = 0;
 		ts.Tflags = 0;
@@ -890,17 +890,17 @@ getscanfile(char *scanfile)
 			p++;
 			ts.Tflags |= FNOACCT;
 		}
-		if ((q = index(p, ' ')) == NULL)
+		if ((q = strchr(p, ' ')) == NULL)
 			goaway("scanfile format inconsistent");
 		*q++ = '\0';
 		ts.Tmode = atoo(p);
 		p = q;
-		if ((q = index(p, ' ')) == NULL)
+		if ((q = strchr(p, ' ')) == NULL)
 			goaway("scanfile format inconsistent");
 		*q++ = '\0';
 		ts.Tctime = atoi(p);
 		p = q;
-		if ((q = index(p, ' ')) == NULL)
+		if ((q = strchr(p, ' ')) == NULL)
 			goaway("scanfile format inconsistent");
 		*q++ = 0;
 		ts.Tmtime = atoi(p);

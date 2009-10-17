@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.36 2009/10/16 22:45:18 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.37 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -489,9 +489,9 @@ listfiles(void)
 	f = fopen(buf, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f))) {
-			if ((q = index(p, '\n')))
+			if ((q = strchr(p, '\n')))
 				*q = '\0';
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			(void) Tinsert(&lastT, p, FALSE);
 		}
@@ -502,9 +502,9 @@ listfiles(void)
 	f = fopen(buf, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f))) {
-			if ((q = index(p, '\n')))
+			if ((q = strchr(p, '\n')))
 				*q = '\0';
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			(void) Tinsert(&refuseT, p, FALSE);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.42 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.43 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -600,7 +600,7 @@ init(int argc, char **argv)
 	if (f == NULL)
 		quit(1, "Unable to open cryptfile %s\n", cryptkey);
 	if ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-		if ((q = index(p, '\n')) != NULL)
+		if ((q = strchr(p, '\n')) != NULL)
 			*q = '\0';
 		if (*p == '\0')
 			quit(1, "No cryptkey found in %s\n", cryptkey);
@@ -829,10 +829,10 @@ srvsetup(void)
 				struct stat fsbuf;
 
 				while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-					q = index(p, '\n');
+					q = strchr(p, '\n');
 					if (q)
 						*q = 0;
-					if (index("#;:", *p))
+					if (strchr("#;:", *p))
 						continue;
 					q = nxtarg(&p, " \t");
 					if (*p == '\0')
@@ -886,10 +886,10 @@ srvsetup(void)
 		f = fopen(buf, "r");
 		if (f) {
 			while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-				q = index(p, '\n');
+				q = strchr(p, '\n');
 				if (q)
 					*q = 0;
-				if (index("#;:", *p))
+				if (strchr("#;:", *p))
 					continue;
 				q = nxtarg(&p, " \t=");
 				if (strcmp(q, collname) == 0) {
@@ -911,10 +911,10 @@ srvsetup(void)
 	f = fopen(buf, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			prefix = estrdup(p);
 			if (chdir(prefix) < 0)
@@ -963,10 +963,10 @@ srvsetup(void)
 			int hostok = FALSE;
 			while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
 				int not;
-				q = index(p, '\n');
+				q = strchr(p, '\n');
 				if (q)
 					*q = 0;
-				if (index("#;:", *p))
+				if (strchr("#;:", *p))
 					continue;
 				q = nxtarg(&p, " \t");
 				if ((not = (*q == '!')) && *++q == '\0')
@@ -1039,7 +1039,7 @@ docrypt(void)
 
 				if (cryptkey == NULL &&
 				    (p = fgets(buf, STRINGLENGTH, f))) {
-					if ((q = index(p, '\n')) != NULL)
+					if ((q = strchr(p, '\n')) != NULL)
 						*q = '\0';
 					if (*p)
 						cryptkey = estrdup(buf);
@@ -1633,10 +1633,10 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 		pswdp = NULL;
 	} else {
 		(void) strcpy(nbuf, namep);
-		account = group = index(nbuf, ',');
+		account = group = strchr(nbuf, ',');
 		if (group != NULL) {
 			*group++ = '\0';
-			account = index(group, ',');
+			account = strchr(group, ',');
 			if (account != NULL) {
 				*account++ = '\0';
 				if (*account == '\0')

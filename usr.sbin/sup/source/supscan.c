@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.17 2009/10/16 22:45:18 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.18 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -285,10 +285,10 @@ init(int argc, char **argv)
 		if ((f = fopen(buf, "r")) == NULL)
 			quit(1, "supscan: Unable to open %s\n", buf);
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			collname = nxtarg(&p, " \t=");
 			p = skipover(p, " \t=");
@@ -308,10 +308,10 @@ init(int argc, char **argv)
 		if ((f = fopen(filename, "r")) == NULL)
 			quit(1, "supscan: Unable to open %s\n", filename);
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			q = nxtarg(&p, " \t=");
 			p = skipover(p, " \t=");
@@ -338,10 +338,10 @@ getscancoll(char *filename, char *collname, char *basedir)
 	if (basedir == NULL) {
 		if ((f = fopen(filename, "r")) != NULL) {
 			while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-				q = index(p, '\n');
+				q = strchr(p, '\n');
 				if (q)
 					*q = 0;
-				if (index("#;:", *p))
+				if (strchr("#;:", *p))
 					continue;
 				q = nxtarg(&p, " \t=");
 				if (strcmp(q, collname) == 0) {
@@ -366,10 +366,10 @@ getscancoll(char *filename, char *collname, char *basedir)
 	(void) sprintf(buf, FILEPREFIX, collname);
 	if ((f = fopen(buf, "r")) != NULL) {
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
-			q = index(p, '\n');
+			q = strchr(p, '\n');
 			if (q)
 				*q = 0;
-			if (index("#;:", *p))
+			if (strchr("#;:", *p))
 				continue;
 			prefix = estrdup(p);
 			if (chdir(prefix) < 0) {

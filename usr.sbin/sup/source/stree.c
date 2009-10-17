@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.13 2009/10/16 12:41:37 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.14 2009/10/17 20:46:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -280,7 +280,7 @@ Tlookup(TREE * t, const char *p)
 		return (x);
 	(void) strncpy(buf, p, sizeof(buf) - 1);
 	buf[MAXPATHLEN] = '\0';
-	while ((q = rindex(buf, '/')) != NULL) {
+	while ((q = strrchr(buf, '/')) != NULL) {
 		while (q >= buf && *(q - 1) == '/')
 			q--;
 		if (q == buf)
