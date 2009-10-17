@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.18 2009/10/17 19:05:54 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.19 2009/10/17 22:36:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.18 2009/10/17 19:05:54 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.19 2009/10/17 22:36:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -269,11 +269,12 @@ doshell(const char *command)
 		if (shell == NULL)
 			shell = _PATH_BSHELL;
 		execl(shell, shell, "-i", NULL);
-		command = shell;
-	} else
-		execlp(command, command, NULL);
+		warn("execl `%s'", shell);
+	} else {
+		if (system(command) == -1)
+			warn("system `%s'", command);
+	}
 
-	warn("execl %s", command);
 	fail();
 }
 
