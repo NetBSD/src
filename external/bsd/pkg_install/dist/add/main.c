@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3.2.2 2009/06/05 17:01:57 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3.2.3 2009/10/18 15:48:53 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.3.2.2 2009/06/05 17:01:57 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3.2.3 2009/10/18 15:48:53 bouyer Exp $");
 
 /*
  *
@@ -36,14 +36,12 @@ __RCSID("$NetBSD: main.c,v 1.1.1.3.2.2 2009/06/05 17:01:57 snj Exp $");
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#if HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
 #include "lib.h"
 #include "add.h"
 
 static char Options[] = "AIK:LP:RVW:fhm:np:t:uvw:";
 
+const char *PlainPkgdb = NULL;
 char   *Destdir = NULL;
 char   *OverrideMachine = NULL;
 char   *Prefix = NULL;
@@ -53,7 +51,9 @@ Boolean NoView = FALSE;
 Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
 Boolean Automatic = FALSE;
+Boolean ForceDepends = FALSE;
 
+int	LicenseCheck = 0;
 int     Replace = 0;
 
 static void
@@ -72,6 +72,7 @@ main(int argc, char **argv)
 {
 	int     ch, error=0;
 	lpkg_head_t pkgs;
+	const char *pkgdb = NULL;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1) {
@@ -89,6 +90,7 @@ main(int argc, char **argv)
 
 		case 'f':
 			Force = TRUE;
+			ForceDepends = TRUE;
 			break;
 
 		case 'I':
@@ -96,7 +98,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
+			pkgdb = optarg;
 			break;
 
 		case 'L':
@@ -152,6 +154,19 @@ main(int argc, char **argv)
 
 	pkg_install_config();
 
+	if (pkgdb == NULL)
+		pkgdb = _pkgdb_getPKGDB_DIR();
+	PlainPkgdb = xstrdup(pkgdb);
+
+	if (Destdir != NULL) {
+		char *pkgdbdir;
+
+		pkgdbdir = xasprintf("%s/%s", Destdir, pkgdb);
+		_pkgdb_setPKGDB_DIR(pkgdbdir);
+		free(pkgdbdir);
+	} else
+		_pkgdb_setPKGDB_DIR(pkgdb);
+
 	process_pkg_path();
 	TAILQ_INIT(&pkgs);
 
@@ -160,6 +175,19 @@ main(int argc, char **argv)
 		warnx("missing package name(s)");
 		usage();
 	}
+
+	if (strcasecmp(do_license_check, "no") == 0)
+		LicenseCheck = 0;
+	else if (strcasecmp(do_license_check, "yes") == 0)
+		LicenseCheck = 1;
+	else if (strcasecmp(do_license_check, "always") == 0)
+		LicenseCheck = 2;
+	else
+		errx(1, "Unknown value of the configuration variable"
+		    "CHECK_LICENSE");
+
+	if (LicenseCheck)
+		load_license_lists();
 
 	/* Get all the remaining package names, if any */
 	for (; argc > 0; --argc, ++argv) {
