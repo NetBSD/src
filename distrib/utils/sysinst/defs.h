@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.145 2009/09/19 14:57:27 abs Exp $	*/
+/*	$NetBSD: defs.h,v 1.146 2009/10/18 12:09:48 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -257,7 +257,7 @@ enum DLTR { PART_A, PART_B, PART_C, PART_D, PART_E, PART_F, PART_G, PART_H,
 #define partition_name(x)	('a' + (x))
 partinfo oldlabel[MAXPARTITIONS];	/* What we found on the disk */
 partinfo bsdlabel[MAXPARTITIONS];	/* What we want it to look like */
-int tmp_mfs_size;
+daddr_t tmp_ramdisk_size;
 
 #define DISKNAME_SIZE 16
 char bsddiskname[DISKNAME_SIZE];
