@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.38.6.5 2009/03/02 19:56:34 snj Exp $ */
+/*	$NetBSD: cgsix.c,v 1.38.6.6 2009/10/18 13:58:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.5 2009/03/02 19:56:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.6 2009/10/18 13:58:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,6 +616,9 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
 
+	cg6_setup_palette(sc);
+	cgsix_clearscreen(sc);
+
 	if(isconsole) {
 		/* we mess with cg6_console_screen only once */
 		vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
@@ -628,7 +631,8 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		cgsix_defaultscreen.ncols = ri->ri_cols;
 		SCREEN_VISIBLE(&cg6_console_screen);
 		sc->vd.active = &cg6_console_screen;
-		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&cg6_console_screen);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -649,9 +653,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			cgsix_defaultscreen.ncols = ri->ri_cols;
 		}
 	}
-
-	cg6_setup_palette(sc);
-	cgsix_clearscreen(sc);
 	
 	aa.scrdata = &cgsix_screenlist;
 	aa.console = isconsole;
