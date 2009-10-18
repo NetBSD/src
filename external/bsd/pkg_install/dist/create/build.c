@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.5.2.2 2009/06/05 17:01:58 snj Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.5.2.3 2009/10/18 15:48:54 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: build.c,v 1.1.1.5.2.2 2009/06/05 17:01:58 snj Exp $");
+__RCSID("$NetBSD: build.c,v 1.1.1.5.2.3 2009/10/18 15:48:54 bouyer Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -150,7 +150,7 @@ write_entry(struct archive *archive, struct archive_entry *entry)
 	len = archive_entry_size(entry);
 
 	while (len > 0) {
-		buf_len = (len > sizeof(buf)) ? sizeof(buf) : (ssize_t)len;
+		buf_len = (len > (off_t)sizeof(buf)) ? (ssize_t)sizeof(buf) : (ssize_t)len;
 
 		if ((buf_len = read(fd, buf, buf_len)) == 0)
 			break;
@@ -412,7 +412,7 @@ pkg_build(const char *pkg, const char *full_pkg, const char *suffix,
 		    PRESERVE_FNAME, 0444);
 	}
 	if (create_views)
-		views_file = make_and_add(plist, VIEWS_FNAME, "", 0444);
+		views_file = make_and_add(plist, VIEWS_FNAME, xstrdup(""), 0444);
 
 	/* Finally, write out the packing list */
 	stringify_plist(plist, &plist_buf, &plist_len, realprefix);

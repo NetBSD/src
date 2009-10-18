@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3.2.2 2009/06/05 17:01:58 snj Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3.2.3 2009/10/18 15:48:54 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.3.2.2 2009/06/05 17:01:58 snj Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3.2.3 2009/10/18 15:48:54 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -99,18 +99,15 @@ fileGetContents(char *fname)
 	int     fd;
 
 	if (stat(fname, &sb) == FAIL) {
-		cleanup(0);
 		errx(2, "can't stat '%s'", fname);
 	}
 
 	contents = xmalloc((size_t) (sb.st_size) + 1);
 	fd = open(fname, O_RDONLY, 0);
 	if (fd == FAIL) {
-		cleanup(0);
 		errx(2, "unable to open '%s' for reading", fname);
 	}
-	if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
-		cleanup(0);
+	if (read(fd, contents, (size_t) sb.st_size) != (ssize_t) sb.st_size) {
 		errx(2, "short read on '%s' - did not get %lld bytes",
 		    fname, (long long) sb.st_size);
 	}
