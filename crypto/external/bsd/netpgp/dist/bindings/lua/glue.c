@@ -104,6 +104,7 @@ l_new(lua_State *L)
 	netpgp_t	*netpgp;
 
 	netpgp = lua_newuserdata(L, sizeof(*netpgp));
+	(void) memset(netpgp, 0x0, sizeof(*netpgp));
 	set_homedir(netpgp, getenv("HOME"), "/.gnupg", 1);
 	netpgp_setvar(netpgp, "hash", DEFAULT_HASH_ALG);
 	return 1;
@@ -332,7 +333,7 @@ l_getvar(lua_State *L)
 	return 1;
 }
 
-const struct luaL_reg libnetpgp[] = {
+const struct luaL_reg libluanetpgp[] = {
 	{ "new",		l_new },
 	{ "init",		l_init },
 
@@ -356,6 +357,6 @@ const struct luaL_reg libnetpgp[] = {
 int 
 luaopen_netpgp(lua_State *L)
 {
-	luaL_openlib(L, "netpgp", libnetpgp, 0);
+	luaL_openlib(L, "netpgp", libluanetpgp, 0);
 	return 1;
 }
