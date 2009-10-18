@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.120 2009/10/18 17:07:30 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.121 2009/10/18 18:28:58 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14451,4 +14451,11 @@ usr.sbin/hdaudioctl/hdaudioctl.h		1.1
 
 	Add hdaudioctl(8), a tool to manipulate hdaudio(4) devices.
 	[sborrill, ticket #1086]
+
+distrib/sets/lists/comp/mi			1.1312
+sys/dev/pci/Makefile				1.13
+sys/dev/pci/hdaudio/Makefile			1.1
+
+	Install hdaudio includes required by userland tools.
+	[sborrill, ticket #1101]
 
