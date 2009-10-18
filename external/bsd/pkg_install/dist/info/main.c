@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.5.4.2 2009/06/05 17:19:40 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.5.4.3 2009/10/18 15:41:55 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.5.4.2 2009/06/05 17:19:40 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.5.4.3 2009/10/18 15:41:55 bouyer Exp $");
 
 /*
  *
@@ -34,9 +34,6 @@ __RCSID("$NetBSD: main.c,v 1.1.1.5.4.2 2009/06/05 17:19:40 snj Exp $");
 #include <sys/ioctl.h>
 #endif
 
-#if HAVE_TERMIOS_H
-#include <termios.h>
-#endif
 #if HAVE_ERR_H
 #include <err.h>
 #endif
@@ -50,9 +47,8 @@ int     Flags = 0;
 enum which Which = WHICH_LIST;
 Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
-char   *InfoPrefix = "";
-char   *BuildInfoVariable = "";
-size_t  termwidth = 0;
+const char   *InfoPrefix = "";
+const char   *BuildInfoVariable = "";
 lpkg_head_t pkgs;
 
 static void
@@ -323,17 +319,6 @@ main(int argc, char **argv)
 	/* If no packages, yelp */
 	if (TAILQ_FIRST(&pkgs) == NULL && Which == WHICH_LIST && !CheckPkg)
 		warnx("missing package name(s)"), usage();
-
-	if (isatty(STDOUT_FILENO)) {
-		const char *p;
-		struct winsize win;
-
-		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			termwidth = win.ws_col;
-	}
 
 	rc = pkg_perform(&pkgs);
 	exit(rc);
