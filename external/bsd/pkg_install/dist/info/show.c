@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.1.8.2 2009/10/18 16:05:26 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
+__RCSID("$NetBSD: show.c,v 1.1.1.1.8.2 2009/10/18 16:05:26 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -68,8 +68,8 @@ __RCSID("$NetBSD: show.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
 /* Structure to define entries for the "show table" */
 typedef struct show_t {
 	pl_ent_t sh_type;	/* type of entry */
-	char   *sh_quiet;	/* message when quiet */
-	char   *sh_verbose;	/* message when verbose */
+	const char *sh_quiet;	/* message when quiet */
+	const char *sh_verbose;	/* message when verbose */
 }       show_t;
 
 /*
@@ -212,7 +212,7 @@ show_files(const char *title, package_t *plist)
 {
 	plist_t *p;
 	Boolean ign;
-	char   *dir = ".";
+	const char *dir = ".";
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
