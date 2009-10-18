@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_smbfs.c,v 1.3 2009/10/18 19:38:35 pooka Exp $	*/
+/*	$NetBSD: rump_smbfs.c,v 1.4 2009/10/18 19:58:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -46,7 +46,6 @@ static void
 pcancel(void)
 {
 
-	abort();
 	if (docancel)
 		p2k_cancel(docancel, 0);
 }
