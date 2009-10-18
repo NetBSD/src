@@ -1,4 +1,4 @@
-/*	$NetBSD: zxvar.h,v 1.2.10.2 2009/10/18 13:23:31 bouyer Exp $	*/
+/*	$NetBSD: zxvar.h,v 1.2.10.3 2009/10/18 14:32:29 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  * Per-instance data.
  */
 struct zx_softc {
-	device_t	sc_dv;
+	struct device	sc_dv;
 	struct sbusdev	sc_sd;
 	struct fbdevice	sc_fb;
 	bus_space_tag_t	sc_bt;
@@ -91,6 +91,8 @@ struct zx_softc {
 	bus_space_handle_t sc_bhzcu;
 
 	int		sc_flags;
+	int		sc_fontw;
+	int		sc_fonth;
 	u_int8_t	*sc_cmap;
 	u_int32_t	*sc_pixels;
 	bus_addr_t	sc_paddr;
@@ -102,15 +104,6 @@ struct zx_softc {
 	struct fbcurpos sc_cursize;
 	u_int8_t	sc_curcmap[8];
 	u_int32_t	sc_curbits[2][32];
-
-#if NWSDISPLAY > 0	
-	uint32_t sc_width;
-	uint32_t sc_height;	/* display width / height */
-	uint32_t sc_stride;
-	int sc_mode;
-	uint32_t sc_bg;
-	struct vcons_data vd;
-#endif	
 };
 #define	ZX_BLANKED	0x01
 #define	ZX_CURSOR	0x02
