@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.1.6.2 2009/10/18 16:01:50 bouyer Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.1.6.2 2009/10/18 16:01:50 bouyer Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -120,7 +120,7 @@ static const struct pkg_meta_desc {
 	{ offsetof(struct pkg_meta, meta_views), VIEWS_FNAME, 0, 0444 },
 	{ offsetof(struct pkg_meta, meta_required_by), REQUIRED_BY_FNAME, 0, 0644 },
 	{ offsetof(struct pkg_meta, meta_installed_info), INSTALLED_INFO_FNAME, 0, 0644 },
-	{ 0, NULL, 0 },
+	{ 0, NULL, 0, 0 },
 };
 
 static int pkg_do(const char *, int, int);
@@ -478,6 +478,8 @@ read_buildinfo(struct pkg_task *pkg)
 		else if (strncmp(data, "USE_ABI_DEPENDS=", 16) == 0)
 			pkg->buildinfo[BI_USE_ABI_DEPENDS] = dup_value(data,
 			    eol);
+		else if (strncmp(data, "LICENSE=", 8) == 0)
+			pkg->buildinfo[BI_LICENSE] = dup_value(data, eol);
 	}
 	if (pkg->buildinfo[BI_OPSYS] == NULL ||
 	    pkg->buildinfo[BI_OS_VERSION] == NULL ||
@@ -780,7 +782,7 @@ pkg_register_depends(struct pkg_task *pkg)
 		if (fd == -1) {
 			warn("can't open dependency file '%s',"
 			    "registration is incomplete!", required_by);
-		} else if (write(fd, text, text_len) != text_len) {
+		} else if (write(fd, text, text_len) != (ssize_t)text_len) {
 			warn("can't write to dependency file `%s'", required_by);
 			close(fd);
 		} else if (close(fd) == -1)
@@ -1032,12 +1034,19 @@ check_dependencies(struct pkg_task *pkg)
 				continue;
 			}
 			if (pkg_do(p->name, 1, 0)) {
-				warnx("Can't install dependency %s", p->name);
-				status = -1;
-				break;
+				if (ForceDepends) {
+					warnx("Can't install dependency %s, "
+					    "continuing", p->name);
+					continue;
+				} else {
+					warnx("Can't install dependency %s",
+					    p->name);
+					status = -1;
+					break;
+				}
 			}
 			best_installed = find_best_matching_installed_pkg(p->name);
-			if (best_installed == NULL && Force) {
+			if (best_installed == NULL && ForceDepends) {
 				warnx("Missing dependency %s ignored", p->name);
 				continue;
 			} else if (best_installed == NULL) {
@@ -1241,6 +1250,34 @@ check_vulnerable(struct pkg_task *pkg)
 	return 0;
 }
 
+static int
+check_license(struct pkg_task *pkg)
+{
+	if (LicenseCheck == 0)
+		return 0;
+
+	if ((pkg->buildinfo[BI_LICENSE] == NULL ||
+	     *pkg->buildinfo[BI_LICENSE] == '\0')) {
+	
+		if (LicenseCheck == 1)
+			return 0;
+		warnx("No LICENSE set for package `%s'", pkg->pkgname);
+		return 1;
+	}
+
+	switch (acceptable_license(pkg->buildinfo[BI_LICENSE])) {
+	case 0:
+		warnx("License `%s' of package `%s' is not acceptable",
+		    pkg->buildinfo[BI_LICENSE], pkg->pkgname);
+		return 1;
+	case 1:
+		return 0;
+	default:
+		warnx("Invalid LICENSE for package `%s'", pkg->pkgname);
+		return 1;
+	}
+}
+
 /*
  * Install a single package.
  */
@@ -1276,7 +1313,13 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (check_signature(pkg, invalid_sig))
 		goto clean_memory;
 
+	if (read_buildinfo(pkg))
+		goto clean_memory;
+
 	if (check_vulnerable(pkg))
+		goto clean_memory;
+
+	if (check_license(pkg))
 		goto clean_memory;
 
 	if (pkg->meta_data.meta_mtree != NULL)
@@ -1286,14 +1329,12 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		pkg->logdir = xstrdup(pkg->prefix);
 		_pkgdb_setPKGDB_DIR(dirname_of(pkg->logdir));
 	} else {
-		pkg->logdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(),
-		    pkg->pkgname);
+		pkg->logdir = xasprintf("%s/%s", PlainPkgdb, pkg->pkgname);
 	}
 
-	if (Destdir != NULL) {
+	if (Destdir != NULL)
 		pkg->install_logdir = xasprintf("%s/%s", Destdir, pkg->logdir);
-		_pkgdb_setPKGDB_DIR(dirname_of(pkg->install_logdir));
-	} else
+	else
 		pkg->install_logdir = xstrdup(pkg->logdir);
 
 	if (NoRecord && !Fake) {
@@ -1316,9 +1357,6 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		status = 0;
 		goto clean_memory;
 	}
-
-	if (read_buildinfo(pkg))
-		goto clean_memory;
 
 	if (check_platform(pkg))
 		goto clean_memory;
