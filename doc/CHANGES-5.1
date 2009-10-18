@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.116 2009/10/18 09:58:56 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.117 2009/10/18 10:07:47 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14345,4 +14345,10 @@ dist/nvi/vi/v_txt.c				1.6
 	- Rename "expandtabs" to "expandtab" to match documentation.
 	- Implement the "et" abbreviation for expandtab.
 	[aymeric, ticket #1068]
+
+sys/arch/i386/pnpbios/ess_pnpbios.c		1.19
+
+	Fix identification of ESS1878 on Fujitsu FMV-5100 NC/S
+	by PnPBIOS. Fixes PR/41629.
+	[snj, ticket #1098]
 
