@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioio.h,v 1.2.4.2 2009/09/26 19:52:10 snj Exp $ */
+/* $NetBSD: hdaudioio.h,v 1.2.4.3 2009/10/18 16:50:13 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -38,6 +38,8 @@
 #define	HDAUDIO_FGRP_INFO	_IOWR('h', 0, struct plistref)
 #define	HDAUDIO_FGRP_GETCONFIG	_IOWR('h', 1, struct plistref)
 #define	HDAUDIO_FGRP_SETCONFIG	_IOWR('h', 2, struct plistref)
+#define	HDAUDIO_FGRP_WIDGET_INFO	_IOWR('h', 3, struct plistref)
+#define	HDAUDIO_FGRP_CODEC_INFO	_IOWR('h', 4, struct plistref)
 
 #define	HDAUDIO_AFG_WIDGET_INFO	_IOWR('H', 0, struct plistref)
 #define	HDAUDIO_AFG_CODEC_INFO	_IOWR('H', 1, struct plistref)

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.14 2009/10/14 18:10:21 snj Exp $
+# $NetBSD: mi,v 1.780.2.15 2009/10/18 16:50:13 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1382,6 +1382,7 @@
 ./usr/sbin/groupdel				base-sysutil-bin
 ./usr/sbin/groupinfo				base-sysutil-bin
 ./usr/sbin/groupmod				base-sysutil-bin
+./usr/sbin/hdaudioctl				base-sysutil-bin
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
 ./usr/sbin/hostapd				base-sysutil-bin
