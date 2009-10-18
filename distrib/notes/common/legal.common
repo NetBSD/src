@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.55 2009/10/18 14:22:39 snj Exp $
+.\"	$NetBSD: legal.common,v 1.56 2009/10/18 14:24:17 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,9 +110,6 @@ This product includes software developed by Adam Glass and Charles M.
 Hannum.
 .It
 This product includes software developed by Adam Glass.
-.It
-This product includes software developed by Adrian Portelli
-for the NetBSD project.
 .It
 This product includes software developed by Advanced Risc Machines
 Ltd.
