@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $	*/
+/*	$NetBSD: null.c,v 1.28 2009/10/18 20:14:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $");
+__RCSID("$NetBSD: null.c,v 1.28 2009/10/18 20:14:06 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $");
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 
 #include <assert.h>
@@ -45,6 +46,7 @@ __RCSID("$NetBSD: null.c,v 1.27 2009/01/08 02:19:48 lukem Exp $");
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 PUFFSOP_PROTOS(puffs_null)
