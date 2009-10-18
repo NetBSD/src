@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.30.2.2 2008/11/18 22:33:28 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.30.2.3 2009/10/18 15:22:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30.2.2 2008/11/18 22:33:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30.2.3 2009/10/18 15:22:38 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -266,6 +266,9 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDP_USEDFPU;
+
 	int onstack;
 	int sig = ksi->ksi_signo;
 	struct netbsd32_sigframe_siginfo *fp, frame;
@@ -334,6 +337,9 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
