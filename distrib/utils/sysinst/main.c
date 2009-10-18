@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2008/12/21 11:02:41 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2009/10/18 12:09:48 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,7 @@ init(void)
 
 	sizemult = 1;
 	disktype = "unknown";
-	tmp_mfs_size = 0;
+	tmp_ramdisk_size = 0;
 	doessf = "";
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;

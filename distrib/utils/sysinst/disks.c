@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.108 2009/10/03 12:00:00 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.109 2009/10/18 12:09:48 ahoka Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -746,13 +746,18 @@ make_fstab(void)
 		   dump_freq, fsck_pass);
 	}
 
-	if (tmp_mfs_size != 0) {
+	if (tmp_ramdisk_size != 0) {
+#ifdef HAVE_TMPFS
+		scripting_fprintf(f, "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,-s=%d\n",
+		    tmp_ramdisk_size * 512);
+#else
 		if (swap_dev != -1)
 			scripting_fprintf(f, "/dev/%s%c\t\t/tmp\tmfs\trw,-s=%d\n",
-				diskdev, 'a' + swap_dev, tmp_mfs_size);
+				diskdev, 'a' + swap_dev, tmp_ramdisk_size);
 		else
 			scripting_fprintf(f, "swap\t\t/tmp\tmfs\trw,-s=%d\n",
-				tmp_mfs_size);
+				tmp_ramdisk_size);
+#endif
 	}
 
 	/* Add /kern, /proc and /dev/pts to fstab and make mountpoint. */
