@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.12 2009/09/15 06:01:38 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.13 2009/10/18 18:26:26 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -462,6 +462,8 @@
 ./usr/include/dev/ofw/openfirmio.h		comp-c-include
 ./usr/include/dev/pci/amrio.h			comp-c-include
 ./usr/include/dev/pci/amrreg.h			comp-c-include
+./usr/include/dev/pci/hdaudio/hdaudioio.h	comp-c-include
+./usr/include/dev/pci/hdaudio/hdaudioreg.h	comp-c-include
 ./usr/include/dev/pci/if_devar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
