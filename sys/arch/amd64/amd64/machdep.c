@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44.2.5 2008/11/22 16:33:41 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44.2.6 2009/10/18 15:20:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.5 2008/11/22 16:33:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.6 2009/10/18 15:20:42 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -517,6 +517,9 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	buildcontext(l, catcher, fp);
+
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 
 	tf->tf_rdi = sig;
 	tf->tf_rsi = (uint64_t)&fp->sf_si;

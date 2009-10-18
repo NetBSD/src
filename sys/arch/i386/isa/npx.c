@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.115 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.115.2.1 2009/10/18 15:20:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.115 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.115.2.1 2009/10/18 15:20:42 bouyer Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -565,7 +565,14 @@ npxdna_xmm(struct cpu_info *ci)
 	splx(s);
 
 	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
-		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		fninit();
+		if (i386_use_fxsave) {
+			fldcw(&l->l_addr->u_pcb.pcb_savefpu.
+			    sv_xmm.sv_env.en_cw);
+		} else {
+			fldcw(&l->l_addr->u_pcb.pcb_savefpu.
+			    sv_87.sv_env.en_cw);
+		}
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
 		/*
