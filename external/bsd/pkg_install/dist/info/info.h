@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.1.1.3.4.2 2009/06/05 17:19:40 snj Exp $ */
+/* $NetBSD: info.h,v 1.1.1.3.4.3 2009/10/18 15:41:55 bouyer Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -112,9 +112,8 @@ extern int Flags;
 extern enum which Which;
 extern Boolean File2Pkg;
 extern Boolean Quiet;
-extern char *InfoPrefix;
-extern char *BuildInfoVariable;
-extern size_t termwidth;
+extern const char *InfoPrefix;
+extern const char *BuildInfoVariable;
 extern lpkg_head_t pkgs;
 
 int CheckForPkg(const char *);

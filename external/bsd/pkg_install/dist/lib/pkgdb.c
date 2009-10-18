@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.3.4.2 2009/06/05 17:19:41 snj Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.3.4.3 2009/10/18 15:41:56 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.3.4.2 2009/06/05 17:19:41 snj Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.3.4.3 2009/10/18 15:41:56 bouyer Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -38,11 +38,7 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1.1.3.4.2 2009/06/05 17:19:41 snj Exp $");
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_DB_185_H
-#include <db_185.h>
-#elif HAVE_DB1_DB_H
-#include <db1/db.h>
-#elif HAVE_DB_H
+#ifdef NETBSD
 #include <db.h>
 #else
 #include <nbcompat/db.h>
@@ -138,9 +134,9 @@ pkgdb_store(const char *key, const char *val)
 	if (pkgdbp == NULL)
 		return -1;
 
-	keyd.data = (void *) key;
+	keyd.data = __UNCONST(key);
 	keyd.size = strlen(key) + 1;
-	vald.data = (void *) val;
+	vald.data = __UNCONST(val);
 	vald.size = strlen(val) + 1;
 
 	if (keyd.size > MaxPathSize || vald.size > MaxPathSize)
@@ -164,7 +160,7 @@ pkgdb_retrieve(const char *key)
 	if (pkgdbp == NULL)
 		return NULL;
 
-	keyd.data = (void *) key;
+	keyd.data = __UNCONST(key);
 	keyd.size = strlen(key) + 1;
 	errno = 0;		/* to be sure it's 0 if the key doesn't match anything */
 
@@ -214,7 +210,7 @@ pkgdb_remove(const char *key)
 	if (pkgdbp == NULL)
 		return -1;
 
-	keyd.data = (char *) key;
+	keyd.data = __UNCONST(key);
 	keyd.size = strlen(key) + 1;
 	if (keyd.size > MaxPathSize)
 		return -1;
@@ -235,7 +231,7 @@ pkgdb_remove_pkg(const char *pkg)
 	DBT     key;
 	int	type;
 	int	ret;
-	int	cc;
+	size_t	cc;
 	char	cachename[MaxPathSize];
 
 	if (pkgdbp == NULL) {
@@ -273,7 +269,7 @@ pkgdb_refcount_dir(void)
 	static char buf[MaxPathSize];
 	char *tmp;
 
-	if ((tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME)))
+	if ((tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME)) != NULL)
 		strlcpy(buf, tmp, sizeof(buf));
 	else
 		snprintf(buf, sizeof(buf), "%s.refcount", _pkgdb_getPKGDB_DIR());
@@ -299,7 +295,7 @@ _pkgdb_getPKGDB_DIR(void)
 	char *tmp;
 
 	if (pkgdb_dir == NULL) {
-		if ((tmp = getenv(PKG_DBDIR)))
+		if ((tmp = getenv(PKG_DBDIR)) != NULL)
 			_pkgdb_setPKGDB_DIR(tmp);
 		else
 			_pkgdb_setPKGDB_DIR(DEF_LOG_DIR);

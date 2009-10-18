@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.2.6.2 2009/06/05 17:19:38 snj Exp $ */
+/* $NetBSD: add.h,v 1.1.1.2.6.3 2009/10/18 15:41:55 bouyer Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -25,6 +25,7 @@
 #ifndef _INST_ADD_H_INCLUDE
 #define _INST_ADD_H_INCLUDE
 
+extern const char *PlainPkgdb;
 extern char *Destdir;
 extern char *OverrideMachine;
 extern char *Prefix;
@@ -35,7 +36,10 @@ extern Boolean NoInstall;
 extern Boolean NoRecord;
 extern Boolean Force;
 extern Boolean Automatic;
+extern int LicenseCheck;
 extern int Replace;
+
+extern Boolean ForceDepends;
 
 int     make_hierarchy(char *);
 void    apply_perms(char *, char **, int);
