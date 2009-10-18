@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.9 2009/10/14 18:22:50 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.10 2009/10/18 19:37:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -106,9 +106,11 @@ main(int argc, char *argv[])
 	cleaner(canon_dir);
 #endif
 
-	p2m = p2k_setup_diskfs(MOUNT_LFS, canon_dev, part, canon_dir, mntflags,
-	    &args, sizeof(args), 0);
+	p2m = p2k_init(0);
 	if (!p2m)
+		err(1, "init p2k");
+	if (p2k_setup_diskfs(p2m, MOUNT_LFS, canon_dev, part, canon_dir,
+	    mntflags, &args, sizeof(args)) == -1)
 		err(1, "mount");
 
 #ifndef CLEANER_TESTING
