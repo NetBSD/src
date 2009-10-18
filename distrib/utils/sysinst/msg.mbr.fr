@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.14 2006/09/04 22:00:52 hubertf Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.15 2009/10/18 19:31:53 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,15 +43,15 @@ message fullpart
 choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
 sur une partie de celui-ci.
 Une installation sur une partie du disque crée une partition, ou `slice', pour
-NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
+NetBSD dans le secteur de démarrage (Master Boot Record, alias MBR) de votre
 disque. Une installation sur la totalité du disque est `dangereusement
 dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
 d'exploitation ou données existants sur le disque. Cela rend également
 impossible l'installation ultérieure d'un deuxième système d'exploitation,
-sauf si vous reinstallez complètement NetBSD en utilisant uniquement une
+sauf si vous réinstallez complètement NetBSD en utilisant uniquement une
 partie du disque.
 
-Que désirez vous faire ?
+Que désirez-vous faire ?
 }
 
 message Select_your_choice
@@ -80,12 +80,12 @@ message part_row_used
 message noactivepart
 {Vous n'avez pas choisi de partition active.
 Cela peut empêcher votre système de démarrer correctement.
-Dois-je marquer la partition NetBSD comme active?}
+Dois-je marquer la partition NetBSD comme active ?}
 
 message setbiosgeom
 {
 La géométrie du disque doit être précisée.
-Veuillez entrez le nombre de secteurs par piste (maximum 63) et le nombre de
+Veuillez entrer le nombre de secteurs par piste (maximum 63) et le nombre de
 têtes (maximum 256) que le BIOS utilise pour accéder au disque.
 Le nombre de cylindres sera déduit de la taille du disque.
 
@@ -101,10 +101,10 @@ message biosguess
 la géométrie utilisée par le BIOS soit de %d cylindres, %d secteurs et %d têtes\n}
 
 message realgeom
-{ géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
+{ géom réelle : %d cylindres, %d têtes, %d secteurs (pour information)\n}
 
 message biosgeom
-{ géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
+{ géom fdisk :  %d cylindres, %d têtes, %d secteurs \n}
 
 message ovrwrite
 {Votre disque a actuellement une partition autre que NetBSD. Voulez-vous
@@ -115,28 +115,28 @@ message Partition_OK
 {Partition OK}
 
 message ptn_type
-{système de fichier: %s}
+{système de fichiers : %s}
 message ptn_start
-{     Début: %d %s}
+{     Début : %d %s}
 message ptn_size
-{    taille: %d %s}
+{    taille : %d %s}
 message ptn_end
-{       fin: %d %s}
+{       fin : %d %s}
 message ptn_active
-{    active: %s}
+{    active : %s}
 message ptn_install
-{   installation: %s}
+{   installation : %s}
 .if BOOTSEL
 message bootmenu
-{  menu de boot: %s}
+{  menu de démarrage : %s}
 message boot_dflt
-{   défaut: %s}
+{   défaut : %s}
 .endif
 
 message get_ptn_size {%staille (maximum %d %s)}
-message Invalid_numeric {Nombre invalide: }
+message Invalid_numeric {Nombre invalide : }
 message Too_large {Trop grand : }
-message Space_allocated {Espace alloué: }
+message Space_allocated {Espace alloué : }
 message ptn_starts {Espace à %d..%d %s (taille %d %s)\n}
 message get_ptn_start {%s%sDébut (en %s)}
 message get_ptn_id {Type de partition (0..255)}
@@ -145,15 +145,15 @@ message Only_one_extended_ptn {Il ne peut y avoir qu'une seule partition étendue
 
 
 message editparttable
-{Editez votre table de partition DOS. La table de partitions est :
+{Éditez votre table de partitions DOS. La table de partitions est :
 
 }
 
 message Partition_table_ok
-{Partition table OK}
+{Table des partitions OK}
 
 message Delete_partition
-{Supprimer la Partition}
+{Supprimer la partition}
 message Dont_change
 {Ne pas modifier}
 message Other_kind 
@@ -163,7 +163,7 @@ message Other_kind
 message reeditpart
 {
 
-Voulez-vous éditer de nouveau la table de partitions (ou abandonner l'installation)?
+Voulez-vous éditer de nouveau la table des partitions (ou abandonner l'installation) ?
 }
 
 message nobsdpart
@@ -175,11 +175,11 @@ démarrage.
 Positionnez l'indicateur 'installation' sur celle à utiliser.}
 
 message dofdisk
-{Configuration de la table de partition DOS ...
+{Configuration de la table de partition DOS...
 }
 
 message wmbrfail
-{L'écriture du MBR a échouée. Nous ne pouvons continuer.}
+{L'écriture du MBR a échoué. Nous ne pouvons continuer.}
 
 .if 0
 .if BOOTSEL
@@ -187,7 +187,7 @@ message Set_timeout_value
 {Modifier le temps d'attente}
 
 message bootseltimeout
-{Temps d'attente: %d\n}
+{Temps d'attente : %d\n}
 
 .endif
 .endif
