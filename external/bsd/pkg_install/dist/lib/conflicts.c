@@ -1,4 +1,4 @@
-/*	$NetBSD: conflicts.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
+/*	$NetBSD: conflicts.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Roland Illig <rillig@NetBSD.org>.
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: conflicts.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
+__RCSID("$NetBSD: conflicts.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -162,5 +162,4 @@ int main(int argc, char **argv)
 		printf("no\n");
 	return 0;
 }
-void cleanup(int i) {}
 #endif

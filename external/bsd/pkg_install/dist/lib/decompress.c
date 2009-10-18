@@ -1,4 +1,4 @@
-/*	$NetBSD: decompress.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
+/*	$NetBSD: decompress.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: decompress.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
+__RCSID("$NetBSD: decompress.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $");
 
 #ifdef BOOTSTRAP
 #include "lib.h"
@@ -75,7 +75,7 @@ decompress_bzip2(const char *in, size_t in_len, char **out, size_t *out_len)
 		*out_len = in_len;
 	*out = xmalloc(*out_len + 1);
 
-	stream.next_in = (char *)in;
+	stream.next_in = __UNCONST(in);
 	stream.avail_in = in_len;
 	stream.next_out = *out;
 	stream.avail_out = *out_len;
@@ -125,7 +125,7 @@ decompress_zlib(const char *in, size_t in_len, char **out, size_t *out_len)
 		*out_len = in_len;
 	*out = xmalloc(*out_len + 1);
 
-	stream.next_in = (unsigned char *)in;
+	stream.next_in = __UNCONST(in);
 	stream.avail_in = in_len;
 	stream.next_out = (unsigned char *)*out;
 	stream.avail_out = *out_len;

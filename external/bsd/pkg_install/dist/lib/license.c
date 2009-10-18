@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.2.4.4 2009/07/27 00:40:11 snj Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.2.4.5 2009/10/18 16:01:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -57,7 +57,7 @@ const char *default_acceptable_licenses =
     "cddl-1.0 "
     "cpl-1.0 "
     "open-font-license "
-    "mpl-1.1 "
+    "mpl-1.0 mpl-1.1 "
     "zpl";
 
 #ifdef DEBUG
@@ -265,8 +265,6 @@ acceptable_pkg_license_internal(const char **licensep, int toplevel, const char 
 		}
 		license += len;
 	}
-
-	return is_true;
 }
 
 int
