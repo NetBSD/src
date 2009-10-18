@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.1.1.2.6.2 2009/04/13 20:59:20 snj Exp $ */
+/*	$NetBSD: multibyte.h,v 1.1.1.2.6.3 2009/10/18 09:58:03 sborrill Exp $ */
 
 #ifndef MULTIBYTE_H
 #define MULTIBYTE_H
@@ -24,6 +24,7 @@ typedef u_int		UCHAR_T;
 #define STRPBRK		wcspbrk
 #define TOUPPER		towupper
 #define STRSET		wmemset
+#define STRCHR		wcschr
 
 #define L(ch)		L ## ch
 
@@ -41,6 +42,7 @@ typedef	u_char		UCHAR_T;
 #define STRPBRK		strpbrk
 #define TOUPPER		toupper
 #define STRSET		memset
+#define STRCHR		strchr
 
 #define L(ch)		ch
 
