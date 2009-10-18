@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_smbfs.c,v 1.1 2009/09/06 20:26:47 pooka Exp $	*/
+/*	$NetBSD: rump_smbfs.c,v 1.2 2009/10/18 15:14:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	    canon_dev, canon_dir);
 
 	rv = p2k_run_fs(MOUNT_SMBFS, canon_dev, canon_dir, mntflags, &args,
-	    sizeof(args), 0);
+	    sizeof(args), PUFFS_KFLAG_WTCACHE);
 	if (rv == -1)
 		err(1, "mount");
 
