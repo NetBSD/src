@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.11 2009/10/16 11:56:10 sborrill Exp $
+# $NetBSD: mi,v 1.1109.2.12 2009/10/18 16:50:13 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2088,6 +2088,7 @@
 ./usr/share/man/cat8/groupmod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/gspa.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/halt.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/hdaudioctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/hlfsd.0			man-amd-catman		.cat
 ./usr/share/man/cat8/hostapd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/hostapd_cli.0		man-sysutil-catman	.cat
@@ -4471,6 +4472,7 @@
 ./usr/share/man/html8/groupmod.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/gspa.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/halt.html			man-sysutil-htmlman	html
+./usr/share/man/html8/hdaudioctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hlfsd.html		man-amd-htmlman		html
 ./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	html
@@ -6951,6 +6953,7 @@
 ./usr/share/man/man8/groupmod.8			man-sysutil-man		.man
 ./usr/share/man/man8/gspa.8			man-sysutil-man		.man
 ./usr/share/man/man8/halt.8			man-sysutil-man		.man
+./usr/share/man/man8/hdaudioctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/hlfsd.8			man-amd-man		.man
 ./usr/share/man/man8/hostapd.8			man-sysutil-man		.man
 ./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		.man
