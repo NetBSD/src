@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.119 2009/10/18 16:03:45 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.120 2009/10/18 17:07:30 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14419,4 +14419,36 @@ external/bsd/pkg_install/dist/lib/version.h		1.1.1.18 - 1.1.1.21
 	- Fix German accent
 	- Don't dereference a null pointer for pkg_admin add
 	[joerg, ticket #1075]
+
+sys/dev/ic/wdc.c				1.258
+
+	Commit patch from PR#41926: use 8bits access to legacy IDE registers
+	through the SATA interface (except data registers).
+	Stops errors such as the following when probing SATA drives through
+	controllers that offer the legacy pciide interface:
+	viaide1 channel 0: reset failed for drive 0
+	[sborrill, ticket #1074]
+
+sys/arch/i386/stand/boot/boot2.c		patch
+
+	- If the menuformat is not letter, do not allow letter keys to be
+	aliases for number keys.
+	- Don't treat timeouts or the return key as an invalid choice.
+	[snj, ticket #1080]
+
+distrib/sets/lists/base/mi			1.833
+distrib/sets/lists/man/mi			1.1164
+sys/dev/pci/hdaudio/hdaudio.c			1.5
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.17
+sys/dev/pci/hdaudio/hdaudioio.h			1.3
+sys/dev/pci/hdaudio/hdaudiovar.h		1.5
+usr.sbin/Makefile				1.243 via patch
+usr.sbin/hdaudioctl/Makefile			1.1
+usr.sbin/hdaudioctl/graph.c			1.1
+usr.sbin/hdaudioctl/hdaudioctl.8		1.1, 1.2
+usr.sbin/hdaudioctl/hdaudioctl.c		1.1
+usr.sbin/hdaudioctl/hdaudioctl.h		1.1
+
+	Add hdaudioctl(8), a tool to manipulate hdaudio(4) devices.
+	[sborrill, ticket #1086]
 
