@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.56 2009/10/18 14:24:17 snj Exp $
+.\"	$NetBSD: legal.common,v 1.57 2009/10/18 18:23:29 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -372,8 +372,6 @@ This product includes software developed by Mats O Jansson.
 This product includes software developed by Matt DeBergalis
 .It
 This product includes software developed by Matthew Fredette.
-.It
-This product includes software developed by Matthias Pfaller.
 .It
 This product includes software developed by Michael Graff
 for the NetBSD Project.
