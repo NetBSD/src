@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586.2.5 2007/08/28 11:46:26 liamjfoy Exp $	*/
+/*	$NetBSD: machdep.c,v 1.586.2.6 2009/10/18 15:20:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.5 2007/08/28 11:46:26 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.6 2009/10/18 15:20:42 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -809,6 +809,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	buildcontext(l, sel, catcher, fp);
+
+#if NNPX > 0
+	/* make sure we get a clean FPU */
+	npxsave_lwp(l, 0);
+	l->l_md.md_flags &= ~MDL_USEDFPU;
+#endif
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
