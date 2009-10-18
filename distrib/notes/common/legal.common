@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.53 2009/10/17 22:33:55 snj Exp $
+.\"	$NetBSD: legal.common,v 1.54 2009/10/18 01:40:44 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,9 +84,6 @@ This product includes software developed at the Information
 Technology Division, US Naval Research Laboratory.
 .It
 This product includes software developed by
-Berkeley Software Design, Inc.
-.It
-This product includes software developed by
 David Jones and Gordon Ross
 .It
 This product includes software developed by
@@ -135,11 +132,7 @@ This product includes software developed by Allen Briggs.
 This product includes software developed by Amancio Hasty and
 Roger Hardiman
 .It
-This product includes software developed by Berkeley Software
-Design, Inc.
-.It
-This product includes software developed by Berkeley Software Design,
-Inc.
+This product includes software developed by Berkeley Software Design, Inc.
 .It
 This product includes software developed by Bill Paul.
 .It
