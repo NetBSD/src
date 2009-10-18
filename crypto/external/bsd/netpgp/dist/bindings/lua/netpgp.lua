@@ -50,7 +50,8 @@ if f then
 	extension = ".dylib"
 	io.close(f)
 end
-glupkg = package.loadlib("libluanetpgp" .. extension, "luaopen_netpgp")
+glupkg = package.loadlib("./" .. "libluanetpgp" .. extension,
+		"luaopen_netpgp")
 netpgp = glupkg()
 
 -- initialise
@@ -70,7 +71,7 @@ if options.detached then
 	detached = "detached"
 end
 if options.homedir then
-	netpgp.homedir(netpgp, options.homedir)
+	netpgp.homedir(pgp, options.homedir)
 end
 
 -- initialise everything
