@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.59 2009/10/10 08:07:23 sborrill Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.60 2009/10/18 15:49:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -880,4 +880,63 @@ distrib/sets/makesums				1.16
 
 	Only generate SHA512 and MD5 checksums for releases.
 	[snj, ticket #1365]
+
+external/bsd/pkg_install/dist/add/add.h			1.1.1.3 - 1.1.1.5
+external/bsd/pkg_install/dist/add/main.c		1.1.1.4 - 1.1.1.6
+external/bsd/pkg_install/dist/add/perform.c		1.1.1.10 - 1.1.1.12
+external/bsd/pkg_install/dist/add/pkg_add.1		1.1.1.8
+external/bsd/pkg_install/dist/admin/audit.c		1.1.1.6
+external/bsd/pkg_install/dist/admin/main.c		1.1.1.8 - 1.1.1.11
+external/bsd/pkg_install/dist/admin/pkg_admin.1		1.1.1.9
+external/bsd/pkg_install/dist/create/build.c		1.1.1.6
+external/bsd/pkg_install/dist/create/create.h		1.1.1.4
+external/bsd/pkg_install/dist/create/main.c		1.1.1.5
+external/bsd/pkg_install/dist/create/perform.c		1.1.1.4
+external/bsd/pkg_install/dist/delete/pkg_delete.1	1.1.1.5 - 1.1.1.6
+external/bsd/pkg_install/dist/delete/pkg_delete.c	1.1.1.5
+external/bsd/pkg_install/dist/info/info.h		1.1.1.4 - 1.1.1.5
+external/bsd/pkg_install/dist/info/main.c		1.1.1.6 - 1.1.1.7
+external/bsd/pkg_install/dist/info/perform.c		1.1.1.11
+external/bsd/pkg_install/dist/info/show.c		1.1.1.7
+external/bsd/pkg_install/dist/lib/config.h.in		1.1.1.4
+external/bsd/pkg_install/dist/lib/conflicts.c		1.1.1.3
+external/bsd/pkg_install/dist/lib/decompress.c		1.1.1.3
+external/bsd/pkg_install/dist/lib/fexec.c		1.1.1.3
+external/bsd/pkg_install/dist/lib/file.c		1.1.1.4 - 1.1.1.5
+external/bsd/pkg_install/dist/lib/gpgsig.c		1.1.1.2
+external/bsd/pkg_install/dist/lib/iterate.c		1.1.1.3
+external/bsd/pkg_install/dist/lib/lib.h			1.1.1.8 - 1.1.1.9
+external/bsd/pkg_install/dist/lib/license.c		1.1.1.5
+external/bsd/pkg_install/dist/lib/parse-config.c	1.1.1.5 - 1.1.1.7
+external/bsd/pkg_install/dist/lib/pkcs7.c		1.1.1.4
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in	1.1.1.6 - 1.1.1.8
+external/bsd/pkg_install/dist/lib/pkg_io.c		1.1.1.7
+external/bsd/pkg_install/dist/lib/pkg_signature.c	1.1.1.6
+external/bsd/pkg_install/dist/lib/pkgdb.c		1.1.1.4 - 1.1.1.5
+external/bsd/pkg_install/dist/lib/plist.c		1.1.1.5
+external/bsd/pkg_install/dist/lib/remove.c		1.1.1.2
+external/bsd/pkg_install/dist/lib/var.c			1.1.1.3
+external/bsd/pkg_install/dist/lib/version.h		1.1.1.18 - 1.1.1.21
+
+	Update to pkg_install-20091008:
+	- pkg_add: add support to check license conditions before installation
+	- pkg_delete: add -k option to skip over preserve packages.
+	- WARNS=4 clean, fix some potential uses of uninitialized variables
+	- Add a new command for pkg_admin: findbest. It takes one or more
+	  patterns and searches for the best match in PKG_PATH, just like
+	  pkg_add would.
+	  It prints the URLs of the best match for each pattern to stdout.
+	- Rewrite the config file parser to read the file only once.
+	- Fix a bug in pkg_add's -P handling. For dependencies the pkgdb path
+	  was computed incorrectly and included destdir more than once.
+	- Fix the ACTIVE_FTP option to actually set the "a" flag and not the
+	  old "p" flag.
+	- restore pkg_add -f functionality for missing dependencies (PR 42001)
+	- pkg_admin rebuild should count packages correctly (he@), also
+	  count @pkgdir   
+	- fix gpg-sign-package syntax in pkg_admin(1)
+	- change default URL for pkg-vulnerabilities to use HTTP
+	- Fix German accent
+	- Don't dereference a null pointer for pkg_admin add
+	[joerg, ticket #1364]
 
