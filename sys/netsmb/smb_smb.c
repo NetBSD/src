@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.31 2009/10/18 22:53:36 tron Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.32 2009/10/18 23:20:31 tron Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.31 2009/10/18 22:53:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.32 2009/10/18 23:20:31 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 		return (EFBIG);
 	}
 
-	if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX)) {
+	if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_READX)) {
 		size_t blksz;
 
 		blksz = SSTOVC(ssp)->vc_txmax - SMB_HDRLEN - 64;
