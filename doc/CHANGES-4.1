@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.179 2009/10/18 13:02:42 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.180 2009/10/18 15:24:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3817,4 +3817,20 @@ bin/kill/kill.c					1.26
 	Make sure that numerical signals and pids are in range for their types.
 	Fixes PR bin/42143
 	[spz, ticket #1361]
+
+sys/arch/i386/include/npx.h			1.23
+
+	Fix wrong memory layout of the FPU save frame. The debugger against a
+	ptrace'd process would be confused.
+	[mlelstv, ticket #1362]
+
+sys/arch/amd64/amd64/fpu.c			1.29 via patch
+sys/arch/amd64/amd64/machdep.c			1.105 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.59 via patch
+sys/arch/i386/i386/machdep.c			1.647 via patch
+sys/arch/i386/isa/npx.c				1.132 via patch
+
+	PR port-i386/39299 FPU use in signal handlers is unsafe
+	Ensure FP state is reset, if FP is used in a signal handler.
+	[mlelstv, ticket #1363]
 
