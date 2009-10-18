@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.64 2009/10/11 08:19:57 mrg Exp $
+# $NetBSD: md.sparc64,v 1.65 2009/10/18 20:26:33 pooka Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -157,7 +157,7 @@
 ./usr/lib/sparc/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpuffs.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libpuffs.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libpuffs.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libradius.so.4.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librefuse.so.1			base-compat-shlib	compat,pic

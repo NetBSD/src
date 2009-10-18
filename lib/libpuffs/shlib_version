@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.3 2009/10/17 21:36:02 pooka Exp $
+#	$NetBSD: shlib_version,v 1.4 2009/10/18 20:26:33 pooka Exp $
 #
 
 #
@@ -9,4 +9,4 @@
 #    2) get rid of PUFFS_DEVEL_LIBVERSION
 #
 major=1
-minor=0
+minor=1
