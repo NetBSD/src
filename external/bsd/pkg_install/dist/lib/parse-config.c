@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.4.2.2 2009/05/30 16:21:37 snj Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.4.2.3 2009/10/18 16:05:26 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.4.2.2 2009/05/30 16:21:37 snj Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.4.2.3 2009/10/18 16:05:26 bouyer Exp $");
 
 /*-
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: parse-config.c,v 1.1.1.4.2.2 2009/05/30 16:21:37 snj Exp $");
 #if HAVE_ERR_H
 #include <err.h>
 #endif
+#include <errno.h>
 #if HAVE_STRING_H
 #include <string.h>
 #endif
@@ -58,6 +59,7 @@ const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
 const char *check_vulnerabilities;
 const char *config_pkg_path;
+const char *do_license_check;
 const char *verified_installation;
 const char *gpg_cmd;
 const char *gpg_keyring_pkgvuln;
@@ -68,7 +70,7 @@ const char *pkg_vulnerabilities_dir;
 const char *pkg_vulnerabilities_file;
 const char *pkg_vulnerabilities_url;
 const char *ignore_advisories = NULL;
-const char tnf_vulnerability_base[] = "ftp://ftp.NetBSD.org/pub/NetBSD/packages/vulns";
+const char tnf_vulnerability_base[] = "http://ftp.NetBSD.org/pub/NetBSD/packages/vulns";
 const char *acceptable_licenses = NULL;
 
 static struct config_variable {
@@ -80,6 +82,7 @@ static struct config_variable {
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
+	{ "CHECK_LICENSE", &do_license_check },
 	{ "CHECK_VULNERABILITIES", &check_vulnerabilities },
 	{ "DEFAULT_ACCEPTABLE_LICENSES", &default_acceptable_licenses },
 	{ "GPG", &gpg_cmd },
@@ -97,17 +100,60 @@ static struct config_variable {
 	{ NULL, NULL }
 };
 
+char *config_tmp_variables[sizeof config_variables/sizeof config_variables[0]];
+
+static void
+parse_pkg_install_conf(void)
+{
+	struct config_variable *var;
+	FILE *fp;
+	char *line, *value;
+	size_t len, var_len, i;
+
+	fp = fopen(config_file, "r");
+	if (!fp) {
+		if (errno != ENOENT)
+			warn("Can't open '%s' for reading", config_file);
+		return;
+	}
+
+	while ((line = fgetln(fp, &len)) != (char *) NULL) {
+		if (line[len - 1] == '\n')
+			--len;
+		for (i = 0; (var = &config_variables[i])->name != NULL; ++i) {
+			var_len = strlen(var->name);
+			if (strncmp(var->name, line, var_len) != 0)
+				continue;
+			if (line[var_len] != '=')
+				continue;
+			line += var_len + 1;
+			len -= var_len + 1;
+			if (config_tmp_variables[i])
+				value = xasprintf("%s\n%.*s",
+				    config_tmp_variables[i], (int)len, line);
+			else
+				value = xasprintf("%.*s", (int)len, line);
+			free(config_tmp_variables[i]);
+			config_tmp_variables[i] = value;
+			break;
+		}
+	}
+
+	for (i = 0; (var = &config_variables[i])->name != NULL; ++i) {
+		if (config_tmp_variables[i] == NULL)
+			continue;
+		*var->var = config_tmp_variables[i];
+		config_tmp_variables[i] = NULL;
+	}
+
+	fclose(fp);
+}
+
 void
 pkg_install_config(void)
 {
 	char *value;
-	struct config_variable *var;
-
-	for (var = config_variables; var->name != NULL; ++var) {
-		value = var_get(config_file, var->name);
-		if (value != NULL)
-			*var->var = value;
-	}
+	parse_pkg_install_conf();
 
 	if (pkg_vulnerabilities_dir == NULL)
 		pkg_vulnerabilities_dir = _pkgdb_getPKGDB_DIR();
@@ -123,12 +169,15 @@ pkg_install_config(void)
 	if (check_vulnerabilities == NULL)
 		check_vulnerabilities = "never";
 
+	if (do_license_check == NULL)
+		do_license_check = "no";
+
 	if ((value = getenv("PKG_PATH")) != NULL)
 		config_pkg_path = value;
 
 	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s",
 	    (verbose_netio && *verbose_netio) ? "v" : "",
-	    (active_ftp && *active_ftp) ? "" : "p",
+	    (active_ftp && *active_ftp) ? "a" : "",
 	    (ignore_proxy && *ignore_proxy) ? "d" : "");
 }
 
