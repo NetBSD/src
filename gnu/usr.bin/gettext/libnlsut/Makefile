@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2009/10/18 23:47:43 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -30,7 +30,6 @@ fstrcmp.c \
 fwriteerror.c \
 full-write.c \
 gcd.c \
-getline.c \
 getndelim2.c \
 hash.c \
 javacomp.c \
