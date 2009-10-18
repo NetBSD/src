@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.96.2.1 2009/03/20 15:29:14 msaitoh Exp $	*/
+/*	$NetBSD: pstat.c,v 1.96.2.2 2009/10/18 12:58:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.96.2.1 2009/03/20 15:29:14 msaitoh Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.96.2.2 2009/10/18 12:58:20 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,11 +48,12 @@ __RCSID("$NetBSD: pstat.c,v 1.96.2.1 2009/03/20 15:29:14 msaitoh Exp $");
 #include <sys/vnode.h>
 #include <sys/ucred.h>
 #define _KERNEL
-#include <sys/file.h>
-#include <ufs/ufs/inode.h>
 #define NFS
 #include <sys/mount.h>
 #undef NFS
+#include <sys/file.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
 #include <sys/uio.h>
 #include <sys/namei.h>
 #include <miscfs/genfs/layer.h>
@@ -471,6 +472,7 @@ ufs_print(struct vnode *vp, int ovflw)
 		struct ufs1_dinode dp1;
 		struct ufs2_dinode dp2;
 	} dip;
+	struct ufsmount ump;
 	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
 	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
 	char *name;
@@ -478,13 +480,15 @@ ufs_print(struct vnode *vp, int ovflw)
 	dev_t rdev;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
-	KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs1_dinode),
-	    "inode's dinode");
+	KGETRET(ip->i_ump, &ump, sizeof(struct ufsmount),
+	    "vnode's mount point");
 
-	if (ip->i_size == dip.dp1.di_size)
+	if (ump.um_fstype == UFS1) {
+		KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs1_dinode),
+		    "inode's dinode");
 		rdev = dip.dp1.di_rdev;
-	else {
-		KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs2_dinode),
+	} else {
+		KGETRET(ip->i_din.ffs2_din, &dip, sizeof (struct ufs2_dinode),
 		    "inode's UFS2 dinode");
 		rdev = dip.dp2.di_rdev;
 	}
