@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.54 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.54.10.1 2009/10/18 13:43:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -245,6 +245,7 @@ static void	*bus_intr_establish2(
 				void (*)(void));	/*optional fast vector*/
 
 
+
 static __inline int
 bus_space_map(t, a, s, f, hp)
 	bus_space_tag_t	t;
@@ -352,7 +353,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 #define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
 #define BUS_SPACE_MAP_BUS2	0x0200
 #define BUS_SPACE_MAP_BUS3	0x0400
-#define BUS_SPACE_MAP_BUS4	0x0800
+#define BUS_SPACE_MAP_LARGE	0x0800	/* map outside IODEV range */
 
 
 /* flags for bus_space_barrier() */
