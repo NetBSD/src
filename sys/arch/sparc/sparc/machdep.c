@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282.4.1 2009/02/02 03:30:33 snj Exp $ */
+/*	$NetBSD: machdep.c,v 1.282.4.2 2009/10/18 13:43:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.4.1 2009/02/02 03:30:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.4.2 2009/10/18 13:43:45 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2127,8 +2127,8 @@ bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
 	return (EINVAL);
 }
 
-int
-sparc_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+static int
+sparc_bus_map_iodev(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
 	      vaddr_t va, bus_space_handle_t *hp)
 {
 	vaddr_t v;
@@ -2194,10 +2194,43 @@ static	vaddr_t iobase;
 	return (0);
 }
 
+static int
+sparc_bus_map_large(bus_space_tag_t t, bus_addr_t ba,
+		    bus_size_t size, int flags, bus_space_handle_t *hp)
+{
+	vaddr_t v = 0;
+
+	if (uvm_map(kernel_map, &v, size, NULL, 0, PAGE_SIZE,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_NORMAL,
+			0)) == 0) {
+		return sparc_bus_map_iodev(t, ba, size, flags, v, hp);
+	}
+	return -1;
+}
+
+int
+sparc_bus_map(bus_space_tag_t t, bus_addr_t ba,
+		    bus_size_t size, int flags, vaddr_t va,
+		    bus_space_handle_t *hp)
+{
+
+	if (flags & BUS_SPACE_MAP_LARGE) {
+		return sparc_bus_map_large(t, ba, size, flags, hp);
+	} else
+		return sparc_bus_map_iodev(t, ba, size, flags, va, hp);
+		
+}
+
 int
 sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 {
 	vaddr_t va = trunc_page((vaddr_t)bh);
+
+	/*
+	 * XXX
+	 * mappings with BUS_SPACE_MAP_LARGE need additional care here
+	 * we can just check if the VA is in the IODEV range
+	 */
 
 	pmap_kremove(va, round_page(size));
 	pmap_update(pmap_kernel());
