@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.25 2009/10/17 23:20:15 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.26 2009/10/18 19:36:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -235,34 +235,28 @@ p2k_errcatcher(struct puffs_usermount *pu, uint8_t type, int error,
 }
 
 /* just to avoid annoying loop when singlestepping */
-static void
-allocp2m(struct ukfs *ukfs)
+static struct p2k_mount *
+allocp2m(void)
 {
 	struct p2k_mount *p2m;
 	int i;
 
 	p2m = malloc(sizeof(*p2m));
+	if (p2m == NULL)
+		return NULL;
 	memset(p2m, 0, sizeof(*p2m));
 
 	for (i = 0; i < NHASHBUCK; i++)
 		LIST_INIT(&p2m->p2m_vphash[i]);
-	ukfs_setspecific(ukfs, p2m);
+
+	return p2m;
 }
 
-static struct p2k_mount *
-setupfs(const char *vfsname, const char *devpath, int partition,
-	const char *mountpath, int mntflags, void *arg, size_t alen,
-	uint32_t puffs_flags)
+struct p2k_mount *
+p2k_init(uint32_t puffs_flags)
 {
-	char partpath[UKFS_PARTITION_MAXPATHLEN];
-	char typebuf[PUFFS_TYPELEN];
 	struct puffs_ops *pops;
-	struct puffs_usermount *pu = NULL;
-	struct p2k_node *p2n_root;
-	struct ukfs *ukfs = NULL;
-	struct p2k_mount *p2m = NULL;
-	extern int puffs_fakecc;
-	int rv = -1, sverrno;
+	struct p2k_mount *p2m;
 	bool dodaemon;
 
 	PUFFSOP_INIT(pops);
@@ -320,11 +314,57 @@ setupfs(const char *vfsname, const char *devpath, int partition,
 		puffs_flags |= PUFFS_KFLAG_NOCACHE;
 	}
 
+	p2m = allocp2m();
+	if (p2m == NULL)
+		return NULL;
+	p2m->p2m_pu = puffs_init(pops, PUFFS_DEFER, PUFFS_DEFER,
+	    PUFFS_DEFER, puffs_flags);
+	if (p2m->p2m_pu == NULL) {
+		int sverrno = errno;
+		free(p2m);
+		errno = sverrno;
+		return NULL;
+	}
+
+	if (dodaemon) {
+		if (puffs_daemon(p2m->p2m_pu, 1, 1) == -1) {
+			int sverrno = errno;
+			p2k_cancel(p2m, sverrno);
+			errno = sverrno;
+			p2m = NULL;
+		}
+	}
+	if (p2m)
+		rump_init();
+
+	return p2m;
+}
+
+void
+p2k_cancel(struct p2k_mount *p2m, int error)
+{
+
+	puffs_cancel(p2m->p2m_pu, error);
+	free(p2m);
+}
+
+static int
+setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
+	int partition, const char *mountpath, int mntflags,
+	void *arg, size_t alen)
+{
+	char partpath[UKFS_PARTITION_MAXPATHLEN];
+	char typebuf[PUFFS_TYPELEN];
+	struct puffs_usermount *pu = p2m->p2m_pu;
+	struct p2k_node *p2n_root;
+	struct ukfs *ukfs = NULL;
+	extern int puffs_fakecc;
+	int rv = -1, sverrno;
+
 	strcpy(typebuf, "p2k|");
 	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
 		struct puffs_kargs *args = arg;
 		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
-		dodaemon = false;
 	} else {
 		strlcat(typebuf, vfsname, sizeof(typebuf));
 	}
@@ -339,12 +379,7 @@ setupfs(const char *vfsname, const char *devpath, int partition,
 	} else {
 		strlcpy(partpath, devpath, sizeof(partpath));
 	}
-	pu = puffs_init(pops, partpath, typebuf, NULL, puffs_flags);
-	if (pu == NULL)
-		goto out;
-
-	if (dodaemon)
-		puffs_daemon(pu, 1, 1);
+	puffs_setmntinfo(pu, partpath, typebuf);
 
 	if (ukfs_init() == -1)
 		goto out;
@@ -356,8 +391,7 @@ setupfs(const char *vfsname, const char *devpath, int partition,
 		    arg, alen);
 	if (ukfs == NULL)
 		goto out;
-	allocp2m(ukfs);
-	p2m = ukfs_getspecific(ukfs);
+	ukfs_setspecific(ukfs, p2m);
 	p2m->p2m_ukfs = ukfs;
 	p2m->p2m_pu = pu;
 
@@ -370,23 +404,19 @@ setupfs(const char *vfsname, const char *devpath, int partition,
 	puffs_set_errnotify(pu, p2k_errcatcher);
 
 	puffs_setspecific(pu, ukfs);
-	if ((rv = puffs_mount(pu, mountpath, mntflags, p2n_root))== -1)
-		goto out;
+	rv = puffs_mount(pu, mountpath, mntflags, p2n_root);
 
  out:
-	sverrno = errno;
-	if (rv) {
+	if (rv == -1) {
+		sverrno = errno;
+		puffs_cancel(pu, sverrno);
 		if (ukfs)
 			ukfs_release(p2m->p2m_ukfs, UKFS_RELFLAG_FORCE);
-		if (pu)
-			puffs_cancel(pu, sverrno);
-		if (p2m)
-			free(p2m);
+		free(p2m);
 		errno = sverrno;
-		p2m = NULL;
 	}
 
-	return p2m;
+	return rv;
 }
 
 int
@@ -411,11 +441,15 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
 {
 	struct p2k_mount *p2m;
+	int rv;
 
-	p2m = setupfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
-	    mntflags, arg, alen, puffs_flags);
+	p2m = p2k_init(puffs_flags);
 	if (p2m == NULL)
 		return -1;
+	rv = setupfs(p2m, vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	    mntflags, arg, alen);
+	if (rv == -1)
+		return rv;
 	return p2k_mainloop(p2m);
 }
 
@@ -425,31 +459,35 @@ p2k_run_diskfs(const char *vfsname, const char *devpath, int partition,
 	uint32_t puffs_flags)
 {
 	struct p2k_mount *p2m;
+	int rv;
 
-	p2m = setupfs(vfsname, devpath, partition, mountpath, mntflags,
-	    arg, alen, puffs_flags);
+	p2m = p2k_init(puffs_flags);
 	if (p2m == NULL)
 		return -1;
+	rv = setupfs(p2m, vfsname, devpath, partition, mountpath, mntflags,
+	    arg, alen);
+	if (rv == -1)
+		return rv;
 	return p2k_mainloop(p2m);
 }
 
-struct p2k_mount *
-p2k_setup_fs(const char *vfsname, const char *devpath, const char *mountpath,
-	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
+int
+p2k_setup_fs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
+	const char *mountpath, int mntflags, void *arg, size_t alen)
 {
 
-	return setupfs(vfsname, devpath, UKFS_PARTITION_NA, mountpath,
-	    mntflags, arg, alen, puffs_flags);
+	return setupfs(p2m, vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	    mntflags, arg, alen);
 }
 
-struct p2k_mount *
-p2k_setup_diskfs(const char *vfsname, const char *devpath, int partition,
-	const char *mountpath, int mntflags, void *arg, size_t alen,
-	uint32_t puffs_flags)
+int
+p2k_setup_diskfs(struct p2k_mount *p2m, const char *vfsname,
+	const char *devpath, int partition, const char *mountpath,
+	int mntflags, void *arg, size_t alen)
 {
 
-	return setupfs(vfsname, devpath, partition, mountpath, mntflags,
-	    arg, alen, puffs_flags);
+	return setupfs(p2m, vfsname, devpath, partition, mountpath, mntflags,
+	    arg, alen);
 }
 
 int
@@ -890,6 +928,7 @@ p2k_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
 	return rv;
 }
 
+/*ARGSUSED*/
 int
 p2k_node_abortop(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cn *pcn)
