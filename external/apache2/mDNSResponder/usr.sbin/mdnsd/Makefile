@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/10/03 00:03:05 tsarna Exp $
+#	$NetBSD: Makefile,v 1.5 2009/10/18 17:43:11 tron Exp $
 
 PROG=	mdnsd
 
@@ -18,5 +18,7 @@ MAN=	mdnsd.8
 
 mdnsd.8: mDNSResponder.8
 	${TOOL_CAT} < $? > $@
-                                
+
+CLEANFILES+=	mdnsd.8
+                               
 .include <bsd.prog.mk>
