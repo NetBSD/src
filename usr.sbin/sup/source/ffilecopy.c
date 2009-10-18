@@ -1,4 +1,4 @@
-/*	$NetBSD: ffilecopy.c,v 1.10 2009/10/17 22:26:13 christos Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.11 2009/10/18 15:23:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -96,7 +96,7 @@
  *
  */
 
-int 
+ssize_t 
 ffilecopy(FILE * here, FILE * there)
 {
 	int i, herefile, therefile;

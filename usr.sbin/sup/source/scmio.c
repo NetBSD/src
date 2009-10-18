@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.18 2009/10/17 22:26:13 christos Exp $	*/
+/*	$NetBSD: scmio.c,v 1.19 2009/10/18 15:23:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -256,7 +256,8 @@ writedata(size_t count, void *data)
 		return (scmerr(-1, "Write retries failed"));
 	}
 	if (x != count)
-		return (scmerr(-1, "Write error on network returned %d on write of %d", x, count));
+		return (scmerr(-1, "Write error on network returned %d "
+		    "on write of %zu", x, count));
 	return (SCMOK);
 }
 
@@ -434,7 +435,7 @@ readdata(size_t count, void *vdata, bool push)
 
 	if (push) {
 		if (bufptr + count < buffer)
-			return (scmerr(-1, "No space in buffer %d", count));
+			return (scmerr(-1, "No space in buffer %zu", count));
 		bufptr -= count;
 		bufcnt += count;
 		memcpy(bufptr, data, -count);
