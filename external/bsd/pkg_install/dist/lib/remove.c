@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.1.1.1.8.2 2009/06/05 17:02:00 snj Exp $	*/
+/*	$NetBSD: remove.c,v 1.1.1.1.8.3 2009/10/18 15:48:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: remove.c,v 1.1.1.1.8.2 2009/06/05 17:02:00 snj Exp $");
+__RCSID("$NetBSD: remove.c,v 1.1.1.1.8.3 2009/10/18 15:48:54 bouyer Exp $");
 
 #if HAVE_DIRENT_H
 #include <dirent.h>
@@ -75,7 +75,7 @@ static int
 long_remove(const char **path_ptr, int missing_ok, int *did_chdir)
 {
 	char tmp_path[PATH_MAX + 1];
-	const char *slash, *path;
+	const char *path;
 	size_t i, len;
 	int rv;
 
@@ -84,7 +84,6 @@ long_remove(const char **path_ptr, int missing_ok, int *did_chdir)
 	*did_chdir = 0;
 
 	while (len >= PATH_MAX) {
-		slash = path;
 		for (i = PATH_MAX - 1; i > 0; --i) {
 			if (path[i] == '/')
 				break;

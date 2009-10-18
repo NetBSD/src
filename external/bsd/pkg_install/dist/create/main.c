@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.4.2.2 2009/06/05 17:01:58 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4.2.3 2009/10/18 15:48:54 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.4.2.2 2009/06/05 17:01:58 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.4.2.3 2009/10/18 15:48:54 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -47,7 +47,7 @@ char   *SrcDir = NULL;
 char   *DefaultOwner = NULL;
 char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
-char   *CompressionType = NULL;
+const char *CompressionType = NULL;
 int	update_pkgdb = 1;
 int	create_views = 0;
 int     PlistOnly = 0;
@@ -68,11 +68,6 @@ usage(void)
             "                  -c comment -d description -f packlist\n"
             "                  pkg-name\n");
 	exit(1);
-}
-
-void
-cleanup(int in_signal)
-{
 }
 
 int
