@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.18 2009/10/17 20:35:52 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.19 2009/10/18 22:55:56 tron Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.18 2009/10/17 20:35:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.19 2009/10/18 22:55:56 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -407,17 +407,25 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	{
 		struct sockaddr *saddr;
 		struct msghdr mhdr;
-		struct iovec iov[32];
+		size_t iov_max, i;
+		struct iovec *iov;
 		struct mbuf *m2;
 		size_t tot;
-		int i, s;
+		int s;
 
 		memset(&mhdr, 0, sizeof(mhdr));
 
+		iov_max = 0;
+		for (m2 = m; m2 != NULL; m2 = m2->m_next) {
+			iov_max++;
+		}
+		if (iov_max == 0)
+			iov_max = 1;
+
+		iov = kmem_alloc(sizeof(struct iovec) * iov_max, KM_SLEEP);
+
 		tot = 0;
-		for (i = 0, m2 = m; m2; m2 = m2->m_next, i++) {
-			if (i >= 32)
-				panic("lazy bum");
+		for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
 			iov[i].iov_base = m2->m_data;
 			iov[i].iov_len = m2->m_len;
 			tot += m2->m_len;
@@ -426,13 +434,15 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		mhdr.msg_iovlen = i;
 		s = SO2S(so);
 
-		if (nam) {
+		if (nam != NULL) {
 			saddr = mtod(nam, struct sockaddr *);
 			mhdr.msg_name = saddr;
 			mhdr.msg_namelen = saddr->sa_len;
 		}
 
 		rumpuser_net_sendmsg(s, &mhdr, 0, &error);
+
+		kmem_free(iov, sizeof(struct iovec) * iov_max);
 
 		m_freem(m);
 		m_freem(control);
