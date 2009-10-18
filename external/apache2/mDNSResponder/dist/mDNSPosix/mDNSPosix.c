@@ -581,7 +581,7 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 	{
 	char line[256];
 	char nameserver[16];
-	char keyword[10];
+	char keyword[11];
 	int  numOfServers = 0;
 	FILE *fp = fopen(filePath, "r");
 	if (fp == NULL) return -1;
