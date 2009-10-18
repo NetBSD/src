@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.117 2009/10/18 10:07:47 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.118 2009/10/18 12:46:42 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14351,4 +14351,13 @@ sys/arch/i386/pnpbios/ess_pnpbios.c		1.19
 	Fix identification of ESS1878 on Fujitsu FMV-5100 NC/S
 	by PnPBIOS. Fixes PR/41629.
 	[snj, ticket #1098]
+
+lib/libpuffs/dispatcher.c			1.33
+lib/libpuffs/puffs.c				1.99
+lib/libpuffs/puffs.h				1.111
+sys/fs/puffs/puffs_msgif.h			1.67 via patch
+sys/fs/puffs/puffs_vnops.c			1.136
+
+	Support VOP_ABORTOP() in puffs.
+	[pooka, ticket #1100]
 
