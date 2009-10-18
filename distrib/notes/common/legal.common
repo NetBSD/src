@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.54 2009/10/18 01:40:44 snj Exp $
+.\"	$NetBSD: legal.common,v 1.55 2009/10/18 14:22:39 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,11 +121,6 @@ This product includes software developed by Alex Zepeda, and
 Colin Wood for the NetBSD Projet.
 .It
 This product includes software developed by Alex Zepeda.
-.It
-This product includes software developed by Alistair G. Crooks.
-.It
-This product includes software developed by Alistair G. Crooks.
-for the NetBSD project.
 .It
 This product includes software developed by Allen Briggs.
 .It
