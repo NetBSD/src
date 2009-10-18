@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_smbfs.c,v 1.2 2009/10/18 15:14:13 pooka Exp $	*/
+/*	$NetBSD: rump_smbfs.c,v 1.3 2009/10/18 19:38:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -41,30 +41,39 @@
 
 #include "mount_smbfs.h"
 
+struct p2k_mount *docancel;
+static void
+pcancel(void)
+{
+
+	abort();
+	if (docancel)
+		p2k_cancel(docancel, 0);
+}
+
 int
 main(int argc, char *argv[])
 {
 	struct smbfs_args args;
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	struct p2k_mount *p2m;
 	int rv, mntflags;
 
 	setprogname(argv[0]);
 
-	/*
-	 * XXX: rump_init() creates threads, we cannot detach after that.
-	 * so let's call rump_smbfs work in progress and force debugging
-	 * mode ;)  (I should go into marketing)
-	 */
-	printf("rump_smbfs is work-in-progress.  forcing debug mode\n");
-	setenv("P2K_DEBUG", "1", 1);
-	rump_init();
+	p2m = p2k_init(PUFFS_KFLAG_WTCACHE);
+	atexit(pcancel);
+	docancel = p2m;
+	/* XXX: this will exit upon error.  therefore kludge with atexit */
 	mount_smbfs_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
+	docancel = NULL;
 
-	rv = p2k_run_fs(MOUNT_SMBFS, canon_dev, canon_dir, mntflags, &args,
-	    sizeof(args), PUFFS_KFLAG_WTCACHE);
-	if (rv == -1)
+	if (p2k_setup_fs(p2m, MOUNT_SMBFS, canon_dev, canon_dir, mntflags,
+	    &args, sizeof(args)) == -1)
 		err(1, "mount");
+	if (p2k_mainloop(p2m) == -1)
+		err(1, "fs service");
 
 	return 0;
 }
