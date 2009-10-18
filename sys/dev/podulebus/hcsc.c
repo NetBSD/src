@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.19 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.20 2009/10/18 18:14:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Matthias Pfaller.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -67,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.19 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.20 2009/10/18 18:14:00 snj Exp $");
 
 #include <sys/param.h>
 
