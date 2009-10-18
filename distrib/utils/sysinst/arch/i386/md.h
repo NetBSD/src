@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.66 2009/04/07 10:45:05 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.67 2009/10/18 12:09:48 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,6 +62,9 @@
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
+
+/* allow using tmpfs for /tmp instead of mfs */
+#define HAVE_TMPFS
 
 /* have file system specific primary boot loader */
 #define	HAVE_BOOTXX_xFS

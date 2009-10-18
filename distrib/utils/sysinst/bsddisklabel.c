@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.52 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.53 2009/10/18 12:09:48 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,9 +61,9 @@ static int check_partitions(void);
 /* For the current state of this file blame abs@NetBSD.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
 
-#define	PART_ANY	-1
-#define	PART_EXTRA	-2
-#define	PART_TMP_MFS	-3
+#define	PART_ANY		-1
+#define	PART_EXTRA		-2
+#define	PART_TMP_RAMDISK	-3
 
 /* Defaults for things that might be defined in md.h */
 #ifndef PART_ROOT
@@ -290,7 +290,7 @@ set_ptn_size(menudesc *m, void *arg)
 	}
 
 	size = NUMSEC(size, mult, dlcylsize);
-	if (p->ptn_id == PART_TMP_MFS) {
+	if (p->ptn_id == PART_TMP_RAMDISK) {
 		p->size = size;
 		return 0;
 	}
@@ -357,9 +357,13 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 #define PI_SWAP 1
 		{ PART_SWAP,	{ 's', 'w', 'a', 'p', '\0' },
 	 	  DEFSWAPSIZE,	DEFSWAPSIZE, 0, 0 },
-		{ PART_TMP_MFS,	
+		{ PART_TMP_RAMDISK,
+#ifdef HAVE_TMPFS
+		  { 't', 'm', 'p', ' ', '(', 't', 'm', 'p', 'f', 's', ')', '\0' },
+#else
 		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
-		    64, 0, 0, 0 },
+#endif
+		  64, 0, 0, 0 },
 #define PI_USR 3
 		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE,
 		  0, 0, 0 },
@@ -495,7 +499,7 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 					break;
 				continue;
 			}
-			if (p->ptn_id == PART_TMP_MFS)
+			if (p->ptn_id == PART_TMP_RAMDISK)
 				continue;
 			p->size += pi.free_space % dlcylsize;
 			break;
@@ -510,8 +514,8 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 				size = p->limit;
 		}
 		i = p->ptn_id;
-		if (i == PART_TMP_MFS) {
-			tmp_mfs_size = size;
+		if (i == PART_TMP_RAMDISK) {
+			tmp_ramdisk_size = size;
 			size = 0;
 			continue;
 		}
