@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.32 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.32.4.1 2009/10/18 12:46:07 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.32 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.32.4.1 2009/10/18 12:46:07 sborrill Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -828,6 +828,24 @@ dispatch(struct puffs_cc *pcc)
 			break;
 		}
 
+		case PUFFS_VN_ABORTOP:
+		{
+			struct puffs_vnmsg_abortop *auxt = auxbuf;
+			struct puffs_cn pcn;
+
+			if (pops->puffs_node_abortop == NULL) {
+				error = 0;
+				break;
+			}
+
+			pcn.pcn_pkcnp = &auxt->pvnr_cn;
+			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
+
+			error = pops->puffs_node_abortop(pu, opcookie, &pcn);
+				
+			break;
+		}
+
 		case PUFFS_VN_READ:
 		{
 			struct puffs_vnmsg_read *auxt = auxbuf;
@@ -896,6 +914,8 @@ dispatch(struct puffs_cc *pcc)
 			break;
 		}
 
+#if 0
+	/* not issued by kernel currently */
 	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_CACHE) {
 		struct puffs_cacheinfo *pci = (void *)preq;
 
@@ -904,6 +924,7 @@ dispatch(struct puffs_cc *pcc)
 			    pci->pcache_nruns, pci->pcache_runs);
 		}
 		error = 0;
+#endif
 
 	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_ERROR) {
 		struct puffs_error *perr = (void *)preq;

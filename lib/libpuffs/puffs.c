@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92.4.2 2009/10/16 12:10:54 sborrill Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92.4.3 2009/10/18 12:46:07 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92.4.2 2009/10/16 12:10:54 sborrill Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92.4.3 2009/10/18 12:46:07 sborrill Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -99,6 +99,7 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
+	FILLOP(abortop,  ABORTOP);
 }
 #undef FILLOP
 
@@ -584,20 +585,14 @@ do {									\
 	return rv;
 }
 
+/*ARGSUSED*/
 struct puffs_usermount *
-_puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
+_puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	const char *puffsname, void *priv, uint32_t pflags)
 {
 	struct puffs_usermount *pu;
 	struct puffs_kargs *pargs;
 	int sverrno;
-
-	if (develv != PUFFS_DEVEL_LIBVERSION) {
-		warnx("puffs_init: mounting with lib version %d, need %d",
-		    develv, PUFFS_DEVEL_LIBVERSION);
-		errno = EINVAL;
-		return NULL;
-	}
 
 	pu = malloc(sizeof(struct puffs_usermount));
 	if (pu == NULL)
