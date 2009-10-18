@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/09/08 09:57:32 he Exp $
+#	$NetBSD: Makefile,v 1.8 2009/10/18 12:41:06 stacktic Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,8 @@ NETBSD_DIST_X11_FILE=
 .endif
 
 NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE}
-	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} > ${.TARGET}
+	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} > \
+	    ${.OBJDIR}/NetBSD.dist
 
 CONFIGFILES=	NetBSD.dist special
 FILESDIR=	/etc/mtree
