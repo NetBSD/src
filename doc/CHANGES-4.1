@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.178 2009/10/09 12:08:16 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.179 2009/10/18 13:02:42 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3804,4 +3804,17 @@ distrib/sets/makesums				1.16
 
 	Only generate SHA512 and MD5 checksums for releases.
 	[snj, ticket #1365]
+
+usr.sbin/pstat/pstat.c				1.115
+
+	Distinguish between UFS1 and UFS2 inodes by reading the ufsmount
+	structure, the previous heuristic of comparing the size fields
+	of inode and dinode failed.
+	[mlelstv, ticket #1360]
+
+bin/kill/kill.c					1.26
+
+	Make sure that numerical signals and pids are in range for their types.
+	Fixes PR bin/42143
+	[spz, ticket #1361]
 
