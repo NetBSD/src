@@ -1,10 +1,13 @@
 #PREFIX=/Users/agcrooks
 PREFIX=/usr
 
+#LIBDIR=/usr/lib
+
 LIB=luanetpgp
 SRCS=glue.c
 MKMAN=no
 CPPFLAGS+=-g -I${PREFIX}/pkg/include
+LDADD+= -lnetpgp
 WARNS=4
 
 .include <bsd.lib.mk>
