@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_nfs.c,v 1.7 2009/01/11 20:31:03 pooka Exp $	*/
+/*	$NetBSD: rump_nfs.c,v 1.8 2009/10/18 15:57:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	mount_nfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 
 	rv = p2k_run_fs(MOUNT_NFS, canon_dev, canon_dir, mntflags, &args,
-	    sizeof(args), 0);
+	    sizeof(args), PUFFS_KFLAG_WTCACHE);
 	if (rv == -1)
 		err(1, "mount");
 
