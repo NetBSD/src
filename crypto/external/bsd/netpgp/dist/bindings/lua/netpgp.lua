@@ -77,8 +77,8 @@ end
 -- initialise everything
 netpgp.init(pgp)
 
-local i = 1
-while i <= #args do
+local i
+for i = 1, #args do
 	if options.encrypt then
 		-- encrypt a file
 		netpgp.encrypt_file(pgp, args[1], output, armour)
@@ -97,5 +97,4 @@ while i <= #args do
 		-- verification of detached signature
 		netpgp.verify_file(pgp, args[1], armour)
 	end
-	i = i + 1
 end
