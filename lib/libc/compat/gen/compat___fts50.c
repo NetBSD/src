@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts50.c,v 1.1 2009/08/16 19:33:39 christos Exp $	*/
+/*	$NetBSD: compat___fts50.c,v 1.2 2009/10/19 17:52:05 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -24,16 +24,16 @@ __warn_references(__fts_set50,
     " include <fts.h> for correct reference")
 
 #define	__fts_level_t	short
-#undef fts_children
-#define fts_children __fts_children50
-#undef fts_close
-#define fts_close __fts_close50
-#undef fts_open
-#define fts_open  __fts_open50
-#undef fts_read
-#define fts_read __fts_read50
-#undef fts_set
-#define fts_set __fts_set50
+#undef	fts_children
+#define	fts_children __fts_children50
+#undef	fts_close
+#define	fts_close __fts_close50
+#undef	fts_open
+#define	fts_open  __fts_open50
+#undef	fts_read
+#define	fts_read __fts_read50
+#undef	fts_set
+#define	fts_set __fts_set50
 
 #include <fts.h>
 #include <compat/include/fts.h>
