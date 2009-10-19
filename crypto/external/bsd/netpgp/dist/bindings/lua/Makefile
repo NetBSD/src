@@ -9,6 +9,7 @@ MKMAN=no
 CPPFLAGS+=-g -I${PREFIX}/pkg/include
 LDADD+= -lnetpgp
 WARNS=4
+CLEANFILES+=	a a.sig
 
 .include <bsd.lib.mk>
 .include <bsd.own.mk>
@@ -31,6 +32,8 @@ t: lib${LIB}.dylib
 .else
 t:
 	cp Makefile a
-	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib ./netpgp.lua --sign --detached a
-	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib ./netpgp.lua --verify a.sig
+	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib \
+		./netpgp.lua --sign --detached a
+	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib \
+		./netpgp.lua --verify a.sig
 .endif
