@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.58 2009/10/19 18:23:28 snj Exp $
+.\"	$NetBSD: legal.common,v 1.59 2009/10/19 19:02:21 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -342,8 +342,6 @@ This product includes software developed by Lutz Vieweg.
 .It
 This product includes software developed by MINOURA Makoto,
 Takuya Harakawa.
-.It
-This product includes software developed by Manuel Bouyer.
 .It
 This product includes software developed by Marc Horowitz.
 .It
