@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2008/06/30 14:12:20 nakayama Exp $ */
+/*	$NetBSD: userret.h,v 1.8.12.1 2009/10/19 09:01:43 sborrill Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -62,14 +62,6 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 	struct proc *p = l->l_proc;
 
 	mi_userret(l);
-
-	if (want_ast) {
-		want_ast = 0;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-	}
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
