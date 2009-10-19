@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.67 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.68 2009/10/19 17:53:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.67 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.68 2009/10/19 17:53:36 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -283,7 +283,8 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		}
 	} else {
 		vrele(devvp);
-		if (devvp != imp->im_devvp)
+		if (devvp != imp->im_devvp &&
+		    devvp->v_rdev != imp->im_devvp->v_rdev)
 			return (EINVAL);	/* needs translation */
 	}
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
