@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.53 2009/10/16 00:14:53 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.54 2009/10/19 22:07:29 christos Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -105,7 +105,7 @@ KERNDIR=${RUMPTOP}/../lib/libkern
 #
 .if ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "hppa" \
     || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
-    || ${MACHINE_CPU} == "vax"
+    || ${MACHINE_CPU} == "vax" || ${MACHINE_ARCH} == "m68000"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
 SRCS+=		atomic_cas_generic.c
 .endif
