@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.40 2009/07/20 19:25:07 dyoung Exp $ */
+/*	$NetBSD: ipmi.c,v 1.41 2009/10/19 18:41:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -57,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.40 2009/07/20 19:25:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.41 2009/10/19 18:41:10 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
