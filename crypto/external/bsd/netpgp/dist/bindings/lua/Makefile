@@ -11,6 +11,9 @@ LDADD+= -lnetpgp
 WARNS=4
 
 .include <bsd.lib.mk>
+.include <bsd.own.mk>
+
+LUANETPGPOBJDIR != cd ${.CURDIR} && ${PRINTOBJDIR}
 
 OPSYS!= uname -s
 
@@ -28,6 +31,6 @@ t: lib${LIB}.dylib
 .else
 t:
 	cp Makefile a
-	./netpgp.lua --sign --detached a
-	./netpgp.lua --verify a.sig
+	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib ./netpgp.lua --sign --detached a
+	env LD_LIBRARY_PATH=${LUANETPGPOBJDIR}:/lib:/usr/lib:${PREFIX}/lib ./netpgp.lua --verify a.sig
 .endif

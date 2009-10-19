@@ -50,8 +50,7 @@ if f then
 	extension = ".dylib"
 	io.close(f)
 end
-glupkg = package.loadlib("./" .. "libluanetpgp" .. extension,
-		"luaopen_netpgp")
+glupkg = package.loadlib("libluanetpgp" .. extension, "luaopen_netpgp")
 netpgp = glupkg()
 
 -- initialise
