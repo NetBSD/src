@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.57 2009/01/11 03:16:33 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.58 2009/10/19 01:25:29 dholland Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.57 2009/01/11 03:16:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.58 2009/10/19 01:25:29 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,6 +379,8 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 		(unsigned long)(vm->vm_ssize),	/* stack size in pages */
 		(unsigned long) 0);
 
+	uvmspace_free(vm);
+
 	if (len == 0)
 		goto out;
 
@@ -482,6 +484,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
+
+	uvmspace_free(vm);
 
 	if (len == 0)
 		goto out;
