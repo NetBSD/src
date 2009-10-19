@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.126 2009/10/16 00:14:53 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.127 2009/10/19 22:35:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.126 2009/10/16 00:14:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.127 2009/10/19 22:35:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -125,6 +125,7 @@ __weak_alias(rump_vfs_fini,rump__unavailable);
 
 __weak_alias(biodone,rump__unavailable);
 __weak_alias(sopoll,rump__unavailable);
+__weak_alias(uvm_readahead,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
