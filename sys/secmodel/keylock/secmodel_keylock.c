@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.4 2009/10/06 04:28:10 elad Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.5 2009/10/19 08:20:21 cegger Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.4 2009/10/06 04:28:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.5 2009/10/19 08:20:21 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -409,7 +409,7 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
-	int result, kstate;
+	int result, kstate, error;
 
 	kstate = keylock_state();
 	if (kstate == KEYLOCK_ABSENT)
