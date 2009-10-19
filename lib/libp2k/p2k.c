@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.26 2009/10/18 19:36:41 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.27 2009/10/19 17:34:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -1210,7 +1210,7 @@ p2k_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	struct p2k_node *p2n = opc;
 	struct vnode *vp = OPC2VP(opc);
-	bool recycle;
+	bool recycle = false;
 	int rv;
 
 	/* deadfs */
