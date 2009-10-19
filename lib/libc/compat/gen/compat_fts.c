@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fts.c,v 1.3 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: compat_fts.c,v 1.4 2009/10/19 17:52:05 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -9,14 +9,18 @@
 #include <sys/cdefs.h>
 #include <dirent.h>
 
-#define __LIBC12_SOURCE__
+#define	__LIBC12_SOURCE__
 #include <sys/stat.h>
 #include <compat/sys/time.h>
 #include <compat/sys/stat.h>
 
-#define __fts_stat_t	struct stat12
-#define __fts_nlink_t	u_int16_t
-#define __fts_ino_t	u_int32_t
+#define	__fts_stat_t	struct stat12
+#define	__fts_nlink_t	u_int16_t
+#define	__fts_ino_t	u_int32_t
+#define	__fts_length_t	unsigned short
+#define	__fts_number_t	long
+#define	__fts_dev_t	uint32_t
+#define	__fts_level_t	short
 
 #include <fts.h>
 #include <compat/include/fts.h>
@@ -46,5 +50,7 @@ __warn_references(fts_set,
     " include <fts.h> for correct reference")
 
 #define	__FTS_COMPAT_TAILINGSLASH
+#define	__FTS_COMPAT_LENGTH
+#define	__FTS_COMPAT_LEVEL
 
 #include "gen/fts.c"
