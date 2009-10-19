@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.21 2009/10/18 16:06:21 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.22 2009/10/19 09:02:02 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -396,4 +396,13 @@ external/bsd/pkg_install/dist/lib/version.h		1.1.1.18 - 1.1.1.21
 	- Fix German accent
 	- Don't dereference a null pointer for pkg_admin add
 	[joerg, ticket #1075]
+
+sys/arch/sparc64/include/userret.h		1.9
+sys/arch/sparc64/sparc64/trap.c			1.158
+
+	Merge want_ast check in userret() into trap handler, and
+	repeat preempt() call while want_resched is true.  While
+	there remove unnecessary #if 1. This should fix a performance
+	degradation of disk I/O on heavy load.
+	[nakayama, ticket #1103]
 
