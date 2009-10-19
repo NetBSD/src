@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.73 2009/01/25 22:25:08 abs Exp $
+#	$NetBSD: Makefile.atari,v 1.74 2009/10/19 13:40:28 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -68,7 +68,7 @@ LINKFORMAT=	-n
 ##
 
 # depend on CPU configuration
-locore.o pmap.o sys_machdep.o: Makefile
+locore.o pmap.o pmap_motorola.o sys_machdep.o: Makefile
 
 ##
 ## (7) misc settings
