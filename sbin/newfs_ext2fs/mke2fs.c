@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.12 2009/03/02 10:57:03 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -64,11 +64,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *	notice, this list of conditions and the following disclaimer in the
  *	documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -106,7 +101,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.12 2009/03/02 10:57:03 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $");
 #endif
 #endif /* not lint */
 
