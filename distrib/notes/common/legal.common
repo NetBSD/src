@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.57 2009/10/18 18:23:29 snj Exp $
+.\"	$NetBSD: legal.common,v 1.58 2009/10/19 18:23:28 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,8 +207,6 @@ This product includes software developed by Darrin B. Jewell
 This product includes software developed by David Miller.
 .It
 This product includes software developed by Dean Huxley.
-.It
-This product includes software developed by Eduardo Horvath.
 .It
 This product includes software developed by Eric S. Hvozda.
 .It
