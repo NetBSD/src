@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.7 2009/04/15 20:44:26 elad Exp $	*/
+/*	$NetBSD: cmos.c,v 1.8 2009/10/19 23:19:38 rmind Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -43,9 +43,6 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of David Young may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -62,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.7 2009/04/15 20:44:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.8 2009/10/19 23:19:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
