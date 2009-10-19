@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.122 2009/10/18 19:04:41 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.123 2009/10/19 07:24:44 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14463,4 +14463,13 @@ distrib/sets/lists/base/mi			1.830
 
 	Add hdaudio directory to the base set list.
 	[sborrill, ticket #1102]
+
+sys/arch/sparc64/include/userret.h		1.9
+sys/arch/sparc64/sparc64/trap.c			1.158
+
+	Merge want_ast check in userret() into trap handler, and
+	repeat preempt() call while want_resched is true.  While
+	there remove unnecessary #if 1. This should fix a performance
+	degradation of disk I/O on heavy load.
+	[nakayama, ticket #1103]
 
