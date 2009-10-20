@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.4 2009/01/14 00:53:44 haad Exp $	*/
+/*	$NetBSD: example.c,v 1.5 2009/10/20 05:33:30 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.4 2009/01/14 00:53:44 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5 2009/10/20 05:33:30 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,7 +46,11 @@ handle_props(prop_dictionary_t props)
 {
 	prop_string_t str;
 
-	str = prop_dictionary_get(props, "msg");
+	if (props != NULL) {
+		str = prop_dictionary_get(props, "msg");
+	} else {
+		str = NULL;
+	}
 	if (str == NULL)
 		printf("The 'msg' property was not given.\n");
 	else if (prop_object_type(str) != PROP_TYPE_STRING)
