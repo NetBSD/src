@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1330 2009/10/15 22:59:12 jym Exp $
+#	$NetBSD: mi,v 1.1331 2009/10/20 04:44:33 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4044,6 +4044,7 @@
 ./usr/share/man/cat2/mlock.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mlockall.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mmap.0			comp-c-catman		.cat
+./usr/share/man/cat2/modctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mount.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mprotect.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mremap.0			comp-c-catman		.cat
@@ -9654,6 +9655,7 @@
 ./usr/share/man/html2/mlock.html		comp-c-htmlman		html
 ./usr/share/man/html2/mlockall.html		comp-c-htmlman		html
 ./usr/share/man/html2/mmap.html			comp-c-htmlman		html
+./usr/share/man/html2/modctl.html		comp-c-htmlman		html
 ./usr/share/man/html2/mount.html		comp-c-htmlman		html
 ./usr/share/man/html2/mprotect.html		comp-c-htmlman		html
 ./usr/share/man/html2/mremap.html		comp-c-htmlman		html
@@ -15043,6 +15045,7 @@
 ./usr/share/man/man2/mlock.2			comp-c-man		.man
 ./usr/share/man/man2/mlockall.2			comp-c-man		.man
 ./usr/share/man/man2/mmap.2			comp-c-man		.man
+./usr/share/man/man2/modctl.2			comp-c-man		.man
 ./usr/share/man/man2/mount.2			comp-c-man		.man
 ./usr/share/man/man2/mprotect.2			comp-c-man		.man
 ./usr/share/man/man2/mremap.2			comp-c-man		.man
