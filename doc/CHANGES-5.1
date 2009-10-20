@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.123 2009/10/19 07:24:44 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.124 2009/10/20 02:01:40 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14472,4 +14472,14 @@ sys/arch/sparc64/sparc64/trap.c			1.158
 	there remove unnecessary #if 1. This should fix a performance
 	degradation of disk I/O on heavy load.
 	[nakayama, ticket #1103]
+
+share/mk/bsd.own.mk                             1.571
+
+	Add sunleo.  Should have been part of ticket 1052.
+	[rmind, ticket #1107]
+
+lib/libc/stdlib/getsubopt.3			1.12
+
+	Fix header to include.
+	[joerg, ticket #1106]
 
