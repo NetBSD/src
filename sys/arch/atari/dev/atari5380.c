@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.52 2009/07/08 12:23:09 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.53 2009/10/20 19:10:10 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Leo Weppelman.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.52 2009/07/08 12:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.53 2009/10/20 19:10:10 snj Exp $");
 
 #include "opt_atariscsi.h"
 
