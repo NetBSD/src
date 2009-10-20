@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.11 2009/10/14 19:14:39 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.12 2009/10/20 00:25:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -75,7 +75,7 @@ configure_interface(void)
         struct sockaddr_in *sin;
 	struct sockaddr_in sinstore;
 	struct ifaliasreq ia;
-	size_t len;
+	ssize_t len;
 	struct {
 		struct rt_msghdr m_rtm;
 		uint8_t m_space;
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 
 	strcpy(buf, "GET / HTTP/1.0\n\n");
 	n = rump_sys_write(s, buf, strlen(buf));
-	if (n != strlen(buf))
+	if (n != (ssize_t)strlen(buf))
 		err(1, "wrote only %zd vs. %zu\n",
 		    n, strlen(buf));
 	
