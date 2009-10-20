@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.19 2009/10/18 22:55:56 tron Exp $	*/
+/*	$NetBSD: sockin.c,v 1.20 2009/10/20 12:17:44 tron Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.19 2009/10/18 22:55:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.20 2009/10/20 12:17:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -408,7 +408,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		struct sockaddr *saddr;
 		struct msghdr mhdr;
 		size_t iov_max, i;
-		struct iovec *iov;
+		struct iovec iov_buf[32], *iov;
 		struct mbuf *m2;
 		size_t tot;
 		int s;
@@ -419,10 +419,13 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		for (m2 = m; m2 != NULL; m2 = m2->m_next) {
 			iov_max++;
 		}
-		if (iov_max == 0)
-			iov_max = 1;
 
-		iov = kmem_alloc(sizeof(struct iovec) * iov_max, KM_SLEEP);
+		if (iov_max <= __arraycount(iov_buf)) {
+			iov = iov_buf;
+		} else {
+			iov = kmem_alloc(sizeof(struct iovec) * iov_max,
+			    KM_SLEEP);
+		}
 
 		tot = 0;
 		for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
@@ -442,7 +445,8 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		rumpuser_net_sendmsg(s, &mhdr, 0, &error);
 
-		kmem_free(iov, sizeof(struct iovec) * iov_max);
+		if (iov != iov_buf)
+			kmem_free(iov, sizeof(struct iovec) * iov_max);
 
 		m_freem(m);
 		m_freem(control);
