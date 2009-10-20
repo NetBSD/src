@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.8 2009/10/20 23:21:53 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.9 2009/10/20 23:29:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.8 2009/10/20 23:21:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.9 2009/10/20 23:29:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.8 2009/10/20 23:21:53 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rump_net_private.h"
 
 #if 0
 #define DPRINTF(x) rumpuser_dprintf x
@@ -178,8 +179,6 @@ nextpktoff(struct shmif_sc *sc, uint32_t oldoff)
 
 	return advance(oldoff, 4 + oldlen);
 }
-
-int rump_shmif_create(const char *, int *); /* XXX */
 
 int
 rump_shmif_create(const char *path, int *ifnum)
