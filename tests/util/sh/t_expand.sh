@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.3 2009/10/14 13:02:03 jmmv Exp $
+# $NetBSD: t_expand.sh,v 1.4 2009/10/20 21:58:35 jmmv Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,6 +94,17 @@ strip_body() {
 	atf_check_equal '$stripped' '${line%%/\**}'
 }
 
+atf_test_case varpattern_backslashes
+varpattern_backslashes_head() {
+	atf_set "descr" "Tests that protecting wildcards with backslashes" \
+	                "works in variable patterns."
+}
+varpattern_backslashes_body() {
+	line='/foo/bar/*/baz'
+	stripped='/foo/bar/'
+	atf_check_equal $stripped ${line%%\**}
+}
+
 atf_test_case arithmetic
 arithmetic_head() {
 	atf_set "descr" "POSIX requires shell arithmetic to use signed" \
@@ -111,5 +122,6 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
 	atf_add_test_case strip
+	atf_add_test_case varpattern_backslashes
 	atf_add_test_case arithmetic
 }
