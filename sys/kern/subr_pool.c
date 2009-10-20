@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.176 2009/10/15 20:50:12 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.177 2009/10/20 17:24:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.176 2009/10/15 20:50:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.177 2009/10/20 17:24:22 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2300,7 +2300,7 @@ pool_cache_invalidate(pool_cache_t pc)
 	pcg_t *full, *empty, *part;
 	uint64_t where;
 
-	if (ncpu < 2) {
+	if (ncpu < 2 || !mp_online) {
 		/*
 		 * We might be called early enough in the boot process
 		 * for the CPU data structures to not be fully initialized.
