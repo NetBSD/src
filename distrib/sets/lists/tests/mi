@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2009/09/25 11:58:08 njoly Exp $
+# $NetBSD: mi,v 1.53 2009/10/20 22:00:38 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1074,12 +1074,14 @@
 ./usr/tests/util/sh				tests-util-tests
 ./usr/tests/util/sh/Atffile			tests-util-tests
 ./usr/tests/util/sh/t_compexit			tests-util-tests
-./usr/tests/util/sh/t_exitstatus		tests-util-tests
+./usr/tests/util/sh/t_exit			tests-util-tests
+./usr/tests/util/sh/t_exitstatus		tests-util-tests	obsolete
 ./usr/tests/util/sh/t_expand			tests-util-tests
 ./usr/tests/util/sh/t_fsplit			tests-util-tests
 ./usr/tests/util/sh/t_here			tests-util-tests
 ./usr/tests/util/sh/t_set_e			tests-util-tests
 ./usr/tests/util/sh/t_varquote			tests-util-tests
+./usr/tests/util/sh/t_wait			tests-util-tests
 ./usr/tests/util/systrace			tests-obsolete		obsolete
 ./usr/tests/util/systrace/Atffile		tests-obsolete		obsolete
 ./usr/tests/util/systrace/id.policy		tests-obsolete		obsolete
