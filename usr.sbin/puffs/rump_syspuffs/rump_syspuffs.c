@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.9 2009/04/15 08:36:21 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.10 2009/10/20 02:14:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -148,6 +148,6 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 	*pflags |= PUFFS_KFLAG_NOCACHE;
 	*pflags &= ~PUFFS_FLAG_BUILDPATH;
 
-	rv = rump_syspuffs_glueinit(sv[1], &kargs->pa_fd);
+	rv = rump_pub_syspuffs_glueinit(sv[1], &kargs->pa_fd);
 	assert(rv == 0);
 }
