@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.54 2009/10/19 22:07:29 christos Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.55 2009/10/20 10:42:41 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -7,6 +7,7 @@ LIB=		rump
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
 	${RUMPTOP}/../secmodel/suser
@@ -41,6 +42,9 @@ SRCS+=	subr_devsw.c subr_callback.c subr_evcnt.c subr_extent.c		\
 	subr_hash.c subr_humanize.c subr_iostat.c subr_kobj.c		\
 	subr_log.c subr_once.c subr_prf.c subr_specificdata.c		\
 	subr_time.c subr_workqueue.c
+
+# sys/uvm
+SRCS+=	uvm_readahead.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
 SRCS+=	secmodel_suser.c
