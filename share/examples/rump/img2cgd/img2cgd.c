@@ -1,4 +1,4 @@
-/*	$NetBSD: img2cgd.c,v 1.2 2009/09/08 21:51:33 pooka Exp $	*/
+/*	$NetBSD: img2cgd.c,v 1.3 2009/10/20 02:05:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #include <sys/param.h>
 
 #include <assert.h>
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +38,8 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+
+#include "cgdconfig.h"
 
 /*
  * We really should use disklabel.  However, for the time being,
@@ -96,7 +99,7 @@ doxfer(int fd_from, int fd_to, off_t nbytes, readfn rfn, writefn wfn,
 int
 main(int argc, char *argv[])
 {
-	const char *the_argv[10];
+	char *the_argv[10];
 	const char *cgd_file, *img_file;
 	struct stat sb_cgd, sb_file;
 	off_t nbytes;
@@ -179,16 +182,16 @@ main(int argc, char *argv[])
 	}
 
 	rump_init();
-	if ((error = rump_etfs_register("/cryptfile", cgd_file,
+	if ((error = rump_pub_etfs_register("/cryptfile", cgd_file,
 	    RUMP_ETFS_BLK)) != 0) {
 		printf("etfs: %d\n", error);
 		exit(1);
 	}
 
-	the_argv[0] = "cgdconfig";
-	the_argv[1] = "cgd0";
-	the_argv[2] = "/cryptfile";
-	the_argv[3] = "./cgd.conf";
+	the_argv[0] = strdup("cgdconfig");
+	the_argv[1] = strdup("cgd0");
+	the_argv[2] = strdup("/cryptfile");
+	the_argv[3] = strdup("./cgd.conf");
 	the_argv[4] = NULL;
 	error = cgdconfig(4, the_argv);
 	if (error) {
