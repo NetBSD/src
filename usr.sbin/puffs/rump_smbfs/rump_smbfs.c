@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_smbfs.c,v 1.4 2009/10/18 19:58:04 pooka Exp $	*/
+/*	$NetBSD: rump_smbfs.c,v 1.5 2009/10/20 02:14:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 	struct smbfs_args args;
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	struct p2k_mount *p2m;
-	int rv, mntflags;
+	int mntflags;
 
 	setprogname(argv[0]);
 
