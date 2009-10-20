@@ -1,6 +1,6 @@
-# $NetBSD: t_exitstatus.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_wait.sh,v 1.1 2009/10/20 21:58:35 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,34 +25,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-crud() {
-	test yes = no
+atf_test_case individual
+individual_head() {
+	atf_set "descr" "Tests that waiting for individual jobs works"
+}
+individual_body() {
+	sleep 3 &
+	sleep 1 &
 
-	cat <<EOF
-$?
-EOF
-}
-
-atf_test_case function
-function_head() {
-	atf_set "descr" "Tests that \$? is correctly updated inside" \
-	                "a function"
-}
-function_body() {
-	foo=`crud`
-	atf_check_equal 'x$foo' 'x1'
-}
-
-atf_test_case readout
-readout_head() {
-	atf_set "descr" "Tests that \$? is correctly updated in a" \
-	                "compound expression"
-}
-readout_body() {
-	atf_check_equal '$( true && ! true | false; echo $? )' '0'
+	wait %1
+	[ $? = 0 ] || atf_fail "Waiting of first job failed"
+	wait %2
+	[ $? = 0 ] || atf_fail "Waiting of second job failed"
 }
 
 atf_init_test_cases() {
-	atf_add_test_case function
-	atf_add_test_case readout
+	atf_add_test_case individual
 }
