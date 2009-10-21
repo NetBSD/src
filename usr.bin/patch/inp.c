@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.22 2009/06/05 19:55:43 joerg Exp $
+ * $NetBSD: inp.c,v 1.23 2009/10/21 17:16:11 joerg Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.22 2009/06/05 19:55:43 joerg Exp $");
+__RCSID("$NetBSD: inp.c,v 1.23 2009/10/21 17:16:11 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -261,12 +261,16 @@ plan_a(const char *filename)
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
-	i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
-	if (i_womp == MAP_FAILED) {
-		perror("mmap failed");
+	if (i_size) {
+		i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
+		if (i_womp == MAP_FAILED) {
+			perror("mmap failed");
+			i_womp = NULL;
+			close(ifd);
+			return false;
+		}
+	} else {
 		i_womp = NULL;
-		close(ifd);
-		return false;
 	}
 
 	close(ifd);
