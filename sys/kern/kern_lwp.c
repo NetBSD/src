@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.133 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.134 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -60,8 +60,7 @@
  *		Runnable: the LWP is parked on a run queue, and may soon be
  *		chosen to run by an idle processor, or by a processor that
  *		has been asked to preempt a currently runnning but lower
- *		priority LWP.  If the LWP is not swapped in (LW_INMEM == 0)
- *		then the LWP is not on a run queue, but may be soon.
+ *		priority LWP.
  *
  *	LSIDL
  *
@@ -210,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.133 2009/09/13 18:45:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.134 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -546,7 +545,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
  * suspended, or stopped by the caller.
  */
 int
-lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
+lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	   void *stack, size_t stacksize, void (*func)(void *), void *arg,
 	   lwp_t **rnewlwpp, int sclass)
 {
@@ -596,7 +595,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
-	l2->l_flag = inmem ? LW_INMEM : 0;
+	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 
@@ -613,7 +612,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	}
 
 	if (p2->p_flag & PK_SYSTEM) {
-		/* Mark it as a system LWP and not a candidate for swapping */
+		/* Mark it as a system LWP. */
 		l2->l_flag |= LW_SYSTEM;
 	}
 
@@ -627,7 +626,6 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
-	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
 
@@ -777,13 +775,6 @@ lwp_exit(struct lwp *l)
 	 */
 	kauth_cred_free(l->l_cred);
 	callout_destroy(&l->l_timeout_ch);
-
-	/*
-	 * While we can still block, mark the LWP as unswappable to
-	 * prevent conflicts with the with the swapper.
-	 */
-	if (current)
-		uvm_lwp_hold(l);
 
 	/*
 	 * Remove the LWP from the global list.
@@ -944,7 +935,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
-	mutex_destroy(&l->l_swaplock);
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
@@ -966,8 +956,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
-	KASSERT((l->l_flag & LW_INMEM) != 0);
 	uvm_lwp_exit(l);
+
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
 	if (!recycle)
@@ -1011,11 +1001,8 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	tspc = &tci->ci_schedstate;
 	switch (lstat) {
 	case LSRUN:
-		if (l->l_flag & LW_INMEM) {
-			l->l_target_cpu = tci;
-			lwp_unlock(l);
-			return;
-		}
+		l->l_target_cpu = tci;
+		break;
 	case LSIDL:
 		l->l_cpu = tci;
 		lwp_unlock_to(l, tspc->spc_mutex);
@@ -1233,13 +1220,12 @@ lwp_trylock(struct lwp *l)
 	}
 }
 
-u_int
+void
 lwp_unsleep(lwp_t *l, bool cleanup)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
-
-	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }
 
 

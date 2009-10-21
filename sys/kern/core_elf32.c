@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.33 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.34 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.33 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.34 2009/10/21 21:12:06 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -432,9 +432,7 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
 	if (iocookie) {
-		uvm_lwp_hold(l);
 		error = elf_process_read_regs(l, &intreg);
-		uvm_lwp_rele(l);
 		if (error)
 			return (error);
 
@@ -453,9 +451,7 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 #ifdef PT_GETFPREGS
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
 	if (iocookie) {
-		uvm_lwp_hold(l);
 		error = elf_process_read_fpregs(l, &freg);
-		uvm_lwp_rele(l);
 		if (error)
 			return (error);
 

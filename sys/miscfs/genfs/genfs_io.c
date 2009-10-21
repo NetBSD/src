@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.20 2009/04/18 15:40:33 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.21 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.20 2009/04/18 15:40:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.21 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -885,7 +885,6 @@ retry:
 		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
-		uvm_lwp_hold(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1155,7 +1154,6 @@ retry:
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq.queue);
-		uvm_lwp_rele(l);
 	}
 
 	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&

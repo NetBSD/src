@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.35 2009/06/28 15:18:51 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.35 2009/06/28 15:18:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
 kmutex_t uvm_kentry_lock;
 kmutex_t uvm_swap_data_lock;
-kmutex_t uvm_scheduler_mutex;
 
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.

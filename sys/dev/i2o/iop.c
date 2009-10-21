@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.76 2009/05/12 14:23:47 cegger Exp $	*/
+/*	$NetBSD: iop.c,v 1.77 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.76 2009/05/12 14:23:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.77 2009/10/21 21:12:05 rmind Exp $");
 
 #include "iop.h"
 
@@ -1091,9 +1091,7 @@ iop_hrt_get(struct iop_softc *sc)
 	struct i2o_hrt hrthdr, *hrt;
 	int size, rv;
 
-	uvm_lwp_hold(curlwp);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	uvm_lwp_rele(curlwp);
 	if (rv != 0)
 		return (rv);
 
@@ -1266,16 +1264,10 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	pgop->oat.fieldcount = htole16(0xffff);
 	pgop->oat.group = htole16(group);
 
-	if (ii == NULL)
-		uvm_lwp_hold(curlwp);
-
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
 	iop_msg_map(sc, im, mb, buf, size, 0, NULL);
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
-
-	if (ii == NULL)
-		uvm_lwp_rele(curlwp);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1375,7 +1367,6 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 	pgop.oat.group = htole16(group);
 	pgop.oat.fields[0] = htole16(0);
 
-	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 30000);
 	if (rv != 0)
@@ -1383,7 +1374,6 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 		    tid, group);
 
 	iop_msg_unmap(sc, im);
-	uvm_lwp_rele(curlwp);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1512,14 +1502,12 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1, NULL);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1, NULL);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	uvm_lwp_rele(curlwp);
 	return (rv);
 }
 

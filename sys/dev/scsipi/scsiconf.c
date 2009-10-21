@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.253 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.254 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.253 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.254 2009/10/21 21:12:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,8 +794,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
 			extension[len++] = ' ';
 	}
-	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
+	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY | XS_CTL_SILENT))
 		goto bad;
 
 	periph->periph_type = inqbuf.device & SID_TYPE;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.98 2009/08/03 19:08:48 rmind Exp $
+.\"	$NetBSD: uvm.9,v 1.99 2009/10/21 21:11:58 rmind Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -677,8 +677,6 @@ value.
 .Fn uvm_pageout "void" ;
 .It Ft void
 .Fn uvm_scheduler "void" ;
-.It Ft void
-.Fn uvm_swapin "struct lwp *l" ;
 .El
 .Pp
 .Fn uvm_pageout
@@ -689,9 +687,6 @@ is the process zero main loop, which is to be called after the
 system has finished starting other processes.
 It handles the swapping in of runnable, swapped out processes in priority
 order.
-.Pp
-.Fn uvm_swapin
-swaps in the named lwp.
 .Sh PAGE LOAN
 .Bl -ohang
 .It Ft int
@@ -770,7 +765,7 @@ and should match what was used for previous call to
 .It Ft void
 .Fn uvm_meter "void" ;
 .It Ft void
-.Fn uvm_fork "struct lwp *l1" "struct lwp *l2" "bool shared" ;
+.Fn uvm_proc_fork "struct proc *p1" "struct proc *p2" "bool shared" ;
 .It Ft int
 .Fn uvm_grow "struct proc *p" "vaddr_t sp" ;
 .It Ft void
@@ -836,9 +831,9 @@ to
 These functions are normally used to wire memory for I/O.
 .Pp
 .Fn uvm_meter
-calculates the load average and wakes up the swapper if necessary.
+calculates the load average.
 .Pp
-.Fn uvm_fork
+.Fn uvm_proc_fork
 forks a virtual address space for process' (old)
 .Fa p1
 and (new)
@@ -980,8 +975,6 @@ int softs;              /* software interrupt count */
 int syscalls;           /* system calls */
 int pageins;            /* pagein operation count */
                         /* pageouts are in pdpageouts below */
-int swapins;            /* swapins */
-int swapouts;           /* swapouts */
 int pgswapin;           /* pages swapped in */
 int pgswapout;          /* pages swapped out */
 int forks;              /* forks */
@@ -1011,7 +1004,6 @@ int flt_przero; /* number of times fault promotes with zerofill (2b) */
 /* daemon counters */
 int pdwoke;     /* number of times daemon woke up */
 int pdrevs;     /* number of times daemon rev'd clock hand */
-int pdswout;    /* number of times daemon called for swapout */
 int pdfreed;    /* number of pages daemon freed since boot */
 int pdscans;    /* number of pages daemon scanned since boot */
 int pdanscan;   /* number of anonymous pages scanned by daemon */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.91 2009/10/21 21:12:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -264,7 +264,6 @@ extern u_int mips3_pg_shift;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 

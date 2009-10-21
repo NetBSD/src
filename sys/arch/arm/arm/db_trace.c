@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19 2009/03/15 22:23:16 cegger Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.20 2009/10/21 21:11:59 rmind Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2009/03/15 22:23:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.20 2009/10/21 21:11:59 rmind Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -125,10 +125,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l->l_addr;
 #ifdef acorn26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);

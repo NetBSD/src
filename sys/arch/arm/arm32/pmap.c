@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.198 2009/04/21 21:29:58 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.199 2009/10/21 21:11:59 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2009/04/21 21:29:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2009/10/21 21:11:59 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4035,25 +4035,6 @@ out:
 	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	return (rv);
-}
-
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-void
-pmap_collect(pmap_t pm)
-{
-
-#ifdef PMAP_CACHE_VIVT
-	pmap_idcache_wbinv_all(pm);
-#endif
-	pm->pm_remove_all = true;
-	pmap_do_remove(pm, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 1);
-	pmap_update(pm);
-	PMAPCOUNT(collects);
 }
 
 /*

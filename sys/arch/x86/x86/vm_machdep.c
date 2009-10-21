@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2009/03/30 22:20:55 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 2009/10/21 21:12:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2009/03/30 22:20:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2009/10/21 21:12:04 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -246,23 +246,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 #endif
 }
 
-void
-cpu_swapin(struct lwp *l)
-{
-
-	setredzone(l);
-}
-
-void
-cpu_swapout(struct lwp *l)
-{
-
-	/*
-	 * Make sure we save the FP state before the user area vanishes.
-	 */
-	fpusave_lwp(l, true);
-}
-
 /*
  * cpu_lwp_free is called from exit() to let machine-dependent
  * code free machine-dependent resources.  Note that this routine
@@ -305,7 +288,7 @@ setredzone(struct lwp *l)
 	vaddr_t addr;
 
 	addr = USER_TO_UAREA(l->l_addr);
-	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
+	pmap_kremove(addr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.85 2009/08/16 14:06:36 skrll Exp $ */
+/*	$NetBSD: pmap.h,v 1.86 2009/10/21 21:12:02 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -252,7 +252,6 @@ void		pmap_bootstrap(int nmmu, int nctx, int nregion);
 void		pmap_prefer(vaddr_t, vaddr_t *);
 int		pmap_pa_exists(paddr_t);
 void		pmap_unwire(pmap_t, vaddr_t);
-void		pmap_collect(pmap_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 pmap_t		pmap_create(void);
 void		pmap_destroy(pmap_t);

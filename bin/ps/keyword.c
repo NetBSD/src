@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.52 2008/02/10 17:47:59 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.53 2009/10/21 21:11:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.52 2008/02/10 17:47:59 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.53 2009/10/21 21:11:57 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ VAR var[] = {
 	VAR4("group", "GROUP", LJUST, gname),
 	VAR4("groupnames", "GROUPNAMES", LJUST, groupnames),
 	VAR4("groups", "GROUPS", LJUST, groups),
+	/* holdcnt: unused, left for compat. */
 	LVAR("holdcnt", "HOLDCNT", 0, l_holdcnt, INT, "d"),
 	VAR3("ignored", "sigignore", ALIAS),
 	PUVAR("inblk", "INBLK", 0, p_uru_inblock, UINT64, PRIu64),
@@ -158,6 +159,7 @@ VAR var[] = {
 	PVAR("nlwp", "NLWP", 0, p_nlwps, UINT64, PRId64),
 	VAR3("nsignals", "nsigs", ALIAS),
 	PUVAR("nsigs", "NSIGS", 0, p_uru_nsignals, UINT64, PRIu64),
+	/* nswap: unused, left for compat. */
 	PUVAR("nswap", "NSWAP", 0, p_uru_nswap, UINT64, PRIu64),
 	PUVAR("nvcsw", "NVCSW", 0, p_uru_nvcsw, UINT64, PRIu64),
 /*XXX*/	LVAR("nwchan", "WCHAN", 0, l_wchan, KPTR, PRIx64),

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2009/10/21 21:12:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -124,33 +124,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
 	pcb->pcb_special.pfs = 0;
 
-	return;
-}
-
-/*
- * Finish a swapin operation.
- *
- * We need to cache the physical address of the PCB, so we can
- * swap context to it easily.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-printf("%s: not yet\n", __func__);
-	return;
-}
-
-/*
- * cpu_swapout is called immediately before a process's 'struct user'
- * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
- * current owner of the floating point unit, the FP state has to be
- * saved, so that it goes out with the pcb, which is in the user area.
- */
-void
-cpu_swapout(struct lwp *l)
-{
-printf("%s: not yet\n", __func__);
 	return;
 }
 

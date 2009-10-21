@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.63 2009/10/19 22:31:47 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.64 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.63 2009/10/19 22:31:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.64 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -471,21 +471,6 @@ uvm_pageout_done(int npages)
 	} else {
 		wakeup(&uvmexp.free);
 	}
-}
-
-/* XXX: following two are unfinished because lwp's are not refcounted yet */
-void
-uvm_lwp_hold(struct lwp *l)
-{
-
-	atomic_inc_uint(&l->l_holdcnt);
-}
-
-void
-uvm_lwp_rele(struct lwp *l)
-{
-
-	atomic_dec_uint(&l->l_holdcnt);
 }
 
 int

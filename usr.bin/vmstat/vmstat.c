@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.165 2009/01/18 07:20:00 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.166 2009/10/21 21:12:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.165 2009/01/18 07:20:00 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.166 2009/10/21 21:12:07 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -588,8 +588,8 @@ void
 print_total_hdr()
 {
 
-	(void)printf("procs            memory\n");
-	(void)printf("ru dw pw sl sw");
+	(void)printf("procs         memory\n");
+	(void)printf("ru dw pw sl");
 	(void)printf("   total-v  active-v  active-r");
 	(void)printf(" vm-sh avm-sh rm-sh arm-sh free\n");
 	hdrcnt = winlines - 2;
@@ -625,7 +625,6 @@ dovmtotal(struct timespec *interval, int reps)
 		(void)printf("%2d ", total.t_dw);
 		(void)printf("%2d ", total.t_pw);
 		(void)printf("%2d ", total.t_sl);
-		(void)printf("%2d ", total.t_sw);
 
 		(void)printf("%9d ", total.t_vm);
 		(void)printf("%9d ", total.t_avm);
@@ -694,10 +693,9 @@ dovmstat(struct timespec *interval, int reps)
 		ovflw = 0;
 		PRWORD(ovflw, " %*d", 2, 1, total.t_rq - 1);
 		PRWORD(ovflw, " %*d", 2, 1, total.t_dw + total.t_pw);
-		PRWORD(ovflw, " %*d", 2, 1, total.t_sw);
 #define	pgtok(a) (long)((a) * ((uint32_t)pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
-		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_avm));
+		PRWORD(ovflw, " %*ld", 9, 1, pgtok(total.t_avm));
 		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_free));
 		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.faults - ouvmexp.faults));
@@ -748,7 +746,7 @@ printhdr(void)
 		(void)printf("%*s  faults   cpu\n",
 		    ndrives * 3, "");
 
-	(void)printf(" r b w    avm    fre  flt  re  pi   po   fr   sr ");
+	(void)printf(" r b      avm    fre  flt  re  pi   po   fr   sr ");
 	for (i = 0; i < ndrive; i++)
 		if (drv_select[i])
 			(void)printf("%c%c ", dr_name[i][0],
@@ -848,8 +846,6 @@ dosum(void)
 	(void)printf("%9u system calls\n", uvmexp.syscalls);
 	(void)printf("%9u pagein requests\n", uvmexp.pageins);
 	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
-	(void)printf("%9u swap ins\n", uvmexp.swapins);
-	(void)printf("%9u swap outs\n", uvmexp.swapouts);
 	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
 	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
 	(void)printf("%9u forks total\n", uvmexp.forks);
@@ -892,7 +888,6 @@ dosum(void)
 
 	(void)printf("%9u times daemon wokeup\n",uvmexp.pdwoke);
 	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
-	(void)printf("%9u times daemon attempted swapout\n", uvmexp.pdswout);
 	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
 	(void)printf("%9u pages scanned by daemon\n", uvmexp.pdscans);
 	(void)printf("%9u anonymous pages scanned by daemon\n",
