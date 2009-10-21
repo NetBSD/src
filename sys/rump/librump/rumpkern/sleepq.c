@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.4 2009/10/16 02:13:54 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.5 2009/10/21 23:13:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.4 2009/10/16 02:13:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.5 2009/10/21 23:13:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -111,7 +111,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 	return NULL;
 }
 
-u_int
+void
 sleepq_unsleep(struct lwp *l, bool cleanup)
 {
 
@@ -122,8 +122,6 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 	if (cleanup) {
 		mutex_spin_exit(l->l_mutex);
 	}
-
-	return 0;
 }
 
 /*
