@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2009/06/25 13:59:02 agc Exp $
+#	$NetBSD: Makefile,v 1.13 2009/10/21 22:59:06 joerg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= am-utils bind dhcpcd fetch file libarchive pkg_install top
+SUBDIR+= am-utils bind dhcpcd fetch file libarchive mdocml pkg_install top
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif

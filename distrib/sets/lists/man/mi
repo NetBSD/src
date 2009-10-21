@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1165 2009/10/11 12:47:38 nakayama Exp $
+# $NetBSD: mi,v 1.1166 2009/10/21 22:59:06 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -265,6 +265,7 @@
 ./usr/share/man/cat1/make.0			man-util-catman		.cat
 ./usr/share/man/cat1/makeinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/man.0			man-man-catman		.cat
+./usr/share/man/cat1/mandoc.0			man-mdocml-catman	.cat
 ./usr/share/man/cat1/md2.0			man-util-catman		.cat
 ./usr/share/man/cat1/md4.0			man-util-catman		.cat
 ./usr/share/man/cat1/md5.0			man-util-catman		.cat
@@ -2956,6 +2957,7 @@
 ./usr/share/man/html1/make.html			man-util-htmlman	html
 ./usr/share/man/html1/makeinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/man.html			man-man-htmlman		html
+./usr/share/man/html1/mandoc.html		man-mdocml-htmlman	html
 ./usr/share/man/html1/md2.html			man-util-htmlman	html
 ./usr/share/man/html1/md4.html			man-util-htmlman	html
 ./usr/share/man/html1/md5.html			man-util-htmlman	html
@@ -5293,6 +5295,7 @@
 ./usr/share/man/man1/make.1			man-util-man		.man
 ./usr/share/man/man1/makeinfo.1			man-texinfo-man		.man
 ./usr/share/man/man1/man.1			man-man-man		.man
+./usr/share/man/man1/mandoc.1			man-mdocml-man		.man
 ./usr/share/man/man1/md2.1			man-util-man		.man
 ./usr/share/man/man1/md4.1			man-util-man		.man
 ./usr/share/man/man1/md5.1			man-util-man		.man
