@@ -41,12 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Ichiro FUKUHARA.
- * 4. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY ICHIRO FUKUHARA ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -99,7 +93,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/tisdp24xx/sdp24xx.h>  
 
-RCSID("$NetBSD: sdp24xx_start.S,v 1.3 2008/08/27 11:03:10 matt Exp $")
+RCSID("$NetBSD: sdp24xx_start.S,v 1.4 2009/10/21 14:15:51 rmind Exp $")
 
 #if 0
 #define Invalidate_I_cache(reg) \
