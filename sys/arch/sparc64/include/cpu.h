@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2009/05/30 16:52:32 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.87 2009/10/21 21:12:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -214,8 +214,6 @@ extern struct pool_cache *fpstate_cache;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 void cpu_proc_fork(struct proc *, struct proc *);
 

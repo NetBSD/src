@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.28 2009/10/12 23:43:13 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.29 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.28 2009/10/12 23:43:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.29 2009/10/21 21:12:06 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -175,7 +175,6 @@ aio_procinit(struct proc *p)
 	struct aioproc *aio;
 	struct lwp *l;
 	int error;
-	bool inmem;
 	vaddr_t uaddr;
 
 	/* Allocate and initialize AIO structure */
@@ -193,15 +192,15 @@ aio_procinit(struct proc *p)
 	 * Create an AIO worker thread.
 	 * XXX: Currently, AIO thread is not protected against user's actions.
 	 */
-	inmem = uvm_uarea_alloc(&uaddr);
+	uaddr = uvm_uarea_alloc();
 	if (uaddr == 0) {
 		aio_exit(p, aio);
 		return EAGAIN;
 	}
-	error = lwp_create(curlwp, p, uaddr, inmem, 0, NULL, 0, aio_worker,
+	error = lwp_create(curlwp, p, uaddr, 0, NULL, 0, aio_worker,
 	    NULL, &l, curlwp->l_class);
 	if (error != 0) {
-		uvm_uarea_free(uaddr, curcpu());
+		uvm_uarea_free(uaddr);
 		aio_exit(p, aio);
 		return error;
 	}

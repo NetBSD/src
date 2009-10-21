@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.212 2009/08/15 12:44:55 pgoyette Exp $ */
+/*	$NetBSD: st.c,v 1.213 2009/10/21 21:12:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.212 2009/08/15 12:44:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.213 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_scsi.h"
 
@@ -2007,7 +2007,7 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 
 	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd),
 	    (void *)&posdata, sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
-	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	    XS_CTL_SILENT | XS_CTL_DATA_IN);
 
 	if (error == 0) {
 #if	0
@@ -2460,6 +2460,5 @@ st_mode_select(struct st_softc *st, int flags)
 	 * do the command
 	 */
 	return scsipi_mode_select(periph, 0, &select.header, select_len,
-				  flags | XS_CTL_DATA_ONSTACK, ST_RETRIES,
-				  ST_CTL_TIME);
+				  flags, ST_RETRIES, ST_CTL_TIME);
 }

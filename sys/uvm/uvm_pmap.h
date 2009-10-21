@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.30 2009/08/19 23:54:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.31 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -125,9 +125,6 @@ bool		pmap_clear_modify(struct vm_page *);
 bool		pmap_clear_reference(struct vm_page *);
 #endif
 
-#if !defined(pmap_collect)
-void		pmap_collect(pmap_t);
-#endif
 #if !defined(pmap_copy)
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 #endif

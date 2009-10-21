@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.41 2008/11/25 15:41:12 nakayama Exp $ */
+/*	$NetBSD: db_trace.c,v 1.42 2009/10/21 21:12:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.41 2008/11/25 15:41:12 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2009/10/21 21:12:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,11 +101,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-                        if ((l->l_flag & LW_INMEM) == 0) {
-                                (*pr)("swapped out\n");
-                                return;
-                        }
-                        u = l->l_addr;
+			u = l->l_addr;
 			frame = (vaddr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else {

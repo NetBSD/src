@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.74 2009/10/21 13:56:36 wiz Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.75 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.74 2009/10/21 13:56:36 wiz Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.75 2009/10/21 21:12:07 rmind Exp $");
 #endif /* not lint */
 
 /*
@@ -329,7 +329,7 @@ labelvmstat_top(void)
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
-	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
+	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 		"|    |    |    |    |    |    |    |    |    |    |");
 
@@ -446,7 +446,6 @@ show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 	putint(Total->t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
 	putint(Total->t_dw, PROCSROW + 1, PROCSCOL + 6, 3);
 	putint(Total->t_sl, PROCSROW + 1, PROCSCOL + 9, 3);
-	putint(Total->t_sw, PROCSROW + 1, PROCSCOL + 12, 3);
 
 	PUTRATE(us, us1, uvmexp->swtch, GENSTATROW + 1, GENSTATCOL - 1, 7);
 	PUTRATE(us, us1, uvmexp->traps, GENSTATROW + 1, GENSTATCOL + 7, 6);
@@ -471,8 +470,6 @@ show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 
 	PUTRATE(us, us1, uvmexp->pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(us, us1, uvmexp->pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
-	PUTRATE(us, us1, uvmexp->swapins, PAGEROW + 2, PAGECOL + 15, 5);
-	PUTRATE(us, us1, uvmexp->swapouts, PAGEROW + 2, PAGECOL + 20, 5);
 	PUTRATE(us, us1, uvmexp->pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
 	PUTRATE(us, us1, uvmexp->pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
 }

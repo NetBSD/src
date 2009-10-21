@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30 2008/07/02 19:49:58 rmind Exp $ */
+/*	$NetBSD: db_trace.c,v 1.31 2009/10/21 21:12:02 rmind Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2009/10/21 21:12:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,10 +95,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if ((l->l_flag & LW_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l->l_addr;
 			frame = (struct frame *)u->u_pcb.pcb_sp;
 			pc = u->u_pcb.pcb_pc;

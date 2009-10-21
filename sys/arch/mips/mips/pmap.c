@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184 2009/08/18 18:06:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.185 2009/10/21 21:12:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2009/08/18 18:06:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2009/10/21 21:12:01 rmind Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1559,27 +1559,6 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		    dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
-}
-
-/*
- *	Routine:	pmap_collect
- *	Function:
- *		Garbage collects the physical map system for
- *		pages which are no longer used.
- *		Success need not be guaranteed -- that is, there
- *		may well be pages which are not referenced, but
- *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_collect(%p)\n", pmap);
 #endif
 }
 

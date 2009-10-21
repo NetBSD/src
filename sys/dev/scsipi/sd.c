@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.289 2009/08/03 09:40:45 jnemeth Exp $	*/
+/*	$NetBSD: sd.c,v 1.290 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.289 2009/08/03 09:40:45 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.290 2009/10/21 21:12:05 rmind Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1602,12 +1602,12 @@ sd_mode_sense(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 		*big = 1;
 		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
 		    size + sizeof(struct scsi_mode_parameter_header_10),
-		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+		    flags, SDRETRIES, 6000);
 	} else {
 		*big = 0;
 		return scsipi_mode_sense(sd->sc_periph, byte2, page, sense,
 		    size + sizeof(struct scsi_mode_parameter_header_6),
-		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+		    flags, SDRETRIES, 6000);
 	}
 }
 
@@ -1622,14 +1622,14 @@ sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 		_lto2b(0, header->data_length);
 		return scsipi_mode_select_big(sd->sc_periph, byte2, sense,
 		    size + sizeof(struct scsi_mode_parameter_header_10),
-		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+		    flags, SDRETRIES, 6000);
 	} else {
 		struct scsi_mode_parameter_header_6 *header = sense;
 
 		header->data_length = 0;
 		return scsipi_mode_select(sd->sc_periph, byte2, sense,
 		    size + sizeof(struct scsi_mode_parameter_header_6),
-		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+		    flags, SDRETRIES, 6000);
 	}
 }
 
@@ -1764,7 +1764,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
 	    &scsipi_sense.header, sizeof(scsipi_sense),
-	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	    flags, SDRETRIES, 6000);
 
 	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
@@ -1824,7 +1824,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		error = scsipi_command(sd->sc_periph,
 		    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
 		    SDRETRIES, 20000, NULL,
-		    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+		    flags | XS_CTL_DATA_IN);
 		if (error == EFTYPE) {
 			/* Medium Format Corrupted, handle as not formatted */
 			return (SDGP_RESULT_UNFORMATTED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.167 2009/09/16 15:03:56 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.168 2009/10/21 21:12:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.167 2009/09/16 15:03:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.168 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -136,7 +136,6 @@ static const u_int sysctl_stflagmap[] = {
 };
 
 static const u_int sysctl_lwpflagmap[] = {
-	LW_INMEM, P_INMEM,
 	LW_SINTR, P_SINTR,
 	LW_SYSTEM, P_SYSTEM,
 	LW_SA, P_SA,	/* WRS ??? */
@@ -2954,7 +2953,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
 		else
 			ki->p_schedflags = 0;
-		ki->p_holdcnt = l->l_holdcnt;
 		ki->p_priority = lwp_eprio(l);
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wchan)
@@ -3061,7 +3059,6 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 		kl->l_schedflags = l->l_cpu->ci_schedstate.spc_flags;
 	else
 		kl->l_schedflags = 0;
-	kl->l_holdcnt = l->l_holdcnt;
 	kl->l_priority = lwp_eprio(l);
 	kl->l_usrpri = l->l_priority;
 	if (l->l_wchan)

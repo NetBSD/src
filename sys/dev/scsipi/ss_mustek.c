@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.38 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.39 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.38 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.39 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -324,7 +324,7 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_set_parms: set_window\n"));
 	error = scsipi_command(periph, (void *)&window_cmd, sizeof(window_cmd),
 	    (void *)&window_data, sizeof(window_data),
-	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
+	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
 	if (error)
 		return (error);
 
@@ -363,7 +363,7 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	/* send the command to the scanner */
 	error = scsipi_command(periph, (void *)&mode_cmd, sizeof(mode_cmd),
 	    (void *)&mode_data, sizeof(mode_data),
-	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
+	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
 	if (error)
 		return (error);
 
@@ -540,7 +540,7 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 		SC_DEBUG(periph, SCSIPI_DB1, ("mustek_get_status: stat_cmd\n"));
 		error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 		    (void *)&data, sizeof(data),
-		    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+		    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_IN);
 		if (error)
 			return (error);
 		if ((data.ready_busy == MUSTEK_READY) ||

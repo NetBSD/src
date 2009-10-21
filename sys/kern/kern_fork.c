@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.173 2009/03/24 21:00:06 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.174 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.173 2009/03/24 21:00:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.174 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -207,7 +207,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct lwp	*l2;
 	int		count;
 	vaddr_t		uaddr;
-	bool		inmem;
 	int		tmp;
 	int		tnprocs;
 	int		error = 0;
@@ -252,11 +251,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Allocate virtual address space for the U-area now, while it
 	 * is still easy to abort the fork operation if we're out of
-	 * kernel virtual address space.  The actual U-area pages will
-	 * be allocated and wired in uvm_fork() if needed.
+	 * kernel virtual address space.
 	 */
-
-	inmem = uvm_uarea_alloc(&uaddr);
+	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
@@ -289,7 +286,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
-	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 * Inherit flags we want to keep.  The flags related to SIGCHLD
 	 * handling are important in order to keep a consistent behaviour
 	 * for the child after the fork.
@@ -418,18 +414,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	doforkhooks(p2, p1);
 
-	/*
-	 * This begins the section where we must prevent the parent
-	 * from being swapped.
-	 */
-	uvm_lwp_hold(l1);
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	lwp_create(l1, p2, uaddr, inmem, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
+	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
 
@@ -470,11 +461,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
-
-	/*
-	 * Now can be swapped.
-	 */
-	uvm_lwp_rele(l1);
 
 	/*
 	 * Notify any interested parties about the new process.

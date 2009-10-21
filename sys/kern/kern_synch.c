@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.270 2009/10/03 22:32:56 elad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.271 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.270 2009/10/03 22:32:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.271 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.270 2009/10/03 22:32:56 elad Exp $"
 
 #include <dev/lockstat.h>
 
-static u_int	sched_unsleep(struct lwp *, bool);
+static void	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
 static void	resched_cpu(struct lwp *);
@@ -909,8 +909,7 @@ lwp_exit_switchaway(lwp_t *l)
 }
 
 /*
- * Change LWP state to be runnable, placing it on the run queue if it is
- * in memory, and awakening the swapper if it isn't in memory.
+ * setrunnable: change LWP state to be runnable, placing it on the run queue.
  *
  * Call with the process and LWP locked.  Will return with the LWP unlocked.
  */
@@ -986,18 +985,9 @@ setrunnable(struct lwp *l)
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 
-	/*
-	 * If thread is swapped out - wake the swapper to bring it back in.
-	 * Otherwise, enter it into a run queue.
-	 */
-	if (l->l_flag & LW_INMEM) {
-		sched_enqueue(l, false);
-		resched_cpu(l);
-		lwp_unlock(l);
-	} else {
-		lwp_unlock(l);
-		uvm_kick_scheduler();
-	}
+	sched_enqueue(l, false);
+	resched_cpu(l);
+	lwp_unlock(l);
 }
 
 /*
@@ -1076,7 +1066,7 @@ suspendsched(void)
  *	interrupted: for example, if the sleep timed out.  Because of this,
  *	it's not a valid action for running or idle LWPs.
  */
-static u_int
+static void
 sched_unsleep(struct lwp *l, bool cleanup)
 {
 
@@ -1100,7 +1090,7 @@ sched_changepri(struct lwp *l, pri_t pri)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+	if (l->l_stat == LSRUN) {
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		sched_dequeue(l);
 		l->l_priority = pri;
@@ -1117,7 +1107,7 @@ sched_lendpri(struct lwp *l, pri_t pri)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+	if (l->l_stat == LSRUN) {
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		sched_dequeue(l);
 		l->l_inheritedprio = pri;
@@ -1145,7 +1135,6 @@ const fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;
  * Call scheduler-specific hook to eventually adjust process/LWP
  * priorities.
  */
-/* ARGSUSED */
 void
 sched_pstats(void *arg)
 {
@@ -1166,10 +1155,7 @@ sched_pstats(void *arg)
 		if (__predict_false((p->p_flag & PK_MARKER) != 0))
 			continue;
 
-		/*
-		 * Increment time in/out of memory and sleep
-		 * time (if sleeping), ignore overflow.
-		 */
+		/* Increment sleep time (if sleeping), ignore overflow. */
 		mutex_enter(p->p_lock);
 		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {

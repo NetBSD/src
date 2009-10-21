@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.154 2009/10/04 03:15:08 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.155 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.154 2009/10/04 03:15:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.155 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -192,7 +192,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 #endif
 	.l_proc = &proc0,
 	.l_lid = 1,
-	.l_flag = LW_INMEM | LW_SYSTEM,
+	.l_flag = LW_SYSTEM,
 	.l_stat = LSONPROC,
 	.l_ts = &turnstile0,
 	.l_syncobj = &sched_syncobj,
@@ -373,7 +373,6 @@ proc0_init(void)
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rw_init(&p->p_reflock);
@@ -1240,11 +1239,9 @@ proclist_foreach_call(struct proclist *list,
 {
 	struct proc marker;
 	struct proc *p;
-	struct lwp * const l = curlwp;
 	int ret = 0;
 
 	marker.p_flag = PK_MARKER;
-	uvm_lwp_hold(l);
 	mutex_enter(proc_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
@@ -1258,7 +1255,6 @@ proclist_foreach_call(struct proclist *list,
 		LIST_REMOVE(&marker, p_list);
 	}
 	mutex_exit(proc_lock);
-	uvm_lwp_rele(l);
 
 	return ret;
 }

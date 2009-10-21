@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.78 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: if_se.c,v 1.79 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.78 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.79 2009/10/21 21:12:05 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -735,7 +735,7 @@ se_add_proto(struct se_softc *sc, int proto)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&add_proto_cmd, sizeof(add_proto_cmd),
 	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL,
-	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
+	    XS_CTL_DATA_OUT);
 	return (error);
 }
 
@@ -750,7 +750,7 @@ se_get_addr(struct se_softc *sc, u_int8_t *myaddr)
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&get_addr_cmd, sizeof(get_addr_cmd),
 	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
-	    XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	    XS_CTL_DATA_IN);
 	printf("%s: ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(myaddr));
 	return (error);

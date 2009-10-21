@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.7 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.8 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ typedef volatile const void *wchan_t;
  */
 typedef struct syncobj {
 	u_int	sobj_flag;
-	u_int	(*sobj_unsleep)(struct lwp *, bool);
+	void	(*sobj_unsleep)(struct lwp *, bool);
 	void	(*sobj_changepri)(struct lwp *, pri_t);
 	void	(*sobj_lendpri)(struct lwp *, pri_t);
 	struct lwp *(*sobj_owner)(wchan_t);

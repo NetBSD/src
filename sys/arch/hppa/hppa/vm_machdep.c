@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2009/06/03 21:08:51 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 2009/10/21 21:12:00 rmind Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 2009/06/03 21:08:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2009/10/21 21:12:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 2009/06/03 21:08:51 skrll Exp $"
 
 #include <hppa/hppa/machdep.h>
 
-void
-cpu_swapin(struct lwp *l)
+static inline void
+cpu_activate_pcb(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	vaddr_t pcb = (vaddr_t)l->l_addr;
@@ -73,14 +73,6 @@ cpu_swapin(struct lwp *l)
 	pmap_remove(pmap_kernel(), maxsp - PAGE_SIZE, maxsp);
 	pmap_update(pmap_kernel());
 #endif
-}
-
-void
-cpu_swapout(struct lwp *l)
-{
-
-	/* Flush this LWP out of the FPU. */
-	hppa_fpu_flush(l);
 }
 
 void
@@ -122,11 +114,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* copy the l1's trapframe to l2 */
 	memcpy(tf, l1->l_md.md_regs, sizeof(*tf));
 
-	/*
-	 * cpu_swapin() is supposed to fill out all the PAs
-	 * we gonna need in locore
-	 */
-	cpu_swapin(l2);
+	/* Fill out all the PAs we are going to need in locore. */
+	cpu_activate_pcb(l2);
 
 	/* Load all of the user's space registers. */
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
@@ -193,7 +182,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	l->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 
-	cpu_swapin(l);
+	cpu_activate_pcb(l);
 
 	/*
 	 * Build stack frames for the cpu_switchto & co.

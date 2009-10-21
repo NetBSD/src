@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2009/08/11 17:04:20 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2009/10/21 21:12:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2009/08/11 17:04:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2009/10/21 21:12:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2517,19 +2517,6 @@ pmap_zero_page(paddr_t dstpa)
 	--tmp_vpages_inuse;
 #endif
 	splx(s);
-}
-
-/* pmap_collect			INTERFACE
- **
- * Called from the VM system when we are about to swap out
- * the process using this pmap.  This should give up any
- * resources held here, including all its MMU tables.
- */
-void 
-pmap_collect(pmap_t pmap)
-{
-
-	/* XXX - todo... */
 }
 
 /* pmap_pinit			INTERNAL

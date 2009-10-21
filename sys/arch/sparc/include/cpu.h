@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2009/05/29 22:06:55 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.87 2009/10/21 21:12:02 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,6 @@
 #define	curlwp			(cpuinfo.ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
-#define	cpu_swapin(p)		/* nothing */
-#define	cpu_swapout(p)		/* nothing */
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 void	cpu_proc_fork(struct proc *, struct proc *);
 

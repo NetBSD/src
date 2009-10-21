@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2009/10/19 18:41:10 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2009/10/21 21:12:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2009/10/19 18:41:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2009/10/21 21:12:04 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -257,10 +257,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2009/10/19 18:41:10 bouyer Exp $");
  *
  * if the kernel is totally out of virtual space
  * (i.e. uvm_km_alloc returns NULL), then we panic.
- *
- * XXX: the fork code currently has no way to return an "out of
- * memory, try again" error code since uvm_fork [fka vm_fork]
- * is a void function.
  *
  * [B] new page tables pages (PTP)
  * 	- call uvm_pagealloc()
@@ -2934,9 +2930,8 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		 * own pmap and is active.  if a user pmap, the caller
 		 * will hold the vm_map write/read locked and so prevent
 		 * entries from disappearing while we are here.  ptps
-		 * can disappear via pmap_remove(), pmap_protect() and
-		 * pmap_collect(), but they are called with the vm_map
-		 * write locked.
+		 * can disappear via pmap_remove() and pmap_protect(),
+		 * but they are called with the vm_map write locked.
 		 */
 		hard = false;
 		ptes = PTE_BASE;
@@ -3996,25 +3991,6 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	}
 #endif
 	kpreempt_enable();
-}
-
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-
-void
-pmap_collect(struct pmap *pmap)
-{
-	/*
-	 * free all of the pt pages by removing the physical mappings
-	 * for its entire address space.
-	 */
-
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
-	    PMAP_REMOVE_SKIPWIRED);
 }
 
 /*

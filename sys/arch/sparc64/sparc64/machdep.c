@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.244 2009/08/15 23:45:00 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.245 2009/10/21 21:12:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.244 2009/08/15 23:45:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2009/10/21 21:12:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1214,7 +1214,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * Lock the part of the user address space involved
 		 *    in the transfer.
 		 */
-		uvm_lwp_hold(p);
 		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
@@ -1248,7 +1247,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			i++;
 		}
 		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
-		uvm_lwp_rele(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return EFBIG;

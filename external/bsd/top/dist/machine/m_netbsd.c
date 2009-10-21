@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $
+ * $Id: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -786,9 +786,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	hp->remaining--;
 
 	/* get the process's user struct and set cputime */
-	if ((pp->p_flag & L_INMEM) == 0)
-		pretty = "<>";
-	else if ((pp->p_flag & P_SYSTEM) != 0)
+	if ((pp->p_flag & P_SYSTEM) != 0)
 		pretty = "[]";
 
 	if (pretty[0] != '\0') {
@@ -888,12 +886,6 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	/* get the process's user struct and set cputime */
 	if (pp) {
 		comm = pp->p_comm;
-#if 0
-		/* XXX needs to be per thread but is not. just ignore for now. */
-		if ((pp->p_flag & L_INMEM) == 0)
-			pretty = "<>";
-		else
-#endif
 		if ((pp->p_flag & P_SYSTEM) != 0)
 			pretty = "[]";
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334 2009/09/10 14:12:02 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.335 2009/10/21 21:12:02 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334 2009/09/10 14:12:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335 2009/10/21 21:12:02 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6848,20 +6848,6 @@ pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap,
 		pmap_update(dst_pmap);
 	}
 #endif
-}
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-/* ARGSUSED */
-void
-pmap_collect(struct pmap *pm)
-{
 }
 
 #if defined(SUN4) || defined(SUN4C)

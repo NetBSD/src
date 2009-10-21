@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.45 2009/03/29 09:24:52 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.46 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.45 2009/03/29 09:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.46 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	vaddr_t uaddr;
-	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
 
@@ -106,16 +105,16 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 
 	/* XXX check against resource limits */
 
-	inmem = uvm_uarea_alloc(&uaddr);
+	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
 		pool_put(&lwp_uc_pool, newuc);
 		return ENOMEM;
 	}
 
-	error = lwp_create(l, p, uaddr, inmem, SCARG(uap, flags) & LWP_DETACHED,
+	error = lwp_create(l, p, uaddr, SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2, l->l_class);
-	if (error) {
-		uvm_uarea_free(uaddr, curcpu());
+	if (__predict_false(error)) {
+		uvm_uarea_free(uaddr);
 		pool_put(&lwp_uc_pool, newuc);
 		return error;
 	}
@@ -329,7 +328,7 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 		error = EBUSY;
 	} else {
 		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
-		(void)lwp_unsleep(t, true);
+		lwp_unsleep(t, true);
 		error = 0;
 	}
 
@@ -476,7 +475,6 @@ lwp_unpark(lwpid_t target, const void *hint)
 {
 	sleepq_t *sq;
 	wchan_t wchan;
-	int swapin;
 	kmutex_t *mp;
 	proc_t *p;
 	lwp_t *t;
@@ -494,10 +492,8 @@ lwp_unpark(lwpid_t target, const void *hint)
 			break;
 
 	if (__predict_true(t != NULL)) {
-		swapin = sleepq_remove(sq, t);
+		sleepq_remove(sq, t);
 		mutex_spin_exit(mp);
-		if (swapin)
-			uvm_kick_scheduler();
 		return 0;
 	}
 
@@ -520,7 +516,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	lwp_lock(t);
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		(void)lwp_unsleep(t, true);
+		lwp_unsleep(t, true);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -651,7 +647,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	sleepq_t *sq;
 	wchan_t wchan;
 	lwpid_t targets[32], *tp, *tpp, *tmax, target;
-	int swapin, error;
+	int error;
 	kmutex_t *mp;
 	u_int ntargets;
 	size_t sz;
@@ -690,7 +686,6 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		return error;
 	}
 
-	swapin = 0;
 	wchan = lwp_park_wchan(p, SCARG(uap, hint));
 	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
@@ -706,7 +701,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 				break;
 
 		if (t != NULL) {
-			swapin |= sleepq_remove(sq, t);
+			sleepq_remove(sq, t);
 			continue;
 		}
 
@@ -729,7 +724,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			(void)lwp_unsleep(t, true);
+			lwp_unsleep(t, true);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to
@@ -746,8 +741,6 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	mutex_spin_exit(mp);
 	if (tp != targets)
 		kmem_free(tp, sz);
-	if (swapin)
-		uvm_kick_scheduler();
 
 	return 0;
 }

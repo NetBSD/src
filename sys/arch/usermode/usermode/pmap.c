@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.3 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: pmap.c,v 1.4 2009/10/21 21:12:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2009/10/21 21:12:04 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,11 +190,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
-{
-}
-
-void
-pmap_collect(pmap_t pmap)
 {
 }
 

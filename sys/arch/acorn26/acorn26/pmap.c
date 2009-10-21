@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.28 2009/05/10 21:47:57 he Exp $ */
+/* $NetBSD: pmap.c,v 1.29 2009/10/21 21:11:58 rmind Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2009/05/10 21:47:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2009/10/21 21:11:58 rmind Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -480,15 +480,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if ((pv->pv_vflags & PV_WIRED) == 0) return;
 	pmap->pm_stats.wired_count--;
 	pv->pv_vflags &= ~PV_WIRED;
-}
-
-void
-pmap_collect(pmap_t pmap)
-{
-	UVMHIST_FUNC("pmap_collect");
-
-	UVMHIST_CALLED(pmaphist);
-	/* This is allowed to be a no-op. */
 }
 
 void

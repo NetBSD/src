@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2008/04/30 23:21:29 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2009/10/21 21:12:01 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -303,8 +303,6 @@ cntlzw(uint32_t val)
 
 #define	LWP_PC(l)		(trapframe(l)->srr0)
 
-#define	cpu_swapin(p)
-#define	cpu_swapout(p)
 #define	cpu_proc_fork(p1, p2)
 #define	cpu_idle()		(curcpu()->ci_idlespin())
 #define cpu_lwp_free2(l)

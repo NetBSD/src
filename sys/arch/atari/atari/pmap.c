@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2009/08/26 00:30:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2009/10/21 21:11:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2009/08/26 00:30:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2009/10/21 21:11:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ void		pmap_pinit(pmap_t);
 void		pmap_release(pmap_t);
 static void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 
-void		pmap_collect1(pmap_t, paddr_t, paddr_t);
+static void	pmap_collect1(pmap_t, paddr_t, paddr_t);
 
 /* pmap_remove_mapping flags */
 #define		PRM_TFLUSH	0x01
@@ -1425,10 +1425,8 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *		Success need not be guaranteed -- that is, there
  *		may well be pages which are not referenced, but
  *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
  */
-void
+static void
 pmap_collect(pmap_t pmap)
 {
 	int bank, s;
@@ -1461,7 +1459,7 @@ pmap_collect(pmap_t pmap)
  *		Helper function for pmap_collect().  Do the actual
  *		garbage-collection of range of physical addresses.
  */
-void
+static void
 pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;

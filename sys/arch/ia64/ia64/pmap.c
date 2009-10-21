@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.21 2009/07/20 04:41:37 kiyohara Exp $ */
+/* $NetBSD: pmap.c,v 1.22 2009/10/21 21:12:00 rmind Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2009/10/21 21:12:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -948,44 +948,6 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 	vaddr_t vsrc = IA64_PHYS_TO_RR7(psrc);
 	vaddr_t vdst = IA64_PHYS_TO_RR7(pdst);
 	memcpy( (void *) vdst, (void *) vsrc, PAGE_SIZE);
-}
-
-
-
-/*
- * pmap_collect:		[ INTERFACE ]
- *
- *	Garbage collects the physical map system for pages which are no
- *	longer used.  Success need not be guaranteed -- that is, there
- *	may well be pages which are not referenced, but others may be
- *	collected.
- *
- *	Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-
-#ifdef DEBUG
-		printf("pmap_collect(%p)\n", pmap);
-#endif
-
-	/*
-	 * If called for the kernel pmap, just return.  We
-	 * handle this case in the event that we ever want
-	 * to have swappable kernel threads.
-	 */
-	if (pmap == pmap_kernel())
-		return;
-
-	/*
-	 * This process is about to be swapped out; free all of
-	 * the PT pages by removing the physical mappings for its
-	 * entire address space.  Note: pmap_remove() performs
-	 * all necessary locking.
-	 *	XXX: Removes wired pages as well via pmap_remove(). Fixme.!!!!!
-	 */
-	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 }
 
 /*

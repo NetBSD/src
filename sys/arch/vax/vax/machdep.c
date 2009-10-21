@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.175 2009/03/18 17:06:48 cegger Exp $	 */
+/* $NetBSD: machdep.c,v 1.176 2009/10/21 21:12:04 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2009/10/21 21:12:04 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -494,9 +494,6 @@ process_set_pc(struct lwp *l, void *addr)
 	struct	trapframe *tf;
 	void	*ptr;
 
-	if ((l->l_flag & LW_INMEM) == 0)
-		return (EIO);
-
 	ptr = (char *) l->l_addr->u_pcb.framep;
 	tf = ptr;
 
@@ -510,9 +507,6 @@ process_sstep(struct lwp *l, int sstep)
 {
 	void	       *ptr;
 	struct trapframe *tf;
-
-	if ((l->l_flag & LW_INMEM) == 0)
-		return (EIO);
 
 	ptr = l->l_addr->u_pcb.framep;
 	tf = ptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2009/10/21 21:12:02 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2009/10/21 21:12:02 rmind Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -170,7 +170,6 @@ static u_int mem_cnt, avail_cnt;
 #define pmap_destroy		PMAPNAME(destroy)
 #define pmap_copy		PMAPNAME(copy)
 #define pmap_update		PMAPNAME(update)
-#define pmap_collect		PMAPNAME(collect)
 #define pmap_enter		PMAPNAME(enter)
 #define pmap_remove		PMAPNAME(remove)
 #define pmap_kenter_pa		PMAPNAME(kenter_pa)
@@ -217,7 +216,6 @@ STATIC void pmap_reference(pmap_t);
 STATIC void pmap_destroy(pmap_t);
 STATIC void pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 STATIC void pmap_update(pmap_t);
-STATIC void pmap_collect(pmap_t);
 STATIC int pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 STATIC void pmap_remove(pmap_t, vaddr_t, vaddr_t);
 STATIC void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
@@ -260,7 +258,6 @@ const struct pmap_ops PMAPNAME(ops) = {
 	.pmapop_destroy = pmap_destroy,
 	.pmapop_copy = pmap_copy,
 	.pmapop_update = pmap_update,
-	.pmapop_collect = pmap_collect,
 	.pmapop_enter = pmap_enter,
 	.pmapop_remove = pmap_remove,
 	.pmapop_kenter_pa = pmap_kenter_pa,
@@ -1308,20 +1305,6 @@ pmap_update(struct pmap *pmap)
 {
 	PMAPCOUNT(updates);
 	TLBSYNC();
-}
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pm)
-{
-	PMAPCOUNT(collects);
 }
 
 static inline int

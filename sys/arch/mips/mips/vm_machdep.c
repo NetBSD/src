@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.125 2009/08/20 01:33:04 cliff Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.126 2009/10/21 21:12:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.125 2009/08/20 01:33:04 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.126 2009/10/21 21:12:01 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -206,32 +206,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif
 }	
-
-/*
- * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-#if USPACE > PAGE_SIZE
-	pt_entry_t *pte;
-	int i, x;
-
-	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switchto() can quickly map
-	 * in the user struct and kernel stack.
-	 */
-	x = (MIPS_HAS_R4K_MMU) ?
-	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-	    MIPS1_PG_G;
-	pte = kvtopte(l->l_addr);
-	for (i = 0; i < UPAGES; i++)
-		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
-#endif
-}
 
 void
 cpu_lwp_free(struct lwp *l, int proc)

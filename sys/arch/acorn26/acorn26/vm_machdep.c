@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.21 2009/03/18 16:00:08 cegger Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.22 2009/10/21 21:11:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21 2009/03/18 16:00:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2009/10/21 21:11:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -169,20 +169,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do here? */
-}
-
-void
-cpu_swapin(struct lwp *l)
-{
-
-	/* Can anyone think of anything I should do here? */
-}
-
-void
-cpu_swapout(struct lwp *l)
-{
-
-	/* ... or here, for that matter. */
 }
 
 /*

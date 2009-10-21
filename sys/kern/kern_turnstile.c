@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.25 2009/09/13 14:38:20 bouyer Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.26 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.25 2009/09/13 14:38:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.26 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -153,7 +153,7 @@ turnstile_remove(turnstile_t *ts, lwp_t *l, int q)
 	}
 
 	ts->ts_waiters[q]--;
-	(void)sleepq_remove(&ts->ts_sleepq[q], l);
+	sleepq_remove(&ts->ts_sleepq[q], l);
 }
 
 /*
@@ -457,7 +457,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
  *	has received a signal.  It's not a valid action for turnstiles,
  *	since LWPs blocking on a turnstile are not interruptable.
  */
-u_int
+void
 turnstile_unsleep(lwp_t *l, bool cleanup)
 {
 

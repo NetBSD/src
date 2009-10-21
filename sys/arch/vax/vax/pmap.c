@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2009/04/21 21:30:00 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.169 2009/10/21 21:12:04 rmind Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2009/04/21 21:30:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2009/10/21 21:12:04 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -675,16 +675,28 @@ rmspace(struct pmap *pm)
 }
 
 /*
- * Find a process to remove the process space for.
- * This is based on uvm_swapout_threads().
+ * Find a process to remove the process space for. *sigh*
  * Avoid to remove ourselves.
  */
 
-#undef swappable
-#define swappable(l, pm)						\
-	(((l)->l_flag & (LW_SYSTEM | LW_INMEM | LW_WEXIT)) == LW_INMEM	\
-	 && (l)->l_holdcnt == 0						\
-	 && (l)->l_proc->p_vmspace->vm_map.pmap != pm)
+static inline bool
+pmap_vax_swappable(struct lwp *l)
+{
+
+	if (l->l_flag & (LW_SYSTEM | LW_WEXIT))
+		return false;
+	if (l->l_proc->p_vmspace->vm_map.pmap == pm)
+		return false;
+	if ((l->l_pflag & LP_RUNNING) != 0)
+		return false;
+	if (l->l_class != SCHED_OTHER)
+		return false;
+	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	if (l->l_proc->p_stat != SACTIVE && l->l_proc->p_stat != SSTOP)
+		return false;
+	return true;
+}
 
 static int
 pmap_rmproc(struct pmap *pm)
@@ -700,7 +712,7 @@ pmap_rmproc(struct pmap *pm)
 	outpri = outpri2 = 0;
 	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if (!swappable(l, pm))
+		if (!pmap_vax_swappable(l, pm))
 			continue;
 		ppm = l->l_proc->p_vmspace->vm_map.pmap;
 		if (ppm->pm_p0lr == 0 && ppm->pm_p1lr == NPTEPERREG)
@@ -1824,40 +1836,4 @@ free_ptp(paddr_t v)
 	v |= KERNBASE;
 	*(int *)v = (int)ptpp;
 	ptpp = (int *)v;
-}
-
-/*
- * Called when a process is about to be swapped, to remove the page tables.
- */
-void
-cpu_swapout(struct lwp *l)
-{
-	struct proc *p = l->l_proc;
-	pmap_t pm;
-
-	PMDEBUG(("Swapout pid %d\n", p->p_pid));
-
-	pm = p->p_vmspace->vm_map.pmap;
-	rmspace(pm);
-	pmap_deactivate(l);
-}
-
-/*
- * Kernel stack red zone need to be set when a process is swapped in.
- * Be sure that all pages are valid.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-	struct pte *pte;
-	int i;
-
-	PMDEBUG(("Swapin pid %d.%d\n", l->l_proc->p_pid, l->l_lid));
-
-	pte = kvtopte((vaddr_t)l->l_addr);
-	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
-		pte[i].pg_v = 1;
-	l->l_addr->u_pcb.pcb_paddr = kvtophys(l->l_addr);
-	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
-	pmap_activate(l);
 }

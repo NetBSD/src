@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.100 2009/06/01 20:58:16 martin Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.101 2009/10/21 21:11:58 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2009/06/01 20:58:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2009/10/21 21:11:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,35 +184,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	up->u_pcb.pcb_context[7] =
 	    (u_int64_t)setfunc_trampoline;	/* ra: assembly magic */
 }	
-
-/*
- * Finish a swapin operation.
- *
- * We need to cache the physical address of the PCB, so we can
- * swap context to it easily.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-	struct user *up = l->l_addr;
-
-	l->l_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-}
-
-/*
- * cpu_swapout is called immediately before a process's 'struct user'
- * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
- * current owner of the floating point unit, the FP state has to be
- * saved, so that it goes out with the pcb, which is in the user area.
- */
-void
-cpu_swapout(struct lwp *l)
-{
-
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(l, 1);
-}
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.47 2009/10/11 20:37:47 mhitch Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.48 2009/10/21 21:12:00 rmind Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.47 2009/10/11 20:37:47 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.48 2009/10/21 21:12:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 
 struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
-void	pmap_collect_pv(void);
+static void	pmap_collect_pv(void);
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
@@ -593,7 +593,7 @@ pmap_free_pv(struct pv_entry *pv)
  *
  *	Perform compaction on the PV list, called via pmap_collect().
  */
-void
+static void
 pmap_collect_pv(void)
 {
 	struct pv_page_list pv_page_collectlist;
@@ -1671,10 +1671,8 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
  *	longer used.  Success need not be guaranteed -- that is, there
  *	may well be pages which are not referenced, but others may be
  *	collected.
- *
- *	Called by the pageout daemon when pages are scarce.
  */
-void
+static void
 pmap_collect(pmap_t pmap)
 {
 
@@ -1719,7 +1717,7 @@ pmap_collect(pmap_t pmap)
  *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
  *	WAY OF HANDLING PT PAGES!
  */
-void
+static void
 pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;

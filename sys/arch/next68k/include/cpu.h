@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2007/10/17 19:56:04 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2009/10/21 21:12:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -119,8 +119,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 
 void	cpu_proc_fork(struct proc *, struct proc *);

@@ -1,11 +1,10 @@
-# $NetBSD: std.gdium,v 1.3 2009/08/09 22:26:45 matt Exp $
+# $NetBSD: std.gdium,v 1.4 2009/10/21 21:11:59 rmind Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
 
 options 	MIPS3_ENABLE_CLOCK_INTR
 options 	ENABLE_MIPS_16KB_PAGE
-no options 	VMSWAP_UAREA
 
 #options 	UVMHIST,UVMHIST_PRINT
 
