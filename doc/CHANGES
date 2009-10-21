@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1308 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1309 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -424,3 +424,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.1.2. [roy 20091016]
 	sysinst(8): Give the option to use tmpfs for /tmp in sysinst instead of
 		the older mfs on i386 and amd64. [ahoka 20091018]
+	kernel: Remove support for uarea swap-out. [rmind 20091021]
