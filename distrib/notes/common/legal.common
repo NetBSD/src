@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.64 2009/10/21 05:42:11 snj Exp $
+.\"	$NetBSD: legal.common,v 1.65 2009/10/21 05:45:35 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -536,9 +536,6 @@ by Bernd Ernesti.
 .It
 This product includes software developed for the NetBSD Project
 by Christopher G. Demetriou.
-.It
-This product includes software developed for the NetBSD Project
-by Christos Zoulas
 .It
 This product includes software developed for the NetBSD Project
 by Emmanuel Dreyfus.
