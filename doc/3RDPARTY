@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.722 2009/10/18 13:42:17 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.723 2009/10/21 22:32:11 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -621,6 +621,17 @@ License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 Responsible:	tsarna
 Notes:
 The sources were integrated into src/sys/external/apache2/mDNSResponder/dist.
+
+Package:	mdocml
+Version:	1.9.9
+Current Vers:	1.9.9
+Maintainer:	Kristaps Džonsons
+Archive Site:	http://mdocml.bsd.lv/snapshots/
+Home Page:	http://mdocml.bsd.lv/
+Mailing List:	
+Responsible:	joerg
+License:	BSD (2-clause)
+Notes:
 
 Package:	mesa-drm
 Version:	git 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c
