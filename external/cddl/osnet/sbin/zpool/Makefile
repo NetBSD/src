@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/07 20:57:56 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2009/10/21 22:32:20 joerg Exp $
 
 .include "../../Makefile.zfs"
 
 PROG=	zpool
 MAN=	zpool.8
+USETBL=	yes
 SRCS=	zpool_main.c zpool_iter.c zpool_util.c zpool_vdev.c
 
 DPADD=	${LIBAVL} ${LIBZFS} ${LIBM} ${LIBNVPAIR} ${LIBUUTIL} ${LIBUTIL}
