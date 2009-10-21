@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.63 2009/10/21 00:35:35 snj Exp $
+.\"	$NetBSD: legal.common,v 1.64 2009/10/21 05:42:11 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -285,9 +285,6 @@ This product includes software developed by Jason L. Wright
 .It
 This product includes software developed by Jason R. Thorpe
 for And Communications, http://www.and.com/
-.It
-This product includes software developed by Jeremy C. Reed
-for the NetBSD project.
 .It
 This product includes software developed by Joachim Koenig-Baltes.
 .It
