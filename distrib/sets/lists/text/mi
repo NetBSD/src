@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2009/04/12 17:56:35 joerg Exp $
+# $NetBSD: mi,v 1.33 2009/10/21 22:59:07 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -22,6 +22,7 @@
 ./usr/bin/lkbib					text-groff-bin
 ./usr/bin/lookbib				text-groff-bin
 ./usr/bin/makeinfo				text-texinfo-bin
+./usr/bin/mandoc				text-mdocml-bin
 ./usr/bin/neqn					text-groff-bin
 ./usr/bin/nroff					text-groff-bin
 ./usr/bin/pfbtops				text-groff-bin
@@ -460,6 +461,10 @@
 ./usr/share/man/cat7/groff_trace.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_www.0		text-groff-catman	.cat
 ./usr/share/man/cat7/man.0			text-groff-catman	.cat
+./usr/share/man/cat7/mandoc_char.0		text-mdocml-catman	.cat
+./usr/share/man/cat7/mandoc_man.0		text-mdocml-catman	.cat
+./usr/share/man/cat7/mandoc_mdoc.0		text-mdocml-catman	.cat
+./usr/share/man/cat7/manuals.0			text-mdocml-catman	.cat
 ./usr/share/man/cat7/mdoc.samples.0		text-groff-catman	.cat
 ./usr/share/man/cat7/me.0			text-groff-catman	.cat
 ./usr/share/man/cat7/mm.0			text-groff-catman	.cat
@@ -511,6 +516,10 @@
 ./usr/share/man/html7/groff_trace.html		text-groff-htmlman	html
 ./usr/share/man/html7/groff_www.html		text-groff-htmlman	html
 ./usr/share/man/html7/man.html			text-groff-htmlman	html
+./usr/share/man/html7/mandoc_char.html		text-mdocml-htmlman	html
+./usr/share/man/html7/mandoc_man.html		text-mdocml-htmlman	html
+./usr/share/man/html7/mandoc_mdoc.html		text-mdocml-htmlman	html
+./usr/share/man/html7/manuals.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/mdoc.samples.html		text-groff-htmlman	html
 ./usr/share/man/html7/me.html			text-groff-htmlman	html
 ./usr/share/man/html7/mm.html			text-groff-htmlman	html
@@ -566,6 +575,10 @@
 ./usr/share/man/man7/groff_trace.7		text-groff-man		.man
 ./usr/share/man/man7/groff_www.7		text-groff-man		.man
 ./usr/share/man/man7/man.7			text-groff-man		.man
+./usr/share/man/man7/mandoc_char.7		text-mdocml-man		.man
+./usr/share/man/man7/mandoc_man.7		text-mdocml-man		.man
+./usr/share/man/man7/mandoc_mdoc.7		text-mdocml-man		.man
+./usr/share/man/man7/manuals.7			text-mdocml-man		.man
 ./usr/share/man/man7/mdoc.samples.7		text-groff-man		.man
 ./usr/share/man/man7/me.7			text-groff-man		.man
 ./usr/share/man/man7/mm.7			text-groff-man		.man
