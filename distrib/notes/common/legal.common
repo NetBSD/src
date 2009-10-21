@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.62 2009/10/21 00:03:42 snj Exp $
+.\"	$NetBSD: legal.common,v 1.63 2009/10/21 00:35:35 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -451,15 +451,6 @@ This product includes software developed by Thomas Gerner
 This product includes software developed by Tobias Weingartner.
 .It
 This product includes software developed by Todd C. Miller.
-.It
-This product includes software developed by Tohru Nishimura
-and Reinoud Zandijk for the NetBSD Project.
-.It
-This product includes software developed by Tohru Nishimura
-for the NetBSD Project.
-.It
-This product includes software developed by Tohru Nishimura.
-for the NetBSD Project.
 .It
 This product includes software developed by TooLs GmbH.
 .It
