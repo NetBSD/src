@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.238 2009/08/15 23:45:00 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.239 2009/10/21 21:12:03 rmind Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.238 2009/08/15 23:45:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.239 2009/10/21 21:12:03 rmind Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1424,73 +1424,6 @@ pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr, vsize_
 	DPRINTF(PDB_CREATE, ("pmap_copy(%p, %p, %p, %lx, %p)\n",
 			     dst_pmap, src_pmap, (void *)(u_long)dst_addr,
 			     (u_long)len, (void *)(u_long)src_addr));
-}
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(struct pmap *pm)
-{
-	int64_t data;
-	paddr_t pa, *pdir, *ptbl;
-	struct vm_page *pg;
-	int i, j, k, n, m;
-
-	/*
-	 * This is a good place to scan the pmaps for page tables with
-	 * no valid mappings in them and free them.
-	 */
-
-	/* NEVER GARBAGE COLLECT THE KERNEL PMAP */
-	if (pm == pmap_kernel())
-		return;
-
-	mutex_enter(&pmap_lock);
-	for (i = 0; i < STSZ; i++) {
-		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i],
-					       ASI_PHYS_CACHED);
-		if (pdir == NULL) {
-			continue;
-		}
-		m = 0;
-		for (k = 0; k < PDSZ; k++) {
-			ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k],
-						       ASI_PHYS_CACHED);
-			if (ptbl == NULL) {
-				continue;
-			}
-			m++;
-			n = 0;
-			for (j = 0; j < PTSZ; j++) {
-				data = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
-				if (data & TLB_V)
-					n++;
-			}
-			if (!n) {
-				stxa((paddr_t)(u_long)&pdir[k],
-				     ASI_PHYS_CACHED, 0);
-				pa = (paddr_t)(u_long)ptbl;
-				pg = PHYS_TO_VM_PAGE(pa);
-				TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
-				pmap_free_page(pa);
-			}
-		}
-		if (!m) {
-			stxa((paddr_t)(u_long)&pm->pm_segs[i],
-			     ASI_PHYS_CACHED, 0);
-			pa = (paddr_t)(u_long)pdir;
-			pg = PHYS_TO_VM_PAGE(pa);
-			TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
-			pmap_free_page(pa);
-		}
-	}
-	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -3014,7 +2947,6 @@ pmap_count_res(struct pmap *pm)
 	paddr_t *pdir, *ptbl;
 	int i, j, k, n;
 
-	/* Almost the same as pmap_collect() */
 	/* Don't want one of these pages reused while we're reading it. */
 	mutex_enter(&pmap_lock);
 	n = 0;
@@ -3057,7 +2989,6 @@ pmap_count_wired(struct pmap *pm)
 	paddr_t *pdir, *ptbl;
 	int i, j, k, n;
 
-	/* Almost the same as pmap_collect() */
 	/* Don't want one of these pages reused while we're reading it. */
 	mutex_enter(&pmap_lock);
 	n = 0;

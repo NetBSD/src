@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.48 2009/01/15 23:33:41 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.49 2009/10/21 21:11:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48 2009/01/15 23:33:41 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.49 2009/10/21 21:11:59 rmind Exp $");
 
 #include "opt_sa.h"
 
@@ -269,7 +269,6 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 	    || (error = trace_enter(code, args, nargs)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		KASSERT(l->l_holdcnt == 0);
 		error = (*callp->sy_call)(l, args, rval);
 	}
 

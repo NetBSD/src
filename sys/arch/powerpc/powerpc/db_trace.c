@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.48 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.49 2009/10/21 21:12:02 rmind Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2009/10/21 21:12:02 rmind Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -150,10 +150,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if ((l->l_flag & LW_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l->l_addr;
 			frame = (db_addr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);

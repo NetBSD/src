@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.15 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.16 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.15 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.16 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 {
 	selcpu_t *sc;
 	uint32_t mask;
-	int index, oflag, swapin;
+	int index, oflag;
 	lwp_t *l;
 	kmutex_t *lock;
 
@@ -632,7 +632,6 @@ selnotify(struct selinfo *sip, int events, long knhint)
 
 	if (sip->sel_lwp != NULL) {
 		/* One named LWP is waiting. */
-		swapin = 0;
 		sc = sip->sel_cpu;
 		lock = sc->sc_lock;
 		mutex_spin_enter(lock);
@@ -648,12 +647,10 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			l->l_selflag = SEL_RESET;
 			if (oflag == SEL_BLOCKING && l->l_mutex == lock) {
 				KASSERT(l->l_wchan == sc);
-				swapin = sleepq_unsleep(l, false);
+				sleepq_unsleep(l, false);
 			}
 		}
 		mutex_spin_exit(lock);
-		if (swapin)
-			uvm_kick_scheduler();
 	}
 
 	if ((mask = sip->sel_collision) != 0) {

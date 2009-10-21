@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.33 2009/04/13 23:20:27 lukem Exp $  */
+/*      $NetBSD: ps.c,v 1.34 2009/10/21 21:12:07 rmind Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.33 2009/04/13 23:20:27 lukem Exp $");
+__RCSID("$NetBSD: ps.c,v 1.34 2009/10/21 21:12:07 rmind Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,9 +193,6 @@ state2str(struct kinfo_proc2 *kp)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & L_INMEM) {
-	} else
-		*cp++ = 'W';
 	if (kp->p_nice < NZERO)
 		*cp++ = '<';
 	else if (kp->p_nice > NZERO)
@@ -208,8 +205,6 @@ state2str(struct kinfo_proc2 *kp)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
-	if ((flag & P_SYSTEM) || kp->p_holdcnt)
-		*cp++ = 'L';
 	if (kp->p_eflag & EPROC_SLEADER)
 		*cp++ = 's'; 
 	if ((flag & P_CONTROLT) && kp->p__pgid == kp->p_tpgid)
@@ -303,9 +298,6 @@ pmem2float(struct kinfo_proc2 *kp)
 	double fracmem;
 	int szptudot = 0;
 
-	/* XXX - I don't like this. */
-	if ((kp->p_flag & L_INMEM) == 0)
-	        return (0.0);
 #ifdef USPACE
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();

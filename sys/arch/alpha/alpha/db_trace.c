@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.24 2008/07/02 19:49:58 rmind Exp $ */
+/* $NetBSD: db_trace.c,v 1.25 2009/10/21 21:11:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2009/10/21 21:11:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,10 +230,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if ((l->l_flag & LW_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			pcbp = &l->l_addr->u_pcb;
 			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
 			callpc = pcbp->pcb_context[7];

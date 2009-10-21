@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2009/10/21 21:12:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@ void pmap_bootstrap(void);
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	pmap_update(pmap)		((void)0)
 #define	pmap_copy(dp,sp,d,l,s)		((void)0)
-#define	pmap_collect(pmap)		((void)0)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 

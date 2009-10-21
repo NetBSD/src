@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.18 2008/05/04 19:43:06 martin Exp $
+.\"	$NetBSD: vmstat.1,v 1.19 2009/10/21 21:12:07 rmind Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,9 +140,7 @@ in disk I/O wait
 .It pw
 waiting for paging
 .It sl
-sleeping while resident
-.It sw
-swapped out, but either runnable or in short-term blocking state
+sleeping
 .El
 .Pp
 The virtual memory section shows:
@@ -203,8 +201,6 @@ Information about the numbers of processes in various states.
 in run queue
 .It b
 blocked for resources (i/o, paging, etc.)
-.It w
-runnable or short sleeper (\*[Lt] 20 secs) but swapped
 .El
 .It memory
 Information about the usage of virtual and real memory.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2009/04/21 21:30:00 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2009/10/21 21:12:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2009/04/21 21:30:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2009/10/21 21:12:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -3685,22 +3685,6 @@ pmap_zero_page(paddr_t pa)
 	set_context(saved_ctx);
 
 	splx(s);
-}
-
-/*
- *	Routine:	pmap_collect
- *	Function:
- *		Garbage collects the physical map system for
- *		pages which are no longer used.
- *		Success need not be guaranteed -- that is, there
- *		may well be pages which are not referenced, but
- *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
- */
-void 
-pmap_collect(pmap_t pmap)
-{
 }
 
 /*

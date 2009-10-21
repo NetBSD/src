@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.280 2009/07/14 20:59:54 apb Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.281 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.280 2009/07/14 20:59:54 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.281 2009/10/21 21:12:06 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1281,7 +1281,6 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
 	int byte_count;
-	struct lwp *l = NULL;
 	size_t origresid;
 #ifndef NFS_V2_ONLY
 	char *cp2;
@@ -1303,10 +1302,6 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
-	if (pageprotected) {
-		l = curlwp;
-		uvm_lwp_hold(l);
-	}
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
@@ -1476,7 +1471,6 @@ nfsmout:
 			cv_wait(&ctx.nwc_cv, &ctx.nwc_lock);
 		}
 		mutex_exit(&ctx.nwc_lock);
-		uvm_lwp_rele(l);
 	}
 	mutex_destroy(&ctx.nwc_lock);
 	cv_destroy(&ctx.nwc_cv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.150 2009/10/04 03:15:08 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.151 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.150 2009/10/04 03:15:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.151 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -615,28 +615,20 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			break;
 		}
 
-		uvm_lwp_hold(lt);
-
 		/* If the address parameter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0) {
-				uvm_lwp_rele(lt);
+		if ((int *)SCARG(uap, addr) != (int *)1) {
+			error = process_set_pc(lt, SCARG(uap, addr));
+			if (error != 0)
 				break;
-			}
-
+		}
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
 		error = process_sstep(lt, req == PT_STEP);
-		if (error) {
-			uvm_lwp_rele(lt);
+		if (error)
 			break;
-		}
 #endif
-
-		uvm_lwp_rele(lt);
-
 		if (req == PT_DETACH) {
 			CLR(t->p_slflag, PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
 
@@ -867,8 +859,6 @@ process_doregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
 	error = process_read_regs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
@@ -878,8 +868,6 @@ process_doregs(struct lwp *curl /*tracer*/,
 		else
 			error = process_write_regs(l, &r);
 	}
-
-	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -921,8 +909,6 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
 	error = process_read_fpregs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
@@ -932,9 +918,6 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 		else
 			error = process_write_fpregs(l, &r);
 	}
-
-	uvm_lwp_rele(l);
-
 	uio->uio_offset = 0;
 	return (error);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2008/11/27 14:28:23 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2009/10/21 21:12:00 rmind Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2008/11/27 14:28:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 2009/10/21 21:12:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l->l_addr;
 			if (p == curproc && l == curlwp) {
 				fp = (int *)ddb_regs.tf_r3;

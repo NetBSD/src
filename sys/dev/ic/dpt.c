@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.62 2008/06/08 12:43:51 tsutsui Exp $	*/
+/*	$NetBSD: dpt.c,v 1.63 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.62 2008/06/08 12:43:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.63 2009/10/21 21:12:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1339,7 +1339,6 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 	/*
 	 * Start the command and sleep on completion.
 	 */
-	uvm_lwp_hold(curlwp);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb),
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
 	s = splbio();
@@ -1349,7 +1348,6 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 		panic("%s: dpt_cmd failed", device_xname(&sc->sc_dv));
 	tsleep(ccb, PWAIT, "dptucmd", 0);
 	splx(s);
-	uvm_lwp_rele(curlwp);
 
 	/*
 	 * Sync up the DMA map and copy out results.
