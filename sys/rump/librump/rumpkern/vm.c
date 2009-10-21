@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.64 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.65 2009/10/21 23:13:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.64 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.65 2009/10/21 23:13:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -691,11 +691,4 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	/* nada */
-}
-
-void
-uvm_kick_scheduler(void)
-{
-
-	/* ouch */
 }
