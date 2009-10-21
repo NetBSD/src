@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.2 2002/05/26 00:09:09 wiz Exp $	*/
+/*	$NetBSD: ssh.c,v 1.3 2009/10/21 23:12:09 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
