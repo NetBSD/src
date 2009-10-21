@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.38 2009/08/03 22:08:57 pooka Exp $
+.\"	$NetBSD: pmap.9,v 1.39 2009/10/21 23:33:32 rmind Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 3, 2009
+.Dd October 22, 2009
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -78,8 +78,6 @@
 .Ft void
 .Fn "pmap_copy" "pmap_t dst_map" "pmap_t src_map" "vaddr_t dst_addr" \
    "vsize_t len" "vaddr_t src_addr"
-.Ft void
-.Fn "pmap_collect" "pmap_t pmap"
 .Ft void
 .Fn "pmap_update" "pmap_t pmap"
 .Ft void
@@ -677,29 +675,6 @@ is merely advisory (it is used in the
 path to
 .Dq pre-fault
 the child's address space).
-.It void Fn "pmap_collect" "pmap_t pmap"
-This function is called just before a process is swapped out to
-allow the
-.Nm
-module to release resources used to map the process's address space.
-The implementation may choose to remove physical mappings in order
-to free for example page tables back to the system.
-Note, however, that wired mappings must
-.Em not
-be removed when
-.Fn pmap_collect
-is called.
-.Pp
-Note that while this function is required to be provided by a
-.Nm
-implementation, it is not actually required to do anything.
-.Fn pmap_collect
-is merely advisory.
-It is recommended, however, that
-.Fn pmap_collect
-be fully implemented by a
-.Nm
-implementation.
 .It void Fn "pmap_update" "pmap_t pmap"
 This function is used to inform the
 .Nm
