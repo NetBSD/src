@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.103 2009/10/16 00:14:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.104 2009/10/21 23:13:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.103 2009/10/16 00:14:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.104 2009/10/21 23:13:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -555,13 +555,13 @@ suspendsched(void)
 	/* we don't control scheduling currently, can't do anything now */
 }
 
-u_int
+void
 lwp_unsleep(lwp_t *l, bool cleanup)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }
 
 vaddr_t
