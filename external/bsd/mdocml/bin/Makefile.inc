@@ -1,3 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.1 2009/10/21 18:04:52 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.2 2009/10/21 22:33:12 joerg Exp $
+
+BINDIR?=	/usr/bin
 
 .include "${.PARSEDIR}/../Makefile.inc"
