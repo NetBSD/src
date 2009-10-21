@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.90 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.91 2009/10/21 17:37:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.90 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91 2009/10/21 17:37:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,8 +502,10 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		ip->i_e2fs_gid_high = 0;
 		ip->i_e2fs_uid_high = 0;
 	}
-	if (ouid != uid || ogid != gid)
+	if (ouid != uid || ogid != gid) {
+		ext2fs_set_inode_guid(ip);
 		ip->i_flag |= IN_CHANGE;
+	}
 	if (ouid != uid && kauth_authorize_generic(cred,
 	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISUID;
