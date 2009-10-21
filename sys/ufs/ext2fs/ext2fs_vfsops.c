@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.151 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.152 2009/10/21 17:37:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.151 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.152 2009/10/21 17:37:21 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,7 +106,6 @@ MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
-static void ext2fs_set_inode_guid(struct inode *);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -164,7 +163,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 };
 
 /* Fill in the inode uid/gid from ext2 halves.  */
-static void
+void
 ext2fs_set_inode_guid(struct inode *ip)
 {
 
