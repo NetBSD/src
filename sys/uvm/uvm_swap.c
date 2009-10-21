@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.146 2009/09/13 18:45:12 pooka Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.147 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.146 2009/09/13 18:45:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.147 2009/10/21 21:12:07 rmind Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -269,11 +269,7 @@ uvm_swap_init(void)
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
-	cv_init(&uvm.scheduler_cv, "schedule");
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
-	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("%s: can't get vnode for swap device", __func__);
@@ -291,30 +287,16 @@ uvm_swap_init(void)
 	 */
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
 	    VM_NOSLEEP, IPL_NONE);
-	if (swapmap == 0)
+	if (swapmap == 0) {
 		panic("%s: vmem_create failed", __func__);
-
-	/*
-	 * done!
-	 */
-	uvm.swap_running = true;
-#ifdef __SWAP_BROKEN
-	uvm.swapout_enabled = 0;
-#else
-	uvm.swapout_enabled = 1;
-#endif
-	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
-
-        sysctl_createv(NULL, 0, NULL, NULL,
-            CTLFLAG_READWRITE,
-            CTLTYPE_INT, "swapout",
-            SYSCTL_DESCR("Set 0 to disable swapout of kernel stacks"),
-            NULL, 0, &uvm.swapout_enabled, 0, CTL_VM, CTL_CREATE, CTL_EOL);
+	}
 
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
 	    NULL, IPL_BIO);
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
 	    NULL, IPL_BIO);
+
+	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.31 2009/08/09 22:24:53 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.32 2009/10/21 21:12:01 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2046,7 +2046,7 @@ END(MIPSX(setfunc_trampoline))
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-#if !defined(ENABLE_MIPS_16KB_PAGE) || defined(VMSWAP_UAREA)
+#if !defined(ENABLE_MIPS_16KB_PAGE)
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	lw	v0, L_ADDR(a0)			# va = l->l_addr
@@ -2105,7 +2105,7 @@ entry0set:
 	nop
 
 resume:
-#endif /* !ENABLE_MIPS_16KB_PAGE || VMSWAP_UAREA */
+#endif /* !ENABLE_MIPS_16KB_PAGE
 	j	ra
 	nop
 END(MIPSX(cpu_switch_resume))

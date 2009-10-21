@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2009/08/12 10:03:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2009/10/21 21:12:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2009/08/12 10:03:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2009/10/21 21:12:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,15 +1229,6 @@ pmap_reference(pmap_t pmap)
 	pmap->pm_obj.uo_refs++;
 	mutex_exit(&pmap->pm_lock);
 }
-
-void
-pmap_collect(pmap_t pmap)
-{
-
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
-	/* nothing yet */
-}
-
 
 /*
  * pmap_enter(pmap, va, pa, prot, flags)

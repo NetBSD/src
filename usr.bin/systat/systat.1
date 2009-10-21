@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.38 2009/03/11 13:58:29 joerg Exp $
+.\"	$NetBSD: systat.1,v 1.39 2009/10/21 21:12:07 rmind Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -335,8 +335,7 @@ Reset the port, host, and protocol matching mechanisms to the default
 (any protocol, port, or host).
 .El
 .It Ic pigs
-Display, in the lower window, those processes resident in main
-memory and getting the
+Display, in the lower window, those processes which are getting the
 largest portion of the processor (the default display).
 When less than 100% of the
 processor is scheduled to user processes, the remaining time
@@ -410,8 +409,7 @@ and fifteen minute intervals.
 Below this is a list of the
 average number of processes (over the last refresh interval)
 that are runnable (`r'), in page wait (`p'),
-in disk wait other than paging (`d'),
-sleeping (`s'), and swapped out but desiring to run (`w').
+in disk wait other than paging (`d'), sleeping (`s').
 Below the queue length listing is a numerical listing and
 a bar graph showing the amount of
 system (shown as `='), user (shown as `\*[Gt]'),
@@ -545,8 +543,6 @@ Reset running statistics to zero.
 For the namelist.
 .It Pa /dev/kmem
 For information in main memory.
-.It Pa /dev/drum
-For information about swapped out processes.
 .It Pa /etc/hosts
 For host names.
 .It Pa /etc/networks

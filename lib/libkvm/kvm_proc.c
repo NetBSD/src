@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.83 2009/05/16 11:56:47 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.84 2009/10/21 21:11:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.83 2009/05/16 11:56:47 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.84 2009/10/21 21:11:58 rmind Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -834,7 +834,7 @@ again:
 			kl->l_swtime = l.l_swtime;
 			kl->l_slptime = l.l_slptime;
 			kl->l_schedflags = 0; /* XXX */
-			kl->l_holdcnt = l.l_holdcnt;
+			kl->l_holdcnt = 0;
 			kl->l_priority = l.l_priority;
 			kl->l_usrpri = l.l_priority;
 			kl->l_stat = l.l_stat;

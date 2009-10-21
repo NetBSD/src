@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.24 2009/10/19 18:41:16 bouyer Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.25 2009/10/21 21:12:06 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.24 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.25 2009/10/21 21:12:06 rmind Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -85,7 +85,7 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 
 		error = scsipi_mode_sense(periph, SMS_DBD,
 		    ATAPI_TAPE_IDENTIFY_PAGE, &identify.header,
-		    sizeof(identify), XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
+		    sizeof(identify), XS_CTL_DISCOVERY,
 		    ST_RETRIES, ST_CTL_TIME);
 		if (error) {
 			printf("onstream get identify: error %d\n", error);
@@ -94,8 +94,7 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 		strncpy(identify.ident, "NBSD", 4);
 		error = scsipi_mode_select(periph, SMS_PF,
 		    &identify.header, sizeof(identify),
-		    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
-		    ST_RETRIES, ST_CTL_TIME);
+		    XS_CTL_DISCOVERY, ST_RETRIES, ST_CTL_TIME);
 		if (error) {
 			printf("onstream set identify: error %d\n", error);
 			return;
@@ -137,7 +136,7 @@ st_atapibus_mode_sense(struct st_softc *st, int flags)
 	for (count = 0 ; count < 5 ; count++) {
 		error = scsipi_mode_sense(periph, SMS_DBD,
 		    ATAPI_TAPE_CAP_PAGE, &cappage.header, sizeof(cappage),
-		    flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
+		    flags, ST_RETRIES, ST_CTL_TIME);
 		if (error == 0) {
 			st->numblks = 0; /* unused anyway */
 			if (cappage.cap4 & ATAPI_TAPE_CAP_PAGE_BLK32K)

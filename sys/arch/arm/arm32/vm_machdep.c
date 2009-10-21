@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 2009/10/21 21:11:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2009/10/21 21:11:59 rmind Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -242,59 +242,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_lwp_free2(struct lwp *l)
 {
-}
-
-void
-cpu_swapin(struct lwp *l)
-{
-#if 0
-	struct proc *p = l->l_proc;
-
-	/* Don't do this.  See the comment in cpu_swapout().  */
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("cpu_swapin(%p, %d, %s, %p)\n", l, l->l_lid,
-		    p->p_comm, p->p_vmspace->vm_map.pmap);
-#endif	/* PMAP_DEBUG */
-
-	if (vector_page < KERNEL_BASE) {
-		/* Map the vector page */
-		pmap_enter(p->p_vmspace->vm_map.pmap, vector_page,
-		    systempage.pv_pa, VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update(p->p_vmspace->vm_map.pmap);
-	}
-#endif
-}
-
-
-void
-cpu_swapout(struct lwp *l)
-{
-#ifdef FPU_VFP
-	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
-		vfp_saveregs_lwp(l, 1);
-#endif
-
-#if 0
-	struct proc *p = l->l_proc;
-
-	/* 
-	 * Don't do this!  If the pmap is shared with another process,
-	 * it will loose it's page0 entry.  That's bad news indeed.
-	 */
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("cpu_swapout(%p, %d, %s, %p)\n", l, l->l_lid,
-		    p->p_comm, &p->p_vmspace->vm_map.pmap);
-#endif	/* PMAP_DEBUG */
-
-	if (vector_page < KERNEL_BASE) {
-		/* Free the system page mapping */
-		pmap_remove(p->p_vmspace->vm_map.pmap, vector_page,
-		    vector_page + PAGE_SIZE);
-		pmap_update(p->p_vmspace->vm_map.pmap);
-	}
-#endif
 }
 
 /*

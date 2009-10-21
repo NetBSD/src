@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.111 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.112 2009/10/21 21:11:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.111 2009/03/29 01:02:49 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.112 2009/10/21 21:11:57 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,6 +483,16 @@ state(void *arg, VARENT *ve, int mode)
 	flag = k->p_flag;
 	cp = buf;
 
+	/*
+	 * NOTE: There are historical letters, which are no longer used:
+	 *
+	 * - W: indicated that process is swapped out.
+	 * - L: indicated non-zero l_holdcnt (i.e. that process was
+	 *   prevented from swapping-out.
+	 *
+	 * These letters should not be used for new states to avoid
+	 * conflicts with old applications which might depend on them.
+	 */
 	switch (k->p_stat) {
 
 	case LSSTOP:
@@ -518,9 +528,6 @@ state(void *arg, VARENT *ve, int mode)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & L_INMEM) {
-	} else
-		*cp++ = 'W';
 	if (k->p_nice < NZERO)
 		*cp++ = '<';
 	else if (k->p_nice > NZERO)
@@ -533,9 +540,6 @@ state(void *arg, VARENT *ve, int mode)
 		*cp++ = 'V';
 	if (flag & P_SYSTEM)
 		*cp++ = 'K';
-	/* system process might have this too, don't need to double up */
-	else if (k->p_holdcnt)
-		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
 	if (flag & P_SA)
@@ -596,11 +600,6 @@ lstate(void *arg, VARENT *ve, int mode)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & L_INMEM) {
-	} else
-		*cp++ = 'W';
-	if (k->l_holdcnt)
-		*cp++ = 'L';
 	if (flag & L_DETACHED)
 		*cp++ = '-';
 	*cp = '\0';
@@ -1110,9 +1109,7 @@ getpcpu(k)
 
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
-	/* XXX - I don't like this */
-	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
-	    k->p_realstat == SZOMB)
+	if (k->p_swtime == 0 || k->p_realstat == SZOMB)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(k->p_pctcpu));
@@ -1144,8 +1141,6 @@ getpmem(k)
 	if (failure)
 		return (0.0);
 
-	if ((k->p_flag & L_INMEM) == 0)
-		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = uspace/getpagesize();
 	/* XXX don't have info about shared */

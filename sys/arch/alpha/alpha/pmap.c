@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.243 2009/10/04 17:00:31 mhitch Exp $ */
+/* $NetBSD: pmap.c,v 1.244 2009/10/21 21:11:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.243 2009/10/04 17:00:31 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.244 2009/10/21 21:11:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1268,8 +1268,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * pmap_do_remove:
  *
  *	This actually removes the range of addresses from the
- *	specified map.  It is used by pmap_collect() (does not
- *	want to remove wired mappings) and pmap_remove() (does
+ *	specified map.  It is used by and pmap_remove() (does
  *	want to remove wired mappings).
  */
 static void
@@ -2145,42 +2144,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  *	pmap operations.
  */
 /* call deleted in <machine/pmap.h> */
-
-/*
- * pmap_collect:		[ INTERFACE ]
- *
- *	Garbage collects the physical map system for pages which are no
- *	longer used.  Success need not be guaranteed -- that is, there
- *	may well be pages which are not referenced, but others may be
- *	collected.
- *
- *	Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_collect(%p)\n", pmap);
-#endif
-
-	/*
-	 * If called for the kernel pmap, just return.  We
-	 * handle this case in the event that we ever want
-	 * to have swappable kernel threads.
-	 */
-	if (pmap == pmap_kernel())
-		return;
-
-	/*
-	 * This process is about to be swapped out; free all of
-	 * the PT pages by removing the physical mappings for its
-	 * entire address space.  Note: pmap_remove() performs
-	 * all necessary locking.
-	 */
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, false);
-}
 
 /*
  * pmap_activate:		[ INTERFACE ]

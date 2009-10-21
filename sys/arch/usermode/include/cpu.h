@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: cpu.h,v 1.3 2009/10/21 21:12:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -84,8 +84,5 @@ struct clockframe {
 #define CLKF_USERMODE(frame)	0
 #define CLKF_PC(frame)		0
 #define CLKF_INTR(frame)	0
-
-#define cpu_swapin(l)
-#define cpu_swapout(l)
 
 #endif /* !_ARCH_USERMODE_INCLUDE_CPU_H */

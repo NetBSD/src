@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.149 2009/04/07 18:10:45 dyoung Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.150 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.149 2009/04/07 18:10:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.150 2009/10/21 21:12:05 rmind Exp $");
 
 #include "opt_scsi.h"
 
@@ -1868,19 +1868,6 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 
 	(chan->chan_bustype->bustype_cmd)(xs);
 
-	if (xs->xs_control & XS_CTL_DATA_ONSTACK) {
-#if 1
-		if (xs->xs_control & XS_CTL_ASYNC)
-			panic("scsipi_execute_xs: on stack and async");
-#endif
-		/*
-		 * If the I/O buffer is allocated on stack, the
-		 * process must NOT be swapped out, as the device will
-		 * be accessing the stack.
-		 */
-		uvm_lwp_hold(curlwp);
-	}
-
 	xs->xs_status &= ~XS_STS_DONE;
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
@@ -2024,9 +2011,6 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * into....
 	 */
  free_xs:
-	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
-		uvm_lwp_rele(curlwp);
-
 	s = splbio();
 	scsipi_put_xs(xs);
 	splx(s);

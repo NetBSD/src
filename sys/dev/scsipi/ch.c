@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.84 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: ch.c,v 1.85 2009/10/21 21:12:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.84 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.85 2009/10/21 21:12:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,8 +734,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, u_int8_t *uptr)
 	 * order to read all data.
 	 */
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr),
-	    XS_CTL_DATA_ONSTACK, 0);
+	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr), 0, 0);
 	if (error)
 		return (error);
 
@@ -1107,7 +1106,7 @@ ch_setvoltag(struct ch_softc *sc, struct changer_set_voltag_request *csvr)
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
 	    (void *)data, datalen, CHRETRIES, 100000, NULL,
-	    datalen ? XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK : 0));
+	    datalen ? XS_CTL_DATA_OUT : 0));
 }
 
 static int
@@ -1169,7 +1168,7 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 	memset(&sense_data, 0, sizeof(sense_data));
 	error = scsipi_mode_sense(sc->sc_periph, SMS_DBD, 0x1d,
 	    &sense_data.header, sizeof(sense_data),
-	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
+	    scsiflags, CHRETRIES, 6000);
 	if (error) {
 		aprint_error_dev(&sc->sc_dev, "could not sense element address page\n");
 		return (error);
@@ -1195,7 +1194,7 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 	 */
 	error = scsipi_mode_sense(sc->sc_periph, SMS_DBD, 0x1f,
 	    &sense_data.header, sizeof(sense_data),
-	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
+	    scsiflags, CHRETRIES, 6000);
 	if (error) {
 		aprint_error_dev(&sc->sc_dev, "could not sense capabilities page\n");
 		return (error);

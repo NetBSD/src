@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.120 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.121 2009/10/21 21:12:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct lwp {
 	struct bintime 	l_rtime;	/* l: real time */
 	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		_reserved1;
 	u_int		l_rticks;	/* l: Saved start time of run */
 	u_int		l_rticksum;	/* l: Sum of ticks spent running */
 	u_int		l_slpticks;	/* l: Saved start time of sleep */
@@ -105,7 +105,6 @@ struct lwp {
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	psetid_t	l_psid;		/* l: assigned processor-set ID */
 	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
-	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
@@ -211,7 +210,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
-#define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
@@ -316,7 +314,7 @@ void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
-u_int	lwp_unsleep(lwp_t *, bool);
+void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -394,7 +392,7 @@ lwp_eprio(lwp_t *l)
 	return MAX(l->l_inheritedprio, pri);
 }
 
-int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
+int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
     void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*

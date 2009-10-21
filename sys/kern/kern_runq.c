@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.26 2009/03/02 21:17:29 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.27 2009/10/21 21:12:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.26 2009/03/02 21:17:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.27 2009/10/21 21:12:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -472,10 +472,10 @@ sched_catchlwp(struct cpu_info *ci)
 
 	for (;;) {
 		/* Check the first and next result from the queue */
-		if (l == NULL)
+		if (l == NULL) {
 			break;
+		}
 		KASSERT(l->l_stat == LSRUN);
-		KASSERT(l->l_flag & LW_INMEM);
 
 		/* Look for threads, whose are allowed to migrate */
 		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
