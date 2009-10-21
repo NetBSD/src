@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.65 2009/10/21 05:45:35 snj Exp $
+.\"	$NetBSD: legal.common,v 1.66 2009/10/21 16:13:36 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -278,8 +278,6 @@ This product includes software developed by Internet
 Initiative Japan Inc.
 .It
 This product includes software developed by James R. Maynard III.
-.It
-This product includes software developed by Jared D. McNeill.
 .It
 This product includes software developed by Jason L. Wright
 .It
