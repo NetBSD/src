@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.244 2009/10/21 21:11:58 rmind Exp $ */
+/* $NetBSD: pmap.c,v 1.245 2009/10/22 19:50:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.244 2009/10/21 21:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2009/10/22 19:50:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,6 @@ static struct pool_cache pmap_tlb_shootdown_job_cache;
  * Internal routines
  */
 static void	alpha_protection_init(void);
-static void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, bool);
 static bool	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool, long);
 static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, long);
 
@@ -1255,25 +1254,6 @@ pmap_reference(pmap_t pmap)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
-#endif
-
-	pmap_do_remove(pmap, sva, eva, true);
-}
-
-/*
- * pmap_do_remove:
- *
- *	This actually removes the range of addresses from the
- *	specified map.  It is used by and pmap_remove() (does
- *	want to remove wired mappings).
- */
-static void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
-{
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
 	vaddr_t l1eva, l2eva, vptva;
@@ -1296,8 +1276,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 	if (pmap == pmap_kernel()) {
 		PMAP_MAP_TO_HEAD_LOCK();
 		PMAP_LOCK(pmap);
-
-		KASSERT(dowired == true);
 
 		while (sva < eva) {
 			l3pte = PMAP_KERNEL_PTE(sva);
@@ -1380,15 +1358,14 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 
 					for (; sva < l2eva && sva < eva;
 					     sva += PAGE_SIZE, l3pte++) {
-						if (pmap_pte_v(l3pte) &&
-						    (dowired == true ||
-						     pmap_pte_w(l3pte) == 0)) {
-							needisync |=
-							    pmap_remove_mapping(
-								pmap, sva,
-								l3pte, true,
-								cpu_id);
+						if (!pmap_pte_v(l3pte)) {
+							continue;
 						}
+						needisync |=
+						    pmap_remove_mapping(
+							pmap, sva,
+							l3pte, true,
+							cpu_id);
 					}
 
 					/*
