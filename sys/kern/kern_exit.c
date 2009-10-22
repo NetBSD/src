@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.222 2009/06/28 11:42:43 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.223 2009/10/22 22:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.222 2009/06/28 11:42:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.223 2009/10/22 22:28:57 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -559,9 +559,7 @@ exit1(struct lwp *l, int rv)
 	 * resources.  This must be done before uvm_lwp_exit(), in
 	 * case these resources are in the PCB.
 	 */
-#ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 1);
-#endif
 	pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
