@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.53 2009/10/22 16:34:27 jkunz Exp $
+.\"	$NetBSD: inetd.8,v 1.54 2009/10/22 21:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 27, 2008
+.Dd October 22, 2009
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -285,8 +285,9 @@ option is present then
 .Nm
 advertises the service in the mDNS Service Directory.
 .Xr mdnsd 8
-needs to run for this to work. Note that mDNS does not distinguish IPv4 and
-IPv6. If a service is enabled for IPv6 only and IPv4 addresses are configured
+needs to run for this to work.
+Note that mDNS does not distinguish IPv4 and IPv6.
+If a service is enabled for IPv6 only and IPv4 addresses are configured
 on the affected interface, the service will be advertized for IPv4 and IPv6.
 .Pp
 The
