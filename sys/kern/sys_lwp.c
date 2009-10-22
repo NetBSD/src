@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.46 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.47 2009/10/22 13:12:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.46 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.47 2009/10/22 13:12:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.46 2009/10/21 21:12:06 rmind Exp $");
 
 #define	LWP_UNPARK_MAX		1024
 
-syncobj_t lwp_park_sobj = {
+static syncobj_t lwp_park_sobj = {
 	SOBJ_SLEEPQ_LIFO,
 	sleepq_unsleep,
 	sleepq_changepri,
@@ -63,7 +63,7 @@ syncobj_t lwp_park_sobj = {
 	syncobj_noowner,
 };
 
-sleeptab_t	lwp_park_tab;
+static sleeptab_t	lwp_park_tab;
 
 void
 lwp_sys_init(void)
@@ -71,9 +71,9 @@ lwp_sys_init(void)
 	sleeptab_init(&lwp_park_tab);
 }
 
-/* ARGSUSED */
 int
-sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_t *retval)
+sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const ucontext_t *) ucp;
@@ -179,7 +179,8 @@ sys__lwp_getprivate(struct lwp *l, const void *v, register_t *retval)
 }
 
 int
-sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap, register_t *retval)
+sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(void *) ptr;
@@ -194,7 +195,8 @@ sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap, r
 }
 
 int
-sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, register_t *retval)
+sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -275,7 +277,8 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 }
 
 int
-sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap, register_t *retval)
+sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -300,7 +303,8 @@ sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap, regis
 }
 
 int
-sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_t *retval)
+sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -338,7 +342,8 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 }
 
 int
-sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap, register_t *retval)
+sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) wait_for;
@@ -364,9 +369,9 @@ sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap, register_t *r
 	return 0;
 }
 
-/* ARGSUSED */
 int
-sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *retval)
+sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)	target;
@@ -401,7 +406,8 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 }
 
 int
-sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap, register_t *retval)
+sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)	target;
@@ -624,7 +630,8 @@ sys____lwp_park50(struct lwp *l, const struct sys____lwp_park50_args *uap,
 }
 
 int
-sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap, register_t *retval)
+sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -635,7 +642,8 @@ sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap, register_
 }
 
 int
-sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, register_t *retval)
+sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const lwpid_t *)	targets;
@@ -746,7 +754,8 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 }
 
 int
-sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, register_t *retval)
+sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -795,7 +804,8 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, registe
 }
 
 int
-sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, register_t *retval)
+sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -828,7 +838,8 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, registe
 }
 
 int
-sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap, register_t *retval)
+sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			features;
