@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.52 2009/07/14 08:24:15 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.53 2009/10/22 16:34:27 jkunz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ The fields of the configuration file are as follows:
 [addr:]service-name
 socket-type[:accept_filter]
 protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
+[mdns,]wait/nowait[:max]
 user[:group]
 server-program
 server program arguments
@@ -132,7 +132,7 @@ based service, the entry would contain these fields:
 service-name/version
 socket-type
 rpc/protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
+[mdns,]wait/nowait[:max]
 user[:group]
 server-program
 server program arguments
@@ -145,7 +145,7 @@ these fields:
 path
 socket-type
 unix[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
+[mdns,]wait/nowait[:max]
 user[:group]
 server-program
 server program arguments
@@ -278,6 +278,16 @@ to indicate kilobytes or
 to indicate megabytes.
 Socket buffer sizes may be specified for all
 services and protocols except for tcpmux services.
+.Pp
+If the
+.Em mdns
+option is present then
+.Nm
+advertises the service in the mDNS Service Directory.
+.Xr mdnsd 8
+needs to run for this to work. Note that mDNS does not distinguish IPv4 and
+IPv6. If a service is enabled for IPv6 only and IPv4 addresses are configured
+on the affected interface, the service will be advertized for IPv4 and IPv6.
 .Pp
 The
 .Em wait/nowait
