@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.114 2009/10/22 16:34:27 jkunz Exp $	*/
+/*	$NetBSD: inetd.c,v 1.115 2009/10/22 22:50:35 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.114 2009/10/22 16:34:27 jkunz Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.115 2009/10/22 22:50:35 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,7 @@ __RCSID("$NetBSD: inetd.c,v 1.114 2009/10/22 16:34:27 jkunz Exp $");
  *	socket type[:accf[,arg]]	stream/dgram/raw/rdm/seqpacket,
 					only stream can name an accept filter
  *	protocol			must be in /etc/protocols
- *	[mdns,]wait/nowait[:max]	single-threaded/multi-threaded, max #
- *					if "mdns" register service in mDNS-SD
+ *	wait/nowait[:max]		single-threaded/multi-threaded, max #
  *	user[:group]			user/group to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
@@ -108,8 +107,7 @@ __RCSID("$NetBSD: inetd.c,v 1.114 2009/10/22 16:34:27 jkunz Exp $");
  *      service name/version            must be in /etc/rpc
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
- *	[mdns,]wait/nowait[:max]	single-threaded/multi-threaded
- *					if "mdns" register service in mDNS-SD
+ *	wait/nowait[:max]		single-threaded/multi-threaded
  *	user[:group]			user to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
@@ -257,10 +255,6 @@ int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #endif
 
-#ifdef MDNS
-#include <dns_sd.h>
-#endif /* MDNS */
-
 #define	TOOMANY		40		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
@@ -326,7 +320,6 @@ struct	servtab {
 	} se_un;			/* bound address */
 #define se_ctrladdr	se_un.se_un_ctrladdr
 #define se_ctrladdr_in	se_un.se_un_ctrladdr_in
-#define se_ctrladdr_in6	se_un.se_un_ctrladdr_in6
 #define se_ctrladdr_un	se_un.se_un_ctrladdr_un
 	int	se_ctrladdr_size;
 	int	se_max;			/* max # of instances of this service */
@@ -336,10 +329,6 @@ struct	servtab {
 	int	se_log;
 #define MULOG_RFC931	0x40000000
 #endif
-	int	se_mdns;
-#ifdef MDNS
-	DNSServiceRef se_mdns_reg;
-#endif /* MDNS */
 	struct	servtab *se_next;
 } *servtab;
 
@@ -399,11 +388,6 @@ static void	dolog(struct servtab *, int);
 static void	timeout(int);
 static char    *rfc931_name(struct sockaddr *, int);
 #endif
-#ifdef MDNS
-static int	iface_idx(struct servtab *);
-static void	register_mdns(struct servtab *);
-#endif /* MDNS */
-
 
 struct biltin {
 	const char *bi_service;		/* internally provided service name */
@@ -1006,10 +990,6 @@ config(void)
 			continue;
 		}
 		*sepp = sep->se_next;
-#ifdef MDNS
-		if (sep->se_mdns_reg != NULL)
-			DNSServiceRefDeallocate(sep->se_mdns_reg);
-#endif /* MDNS */
 		if (sep->se_fd >= 0)
 			close_sep(sep);
 		if (isrpcservice(sep))
@@ -1067,117 +1047,11 @@ goaway(void)
 				unregister_rpc(sep);
 			break;
 		}
-#ifdef MDNS
-		if (sep->se_mdns_reg != NULL)
-			DNSServiceRefDeallocate(sep->se_mdns_reg);
-#endif /* MDNS */
 		(void)close(sep->se_fd);
 		sep->se_fd = -1;
 	}
 	exit(0);
 }
-
-
-#ifdef MDNS
-static int
-iface_idx(struct servtab *sep)
-{
-	int if_idx;
-	struct ifaddrs *ifp;
-	struct ifaddrs *ifa;
-
-	if (sep->se_hostaddr[0] == '*' && sep->se_hostaddr[1] == '\0')
-		return 0;
-	/* Optimize: getifaddrs(3) once and cache result. */
-	if (getifaddrs(&ifp) < 0)
-		return 0;
-	if_idx = 0;
-	for (ifa = ifp; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    sep->se_family == AF_INET &&
-		    ((struct sockaddr_in*)ifa->ifa_addr)->sin_addr.s_addr ==
-		    sep->se_ctrladdr_in.sin_addr.s_addr) {
-			if_idx = if_nametoindex(ifa->ifa_name);
-			break;
-		}
-#ifdef INET6
-		if (ifa->ifa_addr->sa_family == AF_INET6 &&
-		    sep->se_family == AF_INET6 &&
-		    IN6_ARE_ADDR_EQUAL(
-		    &((struct sockaddr_in6*) ifa->ifa_addr)->sin6_addr,
-		    &sep->se_ctrladdr_in6.sin6_addr)) {
-			if_idx = if_nametoindex(ifa->ifa_name);
-			break;
-		}
-#endif /* INET6 */
-	}
-	freeifaddrs(ifp);
-	return if_idx;
-}
-
-
-static void
-register_mdns(struct servtab *sep)
-{
-	char regtype[kDNSServiceMaxDomainName];
-	int port, iface, err;
-#ifdef INET6
-	struct servtab *sep2;
-
-	/* skip INET6 if there is a registration for INET */
-	for (sep2 = servtab; sep2 != NULL; sep2 = sep2->se_next)
-		if (strcmp(sep2->se_service, sep->se_service) == 0 &&
-		    strncmp(sep2->se_proto, sep->se_proto, 3) == 0 &&
-		    ISMUX(sep2) == ISMUX(sep) &&
-		    sep->se_family == AF_INET6 &&
-		    sep2->se_family == AF_INET && sep2->se_mdns != 0)
-			break;
-	if (sep2 != NULL)
-		return;
-#endif /* INET6 */
-	if (sep->se_socktype == SOCK_STREAM)
-		snprintf(regtype, sizeof(regtype), "_%s._tcp",
-		    sep->se_service);
-	else
-		snprintf(regtype, sizeof(regtype), "_%s._udp",
-		    sep->se_service);
-#ifdef INET6
-	if (sep->se_family == AF_INET)
-		port = sep->se_ctrladdr_in.sin_port;
-	else
-		port = sep->se_ctrladdr_in6.sin6_port;
-#else /* INET6 */
-	port = sep->se_ctrladdr_in.sin_port;
-#endif /* else INET6 */
-	iface = iface_idx(sep);
-	if (sep->se_mdns_reg != NULL)
-		DNSServiceRefDeallocate(sep->se_mdns_reg);
-	err = DNSServiceRegister(&sep->se_mdns_reg, 0, iface, NULL, regtype,
-	    NULL, NULL, port, 0, NULL, NULL, NULL);
-	if (err != kDNSServiceErr_NoError) {
-		syslog(LOG_ERR, "Can't register mDNS service %s, error=%d.",
-		    sep->se_service, err);
-		DNSServiceRefDeallocate(sep->se_mdns_reg);
-		sep->se_mdns_reg = NULL;
-	} else {
-		if (fcntl(DNSServiceRefSockFD(sep->se_mdns_reg), F_SETFD,
-		    FD_CLOEXEC) < 0)
-			syslog(LOG_ERR, "MDNS: %s/%s: fcntl(F_SETFD, "
-			    "FD_CLOEXEC): %m", sep->se_service, sep->se_proto);
-		if (DNSServiceRefSockFD(sep->se_mdns_reg) > maxsock) {
-			maxsock = DNSServiceRefSockFD(sep->se_mdns_reg);
-			if (maxsock > (int)(rlim_ofile_cur - FD_MARGIN))
-				bump_nofile();
-		}
-	}
-	if (debug)
-		fprintf(stderr, "MDNS: regtype=%s port=%d iface=%d fd=%d "
-		    "error=%d\n", regtype, port, iface,
-		    sep->se_mdns_reg == NULL ? -1 :
-		    DNSServiceRefSockFD(sep->se_mdns_reg), err);
-}
-#endif /* MDNS */
-
 
 static void
 setup(struct servtab *sep)
@@ -1271,20 +1145,6 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	ev = allocchange();
 	EV_SET(ev, sep->se_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
 	    (intptr_t)sep);
-	if (sep->se_mdns != 0 && ! isrpcservice(sep) &&
-#ifdef INET6
-	    (sep->se_family == AF_INET || sep->se_family == AF_INET6)) {
-#else /* INET6 */
-	    (sep->se_family == AF_INET)) {
-#endif /* else INET6 */
-#ifdef MDNS
-		register_mdns(sep);
-#else /* MDNS */
-		syslog(LOG_WARNING, "Warning: mDNS-SD registation for service "
-		    "%s requested by inetd.conf(5), but mDNS is disabled at "
-		    "compile time.", sep->se_service);
-#endif /* else MDNS */
-	}
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
 		if (maxsock > (int)(rlim_ofile_cur - FD_MARGIN))
@@ -1747,10 +1607,6 @@ do { \
 		}
 	}
 	arg = sskip(&cp);
-	if (strncmp(arg, "mdns,", 5) == 0) {
-		sep->se_mdns = 1;
-		arg += 5;
-	}
 	{
 		char *cp1;
 		if ((cp1 = strchr(arg, ':')) == NULL)
