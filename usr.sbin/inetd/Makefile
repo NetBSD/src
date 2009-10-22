@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.21 2007/05/28 12:06:35 tls Exp $
+#	$NetBSD: Makefile,v 1.22 2009/10/22 16:34:27 jkunz Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,12 @@ DPADD+= ${LIBWRAP} ${LIBUTIL}
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
+.endif
+
+.if (${MKMDNS} != "no")
+CPPFLAGS+=-DMDNS
+LDADD+= -ldns_sd
+DPADD+=	${LIBDNS_SD}
 .endif
 
 CPPFLAGS+=-DIPSEC
