@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.69 2009/10/22 18:59:30 snj Exp $
+.\"	$NetBSD: legal.common,v 1.70 2009/10/22 20:31:24 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,9 +85,6 @@ Technology Division, US Naval Research Laboratory.
 .It
 This product includes software developed by
 David Jones and Gordon Ross
-.It
-This product includes software developed by
-Gordon W. Ross and Leo Weppelman.
 .It
 This product includes software developed by
 Hellmuth Michaelis and Joerg Wunsch
