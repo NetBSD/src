@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2009/10/22 22:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -174,9 +174,6 @@ void cpu_idle(void)
 {
 	asm ("hint @pause" ::: "memory");
 }
-
-/* XXX: revisit later */
-#define __NO_CPU_LWP_FREE
 
 #endif /* _KERNEL_ */
 #endif /* _IA64_CPU_H */
