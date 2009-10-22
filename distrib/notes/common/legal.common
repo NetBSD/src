@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.68 2009/10/22 01:38:53 snj Exp $
+.\"	$NetBSD: legal.common,v 1.69 2009/10/22 18:59:30 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -377,8 +377,6 @@ Brandon Creighton and Job de Haas.
 .It
 This product includes software developed by Niklas Hallqvist.
 .It
-This product includes software developed by Onno van der Linden.
-.It
 This product includes software developed by Paul Kranenburg.
 .It
 This product includes software developed by Paul Mackerras.
@@ -416,8 +414,6 @@ This product includes software developed by Shingo WATANABE.
 .It
 This product includes software developed by Softweyr LLC, the
 University of California, Berkeley, and its contributors.
-.It
-This product includes software developed by Soren S. Jorvang.
 .It
 This product includes software developed by Stephan Thesing.
 .It
