@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2009/04/25 05:11:37 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2009/10/22 15:53:19 seanb Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.13 2009/04/25 05:11:37 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2009/10/22 15:53:19 seanb Exp $");
 #endif
 
 
@@ -96,7 +96,7 @@ str_save(s, ap)
 		return NULL;
 	len = strlen(s)+1;
 	p = alloc(len, ap);
-	strlcpy(p, s, len+1);
+	strlcpy(p, s, len);
 	return (p);
 }
 
