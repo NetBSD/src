@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.48 2009/10/21 21:12:00 rmind Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.49 2009/10/22 19:50:55 rmind Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.48 2009/10/21 21:12:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.49 2009/10/22 19:50:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,6 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 
 struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
-static void	pmap_collect_pv(void);
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
@@ -297,13 +296,11 @@ pa_to_pvh(paddr_t pa)
  * Internal routines
  */
 void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
-void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 bool	pmap_testbit(paddr_t, int);
 bool	pmap_changebit(paddr_t, int, int);
 int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
-void	pmap_collect1(pmap_t, paddr_t, paddr_t);
 void	pmap_pinit(pmap_t);
 void	pmap_release(pmap_t);
 
@@ -593,7 +590,8 @@ pmap_free_pv(struct pv_entry *pv)
  *
  *	Perform compaction on the PV list, called via pmap_collect().
  */
-static void
+#ifdef notyet
+void
 pmap_collect_pv(void)
 {
 	struct pv_page_list pv_page_collectlist;
@@ -654,6 +652,7 @@ pmap_collect_pv(void)
 		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
 	}
 }
+#endif
 
 /*
  * pmap_map:
@@ -852,13 +851,6 @@ pmap_deactivate(struct lwp *l)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-
-	pmap_do_remove(pmap, sva, eva, 1);
-}
-
-void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
-{
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	int flags;
@@ -877,7 +869,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 
 		/*
 		 * Invalidate every valid mapping within this segment.
-		 * If remove_wired is zero, skip the wired pages.
 		 */
 
 		pte = pmap_pte(pmap, sva);
@@ -893,10 +884,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 				break;
 			}
 
-
-
-			if (pmap_pte_v(pte) &&
-			    (remove_wired || !pmap_pte_w(pte))) {
+			if (pmap_pte_v(pte)) {
 #ifdef M68K_MMU_HP
 				if (pmap_aliasmask) {
 
@@ -1665,50 +1653,6 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 }
 
 /*
- * pmap_collect:		[ INTERFACE ]
- *
- *	Garbage collects the physical map system for pages which are no
- *	longer used.  Success need not be guaranteed -- that is, there
- *	may well be pages which are not referenced, but others may be
- *	collected.
- */
-static void
-pmap_collect(pmap_t pmap)
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
-
-	if (pmap == pmap_kernel()) {
-		int bank, s;
-
-		/*
-		 * XXX This is very bogus.  We should handle kernel PT
-		 * XXX pages much differently.
-		 */
-
-		s = splvm();
-		for (bank = 0; bank < vm_nphysseg; bank++)
-			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-			    ptoa(vm_physmem[bank].end));
-		splx(s);
-	} else {
-		/*
-		 * This process is about to be swapped out; free all of
-		 * the PT pages by removing the physical mappings for its
-		 * entire address space.  Note: pmap_remove() performs
-		 * all necessary locking.
-		 */
-		pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 0);
-		pmap_update(pmap);
-	}
-
-#ifdef notyet
-	/* Go compact and garbage-collect the pv_table. */
-	pmap_collect_pv();
-#endif
-}
-
-/*
  * pmap_collect1():
  *
  *	Garbage-collect KPT pages.  Helper for the above (bogus)
@@ -1717,7 +1661,7 @@ pmap_collect(pmap_t pmap)
  *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
  *	WAY OF HANDLING PT PAGES!
  */
-static void
+static inline void
 pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;
@@ -1817,6 +1761,39 @@ pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 			    ste, *ste);
 #endif
 	}
+}
+
+/*
+ * pmap_collect:
+ *
+ *	Helper for pmap_enter_ptpage().
+ *
+ *	Garbage collects the physical map system for pages which are no
+ *	longer used.  Success need not be guaranteed -- that is, there
+ *	may well be pages which are not referenced, but others may be
+ *	collected.
+ */
+static void
+pmap_collect(void)
+{
+	int bank, s;
+
+	/*
+	 * XXX This is very bogus.  We should handle kernel PT
+	 * XXX pages much differently.
+	 */
+
+	s = splvm();
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		pmap_collect1(pmap_kernel(), ptoa(vm_physmem[bank].start),
+		    ptoa(vm_physmem[bank].end));
+	}
+	splx(s);
+
+#ifdef notyet
+	/* Go compact and garbage-collect the pv_table. */
+	pmap_collect_pv();
+#endif
 }
 
 /*
@@ -2615,7 +2592,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 			 */
 			PMAP_DPRINTF(PDB_COLLECT,
 			    ("enter: no KPT pages, collecting...\n"));
-			pmap_collect(pmap_kernel());
+			pmap_collect();
 			if ((kpt = kpt_free_list) == NULL)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}

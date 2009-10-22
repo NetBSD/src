@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.20 2009/09/18 18:31:53 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.21 2009/10/22 19:50:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.20 2009/09/18 18:31:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.21 2009/10/22 19:50:56 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -111,25 +111,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 }
 
 /*
- * It's a brave new world.  arm32 pmap is different (even from arm26)
+ * It's a brave new world.
  */
-#if defined(__arm__) && !defined(__PROG26)
-void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int eger)
-{
+#if !defined(__vax__)
 
-	panic("%s: unavailable", __func__);
-}
-#elif !defined(__vax__)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 
 	panic("%s: unavailable", __func__);
 }
-#endif
 
-#ifndef __vax__
 bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
@@ -137,6 +129,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	*pap = va;
 	return true;
 }
+
 #endif
 
 /*

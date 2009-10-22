@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199 2009/10/21 21:11:59 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.200 2009/10/22 19:50:55 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2009/10/21 21:11:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2009/10/22 19:50:55 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -640,7 +640,7 @@ static bool		pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
 static struct pv_entry *pmap_find_pv(struct vm_page *, pmap_t, vaddr_t);
-static struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t, int);
+static struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
 static u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 			    u_int, u_int);
 
@@ -960,7 +960,7 @@ pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
  * => we return the removed pve
  */
 static struct pv_entry *
-pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va, int skip_wired)
+pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
 	struct pv_entry *pve, **prevptr;
 
@@ -975,8 +975,6 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va, int skip_wired)
 			NPDEBUG(PDB_PVDUMP, printf("pmap_remove_pv: pm %p, pg "
 			    "%p, flags 0x%x\n", pm, pg, pve->pv_flags));
 			if (pve->pv_flags & PVF_WIRED) {
-				if (skip_wired)
-					return (NULL);
 				--pm->pm_stats.wired_count;
 			}
 			*prevptr = SLIST_NEXT(pve, pv_link);	/* remove it! */
@@ -2891,7 +2889,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 * must remove it from the PV list
 				 */
 				simple_lock(&opg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(opg, pm, va, 0);
+				pve = pmap_remove_pv(opg, pm, va);
 				pmap_vac_me_harder(opg, pm, 0);
 				simple_unlock(&opg->mdpage.pvh_slock);
 				oflags = pve->pv_flags;
@@ -2954,7 +2952,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * at this address.
 			 */
 			simple_lock(&opg->mdpage.pvh_slock);
-			pve = pmap_remove_pv(opg, pm, va, 0);
+			pve = pmap_remove_pv(opg, pm, va);
 			pmap_vac_me_harder(opg, pm, 0);
 			simple_unlock(&opg->mdpage.pvh_slock);
 			oflags = pve->pv_flags;
@@ -3078,7 +3076,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #define	PMAP_REMOVE_CLEAN_LIST_SIZE	3
 
 void
-pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
+pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
 	struct l2_bucket *l2b;
 	vaddr_t next_bucket;
@@ -3148,7 +3146,7 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 			if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 				struct pv_entry *pve;
 				simple_lock(&pg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(pg, pm, sva, skip_wired);
+				pve = pmap_remove_pv(pg, pm, sva);
 				pmap_vac_me_harder(pg, pm, 0);
 				simple_unlock(&pg->mdpage.pvh_slock);
 				if (pve != NULL) {
@@ -3159,17 +3157,8 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 						   PV_BEEN_REFD(pve->pv_flags);
 					}
 					pool_put(&pmap_pv_pool, pve);
-				} else
-				if (skip_wired) {
-					/* The mapping is wired. Skip it */
-					continue;
 				}
-			} else
-			if (skip_wired) {
-				/* Unmanaged pages are always wired. */
-				continue;
 			}
-
 			mappings++;
 
 			if (!l2pte_valid(pte)) {
@@ -3285,7 +3274,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	KASSERT(pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
 	KASSERT((pg->mdpage.pvh_attrs & PVF_KMPAGE) == 0);
 
-	pv = pmap_remove_pv(pg, pmap_kernel(), va, false);
+	pv = pmap_remove_pv(pg, pmap_kernel(), va);
 	KASSERT(pv);
 	KASSERT(pv->pv_flags & PVF_KENTRY);
 
