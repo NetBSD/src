@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.134 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.135 2009/10/22 22:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.134 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.135 2009/10/22 22:28:57 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -846,9 +846,7 @@ lwp_exit(struct lwp *l)
 	 *
 	 * Free MD LWP resources.
 	 */
-#ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 0);
-#endif
 
 	if (current) {
 		pmap_deactivate(l);
@@ -953,9 +951,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		pool_cache_put(turnstile_cache, l->l_ts);
 	if (l->l_name != NULL)
 		kmem_free(l->l_name, MAXCOMLEN);
-#ifndef __NO_CPU_LWP_FREE
+
 	cpu_lwp_free2(l);
-#endif
 	uvm_lwp_exit(l);
 
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
