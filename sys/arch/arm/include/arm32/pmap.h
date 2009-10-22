@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.92 2009/08/19 23:54:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.93 2009/10/22 19:50:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -267,8 +267,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
  */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-
-#define	pmap_remove(pmap,sva,eva)	pmap_do_remove((pmap),(sva),(eva),0)
 
 #define	pmap_is_modified(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
