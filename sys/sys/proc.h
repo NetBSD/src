@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.291 2009/10/02 22:38:45 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.292 2009/10/22 22:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -495,12 +495,8 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 int	pgid_in_session(struct proc *, pid_t);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
-#ifndef cpu_lwp_free
 void	cpu_lwp_free(struct lwp *, int);
-#ifndef cpu_lwp_free2
 void	cpu_lwp_free2(struct lwp *);
-#endif
-#endif
 
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);

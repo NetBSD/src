@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 2009/10/21 21:12:00 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 2009/10/22 22:28:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,17 @@ void lwp_trampoline(void);
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-printf("%s: not yet\n", __func__);
+
+	/* XXX: Not yet. */
+	(void)l;
+	(void)proc;
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
 }
 
 /*
