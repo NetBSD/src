@@ -1,24 +1,6 @@
-.\"	$NetBSD: rcs.1,v 1.5 2002/02/08 01:26:51 ross Exp $
+.\"	$NetBSD: rcs.1,v 1.6 2009/10/23 23:22:54 joerg Exp $
 .\"
-.de Id
-.ds Rv \\$3
-.ds Dt \\$4
-..
-.\" Id: rcs.1,v 5.13 1995/06/05 08:28:35 eggert Exp
-.ds r \&\s-1RCS\s0
-.if n .ds - \%--
-.if t .ds - \(em
-.if !\n(.g \{\
-.	if !\w|\*(lq| \{\
-.		ds lq ``
-.		if \w'\(lq' .ds lq "\(lq
-.	\}
-.	if !\w|\*(rq| \{\
-.		ds rq ''
-.		if \w'\(rq' .ds rq "\(rq
-.	\}
-.\}
-.TH RCS 1 \*(Dt GNU
+.TH RCS 1 "" GNU
 .SH NAME
 rcs \- change RCS file attributes
 .SH SYNOPSIS
@@ -26,8 +8,8 @@ rcs \- change RCS file attributes
 .IR "options file " .\|.\|.
 .SH DESCRIPTION
 .B rcs
-creates new \*r files or changes attributes of existing ones.
-An \*r file contains multiple revisions of text,
+creates new RCS files or changes attributes of existing ones.
+An RCS file contains multiple revisions of text,
 an access list, a change log,
 descriptive text,
 and some control attributes.
@@ -40,7 +22,7 @@ the
 .B \-i
 option is present.
 .PP
-Pathnames matching an \*r suffix denote \*r files;
+Pathnames matching an RCS suffix denote RCS files;
 all others denote working files.
 Names are paired as explained in
 .BR ci (1).
@@ -49,28 +31,28 @@ Revision numbers use the syntax described in
 .SH OPTIONS
 .TP
 .B \-i
-Create and initialize a new \*r file, but do not deposit any revision.
-If the \*r file has no path prefix, try to place it
+Create and initialize a new RCS file, but do not deposit any revision.
+If the RCS file has no path prefix, try to place it
 first into the subdirectory
 .BR ./RCS ,
 and then into the current directory.
-If the \*r file
+If the RCS file
 already exists, print an error message.
 .TP
 .BI \-a "logins"
 Append the login names appearing in the comma-separated list
 .I logins
-to the access list of the \*r file.
+to the access list of the RCS file.
 .TP
 .BI \-A "oldfile"
 Append the access list of
 .I oldfile
-to the access list of the \*r file.
+to the access list of the RCS file.
 .TP
 .BR \-e [\f2logins\fP]
 Erase the login names appearing in the comma-separated list
 .I logins
-from the access list of the \*r file.
+from the access list of the RCS file.
 If
 .I logins
 is omitted, erase the entire access list.
@@ -95,14 +77,14 @@ without
 guesses the comment leader from the suffix of the working filename.
 .RS
 .PP
-This option is obsolescent, since \*r normally uses the preceding
+This option is obsolescent, since RCS normally uses the preceding
 .B $\&Log$
 line's prefix when inserting log lines during checkout (see
 .BR co (1)).
-However, older versions of \*r use the comment leader instead of the
+However, older versions of RCS use the comment leader instead of the
 .B $\&Log$
 line's prefix, so
-if you plan to access a file with both old and new versions of \*r,
+if you plan to access a file with both old and new versions of RCS,
 make sure its comment leader matches its
 .B $\&Log$
 line prefix.
@@ -162,7 +144,7 @@ itself.
 Set locking to
 .IR strict .
 Strict locking means that the owner
-of an \*r file is not exempt from locking for checkin.
+of an RCS file is not exempt from locking for checkin.
 This option should be used for files that are shared.
 .TP
 .B \-U
@@ -219,7 +201,7 @@ For example,
 .BI "rcs\ \-n" name ":\ RCS/*"
 associates
 .I name
-with the current latest revision of all the named \*r files;
+with the current latest revision of all the named RCS files;
 this contrasts with
 .BI "rcs\ \-n" name ":$\ RCS/*"
 which associates
@@ -297,7 +279,7 @@ sets the state of a revision to
 .BR \-t [\f2file\fP]
 Write descriptive text from the contents of the named
 .I file
-into the \*r file, deleting the existing text.
+into the RCS file, deleting the existing text.
 The
 .IR file
 pathname cannot begin with
@@ -320,23 +302,23 @@ is not given.
 .BI \-t\- string
 Write descriptive text from the
 .I string
-into the \*r file, deleting the existing text.
+into the RCS file, deleting the existing text.
 .TP
 .B \-T
-Preserve the modification time on the \*r file
+Preserve the modification time on the RCS file
 unless a revision is removed.
 This option can suppress extensive recompilation caused by a
 .BR make (1)
-dependency of some copy of the working file on the \*r file.
+dependency of some copy of the working file on the RCS file.
 Use this option with care; it can suppress recompilation even when it is needed,
-i.e. when a change to the \*r file
+i.e. when a change to the RCS file
 would mean a change to keyword strings in the working file.
 .TP
 .BI \-V
-Print \*r's version number.
+Print RCS's version number.
 .TP
 .BI \-V n
-Emulate \*r version
+Emulate RCS version
 .IR n .
 See
 .BR co (1)
@@ -345,7 +327,7 @@ for details.
 .BI \-x "suffixes"
 Use
 .I suffixes
-to characterize \*r files.
+to characterize RCS files.
 See
 .BR ci (1)
 for details.
@@ -355,7 +337,7 @@ Use
 .I zone
 as the default time zone.
 This option has no effect;
-it is present for compatibility with other \*r commands.
+it is present for compatibility with other RCS commands.
 .PP
 At least one explicit option must be given,
 to ensure compatibility with future planned extensions
@@ -365,26 +347,26 @@ command.
 .SH COMPATIBILITY
 The
 .BI \-b rev
-option generates an \*r file that cannot be parsed by \*r version 3 or earlier.
+option generates an RCS file that cannot be parsed by RCS version 3 or earlier.
 .PP
 The
 .BI \-k subst
 options (except
 .BR \-kkv )
-generate an \*r file that cannot be parsed by \*r version 4 or earlier.
+generate an RCS file that cannot be parsed by RCS version 4 or earlier.
 .PP
 Use
 .BI "rcs \-V" n
-to make an \*r file acceptable to \*r version
+to make an RCS file acceptable to RCS version
 .I n
 by discarding information that would confuse version
 .IR n .
 .PP
-\*r version 5.5 and earlier does not support the
+RCS version 5.5 and earlier does not support the
 .B \-x
 option, and requires a
 .B ,v
-suffix on an \*r pathname.
+suffix on an RCS pathname.
 .SH FILES
 .B rcs
 accesses files much as
@@ -403,7 +385,7 @@ See
 .BR ci (1)
 for details.
 .SH DIAGNOSTICS
-The \*r pathname and the revisions outdated are written to
+The RCS pathname and the revisions outdated are written to
 the diagnostic output.
 The exit status is zero if and only if all operations were successful.
 .SH IDENTIFICATION
@@ -419,14 +401,14 @@ rcsintro(1), co(1), ci(1), ident(1), rcsclean(1), rcsdiff(1),
 rcsmerge(1), rlog(1), rcsfile(5)
 .br
 Walter F. Tichy,
-\*r\*-A System for Version Control,
-.I "Software\*-Practice \*[Am] Experience"
+RCS\(emA System for Version Control,
+.I "Software\(emPractice \*[Am] Experience"
 .BR 15 ,
 7 (July 1985), 637-654.
 .SH BUGS
-A catastrophe (e.g. a system crash) can cause \*r to leave behind
-a semaphore file that causes later invocations of \*r to claim
-that the \*r file is in use.
+A catastrophe (e.g. a system crash) can cause RCS to leave behind
+a semaphore file that causes later invocations of RCS to claim
+that the RCS file is in use.
 To fix this, remove the semaphore file.
 A semaphore file's name typically begins with
 .B ,
