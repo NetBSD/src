@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.101 2009/10/23 22:14:37 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.102 2009/10/23 23:12:10 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -274,7 +274,7 @@ cleanman: .PHONY
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
-.if ${MKMANDOC} == "yes"
+.if ${MKMANDOC} == "yes" && !empty(MANPAGES)
 lintmanpages: ${MANPAGES}
 	${TOOL_MANDOC_LINT} -Tlint -fstrict ${.ALLSRC}
 .endif
