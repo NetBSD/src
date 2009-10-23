@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.70 2009/10/22 20:31:24 snj Exp $
+.\"	$NetBSD: legal.common,v 1.71 2009/10/23 02:53:22 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,8 +129,6 @@ This product includes software developed by Bodo Moeller.
 (If available, substitute umlauted o for oe)
 .It
 This product includes software developed by Boris Popov.
-.It
-This product includes software developed by Brad Pepers
 .It
 This product includes software developed by Bradley A. Grantham.
 .It
