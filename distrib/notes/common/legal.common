@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.75 2009/10/23 05:28:25 snj Exp $
+.\"	$NetBSD: legal.common,v 1.76 2009/10/23 05:37:18 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,8 +168,6 @@ Ezra Story, Kari Mettinen, Markus Wild, Lutz Vieweg
 and Michael Teske.
 .It
 This product includes software developed by Christian E. Hopps.
-.It
-This product includes software developed by Christian Limpach.
 .It
 This product includes software developed by Christopher G. Demetriou
 for the NetBSD Project.
