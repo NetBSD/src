@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.73 2009/10/23 03:42:42 snj Exp $
+.\"	$NetBSD: legal.common,v 1.74 2009/10/23 03:54:38 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -255,8 +255,6 @@ This product includes software developed by Hidetoshi Shimokawa.
 .It
 This product includes software developed by Hubert Feyrer for
 the NetBSD Project.
-.It
-This product includes software developed by Ian F. Darwin and others.
 .It
 This product includes software developed by Ian W. Dall.
 .It
