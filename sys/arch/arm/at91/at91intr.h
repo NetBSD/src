@@ -1,5 +1,5 @@
-/*	$Id: at91intr.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91intr.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91intr.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$NetBSD: at91intr.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
