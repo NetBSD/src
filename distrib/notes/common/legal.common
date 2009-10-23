@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.71 2009/10/23 02:53:22 snj Exp $
+.\"	$NetBSD: legal.common,v 1.72 2009/10/23 03:28:55 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,8 +188,6 @@ This product includes software developed by Colin Wood.
 This product includes software developed by Daan Vreeken.
 .It
 This product includes software developed by Daishi Kato
-.It
-This product includes software developed by Dale Rahn.
 .It
 This product includes software developed by Daniel Widenfalk
 and Michael L. Hitch.
