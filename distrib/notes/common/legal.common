@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.74 2009/10/23 03:54:38 snj Exp $
+.\"	$NetBSD: legal.common,v 1.75 2009/10/23 05:28:25 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -293,8 +293,6 @@ This product includes software developed by Jonathan Stone
 and Jason R. Thorpe for the NetBSD Project.
 .It
 This product includes software developed by Jonathan Stone.
-.It
-This product includes software developed by Jukka Marin.
 .It
 This product includes software developed by Julian Highfield.
 .It
