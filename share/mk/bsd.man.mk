@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.100 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: bsd.man.mk,v 1.101 2009/10/23 22:14:37 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -6,6 +6,9 @@
 ##### Basic targets
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks
 .PHONY:		htmlinstall htmlpages htmllinks
+.if ${MKMANDOC} == "yes"
+.PHONY:		lintmanpages
+.endif
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -131,6 +134,14 @@ ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if defined(USETBL)
 	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+.elif ${MKMANDOC} == yes && !defined(NOMANDOC)
+	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
+		${TOOL_MANDOC_ASCII} ${.IMPSRC} ${MANCOMPRESS} \
+		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
+	else \
+		${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
+	fi
 .else
 	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
@@ -188,8 +199,18 @@ realall:	${HTMLPAGES}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 	${_MKTARGET_FORMAT}
+.if ${MKMANDOC} == "yes" && !defined(NOMANDOC)
+	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
+		${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+		    mv ${.TARGET}.tmp ${.TARGET}; \
+	else \
+		${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+		    mv ${.TARGET}.tmp ${.TARGET}; \
+	fi
+.else
 	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
+.endif
 
 .for F in ${HTMLPAGES:O:u}
 # construct installed path
@@ -252,6 +273,11 @@ cleanman: .PHONY
 .endif
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
+
+.if ${MKMANDOC} == "yes"
+lintmanpages: ${MANPAGES}
+	${TOOL_MANDOC_LINT} -Tlint -fstrict ${.ALLSRC}
+.endif
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
