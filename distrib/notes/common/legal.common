@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.77 2009/10/23 07:04:57 snj Exp $
+.\"	$NetBSD: legal.common,v 1.78 2009/10/23 17:14:35 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -399,8 +399,6 @@ This product includes software developed by Softweyr LLC, the
 University of California, Berkeley, and its contributors.
 .It
 This product includes software developed by Stephan Thesing.
-.It
-This product includes software developed by Steve Woodford.
 .It
 This product includes software developed by Steven M. Bellovin.
 .It
