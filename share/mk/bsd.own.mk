@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.590 2009/10/23 22:14:37 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.591 2009/10/23 23:12:10 joerg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -595,6 +595,9 @@ RUMPKMOD=	# defined
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html
+.if ${MKMANDOC} == "yes"
+TARGETS+=	lintmanpages
+.endif
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
