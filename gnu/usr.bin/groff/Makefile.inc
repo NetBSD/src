@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.17 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile.inc,v 1.18 2009/10/23 23:23:56 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -163,3 +163,5 @@ GROFF_DIST=	${NETBSDSRCDIR}/gnu/dist/groff
 DIST_SUBDIR?=	${.CURDIR:T}
 DIST_DIR=	${GROFF_DIST}/${DIST_SUBDIR}
 .PATH: ${DIST_DIR}
+
+NOMANDOC=	yes
