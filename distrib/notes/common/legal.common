@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.78 2009/10/23 17:14:35 snj Exp $
+.\"	$NetBSD: legal.common,v 1.79 2009/10/23 17:34:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,8 +330,6 @@ This product includes software developed by Markus Wild.
 This product includes software developed by Masanobu Saitoh.
 .It
 This product includes software developed by Masaru Oki.
-.It
-This product includes software developed by Matt DeBergalis
 .It
 This product includes software developed by Matthew Fredette.
 .It
