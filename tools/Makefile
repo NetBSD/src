@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127 2009/02/25 22:28:36 sketch Exp $
+#	$NetBSD: Makefile,v 1.128 2009/10/23 22:14:37 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,9 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
 SUBDIR+=	groff
+.  if ${MKMANDOC} == "yes"
+SUBDIR+=	mandoc
+.  endif
 .endif
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
