@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.3 2009/06/27 16:10:25 jakllsch Exp $      */
+/*        $NetBSD: dm_table.c,v 1.4 2009/10/23 20:41:11 joerg Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -149,8 +149,8 @@ dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 
 	mutex_enter(&head->table_mtx);
 
-	printf("dm_Table_destroy called with %d--%d\n", table_id, head->io_cnt);
-	
+	aprint_debug("dm_Table_destroy called with %d--%d\n", table_id, head->io_cnt);
+
 	while (head->io_cnt != 0)
 		cv_wait(&head->table_cv, &head->table_mtx);
 
