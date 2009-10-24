@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.29 2009/10/15 00:33:37 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.30 2009/10/24 11:29:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -92,8 +92,6 @@ int rumpuser_gettime(uint64_t *, uint64_t *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);
 
 int rumpuser_gethostname(char *, size_t, int *);
-
-char *rumpuser_realpath(const char *, char *, int *);
 
 int rumpuser_poll(struct pollfd *, int, int, int *);
 

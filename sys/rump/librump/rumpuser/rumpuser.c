@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.43 2009/10/09 14:41:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.44 2009/10/24 11:29:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.43 2009/10/09 14:41:36 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.44 2009/10/24 11:29:55 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -412,20 +412,6 @@ rumpuser_gethostname(char *name, size_t namelen, int *error)
 {
 
 	DOCALL(int, (gethostname(name, namelen)));
-}
-
-char *
-rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
-{
-	char *rv;
-
-	rv = realpath(path, resolvedname);
-	if (rv == NULL)
-		*error = errno;
-	else
-		*error = 0;
-
-	return rv;
 }
 
 int
