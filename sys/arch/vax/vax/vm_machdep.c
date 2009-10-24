@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.107 2009/08/15 23:45:01 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.108 2009/10/24 20:03:56 rmind Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.107 2009/08/15 23:45:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108 2009/10/24 20:03:56 rmind Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -200,6 +200,21 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->PC = (long)func + 2;
 }
 #endif
+
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	(void)l;
+	(void)proc;
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
+}
 
 #ifdef EXEC_AOUT
 int
