@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.23 2009/10/14 21:25:52 dsl Exp $	*/
+/*	$NetBSD: fgets.c,v 1.24 2009/10/24 14:50:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.23 2009/10/14 21:25:52 dsl Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.24 2009/10/24 14:50:48 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include "reentrant.h"
 #include "local.h"
@@ -61,14 +62,12 @@ fgets(buf, n, fp)
 	int n;
 	FILE *fp;
 {
-	size_t len;
+	int len;
 	char *s;
 	unsigned char *p, *t;
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(fp != NULL);
-	if (n <= 0)					/* sanity check */
-		return (NULL);
 
 	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
@@ -97,11 +96,25 @@ fgets(buf, n, fp)
 		 * newline, and stop.  Otherwise, copy entire chunk
 		 * and loop.
 		 */
-		if (len > (size_t)n)
+		if (len > n) {
+			if (n < 0) {
+				/*
+				 * Caller's length <= 0
+				 * We can't write into the buffer, so cannot
+				 * return a string, so must return NULL.
+				 * Set errno and __SERR so it is consistent.
+				 * TOG gives no indication of what to do here!
+				 */
+				errno = EINVAL;
+				fp->_flags |= __SERR;
+				FUNLOCKFILE(fp);
+				return NULL;
+			}
 			len = n;
+		}
 		t = memchr((void *)p, '\n', len);
 		if (t != NULL) {
-			len = ++t - p;
+			len = (int)(++t - p);
 			fp->_r -= len;
 			fp->_p = t;
 			(void)memcpy((void *)s, (void *)p, len);
