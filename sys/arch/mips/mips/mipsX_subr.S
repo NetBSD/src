@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.32 2009/10/21 21:12:01 rmind Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.33 2009/10/24 13:28:16 he Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2105,7 +2105,7 @@ entry0set:
 	nop
 
 resume:
-#endif /* !ENABLE_MIPS_16KB_PAGE
+#endif /* !ENABLE_MIPS_16KB_PAGE */
 	j	ra
 	nop
 END(MIPSX(cpu_switch_resume))
