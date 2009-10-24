@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.20 2009/04/20 14:42:12 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.21 2009/10/24 05:35:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.20 2009/04/20 14:42:12 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.21 2009/10/24 05:35:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,9 @@ __RCSID("$NetBSD: res_init.c,v 1.20 2009/04/20 14:42:12 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/event.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -97,6 +99,7 @@ __RCSID("$NetBSD: res_init.c,v 1.20 2009/04/20 14:42:12 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <netdb.h>
 
 #define HAVE_MD5
@@ -156,6 +159,9 @@ static u_int32_t net_mask __P((struct in_addr));
 # define isascii(c) (!(c & 0200))
 #endif
 
+static struct timespec __res_conf_time;
+static const struct timespec ts = { 0, 0 };
+
 /*
  * Resolver state default settings.
  */
@@ -183,8 +189,6 @@ static u_int32_t net_mask __P((struct in_addr));
  */
 int
 res_ninit(res_state statp) {
-	extern int __res_vinit(res_state, int);
-
 	return (__res_vinit(statp, 0));
 }
 
@@ -208,17 +212,17 @@ __res_vinit(res_state statp, int preinit) {
 
 	RES_SET_H_ERRNO(statp, 0);
 
+	if ((statp->options & RES_INIT) != 0U)
+		res_ndestroy(statp);
+
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
 		statp->retry = RES_DFLRETRY;
 		statp->options = RES_DEFAULT;
-		statp->_rnd = malloc(16);
-		res_rndinit(statp);
-		statp->id = res_nrandomid(statp);
 	}
-
-	if ((statp->options & RES_INIT) != 0U)
-		res_ndestroy(statp);
+	statp->_rnd = malloc(16);
+	res_rndinit(statp);
+	statp->id = res_nrandomid(statp);
 
 	memset(u, 0, sizeof(u));
 #ifdef USELOOPBACK
@@ -343,6 +347,9 @@ __res_vinit(res_state statp, int preinit) {
 
 	nserv = 0;
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
+	    struct stat st;
+	    struct kevent kc;
+
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
 		/* skip comments */
@@ -490,7 +497,21 @@ __res_vinit(res_state statp, int preinit) {
 #ifdef RESOLVSORT
 	    statp->nsort = nsort;
 #endif
+	    statp->_u._ext.ext->resfd = dup(fileno(fp));
 	    (void) fclose(fp);
+	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
+		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
+			st.st_mtimespec;
+	    statp->_u._ext.ext->kq = kqueue();
+	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
+	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
+	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
+		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
+		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
+	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
+	} else {
+	    statp->_u._ext.ext->kq = -1;
+	    statp->_u._ext.ext->resfd = -1;
 	}
 /*
  * Last chance to get a nameserver.  This should not normally
@@ -539,6 +560,33 @@ __res_vinit(res_state statp, int preinit) {
 		res_setoptions(statp, cp, "env");
 	statp->options |= RES_INIT;
 	return (statp->res_h_errno);
+}
+
+void
+__res_check(res_state statp)
+{
+	/*
+	 * If the times are equal, then we check if there
+	 * was a kevent related to resolv.conf and reload.
+	 * If the times are not equal, then we don't bother
+	 * to check the kevent, because another thread already
+	 * did, loaded and changed the time.
+	 */
+	if (timespeccmp(&statp->_u._ext.ext->res_conf_time,
+	    &__res_conf_time, ==)) {
+		struct kevent ke;
+		if (statp->_u._ext.ext->kq == -1)
+			return;
+
+		switch (kevent(statp->_u._ext.ext->kq, NULL, 0, &ke, 1, &ts)) {
+		case 0:
+		case -1:
+			return;
+		default:
+			break;
+		}
+	}
+	(void)__res_vinit(statp, 0);
 }
 
 static void
@@ -758,6 +806,10 @@ void
 res_ndestroy(res_state statp) {
 	res_nclose(statp);
 	if (statp->_u._ext.ext != NULL) {
+		if (statp->_u._ext.ext->kq != -1)
+			(void)close(statp->_u._ext.ext->kq);
+		if (statp->_u._ext.ext->resfd != -1)
+			(void)close(statp->_u._ext.ext->resfd);
 		free(statp->_u._ext.ext);
 		statp->_u._ext.ext = NULL;
 	}

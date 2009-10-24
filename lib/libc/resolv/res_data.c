@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.13 2009/04/12 19:43:37 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.14 2009/10/24 05:35:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: res_data.c,v 1.7 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.13 2009/04/12 19:43:37 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.14 2009/10/24 05:35:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: res_data.c,v 1.13 2009/04/12 19:43:37 christos Exp $");
 #include <unistd.h>
 
 #include "port_after.h"
+
+#include "res_private.h"
 
 #ifdef __weak_alias
 __weak_alias(res_init,_res_init)
@@ -108,7 +110,6 @@ int  res_ourserver_p(const res_state, const struct sockaddr *);
 int
 res_init(void) {
 	int rv;
-	extern int __res_vinit(res_state, int);
 #ifdef COMPAT__RES
 	/*
 	 * Compatibility with program that were accessing _res directly
