@@ -3,7 +3,7 @@ banner==========================================================================
 banner=
 banner=ACPI (Advanced Configuration and Power Interface) should work on all modern
 banner=and legacy hardware.  However if you do encounter a problem while booting,
-banner=try disabling it and report a bug at http://www.netbsd.org/.
+banner=try disabling it and report a bug at http://www.NetBSD.org/.
 menu=Install NetBSD:boot netbsd
 menu=Install NetBSD (no ACPI):boot netbsd -2
 menu=Install NetBSD (no ACPI, no SMP):boot netbsd -12
