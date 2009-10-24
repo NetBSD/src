@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2009/08/18 21:30:31 wiz Exp $
+$NetBSD: README,v 1.8 2009/10/24 03:55:27 tsarna Exp $
 
 Organization of Sources:
 
@@ -40,6 +40,8 @@ This arrangement allows for packages to be easily disabled or
 excised as necessary, either on a per-license or per-package basis.
 
 The licenses currently used are:
+
+	apache2		Apache 2.0 license.
 
 	bsd		BSD (or equivalent) licensed software, possibly with
 			the "advertising clause".
