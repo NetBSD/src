@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.43 2009/01/18 10:57:15 drochner Exp $	*/
+/*	$NetBSD: localtime.c,v 1.44 2009/10/24 17:01:04 mlelstv Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.43 2009/01/18 10:57:15 drochner Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.44 2009/10/24 17:01:04 mlelstv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1290,7 +1290,7 @@ register struct tm * const		tmp;
 	if (tmp->tm_wday < 0)
 		tmp->tm_wday += DAYSPERWEEK;
 	y = EPOCH_YEAR;
-#define LEAPS_THRU_END_OF(y)	((y) / 4 - (y) / 100 + (y) / 400)
+#define LEAPS_THRU_END_OF(y)	((y) < 0 ? ((y)-3)/4 - ((y)-99)/100 + ((y)-399)/400 : (y)/4 - (y)/100 + (y)/400)
 	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
 		register time_t	newy;
 		newy = (y + days / DAYSPERNYEAR);
