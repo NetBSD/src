@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.2 2009/10/24 18:11:52 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.3 2009/10/24 18:30:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -302,7 +302,7 @@ LEAF(suswintr)
 END(suswintr)
 
 /*
- * int fuword(void *)
+ * long fuword(void *)
  * Fetches a word of data from the user-space address.
  */
 LEAF(fuword)
@@ -311,7 +311,7 @@ XLEAF(fuiword)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	INT_L	v0, 0(a0)			# fetch word
+	LONG_L	v0, 0(a0)			# fetch word
 	j	ra
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 END(fuword)
