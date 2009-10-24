@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.12 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.13 2009/10/24 21:37:57 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.11 2008/11/14 02:36:51 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.12 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.13 2009/10/24 21:37:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -454,7 +454,6 @@ res_hostalias(const res_state statp, const char *name, char *dst, size_t siz) {
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
-	setbuf(fp, NULL);
 	buf[sizeof(buf) - 1] = '\0';
 	while (fgets(buf, sizeof(buf), fp)) {
 		for (cp1 = buf; *cp1 && !isspace((unsigned char)*cp1); ++cp1)
