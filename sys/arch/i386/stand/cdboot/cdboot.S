@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.10 2009/10/24 11:23:06 dsl Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.11 2009/10/24 12:57:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ read_sectors:
 1:	movb	%dh, edd_nsecs
 	cmpb	$MAX_SECTORS, %dh
 	jle	2f			/* j if less than 64k */
-	movb	$MAX_SECTORS, edd_nsecs	/* Read 16 sectors - 64k bytes */
+	movb	$MAX_SECTORS, edd_nsecs	/* Read 32 sectors - 64k bytes */
 2:	movb	boot_drive, %dl
 	movw	$edd_packet, %si
 read_again:
