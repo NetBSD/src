@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.21 2008/10/27 19:52:28 apb Exp $
+.\" $NetBSD: ksh.Man,v 1.22 2009/10/24 11:08:46 reed Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1716,7 +1716,7 @@ This command is only available on systems which support job control.
 See Job Control below for more information.
 .\"}}}
 .\"{{{  bind [-l] [-m] [key[=editing-command] ...]
-.IP "\fBbind\fP [\fB\-m\fP] [\fIkey\fP[\fB=\fP\fIediting-command\fP] ...]"
+.IP "\fBbind\fP [\fB\-l\fP] [\fB\-m\fP] [\fIkey\fP[\fB=\fP\fIediting-command\fP] ...]"
 Set or view the current emacs command editing key bindings/macros.
 See Emacs Editing Mode below for a complete description.
 .\"}}}
