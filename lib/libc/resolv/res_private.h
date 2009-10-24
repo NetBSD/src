@@ -1,4 +1,4 @@
-/*	$NetBSD: res_private.h,v 1.2 2009/10/24 05:35:37 christos Exp $	*/
+/*	$NetBSD: res_private.h,v 1.3 2009/10/24 17:24:01 christos Exp $	*/
 
 #ifndef res_private_h
 #define res_private_h
@@ -20,7 +20,6 @@ struct __res_state_ext {
 
 extern int res_ourserver_p(const res_state, const struct sockaddr *);
 extern int __res_vinit(res_state, int);
-extern void __res_check(res_state);
 
 #endif
 

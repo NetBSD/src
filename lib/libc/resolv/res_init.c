@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.21 2009/10/24 05:35:37 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.21 2009/10/24 05:35:37 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -562,8 +562,8 @@ __res_vinit(res_state statp, int preinit) {
 	return (statp->res_h_errno);
 }
 
-void
-__res_check(res_state statp)
+int
+res_check(res_state statp, struct timespec *mtime)
 {
 	/*
 	 * If the times are equal, then we check if there
@@ -576,17 +576,23 @@ __res_check(res_state statp)
 	    &__res_conf_time, ==)) {
 		struct kevent ke;
 		if (statp->_u._ext.ext->kq == -1)
-			return;
+			goto out;
 
 		switch (kevent(statp->_u._ext.ext->kq, NULL, 0, &ke, 1, &ts)) {
 		case 0:
 		case -1:
-			return;
+out:
+			if (mtime)
+				*mtime = __res_conf_time;
+			return 0;
 		default:
 			break;
 		}
 	}
 	(void)__res_vinit(statp, 0);
+	if (mtime)
+		*mtime = __res_conf_time;
+	return 1;
 }
 
 static void
