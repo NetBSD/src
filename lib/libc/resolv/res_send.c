@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.19 2009/10/24 05:35:37 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.19 2009/10/24 05:35:37 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -337,7 +337,7 @@ res_nsend(res_state statp,
 	highestFD = sysconf(_SC_OPEN_MAX) - 1;
 #endif
 
-	__res_check(statp);
+	(void)res_check(statp, NULL);
 
 	/* No name servers or res_init() failure */
 	if (statp->nscount == 0 || EXT(statp).ext == NULL) {
