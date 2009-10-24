@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.18 2009/02/11 23:48:17 lukem Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.19 2009/10/24 15:20:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.18 2009/02/11 23:48:17 lukem Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.19 2009/10/24 15:20:15 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,7 +84,7 @@ __sfvwrite(fp, uio)
 	}
 
 #define	MIN(a, b) ((a) < (b) ? (a) : (b))
-#define	COPY(n)	  (void)memcpy((void *)fp->_p, (void *)p, (size_t)(n))
+#define	COPY(n)	  (void)memcpy(fp->_p, p, (n))
 
 	iov = uio->uio_iov;
 	p = iov->iov_base;
@@ -135,8 +135,7 @@ __sfvwrite(fp, uio)
 				do {
 					_size = (_size << 1) + 1;
 				} while (_size < blen + len);
-				_base = realloc(fp->_bf._base,
-				    (size_t)(_size + 1));
+				_base = realloc(fp->_bf._base, _size + 1);
 				if (_base == NULL)
 					goto err;
 				fp->_w += _size - fp->_bf._size;
@@ -187,7 +186,7 @@ __sfvwrite(fp, uio)
 		do {
 			GETIOV(nlknown = 0);
 			if (!nlknown) {
-				nl = memchr((void *)p, '\n', (size_t)len);
+				nl = memchr(p, '\n', len);
 				nldist = nl ? nl + 1 - p : len + 1;
 				nlknown = 1;
 			}
