@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.6 2007/02/03 22:26:55 christos Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.7 2009/10/24 15:20:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.6 2007/02/03 22:26:55 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.7 2009/10/24 15:20:15 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -326,7 +326,7 @@ reswitch:	switch (ch) {
 				 * NUL in the first `prec' characters, and
 				 * strlen() will go further.
 				 */
-				char *p = memchr(cp, 0, (size_t)prec);
+				char *p = memchr(cp, 0, prec);
 
 				if (p != NULL) {
 					size = p - cp;
@@ -400,7 +400,7 @@ number:			if ((dprec = prec) >= 0)
 
 				case HEX:
 					do {
-						*--cp = xdigs[(size_t)_uquad & 15];
+						*--cp = xdigs[_uquad & 15];
 						_uquad >>= 4;
 					} while (_uquad);
 					break;

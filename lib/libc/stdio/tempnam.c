@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.19 2005/07/27 13:23:07 drochner Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.20 2009/10/24 15:20:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.19 2005/07/27 13:23:07 drochner Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.20 2009/10/24 15:20:15 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,24 +75,24 @@ tempnam(const char *dir, const char *pfx)
 	char *name, *f;
 	const char *tmp;
 
-	if (!(name = malloc((size_t)MAXPATHLEN)))
+	if (!(name = malloc(MAXPATHLEN)))
 		return NULL;
 
 	if (!pfx)
 		pfx = "tmp.";
 
 	if ((tmp = getenv("TMPDIR")) != NULL &&
-	    (f = gentemp(name, (size_t)MAXPATHLEN, tmp, pfx)) != NULL)
+	    (f = gentemp(name, MAXPATHLEN, tmp, pfx)) != NULL)
 		return f;
 
 	if (dir != NULL &&
-	    (f = gentemp(name, (size_t)MAXPATHLEN, dir, pfx)) != NULL)
+	    (f = gentemp(name, MAXPATHLEN, dir, pfx)) != NULL)
 		return f;
 
-	if ((f = gentemp(name, (size_t)MAXPATHLEN, P_tmpdir, pfx)) != NULL)
+	if ((f = gentemp(name, MAXPATHLEN, P_tmpdir, pfx)) != NULL)
 		return f;
 
-	if ((f = gentemp(name, (size_t)MAXPATHLEN, _PATH_TMP, pfx)) != NULL)
+	if ((f = gentemp(name, MAXPATHLEN, _PATH_TMP, pfx)) != NULL)
 		return f;
 
 	sverrno = errno;
