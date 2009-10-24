@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66 2009/10/21 21:12:01 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67 2009/10/24 20:03:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -305,7 +305,6 @@ cntlzw(uint32_t val)
 
 #define	cpu_proc_fork(p1, p2)
 #define	cpu_idle()		(curcpu()->ci_idlespin())
-#define cpu_lwp_free2(l)
 
 extern int powersave;
 extern int cpu_timebase;
