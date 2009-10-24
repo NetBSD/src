@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.86 2009/02/15 13:04:03 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.87 2009/10/24 14:52:19 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.86 2009/02/15 13:04:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.87 2009/10/24 14:52:19 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -569,7 +569,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    ("iommu_dvmamap_load: map %p loading va %p "
 		    "dva %lx at pa %lx\n",
 		    map, (void *)vaddr, (long)dvmaddr,
-		    (long)(curaddr & ~(PAGE_SIZE-1))));
+		    (long)trunc_page(curaddr)));
 		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 
@@ -926,8 +926,8 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 		return (0);
 	}
 
-	vaend = (va + len + PGOFSET) & ~PGOFSET;
-	va &= ~PGOFSET;
+	vaend = round_page(va + len);
+	va = trunc_page(va);
 
 #ifdef DIAGNOSTIC
 	if (va < is->is_dvmabase || vaend > is->is_dvmaend)
