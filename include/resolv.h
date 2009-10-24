@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.37 2009/04/20 14:42:12 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.38 2009/10/24 17:23:34 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -372,6 +372,7 @@ extern const struct res_sym __p_rcode_syms[];
 #define p_sockun		__p_sockun
 #define putlong			__putlong
 #define putshort		__putshort
+#define	res_check		__res_check
 #define res_dnok		__res_dnok
 #define res_findzonecut		__res_findzonecut
 #define res_findzonecut2	__res_findzonecut2
@@ -420,6 +421,8 @@ __BEGIN_DECLS
 int		res_hnok(const char *);
 int		res_ownok(const char *);
 int		res_mailok(const char *);
+struct timespec;
+int		res_check(res_state, struct timespec *);
 int		res_dnok(const char *);
 int		sym_ston(const struct res_sym *, const char *, int *);
 const char *	sym_ntos(const struct res_sym *, int, int *);
