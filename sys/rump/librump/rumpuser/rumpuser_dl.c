@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.3 2009/10/14 18:18:53 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.4 2009/10/24 11:36:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.3 2009/10/14 18:18:53 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.4 2009/10/24 11:36:59 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -41,13 +41,12 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.3 2009/10/14 18:18:53 pooka Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#include <rump/rump.h>
 #include <rump/rumpuser.h>
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)				\
     || (defined(__sun__) && defined(__svr4__))
 static void
-process(const char *soname)
+process(const char *soname, rump_modinit_fn domodinit)
 {
 	void *handle;
 	struct modinfo **mi, **mi_end;
@@ -67,7 +66,7 @@ process(const char *soname)
 		goto out;
 
 	for (; mi < mi_end; mi++)
-		rump_pub_module_init(*mi, NULL);
+		domodinit(*mi, NULL);
 	assert(mi == mi_end);
 
  out:
@@ -79,7 +78,7 @@ process(const char *soname)
  * from all objects in the linkmap.
  */
 void
-rumpuser_dl_module_bootstrap(void)
+rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit)
 {
 	struct link_map *map;
 
@@ -98,7 +97,7 @@ rumpuser_dl_module_bootstrap(void)
 	for (; map->l_next; map = map->l_next)
 		continue;
 	for (; map; map = map->l_prev)
-		process(map->l_name);
+		process(map->l_name, domodinit);
 }
 #else
 void
