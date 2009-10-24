@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 2008/02/02 04:51:52 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.11 2009/10/24 12:47:30 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@ message md_hello
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
 message set_kernel_1
