@@ -1,33 +1,12 @@
-.\"	$NetBSD: rcsintro.1,v 1.5 2002/02/08 01:26:51 ross Exp $
+.\"	$NetBSD: rcsintro.1,v 1.6 2009/10/24 19:31:03 joerg Exp $
 .\"
-.de Id
-.ds Rv \\$3
-.ds Dt \\$4
-..
-.\" Id: rcsintro.1,v 5.3 1993/11/03 17:42:27 eggert Exp
-.ds r \&\s-1RCS\s0
-.if n .ds - \%--
-.if t .ds - \(em
-.if !\n(.g \{\
-.	if !\w|\*(lq| \{\
-.		ds lq ``
-.		if \w'\(lq' .ds lq "\(lq
-.	\}
-.	if !\w|\*(rq| \{\
-.		ds rq ''
-.		if \w'\(rq' .ds rq "\(rq
-.	\}
-.\}
-.am SS
-.LP
-..
-.TH RCSINTRO 1 \*(Dt GNU
+.TH RCSINTRO 1 "" GNU
 .SH NAME
 rcsintro \- introduction to RCS commands
 .SH DESCRIPTION
-The Revision Control System (\*r) manages multiple revisions of files.
-\*r automates the storing, retrieval, logging, identification, and merging
-of revisions.  \*r is useful for text that is revised frequently, for example
+The Revision Control System (RCS) manages multiple revisions of files.
+RCS automates the storing, retrieval, logging, identification, and merging
+of revisions.  RCS is useful for text that is revised frequently, for example
 programs, documentation, graphics, papers, and form letters.
 .PP
 The basic user interface is extremely simple.  The novice only needs
@@ -37,13 +16,13 @@ and
 .BR co (1).
 .BR ci ,
 short for \*(lqcheck in\*(rq, deposits the contents of a
-file into an archival file called an \*r file.  An \*r file
+file into an archival file called an RCS file.  An RCS file
 contains all revisions of a particular file.
 .BR co ,
-short for \*(lqcheck out\*(rq, retrieves revisions from an \*r file.
-.SS "Functions of \*r"
+short for \*(lqcheck out\*(rq, retrieves revisions from an RCS file.
+.SS "Functions of RCS"
 .IP \(bu
-Store and retrieve multiple revisions of text.  \*r saves all old
+Store and retrieve multiple revisions of text.  RCS saves all old
 revisions in a space efficient way.
 Changes no longer destroy the original, because the
 previous revisions remain accessible.  Revisions can be retrieved according to
@@ -51,24 +30,24 @@ ranges of revision numbers, symbolic names, dates, authors, and
 states.
 .IP \(bu
 Maintain a complete history of changes.
-\*r logs all changes automatically.
-Besides the text of each revision, \*r stores the author, the date and time of
+RCS logs all changes automatically.
+Besides the text of each revision, RCS stores the author, the date and time of
 check-in, and a log message summarizing the change.
 The logging makes it easy to find out
 what happened to a module, without having to compare
 source listings or having to track down colleagues.
 .IP \(bu
 Resolve access conflicts.  When two or more programmers wish to
-modify the same revision, \*r alerts the programmers and prevents one
+modify the same revision, RCS alerts the programmers and prevents one
 modification from corrupting the other.
 .IP \(bu
-Maintain a tree of revisions.  \*r can maintain separate lines of development
+Maintain a tree of revisions.  RCS can maintain separate lines of development
 for each module.  It stores a tree structure that represents the
 ancestral relationships among revisions.
 .IP \(bu
 Merge revisions and resolve conflicts.
 Two separate lines of development of a module can be coalesced by merging.
-If the revisions to be merged affect the same sections of code, \*r alerts the
+If the revisions to be merged affect the same sections of code, RCS alerts the
 user about the overlapping changes.
 .IP \(bu
 Control releases and configurations.
@@ -84,14 +63,14 @@ in the text of a revision.
 The identification makes it simple to determine which
 revisions of which modules make up a given configuration.
 .IP \(bu
-Minimize secondary storage.  \*r needs little extra space for
+Minimize secondary storage.  RCS needs little extra space for
 the revisions (only the differences).  If intermediate revisions are
 deleted, the corresponding deltas are compressed accordingly.
-.SS "Getting Started with \*r"
+.SS "Getting Started with RCS"
 Suppose you have a file
 .B f.c
-that you wish to put under control of \*r.
-If you have not already done so, make an \*r directory with the command
+that you wish to put under control of RCS.
+If you have not already done so, make an RCS directory with the command
 .IP
 .B "mkdir  RCS"
 .LP
@@ -99,7 +78,7 @@ Then invoke the check-in command
 .IP
 .B "ci  f.c"
 .LP
-This command creates an \*r file in the
+This command creates an RCS file in the
 .B RCS
 directory,
 stores
@@ -112,7 +91,7 @@ should be a synopsis of the contents of the file.  All later check-in
 commands will ask you for a log entry, which should summarize the
 changes that you made.
 .PP
-Files in the \*r directory are called \*r files;
+Files in the RCS directory are called RCS files;
 the others are called working files.
 To get back the working file
 .B f.c
@@ -121,7 +100,7 @@ command
 .IP
 .B "co  f.c"
 .LP
-This command extracts the latest revision from the \*r file
+This command extracts the latest revision from the RCS file
 and writes
 it into
 .BR f.c .
@@ -173,26 +152,26 @@ prevents is a
 .I "check-in"
 by anybody but the locker.
 .PP
-If your \*r file is private, i.e., if you are the only person who is going
+If your RCS file is private, i.e., if you are the only person who is going
 to deposit revisions into it, strict locking is not needed and you
 can turn it off.
 If strict locking is turned off,
-the owner of the \*r file need not have a lock for check-in; all others
+the owner of the RCS file need not have a lock for check-in; all others
 still do.  Turning strict locking off and on is done with the commands
 .IP
 .BR "rcs  \-U  f.c" "     and     " "rcs  \-L  f.c"
 .LP
-If you don't want to clutter your working directory with \*r files, create
+If you don't want to clutter your working directory with RCS files, create
 a subdirectory called
 .B RCS
-in your working directory, and move all your \*r
-files there.  \*r commands will look first into that directory to find
+in your working directory, and move all your RCS
+files there.  RCS commands will look first into that directory to find
 needed files.  All the commands discussed above will still work, without any
 modification.
-(Actually, pairs of \*r and working files can be specified in three ways:
+(Actually, pairs of RCS and working files can be specified in three ways:
 (a) both are given, (b) only the working file is given, (c) only the
-\*r file is given.  Both \*r and working files may have arbitrary path prefixes;
-\*r commands pair them up intelligently.)
+RCS file is given.  Both RCS and working files may have arbitrary path prefixes;
+RCS commands pair them up intelligently.)
 .PP
 To avoid the deletion of the working file during check-in (in case you want to
 continue editing or compiling), invoke
@@ -247,19 +226,19 @@ the number 1.3.1.1 to the new revision.  For more information about
 branches, see
 .BR rcsfile (5).
 .SS "Automatic Identification"
-\*r can put special strings for identification into your source and object
+RCS can put special strings for identification into your source and object
 code.  To obtain such identification, place the marker
 .IP
 .B "$\&Id$"
 .LP
 into your text, for instance inside a comment.
-\*r will replace this marker with a string of the form
+RCS will replace this marker with a string of the form
 .IP
 .BI $\&Id: "  filename  revision  date  time  author  state  " $
 .LP
 With such a marker on the first page of each module, you can
 always see with which revision you are working.
-\*r keeps the markers up to date automatically.
+RCS keeps the markers up to date automatically.
 To propagate the markers into your object code, simply put
 them into literal character strings.  In C, this is done as follows:
 .IP
@@ -297,8 +276,8 @@ Copyright \(co 1990, 1991, 1992, 1993 Paul Eggert.
 ci(1), co(1), ident(1), rcs(1), rcsdiff(1), rcsintro(1), rcsmerge(1), rlog(1)
 .br
 Walter F. Tichy,
-\*r\*-A System for Version Control,
-.I "Software\*-Practice \*[Am] Experience"
+RCS\(emA System for Version Control,
+.I "Software\(emPractice \*[Am] Experience"
 .BR 15 ,
 7 (July 1985), 637-654.
 .br
