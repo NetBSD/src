@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2009/10/21 21:12:03 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.246 2009/10/24 14:52:20 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2009/10/21 21:12:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2009/10/24 14:52:20 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1498,7 +1498,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
+	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
@@ -1709,7 +1709,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	else
 		hp->_asi = ASI_PRIMARY;
 
-	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
+	pa = trunc_page(addr);
 	if (!(flags&BUS_SPACE_MAP_READONLY))
 		pm_prot |= VM_PROT_WRITE;
 
