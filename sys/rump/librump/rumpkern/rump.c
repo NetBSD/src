@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.128 2009/10/20 10:42:41 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.129 2009/10/24 11:36:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.128 2009/10/20 10:42:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.129 2009/10/24 11:36:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -294,12 +294,8 @@ rump__init(int rump_version)
 		vmem_rehash_start();
 #endif
 
-	/*
-	 * Module bootstrap makes calls back into rump, so
-	 * unschedule before calling.
-	 */
+	rumpuser_dl_module_bootstrap(rump_module_init);
 	rump_unschedule();
-	rumpuser_dl_module_bootstrap();
 
 	return 0;
 }
