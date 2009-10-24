@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.4 2009/05/12 21:50:38 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.5 2009/10/24 20:06:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.4 2009/05/12 21:50:38 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.5 2009/10/24 20:06:42 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -348,7 +348,7 @@ server_mkrecord(void)
 		sdp_put_uint16(&buf, 0x0004);	/* 10Mb Ethernet */
 
 		sdp_put_uint16(&buf, SDP_ATTR_MAX_NET_ACCESS_RATE);
-		sdp_put_uint32(&buf, 10000);	/* 10Mb/s (?) */
+		sdp_put_uint32(&buf, IF_Mbps(10) / 8);	/* octets/second */
 	}
 
 	if (service_class == SDP_SERVICE_CLASS_NAP
