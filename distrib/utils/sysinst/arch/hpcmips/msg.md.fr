@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.12 2008/02/02 05:34:01 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.13 2009/10/24 14:41:57 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,24 +44,28 @@ message md_hello
 }
 
 message dobad144
-{Installation de la table des block défectueux ...
+{Installation de la table des blocs défectueux ...
 }
 
 message getboottype
-{Aimez-vous installer l'ensemble normal de bootblocks ou de bootblocks serial?
+{Voulez-vous installer le programme de démarrage standard ou sur port série ?
+
+Le programme de démarrage standard utilise les périphériques définis par le
+BIOS (en général le moniteur et le clavier). Le programme de démarrage sur
+port série utilise quant à lui le premier port série.
 }
 
 message dobootblks
-{Installation des block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
 message onebiosmatch
-{Ce disque correspond au disque du BIOS suivant:
+{Ce disque correspond au disque du BIOS suivant :
 
 }
 
 message onebiosmatch_header
-{BIOS # cylinders  heads   sectors
+{BIOS # cylindres  heads   sectors
 ------ ---------- ------- -------
 }
 
@@ -74,22 +78,22 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cylinders  heads   sectors
-   ------ ---------- ------- -------
+{   BIOS # cylinders  têtes   secteurs
+   ------ ---------- ------- --------
 }
 
 message biosmultmatch_row
 {%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
-{Choisissez un disque: }
+{Choisissez un disque : }
 
 message partabovechs
 {La partition de votre disque réservée à NetBSD se trouve en-dehors de l'espace
-que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
-ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
+que le BIOS de votre machine peut adresser. L'amorçage depuis cette partition
+ne sera peut-être pas possible. Voulez-vous réellement faire ceci ?
 
-('Non' vous ramènera au menu d'edition des partitions.)}
+('Non' vous ramènera au menu d'édition des partitions.)}
 
 message set_kernel_1
 {Kernel (GENERIC)}

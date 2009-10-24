@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 2008/02/02 05:33:57 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 2009/10/24 14:41:57 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,21 +50,21 @@ message badreadbb
 }
 
 message badreadriscix
-{Impossible de lire la table de partition RISCiX
+{Impossible de lire la table de partitions RISCiX
 }
 
 message notnetbsdriscix
-{Aucune partition NetBSD trouvée dans la table de partition RISCiX. Impossible
-de crééer un label.
+{Aucune partition NetBSD trouvée dans la table de partitions RISCiX. Impossible
+de créer un label.
 }
 
 message notnetbsd
-{Aucune partition NetBSD trouvée (disque juste filecore ?). Impossible
-de crééer un label.
+{Aucune partition NetBSD trouvée (disque filecore uniquement ?). Impossible
+de créer un label.
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
 message arm32fspart

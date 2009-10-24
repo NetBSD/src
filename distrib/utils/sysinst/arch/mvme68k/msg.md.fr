@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5 2005/09/11 08:39:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.6 2009/10/24 14:41:58 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,26 +38,27 @@
 
 /* MD Message catalog -- french, mvme68k version */
 
-message md_hello	/* XXX translate */
-{If your machine has 4MB or less, sysinst will not operate correctly.
+message md_hello
+{Si votre machine possède 4Mo ou moins, sysinst ne pourra pas fonctionner
+correctement.
 
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
-message newdisk		/* XXX translate */
-{It appears that your disk, %s, has no X68K disk mark. sysinst is
-writing a disk mark.
+message newdisk
+{Il apparaît que votre disque, %s, n'a pas de marque de label de disque mvme68k.
+sysinst écrit un label de disque.
 }
 
-message ordering	/* XXX translate */
-{The order of partition %c is wrong.  Edit again?}
+message ordering
+{L'ordre de la partition %c est erroné.  Modifier à nouveau ?}
 
-message emptypart	/* XXX translate */
-{There is a valid partition %c after empty partition(s).
-Please re-edit the partition table.}
+message emptypart
+{Il y a une partition valide %c après une (ou plusieurs) partition(s) vide(s).
+Veuillez modifier la table des partitions.}
 
 message set_kernel_1
 {Kernel (GENERIC)}

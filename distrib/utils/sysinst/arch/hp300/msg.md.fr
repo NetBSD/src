@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2004/02/23 03:44:29 jschauma Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2009/10/24 14:41:57 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,28 +38,29 @@
 
 /* MD Message catalog -- french, hp300 version */
 
-message md_hello	/* XXX translate */
-{If your machine has 4MB or less, sysinst will not operate correctly.
+message md_hello
+{Si votre machine possède 4Mo ou moins, sysinst ne pourra pas fonctionner
+correctement.
 
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
-message newdisk		/* XXX translate */
-{It appears that your disk, %s, has no X68K disk mark. sysinst is
-writing a disk mark.
-Note that if you plan to use a part of %s from Human68k, you should abort  
-here and format the disk with Human68k format.x utility.
+message newdisk
+{Il apparaît que votre disque, %s, n'a pas de marque de disque X68K. sysinst
+écrit une marque de disque.
+Si vous comptez utiliser une partie de %s depuis Human68k, vous devriez annuler
+maintenant et formater le disque avec l'utilitaire format.x de Human68k.
 }
 
-message ordering	/* XXX translate */
-{The order of partition %c is wrong.  Edit again?}
+message ordering
+{L'ordre de la partition %c est erroné.  Modifier à nouveau ?}
 
-message emptypart	/* XXX translate */
-{There is a valid partition %c after empty partition(s).
-Please re-edit the partition table.}
+message emptypart
+{Il y a une partition valide %c après une (ou plusieurs) partition(s) vide(s).
+Veuillez modifier la table des partitions.}
 
 message set_kernel_1
 {Kernel (GENERIC)}
