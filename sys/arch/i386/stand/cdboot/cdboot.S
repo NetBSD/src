@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.9 2009/10/24 10:28:30 dsl Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.10 2009/10/24 11:23:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -33,9 +33,6 @@
  * This is a primary boot loader that loads a secondary boot loader
  * directly from CD without performing floppy/hard disk emulation as
  * described by the El Torito specification.
- *
- * TODO:
- *  - Support for loading secondary boot loader > 64kB
  */
 
 #include <machine/asm.h>
@@ -302,38 +299,40 @@ panic:
  * %eax = LBA of starting sector
  * %ebx = buffer to store sectors
  * %dh = number of sectors to read
+ *
+ * Long transfers are split onto multiple 64k reads
  */
+#define MAX_SECTORS (0x10000/BLOCK_SIZE)
 read_sectors:
-	pusha
+	pushal
 	movl	%eax, edd_lba
 	shrl	$4, %ebx		/* Convert buffer addr to seg:0 */
 	movw	%bx, edd_segment
-	movb	%dh, edd_nsecs
-	movb	boot_drive, %dl
+1:	movb	%dh, edd_nsecs
+	cmpb	$MAX_SECTORS, %dh
+	jle	2f			/* j if less than 64k */
+	movb	$MAX_SECTORS, edd_nsecs	/* Read 16 sectors - 64k bytes */
+2:	movb	boot_drive, %dl
 	movw	$edd_packet, %si
 read_again:
 	movb	$0x42, %ah
+	push	%dx			/* bios shouldn't kill %dh, but ... */
 	int	$0x13
+	pop	%dx			/* ... better safe than sorry! */
 	jc	read_fail
-	popa
+	addw	$0x1000, edd_segment	/* Advance segment addr by 64k bytes */
+	addl	$MAX_SECTORS, edd_lba	/* And sector number to match */
+	sub	edd_nsecs, %dh		/* Number of sectors remaining */
+	jnz	1b			
+	popal
 	ret
+
 read_fail:
 	cmpb	$ERROR_TIMEOUT, %ah
 	jz	read_again
 	movw	$str_read_error, %si
 	call	message
 	jmp	panic
-
-/*
- * For debugging purpose
- */
-put_char:
-	pusha
-	movb	$0x0e, %ah
-	movw	$0x0001, %bx
-	int	$0x10
-	popa
-	ret
 
 #include <message.S>
 
