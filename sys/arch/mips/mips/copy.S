@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.1 2009/08/20 22:32:19 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.2 2009/10/24 18:11:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -347,7 +347,7 @@ XLEAF(fuibyte)
 END(fubyte)
 
 /*
- * int suword(void *, int)
+ * int suword(void *, long)
  * Stores a word of data to the user-space address.
  */
 LEAF(suword)
@@ -355,7 +355,7 @@ LEAF(suword)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	INT_S	a1, 0(a0)			# store word
+	LONG_S	a1, 0(a0)			# store word
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
