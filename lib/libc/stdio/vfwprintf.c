@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.16 2009/08/05 20:46:01 dsl Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.17 2009/10/24 15:20:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.16 2009/08/05 20:46:01 dsl Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.17 2009/10/24 15:20:15 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -316,7 +316,7 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 
 	case 16:
 		do {
-			*--cp = xdigs[(size_t)val & 15];
+			*--cp = xdigs[val & 15];
 			val >>= 4;
 		} while (val);
 		break;
@@ -388,7 +388,7 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 
 	case 16:
 		do {
-			*--cp = xdigs[(size_t)val & 15];
+			*--cp = xdigs[val & 15];
 			val >>= 4;
 		} while (val);
 		break;
