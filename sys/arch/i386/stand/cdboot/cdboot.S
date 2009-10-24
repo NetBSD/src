@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.8 2008/05/03 13:07:31 ad Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.9 2009/10/24 10:28:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -224,6 +224,8 @@ boot_hard_disk:
 boot_cdrom:
 	movw	$str_banner, %si
 	call	message
+
+/* Read volume descriptor sectors until Primary decriptor found */
 	movl	$VD_LBA, %eax
 next_block:
 	movb	$1, %dh			/* Number of sectors to read */
@@ -238,6 +240,7 @@ next_block:
 	call	message
 	jmp	panic
 
+/* Read all of root directory */
 pvd_found:
 	movw	$PVD_ADDR+PVD_ROOT_DR, %bx
 	movl	DR_EXTENT(%bx), %eax	/* LBA of the root directory */
@@ -246,6 +249,8 @@ pvd_found:
 	movb	%dl, %dh		/*  ... and load it to %dh */
 	movl	$ROOTDIR_ADDR, %ebx
 	call	read_sectors
+
+/* Scan directory entries searching for /boot */
 next_entry:
 	cmpb	$0, DR_LEN(%bx)
 	jz	last_entry
@@ -270,6 +275,7 @@ last_entry:
 	call	message
 	jmp	panic
 
+/* Found /boot, read contents to 0x1000:0 */
 load_loader:
 	movl	DR_EXTENT(%bx), %eax
 	movl	DR_DATA_LEN(%bx), %edx
@@ -278,6 +284,8 @@ load_loader:
 	movb	%dl, %dh
 	movl	$LOADER_ADDR, %ebx
 	call	read_sectors
+
+/* Finally call into code of /boot */
 	movl	$boot_params, %esi	/* Provide boot_params */
 	xorl	%edx, %edx
 	movb	boot_drive, %dl
@@ -297,8 +305,8 @@ panic:
  */
 read_sectors:
 	pusha
-	movl	%eax, edd_lba		/* Convert LBA to segment */
-	shrl	$4, %ebx
+	movl	%eax, edd_lba
+	shrl	$4, %ebx		/* Convert buffer addr to seg:0 */
 	movw	%bx, edd_segment
 	movb	%dh, edd_nsecs
 	movb	boot_drive, %dl
