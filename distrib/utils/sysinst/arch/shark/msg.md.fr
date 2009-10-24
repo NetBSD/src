@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 2008/02/02 05:34:03 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.11 2009/10/24 14:41:58 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,21 +53,21 @@ message badreadbb
 }
 
 message badreadriscix
-{Impossible de lire la table de partition RISCiX
+{Impossible de lire la table de partitions RISCiX
 }
 
 message notnetbsdriscix
-{Aucune partition NetBSD trouvée dans la table de partition RISCiX. Impossible
-de crééer un label.
+{Aucune partition NetBSD trouvée dans la table de partitions RISCiX. Impossible
+de créer un label.
 }
 
 message notnetbsd
-{Aucune partition NetBSD trouvée (disque juste filecore ?). Impossible
-de crééer un label.
+{Aucune partition NetBSD trouvée (disque filecore uniquement ?). Impossible
+de créer un label.
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
 message arm32fspart
@@ -79,25 +79,25 @@ message set_kernel_1
 {Kernel (GENERIC)}
 
 message setbootdevice
-{In order to make your system boot automatically from the on-disk file
-system, you need to manually configure OpenFirmware to tell it where to
-load the kernel from.
+{Afin que votre système démarre automatiquement depuis le système de fichiers
+sur le disque, vous devez configurer manuellement OpenFirmware pour lui
+spécifier l'emplacement depuis lequel il doit charger le noyau.
 
-OpenFirmware can load a NetBSD a.out kernel (sorry, ELF is not supported)
-straight from a FFS partition on the local hard disk.  So, to configure it
-to boot the just-installed kernel, run the following command from
-OpenFirmware's shell:
+OpenFirmware peut charger un noyau NetBSD a.out (malheureusement, ELF n'est pas
+supporté) directement depuis une partition FFS sur le disque dur local. Donc,
+afin de configurer le noyau qui vient d'être installé, exécutez la commande
+suivante depuis l'interpréteur de commandes OpenFirmware :
 
 setenv boot-device disk:\\netbsd.aout
 
-You only need to run this once and only if the 'boot-device' property did
-not already contain the value shown above.
+Il n'est nécessaire d'exécuter cette commande qu'une seule fois et uniquement
+si la propriété 'boot-device' ne contient pas déjà la valeur affichée ci-dessus.
 }
 
 message badclearmbr
-{Failed to clear the disk's first sector.  If OpenFirmware cannot see the
-disk, try to run the following command manually from the installer's shell
-utility:
+{Erreur lors de l'effacement du premier secteur du disque. Si OpenFirmware ne
+parvient pas à voir le disque, essayez d'exécuter manuellement la commande
+suivante depuis l'interpréteur de commandes de l'installeur :
 
 dd if=/dev/zero of=%s bs=512 count=1
 }
