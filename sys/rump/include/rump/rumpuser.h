@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.30 2009/10/24 11:29:55 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.31 2009/10/24 11:36:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -187,6 +187,15 @@ int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
 
 /* rumpuser dynloader */
 
-void rumpuser_dl_module_bootstrap(void);
+/* XXX: go _t, go */
+#ifdef __NetBSD__
+#include <prop/proplib.h>
+#else
+typedef struct prop_dictionary *prop_dictionary_t;
+#endif
+
+struct modinfo;
+typedef int (*rump_modinit_fn)(struct modinfo *, prop_dictionary_t);
+void rumpuser_dl_module_bootstrap(rump_modinit_fn);
 
 #endif /* _RUMP_RUMPUSER_H_ */
