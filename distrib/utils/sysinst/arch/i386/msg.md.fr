@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.48 2009/04/07 10:45:05 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.49 2009/10/24 12:47:30 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,8 @@
 /* MD Message catalog -- french, i386 version */
 
 message md_hello
-{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+{Si vous avez démarré sur un média amovible (clé USB, disquette...), vous
+pouvez maintenant le retirer.
 
 }
 
@@ -47,13 +48,17 @@ message Keyboard_type {Type de clavier}
 message kb_default {fr}
 
 message dobad144
-{Installation de la table des block défectueux ...
+{Installation de la table des blocs défectueux ...
 }
 
 message getboottype
-{Voulez-vous installer le programme de démarrage normal ou sur port serie ?
+{Voulez-vous installer le programme de démarrage standard ou sur port série ?
 
-Programme de boot sélectionné: }
+Le programme de démarrage standard utilise les périphériques définis par le
+BIOS (en général le moniteur et le clavier). Le programme de démarrage sur
+port série utilise quant à lui le premier port série.
+
+Programme de démarrage sélectionné : }
 
 message console_PC {Console du BIOS}
 message console_com {Port série com%d, baud rate %d}
@@ -74,7 +79,7 @@ message dobootblks
 }
 
 message onebiosmatch
-{Ce disque correspond au disque du BIOS suivant:
+{Ce disque correspond au disque du BIOS suivant :
 
 }
 
@@ -94,7 +99,7 @@ message Use_one_of_these_disks
 {Utiliser l'un de ces disques}
 
 message biosmultmatch
-{Ce disque correspond aux disques du BIOS suivants:
+{Ce disque correspond aux disques du BIOS suivants :
 
 }
 
@@ -115,14 +120,14 @@ fausses.
 }
 
 message pickdisk
-{Choisissez un disque: }
+{Choisissez un disque : }
 
 message partabovechs
 {La partition de votre disque réservée à NetBSD se trouve en-dehors de l'espace
-que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
-ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
+que le BIOS de votre machine peut adresser. L'amorçage depuis cette partition
+ne sera peut-être pas possible. Voulez-vous réellement faire ceci ?
 
-('Non' vous ramènera au menu d'edition des partitions.)}
+('Non' vous ramènera au menu d'édition des partitions.)}
 
 message missing_bootmenu_text
 {Vous avez plus d'un système d'exploitation sur ce disque, mais vous n'avez
@@ -133,24 +138,24 @@ Voulez-vous réediter la partition pour ajouter une entrée dans le menu de boot ?
 
 message no_extended_bootmenu
 {Vous avez ajouté une partition étendue au menu de boot, mais il semble que
-le BIOS de votre systeme ne supporte pas la commande de lecture utilisée
+le BIOS de votre système ne supporte pas la commande de lecture utilisée
 par cette version du menu de boot.
 Voulez-vous vraiment faire ceci ?
 
-('non' vous ramenera au menu d'édition des partitions.)}
+('non' vous ramènera au menu d'édition des partitions.)}
 
 message installbootsel
-{Votre configutation nécessite le selecteur de boot de NetBSD pour choisir
+{Votre configuration nécessite le selecteur de boot de NetBSD pour choisir
 le système d'exploitation à démarrer.
 Il n'est pour l'instant pas installé, voulez-vous l'installer maintenant ?}
 
 message installmbr
-{Le code d'ammorcage dans le secteur de boot ne semble pas etre valide.
+{Le code d'amorçage dans le secteur de boot ne semble pas être valide.
 
-Voulez-vous installer le code d'ammorcage de NetBSD ?}
+Voulez-vous installer le code d'amorçage de NetBSD ?}
 
 message updatembr
-{Voulez-vous mettre a jour le code d'ammorcage dans le secteur de boot
-avec la dernière version du code d'ammorcage de NetBSD ?}
+{Voulez-vous mettre à jour le code d'amorçage dans le secteur de boot
+avec la dernière version du code d'amorçage de NetBSD ?}
 
 message set_kernel_1	{Kernel (GENERIC)}

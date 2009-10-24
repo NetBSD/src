@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 2008/02/02 04:51:40 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 2009/10/24 12:47:30 stacktic Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,11 +41,12 @@
 
 
 message md_hello
-{
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+
 }
 
 message dobootblks
-{Installation du block de démarrage sur %s ...
+{Installation des blocs de démarrage sur %s ...
 }
 
 message set_kernel_1
