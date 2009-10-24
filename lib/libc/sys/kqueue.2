@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.24 2009/09/01 22:12:05 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.25 2009/10/24 17:49:58 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd September 1, 2009
+.Dd October 24, 2009
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -496,7 +496,7 @@ int
 main(int argc, char *argv[])
 {
         int fd, kq, nev;
-        struct kevent ev, ch;
+        struct kevent ev;
         static const struct timespec tout = { 1, 0 };
 
         if ((fd = open(argv[1], O_RDONLY)) == -1)
@@ -505,11 +505,13 @@ main(int argc, char *argv[])
         if ((kq = kqueue()) == -1)
                 err(1, "Cannot create kqueue");
 
-        EV_SET(\*[Am]ch, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+        EV_SET(\*[Am]ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
             NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
             NOTE_RENAME|NOTE_REVOKE, 0, 0);
+	if (kevent(kq, \*[Am]ch, 1, NULL, 0, \*[Am]tout) == -1)
+		err(1, "kevent");
         for (;;) {
-                nev = kevent(kq, \*[Am]ch, 1, \*[Am]ev, 1, \*[Am]tout);
+                nev = kevent(kq, NULL, 0, \*[Am]ev, 1, \*[Am]tout);
                 if (nev == -1)
                         err(1, "kevent");
                 if (nev == 0)
@@ -527,7 +529,7 @@ main(int argc, char *argv[])
                         ev.fflags \*[Am]= ~NOTE_EXTEND;
                 }
                 if (ev.fflags \*[Am] NOTE_ATTRIB) {
-                        printf("chmod/chown ");
+                        printf("chmod/chown/utimes ");
                         ev.fflags \*[Am]= ~NOTE_ATTRIB;
                 }
                 if (ev.fflags \*[Am] NOTE_LINK) {
