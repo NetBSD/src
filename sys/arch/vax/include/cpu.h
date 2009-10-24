@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.85 2008/03/11 05:34:02 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.86 2009/10/24 20:03:56 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -163,8 +163,6 @@ extern int cpu_printfataltraps;
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
-#define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
-#define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
 #define	cpu_idle()		do { } while (/*CONSCOND*/0)
 static inline bool
 cpu_intr_p(void)
