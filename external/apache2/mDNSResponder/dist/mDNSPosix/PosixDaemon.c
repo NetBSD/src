@@ -183,10 +183,24 @@ mDNSlocal void DumpStateLog(mDNS *const m)
 // Dump a little log of what we've been up to.
 	{
 	DNSServer *s;
+        PosixNetworkInterface *i;
 
 	LogMsg("---- BEGIN STATE LOG ----");
 	udsserver_info(m);
 
+        LogMsgNoIdent("----- Network Interfaces -------");
+        for (i = (PosixNetworkInterface*)(m->HostInterfaces);
+        i; i = (PosixNetworkInterface *)(i->coreIntf.next)) {
+            LogMsg("%p %p %d %s%s%s%s%s %-8s %#a", i,
+            (void *)(i->coreIntf.InterfaceID), i->index,
+            i->coreIntf.InterfaceActive ? "-" : "D",
+            i->coreIntf.IPv4Available ? "4" : "-",
+            i->coreIntf.IPv6Available ? "6" : "-",
+            i->coreIntf.Advertise ? "A" : "-",
+            i->coreIntf.McastTxRx ? "M" : "-",
+            i->intfName, &(i->coreIntf.ip));
+        }
+        
         LogMsgNoIdent("--------- DNS Servers ----------");
         if (!mDNSStorage.DNSServers) LogMsgNoIdent("<None>");
         else
