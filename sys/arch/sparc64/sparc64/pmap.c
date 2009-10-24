@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.239 2009/10/21 21:12:03 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.240 2009/10/24 14:52:20 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.239 2009/10/21 21:12:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.240 2009/10/24 14:52:20 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2032,7 +2032,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 
 	mutex_enter(&pmap_lock);
-	sva = sva & ~PGOFSET;
+	sva = trunc_page(sva);
 	for (; sva < eva; sva += PAGE_SIZE) {
 #ifdef DEBUG
 		/*
