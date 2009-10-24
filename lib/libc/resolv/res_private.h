@@ -1,4 +1,4 @@
-/*	$NetBSD: res_private.h,v 1.1.1.4 2009/04/12 16:35:48 christos Exp $	*/
+/*	$NetBSD: res_private.h,v 1.2 2009/10/24 05:35:37 christos Exp $	*/
 
 #ifndef res_private_h
 #define res_private_h
@@ -14,10 +14,13 @@ struct __res_state_ext {
 	} sort_list[MAXRESOLVSORT];
 	char nsuffix[64];
 	char nsuffix2[64];
+	struct timespec res_conf_time;
+	int kq, resfd;
 };
 
-extern int
-res_ourserver_p(const res_state statp, const struct sockaddr *sa);
+extern int res_ourserver_p(const res_state, const struct sockaddr *);
+extern int __res_vinit(res_state, int);
+extern void __res_check(res_state);
 
 #endif
 
