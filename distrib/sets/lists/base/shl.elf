@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.189 2009/10/11 11:26:40 pooka Exp $
+# $NetBSD: shl.elf,v 1.190 2009/10/25 04:38:05 christos Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -99,7 +99,7 @@
 ./usr/lib/libbfd.so.10				base-sys-shlib		binutils=216
 ./usr/lib/libbfd.so.11				base-sys-shlib		binutils=219
 ./usr/lib/libbind9.so				base-bind-shlib
-./usr/lib/libbind9.so.4				base-bind-shlib
+./usr/lib/libbind9.so.5				base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbsdmalloc.so			base-sys-shlib
@@ -122,7 +122,7 @@
 ./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
 ./usr/lib/libdns.so				base-bind-shlib
-./usr/lib/libdns.so.4				base-bind-shlib
+./usr/lib/libdns.so.5				base-bind-shlib
 ./usr/lib/libdns_sd.so				base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
 ./usr/lib/libedit.so				base-sys-shlib
@@ -152,11 +152,11 @@
 ./usr/lib/libipsec.so				base-net-shlib
 ./usr/lib/libipsec.so.3				base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
-./usr/lib/libisc.so.4				base-bind-shlib
+./usr/lib/libisc.so.5				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
-./usr/lib/libisccc.so.4				base-bind-shlib
+./usr/lib/libisccc.so.5				base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
-./usr/lib/libisccfg.so.4			base-bind-shlib
+./usr/lib/libisccfg.so.5			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
@@ -180,7 +180,7 @@
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so				base-bind-shlib
-./usr/lib/liblwres.so.4				base-bind-shlib
+./usr/lib/liblwres.so.5				base-bind-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib

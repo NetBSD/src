@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.835 2009/10/13 10:18:35 tron Exp $
+# $NetBSD: mi,v 1.836 2009/10/25 04:38:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1032,8 +1032,10 @@
 ./usr/sbin/dnssec-dsfromkey			base-bind-bin
 ./usr/sbin/dnssec-keyfromlabel			base-bind-bin
 ./usr/sbin/dnssec-keygen			base-bind-bin
+./usr/sbin/dnssec-revoke			base-bind-bin
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
+./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
@@ -1230,7 +1232,7 @@
 ./usr/sbin/rip6query				base-netutil-bin	inet6
 ./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/rndc					base-bind-bin
-./usr/sbin/rndc-confgen				base-bind-bin
+./usr/sbin/rndc-confgen				base-obsolete		obsolete
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
 ./usr/sbin/rpc.lockd				base-nfsserver-bin

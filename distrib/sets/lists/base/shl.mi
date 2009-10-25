@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.502 2009/10/25 00:17:06 tsarna Exp $
+# $NetBSD: shl.mi,v 1.503 2009/10/25 04:38:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -58,7 +58,7 @@
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libbfd.so.10.0			base-sys-shlib		binutils=216
 ./usr/lib/libbfd.so.11.0			base-sys-shlib		binutils=219
-./usr/lib/libbind9.so.4.0			base-bind-shlib
+./usr/lib/libbind9.so.5.0			base-bind-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
@@ -69,7 +69,7 @@
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
 ./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
-./usr/lib/libdns.so.4.0				base-bind-shlib
+./usr/lib/libdns.so.5.0				base-bind-shlib
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
 ./usr/lib/libedit.so.3.0			base-sys-shlib
 ./usr/lib/libevent.so.3.1			base-sys-shlib
@@ -84,9 +84,9 @@
 ./usr/lib/libhx509.so.4.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.1.0			base-sys-shlib
 ./usr/lib/libipsec.so.3.0			base-net-shlib
-./usr/lib/libisc.so.4.0				base-bind-shlib
-./usr/lib/libisccc.so.4.0			base-bind-shlib
-./usr/lib/libisccfg.so.4.0			base-bind-shlib
+./usr/lib/libisc.so.5.0				base-bind-shlib
+./usr/lib/libisccc.so.5.0			base-bind-shlib
+./usr/lib/libisccfg.so.5.0			base-bind-shlib
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
 ./usr/lib/libkadm5clnt.so.12.0			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so.13.0			base-krb5-shlib		kerberos
@@ -96,7 +96,7 @@
 ./usr/lib/liblber.so.3.0			base-ldap-shlib		ldap
 ./usr/lib/libldap.so.4.0			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4.0			base-ldap-shlib		ldap
-./usr/lib/liblwres.so.4.0			base-bind-shlib
+./usr/lib/liblwres.so.5.0			base-bind-shlib
 ./usr/lib/libm.so.0.7				base-sys-shlib
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
