@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.1 2009/03/22 14:56:14 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.2 2009/10/25 00:01:34 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.29 2008/10/24 01:44:48 tbox Exp */
+/* Id: os.h,v 1.31 2009/08/05 23:47:43 tbox Exp */
 
 #ifndef NS_OS_H
 #define NS_OS_H 1
@@ -53,8 +53,12 @@ ns_os_adjustnofile(void);
 void
 ns_os_minprivs(void);
 
+FILE *
+ns_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user);
+
 void
 ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
+
 void
 ns_os_shutdown(void);
 

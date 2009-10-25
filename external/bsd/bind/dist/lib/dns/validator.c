@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.1.1.2 2009/07/28 21:11:12 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.1.1.3 2009/10/25 00:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.c,v 1.164.12.9 2009/05/07 23:47:12 tbox Exp */
+/* Id: validator.c,v 1.178 2009/06/30 02:52:32 each Exp */
 
 #include <config.h>
 
@@ -370,7 +370,7 @@ isdelegation(dns_name_t *name, dns_rdataset_t *rdataset,
 }
 
 /*%
- * We have been asked to to look for a key.
+ * We have been asked to look for a key.
  * If found resume the validation process.
  * If not found fail the validation process.
  */
@@ -1016,7 +1016,7 @@ nsec3noexistnodata(dns_validator_t *val, dns_name_t* name,
 			if (ns && !soa) {
 				if (!atparent) {
 					/*
-					 * This NSEC record is from somewhere
+					 * This NSEC3 record is from somewhere
 					 * higher in the DNS, and at the
 					 * parent of a delegation. It can not
 					 * be legitimately used here.
@@ -1027,7 +1027,7 @@ nsec3noexistnodata(dns_validator_t *val, dns_name_t* name,
 				}
 			} else if (atparent && ns && soa) {
 				/*
-				 * This NSEC record is from the child.
+				 * This NSEC3 record is from the child.
 				 * It can not be legitimately used here.
 				 */
 				validator_log(val, ISC_LOG_DEBUG(3),
@@ -1877,6 +1877,8 @@ validate(dns_validator_t *val, isc_boolean_t resume) {
 					break;
 				}
 				val->key = dns_keynode_key(val->keynode);
+				if (val->key == NULL)
+					break;
 			} else {
 				if (get_dst_key(val, val->siginfo, val->keyset)
 				    != ISC_R_SUCCESS)
@@ -2117,7 +2119,8 @@ dlv_validatezonekey(dns_validator_t *val) {
 }
 
 /*%
- * Attempts positive response validation of an RRset containing zone keys.
+ * Attempts positive response validation of an RRset containing zone keys
+ * (i.e. a DNSKEY rrset).
  *
  * Returns:
  * \li	ISC_R_SUCCESS	Validation completed successfully
@@ -2184,11 +2187,18 @@ validatezonekey(dns_validator_t *val) {
 				atsep = ISC_TRUE;
 			while (result == ISC_R_SUCCESS) {
 				dstkey = dns_keynode_key(keynode);
+				if (dstkey == NULL) {
+					dns_keytable_detachkeynode(
+								val->keytable,
+								&keynode);
+					break;
+				}
 				result = verify(val, dstkey, &sigrdata,
 						sig.keyid);
 				if (result == ISC_R_SUCCESS) {
-					dns_keytable_detachkeynode(val->keytable,
-								   &keynode);
+					dns_keytable_detachkeynode(
+								val->keytable,
+								&keynode);
 					break;
 				}
 				result = dns_keytable_findnextkeynode(
@@ -2230,8 +2240,8 @@ validatezonekey(dns_validator_t *val) {
 					sizeof(namebuf));
 			validator_log(val, ISC_LOG_DEBUG(2),
 				      "unable to find a DNSKEY which verifies "
-				      "the DNSKEY RRset and also matches one "
-				      "of specified trusted-keys for '%s'",
+				      "the DNSKEY RRset and also matches a "
+				      "trusted key for '%s'",
 				      namebuf);
 			return (DNS_R_NOVALIDKEY);
 		}
@@ -2923,7 +2933,6 @@ nsecvalidate(dns_validator_t *val, isc_boolean_t resume) {
 			      "nonexistence proof(s) found");
 		return (ISC_R_SUCCESS);
 	}
-		findnsec3proofs(val);
 
 	validator_log(val, ISC_LOG_DEBUG(3),
 		      "nonexistence proof(s) not found");
@@ -3283,7 +3292,7 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 		/*
 		 * If we have a DS rdataset and it is secure then check if
 		 * the DS rdataset has a supported algorithm combination.
-		 * If not this is a insecure delegation as far as this
+		 * If not this is an insecure delegation as far as this
 		 * resolver is concerned.  Fall back to DLV if available.
 		 */
 		if (have_ds && val->frdataset.trust >= dns_trust_secure &&
@@ -3337,7 +3346,7 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 		if (result == DNS_R_NXRRSET || result == DNS_R_NCACHENXRRSET) {
 			/*
 			 * There is no DS.  If this is a delegation,
-			 * we maybe done.
+			 * we may be done.
 			 */
 			if (val->frdataset.trust == dns_trust_pending) {
 				result = create_fetch(val, tname,
@@ -3477,9 +3486,9 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 		return (nsecvalidate(val, ISC_FALSE));
 	}
 */
-
+	/* Couldn't complete insecurity proof */
 	validator_log(val, ISC_LOG_DEBUG(3), "insecurity proof failed");
-	return (DNS_R_NOTINSECURE); /* Couldn't complete insecurity proof */
+	return (DNS_R_NOTINSECURE);
 
  out:
 	if (dns_rdataset_isassociated(&val->frdataset))
@@ -3518,7 +3527,7 @@ dlv_validator_start(dns_validator_t *val) {
  * \li	3. a negative answer (secure or unsecure).
  *
  * Note a answer that appears to be a secure positive answer may actually
- * be a unsecure positive answer.
+ * be an unsecure positive answer.
  */
 static void
 validator_start(isc_task_t *task, isc_event_t *event) {
@@ -3583,6 +3592,10 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 
 		val->attributes |= VALATTR_INSECURITY;
 		result = proveunsecure(val, ISC_FALSE, ISC_FALSE);
+		if (result == DNS_R_NOTINSECURE)
+			validator_log(val, ISC_LOG_INFO,
+				      "got insecure response; "
+				      "parent indicates it should be secure");
 	} else if (val->event->rdataset == NULL &&
 		   val->event->sigrdataset == NULL)
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.1.1.2 2009/07/28 21:11:11 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.1.1.3 2009/10/25 00:02:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.384.14.14 2009/06/02 23:47:13 tbox Exp */
+/* Id: resolver.c,v 1.405 2009/09/01 00:22:26 jinmei Exp */
 
 /*! \file */
 
@@ -1015,6 +1015,7 @@ fctx_sendevents(fetchctx_t *fctx, isc_result_t result, int line) {
 		ISC_LIST_UNLINK(fctx->events, event, ev_link);
 		task = event->ev_sender;
 		event->ev_sender = fctx;
+		event->vresult = fctx->vresult;
 		if (!HAVE_ANSWER(fctx))
 			event->result = result;
 
@@ -2235,7 +2236,7 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 	char code[64];
 	isc_buffer_t b;
 	isc_sockaddr_t *sa;
-	const char *sep1, *sep2;
+	const char *spc = "";
 	isc_sockaddr_t *address = &addrinfo->sockaddr;
 
 	if (reason == DNS_R_LAME)
@@ -2281,18 +2282,14 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 		isc_buffer_init(&b, code, sizeof(code) - 1);
 		dns_rcode_totext(fctx->rmessage->rcode, &b);
 		code[isc_buffer_usedlength(&b)] = '\0';
-		sep1 = "(";
-		sep2 = ") ";
+		spc = " ";
 	} else if (reason == DNS_R_UNEXPECTEDOPCODE) {
 		isc_buffer_init(&b, code, sizeof(code) - 1);
 		dns_opcode_totext((dns_opcode_t)fctx->rmessage->opcode, &b);
 		code[isc_buffer_usedlength(&b)] = '\0';
-		sep1 = "(";
-		sep2 = ") ";
+		spc = " ";
 	} else {
 		code[0] = '\0';
-		sep1 = "";
-		sep2 = "";
 	}
 	dns_name_format(&fctx->name, namebuf, sizeof(namebuf));
 	dns_rdatatype_format(fctx->type, typebuf, sizeof(typebuf));
@@ -2300,8 +2297,8 @@ add_bad(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, isc_result_t reason,
 	isc_sockaddr_format(address, addrbuf, sizeof(addrbuf));
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_LAME_SERVERS,
 		      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
-		      "%s %s%s%sresolving '%s/%s/%s': %s",
-		      dns_result_totext(reason), sep1, code, sep2,
+		      "error (%s%s%s) resolving '%s/%s/%s': %s",
+		      dns_result_totext(reason), spc, code,
 		      namebuf, typebuf, classbuf, addrbuf);
 }
 
@@ -2536,6 +2533,16 @@ findname(fetchctx_t *fctx, dns_name_t *name, in_port_t port,
 	}
 }
 
+static isc_boolean_t
+isstrictsubdomain(dns_name_t *name1, dns_name_t *name2) {
+	int order;
+	unsigned int nlabels;
+	dns_namereln_t namereln;
+
+	namereln = dns_name_fullcompare(name1, name2, &order, &nlabels);
+	return (ISC_TF(namereln == dns_namereln_subdomain));
+}
+
 static isc_result_t
 fctx_getaddresses(fetchctx_t *fctx) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
@@ -2581,23 +2588,40 @@ fctx_getaddresses(fetchctx_t *fctx) {
 		dns_name_t *name = &fctx->name;
 		dns_name_t suffix;
 		unsigned int labels;
+		dns_fixedname_t fixed;
+		dns_name_t *domain;
 
 		/*
 		 * DS records are found in the parent server.
 		 * Strip label to get the correct forwarder (if any).
 		 */
-		if (fctx->type == dns_rdatatype_ds &&
+		if (dns_rdatatype_atparent(fctx->type) &&
 		    dns_name_countlabels(name) > 1) {
 			dns_name_init(&suffix, NULL);
 			labels = dns_name_countlabels(name);
 			dns_name_getlabelsequence(name, 1, labels - 1, &suffix);
 			name = &suffix;
 		}
-		result = dns_fwdtable_find(fctx->res->view->fwdtable, name,
-					   &forwarders);
+
+		dns_fixedname_init(&fixed);
+		domain = dns_fixedname_name(&fixed);
+		result = dns_fwdtable_find2(fctx->res->view->fwdtable, name,
+					    domain, &forwarders);
 		if (result == ISC_R_SUCCESS) {
 			sa = ISC_LIST_HEAD(forwarders->addrs);
 			fctx->fwdpolicy = forwarders->fwdpolicy;
+			if (fctx->fwdpolicy == dns_fwdpolicy_only &&
+			    isstrictsubdomain(domain, &fctx->domain)) {
+				isc_mem_t *mctx;
+
+				mctx = res->buckets[fctx->bucketnum].mctx;
+				dns_name_free(&fctx->domain, mctx);
+				dns_name_init(&fctx->domain, NULL);
+				result = dns_name_dup(domain, mctx,
+						      &fctx->domain);
+				if (result != ISC_R_SUCCESS)
+					return (result);
+			}
 		}
 	}
 
@@ -3479,21 +3503,22 @@ fctx_create(dns_resolver_t *res, dns_name_t *name, dns_rdatatype_t type,
 	if (domain == NULL) {
 		dns_forwarders_t *forwarders = NULL;
 		unsigned int labels;
+		dns_name_t *fwdname = name;
 
 		/*
 		 * DS records are found in the parent server.
 		 * Strip label to get the correct forwarder (if any).
 		 */
-		if (fctx->type == dns_rdatatype_ds &&
+		if (dns_rdatatype_atparent(fctx->type) &&
 		    dns_name_countlabels(name) > 1) {
 			dns_name_init(&suffix, NULL);
 			labels = dns_name_countlabels(name);
 			dns_name_getlabelsequence(name, 1, labels - 1, &suffix);
-			name = &suffix;
+			fwdname = &suffix;
 		}
 		dns_fixedname_init(&fixed);
 		domain = dns_fixedname_name(&fixed);
-		result = dns_fwdtable_find2(fctx->res->view->fwdtable, name,
+		result = dns_fwdtable_find2(fctx->res->view->fwdtable, fwdname,
 					    domain, &forwarders);
 		if (result == ISC_R_SUCCESS)
 			fctx->fwdpolicy = forwarders->fwdpolicy;
@@ -3504,7 +3529,7 @@ fctx_create(dns_resolver_t *res, dns_name_t *name, dns_rdatatype_t type,
 			 * nameservers, and we're not in forward-only mode,
 			 * so find the best nameservers to use.
 			 */
-			if (dns_rdatatype_atparent(type))
+			if (dns_rdatatype_atparent(fctx->type))
 				findoptions |= DNS_DBFIND_NOEXACT;
 			result = dns_view_findzonecut(res->view, name, domain,
 						      0, findoptions, ISC_TRUE,
@@ -3867,6 +3892,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 	REQUIRE(!ISC_LIST_EMPTY(fctx->validators));
 
 	vevent = (dns_validatorevent_t *)event;
+	fctx->vresult = vevent->result;
 
 	FCTXTRACE("received validation completion event");
 
@@ -4950,6 +4976,134 @@ dname_target(dns_rdataset_t *rdataset, dns_name_t *qname, dns_name_t *oname,
 	return (result);
 }
 
+static isc_boolean_t
+is_answeraddress_allowed(dns_view_t *view, dns_name_t *name,
+			 dns_rdataset_t *rdataset)
+{
+	isc_result_t result;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	struct in_addr ina;
+	struct in6_addr in6a;
+	isc_netaddr_t netaddr;
+	char addrbuf[ISC_NETADDR_FORMATSIZE];
+	char namebuf[DNS_NAME_FORMATSIZE];
+	char classbuf[64];
+	char typebuf[64];
+	int match;
+
+	/* By default, we allow any addresses. */
+	if (view->denyansweracl == NULL)
+		return (ISC_TRUE);
+
+	/*
+	 * If the owner name matches one in the exclusion list, either exactly
+	 * or partially, allow it.
+	 */
+	if (view->answeracl_exclude != NULL) {
+		dns_rbtnode_t *node = NULL;
+
+		result = dns_rbt_findnode(view->answeracl_exclude, name, NULL,
+					  &node, NULL, 0, NULL, NULL);
+
+		if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH)
+			return (ISC_TRUE);
+	}
+
+	/*
+	 * Otherwise, search the filter list for a match for each address
+	 * record.  If a match is found, the address should be filtered,
+	 * so should the entire answer.
+	 */
+	for (result = dns_rdataset_first(rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(rdataset)) {
+		dns_rdata_reset(&rdata);
+		dns_rdataset_current(rdataset, &rdata);
+		if (rdataset->type == dns_rdatatype_a) {
+			INSIST(rdata.length == sizeof(ina.s_addr));
+			memcpy(&ina.s_addr, rdata.data, sizeof(ina.s_addr));
+			isc_netaddr_fromin(&netaddr, &ina);
+		} else {
+			INSIST(rdata.length == sizeof(in6a.s6_addr));
+			memcpy(in6a.s6_addr, rdata.data, sizeof(in6a.s6_addr));
+			isc_netaddr_fromin6(&netaddr, &in6a);
+		}
+
+		result = dns_acl_match(&netaddr, NULL, view->denyansweracl,
+				       &view->aclenv, &match, NULL);
+
+		if (result == ISC_R_SUCCESS && match > 0) {
+			isc_netaddr_format(&netaddr, addrbuf, sizeof(addrbuf));
+			dns_name_format(name, namebuf, sizeof(namebuf));
+			dns_rdatatype_format(rdataset->type, typebuf,
+					     sizeof(typebuf));
+			dns_rdataclass_format(rdataset->rdclass, classbuf,
+					      sizeof(classbuf));
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+				      DNS_LOGMODULE_RESOLVER, ISC_LOG_NOTICE,
+				      "answer address %s denied for %s/%s/%s",
+				      addrbuf, namebuf, typebuf, classbuf);
+			return (ISC_FALSE);
+		}
+	}
+
+	return (ISC_TRUE);
+}
+
+static isc_boolean_t
+is_answertarget_allowed(dns_view_t *view, dns_name_t *name,
+			dns_rdatatype_t type, dns_name_t *tname,
+			dns_name_t *domain)
+{
+	isc_result_t result;
+	dns_rbtnode_t *node = NULL;
+	char qnamebuf[DNS_NAME_FORMATSIZE];
+	char tnamebuf[DNS_NAME_FORMATSIZE];
+	char classbuf[64];
+	char typebuf[64];
+
+	/* By default, we allow any target name. */
+	if (view->denyanswernames == NULL)
+		return (ISC_TRUE);
+
+	/*
+	 * If the owner name matches one in the exclusion list, either exactly
+	 * or partially, allow it.
+	 */
+	if (view->answernames_exclude != NULL) {
+		result = dns_rbt_findnode(view->answernames_exclude, name, NULL,
+					  &node, NULL, 0, NULL, NULL);
+		if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH)
+			return (ISC_TRUE);
+	}
+
+	/*
+	 * If the target name is a subdomain of the search domain, allow it.
+	 */
+	if (dns_name_issubdomain(tname, domain))
+		return (ISC_TRUE);
+
+	/*
+	 * Otherwise, apply filters.
+	 */
+	result = dns_rbt_findnode(view->denyanswernames, tname, NULL, &node,
+				  NULL, 0, NULL, NULL);
+	if (result == ISC_R_SUCCESS || result == DNS_R_PARTIALMATCH) {
+		dns_name_format(name, qnamebuf, sizeof(qnamebuf));
+		dns_name_format(tname, tnamebuf, sizeof(tnamebuf));
+		dns_rdatatype_format(type, typebuf, sizeof(typebuf));
+		dns_rdataclass_format(view->rdclass, classbuf,
+				      sizeof(classbuf));
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+			      DNS_LOGMODULE_RESOLVER, ISC_LOG_NOTICE,
+			      "%s target %s denied for %s/%s",
+			      typebuf, tnamebuf, qnamebuf, classbuf);
+		return (ISC_FALSE);
+	}
+
+	return (ISC_TRUE);
+}
+
 /*
  * Handle a no-answer response (NXDOMAIN, NXRRSET, or referral).
  * If bind8_ns_resp is ISC_TRUE, this is a suspected BIND 8
@@ -5152,7 +5306,7 @@ noanswer_response(fetchctx_t *fctx, dns_name_t *oqname,
 					 *
 					 * These should only be here if
 					 * this is a referral, and there
-					 * should only be one DS.
+					 * should only be one DS RRset.
 					 */
 					if (ns_name == NULL)
 						return (DNS_R_FORMERR);
@@ -5307,6 +5461,7 @@ answer_response(fetchctx_t *fctx) {
 	unsigned int aflag;
 	dns_rdatatype_t type;
 	dns_fixedname_t dname, fqname;
+	dns_view_t *view;
 
 	FCTXTRACE("answer_response");
 
@@ -5329,6 +5484,7 @@ answer_response(fetchctx_t *fctx) {
 		aa = ISC_FALSE;
 	qname = &fctx->name;
 	type = fctx->type;
+	view = fctx->res->view;
 	result = dns_message_firstname(message, DNS_SECTION_ANSWER);
 	while (!done && result == ISC_R_SUCCESS) {
 		name = NULL;
@@ -5349,6 +5505,18 @@ answer_response(fetchctx_t *fctx) {
 					 */
 					return (DNS_R_FORMERR);
 				}
+
+				/*
+				 * Apply filters, if given, on answers to reject
+				 * a malicious attempt of rebinding.
+				 */
+				if ((rdataset->type == dns_rdatatype_a ||
+				     rdataset->type == dns_rdatatype_aaaa) &&
+				    !is_answeraddress_allowed(view, name,
+							      rdataset)) {
+					return (DNS_R_SERVFAIL);
+				}
+
 				if (rdataset->type == type && !found_cname) {
 					/*
 					 * We've found an ordinary answer.
@@ -5397,6 +5565,14 @@ answer_response(fetchctx_t *fctx) {
 							      &tname);
 					if (result != ISC_R_SUCCESS)
 						return (result);
+					/* Apply filters on the target name. */
+					if (!is_answertarget_allowed(view,
+							name,
+							rdataset->type,
+							&tname,
+							&fctx->domain)) {
+						return (DNS_R_SERVFAIL);
+					}
 				} else if (rdataset->type == dns_rdatatype_rrsig
 					   && rdataset->covers ==
 					   dns_rdatatype_cname
@@ -5499,6 +5675,8 @@ answer_response(fetchctx_t *fctx) {
 			     rdataset != NULL;
 			     rdataset = ISC_LIST_NEXT(rdataset, link)) {
 				isc_boolean_t found_dname = ISC_FALSE;
+				dns_name_t *dname_name;
+
 				found = ISC_FALSE;
 				aflag = 0;
 				if (rdataset->type == dns_rdatatype_dname) {
@@ -5528,6 +5706,15 @@ answer_response(fetchctx_t *fctx) {
 						return (result);
 					else
 						found_dname = ISC_TRUE;
+
+					dname_name = dns_fixedname_name(&dname);
+					if (!is_answertarget_allowed(view,
+							qname,
+							rdataset->type,
+							dname_name,
+							&fctx->domain)) {
+						return (DNS_R_SERVFAIL);
+					}
 				} else if (rdataset->type == dns_rdatatype_rrsig
 					   && rdataset->covers ==
 					   dns_rdatatype_dname) {
@@ -6968,6 +7155,7 @@ dns_resolver_create(dns_view_t *view,
 	return (result);
 }
 
+#ifdef BIND9
 static void
 prime_done(isc_task_t *task, isc_event_t *event) {
 	dns_resolver_t *res;
@@ -7073,6 +7261,7 @@ dns_resolver_prime(dns_resolver_t *res) {
 		}
 	}
 }
+#endif /* BIND9 */
 
 void
 dns_resolver_freeze(dns_resolver_t *res) {

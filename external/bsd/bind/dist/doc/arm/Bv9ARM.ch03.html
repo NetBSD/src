@@ -2,7 +2,7 @@
  - Copyright (C) 2004-2009 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: Bv9ARM.ch03.html,v 1.71.48.2 2009/04/03 01:52:21 tbox Exp -->
+<!-- Id: Bv9ARM.ch03.html,v 1.77 2009/10/12 23:15:32 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -54,7 +54,7 @@
 <dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568358">Name Server Operations</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2568363">Tools for Use With the Name Server Daemon</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570071">Signals</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570124">Signals</a></span></dt>
 </dl></dd>
 </dl>
 </div>
@@ -82,10 +82,13 @@
 // Two corporate subnets we wish to allow queries from.
 acl corpnets { 192.168.4.0/24; 192.168.7.0/24; };
 options {
-     directory "/etc/namedb";           // Working directory
+     // Working directory
+     directory "/etc/namedb";
+
      allow-query { corpnets; };
 };
-// Provide a reverse mapping for the loopback address 127.0.0.1
+// Provide a reverse mapping for the loopback
+// address 127.0.0.1
 zone "0.0.127.in-addr.arpa" {
      type master;
      file "localhost.rev";
@@ -103,13 +106,18 @@ zone "0.0.127.in-addr.arpa" {
         </p>
 <pre class="programlisting">
 options {
-     directory "/etc/namedb";           // Working directory
-     allow-query-cache { none; };       // Do not allow access to cache
-     allow-query { any; };              // This is the default
-     recursion no;                      // Do not provide recursive service
+     // Working directory
+     directory "/etc/namedb";
+     // Do not allow access to cache
+     allow-query-cache { none; };
+     // This is the default
+     allow-query { any; };
+     // Do not provide recursive service
+     recursion no;
 };
 
-// Provide a reverse mapping for the loopback address 127.0.0.1
+// Provide a reverse mapping for the loopback
+// address 127.0.0.1
 zone "0.0.127.in-addr.arpa" {
      type master;
      file "localhost.rev";
@@ -119,7 +127,8 @@ zone "0.0.127.in-addr.arpa" {
 zone "example.com" {
      type master;
      file "example.com.db";
-     // IP addresses of slave servers allowed to transfer example.com
+     // IP addresses of slave servers allowed to
+     // transfer example.com
      allow-transfer {
           192.168.4.14;
           192.168.5.53;
@@ -463,6 +472,32 @@ zone "eng.example.com" {
 <dd><p>
                         Retransfer the given zone from the master.
                       </p></dd>
+<dt><span class="term"><strong class="userinput"><code>sign <em class="replaceable"><code>zone</code></em>
+                        [<span class="optional"><em class="replaceable"><code>class</code></em>
+           [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
+<dd>
+<p>
+                        Fetch all DNSSEC keys for the given zone
+                        from the key directory (see
+                        <span><strong class="command">key-directory</strong></span> in
+                        <a href="Bv9ARM.ch06.html#options" title="options Statement Definition and
+          Usage">the section called &#8220;<span><strong class="command">options</strong></span> Statement Definition and
+          Usage&#8221;</a>), and merge them
+                        into the zone's DNSKEY RRset.  If the DNSKEY RRset
+                        is changed as a result of this, then the zone is
+                        automatically re-signed with the new key set.
+                      </p>
+<p>
+                        This command requires that the
+                        <span><strong class="command">auto-dnssec</strong></span> zone option to be set
+                        to <code class="literal">allow</code>,
+                        <code class="literal">maintain</code>, or
+                        <code class="literal">create</code>,  and also requires
+                        the zone to be configured to allow dynamic DNS.
+                        See <a href="Bv9ARM.ch06.html#dynamic_update_policies" title="Dynamic Update Policies">the section called &#8220;Dynamic Update Policies&#8221;</a> for
+                        more details.
+                      </p>
+</dd>
 <dt><span class="term"><strong class="userinput"><code>freeze
                         [<span class="optional"><em class="replaceable"><code>zone</code></em>
        [<span class="optional"><em class="replaceable"><code>class</code></em>
@@ -699,7 +734,8 @@ zone "eng.example.com" {
 <pre class="programlisting">
 key rndc_key {
      algorithm "hmac-md5";
-     secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
+     secret
+       "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
 };
 options {
      default-server 127.0.0.1;
@@ -721,7 +757,8 @@ options {
                 </p>
 <pre class="programlisting">
 controls {
-        inet 127.0.0.1 allow { localhost; } keys { rndc_key; };
+        inet 127.0.0.1
+            allow { localhost; } keys { rndc_key; };
 };
 </pre>
 <p>
@@ -749,7 +786,7 @@ controls {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2570071"></a>Signals</h3></div></div></div>
+<a name="id2570124"></a>Signals</h3></div></div></div>
 <p>
           Certain UNIX signals cause the name server to take specific
           actions, as described in the following table.  These signals can

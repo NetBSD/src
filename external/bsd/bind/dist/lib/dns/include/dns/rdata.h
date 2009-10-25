@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.1.1.1 2009/03/22 15:01:46 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.h,v 1.70.120.3 2009/02/16 00:29:27 marka Exp */
+/* Id: rdata.h,v 1.76 2009/10/08 23:48:10 tbox Exp */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -97,6 +97,7 @@
 
 #include <dns/types.h>
 #include <dns/name.h>
+#include <dns/message.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -126,8 +127,26 @@ struct dns_rdata {
 
 #define DNS_RDATA_INIT { NULL, 0, 0, 0, 0, {(void*)(-1), (void *)(-1)}}
 
+#define DNS_RDATA_CHECKINITIALIZED
+#ifdef DNS_RDATA_CHECKINITIALIZED
+#define DNS_RDATA_INITIALIZED(rdata) \
+	((rdata)->data == NULL && (rdata)->length == 0 && \
+	 (rdata)->rdclass == 0 && (rdata)->type == 0 && (rdata)->flags == 0 && \
+	 !ISC_LINK_LINKED((rdata), link))
+#else
+#ifdef ISC_LIST_CHECKINIT
+#define DNS_RDATA_INITIALIZED(rdata) \
+	(!ISC_LINK_LINKED((rdata), link))
+#else
+#define DNS_RDATA_INITIALIZED(rdata) ISC_TRUE
+#endif
+#endif
+
 #define DNS_RDATA_UPDATE	0x0001		/*%< update pseudo record. */
 #define DNS_RDATA_OFFLINE	0x0002		/*%< RRSIG has a offline key. */
+
+#define DNS_RDATA_VALIDFLAGS(rdata) \
+	(((rdata)->flags & ~(DNS_RDATA_UPDATE|DNS_RDATA_OFFLINE)) == 0)
 
 /*
  * Flags affecting rdata formatting style.  Flags 0xFFFF0000
@@ -699,6 +718,21 @@ dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad);
  *	'owner' to be valid.
  *	'bad'	to be NULL or valid.
  */
+
+void
+dns_rdata_exists(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_notexist(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_deleterrset(dns_rdata_t *rdata, dns_rdatatype_t type);
+
+void
+dns_rdata_makedelete(dns_rdata_t *rdata);
+
+const char *
+dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section);
 
 ISC_LANG_ENDDECLS
 

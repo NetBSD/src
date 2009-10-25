@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.h,v 1.1.1.1 2009/03/22 14:58:21 christos Exp $	*/
+/*	$NetBSD: zconf.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -41,7 +41,7 @@
 # define ZCONF_H
 
 
-# define	MINSEC	60
+# define	MINSEC	60L
 # define	HOURSEC	(MINSEC * 60)
 # define	DAYSEC	(HOURSEC * 24)
 # define	WEEKSEC	(DAYSEC * 7)
@@ -66,13 +66,19 @@
 #if 0
 # define	ZSK_LIFETIME	((SIG_VALID_DAYS * 3) * DAYSEC)	/* set to three times the sig validity */
 #else
-# define	ZSK_LIFETIME	((MONTH * 3) * DAYSEC)	/* set fixed to 3 month */
+# if 0
+#  define	ZSK_LIFETIME	((MONTH * 3) * DAYSEC)	/* set fixed to 3 month */
+# else
+#  define	ZSK_LIFETIME	(12 * WEEKSEC)	/* set fixed to 3 month */
+# endif
 #endif
 
-# define	KSK_ALGO	(DK_ALGO_RSASHA1)
+/* # define	KSK_ALGO	(DK_ALGO_RSASHA1)	KSK_ALGO renamed to KEY_ALGO (v0.99) */
+# define	KEY_ALGO	(DK_ALGO_RSASHA1)	/* general KEY_ALGO used for both ksk and zsk */
+# define	ADDITIONAL_KEY_ALGO	0
 # define	KSK_BITS	(1300)
 # define	KSK_RANDOM	"/dev/urandom"	/* was NULL before v0.94 */
-# define	ZSK_ALGO	(DK_ALGO_RSASHA1)
+/* # define	ZSK_ALGO	(DK_ALGO_RSASHA1)	ZSK_ALGO has to be the same as KSK, so this is no longer used (v0.99) */
 # define	ZSK_BITS	(512)
 # define	ZSK_RANDOM	"/dev/urandom"
 # define	SALTLEN		24		/* salt length in bits (resolution is 4 bits)*/
@@ -96,6 +102,7 @@
 # define	SIG_GENDS	1
 # define	SIG_PARAM	""
 # define	DIST_CMD	NULL	/* default is to run "rndc reload" */
+# define	NAMED_CHROOT	NULL	/* default is none */
 
 #ifndef CONFIG_PATH
 # define	CONFIG_PATH	"/var/named/"
@@ -128,27 +135,29 @@ typedef	struct zconf	{
 	int	printtime;
 	int	printage;
 	int	ljust;
-	int	sigvalidity;	/* should be less than expire time */
-	int	max_ttl;	/* should be set to the maximum used ttl in the zone */
-	int	key_ttl;
-	int	proptime;	/* expected time offset for zone propagation */
+	long	sigvalidity;	/* should be less than expire time */
+	long	max_ttl;	/* should be set to the maximum used ttl in the zone */
+	long	key_ttl;
+	long	proptime;	/* expected time offset for zone propagation */
 #if defined (DEF_TTL)
-	int	def_ttl;	/* default ttl set in soa record  */
+	long	def_ttl;	/* default ttl set in soa record  */
 #endif
 	serial_form_t	serialform;	/* format of serial no */
-	int	resign;		/* resign interval */
+	long	resign;		/* resign interval */
 
-	int	k_life;
 	int	k_algo;
+	int	k2_algo;
+	long	k_life;
 	int	k_bits;
 	char	*k_random;
-	int	z_life;
-	int	z_algo;
+	long	z_life;
+	/* int	z_algo;		no longer used; renamed to k2_algo (v0.99) */
 	int	z_bits;
 	char	*z_random;
 	int	saltbits;
 
 	char	*view;
+	int	noexec;
 	// char	*errlog;
 	char	*logfile;
 	char	*loglevel;
@@ -165,6 +174,7 @@ typedef	struct zconf	{
 	int	sig_gends;
 	char	*sig_param;
 	char	*dist_cmd;	/* cmd to run instead of "rndc reload" */
+	char	*chroot_dir;	/* chroot directory of named */
 } zconf_t;
 
 extern	zconf_t	*loadconfig (const char *filename, zconf_t *z);

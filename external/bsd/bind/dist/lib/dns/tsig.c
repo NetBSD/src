@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.1.1.1 2009/03/22 15:01:31 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.2 2009/10/25 00:02:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tsig.c,v 1.136 2008/11/04 21:23:14 marka Exp
+ * Id: tsig.c,v 1.138 2009/06/11 23:47:55 tbox Exp
  */
 /*! \file */
 #include <config.h>
@@ -217,6 +217,37 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 			      level, "tsig key '%s': %s", namestr, message);
 }
 
+/*
+ * A supplemental routine just to add a key to ring.  Note that reference
+ * counter should be counted separately because we may be adding the key
+ * as part of creation of the key, in which case the reference counter was
+ * already initialized.  Also note we don't need RWLOCK for the reference
+ * counter: it's protected by a separate lock.
+ */
+static isc_result_t
+keyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
+	    dns_tsigkey_t *tkey)
+{
+	isc_result_t result;
+
+	RWLOCK(&ring->lock, isc_rwlocktype_write);
+	ring->writecount++;
+
+	/*
+	 * Do on the fly cleaning.  Find some nodes we might not
+	 * want around any more.
+	 */
+	if (ring->writecount > 10) {
+		cleanup_ring(ring);
+		ring->writecount = 0;
+	}
+
+	result = dns_rbt_addname(ring->keys, name, tkey);
+	RWUNLOCK(&ring->lock, isc_rwlocktype_write);
+
+	return (result);
+}
+
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			  dst_key_t *dstkey, isc_boolean_t generated,
@@ -333,7 +364,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->ring = ring;
 
 	if (key != NULL)
-		refs++;
+		refs = 1;
 	if (ring != NULL)
 		refs++;
 	ret = isc_refcount_init(&tkey->refs, refs);
@@ -349,23 +380,9 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->magic = TSIG_MAGIC;
 
 	if (ring != NULL) {
-		RWLOCK(&ring->lock, isc_rwlocktype_write);
-		ring->writecount++;
-
-		/*
-		 * Do on the fly cleaning.  Find some nodes we might not
-		 * want around any more.
-		 */
-		if (ring->writecount > 10) {
-			cleanup_ring(ring);
-			ring->writecount = 0;
-		}
-		ret = dns_rbt_addname(ring->keys, name, tkey);
-		if (ret != ISC_R_SUCCESS) {
-			RWUNLOCK(&ring->lock, isc_rwlocktype_write);
+		ret = keyring_add(ring, name, tkey);
+		if (ret != ISC_R_SUCCESS)
 			goto cleanup_refs;
-		}
-		RWUNLOCK(&ring->lock, isc_rwlocktype_write);
 	}
 
 	/*
@@ -381,6 +398,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			      "the key '%s' is too short to be secure",
 			      namestr);
 	}
+
 	if (key != NULL)
 		*key = tkey;
 
@@ -1533,6 +1551,19 @@ dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp) {
 
 	*ringp = ring;
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_tsigkeyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
+		    dns_tsigkey_t *tkey)
+{
+	isc_result_t result;
+
+	result = keyring_add(ring, name, tkey);
+	if (result == ISC_R_SUCCESS)
+		isc_refcount_increment(&tkey->refs, NULL);
+
+	return (result);
 }
 
 void

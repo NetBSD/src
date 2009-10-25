@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.46 2008/05/19 23:47:03 tbox Exp
+# Id: Makefile.in,v 1.49 2009/09/01 00:22:25 jinmei Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -24,7 +24,7 @@ top_srcdir =	@top_srcdir@
 CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} \
 		${ISC_INCLUDES} @DST_GSSAPI_INC@
 
-CDEFINES =
+CDEFINES =	-DBIND9
 CWARNINGS =
 
 DNSLIBS =	../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
@@ -58,7 +58,7 @@ gsstest@EXEEXT@: gsstest.@O@ ${DEPLIBS}
 		gsstest.@O@ ${LIBS}
 
 test: t_dst@EXEEXT@
-	../genrandom@EXEEXT@ 100 randomfile
+	../../tools/genrandom@EXEEXT@ 100 randomfile
 	-@ ./t_dst@EXEEXT@ -b @srcdir@ -q 1800 -a
 
 clean distclean::

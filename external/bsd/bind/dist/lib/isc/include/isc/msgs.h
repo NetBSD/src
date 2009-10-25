@@ -1,7 +1,7 @@
-/*	$NetBSD: msgs.h,v 1.1.1.1 2009/03/22 15:02:13 christos Exp $	*/
+/*	$NetBSD: msgs.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: msgs.h,v 1.17 2008/08/08 06:28:59 tbox Exp */
+/* Id: msgs.h,v 1.19 2009/10/01 23:48:08 tbox Exp */
 
 #ifndef ISC_MSGS_H
 #define ISC_MSGS_H 1
@@ -158,7 +158,7 @@
 #define ISC_MSG_FILTER	       1421 /*%< setsockopt(SO_ACCEPTFILTER): %s */
 
 #define ISC_MSG_TOOMANYHANDLES 1422 /*%< %s: too many open WSA event handles: %s */
-
+#define ISC_MSG_POKED          1423 /*%< "poked flags: %d" */
 
 #define ISC_MSG_AWAKE	       1502 /*%< "awake" */
 #define ISC_MSG_WORKING	       1503 /*%< "working" */

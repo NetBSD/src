@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.10 2007/09/24 04:13:25 marka Exp
+# Id: ans.pl,v 1.12 2009/05/29 23:47:49 tbox Exp
 
 #
 # Ad hoc name server
@@ -52,6 +52,7 @@ for (;;) {
 
 	my @questions = $packet->question;
 	my $qname = $questions[0]->qname;
+	my $qtype = $questions[0]->qtype;
 
 	if ($qname eq "cname1.example.com") {
 		# Data for the "cname + other data / 1" test
@@ -61,6 +62,32 @@ for (;;) {
 		# Data for the "cname + other data / 2" test: same RRs in opposite order
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 A 1.2.3.4"));
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 CNAME cname2.example.com"));
+	} elsif ($qname eq "www.example.org" || $qname eq "www.example.net" ||
+		 $qname eq "badcname.example.org" ||
+		 $qname eq "goodcname.example.org" ||
+		 $qname eq "foo.baddname.example.org" ||
+		 $qname eq "foo.gooddname.example.org") {
+		# Data for address/alias filtering.
+		if ($qtype eq "A") {
+			$packet->push("answer",
+				      new Net::DNS::RR($qname .
+						       " 300 A 192.0.2.1"));
+		} elsif ($qtype eq "AAAA") {
+			$packet->push("answer",
+				      new Net::DNS::RR($qname .
+						" 300 AAAA 2001:db8:beef::1"));
+		}
+	} elsif ($qname eq "badcname.example.net" ||
+		 $qname eq "goodcname.example.net") {
+		# Data for CNAME/DNAME filtering.  We need to make one-level
+		# delegation to avoid automatic acceptance for subdomain aliases
+		$packet->push("authority", new Net::DNS::RR("example.net 300 NS ns.example.net"));
+		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname =~ /sub\.example\.org/) {
+		# Data for CNAME/DNAME filtering.  The final answers are
+		# expected to be accepted regardless of the filter setting.
+		$packet->push("authority", new Net::DNS::RR("sub.example.org 300 NS ns.sub.example.org"));
+		$packet->push("additional", new Net::DNS::RR("ns.sub.example.org 300 A 10.53.0.3"));
 	} else {
 		# Data for the "bogus referrals" test
 		$packet->push("authority", new Net::DNS::RR("below.www.example.com 300 NS ns.below.www.example.com"));

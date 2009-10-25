@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.1 2009/03/22 14:55:41 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.2 2009/10/25 00:01:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.46.222.2 2009/02/16 23:47:15 tbox Exp */
+/* Id: named-checkconf.c,v 1.50 2009/09/29 15:06:05 fdupont Exp */
 
 /*! \file */
 
@@ -61,6 +61,9 @@ isc_log_t *logc = NULL;
 	} while (0)
 
 /*% usage */
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
 static void
 usage(void) {
 	fprintf(stderr, "usage: %s [-h] [-j] [-v] [-z] [-t directory] "
@@ -389,6 +392,15 @@ load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 	return (result);
 }
 
+static void
+output(void *closure, const char *text, int textlen) {
+	UNUSED(closure);
+	if (fwrite(text, 1, textlen, stdout) != (size_t)textlen) {
+		perror("fwrite");
+		exit(1);
+	}
+}
+
 /*% The main processing routine */
 int
 main(int argc, char **argv) {
@@ -401,10 +413,11 @@ main(int argc, char **argv) {
 	int exit_status = 0;
 	isc_entropy_t *ectx = NULL;
 	isc_boolean_t load_zones = ISC_FALSE;
+	isc_boolean_t print = ISC_FALSE;
 
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, "dhjt:vz")) != EOF) {
+	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -421,6 +434,10 @@ main(int argc, char **argv) {
 					isc_result_totext(result));
 				exit(1);
 			}
+			break;
+
+		case 'p':
+			print = ISC_TRUE;
 			break;
 
 		case 'v':
@@ -483,6 +500,8 @@ main(int argc, char **argv) {
 			exit_status = 1;
 	}
 
+	if (print && exit_status == 0)
+		cfg_print(config, output, NULL);
 	cfg_obj_destroy(parser, &config);
 
 	cfg_parser_destroy(&parser);

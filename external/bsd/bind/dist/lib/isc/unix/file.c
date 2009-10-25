@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2009/03/22 15:02:18 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2 2009/10/25 00:02:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: file.c,v 1.51.332.2 2009/02/16 23:47:15 tbox Exp */
+/* Id: file.c,v 1.55 2009/08/28 03:13:08 each Exp */
 
 /*! \file */
 
@@ -70,6 +70,7 @@
 #include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/log.h>
+#include <isc/mem.h>
 #include <isc/random.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -443,4 +444,74 @@ isc_file_truncate(const char *filename, isc_offset_t size) {
 	if (truncate(filename, size) < 0)
 		result = isc__errno2result(errno);
 	return (result);
+}
+
+isc_result_t
+isc_file_safecreate(const char *filename, FILE **fp) {
+	isc_result_t result;
+	int flags;
+	struct stat sb;
+	FILE *f;
+	int fd;
+
+	REQUIRE(filename != NULL);
+	REQUIRE(fp != NULL && *fp == NULL);
+
+	result = file_stats(filename, &sb);
+	if (result == ISC_R_SUCCESS) {
+		if ((sb.st_mode & S_IFREG) == 0)
+			return (ISC_R_INVALIDFILE);
+		flags = O_WRONLY | O_TRUNC;
+	} else if (result == ISC_R_FILENOTFOUND) {
+		flags = O_WRONLY | O_CREAT | O_EXCL;
+	} else
+		return (result);
+
+	fd = open(filename, flags, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (isc__errno2result(errno));
+
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		result = isc__errno2result(errno);
+		close(fd);
+		return (result);
+	}
+
+	*fp = f;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+{
+	char *dir, *file, *slash;
+
+	slash = strrchr(path, '/');
+
+	if (slash == path) {
+		file = ++slash;
+		dir = isc_mem_strdup(mctx, "/");
+	} else if (slash != NULL) {
+		file = ++slash;
+		dir = isc_mem_allocate(mctx, slash - path);
+		if (dir != NULL)
+			strlcpy(dir, path, slash - path);
+	} else {
+		file = path;
+		dir = isc_mem_strdup(mctx, ".");
+	}
+
+	if (dir == NULL)
+		return (ISC_R_NOMEMORY);
+
+	if (*file == '\0') {
+		isc_mem_free(mctx, dir);
+		return (ISC_R_INVALIDFILE);
+	}
+
+	*dirname = dir;
+	*basename = file;
+
+	return (ISC_R_SUCCESS);
 }

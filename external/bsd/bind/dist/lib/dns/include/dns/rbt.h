@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.1.1.1 2009/03/22 15:01:46 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.h,v 1.71.48.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: rbt.h,v 1.74 2009/09/29 15:06:06 fdupont Exp */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
@@ -911,7 +911,7 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 	} while (0)
 #else  /* DNS_RBT_USEISCREFCOUNT */
 #define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
-#define dns_rbtnode_refdestroy(node)    (REQUIRE((node)->references == 0))
+#define dns_rbtnode_refdestroy(node)    REQUIRE((node)->references == 0)
 #define dns_rbtnode_refcurrent(node)    ((node)->references)
 #define dns_rbtnode_refincrement0(node, refs)                   \
 	do {                                                    \

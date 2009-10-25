@@ -1,7 +1,7 @@
-/*	$NetBSD: parser.c,v 1.1.1.1 2009/03/22 15:02:34 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.129 2008/09/25 04:02:39 tbox Exp */
+/* Id: parser.c,v 1.132 2009/09/02 23:43:54 each Exp */
 
 /*! \file */
 
@@ -31,12 +31,12 @@
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
+#include <isc/netscope.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/sockaddr.h>
-#include <isc/netscope.h>
-#include <isc/util.h>
 #include <isc/symtab.h>
+#include <isc/util.h>
 
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>
@@ -402,6 +402,7 @@ cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
 	pctx->callback = NULL;
 	pctx->callbackarg = NULL;
 	pctx->token.type = isc_tokentype_unknown;
+	pctx->flags = 0;
 
 	memset(specials, 0, sizeof(specials));
 	specials['{'] = 1;

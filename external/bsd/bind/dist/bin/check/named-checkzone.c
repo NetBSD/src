@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.2 2009/07/28 21:10:22 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.1.1.3 2009/10/25 00:01:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkzone.c,v 1.51.34.3 2009/05/29 02:17:43 marka Exp */
+/* Id: named-checkzone.c,v 1.55 2009/09/29 15:06:05 fdupont Exp */
 
 /*! \file */
 
@@ -71,6 +71,9 @@ static enum { progmode_check, progmode_compile } progmode;
 			return (result); \
 		} \
 	} while (0)
+
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
 
 static void
 usage(void) {

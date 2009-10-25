@@ -1,7 +1,7 @@
-/*	$NetBSD: master_test.c,v 1.1.1.1 2009/03/22 14:56:23 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master_test.c,v 1.30 2007/06/19 23:46:59 tbox Exp */
+/* Id: master_test.c,v 1.32 2009/09/02 23:48:01 tbox Exp */
 
 #include <config.h>
 
@@ -77,7 +77,7 @@ main(int argc, char *argv[]) {
 		isc_buffer_init(&target, name_buf, 255);
 		dns_name_init(&origin, NULL);
 		result = dns_name_fromtext(&origin, &source, dns_rootname,
-					   ISC_FALSE, &target);
+					   0, &target);
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stdout, "dns_name_fromtext: %s\n",
 				dns_result_totext(result));
@@ -87,7 +87,7 @@ main(int argc, char *argv[]) {
 		dns_rdatacallbacks_init_stdio(&callbacks);
 		callbacks.add = print_dataset;
 
-		result = dns_master_loadfile(argv[1], &origin, &origin, 
+		result = dns_master_loadfile(argv[1], &origin, &origin,
 					     dns_rdataclass_in, 0,
 					     &callbacks, mctx);
 		fprintf(stdout, "dns_master_loadfile: %s\n",

@@ -1,0 +1,10 @@
+Private-key-format: v1.2
+Algorithm: 7 (NSEC3RSASHA1)
+Modulus: 24opa7iwrJyDng5gmdzj9PNvU4W/EbCECHilWmXTTcmvFP+lCMjD/MkUSdSDAIMOYZ982rvdJuTKSdPJdhF7aQ==
+PublicExponent: AQAB
+PrivateExponent: M7mksrWsIq8pr4axqe7KYr8sXqBneTJ+mURbqSXOmEfZrlUlW0GwbOoVcDwrStuknXF+34wo5Q3cMwk0DX95UQ==
+Prime1: +rQpJtsPO9HubmItf5eIz0quciGA5CnaMrhkB00JGEU=
+Prime2: 4C12MHLPRcYtMLNzbTOkqBWhRiBRy33Q/djerAxswtU=
+Exponent1: zyXjxtZEPRJWJ2D55S5JfbZgc69ZN62ZPEV9aUbu190=
+Exponent2: NMpf367Zopu1fpdzog6cQry9Oq9Xs6zQL0cHwMo4PnU=
+Coefficient: dT+ysdkCUq1RU+toH16kAW5F7eQ3dAMGsYIII+scCYo=
