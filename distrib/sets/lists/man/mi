@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1168 2009/10/23 08:32:06 wiz Exp $
+# $NetBSD: mi,v 1.1169 2009/10/25 04:40:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2054,8 +2054,10 @@
 ./usr/share/man/cat8/dnssec-dsfromkey.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-keyfromlabel.0	man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-revoke.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-makekeyset.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dnssec-signkey.0		man-obsolete		obsolete
+./usr/share/man/cat8/dnssec-settime.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
@@ -2499,7 +2501,7 @@
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		.cat
+./usr/share/man/cat8/rndc-confgen.0		man-obsolete		obsolete
 ./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
@@ -4539,6 +4541,8 @@
 ./usr/share/man/html8/dnssec-dsfromkey.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keyfromlabel.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keygen.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-revoke.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-settime.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-signzone.html	man-bind-htmlman	html
 ./usr/share/man/html8/dreamcast/boot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/drvctl.html		man-sysutil-htmlman	html
@@ -4875,7 +4879,7 @@
 ./usr/share/man/html8/rip6query.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/rlogind.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rmt.html			man-sysutil-htmlman	html
-./usr/share/man/html8/rndc-confgen.html		man-bind-htmlman	html
+./usr/share/man/html8/rndc-confgen.html		man-obsolete		obsolete
 ./usr/share/man/html8/rndc.html			man-bind-htmlman	html
 ./usr/share/man/html8/rndctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/route.html		man-netutil-htmlman	html
@@ -7083,8 +7087,10 @@
 ./usr/share/man/man8/dnssec-dsfromkey.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-keyfromlabel.8	man-bind-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-revoke.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-makekeyset.8	man-obsolete		obsolete
 ./usr/share/man/man8/dnssec-signkey.8		man-obsolete		obsolete
+./usr/share/man/man8/dnssec-settime.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
@@ -7529,7 +7535,7 @@
 ./usr/share/man/man8/rlogind.8			man-netutil-man		.man
 ./usr/share/man/man8/rmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
-./usr/share/man/man8/rndc-confgen.8		man-bind-man		.man
+./usr/share/man/man8/rndc-confgen.8		man-obsolete		obsolete
 ./usr/share/man/man8/rndc.8			man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
