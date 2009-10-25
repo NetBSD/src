@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.2 2009/10/25 00:14:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -179,9 +179,9 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		case 'f':
-			if (toupper(isc_commandline_argument[0]) == 'K')
+			if (toupper((unsigned char)isc_commandline_argument[0]) == 'K')
 				kskflag = DNS_KEYFLAG_KSK;
-			else if (toupper(isc_commandline_argument[0]) == 'R')
+			else if (toupper((unsigned char)isc_commandline_argument[0]) == 'R')
 				revflag = DNS_KEYFLAG_REVOKE;
 			else
 				fatal("unknown flag '%s'",

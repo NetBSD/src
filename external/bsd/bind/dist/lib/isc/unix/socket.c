@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2009/10/25 00:02:47 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2009/10/25 00:14:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -3147,7 +3147,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	} else {
 		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
 		NEWCONNSOCK(dev)->references--;
-		free_socket((isc__socket_t **)&dev->newsocket);
+		free_socket((isc__socket_t **)(void *)&dev->newsocket);
 	}
 
 	/*
@@ -5493,7 +5493,7 @@ isc__socket_cancel(isc_socket_t *sock0, isc_task_t *task, unsigned int how) {
 						ev_link);
 
 				NEWCONNSOCK(dev)->references--;
-				free_socket((isc__socket_t **)&dev->newsocket);
+				free_socket((isc__socket_t **)(void *)&dev->newsocket);
 
 				dev->result = ISC_R_CANCELED;
 				dev->ev_sender = sock;

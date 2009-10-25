@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.126.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: name.h,v 1.132 2009/09/01 17:36:51 jinmei Exp */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -129,21 +129,27 @@ struct dns_name {
 
 #define DNS_NAME_MAGIC			ISC_MAGIC('D','N','S','n')
 
-#define DNS_NAMEATTR_ABSOLUTE		0x0001
-#define DNS_NAMEATTR_READONLY		0x0002
-#define DNS_NAMEATTR_DYNAMIC		0x0004
-#define DNS_NAMEATTR_DYNOFFSETS		0x0008
-#define DNS_NAMEATTR_NOCOMPRESS		0x0010
+#define DNS_NAMEATTR_ABSOLUTE		0x00000001
+#define DNS_NAMEATTR_READONLY		0x00000002
+#define DNS_NAMEATTR_DYNAMIC		0x00000004
+#define DNS_NAMEATTR_DYNOFFSETS		0x00000008
+#define DNS_NAMEATTR_NOCOMPRESS		0x00000010
 /*
  * Attributes below 0x0100 reserved for name.c usage.
  */
-#define DNS_NAMEATTR_CACHE		0x0100		/*%< Used by resolver. */
-#define DNS_NAMEATTR_ANSWER		0x0200		/*%< Used by resolver. */
-#define DNS_NAMEATTR_NCACHE		0x0400		/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHAINING		0x0800		/*%< Used by resolver. */
-#define DNS_NAMEATTR_CHASE		0x1000		/*%< Used by resolver. */
-#define DNS_NAMEATTR_WILDCARD		0x2000		/*%< Used by server. */
+#define DNS_NAMEATTR_CACHE		0x00000100	/*%< Used by resolver. */
+#define DNS_NAMEATTR_ANSWER		0x00000200	/*%< Used by resolver. */
+#define DNS_NAMEATTR_NCACHE		0x00000400	/*%< Used by resolver. */
+#define DNS_NAMEATTR_CHAINING		0x00000800	/*%< Used by resolver. */
+#define DNS_NAMEATTR_CHASE		0x00001000	/*%< Used by resolver. */
+#define DNS_NAMEATTR_WILDCARD		0x00002000	/*%< Used by server. */
+#define DNS_NAMEATTR_PREREQUISITE	0x00004000	/*%< Used by client. */
+#define DNS_NAMEATTR_UPDATE		0x00008000	/*%< Used by client. */
+#define DNS_NAMEATTR_HASUPDATEREC	0x00010000	/*%< Used by client. */
 
+/*
+ * Various flags.
+ */
 #define DNS_NAME_DOWNCASE		0x0001
 #define DNS_NAME_CHECKNAMES		0x0002		/*%< Used by rdata. */
 #define DNS_NAME_CHECKNAMESFAIL		0x0004		/*%< Used by rdata. */
@@ -1129,6 +1135,49 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size);
  *
  *\li	'size' > 0.
  *
+ */
+
+isc_result_t
+dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
+/*%<
+ * Convert 'name' to string format, allocating sufficient memory to
+ * hold it (free with isc_mem_free()).
+ *
+ * Differs from dns_name_format in that it allocates its own memory.
+ *
+ * Requires:
+ *
+ *\li	'name' is a valid name.
+ *\li	'target' is not NULL.
+ *\li	'*target' is NULL.
+ *
+ * Returns:
+ *
+ *\li	ISC_R_SUCCESS
+ *
+ *\li	Any error that dns_name_totext() can return.
+ */
+
+isc_result_t
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
+		    isc_mem_t *mctx);
+/*%<
+ * Convert a string to a name and place it in target, allocating memory
+ * as necessary.  'options' has the same semantics as that of
+ * dns_name_fromtext().
+ *
+ * Requires:
+ *
+ * \li	'target' is a valid name that is not read-only.
+ * \li	'src' is not NULL.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS
+ *
+ *\li	Any error that dns_name_fromtext() can return.
+ *
+ *\li	Any error that dns_name_dup() can return.
  */
 
 isc_result_t
