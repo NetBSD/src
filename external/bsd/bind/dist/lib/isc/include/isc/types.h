@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2009/04/13 21:20:41 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,10 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.46.84.2 2009/01/29 23:47:44 tbox Exp */
+/* Id: types.h,v 1.51 2009/10/01 01:30:01 sar Exp */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
+
+#include <isc/namespace.h>
 
 /*! \file isc/types.h
  * \brief
@@ -42,6 +44,8 @@
 
 /* Core Types.  Alphabetized by defined type. */
 
+typedef struct isc_appctx		isc_appctx_t;	 	/*%< Application context */
+typedef struct isc_backtrace_symmap	isc_backtrace_symmap_t; /*%< Symbol Table Entry */
 typedef struct isc_bitstring		isc_bitstring_t; 	/*%< Bitstring */
 typedef struct isc_buffer		isc_buffer_t;		/*%< Buffer */
 typedef ISC_LIST(isc_buffer_t)		isc_bufferlist_t;	/*%< Buffer List */
@@ -100,7 +104,7 @@ typedef struct isc_timer		isc_timer_t;		/*%< Timer */
 typedef struct isc_timermgr		isc_timermgr_t;		/*%< Timer Manager */
 
 typedef void (*isc_taskaction_t)(isc_task_t *, isc_event_t *);
-typedef int (*isc_sockfdwatch_t)(isc_task_t *, isc_socket_t *, void *);
+typedef int (*isc_sockfdwatch_t)(isc_task_t *, isc_socket_t *, void *, int);
 
 /* The following cannot be listed alphabetically due to forward reference */
 typedef isc_result_t (isc_httpdaction_t)(const char *url,
