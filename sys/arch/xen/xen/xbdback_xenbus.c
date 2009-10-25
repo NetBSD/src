@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.27 2009/10/19 18:41:11 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.28 2009/10/25 13:47:43 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.27 2009/10/19 18:41:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.28 2009/10/25 13:47:43 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -987,6 +987,7 @@ xbdback_co_cache_flush2(struct xbdback_instance *xbdi, void *obj)
 	if (xbdi->xbdi_pendingreqs > 0) {
 		/* event or iodone will restart processing */
 		xbdi->xbdi_cont = NULL;
+		xbdi_put(xbdi);
 		return NULL;
 	}
 	xbdi->xbdi_cont = xbdback_co_cache_doflush;
