@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft_plb.c,v 1.2 2007/03/04 05:59:46 christos Exp $ */
+/* 	$NetBSD: tft_plb.c,v 1.3 2009/10/25 09:32:25 ahoka Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft_plb.c,v 1.2 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft_plb.c,v 1.3 2009/10/25 09:32:25 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ plb_tft_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX hack, use predefined base addr */
 	sc->sc_image = (void *)(uintptr_t)0x3c00000;
 
-	/* XXX fuck the hack above, use "virtex-tft-framebuffer-base" prop */
+	/* XXX forget the hack above, use "virtex-tft-framebuffer-base" prop */
 
 	tft_attach(self, &plb_tft_accessops);
 
@@ -151,7 +151,7 @@ plb_tft_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TFT_CTRL, CTRL_ENABLE);
 
 #if 0
-	/* XXX how the fuck do we change framebuffer base? */
+	/* XXX how do we change framebuffer base? */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TFT_CTRL, CTRL_RESET);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TFT_CTRL, CTRL_ENABLE);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TFT_ADDR,
