@@ -81,11 +81,13 @@
 #include "rdata/in_1/dhcid_49.c"
 #include "rdata/generic/nsec3_50.c"
 #include "rdata/generic/nsec3param_51.c"
+#include "rdata/generic/hip_55.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/unspec_103.c"
 #include "rdata/generic/tkey_249.c"
 #include "rdata/any_255/tsig_250.c"
 #include "rdata/generic/dlv_32769.c"
+#include "rdata/generic/keydata_65533.c"
 
 
 
@@ -188,6 +190,7 @@
 		break; \
 	case 50: result = fromtext_nsec3(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 51: result = fromtext_nsec3param(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 55: result = fromtext_hip(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 249: result = fromtext_tkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -197,6 +200,7 @@
 		} \
 		break; \
 	case 32769: result = fromtext_dlv(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 65533: result = fromtext_keydata(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	default: result = DNS_R_UNKNOWN; break; \
 	}
 
@@ -299,6 +303,7 @@
 		break; \
 	case 50: result = totext_nsec3(rdata, tctx, target); break; \
 	case 51: result = totext_nsec3param(rdata, tctx, target); break; \
+	case 55: result = totext_hip(rdata, tctx, target); break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 103: result = totext_unspec(rdata, tctx, target); break; \
 	case 249: result = totext_tkey(rdata, tctx, target); break; \
@@ -308,6 +313,7 @@
 		} \
 		break; \
 	case 32769: result = totext_dlv(rdata, tctx, target); break; \
+	case 65533: result = totext_keydata(rdata, tctx, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -410,6 +416,7 @@
 		break; \
 	case 50: result = fromwire_nsec3(rdclass, type, source, dctx, options, target); break; \
 	case 51: result = fromwire_nsec3param(rdclass, type, source, dctx, options, target); break; \
+	case 55: result = fromwire_hip(rdclass, type, source, dctx, options, target); break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
 	case 103: result = fromwire_unspec(rdclass, type, source, dctx, options, target); break; \
 	case 249: result = fromwire_tkey(rdclass, type, source, dctx, options, target); break; \
@@ -419,6 +426,7 @@
 		} \
 		break; \
 	case 32769: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
+	case 65533: result = fromwire_keydata(rdclass, type, source, dctx, options, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -521,6 +529,7 @@
 		break; \
 	case 50: result = towire_nsec3(rdata, cctx, target); break; \
 	case 51: result = towire_nsec3param(rdata, cctx, target); break; \
+	case 55: result = towire_hip(rdata, cctx, target); break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 103: result = towire_unspec(rdata, cctx, target); break; \
 	case 249: result = towire_tkey(rdata, cctx, target); break; \
@@ -530,6 +539,7 @@
 		} \
 		break; \
 	case 32769: result = towire_dlv(rdata, cctx, target); break; \
+	case 65533: result = towire_keydata(rdata, cctx, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -632,6 +642,7 @@
 		break; \
 	case 50: result = compare_nsec3(rdata1, rdata2); break; \
 	case 51: result = compare_nsec3param(rdata1, rdata2); break; \
+	case 55: result = compare_hip(rdata1, rdata2); break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 103: result = compare_unspec(rdata1, rdata2); break; \
 	case 249: result = compare_tkey(rdata1, rdata2); break; \
@@ -641,6 +652,7 @@
 		} \
 		break; \
 	case 32769: result = compare_dlv(rdata1, rdata2); break; \
+	case 65533: result = compare_keydata(rdata1, rdata2); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -743,6 +755,7 @@
 		break; \
 	case 50: result = fromstruct_nsec3(rdclass, type, source, target); break; \
 	case 51: result = fromstruct_nsec3param(rdclass, type, source, target); break; \
+	case 55: result = fromstruct_hip(rdclass, type, source, target); break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 103: result = fromstruct_unspec(rdclass, type, source, target); break; \
 	case 249: result = fromstruct_tkey(rdclass, type, source, target); break; \
@@ -752,6 +765,7 @@
 		} \
 		break; \
 	case 32769: result = fromstruct_dlv(rdclass, type, source, target); break; \
+	case 65533: result = fromstruct_keydata(rdclass, type, source, target); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -854,6 +868,7 @@
 		break; \
 	case 50: result = tostruct_nsec3(rdata, target, mctx); break; \
 	case 51: result = tostruct_nsec3param(rdata, target, mctx); break; \
+	case 55: result = tostruct_hip(rdata, target, mctx); break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 103: result = tostruct_unspec(rdata, target, mctx); break; \
 	case 249: result = tostruct_tkey(rdata, target, mctx); break; \
@@ -863,6 +878,7 @@
 		} \
 		break; \
 	case 32769: result = tostruct_dlv(rdata, target, mctx); break; \
+	case 65533: result = tostruct_keydata(rdata, target, mctx); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -965,6 +981,7 @@
 		break; \
 	case 50: freestruct_nsec3(source); break; \
 	case 51: freestruct_nsec3param(source); break; \
+	case 55: freestruct_hip(source); break; \
 	case 99: freestruct_spf(source); break; \
 	case 103: freestruct_unspec(source); break; \
 	case 249: freestruct_tkey(source); break; \
@@ -974,6 +991,7 @@
 		} \
 		break; \
 	case 32769: freestruct_dlv(source); break; \
+	case 65533: freestruct_keydata(source); break; \
 	default: break; \
 	}
 
@@ -1076,6 +1094,7 @@
 		break; \
 	case 50: result = additionaldata_nsec3(rdata, add, arg); break; \
 	case 51: result = additionaldata_nsec3param(rdata, add, arg); break; \
+	case 55: result = additionaldata_hip(rdata, add, arg); break; \
 	case 99: result = additionaldata_spf(rdata, add, arg); break; \
 	case 103: result = additionaldata_unspec(rdata, add, arg); break; \
 	case 249: result = additionaldata_tkey(rdata, add, arg); break; \
@@ -1085,6 +1104,7 @@
 		} \
 		break; \
 	case 32769: result = additionaldata_dlv(rdata, add, arg); break; \
+	case 65533: result = additionaldata_keydata(rdata, add, arg); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -1187,6 +1207,7 @@
 		break; \
 	case 50: result = digest_nsec3(rdata, digest, arg); break; \
 	case 51: result = digest_nsec3param(rdata, digest, arg); break; \
+	case 55: result = digest_hip(rdata, digest, arg); break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 103: result = digest_unspec(rdata, digest, arg); break; \
 	case 249: result = digest_tkey(rdata, digest, arg); break; \
@@ -1196,6 +1217,7 @@
 		} \
 		break; \
 	case 32769: result = digest_dlv(rdata, digest, arg); break; \
+	case 65533: result = digest_keydata(rdata, digest, arg); break; \
 	default: use_default = ISC_TRUE; break; \
 	}
 
@@ -1298,6 +1320,7 @@
 		break; \
 	case 50: result = checkowner_nsec3(name, rdclass, type, wildcard); break; \
 	case 51: result = checkowner_nsec3param(name, rdclass, type, wildcard); break; \
+	case 55: result = checkowner_hip(name, rdclass, type, wildcard); break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 103: result = checkowner_unspec(name, rdclass, type, wildcard); break; \
 	case 249: result = checkowner_tkey(name, rdclass, type, wildcard); break; \
@@ -1307,6 +1330,7 @@
 		} \
 		break; \
 	case 32769: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
+	case 65533: result = checkowner_keydata(name, rdclass, type, wildcard); break; \
 	default: result = ISC_TRUE; break; \
 	}
 
@@ -1409,6 +1433,7 @@
 		break; \
 	case 50: result = checknames_nsec3(rdata, owner, bad); break; \
 	case 51: result = checknames_nsec3param(rdata, owner, bad); break; \
+	case 55: result = checknames_hip(rdata, owner, bad); break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 103: result = checknames_unspec(rdata, owner, bad); break; \
 	case 249: result = checknames_tkey(rdata, owner, bad); break; \
@@ -1418,6 +1443,7 @@
 		} \
 		break; \
 	case 32769: result = checknames_dlv(rdata, owner, bad); break; \
+	case 65533: result = checknames_keydata(rdata, owner, bad); break; \
 	default: result = ISC_TRUE; break; \
 	}
 #define RDATATYPE_COMPARE(_s, _d, _tn, _n, _tp) \
@@ -1577,6 +1603,9 @@
 		case 233: \
 			RDATATYPE_COMPARE("nsec3", 50, _typename, _length, _typep); \
 			break; \
+		case 208: \
+			RDATATYPE_COMPARE("hip", 55, _typename, _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename, _length, _typep); \
 			break; \
@@ -1603,6 +1632,7 @@
 			break; \
 		case 50: \
 			RDATATYPE_COMPARE("maila", 254, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("keydata", 65533, _typename, _length, _typep); \
 			break; \
 		case 68: \
 			RDATATYPE_COMPARE("any", 255, _typename, _length, _typep); \
@@ -1661,6 +1691,7 @@
 	case 49: return (RRTYPE_DHCID_ATTRIBUTES); \
 	case 50: return (RRTYPE_NSEC3_ATTRIBUTES); \
 	case 51: return (RRTYPE_NSEC3PARAM_ATTRIBUTES); \
+	case 55: return (RRTYPE_HIP_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
 	case 100: return (DNS_RDATATYPEATTR_RESERVED); \
 	case 101: return (DNS_RDATATYPEATTR_RESERVED); \
@@ -1674,6 +1705,7 @@
 	case 254: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
 	case 255: return (DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_QUESTIONONLY); \
 	case 32769: return (RRTYPE_DLV_ATTRIBUTES); \
+	case 65533: return (RRTYPE_KEYDATA_ATTRIBUTES); \
 	}
 #define RDATATYPE_TOTEXT_SW \
 	switch (type) { \
@@ -1728,6 +1760,7 @@
 	case 49: return (str_totext("DHCID", target)); \
 	case 50: return (str_totext("NSEC3", target)); \
 	case 51: return (str_totext("NSEC3PARAM", target)); \
+	case 55: return (str_totext("HIP", target)); \
 	case 99: return (str_totext("SPF", target)); \
 	case 100: return (str_totext("UINFO", target)); \
 	case 101: return (str_totext("UID", target)); \
@@ -1741,5 +1774,6 @@
 	case 254: return (str_totext("MAILA", target)); \
 	case 255: return (str_totext("ANY", target)); \
 	case 32769: return (str_totext("DLV", target)); \
+	case 65533: return (str_totext("KEYDATA", target)); \
 	}
 #endif /* DNS_CODE_H */
