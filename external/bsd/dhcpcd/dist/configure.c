@@ -547,7 +547,7 @@ get_routes(const struct interface *iface)
 		return nrt;
 	}
 
-	return get_option_routes(iface->state->new);
+	return get_option_routes(iface->name, iface->state->new);
 }
 
 static struct rt *

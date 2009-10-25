@@ -918,7 +918,7 @@ start_rebind(void *arg)
 {
 	struct interface *iface = arg;
 
-	syslog(LOG_ERR, "%s: failed to renew, attmepting to rebind",
+	syslog(LOG_ERR, "%s: failed to renew, attempting to rebind",
 	    iface->name);
 	iface->state->state = DHS_REBIND;
 	delete_timeout(send_renew, iface);
@@ -1769,6 +1769,11 @@ main(int argc, char **argv)
 
 	ifc = argc - optind;
 	ifv = argv + optind;
+
+	/* When running dhcpcd against a single interface, we need to retain
+	 * the old behaviour of waiting for an IP address */
+	if (ifc == 1)
+		options |= DHCPCD_WAITIP;
 
 	ifaces = discover_interfaces(ifc, ifv);
 	for (i = 0; i < ifc; i++) {
