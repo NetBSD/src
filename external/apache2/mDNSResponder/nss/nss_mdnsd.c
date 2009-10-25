@@ -1,4 +1,4 @@
-/*	$NetBSD: nss_mdns.c,v 1.1 2009/10/05 03:54:17 tsarna Exp $	*/
+/*	$NetBSD: nss_mdnsd.c,v 1.1 2009/10/25 00:17:06 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,17 +39,21 @@
  * http://www.dns-sd.org/
  */
 
+#include <errno.h>
 #include <nsswitch.h>
 #include <stdarg.h>  
 #include <stdlib.h>  
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <resolv.h>
 #include <dns_sd.h>
 #include <poll.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #ifndef lint
 #define UNUSED(a)       (void)&a
@@ -57,27 +61,11 @@
 #define UNUSED(a)       a = a
 #endif
 
-#if defined(__NetBSD__) && (__NetBSD_Version__ < 599002000)
-static struct addrinfo *
-allocaddrinfo(socklen_t addrlen)
-{
-    struct addrinfo *ai;
-    
-    ai = calloc(sizeof(struct addrinfo) + addrlen, 1);
-    if (ai) {
-        ai->ai_addrlen = addrlen;
-        ai->ai_addr = (void *)(ai+1);
-    }
-    
-    return ai;
-}
-#endif
-
 #define MAXALIASES      35 
 #define MAXADDRS        35
 
 typedef struct callback_ctx {
-    int done;
+    bool done;
 } callback_ctx;
 
 typedef struct hostent_ctx {
@@ -87,7 +75,7 @@ typedef struct hostent_ctx {
     char *host_aliases[MAXALIASES];
     char addrs[MAXADDRS * 16];
     char buf[8192], *next;
-    int done, naliases, naddrs;
+    int naliases, naddrs;
 } hostent_ctx;
 
 typedef struct addrinfo_ctx {
@@ -97,34 +85,58 @@ typedef struct addrinfo_ctx {
 
 #define HCTX_BUFLEFT(c) (sizeof((c)->buf) - ((c)->next - (c)->buf))
 
+typedef struct search_domain {
+    const char *name;
+    bool        enabled;
+} search_domain;
+
+typedef struct search_iter {
+    const char     *name;
+    search_domain  *next_search;
+    size_t          baselen;
+    bool            abs_first;
+    bool            abs_last;
+    char            buf[MAXHOSTNAMELEN];
+} search_iter;
+
 static hostent_ctx h_ctx;
+static DNSServiceFlags svc_flags = 0;
+static int ndots = 1, timeout = 1000;
+static search_domain *search_domains, *no_search;
 
+ns_mtab *nss_module_register(const char *, u_int *, nss_module_unregister_fn *);
+static int load_config(res_state);
 
-static int _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap);
-static int _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap);
-static int _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap);
+static int _mdns_getaddrinfo(void *, void *, va_list);
+static int _mdns_gethtbyaddr(void *, void *, va_list);
+static int _mdns_gethtbyname(void *, void *, va_list);
 
-static void _mdns_addrinfo_init(addrinfo_ctx *ctx, const struct addrinfo *ai);
-static void _mdns_addrinfo_add_ai(addrinfo_ctx *ctx, struct addrinfo *ai);
-static struct addrinfo *_mdns_addrinfo_done(addrinfo_ctx *ctx);
+static int _mdns_getaddrinfo_abs(const char *, DNSServiceProtocol,
+    DNSServiceRef, addrinfo_ctx *);
+static void _mdns_addrinfo_init(addrinfo_ctx *, const struct addrinfo *);
+static void _mdns_addrinfo_add_ai(addrinfo_ctx *, struct addrinfo *);
+static struct addrinfo *_mdns_addrinfo_done(addrinfo_ctx *);
 
-static void _mdns_hostent_init(hostent_ctx *ctx, int af, int addrlen);
-static void _mdns_hostent_add_host(hostent_ctx *ctx, const char *name);
-static void _mdns_hostent_add_addr(hostent_ctx *ctx, const void *addr, uint16_t len);
-static struct hostent *_mdns_hostent_done(hostent_ctx *ctx);
+static int _mdns_gethtbyname_abs(const char *, int, DNSServiceRef);
+static void _mdns_hostent_init(hostent_ctx *, int, int);
+static void _mdns_hostent_add_host(hostent_ctx *, const char *);
+static void _mdns_hostent_add_addr(hostent_ctx *, const void *, uint16_t);
+static struct hostent *_mdns_hostent_done(hostent_ctx *);
 
-static void _mdns_addrinfo_cb(DNSServiceRef sdRef, DNSServiceFlags flags,
-    uint32_t interfaceIndex, DNSServiceErrorType errorCode,
-    const char *hostname, const struct sockaddr *address, uint32_t ttl,
-    void *context);
-static void _mdns_hostent_cb(DNSServiceRef sdRef, DNSServiceFlags flags,
-    uint32_t interfaceIndex, DNSServiceErrorType errorCode,
-    const char *fullname, uint16_t rrtype, uint16_t rrclass,
-    uint16_t rdlen, const void *rdata, uint32_t ttl, void *context);
-static void _mdns_eventloop(DNSServiceRef sdRef, callback_ctx *ctx);
+static void _mdns_addrinfo_cb(DNSServiceRef, DNSServiceFlags,
+    uint32_t, DNSServiceErrorType, const char *, const struct sockaddr *,
+    uint32_t, void *);
+static void _mdns_hostent_cb(DNSServiceRef, DNSServiceFlags,
+    uint32_t, DNSServiceErrorType, const char *, uint16_t, uint16_t, uint16_t,
+    const void *, uint32_t, void *);
+static void _mdns_eventloop(DNSServiceRef, callback_ctx *);
 
-static char *_mdns_rdata2name(const unsigned char *rdata, uint16_t rdlen,
-    char *buf, size_t buflen);
+static char *_mdns_rdata2name(const unsigned char *, uint16_t,
+    char *, size_t);
+
+void search_init(search_iter *, const char *);
+const char *search_next(search_iter *);
+
 
 
 static ns_mtab mtab[] = {
@@ -139,13 +151,60 @@ ns_mtab *
 nss_module_register(const char *source, u_int *nelems,
                     nss_module_unregister_fn *unreg)
 {
-    UNUSED(source);
+    res_state res;
+
     UNUSED(unreg);
     
     *nelems = sizeof(mtab) / sizeof(mtab[0]);
     *unreg = NULL;
 
+    if (!strcmp(source, "multicast_dns")) {
+        svc_flags = kDNSServiceFlagsForceMulticast;
+    }
+
+    res = __res_get_state();
+    if (res) {
+        load_config(res);
+        __res_put_state(res);
+    }
+
     return mtab;
+}
+
+
+
+static int
+load_config(res_state res)
+{
+    int count = 0;
+    char **sd;
+    
+    ndots = res->ndots;
+    timeout = res->retrans * 1000; /* retrans in sec to timeout in msec */
+
+    sd = res->dnsrch;
+    while (*sd) {
+        count++;
+        sd++;
+    }
+    
+    search_domains = malloc(sizeof(search_domain) * (count + 1));
+    if (!search_domains) {
+        return -1;
+    }
+    
+    sd = res->dnsrch;
+    no_search = search_domains;
+    while (*sd) {
+        no_search->name = *sd;
+        no_search->enabled =
+            (svc_flags & kDNSServiceFlagsForceMulticast) ? true : true;
+        no_search++;
+        sd++;
+    }
+
+    /* terminate list */
+    no_search->name = NULL;
 }
 
 
@@ -154,18 +213,17 @@ static int
 _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
 {
     const struct addrinfo *pai;
-    const char *name;
-    addrinfo_ctx ctx;
+    const char *name, *sname;
     DNSServiceProtocol proto;
-    DNSServiceErrorType err;
+    int err = NS_UNAVAIL;
     DNSServiceRef sdRef;
+    addrinfo_ctx ctx;
+    search_iter iter;
     
     UNUSED(cbdata);
     
     name = va_arg(ap, char *);
     pai = va_arg(ap, struct addrinfo *);
-    
-    //XXX check valid name space
     
     switch (pai->ai_family) {
     case AF_UNSPEC:
@@ -181,19 +239,52 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
         break;
         
     default:
+        h_errno = NO_RECOVERY;
         return NS_UNAVAIL;
     }
 
+    /* use one connection for all searches */
+    if (DNSServiceCreateConnection(&sdRef)) {
+        h_errno = NETDB_INTERNAL;
+        return NS_UNAVAIL;
+    }
+    
     _mdns_addrinfo_init(&ctx, pai);
+    search_init(&iter, name);
+    sname = search_next(&iter);
+    
+    while (sname && (err != NS_SUCCESS)) {
+        err = _mdns_getaddrinfo_abs(sname, proto, sdRef, &ctx);
+        if (err != NS_SUCCESS) {
+            sname = search_next(&iter);
+        }
+    };
+
+    DNSServiceRefDeallocate(sdRef);
+
+    if (err == NS_SUCCESS) {
+        *(struct addrinfo **)cbrv = _mdns_addrinfo_done(&ctx);
+    }
+    
+    return err;
+}
+
+
+
+static int
+_mdns_getaddrinfo_abs(const char *name, DNSServiceProtocol proto,
+    DNSServiceRef sdRef, addrinfo_ctx *ctx)
+{
+    DNSServiceErrorType err;
 
     err = DNSServiceGetAddrInfo(
         &sdRef,
-        kDNSServiceFlagsForceMulticast,
+        svc_flags,
         kDNSServiceInterfaceIndexAny,
         proto,
         name,
         _mdns_addrinfo_cb,
-        &ctx
+        ctx
     );
 
     if (err) {
@@ -201,15 +292,14 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
         return NS_UNAVAIL;
     }
     
-    _mdns_eventloop(sdRef, (void *)&h_ctx);
+    _mdns_eventloop(sdRef, (void *)ctx);
 
     DNSServiceRefDeallocate(sdRef);
 
-    if (ctx.start.ai_next) {
-        *(struct addrinfo **)cbrv = _mdns_addrinfo_done(&ctx);
-    
+    if (ctx->start.ai_next) {
         return NS_SUCCESS;
     } else {
+        h_errno = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 }
@@ -232,8 +322,6 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     addrlen = va_arg(ap, int);
     af = va_arg(ap, int);
 
-    //XXX Check if in valid address space
-    
     switch (af) {
     case AF_INET:
         (void)snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
@@ -262,8 +350,8 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
         break;
 
     default:
-        h_errno = NETDB_INTERNAL;
-        return NS_NOTFOUND;
+        h_errno = NO_RECOVERY;
+        return NS_UNAVAIL;
     }
 
     _mdns_hostent_init(&h_ctx, af, addrlen);
@@ -271,7 +359,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
 
     err = DNSServiceQueryRecord(
         &sdRef,
-        kDNSServiceFlagsForceMulticast,
+        svc_flags,
         kDNSServiceInterfaceIndexAny,
         qbuf,
         kDNSServiceType_PTR,
@@ -294,6 +382,7 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     
         return NS_SUCCESS;
     } else {
+        h_errno = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 }
@@ -303,10 +392,10 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
 static int
 _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
 {
-    const char *name;
-    int namelen, af, addrlen, rrtype;
-    DNSServiceErrorType err;
+    int namelen, af, addrlen, rrtype, err = NS_UNAVAIL;
+    const char *name, *sname;
     DNSServiceRef sdRef;
+    search_iter iter;
 
     UNUSED(cbdata);
     
@@ -315,8 +404,6 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
     af = va_arg(ap, int);
 
     UNUSED(namelen);
-    
-    //XXX Check if in valid name space
     
     switch (af) {
     case AF_INET:
@@ -334,12 +421,44 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
         return NS_NOTFOUND;
     }
 
+    /* use one connection for all searches */
+    if (DNSServiceCreateConnection(&sdRef)) {
+        h_errno = NETDB_INTERNAL;
+        return NS_UNAVAIL;
+    }
+    
     _mdns_hostent_init(&h_ctx, af, addrlen);
-    _mdns_hostent_add_host(&h_ctx, name);
+    search_init(&iter, name);
+    sname = search_next(&iter);
+    
+    while (sname && (err != NS_SUCCESS)) {
+        err = _mdns_gethtbyname_abs(sname, rrtype, sdRef);
+        if (err != NS_SUCCESS) {
+            sname = search_next(&iter);
+        }
+    };
+
+    DNSServiceRefDeallocate(sdRef);
+
+    if (err == NS_SUCCESS) {
+        _mdns_hostent_add_host(&h_ctx, sname);
+        _mdns_hostent_add_host(&h_ctx, name);
+        *(struct hostent **)cbrv = _mdns_hostent_done(&h_ctx);
+    }
+    
+    return err;
+}
+
+
+
+static int
+_mdns_gethtbyname_abs(const char *name, int rrtype, DNSServiceRef sdRef)
+{
+    DNSServiceErrorType err;
 
     err = DNSServiceQueryRecord(
         &sdRef,
-        kDNSServiceFlagsForceMulticast,
+        svc_flags,
         kDNSServiceInterfaceIndexAny,
         name,
         rrtype,
@@ -358,10 +477,9 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
     DNSServiceRefDeallocate(sdRef);
 
     if (h_ctx.naddrs) {
-        *(struct hostent **)cbrv = _mdns_hostent_done(&h_ctx);
-    
         return NS_SUCCESS;
     } else {
+        h_errno = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 }
@@ -371,7 +489,7 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
 static void
 _mdns_addrinfo_init(addrinfo_ctx *ctx, const struct addrinfo *ai)
 {
-    ctx->cb_ctx.done = 0;
+    ctx->cb_ctx.done = false;
     ctx->start = *ai;
     ctx->start.ai_next = NULL;
     ctx->start.ai_canonname = NULL;
@@ -398,7 +516,7 @@ _mdns_addrinfo_done(addrinfo_ctx *ctx)
     /* sort v6 up */
 
     t = &head;
-    p = &(ctx->start);
+    p = ctx->start.ai_next;
 
     while (p->ai_next) {
         if (p->ai_next->ai_family == AF_INET6) {
@@ -410,7 +528,8 @@ _mdns_addrinfo_done(addrinfo_ctx *ctx)
         }
     }
 
-    /* add rest of list and reset start to the new list*/
+    /* add rest of list and reset start to the new list */
+
     t->ai_next = ctx->start.ai_next;
     ctx->start.ai_next = head.ai_next;
     
@@ -424,7 +543,8 @@ _mdns_hostent_init(hostent_ctx *ctx, int af, int addrlen)
 {
     int i;
     
-    ctx->cb_ctx.done = ctx->naliases = ctx->naddrs = 0;
+    ctx->cb_ctx.done = false;
+    ctx->naliases = ctx->naddrs = 0;
     ctx->next = ctx->buf;
 
     ctx->host.h_aliases = ctx->host_aliases;
@@ -443,15 +563,32 @@ _mdns_hostent_init(hostent_ctx *ctx, int af, int addrlen)
 static void
 _mdns_hostent_add_host(hostent_ctx *ctx, const char *name)
 {
-    size_t len = strlen(name);
+    size_t len;
+    int i;
     
-    if (name && (HCTX_BUFLEFT(ctx) > len) && (ctx->naliases < MAXALIASES)) {
+    if (name && (len = strlen(name))
+    && (HCTX_BUFLEFT(ctx) > len) && (ctx->naliases < MAXALIASES)) {
+        if (len && (name[len - 1] == '.')) {
+            len--;
+        }
+        
         /* skip dupe names */
-        if ((ctx->host.h_name) && !strcmp(ctx->host.h_name, name)) {
+
+        if ((ctx->host.h_name) && !strncmp(ctx->host.h_name, name, len)
+        && (strlen(ctx->host.h_name) == len)) {
             return;
         }
+
+        for (i = 0; i < ctx->naliases - 1; i++) {
+            if (!strncmp(ctx->host.h_aliases[i], name, len)
+            && (strlen(ctx->host.h_aliases[i]) == len)) {
+                return;
+            }
+        }
     
-        strcpy(ctx->next, name);
+        strncpy(ctx->next, name, len);
+        ctx->next[len] = 0;
+        
         if (ctx->naliases == 0) {
             ctx->host.h_name = ctx->next;
         } else {
@@ -510,7 +647,7 @@ _mdns_addrinfo_cb(
 
     if (errorCode == kDNSServiceErr_NoError) {
         if (! (flags & kDNSServiceFlagsMoreComing)) {
-            ctx->cb_ctx.done = 1;
+            ctx->cb_ctx.done = true;
         }
 
         ai = allocaddrinfo((socklen_t)(address->sa_len));
@@ -521,7 +658,13 @@ _mdns_addrinfo_cb(
             ai->ai_protocol = ctx->start.ai_protocol;
             memcpy(ai->ai_addr, address, (size_t)(address->sa_len));
             
-            //XXX canonname?
+            if ((ctx->start.ai_flags & AI_CANONNAME) && hostname) {
+                ai->ai_canonname = strdup(hostname);
+                if (ai->ai_canonname[strlen(ai->ai_canonname) - 1] == '.') {
+                    ai->ai_canonname[strlen(ai->ai_canonname) - 1] = '\0';
+                }
+            }
+
             _mdns_addrinfo_add_ai(ctx, ai);
         }
     }
@@ -552,7 +695,7 @@ _mdns_hostent_cb(
     UNUSED(ttl);
 
     if (! (flags & kDNSServiceFlagsMoreComing)) {
-        ctx->cb_ctx.done = 1;
+        ctx->cb_ctx.done = true;
     }
 
     if (errorCode == kDNSServiceErr_NoError) {
@@ -596,7 +739,7 @@ _mdns_eventloop(DNSServiceRef sdRef, callback_ctx *ctx)
     fds.events = POLLRDNORM;
 
     while (!ctx->done) {
-        ret = poll(&fds, 1, 500);
+        ret = poll(&fds, 1, timeout);
         if (ret > 0) {
             DNSServiceProcessResult(sdRef);
         } else {
@@ -670,4 +813,93 @@ _mdns_rdata2name(const unsigned char *rdata, uint16_t rdlen, char *buf, size_t b
     *buf = '\0';
 
     return r;
+}
+
+
+
+void
+search_init(search_iter *iter, const char *name)
+{
+    const char *c = name;
+    bool enddot = false;
+    int dots = 0;
+
+    iter->name = name;
+    iter->baselen = 0;
+        
+    while (*c) {
+        if (*c == '.') {
+            dots++;
+            enddot = true;
+        } else {
+            enddot = false;
+        }
+        c++;
+    } 
+    
+    if (dots >= ndots) {
+        iter->abs_first = true;
+        iter->abs_last = false;
+    } else {
+        iter->abs_first = false;
+        iter->abs_last = true;
+    }
+    
+    if (enddot) {
+        iter->next_search = no_search;
+    } else {
+        iter->next_search = search_domains;
+    }
+}
+
+
+
+const char *
+search_next(search_iter *iter)
+{
+    const char *a = NULL;
+    res_state res;
+    size_t len;
+    
+    if (iter->abs_first) {
+        iter->abs_first = false;
+        return iter->name;
+    }
+    
+    while (iter->next_search->name) {
+        if (iter->next_search->enabled) {
+            if (!iter->baselen) {
+                iter->baselen = strlcpy(iter->buf, iter->name, sizeof(iter->buf));
+                if (iter->baselen >= sizeof(iter->buf) - 1) {
+                    /* original is too long, don't try any search domains */
+                    iter->next_search = no_search;
+                    break;
+                }
+                
+                iter->buf[iter->baselen++] = '.';
+            }
+            
+            len = strlcpy(&(iter->buf[iter->baselen]),
+                iter->next_search->name,
+                sizeof(iter->buf) - iter->baselen);
+                
+            iter->next_search++;
+
+            if (len >= sizeof(iter->buf) - iter->baselen) {
+                /* result would be too long */
+                continue;
+            }
+            
+            return iter->buf;
+        } else {
+            iter->next_search++;
+        }
+    }
+    
+    if (iter->abs_last) {
+        iter->abs_last = false;
+        return iter->name;
+    }
+    
+    return NULL;
 }

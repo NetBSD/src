@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2009/10/05 03:54:17 tsarna Exp $
+#	$NetBSD: Makefile,v 1.2 2009/10/25 00:17:06 tsarna Exp $
 
-LIB=		nss_mdns
+LIB=		nss_mdnsd
 SHLIB_MAJOR=	0
+LINKS=  	${LIBDIR}/${LIB}.so.${SHLIB_MAJOR} \
+		${LIBDIR}/nss_multicast_dns.so.${SHLIB_MAJOR}
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -11,7 +13,7 @@ NOPICINSTALL=	# don't install _pic.a library
 
 .include "${.CURDIR}/../Makefile.inc"
 
-SRCS=		nss_mdns.c
+SRCS=		nss_mdnsd.c
 LDADD+= 	-ldns_sd
 DPADD+= 	${LIBDNS_SD}
 
