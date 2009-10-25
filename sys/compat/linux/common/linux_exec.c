@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.112 2009/03/15 15:55:51 cegger Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.113 2009/10/25 01:14:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.112 2009/03/15 15:55:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.113 2009/10/25 01:14:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,42 +90,40 @@ void linux_userret(void);
 struct uvm_object *emul_linux_object;
 
 struct emul emul_linux = {
-	"linux",
-	"/emul/linux",
+	.e_name =		"linux",
+	.e_path =		"/emul/linux",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	(const int *)native_to_linux_errno,
-	LINUX_SYS_syscall,
-	LINUX_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		(const int *)native_to_linux_errno,
+	.e_nosys =		LINUX_SYS_syscall,
+	.e_nsysent =		LINUX_SYS_NSYSENT,
 #endif
-	linux_sysent,
-	linux_syscallnames,
-	linux_sendsig,
-	linux_trapsignal,
-	NULL,
-	linux_sigcode,
-	linux_esigcode,
-	&emul_linux_object,
-	linux_setregs,
-	linux_e_proc_exec,
-	linux_e_proc_fork,
-	linux_e_proc_exit,
-	NULL,
-	NULL,
+	.e_sysent =		linux_sysent,
+	.e_syscallnames =	linux_syscallnames,
+	.e_sendsig =		linux_sendsig,
+	.e_trapsignal =		linux_trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		linux_sigcode,
+	.e_esigcode =		linux_esigcode,
+	.e_sigobject =		&emul_linux_object,
+	.e_setregs =		linux_setregs,
+	.e_proc_exec =		linux_e_proc_exec,
+	.e_proc_fork =		linux_e_proc_fork,
+	.e_proc_exit =		linux_e_proc_exit,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	linux_syscall_intern,
+	.e_syscall_intern =	linux_syscall_intern,
 #else
 #error Implement __HAVE_SYSCALL_INTERN for this platform
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-
-	linux_usertrap,
-	NULL,		/* e_sa */
-	0,
-	NULL,		/* e_startlwp */
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		linux_usertrap,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 static void
