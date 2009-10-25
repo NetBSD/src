@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.26 2009/03/11 13:51:47 joerg Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.27 2009/10/25 00:17:06 tsarna Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -58,7 +58,7 @@ Each criterion consists of one or more status codes, and actions to
 take if that status code occurs.
 .Ss Sources
 The following sources are implemented:
-.Bl -column "compat" -offset indent -compact
+.Bl -column "multicast_dns" -offset indent -compact
 .It Sy Source	Description
 .It files	Local files, such as
 .Pa /etc/hosts ,
@@ -67,12 +67,28 @@ and
 .It dns	Internet Domain Name System.
 .Dq hosts
 and
-.Sq networks
+.Dq networks
 use
 .Sy IN
 class entries, all other databases use
 .Sy HS
 class (Hesiod) entries.
+.It mdnsd	Use
+.Xr mdnsd 8
+for
+.Dq hosts
+lookups, acting as both a system-wide cache for normal unicast DNS
+as well as providing multicast DNS
+.Dq ( zeroconf )
+lookups.
+.It multicast_dns	Use
+.Xr mdnsd 8
+only for multicast DNS
+.Dq hosts
+lookups.
+This would normally be used in conjunction with
+.Dq dns ,
+which would then provide unicast DNS resolver functions.
 .It nis	NIS (formerly YP)
 .It compat	support
 .Sq +/-
