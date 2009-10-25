@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.1 2009/03/22 14:55:58 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.259.12.3 2009/01/29 22:40:33 jinmei Exp */
+/* Id: client.c,v 1.265 2009/05/07 09:41:21 fdupont Exp */
 
 #include <config.h>
 
@@ -1357,7 +1357,6 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	dns_name_t *signame;
 	isc_boolean_t ra;	/* Recursion available. */
 	isc_netaddr_t netaddr;
-	isc_netaddr_t destaddr;
 	int match;
 	dns_messageid_t id;
 	unsigned int flags;
@@ -1475,7 +1474,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 
 	/*
 	 * Silently drop multicast requests for the present.
-	 * XXXMPA look at when/if mDNS spec stabilizes.
+	 * XXXMPA revisit this as mDNS spec was published.
 	 */
 	if ((client->attributes & NS_CLIENTATTR_MULTICAST) != 0) {
 		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
@@ -1649,24 +1648,20 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	 * etc), we regard this as an error for safety.
 	 */
 	if ((client->interface->flags & NS_INTERFACEFLAG_ANYADDR) == 0)
-		isc_netaddr_fromsockaddr(&destaddr, &client->interface->addr);
+		isc_netaddr_fromsockaddr(&client->destaddr,
+					 &client->interface->addr);
 	else {
+		isc_sockaddr_t sockaddr;
 		result = ISC_R_FAILURE;
 
-		if (TCP_CLIENT(client)) {
-			isc_sockaddr_t destsockaddr;
-
+		if (TCP_CLIENT(client))
 			result = isc_socket_getsockname(client->tcpsocket,
-							&destsockaddr);
-			if (result == ISC_R_SUCCESS)
-				isc_netaddr_fromsockaddr(&destaddr,
-							 &destsockaddr);
-		}
+							&sockaddr);
+		if (result == ISC_R_SUCCESS)
+			isc_netaddr_fromsockaddr(&client->destaddr, &sockaddr);
 		if (result != ISC_R_SUCCESS &&
 		    client->interface->addr.type.sa.sa_family == AF_INET6 &&
 		    (client->attributes & NS_CLIENTATTR_PKTINFO) != 0) {
-			isc_uint32_t zone = 0;
-
 			/*
 			 * XXXJT technically, we should convert the receiving
 			 * interface ID to a proper scope zone ID.  However,
@@ -1675,12 +1670,11 @@ client_request(isc_task_t *task, isc_event_t *event) {
 			 * interface index as link ID.  Despite the assumption,
 			 * it should cover most typical cases.
 			 */
-			if (IN6_IS_ADDR_LINKLOCAL(&client->pktinfo.ipi6_addr))
-				zone = (isc_uint32_t)client->pktinfo.ipi6_ifindex;
-
-			isc_netaddr_fromin6(&destaddr,
+			isc_netaddr_fromin6(&client->destaddr,
 					    &client->pktinfo.ipi6_addr);
-			isc_netaddr_setzone(&destaddr, zone);
+			if (IN6_IS_ADDR_LINKLOCAL(&client->pktinfo.ipi6_addr))
+				isc_netaddr_setzone(&client->destaddr,
+						client->pktinfo.ipi6_ifindex);
 			result = ISC_R_SUCCESS;
 		}
 		if (result != ISC_R_SUCCESS) {
@@ -1710,7 +1704,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 				tsig = dns_tsigkey_identity(client->message->tsigkey);
 
 			if (allowed(&netaddr, tsig, view->matchclients) &&
-			    allowed(&destaddr, tsig, view->matchdestinations) &&
+			    allowed(&client->destaddr, tsig,
+				    view->matchdestinations) &&
 			    !((client->message->flags & DNS_MESSAGEFLAG_RD)
 			      == 0 && view->matchrecursiveonly))
 			{
@@ -1863,10 +1858,10 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	    ns_client_checkaclsilent(client, NULL,
 				     client->view->queryacl,
 				     ISC_TRUE) == ISC_R_SUCCESS &&
-	    ns_client_checkaclsilent(client, &client->interface->addr,
+	    ns_client_checkaclsilent(client, &client->destaddr,
 				     client->view->recursiononacl,
 				     ISC_TRUE) == ISC_R_SUCCESS &&
-	    ns_client_checkaclsilent(client, &client->interface->addr,
+	    ns_client_checkaclsilent(client, &client->destaddr,
 				     client->view->queryonacl,
 				     ISC_TRUE) == ISC_R_SUCCESS)
 		ra = ISC_TRUE;
@@ -2602,12 +2597,12 @@ ns_client_getsockaddr(ns_client_t *client) {
 }
 
 isc_result_t
-ns_client_checkaclsilent(ns_client_t *client, isc_sockaddr_t *sockaddr,
+ns_client_checkaclsilent(ns_client_t *client, isc_netaddr_t *netaddr,
 			 dns_acl_t *acl, isc_boolean_t default_allow)
 {
 	isc_result_t result;
+	isc_netaddr_t tmpnetaddr;
 	int match;
-	isc_netaddr_t netaddr;
 
 	if (acl == NULL) {
 		if (default_allow)
@@ -2616,15 +2611,13 @@ ns_client_checkaclsilent(ns_client_t *client, isc_sockaddr_t *sockaddr,
 			goto deny;
 	}
 
+	if (netaddr == NULL) {
+		isc_netaddr_fromsockaddr(&tmpnetaddr, &client->peeraddr);
+		netaddr = &tmpnetaddr;
+	}
 
-	if (sockaddr == NULL)
-		isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
-	else
-		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-
-	result = dns_acl_match(&netaddr, client->signer, acl,
-			       &ns_g_server->aclenv,
-			       &match, NULL);
+	result = dns_acl_match(netaddr, client->signer, acl,
+			       &ns_g_server->aclenv, &match, NULL);
 
 	if (result != ISC_R_SUCCESS)
 		goto deny; /* Internal error, already logged. */
@@ -2644,8 +2637,14 @@ ns_client_checkacl(ns_client_t *client, isc_sockaddr_t *sockaddr,
 		   const char *opname, dns_acl_t *acl,
 		   isc_boolean_t default_allow, int log_level)
 {
-	isc_result_t result =
-		ns_client_checkaclsilent(client, sockaddr, acl, default_allow);
+	isc_result_t result;
+	isc_netaddr_t netaddr;
+
+	if (sockaddr != NULL)
+		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
+
+	result = ns_client_checkaclsilent(client, sockaddr ? &netaddr : NULL,
+					  acl, default_allow);
 
 	if (result == ISC_R_SUCCESS)
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,

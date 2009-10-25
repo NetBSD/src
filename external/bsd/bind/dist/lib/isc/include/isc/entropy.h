@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.h,v 1.1.1.1 2009/03/22 15:02:11 christos Exp $	*/
+/*	$NetBSD: entropy.h,v 1.1.1.2 2009/10/25 00:02:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.h,v 1.32.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: entropy.h,v 1.34 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef ISC_ENTROPY_H
 #define ISC_ENTROPY_H 1

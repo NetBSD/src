@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.1.1.1 2009/03/22 15:01:49 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.h,v 1.41.48.3 2009/01/18 23:25:17 marka Exp */
+/* Id: validator.h,v 1.44 2009/01/17 13:20:45 fdupont Exp */
 
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1

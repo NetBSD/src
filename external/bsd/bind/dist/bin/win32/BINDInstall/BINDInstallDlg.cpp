@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.37.228.4 2009/01/18 23:47:35 tbox Exp */
+/* Id: BINDInstallDlg.cpp,v 1.45 2009/09/29 04:37:08 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -64,8 +64,12 @@
 #include "AccountInfo.h"
 #include "versioninfo.h"
 
+#include <config.h>
+
 #define MAX_GROUPS	100
 #define MAX_PRIVS	 50
+
+#define LOCAL_SERVICE "NT AUTHORITY\\LocalService"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -100,55 +104,59 @@ typedef struct _filedata {
 	int destination;
 	int importance;
 	BOOL checkVer;
-
+	BOOL withTools;
 } FileData;
 
 const FileData installFiles[] =
 {
 #ifdef BINARIES_INSTALL
 #  ifdef DEBUG_BINARIES
-	{"msvcrtd.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"msvcrtd.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
 #  endif
 #  ifdef RELEASE_BINARIES
-	{"msvcrt.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"msvcrt.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
 #  endif
 #endif
 #if _MSC_VER < 1400
 #if _MSC_VER >= 1310
-	{"mfc71.dll", FileData::WinSystem, FileData::Critical, TRUE},
-	{"msvcr71.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"mfc71.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
+	{"msvcr71.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
 #elif _MSC_VER > 1200 && _MSC_VER < 1310
-	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE},
-	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE},
+	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
+	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE, TRUE},
 #endif
 #endif
-	{"bindevt.dll", FileData::BinDir, FileData::Normal, FALSE},
-	{"libbind9.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"libisc.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"libisccfg.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE},
-	{"named.exe", FileData::BinDir, FileData::Critical, FALSE},
-	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"BINDInstall.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"rndc.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dig.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"host.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-signzone.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-dsfromkey.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"dnssec-keyfromlabel.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE},
-	{"readme1st.txt", FileData::BinDir, FileData::Trivial, FALSE},
+	{"bindevt.dll", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"libbind9.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libisc.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libisccfg.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#ifdef HAVE_LIBXML2
+	{"libxml2.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
+	{"named.exe", FileData::BinDir, FileData::Critical, FALSE, FALSE},
+	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"BINDInstall.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"rndc.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dig.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"host.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"ddns-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-signzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-dsfromkey.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-keyfromlabel.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-revoke.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"readme1st.txt", FileData::BinDir, FileData::Trivial, FALSE, TRUE},
 	{NULL, -1, -1}
 };
-
 
 /////////////////////////////////////////////////////////////////////////////
 // CBINDInstallDlg dialog
@@ -160,6 +168,7 @@ CBINDInstallDlg::CBINDInstallDlg(CWnd* pParent /*=NULL*/)
 	//{{AFX_DATA_INIT(CBINDInstallDlg)
 	m_targetDir = _T("");
 	m_version = _T("");
+	m_toolsOnly = FALSE;
 	m_autoStart = FALSE;
 	m_keepFiles = FALSE;
 	m_current = _T("");
@@ -194,6 +203,7 @@ void CBINDInstallDlg::DoDataExchange(CDataExchange* pDX) {
 	DDX_Text(pDX, IDC_ACCOUNT_NAME, m_accountName);
 	DDX_Text(pDX, IDC_ACCOUNT_PASSWORD, m_accountPassword);
 	DDX_Text(pDX, IDC_ACCOUNT_PASSWORD_CONFIRM, m_accountPasswordConfirm);
+	DDX_Check(pDX, IDC_TOOLS_ONLY, m_toolsOnly);
 	DDX_Check(pDX, IDC_AUTO_START, m_autoStart);
 	DDX_Check(pDX, IDC_KEEP_FILES, m_keepFiles);
 	DDX_Text(pDX, IDC_CURRENT, m_current);
@@ -228,7 +238,7 @@ BOOL CBINDInstallDlg::OnInitDialog() {
 	char *fptr = &filename[0];
 	GetModuleFileName(NULL, filename, MAX_PATH);
 	char *dptr = strrchr(filename,'\\');
-	int index = dptr - fptr;
+	size_t index = dptr - fptr;
 	strncpy(dirname, filename, index);
 	dirname[index] = '\0';
 	CString Dirname(dirname);
@@ -402,48 +412,55 @@ void CBINDInstallDlg::OnInstall() {
 
 	UpdateData();
 
-	/*
-	 * Check that the Passwords entered match.
-	 */
-	if (m_accountPassword != m_accountPasswordConfirm) {
-		MsgBox(IDS_ERR_PASSWORD);
-		return;
-	}
-
-	/*
-	 * Check that there is not leading / trailing whitespace.
-	 * This is for compatibility with the standard password dialog.
-	 * Passwords really should be treated as opaque blobs.
-	 */
-	oldlen = m_accountPassword.GetLength();
-	m_accountPassword.TrimLeft();
-	m_accountPassword.TrimRight();
-	if (m_accountPassword.GetLength() != oldlen) {
-		MsgBox(IDS_ERR_WHITESPACE);
-		return;
-	}
-
-	/*
-	 * Check the entered account name.
-	 */
-	if (ValidateServiceAccount() == FALSE)
-		return;
-
-	/*
-	 * For Registration we need to know if account was changed.
-	 */
-	if (m_accountName != m_currentAccount)
-		m_accountUsed = FALSE;
-
-	if (m_accountUsed == FALSE && m_serviceExists == FALSE)
-	{
-	/*
-	 * Check that the Password is not null.
-	 */
-		if (m_accountPassword.GetLength() == 0) {
-			MsgBox(IDS_ERR_NULLPASSWORD);
+	if (!m_toolsOnly && m_accountName != LOCAL_SERVICE) {
+		/*
+		 * Check that the Passwords entered match.
+		 */
+		if (m_accountPassword != m_accountPasswordConfirm) {
+			MsgBox(IDS_ERR_PASSWORD);
 			return;
 		}
+
+		/*
+		 * Check that there is not leading / trailing whitespace.
+		 * This is for compatibility with the standard password dialog.
+		 * Passwords really should be treated as opaque blobs.
+		 */
+		oldlen = m_accountPassword.GetLength();
+		m_accountPassword.TrimLeft();
+		m_accountPassword.TrimRight();
+		if (m_accountPassword.GetLength() != oldlen) {
+			MsgBox(IDS_ERR_WHITESPACE);
+			return;
+		}
+
+		/*
+		 * Check the entered account name.
+		 */
+		if (ValidateServiceAccount() == FALSE)
+			return;
+
+		/*
+		 * For Registration we need to know if account was changed.
+		 */
+		if (m_accountName != m_currentAccount)
+			m_accountUsed = FALSE;
+
+		if (m_accountUsed == FALSE && m_serviceExists == FALSE)
+		{
+		/*
+		 * Check that the Password is not null.
+		 */
+			if (m_accountPassword.GetLength() == 0) {
+				MsgBox(IDS_ERR_NULLPASSWORD);
+				return;
+			}
+		}
+	} else if (m_accountName == LOCAL_SERVICE) {
+		/* The LocalService always exists. */
+		m_accountExists = TRUE;
+		if (m_accountName != m_currentAccount)
+			m_accountUsed = FALSE;
 	}
 
 	/* Directories */
@@ -466,14 +483,16 @@ void CBINDInstallDlg::OnInstall() {
 		}
 	}
 
-	if (m_accountExists == FALSE) {
-		success = CreateServiceAccount(m_accountName.GetBuffer(30),
-						m_accountPassword.GetBuffer(30));
-		if (success == FALSE) {
-			MsgBox(IDS_CREATEACCOUNT_FAILED);
-			return;
+	if (!m_toolsOnly) {
+		if (m_accountExists == FALSE) {
+			success = CreateServiceAccount(m_accountName.GetBuffer(30),
+							m_accountPassword.GetBuffer(30));
+			if (success == FALSE) {
+				MsgBox(IDS_CREATEACCOUNT_FAILED);
+				return;
+			}
+			m_accountExists = TRUE;
 		}
-		m_accountExists = TRUE;
 	}
 
 	ProgramGroup(FALSE);
@@ -498,7 +517,8 @@ void CBINDInstallDlg::OnInstall() {
 	try {
 		CreateDirs();
 		CopyFiles();
-		RegisterService();
+		if (!m_toolsOnly)
+			RegisterService();
 		RegisterMessages();
 
 		HKEY hKey;
@@ -599,6 +619,8 @@ void CBINDInstallDlg::CopyFiles() {
 	CString destFile;
 
 	for (int i = 0; installFiles[i].filename; i++) {
+		if (m_toolsOnly && !installFiles[i].withTools)
+			continue;
 		SetCurrent(IDS_COPY_FILE, installFiles[i].filename);
 
 		destFile = DestDir(installFiles[i].destination) + "\\" +
@@ -713,13 +735,16 @@ CBINDInstallDlg::GetCurrentServiceAccountName() {
 	}
 
 	RegCloseKey(hKey);
-	if(keyFound == FALSE)
+	if (keyFound == FALSE)
 		m_accountName = "";
-	else {
-	/*
-	 * LocalSystem is not a regular account and is equivalent
-	 * to no account but with lots of privileges
-	 */
+	else if (!strcmp(accountName, LOCAL_SERVICE)) {
+		m_accountName = LOCAL_SERVICE;
+		m_accountUsed = TRUE;
+	} else {
+		/*
+		 * LocalSystem is not a regular account and is equivalent
+		 * to no account but with lots of privileges
+		 */
 		Tmp = accountName;
 		if (Tmp == ".\\LocalSystem")
 			m_accountName = "";
@@ -775,20 +800,23 @@ void
 CBINDInstallDlg::RegisterService() {
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
-	CString StartName = ".\\" + m_accountName;
+	CString StartName;
 
+	if (m_accountName == LOCAL_SERVICE)
+		StartName = LOCAL_SERVICE;
+	else
+		StartName = ".\\" + m_accountName;
 	/*
 	 * We need to change the service rather than create it
 	 * if the service already exists. Do nothing if we are already
 	 * using that account
 	 */
-	if(m_serviceExists == TRUE) {
-		if(m_accountUsed == FALSE) {
-			UpdateService();
+	if (m_serviceExists == TRUE) {
+		if (m_accountUsed == FALSE) {
+			UpdateService(StartName);
 			SetItemStatus(IDC_REG_SERVICE);
 			return;
-		}
-		else {
+		} else {
 			SetItemStatus(IDC_REG_SERVICE);
 			return;
 		}
@@ -827,10 +855,12 @@ CBINDInstallDlg::RegisterService() {
 }
 
 void
-CBINDInstallDlg::UpdateService() {
+CBINDInstallDlg::UpdateService(CString StartName) {
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
-	CString StartName = ".\\" + m_accountName;
+
+	if(m_toolsOnly)
+		return;
 
 	SetCurrent(IDS_OPEN_SCM);
 	hSCManager= OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
@@ -857,11 +887,10 @@ CBINDInstallDlg::UpdateService() {
 		if (hSCManager)
 			CloseServiceHandle(hSCManager);
 		return;
-	}
-	else {
+	} else {
 		if (ChangeServiceConfig(hService, dwServiceType, dwStart,
 			SERVICE_ERROR_NORMAL, namedLoc, NULL, NULL, NULL,
-			StartName, m_accountPassword,BIND_DISPLAY_NAME)
+			StartName, m_accountPassword, BIND_DISPLAY_NAME)
 			!= TRUE) {
 			DWORD err = GetLastError();
 			MsgBox(IDS_ERR_UPDATE_SERVICE, GetErrMessage());
@@ -941,7 +970,7 @@ void CBINDInstallDlg::RegisterMessages() {
 
 	/* Add the Event-ID message-file name to the subkey. */
 	if (RegSetValueEx(hKey, "EventMessageFile", 0, REG_EXPAND_SZ,
-		(LPBYTE)pszMsgDLL, strlen(pszMsgDLL) + 1) != ERROR_SUCCESS)
+		(LPBYTE)pszMsgDLL, (DWORD)(strlen(pszMsgDLL) + 1)) != ERROR_SUCCESS)
 		throw(Exception(IDS_ERR_SET_VALUE, GetErrMessage()));
 
 	/* Set the supported types flags and addit to the subkey. */

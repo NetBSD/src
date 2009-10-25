@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.1.1.1 2009/03/22 15:01:49 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.111.88.4 2009/01/29 22:40:35 jinmei Exp */
+/* Id: view.h,v 1.118 2009/06/30 02:52:32 each Exp */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -94,8 +94,7 @@ struct dns_view {
 	dns_cache_t *			cache;
 	dns_db_t *			cachedb;
 	dns_db_t *			hints;
-	dns_keytable_t *		secroots;
-	dns_keytable_t *		trustedkeys;
+	dns_keytable_t *		secroots;   /* security roots */
 	isc_mutex_t			lock;
 	isc_boolean_t			frozen;
 	isc_task_t *			task;
@@ -104,6 +103,7 @@ struct dns_view {
 	isc_event_t			reqevent;
 	isc_stats_t *			resstats;
 	dns_stats_t *			resquerystats;
+	isc_boolean_t			cacheshared;
 
 	/* Configurable data. */
 	dns_tsig_keyring_t *		statickeys;
@@ -129,6 +129,10 @@ struct dns_view {
 	dns_acl_t *			transferacl;
 	dns_acl_t *			updateacl;
 	dns_acl_t *			upfwdacl;
+	dns_acl_t *			denyansweracl;
+	dns_rbt_t *			answeracl_exclude;
+	dns_rbt_t *			denyanswernames;
+	dns_rbt_t *			answernames_exclude;
 	isc_boolean_t			requestixfr;
 	isc_boolean_t			provideixfr;
 	isc_boolean_t			requestnsid;
@@ -162,6 +166,7 @@ struct dns_view {
 	unsigned int			attributes;
 	/* Under owner's locking control. */
 	ISC_LINK(struct dns_view)	link;
+	dns_viewlist_t *		viewlist;
 };
 
 #define DNS_VIEW_MAGIC			ISC_MAGIC('V','i','e','w')
@@ -310,8 +315,12 @@ dns_view_createresolver(dns_view_t *view,
 
 void
 dns_view_setcache(dns_view_t *view, dns_cache_t *cache);
+void
+dns_view_setcache2(dns_view_t *view, dns_cache_t *cache, isc_boolean_t shared);
 /*%<
- * Set the view's cache database.
+ * Set the view's cache database.  If 'shared' is true, this means the cache
+ * is created by another view and is shared with that view.  dns_view_setcache()
+ * is a backward compatible version equivalent to setcache2(..., ISC_FALSE).
  *
  * Requires:
  *
@@ -728,8 +737,14 @@ dns_view_dumpdbtostream(dns_view_t *view, FILE *fp);
 
 isc_result_t
 dns_view_flushcache(dns_view_t *view);
+isc_result_t
+dns_view_flushcache2(dns_view_t *view, isc_boolean_t fixuponly);
 /*%<
- * Flush the view's cache (and ADB).
+ * Flush the view's cache (and ADB).  If 'fixuponly' is true, it only updates
+ * the internal reference to the cache DB with omitting actual flush operation.
+ * 'fixuponly' is intended to be used for a view that shares a cache with
+ * a different view.  dns_view_flushcache() is a backward compatible version
+ * that always sets fixuponly to false.
  *
  * Requires:
  * 	'view' is valid.
@@ -876,6 +891,19 @@ dns_view_getresquerystats(dns_view_t *view, dns_stats_t **statsp);
  * \li	'view' is valid and is not frozen.
  *
  *\li	'statsp' != NULL && '*statsp' != NULL
+ */
+
+isc_boolean_t
+dns_view_iscacheshared(dns_view_t *view);
+/*%<
+ * Check if the view shares the cache created by another view.
+ *
+ * Requires:
+ * \li	'view' is valid.
+ *
+ * Returns:
+ *\li	#ISC_TRUE if the cache is shared.
+ *\li	#ISC_FALSE otherwise.
  */
 
 #endif /* DNS_VIEW_H */

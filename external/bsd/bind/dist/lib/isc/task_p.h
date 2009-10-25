@@ -1,7 +1,7 @@
-/*	$NetBSD: task_p.h,v 1.1.1.1 2009/03/22 15:02:09 christos Exp $	*/
+/*	$NetBSD: task_p.h,v 1.1.1.2 2009/10/25 00:02:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task_p.h,v 1.11 2007/06/19 23:47:17 tbox Exp */
+/* Id: task_p.h,v 1.13 2009/09/02 23:48:02 tbox Exp */
 
 #ifndef ISC_TASK_P_H
 #define ISC_TASK_P_H
@@ -25,9 +25,9 @@
 /*! \file */
 
 isc_boolean_t
-isc__taskmgr_ready(void);
+isc__taskmgr_ready(isc_taskmgr_t *taskmgr);
 
 isc_result_t
-isc__taskmgr_dispatch(void);
+isc__taskmgr_dispatch(isc_taskmgr_t *taskmgr);
 
 #endif /* ISC_TASK_P_H */

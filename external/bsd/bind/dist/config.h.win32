@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.19 2008/09/25 07:44:12 marka Exp */
+/* Id: config.h.win32,v 1.23 2009/10/12 16:41:12 each Exp */
 
 /*
  * win32 configuration file
@@ -51,7 +51,10 @@
 /*
  * Windows NT and 2K only
  */
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
+#endif
+
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
 
@@ -234,3 +237,20 @@ typedef long off_t;
  * Windows doesn't use configure so just set "default" here.
  */
 #define CONFIGARGS "default"
+
+/*
+ * Define if libxml2 is present
+ */
+#define HAVE_LIBXML2 1
+
+/*
+ * Define when building BIND9.  When building exportable versions
+ * of libisc, libdns, etc, this must be removed.
+ */
+#define BIND9 1
+
+/*
+ * Define if PKCS11 is to be used.
+ */
+/* #undef USE_PKCS11 */
+

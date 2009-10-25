@@ -19,13 +19,14 @@ rem BuildSetup.bat
 rem This script sets up the files necessary ready to build BIND 9.
 rem This requires perl to be installed on the system.
 
-rem Get and update for the latest build of the openssl library
-perl updateopenssl.pl
-
 rem Set up the configuration file
 cd ..
 copy config.h.win32 config.h
 cd win32utils
+
+rem Get and update for the latest build of the openssl and libxml libraries
+perl updateopenssl.pl
+perl updatelibxml2.pl
 
 rem Generate the version information
 perl makeversion.pl
@@ -55,6 +56,7 @@ echo Copying the standalone manual pages.
 
 copy ..\bin\named\named.html ..\Build\Release
 copy ..\bin\rndc\*.html ..\Build\Release
+copy ..\bin\confgen\*.html ..\Build\Release
 copy ..\bin\dig\*.html ..\Build\Release
 copy ..\bin\nsupdate\*.html ..\Build\Release
 copy ..\bin\check\*.html ..\Build\Release
@@ -62,13 +64,16 @@ copy ..\bin\dnssec\dnssec-keygen.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-signzone.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-dsfromkey.html ..\Build\Release
 copy ..\bin\dnssec\dnssec-keyfromlabel.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-keygen.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-list.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-destroy.html ..\Build\Release
 
 echo Copying the migration notes.
 
 copy ..\doc\misc\migration ..\Build\Release
 copy ..\doc\misc\migration-4to9 ..\Build\Release
 
-call BuildOpenSSL.bat
+call SetupLibs.bat
 
 rem
 rem set vcredist here so that it is correctly expanded in the if body 
@@ -79,8 +84,7 @@ if Defined FrameworkSDKDir (
 
 rem
 rem vcredist_x86.exe path relative to FrameworkSDKDir
-rem
-
+rem 
 if Exist "%FrameworkSDKDir%\%vcredist%" (
 
 echo Copying Visual C x86 Redistributable Installer

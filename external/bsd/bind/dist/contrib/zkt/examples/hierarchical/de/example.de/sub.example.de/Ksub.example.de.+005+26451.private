@@ -1,0 +1,10 @@
+Private-key-format: v1.2
+Algorithm: 5 (RSASHA1)
+Modulus: u2BSOupQez5A9uJYlPzNwRyAwP4qW+F6A0PuQnYdH4autBznW7kseAHbH8ABl8XryOiVwt2zRwyYjkujA0yOPE83mD/o9Y+J/PU/ZGnyj51lpTZU2Hazr1hMJpA/KevtDPjkraGY0UxtfF32I/xfOlYixImhZHlY04a9eVgvhME=
+PublicExponent: AQAAAAE=
+PrivateExponent: opFdHZAmZ2/cdNYkJs+CD0jU3nK/atMHKnKtsczlAC7p4eqmS2vRj54oe+yG204gZ3yzLp6yIp3TALfutc5HICmuyfMUdliiaUn3dcbzcc6QK9XgcEJPSz2X5Ot04CdgafNZ5g6s4r2zWSSRBYsZtCeZbevIH4KJcJjh/D5IDF0=
+Prime1: 7SZBGa/9lloRYImdEH5auLkCDGezv+AGKFtMm/UjQ8KwezpxtjFz+KsWckEtyUkDIIPWAQ3t4iND118Nb7L8Uw==
+Prime2: ykU794Iygwej+0ZsLsDju3Iulniy2qtvQ4CrS6zu6D0BzuiQyAEI9V1PThMnIfHlIA3g8rGRK8AAARiCrNh4Gw==
+Exponent1: tcJZs75GusGfQ7z3N//r+rp67thZlOV3RY//4mm+t3Hg4qZEw02A9kSmNdiBb0VzVhKIHd3OFvXCkdKa5fj6Qw==
+Exponent2: nyGlgUHTHESEFHfdJEIxVvRNa12iG179Mfu7ytWNpKUV9EvAP1WfyoGlLEmhhwENii/xK1e4qwxNk1yjBtQ8CQ==
+Coefficient: r2Nfc/szQ0mm/kJdfenPpWVbdvAML1RSt7CxaNUfYqmnuMRP12LMJazAApIweJKNI0u4qDBLIHhAwbXKFtLm1A==

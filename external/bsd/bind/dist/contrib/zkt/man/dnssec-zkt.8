@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-zkt.8,v 1.1.1.1 2009/03/22 14:58:25 christos Exp $
+.\"	$NetBSD: dnssec-zkt.8,v 1.1.1.2 2009/10/25 00:01:54 christos Exp $
 .\"
-.TH dnssec-zkt 8 "December 28, 2008" "ZKT 0.98" ""
+.TH dnssec-zkt 8 "August 1, 2009" "ZKT 0.99b" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -208,7 +208,7 @@ to assist in dnssec zone key management.
 .PP
 In the common usage the command prints out information about
 all dnssec (zone) keys found in the given (or predefined default) directory.
-It's also possible to specify keyfiles (K*.key) as arguments.
+It is also possible to specify keyfiles (K*.key) as arguments.
 With option
 .B \-r
 subdirectories will be searched recursively, and all dnssec keys found
@@ -221,7 +221,7 @@ Other forms of the command print out keys in a format suitable for
 a trusted-key section or as a DNSKEY resource record.
 .PP
 The command is also useful in dns key management.
-It allows key livetime monitoring and status change.
+It offers monitoring of key lifetime and modification of key status.
 
 .SH GENERAL OPTIONS
 .TP
@@ -229,7 +229,7 @@ It allows key livetime monitoring and status change.
 Try to read the default configuration out of a file named
 .I dnssec-<view>.conf .
 Instead of specifying the \-V or --view option every time,
-it's also possible to create a hard or softlink to the
+it is also possible to create a hard or softlink to the
 executable file to give it an additional name like 
 .I dnssec-zkt-<view> .
 .TP
@@ -254,7 +254,7 @@ This will be useful in combination with wildcard arguments
 to prevent dnsssec-zkt to list all keys found in subdirectories. 
 For example "dnssec-zkt -d *" will print out a list of all keys only found in
 the current directory.
-Maybe it's easier to use "dnssec-zkt ." instead (without -r set).
+Maybe it is easier to use "dnssec-zkt ." instead (without -r set).
 The option works similar to the \-d option of
 .IR ls(1) .
 .TP
@@ -419,6 +419,7 @@ Depreciate the key with tag "12345" below the current directory,
 .TP
 .fam C
 .B "dnssec-zkt --view intern 
+.fam T
 Print out a list of all zone keys found below the directory where all
 the zones of view intern live.
 There should be a seperate dnssec config file
@@ -431,8 +432,11 @@ with a directory option to take affect of this.
 Same as above.
 The binary file
 .I dnssec-zkt
-have linked to
-.I dnssec-zkt-intern .
+has another link, named
+.I dnssec-zkt-intern
+made, and 
+.I dnssec-zkt
+examines argv[0] to find a view whose zones it proceeds to process.
 
 .SH ENVIRONMENT VARIABLES
 .TP
@@ -464,8 +468,8 @@ and the ksk rollover options
 insist on domain names ending with a dot.
 .PP
 
-.SH AUTHOR
-Holger Zuleger 
+.SH AUTHORS
+Holger Zuleger, Mans Nilsson
 
 .SH COPYRIGHT
 Copyright (c) 2005 \- 2008 by Holger Zuleger.

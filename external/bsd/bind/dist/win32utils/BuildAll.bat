@@ -80,7 +80,12 @@ cd ..\..
 
 cd rndc\win32
 nmake /nologo -f rndc.mak CFG="rndc - Win32 Release"  NO_EXTERNAL_DEPS="1"
-nmake /nologo -f confgen.mak CFG="rndcconfgen - Win32 Release"  NO_EXTERNAL_DEPS="1"
+
+cd ..\..
+
+cd confgen\win32
+nmake /nologo -f rndcconfgen.mak CFG="rndcconfgen - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f ddnsconfgen.mak CFG="ddnsconfgen - Win32 Release"  NO_EXTERNAL_DEPS="1"
 
 cd ..\..
 
@@ -104,6 +109,14 @@ nmake /nologo -f keygen.mak CFG="keygen - Win32 Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f signzone.mak CFG="signzone - Win32 Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f dsfromkey.mak CFG="dsfromkey - Win32 Release"  NO_EXTERNAL_DEPS="1"
 nmake /nologo -f keyfromlabel.mak CFG="keyfromlabel - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f revoke.mak CFG="revoke - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f settime.mak CFG="settime - Win32 Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..
+
+cd pkcs11\win32
+nmake /nologo -f pk11keygen.mak CFG="pk11keygen - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f pk11list.mak CFG="pk11list - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f pk11destroy.mak CFG="pk11destroy - Win32 Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 
 rem This is the BIND 9 Installer

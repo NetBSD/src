@@ -1,4 +1,58 @@
-zkt 0.98 -- 30. Dec 2008
+zkt 0.99c -- 1. Aug 2009
+
+* misc	dnssec-signer command line option vars changed to storage
+	class static.
+
+* port	setenv() replaced by putenv() in misc.c
+
+* misc	Install binaries in prefix/bin instead of $HOME/bin.
+	Fixing some spelling errors in dnssec-signzone.8 and
+	dnssec-zkt.8.
+	Thanks to Mans Nilsson.
+
+* port	timegm() check added to configure.ac
+
+* misc	configure.ac, Makefile.in, and doc is now part of distribution
+
+* bug	off by one error fixed in splitpath()
+
+* misc	is_dotfile() renamed to is_dotfilename() (misc.c)
+
+* misc	inc_soaserial() sourced out to soaserial.c
+
+* misc	reload() functions sourced out to nscomm.c
+
+* bug	Introducing parameter "KeyAlgorithm" for both ZSK and
+	KSK keys instead of separate KSK and ZSK algorithms.
+	New functions dki_algo() and dki_findalgo().
+
+* bug	Redirect stderr message (additionally to stdout) of
+	dnssec-signzone command to pipe.
+	Pick up last line of output for logging.
+
+* misc	"Sig_GenerateDS" is no longer a hidden parameter.
+
+* misc	"make clean" now remove the binary files
+	New target "distclean" added to Makefile
+
+* bug	Wrong typecast in zconf.c parsing CONF_TIMEINT (Thanks to Frederick
+	Soderblum and Peter Norin for the patch)
+	Changed all TIMEINT parameter values to long.
+
+* bug	If someone changes the zone.db file in dynamic mode, this will be treated
+	the same way as an initial setup, so the zone.db file will be used as new
+	input file (Thanks to Shane Wegner for this patch)
+
+* bug	Option nsec3_param added to dnssec-signzone command for dynamic zones.
+
+* func	New option "NamedChrootDir" added to dnssec.conf to specify the
+	directory of a chrooted named. Without such an option
+	"dnssec-signer -N named.conf" couldn't find the zone file directory.
+
+* misc 	Default ZSK lifetime set to 12 weeks instead of 3 months (30days) to
+	suppress the warning message about ZSK keysize of 512 bits.
+
+zkt 0.98 -- 28. Dec 2008
 
 * misc 	Target "install-man" added to Makefile
 	man files moved to sub directory "man"

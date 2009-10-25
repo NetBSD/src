@@ -32,17 +32,35 @@ generated as part of the initial signing process.
 
 While the update request will complete almost immediately the zone
 will not be completely signed until named has had time to walk the
-zone and generate the NSEC and RRSIG records.  Initially the NSEC
-record at the zone apex will have the OPT bit set.  When the NSEC
-chain is complete the OPT bit will be cleared.  Additionally when
-the zone is fully signed the private type (default TYPE65535) records
-will have a non zero value for the final octet. 
+zone and generate the NSEC and RRSIG records.  The NSEC record at the
+apex will be added last to signal that there is a complete NSEC chain.
+Additionally when the zone is fully signed the private type (default
+TYPE65534) records will have a non zero value for the final octet for
+those record with a none zero initial octet.
 
-The private type record has 5 octets.
+The private type record format:
+If the first octet is non-zero then the record indicates that the zone needs
+to be signed with the key matching the record or that all signatures that
+match the record should be removed.
+
 	algorithm (octet 1)
 	key id in network order (octet 2 and 3)
 	removal flag (octet 4)
 	complete flag (octet 5)
+
+Only records with the complete flag set can be removed via nsupdate.
+Attempts to remove other private type records will be silently ignored.
+
+If the first octet is zero (this is a reserved algorithm number
+that should never appear in a DNSKEY record) then the record indicates
+changes to the NSEC3 chains are in progress.  The rest of the record
+contains a NSEC3PARAM record.  The flag field tells what operation
+to perform based on the flag bits.
+
+	0x01 OPTOUT
+	0x80 CREATE
+	0x40 REMOVE
+	0x20 NONSEC
 
 If you wish to go straight to a secure zone using NSEC3 you should
 also add a NSECPARAM record to the update request with the flags
@@ -56,10 +74,11 @@ bit set or not.
 	> update add example.net NSEC3PARAM 1 1 100 1234567890
 	> send
 
-Again the update request will complete almost immediately however the
-NSEC3PARAM record will have additional flag bits set indicating that the
-NSEC3 chain is under construction.  When the NSEC3 chain is complete the
-flags field will be set to zero. 
+Again the update request will complete almost immediately however
+the record won't show up or be deleted until named has had a chance
+to build/remove the relevent chain.  A private type record will be
+created to record the operatation and will be removed once the
+operation completes.
 
 While the initial signing and NSEC/NSEC3 chain generation is happening
 other updates are possible.
@@ -109,7 +128,8 @@ NSEC chain will be generated before the NSEC3 chain is removed.
 
 To do this remove all the DNSKEY records.  Any NSEC or NSEC3 chains
 will be removed as well as associated NSEC3PARAM records.  This will
-take place after the update requests completes.
+take place after the update requests completes.  This requires
+secure-to-insecure to be set in named.conf.
 
 		Periodic re-signing.
 
