@@ -38,6 +38,7 @@ cfg_parse_file
 cfg_parser_create
 cfg_parser_destroy
 cfg_parser_setcallback
+cfg_print
 cfg_tuple_get
 
 ; Exported Data

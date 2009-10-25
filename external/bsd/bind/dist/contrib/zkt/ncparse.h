@@ -1,4 +1,4 @@
-/*	$NetBSD: ncparse.h,v 1.1.1.1 2009/03/22 14:58:20 christos Exp $	*/
+/*	$NetBSD: ncparse.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -39,5 +39,5 @@
 
 #ifndef NCPARSE_H
 # define NCPARSE_H
-extern	int	parse_namedconf (const char *filename, char *dir, size_t dirsize, int (*func) ());
+extern	int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, size_t dirsize, int (*func) ());
 #endif

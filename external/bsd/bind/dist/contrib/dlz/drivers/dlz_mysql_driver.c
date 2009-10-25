@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.1 2009/03/22 14:57:11 christos Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2 2009/10/25 00:01:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -794,6 +794,9 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	char *endp;
 	int j;
 	unsigned int flags = 0;
+#ifdef MYSQL_OPT_RECONNECT
+        my_bool auto_reconnect = 1;
+#endif
 
 	UNUSED(driverarg);
 	UNUSED(dlzname);
@@ -924,6 +927,17 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	user = getParameterValue(argv[1], "user=");
 	pass = getParameterValue(argv[1], "pass=");
 	socket = getParameterValue(argv[1], "socket=");
+
+#ifdef MYSQL_OPT_RECONNECT
+	/* enable automatic reconnection. */
+        if (mysql_options((MYSQL *) dbi->dbconn, MYSQL_OPT_RECONNECT,
+			  &auto_reconnect) != 0) {
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
+			      DNS_LOGMODULE_DLZ, ISC_LOG_WARNING,
+			      "mysql driver failed to set "
+			      "MYSQL_OPT_RECONNECT option, continuing");
+	}
+#endif
 
 	for (j=0; dbc == NULL && j < 4; j++)
 		dbc = mysql_real_connect((MYSQL *) dbi->dbconn, host,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.2 2009/07/28 21:11:12 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.3 2009/10/25 00:02:34 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.18.50.2 2009/04/21 23:47:18 tbox Exp */
+/* Id: sdlz.c,v 1.22 2009/09/01 00:22:26 jinmei Exp */
 
 /*! \file */
 
@@ -1119,9 +1119,11 @@ dbiterator_seek(dns_dbiterator_t *iterator, dns_name_t *name) {
 	sdlz_dbiterator_t *sdlziter = (sdlz_dbiterator_t *)iterator;
 
 	sdlziter->current = ISC_LIST_HEAD(sdlziter->nodelist);
-	while (sdlziter->current != NULL)
+	while (sdlziter->current != NULL) {
 		if (dns_name_equal(sdlziter->current->name, name))
 			return (ISC_R_SUCCESS);
+		sdlziter->current = ISC_LIST_NEXT(sdlziter->current, link);
+	}
 	return (ISC_R_NOTFOUND);
 }
 
@@ -1620,7 +1622,7 @@ dns_sdlz_putnamedrr(dns_sdlzallnodes_t *allnodes, const char *name,
 	isc_buffer_init(&b, name, strlen(name));
 	isc_buffer_add(&b, strlen(name));
 
-	result = dns_name_fromtext(newname, &b, origin, ISC_FALSE, NULL);
+	result = dns_name_fromtext(newname, &b, origin, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 

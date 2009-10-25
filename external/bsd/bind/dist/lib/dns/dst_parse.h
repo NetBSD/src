@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.h,v 1.1.1.1 2009/03/22 15:01:04 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.1.1.2 2009/10/25 00:02:29 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_parse.h,v 1.11 2008/05/15 00:50:26 each Exp */
+/* Id: dst_parse.h,v 1.14 2009/09/02 06:29:01 each Exp */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -42,10 +42,15 @@
 #include <dst/dst.h>
 
 #define MAJOR_VERSION		1
-#define MINOR_VERSION		2
+#define MINOR_VERSION		3
 
 #define MAXFIELDSIZE		512
-#define MAXFIELDS		12
+
+/*
+ * Maximum number of fields in a private file is 18 (12 algorithm-
+ * specific fields for RSA, plus 6 generic fields).
+ */
+#define MAXFIELDS		12+6
 
 #define TAG_SHIFT		4
 #define TAG_ALG(tag)		((unsigned int)(tag) >> TAG_SHIFT)
@@ -123,11 +128,11 @@ ISC_LANG_BEGINDECLS
 void
 dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx);
 
-int
+isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		      isc_mem_t *mctx, dst_private_t *priv);
 
-int
+isc_result_t
 dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 			  const char *directory);
 

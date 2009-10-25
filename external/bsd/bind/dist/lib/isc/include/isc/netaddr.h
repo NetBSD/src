@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.h,v 1.1.1.1 2009/03/22 15:02:13 christos Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.h,v 1.35.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: netaddr.h,v 1.37 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1

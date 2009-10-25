@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.9 2007/09/24 04:13:25 marka Exp
+# Id: ans.pl,v 1.11 2009/05/29 23:47:49 tbox Exp
 
 #
 # Ad hoc name server
@@ -50,7 +50,42 @@ for (;;) {
 
 	$packet->header->qr(1);
 
-	$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
+	my @questions = $packet->question;
+	my $qname = $questions[0]->qname;
+
+	if ($qname eq "badcname.example.net") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname .
+				       " 300 CNAME badcname.example.org"));
+	} elsif ($qname eq "foo.baddname.example.net") {
+		$packet->push("answer",
+			      new Net::DNS::RR("baddname.example.net" .
+				       " 300 DNAME baddname.example.org"));
+	} elsif ($qname eq "foo.gooddname.example.net") {
+		$packet->push("answer",
+			      new Net::DNS::RR("gooddname.example.net" .
+				       " 300 DNAME gooddname.example.org"));
+	} elsif ($qname eq "goodcname.example.net") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname .
+				       " 300 CNAME goodcname.example.org"));
+	} elsif ($qname eq "cname.sub.example.org") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname .
+				       " 300 CNAME ok.sub.example.org"));
+	} elsif ($qname eq "ok.sub.example.org") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname . " 300 A 192.0.2.1"));
+	} elsif ($qname eq "www.dname.sub.example.org") {
+		$packet->push("answer",
+			      new Net::DNS::RR("dname.sub.example.org" .
+				       " 300 DNAME ok.sub.example.org"));
+	} elsif ($qname eq "www.ok.sub.example.org") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname . " 300 A 192.0.2.1"));
+	} else {
+		$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
+	}
 
 	$sock->send($packet->data);
 

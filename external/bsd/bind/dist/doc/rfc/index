@@ -111,11 +111,14 @@
 4408:	Sender Policy Framework (SPF) for Authorizing Use of Domains
 	 in E-Mail, Version 1
 4470:	Minimally Covering NSEC Records and DNSSEC On-line Signing
+4509:	Use of SHA-256 in DNSSEC Delegation Signer (DS) Resource Records (RRs)
 4634:	US Secure Hash Algorithms (SHA and HMAC-SHA)
+4635:	HMAC SHA TSIG Algorithm Identifiers
 4641:	DNSSEC Operational Practices
 4648:	The Base16, Base32, and Base64 Data Encodings
 4701:	A DNS Resource Record (RR) for Encoding
          Dynamic Host Configuration Protocol (DHCP) Information (DHCID RR)
+4892:	Requirements for a Mechanism Identifying a Name Server Instance
 5155:	DNS Security (DNSSEC) Hashed Authenticated Denial of Existence
 5295:	Host Identity Protocol (HIP) Domain Name System (DNS) Extension
 5507:	Design Choices When Expanding the DNS

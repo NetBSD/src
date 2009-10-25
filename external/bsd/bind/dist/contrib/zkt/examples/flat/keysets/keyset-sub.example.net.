@@ -1,8 +1,8 @@
 $ORIGIN .
 sub.example.net		7200	IN DNSKEY 257 3 7 (
-					AwEAAeOdfq7cwfhl3aL8BlURGngPA+3I2E3G
-					3XPRE7Yaw/Nco7aXorHKJgRFMoM30q7jDBau
-					dLeXC//fOQAw2P5vCwyuHmIFo4flXn51sMeF
-					pWdP7E8fmi4k/YoCESu+vBvf+rZWDMVosj8V
-					VEIbKTcJE16Nsd1ls1FIGfiqfu8SrJ0f
-					) ; key id = 18846
+					AwEAAcVJgMf71y0M2KfrhiAKIHkhS8MlgmKb
+					jkaBY56zZRAQMwHJyMODZcIgBQvPkxGw/1Yr
+					/5v3ZbOwVCj7zeYfve+tRsXXBEYTvo7POLE9
+					H0iMf69vq7Qxh82/q+LpBH1818iDhBn6q0f7
+					ww4Flo7B3u5zJf6FHul8JPx5UPSENnx3
+					) ; key id = 48516

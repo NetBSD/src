@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2009/03/22 15:02:24 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2 2009/10/25 00:02:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.c,v 1.31 2007/06/19 23:47:19 tbox Exp */
+/* Id: file.c,v 1.35 2009/09/02 17:58:06 each Exp */
 
 #include <config.h>
 
@@ -33,10 +33,12 @@
 #include <sys/utime.h>
 
 #include <isc/file.h>
+#include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/time.h>
 #include <isc/util.h>
 #include <isc/stat.h>
+#include <isc/string.h>
 
 #include "errno2result.h"
 
@@ -215,9 +217,9 @@ isc_file_getmodtime(const char *file, isc_time_t *time) {
 			 &time->absolute))
 	{
 		close(fh);
-                errno = EINVAL;
-                return (isc__errno2result(errno));
-        }
+		errno = EINVAL;
+		return (isc__errno2result(errno));
+	}
 	close(fh);
 	return (ISC_R_SUCCESS);
 }
@@ -231,23 +233,23 @@ isc_file_settime(const char *file, isc_time_t *time) {
 	if ((fh = open(file, _O_RDWR | _O_BINARY)) < 0)
 		return (isc__errno2result(errno));
 
-        /*
+	/*
 	 * Set the date via the filedate system call and return.  Failing
-         * this call implies the new file times are not supported by the
-         * underlying file system.
-         */
+	 * this call implies the new file times are not supported by the
+	 * underlying file system.
+	 */
 	if (!SetFileTime((HANDLE) _get_osfhandle(fh),
 			 NULL,
 			 &time->absolute,
 			 &time->absolute))
 	{
 		close(fh);
-                errno = EINVAL;
-                return (isc__errno2result(errno));
-        }
+		errno = EINVAL;
+		return (isc__errno2result(errno));
+	}
 
 	close(fh);
-        return (ISC_R_SUCCESS);
+	return (ISC_R_SUCCESS);
 
 }
 
@@ -459,7 +461,7 @@ isc_file_progname(const char *filename, char *progname, size_t namelen) {
 		return (ISC_R_SUCCESS);
 	}
 
-	/* 
+	/*
 	 * Copy the result to the buffer
 	 */
 	len = p - s;
@@ -504,6 +506,82 @@ isc_file_truncate(const char *filename, isc_offset_t size) {
 		return (isc__errno2result(errno));
 	}
 	close(fh);
+
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_safecreate(const char *filename, FILE **fp) {
+	isc_result_t result;
+	int flags;
+	struct stat sb;
+	FILE *f;
+	int fd;
+
+	REQUIRE(filename != NULL);
+	REQUIRE(fp != NULL && *fp == NULL);
+
+	result = file_stats(filename, &sb);
+	if (result == ISC_R_SUCCESS) {
+		if ((sb.st_mode & S_IFREG) == 0)
+			return (ISC_R_INVALIDFILE);
+		flags = O_WRONLY | O_TRUNC;
+	} else if (result == ISC_R_FILENOTFOUND) {
+		flags = O_WRONLY | O_CREAT | O_EXCL;
+	} else
+		return (result);
+
+	fd = open(filename, flags, S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (isc__errno2result(errno));
+
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		result = isc__errno2result(errno);
+		close(fd);
+		return (result);
+	}
+
+	*fp = f;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+{
+	char *dir, *file, *slash;
+	char *backslash;
+
+	slash = strrchr(path, '/');
+
+	backslash = strrchr(path, '\\');
+	if ((slash != NULL && backslash != NULL && backslash > slash) ||
+	    (slash == NULL && backslash != NULL))
+		slash = backslash;
+
+	if (slash == path) {
+		file = ++slash;
+		dir = isc_mem_strdup(mctx, "/");
+	} else if (slash != NULL) {
+		file = ++slash;
+		dir = isc_mem_allocate(mctx, slash - path);
+		if (dir != NULL)
+			strlcpy(dir, path, slash - path);
+	} else {
+		file = path;
+		dir = isc_mem_strdup(mctx, ".");
+	}
+
+	if (dir == NULL)
+		return (ISC_R_NOMEMORY);
+
+	if (*file == '\0') {
+		isc_mem_free(mctx, dir);
+		return (ISC_R_INVALIDFILE);
+	}
+
+	*dirname = dir;
+	*basename = file;
 
 	return (ISC_R_SUCCESS);
 }

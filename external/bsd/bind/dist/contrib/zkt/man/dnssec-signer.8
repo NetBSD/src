@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-signer.8,v 1.1.1.1 2009/03/22 14:58:25 christos Exp $
+.\"	$NetBSD: dnssec-signer.8,v 1.1.1.2 2009/10/25 00:01:54 christos Exp $
 .\"
-.TH dnssec-signer 8 "December 28, 2008" "ZKT 0.98" ""
+.TH dnssec-signer 8 "Aug 1, 2009" "ZKT 0.99b" ""
 \" turn off hyphenation
 .\"	if n .nh
 .nh
@@ -61,7 +61,7 @@ command is a wrapper around
 and
 .I dnssec-keygen(8)
 to sign a zone and manage the necessary zone keys.
-It's able to increment the serial number before signing the zone
+It is able to increment the serial number before signing the zone
 and can trigger
 .I named(8)
 to reload the signed zone file.
@@ -84,10 +84,10 @@ All master zone statements will be scanned for filenames
 ending with ".signed".
 These zones will be checked if the necessary zone- and key signing keys
 are existent and fresh enough to be used in the signing process.
-If some out-dated keys where found, new keying material will be generated via
+If one or more  out-dated keys are found, new keying material will be generated via
 the
 .I dnssec-keygen(8)
-command and the old ones will be marked as depreciated.
+command and the old keys will be marked as depreciated.
 So the command do anything needed for a zone key rollover as defined by [2].
 .PP
 If the resigning interval is reached or any new key must be announced,
@@ -101,14 +101,14 @@ is given, the
 command will be called to reload the zone on the
 nameserver.
 .PP
-In the second form of the command it's possible to specify a directory
+In the second form of the command it is possible to specify a directory
 tree with the option
 .B \-D
 .IR dir .
 Every secure zone found in a subdirectory below
 .I dir
 will be signed.
-However, it's also possible to reduce the signing to those
+However, it is also possible to reduce the signing to those
 zones given as arguments.
 In directory mode the pre-requisite is, that the directory name is
 exactly (including the trailing dot) the same as the zone name.
@@ -117,7 +117,7 @@ In the last form of the command, the functionality is more or less the same
 as the
 .I dnssec-signzone (8)
 command.
-The parameter specify the zone file name and the option
+The parameter specifies the zone file name and the option
 .B \-o
 takes the name of the zone.
 .PP
@@ -144,7 +144,7 @@ logfiles are created with a name like
 .fam T
 .\" \&.
 If the argument is not an absolute path name and a zone directory
-is specified in the config file, this will prepend the given name.
+is specified in the config file, this will be prepended to the given name.
 This option is also settable in the dnssec.conf file via the parameter
 .BI LogFile .
 .br
@@ -172,7 +172,7 @@ to file and syslog.
 Try to read the default configuration out of a file named
 .I dnssec-<view>.conf .
 Instead of specifying the \-V or --view option every time,
-it's also possible to create a hard or softlink to the
+it is also possible to create a hard- or softlink to the
 executable file with an additional name like 
 .I dnssec-zkt-<view> .
 .TP
@@ -183,7 +183,7 @@ will be used.
 .TP
 .BI \-O " optstr" ", \-\-config-option=" optstr
 Set any config file option via the commandline.
-Several config file options could be specified at the argument string
+Several config file options can be specified via the argument string
 but have to be delimited by semicolon (or newline).
 .TP
 .BR \-f ", " \-\-force
@@ -200,9 +200,9 @@ Currently this option is of very limited usage.
 Reload the zone via
 .I rndc(8)
 after successful signing.
-In a production environment it's recommended to use this option
+In a production environment it is recommended to use this option
 to be sure that a freshly signed zone will be immediately propagated.
-However, that's only feasable if the named runs on the signing
+However, that's only feasable if named runs on the signing
 machine, which is not recommended.
 Otherwise the signed zonefile must be copied to the production
 server before reloading the zone.
@@ -263,7 +263,7 @@ files.
 .B ZSK_lifetime 2d;' \-v \-v \-o example.net. zone.db
 .fam T
 .br
-Sign the example.net zone but overwrite some config file values with the parameters
+Sign the example.net zone but override some config file values with parameters
 given on the commandline.
 
 .SH Zone setup and initial preparation
@@ -351,7 +351,7 @@ left justified in a field of at least 10 spaces!
 .fi
 .fam T
 .\}
-If you use a BIND Verison of 9.4 or greater and
+If you use BIND version 9.4 or later and
 use the unixtime format for the serial number (See parameter
 Serialformat in 
 .IR dnssec.conf )
@@ -411,16 +411,14 @@ file (parameter
 
 .SH BUGS
 .PP
-The zone name given as an argument must be ending with a dot.
-.PP
 The named.conf parser is a bit rudimental and not
 very well tested.
 
-.SH AUTHOR
-Holger Zuleger 
+.SH AUTHORS
+Holger Zuleger, Mans Nilsson
 
 .SH COPYRIGHT
-Copyright (c) 2005 \- 2008 by Holger Zuleger.
+Copyright (c) 2005 \- 2009 by Holger Zuleger.
 Licensed under the BSD Licence. There is NO warranty; not even for MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 .\"--------------------------------------------------

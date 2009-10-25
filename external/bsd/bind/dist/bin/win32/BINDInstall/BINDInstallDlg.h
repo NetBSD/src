@@ -1,7 +1,7 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.1 2009/03/22 14:57:04 christos Exp $	*/
+/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.2 2009/10/25 00:01:38 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.h,v 1.8 2007/06/19 23:47:07 tbox Exp */
+/* Id: BINDInstallDlg.h,v 1.11 2009/09/01 06:51:47 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -50,6 +50,7 @@ public:
 	CString	m_version;
 	BOOL	m_autoStart;
 	BOOL	m_keepFiles;
+	BOOL	m_toolsOnly;
 	CString	m_current;
 	BOOL	m_startOnInstall;
 	//}}AFX_DATA
@@ -74,12 +75,12 @@ protected:
 	void DeleteFiles(BOOL uninstall);
 
 	void RegisterService();
-	void UpdateService();
+	void UpdateService(CString StartName);
 	void UnregisterService(BOOL uninstall);
 
 	void RegisterMessages();
 	void UnregisterMessages(BOOL uninstall);
-	
+
 	void FailedInstall();
 	void SetItemStatus(UINT nID, BOOL bSuccess = TRUE);
 
@@ -93,7 +94,7 @@ protected:
 	BOOL CheckBINDService();
 	void SetCurrent(int id, ...);
 	void ProgramGroup(BOOL create = TRUE);
-	
+
 	HICON m_hIcon;
 	CString m_defaultDir;
 	CString m_etcDir;
@@ -108,7 +109,7 @@ protected:
 	CString m_accountPasswordConfirm;
 	CString m_accountPassword;
 	BOOL	m_serviceExists;
- 
+
 	// Generated message map functions
 	//{{AFX_MSG(CBINDInstallDlg)
 	virtual BOOL OnInitDialog();

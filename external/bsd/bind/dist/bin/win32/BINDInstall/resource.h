@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.1.1.1 2009/03/22 14:57:04 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.1.1.2 2009/10/25 00:01:38 christos Exp $	*/
 
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
@@ -92,6 +92,7 @@
 #define IDC_ACCOUNT_NAME                1030
 #define IDC_ACCOUNT_PASSWORD            1031
 #define IDC_ACCOUNT_PASSWORD_CONFIRM    1032
+#define IDC_TOOLS_ONLY			1033
 
 // Next default values for new objects
 // 

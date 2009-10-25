@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.1 2009/03/22 14:56:06 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.313.20.7 2009/03/13 01:38:51 marka Exp */
+/* Id: query.c,v 1.327 2009/09/14 23:13:37 marka Exp */
 
 /*! \file */
 
@@ -2733,7 +2733,7 @@ query_addds(ns_client_t *client, dns_db_t *db, dns_dbnode_t *node,
 	return;
 
    addnsec3:
-	if (dns_db_iscache(db))
+	if (!dns_db_iszone(db))
 		goto cleanup;
 	/*
 	 * Add the NSEC3 which proves the DS does not exist.
@@ -2853,7 +2853,7 @@ query_addwildcardproof(ns_client_t *client, dns_db_t *db,
 	 *  j.example -> z.i.example NSEC example
 	 *	owner common example
 	 *	next common example
-	 *	wild *.f.example
+	 *	wild *.example
 	 */
 	options = client->query.dboptions | DNS_DBFIND_NOWILD;
 	dns_fixedname_init(&wfixed);
@@ -3222,7 +3222,11 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qdomain,
 					      NS_LOGMODULE_QUERY,
 					      ISC_LOG_WARNING,
 					      "recursive-clients soft limit "
-					      "exceeded, aborting oldest query");
+					      "exceeded (%d/%d/%d), "
+					      "aborting oldest query",
+					      client->recursionquota->used,
+					      client->recursionquota->soft,
+					      client->recursionquota->max);
 			}
 			ns_client_killoldestquery(client);
 			result = ISC_R_SUCCESS;
@@ -3235,7 +3239,11 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qdomain,
 				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
 					      NS_LOGMODULE_QUERY,
 					      ISC_LOG_WARNING,
-					      "no more recursive clients: %s",
+					      "no more recursive clients "
+					      "(%d/%d/%d): %s",
+					      ns_g_server->recursionquota.used,
+					      ns_g_server->recursionquota.soft,
+					      ns_g_server->recursionquota.max,
 					      isc_result_totext(result));
 			}
 			ns_client_killoldestquery(client);
@@ -3313,6 +3321,14 @@ do { \
 	eresult = r; \
 	want_restart = ISC_FALSE; \
 	line = __LINE__; \
+} while (0)
+
+#define RECURSE_ERROR(r) \
+do { \
+	if ((r) == DNS_R_DUPLICATE || (r) == DNS_R_DROP) \
+		QUERY_ERROR(r); \
+	else \
+		QUERY_ERROR(DNS_R_SERVFAIL); \
 } while (0)
 
 /*
@@ -3602,7 +3618,7 @@ query_findclosestnsec3(dns_name_t *qname, dns_db_t *db,
 		       dns_name_t *found)
 {
 	unsigned char salt[256];
-	size_t salt_length = sizeof(salt);
+	size_t salt_length;
 	isc_uint16_t iterations;
 	isc_result_t result;
 	unsigned int dboptions;
@@ -3997,14 +4013,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				if (result == ISC_R_SUCCESS)
 					client->query.attributes |=
 						NS_QUERYATTR_RECURSING;
-				else if (result == DNS_R_DUPLICATE ||
-					 result == DNS_R_DROP) {
-					/* Duplicate query. */
-					QUERY_ERROR(result);
-				} else {
-					/* Unable to recurse. */
-					QUERY_ERROR(DNS_R_SERVFAIL);
-				}
+				else
+					RECURSE_ERROR(result);
 				goto cleanup;
 			} else {
 				/* Unable to give root server referral. */
@@ -4183,11 +4193,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				if (result == ISC_R_SUCCESS)
 					client->query.attributes |=
 						NS_QUERYATTR_RECURSING;
-				else if (result == DNS_R_DUPLICATE ||
-					 result == DNS_R_DROP)
-					QUERY_ERROR(result);
 				else
-					QUERY_ERROR(DNS_R_SERVFAIL);
+					RECURSE_ERROR(result);
 			} else {
 				dns_fixedname_t fixed;
 
@@ -4727,7 +4734,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 						    client->query.attributes |=
 							NS_QUERYATTR_RECURSING;
 						else
-						    QUERY_ERROR(DNS_R_SERVFAIL);					}
+						    RECURSE_ERROR(result);
+					}
 					goto addauth;
 				}
 				/*
@@ -4925,6 +4933,7 @@ log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char typename[DNS_RDATATYPE_FORMATSIZE];
 	char classname[DNS_RDATACLASS_FORMATSIZE];
+	char onbuf[ISC_NETADDR_FORMATSIZE];
 	dns_rdataset_t *rdataset;
 	int level = ISC_LOG_INFO;
 
@@ -4936,14 +4945,16 @@ log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
 	dns_name_format(client->query.qname, namebuf, sizeof(namebuf));
 	dns_rdataclass_format(rdataset->rdclass, classname, sizeof(classname));
 	dns_rdatatype_format(rdataset->type, typename, sizeof(typename));
+	isc_netaddr_format(&client->destaddr, onbuf, sizeof(onbuf));
 
 	ns_client_log(client, NS_LOGCATEGORY_QUERIES, NS_LOGMODULE_QUERY,
-		      level, "query: %s %s %s %s%s%s%s%s", namebuf, classname,
-		      typename, WANTRECURSION(client) ? "+" : "-",
+		      level, "query: %s %s %s %s%s%s%s%s (%s)", namebuf,
+		      classname, typename, WANTRECURSION(client) ? "+" : "-",
 		      (client->signer != NULL) ? "S": "",
 		      (client->opt != NULL) ? "E" : "",
 		      ((extflags & DNS_MESSAGEEXTFLAG_DO) != 0) ? "D" : "",
-		      ((flags & DNS_MESSAGEFLAG_CD) != 0) ? "C" : "");
+		      ((flags & DNS_MESSAGEFLAG_CD) != 0) ? "C" : "",
+		      onbuf);
 }
 
 static inline void
@@ -5121,9 +5132,9 @@ ns_query_start(ns_client_t *client) {
 	}
 
 	/*
-	 * Turn on minimal response for DNSKEY queries.
+	 * Turn on minimal response for DNSKEY and DS queries.
 	 */
-	if (qtype == dns_rdatatype_dnskey)
+	if (qtype == dns_rdatatype_dnskey || qtype == dns_rdatatype_ds)
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
 					     NS_QUERYATTR_NOADDITIONAL);
 

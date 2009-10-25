@@ -1,5 +1,5 @@
-<!-- Creator     : groff version 1.19.2 -->
-<!-- CreationDate: Sun Dec 28 23:15:25 2008 -->
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Tue Aug  4 21:33:41 2009 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -8,16 +8,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="Content-Style" content="text/css">
 <style type="text/css">
-       p     { margin-top: 0; margin-bottom: 0; }
-       pre   { margin-top: 0; margin-bottom: 0; }
-       table { margin-top: 0; margin-bottom: 0; }
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
 </style>
 <title>dnssec-signer</title>
 
 </head>
 <body>
 
-<h1 align=center>dnssec-signer</h1>
+<h1 align="center">dnssec-signer</h1>
 
 <a href="#NAME">NAME</a><br>
 <a href="#SYNOPSYS">SYNOPSYS</a><br>
@@ -28,22 +29,24 @@
 <a href="#ENVIRONMENT VARIABLES">ENVIRONMENT VARIABLES</a><br>
 <a href="#FILES">FILES</a><br>
 <a href="#BUGS">BUGS</a><br>
-<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
 <a href="#COPYRIGHT">COPYRIGHT</a><br>
 <a href="#SEE ALSO">SEE ALSO</a><br>
 
 <hr>
 
 
+<h2>NAME
 <a name="NAME"></a>
-<h2>NAME</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">dnssec-signer
 &mdash; Secure DNS zone signing tool</p>
 
+<h2>SYNOPSYS
 <a name="SYNOPSYS"></a>
-<h2>SYNOPSYS</h2>
+</h2>
 
 
 
@@ -64,19 +67,20 @@ dnssec-signer</b> [<b>&minus;L|--logfile</b> <i>file</i>]
 [<b>&minus;v</b>]] <b>&minus;o</b> <i>origin</i>
 [<i>zonefile</i>]</p>
 
+<h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
-<h2>DESCRIPTION</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">The
 <i>dnssec-signer</i> command is a wrapper around
 <i>dnssec-signzone(8)</i> and <i>dnssec-keygen(8)</i> to
-sign a zone and manage the necessary zone keys. It&rsquo;s
-able to increment the serial number before signing the zone
-and can trigger <i>named(8)</i> to reload the signed zone
-file. The command controls several secure zones and, if
-started in regular intervals via <i>cron(8)</i>, can do all
-that stuff automatically.</p>
+sign a zone and manage the necessary zone keys. It is able
+to increment the serial number before signing the zone and
+can trigger <i>named(8)</i> to reload the signed zone file.
+The command controls several secure zones and, if started in
+regular intervals via <i>cron(8)</i>, can do all that stuff
+automatically.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In the most
 useful usage scenario the command will be called with option
@@ -90,11 +94,12 @@ specify the name of the view. All master zone statements
 will be scanned for filenames ending with
 &quot;.signed&quot;. These zones will be checked if the
 necessary zone- and key signing keys are existent and fresh
-enough to be used in the signing process. If some out-dated
-keys where found, new keying material will be generated via
-the <i>dnssec-keygen(8)</i> command and the old ones will be
-marked as depreciated. So the command do anything needed for
-a zone key rollover as defined by [2].</p>
+enough to be used in the signing process. If one or more
+out-dated keys are found, new keying material will be
+generated via the <i>dnssec-keygen(8)</i> command and the
+old keys will be marked as depreciated. So the command do
+anything needed for a zone key rollover as defined by
+[2].</p>
 
 <p style="margin-left:11%; margin-top: 1em">If the
 resigning interval is reached or any new key must be
@@ -105,19 +110,18 @@ given, the <i>rndc(8)</i> command will be called to reload
 the zone on the nameserver.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In the second
-form of the command it&rsquo;s possible to specify a
-directory tree with the option <b>&minus;D</b> <i>dir</i>.
-Every secure zone found in a subdirectory below <i>dir</i>
-will be signed. However, it&rsquo;s also possible to reduce
-the signing to those zones given as arguments. In directory
-mode the pre-requisite is, that the directory name is
-exactly (including the trailing dot) the same as the zone
-name.</p>
+form of the command it is possible to specify a directory
+tree with the option <b>&minus;D</b> <i>dir</i>. Every
+secure zone found in a subdirectory below <i>dir</i> will be
+signed. However, it is also possible to reduce the signing
+to those zones given as arguments. In directory mode the
+pre-requisite is, that the directory name is exactly
+(including the trailing dot) the same as the zone name.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In the last
 form of the command, the functionality is more or less the
 same as the <i>dnssec-signzone (8)</i> command. The
-parameter specify the zone file name and the option
+parameter specifies the zone file name and the option
 <b>&minus;o</b> takes the name of the zone.</p>
 
 <p style="margin-left:11%; margin-top: 1em">If neither
@@ -126,8 +130,9 @@ given, then the default directory specified in the
 <i>dnssec.conf</i> file by the parameter <i>zonedir</i> will
 be used as top level directory.</p>
 
+<h2>OPTIONS
 <a name="OPTIONS"></a>
-<h2>OPTIONS</h2>
+</h2>
 
 
 
@@ -139,9 +144,10 @@ be used as top level directory.</p>
 or a directory where logfiles are created with a name like
 zkt-<i>YYYY-MM-DD</i>T<i>hhmmss</i>Z.log<i>.</i> If the
 argument is not an absolute path name and a zone directory
-is specified in the config file, this will prepend the given
-name. This option is also settable in the dnssec.conf file
-via the parameter <b>LogFile</b><i>.</i> <br>
+is specified in the config file, this will be prepended to
+the given name. This option is also settable in the
+dnssec.conf file via the parameter <b>LogFile</b><i>.</i>
+<br>
 The default is no file logging, but error logging to syslog
 with facility <b>USER</b> at level <b>ERROR</b> is enabled
 by default. These parameters are settable via the config
@@ -158,10 +164,9 @@ logged with level <b>DEBUG</b> to file and syslog.</p>
 <p style="margin-left:22%;">Try to read the default
 configuration out of a file named
 <i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
-&minus;V or --view option every time, it&rsquo;s also
-possible to create a hard or softlink to the executable file
-with an additional name like <i>dnssec-zkt-&lt;view&gt;
-.</i></p>
+&minus;V or --view option every time, it is also possible to
+create a hard- or softlink to the executable file with an
+additional name like <i>dnssec-zkt-&lt;view&gt; .</i></p>
 
 <p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
 &minus;&minus;config=</b><i>file</i></p>
@@ -175,9 +180,9 @@ read or build-in defaults will be used.</p>
 &minus;&minus;config-option=</b><i>optstr</i></p>
 
 <p style="margin-left:22%;">Set any config file option via
-the commandline. Several config file options could be
-specified at the argument string but have to be delimited by
-semicolon (or newline).</p>
+the commandline. Several config file options can be
+specified via the argument string but have to be delimited
+by semicolon (or newline).</p>
 
 <p style="margin-left:11%;"><b>&minus;f</b>,
 <b>&minus;&minus;force</b></p>
@@ -198,15 +203,14 @@ of very limited usage.</p>
 
 <p style="margin-left:22%;">Reload the zone via
 <i>rndc(8)</i> after successful signing. In a production
-environment it&rsquo;s recommended to use this option to be
-sure that a freshly signed zone will be immediately
-propagated. However, that&rsquo;s only feasable if the named
-runs on the signing machine, which is not recommended.
-Otherwise the signed zonefile must be copied to the
-production server before reloading the zone. If this is the
-case, the parameter <i>propagation</i> in the
-<i>dnssec.conf</i> file must be set to a reasonable
-value.</p>
+environment it is recommended to use this option to be sure
+that a freshly signed zone will be immediately propagated.
+However, that&rsquo;s only feasable if named runs on the
+signing machine, which is not recommended. Otherwise the
+signed zonefile must be copied to the production server
+before reloading the zone. If this is the case, the
+parameter <i>propagation</i> in the <i>dnssec.conf</i> file
+must be set to a reasonable value.</p>
 
 <p style="margin-left:11%;"><b>&minus;v</b>,
 <b>&minus;&minus;verbose</b></p>
@@ -219,8 +223,9 @@ second <b>&minus;v</b> will be a little more verbose.</p>
 
 <p style="margin-left:22%;">Print out the online help.</p>
 
+<h2>SAMPLE USAGE
 <a name="SAMPLE USAGE"></a>
-<h2>SAMPLE USAGE</h2>
+</h2>
 
 
 
@@ -263,11 +268,12 @@ Sigvalidity 28h; \</b></p>
 
 <p style="margin-left:22%;"><b>ZSK_lifetime 2d;&rsquo;
 &minus;v &minus;v &minus;o example.net. zone.db</b> <br>
-Sign the example.net zone but overwrite some config file
-values with the parameters given on the commandline.</p>
+Sign the example.net zone but override some config file
+values with parameters given on the commandline.</p>
 
+<h2>Zone setup and initial preparation
 <a name="Zone setup and initial preparation"></a>
-<h2>Zone setup and initial preparation</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">Create a
@@ -322,10 +328,10 @@ SOA-Record</p>
 <p style="margin-left:22%;">For automatic incrementation of
 the serial number, the SOA-Record must be formated, so that
 the serial number is on a single line and left justified in
-a field of at least 10 spaces! If you use a BIND Verison of
-9.4 or greater and use the unixtime format for the serial
-number (See parameter Serialformat in <i>dnssec.conf</i>)
-than this is not necessary.</p>
+a field of at least 10 spaces! If you use BIND version 9.4
+or later and use the unixtime format for the serial number
+(See parameter Serialformat in <i>dnssec.conf</i>) than this
+is not necessary.</p>
 
 <p style="margin-left:11%;">Try to sign the zone</p>
 
@@ -338,8 +344,9 @@ $ dnssec-signer &minus;o example.net. <br>
 to create the initial keying material and a signed zone
 file. Then try to load the file on the name server.</p>
 
+<h2>ENVIRONMENT VARIABLES
 <a name="ENVIRONMENT VARIABLES"></a>
-<h2>ENVIRONMENT VARIABLES</h2>
+</h2>
 
 
 
@@ -348,8 +355,9 @@ file. Then try to load the file on the name server.</p>
 <p style="margin-left:22%;">Specifies the name of the
 default global configuration files.</p>
 
+<h2>FILES
 <a name="FILES"></a>
-<h2>FILES</h2>
+</h2>
 
 
 
@@ -385,34 +393,35 @@ via the dnssec configuration file (parameter
 of the file is settable via the dnssec configuration file
 (parameter <i>zonefile</i>).</p>
 
+<h2>BUGS
 <a name="BUGS"></a>
-<h2>BUGS</h2>
+</h2>
 
-
-<p style="margin-left:11%; margin-top: 1em">The zone name
-given as an argument must be ending with a dot.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The named.conf
 parser is a bit rudimental and not very well tested.</p>
 
-<a name="AUTHOR"></a>
-<h2>AUTHOR</h2>
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">Holger
-Zuleger</p>
+<p style="margin-left:11%; margin-top: 1em">Holger Zuleger,
+Mans Nilsson</p>
 
+<h2>COPYRIGHT
 <a name="COPYRIGHT"></a>
-<h2>COPYRIGHT</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (c)
-2005 &minus; 2008 by Holger Zuleger. Licensed under the BSD
+2005 &minus; 2009 by Holger Zuleger. Licensed under the BSD
 Licence. There is NO warranty; not even for MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE.</p>
 
+<h2>SEE ALSO
 <a name="SEE ALSO"></a>
-<h2>SEE ALSO</h2>
+</h2>
 
 
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.1 2009/03/22 14:56:24 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt_test.c,v 1.48 2007/06/19 23:46:59 tbox Exp */
+/* Id: rbt_test.c,v 1.50 2009/09/02 23:48:01 tbox Exp */
 
 #include <config.h>
 
@@ -73,8 +73,7 @@ create_name(char *s) {
 	dns_name_init(name, NULL);
 	isc_buffer_init(&target, name + 1, DNSNAMELEN);
 
-	result = dns_name_fromtext(name, &source, dns_rootname,
-				   ISC_FALSE, &target);
+	result = dns_name_fromtext(name, &source, dns_rootname, 0, &target);
 
 	if (result != ISC_R_SUCCESS) {
 		printf("dns_name_fromtext(%s) failed: %s\n",

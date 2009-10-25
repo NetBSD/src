@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rbt.c,v 1.1.1.1 2009/03/22 14:56:35 christos Exp $	*/
+/*	$NetBSD: t_rbt.c,v 1.1.1.2 2009/10/25 00:01:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_rbt.c,v 1.30.332.2 2009/01/22 23:47:05 tbox Exp */
+/* Id: t_rbt.c,v 1.33 2009/09/01 00:22:25 jinmei Exp */
 
 #include <config.h>
 
@@ -154,7 +154,7 @@ create_name(char *s, isc_mem_t *mctx, dns_name_t **dns_name) {
 			isc_buffer_init(&target, name + 1, DNSNAMELEN);
 
 			result = dns_name_fromtext(name, &source, dns_rootname,
-						   ISC_FALSE, &target);
+						   0, &target);
 
 			if (result != ISC_R_SUCCESS) {
 				++nfails;
@@ -834,7 +834,7 @@ t_dns_rbtnodechain_init(char *dbfile, char *findname,
 	dns_fixedname_init(&dns_nextname);
 
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-					&isc_buffer, NULL, ISC_FALSE, NULL);
+					&isc_buffer, NULL, 0, NULL);
 
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
@@ -1496,7 +1496,7 @@ t_dns_rbtnodechain_next(char *dbfile, char *findname,
 	dns_fixedname_init(&dns_origin);
 
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-				       &isc_buffer, NULL, ISC_FALSE, NULL);
+				       &isc_buffer, NULL, 0, NULL);
 
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
@@ -1703,7 +1703,7 @@ t_dns_rbtnodechain_prev(char *dbfile, char *findname, char *prevname,
 	dns_fixedname_init(&dns_origin);
 
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-				       &isc_buffer, NULL, ISC_FALSE, NULL);
+				       &isc_buffer, NULL, 0, NULL);
 
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",

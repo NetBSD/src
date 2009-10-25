@@ -7,7 +7,7 @@
 $TTL 7200
 
 @ 	IN SOA	ns1.example.de. hostmaster.example.de.  (
-				2008122801; Serial (up to 10 digits)
+				2009070301; Serial (up to 10 digits)
 				86400	; Refresh	(RIPE recommendation if NOTIFY is used)
 				1800	; Retry
 				2W	; Expire

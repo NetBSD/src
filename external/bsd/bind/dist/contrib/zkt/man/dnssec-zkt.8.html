@@ -1,5 +1,5 @@
-<!-- Creator     : groff version 1.19.2 -->
-<!-- CreationDate: Sun Dec 28 23:15:24 2008 -->
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Tue Aug  4 21:33:40 2009 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -8,16 +8,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="Content-Style" content="text/css">
 <style type="text/css">
-       p     { margin-top: 0; margin-bottom: 0; }
-       pre   { margin-top: 0; margin-bottom: 0; }
-       table { margin-top: 0; margin-bottom: 0; }
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
 </style>
 <title>dnssec-zkt</title>
 
 </head>
 <body>
 
-<h1 align=center>dnssec-zkt</h1>
+<h1 align="center">dnssec-zkt</h1>
 
 <a href="#NAME">NAME</a><br>
 <a href="#SYNOPSYS">SYNOPSYS</a><br>
@@ -28,22 +29,24 @@
 <a href="#ENVIRONMENT VARIABLES">ENVIRONMENT VARIABLES</a><br>
 <a href="#FILES">FILES</a><br>
 <a href="#BUGS">BUGS</a><br>
-<a href="#AUTHOR">AUTHOR</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
 <a href="#COPYRIGHT">COPYRIGHT</a><br>
 <a href="#SEE ALSO">SEE ALSO</a><br>
 
 <hr>
 
 
+<h2>NAME
 <a name="NAME"></a>
-<h2>NAME</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">dnssec-zkt
 &mdash; Secure DNS zone key tool</p>
 
+<h2>SYNOPSYS
 <a name="SYNOPSYS"></a>
-<h2>SYNOPSYS</h2>
+</h2>
 
 
 
@@ -135,8 +138,9 @@ dnssec-zkt &minus;0 | &minus;&minus;ksk-roll-stat</b>
 <i>do.ma.in.</i> [<b>&minus;V|--view</b> <i>view</i>]
 [<b>&minus;c</b> <i>file</i>]</p>
 
+<h2>DESCRIPTION
 <a name="DESCRIPTION"></a>
-<h2>DESCRIPTION</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">The
@@ -147,24 +151,25 @@ management.</p>
 <p style="margin-left:11%; margin-top: 1em">In the common
 usage the command prints out information about all dnssec
 (zone) keys found in the given (or predefined default)
-directory. It&rsquo;s also possible to specify keyfiles
-(K*.key) as arguments. With option <b>&minus;r</b>
-subdirectories will be searched recursively, and all dnssec
-keys found will be listed sorted by domain name, key type
-and generation time. In that mode the use of the
-<b>&minus;p</b> option may be helpful to find the location
-of the keyfile in the directory tree.</p>
+directory. It is also possible to specify keyfiles (K*.key)
+as arguments. With option <b>&minus;r</b> subdirectories
+will be searched recursively, and all dnssec keys found will
+be listed sorted by domain name, key type and generation
+time. In that mode the use of the <b>&minus;p</b> option may
+be helpful to find the location of the keyfile in the
+directory tree.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Other forms of
 the command print out keys in a format suitable for a
 trusted-key section or as a DNSKEY resource record.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The command is
-also useful in dns key management. It allows key livetime
-monitoring and status change.</p>
+also useful in dns key management. It offers monitoring of
+key lifetime and modification of key status.</p>
 
+<h2>GENERAL OPTIONS
 <a name="GENERAL OPTIONS"></a>
-<h2>GENERAL OPTIONS</h2>
+</h2>
 
 
 
@@ -174,10 +179,9 @@ monitoring and status change.</p>
 <p style="margin-left:22%;">Try to read the default
 configuration out of a file named
 <i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
-&minus;V or --view option every time, it&rsquo;s also
-possible to create a hard or softlink to the executable file
-to give it an additional name like
-<i>dnssec-zkt-&lt;view&gt; .</i></p>
+&minus;V or --view option every time, it is also possible to
+create a hard or softlink to the executable file to give it
+an additional name like <i>dnssec-zkt-&lt;view&gt; .</i></p>
 
 <p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
 &minus;&minus;config=</b><i>file</i></p>
@@ -209,7 +213,7 @@ will be useful in combination with wildcard arguments to
 prevent dnsssec-zkt to list all keys found in
 subdirectories. For example &quot;dnssec-zkt -d *&quot; will
 print out a list of all keys only found in the current
-directory. Maybe it&rsquo;s easier to use &quot;dnssec-zkt
+directory. Maybe it is easier to use &quot;dnssec-zkt
 .&quot; instead (without -r set). The option works similar
 to the &minus;d option of <i>ls(1)</i>.</p>
 
@@ -281,25 +285,25 @@ time.</p>
 Also settable in the dnssec.conf file (Parameter:
 PrintTime).</p>
 
-<table width="100%" border=0 rules="none" frame="void"
+<table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">
 <tr valign="top" align="left">
 <td width="11%"></td>
 <td width="3%">
 
 
-
-<p style="margin-top: 1em" valign="top"><b>&minus;h</b></p> </td>
+<p><b>&minus;h</b></p></td>
 <td width="8%"></td>
 <td width="78%">
 
 
-<p style="margin-top: 1em" valign="top">No header or
-trusted-key section header and trailer in -T mode</p></td>
+<p>No header or trusted-key section header and trailer in
+-T mode</p></td></tr>
 </table>
 
+<h2>COMMAND OPTIONS
 <a name="COMMAND OPTIONS"></a>
-<h2>COMMAND OPTIONS</h2>
+</h2>
 
 
 
@@ -398,8 +402,9 @@ in experimental status and is mainly for the use in an
 hierachical environment. Use --ksk-rollover for a little
 more detailed description.</p>
 
+<h2>SAMPLE USAGE
 <a name="SAMPLE USAGE"></a>
-<h2>SAMPLE USAGE</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>dnssec-zkt
@@ -447,11 +452,14 @@ affect of this.</p>
 <p style="margin-left:11%;"><b>dnssec-zkt-intern</b></p>
 
 <p style="margin-left:22%;">Same as above. The binary file
-<i>dnssec-zkt</i> have linked to <i>dnssec-zkt-intern
-.</i></p>
+<i>dnssec-zkt</i> has another link, named
+<i>dnssec-zkt-intern</i> made, and <i>dnssec-zkt</i>
+examines argv[0] to find a view whose zones it proceeds to
+process.</p>
 
+<h2>ENVIRONMENT VARIABLES
 <a name="ENVIRONMENT VARIABLES"></a>
-<h2>ENVIRONMENT VARIABLES</h2>
+</h2>
 
 
 
@@ -460,8 +468,9 @@ affect of this.</p>
 <p style="margin-left:22%;">Specifies the name of the
 default global configuration files.</p>
 
+<h2>FILES
 <a name="FILES"></a>
-<h2>FILES</h2>
+</h2>
 
 
 
@@ -483,8 +492,9 @@ configuration file.</p>
 <p style="margin-left:22%;">Local configuration file (only
 used in <b>&minus;C</b> mode).</p>
 
+<h2>BUGS
 <a name="BUGS"></a>
-<h2>BUGS</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">Some of the
@@ -493,15 +503,17 @@ modes. <br>
 The option <b>&minus;l</b> and the ksk rollover options
 insist on domain names ending with a dot.</p>
 
-<a name="AUTHOR"></a>
-<h2>AUTHOR</h2>
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">Holger
-Zuleger</p>
+<p style="margin-left:11%; margin-top: 1em">Holger Zuleger,
+Mans Nilsson</p>
 
+<h2>COPYRIGHT
 <a name="COPYRIGHT"></a>
-<h2>COPYRIGHT</h2>
+</h2>
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (c)
@@ -509,8 +521,9 @@ Zuleger</p>
 Licences. There is NO warranty; not even for MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE.</p>
 
+<h2>SEE ALSO
 <a name="SEE ALSO"></a>
-<h2>SEE ALSO</h2>
+</h2>
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_mgr.c,v 1.1.1.1 2009/03/22 14:57:06 christos Exp $	*/
+/*	$NetBSD: dbus_mgr.c,v 1.1.1.2 2009/10/25 00:01:39 christos Exp $	*/
 
 /* dbus_mgr.c
  *
@@ -916,7 +916,7 @@ dbus_mgr_get_name_list
 	dnsName = dns_fixedname_name(fixedname);
 
 	result= dns_name_fromtext
-	        (  dnsName, &buffer, ( *(endp-1) != '.') ? dns_rootname : NULL, ISC_FALSE, NULL
+	        (  dnsName, &buffer, ( *(endp-1) != '.') ? dns_rootname : NULL, 0, NULL
 		); 
 
 	if( result != ISC_R_SUCCESS )
@@ -1568,7 +1568,7 @@ dbus_mgr_handle_get_forwarders
     dnsName = dns_fixedname_name(&fixedname);
 
     result = dns_name_fromtext
-	     (  dnsName, &buffer, dns_rootname, ISC_FALSE, NULL
+	     (  dnsName, &buffer, dns_rootname, 0, NULL
 	     ); 
 
     if( result != ISC_R_SUCCESS )
@@ -1742,7 +1742,7 @@ dns_name_t *dbus_mgr_if_reverse_ip_name
 	dns_name = dns_fixedname_name(fixedname);
 
 	result= dns_name_fromtext
-	        (  dns_name, &buffer, dns_rootname, ISC_FALSE, NULL
+	        (  dns_name, &buffer, dns_rootname, 0, NULL
 		); 
 
 	ISC_LINK_INIT(dns_name, link);

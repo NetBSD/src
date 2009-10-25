@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.1 2009/03/22 15:01:48 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.130.50.3 2009/01/29 22:40:35 jinmei Exp */
+/* Id: types.h,v 1.136 2009/09/01 00:22:27 jinmei Exp */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -46,6 +46,10 @@ typedef struct dns_adbentry			dns_adbentry_t;
 typedef struct dns_adbfind			dns_adbfind_t;
 typedef ISC_LIST(dns_adbfind_t)			dns_adbfindlist_t;
 typedef struct dns_byaddr			dns_byaddr_t;
+typedef struct dns_client			dns_client_t;
+typedef void					dns_clientrestrans_t;
+typedef void					dns_clientreqtrans_t;
+typedef void					dns_clientupdatetrans_t;
 typedef struct dns_cache			dns_cache_t;
 typedef isc_uint16_t				dns_cert_t;
 typedef struct dns_compress			dns_compress_t;
@@ -65,6 +69,8 @@ typedef struct dns_dispatchevent		dns_dispatchevent_t;
 typedef struct dns_dispatchlist			dns_dispatchlist_t;
 typedef struct dns_dispatchmgr			dns_dispatchmgr_t;
 typedef struct dns_dispentry			dns_dispentry_t;
+typedef struct dns_dnsseckey			dns_dnsseckey_t;
+typedef ISC_LIST(dns_dnsseckey_t)		dns_dnsseckeylist_t;
 typedef struct dns_dumpctx			dns_dumpctx_t;
 typedef struct dns_fetch			dns_fetch_t;
 typedef struct dns_fixedname			dns_fixedname_t;
@@ -74,6 +80,7 @@ typedef struct dns_iptable			dns_iptable_t;
 typedef isc_uint32_t				dns_iterations_t;
 typedef isc_uint16_t				dns_keyflags_t;
 typedef struct dns_keynode			dns_keynode_t;
+typedef ISC_LIST(dns_keynode_t)			dns_keynodelist_t;
 typedef struct dns_keytable			dns_keytable_t;
 typedef isc_uint16_t				dns_keytag_t;
 typedef struct dns_loadctx			dns_loadctx_t;
@@ -113,6 +120,7 @@ typedef struct dns_stats			dns_stats_t;
 typedef isc_uint32_t				dns_rdatastatstype_t;
 typedef struct dns_tkeyctx			dns_tkeyctx_t;
 typedef isc_uint16_t				dns_trust_t;
+typedef struct dns_tsec				dns_tsec_t;
 typedef struct dns_tsig_keyring			dns_tsig_keyring_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef isc_uint32_t				dns_ttl_t;

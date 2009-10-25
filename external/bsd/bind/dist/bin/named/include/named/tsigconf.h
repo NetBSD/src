@@ -1,7 +1,7 @@
-/*	$NetBSD: tsigconf.h,v 1.1.1.1 2009/03/22 14:56:14 christos Exp $	*/
+/*	$NetBSD: tsigconf.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsigconf.h,v 1.16 2007/06/19 23:46:59 tbox Exp */
+/* Id: tsigconf.h,v 1.18 2009/06/11 23:47:55 tbox Exp */
 
 #ifndef NS_TSIGCONF_H
 #define NS_TSIGCONF_H 1
@@ -38,8 +38,9 @@ ns_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
  *
  *	Requires:
  *	\li	'config' is not NULL.
+ *	\li	'vconfig' is not NULL.
  *	\li	'mctx' is not NULL
- *	\li	'ring' is not NULL, and '*ring' is NULL
+ *	\li	'ringp' is not NULL, and '*ringp' is NULL
  *
  *	Returns:
  *	\li	ISC_R_SUCCESS

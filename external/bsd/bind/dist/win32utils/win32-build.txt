@@ -1,18 +1,27 @@
-Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2002  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: win32-build.txt,v 1.11.692.2 2008/12/14 21:33:07 tbox Exp
+Id: win32-build.txt,v 1.18 2009/10/12 16:41:13 each Exp
 
-       BIND 9.4 for Win32 Source Build Instructions.  28-May-2005
+       BIND 9.7 for Win32 Source Build Instructions.  02-Jul-2009
 
-Building BIND 9.4 on Windows NT/2000 has the following prerequisites:
+Building BIND 9.7 on Windows XP/2003/2008 has the following prerequisites:
 
-1) You need to install Perl for Windows NT/2000. ActiveState
-(http://www.activestate.com/) is the one most people install and use;
+1) You need to install Perl for Windows.  ActivePerl
+(http://www.activestate.com/) and Strawberry Perl
+(http://www.strawberryperl.com) have both been tested and found
+to work.
+
 2) OpenSSL (http://www.openssl.org) needs to be downloaded and built
 on the system on which you are building BIND.
-3) If you want to build using Visual C++ 6.0, you'll need some extra
+
+3) If you wish to use the statistics channel, LibXML2
+(ftp://xmlsoft.org/libxml2) needs to be downloaded and built on
+the system on which you are building BIND.  (If you do not wish
+to use the statistics channel, remove HAVE_LIBXML2 from config.h.win32.)
+
+4) If you want to build using Visual C++ 6.0, you'll need some extra
 files that are to be found in the Platform SDK (which you will need
 to install), namely:
 
@@ -40,25 +49,62 @@ Server (SP3 or later), Windows 2000 Professional (SP1 or later),
 Windows 2000 Server or any kind (SP1 or later), Windows XP, Windows 2003
 Server. It will NOT build or run on Windows 95, Windows 98, etc. platforms.
 
-Step 1: Download and Build OpenSSL
+Step 1: Download and build OpenSSL
 
 Download and untar the OpenSSL sources from http://www.openssl.org/.
-if you have place the BIND sources in /BIND9 you should place the
-OpenSSL sources in /openssl-0.9.7c or the appropriate directory name
-created when you untarred the openssl tarball.
+Extract them at in the same directory in which you extracted the BIND9
+source:  If BIND9 is in \build\bind-9.7.0, for instance, OpenSSL should be
+in \build\openssl-0.9.8k (subject to version number changes).
 
-Note: Building OpenSSL also requires that you install Perl as it uses
-it during its build process. Follow the instructions for NT given
-in the INSTALL.W32 file to build the kit. This will produce libeay32.lib
-and libeay32.dll in the out32dll subdirectory. 
+Note: Building OpenSSL requires that you install Perl as it uses
+it during its build process. The following commands work as of
+openssl-0.9.8k, but you should check the OpenSSL distribution 
+to see if the build instructions have changed:
 
+  cd openssl-0.9.8k
+  perl Configure VC-WIN32 --prefix=c:/openssl
+  ms\do_masm
+  nmake /f ms\ntdll.mak
 
-Step 2 Building BIND
+If you wish to use PKCS #11 to control a cryptographic hardware service
+module, please see bind9\README.pkcs11.  You will need to apply the patch
+in bind9\bin\pkcs11\openssl-0.9.8k-patch (this can be done using the Cygwin
+'patch' utility) and add --pk11-libname and --pk11-flavor to the Configure
+command above.
 
-You must build openssl first. 
+Step 2: Download and build libxml2
 
-From the command prompt cd to the win32utils under the BIND root.
-Execute the BuildAll.bat file. This will do the following:
+Download and untar the libxml2 sources from ftp://xmlsoft.org/libxml2.
+Extract them at in the same directory in which you extracted the BIND9
+source:  If BIND9 is in \build\bind-9.7.0, for instance, libxml2 should
+be in \build\libxml2-2.7.3 (subject to version number changes).
+
+Now build libxml2, and copy the resulting files into the include and lib
+directories:
+
+ cd libxml2-2.7.3\win32
+ cscript configure.js compiler=msvc vcmanifest=yes static=yes debug=no iconv=no
+ nmake /f Makefile.msvc libxml
+
+Step 3: Building BIND
+
+You must build openssl and libxml2 first. 
+
+From the command prompt cd to the win32utils directory under
+the BIND9 root:
+
+  cd bind-9.7.0\win32utils
+
+If you wish to use PKCS #11 to control a cryptographic hardware service
+module, set the path to the PKCS #11 provider library:
+
+  perl setpk11provider.pl <DLL path>
+  
+If using VC++ 6.0, run the BuildAll.bat file:
+
+  BuildAll
+
+This will do the following:
 1) copy config.h.win32 to config.h in the root.
 2) create the versions.h file in the root.
 3) Build the gen application in the lib/dns directory.
@@ -74,60 +120,24 @@ Execute the BuildAll.bat file. This will do the following:
 8) Copies the BIND 9 ARM HTML files and the application HTML files
    to the Build\Release area.
 
-If you wish to use Visual Studio for building, you can just run the
-BuildSetup.bat file which will create all the necessary files and you
-can then use the BINDBuild.dsw to open the workspace for all of the
-libraries and applications. These files reside in the same win32utils
-directory as this file.
+If you wish to use the Visual Studio GUI for building, you can just
+run the BuildSetup.bat file:
 
-The following files are built:
+  BuildSetup
+  
+This will create or find and copy into place several files which are
+necessary for the build to proceed.  It also locates and copies into place
+the DLLs for OpenSSL and libxml2.
 
-libbind9.dll
-libisc.dll
-libdns.dll
-libisccc.dll
-libisccfg.dll
-liblwres.dll
-named.exe
-bindevt.dll 
-BINDInstall.exe
+Use BINDBuild.dsw (also located in the win32utils directory) to open the
+workspace for all of the BIND9 libraries and applications.  Select
+"Build->Batch Build", click "Select All", then click "Build".
 
-rndc.exe
-dig.exe
-host.exe
-nslookup.exe
-nsupdate.exe
+After the build has completed, run the BuildPost.bat file:
 
-named-checkconf.exe
-named-checkzone.exe
+  BuildPost
 
-dnssec-keygen.exe
-dnssec-signzone.exe
-dnssec-dsfromkey.exe
-dnssec-keyfromlabel.exe
-
-If you are building with VS.NET (aka VC++ V7) you will need additional
-system DLL's: 
-
-mfc71.dll
-msvcr71.dll
-
-or
-
-mfc70.dll
-msvcr70.dll
-
-depending on your version of the compiler.
-
-You should end up with 18-20 binaries in the bind9/Build/Release
-directory. The Install instructions Readme1st.txt from win32utils and
-libeay32.dll from the openssl/out32dll/ directory are also copied into
-the Build area. In addition you should have 22 HTML files and a number
-of text files.
-
-The set of files in the directory bind9/Build/Release form the
-installation kit which can then be zipped and distributed to any
-suitable Windows NT 4.0 or Windows 2000 platform.
+...which does post-build processing.
 
 Installation is accomplished by running the BINDInstall program. All DLL's
 are copied to the system32 area and all applications (including BINDInstall
@@ -139,8 +149,3 @@ not yet do this.
 All bugs found, whether in the process of building the application or
 running BIND or the tools should be reported to the bind9 bugs email
 account at bind9-bugs@isc.org.
-
-	Danny Mayer
-	mayer@ntp.isc.org
-
-

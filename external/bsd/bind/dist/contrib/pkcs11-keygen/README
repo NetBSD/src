@@ -1,18 +1,1 @@
-This is a set of utilities that when used together create rsa keys in
-a PKCS11 keystore. The keys will have a label of "zone,zsk|ksk,xxx" and
-an id of the keytag in hex.
-
-Run genkey.sh to generate a new key and call the other programs in turn.
-Run writekey.sh to load key to the key store from Kxxx.{key,private}.
-
-genkey[.c] uses PKCS11 calls to generate keys.
-PEM_write_pubkey[.c] uses OpenSSL to write a public key from the key store
- into a file in PEM format.
-keyconv.pl uses Net::DNS::SEC to calculate the key tag and to write out
- a DNSKEY RR into a file.
-set_key_id[.c] uses PKCS11 to set to the key id == keytag in the key store.
-readkey[.c] and writekey[.c] extracts and loads a key from/to the key store.
-keydump.pl uses Net::DNS::SEC to get the key from a Kxxx.private file and
- write it into a file in PEM format.
-
-listobjs and destroyobjs browse the key store, prints or destroys objects.
+Moved to ${top}/bin/pkcs11

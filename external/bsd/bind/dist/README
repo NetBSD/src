@@ -42,6 +42,42 @@ BIND 9
 		Stichting NLnet - NLnet Foundation
 		Nominum, Inc.
 
+BIND 9.7.0
+
+	BIND 9.7.0 includes a number of changes from BIND 9.6 and earlier
+	releases.  Most are intended to simplify DNSSEC configuration.
+
+	New features include:
+
+	- Fully automatic signing of zones by "named"
+	- Simplified configuration of DNSSEC Lookaside Validation (DLV).
+	- Simplified configuration of Dynamic DNS, using the "ddns-confgen"
+	  command line tool or the "local" update-policy option.  (As a side
+	  effect, this also makes it easier to configure automatic zone
+	  re-signing.)
+	- New named option "attach-cache" that allows multiple views to
+	  share a single cache.
+	- DNS rebinding attack prevention.
+	- New default values for dnssec-keygen parameters.
+	- Support for RFC 5011 automated trust anchor maintenance
+          (see README.rfc5011 for additional details).
+	- Smart signing: simplified tools for zone signing and key
+	  maintenance.
+	- The "statistics-channels" option is now available on Windows.
+        - A new DNSSEC-aware libdns API for use by non-BIND9 applications
+          (see README.libdns for details).
+        - On some platforms, named and other binaries can now print out
+          a stack backtrace on assertion failure, to aid in debugging.
+        - A "tools only" installation mode on Windows, which only installs
+          dig, host, nslookup and nsupdate.
+        - Improved PKCS#11 support, including Keyper support and explicit
+          OpenSSL engine selection (see README.pkcs11 for additional details).
+
+	Warning: If you had built BIND 9.6 with any of ALLOW_NSEC3PARAM_UPDATE,
+	ALLOW_SECURE_TO_INSECURE or ALLOW_INSECURE_TO_SECURE defined then
+	you should ensure that all changes that are in progress have completed
+	prior to upgrading to BIND 9.7.  BIND 9.7 is not backwards compatible.
+
 BIND 9.6.0
 
         BIND 9.6.0 includes a number of changes from BIND 9.5 and earlier
@@ -390,7 +426,7 @@ Building
 		FreeBSD 4.10, 5.2.1, 6.2
 		HP-UX 11.11
 		Mac OS X 10.5
-		NetBSD 3.x and 4.0-beta
+		NetBSD 3.x, 4.0-beta, 5.0-beta
 		OpenBSD 3.3 and up
 		Solaris 8, 9, 9 (x86), 10
 		Ubuntu 7.04, 7.10

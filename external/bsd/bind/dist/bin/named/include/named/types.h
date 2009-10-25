@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.1.1.1 2009/03/22 14:56:14 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.29 2008/01/17 23:46:59 tbox Exp */
+/* Id: types.h,v 1.31 2009/01/09 23:47:45 tbox Exp */
 
 #ifndef NAMED_TYPES_H
 #define NAMED_TYPES_H 1
@@ -26,6 +26,8 @@
 
 #include <dns/types.h>
 
+typedef struct ns_cache			ns_cache_t;
+typedef ISC_LIST(ns_cache_t)		ns_cachelist_t;
 typedef struct ns_client		ns_client_t;
 typedef struct ns_clientmgr		ns_clientmgr_t;
 typedef struct ns_query			ns_query_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.1.1.1 2009/03/22 15:01:48 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stats.h,v 1.18.56.2 2009/01/29 23:47:44 tbox Exp */
+/* Id: stats.h,v 1.20 2009/01/27 23:47:54 tbox Exp */
 
 #ifndef DNS_STATS_H
 #define DNS_STATS_H 1

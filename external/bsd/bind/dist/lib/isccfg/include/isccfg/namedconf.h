@@ -1,7 +1,7 @@
-/*	$NetBSD: namedconf.h,v 1.1.1.1 2009/03/22 15:02:35 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.h,v 1.9 2007/06/19 23:47:22 tbox Exp */
+/* Id: namedconf.h,v 1.15 2009/07/31 23:43:23 each Exp */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1
@@ -35,13 +35,19 @@
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_namedconf;
 /*%< A complete named.conf file. */
 
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bindkeys;
+/*%< A bind.keys file. */
+
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndcconf;
 /*%< A complete rndc.conf file. */
 
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndckey;
 /*%< A complete rndc.key file. */
 
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sessionkey;
+/*%< A complete session.key file. */
+
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
 /*%< A key reference, used as an ACL element */
 
-#endif /* ISCCFG_CFG_H */
+#endif /* ISCCFG_NAMEDCONF_H */

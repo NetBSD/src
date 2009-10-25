@@ -11,7 +11,7 @@ $TTL	7200
 ;				0123456789;
 ;	It's also possible to use the date format e.g. 2005040101
 @	IN SOA	ns1.example.net. hostmaster.example.net.  (
-				333       ; Serial	
+				350       ; Serial	
 				43200	; Refresh
 				1800	; Retry
 				2W	; Expire

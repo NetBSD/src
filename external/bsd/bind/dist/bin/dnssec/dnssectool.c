@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.2 2009/07/28 21:10:24 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.1.1.3 2009/10/25 00:01:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.c,v 1.45.334.4 2009/06/08 23:47:00 tbox Exp */
+/* Id: dnssectool.c,v 1.55 2009/10/12 20:48:11 each Exp */
 
 /*! \file */
 
@@ -67,7 +67,7 @@ void
 fatal(const char *format, ...) {
 	va_list args;
 
-	fprintf(stderr, "%s: ", program);
+	fprintf(stderr, "%s: fatal: ", program);
 	va_start(args, format);
 	vfprintf(stderr, format, args);
 	va_end(args);
@@ -113,36 +113,13 @@ type_format(const dns_rdatatype_t type, char *cp, unsigned int size) {
 }
 
 void
-alg_format(const dns_secalg_t alg, char *cp, unsigned int size) {
-	isc_buffer_t b;
-	isc_region_t r;
-	isc_result_t result;
-
-	isc_buffer_init(&b, cp, size - 1);
-	result = dns_secalg_totext(alg, &b);
-	check_result(result, "dns_secalg_totext()");
-	isc_buffer_usedregion(&b, &r);
-	r.base[r.length] = 0;
-}
-
-void
 sig_format(dns_rdata_rrsig_t *sig, char *cp, unsigned int size) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	char algstr[DNS_NAME_FORMATSIZE];
 
 	dns_name_format(&sig->signer, namestr, sizeof(namestr));
-	alg_format(sig->algorithm, algstr, sizeof(algstr));
+	dns_secalg_format(sig->algorithm, algstr, sizeof(algstr));
 	snprintf(cp, size, "%s/%s/%d", namestr, algstr, sig->keyid);
-}
-
-void
-key_format(const dst_key_t *key, char *cp, unsigned int size) {
-	char namestr[DNS_NAME_FORMATSIZE];
-	char algstr[DNS_NAME_FORMATSIZE];
-
-	dns_name_format(dst_key_name(key), namestr, sizeof(namestr));
-	alg_format((dns_secalg_t) dst_key_alg(key), algstr, sizeof(algstr));
-	snprintf(cp, size, "%s/%s/%d", namestr, algstr, dst_key_id(key));
 }
 
 void
@@ -267,32 +244,92 @@ cleanup_entropy(isc_entropy_t **ectx) {
 	isc_entropy_detach(ectx);
 }
 
+static isc_stdtime_t
+time_units(isc_stdtime_t offset, char *suffix, const char *str) {
+	switch (suffix[0]) {
+	    case 'Y': case 'y':
+		return (offset * (365 * 24 * 3600));
+	    case 'M': case 'm':
+		switch (suffix[1]) {
+		    case 'O': case 'o':
+			return (offset * (30 * 24 * 3600));
+		    case 'I': case 'i':
+			return (offset * 60);
+		    case '\0':
+			fatal("'%s' ambiguous: use 'mi' for minutes "
+			      "or 'mo' for months", str);
+		    default:
+			fatal("time value %s is invalid", str);
+		}
+		/* NOTREACHED */
+		break;
+	    case 'W': case 'w':
+		return (offset * (7 * 24 * 3600));
+	    case 'D': case 'd':
+		return (offset * (24 * 3600));
+	    case 'H': case 'h':
+		return (offset * 3600);
+	    case 'S': case 's': case '\0':
+		return (offset);
+	    default:
+		fatal("time value %s is invalid", str);
+	}
+	/* NOTREACHED */
+	return(0); /* silence compiler warning */
+}
+
+dns_ttl_t
+strtottl(const char *str) {
+	const char *orig = str;
+	dns_ttl_t ttl;
+	char *endp;
+
+	ttl = strtol(str, &endp, 0);
+	if (ttl == 0 && endp == str)
+		fatal("TTL must be numeric");
+	ttl = time_units(ttl, endp, orig);
+	return (ttl);
+}
+
 isc_stdtime_t
 strtotime(const char *str, isc_int64_t now, isc_int64_t base) {
 	isc_int64_t val, offset;
 	isc_result_t result;
+	const char *orig = str;
 	char *endp;
 
-	if (str[0] == '+') {
+	if ((str[0] == '0' || str[0] == '-') && str[1] == '\0')
+		return ((isc_stdtime_t) 0);
+
+	if (strncmp(str, "now", 3) == 0) {
+		base = now;
+		str += 3;
+	}
+
+	if (str[0] == '\0')
+		return ((isc_stdtime_t) base);
+	else if (str[0] == '+') {
 		offset = strtol(str + 1, &endp, 0);
-		if (*endp != '\0')
-			fatal("time value %s is invalid", str);
+		offset = time_units((isc_stdtime_t) offset, endp, orig);
 		val = base + offset;
-	} else if (strncmp(str, "now+", 4) == 0) {
-		offset = strtol(str + 4, &endp, 0);
-		if (*endp != '\0')
-			fatal("time value %s is invalid", str);
-		val = now + offset;
+	} else if (str[0] == '-') {
+		offset = strtol(str + 1, &endp, 0);
+		offset = time_units((isc_stdtime_t) offset, endp, orig);
+		val = base - offset;
 	} else if (strlen(str) == 8U) {
 		char timestr[15];
 		sprintf(timestr, "%s000000", str);
 		result = dns_time64_fromtext(timestr, &val);
 		if (result != ISC_R_SUCCESS)
-			fatal("time value %s is invalid", str);
+			fatal("time value %s is invalid: %s", orig,
+			      isc_result_totext(result));
+	} else if (strlen(str) > 14U) {
+		fatal("time value %s is invalid", orig);
 	} else {
 		result = dns_time64_fromtext(str, &val);
 		if (result != ISC_R_SUCCESS)
-			fatal("time value %s is invalid", str);
+			fatal("time value %s is invalid: %s", orig,
+			      isc_result_totext(result));
 	}
 
 	return ((isc_stdtime_t) val);

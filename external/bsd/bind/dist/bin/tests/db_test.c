@@ -1,7 +1,7 @@
-/*	$NetBSD: db_test.c,v 1.1.1.1 2009/03/22 14:56:22 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db_test.c,v 1.66 2008/09/25 04:02:38 tbox Exp */
+/* Id: db_test.c,v 1.68 2009/09/02 23:48:01 tbox Exp */
 
 /*! \file
  * \author
@@ -136,8 +136,7 @@ select_db(char *origintext) {
 	isc_buffer_add(&source, len);
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &source, dns_rootname, ISC_FALSE,
-				   NULL);
+	result = dns_name_fromtext(origin, &source, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		print_result("bad name", result);
 		return (NULL);
@@ -190,8 +189,7 @@ list(dbinfo *dbi, char *seektext) {
 				result = dns_name_fromtext(seekname, &source,
 							   dns_db_origin(
 								 dbi->db),
-							   ISC_FALSE,
-							   NULL);
+							   0, NULL);
 				if (result == ISC_R_SUCCESS)
 					result = dns_dbiterator_seek(
 							     dbi->dbiterator,
@@ -273,8 +271,7 @@ load(const char *filename, const char *origintext, isc_boolean_t cache) {
 	isc_buffer_add(&source, len);
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &source, dns_rootname, ISC_FALSE,
-				   NULL);
+	result = dns_name_fromtext(origin, &source, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -738,8 +735,7 @@ main(int argc, char *argv[]) {
 		isc_buffer_init(&source, s, len);
 		isc_buffer_add(&source, len);
 		isc_buffer_init(&target, b, sizeof(b));
-		result = dns_name_fromtext(&name, &source, origin,
-					   ISC_FALSE, &target);
+		result = dns_name_fromtext(&name, &source, origin, 0, &target);
 		if (result != ISC_R_SUCCESS) {
 			print_result("bad name: ", result);
 			continue;

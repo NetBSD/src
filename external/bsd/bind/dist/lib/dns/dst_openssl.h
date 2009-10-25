@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.1 2009/03/22 15:01:00 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.2 2009/10/25 00:02:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_openssl.h,v 1.7 2008/04/01 23:47:10 tbox Exp */
+/* Id: dst_openssl.h,v 1.9 2009/10/06 04:40:14 tbox Exp */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1
@@ -31,10 +31,7 @@ isc_result_t
 dst__openssl_toresult(isc_result_t fallback);
 
 ENGINE *
-dst__openssl_getengine(const char *name);
-
-isc_result_t
-dst__openssl_setdefault(const char *name);
+dst__openssl_getengine(const char *engine);
 
 ISC_LANG_ENDDECLS
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.1.1.1 2009/03/22 14:56:13 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.80 2008/11/16 22:49:18 marka Exp */
+/* Id: globals.h,v 1.86 2009/10/05 17:30:49 fdupont Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -31,6 +31,8 @@
 #include <isccfg/cfg.h>
 
 #include <dns/zone.h>
+
+#include <dst/dst.h>
 
 #include <named/types.h>
 
@@ -88,8 +90,13 @@ EXTERN cfg_obj_t *		ns_g_config		INIT(NULL);
 EXTERN const cfg_obj_t *	ns_g_defaults		INIT(NULL);
 EXTERN const char *		ns_g_conffile		INIT(NS_SYSCONFDIR
 							     "/named.conf");
+EXTERN cfg_obj_t *		ns_g_bindkeys		INIT(NULL);
 EXTERN const char *		ns_g_keyfile		INIT(NS_SYSCONFDIR
 							     "/rndc.key");
+
+EXTERN dns_tsigkey_t *		ns_g_sessionkey		INIT(NULL);
+EXTERN dns_name_t		ns_g_sessionkeyname;
+
 EXTERN const char *		lwresd_g_conffile	INIT(NS_SYSCONFDIR
 							     "/lwresd.conf");
 EXTERN const char *		lwresd_g_resolvconffile	INIT("/etc"
@@ -114,6 +121,10 @@ EXTERN const char *		ns_g_chrootdir		INIT(NULL);
 EXTERN isc_boolean_t		ns_g_foreground		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_logstderr		INIT(ISC_FALSE);
 
+EXTERN const char *		ns_g_defaultsessionkeyfile
+					INIT(NS_LOCALSTATEDIR "/run/named/"
+							      "session.key");
+
 #if NS_RUN_PID_DIR
 EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
 							     "/run/named/"
@@ -129,6 +140,12 @@ EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
 #endif
 
 EXTERN const char *		ns_g_username		INIT(NULL);
+
+#ifdef USE_PKCS11
+EXTERN const char *		ns_g_engine		INIT("pkcs11");
+#else
+EXTERN const char *		ns_g_engine		INIT(NULL);
+#endif
 
 EXTERN int			ns_g_listen		INIT(3);
 EXTERN isc_time_t		ns_g_boottime;

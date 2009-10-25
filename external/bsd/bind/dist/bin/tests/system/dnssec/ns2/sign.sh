@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.30.48.4 2009/06/08 23:47:00 tbox Exp
+# Id: sign.sh,v 1.33 2009/07/19 04:18:04 each Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -32,7 +32,7 @@ zonefile=example.db
 
 for subdomain in secure bogus dynamic keyless nsec3 optout nsec3-unknown optout-unknown multiple
 do
-	cp ../ns3/keyset-$subdomain.example. .
+	cp ../ns3/dsset-$subdomain.example. .
 done
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
@@ -40,7 +40,7 @@ keyname2=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 # Sign the privately secure file
 
@@ -52,7 +52,7 @@ privkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $privzone`
 
 cat $privinfile $privkeyname.key >$privzonefile
 
-$SIGNER -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
 
 # Sign the DLV secure zone.
 
@@ -65,4 +65,4 @@ dlvkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 
 cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
-$SIGNER -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null

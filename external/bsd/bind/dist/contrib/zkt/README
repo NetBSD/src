@@ -1,7 +1,7 @@
 #
 #	README  dnssec zone key tool
 #
-#	(c) March 2005 - Dec 2008 by  Holger Zuleger  hznet
+#	(c) March 2005 - Aug 2009 by  Holger Zuleger  hznet
 #	(c) for domaincmp Aug 2005 by Karle Boss & H. Zuleger (kaho)
 #	(c) for zconf.c by Jeroen Masar & Holger Zuleger
 #
@@ -16,13 +16,13 @@ The complete software stands under BSD licence (see LICENCE file)
 
 To build the software:
 a) Get the current version of zkt
-	$ wget http://www.hznet.de/dns/zkt/zkt-0.98.tar.gz
+	$ wget http://www.hznet.de/dns/zkt/zkt-0.99c.tar.gz
 
 b) Unpack
-	$ tar xzvf zkt-0.98.tar.gz
+	$ tar xzvf zkt-0.99c.tar.gz
 
 c) Change to dir
-	$ cd zkt-0.98
+	$ cd zkt-0.99c
 
 d) Run configure script
 	$ ./configure
@@ -33,7 +33,8 @@ f) Compile
 	$ make
 
 g) Install
-	$ make install	# this will copy the binarys to $HOME/bin
+	# make install
+	# make install-man
 
 h) (optional) Install and modify the default dnssec.conf file 
 	$ ./dnssec-zkt -c "" -Z > /var/named/dnssec.conf

@@ -60,8 +60,8 @@ distribute)
 	fi
 	;;
 reload)
-	echo "rndc $action $zone $view"
-	: rndc $action $zone $view
+	echo "rndc $action $domain $view"
+	: rndc $action $domain $view
 	;;
 *)
 	usage "illegal action $action"

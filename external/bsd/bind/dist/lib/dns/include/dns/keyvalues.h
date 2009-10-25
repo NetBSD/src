@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.2 2009/07/28 21:11:14 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.3 2009/10/25 00:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyvalues.h,v 1.23.48.2 2009/06/04 02:56:14 tbox Exp */
+/* Id: keyvalues.h,v 1.26 2009/06/30 02:52:32 each Exp */
 
 #ifndef DNS_KEYVALUES_H
 #define DNS_KEYVALUES_H 1
@@ -44,7 +44,7 @@
 #define DNS_KEYOWNER_ENTITY	0x0200	/*%< key is assoc. with entity eg host */
 #define DNS_KEYOWNER_ZONE	0x0100	/*%< key is zone key */
 #define DNS_KEYOWNER_RESERVED	0x0300	/*%< reserved meaning */
-#define DNS_KEYFLAG_REVOKE	0x0080	/*%< key revoked (per rfc5001) */
+#define DNS_KEYFLAG_REVOKE	0x0080	/*%< key revoked (per rfc5011) */
 #define DNS_KEYFLAG_RESERVED9	0x0040	/*%< reserved - must be zero */
 #define DNS_KEYFLAG_RESERVED10	0x0020	/*%< reserved - must be zero */
 #define DNS_KEYFLAG_RESERVED11	0x0010	/*%< reserved - must be zero */
@@ -53,7 +53,6 @@
 #define DNS_KEYFLAG_RESERVEDMASK (DNS_KEYFLAG_RESERVED2 | \
 				  DNS_KEYFLAG_RESERVED4 | \
 				  DNS_KEYFLAG_RESERVED5 | \
-				  DNS_KEYFLAG_RESERVED8 | \
 				  DNS_KEYFLAG_RESERVED9 | \
 				  DNS_KEYFLAG_RESERVED10 | \
 				  DNS_KEYFLAG_RESERVED11 )

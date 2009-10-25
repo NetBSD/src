@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.1 2009/03/22 14:56:28 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_test.c,v 1.43.332.2 2009/03/02 23:47:11 tbox Exp */
+/* Id: dst_test.c,v 1.46 2009/09/01 00:22:25 jinmei Exp */
 
 #include <config.h>
 
@@ -266,7 +266,7 @@ main(void) {
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
-	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (1);
 	io(name, 23616, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
@@ -278,7 +278,7 @@ main(void) {
 
 	isc_buffer_init(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
-	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (1);
 	dh(name, 18602, name, 48957, mctx);

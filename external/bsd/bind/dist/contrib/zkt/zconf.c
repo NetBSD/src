@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.c,v 1.1.1.1 2009/03/22 14:58:21 christos Exp $	*/
+/*	$NetBSD: zconf.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /****************************************************************
 **
@@ -7,8 +7,7 @@
 **	Most of the code is from the SixXS Heartbeat Client
 **	written by Jeroen Massar <jeroen@sixxs.net>
 **
-**	New config types and some slightly code changes
-**	by Holger Zuleger
+**	New config types and some slightly code changes by Holger Zuleger
 **
 **	Copyright (c) Aug 2005, Jeroen Massar, Holger Zuleger.
 **	All rights reserved.
@@ -93,15 +92,18 @@ static	zconf_t	def = {
 	PRINTTIME, PRINTAGE, LJUST,
 	SIG_VALIDITY, MAX_TTL, KEY_TTL, PROPTIME, Incremental,
 	RESIGN_INT,
-	KSK_LIFETIME, KSK_ALGO, KSK_BITS, KSK_RANDOM,
-	ZSK_LIFETIME, ZSK_ALGO, ZSK_BITS, ZSK_RANDOM,
+	KEY_ALGO, ADDITIONAL_KEY_ALGO,
+	KSK_LIFETIME, KSK_BITS, KSK_RANDOM,
+	ZSK_LIFETIME, ZSK_BITS, ZSK_RANDOM,
 	SALTLEN,
-	NULL, /* viewname cmdline paramter */
+	NULL, /* viewname cmdline parameter */
+	0, /* noexec cmdline parameter */
 	LOGFILE, LOGLEVEL, SYSLOGFACILITY, SYSLOGLEVEL, VERBOSELOG, 0,
 	DNSKEYFILE, ZONEFILE, KEYSETDIR,
 	LOOKASIDEDOMAIN,
 	SIG_RANDOM, SIG_PSEUDO, SIG_GENDS, SIG_PARAM,
-	DIST_CMD	/* deafults to NULL which means to run "rndc reload" */
+	DIST_CMD,	/* defaults to NULL which means to run "rndc reload" */
+	NAMED_CHROOT
 };
 
 typedef	struct {
@@ -138,12 +140,15 @@ static	zconf_para_t	confpara[] = {
 
 	{ "",			0,	CONF_COMMENT,	NULL },
 	{ "",			0,	CONF_COMMENT,	"signing key parameters"},
+	{ "Key_algo",		0,	CONF_ALGO,	&def.k_algo },	/* now used as general KEY algoritjm (KSK & ZSK) */
+	{ "AddKey_algo",	0,	CONF_ALGO,	&def.k2_algo },		/* second key algorithm added (v0.99) */
 	{ "KSK_lifetime",	0,	CONF_TIMEINT,	&def.k_life },
-	{ "KSK_algo",		0,	CONF_ALGO,	&def.k_algo },
+	{ "KSK_algo",		1,	CONF_ALGO,	&def.k_algo },	/* old KSK value changed to key algorithm */
 	{ "KSK_bits",		0,	CONF_INT,	&def.k_bits },
 	{ "KSK_randfile",	0,	CONF_STRING,	&def.k_random },
 	{ "ZSK_lifetime",	0,	CONF_TIMEINT,	&def.z_life },
-	{ "ZSK_algo",		0,	CONF_ALGO,	&def.z_algo },
+	/* { "ZSK_algo",		1,	CONF_ALGO,	&def.z_algo },		ZSK algo removed (set to same as ksk) */
+	{ "ZSK_algo",		1,	CONF_ALGO,	&def.k2_algo },		/* if someone using it already, map the algo to the additional key algorithm */
 	{ "ZSK_bits",		0,	CONF_INT,	&def.z_bits },
 	{ "ZSK_randfile",	0,	CONF_STRING,	&def.z_random },
 	{ "SaltBits",		0,	CONF_INT,	&def.saltbits },
@@ -151,6 +156,7 @@ static	zconf_para_t	confpara[] = {
 	{ "",			0,	CONF_COMMENT,	NULL },
 	{ "",			0,	CONF_COMMENT,	"dnssec-signer options"},
 	{ "--view",		1,	CONF_STRING,	&def.view },
+	{ "--noexec",		1,	CONF_BOOL,	&def.noexec },
 	{ "LogFile",		0,	CONF_STRING,	&def.logfile },
 	{ "LogLevel",		0,	CONF_LEVEL,	&def.loglevel },
 	{ "SyslogFacility",	0,	CONF_FACILITY,	&def.syslogfacility },
@@ -163,9 +169,10 @@ static	zconf_para_t	confpara[] = {
 	{ "DLV_Domain",		0,	CONF_STRING,	&def.lookaside },
 	{ "Sig_Randfile",	0,	CONF_STRING,	&def.sig_random },
 	{ "Sig_Pseudorand",	0,	CONF_BOOL,	&def.sig_pseudo },
-	{ "Sig_GenerateDS",	1,	CONF_BOOL,	&def.sig_gends },
+	{ "Sig_GenerateDS",	0,	CONF_BOOL,	&def.sig_gends },
 	{ "Sig_Parameter",	0,	CONF_STRING,	&def.sig_param },
 	{ "Distribute_Cmd",	0,	CONF_STRING,	&def.dist_cmd },
+	{ "NamedChrootDir",	0,	CONF_STRING,	&def.chroot_dir },
 
 	{ NULL,			0,	CONF_END,	NULL},
 };
@@ -231,18 +238,22 @@ static	void set_all_varptr (zconf_t *cp)
 #endif
 	set_varptr ("serialformat", &cp->serialform);
 
+	set_varptr ("key_algo", &cp->k_algo);
+	set_varptr ("addkey_algo", &cp->k2_algo);
 	set_varptr ("ksk_lifetime", &cp->k_life);
-	set_varptr ("ksk_algo", &cp->k_algo);
+	set_varptr ("ksk_algo", &cp->k_algo);		/* to be removed in next release */
 	set_varptr ("ksk_bits", &cp->k_bits);
 	set_varptr ("ksk_randfile", &cp->k_random);
 
 	set_varptr ("zsk_lifetime", &cp->z_life);
-	set_varptr ("zsk_algo", &cp->z_algo);
+	// set_varptr ("zsk_algo", &cp->z_algo);
+	set_varptr ("zsk_algo", &cp->k2_algo);
 	set_varptr ("zsk_bits", &cp->z_bits);
 	set_varptr ("zsk_randfile", &cp->z_random);
 	set_varptr ("saltbits", &cp->saltbits);
 
 	set_varptr ("--view", &cp->view);
+	set_varptr ("--noexec", &cp->noexec);
 	set_varptr ("logfile", &cp->logfile);
 	set_varptr ("loglevel", &cp->loglevel);
 	set_varptr ("syslogfacility", &cp->syslogfacility);
@@ -258,6 +269,7 @@ static	void set_all_varptr (zconf_t *cp)
 	set_varptr ("sig_generateds", &cp->sig_gends);
 	set_varptr ("sig_parameter", &cp->sig_param);
 	set_varptr ("distribute_cmd", &cp->dist_cmd);
+	set_varptr ("namedchrootdir", &cp->chroot_dir);
 }
 
 static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
@@ -327,7 +339,7 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 		{
 			char	**str;
 			char	quantity;
-			int	ival;
+			long	lval;
 
 			found = 1;
 			switch ( c->type )
@@ -344,18 +356,18 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 				break;
 			case CONF_TIMEINT:
 				quantity = 'd';
-				sscanf (val, "%d%c", &ival, &quantity);
+				sscanf (val, "%ld%c", &lval, &quantity);
 				if  ( quantity == 'm' )
-					ival *= MINSEC;
+					lval *= MINSEC;
 				else if  ( quantity == 'h' )
-					ival *= HOURSEC;
+					lval *= HOURSEC;
 				else if  ( quantity == 'd' )
-					ival *= DAYSEC;
+					lval *= DAYSEC;
 				else if  ( quantity == 'w' )
-					ival *= WEEKSEC;
+					lval *= WEEKSEC;
 				else if  ( quantity == 'y' )
-					ival *= YEARSEC;
-				(*(int *)c->var) = ival;
+					lval *= YEARSEC;
+				(*(long *)c->var) = lval;
 				break;
 			case CONF_ALGO:
 				if ( strcasecmp (val, "rsa") == 0 || strcasecmp (val, "rsamd5") == 0 )
@@ -400,6 +412,7 @@ static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)
 static	void	printconfigline (FILE *fp, zconf_para_t *cp)
 {
 	int	i;
+	long	lval;
 
 	assert (fp != NULL);
 	assert (cp != NULL);
@@ -437,16 +450,19 @@ static	void	printconfigline (FILE *fp, zconf_para_t *cp)
 		fprintf (fp, "%s:\t%s\n", cp->label, bool2str ( *(int*)cp->var ));
 		break;
 	case CONF_TIMEINT:
-		i = *(ulong*)cp->var;
-		fprintf (fp, "%s:\t%s", cp->label, timeint2str (i));
-		if ( i )
-			fprintf (fp, "\t# (%d seconds)", i);
+		lval = *(ulong*)cp->var;	/* in that case it should be of type ulong */
+		fprintf (fp, "%s:\t%s", cp->label, timeint2str (lval));
+		if ( lval )
+			fprintf (fp, "\t# (%ld seconds)", lval);
 		putc ('\n', fp);
 		break;
 	case CONF_ALGO:
 		i = *(int*)cp->var;
-		fprintf (fp, "%s:\t%s", cp->label, dki_algo2str (i));
-		fprintf (fp, "\t# (Algorithm ID %d)\n", i);
+		if ( i )
+		{
+			fprintf (fp, "%s:\t%s", cp->label, dki_algo2str (i));
+			fprintf (fp, "\t# (Algorithm ID %d)\n", i);
+		}
 		break;
 	case CONF_SERIAL:
 		fprintf (fp, "%s:\t", cp->label);
@@ -601,10 +617,11 @@ int	setconfigpar (zconf_t *config, char *entry, const void *pval)
 				/* fall through */
 			case CONF_ALGO:
 				/* fall through */
-			case CONF_TIMEINT:
-				/* fall through */
 			case CONF_INT:
 				*((int *)c->var) = *((int *)pval);
+				break;
+			case CONF_TIMEINT:
+				*((long *)c->var) = *((long *)pval);
 				break;
 			case CONF_SERIAL:
 				*((serial_form_t *)c->var) = *((serial_form_t *)pval);
@@ -730,12 +747,12 @@ int	checkconfig (const zconf_t *z)
 	if ( z->resign < (z->max_ttl + z->proptime) )
 	{
 		fprintf (stderr, "Re-signing interval (%s) should be ", timeint2str (z->resign));
-		fprintf (stderr, "greater than max_ttl (%d) plus ", z->max_ttl);
-		fprintf (stderr, "propagation time (%d)\n", z->proptime);
+		fprintf (stderr, "greater than max_ttl (%ld) plus ", z->max_ttl);
+		fprintf (stderr, "propagation time (%ld)\n", z->proptime);
 	}
 
 	if ( z->max_ttl >= z->sigvalidity )
-		fprintf (stderr, "Max TTL (%d) should be less than signatur validity (%d)\n",
+		fprintf (stderr, "Max TTL (%ld) should be less than signature validity (%ld)\n",
 								z->max_ttl, z->sigvalidity);
 
 	if ( z->z_life > (12 * WEEKSEC) * (z->z_bits / 512.) )

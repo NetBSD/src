@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.1 2009/03/22 14:58:20 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -81,10 +81,9 @@ extern	void    fatal (char *fmt, ...);
 extern	void    logmesg (char *fmt, ...);
 extern	void	verbmesg (int verblvl, const zconf_t *conf, char *fmt, ...);
 extern	void	logflush (void);
-extern	int	inc_serial (const char *fname, int use_unixtime);
-extern	const	char	*inc_errstr (int err);
+extern	int	gensalt (char *salt, size_t saltsize, int saltbits);
 extern	char	*str_untaint (char *str);
 extern	char	*str_chop (char *str, char c);
-extern	int	is_dotfile (const char *name);
+extern	int	is_dotfilename (const char *name);
 extern	void	parseurl (char *url, char **proto, char **host, char **port, char **para);
 #endif

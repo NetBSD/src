@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.1.1.1 2009/03/22 15:01:54 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.1.1.2 2009/10/25 00:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3_50.c,v 1.4.48.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: nsec3_50.c,v 1.6 2009/01/17 23:47:43 tbox Exp */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.

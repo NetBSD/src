@@ -1,18 +1,25 @@
 $ORIGIN .
-sub.example.de		7200	IN DNSKEY 257 3 5 (
-					BQEAAAABolXOM+J0RdjVTzlptvXKqtwxQQkc
-					7uzNfjzrCL9VNvD4AaydpGIqeqC05rLCILe6
-					2RRgCnQOs62kcUySrxRkmuAkkfONwU5PhXBA
-					jrblcV1T2xziS0rUBHMtgQlp3da0xOAqZVmB
-					cCJChytISJJmtuh0qryY1Z3nGLv3a4BbGFc=
-					) ; key id = 56595
+sub.example.de		7200	IN DNSKEY 257 3 1 (
+					BQEAAAABxmEeZyUrN83wG66weBOurn/+nds4
+					LHa2gARHpalrNFJp6jwQf7bXR0SaPU+gpcJW
+					/iJzkZemr+1gQOe0rwSjd4W1FGIW0WRG6LR6
+					gYYgoSaUsOc7Px2vVF1YE1jHcBu7BYtXfgKb
+					vV6X9KPqu0lMFpLDk+7Q/NUZjyZPu//rrNM=
+					) ; key id = 60332
 			7200	IN DNSKEY 257 3 5 (
-					BQEAAAABvFi0FuW1hnSuYpaWPBhN7/hQo59i
-					gc30zlVBFugkWd9wjsxXT5mNmmg8pceNgOgV
-					4+0bHBgQlAkC0I605MlTdljra6dLBsxIneJx
-					fWEEJ9LOQPPbnEPAJrEQzqtt5crVc687oyWY
-					g9UGZBconBIAeefO2h19hVjiqj6JGXl48/0=
-					) ; key id = 31785
+					BQEAAAABtnNSJcG6PU7RTitfJ4aVUM6Pclu4
+					WPKm0H4fm0zLnRldMT/DxRX4I8Lc2Iq+oQ2c
+					pOAhHvtsJ+boTX0j4aQjIPolRFZUfhr7o0wQ
+					uRrp3f4fMGzezcR1UsqRLG7+2KF9cq4H7u1X
+					0KBLqokJHyy9Chp+ui188878vlXrwWNo4Pk=
+					) ; key id = 24426
+			7200	IN DNSKEY 257 3 5 (
+					BQEAAAABu2BSOupQez5A9uJYlPzNwRyAwP4q
+					W+F6A0PuQnYdH4autBznW7kseAHbH8ABl8Xr
+					yOiVwt2zRwyYjkujA0yOPE83mD/o9Y+J/PU/
+					ZGnyj51lpTZU2Hazr1hMJpA/KevtDPjkraGY
+					0UxtfF32I/xfOlYixImhZHlY04a9eVgvhME=
+					) ; key id = 26451
 			7200	IN DNSKEY 257 3 5 (
 					BQEAAAAB1c44bXfWMzPJQ0k35Gz0euAPGkw4
 					8XBb+ECUiiiI5wklFOjgCyN1Yr9j1QYsvsYv

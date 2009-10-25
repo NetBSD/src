@@ -2,7 +2,7 @@
  - Copyright (C) 2004-2009 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  - 
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: Bv9ARM.ch07.html,v 1.178.14.6 2009/06/03 01:54:39 tbox Exp -->
+<!-- Id: Bv9ARM.ch07.html,v 1.211 2009/10/16 04:20:33 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -46,10 +46,10 @@
 <p><b>Table of Contents</b></p>
 <dl>
 <dt><span class="sect1"><a href="Bv9ARM.ch07.html#Access_Control_Lists">Access Control Lists</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch07.html#id2598990"><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span></a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch07.html#id2600830"><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span></a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2599072">The <span><strong class="command">chroot</strong></span> Environment</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2599268">Using the <span><strong class="command">setuid</strong></span> Function</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2600912">The <span><strong class="command">chroot</strong></span> Environment</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2600971">Using the <span><strong class="command">setuid</strong></span> Function</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch07.html#dynamic_update_security">Dynamic Update Security</a></span></dt>
 </dl>
@@ -80,14 +80,17 @@
           Here is an example of how to properly apply ACLs:
         </p>
 <pre class="programlisting">
-// Set up an ACL named "bogusnets" that will block RFC1918 space
-// and some reserved space, which is commonly used in spoofing attacks.
+// Set up an ACL named "bogusnets" that will block
+// RFC1918 space and some reserved space, which is
+// commonly used in spoofing attacks.
 acl bogusnets {
-        0.0.0.0/8; 1.0.0.0/8; 2.0.0.0/8; 192.0.2.0/24; 224.0.0.0/3;
-        10.0.0.0/8; 172.16.0.0/12; 192.168.0.0/16;
+        0.0.0.0/8; 1.0.0.0/8; 2.0.0.0/8; 192.0.2.0/24;
+        224.0.0.0/3; 10.0.0.0/8; 172.16.0.0/12;
+        192.168.0.0/16;
 };
 
-// Set up an ACL called our-nets. Replace this with the real IP numbers.
+// Set up an ACL called our-nets. Replace this with the
+// real IP numbers.
 acl our-nets { x.x.x.x/24; x.x.x.x/21; };
 options {
   ...
@@ -119,7 +122,7 @@ zone "example.com" {
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2598990"></a><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span>
+<a name="id2600830"></a><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span>
 </h2></div></div></div>
 <p>
           On UNIX servers, it is possible to run <acronym class="acronym">BIND</acronym>
@@ -145,7 +148,7 @@ zone "example.com" {
         </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2599072"></a>The <span><strong class="command">chroot</strong></span> Environment</h3></div></div></div>
+<a name="id2600912"></a>The <span><strong class="command">chroot</strong></span> Environment</h3></div></div></div>
 <p>
             In order for a <span><strong class="command">chroot</strong></span> environment
             to
@@ -173,7 +176,7 @@ zone "example.com" {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2599268"></a>Using the <span><strong class="command">setuid</strong></span> Function</h3></div></div></div>
+<a name="id2600971"></a>Using the <span><strong class="command">setuid</strong></span> Function</h3></div></div></div>
 <p>
             Prior to running the <span><strong class="command">named</strong></span> daemon,
             use

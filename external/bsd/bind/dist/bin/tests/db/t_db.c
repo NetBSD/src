@@ -1,4 +1,4 @@
-/*	$NetBSD: t_db.c,v 1.1.1.1 2009/03/22 14:56:27 christos Exp $	*/
+/*	$NetBSD: t_db.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_db.c,v 1.36.332.2 2009/01/22 23:47:05 tbox Exp */
+/* Id: t_db.c,v 1.39 2009/09/01 00:22:25 jinmei Exp */
 
 #include <config.h>
 
@@ -63,7 +63,7 @@ t_create(const char *db_type, const char *origin, const char *class,
 	isc_buffer_init(&origin_buffer, origin, len);
 	isc_buffer_add(&origin_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_origin),
-				       &origin_buffer, NULL, ISC_FALSE, NULL);
+				       &origin_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       dns_result_totext(dns_result));
@@ -192,7 +192,7 @@ t_dns_db_load(char **av) {
 	isc_buffer_init(&findname_buffer, findname, len);
 	isc_buffer_add(&findname_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-				&findname_buffer, NULL, ISC_FALSE, NULL);
+				&findname_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -307,7 +307,7 @@ t_dns_db_zc_x(char *filename, char *db_type, char *origin, char *class,
 	isc_buffer_init(&origin_buffer, origin, len);
 	isc_buffer_add(&origin_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_origin),
-				       &origin_buffer, NULL, ISC_FALSE, NULL);
+				       &origin_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       dns_result_totext(dns_result));
@@ -586,7 +586,7 @@ t_dns_db_origin(char **av) {
 	}
 
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_origin),
-				&origin_buffer, NULL, ISC_FALSE, NULL);
+				&origin_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 				dns_result_totext(dns_result));
@@ -834,7 +834,7 @@ t_dns_db_currentversion(char **av) {
 	isc_buffer_init(&findname_buffer, findname, len);
 	isc_buffer_add(&findname_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-				&findname_buffer, NULL, ISC_FALSE, NULL);
+				&findname_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -1125,7 +1125,7 @@ t_dns_db_newversion(char **av) {
 	isc_buffer_init(&newname_buffer, newname, len);
 	isc_buffer_add(&newname_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_newname),
-				&newname_buffer, NULL, ISC_FALSE, NULL);
+				&newname_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -1451,7 +1451,7 @@ t_dns_db_closeversion_1(char **av) {
 	isc_buffer_init(&name_buffer, existing_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_existingname),
-			&name_buffer, NULL, ISC_FALSE, NULL);
+			&name_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -1530,7 +1530,7 @@ t_dns_db_closeversion_1(char **av) {
 	isc_buffer_init(&name_buffer, new_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_newname),
-				&name_buffer, NULL, ISC_FALSE, NULL);
+				&name_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -1863,7 +1863,7 @@ t_dns_db_closeversion_2(char **av) {
 	isc_buffer_init(&name_buffer, existing_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_existingname),
-			&name_buffer, NULL, ISC_FALSE, NULL);
+			&name_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));
@@ -1944,7 +1944,7 @@ t_dns_db_closeversion_2(char **av) {
 	isc_buffer_init(&name_buffer, new_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_newname),
-				       &name_buffer, NULL, ISC_FALSE, NULL);
+				       &name_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       dns_result_totext(dns_result));
@@ -2281,7 +2281,7 @@ t_dns_db_expirenode(char **av) {
 	isc_buffer_init(&name_buffer, existing_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_existingname),
-				       &name_buffer, NULL, ISC_FALSE, NULL);
+				       &name_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       dns_result_totext(dns_result));
@@ -2527,7 +2527,7 @@ t_dns_db_findnode_1(char **av) {
 	isc_buffer_init(&name_buffer, find_name, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_name),
-				&name_buffer, NULL, ISC_FALSE, NULL);
+				&name_buffer, NULL, 0, NULL);
 
 	dns_result = dns_db_findnode(db, dns_fixedname_name(&dns_name),
 				ISC_FALSE, &nodep);
@@ -2683,7 +2683,7 @@ t_dns_db_findnode_2(char **av) {
 	isc_buffer_init(&name_buffer, newname, len);
 	isc_buffer_add(&name_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_name),
-				       &name_buffer, NULL, ISC_FALSE, NULL);
+				       &name_buffer, NULL, 0, NULL);
 
 	dns_result = dns_db_findnode(db, dns_fixedname_name(&dns_name),
 				     ISC_FALSE, &nodep);
@@ -2888,7 +2888,7 @@ t_dns_db_find_x(char **av) {
 	isc_buffer_init(&findname_buffer, findname, len);
 	isc_buffer_add(&findname_buffer, len);
 	dns_result = dns_name_fromtext(dns_fixedname_name(&dns_findname),
-				&findname_buffer, NULL, ISC_FALSE, NULL);
+				&findname_buffer, NULL, 0, NULL);
 	if (dns_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			dns_result_totext(dns_result));

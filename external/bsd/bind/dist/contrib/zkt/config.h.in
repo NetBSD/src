@@ -34,6 +34,9 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define to 1 if you have the `getuid' function. */
+#undef HAVE_GETUID
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -53,8 +56,8 @@
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
-/* Define to 1 if you have the `setenv' function. */
-#undef HAVE_SETENV
+/* Define to 1 if you have the `putenv' function. */
+#undef HAVE_PUTENV
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
@@ -118,6 +121,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the `timegm' function. */
+#undef HAVE_TIMEGM
 
 /* Define to 1 if you have the `tzset' function. */
 #undef HAVE_TZSET
@@ -198,7 +204,7 @@
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `unsigned char' if <sys/types.h> does not define. */

@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.1 2009/03/22 15:02:35 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.17 2008/09/25 04:02:39 tbox Exp */
+/* Id: grammar.h,v 1.19 2009/06/11 23:47:55 tbox Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -212,10 +212,18 @@ struct cfg_parser {
 	 */
 	unsigned int	line;
 
+	/*%
+	 * Parser context flags, used for maintaining state
+	 * from one token to the next.
+	 */
+	unsigned int flags;
+
 	cfg_parsecallback_t callback;
 	void *callbackarg;
 };
 
+/* Parser context flags */
+#define CFG_PCTX_SKIP		0x1
 
 /*@{*/
 /*%

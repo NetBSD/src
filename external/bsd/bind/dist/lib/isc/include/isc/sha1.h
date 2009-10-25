@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.h,v 1.1.1.1 2009/03/22 15:02:14 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -20,9 +20,9 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* Id: sha1.h,v 1.17 2007/06/19 23:47:18 tbox Exp */
+/* Id: sha1.h,v 1.19 2009/02/06 23:47:42 tbox Exp */
 
-/*	$NetBSD: sha1.h,v 1.1.1.1 2009/03/22 15:02:14 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*! \file isc/sha1.h
  * \brief SHA-1 in C
@@ -31,16 +31,25 @@
  */
 
 #include <isc/lang.h>
+#include <isc/platform.h>
 #include <isc/types.h>
 
 #define ISC_SHA1_DIGESTLENGTH 20U
 #define ISC_SHA1_BLOCK_LENGTH 64U
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+#include <openssl/evp.h>
+
+typedef EVP_MD_CTX isc_sha1_t;
+
+#else
 
 typedef struct {
 	isc_uint32_t state[5];
 	isc_uint32_t count[2];
 	unsigned char buffer[ISC_SHA1_BLOCK_LENGTH];
 } isc_sha1_t;
+#endif
 
 ISC_LANG_BEGINDECLS
 

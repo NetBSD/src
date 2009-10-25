@@ -114,6 +114,48 @@ Package=<4>
 
 ###############################################################################
 
+Project: "revoke"="..\bin\dnssec\win32\revoke.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "settime"="..\bin\dnssec\win32\settime.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dnssectool
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "keygen"="..\bin\dnssec\win32\keygen.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -375,7 +417,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "rndcconfgen"="..\bin\rndc\win32\confgen.dsp" - Package Owner=<4>
+Project: "rndcconfgen"="..\bin\confgen\win32\rndcconfgen.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -384,7 +426,43 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name rndcutil
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name confgentool
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ddnsconfgen"="..\bin\confgen\win32\ddnsconfgen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name confgentool
     End Project Dependency
 }}}
 
@@ -456,7 +534,55 @@ Package=<4>
 
 ###############################################################################
 
+Project: "confgentool"="..\bin\confgen\win32\confgentool.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "checktool"="..\bin\check\win32\checktool.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11keygen"="..\bin\pkcs11\win32\pk11keygen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11list"="..\bin\pkcs11\win32\pk11list.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pk11destroy"="..\bin\pkcs11\win32\pk11destroy.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

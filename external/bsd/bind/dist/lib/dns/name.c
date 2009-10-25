@@ -1,7 +1,7 @@
-/*	$NetBSD: name.c,v 1.1.1.1 2009/03/22 15:01:12 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.2 2009/10/25 00:02:31 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.165 2008/04/01 23:47:10 tbox Exp */
+/* Id: name.c,v 1.169 2009/09/01 17:36:51 jinmei Exp */
 
 /*! \file */
 
@@ -36,6 +36,7 @@
 #include <isc/util.h>
 
 #include <dns/compress.h>
+#include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/result.h>
 
@@ -1019,7 +1020,6 @@ dns_name_toregion(dns_name_t *name, isc_region_t *r) {
 
 	DNS_NAME_TOREGION(name, r);
 }
-
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
@@ -2340,6 +2340,62 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size) {
 
 	} else
 		snprintf(cp, size, "<unknown>");
+}
+
+/*
+ * dns_name_tostring() -- similar to dns_name_format() but allocates its own
+ * memory.
+ */
+isc_result_t
+dns_name_tostring(dns_name_t *name, char **target, isc_mem_t *mctx) {
+	isc_result_t result;
+	isc_buffer_t buf;
+	isc_region_t reg;
+	char *p, txt[DNS_NAME_FORMATSIZE];
+
+	REQUIRE(VALID_NAME(name));
+	REQUIRE(target != NULL && *target == NULL);
+
+	isc_buffer_init(&buf, txt, sizeof(txt));
+	result = dns_name_totext(name, ISC_FALSE, &buf);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	isc_buffer_usedregion(&buf, &reg);
+	p = isc_mem_allocate(mctx, reg.length + 1);
+	memcpy(p, (char *) reg.base, (int) reg.length);
+	p[reg.length] = '\0';
+
+	*target = p;
+	return (ISC_R_SUCCESS);
+}
+
+/*
+ * dns_name_fromstring() -- convert directly from a string to a name,
+ * allocating memory as needed
+ */
+isc_result_t
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
+		    isc_mem_t *mctx)
+{
+	isc_result_t result;
+	isc_buffer_t buf;
+	dns_fixedname_t fn;
+	dns_name_t *name;
+
+	REQUIRE(src != NULL);
+
+	isc_buffer_init(&buf, src, strlen(src));
+	isc_buffer_add(&buf, strlen(src));
+	dns_fixedname_init(&fn);
+	name = dns_fixedname_name(&fn);
+
+	result = dns_name_fromtext(name, &buf, dns_rootname, options, NULL);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = dns_name_dup(name, mctx, target);
+	return (result);
 }
 
 isc_result_t

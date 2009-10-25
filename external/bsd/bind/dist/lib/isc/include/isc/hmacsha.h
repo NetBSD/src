@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacsha.h,v 1.1.1.1 2009/03/22 15:02:12 christos Exp $	*/
+/*	$NetBSD: hmacsha.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.h,v 1.7 2007/06/19 23:47:18 tbox Exp */
+/* Id: hmacsha.h,v 1.9 2009/02/06 23:47:42 tbox Exp */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -27,6 +27,7 @@
 #define ISC_HMACSHA_H 1
 
 #include <isc/lang.h>
+#include <isc/platform.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 #include <isc/types.h>
@@ -36,6 +37,17 @@
 #define ISC_HMACSHA256_KEYLENGTH ISC_SHA256_BLOCK_LENGTH
 #define ISC_HMACSHA384_KEYLENGTH ISC_SHA384_BLOCK_LENGTH
 #define ISC_HMACSHA512_KEYLENGTH ISC_SHA512_BLOCK_LENGTH
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+#include <openssl/hmac.h>
+
+typedef HMAC_CTX isc_hmacsha1_t;
+typedef HMAC_CTX isc_hmacsha224_t;
+typedef HMAC_CTX isc_hmacsha256_t;
+typedef HMAC_CTX isc_hmacsha384_t;
+typedef HMAC_CTX isc_hmacsha512_t;
+
+#else
 
 typedef struct {
 	isc_sha1_t sha1ctx;
@@ -61,6 +73,7 @@ typedef struct {
 	isc_sha512_t sha512ctx;
 	unsigned char key[ISC_HMACSHA512_KEYLENGTH];
 } isc_hmacsha512_t;
+#endif
 
 ISC_LANG_BEGINDECLS
 

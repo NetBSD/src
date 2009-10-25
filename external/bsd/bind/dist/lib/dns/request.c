@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.1.1.1 2009/03/22 15:01:24 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.2 2009/10/25 00:02:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.82.72.2 2009/01/18 23:47:40 tbox Exp */
+/* Id: request.c,v 1.85 2009/09/01 00:22:26 jinmei Exp */
 
 /*! \file */
 
@@ -451,7 +451,8 @@ req_send(dns_request_t *request, isc_task_t *task, isc_sockaddr_t *address) {
 }
 
 static isc_result_t
-new_request(isc_mem_t *mctx, dns_request_t **requestp) {
+new_request(isc_mem_t *mctx, dns_request_t **requestp)
+{
 	dns_request_t *request;
 
 	request = isc_mem_get(mctx, sizeof(*request));
