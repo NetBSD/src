@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.158 2009/08/09 22:49:01 haad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.159 2009/10/25 01:14:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.158 2009/08/09 22:49:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.159 2009/10/25 01:14:03 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -133,55 +133,54 @@ const struct sa_emul saemul_netbsd32 = {
 }; 
 
 struct emul emul_netbsd32 = {
-	"netbsd32",
-	"/emul/netbsd32",
+	.e_name =		"netbsd32",
+	.e_path =		"/emul/netbsd32",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	NULL,
-	NETBSD32_SYS_netbsd32_syscall,
-	NETBSD32_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL,
+	.e_nosys =		NETBSD32_SYS_netbsd32_syscall,
+	.e_nsysent =		NETBSD32_SYS_NSYSENT,
 #endif
-	netbsd32_sysent,
+	.e_sysent =		netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
-	netbsd32_syscallnames,
+	.e_syscallnames =	netbsd32_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	netbsd32_sendsig,
-	trapsignal,
-	NULL,
+	.e_sendsig =		netbsd32_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
 #ifdef COMPAT_16
-	netbsd32_sigcode,
-	netbsd32_esigcode,
-	&emul_netbsd32_object,
+	.e_sigcode =		netbsd32_sigcode,
+	.e_esigcode =		netbsd32_esigcode,
+	.e_sigobject =		&emul_netbsd32_object,
 #else
-	NULL,
-	NULL,
-	NULL,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
 #endif
-	netbsd32_setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_setregs =		netbsd32_setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	netbsd32_syscall_intern,
+	.e_syscall_intern =	netbsd32_syscall_intern,
 #else
-	syscall,
+	.e_syscall =		syscall,
 #endif
-	&netbsd32_sysctl_root,
-	NULL,
-
-	netbsd32_vm_default_addr,
-	NULL,
+	.e_sysctlovly =		&netbsd32_sysctl_root,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	netbsd32_vm_default_addr,
+	.e_usertrap =		NULL,
 #ifdef COMPAT_40
-	&saemul_netbsd32,
+	.e_sa =			&saemul_netbsd32,
 #else
-	NULL,
+	.e_sa =			NULL,
 #endif
-	sizeof(ucontext32_t),
-	startlwp32,
+	.e_ucsize =		sizeof(ucontext32_t),
+	.e_startlwp =		startlwp32
 };
 
 /*
