@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.501 2009/10/18 20:26:33 pooka Exp $
+# $NetBSD: shl.mi,v 1.502 2009/10/25 00:17:06 tsarna Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -174,7 +174,9 @@
 ./usr/lib/libzfs.so.0.0				base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libzpool.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
-./usr/lib/nss_mdns.so.0				base-mdns-shlib		mdns
+./usr/lib/nss_mdns.so.0				base-mdns-shlib		mdns,obsolete
+./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
+./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
 ./usr/lib/security/pam_afslog.so.3		base-sys-shlib		kerberos,pam
 ./usr/lib/security/pam_chroot.so.3		base-sys-shlib		pam
 ./usr/lib/security/pam_deny.so.3		base-sys-shlib		pam
