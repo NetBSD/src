@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.1.1.1 2009/10/25 00:02:42 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.2 2009/10/25 20:53:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -187,7 +187,7 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 	 * first argument.  Note that the body of this function cannot be
 	 * inlined since it depends on the address of the function argument.
 	 */
-	sp = (void **)&addrs - 2;
+	sp = (void **)(void *)&addrs - 2;
 #endif
 
 	while (sp != NULL && i < maxaddrs) {
