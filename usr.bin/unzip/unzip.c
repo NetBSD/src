@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.9 2009/09/30 10:04:54 wiz Exp $ */
+/* $NetBSD: unzip.c,v 1.10 2009/10/25 20:14:50 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.9 2009/09/30 10:04:54 wiz Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.10 2009/10/25 20:14:50 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -408,7 +408,7 @@ extract_dir(struct archive *a, struct archive_entry *e, const char *path)
 	if (mode & 0004)
 		mode |= 0001;
 
-	info("d %s\n", path);
+	info("   creating: %s/\n", path);
 	make_dir(path, mode);
 	ac(archive_read_data_skip(a));
 }
