@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-zkt.c,v 1.1.1.1 2009/03/22 14:58:19 christos Exp $	*/
+/*	$NetBSD: dnssec-zkt.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -430,7 +430,7 @@ static	void    usage (char *mesg, zconf_t *cp)
         sopt_usage ("\tusage: %s -C <name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
         lopt_usage ("\tusage: %s --create=<name> [-k] [-dpr] [-c config] [dir ...]\n", progname);
         fprintf (stderr, "\t\tKSK (use -k):  %s %d bits\n", dki_algo2str (cp->k_algo), cp->k_bits);
-        fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->z_algo), cp->z_bits);
+        fprintf (stderr, "\t\tZSK (default): %s %d bits\n", dki_algo2str (cp->k_algo), cp->z_bits);
         fprintf (stderr, "\n");
         fprintf (stderr, "Change key status of specified key to published, active or depreciated\n");
         fprintf (stderr, "\t(<keyspec> := tag | tag:name) \n");
@@ -510,7 +510,7 @@ static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *co
 	}
 	
 	if  ( zskflag )
-		dkp = dki_new (dir, keyname, DKI_ZSK, conf->z_algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
+		dkp = dki_new (dir, keyname, DKI_ZSK, conf->k_algo, conf->z_bits, conf->z_random, conf->z_life / DAYSEC);
 	else
 		dkp = dki_new (dir, keyname, DKI_KSK, conf->k_algo, conf->k_bits, conf->k_random, conf->k_life / DAYSEC);
 	if ( dkp == NULL )
@@ -659,7 +659,7 @@ static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const z
 		}
 
 		// dkp = keylist;	/* use old key to create the parent file */
-		if ( (dkp = (dki_t *)dki_find (keylist, 1, 'a', 1)) == NULL )	/* find the oldest active ksk to create the parent file */
+		if ( (dkp = (dki_t *)dki_findalgo (keylist, 1, conf->k_algo, 'a', 1)) == NULL )	/* find the oldest active ksk to create the parent file */
 			fatal ("ksk_rollover phase1: Couldn't find the old active key\n");
 		if ( !create_parent_file (path, phase, key_ttl, dkp) )
 			fatal ("Couldn't create parentfile %s\n", path);
@@ -745,7 +745,7 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 
 	while ( (dentp = readdir (dirp)) != NULL )
 	{
-		if ( is_dotfile (dentp->d_name) )
+		if ( is_dotfilename (dentp->d_name) )
 			continue;
 
 		dbg_val ("directory: check %s\n", dentp->d_name);

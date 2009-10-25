@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dst.c,v 1.1.1.1 2009/03/22 14:56:28 christos Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_dst.c,v 1.55.158.2 2009/01/22 23:47:05 tbox Exp */
+/* Id: t_dst.c,v 1.58 2009/09/01 00:22:25 jinmei Exp */
 
 #include <config.h>
 
@@ -407,7 +407,7 @@ t1(void) {
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
-	isc_result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       isc_result_totext(isc_result));
@@ -429,7 +429,7 @@ t1(void) {
 
 	isc_buffer_init(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
-	isc_result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 		       isc_result_totext(isc_result));
@@ -688,7 +688,7 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, keyname, strlen(keyname));
 	isc_buffer_add(&b, strlen(keyname));
-	isc_result = dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("dns_name_fromtext failed %s\n",
 			isc_result_totext(isc_result));

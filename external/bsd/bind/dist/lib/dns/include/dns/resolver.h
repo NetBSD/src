@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.1.1.1 2009/03/22 15:01:47 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.60.56.3 2009/01/29 22:40:35 jinmei Exp */
+/* Id: resolver.h,v 1.64 2009/09/01 00:22:26 jinmei Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -83,6 +83,7 @@ typedef struct dns_fetchevent {
 	dns_fixedname_t			foundname;
 	isc_sockaddr_t *		client;
 	dns_messageid_t			id;
+	isc_result_t			vresult;
 } dns_fetchevent_t;
 
 /*

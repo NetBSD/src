@@ -55,6 +55,7 @@ Current logging messages:
 		Start and stop of dnssec-signer
 		Re-signing events 
 		Key rollover events
+		KSK key generation and revoking
 		Zone reload resp. freeze/thaw of dynamic zone
 	LG_INFO: Currently none
 		planned:

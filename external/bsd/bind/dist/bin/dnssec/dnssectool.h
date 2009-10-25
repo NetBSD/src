@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.h,v 1.1.1.1 2009/03/22 14:55:54 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.h,v 1.22 2008/09/25 04:02:38 tbox Exp */
+/* Id: dnssectool.h,v 1.27 2009/10/12 20:48:11 each Exp */
 
 #ifndef DNSSECTOOL_H
 #define DNSSECTOOL_H 1
@@ -29,8 +29,9 @@
 
 typedef void (fatalcallback_t)(void);
 
-void
-fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
+ISC_PLATFORM_NORETURN_PRE void
+fatal(const char *format, ...)
+ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
 
 void
 setfatalcallback(fatalcallback_t *callback);
@@ -46,16 +47,8 @@ type_format(const dns_rdatatype_t type, char *cp, unsigned int size);
 #define TYPE_FORMATSIZE 20
 
 void
-alg_format(const dns_secalg_t alg, char *cp, unsigned int size);
-#define ALG_FORMATSIZE 10
-
-void
 sig_format(dns_rdata_rrsig_t *sig, char *cp, unsigned int size);
-#define SIG_FORMATSIZE (DNS_NAME_FORMATSIZE + ALG_FORMATSIZE + sizeof("65535"))
-
-void
-key_format(const dst_key_t *key, char *cp, unsigned int size);
-#define KEY_FORMATSIZE (DNS_NAME_FORMATSIZE + ALG_FORMATSIZE + sizeof("65535"))
+#define SIG_FORMATSIZE (DNS_NAME_FORMATSIZE + DNS_SECALG_FORMATSIZE + sizeof("65535"))
 
 void
 setup_logging(int verbose, isc_mem_t *mctx, isc_log_t **logp);
@@ -68,6 +61,8 @@ setup_entropy(isc_mem_t *mctx, const char *randomfile, isc_entropy_t **ectx);
 
 void
 cleanup_entropy(isc_entropy_t **ectx);
+
+dns_ttl_t strtottl(const char *str);
 
 isc_stdtime_t
 strtotime(const char *str, isc_int64_t now, isc_int64_t base);

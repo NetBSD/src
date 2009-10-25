@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.131 2008/09/25 04:02:38 tbox Exp
+# Id: Makefile.in,v 1.137 2009/09/01 22:30:28 jinmei Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -24,16 +24,18 @@ top_srcdir =	@top_srcdir@
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 		${LWRES_INCLUDES} ${OMAPI_INCLUDES}
 
-CDEFINES =
+CDEFINES =	-DBIND9
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@
+ISCLIBS =	../../lib/isc/libisc.@A@ @DNS_CRYPTO_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @DNS_CRYPTO_LIBS@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
+ISCDEPNOSYMLIBS = ../../lib/isc/libisc-nosymtbl.@A@
 ISCCFGDEPLIBS = ../../lib/isccfg/libisccfg.@A@
 LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
@@ -41,19 +43,19 @@ LIBS =		@LIBS@
 
 SUBDIRS = db dst master mem names net rbt sockaddr tasks timers system
 
-# A few of the test programs are built by default:
-# cfg_test is needed for regenerating doc/misc/options;
-# genrandom is needed by the system tests
+# Test programs that are built by default:
+# cfg_test is needed for regenerating doc/misc/options
 
 # Alphabetically
-TARGETS =	cfg_test@EXEEXT@ \
-		genrandom@EXEEXT@
+TARGETS =	cfg_test@EXEEXT@
 
 # All the other tests are optional and not built by default.
 
 # Alphabetically
 XTARGETS =	adb_test@EXEEXT@ \
 		byaddr_test@EXEEXT@ \
+		backtrace_test@EXEEXT@ \
+		backtrace_test_nosymtbl@EXEEXT@ \
 		byname_test@EXEEXT@ \
 		compress_test@EXEEXT@ \
 		db_test@EXEEXT@ \
@@ -62,10 +64,8 @@ XTARGETS =	adb_test@EXEEXT@ \
 		gxba_test@EXEEXT@ \
 		gxbn_test@EXEEXT@ \
 		hash_test@EXEEXT@ \
-		nsec3hash@EXEEXT@ \
 		fsaccess_test@EXEEXT@ \
 		inter_test@EXEEXT@ \
-		journalprint@EXEEXT@ \
 		keyboard_test@EXEEXT@ \
 		lex_test@EXEEXT@ \
 		lfsr_test@EXEEXT@ \
@@ -91,10 +91,11 @@ XTARGETS =	adb_test@EXEEXT@ \
 		zone_test@EXEEXT@
 
 # Alphabetically
-SRCS =		cfg_test.c genrandom.c ${XSRCS}
+SRCS =		cfg_test.c ${XSRCS}
 
 XSRCS =		adb_test.c \
 		byaddr_test.c \
+		backtrace_test.c \
 		byname_test.c \
 		compress_test.c \
 		db_test.c \
@@ -105,7 +106,6 @@ XSRCS =		adb_test.c \
 		hash_test.c \
 		fsaccess_test.c \
 		inter_test.c \
-		journalprint.c \
 		keyboard_test.c \
 		lex_test.c \
 		lfsr_test.c \
@@ -133,14 +133,41 @@ XSRCS =		adb_test.c \
 
 @BIND9_MAKE_RULES@
 
-all_tests: ${XTARGETS}
+# disable optimization for backtrace test to get the expected result	
+BTTEST_CFLAGS =	${EXT_CFLAGS} ${ALL_CPPFLAGS} -g ${ALWAYS_WARNINGS} \
+	${STD_CWARNINGS} ${CWARNINGS}
 
-genrandom@EXEEXT@: genrandom.@O@
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ genrandom.@O@ @GENRANDOMLIB@ ${LIBS}
+all_tests: ${XTARGETS}
 
 adb_test@EXEEXT@: adb_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ adb_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+backtrace_test_nosymtbl@EXEEXT@: backtrace_test.c ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} -o $@ \
+	backtrace_test.c ${ISCLIBS} ${LIBS}
+
+backtrace_test@EXEEXT@: backtrace_test_nosymtbl@EXEEXT@
+	#first step: create a first symbol table
+	rm -f symtbl.c
+	if test X${MKSYMTBL_PROGRAM} != X; then \
+	${MKSYMTBL_PROGRAM} ${top_srcdir}/util/mksymtbl.pl \
+	backtrace_test_nosymtbl@EXEEXT@; else \
+	cp ${top_srcdir}/lib/isc/backtrace-emptytbl.c symtbl.c; fi
+	#second step: build a binary with the first symbol table
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} \
+	-o $@0 backtrace_test.c symtbl.c \
+	${ISCNOSYMLIBS} ${LIBS}
+	rm -f symtbl.c
+	#third step: create a second symbol table
+	if test X${MKSYMTBL_PROGRAM} != X; then \
+	${MKSYMTBL_PROGRAM} ${top_srcdir}/util/mksymtbl.pl $@0; else \
+	cp ${top_srcdir}/lib/isc/backtrace-emptytbl.c symtbl.c; fi
+	#fourth step: build the final binary
+	rm -f $@0
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} \
+	-o $@ backtrace_test.c symtbl.c ${ISCNOSYMLIBS} ${LIBS}
+	rm -f symtbl.c
 
 nsecify@EXEEXT@: nsecify.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ nsecify.@O@ \
@@ -278,17 +305,9 @@ sig0_test@EXEEXT@: sig0_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ sig0_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-journalprint@EXEEXT@: journalprint.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ journalprint.@O@ \
-		${DNSLIBS} ${ISCLIBS} ${LIBS}
-
 cfg_test@EXEEXT@: cfg_test.@O@ ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ cfg_test.@O@ \
 		${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
-
-nsec3hash@EXEEXT@: nsec3hash.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL_MODE_LINK} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ nsec3hash.@O@ \
-	${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 distclean::
 	rm -f headerdep_test.sh
@@ -296,6 +315,7 @@ distclean::
 clean distclean::
 	rm -f ${TARGETS} ${XTARGETS}
 	rm -f t_journal
+	rm -f backtrace_test_symtbl.c
 
 check: test
 

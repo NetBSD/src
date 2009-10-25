@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.1 2009/03/22 15:01:53 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.2 2009/10/25 00:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: loc_29.c,v 1.45.332.4 2009/02/17 05:54:12 marka Exp */
+/* Id: loc_29.c,v 1.49 2009/02/17 05:53:13 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 

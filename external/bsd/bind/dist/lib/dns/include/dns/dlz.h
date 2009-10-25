@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.h,v 1.1.1.1 2009/03/22 15:01:42 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.1.1.2 2009/10/25 00:02:37 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz.h,v 1.7.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: dlz.h,v 1.9 2009/01/17 23:47:43 tbox Exp */
 
 /*! \file dns/dlz.h */
 

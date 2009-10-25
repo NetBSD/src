@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.1.1 2009/03/22 15:02:29 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.2 2009/10/25 00:02:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h,v 1.16.118.2 2009/02/16 23:47:15 tbox Exp */
+/* Id: platform.h,v 1.19 2009/09/29 23:48:04 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -64,6 +64,12 @@
  * Define if the platform has <sys/un.h>.
  */
 #undef ISC_PLATFORM_HAVESYSUNH
+
+/*
+ * Defines for the noreturn attribute.
+ */
+#define ISC_PLATFORM_NORETURN_PRE __declspec(noreturn)
+#define ISC_PLATFORM_NORETURN_POST
 
  /*
  * Set up a macro for importing and exporting from the DLL

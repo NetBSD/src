@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.1.1.1 2009/03/22 15:02:11 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.h,v 1.33.332.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: file.h,v 1.37 2009/08/28 03:13:08 each Exp */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -251,6 +251,29 @@ isc_result_t
 isc_file_truncate(const char *filename, isc_offset_t size);
 /*%<
  * Truncate/extend the file specified to 'size' bytes.
+ */
+
+isc_result_t
+isc_file_safecreate(const char *filename, FILE **fp);
+/*%<
+ * Open 'filename' for writing, truncating if necessary.  Ensure that
+ * if it existed it was a normal file.  If creating the file, ensure
+ * that only the owner can read/write it.
+ */
+
+isc_result_t
+isc_file_splitpath(isc_mem_t *mctx, char *path,
+		   char **dirname, char **basename);
+/*%<
+ * Split a path into dirname and basename.  If 'path' contains no slash
+ * (or, on windows, backslash), then '*dirname' is set to ".".
+ *
+ * Allocates memory for '*dirname', which can be freed with isc_mem_free().
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
+ * - ISC_R_INVALIDFILE if 'path' is empty or ends with '/'
+ * - ISC_R_NOMEMORY if unable to allocate memory
  */
 
 ISC_LANG_ENDDECLS

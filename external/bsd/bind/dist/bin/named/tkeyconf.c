@@ -1,7 +1,7 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.1 2009/03/22 14:56:09 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.c,v 1.29 2007/06/19 23:46:59 tbox Exp */
+/* Id: tkeyconf.c,v 1.31 2009/09/02 23:48:01 tbox Exp */
 
 /*! \file */
 
@@ -79,8 +79,7 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		isc_buffer_add(&b, strlen(s));
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);
-		RETERR(dns_name_fromtext(name, &b, dns_rootname,
-					 ISC_FALSE, NULL));
+		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		type = DST_TYPE_PUBLIC|DST_TYPE_PRIVATE|DST_TYPE_KEY;
 		RETERR(dst_key_fromfile(name, (dns_keytag_t) n, DNS_KEYALG_DH,
 					type, NULL, mctx, &tctx->dhkey));
@@ -94,8 +93,7 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		isc_buffer_add(&b, strlen(s));
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);
-		RETERR(dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE,
-					 NULL));
+		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		tctx->domain = isc_mem_get(mctx, sizeof(dns_name_t));
 		if (tctx->domain == NULL) {
 			result = ISC_R_NOMEMORY;
@@ -114,10 +112,8 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		isc_buffer_add(&b, strlen(s));
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);
-		RETERR(dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE,
-					 NULL));
-		RETERR(dst_gssapi_acquirecred(name, ISC_FALSE,
-					      &tctx->gsscred));
+		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
+		RETERR(dst_gssapi_acquirecred(name, ISC_FALSE, &tctx->gsscred));
 	}
 
 	*tctxp = tctx;

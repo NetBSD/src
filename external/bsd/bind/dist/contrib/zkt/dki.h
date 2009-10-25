@@ -1,4 +1,4 @@
-/*	$NetBSD: dki.h,v 1.1.1.1 2009/03/22 14:58:19 christos Exp $	*/
+/*	$NetBSD: dki.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -165,6 +165,7 @@ extern	int	dki_isdepreciated (const dki_t *dkp);
 extern	int	dki_isrevoked (const dki_t *dkp);
 extern	int	dki_isactive (const dki_t *dkp);
 extern	int	dki_ispublished (const dki_t *dkp);
+extern	time_t	dki_algo (const dki_t *dkp);
 extern	time_t	dki_time (const dki_t *dkp);
 extern	time_t	dki_exptime (const dki_t *dkp);
 extern	time_t	dki_gentime (const dki_t *dkp);
@@ -181,6 +182,7 @@ extern	dki_t	*dki_add (dki_t **dkp, dki_t *new);
 extern	const dki_t	*dki_tsearch (const dki_t *tree, int tag, const char *name);
 extern	const dki_t	*dki_search (const dki_t *list, int tag, const char *name);
 extern	const dki_t	*dki_find (const dki_t *list, int ksk, int status, int first);
+extern	const dki_t	*dki_findalgo (const dki_t *list, int ksk, int alg, int status, int no);
 extern	void	dki_free (dki_t *dkp);
 extern	void	dki_freelist (dki_t **listp);
 extern	char	*dki_algo2str (int algo);

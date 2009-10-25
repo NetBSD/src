@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.1 2009/03/22 15:01:13 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.2 2009/10/25 00:02:31 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.14 2008/04/01 23:47:10 tbox Exp
+ * Id: openssldh_link.c,v 1.16 2009/09/03 23:48:13 tbox Exp
  */
 
 #ifdef OPENSSL
@@ -478,7 +478,7 @@ openssldh_tofile(const dst_key_t *key, const char *directory) {
 }
 
 static isc_result_t
-openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
+openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t ret;
 	int i;
@@ -486,6 +486,7 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer) {
 	isc_mem_t *mctx;
 #define DST_RET(a) {ret = a; goto err;}
 
+	UNUSED(pub);
 	mctx = key->mctx;
 
 	/* read private key file */

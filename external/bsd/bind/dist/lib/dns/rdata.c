@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.1 2009/03/22 15:01:21 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.2 2009/10/25 00:02:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.199.50.2 2009/02/16 23:47:15 tbox Exp */
+/* Id: rdata.c,v 1.203 2009/10/08 23:13:07 marka Exp */
 
 /*! \file */
 
@@ -40,6 +40,7 @@
 #include <dns/enumtype.h>
 #include <dns/keyflags.h>
 #include <dns/keyvalues.h>
+#include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -276,23 +277,6 @@ dns_rdata_init(dns_rdata_t *rdata) {
 	ISC_LINK_INIT(rdata, link);
 	/* ISC_LIST_INIT(rdata->list); */
 }
-
-#if 1
-#define DNS_RDATA_INITIALIZED(rdata) \
-	((rdata)->data == NULL && (rdata)->length == 0 && \
-	 (rdata)->rdclass == 0 && (rdata)->type == 0 && (rdata)->flags == 0 && \
-	 !ISC_LINK_LINKED((rdata), link))
-#else
-#ifdef ISC_LIST_CHECKINIT
-#define DNS_RDATA_INITIALIZED(rdata) \
-	(!ISC_LINK_LINKED((rdata), link))
-#else
-#define DNS_RDATA_INITIALIZED(rdata) ISC_TRUE
-#endif
-#endif
-
-#define DNS_RDATA_VALIDFLAGS(rdata) \
-	(((rdata)->flags & ~(DNS_RDATA_UPDATE|DNS_RDATA_OFFLINE)) == 0)
 
 void
 dns_rdata_reset(dns_rdata_t *rdata) {
@@ -1768,4 +1752,94 @@ dns_rdatatype_isknown(dns_rdatatype_t type) {
 	    == 0)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
+}
+
+void
+dns_rdata_exists(dns_rdata_t *rdata, dns_rdatatype_t type) {
+
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+
+	rdata->data = NULL;
+	rdata->length = 0;
+	rdata->flags = DNS_RDATA_UPDATE;
+	rdata->type = type;
+	rdata->rdclass = dns_rdataclass_any;
+}
+
+void
+dns_rdata_notexist(dns_rdata_t *rdata, dns_rdatatype_t type) {
+
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+
+	rdata->data = NULL;
+	rdata->length = 0;
+	rdata->flags = DNS_RDATA_UPDATE;
+	rdata->type = type;
+	rdata->rdclass = dns_rdataclass_none;
+}
+
+void
+dns_rdata_deleterrset(dns_rdata_t *rdata, dns_rdatatype_t type) {
+
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+
+	rdata->data = NULL;
+	rdata->length = 0;
+	rdata->flags = DNS_RDATA_UPDATE;
+	rdata->type = type;
+	rdata->rdclass = dns_rdataclass_any;
+}
+
+void
+dns_rdata_makedelete(dns_rdata_t *rdata) {
+	REQUIRE(rdata != NULL);
+
+	rdata->rdclass = dns_rdataclass_none;
+}
+
+const char *
+dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section) {
+
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+
+	switch (section) {
+	case DNS_SECTION_PREREQUISITE:
+		switch (rdata->rdclass) {
+		case dns_rdataclass_none:
+			switch (rdata->type) {
+			case dns_rdatatype_any:
+				return ("domain doesn't exist");
+			default:
+				return ("rrset doesn't exist");
+			}
+		case dns_rdataclass_any:
+			switch (rdata->type) {
+			case dns_rdatatype_any:
+				return ("domain exists");
+			default:
+				return ("rrset exists (value independent)");
+			}
+		default:
+			return ("rrset exists (value dependent)");
+		}
+	case DNS_SECTION_UPDATE:
+		switch (rdata->rdclass) {
+		case dns_rdataclass_none:
+			return ("delete");
+		case dns_rdataclass_any:
+			switch (rdata->type) {
+			case dns_rdatatype_any:
+				return ("delete all rrsets");
+			default:
+				return ("delete rrset");
+			}
+		default:
+			return ("add");
+		}
+	}
+	return ("invalid");
 }
