@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 16, 2009
+.Dd October 25, 2009
 .Dt DHCPCD 8 SMM
 .Os
 .Sh NAME
@@ -113,16 +113,28 @@ To disable this behaviour, you can use the
 .Fl L , -noipv4ll
 option.
 .Ss Multiple interfaces
-.Nm
-can be run per interface or as a single instance to manage all interfaces.
 If a list of interfaces are given on the command line, then
 .Nm
 only works with those interfaces, otherwise
 .Nm
-discovers available interfaces.
-If link management is enabled and no interfaces are given on the command line,
+discovers available Ethernet interfaces.
+If any interface reports a working carrier then
 .Nm
-forks to the background right away.
+will try and obtain a lease before forking to the background,
+otherwise it will fork right away.
+This behaviour can be modified with the
+.Fl b , -background
+and
+.Fl w , -waitip
+options.
+.Pp
+If a single interface is given then
+.Nm
+only works for that interface and runs as a separate instance.
+The
+.Fl w , -waitip
+option is enabled in this instance to maintain compatability with older
+versions.
 .Pp
 Interfaces are preferred by carrier, DHCP lease/IPv4LL and then lowest metric.
 For systems that support route metrics, each route will be tagged with the
@@ -536,6 +548,10 @@ option described above.
 .It Pa @DBDIR@/dhcpcd\- Ns Ar interface Ns .lease
 The actual DHCP message send by the server. We use this when reading the last
 lease and use the files mtime as when it was issued.
+.It Pa /var/run/dhcpcd.pid
+Stores the PID of
+.Nm
+running on all interfaces.
 .It Pa /var/run/dhcpcd\- Ns Ar interface Ns .pid
 Stores the PID of
 .Nm
