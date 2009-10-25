@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.5 2009/10/24 20:06:42 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.6 2009/10/25 19:28:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.5 2009/10/24 20:06:42 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.6 2009/10/25 19:28:45 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -76,6 +76,7 @@ static void
 server_open(void)
 {
 	struct sockaddr_bt sa;
+	socklen_t len;
 	uint16_t mru;
 	int fd;
 
@@ -100,6 +101,8 @@ server_open(void)
 		log_err("Could not set link mode (0x%4.4x): %m", l2cap_mode);
 		exit(EXIT_FAILURE);
 	}
+	len = sizeof(l2cap_mode);
+	getsockopt(fd, BTPROTO_L2CAP, SO_L2CAP_LM, &l2cap_mode, &len);
 
 	mru = BNEP_MTU_MIN;
 	if (setsockopt(fd, BTPROTO_L2CAP,
@@ -341,7 +344,7 @@ server_mkrecord(void)
 	sdp_put_str(&buf, service_desc, -1);
 
 	sdp_put_uint16(&buf, SDP_ATTR_SECURITY_DESCRIPTION);
-	sdp_put_uint16(&buf, (l2cap_mode == 0) ? 0x0000 : 0x0001);
+	sdp_put_uint16(&buf, (l2cap_mode & L2CAP_LM_AUTH) ?  0x0001 : 0x0000);
 
 	if (service_class == SDP_SERVICE_CLASS_NAP) {
 		sdp_put_uint16(&buf, SDP_ATTR_NET_ACCESS_TYPE);
