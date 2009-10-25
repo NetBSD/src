@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169 2009/10/21 21:12:04 rmind Exp $	   */
+/*	$NetBSD: pmap.c,v 1.170 2009/10/25 09:25:10 he Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2009/10/21 21:12:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.170 2009/10/25 09:25:10 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -680,7 +680,7 @@ rmspace(struct pmap *pm)
  */
 
 static inline bool
-pmap_vax_swappable(struct lwp *l)
+pmap_vax_swappable(struct lwp *l, struct pmap *pm)
 {
 
 	if (l->l_flag & (LW_SYSTEM | LW_WEXIT))
