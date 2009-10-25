@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuffer.c,v 1.11 2009/10/24 15:20:15 dsl Exp $	*/
+/*	$NetBSD: setbuffer.c,v 1.12 2009/10/25 20:44:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setbuffer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuffer.c,v 1.11 2009/10/24 15:20:15 dsl Exp $");
+__RCSID("$NetBSD: setbuffer.c,v 1.12 2009/10/25 20:44:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ setbuffer(fp, buf, size)
 	_DIAGASSERT(fp != NULL);
 	/* buf may be NULL */
 
-	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, size);
+	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, (size_t)size);
 }
 
 /*
@@ -68,5 +68,5 @@ setlinebuf(fp)
 
 	_DIAGASSERT(fp != NULL);
 
-	return (setvbuf(fp, NULL, _IOLBF, 0));
+	return (setvbuf(fp, NULL, _IOLBF, (size_t)0));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.17 2009/10/25 17:09:34 dsl Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.18 2009/10/25 20:44:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.17 2009/10/25 17:09:34 dsl Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.18 2009/10/25 20:44:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,7 +60,7 @@ asprintf(char **str, char const *fmt, ...)
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
-	f._bf._base = f._p = malloc(128);
+	f._bf._base = f._p = malloc((size_t)128);
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
@@ -70,7 +70,7 @@ asprintf(char **str, char const *fmt, ...)
 	if (ret < 0)
 		goto err;
 	*f._p = '\0';
-	_base = realloc(f._bf._base, ret + 1u);
+	_base = realloc(f._bf._base, (size_t)ret + 1);
 	if (_base == NULL)
 		goto err;
 	*str = (char *)_base;
