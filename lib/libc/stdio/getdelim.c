@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.5 2009/10/24 15:20:15 dsl Exp $ */
+/* $NetBSD: getdelim.c,v 1.6 2009/10/25 17:09:34 dsl Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.5 2009/10/24 15:20:15 dsl Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.6 2009/10/25 17:09:34 dsl Exp $");
 
 #include "namespace.h"
 
@@ -83,7 +83,7 @@ __getdelim(char **__restrict buf, size_t *__restrict buflen,
 		}
 
 		/* Scan through looking for the separator */
-		p = memchr(fp->_p, sep, fp->_r);
+		p = memchr(fp->_p, sep, fp->_r + 0u);
 		if (p == NULL)
 			len = fp->_r;
 		else

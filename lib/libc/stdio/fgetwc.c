@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.9 2009/10/24 15:20:15 dsl Exp $ */
+/* $NetBSD: fgetwc.c,v 1.10 2009/10/25 17:09:34 dsl Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.9 2009/10/24 15:20:15 dsl Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.10 2009/10/25 17:09:34 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -63,7 +63,7 @@ restart:
 			return WEOF;
 	}
 	nr = mbrtowc(&wc, (const char *)fp->_p,
-	    fp->_r, &wcio->wcio_mbstate_in);
+	    fp->_r + 0u, &wcio->wcio_mbstate_in);
 	if (nr == (size_t)-1) {
 		fp->_flags |= __SERR;
 		return WEOF;
