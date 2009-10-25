@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.3 2009/04/13 20:23:27 christos Exp $ */
+/* Id: platform.h.in,v 1.53 2009/09/29 15:06:07 fdupont Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -146,6 +146,11 @@
  * Define if the system supports /dev/poll multiplexing
  */
 #undef ISC_PLATFORM_HAVEDEVPOLL
+
+/*! \brief
+ * Define if we want to log backtrace
+ */
+#define ISC_PLATFORM_USEBACKTRACE 1
 
 /*
  *** Printing.
@@ -286,6 +291,17 @@
  * Define if the platform has <strings.h>.
  */
 #define ISC_PLATFORM_HAVESTRINGSH 1
+
+/*
+ * Define if the hash functions must be provided by OpenSSL.
+ */
+#undef ISC_PLATFORM_OPENSSLHASH
+
+/*
+ * Defines for the noreturn attribute.
+ */
+#define ISC_PLATFORM_NORETURN_PRE
+#define ISC_PLATFORM_NORETURN_POST __attribute__((noreturn))
 
 /***
  ***	Windows dll support.

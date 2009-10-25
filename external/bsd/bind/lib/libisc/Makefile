@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:10 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/10/25 00:18:40 christos Exp $
 
 LIB=isc
 
@@ -15,9 +15,10 @@ DIST=	${IDIST}/lib/isc
 .PATH.c:	${DIST}/unix ${DIST}/nls ${DIST}/nothreads ${DIST}
 .endif
 
-UNIX_SRCS=	app.c dir.c entropy.c errno2result.c file.c fsaccess.c \
-		interfaceiter.c keyboard.c net.c os.c resource.c \
-		socket.c stdio.c stdtime.c strerror.c syslog.c time.c
+UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
+		fsaccess.c interfaceiter.c keyboard.c net.c os.c resource.c \
+		socket.c stdio.c stdtime.c strerror.c syslog.c time.c \
+		backtrace-emptytbl.c
 NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
 
