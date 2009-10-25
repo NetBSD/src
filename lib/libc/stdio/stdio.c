@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.15 2009/10/24 15:20:15 dsl Exp $	*/
+/*	$NetBSD: stdio.c,v 1.16 2009/10/25 20:44:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.15 2009/10/24 15:20:15 dsl Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.16 2009/10/25 20:44:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ __sread(cookie, buf, n)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(buf != NULL);
 
-	ret = read(__sfileno(fp), buf, n);
+	ret = read(__sfileno(fp), buf, (size_t)n);
 	/* if the read succeeded, update the current offset */
 	if (ret >= 0)
 		fp->_offset += ret;
@@ -91,7 +91,7 @@ __swrite(cookie, buf, n)
 	if (fp->_flags & __SAPP)
 		(void) lseek(__sfileno(fp), (off_t)0, SEEK_END);
 	fp->_flags &= ~__SOFF;	/* in case FAPPEND mode is set */
-	return write(__sfileno(fp), buf, n);
+	return write(__sfileno(fp), buf, (size_t)n);
 }
 
 fpos_t

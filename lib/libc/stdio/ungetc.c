@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.15 2009/10/24 15:20:15 dsl Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.16 2009/10/25 20:44:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.15 2009/10/24 15:20:15 dsl Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.16 2009/10/25 20:44:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ __submore(fp)
 		/*
 		 * Get a new buffer (rather than expanding the old one).
 		 */
-		if ((p = malloc(BUFSIZ)) == NULL)
+		if ((p = malloc((size_t)BUFSIZ)) == NULL)
 			return (EOF);
 		_UB(fp)._base = p;
 		_UB(fp)._size = BUFSIZ;
@@ -80,11 +80,11 @@ __submore(fp)
 		return (0);
 	}
 	i = _UB(fp)._size;
-	p = realloc(_UB(fp)._base, (i << 1));
+	p = realloc(_UB(fp)._base, (size_t)(i << 1));
 	if (p == NULL)
 		return (EOF);
 	/* no overlap (hence can use memcpy) because we doubled the size */
-	(void)memcpy(p + i, p, i);
+	(void)memcpy((p + i), p, (size_t)i);
 	fp->_p = p + i;
 	_UB(fp)._base = p;
 	_UB(fp)._size = i << 1;
