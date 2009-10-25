@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.290 2009/08/06 21:33:54 dsl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.291 2009/10/25 01:14:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.290 2009/08/06 21:33:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.291 2009/10/25 01:14:03 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -159,49 +159,48 @@ static struct sa_emul saemul_netbsd = {
 
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
-	"netbsd",
-	NULL,		/* emulation path */
+	.e_name =		"netbsd",
+	.e_path =		NULL,
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
-	NULL,
-	SYS_syscall,
-	SYS_NSYSENT,
+	.e_flags =		EMUL_HAS_SYS___syscall,
+	.e_errno =		NULL,
+	.e_nosys =		SYS_syscall,
+	.e_nsysent =		SYS_NSYSENT,
 #endif
-	sysent,
+	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
+	.e_syscallnames =	syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	sendsig,
-	trapsignal,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_sendsig =		sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
+	.e_setregs =		setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	.e_syscall_intern =	syscall_intern,
 #else
-	syscall,
+	.e_syscall =		syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
 #ifdef KERN_SA
-	&saemul_netbsd,
+	.e_sa =			&saemul_netbsd,
 #else
-	NULL,
+	.e_sa =			NULL,
 #endif
-	sizeof(ucontext_t),
-	startlwp,
+	.e_ucsize =		sizeof(ucontext_t),
+	.e_startlwp =		startlwp
 };
 
 /*

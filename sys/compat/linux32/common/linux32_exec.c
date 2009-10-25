@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.18 2009/03/14 21:04:18 dsl Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.19 2009/10/25 01:14:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.18 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.19 2009/10/25 01:14:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,36 +90,36 @@ void linux_nptl_proc_init(struct proc *, struct proc *);
 struct uvm_object *emul_linux32_object;
 
 struct emul emul_linux32 = {
-	"linux32",
-	"/emul/linux32",
+	.e_name =		"linux32",
+	.e_path =		"/emul/linux32",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	NULL,
-	LINUX32_SYS_syscall,
-	LINUX32_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL,
+	.e_nosys =		LINUX32_SYS_syscall,
+	.e_nsysent =		LINUX32_SYS_NSYSENT,
 #endif
-	linux32_sysent,
-	linux32_syscallnames,
-	linux32_sendsig,
-	trapsignal,
-	NULL,
-	linux32_sigcode,
-	linux32_esigcode,
-	&emul_linux32_object,
-	linux32_setregs,
-	linux32_e_proc_exec,
-	linux32_e_proc_fork,
-	linux32_e_proc_exit,
-	NULL,
-	NULL,
-	linux32_syscall_intern,
-	NULL,
-	NULL,
-	netbsd32_vm_default_addr,
-	NULL,
-	NULL,
-	0,
-	NULL
+	.e_sysent =		linux32_sysent,
+	.e_syscallnames =	linux32_syscallnames,
+	.e_sendsig =		linux32_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		linux32_sigcode,
+	.e_esigcode =		linux32_esigcode,
+	.e_sigobject =		&emul_linux32_object,
+	.e_setregs =		linux32_setregs,
+	.e_proc_exec =		linux32_e_proc_exec,
+	.e_proc_fork =		linux32_e_proc_fork,
+	.e_proc_exit =		linux32_e_proc_exit,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
+	.e_syscall_intern =	linux32_syscall_intern,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	netbsd32_vm_default_addr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 static void
