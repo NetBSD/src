@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.1.1.2 2009/10/25 00:02:46 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.2 2009/10/25 00:14:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -109,8 +109,10 @@ ISC_APPFUNC_SCOPE void isc__app_ctxfinish(isc_appctx_t *ctx);
 ISC_APPFUNC_SCOPE void isc__app_finish(void);
 ISC_APPFUNC_SCOPE void isc__app_block(void);
 ISC_APPFUNC_SCOPE void isc__app_unblock(void);
+#ifdef USE_APPIMPREGISTER
 ISC_APPFUNC_SCOPE isc_result_t isc__appctx_create(isc_mem_t *mctx,
 						  isc_appctx_t **ctxp);
+#endif
 ISC_APPFUNC_SCOPE void isc__appctx_destroy(isc_appctx_t **ctxp);
 ISC_APPFUNC_SCOPE void isc__appctx_settaskmgr(isc_appctx_t *ctx,
 					      isc_taskmgr_t *taskmgr);
@@ -887,6 +889,7 @@ isc__app_unblock(void) {
 #endif /* ISC_PLATFORM_USETHREADS */
 }
 
+#ifdef USE_APPIMPREGISTER
 ISC_APPFUNC_SCOPE isc_result_t
 isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 	isc__appctx_t *ctx;
@@ -913,6 +916,7 @@ isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
 
 	return (ISC_R_SUCCESS);
 }
+#endif
 
 ISC_APPFUNC_SCOPE void
 isc__appctx_destroy(isc_appctx_t **ctxp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.160.50.4 2009/01/29 22:40:35 jinmei Exp */
+/* Id: zone.h,v 1.170 2009/10/12 20:48:12 each Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -42,7 +42,8 @@ typedef enum {
 	dns_zone_none,
 	dns_zone_master,
 	dns_zone_slave,
-	dns_zone_stub
+	dns_zone_stub,
+	dns_zone_key
 } dns_zonetype_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
@@ -72,6 +73,8 @@ typedef enum {
 #define DNS_ZONEOPT_TRYTCPREFRESH 0x01000000U	/*%< try tcp refresh on udp failure */
 #define DNS_ZONEOPT_NOTIFYTOSOA	  0x02000000U	/*%< Notify the SOA MNAME */
 #define DNS_ZONEOPT_NSEC3TESTZONE 0x04000000U	/*%< nsec3-test-zone */
+#define DNS_ZONEOPT_SECURETOINSECURE 0x08000000U /*%< secure-to-insecure */
+#define DNS_ZONEOPT_DNSKEYKSKONLY 0x10000000U	/*%< dnskey-ksk-only */
 
 #ifndef NOMINUM_PUBLIC
 /*
@@ -79,6 +82,13 @@ typedef enum {
  */
 #define DNS_ZONEOPT_NOTIFYFORWARD 0x80000000U	/* forward notify to master */
 #endif /* NOMINUM_PUBLIC */
+
+/*
+ * Zone key maintenance options
+ */
+#define DNS_ZONEKEY_ALLOW	0x00000001U	/*%< fetch keys on command */
+#define DNS_ZONEKEY_MAINTAIN	0x00000002U	/*%< publish/sign on schedule */
+#define DNS_ZONEKEY_CREATE	0x00000004U	/*%< make keys when needed */
 
 #ifndef DNS_ZONE_MINREFRESH
 #define DNS_ZONE_MINREFRESH		    300	/*%< 5 minutes */
@@ -151,13 +161,24 @@ dns_zone_getclass(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
+isc_result_t
+dns_zone_getserial2(dns_zone_t *zone, isc_uint32_t *serialp);
+
 isc_uint32_t
 dns_zone_getserial(dns_zone_t *zone);
 /*%<
- *	Returns the current serial number of the zone.
+ *	Returns the current serial number of the zone.  On success, the SOA
+ *	serial of the zone will be copied into '*serialp'.
+ *	dns_zone_getserial() cannot catch failure cases and is deprecated by
+ *	dns_zone_getserial2().
  *
  * Requires:
  *\li	'zone' to be a valid zone.
+ *\li	'serialp' to be non NULL
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#DNS_R_NOTLOADED	zone DB is not loaded
  */
 
 void
@@ -258,6 +279,9 @@ dns_zone_load(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_loadnew(dns_zone_t *zone);
+
+isc_result_t
+dns_zone_loadandthaw(dns_zone_t *zone);
 /*%<
  *	Cause the database to be loaded from its backing store.
  *	Confirm that the minimum requirements for the zone type are
@@ -266,6 +290,8 @@ dns_zone_loadnew(dns_zone_t *zone);
  *	dns_zone_loadnew() only loads zones that are not yet loaded.
  *	dns_zone_load() also loads zones that are already loaded and
  *	and whose master file has changed since the last load.
+ *	dns_zone_loadandthaw() is similar to dns_zone_load() but will
+ *	also re-enable DNS UPDATEs when the load completes.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -548,6 +574,25 @@ unsigned int
 dns_zone_getoptions(dns_zone_t *zone);
 /*%<
  *	Returns the current zone options.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_setkeyopt(dns_zone_t *zone, unsigned int option, isc_boolean_t value);
+/*%<
+ *	Set key options on ('value' == ISC_TRUE) or off ('value' ==
+ *	#ISC_FALSE).
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+unsigned int
+dns_zone_getkeyopts(dns_zone_t *zone);
+/*%<
+ *	Returns the current zone key options.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -1731,6 +1776,12 @@ dns_zone_getprivatetype(dns_zone_t *zone);
 /*
  * Get/Set the private record type.  It is expected that these interfaces
  * will not be permanent.
+ */
+
+isc_result_t
+dns_zone_rekey(dns_zone_t *zone);
+/*%<
+ * Update the zone's DNSKEY set from the key repository.
  */
 
 ISC_LANG_ENDDECLS
