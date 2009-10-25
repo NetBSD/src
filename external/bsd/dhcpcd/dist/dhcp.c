@@ -71,7 +71,7 @@ static const struct dhcp_opt const dhcp_opts[] = {
 		/* RFC 3442 states that the CSR has to come before all other
 		 * routes. For completeness, we also specify static routes,
 		 * then routers. */
-	{ 121,  RFC3442 | REQUEST,	"classless_static_routes" },
+	{ 121,  RFC3442,	"classless_static_routes" },
 	{ 249,  RFC3442,	"ms_classless_static_routes" },
 	{ 33,	IPV4 | ARRAY | REQUEST,	"static_routes" },
 	{ 3,	IPV4 | ARRAY | REQUEST,	"routers" },
@@ -701,7 +701,7 @@ route_netmask(uint32_t ip_in)
  * If we have a CSR then we only use that.
  * Otherwise we add static routes and then routers. */
 struct rt *
-get_option_routes(const struct dhcp_message *dhcp)
+get_option_routes(const char *ifname, const struct dhcp_message *dhcp)
 {
 	const uint8_t *p;
 	const uint8_t *e;
@@ -716,8 +716,11 @@ get_option_routes(const struct dhcp_message *dhcp)
 		p = get_option(dhcp, DHO_MSCSR, &len, NULL);
 	if (p) {
 		routes = decode_rfc3442_rt(len, p);
-		if (routes)
+		if (routes) {
+			syslog(LOG_DEBUG, "%s: using Classless Static Routes (RFC3442)",
+			       ifname);
 			return routes;
+		}
 	}
 
 	/* OK, get our static routes first. */
