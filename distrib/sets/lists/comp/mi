@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1332 2009/10/21 22:59:06 joerg Exp $
+#	$NetBSD: mi,v 1.1333 2009/10/25 15:07:46 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3374,6 +3374,8 @@
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
@@ -3522,7 +3524,7 @@
 ./usr/libdata/debug/usr/sbin/revnetgroup.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rip6query.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rmt.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rndc.debug		comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/route6d.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rpc.bootparamd.debug	comp-bootserver-debug	debug
