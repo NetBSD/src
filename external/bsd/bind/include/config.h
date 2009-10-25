@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -65,9 +65,6 @@
 
 /** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #define HAVE_IFLIST_SYSCTL 1
-
-/** define if chroot() is available */
-#define HAVE_CHROOT 1
 
 /** define if tzset() is available */
 #define HAVE_TZSET 1
@@ -167,6 +164,18 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable "rrset-order fixed" syntax. */
 #define DNS_RDATASET_FIXED 1
 
+/* Solaris hack to get select_large_fdset. */
+/* #undef FD_SETSIZE */
+
+/* Define to 1 if you have the `chroot' function. */
+#define HAVE_CHROOT 1
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#define HAVE_FCNTL_H 1
+
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_H 1
 
@@ -224,8 +233,23 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
+/* Define to 1 if you have the <regex.h> header file. */
+#define HAVE_REGEX_H 1
+
+/* Define to 1 if you have the `setegid' function. */
+#define HAVE_SETEGID 1
+
+/* Define to 1 if you have the `seteuid' function. */
+#define HAVE_SETEUID 1
+
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
+
+/* Define to 1 if you have the `setresgid' function. */
+/* #undef HAVE_SETRESGID */
+
+/* Define to 1 if you have the `setresuid' function. */
+/* #undef HAVE_SETRESUID */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -284,6 +308,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if extern char *optarg is not declared. */
 /* #undef NEED_OPTARG */
 
+/* Define to the buffer length type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_BUFLEN_T socklen_t
+
+/* Define to the flags type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_FLAGS_T int
+
+/* Define to the return type of gai_strerror(3). */
+#define IRS_GAISTRERROR_RETURN_T const char *
+
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */
 /* #undef NEED_SECURE_DIRECTORY */
@@ -316,6 +349,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
+
+/** define if the system have backtrace function. */
+/* #undef HAVE_LIBCTRACE */
 
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */
