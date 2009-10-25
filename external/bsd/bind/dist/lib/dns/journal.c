@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.1.1.1 2009/03/22 15:01:07 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.2 2009/10/25 00:02:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.103.48.2 2009/01/18 23:47:37 tbox Exp */
+/* Id: journal.c,v 1.106 2009/08/25 07:41:28 marka Exp */
 
 #include <config.h>
 
@@ -564,11 +564,9 @@ journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 
 	if (result == ISC_R_FILENOTFOUND) {
 		if (create) {
-			isc_log_write(JOURNAL_COMMON_LOGARGS,
-				      ISC_LOG_INFO,
+			isc_log_write(JOURNAL_COMMON_LOGARGS, ISC_LOG_DEBUG(1),
 				      "journal file %s does not exist, "
-				      "creating it",
-				      j->filename);
+				      "creating it", j->filename);
 			CHECK(journal_file_create(mctx, filename));
 			/*
 			 * Retry.

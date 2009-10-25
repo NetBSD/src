@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.1 2009/03/22 15:02:49 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.2 2009/10/25 00:02:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.63.156.2 2009/03/02 23:47:11 tbox Exp */
+/* Id: t_api.c,v 1.65 2009/03/02 23:47:43 tbox Exp */
 
 /*! \file */
 

@@ -6,7 +6,6 @@
 
 prefix	=	@prefix@
 mandir	=	@mandir@
-INSTALL_DIR =	$$HOME/bin
 
 CC	=	@CC@
 
@@ -25,11 +24,12 @@ VERSION =	@PACKAGE_VERSION@
 
 HEADER	=	dki.h misc.h domaincmp.h zconf.h config_zkt.h \
 		config.h.in strlist.h zone.h zkt.h debug.h \
-		ncparse.h log.h rollover.h
+		ncparse.h log.h rollover.h nscomm.h soaserial.h
 SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c log.c
 OBJ_ALL	=	$(SRC_ALL:.c=.o)
 
-SRC_SIG	=	dnssec-signer.c zone.c ncparse.c rollover.c
+SRC_SIG	=	dnssec-signer.c zone.c ncparse.c rollover.c \
+		nscomm.c soaserial.c
 OBJ_SIG	=	$(SRC_SIG:.c=.o)
 MAN_SIG	=	dnssec-signer.8
 PROG_SIG=	dnssec-signer
@@ -47,17 +47,18 @@ PROG_SER=	zkt-soaserial
 MAN_ALL	=	$(MAN_ZKT) $(MAN_SIG) #$(MAN_SER)
 OTHER	=	README README.logging TODO LICENSE CHANGELOG tags Makefile.in \
 		configure examples
-SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER) man $(OTHER)
-MNTSAVE	=	$(SAVE) configure.ac config.h.in doc 
+SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER) $(OTHER) \
+		man configure.ac config.h.in doc
+#MNTSAVE	=	$(SAVE) configure.ac config.h.in doc 
 
 
 all:	$(PROG_ZKT) $(PROG_SIG) $(PROG_SER)
 
-macos:		## for MAC OS
+macos:		## for MAC OS (depreciated)
 macos:
 	$(MAKE) CFLAGS="$(CFLAGS) -D HAS_UTYPES=0" all
 
-solaris:	## for solaris
+solaris:	## for solaris (depreciated)
 solaris:
 	@$(MAKE) CFLAGS="$(CFLAGS) -D HAVE_GETOPT_LONG=0" all
 
@@ -74,13 +75,16 @@ $(PROG_ZKT):	$(OBJ_ZKT) $(OBJ_ALL) Makefile
 $(PROG_SER):	$(OBJ_SER) Makefile
 	$(CC) $(LDFLAGS) $(OBJ_SER) -o $(PROG_SER)
 
-install:	## install binaries in INSTALL_DIR
+install:	## install binaries in prefix/bin
 install:	$(PROG_ZKT) $(PROG_SIG) $(PROG_SER)
-	cp $(PROG_ZKT) $(PROG_SIG) $(PROG_SER) $(INSTALL_DIR)
+		test -d $(prefix)/bin || mkdir -p $(prefix)/bin
+		cp $(PROG_ZKT) $(PROG_SIG) $(PROG_SER) $(prefix)/bin/
 
 install-man:	## install man pages in mandir
 install-man:
-	test -d $(mandir)/man8/ && cp -p man/$(MAN_ZKT) man/$(MAN_SIG) $(mandir)/man8/
+	test -d $(mandir)/man8/ || mkdir -p $(mandir)/man8/
+	cp -p man/$(MAN_ZKT) man/$(MAN_SIG) $(mandir)/man8/
+
 
 
 tags:		## create tags file
@@ -89,20 +93,19 @@ tags:	$(SRC_ALL) $(SRC_SIG) $(SRC_ZKT) $(SRC_SER)
 
 clean:		## remove objectfiles and binaries
 clean:
-	rm -f $(OBJ_SIG) $(OBJ_ZKT) $(OBJ_SER) $(OBJ_ALL)
+	-rm -f $(OBJ_SIG) $(OBJ_ZKT) $(OBJ_SER) $(OBJ_ALL) \
+	$(PROG_ZKT) $(PROG_SIG) $(PROG_SER)
 
-dist:		## create tar file for distribution
-dist:	$(PROJECT)-$(VERSION).tar.gz
+distclean:	## remove objectfiles, binaries and distribution files
+distclean:	clean
+	-rm -f Makefile config.h config.log config.status config.cache \
+	$(PROJECT)-$(VERSION).tar.gz
+
 tar:		## create tar file for distribution
 tar:	$(PROJECT)-$(VERSION).tar.gz
 
-maintain:	## create configure script
-maintain:	configure
-
-mainttar:	## create tar file for maintenance
-mainttar:	$(PROJECT)-maint-$(VERSION).tar.gz
-
-configure:	configure.ac
+configure:	## create configure script
+configure:	configure.ac Makefile.in
 	autoconf && autoheader
 
 man:	man/$(MAN_ZKT).html man/$(MAN_ZKT).pdf man/$(MAN_SIG).html man/$(MAN_SIG).pdf
@@ -124,12 +127,6 @@ $(PROJECT)-$(VERSION).tar.gz:	$(SAVE)
 		cd .. && tar czvf $(PROJECT)-$(VERSION)/$(PROJECT)-$(VERSION).tar.gz $$distfiles ;\
 	)
 
-$(PROJECT)-maint-$(VERSION).tar.gz:	$(MNTSAVE)
-	(	\
-		distfiles=`ls -d $(MNTSAVE) | sed 's|^|$(PROJECT)-$(VERSION)/|'` ;\
-		cd .. && tar czvf $(PROJECT)-$(VERSION)/$(PROJECT)-maint-$(VERSION).tar.gz $$distfiles ;\
-	)
-
 depend:
 	$(CC) -MM $(SRC_SIG) $(SRC_ZKT) $(SRC_SER) $(SRC_ALL)
 
@@ -138,14 +135,17 @@ help:
 
 ## all dependicies
 #:r !make depend
-#gcc -MM dnssec-signer.c zone.c ncparse.c rollover.c dnssec-zkt.c strlist.c zkt.c zkt-soaserial.c dki.c misc.c domaincmp.c zconf.c log.c
+#gcc -MM dnssec-signer.c zone.c ncparse.c rollover.c nscomm.c soaserial.c dnssec-zkt.c strlist.c zkt.c zkt-soaserial.c dki.c misc.c domaincmp.c zconf.c log.c
 dnssec-signer.o: dnssec-signer.c config_zkt.h zconf.h debug.h misc.h \
-  ncparse.h zone.h dki.h rollover.h log.h
+  ncparse.h nscomm.h zone.h dki.h log.h soaserial.h rollover.h
 zone.o: zone.c config_zkt.h debug.h domaincmp.h misc.h zconf.h dki.h \
   zone.h
 ncparse.o: ncparse.c debug.h misc.h zconf.h log.h ncparse.h
 rollover.o: rollover.c config_zkt.h zconf.h debug.h misc.h zone.h dki.h \
   log.h rollover.h
+nscomm.o: nscomm.c config_zkt.h zconf.h nscomm.h zone.h dki.h log.h \
+  misc.h debug.h
+soaserial.o: soaserial.c config_zkt.h zconf.h log.h debug.h soaserial.h
 dnssec-zkt.o: dnssec-zkt.c config_zkt.h debug.h misc.h zconf.h strlist.h \
   dki.h zkt.h
 strlist.o: strlist.c strlist.h

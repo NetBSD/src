@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.1 2009/03/22 15:01:44 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.h,v 1.125.118.2 2009/01/18 23:47:41 tbox Exp */
+/* Id: message.h,v 1.128 2009/09/01 00:22:26 jinmei Exp */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -83,8 +83,7 @@
  *	name = NULL;
  *	name = dns_message_gettempname(message, &name);
  *	dns_name_init(name, NULL);
- *	result = dns_name_fromtext(name, &source, dns_rootname, ISC_FALSE,
- *				   buffer);
+ *	result = dns_name_fromtext(name, &source, dns_rootname, 0, buffer);
  *	dns_message_takebuffer(message, &buffer);
  * \endcode
  *

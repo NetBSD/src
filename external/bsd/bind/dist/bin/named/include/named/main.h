@@ -1,7 +1,7 @@
-/*	$NetBSD: main.h,v 1.1.1.1 2009/03/22 14:56:13 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,15 +17,16 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.h,v 1.15 2007/06/19 23:46:59 tbox Exp */
+/* Id: main.h,v 1.17 2009/09/29 23:48:03 tbox Exp */
 
 #ifndef NAMED_MAIN_H
 #define NAMED_MAIN_H 1
 
 /*! \file */
 
-void
-ns_main_earlyfatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
+ISC_PLATFORM_NORETURN_PRE void
+ns_main_earlyfatal(const char *format, ...)
+ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
 
 void
 ns_main_earlywarning(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);

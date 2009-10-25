@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.1.1.2 2009/07/28 21:10:23 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.3 2009/10/25 00:01:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.116.216.2 2009/05/06 23:47:18 tbox Exp */
+/* Id: host.c,v 1.120 2009/09/29 15:06:05 fdupont Exp */
 
 /*! \file */
 
@@ -142,6 +142,9 @@ rcode_totext(dns_rcode_t rcode)
 		totext.consttext = rcodetext[rcode];
 	return totext.deconsttext;
 }
+
+ISC_PLATFORM_NORETURN_PRE static void
+show_usage(void) ISC_PLATFORM_NORETURN_POST;
 
 static void
 show_usage(void) {
@@ -841,11 +844,10 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	} else {
 		strncpy(lookup->textname, hostname, sizeof(lookup->textname));
 		lookup->textname[sizeof(lookup->textname)-1]=0;
+		usesearch = ISC_TRUE;
 	}
 	lookup->new_search = ISC_TRUE;
 	ISC_LIST_APPEND(lookup_list, lookup, link);
-
-	usesearch = ISC_TRUE;
 }
 
 int

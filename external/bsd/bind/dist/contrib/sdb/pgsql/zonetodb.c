@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.1 2009/03/22 14:58:12 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.2 2009/10/25 00:01:52 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.20 2008/09/25 04:02:38 tbox Exp */
+/* Id: zonetodb.c,v 1.23 2009/09/02 23:48:01 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>
@@ -167,16 +167,16 @@ main(int argc, char **argv) {
 	check_result(result, "isc_mem_create");
 
 	result = isc_entropy_create(mctx, &ectx);
-	result_check (result, "isc_entropy_create");
+	check_result(result, "isc_entropy_create");
 
 	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	check_result (result, "isc_hash_create");
+	check_result(result, "isc_hash_create");
 
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &b, dns_rootname, ISC_FALSE, NULL);
+	result = dns_name_fromtext(origin, &b, dns_rootname, 0, NULL);
 	check_result(result, "dns_name_fromtext");
 
 	db = NULL;

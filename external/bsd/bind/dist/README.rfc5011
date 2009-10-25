@@ -1,0 +1,57 @@
+
+                        BIND 9 RFC 5011 support
+
+BIND 9.7.0 introduces support for RFC 5011, dynamic trust anchor
+management.  Using this feature allows named to keep track of changes to
+critical DNSSEC keys without any need for the operator to make changes to
+configuration files.
+
+VALIDATING RESOLVER
+-------------------
+
+To configure a validating resolver to use RFC5011 to maintain a trust
+anchor, configure the trust anchor using a "managed-keys" statement.
+Information about this can be found in the ARM, in the section titled
+"managed-keys Statement Definition".
+
+AUTHORITATIVE SERVER
+--------------------
+
+To set up an authoritative zone for RFC5011 trust anchor maintenance,
+generate two (or more) key signing keys (KSKs) for the zone.  Sign the zone
+with one of them; this is the "active" KSK.  All KSK's which do not sign
+the zone are "stand-by" keys.
+
+Any validating resolver which is configured to use the active KSK as an
+RFC5011-managed trust anchor will take note of the stand-by KSKs in the
+zone's DNSKEY RRset, and store them for future reference.  The resolver
+will recheck the zone periodically, and after 30 days, if the new key is
+still there, then the key will be accepted by the resolver as a valid
+trust anchor for the zone.
+
+The easiest way to place a stand-by key in a zone is to use the "smart
+signing" features of dnssec-signzone.  If a key with a publication date
+in the past, but an activation date in the future, "dnssec-signzone -S"
+will include the DNSKEY record in the zone, but will not sign with it:
+
+    $ dnssec-keygen -K keys -f KSK -P now -A now+2y example.net
+    $ dnssec-signzone -S -K keys example.net
+
+At any time after this 30-day acceptance timer has expired, the active
+KSK can be revoked and the zone can be "rolled over" to one of the
+standby KSKs.
+
+To revoke a key, the new command "dnssec-revoke" has been added.  This adds
+the REVOKED bit to the key flags and re-generates the K*.key and K*.private
+files.
+
+After revoking the active key, the zone must be signed with both the
+revoked KSK and the new active KSK.  (Smart signing takes care of this
+automatically.)
+
+Once a key has been revoked and used to sign the DNSKEY RRset in which it
+appears, that key will never again be accepted as a valid trust anchor by
+the resolver.  However, validation can proceed using the new active key
+(which had been accepted by the resolver when it was a stand-by key).
+
+See RFC 5011 for more details on key rollover scenarios.
