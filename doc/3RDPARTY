@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.728 2009/10/26 21:35:51 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.729 2009/10/26 22:40:50 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -557,7 +557,7 @@ Responsible:	haad
 License:	LGPLv2.1
 Notes:
 The lvm2tools and the libdevmapper are now distributed as one source 
-repository. See the lvm2tools Notes for more informations.
+repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
 Version:	1.4.4-stable
@@ -817,7 +817,7 @@ Mailing List:
 Responsible:	dbj
 License:	BSD-like
 Notes:
-This is the disk partition utility used by Apple's mkLinux and osX
+This is the disk partition utility used by Apple's mkLinux and OS X
 It is imported into dist/pdisk, with a reachover makefile in
 src/sbin/pdisk builds for macppc and mac68k.
 
@@ -855,7 +855,7 @@ Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
 Notes:
-The authoritive version used to live in src/usr.sbin/pkg_install and was
+The authoritative version used to live in src/usr.sbin/pkg_install and was
 moved to pkgsrc/pkgtool/pkg_install. Reachover Makefiles are kept in place.
 
 Package:	ping
@@ -869,7 +869,7 @@ Responsible:	christos
 License:	BSD (3-clause)
 Notes:
 We use err() and friends. We have changes for snprintf, extra
-formating in man pages, disallowing flood pinging, alignment fixes,
+formatting in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
