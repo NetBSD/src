@@ -1,6 +1,8 @@
-/* $OpenBSD: expr.c,v 1.17 2006/01/20 23:10:19 espie Exp $ */
-/*
- * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
+/* $OpenBSD: ohash_qlookup.c,v 1.2 2004/06/22 20:00:17 espie Exp $ */
+/* ex:ts=8 sw=4: 
+ */
+
+/* Copyright (c) 1999, 2004 Marc Espie <espie@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,30 +16,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <stdint.h>
-#include <stdio.h>
-#include <stddef.h>
-#include "mdef.h"
-#include "extern.h"
 
-int32_t end_result;
-const char *copy_toeval;
+#include "ohash_int.h"
 
-extern void yy_scan_string(const char *);
-extern int yyparse(void);
-
-int
-yyerror(const char *msg)
+unsigned int
+ohash_qlookup(struct ohash *h, const char *s)
 {
-	fprintf(stderr, "m4: %s in expr %s\n", msg, copy_toeval);
-	return(0);
-}
-
-int 
-expr(const char *toeval)
-{
-	copy_toeval = toeval;
-	yy_scan_string(toeval);
-	yyparse();
-	return end_result;
+	const char *e = NULL;
+	return ohash_qlookupi(h, s, &e);
 }
