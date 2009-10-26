@@ -192,7 +192,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* %U */
 };
 
-#define	RSORD_MAX 13
+#define	RSORD_MAX 14
 
 static	const int rsord[RSORD_MAX] = {
 	MDOC__A,
@@ -203,6 +203,7 @@ static	const int rsord[RSORD_MAX] = {
 	MDOC__R,
 	MDOC__N,
 	MDOC__V,
+	MDOC__U,
 	MDOC__P,
 	MDOC__Q,
 	MDOC__D,
