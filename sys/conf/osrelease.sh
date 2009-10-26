@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.115 2008/08/05 08:26:05 apb Exp $
+#	$NetBSD: osrelease.sh,v 1.116 2009/10/26 15:32:38 joerg Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,6 +44,9 @@ release=`$AWK '/^#define[ 	]*__NetBSD_Version__/ { print $6 }' $PARAMH`
 case $1 in
 -m)
 	echo $release | $AWK -F. '{print int($1+$2/100+0.01)}'
+	;;
+-n)
+	echo $release | $AWK -F. '{print $1 "." $2}'
 	;;
 -s)
 	echo $release | $SED -e 's,\.,,g'
