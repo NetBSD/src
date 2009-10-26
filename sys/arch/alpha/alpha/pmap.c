@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.247 2009/10/26 03:21:19 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.248 2009/10/26 03:51:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2009/10/26 03:21:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2009/10/26 03:51:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2166,29 +2166,6 @@ pmap_deactivate(struct lwp *l)
 	 */
 	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * pmap_do_reactivate:
- *
- *	Reactivate an address space when the level 1 map changes.
- *	We are invoked by an interprocessor interrupt.
- */
-void
-pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
-{
-	struct pmap *pmap;
-
-	if (ci->ci_curlwp == ci->ci_data.cpu_idlelwp)
-		return;
-
-	pmap = ci->ci_curlwp->l_proc->p_vmspace->vm_map.pmap;
-
-	pmap_asn_alloc(pmap, ci->ci_cpuid);
-	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
-		PMAP_ACTIVATE(pmap, ci->ci_curlwp, ci->ci_cpuid);
-}
-#endif /* MULTIPROCESSOR */
 
 /*
  * pmap_zero_page:		[ INTERFACE ]
