@@ -1,4 +1,4 @@
-/*	$NetBSD: scanopt.c,v 1.1.1.1 2009/10/26 00:26:56 christos Exp $	*/
+/*	$NetBSD: scanopt.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -48,7 +48,7 @@ static int STRCASECMP (a, b)
      const char *a;
      const char *b;
 {
-	while (tolower (*a++) == tolower (*b++)) ;
+	while (tolower ((unsigned char)*a++) == tolower ((unsigned char)*b++)) ;
 	return b - a;
 }
 #endif
@@ -214,7 +214,7 @@ scanopt_t *scanopt_init (options, argc, argv, flags)
 		aux->namelen = 0;
 		for (p = pname + 1; *p; p++) {
 			/* detect required arg */
-			if (*p == '=' || isspace (*p)
+			if (*p == '=' || isspace ((unsigned char)*p)
 			    || !(aux->flags & IS_LONG)) {
 				if (aux->namelen == 0)
 					aux->namelen = p - pname;
@@ -483,7 +483,7 @@ int     scanopt_usage (scanner, fp, usage)
 
 					while (*p && n < maxlen[1]
 					       && *p != '\n') {
-						if (isspace (*p)
+						if (isspace ((unsigned char)*p)
 						    || *p == '-') lastws =
 								p;
 						n++;
@@ -506,8 +506,8 @@ int     scanopt_usage (scanner, fp, usage)
 						if (lastws) {
 							fprintf (fp,
 								 "%.*s\n",
-								 lastws -
-								 pstart,
+								 (int)(lastws -
+								 pstart),
 								 pstart);
 							pstart =
 								lastws + 1;

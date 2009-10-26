@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.1.1.1 2009/10/26 00:26:55 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -70,7 +70,7 @@ extern const char *escaped_qstart, *escaped_qend;
 #define RETURNNAME \
 	if(yyleng < MAXLINE) \
          { \
-	strcpy( nmstr, yytext ); \
+	strlcpy( nmstr, yytext, sizeof(nmstr) ); \
 	 } \
 	else \
 	 { \
@@ -187,7 +187,7 @@ M4QEND      "]]"
 	^{NAME}		{
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strlcpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -295,7 +295,7 @@ M4QEND      "]]"
 	{NOT_WS}[^\r\n]*	{
  		        if(yyleng < MAXLINE)
  		         {
-			strcpy( (char *) nmdef, yytext );
+			strlcpy( (char *) nmdef, yytext, sizeof(nmdef) );
  		         }
  		        else
  		         {
@@ -438,7 +438,7 @@ M4QEND      "]]"
 	\"[^"\n]*\"	{
 			if(yyleng-1 < MAXLINE)
         		 {
-			strcpy( nmstr, yytext + 1 );
+			strlcpy( nmstr, yytext + 1, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -613,7 +613,7 @@ M4QEND      "]]"
 
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strlcpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -671,7 +671,7 @@ M4QEND      "]]"
 
  			if(yyleng-1 < MAXLINE)
          		 {
-			strcpy( nmstr, yytext + 1 );
+			strlcpy( nmstr, yytext + 1, sizeof(nmstr) );
  			 }
  			else
  			 {

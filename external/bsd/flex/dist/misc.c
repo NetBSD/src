@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.1 2009/10/26 00:26:26 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -113,11 +113,12 @@ void action_define (defname, value)
 }
 
 
+#ifdef notdef
 /** Append "m4_define([[defname]],[[value]])m4_dnl\n" to the running buffer.
  *  @param defname The macro name.
  *  @param value The macro value, can be NULL, which is the same as the empty string.
  */
-void action_m4_define (const char *defname, const char * value)
+static void action_m4_define (const char *defname, const char * value)
 {
 	char    buf[MAXLINE];
 
@@ -133,6 +134,7 @@ void action_m4_define (const char *defname, const char * value)
 	snprintf (buf, sizeof(buf), "m4_define([[%s]],[[%s]])m4_dnl\n", defname, value?value:"");
 	add_action (buf);
 }
+#endif
 
 /* Append "new_text" to the running buffer. */
 void add_action (new_text)
@@ -186,7 +188,7 @@ int all_lower (str)
      register char *str;
 {
 	while (*str) {
-		if (!isascii ((Char) * str) || !islower (*str))
+		if (!isascii ((Char)*str) || !islower ((Char)*str))
 			return 0;
 		++str;
 	}
@@ -201,7 +203,7 @@ int all_upper (str)
      register char *str;
 {
 	while (*str) {
-		if (!isascii ((Char) * str) || !isupper (*str))
+		if (!isascii ((Char)*str) || !isupper ((Char)*str))
 			return 0;
 		++str;
 	}
@@ -473,7 +475,7 @@ void line_directive_out (output_file, do_infile)
 {
 	char    directive[MAXLINE], filename[MAXLINE];
 	char   *s1, *s2, *s3;
-	static const char *line_fmt = "#line %d \"%s\"\n";
+	static const char line_fmt[] = "#line %d \"%s\"\n";
 
 	if (!gen_line_dirs)
 		return;
@@ -677,7 +679,7 @@ Char myesc (array)
 			int     sptr = 2;
 
 			while (isascii (array[sptr]) &&
-			       isxdigit ((char) array[sptr]))
+			       isxdigit ((Char)array[sptr]))
 				/* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
 				 * expand into multiple increments ...
