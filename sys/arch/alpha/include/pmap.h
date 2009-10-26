@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.74 2009/03/15 22:19:15 cegger Exp $ */
+/* $NetBSD: pmap.h,v 1.75 2009/10/26 03:51:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -194,8 +194,6 @@ typedef struct pv_entry {
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
 struct trapframe;
-
-void	pmap_do_reactivate(struct cpu_info *, struct trapframe *);
 
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, u_long *);
 void	pmap_tlb_shootnow(u_long);
