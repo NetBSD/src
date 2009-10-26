@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.3 2009/10/26 20:40:00 jnemeth Exp $
+.\"	$NetBSD: modctl.2,v 1.4 2009/10/26 20:43:37 jnemeth Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,6 +139,8 @@ The module was loaded from the file system.
 .It Fa "modclass_t ms_class"
 One of the following enumerated constants:
 .Bl -tag -compact -width "MODULE_SOURCE_FILESYS"
+.It Dv MODULE_CLASS_SECMODEL
+Security model.
 .It Dv MODULE_CLASS_VFS
 File system.
 .It Dv MODULE_CLASS_DRIVER
