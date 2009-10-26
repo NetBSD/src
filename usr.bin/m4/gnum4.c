@@ -1,4 +1,4 @@
-/* $NetBSD: gnum4.c,v 1.6 2009/10/26 21:11:28 christos Exp $ */
+/* $NetBSD: gnum4.c,v 1.7 2009/10/26 21:16:49 christos Exp $ */
 /* $OpenBSD: gnum4.c,v 1.39 2008/08/21 21:01:04 espie Exp $ */
 
 /*
@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.6 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.7 2009/10/26 21:16:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,6 +54,9 @@ __RCSID("$NetBSD: gnum4.c,v 1.6 2009/10/26 21:11:28 christos Exp $");
 
 
 int mimic_gnu = 0;
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX (size_t)~0ull
+#endif
 
 /*
  * Support for include path search
