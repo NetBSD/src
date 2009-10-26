@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.2 2009/10/26 11:19:47 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2009/10/26 18:32:39 christos Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -25,7 +25,7 @@ main.c \
 misc.c \
 nfa.c \
 options.c \
-parse.y \
+parse.c \
 regex.c \
 scan.c \
 scanflags.c \
@@ -37,12 +37,18 @@ tables_shared.c \
 tblcmp.c \
 yylex.c
 
+# Don't frob yacc files until we have a good bison
+.y.c .y.h:
+	@true
+
 YHEADER=1
-CLEANFILES+=scan.c skel.c
+CLEANFILES+=scan.c skel.c parse.c parse.h
 INCS	=FlexLexer.h
 INCSDIR=/usr/include/g++
 LDADD+=-lm
 DPADD+=${LIBM}
+# XXX: Fix m4.
+TOOL_M4=/usr/pkg/bin/gm4
 
 MAN = flex.1
 
@@ -52,7 +58,7 @@ MLINKS=	flex.1 lex.1
 
 skel.c: flex.skl mkskel.sh flexint.h tables_shared.h
 	${TOOL_SED} -e 's/m4_/m4postproc_/g' -e 's/m4preproc_/m4_/g' \
-	    ${IDIST}/flex.skl | ${TOOL_M4} -P \
+	    ${IDIST}/flex.skl | ${TOOL_M4} -I${IDIST} -P \
 	    -DFLEX_MAJOR_VERSION=`echo ${VERSION} | cut -f 1 -d .` \
 	    -DFLEX_MINOR_VERSION=`echo ${VERSION} | cut -f 2 -d .` \
 	    -DFLEX_SUBMINOR_VERSION=`echo ${VERSION} | cut -f 3 -d .` | \
