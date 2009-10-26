@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.239 2009/10/03 01:46:39 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.240 2009/10/26 16:41:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.239 2009/10/03 01:46:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.240 2009/10/26 16:41:35 cegger Exp $");
 
 #include "opt_inet.h"
 
@@ -172,8 +172,10 @@ static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 
+#if defined(INET) || defined(INET6)
 static void sysctl_net_ifq_setup(struct sysctllog **, int, const char *,
 				 int, const char *, int, struct ifqueue *);
+#endif
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
