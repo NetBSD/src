@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.726 2009/10/26 01:33:28 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.727 2009/10/26 02:51:01 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -922,8 +922,8 @@ The root server cache is also included with BIND.  However, the
 InterNIC version is usually more up to date.
 
 Package:	routed
-Version:	2.28
-Current Vers:	2.31
+Version:	2.32
+Current Vers:	2.32
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Home Page:	http://www.rhyolite.com/src/
