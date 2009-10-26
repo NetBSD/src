@@ -31,6 +31,6 @@ ohash_next(struct ohash *h, unsigned int *pos)
 {
 	for (; *pos < h->size; (*pos)++) 
 		if (h->t[*pos].p != DELETED && h->t[*pos].p != NULL) 
-			return (void *)h->t[(*pos)++].p;
+			return __UNCONST(h->t[(*pos)++].p);
 	return NULL;
 }

@@ -16,7 +16,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: strtonum.c,v 1.2 2009/10/26 21:14:18 christos Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -25,6 +29,9 @@
 #define TOOSMALL 	2
 #define TOOLARGE 	3
 
+long long
+strtonum(const char *numstr, long long minval, long long maxval,
+    const char **errstrp);
 long long
 strtonum(const char *numstr, long long minval, long long maxval,
     const char **errstrp)
