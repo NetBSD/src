@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.33 2009/08/12 12:56:29 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.34 2009/10/26 19:16:57 cegger Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.33 2009/08/12 12:56:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.34 2009/10/26 19:16:57 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1976,7 +1976,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				memcpy( LLADDR(ifp->if_sadl), ina->x_host.c_host,
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ifp->if_addrlen);
 			/* Set new address. */
 			sbmac_init_and_start(sc);
@@ -2345,7 +2345,7 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.176 2009/10/21 21:12:04 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.177 2009/10/26 19:16:58 cegger Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2009/10/21 21:12:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2009/10/26 19:16:58 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -464,7 +464,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
-	memcpy( &regs->r0, &tf->r0, 12 * sizeof(int));
+	memcpy(&regs->r0, &tf->r0, 12 * sizeof(int));
 	regs->ap = tf->ap;
 	regs->fp = tf->fp;
 	regs->sp = tf->sp;
@@ -478,7 +478,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
-	memcpy( &tf->r0, &regs->r0, 12 * sizeof(int));
+	memcpy(&tf->r0, &regs->r0, 12 * sizeof(int));
 	tf->ap = regs->ap;
 	tf->fp = regs->fp;
 	tf->sp = regs->sp;

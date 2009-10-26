@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2009/03/18 17:06:46 cegger Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 2009/10/26 19:16:57 cegger Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2009/03/18 17:06:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2009/10/26 19:16:57 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -746,7 +746,7 @@ writeback(struct frame *fp, int docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			memcpy( (void *)fa, (void *)&f->f_pd0, 16);
+			memcpy((void *)fa, (void *)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -771,7 +771,7 @@ writeback(struct frame *fp, int docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			memcpy( (void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
+			memcpy((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0, 16);
 		else
 			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.32 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.33 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.32 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.33 2009/10/26 19:16:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -751,7 +751,7 @@ cc_init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	vdata_t *vd = VDATA(v);
 	v->bitmap = bm;
 	vd->mode = mode;
-	memcpy( &v->display, dbox, sizeof(box_t));
+	memcpy(&v->display, dbox, sizeof(box_t));
 
 	v->display_view = DMDATA(vd->mode)->display_view;
 	v->use_colormap = DMDATA(vd->mode)->use_colormap;
@@ -872,9 +872,9 @@ cc_init_ntsc_hires(void)
 		h_this_data->frames[F_STORE_LONG] =
 			&h_this_data->frames[F_LONG][len];
 
-		memcpy( h_this_data->frames[F_STORE_LONG], std_copper_list,
+		memcpy(h_this_data->frames[F_STORE_LONG], std_copper_list,
 			std_copper_list_size);
-		memcpy( h_this_data->frames[F_LONG], std_copper_list,
+		memcpy(h_this_data->frames[F_LONG], std_copper_list,
 			std_copper_list_size);
 
 		h_this_data->bplcon0 = 0x8200 | USE_CON3;	/* hires, color
@@ -1060,13 +1060,13 @@ cc_init_ntsc_hires_lace(void)
 		hl_this_data->frames[F_LACE_STORE_SHORT] =
 				&hl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		memcpy( hl_this_data->frames[F_LACE_STORE_LONG], std_copper_list,
+		memcpy(hl_this_data->frames[F_LACE_STORE_LONG], std_copper_list,
 			std_copper_list_size);
-		memcpy( hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list,
+		memcpy(hl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list,
 			std_copper_list_size);
-		memcpy( hl_this_data->frames[F_LACE_LONG], std_copper_list,
+		memcpy(hl_this_data->frames[F_LACE_LONG], std_copper_list,
 			std_copper_list_size);
-		memcpy( hl_this_data->frames[F_LACE_SHORT], std_copper_list,
+		memcpy(hl_this_data->frames[F_LACE_SHORT], std_copper_list,
 			std_copper_list_size);
 
 		hl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
@@ -1545,7 +1545,7 @@ cc_init_ntsc_a2024(void)
 		hedley_init[0] = 0x03;
 
 		/* copy image of standard copper list. */
-		memcpy( a24_this_data->frames[0], std_a2024_copper_list,
+		memcpy(a24_this_data->frames[0], std_a2024_copper_list,
 			std_a2024_copper_list_size);
 
 		/* set the init plane pointer. */
@@ -1823,8 +1823,8 @@ cc_init_ntsc_aga(void)
 		}
 		aga_this_data->frames[F_STORE_LONG] = &aga_this_data->frames[F_LONG][len];
 
-		memcpy( aga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
-		memcpy( aga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy(aga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy(aga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
 
 		aga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
 								 * enable,
@@ -2424,8 +2424,8 @@ cc_init_pal_hires(void)
 		}
 		ph_this_data->frames[F_STORE_LONG] = &ph_this_data->frames[F_LONG][len];
 
-		memcpy( ph_this_data->frames[F_STORE_LONG], std_copper_list, std_copper_list_size);
-		memcpy( ph_this_data->frames[F_LONG], std_copper_list, std_copper_list_size);
+		memcpy(ph_this_data->frames[F_STORE_LONG], std_copper_list, std_copper_list_size);
+		memcpy(ph_this_data->frames[F_LONG], std_copper_list, std_copper_list_size);
 
 		ph_this_data->bplcon0 = 0x8200 | USE_CON3;	/* pal_hires, color
 								 * composite enable,
@@ -2597,10 +2597,10 @@ cc_init_pal_hires_lace(void)
 		phl_this_data->frames[F_LACE_STORE_LONG] = &phl_this_data->frames[F_LACE_SHORT][len];
 		phl_this_data->frames[F_LACE_STORE_SHORT] = &phl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		memcpy( phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list, std_copper_list_size);
-		memcpy( phl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list, std_copper_list_size);
-		memcpy( phl_this_data->frames[F_LACE_LONG], std_copper_list, std_copper_list_size);
-		memcpy( phl_this_data->frames[F_LACE_SHORT], std_copper_list, std_copper_list_size);
+		memcpy(phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list, std_copper_list_size);
+		memcpy(phl_this_data->frames[F_LACE_STORE_SHORT], std_copper_list, std_copper_list_size);
+		memcpy(phl_this_data->frames[F_LACE_LONG], std_copper_list, std_copper_list_size);
+		memcpy(phl_this_data->frames[F_LACE_SHORT], std_copper_list, std_copper_list_size);
 
 		phl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
@@ -2720,7 +2720,7 @@ display_pal_hires_lace_view(view_t *v)
 		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(phl_this_data->frames[F_LACE_STORE_SHORT]));
 
 
-		memcpy( phl_this_data->frames[F_LACE_STORE_SHORT], phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list_size);
+		memcpy(phl_this_data->frames[F_LACE_STORE_SHORT], phl_this_data->frames[F_LACE_STORE_LONG], std_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = phl_this_data->frames[F_LACE_STORE_SHORT];
@@ -2797,10 +2797,10 @@ cc_init_pal_hires_dlace(void)
 		phdl_this_data->frames[F_LACE_STORE_LONG] = &phdl_this_data->frames[F_LACE_SHORT][len];
 		phdl_this_data->frames[F_LACE_STORE_SHORT] = &phdl_this_data->frames[F_LACE_STORE_LONG][len];
 
-		memcpy( phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
-		memcpy( phdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
-		memcpy( phdl_this_data->frames[F_LACE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
-		memcpy( phdl_this_data->frames[F_LACE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy(phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy(phdl_this_data->frames[F_LACE_STORE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy(phdl_this_data->frames[F_LACE_LONG], std_dlace_copper_list, std_dlace_copper_list_size);
+		memcpy(phdl_this_data->frames[F_LACE_SHORT], std_dlace_copper_list, std_dlace_copper_list_size);
 
 		phdl_this_data->bplcon0 = 0x8204 | USE_CON3;	/* hires, color
 								 * composite enable,
@@ -2931,7 +2931,7 @@ display_pal_hires_dlace_view(view_t *v)
 		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(phdl_this_data->frames[F_LACE_STORE_SHORT]));
 		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(phdl_this_data->frames[F_LACE_STORE_SHORT]));
 
-		memcpy( phdl_this_data->frames[F_LACE_STORE_SHORT], phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list_size);
+		memcpy(phdl_this_data->frames[F_LACE_STORE_SHORT], phdl_this_data->frames[F_LACE_STORE_LONG], std_dlace_copper_list_size);
 
 		/* these are the only ones that are different from long frame. */
 		cp = phdl_this_data->frames[F_LACE_STORE_SHORT];
@@ -3022,7 +3022,7 @@ cc_init_pal_a2024(void)
 		hedley_init[0] = 0x03;
 
 		/* copy image of standard copper list. */
-		memcpy( p24_this_data->frames[0], std_pal_a2024_copper_list, std_pal_a2024_copper_list_size);
+		memcpy(p24_this_data->frames[0], std_pal_a2024_copper_list, std_pal_a2024_copper_list_size);
 
 		/* set the init plane pointer. */
 		cp = find_copper_inst(p24_this_data->frames[F_QD_QUAD0], CI_MOVE(R_BPL0PTH));
@@ -3031,7 +3031,7 @@ cc_init_pal_a2024(void)
 
 		for (i = 1; i < F_QD_TOTAL; i++) {
 			p24_this_data->frames[i] = &p24_this_data->frames[i - 1][len];
-			memcpy( p24_this_data->frames[i], p24_this_data->frames[0], std_pal_a2024_copper_list_size);
+			memcpy(p24_this_data->frames[i], p24_this_data->frames[0], std_pal_a2024_copper_list_size);
 		}
 
 		p24_this_data->bplcon0 = 0x8200;	/* hires */
@@ -3069,9 +3069,9 @@ display_pal_a2024_view(view_t *v)
 		tmp = find_copper_inst(tmp, CI_MOVE(R_BPLCON0));	/* grab third one. */
 		tmp->cp.inst.operand = p24_this_data->bplcon0 | ((depth & 0x7) << 13);	/* times 2 */
 
-		memcpy( p24_this_data->frames[F_QD_STORE_QUAD1], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
-		memcpy( p24_this_data->frames[F_QD_STORE_QUAD2], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
-		memcpy( p24_this_data->frames[F_QD_STORE_QUAD3], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
+		memcpy(p24_this_data->frames[F_QD_STORE_QUAD1], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
+		memcpy(p24_this_data->frames[F_QD_STORE_QUAD2], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
+		memcpy(p24_this_data->frames[F_QD_STORE_QUAD3], p24_this_data->frames[F_QD_STORE_QUAD0], std_pal_a2024_copper_list_size);
 
 		/*
 		 * Mark Id's
@@ -3248,8 +3248,8 @@ cc_init_pal_aga(void)
 		}
 		paga_this_data->frames[F_STORE_LONG] = &paga_this_data->frames[F_LONG][len];
 
-		memcpy( paga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
-		memcpy( paga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy(paga_this_data->frames[F_STORE_LONG], aga_copper_list, aga_copper_list_size);
+		memcpy(paga_this_data->frames[F_LONG], aga_copper_list, aga_copper_list_size);
 
 		paga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
 								 * enable,

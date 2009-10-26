@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.64 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: sbic.c,v 1.65 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.64 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.65 2009/10/26 19:16:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ sbic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (flags & XS_CTL_DATA_IN)
 			acb->flags |= ACB_DATAIN;
 		acb->xs = xs;
-		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->sc_kv.dc_addr = xs->data;
 		acb->sc_kv.dc_count = xs->datalen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.51 2009/03/18 17:06:41 cegger Exp $ */
+/*	$NetBSD: grf.c,v 1.52 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.51 2009/03/18 17:06:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.52 2009/10/26 19:16:54 cegger Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -247,10 +247,10 @@ grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
+	  	memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
-		memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo));
+		memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
 		error = grfon(dev);

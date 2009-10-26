@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.7 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: if_de.c,v 1.8 2009/10/26 19:16:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -134,7 +134,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	dc->dc_pcbb.pcbb0 = FC_RDPHYAD;
 	DE_WLOW(CMD_GETCMD);
 	dewait("read physaddr");
-	memcpy( eaddr, (char *)&dc->dc_pcbb.pcbb2, 6);
+	memcpy(eaddr, (char *)&dc->dc_pcbb.pcbb2, 6);
 
 	/* Create and link the descriptors */
 	for (i=0; i < NRCV; i++) {
@@ -213,7 +213,7 @@ retry:
 	if (len > maxlen)
 		len = maxlen;
 	if (len)
-		memcpy( pkt, (char *)&dc->dc_rbuf[crx][0], len);
+		memcpy(pkt, (char *)&dc->dc_rbuf[crx][0], len);
 
 	dc->dc_rrent[crx].r_flags = RFLG_OWN;
 	dc->dc_rrent[crx].r_lenerr = 0;
@@ -247,7 +247,7 @@ retry:
 	if (dc->dc_xrent[ctx].r_flags & RFLG_OWN)
 		goto retry;
 
-	memcpy( (char *)&dc->dc_xbuf[ctx][0], pkt, len);
+	memcpy((char *)&dc->dc_xbuf[ctx][0], pkt, len);
 
 	dc->dc_xrent[ctx].r_slen = len;
 	dc->dc_xrent[ctx].r_tdrerr = 0;

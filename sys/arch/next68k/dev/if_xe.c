@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.18 2009/03/18 17:06:46 cegger Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.19 2009/10/26 19:16:57 cegger Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.18 2009/03/18 17:06:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.19 2009/10/26 19:16:57 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -472,7 +472,7 @@ xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 			u_char *p = buf;
 			for (m=xsc->sc_tx_mb_head; m; m = m->m_next) {
 				if (m->m_len == 0) continue;
-				memcpy( p, mtod(m, u_char *), m->m_len);
+				memcpy(p, mtod(m, u_char *), m->m_len);
 				p += m->m_len;
 			}
 			/* Fix runt packets */

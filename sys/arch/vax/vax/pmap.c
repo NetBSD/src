@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.170 2009/10/25 09:25:10 he Exp $	   */
+/*	$NetBSD: pmap.c,v 1.171 2009/10/26 19:16:58 cegger Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.170 2009/10/25 09:25:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171 2009/10/26 19:16:58 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -822,7 +822,7 @@ grow_p0(struct pmap *pm, int reqlen)
 	    from, to, srclen, dstlen));
 
 	if (inuse)
-		memcpy( to, from, srclen);
+		memcpy(to, from, srclen);
 	memset(to+srclen, 0, dstlen-srclen);
 	p0br = (u_long)pm->pm_p0br;
 	pm->pm_p0br = (struct pte *)nptespc;
@@ -857,7 +857,7 @@ grow_p1(struct pmap *pm, int len)
 	 */
 	memset(kvtopte(nptespc), 0, vax_btop(nlen-olen) * PPTESZ);
 	if (optespc)
-		memcpy( kvtopte(nptespc+nlen-olen), kvtopte(optespc),
+		memcpy(kvtopte(nptespc+nlen-olen), kvtopte(optespc),
 		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (struct pte *)nptespc;

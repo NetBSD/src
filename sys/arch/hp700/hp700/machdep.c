@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2009/08/15 23:44:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:55 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/08/15 23:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:55 cegger Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1838,7 +1838,7 @@ kcopy(const void *from, void *to, size_t size)
 	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
 
 	curlwp->l_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
-	memcpy( to, from, size);
+	memcpy(to, from, size);
 	curlwp->l_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;

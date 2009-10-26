@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.10 2009/05/08 09:33:59 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.11 2009/10/26 19:16:55 cegger Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -215,7 +215,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
 			       offset, xfer, (int)size, (int)blk);
 #endif
-		memcpy( buf, dp->buf + offset, xfer);
+		memcpy(buf, dp->buf + offset, xfer);
 		buf = (char *) buf + xfer;
 	}
 
@@ -247,7 +247,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 		dp->last_read = ret;
 		if ((ret -= offset) > size)
 			ret = size;
-		memcpy( buf, dp->buf + offset, ret);
+		memcpy(buf, dp->buf + offset, ret);
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
@@ -392,7 +392,7 @@ pdc_findev(int unit, int class)
 		}
 
 		pz.pz_flags = 0;
-		memcpy( pz.pz_layers, layers, sizeof(pz.pz_layers));
+		memcpy(pz.pz_layers, layers, sizeof(pz.pz_layers));
 		pz.pz_hpa = io;
 /* XXX		pz.pz_spa = io->io_spa; */
 		pz.pz_iodc_io = iodc;

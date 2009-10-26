@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.44 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.45 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.44 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.45 2009/10/26 19:16:54 cegger Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -358,7 +358,7 @@ grfclattach(struct device *pdp, struct device *dp, void *auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		memcpy( &gp->g_display, &congrf.g_display,
+		memcpy(&gp->g_display, &congrf.g_display,
 		    (char *) &gp[1] - (char *) &gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *) cl_regaddr;
@@ -598,7 +598,7 @@ cl_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 #ifdef CL5426CONSOLE
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
-		memcpy( vm, &clconsole_mode, sizeof(struct grfvideo_mode));
+		memcpy(vm, &clconsole_mode, sizeof(struct grfvideo_mode));
 		/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = clconsole_mode.fy;
 	} else
@@ -612,7 +612,7 @@ cl_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
                 if (gv->mode_num == 0)
                         return (EINVAL);
 
-                memcpy( vm, gv, sizeof(struct grfvideo_mode));
+                memcpy(vm, gv, sizeof(struct grfvideo_mode));
         }
 
         /* adjust internal values to pixel values */
@@ -934,9 +934,9 @@ cl_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 		copyin(data->cmap.red, red, 2);
 		copyin(data->cmap.green, green, 2);
 		copyin(data->cmap.blue, blue, 2);
-		memcpy( cl_cursprite.cmap.red, red, 2);
-		memcpy( cl_cursprite.cmap.green, green, 2);
-		memcpy( cl_cursprite.cmap.blue, blue, 2);
+		memcpy(cl_cursprite.cmap.red, red, 2);
+		memcpy(cl_cursprite.cmap.green, green, 2);
+		memcpy(cl_cursprite.cmap.blue, blue, 2);
 
                 /* enable and load colors 256 & 257 */
 		WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x06);
@@ -1018,7 +1018,7 @@ cl_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 #ifdef CL5426CONSOLE
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
-		memcpy( &clconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
+		memcpy(&clconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
 		clconsole_mode.gv.hblank_start /= 8;
 		clconsole_mode.gv.hsync_start /= 8;
 		clconsole_mode.gv.hsync_stop /= 8;
@@ -1033,7 +1033,7 @@ cl_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 #endif
 
 	md = monitor_def + (gv->mode_num - 1);
-	memcpy( md, gv, sizeof(struct grfvideo_mode));
+	memcpy(md, gv, sizeof(struct grfvideo_mode));
 
 	/* adjust pixel oriented values to internal rep. */
 

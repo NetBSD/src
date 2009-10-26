@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.52 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.53 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.52 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.53 2009/10/26 19:16:54 cegger Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1591,7 +1591,7 @@ grfrhattach(struct device *pdp, struct device *dp, void *auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		memcpy( &gp->g_display, &congrf.g_display,
+		memcpy(&gp->g_display, &congrf.g_display,
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *)zap->va;

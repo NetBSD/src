@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.23 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.24 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.23 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.24 2009/10/26 19:16:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ gvpbusattach(struct device *pdp, struct device *dp, void *auxp)
 	int flags0, flags;
 
 	zap = auxp;
-	memcpy( &ga.zargs, zap, sizeof(struct zbus_args));
+	memcpy(&ga.zargs, zap, sizeof(struct zbus_args));
 	flags = 0;
 	
 	/*

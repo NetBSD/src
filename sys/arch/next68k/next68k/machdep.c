@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2009/08/15 23:44:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2009/10/26 19:16:57 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2009/08/15 23:44:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2009/10/26 19:16:57 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -677,7 +677,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
-	memcpy( chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
+	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);

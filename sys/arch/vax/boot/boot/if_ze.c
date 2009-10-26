@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.16 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.17 2009/10/26 19:16:58 cegger Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -251,7 +251,7 @@ ze_put(struct iodesc *desc, void *pkt, size_t len)
 		;
 
 	/* Copy the packet to the buffer we allocated. */
-	memcpy( (void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
+	memcpy((void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
 
 	/* Set the packet length in the descriptor, increasing it to the
 		minimum size if needed. */

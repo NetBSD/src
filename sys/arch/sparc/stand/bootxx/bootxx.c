@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.24 2009/08/23 08:51:56 he Exp $ */
+/*	$NetBSD: bootxx.c,v 1.25 2009/10/26 19:16:57 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,14 +126,14 @@ loadboot(struct open_file *f, char *addr)
 			printf("%s: read failure", progname);
 			_rtt();
 		}
-		memcpy( addr, buf, bbinfo.bbi_block_size);
+		memcpy(addr, buf, bbinfo.bbi_block_size);
 		if (n != bbinfo.bbi_block_size)
 			panic("%s: short read", progname);
 		if (i == 0) {
 			int m = N_GETMAGIC(*(struct exec *)addr);
 			if (m == ZMAGIC || m == NMAGIC || m == OMAGIC) {
 				/* Move exec header out of the way */
-				memcpy( addr - sizeof(struct exec), addr, n);
+				memcpy(addr - sizeof(struct exec), addr, n);
 				addr -= sizeof(struct exec);
 			}
 		}
