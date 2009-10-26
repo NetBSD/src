@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.36 2009/09/20 17:24:57 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.37 2009/10/24 05:52:13 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -174,6 +174,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* %Q */
 	{ in_line_eoln, 0 }, /* br */
 	{ in_line_eoln, 0 }, /* sp */
+	{ in_line_eoln, 0 }, /* %U */
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;

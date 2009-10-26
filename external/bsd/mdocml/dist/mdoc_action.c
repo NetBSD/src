@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_action.c,v 1.41 2009/09/25 13:03:25 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_action.c,v 1.44 2009/10/26 04:09:45 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,13 +14,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef	OSNAME
 #include <sys/utsname.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "libmdoc.h"
 
@@ -174,7 +177,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ud */
 	{ NULL, post_lb }, /* Lb */
 	{ NULL, NULL }, /* Lp */
-	{ NULL, post_tilde }, /* Lk */
+	{ NULL, NULL }, /* Lk */
 	{ NULL, NULL }, /* Mt */
 	{ NULL, NULL }, /* Brq */
 	{ NULL, NULL }, /* Bro */
@@ -186,6 +189,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* %Q */
 	{ NULL, NULL }, /* br */
 	{ NULL, NULL }, /* sp */
+	{ NULL, NULL }, /* %U */
 };
 
 #define	RSORD_MAX 13
@@ -520,7 +524,15 @@ static int
 post_os(POST_ARGS)
 {
 	char		  buf[64];
+#ifndef	OSNAME
 	struct utsname	  utsname;
+#endif
+
+	/*
+	 * Setting OSNAME to be the name of the target operating system,
+	 * e.g., "OpenBSD 4.4", will result in the compile-time constant
+	 * by supplied instead of the value in uname().
+	 */
 
 	if (m->meta.os)
 		free(m->meta.os);
@@ -530,6 +542,10 @@ post_os(POST_ARGS)
 		return(0);
 
 	if (0 == buf[0]) {
+#ifdef	OSNAME
+		if (strlcat(buf, OSNAME, 64) >= 64)
+			return(mdoc_nerr(m, n, EUTSNAME));
+#else
 		if (-1 == uname(&utsname))
 			return(mdoc_nerr(m, n, EUTSNAME));
 		if (strlcat(buf, utsname.sysname, 64) >= 64)
@@ -538,6 +554,7 @@ post_os(POST_ARGS)
 			return(mdoc_nerr(m, n, ETOOLONG));
 		if (strlcat(buf, utsname.release, 64) >= 64)
 			return(mdoc_nerr(m, n, ETOOLONG));
+#endif
 	}
 
 	if (NULL == (m->meta.os = strdup(buf)))
@@ -757,7 +774,6 @@ post_tilde(POST_ARGS)
 	np = n;
 	m->next = MDOC_NEXT_CHILD;
 
-	/* XXX: not documented for `Lk'. */
 	if ( ! mdoc_word_alloc(m, n->line, n->pos, "~"))
 		return(0);
 	m->last = np;
