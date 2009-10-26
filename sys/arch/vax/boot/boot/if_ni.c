@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.7 2009/03/18 17:06:47 cegger Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8 2009/10/26 19:16:58 cegger Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -471,7 +471,7 @@ loop:
 		len = data->bufs[0]._len;
 		if (len > maxlen)
 			len = maxlen;
-		memcpy( pkt, (void *)data->nd_cmdref, len);
+		memcpy(pkt, (void *)data->nd_cmdref, len);
 		bd->nb_pte = (int)&syspte[data->nd_cmdref>>9];
 		data->bufs[0]._len = bd->nb_len = 2048;
 		data->bufs[0]._offset = 0;
@@ -512,7 +512,7 @@ ni_put(struct iodesc *desc, void *pkt, size_t len)
 	bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 	bdp->nb_status = NIBD_VALID;
 	bdp->nb_len = (len < 64 ? 64 : len);
-	memcpy( (void *)data->nd_cmdref, pkt, len);
+	memcpy((void *)data->nd_cmdref, pkt, len);
 	data->bufs[0]._offset = 0;
 	data->bufs[0]._len = bdp->nb_len;
 	data->nd_opcode = BVP_DGRAM;

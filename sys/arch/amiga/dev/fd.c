@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.82 2009/03/18 17:06:41 cegger Exp $ */
+/*	$NetBSD: fd.c,v 1.83 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.82 2009/03/18 17:06:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.83 2009/10/26 19:16:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -805,7 +805,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 		error = EINVAL;
 		goto nolabel;
 	}
-	memcpy( lp, dlp, sizeof(struct disklabel));
+	memcpy(lp, dlp, sizeof(struct disklabel));
 	if (lp->d_trkseek > FDSTEPDELAY)
 		sc->stepdelay = lp->d_trkseek;
 	brelse(bp, 0);
@@ -873,7 +873,7 @@ fdsetdisklabel(struct fd_softc *sc, struct disklabel *lp)
 	    (pp->p_frag * pp->p_fsize % PAGE_SIZE))
 		return(EINVAL);
 done:
-	memcpy( clp, lp, sizeof(struct disklabel));
+	memcpy(clp, lp, sizeof(struct disklabel));
 	return(0);
 }
 
@@ -909,7 +909,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	 * copy disklabel to buf and write it out synchronous
 	 */
 	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
-	memcpy( dlp, lp, sizeof(struct disklabel));
+	memcpy(dlp, lp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_flags &= ~(B_READ);
@@ -1555,9 +1555,9 @@ fddone(struct fd_softc *sc)
 		sz *= FDSECSIZE;
 		sz = min(dp->b_bcount, sz);
 		if (bp->b_flags & B_READ)
-			memcpy( dp->b_data, data, sz);
+			memcpy(dp->b_data, data, sz);
 		else {
-			memcpy( data, dp->b_data, sz);
+			memcpy(data, dp->b_data, sz);
 			sc->flags |= FDF_DIRTY;
 		}
 		bp->b_resid = dp->b_bcount - sz;
