@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.725 2009/10/25 23:42:58 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.726 2009/10/26 01:33:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -322,7 +322,7 @@ Notes:
 use file2netbsd
 
 Package:	flex
-Version:	2.5.4
+Version:	2.5.35
 Current Vers:	2.5.35
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	http://flex.sourceforge.net/
@@ -331,8 +331,7 @@ Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like	
 Notes:
-The newest version is far more advanced than the one in NetBSD --
-among other features, it can produce re-entrant scanners.
+There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
 Version:	4.1.3-20080831
