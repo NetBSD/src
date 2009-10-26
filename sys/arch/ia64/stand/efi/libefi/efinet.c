@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.5 2009/03/18 17:06:45 cegger Exp $	*/
+/*	$NetBSD: efinet.c,v 1.6 2009/10/26 19:16:56 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -144,7 +144,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 			 */
 			if (bufsz > len)
 				bufsz = len;
-			memcpy( pkt, buf, bufsz);
+			memcpy(pkt, buf, bufsz);
 			return bufsz;
 		}
 		if (status != EFI_NOT_READY)
@@ -198,7 +198,7 @@ efinet_init(struct iodesc *desc, void *machdep_hint)
 	dump_mode(net->Mode);
 #endif
 
-	memcpy( desc->myea, net->Mode->CurrentAddress.Addr, 6);
+	memcpy(desc->myea, net->Mode->CurrentAddress.Addr, 6);
 	desc->xid = 1;
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.109 2009/03/18 17:06:41 cegger Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.110 2009/10/26 19:16:54 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.109 2009/03/18 17:06:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.110 2009/10/26 19:16:54 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -955,7 +955,7 @@ kernel_image_magic_copy(u_char *dest)
 {
 	*((int*)dest) = ncfdev;
 	dest += 4;
-	memcpy( dest, cfdev, ncfdev * sizeof(struct cfdev)
+	memcpy(dest, cfdev, ncfdev * sizeof(struct cfdev)
 	    + memlist->m_nseg * sizeof(struct boot_memseg) + 4);
 }
 
@@ -1101,7 +1101,7 @@ kernel_reload_write(struct uio *uio)
 		if (kernel_image == NULL)
 			panic("kernel_reload failed second malloc");
 		for (c = 0; c < kernel_load_ofs; c += MAXPHYS)
-			memcpy( kernel_image + c, kernel_image_copy + c,
+			memcpy(kernel_image + c, kernel_image_copy + c,
 			    (kernel_load_ofs - c) > MAXPHYS ? MAXPHYS :
 			    kernel_load_ofs - c);
 #endif

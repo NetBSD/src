@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.47 2009/10/21 23:53:38 snj Exp $ */
+/*	$NetBSD: if_es.c,v 1.48 2009/10/26 19:16:54 cegger Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.47 2009/10/21 23:53:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.48 2009/10/26 19:16:54 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -178,7 +178,7 @@ esattach(struct device *parent, struct device *self, void *aux)
 	myaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
@@ -842,7 +842,7 @@ esstart(struct ifnet *ifp)
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
-			memcpy( (char *)pktbuf + i, mtod(m, void *), m->m_len);
+			memcpy((char *)pktbuf + i, mtod(m, void *), m->m_len);
 			i += m->m_len;
 		}
 

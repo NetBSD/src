@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.12 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: mfm.c,v 1.13 2009/10/26 19:16:58 cegger Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -516,7 +516,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			mfm_rxprepare();
 			/* copy from buf */
-			memcpy( (void *) 0x200D0000, cbuf, *rsize);
+			memcpy((void *) 0x200D0000, cbuf, *rsize);
 			res = mfm_command(DKC_CMD_WRITE_RX33);
 		} else {
 			creg.udc_rtcnt = UDC_RC_RX33READ;
@@ -528,7 +528,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			memset((void *) 0x200D0000, 0, *rsize);
 			res = mfm_command(DKC_CMD_READ_RX33);
 			/* copy to buf */
-			memcpy( cbuf, (void *) 0x200D0000, *rsize);
+			memcpy(cbuf, (void *) 0x200D0000, *rsize);
 		}
 
 		scount -= *rsize / 512;
@@ -607,7 +607,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			creg.udc_term = UDC_TC_HDD;
 			cmd = DKC_CMD_WRITE_HDD;
 
-			memcpy( (void *) 0x200D0000, cbuf, *rsize);
+			memcpy((void *) 0x200D0000, cbuf, *rsize);
 			res = mfm_command(cmd);
 		} else {
 			creg.udc_rtcnt = UDC_RC_HDD_READ;
@@ -617,7 +617,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 
 			memset((void *) 0x200D0000, 0, *rsize);
 			res = mfm_command(cmd);
-			memcpy( cbuf, (void *) 0x200D0000, *rsize);
+			memcpy(cbuf, (void *) 0x200D0000, *rsize);
 		}
 
 		scount -= *rsize / 512;

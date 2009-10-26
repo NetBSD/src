@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.56 2009/03/19 22:52:16 he Exp $ */
+/*	$NetBSD: vsbus.c,v 1.57 2009/10/26 19:16:58 cegger Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.56 2009/03/19 22:52:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.57 2009/10/26 19:16:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 	paddr_t pa;
 
 	if ((vaddr_t)to & KERNBASE) { /* In kernel space */
-		memcpy( to, from, len);
+		memcpy(to, from, len);
 		return;
 	}
 
@@ -329,7 +329,7 @@ vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 	paddr_t pa;
 
 	if ((vaddr_t)from & KERNBASE) { /* In kernel space */
-		memcpy( to, from, len);
+		memcpy(to, from, len);
 		return;
 	}
 

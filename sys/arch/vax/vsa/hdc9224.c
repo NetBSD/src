@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.48 2009/03/18 17:06:48 cegger Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.49 2009/10/26 19:16:58 cegger Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.48 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.49 2009/10/26 19:16:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,7 @@ rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
 	HDC_WCMD(DKC_CMD_READ_HDD|2);
 	while ((sc->sc_status & DKC_ST_INTPEND) == 0)
 		;
-	memcpy( &rd->sc_xbn, sc->sc_dmabase, sizeof(struct rdgeom));
+	memcpy(&rd->sc_xbn, sc->sc_dmabase, sizeof(struct rdgeom));
 }
 
 #ifdef RDDEBUG
