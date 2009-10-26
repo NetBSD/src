@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.23 2008/12/28 20:15:21 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.24 2009/10/26 02:53:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.23 2008/12/28 20:15:21 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.24 2009/10/26 02:53:15 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -298,7 +298,7 @@ ag_check(naddr	dst,
 	naddr xaddr;
 	int x;
 
-	NTOHL(dst);
+	dst = ntohl(dst);
 
 	/* Punt non-contiguous subnet masks.
 	 *
@@ -1112,12 +1112,17 @@ flush_kern(void)
 		if (rtm->rtm_flags & RTF_LLINFO)
 			continue;
 
-#if defined(RTF_CLONED) && defined(__bsdi__)
 		/* ignore cloned routes
 		 */
+#if defined(RTF_CLONED) && defined(__bsdi__)
 		if (rtm->rtm_flags & RTF_CLONED)
 			continue;
 #endif
+#if defined(RTF_WASCLONED) && defined(__FreeBSD__)
+		if (rtm->rtm_flags & RTF_WASCLONED)
+			continue;
+#endif
+ 
 
 		/* ignore multicast addresses
 		 */
@@ -1275,6 +1280,12 @@ read_rt(void)
 
 #if defined(RTF_CLONED) && defined(__bsdi__)
 		if (m.r.rtm.rtm_flags & RTF_CLONED) {
+			trace_act("ignore cloned %s", str);
+			continue;
+		}
+#endif
+#if defined(RTF_WASCLONED) && defined(__FreeBSD__)
+		if (m.r.rtm.rtm_flags & RTF_WASCLONED) {
 			trace_act("ignore cloned %s", str);
 			continue;
 		}
@@ -1740,6 +1751,8 @@ rtadd(naddr	dst,
 	rt->rt_poison_metric = HOPCNT_INFINITY;
 	rt->rt_seqno = update_seqno;
 
+	if (++total_routes == MAX_ROUTES)
+		msglog("have maximum (%d) routes", total_routes);
 	if (TRACEACTIONS)
 		trace_add_del("Add", rt);
 
@@ -1751,9 +1764,6 @@ rtadd(naddr	dst,
 		msglog("rnh_addaddr() failed for %s mask=%#lx",
 		       naddr_ntoa(dst), (u_long)mask);
 		free(rt);
-	} else {
-		if (++total_routes == MAX_ROUTES)
-			msglog("have maximum (%d) routes", total_routes);
 	}
 }
 

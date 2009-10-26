@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.24 2006/03/21 21:50:44 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.25 2009/10/26 02:53:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: output.c,v 1.24 2006/03/21 21:50:44 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.25 2009/10/26 02:53:15 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -144,7 +144,8 @@ output(enum output_type type,
 		flags = MSG_DONTROUTE;
 		break;
 	case OUT_MULTICAST:
-		if (ifp->int_if_flags & IFF_POINTOPOINT) {
+		if ((ifp->int_if_flags & IFF_POINTOPOINT)
+		    && !(ifp->int_if_flags & IFF_MULTICAST)) {
 			msg = "Send pt-to-pt";
 		} else if (ifp->int_state & IS_DUP) {
 			trace_act("abort multicast output via %s"
@@ -426,7 +427,7 @@ supply_out(struct ag_info *ag)
 		wb->n->n_metric = ((stopint || ag->ag_metric < 1)
 				   ? HOPCNT_INFINITY
 				   : ag->ag_metric);
-		HTONL(wb->n->n_metric);
+		wb->n->n_metric = htonl(wb->n->n_metric);
 		/* Any non-zero bits in the supposedly unused RIPv1 fields
 		 * cause the old `routed` to ignore the route.
 		 * That means the mask and so forth cannot be sent
@@ -869,7 +870,7 @@ rip_bcast(int flash)
 			dst.sin_addr.s_addr = ifp->int_brdaddr;
 
 			if (vers == RIPv2
-			    && !(ifp->int_state  & IS_NO_RIP_MCAST)) {
+			    && !(ifp->int_state & IS_NO_RIP_MCAST)) {
 				type = OUT_MULTICAST;
 			} else {
 				type = OUT_BROADCAST;
@@ -878,7 +879,14 @@ rip_bcast(int flash)
 		} else if (ifp->int_if_flags & IFF_POINTOPOINT) {
 			/* point-to-point hardware interface */
 			dst.sin_addr.s_addr = ifp->int_dstaddr;
-			type = OUT_UNICAST;
+			/* use multicast if the interface allows (e.g. GRE) */
+			if (vers == RIPv2
+			    && (ifp->int_if_flags & IFF_MULTICAST)
+			    && !(ifp->int_state & IS_NO_RIP_MCAST)) {
+				type = OUT_MULTICAST;
+			} else {
+				type = OUT_UNICAST;
+			}
 
 		} else if (ifp->int_state & IS_REMOTE) {
 			/* remote interface */
@@ -958,7 +966,7 @@ rip_query(void)
 			 */
 			if (buf.rip_vers == RIPv2
 			    && (ifp->int_if_flags & IFF_MULTICAST)
-			    && !(ifp->int_state  & IS_NO_RIP_MCAST)) {
+			    && !(ifp->int_state & IS_NO_RIP_MCAST)) {
 				type = OUT_MULTICAST;
 			} else {
 				type = OUT_BROADCAST;
@@ -967,7 +975,14 @@ rip_query(void)
 		} else if (ifp->int_if_flags & IFF_POINTOPOINT) {
 			/* point-to-point hardware interface */
 			dst.sin_addr.s_addr = ifp->int_dstaddr;
-			type = OUT_UNICAST;
+			/* use multicast if the interface allows (e.g. GRE) */
+			if (buf.rip_vers == RIPv2
+			    && (ifp->int_if_flags & IFF_MULTICAST)
+			    && !(ifp->int_state & IS_NO_RIP_MCAST)) {
+				type = OUT_MULTICAST;
+			} else {
+				type = OUT_UNICAST;
+			}
 
 		} else if (ifp->int_state & IS_REMOTE) {
 			/* remote interface */
