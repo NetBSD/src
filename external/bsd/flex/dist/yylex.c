@@ -1,4 +1,4 @@
-/*	$NetBSD: yylex.c,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
+/*	$NetBSD: yylex.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* yylex - scanner front-end for flex */
 
@@ -40,11 +40,11 @@
 
 /* yylex - scan for a regular expression token */
 
+extern char *yytext;
 int     yylex ()
 {
 	int     toktype;
 	static int beglin = false;
-	extern char *yytext;
 
 	if (eofseen)
 		toktype = EOF;
