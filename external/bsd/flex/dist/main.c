@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2009/10/26 00:26:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -119,13 +119,13 @@ struct yytbl_writer tableswr;
 char   *program_name = "flex";
 
 #ifndef SHORT_FILE_NAMES
-static char *outfile_template = "lex.%s.%s";
-static char *backing_name = "lex.backup";
-static char *tablesfile_template = "lex.%s.tables";
+static const char outfile_template[] = "lex.%s.%s";
+static const char backing_name[] = "lex.backup";
+static const char tablesfile_template[] = "lex.%s.tables";
 #else
-static char *outfile_template = "lex%s.%s";
-static char *backing_name = "lex.bck";
-static char *tablesfile_template = "lex%s.tbl";
+static const char outfile_template[] = "lex%s.%s";
+static const char backing_name[] = "lex.bck";
+static const char tablesfile_template[] = "lex%s.tbl";
 #endif
 
 #ifdef MS_DOS
@@ -296,7 +296,7 @@ void check_options ()
 		flexerror (_("Can't use -+ with -CF option"));
 
 	if (C_plus_plus && yytext_is_array) {
-		warn (_("%array incompatible with -+ option"));
+		lwarn (_("%array incompatible with -+ option"));
 		yytext_is_array = false;
 	}
 
