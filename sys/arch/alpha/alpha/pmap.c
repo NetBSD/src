@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.246 2009/10/24 04:56:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.247 2009/10/26 03:21:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2009/10/24 04:56:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2009/10/26 03:21:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -599,26 +599,6 @@ do {									\
 		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);	\
 	}								\
 } while (/*CONSTCOND*/0)
-
-#if defined(MULTIPROCESSOR)
-/*
- * PMAP_LEV1MAP_SHOOTDOWN:
- *
- *	"Shoot down" the level 1 map on other CPUs.
- */
-#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)				\
-do {									\
-	u_long __cpumask = (pmap)->pm_cpus & ~(1UL << (cpu_id));	\
-									\
-	if (__cpumask != 0) {						\
-		alpha_multicast_ipi(__cpumask,				\
-		    ALPHA_IPI_PMAP_REACTIVATE);				\
-		/* XXXSMP BARRIER OPERATION */				\
-	}								\
-} while (/*CONSTCOND*/0)
-#else
-#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)	/* nothing */
-#endif /* MULTIPROCESSOR */
 
 /*
  * PMAP_SET_NEEDISYNC:
