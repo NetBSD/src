@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179 2009/09/03 01:17:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.180 2009/10/26 01:18:19 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -14,7 +14,7 @@ SUBDIR= apply apropos asa at audio awk \
 	fsplit fstat ftp gcore genassym gencat getconf getent getopt gprof \
 	gzip head hexdump iconv id indent innetgr ipcrm ipcs join jot \
 	kdump ktrace ktruss lam last lastcomm ldd leave less \
-	lex locale locate lock logger login logname look lorder m4 \
+	locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
 	mkdep mkesdb mkfifo mklocale mkstr mktemp moduli msgc msgs \
 	nbperf netgroup netstat newgrp newsyslog nfsstat nice nl nohup nvi \
