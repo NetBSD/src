@@ -1,6 +1,6 @@
-.\" $NetBSD: flex.1,v 1.1 2009/10/26 00:49:04 christos Exp $
+.\" $NetBSD: flex.1,v 1.2 2009/10/26 01:37:21 christos Exp $
 .\"
-.TH FLEX 1 "April 1995" "Version 2.5"
+.TH FLEX 1 "February 2008" "Version 2.5"
 .SH NAME
 flex, lex \- fast lexical analyzer generator
 .SH SYNOPSIS
@@ -2162,7 +2162,7 @@ part of the scanner might look like:
 .I flex
 has the following options:
 .TP
-.B \-b
+.B \-b, --backup
 Generate backing-up information to
 .I lex.backup.
 This is a list of scanner states which require backing up
@@ -2185,7 +2185,7 @@ scanners need worry about this option.
 .B \-c
 is a do-nothing, deprecated option included for POSIX compliance.
 .TP
-.B \-d
+.B \-d, \-\-debug
 makes the generated scanner run in
 .I debug
 mode.
@@ -2207,7 +2207,7 @@ default rule, reaches the end of its input buffer (or encounters
 a NUL; at this point, the two look the same as far as the scanner's concerned),
 or reaches an end-of-file.
 .TP
-.B \-f
+.B \-f, \-\-full
 specifies
 .I fast scanner.
 No table compression is done and stdio is bypassed.
@@ -2216,7 +2216,7 @@ This option is equivalent to
 .B \-Cfr
 (see below).
 .TP
-.B \-h
+.B \-h, \-\-help
 generates a "help" summary of
 .I flex's
 options to
@@ -2228,7 +2228,7 @@ and
 are synonyms for
 .B \-h.
 .TP
-.B \-i
+.B \-i, \-\-case-insensitive
 instructs
 .I flex
 to generate a
@@ -2242,7 +2242,7 @@ The matched text given in
 .I yytext
 will have the preserved case (i.e., it will not be folded).
 .TP
-.B \-l
+.B \-l, \-\-lex\-compat
 turns on maximum compatibility with the original AT\*[Am]T
 .I lex
 implementation.
@@ -2266,7 +2266,7 @@ being #define'd in the generated scanner.
 is another do-nothing, deprecated option included only for
 POSIX compliance.
 .TP
-.B \-p
+.B \-p, \-\-perf\-report
 generates a performance report to stderr.
 The report consists of comments regarding features of the
 .I flex
@@ -2288,7 +2288,7 @@ and the
 .B \-I
 flag entail minor performance penalties.
 .TP
-.B \-s
+.B \-s, \-\-no\-default
 causes the
 .I default rule
 (that unmatched scanner input is echoed to
@@ -2299,14 +2299,14 @@ match any of its rules, it aborts with an error.
 This option is
 useful for finding holes in a scanner's rule set.
 .TP
-.B \-t
+.B \-t, \-\-stdout
 instructs
 .I flex
 to write the scanner it generates to standard output instead
 of
 .B lex.yy.c.
 .TP
-.B \-v
+.B \-v, \-\-verbose
 specifies that
 .I flex
 should write to
@@ -2321,10 +2321,10 @@ user, but the first line identifies the version of
 and the next line the flags used when generating the scanner, including
 those that are on by default.
 .TP
-.B \-w
+.B \-w, \-\-nowarn
 suppresses warning messages.
 .TP
-.B \-B
+.B \-B, \-\-batch
 instructs
 .I flex
 to generate a
@@ -2352,7 +2352,7 @@ options (discussed below), which turn on
 .B \-B
 automatically anyway.
 .TP
-.B \-F
+.B \-F, \-\-fast
 specifies that the
 .ul
 fast
@@ -2385,7 +2385,7 @@ This option is equivalent to
 It cannot be used with
 .B \-+.
 .TP
-.B \-I
+.B \-I, \-\-interactive
 instructs
 .I flex
 to generate an
@@ -2434,7 +2434,7 @@ be interactive by using
 .B \-B
 (see above).
 .TP
-.B \-L
+.B \-L, \-\-noline
 instructs
 .I flex
 not to generate
@@ -2453,7 +2453,7 @@ input file (if the errors are due to code in the input file), or
 fault -- you should report these sorts of errors to the email address
 given below).
 .TP
-.B \-T
+.B \-T, \-\-trace
 makes
 .I flex
 run in
@@ -2467,7 +2467,7 @@ finite automata.
 This option is mostly for use in maintaining
 .I flex.
 .TP
-.B \-V
+.B \-V, \-\-version
 prints the version number to
 .I stdout
 and exits.
@@ -2475,7 +2475,7 @@ and exits.
 is a synonym for
 .B \-V.
 .TP
-.B \-7
+.B \-7, \-\-7bit
 instructs
 .I flex
 to generate a 7-bit scanner, i.e., one which can only recognized 7-bit
@@ -2521,7 +2521,7 @@ discussed see below), flex still defaults to generating an 8-bit
 scanner, since usually with these compression options full 8-bit tables
 are not much more expensive than 7-bit tables.
 .TP
-.B \-8
+.B \-8, \-\-8bit
 instructs
 .I flex
 to generate an 8-bit scanner, i.e., one which can recognize 8-bit
@@ -2537,7 +2537,7 @@ See the discussion of
 above for flex's default behavior and the tradeoffs between 7-bit
 and 8-bit scanners.
 .TP
-.B \-+
+.B \-+, \-\-c++
 specifies that you want flex to generate a C++
 scanner class.
 See the section on Generating C++ Scanners below for
@@ -2547,7 +2547,7 @@ details.
 controls the degree of table compression and, more generally, trade-offs
 between small scanners and fast scanners.
 .IP
-.B \-Ca
+.B \-Ca, \-\-align
 ("align") instructs flex to trade off larger tables in the
 generated scanner for faster performance because the elements of
 the tables are better aligned for memory access and computation.
@@ -2557,7 +2557,7 @@ than with smaller-sized units such as shortwords.
 This option can
 double the size of the tables used by your scanner.
 .IP
-.B \-Ce
+.B \-Ce, \-\-ecs
 directs
 .I flex
 to construct
@@ -2592,7 +2592,7 @@ should be used.
 This option cannot be used with
 .B \-+.
 .IP
-.B \-Cm
+.B \-Cm, \-\-meta-ecs
 directs
 .I flex
 to construct
@@ -2604,7 +2604,7 @@ classes are often a big win when using compressed tables, but they
 have a moderate performance impact (one or two "if" tests and one
 array look-up per character scanned).
 .IP
-.B \-Cr
+.B \-Cr, \-\-read
 causes the generated scanner to
 .I bypass
 use of the standard I/O library (stdio) for input.
@@ -2679,7 +2679,7 @@ compression.
 is often a good compromise between speed and size for production
 scanners.
 .TP
-.B \-ooutput
+.B \-ooutput, \-\-outputfile=FILE
 directs flex to write the scanner to the file
 .B output
 instead of
@@ -2697,7 +2697,7 @@ directives (see the
 option above) refer to the file
 .B output.
 .TP
-.B \-Pprefix
+.B \-Pprefix, \-\-prefix=STRING
 changes the default
 .I "yy"
 prefix used by
@@ -2758,13 +2758,54 @@ as linking with
 .B \-lfl
 no longer provides one for you by default.
 .TP
-.B \-Sskeleton_file
+.B \-Sskeleton_file, \-\-skel=FILE
 overrides the default skeleton file from which
 .I flex
 constructs its scanners.
 You'll never need this option unless you are doing
 .I flex
 maintenance or development.
+.TP
+.B \-X, \-\-posix\-compat
+maximal compatibility with POSIX lex.
+.TP
+.B \-\-yylineno
+track line count in yylineno.
+.TP
+.B \-\-yyclass=NAME
+name of C++ class.
+.TP
+.B \-\-header\-file=FILE
+reate a C header file in addition to the scanner.
+.TP
+.B \-\-tables\-file[=FILE]
+write tables to FILE.
+.TP
+.B \\-Dmacro[=defn]
+#define macro defn (default defn is '1').
+.TP
+.B \-R,  \-\-reentrant
+generate a reentrant C scanner
+.TP
+.B \-\-bison\-bridge
+scanner for bison pure parser.
+.TP
+.B \-\-bison\-locations
+include yylloc support.
+.TP
+.B \-\-stdinit
+initialize yyin/yyout to stdin/stdout.
+.TP
+.B \-\-noansi\-definitions old\-style function definitions.
+.TP
+.B \-\-noansi\-prototypes
+empty parameter list in prototypes.
+.TP
+.B \-\-nounistd
+do not include \*[Lt]unistd.h\*[Gt].
+.TP
+.B \-\-noFUNCTION
+do not generate a particular FUNCTION.
 .PP
 .I flex
 also provides a mechanism for controlling options within the
