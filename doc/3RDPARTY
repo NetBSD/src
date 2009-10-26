@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.727 2009/10/26 02:51:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.728 2009/10/26 21:35:51 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -607,6 +607,18 @@ Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
 under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
+
+Package:	m4
+Version:	20091026
+Current Vers:	20091026
+Maintainer:	OpenBSD
+Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
+Home Page:	http://openbsd.org
+Mailing List:	
+License:	BSD 3-clause like (dns-sd)
+Responsible:	christos
+Notes:
+Imported in to /usr/src/usr.bin/m4; uses libc's ohash, and strtonum
 
 Package:	mDNSResponder
 Version:	212.1
