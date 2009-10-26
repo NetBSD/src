@@ -1,5 +1,5 @@
-/*	$NetBSD: mdef.h,v 1.12 2003/08/07 11:14:33 agc Exp $	*/
-/*	$OpenBSD: mdef.h,v 1.21 2001/09/27 11:40:33 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
+/*	$NetBSD: mdef.h,v 1.13 2009/10/26 21:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,12 @@
  *
  *	@(#)mdef.h	8.1 (Berkeley) 6/6/93
  */
+
+#ifdef __GNUC__
+# define UNUSED	__attribute__((__unused__))
+#else
+# define UNUSED
+#endif
 
 #define MACRTYPE        1
 #define DEFITYPE        2
@@ -78,7 +84,9 @@
 #define ESYSCMDTYPE	41
 #define TRACEONTYPE	42
 #define TRACEOFFTYPE	43
+#define FORMATTYPE	44
 
+#define BUILTIN_MARKER	"__builtin_"
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define RECDEF		256	/* Pure recursive def, don't expand it */
@@ -129,21 +137,20 @@
  
 typedef struct ndblock *ndptr;
  
-struct ndblock {		/* hastable structure         */
-	char		*name;	/* entry name..               */
+struct macro_definition {
+	struct macro_definition *next;
 	char		*defn;	/* definition..               */
 	unsigned int	type;	/* type of the entry..        */
-	unsigned int 	hv;	/* hash function value..      */
-	ndptr		nxtptr;	/* link to next entry..       */
-};
- 
-#define nil     ((ndptr) 0)
- 
-struct keyblk {
-	const char	*knam;	/* keyword name */
-	int		ktyp;	/* keyword type */
 };
 
+
+struct ndblock {			/* hashtable structure         */
+	unsigned int 		builtin_type;
+	unsigned int		trace_flags;
+	struct macro_definition *d;
+	char		name[1];	/* entry name..               */
+};
+ 
 typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
 	char 	*sstr;		/* string entry */
@@ -153,6 +160,7 @@ struct input_file {
 	FILE 		*file;
 	char 		*name;
 	unsigned long 	lineno;
+	unsigned long   synch_lineno;	/* used for -s */
 	int 		c;
 };
 
@@ -168,7 +176,7 @@ struct input_file {
 #define gpbc() 	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
 #define pushf(x) 			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX) 	\
 			enlarge_stack();\
 		mstack[sp].sfra = (x);	\
 		sstack[sp] = 0; \
@@ -176,7 +184,7 @@ struct input_file {
 
 #define pushs(x) 			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX) 	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 1; \
@@ -184,7 +192,7 @@ struct input_file {
 
 #define pushs1(x) 			\
 	do {				\
-		if (++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX) 	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 0; \
@@ -214,7 +222,8 @@ struct input_file {
  *
  */
 #define PARLEV  (mstack[fp].sfra)
-#define CALTYP  (mstack[fp-1].sfra)
+#define CALTYP  (mstack[fp-2].sfra)
+#define TRACESTATUS (mstack[fp-1].sfra)
 #define PREVEP	(mstack[fp+3].sstr)
-#define PREVSP	(fp-3)
-#define PREVFP	(mstack[fp-2].sfra)
+#define PREVSP	(fp-4)
+#define PREVFP	(mstack[fp-3].sfra)
