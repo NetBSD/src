@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.30 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: input.c,v 1.31 2009/10/26 02:53:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: input.c,v 1.30 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: input.c,v 1.31 2009/10/26 02:53:15 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -279,7 +279,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		clr_ws_buf(&v12buf, ap);
 
 		do {
-			NTOHL(n->n_metric);
+			n->n_metric = ntohl(n->n_metric);
 
 			/* A single entry with family RIP_AF_UNSPEC and
 			 * metric HOPCNT_INFINITY means "all routes".
@@ -424,7 +424,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 					    v12buf.n->n_nhop = rt->rt_gate;
 				}
 			}
-			HTONL(v12buf.n->n_metric);
+			v12buf.n->n_metric = htonl(v12buf.n->n_metric);
 
 			/* Stop paying attention if we fill the output buffer.
 			 */
@@ -604,7 +604,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			if (n->n_family == RIP_AF_AUTH)
 				continue;
 
-			NTOHL(n->n_metric);
+			n->n_metric = ntohl(n->n_metric);
 			dst = n->n_dst;
 			if (n->n_family != RIP_AF_INET
 			    && (n->n_family != RIP_AF_UNSPEC
@@ -762,7 +762,8 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 				input_route(dst, mask, &new, n);
 				if (++j > i)
 					break;
-				dst = htonl(ntohl(dst) + ddst_h);
+				dst = ntohl(dst) + ddst_h;
+				dst = htonl(dst);
 			}
 		} while (++n < lim);
 		break;
