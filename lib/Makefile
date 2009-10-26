@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2009/09/03 15:35:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.144 2009/10/26 01:18:46 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -6,10 +6,12 @@
 SUBDIR=	csu libc .WAIT libarch \
 	libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
-	libcurses libevent libintl libkvm libl libm \
+	libcurses libevent libintl libkvm libm \
 	libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 	libterm libusbhid libutil libwrap liby libz
+
+SUBDIR+=../external/bsd/flex/lib
 
 # libform and libmenu need libcurses
 SUBDIR+=	.WAIT libform libmenu 
