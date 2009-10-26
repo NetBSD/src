@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.3 2009/10/26 19:23:33 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -508,7 +508,9 @@ void gen_find_action ()
 		indent_puts ("yy_current_state = *--YY_G(yy_state_ptr);");
 		indent_puts ("YY_G(yy_lp) = yy_accept[yy_current_state];");
 
+		outn ("#ifdef YY_USES_REJECT");
 		outn ("find_rule: /* we branch to this label when backing up */");
+		outn ("#endif");
 
 		indent_puts
 			("for ( ; ; ) /* until we find what rule we matched */");
