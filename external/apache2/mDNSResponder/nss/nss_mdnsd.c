@@ -1,4 +1,4 @@
-/*	$NetBSD: nss_mdnsd.c,v 1.1 2009/10/25 00:17:06 tsarna Exp $	*/
+/*	$NetBSD: nss_mdnsd.c,v 1.2 2009/10/26 00:46:19 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -85,14 +85,9 @@ typedef struct addrinfo_ctx {
 
 #define HCTX_BUFLEFT(c) (sizeof((c)->buf) - ((c)->next - (c)->buf))
 
-typedef struct search_domain {
-    const char *name;
-    bool        enabled;
-} search_domain;
-
 typedef struct search_iter {
     const char     *name;
-    search_domain  *next_search;
+    char           **next_search;
     size_t          baselen;
     bool            abs_first;
     bool            abs_last;
@@ -102,7 +97,7 @@ typedef struct search_iter {
 static hostent_ctx h_ctx;
 static DNSServiceFlags svc_flags = 0;
 static int ndots = 1, timeout = 1000;
-static search_domain *search_domains, *no_search;
+static char **search_domains, **no_search;
 
 ns_mtab *nss_module_register(const char *, u_int *, nss_module_unregister_fn *);
 static int load_config(res_state);
@@ -136,6 +131,7 @@ static char *_mdns_rdata2name(const unsigned char *, uint16_t,
 
 void search_init(search_iter *, const char *);
 const char *search_next(search_iter *);
+bool searchable_domain(char *);
 
 
 
@@ -153,8 +149,6 @@ nss_module_register(const char *source, u_int *nelems,
 {
     res_state res;
 
-    UNUSED(unreg);
-    
     *nelems = sizeof(mtab) / sizeof(mtab[0]);
     *unreg = NULL;
 
@@ -179,16 +173,27 @@ load_config(res_state res)
     int count = 0;
     char **sd;
     
-    ndots = res->ndots;
-    timeout = res->retrans * 1000; /* retrans in sec to timeout in msec */
+    /* free old search list, if any */
 
+    if ((no_search = search_domains)) {
+        for (; *no_search; no_search++) {
+            free(*no_search);
+        }
+        
+        free(search_domains);
+    }
+
+    /* new search list */
+    
     sd = res->dnsrch;
     while (*sd) {
-        count++;
+        if (searchable_domain(*sd)) {
+            count++;
+        }
         sd++;
     }
     
-    search_domains = malloc(sizeof(search_domain) * (count + 1));
+    search_domains = calloc(sizeof(char *), count + 1);
     if (!search_domains) {
         return -1;
     }
@@ -196,15 +201,24 @@ load_config(res_state res)
     sd = res->dnsrch;
     no_search = search_domains;
     while (*sd) {
-        no_search->name = *sd;
-        no_search->enabled =
-            (svc_flags & kDNSServiceFlagsForceMulticast) ? true : true;
-        no_search++;
+        if (searchable_domain(*sd)) {
+            *no_search = strdup(*sd);
+            no_search++;
+        }
         sd++;
     }
 
-    /* terminate list */
-    no_search->name = NULL;
+    /* retrans in sec to timeout in msec */
+    timeout = res->retrans * 1000;
+
+    if (svc_flags & kDNSServiceFlagsForceMulticast) {
+        ndots = 1;
+        if (timeout > 2000) {
+            timeout = 2000;
+        }
+    } else {
+        ndots = res->ndots;
+    }
 }
 
 
@@ -243,6 +257,14 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
         return NS_UNAVAIL;
     }
 
+    search_init(&iter, name);
+    sname = search_next(&iter);
+
+    if (!sname) {
+        h_errno = HOST_NOT_FOUND;
+        return NS_NOTFOUND;
+    }
+
     /* use one connection for all searches */
     if (DNSServiceCreateConnection(&sdRef)) {
         h_errno = NETDB_INTERNAL;
@@ -250,9 +272,7 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
     }
     
     _mdns_addrinfo_init(&ctx, pai);
-    search_init(&iter, name);
-    sname = search_next(&iter);
-    
+
     while (sname && (err != NS_SUCCESS)) {
         err = _mdns_getaddrinfo_abs(sname, proto, sdRef, &ctx);
         if (err != NS_SUCCESS) {
@@ -279,7 +299,7 @@ _mdns_getaddrinfo_abs(const char *name, DNSServiceProtocol proto,
 
     err = DNSServiceGetAddrInfo(
         &sdRef,
-        svc_flags,
+        svc_flags | kDNSServiceFlagsReturnIntermediates,
         kDNSServiceInterfaceIndexAny,
         proto,
         name,
@@ -291,7 +311,6 @@ _mdns_getaddrinfo_abs(const char *name, DNSServiceProtocol proto,
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
-    
     _mdns_eventloop(sdRef, (void *)ctx);
 
     DNSServiceRefDeallocate(sdRef);
@@ -324,12 +343,28 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
 
     switch (af) {
     case AF_INET:
+        /* if mcast-only don't bother for non-LinkLocal addrs) */
+        if (svc_flags & kDNSServiceFlagsForceMulticast) {
+            if ((addr[0] != 169) || (addr[1] != 254)) {
+                h_errno = HOST_NOT_FOUND;
+                return NS_NOTFOUND;
+            }
+        }
+
         (void)snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
             (addr[3] & 0xff), (addr[2] & 0xff),
             (addr[1] & 0xff), (addr[0] & 0xff));
         break;
     
     case AF_INET6:
+        /* if mcast-only don't bother for non-LinkLocal addrs) */
+        if (svc_flags & kDNSServiceFlagsForceMulticast) {
+            if ((addr[0] != 0xfe) || ((addr[1] & 0xc0) != 0x80)) {
+                h_errno = HOST_NOT_FOUND;
+                return NS_NOTFOUND;
+            }
+        }
+        
         qp = qbuf;
         ep = qbuf + sizeof(qbuf) - 1;
         for (n = IN6ADDRSZ - 1; n >= 0; n--) {
@@ -417,7 +452,15 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
         break;
 
     default:
-        h_errno = NETDB_INTERNAL;
+        h_errno = NO_RECOVERY;
+        return NS_UNAVAIL;
+    }
+
+    search_init(&iter, name);
+    sname = search_next(&iter);
+
+    if (!sname) {
+        h_errno = HOST_NOT_FOUND;
         return NS_NOTFOUND;
     }
 
@@ -428,9 +471,7 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
     }
     
     _mdns_hostent_init(&h_ctx, af, addrlen);
-    search_init(&iter, name);
-    sname = search_next(&iter);
-    
+
     while (sname && (err != NS_SUCCESS)) {
         err = _mdns_gethtbyname_abs(sname, rrtype, sdRef);
         if (err != NS_SUCCESS) {
@@ -458,7 +499,7 @@ _mdns_gethtbyname_abs(const char *name, int rrtype, DNSServiceRef sdRef)
 
     err = DNSServiceQueryRecord(
         &sdRef,
-        svc_flags,
+        svc_flags | kDNSServiceFlagsReturnIntermediates,
         kDNSServiceInterfaceIndexAny,
         name,
         rrtype,
@@ -642,7 +683,6 @@ _mdns_addrinfo_cb(
 
     UNUSED(sdRef);
     UNUSED(interfaceIndex);
-    UNUSED(hostname);
     UNUSED(ttl);
 
     if (errorCode == kDNSServiceErr_NoError) {
@@ -723,6 +763,8 @@ _mdns_hostent_cb(
             }
             break;
         }
+    } else if (errorCode == kDNSServiceErr_NoSuchRecord) {
+        ctx->cb_ctx.done = true;
     }
 }
 
@@ -820,35 +862,52 @@ _mdns_rdata2name(const unsigned char *rdata, uint16_t rdlen, char *buf, size_t b
 void
 search_init(search_iter *iter, const char *name)
 {
-    const char *c = name;
-    bool enddot = false;
-    int dots = 0;
+    const char *c = name, *cmp;
+    int dots = 0, enddot = 0;
+    size_t len, cl;
 
     iter->name = name;
     iter->baselen = 0;
+    iter->abs_first = iter->abs_last = false;
+    iter->next_search = search_domains;
         
     while (*c) {
         if (*c == '.') {
             dots++;
-            enddot = true;
+            enddot = 1;
         } else {
-            enddot = false;
+            enddot = 0;
         }
         c++;
     } 
     
-    if (dots >= ndots) {
-        iter->abs_first = true;
-        iter->abs_last = false;
+    if (svc_flags & kDNSServiceFlagsForceMulticast) {
+        if (dots) {
+            iter->next_search = no_search;
+            if ((dots - enddot) == 1) {
+                len = strlen(iter->name);
+                cl = strlen(".local") + enddot;
+                if (len > cl) {
+                    cmp = enddot ? ".local." : ".local";
+                    c = iter->name + len - cl;
+                    
+                    if (!strcasecmp(c, cmp)) {
+                        iter->abs_first = true;
+                    }
+                }
+            }
+        }
     } else {
-        iter->abs_first = false;
-        iter->abs_last = true;
-    }
+        if (dots >= ndots) {
+            iter->abs_first = true;
+        } else {
+            iter->abs_last = true;
+        }
     
-    if (enddot) {
-        iter->next_search = no_search;
-    } else {
-        iter->next_search = search_domains;
+        if (enddot) {
+            /* absolute; don't search */
+            iter->next_search = no_search;
+        }
     }
 }
 
@@ -866,34 +925,30 @@ search_next(search_iter *iter)
         return iter->name;
     }
     
-    while (iter->next_search->name) {
-        if (iter->next_search->enabled) {
-            if (!iter->baselen) {
-                iter->baselen = strlcpy(iter->buf, iter->name, sizeof(iter->buf));
-                if (iter->baselen >= sizeof(iter->buf) - 1) {
-                    /* original is too long, don't try any search domains */
-                    iter->next_search = no_search;
-                    break;
-                }
-                
-                iter->buf[iter->baselen++] = '.';
+    while (*(iter->next_search)) {
+        if (!iter->baselen) {
+            iter->baselen = strlcpy(iter->buf, iter->name, sizeof(iter->buf));
+            if (iter->baselen >= sizeof(iter->buf) - 1) {
+                /* original is too long, don't try any search domains */
+                iter->next_search = no_search;
+                break;
             }
-            
-            len = strlcpy(&(iter->buf[iter->baselen]),
-                iter->next_search->name,
-                sizeof(iter->buf) - iter->baselen);
-                
-            iter->next_search++;
 
-            if (len >= sizeof(iter->buf) - iter->baselen) {
-                /* result would be too long */
-                continue;
-            }
-            
-            return iter->buf;
-        } else {
-            iter->next_search++;
+            iter->buf[iter->baselen++] = '.';
         }
+
+        len = strlcpy(&(iter->buf[iter->baselen]),
+            *(iter->next_search),
+            sizeof(iter->buf) - iter->baselen);
+
+        iter->next_search++;
+
+        if (len >= sizeof(iter->buf) - iter->baselen) {
+            /* result was too long */
+            continue;
+        }
+
+        return iter->buf;
     }
     
     if (iter->abs_last) {
@@ -902,4 +957,25 @@ search_next(search_iter *iter)
     }
     
     return NULL;
+}
+
+
+
+/*
+ * Is domain appropriate to be in the domain search list?
+ * For mdnsd, take everything. For multicast_dns, only "local"
+ * if present.
+ */
+bool
+searchable_domain(char *d)
+{
+    if (!(svc_flags & kDNSServiceFlagsForceMulticast)) {
+        return true;
+    }
+    
+    if (!strcasecmp(d, "local") || !strcasecmp(d, "local.")) {
+        return true;
+    }
+    
+    return false;
 }
