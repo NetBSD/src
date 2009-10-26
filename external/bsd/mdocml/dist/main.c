@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.c,v 1.46 2009/10/13 10:57:25 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.49 2009/10/26 08:42:37 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,7 @@
 
 #ifdef __linux__
 extern	int		  getsubopt(char **, char * const *, char **);
+extern	size_t	  	  strlcat(char *, const char *, size_t);
 # ifndef __dead
 #  define __dead __attribute__((__noreturn__))
 # endif
@@ -88,7 +89,7 @@ struct	curparse {
 	out_man	  	  outman;
 	out_free	  outfree;
 	void		 *outdata;
-	char		 *outopts;
+	char		  outopts[BUFSIZ];
 };
 
 static	int		  foptions(int *, char *);
@@ -124,7 +125,7 @@ main(int argc, char *argv[])
 	curp.outtype = OUTT_ASCII;
 
 	/* LINTED */
-	while (-1 != (c = getopt(argc, argv, "f:m:o:T:VW:")))
+	while (-1 != (c = getopt(argc, argv, "f:m:O:T:VW:")))
 		switch (c) {
 		case ('f'):
 			if ( ! foptions(&curp.fflags, optarg))
@@ -134,8 +135,9 @@ main(int argc, char *argv[])
 			if ( ! moptions(&curp.inttype, optarg))
 				return(EXIT_FAILURE);
 			break;
-		case ('o'):
-			curp.outopts = optarg;
+		case ('O'):
+			(void)strlcat(curp.outopts, optarg, BUFSIZ);
+			(void)strlcat(curp.outopts, ",", BUFSIZ);
 			break;
 		case ('T'):
 			if ( ! toptions(&curp.outtype, optarg))
@@ -221,8 +223,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s [-V] [-foption...] "
-			"[-mformat] [-Toutput] [-Werr...]\n", 
-			__progname);
+			"[-mformat] [-Ooption] [-Toutput] "
+			"[-Werr...]\n", __progname);
 	exit(EXIT_FAILURE);
 }
 

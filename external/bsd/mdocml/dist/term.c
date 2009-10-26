@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.c,v 1.108 2009/10/19 15:18:30 kristaps Exp $ */
+/*	$Vendor-Id: term.c,v 1.112 2009/10/26 09:06:03 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -130,7 +130,7 @@ void
 term_flushln(struct termp *p)
 {
 	int		 i, j;
-	size_t		 vbl, vsz, vis, maxvis, mmax, bp, os;
+	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
 	static int	 overstep = 0;
 
 	/*
@@ -143,9 +143,6 @@ term_flushln(struct termp *p)
 	assert(p->offset < p->rmargin);
 	assert((int)(p->rmargin - p->offset) - overstep > 0);
 
-	/* Save the overstep. */
-	os = (size_t)overstep;
-
 	maxvis = /* LINTED */
 		p->rmargin - p->offset - overstep;
 	mmax = /* LINTED */
@@ -153,7 +150,6 @@ term_flushln(struct termp *p)
 
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
 	vis = 0;
-	overstep = 0;
 
 	/*
 	 * If in the standard case (left-justified), then begin with our
@@ -208,8 +204,9 @@ term_flushln(struct termp *p)
 				vis = 0;
 			}
 			/* Remove the overstep width. */
-			bp += os;
-			os = 0;
+			bp += (int)/* LINTED */
+				overstep;
+			overstep = 0;
 		} else {
 			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
@@ -226,7 +223,9 @@ term_flushln(struct termp *p)
 		}
 		vis += vsz;
 	}
+
 	p->col = 0;
+	overstep = 0;
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
 		putchar('\n');
@@ -548,12 +547,12 @@ encode(struct termp *p, char c)
 {
 	
 	if (' ' != c) {
-		if (p->bold) {
-			buffer(p, c);
-			buffer(p, 8);
-		}
 		if (p->under) {
 			buffer(p, '_');
+			buffer(p, 8);
+		}
+		if (p->bold) {
+			buffer(p, c);
 			buffer(p, 8);
 		}
 	}

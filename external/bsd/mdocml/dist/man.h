@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.h,v 1.21 2009/10/07 15:03:21 kristaps Exp $ */
+/*	$Vendor-Id: man.h,v 1.22 2009/10/24 05:45:04 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -50,7 +50,8 @@
 #define	MAN_RS		 28
 #define	MAN_DT		 29
 #define	MAN_UC		 30
-#define	MAN_MAX	 	 31
+#define	MAN_PD		 31
+#define	MAN_MAX	 	 32
 
 enum	man_type {
 	MAN_TEXT,
