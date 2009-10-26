@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 2009/03/18 17:06:47 cegger Exp $ */
+/*	$NetBSD: boot.c,v 1.30 2009/10/26 19:16:58 cegger Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -280,7 +280,7 @@ loadpcs(void)
 		if (*cp == ')' || *cp == ':')
 			break;
 	if (*cp) {
-		memcpy( pcs, line, 99);
+		memcpy(pcs, line, 99);
 		pcs[99] = 0;
 		i = cp - line + 1;
 	} else

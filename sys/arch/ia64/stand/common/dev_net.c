@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.6 2009/03/18 17:06:45 cegger Exp $
+ * $NetBSD: dev_net.c,v 1.7 2009/10/26 19:16:56 cegger Exp $
  */
 
 /*-
@@ -273,8 +273,8 @@ net_getparams(int sock)
 	    rootpath[i++] = '\0';
 	    if (inet_addr(&rootpath[0]) != INADDR_NONE)
 		    rootip.s_addr = inet_addr(&rootpath[0]);
-	    memcpy( &temp[0], &rootpath[i], strlen(&rootpath[i])+1);
-	    memcpy( &rootpath[0], &temp[0], strlen(&rootpath[i])+1);	    
+	    memcpy(&temp[0], &rootpath[i], strlen(&rootpath[i])+1);
+	    memcpy(&rootpath[0], &temp[0], strlen(&rootpath[i])+1);	    
     }
     printf("net_open: server addr: %s\n", inet_ntoa(rootip));
     printf("net_open: server path: %s\n", rootpath);	    

@@ -1,4 +1,4 @@
-/*	$NetBSD: interp_parse.c,v 1.4 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: interp_parse.c,v 1.5 2009/10/26 19:16:56 cegger Exp $	*/
 
 /*-
  * Redistribution and use in source and binary forms, with or without
@@ -169,7 +169,7 @@ parse(int *argc, char ***argv, char *str)
     args[ac] = NULL;
     *argc = ac;
     *argv = (char **)alloc((sizeof(char *) * ac + 1));
-    memcpy( *argv, args, sizeof(char *) * ac + 1);
+    memcpy(*argv, args, sizeof(char *) * ac + 1);
     free(buf);
     free(copy);
     return 0;

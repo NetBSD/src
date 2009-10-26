@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.5 2009/03/18 17:06:42 cegger Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.6 2009/10/26 19:16:55 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.5 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.6 2009/10/26 19:16:55 cegger Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -1394,7 +1394,7 @@ ixpnpe_recvmsg_locked(struct ixpnpe_softc *sc, uint32_t msg[2])
 		delay(1000);	/* wait 1ms (is it ok?)*/
 #endif
 	}
-	memcpy( msg, sc->sc_msg, sizeof(sc->sc_msg));
+	memcpy(msg, sc->sc_msg, sizeof(sc->sc_msg));
 	/* NB: sc_msgwaiting != 1 means the ack fetch failed */
 	return sc->sc_msgwaiting != 1 ? EIO : 0;
 }
@@ -1443,7 +1443,7 @@ ixpnpe_recvmsg(struct ixpnpe_softc *sc, uint32_t msg[2])
 
     simple_lock(&sc->sc_lock);
     if (sc->sc_msgwaiting)
-	memcpy( msg, sc->sc_msg, sizeof(sc->sc_msg));
+	memcpy(msg, sc->sc_msg, sizeof(sc->sc_msg));
     /* NB: sc_msgwaiting != 1 means the ack fetch failed */
     error = sc->sc_msgwaiting != 1 ? EIO : 0;
     simple_unlock(&sc->sc_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.23 2009/03/18 17:06:47 cegger Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.24 2009/10/26 19:16:57 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -515,10 +515,10 @@ open_again:
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
-		memcpy( &file_system[nfsys++], &file_system_ufs, sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_ufs, sizeof file_system[0]);
 #endif
 #ifdef SPARC_BOOT_CD9660
-		memcpy( &file_system[nfsys++], &file_system_cd9660,
+		memcpy(&file_system[nfsys++], &file_system_cd9660,
 		    sizeof file_system[0]);
 #endif
 		DPRINTF(("devopen: return 0\n"));
@@ -535,13 +535,13 @@ open_again:
 
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;
-			memcpy( &file_system[0], &file_system_tftp, sizeof file_system[0]);
+			memcpy(&file_system[0], &file_system_tftp, sizeof file_system[0]);
 			if (net_tftp_bootp(&of->f_devdata)) {
 				net_close(&ofdev);
 				goto bad;
 			}
 		} else {
-			memcpy( &file_system[0], &file_system_nfs, sizeof file_system[0]);
+			memcpy(&file_system[0], &file_system_nfs, sizeof file_system[0]);
 			if (error = net_mountroot()) {
 				net_close(&ofdev);
 				goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.45 2009/03/18 17:06:46 cegger Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.46 2009/10/26 19:16:57 cegger Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.45 2009/03/18 17:06:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.46 2009/10/26 19:16:57 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -119,7 +119,7 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
 	DPRINTF(("%s: mb8795_config()\n",sc->sc_dev.dv_xname));
 
 	/* Initialize ifnet structure. */
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = mb8795_start;
 	ifp->if_ioctl = mb8795_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcache.c,v 1.4 2009/03/18 17:06:45 cegger Exp $	*/
+/*	$NetBSD: bcache.c,v 1.5 2009/10/26 19:16:56 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -285,7 +285,7 @@ bcache_insert(void *buf, daddr_t blkno)
     }
     
     DEBUG("insert blk %d -> %d @ %d # %d", blkno, cand, now, bcache_bcount);
-    memcpy( bcache_data + (bcache_blksize * cand), buf, bcache_blksize);
+    memcpy(bcache_data + (bcache_blksize * cand), buf, bcache_blksize);
     bcache_ctl[cand].bc_blkno = blkno;
     bcache_ctl[cand].bc_stamp = now;
     bcache_ctl[cand].bc_count = bcache_bcount++;
@@ -307,7 +307,7 @@ bcache_lookup(void *buf, daddr_t blkno)
     for (i = 0; i < bcache_nblks; i++)
 	/* cache hit? */
 	if ((bcache_ctl[i].bc_blkno == blkno) && ((bcache_ctl[i].bc_stamp + BCACHE_TIMEOUT) >= now)) {
-	    memcpy( buf, bcache_data + (bcache_blksize * i), bcache_blksize);
+	    memcpy(buf, bcache_data + (bcache_blksize * i), bcache_blksize);
 	    DEBUG("hit blk %d <- %d (now %d then %d)", blkno, i, now, bcache_ctl[i].bc_stamp);
 	    return(0);
 	}
