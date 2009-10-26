@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.24 2005/06/27 01:00:06 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.25 2009/10/26 02:53:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -643,7 +643,8 @@ void rt_xaddrs(struct rt_addrinfo *, struct sockaddr *, struct sockaddr *,
 extern naddr	std_mask(naddr);
 extern naddr	ripv1_mask_net(naddr, struct interface *);
 extern naddr	ripv1_mask_host(naddr,struct interface *);
-#define		on_net(a,net,mask) (((ntohl(a) ^ (net)) & (mask)) == 0)
+#define		on_net_h(a,net,mask) ((((a) ^ (net)) & (mask)) == 0)
+#define		on_net(a,net,mask) on_net_h(ntohl(a),net,mask)
 extern int	check_dst(naddr);
 extern struct interface *check_dup(naddr, naddr, naddr, int);
 extern int	check_remote(struct interface *);

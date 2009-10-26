@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2009/10/26 02:53:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,6 +38,9 @@
 #ifdef sgi
 #include "math.h"
 #endif
+#if defined(__NetBSD__)
+#include <util.h>
+#endif
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -45,16 +48,12 @@
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.40 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2009/10/26 02:53:15 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
 __RCSID("Revision: 2.27 ");
 #ident "Revision: 2.27 "
-#endif
-
-#if defined(__NetBSD__)
-#include <util.h>
 #endif
 
 pid_t	mypid;
@@ -225,7 +224,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.28");
+			msglog("version 2.32");
 			break;
 
 		default:
