@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.406 2009/10/06 21:07:05 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.407 2009/10/26 19:03:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.406 2009/10/06 21:07:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.407 2009/10/26 19:03:17 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -378,7 +378,7 @@ main(void)
 	/* Initialize resource management. */
 	resource_init();
 
-	/* Create process 0 (the swapper). */
+	/* Create process 0. */
 	proc0_init();
 
 	/* Disable preemption during boot. */
