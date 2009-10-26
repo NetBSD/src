@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1312 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1313 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -429,3 +429,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.1.3. [roy 20091025]
 	flex(1): Import flex-2.5.35 [christos 20091025]
 	routed(8): Merge 2.32 changes [christos 20091025]
+	m4(1): Import the OpenBSD one since it implements features from gm4
+		that the new flex wants [christos 20091026]
