@@ -1,5 +1,5 @@
-/*	$NetBSD: look.c,v 1.10 2004/06/20 22:20:15 jmc Exp $	*/
-/*	$OpenBSD: look.c,v 1.8 2001/09/17 08:11:13 espie Exp $	*/
+/*	$NetBSD: look.c,v 1.11 2009/10/26 21:11:28 christos Exp $	*/
+/*	$OpenBSD: look.c,v 1.21 2009/10/14 17:23:17 sthen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,125 +33,255 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: look.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
-#endif
-#endif /* not lint */
-
 /*
  * look.c
  * Facility: m4 macro processor
  * by: oz
  */
-
-#include <sys/types.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: look.c,v 1.11 2009/10/26 21:11:28 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <ohash.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
 
-static void freent __P((ndptr));
+static void *hash_alloc(size_t, void *);
+static void hash_free(void *, size_t, void *);
+static void *element_alloc(size_t, void *);
+static void setup_definition(struct macro_definition *, const char *, 
+    const char *);
 
-unsigned
-hash(name)
-	const char *name;
+static struct ohash_info macro_info = {
+	offsetof(struct ndblock, name),
+	NULL, hash_alloc, hash_free, element_alloc };
+
+struct ohash macros;
+
+/* Support routines for hash tables.  */
+void *
+hash_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
 {
-	unsigned int h = 0;
-	while (*name)
-		h = (h << 5) + h + *name++;
-	return (h);
+	void *storage = xalloc(s, "hash alloc");
+	if (storage)
+		memset(storage, 0, s);
+	return storage;
+}
+
+void
+hash_free(p, s, u)
+	void *p;
+	size_t s	UNUSED;
+	void *u 	UNUSED;
+{
+	free(p);
+}
+
+void *
+element_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	return xalloc(s, "element alloc");
+}
+
+void
+init_macros()
+{
+	ohash_init(&macros, 10, &macro_info);
 }
 
 /*
  * find name in the hash table
  */
 ndptr 
-lookup(name)
-	const char *name;
+lookup(const char *name)
 {
-	ndptr p;
-	unsigned int h;
-
-	h = hash(name);
-	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
-		if (h == p->hv && STREQ(name, p->name))
-			break;
-	return (p);
+	return ohash_find(&macros, ohash_qlookup(&macros, name));
 }
 
-/*
- * hash and create an entry in the hash table.
- * The new entry is added in front of a hash bucket.
- */
-ndptr 
-addent(name)
-	const char *name;
+struct macro_definition *
+lookup_macro_definition(const char *name)
 {
-	unsigned int h;
 	ndptr p;
 
-	h = hash(name);
-	p = (ndptr) xalloc(sizeof(struct ndblock));
-	p->nxtptr = hashtab[h % HASHSIZE];
-	hashtab[h % HASHSIZE] = p;
-	p->name = xstrdup(name);
-	p->hv = h;
-	return p;
+	p = ohash_find(&macros, ohash_qlookup(&macros, name));
+	if (p)
+		return p->d;
+	else
+		return NULL;
 }
 
-static void
-freent(p)
-	ndptr p;
+static void 
+setup_definition(struct macro_definition *d, const char *defn, const char *name)
 {
-	free((char *) p->name);
-	if (p->defn != null)
-		free((char *) p->defn);
-	free((char *) p);
+	ndptr p;
+
+	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0 &&
+	    (p = macro_getbuiltin(defn+sizeof(BUILTIN_MARKER)-1)) != NULL) {
+		d->type = macro_builtin_type(p);
+		d->defn = xstrdup(defn+sizeof(BUILTIN_MARKER)-1);
+	} else {
+		if (!*defn)
+			d->defn = xstrdup(null);
+		else
+			d->defn = xstrdup(defn);
+		d->type = MACRTYPE;
+	}
+	if (STREQ(name, defn))
+		d->type |= RECDEF;
 }
 
-/*
- * remove an entry from the hashtable
- */
+static ndptr
+create_entry(const char *name)
+{
+	const char *end = NULL;
+	unsigned int i;
+	ndptr n;
+
+	i = ohash_qlookupi(&macros, name, &end);
+	n = ohash_find(&macros, i);
+	if (n == NULL) {
+		n = ohash_create_entry(&macro_info, name, &end);
+		ohash_insert(&macros, i, n);
+		n->trace_flags = FLAG_NO_TRACE;
+		n->builtin_type = MACRTYPE;
+		n->d = NULL;
+	}
+	return n;
+}
+
 void
-remhash(name, all)
-	const char *name;
-	int all;
+macro_define(const char *name, const char *defn)
 {
-	unsigned int h;
-	ndptr xp, tp, mp;
+	ndptr n = create_entry(name);
+	if (n->d != NULL) {
+		if (n->d->defn != null)
+			free(n->d->defn);
+	} else {
+		n->d = xalloc(sizeof(struct macro_definition), NULL);
+		n->d->next = NULL;
+	}
+	setup_definition(n->d, defn, name);
+}
 
-	h = hash(name);
-	mp = hashtab[h % HASHSIZE];
-	tp = nil;
-	while (mp != nil) {
-		if (mp->hv == h && STREQ(mp->name, name)) {
-			mp = mp->nxtptr;
-			if (tp == nil) {
-				freent(hashtab[h % HASHSIZE]);
-				hashtab[h % HASHSIZE] = mp;
-			}
-			else {
-				xp = tp->nxtptr;
-				tp->nxtptr = mp;
-				freent(xp);
-			}
-			if (!all)
-				break;
+void
+macro_pushdef(const char *name, const char *defn)
+{
+	ndptr n;
+	struct macro_definition *d;
+	
+	n = create_entry(name);
+	d = xalloc(sizeof(struct macro_definition), NULL);
+	d->next = n->d;
+	n->d = d;
+	setup_definition(n->d, defn, name);
+}
+
+void
+macro_undefine(const char *name)
+{
+	ndptr n = lookup(name);
+	if (n != NULL) {
+		struct macro_definition *r, *r2;
+
+		for (r = n->d; r != NULL; r = r2) {
+			r2 = r->next;
+			if (r->defn != null)
+				free(r->defn);
+			free(r);
 		}
-		else {
-			tp = mp;
-			mp = mp->nxtptr;
+		n->d = NULL;
+	}
+}
+
+void
+macro_popdef(const char *name)
+{
+	ndptr n = lookup(name);
+
+	if (n != NULL) {
+		struct macro_definition *r = n->d;
+		if (r != NULL) {
+			n->d = r->next;
+			if (r->defn != null)
+				free(r->defn);
+			free(r);
 		}
 	}
 }
+
+void
+macro_for_all(void (*f)(const char *, struct macro_definition *))
+{
+	ndptr n;
+	unsigned int i;
+
+	for (n = ohash_first(&macros, &i); n != NULL; 
+	    n = ohash_next(&macros, &i))
+		if (n->d != NULL)
+			f(n->name, n->d);
+}
+
+void 
+setup_builtin(const char *name, unsigned int type)
+{
+	ndptr n;
+	char *name2;
+
+	if (prefix_builtins) {
+		name2 = xalloc(strlen(name)+3+1, NULL);
+		memcpy(name2, "m4_", 3);
+		memcpy(name2 + 3, name, strlen(name)+1);
+	} else
+		name2 = xstrdup(name);
+
+	n = create_entry(name2);
+	n->builtin_type = type;
+	n->d = xalloc(sizeof(struct macro_definition), NULL);
+	n->d->defn = name2;
+	n->d->type = type;
+	n->d->next = NULL;
+}
+
+void
+mark_traced(const char *name, int on)
+{
+	ndptr p;
+	unsigned int i;
+
+	if (name == NULL) {
+		if (on)
+			trace_flags |= TRACE_ALL;
+		else
+			trace_flags &= ~TRACE_ALL;
+		for (p = ohash_first(&macros, &i); p != NULL; 
+		    p = ohash_next(&macros, &i))
+		    	p->trace_flags = FLAG_NO_TRACE;
+	} else {
+		p = create_entry(name);
+		p->trace_flags = on;
+	}
+}
+
+ndptr 
+macro_getbuiltin(const char *name)
+{
+	ndptr p;
+
+	p = lookup(name);
+	if (p == NULL || p->builtin_type == MACRTYPE)
+		return NULL;
+	else
+		return p;
+}
+
