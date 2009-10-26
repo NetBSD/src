@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_validate.c,v 1.48 2009/10/19 09:40:23 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_validate.c,v 1.51 2009/10/26 04:09:46 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -119,19 +119,18 @@ static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
-static	v_post	 posts_in[] = { eerr_eq1, NULL };
 static	v_post	 posts_it[] = { post_it, NULL };
 static	v_post	 posts_lb[] = { eerr_eq1, post_lb, NULL };
 static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { eerr_eq0, NULL };
-static	v_post	 posts_pf[] = { eerr_eq1, NULL };
 static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { eerr_le1, NULL };
 static	v_post	 posts_ss[] = { herr_ge1, NULL };
 static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
 static	v_post	 posts_text[] = { eerr_ge1, NULL };
+static	v_post	 posts_text1[] = { eerr_eq1, NULL };
 static	v_post	 posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
 static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
 static	v_post	 posts_xr[] = { eerr_ge1, eerr_le2, NULL };
@@ -182,7 +181,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* Fn */ 
 	{ NULL, posts_wtext },			/* Ft */ 
 	{ NULL, posts_text },			/* Ic */ 
-	{ NULL, posts_in },			/* In */ 
+	{ NULL, posts_text1 },			/* In */ 
 	{ NULL, NULL },				/* Li */
 	{ NULL, posts_nd },			/* Nd */
 	{ NULL, posts_nm },			/* Nm */
@@ -230,7 +229,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Nx */
 	{ NULL, NULL },				/* Ox */
 	{ NULL, NULL },				/* Pc */
-	{ NULL, posts_pf },			/* Pf */
+	{ NULL, posts_text1 },			/* Pf */
 	{ NULL, NULL },				/* Po */
 	{ NULL, posts_wline },			/* Pq */
 	{ NULL, NULL },				/* Qc */
@@ -261,7 +260,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_notext },			/* Ud */
 	{ pres_lb, posts_lb },			/* Lb */
 	{ NULL, posts_notext },			/* Lp */ 
-	{ NULL, NULL },				/* Lk */ 
+	{ NULL, posts_text },			/* Lk */ 
 	{ NULL, posts_text },			/* Mt */ 
 	{ NULL, posts_wline },			/* Brq */ 
 	{ NULL, NULL },				/* Bro */ 
@@ -273,6 +272,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* %Q */
 	{ NULL, posts_notext },			/* br */
 	{ NULL, posts_sp },			/* sp */
+	{ NULL, posts_text1 },			/* %U */
 };
 
 
@@ -696,6 +696,8 @@ pre_bd(PRE_ARGS)
 	for (i = 0, err = type = 0; ! err && 
 			i < (int)n->args->argc; i++)
 		switch (n->args->argv[i].arg) {
+		case (MDOC_Centred):
+			/* FALLTHROUGH */
 		case (MDOC_Ragged):
 			/* FALLTHROUGH */
 		case (MDOC_Unfilled):
@@ -1153,6 +1155,8 @@ post_rs(POST_ARGS)
 
 	for (nn = mdoc->last->child; nn; nn = nn->next)
 		switch (nn->tok) {
+		case(MDOC__U):
+			/* FALLTHROUGH */
 		case(MDOC__Q):
 			/* FALLTHROUGH */
 		case(MDOC__C):

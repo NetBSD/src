@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.h,v 1.5 2009/10/18 19:02:11 kristaps Exp $ */
+/*	$Vendor-Id: out.h,v 1.6 2009/10/22 18:55:33 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,6 +16,8 @@
  */
 #ifndef OUT_H
 #define OUT_H
+
+#define	DATESIZ		24
 
 __BEGIN_DECLS
 
@@ -52,6 +54,7 @@ struct	roffsu {
 
 int		  a2roffsu(const char *, 
 			struct roffsu *, enum roffscale);
+void		  time2a(time_t, char *, size_t);
 
 __END_DECLS
 

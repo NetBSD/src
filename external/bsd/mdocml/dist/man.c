@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.41 2009/09/23 11:53:45 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.43 2009/10/26 07:11:06 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -40,7 +40,6 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"expected block head arguments", /* WHEADARGS */
 	"expected block body arguments", /* WBODYARGS */
 	"expected empty block head", /* WNHEADARGS */
-	"unknown macro", /* WMACRO */
 	"ill-formed macro", /* WMACROFORM */
 	"scope open on exit", /* WEXITSCOPE */
 	"no scope context", /* WNOSCOPE */
@@ -56,7 +55,7 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"R",		"B",		"I",		"IR",
 	"RI",		"na",		"i",		"sp",
 	"nf",		"fi",		"r",		"RE",
-	"RS",		"DT",		"UC"
+	"RS",		"DT",		"UC",		"PD"
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -71,6 +70,7 @@ static	void		 man_free1(struct man *);
 static	int		 man_alloc1(struct man *);
 static	int		 pstring(struct man *, int, int, 
 				const char *, size_t);
+static	int		 macrowarn(struct man *, int, const char *);
 
 #ifdef __linux__
 extern	size_t	  	  strlcpy(char *, const char *, size_t);
@@ -456,6 +456,18 @@ descope:
 }
 
 
+static int
+macrowarn(struct man *m, int ln, const char *buf)
+{
+	if ( ! (MAN_IGN_MACRO & m->pflags))
+		return(man_verr(m, ln, 0, 
+				"unknown macro: %s%s", 
+				buf, strlen(buf) > 3 ? "..." : ""));
+	return(man_vwarn(m, ln, 0, "unknown macro: %s%s",
+				buf, strlen(buf) > 3 ? "..." : ""));
+}
+
+
 int
 man_pmacro(struct man *m, int ln, char *buf)
 {
@@ -510,11 +522,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 	}
 	
 	if (MAN_MAX == (c = man_hash_find(mac))) {
-		if ( ! (MAN_IGN_MACRO & m->pflags)) {
-			(void)man_perr(m, ln, ppos, WMACRO);
-			goto err;
-		} 
-		if ( ! man_pwarn(m, ln, ppos, WMACRO))
+		if ( ! macrowarn(m, ln, mac))
 			goto err;
 		return(1);
 	}

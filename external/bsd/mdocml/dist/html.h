@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.h,v 1.13 2009/10/13 10:21:24 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.14 2009/10/26 08:18:16 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -62,18 +62,22 @@ enum	htmlattr {
 };
 
 struct	tag {
+	struct tag	 *next;
 	enum htmltag	  tag;
-	SLIST_ENTRY(tag)  entry;
 };
 
 struct	ord {
-	int		  pos;
+	struct ord	 *next;
 	const void	 *cookie;
-	SLIST_ENTRY(ord)  entry;
+	int		  pos;
 };
 
-SLIST_HEAD(tagq, tag);
-SLIST_HEAD(ordq, ord);
+struct tagq {
+	struct tag	 *head;
+};
+struct ordq {
+	struct ord	 *head;
+};
 
 struct	htmlpair {
 	enum htmlattr	  key;
