@@ -1,3 +1,6 @@
+/*	$OpenBSD: pathnames.h,v 1.5 2003/06/03 02:56:10 millert Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.3 2009/10/26 21:08:59 christos Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -13,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,8 +45,8 @@
 #define	UNIQUE		3			/* unique char location */
 #endif
 
-#ifdef unix
-#define _PATH_DIVNAME	"/tmp/m4.0XXXXXX"	/* unix diversion files */
+#if defined(unix) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define _PATH_DIVNAME	"/tmp/m4.0XXXXXXXXXX"	/* unix diversion files */
 #define UNIQUE		8			/* unique char location */
 #endif
 
