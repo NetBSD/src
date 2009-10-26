@@ -1,4 +1,5 @@
 %{
+/* $NetBSD: tokenizer.l,v 1.2 2009/10/26 21:11:28 christos Exp $ */
 /* $OpenBSD: tokenizer.l,v 1.6 2008/08/21 21:00:14 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
@@ -15,7 +16,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 #include "parser.h"
+__RCSID("$NetBSD: tokenizer.l,v 1.2 2009/10/26 21:11:28 christos Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -23,6 +28,8 @@
 
 extern int mimic_gnu;
 extern int32_t yylval;
+extern int yylex(void);
+extern int yywrap(void);
 
 int32_t number(void);
 int32_t parse_radix(void);

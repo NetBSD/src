@@ -1,5 +1,5 @@
-/*	$NetBSD: extern.h,v 1.12 2003/10/27 00:12:43 lukem Exp $	*/
-/*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2009/10/26 21:11:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,69 +35,88 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#include <err.h>
-#include <unistd.h>
-
 /* eval.c */
-extern void	eval __P((const char *[], int, int));
-extern void	dodefine __P((const char *, const char *));
+extern void	eval(const char *[], int, int, int);
+extern void	dodefine(const char *, const char *);
 extern unsigned long expansion_id;
 
 /* expr.c */
-extern int	expr __P((const char *));
+extern int	expr(const char *);
 
 /* gnum4.c */
-extern void 	addtoincludepath __P((const char *));
-extern struct input_file *fopen_trypath __P((struct input_file *, const char *));
-extern void	doindir __P((const char *[], int));
-extern void	dobuiltin __P((const char *[], int));
-extern void	dopatsubst __P((const char *[], int));
-extern void	doregexp __P((const char *[], int));
-extern void	doprintlineno __P((struct input_file *));
-extern void	doprintfilename __P((struct input_file *));
-extern void	doesyscmd __P((const char *));
+extern void 	addtoincludepath(const char *);
+extern struct input_file *fopen_trypath(struct input_file *, const char *);
+extern void doindir(const char *[], int);
+extern void dobuiltin(const char *[], int);
+extern void dopatsubst(const char *[], int);
+extern void doregexp(const char *[], int);
+
+extern void doprintlineno(struct input_file *);
+extern void doprintfilename(struct input_file *);
+
+extern void doesyscmd(const char *);
+extern void getdivfile(const char *);
+extern void doformat(const char *[], int);
  
 
 /* look.c */
-extern ndptr	addent __P((const char *));
-extern unsigned	hash __P((const char *));
-extern ndptr	lookup __P((const char *));
-extern void	remhash __P((const char *, int));
+
+#define FLAG_UNTRACED 0
+#define FLAG_TRACED 1
+#define FLAG_NO_TRACE 2
+
+extern void	init_macros(void);
+extern ndptr	lookup(const char *);
+extern void mark_traced(const char *, int);
+extern struct ohash macros;
+
+extern struct macro_definition *lookup_macro_definition(const char *);
+extern void 	macro_define(const char *, const char *);
+extern void 	macro_pushdef(const char *, const char *);
+extern void 	macro_popdef(const char *);
+extern void 	macro_undefine(const char *);
+extern void 	setup_builtin(const char *, unsigned int);
+extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
+#define macro_getdef(p) 	((p)->d)
+#define macro_name(p)		((p)->name)
+#define macro_builtin_type(p)	((p)->builtin_type)
+#define is_traced(p) ((p)->trace_flags == FLAG_NO_TRACE ? (trace_flags & TRACE_ALL) : (p)->trace_flags)
+
+extern ndptr macro_getbuiltin(const char *);
 
 /* main.c */
-extern void outputstr __P((const char *));
-extern int builtin_type __P((const char *));
-extern const char *builtin_realname __P((int));
+extern void outputstr(const char *);
+extern void do_emit_synchline(void);
+#define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 
 /* misc.c */
-extern void	chrsave __P((int));
-extern char 	*compute_prevep __P((void));
-extern void	getdiv __P((int));
-extern ptrdiff_t indx __P((const char *, const char *));
-extern void 	initspaces __P((void));
-extern void	killdiv __P((void));
-extern void	onintr __P((int));
-extern void	pbnum __P((int));
-extern void	pbunsigned __P((unsigned long));
-extern void	pbstr __P((const char *));
-extern void	putback __P((int));
-extern void	*xalloc __P((size_t));
-extern char	*xstrdup __P((const char *));
-extern void	usage __P((const char *));
-extern void	resizedivs __P((int));
-extern size_t	buffer_mark __P((void));
-extern void	dump_buffer __P((FILE *, size_t));
+extern void	chrsave(int);
+extern char 	*compute_prevep(void);
+extern void	getdiv(int);
+extern ptrdiff_t indx(const char *, const char *);
+extern void 	initspaces(void);
+extern void	killdiv(void);
+extern void	onintr(int);
+extern void	pbnum(int);
+extern void	pbnumbase(int, int, int);
+extern void	pbunsigned(unsigned long);
+extern void	pbstr(const char *);
+extern void	pushback(int);
+extern void	*xalloc(size_t, const char *fmt, ...);
+extern void	*xrealloc(void *, size_t, const char *fmt, ...);
+extern char	*xstrdup(const char *);
+extern void	usage(void);
+extern void	resizedivs(int);
+extern size_t	buffer_mark(void);
+extern void	dump_buffer(FILE *, size_t);
+extern void	__dead m4errx(int, const char *, ...);
 
-extern int 	obtain_char __P((struct input_file *));
-extern void	set_input __P((struct input_file *, FILE *, const char *));
-extern void	release_input __P((struct input_file *));
+extern int 	obtain_char(struct input_file *);
+extern void	set_input(struct input_file *, FILE *, const char *);
+extern void	release_input(struct input_file *);
 
-/* speeded-up versions of chrsave/putback */
-#define PUTBACK(c)				\
+/* speeded-up versions of chrsave/pushback */
+#define PUSHBACK(c)				\
 	do {					\
 		if (bp >= endpbb)		\
 			enlarge_bufspace();	\
@@ -112,19 +131,18 @@ extern void	release_input __P((struct input_file *));
 	} while(0)
 
 /* and corresponding exposure for local symbols */
-extern void enlarge_bufspace __P((void));
-extern void enlarge_strspace __P((void));
-extern char *endpbb;
+extern void enlarge_bufspace(void);
+extern void enlarge_strspace(void);
+extern unsigned char *endpbb;
 extern char *endest;
 
 /* trace.c */
-extern void	mark_traced __P((const char *, int));
-extern int	is_traced __P((const char *));
-extern void	trace_file __P((const char *));
-extern ssize_t	trace __P((const char **, int, struct input_file *));
-extern void	finish_trace __P((size_t));
-extern void	set_trace_flags __P((const char *));
-extern int traced_macros;
+extern unsigned int trace_flags;
+#define TRACE_ALL	512
+extern void trace_file(const char *);
+extern size_t trace(const char **, int, struct input_file *);
+extern void finish_trace(size_t);
+extern void set_trace_flags(const char *);
 extern FILE *traceout;
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
@@ -138,15 +156,23 @@ extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */
-extern char *bp;		/* first available character */
-extern char *buf;		/* push-back buffer */
-extern char *bufbase;		/* buffer base for this ilevel */
-extern char *bbase[];		/* buffer base per ilevel */
+extern unsigned char *bp;	/* first available character */
+extern unsigned char *buf;	/* push-back buffer */
+extern unsigned char *bufbase;	/* buffer base for this ilevel */
+extern unsigned char *bbase[];	/* buffer base per ilevel */
 extern char ecommt[MAXCCHARS+1];/* end character for comment */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[MAXCCHARS+1];/* left quote character (`) */
-extern char *m4wraps;		/* m4wrap string default. */
-extern char *null;		/* as it says.. just a null. */
+extern char **m4wraps;		/* m4wrap string default. */
+extern int maxwraps;		/* size of m4wraps array */
+extern int wrapindex;		/* current index in m4wraps */
+
+extern const char *null;	/* as it says.. just a null. */
 extern char rquote[MAXCCHARS+1];/* right quote character (') */
 extern char scommt[MAXCCHARS+1];/* start character for comment */
+extern int  synch_lines;	/* line synchronisation directives */
+
 extern int mimic_gnu;		/* behaves like gnu-m4 */
+extern int prefix_builtins;	/* prefix builtin macros with m4_ */
+
+extern int strtonum(const char *, int, int, const char **);
