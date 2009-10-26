@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.1 2009/10/26 00:26:23 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -123,7 +123,7 @@ static struct yytbl_data *mkeoltbl (void)
 }
 
 /* Generate the table for possible eol matches. */
-static void geneoltbl ()
+static void geneoltbl (void)
 {
 	int     i;
 
@@ -432,8 +432,7 @@ void genctbl ()
 
 
 /* mkecstbl - Make equivalence-class tables.  */
-
-struct yytbl_data *mkecstbl (void)
+static struct yytbl_data *mkecstbl (void)
 {
 	register int i;
 	struct yytbl_data *tbl = 0;

@@ -1,5 +1,3 @@
-/*	$NetBSD: scan.c,v 1.1.1.1 2009/10/26 00:26:54 christos Exp $	*/
-
 
 #line 3 "scan.c"
 
