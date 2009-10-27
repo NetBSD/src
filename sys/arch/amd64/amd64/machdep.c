@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2009/10/19 18:41:10 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 2009/10/27 03:05:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2009/10/19 18:41:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2009/10/27 03:05:27 rmind Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -415,13 +415,12 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
+	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
 #if !defined(XEN)
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap_kernel()->pm_ldt_sel);
 #else
 	{
 	struct physdev_op physop;
