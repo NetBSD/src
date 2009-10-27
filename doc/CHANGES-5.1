@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.124 2009/10/20 02:01:40 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.125 2009/10/27 20:47:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14482,4 +14482,48 @@ lib/libc/stdlib/getsubopt.3			1.12
 
 	Fix header to include.
 	[joerg, ticket #1106]
+
+sys/netsmb/smb_smb.c				1.31, 1.32
+
+	Fix detection of SMB capabilities according to the CIFS spec:
+	1.) SMB_CAP_LARGE_FILES advertises support for 64-bit file offsets.
+	2.) SMB_CAP_LARGE_READX and SMB_CAP_LARGE_WRITEX advertise support for
+	    large reads and writes (larger than 64KB).
+	The code previously only used SMB_CAP_LARGE_READX and
+	SMB_CAP_LARGE_WRITEX which is not correct and doesn't work for
+	the Apple Time Capsule which only supports SMB_CAP_LARGE_FILES.
+	This fixes PR kern/42175.
+	[tron, ticket #1104]
+
+lib/libpuffs/puffs.c				1.100
+lib/libpuffs/puffs.h				1.112
+lib/libpuffs/shlib_version			patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+
+	Make it possible to supply parameters to puffs_init() later (but
+	before puffs_mount()).
+	[pooka, ticket #1105]
+
+xsrc/external/mit/xf86-video-chips/dist/src/ct_driver.c 1.4
+xsrc/external/mit/xf86-video-chips/dist/src/ct_driver.h 1.2
+external/mit/xorg/server/drivers/xf86-video-chips/Makefile 1.5
+
+	make this work on shark again by enabling the VLB probe routines
+	when HAVE_ISA is defined. For now this disables the PCI probe
+	routine but the only arch where we actually need this is shark
+	where we couldn't add a PCI CT65550 even if we wanted to.
+	set -DHAVE_ISA on shark, with this accelerated Xorg works again on
+	rev. 4 sharks.
+	[macallan, ticket #1108]
+
+sys/fs/smbfs/smbfs_smb.c			1.41
+sys/fs/smbfs/smbfs_subr.h			1.20
+
+	Add support for 64 bit file offsets to smbfs_smb_setfsize(), largely
+	based on code taken from FreeBSD.
+	This stops truncation of files larger than 4GB by VOP_SETATTR() which
+	e.g.  happened when copying large files "rump_smbfs". 
+	[tron, ticket #1109]
 
