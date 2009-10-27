@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/04 09:59:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2009/10/27 14:20:21 tsutsui Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-dbsym
+
+.if $(HAVE_BINUTILS) == "219"
+HOST_SRCDIR=    external/gpl3/binutils/usr.sbin/dbsym
+.else
 HOST_SRCDIR=	gnu/usr.sbin/dbsym
+.endif
 
 TOOLCHAINOBJ!=	cd ${.CURDIR}/../binutils && ${PRINTOBJDIR}
 BFDDIR=		${TOOLCHAINOBJ}/build/bfd
