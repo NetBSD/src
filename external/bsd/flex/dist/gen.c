@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.3 2009/10/26 19:23:33 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.4 2009/10/27 01:44:01 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -1893,7 +1893,7 @@ void make_tables ()
 			outn ("\tif ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \\");
 			outn ("\t\t{ \\");
 			outn ("\t\tint c = '*'; \\");
-			outn ("\t\tint n; \\");
+			outn ("\t\tsize_t n; \\");
 			outn ("\t\tfor ( n = 0; n < max_size && \\");
 			outn ("\t\t\t     (c = getc( yyin )) != EOF && c != '\\n'; ++n ) \\");
 			outn ("\t\t\tbuf[n] = (char) c; \\");
