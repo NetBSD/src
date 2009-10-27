@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.39 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.39.6.1 2009/10/27 21:41:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -143,6 +143,7 @@ int ext2fs_mountfs(struct vnode *, struct mount *);
 int ext2fs_flushfiles(struct mount *, int);
 int ext2fs_sbupdate(struct ufsmount *, int);
 int ext2fs_cgupdate(struct ufsmount *, int);
+void ext2fs_set_inode_guid(struct inode *);
 
 /* ext2fs_readwrite.c */
 int ext2fs_read(void *);
