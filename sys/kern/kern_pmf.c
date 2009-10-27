@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.30 2009/10/27 02:55:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.30 2009/10/27 02:55:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,6 @@ typedef struct pmf_event_workitem {
 	struct work				pew_work;
 	pmf_generic_event_t			pew_event;
 	device_t				pew_device;
-	SIMPLEQ_ENTRY(pmf_event_workitem)	pew_next_free;
 } pmf_event_workitem_t;
 
 typedef struct pmf_suspend_workitem {
@@ -112,7 +111,7 @@ typedef struct pmf_suspend_workitem {
 	struct pmf_qual	psw_qual;
 } pmf_suspend_workitem_t;
 
-static pool_cache_t pew_pc;
+static struct pool pew_pl;
 
 static pmf_event_workitem_t *pmf_event_workitem_get(void);
 static void pmf_event_workitem_put(pmf_event_workitem_t *);
@@ -1060,21 +1059,16 @@ pmf_class_display_register(device_t dv)
 static void
 pmf_event_workitem_put(pmf_event_workitem_t *pew)
 {
+
 	KASSERT(pew != NULL);
-	pool_cache_put(pew_pc, pew);
+	pool_put(&pew_pl, pew);
 }
 
 static pmf_event_workitem_t *
 pmf_event_workitem_get(void)
 {
-	return pool_cache_get(pew_pc, PR_NOWAIT);
-}
 
-static int
-pew_constructor(void *arg, void *obj, int flags)
-{
-	memset(obj, 0, sizeof(pmf_event_workitem_t));
-	return 0;
+	return pool_get(&pew_pl, PR_NOWAIT);
 }
 
 void
@@ -1082,10 +1076,10 @@ pmf_init(void)
 {
 	int err;
 
-	pew_pc = pool_cache_init(sizeof(pmf_event_workitem_t), 0, 0, 0,
-	    "pew pool", NULL, IPL_HIGH, pew_constructor, NULL, NULL);
-	pool_cache_setlowat(pew_pc, 16);
-	pool_cache_sethiwat(pew_pc, 256);
+	pool_init(&pew_pl, sizeof(pmf_event_workitem_t), 0, 0, 0,
+	    "pewpl", NULL, IPL_HIGH);
+	pool_setlowat(&pew_pl, 1);
+	pool_sethiwat(&pew_pl, 8);
 
 	KASSERT(pmf_event_workqueue == NULL);
 	err = workqueue_create(&pmf_event_workqueue, "pmfevent",
