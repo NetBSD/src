@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.11 2009/05/02 16:19:36 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.12 2009/10/27 16:27:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.11 2009/05/02 16:19:36 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.12 2009/10/27 16:27:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,9 +172,9 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
 	    Elf64_Ehdr h64;
 	} e;
 	union {
-	    Elf32_Phdr h32;
-	    Elf64_Phdr h64;
-	} p;
+	    Elf32_Shdr h32;
+	    Elf64_Shdr h64;
+	} s;
 	union {
 	    Elf32_Nhdr h32;
 	    Elf64_Nhdr h64;
@@ -185,9 +185,9 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
     /*LINTED*/(sizeof(a) == 4 ? bswap32(a) : \
     /*LINTED*/(sizeof(a) == 8 ? bswap64(a) : (abort(), (a)))))))
 #define EH(field)	(size == 32 ? SWAP(e.h32.field) : SWAP(e.h64.field))
-#define PH(field)	(size == 32 ? SWAP(p.h32.field) : SWAP(p.h64.field))
+#define SH(field)	(size == 32 ? SWAP(s.h32.field) : SWAP(s.h64.field))
 #define NH(field)	(size == 32 ? SWAP(n.h32.field) : SWAP(n.h64.field))
-#define PHSIZE		(size == 32 ? sizeof(p.h32) : sizeof(p.h64))
+#define SHSIZE		(size == 32 ? sizeof(s.h32) : sizeof(s.h64))
 #define NHSIZE		(size == 32 ? sizeof(n.h32) : sizeof(n.h64))
 	struct {
 		char name[ELF_NOTE_PAX_NAMESZ];
@@ -230,17 +230,17 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
 		goto out;
 	}
 
-	for (i = 0; i < EH(e_phnum); i++) {
-		if ((size_t)pread(fd, &p, PHSIZE,
-		    (off_t)EH(e_phoff) + i * PHSIZE) != PHSIZE) {
-			warn("Can't read program header data from `%s'", name);
+	for (i = 0; i < EH(e_shnum); i++) {
+		if ((size_t)pread(fd, &s, SHSIZE,
+		    (off_t)EH(e_shoff) + i * SHSIZE) != SHSIZE) {
+			warn("Can't read section header data from `%s'", name);
 			goto out;
 		}
 
-		if (PH(p_type) != PT_NOTE)
+		if (SH(sh_type) != SHT_NOTE)
 			continue;
 
-		if (pread(fd, &n, NHSIZE, (off_t)PH(p_offset)) != NHSIZE) {
+		if (pread(fd, &n, NHSIZE, (off_t)SH(sh_offset)) != NHSIZE) {
 			warn("Can't read note header from `%s'", name);
 			goto out;
 		}
@@ -248,7 +248,7 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
 		    NH(n_descsz) != ELF_NOTE_PAX_DESCSZ ||
 		    NH(n_namesz) != ELF_NOTE_PAX_NAMESZ)
 			continue;
-		if (pread(fd, &pax_tag, sizeof(pax_tag), PH(p_offset) + NHSIZE)
+		if (pread(fd, &pax_tag, sizeof(pax_tag), SH(sh_offset) + NHSIZE)
 		    != sizeof(pax_tag)) {
 			warn("Can't read pax_tag from `%s'", name);
 			goto out;
@@ -289,13 +289,13 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
 		}
 
 		if (pwrite(fd, &pax_tag, sizeof(pax_tag),
-		    (off_t)PH(p_offset) + NHSIZE) != sizeof(pax_tag))
+		    (off_t)SH(sh_offset) + NHSIZE) != sizeof(pax_tag))
 			warn("Can't modify flags on `%s'", name);
 		break;
 	}
 
 	if (!ok) {
-		warnx("Could not find an ELF PaX PT_NOTE section in `%s'",
+		warnx("Could not find an ELF PaX SHT_NOTE section in `%s'",
 		    name);
 		goto out;
 	}
