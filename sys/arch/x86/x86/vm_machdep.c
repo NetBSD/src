@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 2009/10/21 21:12:04 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 2009/10/27 03:48:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2009/10/21 21:12:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2009/10/27 03:48:59 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -115,8 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2009/10/21 21:12:04 rmind Exp $")
 #endif
 #endif
 
-static void setredzone(struct lwp *);
-
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
@@ -127,96 +125,102 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 }
 
 /*
- * Finish a new thread operation, with LWP l2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * cpu_lwp_fork: finish a new LWP (l2) operation.
  *
- * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with l2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
- *
- * l1 is the thread being forked; if l1 == &lwp0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * First LWP (l1) is the process being forked.  If it is &lwp, then we
+ * are creating a kthread, where return path and argument are specified
+ * with `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * in both the stack and stacksize arguments), then set up the user stack
+ * pointer accordingly.
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 
+	pcb1 = &l1->l_addr->u_pcb;
+	pcb2 = &l2->l_addr->u_pcb;
+
 	/*
-	 * If fpuproc != p1, then the fpu h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps.
-	 *
-	 * If fpuproc == p1, then we have to save the fpu h/w state to
-	 * p1's pcb so that we can copy it.
+	 * If parent LWP was using FPU, then we have to save the FPU h/w
+	 * state to PCB so that we can copy it.
 	 */
-	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL) {
+	if (pcb1->pcb_fpcpu != NULL) {
 		fpusave_lwp(l1, true);
 	}
 
-	l2->l_md.md_flags = l1->l_md.md_flags;
-
-	/* Copy pcb from proc p1 to p2. */
+	/*
+	 * Sync the PCB before we copy it.
+	 */
 	if (l1 == curlwp) {
-		/* Sync the PCB before we copy it. */
-		savectx(curpcb);
+		KASSERT(pcb1 == curpcb);
+		savectx(pcb1);
 	} else {
 		KASSERT(l1 == &lwp0);
 	}
-	*pcb = l1->l_addr->u_pcb;
+
+	/* Copy the PCB from parent. */
+	memcpy(pcb2, pcb1, sizeof(struct pcb));
+
 #if defined(XEN)
-	pcb->pcb_iopl = SEL_KPL;
-#endif /* defined(XEN) */
-
-#ifdef __x86_64__
-	/*
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
-	 * we run the new process.
-	 */
-	pcb->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
-	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
-	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_gs;
-#else
-	pcb->pcb_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
-	memcpy(&pcb->pcb_fsd, curpcb->pcb_fsd, sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, curpcb->pcb_gsd, sizeof(pcb->pcb_gsd));
-	pcb->pcb_iomap = NULL;
+	pcb2->pcb_iopl = SEL_KPL;
 #endif
-	l2->l_md.md_astpending = 0;
 
 	/*
-	 * Copy the trapframe.
+	 * Set the kernel stack address (from the address to uarea) and
+	 * trapframe address for child.
+	 *
+	 * Rig kernel stack so that it would start out in lwp_trampoline()
+	 * and call child_return() with l2 as an argument.  This causes the
+	 * newly-created child process to go directly to user level with a
+	 * parent return value of 0 from fork(), while the parent process
+	 * returns normally.
+	 * 
+	 * Also, copy PCB %fs/%gs base from parent.
 	 */
 #ifdef __x86_64__
-	tf = (struct trapframe *)pcb->pcb_rsp0 - 1;
+	pcb2->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
+
+	pcb2->pcb_fs = pcb1->pcb_fs;
+	pcb2->pcb_gs = pcb1->pcb_gs;
 #else
-	tf = (struct trapframe *)pcb->pcb_esp0 - 1;
+	pcb2->pcb_esp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16);
+	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
+
+	memcpy(&pcb2->pcb_fsd, pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
+	memcpy(&pcb2->pcb_gsd, pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
+	pcb2->pcb_iomap = NULL;
 #endif
 	l2->l_md.md_regs = tf;
-	*tf = *l1->l_md.md_regs;
+
+	/* Copy the trapframe from parent. */
+	memcpy(tf, l1->l_md.md_regs, sizeof(struct trapframe));
+
+	/* Child LWP might get aston() before returning to userspace. */
 	tf->tf_trapno = T_ASTFLT;
 
-	setredzone(l2);
+#ifdef DIAGNOSTIC
+	/* Set a red zone in the kernel stack after the uarea. */
+	pmap_kremove(USER_TO_UAREA(l2->l_addr), PAGE_SIZE);
+	pmap_update(pmap_kernel());
+#endif
 
-	/*
-	 * If specified, give the child a different stack.
-	 */
+	/* If specified, set a different user stack for a child. */
 	if (stack != NULL) {
 #ifdef __x86_64__
 		tf->tf_rsp = (uint64_t)stack + stacksize;
 #else
-		tf->tf_esp = (u_int)stack + stacksize;
+		tf->tf_esp = (uint32_t)stack + stacksize;
 #endif
 	}
+
+	l2->l_md.md_flags = l1->l_md.md_flags;
+	l2->l_md.md_astpending = 0;
 
 	cpu_setfunc(l2, func, arg);
 }
@@ -275,22 +279,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* nothing */
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-static void
-setredzone(struct lwp *l)
-{
-
-#ifdef DIAGNOSTIC
-	vaddr_t addr;
-
-	addr = USER_TO_UAREA(l->l_addr);
-	pmap_kremove(addr, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-#endif
 }
 
 /*
