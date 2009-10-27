@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92.4.3 2009/10/18 12:46:07 sborrill Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92.4.4 2009/10/27 20:37:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92.4.3 2009/10/18 12:46:07 sborrill Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92.4.4 2009/10/27 20:37:38 bouyer Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -274,6 +274,18 @@ puffs_setspecific(struct puffs_usermount *pu, void *privdata)
 {
 
 	pu->pu_privdata = privdata;
+}
+
+void
+puffs_setmntinfo(struct puffs_usermount *pu,
+	const char *mntfromname, const char *puffsname)
+{
+	struct puffs_kargs *pargs = pu->pu_kargp;
+
+	(void)strlcpy(pargs->pa_mntfromname, mntfromname,
+	    sizeof(pargs->pa_mntfromname));
+	(void)strlcpy(pargs->pa_typename, puffsname,
+	    sizeof(pargs->pa_typename));
 }
 
 size_t
@@ -594,6 +606,13 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	struct puffs_kargs *pargs;
 	int sverrno;
 
+	if (puffsname == PUFFS_DEFER)
+		puffsname = "n/a";
+	if (mntfromname == PUFFS_DEFER)
+		mntfromname = "n/a";
+	if (priv == PUFFS_DEFER)
+		priv = NULL;
+
 	pu = malloc(sizeof(struct puffs_usermount));
 	if (pu == NULL)
 		goto failfree;
@@ -607,10 +626,7 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
 	fillvnopmask(pops, pargs->pa_vnopmask);
-	(void)strlcpy(pargs->pa_typename, puffsname,
-	    sizeof(pargs->pa_typename));
-	(void)strlcpy(pargs->pa_mntfromname, mntfromname,
-	    sizeof(pargs->pa_mntfromname));
+	puffs_setmntinfo(pu, mntfromname, puffsname);
 
 	puffs_zerostatvfs(&pargs->pa_svfsb);
 	pargs->pa_root_cookie = NULL;
