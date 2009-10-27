@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.48 2008/12/07 08:24:26 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.49 2009/10/27 03:45:32 snj Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gordon Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -54,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.48 2008/12/07 08:24:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2009/10/27 03:45:32 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
