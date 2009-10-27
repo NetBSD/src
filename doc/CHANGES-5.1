@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.125 2009/10/27 20:47:34 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.126 2009/10/27 22:01:46 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14526,4 +14526,36 @@ sys/fs/smbfs/smbfs_subr.h			1.20
 	This stops truncation of files larger than 4GB by VOP_SETATTR() which
 	e.g.  happened when copying large files "rump_smbfs". 
 	[tron, ticket #1109]
+
+usr.bin/systat/syscall.c			1.7
+usr.bin/systat/vmstat.c				1.74
+
+	Fix problems with SIGWINCH. From Paul Ripke in PR 42161.
+	[wiz, ticket #1110]
+
+sys/dev/pckbport/wskbdmap_mfii.c		 patch
+
+	Add hungarian keyboard layout 
+	[ahoka, ticket #1111]
+
+sys/ufs/ext2fs/ext2fs_extern.h			1.42
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.152
+sys/ufs/ext2fs/ext2fs_vnops.c			1.91
+
+	update i_uid and i_gid after chown
+	[pooka, ticket #1112]
+
+sys/miscfs/procfs/procfs_linux.c		1.58
+
+	Fix memory leak. Fixes PR 42053 from SHIMIZU Ryo.
+	[markd, ticket #1113]
+
+sys/fs/cd9660/cd9660_vfsops.c			1.68
+
+	Apply a similar fix for mount function from ffs_vfsops.c rev 1.186:
+	 Change cd9660_mount, in MNT_UPDATE case, to check dev_t's for equality
+	 instead of just vnode pointers.  Fixes erroneous "Invalid argument"
+	 errors from mount(8) with -u against cd9660 root in the presence of
+	 mfs or tmpfs /dev prepared after initial mountroot.
+	[tsutsui, ticket #1115]
 
