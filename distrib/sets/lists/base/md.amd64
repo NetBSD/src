@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.4 2009/08/04 18:32:07 snj Exp $
+# $NetBSD: md.amd64,v 1.25.2.5 2009/10/27 20:37:38 bouyer Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -219,7 +219,7 @@
 ./usr/lib/i386/libpthread_dbg.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpthread_dbg.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpuffs.so.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libpuffs.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libpuffs.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libresolv.so.1			base-compat-shlib	compat,pic

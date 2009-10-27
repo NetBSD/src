@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.108.4.3 2009/10/18 12:46:07 sborrill Exp $	*/
+/*	$NetBSD: puffs.h,v 1.108.4.4 2009/10/27 20:37:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -418,6 +418,7 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 
 __BEGIN_DECLS
 
+#define PUFFS_DEFER ((void *)-1)
 struct puffs_usermount *_puffs_init(int, struct puffs_ops *, const char *,
 				    const char *, void *, uint32_t);
 int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
@@ -446,6 +447,8 @@ void			puffs_setspecific(struct puffs_usermount *, void *);
 void			puffs_setmaxreqlen(struct puffs_usermount *, size_t);
 size_t			puffs_getmaxreqlen(struct puffs_usermount *);
 void			puffs_setfhsize(struct puffs_usermount *, size_t, int);
+void			puffs_setmntinfo(struct puffs_usermount *,
+					 const char *, const char *);
 
 void			puffs_setncookiehash(struct puffs_usermount *, int);
 
