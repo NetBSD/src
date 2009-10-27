@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.29 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.29.6.1 2009/10/27 20:31:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.29 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.29.6.1 2009/10/27 20:31:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,6 +594,22 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	u_int16_t residhi, residlo, off, doff;
 	u_int32_t resid;
 
+	if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_FILES) &&
+	    uio->uio_offset >= (1LL << 32)) {
+		/* Cannot read at/beyond 4G */
+		return (EFBIG);
+	}
+
+	if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_READX)) {
+		size_t blksz;
+
+		blksz = SSTOVC(ssp)->vc_txmax - SMB_HDRLEN - 64;
+		if (blksz > 0xffff)
+			blksz = 0xffff;
+
+		*len = min(blksz, *len);
+	}
+
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_READ_ANDX, scred, &rqp);
 	if (error)
 		return error;
@@ -674,8 +690,26 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	u_int8_t wc;
 	u_int16_t resid;
 
+	if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_FILES) &&
+	    uio->uio_offset >= (1LL << 32)) {
+		/* Cannot write at/beyond 4G */
+		return (EFBIG);
+	}
+
+	if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX) {
+		*len = min(SSTOVC(ssp)->vc_wxmax, *len);
+	} else {
+		size_t blksz;
+
+		blksz = SSTOVC(ssp)->vc_txmax - SMB_HDRLEN - 64;
+		if (blksz > 0xffff)
+			blksz = 0xffff;
+
+		*len = min(blksz, *len);
+	}
+
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_WRITE_ANDX, scred, &rqp);
-	if (error)
+	if (error != 0)
 		return (error);
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
@@ -687,7 +721,6 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	mb_put_uint32le(mbp, 0);	/* MBZ (timeout) */
 	mb_put_uint16le(mbp, 0);	/* !write-thru */
 	mb_put_uint16le(mbp, 0);
-	*len = min(SSTOVC(ssp)->vc_wxmax, *len);
 	mb_put_uint16le(mbp, *len >> 16);
 	mb_put_uint16le(mbp, *len);
 	mb_put_uint16le(mbp, 64);	/* data offset from header start */
@@ -785,7 +818,8 @@ smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 {
 	size_t tsize, len, resid;
 	int error = 0;
-	int rx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_READX);
+	bool rx = (SMB_CAPS(SSTOVC(ssp)) &
+		   (SMB_CAP_LARGE_FILES|SMB_CAP_LARGE_READX)) != 0;
 
 	resid = 0;	/* XXX gcc */
 
@@ -866,7 +900,8 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 {
 	int error = 0;
 	size_t len, tsize, resid;
-	int wx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX);
+	bool wx = (SMB_CAPS(SSTOVC(ssp)) &
+		   (SMB_CAP_LARGE_FILES|SMB_CAP_LARGE_WRITEX)) != 0;
 
 	resid = 0;	/* XXX gcc */
 
@@ -877,7 +912,7 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 		    error = smb_smb_writex(ssp, fid, &len, &resid, uio, scred);
 		else
 		    error = smb_smb_write(ssp, fid, &len, &resid, uio, scred);
-		if (error)
+		if (error != 0)
 			break;
 		if (resid < len) {
 			error = EIO;
