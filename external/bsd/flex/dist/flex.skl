@@ -994,10 +994,12 @@ extern int yywrap M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
 #endif
 
 %not-for-header
+#ifndef YY_NO_UNPUT
     m4_ifdef( [[M4_YY_NO_UNPUT]],,
     [[
     static void yyunput M4_YY_PARAMS( int c, char *buf_ptr  M4_YY_PROTO_LAST_ARG);
     ]])
+#endif
 %ok-for-header
 %endif
 
@@ -1092,7 +1094,7 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 %% [5.0] fread()/read() definition of YY_INPUT goes here unless we're doing C++ \
 \
 %if-c++-only C++ definition \
-	if ( (result = LexerInput( (char *) buf, max_size )) < 0 ) \
+	if ( (int)(result = LexerInput( (char *) buf, max_size )) < 0 ) \
 		YY_FATAL_ERROR( "input in flex scanner failed" );
 %endif
 
@@ -1768,6 +1770,7 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 }
 
 
+#ifndef YY_NO_UNPUT
 %if-c-only
 m4_ifdef( [[M4_YY_NO_UNPUT]],,
 [[
@@ -1823,6 +1826,7 @@ m4_ifdef( [[M4_YY_USE_LINENO]],
 %if-c-only
 ]])
 %endif
+#endif
 
 %if-c-only
 #ifndef YY_NO_INPUT
