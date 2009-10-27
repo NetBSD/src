@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.82 2009/10/27 20:14:11 snj Exp $
+.\"	$NetBSD: legal.common,v 1.83 2009/10/27 23:23:33 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,8 +370,6 @@ This product includes software developed by Roar Thronæs.
 This product includes software developed by Rodney W. Grimes.
 .It
 This product includes software developed by Roger Hardiman
-.It
-This product includes software developed by Roland C. Dowdeswell.
 .It
 This product includes software developed by Rolf Grossmann.
 .It
