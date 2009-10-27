@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.199 2009/08/16 11:00:20 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.200 2009/10/27 02:58:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.199 2009/08/16 11:00:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.200 2009/10/27 02:58:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1326,10 +1326,12 @@ fd_share(struct proc *p2)
  * Acquire a hold on a filedesc structure.
  */
 void
-fd_hold(void)
+fd_hold(lwp_t *l)
 {
+	filedesc_t *fdp = l->l_fd;
 
-	atomic_inc_uint(&curlwp->l_fd->fd_refcnt);
+	KASSERT(fdp == curlwp->l_fd || fdp == lwp0.l_fd);
+	atomic_inc_uint(&fdp->fd_refcnt);
 }
 
 /*
