@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.37 2008/06/24 10:23:48 gmcgarry Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.37.6.1 2009/10/27 20:46:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.37 2008/06/24 10:23:48 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.37.6.1 2009/10/27 20:46:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,13 +265,49 @@ smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	return 0;
 }
 
+static int
+smbfs_smb_seteof(struct smbnode *np, int64_t newsize, struct smb_cred *scred)
+{
+	struct smb_t2rq *t2p;
+	struct smb_share *ssp = np->n_mount->sm_share;
+	struct mbchain *mbp;
+	int error;
+
+	error = smb_t2_alloc(SSTOCP(ssp), SMB_TRANS2_SET_FILE_INFORMATION,
+	    scred, &t2p);
+	if (error)
+		return error;
+	mbp = &t2p->t2_tparam;
+	mb_init(mbp);
+	mb_put_mem(mbp, (void *)&np->n_fid, 2, MB_MSYSTEM);
+	mb_put_uint16le(mbp, SMB_SET_FILE_END_OF_FILE_INFO);
+	mb_put_uint32le(mbp, 0);
+	mbp = &t2p->t2_tdata;
+	mb_init(mbp);
+	mb_put_int64le(mbp, newsize);
+	mb_put_uint32le(mbp, 0);			/* padding */
+	mb_put_uint16le(mbp, 0);
+	t2p->t2_maxpcount = 2;
+	t2p->t2_maxdcount = 0;
+	error = smb_t2_request(t2p);
+	smb_t2_done(t2p);
+	return error;
+}
+
 int
-smbfs_smb_setfsize(struct smbnode *np, int newsize, struct smb_cred *scred)
+smbfs_smb_setfsize(struct smbnode *np, u_quad_t newsize,
+		   struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
 	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	int error;
+
+	if (newsize >= (1LL << 32)) {
+		if (!(SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_FILES))
+			return EFBIG;
+		return smbfs_smb_seteof(np, (int64_t)newsize, scred);
+	}
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_WRITE, scred, &rqp);
 	if (error)
