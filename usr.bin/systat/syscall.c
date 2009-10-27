@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2008/04/29 06:53:04 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.6.1 2009/10/27 21:37:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.5 2008/04/29 06:53:04 martin Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.5.6.1 2009/10/27 21:37:52 bouyer Exp $");
 
 /* System call stats */
 
@@ -201,9 +201,8 @@ showsyscall(void)
 		etime = cur.cp_etime;
 		/* < 5 ticks - ignore this trash */
 		if ((etime * hertz) < 1.0) {
-			if (failcnt++ > MAXFAIL)
+			if (failcnt++ <= MAXFAIL)
 				return;
-			failcnt = 0;
 			clear();
 			mvprintw(2, 10, "The alternate system clock has died!");
 			mvprintw(3, 10, "Reverting to ``pigs'' display.");
