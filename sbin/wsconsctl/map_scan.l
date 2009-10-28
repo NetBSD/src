@@ -1,4 +1,4 @@
-/*	$NetBSD: map_scan.l,v 1.4 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: map_scan.l,v 1.5 2009/10/28 19:43:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #include "wsconsctl.h"
 #include "map_parse.h"
 
-#define yywrap()	1
 
 void
 map_scan_setinput(char *str)
@@ -50,6 +49,8 @@ map_scan_setinput(char *str)
 }
 
 %}
+
+%option noyywrap
 
 %%
 
