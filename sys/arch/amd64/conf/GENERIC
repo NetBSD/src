@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231.4.6 2009/10/08 09:47:08 sborrill Exp $
+# $NetBSD: GENERIC,v 1.231.4.7 2009/10/28 09:03:42 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231.4.6 $"
+#ident 		"GENERIC-$Revision: 1.231.4.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -907,6 +907,10 @@ fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?
 
 # SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
 
 ld*    at sdmmc?
 
