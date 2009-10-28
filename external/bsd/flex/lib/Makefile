@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/10/26 00:49:04 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/10/28 11:20:07 njoly Exp $
 
 NOPIC=		# defined
 
@@ -17,7 +17,7 @@ LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 LINKS+=		${LIBDIR}/libl_p.a ${LIBDIR}/libfl_p.a
 .endif
 
-.if ${MKDEBUG} != "no"
+.if ${MKDEBUGLIB} != "no"
 LINKS+=		${LIBDIR}/libl_g.a ${LIBDIR}/libfl_g.a
 .endif
 
