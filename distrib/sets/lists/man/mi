@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.12 2009/10/18 16:50:13 bouyer Exp $
+# $NetBSD: mi,v 1.1109.2.13 2009/10/28 09:03:41 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1352,6 +1352,7 @@
 ./usr/share/man/cat4/scsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsibus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sd.0			man-sys-catman		.cat
+./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sdmmc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/se.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sea.0			man-sys-catman		.cat
@@ -3829,6 +3830,7 @@
 ./usr/share/man/html4/scsi.html			man-sys-htmlman		html
 ./usr/share/man/html4/scsibus.html		man-sys-htmlman		html
 ./usr/share/man/html4/sd.html			man-sys-htmlman		html
+./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
 ./usr/share/man/html4/sdmmc.html		man-sys-htmlman		html
 ./usr/share/man/html4/se.html			man-sys-htmlman		html
 ./usr/share/man/html4/sea.html			man-sys-htmlman		html
@@ -6218,6 +6220,7 @@
 ./usr/share/man/man4/scsi.4			man-sys-man		.man
 ./usr/share/man/man4/scsibus.4			man-sys-man		.man
 ./usr/share/man/man4/sd.4			man-sys-man		.man
+./usr/share/man/man4/sdhc.4			man-sys-man		.man
 ./usr/share/man/man4/sdmmc.4			man-sys-man		.man
 ./usr/share/man/man4/se.4			man-sys-man		.man
 ./usr/share/man/man4/sea.4			man-sys-man		.man
