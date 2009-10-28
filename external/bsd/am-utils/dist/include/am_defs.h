@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.2 2009/10/28 13:08:45 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.3 2009/10/28 15:00:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Erez Zadok
@@ -321,17 +321,6 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
 # include <mntent.h>
 #endif /* HAVE_MNTENT_H */
 
-/*
- * Actions to take if <sys/errno.h> exists.
- */
-#ifdef HAVE_SYS_ERRNO_H
-# ifdef __NetBSD__
-#  include <errno.h>
-# else
-#  include <sys/errno.h>
-extern int errno;
-# endif
-#endif /* HAVE_SYS_ERRNO_H */
 
 /*
  * Actions to take if <sys/fsid.h> exists.
@@ -937,6 +926,14 @@ struct sockaddr_dl;
  */
 #ifdef HAVE_ERRNO_H
 # include <errno.h>
+#else
+/*
+ * Actions to take if <sys/errno.h> exists.
+ */
+# ifdef HAVE_SYS_ERRNO_H
+# include <sys/errno.h>
+extern int errno;
+# endif /* HAVE_SYS_ERRNO_H */
 #endif /* HAVE_ERRNO_H */
 
 /*
