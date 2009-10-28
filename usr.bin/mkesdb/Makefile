@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/20 16:05:30 drochner Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/28 22:22:44 christos Exp $
 
 NOMAN=# defined (must come before bsd.own.mk)
 
@@ -14,7 +14,7 @@ SRCS=		yacc.y lex.l \
 		citrus_lookup_factory.c
 CPPFLAGS+=	-I. -I${.CURDIR} -I${NETBSDSRCDIR}/lib/libc \
 		-I${NETBSDSRCDIR}/lib/libc/citrus \
-		-DHOSTPROG -DLIBC_SCCS -DYY_NO_INPUT
+		-DHOSTPROG -DLIBC_SCCS
 YHEADER=	1
 
 .ifndef HOSTPROG
