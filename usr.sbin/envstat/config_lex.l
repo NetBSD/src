@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_lex.l,v 1.4 2008/08/22 11:27:50 pgoyette Exp $	*/
+/* 	$NetBSD: config_lex.l,v 1.5 2009/10/28 22:37:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.4 2008/08/22 11:27:50 pgoyette Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.5 2009/10/28 22:37:50 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: config_lex.l,v 1.4 2008/08/22 11:27:50 pgoyette Exp $");
 extern int yyline;
 extern int yyerror(const char *, ...);
 int yylex(void);
+
+#define YY_NO_UNPUT
 
 %}
 
