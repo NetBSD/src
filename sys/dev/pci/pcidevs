@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.5 2009/09/26 20:05:43 snj Exp $
+$NetBSD: pcidevs,v 1.962.4.6 2009/10/28 09:03:42 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1811,6 +1811,7 @@ product EMULEX LP9802	0xf980	LP9802 FibreChannel adapter
 
 /* ENE Technology products */
 product ENE MCR510	0x0510	MCR510 PCI Memory Card Reader Controller
+product ENE CB712	0x0550	CB712/714/810 PCI SD Card Reader Controller
 product ENE CB1211	0x1211	CB1211 CardBus Controller
 product ENE CB1225	0x1225	CB1225 CardBus Controller
 product ENE CB1410	0x1410	CB1410 CardBus Controller
@@ -3803,6 +3804,7 @@ product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardB
 product TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
 product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
+product TI	PCI72111SD	0x8034	PCI7x21/7x11 SD Card Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	ACX100A		0x8400	ACX100A 802.11b

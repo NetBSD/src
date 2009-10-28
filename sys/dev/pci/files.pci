@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308.2.5 2009/09/28 00:27:13 snj Exp $
+#	$NetBSD: files.pci,v 1.308.2.6 2009/10/28 09:03:42 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -908,6 +908,10 @@ attach	mskc at pci
 device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
+
+# SD Host Controller
+attach sdhc at pci with sdhc_pci
+file	dev/pci/sdhc_pci.c		sdhc_pci
 
 #
 # Direct Rendering Manager
