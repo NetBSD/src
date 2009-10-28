@@ -1,4 +1,4 @@
-.\"	$NetBSD: callback.9,v 1.2 2009/10/14 23:55:26 joerg Exp $
+.\"	$NetBSD: callback.9,v 1.3 2009/10/28 18:20:41 njoly Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,8 +99,6 @@ Executes all functions registered in the callback
 structure, specified by
 .Fa ch .
 The functions are executed in round-robin fashion.
-The entry should be passed as
-.Fa ce .
 The value of
 .Fa arg
 will be passed to the callback functions.
