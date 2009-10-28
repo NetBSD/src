@@ -675,7 +675,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 	}
 
 	dprintf("zfs_znode_alloc znode %p -- vnode %p\n", zp, vp);
-	dprintf("zfs_znode_alloc Initializing genfs_node at %p\n", vp);
+	dprintf("zfs_znode_alloc z_id %ld\n", zp->z_id);
 	//cpu_Debugger();
 	
 	uvm_vnp_setsize(vp, zp->z_phys->zp_size);
@@ -829,6 +829,9 @@ zfs_mknode(znode_t *dzp, vattr_t *vap, dmu_tx_t *tx, cred_t *cr,
 
 	pzp->zp_mode = MAKEIMODE(vap->va_type, vap->va_mode);
 	if (!(flag & IS_ROOT_NODE)) {
+		dprintf("zfs_mknode parent vp %p - zp %p\n", ZTOV(dzp), dzp);
+		dprintf("Going to lock %p with %ld\n", ZFS_OBJ_MUTEX(zfsvfs, obj), obj);
+		
 		ZFS_OBJ_HOLD_ENTER(zfsvfs, obj);
 		*zpp = zfs_znode_alloc(zfsvfs, db, 0);
 
@@ -952,7 +955,6 @@ again:
 			err = ENOENT;
 		} else {
 			if ((vp = ZTOV(zp)) != NULL) {
-				
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&zp->z_lock);
 				if (vget(vp, LK_INTERLOCK) != 0) {
@@ -1057,19 +1059,19 @@ zfs_znode_delete(znode_t *zp, dmu_tx_t *tx)
 	zfs_znode_free(zp);
 }
 
+/*
+ * zfs_zinactive must be called with ZFS_OBJ_HOLD_ENTER held. And this lock
+ * will be released in zfs_zinactive.
+ */
 void
 zfs_zinactive(znode_t *zp)
 {
 	vnode_t	*vp = ZTOV(zp);
-	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-	uint64_t z_id = zp->z_id;
 
 	ASSERT(zp->z_dbuf && zp->z_phys);
 
-	/*
-	 * Don't allow a zfs_zget() while were trying to release this znode
-	 */
-	ZFS_OBJ_HOLD_ENTER(zfsvfs, z_id);
+	//printf("zfs_zinactive vp %p - zp %p\n", vp, zp);
+	//printf("Going to lock %p with %ld\n", ZFS_OBJ_MUTEX(zfsvfs, z_id), z_id);
 
 	mutex_enter(&zp->z_lock);
 	/*
@@ -1079,9 +1081,6 @@ zfs_zinactive(znode_t *zp)
 	if (zp->z_unlinked) {
 		mutex_exit(&zp->z_lock);
 		ZFS_OBJ_HOLD_EXIT(zfsvfs, z_id);
-#ifndef __NetBSD__
-		ASSERT(vp->v_count == 0);
-#endif
 		zfs_rmnode(zp);
 		return;
 	}
