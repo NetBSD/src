@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.1 2009/10/28 02:10:27 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.2 2009/10/28 04:25:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.1 2009/10/28 02:10:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.2 2009/10/28 04:25:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,16 +600,18 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
 {
 
 	pm2fb_wait(sc, 6);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 
+	    0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 	    PM2RECFG_WRITE_EN);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONST_COLOUR,
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_BLOCK_COLOUR,
 	    colour);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_START,
 	    (y << 16) | x);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_SIZE,
 	    (he << 16) | wi);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RENDER,
-	    PM2RE_RECTANGLE);
+	    PM2RE_RECTANGLE | PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
 	
 	pm2fb_flush_engine(sc);
 }
@@ -620,14 +622,14 @@ pm2fb_bitblt(struct pm2fb_softc *sc, int xs, int ys, int xd, int yd,
 {
 	uint32_t dir = 0;
 
-	pm2fb_wait(sc, 5);
-
 	if (yd <= ys) {
 		dir |= PM2RE_INC_Y;
 	}
 	if (xd <= xs) {
 		dir |= PM2RE_INC_X;
 	}
+	pm2fb_wait(sc, 6);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 	    PM2RECFG_READ_SRC | PM2RECFG_WRITE_EN | PM2RECFG_ROP_EN |
 	    (rop << 6));
