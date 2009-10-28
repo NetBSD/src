@@ -16,6 +16,9 @@
 /* First, we deal with  platform-specific or compiler-specific issues. */
 
 /* begin standard C headers. */
+#ifdef _LIBC
+#include "namespace.h"
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
