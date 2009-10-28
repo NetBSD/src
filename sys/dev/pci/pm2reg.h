@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.1 2009/10/28 02:10:27 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.2 2009/10/28 04:25:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -130,4 +130,8 @@
 #define PM2_RE_SYNC		0x00008c40
 #define PM2_RE_FILTER_MODE	0x00008c00
 #define		PM2FLT_PASS_SYNC	0x00000400
+#define PM2_RE_DDA_MODE		0x000087e0
+#define		PM2DDA_ENABLE		0x00000001
+#define		PM2DDA_GORAUD		0x00000002 /* flat otherwise */
+#define PM2_RE_BLOCK_COLOUR	0x00008ac8
 #endif /* PM2_REG_H */
