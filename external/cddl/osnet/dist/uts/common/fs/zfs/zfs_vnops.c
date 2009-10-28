@@ -1950,12 +1950,6 @@ top:
 	vnevent_rmdir(vp, dvp, name, ct);
 
 	/*
-	 * Grab a lock on the directory to make sure that noone is
-	 * trying to add (or lookup) entries while we are removing it.
-	 */
-	rw_enter(&zp->z_name_lock, RW_WRITER);
-
-	/*
 	 * Grab a lock on the parent pointer to make sure we play well
 	 * with the treewalk and directory rename code.
 	 */
@@ -4236,13 +4230,36 @@ zfs_netbsd_inactive(struct vop_inactive_args *ap)
 	return (0);
 }
 
+/*
+ * Destroy znode from taskq thread without ZFS_OBJ_MUTEX held.
+ */
+static void
+zfs_reclaim_deferred(void *arg, int pending)
+{
+	znode_t *zp = arg;
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
+	uint64_t z_id = zp->z_id;
+
+	/*
+	 * Don't allow a zfs_zget() while were trying to release this znode
+	 */
+	ZFS_OBJ_HOLD_ENTER(zfsvfs, z_id);
+
+	/* Don't need to call ZFS_OBJ_HOLD_EXIT zfs_inactive did thatfor us. */
+	zfs_zinactive(zp);
+	
+}
+
 static int
 zfs_netbsd_reclaim(struct vop_reclaim_args *ap)
 {
 	vnode_t	*vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs;
+	int locked;
 
+	locked = 0;
+	
 	ASSERT(zp != NULL);
 	KASSERT(!vn_has_cached_data(vp));
 
@@ -4251,13 +4268,11 @@ zfs_netbsd_reclaim(struct vop_reclaim_args *ap)
 	mutex_enter(&zp->z_lock);
 	ASSERT(zp->z_phys);
 
-	dprintf("destroying znode %p -- vnode %p -- zp->z_buf = %p\n", zp, ZTOV(zp), zp->z_dbuf);
-	//cpu_Debugger();
-
-	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
+//	dprintf("destroying znode %p -- vnode %p -- zp->z_buf = %p\n", zp, ZTOV(zp), zp->z_dbuf);
+//	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
 	genfs_node_destroy(vp);
 	cache_purge(vp);
-//	ZTOV(zp) = NULL;
+
 	if (zp->z_dbuf == NULL) {
 		/*
 		 * The fs has been unmounted, or we did a
@@ -4270,8 +4285,34 @@ zfs_netbsd_reclaim(struct vop_reclaim_args *ap)
 	}
 	mutex_exit(&zp->z_lock);
 
-	zfs_zinactive(zp);
-	rw_exit(&zfsvfs->z_teardown_inactive_lock);
+	mutex_enter(&zp->z_lock);
+	if (!zp->z_unlinked) {
+		/*
+		 * XXX Hack because ZFS_OBJ_MUTEX is held we can't call zfs_zinactive
+		 * now. I need to defer zfs_zinactive to another thread which doesn't hold this mutex.
+		 */
+		locked = MUTEX_HELD(ZFS_OBJ_MUTEX(zfsvfs, zp->z_id)) ? 2 :
+		    ZFS_OBJ_HOLD_TRYENTER(zfsvfs, zp->z_id);
+		if (locked == 0) {
+			/*
+			 * Lock can't be obtained due to deadlock possibility,
+			 * so defer znode destruction.
+			 */
+			taskq_dispatch(system_taskq, zfs_reclaim_deferred, zp, 0);
+		} else {
+			zfs_znode_dmu_fini(zp);
+			/* Our LWP is holding ZFS_OBJ_HELD mutex but it was locked before
+			   zfs_zinactive was called therefore we can't release it. */
+			if (locked == 1)
+				ZFS_OBJ_HOLD_EXIT(zfsvfs, zp->z_id);
+			zfs_znode_free(zp);
+		}
+	} else
+		mutex_exit(&zp->z_lock);
+
+	ZTOV(zp) = NULL;
+	vp->v_data = NULL; /* v_data must be NULL for a cleaned vnode. */
+	
 	return (0);
 }
 
