@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.12 2007/07/18 12:07:53 vanhu Exp $	*/
+/*	$NetBSD: token.l,v 1.13 2009/10/28 21:22:49 christos Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -58,6 +58,8 @@
 #else
 #include "y.tab.h"
 #endif
+
+#define YY_NO_UNPUT
 
 #include "extern.h"
 

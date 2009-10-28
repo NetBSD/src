@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdlex.l,v 1.3 2008/05/11 03:15:21 elric Exp $ */
+/* $NetBSD: cgdlex.l,v 1.4 2009/10/28 20:59:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdlex.l,v 1.3 2008/05/11 03:15:21 elric Exp $");
+__RCSID("$NetBSD: cgdlex.l,v 1.4 2009/10/28 20:59:46 christos Exp $");
 #endif
 
 #include <err.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: cgdlex.l,v 1.3 2008/05/11 03:15:21 elric Exp $");
 #include "utils.h"
 #include "cgdparse.h"
 
+#define YY_NO_UNPUT
 /*
  * We use macros here to separate the C from the tokeniser, to
  * ease reading each.
