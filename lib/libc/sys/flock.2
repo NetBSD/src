@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.19 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: flock.2,v 1.20 2009/10/28 18:24:44 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)flock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd October 26, 2009
 .Dt FLOCK 2
 .Os
 .Sh NAME
@@ -136,7 +136,7 @@ refers to an object other than a file.
 .It Bq Er EINVAL
 The argument
 .Fa operation
-does not include one of
+does not include exactly one of
 .Dv LOCK_EX ,
 .Dv LOCK_SH
 or
