@@ -932,7 +932,7 @@ FILE *yyget_in M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
 
 m4_ifdef( [[M4_YY_NO_SET_IN]],,
 [[
-void yyset_in  M4_YY_PARAMS( FILE * in_str M4_YY_PROTO_LAST_ARG );
+void yyset_in  M4_YY_PARAMS( FILE * _in_str M4_YY_PROTO_LAST_ARG );
 ]])
 
 m4_ifdef( [[M4_YY_NO_GET_OUT]],,
@@ -942,7 +942,7 @@ FILE *yyget_out M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
 
 m4_ifdef( [[M4_YY_NO_SET_OUT]],,
 [[
-void yyset_out  M4_YY_PARAMS( FILE * out_str M4_YY_PROTO_LAST_ARG );
+void yyset_out  M4_YY_PARAMS( FILE * _out_str M4_YY_PROTO_LAST_ARG );
 ]])
 
 m4_ifdef( [[M4_YY_NO_GET_LENG]],,
@@ -962,7 +962,7 @@ int yyget_lineno M4_YY_PARAMS( M4_YY_PROTO_ONLY_ARG );
 
 m4_ifdef( [[M4_YY_NO_SET_LINENO]],,
 [[
-void yyset_lineno M4_YY_PARAMS( int line_number M4_YY_PROTO_LAST_ARG );
+void yyset_lineno M4_YY_PARAMS( int _line_number M4_YY_PROTO_LAST_ARG );
 ]])
 
 %if-bison-bridge
@@ -1049,7 +1049,7 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 [[
     m4_ifdef( [[M4_YY_NO_PUSH_STATE]],,
     [[
-    static void yy_push_state M4_YY_PARAMS( int new_state M4_YY_PROTO_LAST_ARG);
+    static void yy_push_state M4_YY_PARAMS( int _new_state M4_YY_PROTO_LAST_ARG);
     ]])
     m4_ifdef( [[M4_YY_NO_POP_STATE]],,
     [[
@@ -2400,10 +2400,10 @@ YY_BUFFER_STATE yy_scan_bytes  YYFARGS2( yyconst char *,yybytes, int ,_yybytes_l
 m4_ifdef( [[M4_YY_NO_PUSH_STATE]],,
 [[
 %if-c-only
-    static void yy_push_state YYFARGS1( int ,new_state)
+    static void yy_push_state YYFARGS1( int ,_new_state)
 %endif
 %if-c++-only
-    void yyFlexLexer::yy_push_state( int new_state )
+    void yyFlexLexer::yy_push_state( int _new_state )
 %endif
 {
     M4_YY_DECL_GUTS_VAR();
@@ -2427,7 +2427,7 @@ m4_ifdef( [[M4_YY_NO_PUSH_STATE]],,
 
 	YY_G(yy_start_stack)[YY_G(yy_start_stack_ptr)++] = YY_START;
 
-	BEGIN(new_state);
+	BEGIN(_new_state);
 }
 ]])
 
@@ -2626,10 +2626,10 @@ void yyset_extra YYFARGS1( YY_EXTRA_TYPE ,user_defined)
 m4_ifdef( [[M4_YY_NO_SET_LINENO]],,
 [[
 /** Set the current line number.
- * @param line_number
+ * @param _line_number
  * M4_YY_DOC_PARAM
  */
-void yyset_lineno YYFARGS1( int ,line_number)
+void yyset_lineno YYFARGS1( int ,_line_number)
 {
     M4_YY_DECL_GUTS_VAR();
 
@@ -2639,7 +2639,7 @@ void yyset_lineno YYFARGS1( int ,line_number)
         if (! YY_CURRENT_BUFFER )
            yy_fatal_error( "yyset_lineno called with no buffer" M4_YY_CALL_LAST_ARG); 
     ]])
-    yylineno = line_number;
+    yylineno = _line_number;
 }
 ]])
 
@@ -2648,10 +2648,10 @@ m4_ifdef( [[M4_YY_REENTRANT]],
 m4_ifdef( [[M4_YY_NO_SET_COLUMN]],,
 [[
 /** Set the current column.
- * @param line_number
+ * @param _line_number
  * M4_YY_DOC_PARAM
  */
-void yyset_column YYFARGS1( int , column_no)
+void yyset_column YYFARGS1( int , _column_no)
 {
     M4_YY_DECL_GUTS_VAR();
 
@@ -2661,7 +2661,7 @@ void yyset_column YYFARGS1( int , column_no)
         if (! YY_CURRENT_BUFFER )
            yy_fatal_error( "yyset_column called with no buffer" M4_YY_CALL_LAST_ARG); 
     ]])
-    yycolumn = column_no;
+    yycolumn = _column_no;
 }
 ]])
 ]])
@@ -2671,23 +2671,23 @@ m4_ifdef( [[M4_YY_NO_SET_IN]],,
 [[
 /** Set the input stream. This does not discard the current
  * input buffer.
- * @param in_str A readable stream.
+ * @param _in_str A readable stream.
  * M4_YY_DOC_PARAM
  * @see yy_switch_to_buffer
  */
-void yyset_in YYFARGS1( FILE * ,in_str)
+void yyset_in YYFARGS1( FILE * ,_in_str)
 {
     M4_YY_DECL_GUTS_VAR();
-    yyin = in_str ;
+    yyin = _in_str ;
 }
 ]])
 
 m4_ifdef( [[M4_YY_NO_SET_OUT]],,
 [[
-void yyset_out YYFARGS1( FILE * ,out_str)
+void yyset_out YYFARGS1( FILE * ,_out_str)
 {
     M4_YY_DECL_GUTS_VAR();
-    yyout = out_str ;
+    yyout = _out_str ;
 }
 ]])
 
@@ -2703,10 +2703,10 @@ int yyget_debug  YYFARGS0(void)
 
 m4_ifdef( [[M4_YY_NO_SET_DEBUG]],,
 [[
-void yyset_debug YYFARGS1( int ,bdebug)
+void yyset_debug YYFARGS1( int ,_bdebug)
 {
     M4_YY_DECL_GUTS_VAR();
-    yy_flex_debug = bdebug ;
+    yy_flex_debug = _bdebug ;
 }
 ]])
 %endif
