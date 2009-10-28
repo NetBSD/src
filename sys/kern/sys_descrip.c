@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.16 2009/06/10 23:48:10 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.16 2009/06/10 23:48:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,21 +585,25 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
 	lf.l_len = 0;
-	if (how & LOCK_UN) {
+
+	switch (how & ~LOCK_NB) {
+	case LOCK_UN:
 		lf.l_type = F_UNLCK;
 		atomic_and_uint(&fp->f_flag, ~FHASLOCK);
 		error = VOP_ADVLOCK(vp, fp, F_UNLCK, &lf, F_FLOCK);
 		fd_putfile(fd);
 		return error;
-	}
-	if (how & LOCK_EX) {
+	case LOCK_EX:
 		lf.l_type = F_WRLCK;
-	} else if (how & LOCK_SH) {
+		break;
+	case LOCK_SH:
 		lf.l_type = F_RDLCK;
-	} else {
+		break;
+	default:
 		fd_putfile(fd);
 		return EINVAL;
 	}
+
 	atomic_or_uint(&fp->f_flag, FHASLOCK);
 	p = curproc;
 	if (how & LOCK_NB) {
