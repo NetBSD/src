@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.12 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: scan.l,v 1.13 2009/10/28 02:42:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,9 +105,10 @@ static int endinclude(void);
 static int getincludepath(void);
 static int getcurifdef(void);
 
-#define	yywrap() 1
 
 %}
+
+%option  noyywrap
 
 PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
 QCHARS	([^"\n]|\\\")+
