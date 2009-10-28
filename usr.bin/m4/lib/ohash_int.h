@@ -1,5 +1,9 @@
 /*	$OpenBSD: ohash_int.h,v 1.3 2006/01/16 15:52:25 espie Exp $	*/
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
