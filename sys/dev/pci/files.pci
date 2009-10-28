@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.322 2009/09/26 19:43:04 snj Exp $
+#	$NetBSD: files.pci,v 1.323 2009/10/28 02:10:27 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -988,3 +988,9 @@ defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
 
 # High Definition Audio
 include "dev/pci/hdaudio/files.hdaudio"
+
+# Permedia 2 / Sun PGX32 / Raptor
+device	pm2fb: wsemuldisplaydev, rasops8, vcons, videomode, iic, i2c_bitbang
+attach	pm2fb at pci
+file	dev/pci/pm2fb.c		pm2fb
+defflag	opt_pm2fb.h	PM2FB_DEBUG
