@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.12 2008/08/31 23:37:45 dholland Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.13 2009/10/28 17:25:44 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -40,6 +40,7 @@
 
 #include "veriexecctl_parse.h"
 
+#define YY_NO_UNPUT
 int yylex(void);
 
 extern size_t line;
