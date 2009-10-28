@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.5 2009/09/26 20:06:47 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.6 2009/10/28 09:06:10 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.5 2009/09/26 20:05:43 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.6 2009/10/28 09:03:42 bouyer Exp
  */
 
 /*
@@ -6358,6 +6358,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MCR510,
 	    "MCR510 PCI Memory Card Reader Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB712,
+	    "CB712/714/810 PCI SD Card Reader Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
@@ -13232,6 +13236,10 @@ static const struct pci_product pci_products[] = {
 	    "PCI7x21/7x11 Integrated FlashMedia Controller",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111SD,
+	    "PCI7x21/7x11 SD Card Controller",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,
 	    "PCI6515A Cardbus Controller",
 	},
@@ -14596,4 +14604,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3048;
+const int pci_nproducts = 3050;
