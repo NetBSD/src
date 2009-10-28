@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: tokenizer.l,v 1.2 2009/10/26 21:11:28 christos Exp $ */
+/* $NetBSD: tokenizer.l,v 1.3 2009/10/28 21:42:47 christos Exp $ */
 /* $OpenBSD: tokenizer.l,v 1.6 2008/08/21 21:00:14 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
@@ -20,7 +20,7 @@
 #include "nbtool_config.h"
 #endif
 #include "parser.h"
-__RCSID("$NetBSD: tokenizer.l,v 1.2 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: tokenizer.l,v 1.3 2009/10/28 21:42:47 christos Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -33,6 +33,8 @@ extern int yywrap(void);
 
 int32_t number(void);
 int32_t parse_radix(void);
+
+#define YY_NO_UNPUT
 %}
 
 delim 	[ \t\n]
