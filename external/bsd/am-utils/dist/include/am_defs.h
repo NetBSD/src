@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.2 2009/10/28 13:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Erez Zadok
@@ -325,8 +325,12 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
  * Actions to take if <sys/errno.h> exists.
  */
 #ifdef HAVE_SYS_ERRNO_H
-# include <sys/errno.h>
+# ifdef __NetBSD__
+#  include <errno.h>
+# else
+#  include <sys/errno.h>
 extern int errno;
+# endif
 #endif /* HAVE_SYS_ERRNO_H */
 
 /*
