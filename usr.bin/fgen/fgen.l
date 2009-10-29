@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.31 2009/10/19 18:12:37 snj Exp $	*/
+/*	$NetBSD: fgen.l,v 1.32 2009/10/29 14:35:25 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,12 +42,12 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.31 2009/10/19 18:12:37 snj Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.32 2009/10/29 14:35:25 christos Exp $");
 #endif
 
 %}
 
-%option yylineno
+%option yylineno noinput
 
 decimal	[0-9.]
 hex	[0-9A-Fa-f.]
