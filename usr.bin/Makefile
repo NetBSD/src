@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.182 2009/10/26 21:37:10 christos Exp $
+#	$NetBSD: Makefile,v 1.183 2009/10/29 01:01:17 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ SUBDIR= apply apropos asa at audio awk \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind vis vmstat vndcompress w \
 	wall wc what whatis whereis who whois window \
-	write xargs xinstall xlint xstr yacc yes
+	write xargs xinstall xlint xstr yes
 
 .if (${MKHESIOD} != "no")
 SUBDIR+= hesinfo
