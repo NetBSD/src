@@ -1,10 +1,10 @@
-/*	$NetBSD: reader.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.3 2009/10/29 21:03:59 christos Exp $	*/
 /* Id: reader.c,v 1.18 2009/10/27 09:04:07 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.3 2009/10/29 21:03:59 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -45,6 +45,7 @@ static size_t name_pool_size;
 static char *name_pool;
 
 char line_format[] = "#line %d \"%s\"\n";
+int pure_parser;
 
 static void
 cachec(int c)
@@ -278,6 +279,12 @@ keyword(void)
 	    return (EXPECT);
 	if (strcmp(cache, "expect-rr") == 0)
 	    return (EXPECT_RR);
+	if (strcmp(cache, "pure-parser") == 0)
+	    return (PURE_PARSER);
+	if (strcmp(cache, "parse-param") == 0)
+	    return (PARSE_PARAM);
+	if (strcmp(cache, "lex-param") == 0)
+	    return (LEX_PARAM);
     }
     else
     {
@@ -297,6 +304,90 @@ keyword(void)
     }
     syntax_error(lineno, line, t_cptr);
     /*NOTREACHED */
+}
+
+struct param *lex_param;
+struct param *parse_param;
+
+/*
+ * Keep a linked list of parameters
+ */
+static void
+copy_param(int k)
+{
+    char *buf;
+    int c;
+    param *head, *p;
+    int i;
+
+    c = nextc();
+    if (c == EOF)
+	unexpected_EOF();
+    if (c != '{')
+	goto out;
+    cptr++;
+
+    c = nextc();
+    if (c == EOF)
+	unexpected_EOF();
+    if (c == '}')
+	goto out;
+
+    buf = MALLOC(linesize);
+    if (buf == NULL)
+	goto nospace;
+
+    for (i = 0; (c = *cptr++) != '}'; i++) {
+	if (c == EOF)
+	    unexpected_EOF();
+	buf[i] = c;
+    }
+
+    if (i == 0)
+	goto out;
+
+    buf[i--] = '\0';
+    while (i >= 0 && isspace((unsigned char)buf[i]))
+	buf[i--] = '\0';
+    while (i >= 0 && isalnum((unsigned char)buf[i]))
+	i--;
+
+    if (!isspace((unsigned char)buf[i]) && buf[i] != '*')
+	goto out;
+
+    p = MALLOC(sizeof(*p));
+    if (p == NULL)
+	goto nospace;
+
+    p->name = strdup(buf + i + 1);
+    if (p->name == NULL)
+	goto nospace;
+
+    buf[i + 1] = '\0';
+    p->type = buf;
+
+    if (k == LEX_PARAM)
+	head = lex_param;
+    else
+	head = parse_param;
+
+    if (head != NULL) {
+	while (head->next)
+	    head = head->next;
+	head->next = p;
+    } else {
+	if (k == LEX_PARAM)
+	    lex_param = p;
+	else
+	    parse_param = p;
+    }
+    p->next = NULL;
+    return;
+	
+out:
+    syntax_error(lineno, line, cptr);
+nospace:
+    no_space();
 }
 
 static void
@@ -481,9 +572,9 @@ copy_union(void)
     if (!lflag)
 	fprintf(text_file, line_format, lineno, input_file_name);
 
-    fprintf(text_file, "typedef union");
+    fprintf(text_file, "typedef union YYSTYPE");
     if (dflag)
-	fprintf(union_file, "typedef union");
+	fprintf(union_file, "typedef union YYSTYPE");
 
     depth = 0;
   loop:
@@ -1119,6 +1210,15 @@ read_declarations(void)
 
 	case UNION:
 	    copy_union();
+	    break;
+
+	case PURE_PARSER:
+	    pure_parser = 1;
+	    break;
+
+	case LEX_PARAM:
+	case PARSE_PARAM:
+	    copy_param(k);
 	    break;
 
 	case TOKEN:
@@ -2028,7 +2128,6 @@ print_grammar(void)
 void
 reader(void)
 {
-    write_section(banner);
     create_symbol_table();
     read_declarations();
     read_grammar();
