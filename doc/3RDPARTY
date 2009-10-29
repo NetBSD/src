@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.729 2009/10/26 22:40:50 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.730 2009/10/29 00:58:06 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -166,8 +166,8 @@ License:	See URL above.
 Notes:
 
 Package:	byacc
-Version:	20080826
-Current Vers:	1.9
+Version:	20091028
+Current Vers:	20091028
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
@@ -175,9 +175,6 @@ Mailing List:
 Responsible:	christos
 License:	Public Domain
 Notes:
-We haven't had a sync since 1993, the sources have diverged a lot
-since then but there are a bunch of bug fixes we probably want to pull
-in.
 
 Package:	bzip2
 Version:	1.0.5
