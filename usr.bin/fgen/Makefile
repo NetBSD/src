@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2009/04/20 16:05:30 drochner Exp $
+#	$NetBSD: Makefile,v 1.8 2009/10/29 14:35:25 christos Exp $
 
-CPPFLAGS+= -I${.CURDIR} -DYY_NO_INPUT
+CPPFLAGS+= -I${.CURDIR}
 PROG=	fgen
 SRCS=	fgen.l
 MAN=	fgen.1
