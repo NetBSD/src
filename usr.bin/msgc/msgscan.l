@@ -1,4 +1,4 @@
-/*	$NetBSD: msgscan.l,v 1.4 2003/07/17 08:33:05 lukem Exp $	*/
+/*	$NetBSD: msgscan.l,v 1.5 2009/10/29 14:37:56 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msgscan.l,v 1.4 2003/07/17 08:33:05 lukem Exp $");
+__RCSID("$NetBSD: msgscan.l,v 1.5 2009/10/29 14:37:56 christos Exp $");
 #endif
 
 
@@ -57,6 +57,8 @@ static int level; 	/* For nested comments. */
 
 %x COMMENT
 %x BRACE
+
+%option noinput
 
 %%
 
