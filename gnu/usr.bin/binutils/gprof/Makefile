@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/20 16:05:29 drochner Exp $
+#	$NetBSD: Makefile,v 1.7 2009/10/29 14:32:18 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ TOP=		${NETBSDSRCDIR}/gnu
 
 PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -DYY_NO_INPUT
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
