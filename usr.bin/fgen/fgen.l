@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.32 2009/10/29 14:35:25 christos Exp $	*/
+/*	$NetBSD: fgen.l,v 1.33 2009/10/29 14:49:03 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.32 2009/10/29 14:35:25 christos Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.33 2009/10/29 14:49:03 christos Exp $");
 #endif
 
 %}
@@ -103,8 +103,9 @@ int debug = 0;
 #define ASSERT if (debug) assert
 #define STATE(y, x)	do { if (debug) printf( "%ld State %s: token `%s'\n", outpos, x, y); } while (0)
 
-#define YY_NO_UNPUT
 %}
+
+%option nounput
 
 %%
 

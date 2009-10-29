@@ -45,17 +45,16 @@
 #include "lex.h"
 
 __RCSID("$Heimdal: lex.l 15143 2005-05-16 08:52:54Z lha $"
-        "$NetBSD: lex.l,v 1.3 2008/03/22 08:37:06 mlelstv Exp $");
+        "$NetBSD: lex.l,v 1.4 2009/10/29 14:49:02 christos Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);
-
-#define YY_NO_UNPUT
 
 #undef ECHO
 
 %}
 
+%option nounput
 
 %%
 et			{ return ET; }
