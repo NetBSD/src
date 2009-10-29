@@ -1,26 +1,28 @@
-/*	$NetBSD: error.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: error.c,v 1.2 2009/10/29 00:56:19 christos Exp $	*/
 /* Id: error.c,v 1.6 2008/11/24 21:30:35 tom Exp */
 
-/* routines for printing error messages  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: error.c,v 1.2 2009/10/29 00:56:19 christos Exp $");
 
 #include "defs.h"
 
-void
+/* routines for printing error messages  */
+
+__dead void
 fatal(const char *msg)
 {
     fprintf(stderr, "%s: f - %s\n", myname, msg);
     done(2);
 }
 
-void
+__dead void
 no_space(void)
 {
     fprintf(stderr, "%s: f - out of space\n", myname);
     done(2);
 }
 
-void
+__dead void
 open_error(const char *filename)
 {
     fprintf(stderr, "%s: f - cannot open \"%s\"\n", myname, filename);
@@ -44,7 +46,7 @@ print_pos(char *st_line, char *st_cptr)
 	return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint(*s) || *s == '\t')
+	if (isprint((unsigned char)*s) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);
@@ -61,7 +63,7 @@ print_pos(char *st_line, char *st_cptr)
     putc('\n', stderr);
 }
 
-void
+__dead void
 syntax_error(int st_lineno, char *st_line, char *st_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", syntax error\n",
@@ -70,7 +72,7 @@ syntax_error(int st_lineno, char *st_line, char *st_cptr)
     done(1);
 }
 
-void
+__dead void
 unterminated_comment(int c_lineno, char *c_line, char *c_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unmatched /*\n",
@@ -79,7 +81,7 @@ unterminated_comment(int c_lineno, char *c_line, char *c_cptr)
     done(1);
 }
 
-void
+__dead void
 unterminated_string(int s_lineno, char *s_line, char *s_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unterminated string\n",
@@ -88,7 +90,7 @@ unterminated_string(int s_lineno, char *s_line, char *s_cptr)
     done(1);
 }
 
-void
+__dead void
 unterminated_text(int t_lineno, char *t_line, char *t_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unmatched %%{\n",
@@ -97,7 +99,7 @@ unterminated_text(int t_lineno, char *t_line, char *t_cptr)
     done(1);
 }
 
-void
+__dead void
 unterminated_union(int u_lineno, char *u_line, char *u_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unterminated %%union \
@@ -106,7 +108,7 @@ declaration\n", myname, u_lineno, input_file_name);
     done(1);
 }
 
-void
+__dead void
 over_unionized(char *u_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", too many %%union \
@@ -115,7 +117,7 @@ declarations\n", myname, lineno, input_file_name);
     done(1);
 }
 
-void
+__dead void
 illegal_tag(int t_lineno, char *t_line, char *t_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal tag\n",
@@ -124,7 +126,7 @@ illegal_tag(int t_lineno, char *t_line, char *t_cptr)
     done(1);
 }
 
-void
+__dead void
 illegal_character(char *c_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal character\n",
@@ -133,7 +135,7 @@ illegal_character(char *c_cptr)
     done(1);
 }
 
-void
+__dead void
 used_reserved(char *s)
 {
     fprintf(stderr,
@@ -142,7 +144,7 @@ used_reserved(char *s)
     done(1);
 }
 
-void
+__dead void
 tokenized_start(char *s)
 {
     fprintf(stderr,
@@ -227,7 +229,7 @@ dollar_warning(int a_lineno, int i)
 end of the current rule\n", myname, a_lineno, input_file_name, i);
 }
 
-void
+__dead void
 dollar_error(int a_lineno, char *a_line, char *a_cptr)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal $-name\n",
@@ -236,7 +238,7 @@ dollar_error(int a_lineno, char *a_line, char *a_cptr)
     done(1);
 }
 
-void
+__dead void
 untyped_lhs(void)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $$ is untyped\n",
@@ -244,7 +246,7 @@ untyped_lhs(void)
     done(1);
 }
 
-void
+__dead void
 untyped_rhs(int i, char *s)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $%d (%s) is untyped\n",
@@ -252,7 +254,7 @@ untyped_rhs(int i, char *s)
     done(1);
 }
 
-void
+__dead void
 unknown_rhs(int i)
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $%d is untyped\n",
