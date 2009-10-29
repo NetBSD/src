@@ -1,4 +1,4 @@
-/* $NetBSD: config_lex.l,v 1.6 2009/10/28 22:49:38 christos Exp $ */
+/* $NetBSD: config_lex.l,v 1.7 2009/10/29 14:40:09 christos Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.6 2009/10/28 22:49:38 christos Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.7 2009/10/29 14:40:09 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,11 +50,10 @@ extern int yyline;
 extern int yyerror(const char *fmt, ...);
 int yylex(void);
 
-#define YY_NO_UNPUT
 
 %}
 
-%option noyywrap
+%option noyywrap noinput nounput
 
 STRING		[\$A-Za-z\.\/_\-0-9]*
 SP_STRING	[\$A-Za-z\.\/_\-0-9 ]*
