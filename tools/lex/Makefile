@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/10/26 21:32:14 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2009/10/29 17:16:40 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	external/bsd/flex/bin
@@ -8,3 +8,11 @@ HOST_CPPFLAGS+=	-DM4=\"${TOOL_M4}\"
 
 scan.c:
 	echo '#include <initscan.c>' >$@
+parse.c:
+	echo '#include <initparse.c>' >$@
+parse.h:
+	echo '#include <initparse.h>' >$@
+
+scan.c: parse.h
+
+CLEANFILES+=scan.c parse.c parse.h
