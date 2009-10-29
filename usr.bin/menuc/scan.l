@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.14 2004/08/02 21:29:07 dsl Exp $	*/
+/*	$NetBSD: scan.l,v 1.15 2009/10/29 14:36:14 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,8 @@ static int comstart;	/* line number of comment start. */
 
 %x COMMENT
 %x BRACE
+
+%option noinput
 
 %%
 
