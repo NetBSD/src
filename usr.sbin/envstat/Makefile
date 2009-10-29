@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/04/22 15:23:03 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2009/10/29 14:38:37 christos Exp $
 
 PROG=		envstat
 SRCS+=		envstat.c config.c config_yacc.y config_lex.l
@@ -8,7 +8,7 @@ DPADD=		${LIBPROP}
 
 MAN=		envstat.8 envsys.conf.5
 
-CPPFLAGS+=      -I${.CURDIR} -I. -DYY_NO_INPUT
+CPPFLAGS+=      -I${.CURDIR} -I.
 
 YHEADER=	yes
 
