@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2009/04/22 15:23:10 lukem Exp $
+# $NetBSD: Makefile,v 1.9 2009/10/29 14:40:09 christos Exp $
 #
 
 WARNS?= 2	# XXX -Wcast-qual (etc)
@@ -21,7 +21,7 @@ CPPFLAGS+=	-DWSMOUSED_SELECTION_MODE
 SRCS+=		selection.c
 .endif
 
-CPPFLAGS+=	-I${.CURDIR} -I. -DYY_NO_INPUT
+CPPFLAGS+=	-I${.CURDIR} -I.
 LDADD+=		-lutil
 
 YHEADER=	yes
