@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.4 2009/10/29 13:03:09 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2009/10/29 17:17:33 christos Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -36,10 +36,6 @@ tables.c \
 tables_shared.c \
 tblcmp.c \
 yylex.c
-
-# Don't frob yacc files until we have a good bison
-.y.c .y.h:
-	@true
 
 YHEADER=1
 CLEANFILES+=scan.c skel.c parse.c parse.h
