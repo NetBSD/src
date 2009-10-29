@@ -1,11 +1,14 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: main.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 /* Id: main.c,v 1.23 2009/10/27 09:06:44 tom Exp */
+
+#include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
 
-#include "defs.h"
 
 char dflag;
 char gflag;
@@ -22,16 +25,18 @@ int lineno;
 int outline;
 
 static char empty_string[] = "";
-static char default_file_prefix[] = "y";
+static const char default_file_prefix[] = "y";
+static int explicit_file_name;
 
-static char *file_prefix = default_file_prefix;
+static const char *file_prefix = default_file_prefix;
 
 char *code_file_name;
 char *defines_file_name;
-char *input_file_name = empty_string;
+const char *input_file_name = empty_string;
 char *output_file_name = 0;
 char *verbose_file_name;
 char *graph_file_name;
+char *allocated_file_prefix;
 
 FILE *action_file;	/*  a temp file, used to save actions associated    */
 			/*  with rules until the parser is written          */
@@ -258,6 +263,7 @@ getargs(int argc, char *argv[])
 		output_file_name = argv[i];
 	    else
 		usage();
+	    explicit_file_name = 1;
 	    continue;
 
 	case 'p':
@@ -338,10 +344,10 @@ create_file_names(void)
     if (prefix != NULL)
     {
 	len = (size_t) (prefix - output_file_name);
-	file_prefix = (char *)MALLOC(len + 1);
+	file_prefix = allocated_file_prefix = MALLOC(len + 1);
 	if (file_prefix == 0)
 	    no_space();
-	strncpy(file_prefix, output_file_name, len)[len] = 0;
+	strlcpy(allocated_file_prefix, output_file_name, len + 1);
     }
     else
 	len = strlen(file_prefix);
@@ -362,6 +368,35 @@ create_file_names(void)
 
     if (dflag)
     {
+	if (explicit_file_name)
+	{
+	    char *suffix;
+	    defines_file_name = strdup(output_file_name);
+	    if (defines_file_name == 0)
+		no_space();
+	    /* does the output_file_name have a known suffix */
+            suffix = strrchr(output_file_name, '.');
+            if (suffix != 0 &&
+		(!strcmp(suffix, ".c") ||   /* good, old-fashioned C */
+                 !strcmp(suffix, ".C") ||   /* C++, or C on Windows */
+                 !strcmp(suffix, ".cc") ||  /* C++ */
+                 !strcmp(suffix, ".cxx") || /* C++ */
+                 !strcmp(suffix, ".cpp")))  /* C++ (Windows) */
+            {
+                strncpy(defines_file_name, output_file_name,
+                        suffix - output_file_name + 1);
+                defines_file_name[suffix - output_file_name + 1] = 'h';
+                defines_file_name[suffix - output_file_name + 2] = 0;
+            } else {
+                fprintf(stderr,"%s: suffix of output file name %s"
+                               " not recognized, no -d file generated.\n",
+                        myname, output_file_name);
+                dflag = 0;
+                free(defines_file_name);
+                defines_file_name = 0;
+            }
+	}
+    } else {
 	CREATE_FILE_NAME(defines_file_name, defines_suffix);
     }
 
@@ -375,9 +410,9 @@ create_file_names(void)
 	CREATE_FILE_NAME(graph_file_name, GRAPH_SUFFIX);
     }
 
-    if (prefix != NULL)
+    if (allocated_file_prefix != NULL)
     {
-	FREE(file_prefix);
+	FREE(allocated_file_prefix);
     }
 }
 

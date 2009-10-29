@@ -1,8 +1,10 @@
-/*	$NetBSD: skeleton.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: skeleton.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 /* Id: skeleton.c,v 1.19 2008/12/24 14:52:28 tom Exp */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: skeleton.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -16,7 +18,7 @@
 /*  the body either are not useful outside of semantic actions or	*/
 /*  are conditional.							*/
 
-const char *banner[] =
+const char * const banner[] =
 {
     "#ifndef lint",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
@@ -32,6 +34,7 @@ const char *banner[] =
     CONCAT1("#define YYPATCH ", YYPATCH),
 #endif
     "",
+    "#define YYLEX yylex()",
     "#define YYEMPTY        (-1)",
     "#define yyclearin      (yychar = YYEMPTY)",
     "#define yyerrok        (yyerrflag = 0)",
@@ -55,7 +58,7 @@ const char *banner[] =
     0
 };
 
-const char *tables[] =
+const char * const tables[] =
 {
     "extern short yylhs[];",
     "extern short yylen[];",
@@ -74,7 +77,7 @@ const char *tables[] =
     0
 };
 
-const char *header[] =
+const char * const header[] =
 {
     "#if YYDEBUG",
     "#include <stdio.h>",
@@ -112,7 +115,7 @@ const char *header[] =
     0
 };
 
-const char *body[] =
+const char * const body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
     "static int yygrowstack(void)",
@@ -303,7 +306,7 @@ const char *body[] =
     0
 };
 
-const char *trailer[] =
+const char * const trailer[] =
 {
     "    }",
     "    yyssp -= yym;",
@@ -368,7 +371,7 @@ const char *trailer[] =
 };
 
 void
-write_section(const char *section[])
+write_section(const char * const section[])
 {
     int c;
     int i;
