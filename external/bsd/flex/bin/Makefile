@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.3 2009/10/26 18:32:39 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2009/10/29 13:03:09 christos Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -47,8 +47,6 @@ INCS	=FlexLexer.h
 INCSDIR=/usr/include/g++
 LDADD+=-lm
 DPADD+=${LIBM}
-# XXX: Fix m4.
-TOOL_M4=/usr/pkg/bin/gm4
 
 MAN = flex.1
 
