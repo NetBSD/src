@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2002/12/08 20:20:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2009/10/29 01:01:27 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}yacc
-HOST_SRCDIR=	usr.bin/yacc
+HOST_SRCDIR=	external/bsd/byacc/bin
 
 .include "${.CURDIR}/../Makefile.host"
