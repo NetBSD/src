@@ -1,10 +1,10 @@
-/*	$NetBSD: output.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.3 2009/10/29 21:03:59 christos Exp $	*/
 /* Id: output.c,v 1.21 2009/10/27 10:55:05 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.3 2009/10/29 21:03:59 christos Exp $");
 
 static int nvectors;
 static int nentries;
@@ -54,6 +54,70 @@ define_prefixed(const char *name)
     fprintf(code_file, "#define %-10s %s%s\n", name, symbol_prefix, name + 2);
 }
 
+static void
+output_yacc_decl(void)
+{
+    param *p;
+    ++outline;
+    fprintf(code_file, "/* compatibility with bison */\n");
+    ++outline;
+    fprintf(code_file, "#ifdef YYPARSE_PARAM\n");
+    ++outline;
+    fprintf(code_file, "/* compatibility with FreeBSD */\n");
+    ++outline;
+    fprintf(code_file, "# ifdef YYPARSE_PARAM_TYPE\n");
+    ++outline;
+    fprintf(code_file, "#  define YYPARSE_DECL() "
+	"yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)\n");
+    ++outline;
+    fprintf(code_file, "# else\n");
+    ++outline;
+    fprintf(code_file, "#  define YYPARSE_DECL() "
+	"yyparse(void *YYPARSE_PARAM)\n");
+    ++outline;
+    fprintf(code_file, "# endif\n");
+    ++outline;
+    fprintf(code_file, "#else\n");
+    ++outline;
+    fprintf(code_file, "# define YYPARSE_DECL() yyparse(");
+    if (!parse_param)
+	fprintf(code_file, "void");
+    else
+	for (p = lex_param; p; p = p->next)
+	    fprintf(code_file, "%s %s%s", p->type, p->name,
+		p->next ? ", " : "");
+    fprintf(code_file, ")\n");
+    outline += 2;
+    fprintf(code_file, "#endif\n\n");
+}
+
+static void
+output_lex_decl(void)
+{
+    param *p;
+    ++outline;
+    fprintf(code_file, "/* Pure parsers. */\n");
+    ++outline;
+    fprintf(code_file, "#define YYPURE %d\n", pure_parser);
+    ++outline;
+    fprintf(code_file, "#ifdef YYLEX_PARAM\n");
+    ++outline;
+    if (pure_parser)
+	fprintf(code_file, "# define YYLEX yylex(&yylval, YYLEX_PARAM)\n");
+    else
+	fprintf(code_file, "# define YYLEX yylex(YYLEX_PARAM)\n");
+    ++outline;
+    fprintf(code_file, "#else\n");
+    if (pure_parser)
+	fprintf(code_file, "# define YYLEX yylex(&yylval, ");
+    else
+	fprintf(code_file, "# define YYLEX yylex(");
+    for (p = lex_param; p; p = p->next)
+	fprintf(code_file, "%s%s", p->name, p->next ? ", " : "");
+    fprintf(code_file, ")\n");
+    outline += 2;
+    fprintf(code_file, "#endif\n\n");
+}
 static void
 output_prefix(void)
 {
@@ -837,7 +901,8 @@ output_defines(void)
 	rewind(union_file);
 	while ((c = getc(union_file)) != EOF)
 	    putc(c, defines_file);
-	fprintf(defines_file, " YYSTYPE;\nextern YYSTYPE %slval;\n",
+	if (!pure_parser)
+	    fprintf(defines_file, " YYSTYPE;\nextern YYSTYPE %slval;\n",
 		symbol_prefix);
     }
 }
@@ -1210,6 +1275,9 @@ output(void)
     free_itemsets();
     free_shifts();
     free_reductions();
+    write_section(banner, 0);
+    output_yacc_decl();
+    output_lex_decl();
     output_prefix();
     output_stored_text();
     output_defines();
@@ -1220,12 +1288,12 @@ output(void)
     output_debug();
     output_stype();
     if (rflag)
-	write_section(tables);
-    write_section(header);
+	write_section(tables, 0);
+    write_section(header, !pure_parser);
     output_trailing_text();
-    write_section(body);
+    write_section(body, pure_parser);
     output_semantic_actions();
-    write_section(trailer);
+    write_section(trailer, 0);
 }
 
 #ifdef NO_LEAKS

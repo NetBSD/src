@@ -96,6 +96,9 @@
 #define IDENT 9
 #define EXPECT 10
 #define EXPECT_RR 11
+#define PURE_PARSER 12
+#define PARSE_PARAM 13
+#define LEX_PARAM 14
 
 /*  symbol classes  */
 
@@ -182,6 +185,13 @@ struct shifts
     Value_t shift[1];
 };
 
+typedef struct param param;
+struct param {
+    struct param *next;
+    char *name;
+    char *type;
+};
+
 /*  the structure used to store reductions  */
 
 typedef struct reductions reductions;
@@ -223,6 +233,7 @@ extern char *line;
 extern int lineno;
 extern int outline;
 extern int exit_code;
+extern int pure_parser;
 
 extern const char * const banner[];
 extern const char * const tables[];
@@ -306,6 +317,9 @@ extern Value_t final_state;
 extern Value_t *itemset;
 extern Value_t *itemsetend;
 extern unsigned *ruleset;
+
+extern param *lex_param;
+extern param *parse_param;
 
 /* global functions */
 
@@ -393,7 +407,7 @@ extern void output(void);
 extern void reader(void);
 
 /* skeleton.c */
-extern void write_section(const char * const section[]);
+extern void write_section(const char * const section[], int);
 
 /* verbose.c */
 extern void verbose(void);
