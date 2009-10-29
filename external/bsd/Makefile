@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.17 2009/10/29 00:58:50 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2009/10/29 01:07:00 christos Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+= am-utils bind dhcpcd fetch file flex libarchive mdocml pkg_install \
-	top yacc
+	top byacc
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
