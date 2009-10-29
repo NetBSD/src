@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_lex.l,v 1.5 2009/10/28 22:37:50 christos Exp $	*/
+/* 	$NetBSD: config_lex.l,v 1.6 2009/10/29 14:38:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.5 2009/10/28 22:37:50 christos Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.6 2009/10/29 14:38:37 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -42,11 +42,10 @@ extern int yyline;
 extern int yyerror(const char *, ...);
 int yylex(void);
 
-#define YY_NO_UNPUT
 
 %}
 
-%option noyywrap
+%option noyywrap noinput nounput
 
 DEVICEPROP	refresh-timeout
 SENSOR		sensor[0-9]+
