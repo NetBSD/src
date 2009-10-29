@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration lexical analyzer
  *	---------------------------------------------------
  *
- *	$Id: rc_scan.l,v 1.6 2004/10/30 08:19:30 dsl Exp $ 
+ *	$Id: rc_scan.l,v 1.7 2009/10/29 14:39:24 christos Exp $ 
  *
  * $FreeBSD$
  *
@@ -55,8 +55,7 @@ int yylex(void);
 
 %}
 
-%option	noyywrap
-%option nounput
+%option	noyywrap nounput noinput
 
 %%
 
