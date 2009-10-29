@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.5 2009/10/28 22:09:02 christos Exp $	*/
+/*	$NetBSD: lex.l,v 1.6 2009/10/29 14:37:16 christos Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lex.l,v 1.5 2009/10/28 22:09:02 christos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.6 2009/10/29 14:37:16 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -49,9 +49,10 @@ __RCSID("$NetBSD: lex.l,v 1.5 2009/10/28 22:09:02 christos Exp $");
 
 int line_number = 1;
 
-#define YY_NO_UNPUT
 
 %}
+
+%option noinput nounput
 
 %x	COMMENT
 
