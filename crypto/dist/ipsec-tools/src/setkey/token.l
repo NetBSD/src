@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.13 2009/10/28 21:22:49 christos Exp $	*/
+/*	$NetBSD: token.l,v 1.14 2009/10/29 14:34:27 christos Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -59,8 +59,6 @@
 #include "y.tab.h"
 #endif
 
-#define YY_NO_UNPUT
-
 #include "extern.h"
 
 /* make the code compile on *BSD-current */
@@ -113,7 +111,9 @@ hostname	{name}(({dot}{name})+{dot}?)?
 
 %s S_PL S_AUTHALG S_ENCALG
 
+%option noinput nounput
 %%
+
 
 add		{ return(ADD); }
 delete		{ return(DELETE); }
