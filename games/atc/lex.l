@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: lex.l,v 1.7 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: lex.l,v 1.8 2009/10/29 14:27:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.7 2003/08/07 09:36:54 agc Exp $");
+__RCSID("$NetBSD: lex.l,v 1.8 2009/10/29 14:27:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: lex.l,v 1.7 2003/08/07 09:36:54 agc Exp $");
 extern int	line;
 
 %}
+%option nounput noinput
 %%
 [0-9]+			{ yylval.ival = atoi(yytext);  return(ConstOp); }
 height			{ return(HeightOp); }

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.27 2009/04/20 16:05:29 drochner Exp $
+#	$NetBSD: Makefile,v 1.28 2009/10/29 14:27:26 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
 
 PROG=	atc
-CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT -DYY_NO_INPUT
+CPPFLAGS+=-DBSD -I${.CURDIR} -I.
 SRCS=	extern.c grammar.y graphics.c input.c lex.l list.c log.c \
 	main.c tunable.c update.c
 YHEADER=1
