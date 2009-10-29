@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2009/10/27 03:48:59 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2009/10/29 09:50:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2009/10/27 03:48:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2009/10/29 09:50:49 yamt Exp $");
 
 #include "opt_mtrr.h"
 
@@ -127,7 +127,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 /*
  * cpu_lwp_fork: finish a new LWP (l2) operation.
  *
- * First LWP (l1) is the process being forked.  If it is &lwp, then we
+ * First LWP (l1) is the process being forked.  If it is &lwp0, then we
  * are creating a kthread, where return path and argument are specified
  * with `func' and `arg'.
  *
