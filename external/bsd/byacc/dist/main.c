@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2009/10/29 01:04:17 christos Exp $	*/
 /* Id: main.c,v 1.23 2009/10/27 09:06:44 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2009/10/29 01:04:17 christos Exp $");
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
@@ -395,9 +395,9 @@ create_file_names(void)
                 free(defines_file_name);
                 defines_file_name = 0;
             }
+	} else {
+	    CREATE_FILE_NAME(defines_file_name, defines_suffix);
 	}
-    } else {
-	CREATE_FILE_NAME(defines_file_name, defines_suffix);
     }
 
     if (vflag)
