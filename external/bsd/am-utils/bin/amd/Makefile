@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/04/20 16:05:29 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2009/10/29 14:42:54 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -54,7 +54,7 @@ MAN+=	amd.8
 
 AMDOBJDIR!=cd ${.CURDIR} && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-I${DIST} -I${AMDOBJDIR} -DYY_NO_INPUT
+CPPFLAGS+=	-I${DIST} -I${AMDOBJDIR}
 LDADD+=		${LIBAMU} -lrpcsvc
 DPADD+=		${LIBRPCSVC}
 YHEADER=	1
