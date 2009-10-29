@@ -1,7 +1,7 @@
-/*	$NetBSD: error.tab.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: error.tab.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 #ifndef lint
-static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
+/* static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93"; */
+static char rcsid[] = "$NetBSD: error.tab.c,v 1.2 2009/10/29 00:56:20 christos Exp $";
 #endif
 
 #include <stdlib.h>

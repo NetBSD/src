@@ -1,8 +1,10 @@
-/*	$NetBSD: reader.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: reader.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 /* Id: reader.c,v 1.18 2009/10/27 09:04:07 tom Exp */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: reader.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -816,10 +818,10 @@ is_reserved(char *name)
 	strcmp(name, "$end") == 0)
 	return (1);
 
-    if (name[0] == '$' && name[1] == '$' && isdigit(name[2]))
+    if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char)name[2]))
     {
 	s = name + 3;
-	while (isdigit(*s))
+	while (isdigit((unsigned char)*s))
 	    ++s;
 	if (*s == NUL)
 	    return (1);
@@ -1355,7 +1357,7 @@ add_symbol(void)
 static char *
 after_blanks(char *s)
 {
-    while (*s != '\0' && isspace(*s))
+    while (*s != '\0' && isspace((unsigned char)*s))
 	++s;
     return s;
 }
@@ -1424,7 +1426,7 @@ copy_action(void)
 		FREE(d_line);
 		goto loop;
 	    }
-	    else if (c == '-' && isdigit(cptr[1]))
+	    else if (c == '-' && isdigit((unsigned char)cptr[1]))
 	    {
 		++cptr;
 		i = -get_number() - n;
@@ -1449,7 +1451,7 @@ copy_action(void)
 	    cptr += 2;
 	    goto loop;
 	}
-	else if (isdigit(cptr[1]))
+	else if (isdigit((unsigned char)cptr[1]))
 	{
 	    ++cptr;
 	    i = get_number();
@@ -1712,8 +1714,8 @@ pack_names(void)
     if (name_pool == 0)
 	no_space();
 
-    strcpy(name_pool, "$accept");
-    strcpy(name_pool + 8, "$end");
+    strlcpy(name_pool, "$accept", name_pool_size);
+    strlcpy(name_pool + 8, "$end", name_pool_size - 8);
     t = name_pool + 13;
     for (bp = first_symbol; bp; bp = bp->next)
     {
