@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/20 20:03:28 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2009/10/29 14:41:02 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ MAN=	ypserv.8
 
 LIBCDIR=${NETBSDSRCDIR}/lib/libc
 .PATH:	${LIBCDIR}/net
-CPPFLAGS+=-DYY_NO_UNPUT -DOPTIMIZE_DB -DLIBWRAP -I. -I${LIBCDIR}/include
+CPPFLAGS+=-DOPTIMIZE_DB -DLIBWRAP -I. -I${LIBCDIR}/include
 YHEADER=1
 
 LDADD+=	-lwrap -lutil
