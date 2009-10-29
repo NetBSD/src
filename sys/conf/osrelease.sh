@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.116 2009/10/26 15:32:38 joerg Exp $
+#	$NetBSD: osrelease.sh,v 1.117 2009/10/29 06:33:27 apb Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,9 @@ PARAMH="`dirname $0`"/../sys/param.h
 release=`$AWK '/^#define[ 	]*__NetBSD_Version__/ { print $6 }' $PARAMH`
 
 # default: return nn.nn.nn
-# -m: return the major number -- -current is the number of the next release
+# -m: return nn, representing only the major number; however, for -current,
+#     return the next major number (e.g. for 5.99.nn, return 6)
+# -n: return nn.nn
 # -s: return nnnnnn (no dots)
 
 case $1 in
