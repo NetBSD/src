@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1313 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1314 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -431,3 +431,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	routed(8): Merge 2.32 changes [christos 20091025]
 	m4(1): Import the OpenBSD one since it implements features from gm4
 		that the new flex wants [christos 20091026]
+	yacc(1): Import byacc-20091028 [christos 20091028]
