@@ -1,10 +1,11 @@
-/*	$NetBSD: error.c,v 1.2 2009/10/29 00:56:19 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.3 2009/10/29 12:55:52 christos Exp $	*/
 /* Id: error.c,v 1.6 2008/11/24 21:30:35 tom Exp */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.2 2009/10/29 00:56:19 christos Exp $");
-
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: error.c,v 1.3 2009/10/29 12:55:52 christos Exp $");
+
 
 /* routines for printing error messages  */
 
