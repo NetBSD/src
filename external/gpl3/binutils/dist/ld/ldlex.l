@@ -59,7 +59,6 @@ const char *lex_string = NULL;
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) yy_input (buf, &result, max_size)
 
-#define YY_NO_UNPUT
 
 #define MAX_INCLUDE_DEPTH 10
 static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -89,6 +88,8 @@ static void lex_warn_invalid (char *where, char *what);
 int yywrap (void) { return 1; }
 #endif
 %}
+
+%option nounput
 
 %a 4000
 %o 5000

@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.7 2007/12/12 10:04:52 martin Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.8 2009/10/29 14:49:03 christos Exp $");
 #endif
 
 #include <regex.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: inf-token.l,v 1.7 2007/12/12 10:04:52 martin Exp $");
 #include "inf-parse.h"
 
 int lineno = 1;
-#define YY_NO_UNPUT
 
 int input_is_unicode = 0;
 #define IS_UNICODE 	1
@@ -71,6 +70,8 @@ update_lineno(const char *cp)
 }
 
 %}
+
+%option nounput
 
 %%
 

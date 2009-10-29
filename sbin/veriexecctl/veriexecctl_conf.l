@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.13 2009/10/28 17:25:44 christos Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.14 2009/10/29 14:49:03 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -40,7 +40,6 @@
 
 #include "veriexecctl_parse.h"
 
-#define YY_NO_UNPUT
 int yylex(void);
 
 extern size_t line;
@@ -81,6 +80,8 @@ dequote(const char *s)
 
 STRING		[0-9a-zA-Z]+
 PCHAR           (\\.|[^ \t])
+
+%option nounput
 
 %%
 

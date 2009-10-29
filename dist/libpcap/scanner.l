@@ -22,7 +22,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/scanner.l,v 1.2 2006/02/27 15:55:30 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/scanner.l,v 1.3 2009/10/29 14:49:03 christos Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -63,7 +63,6 @@ static int stoi(char *);
 static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
-#define YY_NO_UNPUT
 static YY_BUFFER_STATE in_buffer;
 #else
 static char *in_buffer;
@@ -165,6 +164,8 @@ V6004		::{N}\.{N}\.{N}\.{N}
 
 
 V6		({V680}|{V670}|{V671}|{V672}|{V673}|{V674}|{V675}|{V676}|{V677}|{V660}|{V661}|{V662}|{V663}|{V664}|{V665}|{V666}|{V650}|{V651}|{V652}|{V653}|{V654}|{V655}|{V640}|{V641}|{V642}|{V643}|{V644}|{V630}|{V631}|{V632}|{V633}|{V620}|{V621}|{V622}|{V610}|{V611}|{V600}|{V6604}|{V6504}|{V6514}|{V6524}|{V6534}|{V6544}|{V6554}|{V6404}|{V6414}|{V6424}|{V6434}|{V6444}|{V6304}|{V6314}|{V6324}|{V6334}|{V6204}|{V6214}|{V6224}|{V6104}|{V6114}|{V6004})
+
+%option nounput
 
 %%
 dst		return DST;
