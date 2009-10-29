@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/10/19 01:24:19 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2009/10/29 02:36:48 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,6 +9,8 @@ LIB=	cvs
 DIST=	${IDIST}/lib
 .PATH:	${DIST}
 CPPFLAGS+=-I${DIST}
+.y.c .y.h:
+	@true
 
 SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 	chdir-long.c closeout.c cycle-check.c dirname.c dup-safer.c exitfail.c \
