@@ -1,10 +1,10 @@
-/*	$NetBSD: output.c,v 1.3 2009/10/29 21:03:59 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.4 2009/10/29 21:11:57 christos Exp $	*/
 /* Id: output.c,v 1.21 2009/10/27 10:55:05 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.3 2009/10/29 21:03:59 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.4 2009/10/29 21:11:57 christos Exp $");
 
 static int nvectors;
 static int nentries;
@@ -108,6 +108,7 @@ output_lex_decl(void)
 	fprintf(code_file, "# define YYLEX yylex(YYLEX_PARAM)\n");
     ++outline;
     fprintf(code_file, "#else\n");
+    ++outline;
     if (pure_parser)
 	fprintf(code_file, "# define YYLEX yylex(&yylval, ");
     else
