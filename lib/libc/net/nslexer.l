@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.8 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.9 2009/10/29 14:49:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nslexer.l,v 1.8 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: nslexer.l,v 1.9 2009/10/29 14:49:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,11 +44,9 @@ __RCSID("$NetBSD: nslexer.l,v 1.8 2008/04/28 20:23:00 martin Exp $");
 
 #include "nsparser.h"
 
-#define YY_NO_UNPUT
-
 %}
 
-%option yylineno
+%option yylineno nounput
 %option never-interactive
 
 BLANK		[ \t]

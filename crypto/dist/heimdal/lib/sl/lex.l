@@ -38,17 +38,16 @@
 #include "parse.h"
 
 __RCSID("$Heimdal: lex.l 10703 2001-09-16 23:10:10Z assar $"
-        "$NetBSD: lex.l,v 1.5 2008/03/22 08:37:23 mlelstv Exp $");
+        "$NetBSD: lex.l,v 1.6 2009/10/29 14:49:03 christos Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);
-
-#define YY_NO_UNPUT
 
 #undef ECHO
 
 %}
 
+%option nounput
 
 %%
 command_table		{ return TABLE; }

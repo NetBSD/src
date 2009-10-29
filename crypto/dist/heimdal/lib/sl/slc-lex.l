@@ -33,7 +33,7 @@
  */
 
 /* $Heimdal: slc-lex.l 15118 2005-05-10 22:19:01Z lha $
-   $NetBSD: slc-lex.l,v 1.1 2008/03/22 08:37:23 mlelstv Exp $ */
+   $NetBSD: slc-lex.l,v 1.2 2009/10/29 14:49:03 christos Exp $ */
 
 #undef ECHO
 
@@ -48,11 +48,13 @@ unsigned lineno = 1;
 static void handle_comment(void);
 static char * handle_string(void);
 
-#define YY_NO_UNPUT
 
 #undef ECHO
 
 %}
+
+%option nounput
+
 %%
 [A-Za-z][-A-Za-z0-9_]*	{
 			  yylval.string = strdup ((const char *)yytext);
