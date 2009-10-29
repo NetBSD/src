@@ -1067,6 +1067,7 @@ void
 zfs_zinactive(znode_t *zp)
 {
 	vnode_t	*vp = ZTOV(zp);
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 
 	ASSERT(zp->z_dbuf && zp->z_phys);
 
@@ -1080,13 +1081,13 @@ zfs_zinactive(znode_t *zp)
 	 */
 	if (zp->z_unlinked) {
 		mutex_exit(&zp->z_lock);
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, z_id);
+		ZFS_OBJ_HOLD_EXIT(zfsvfs, zp->z_id);
 		zfs_rmnode(zp);
 		return;
 	}
 
 	mutex_exit(&zp->z_lock);
-	ZFS_OBJ_HOLD_EXIT(zfsvfs, z_id);
+	ZFS_OBJ_HOLD_EXIT(zfsvfs, zp->z_id);
 	zfs_znode_free(zp);
 }
 
