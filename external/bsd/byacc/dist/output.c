@@ -1,8 +1,10 @@
-/*	$NetBSD: output.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: output.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 /* Id: output.c,v 1.21 2009/10/27 10:55:05 tom Exp */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: output.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 static int nvectors;
 static int nentries;

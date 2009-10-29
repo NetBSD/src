@@ -1,6 +1,8 @@
-/*	$NetBSD: defs.h,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
 /* Id: defs.h,v 1.20 2009/10/27 10:47:43 tom Exp */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -222,15 +224,15 @@ extern int lineno;
 extern int outline;
 extern int exit_code;
 
-extern const char *banner[];
-extern const char *tables[];
-extern const char *header[];
-extern const char *body[];
-extern const char *trailer[];
+extern const char * const banner[];
+extern const char * const tables[];
+extern const char * const header[];
+extern const char * const body[];
+extern const char * const trailer[];
 
 extern char *code_file_name;
 extern char *defines_file_name;
-extern char *input_file_name;
+extern const char *input_file_name;
 extern char *output_file_name;
 extern char *verbose_file_name;
 extern char *graph_file_name;
@@ -340,7 +342,7 @@ extern void reprec_warning(char *s);
 extern void restarted_warning(void);
 extern void retyped_warning(char *s);
 extern void revalued_warning(char *s);
-extern void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
+extern __dead void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
 extern void terminal_lhs(int s_lineno);
 extern void terminal_start(char *s);
 extern void tokenized_start(char *s);
@@ -391,7 +393,7 @@ extern void output(void);
 extern void reader(void);
 
 /* skeleton.c */
-extern void write_section(const char *section[]);
+extern void write_section(const char * const section[]);
 
 /* verbose.c */
 extern void verbose(void);

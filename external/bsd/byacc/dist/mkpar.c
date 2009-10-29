@@ -1,8 +1,10 @@
-/*	$NetBSD: mkpar.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
+/*	$NetBSD: mkpar.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 /* Id: mkpar.c,v 1.10 2009/10/27 10:50:13 tom Exp */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkpar.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 static action *add_reduce(action *actions, int ruleno, int symbol);
 static action *add_reductions(int stateno, action *actions);

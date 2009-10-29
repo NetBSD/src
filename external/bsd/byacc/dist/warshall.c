@@ -1,8 +1,10 @@
-/*	$NetBSD: warshall.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
-
-/* Id: warshall.c,v 1.6 2008/11/24 21:30:35 tom Exp */
+/*	$NetBSD: warshall.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/* Id: warshall.c,v 1.6 2008/11/24 21:30:35 tom Exp  */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: warshall.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
 
 static void
 transitive_closure(unsigned *R, int n)

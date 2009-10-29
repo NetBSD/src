@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.y,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: ftp.y,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -16,7 +16,8 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *	@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
+ *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
+ *	$NetBSD: ftp.y,v 1.2 2009/10/29 00:56:20 christos Exp $
  */
 
 /*
@@ -28,6 +29,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
+static char rcsid[] = "$NetBSD: ftp.y,v 1.2 2009/10/29 00:56:20 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -457,8 +459,9 @@ cmd:		USER SP username CRLF
 					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
-					    "19%02d%02d%02d%02d%02d%02d",
-					    t->tm_year, t->tm_mon+1, t->tm_mday,
+					    "%04d%02d%02d%02d%02d%02d",
+					    1900 + t->tm_year,
+					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
@@ -1148,7 +1151,7 @@ char *filename;
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%lu", stbuf.st_size);
+			reply(213, "%llu", (long long)stbuf.st_size);
 		break;}
 	case TYPE_A: {
 		FILE *fin;
