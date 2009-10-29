@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.128 2009/07/19 03:39:14 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.129 2009/10/29 17:10:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#endif
 
 /*
  * Compile-time options for LFS.
@@ -1081,8 +1084,8 @@ struct lfs_fcntl_markv {
 	int blkcnt;		/* number of blocks */
 };
 
-#define LFCNSEGWAITALL	 _FCNR_FSPRIV('L', 0, struct timeval)
-#define LFCNSEGWAIT	 _FCNR_FSPRIV('L', 1, struct timeval)
+#define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)
+#define LFCNSEGWAIT	_FCNR_FSPRIV('L', 15, struct timeval)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
@@ -1101,12 +1104,22 @@ struct lfs_fhandle {
 # define LFS_WRAP_WAITING 0x1
 #define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
 /* Compat */
-#define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
-#define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
+#ifdef COMPAT_20
+#define LFCNSEGWAITALL_COMPAT	_FCNW_FSPRIV('L', 0, struct timeval50)
+#define LFCNSEGWAIT_COMPAT	_FCNW_FSPRIV('L', 1, struct timeval50)
+#endif
+#ifdef COMPAT_30
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
+#endif
+#ifdef COMPAT_40
 #define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
 #define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
+#endif
+#ifdef COMPAT_50
+#define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
+#define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
+#endif
 
 #ifdef _KERNEL
 /* XXX MP */
