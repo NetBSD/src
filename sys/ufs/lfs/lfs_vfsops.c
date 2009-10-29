@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.278 2009/09/13 05:17:37 tsutsui Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.279 2009/10/29 18:20:11 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.278 2009/09/13 05:17:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.279 2009/10/29 18:20:11 eeh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1678,10 +1678,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 				     UVMPAGER_MAPIN_WAITOK);
 	}
 
-	mutex_enter(&vp->v_interlock);
-	vp->v_numoutput += 2; /* one for biodone, one for aiodone */
-	mutex_exit(&vp->v_interlock);
-
 	mbp = getiobuf(NULL, true);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
@@ -1738,9 +1734,14 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		/* if it's really one i/o, don't make a second buf */
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
-			/* correct overcount if there is no second buffer */
+			/* 
+			 * All the LFS output is done by the segwriter.  It
+			 * will increment numoutput by one for all the bufs it
+			 * recieves.  However this buffer needs one extra to
+			 * account for aiodone.
+			 */
 			mutex_enter(&vp->v_interlock);
-			--vp->v_numoutput;
+			vp->v_numoutput++;
 			mutex_exit(&vp->v_interlock);
 		} else {
 			bp = getiobuf(NULL, true);
@@ -1754,15 +1755,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			 * converted this to use nestiobuf --pooka
 			 */
 			bp->b_flags &= ~B_ASYNC;
-			/*
-			 * LFS uses VOP_BWRITE instead of VOP_STRATEGY.
-			 * Therefore biodone doesn't get called for
-			 * the buffer.  Therefore decrement the output
-			 * counter that nestiobuf_setup() incremented.
-			 */
-			mutex_enter(&vp->v_interlock);
-			vp->v_numoutput--;
-			mutex_exit(&vp->v_interlock);
 		}
 
 		/* XXX This is silly ... is this necessary? */
