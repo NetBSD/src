@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2009/10/23 22:14:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.129 2009/10/29 13:07:12 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,8 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT sed .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump join \
 		${LINT_BITS} \
-		lorder m4 makewhatis mkdep mtree rpcgen tsort uudecode \
+		lorder makewhatis mkdep mtree rpcgen tsort uudecode \
+	m4 .WAIT \
 	texinfo .WAIT \
 	yacc .WAIT \
 	awk .WAIT \
