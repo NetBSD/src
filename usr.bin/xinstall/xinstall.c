@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.112 2009/07/25 11:45:58 gson Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.113 2009/10/30 20:57:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.112 2009/07/25 11:45:58 gson Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.113 2009/10/30 20:57:30 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -961,7 +961,7 @@ strip(char *to_name)
 	const char * volatile stripprog, *progname;
 	char *cmd;
 
-	if ((stripprog = getenv("STRIP")) == NULL) {
+	if ((stripprog = getenv("STRIP")) == NULL || *stripprog == '\0') {
 #ifdef TARGET_STRIP
 		stripprog = TARGET_STRIP;
 #else
