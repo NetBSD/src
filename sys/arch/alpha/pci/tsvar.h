@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.6 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: tsvar.h,v 1.7 2009/10/30 18:55:45 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,6 +35,8 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/pci_sgmap_pte64.h>
 
+#define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
+
 #define	tsvar() { Generate ctags(1) key. }
 
 struct tsc_softc {
@@ -58,6 +60,8 @@ struct tsp_config {
 	u_int32_t pc_hae_mem;
 	u_int32_t pc_hae_io;
 
+	long	pc_io_exstorage[_FSTORE];
+	long	pc_mem_exstorage[_FSTORE];
 	struct	extent *pc_io_ex, *pc_mem_ex;
 	int	pc_mallocsafe;
 };
