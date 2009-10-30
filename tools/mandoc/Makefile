@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/26 21:17:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/10/30 17:18:51 joerg Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
