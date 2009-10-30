@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.134 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: umass.c,v 1.135 2009/10/30 16:22:32 is Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.134 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.135 2009/10/30 16:22:32 is Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1012,6 +1012,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
 	usbd_xfer_handle next_xfer;
+	int residue;
 
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
@@ -1184,6 +1185,11 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		DIF(UDMASS_BBB, umass_bbb_dump_csw(sc, &sc->csw));
 
+		if (sc->sc_quirks & UMASS_QUIRK_IGNORE_RESIDUE)
+                    residue = sc->transfer_datalen - sc->transfer_actlen;
+                else
+                    residue = UGETDW(sc->csw.dCSWDataResidue);
+
 		/* Translate weird command-status signatures. */
 		if ((sc->sc_quirks & UMASS_QUIRK_WRONG_CSWSIG) &&
 		    UGETDW(sc->csw.dCSWSignature) == CSWSIGNATURE_OLYMPUS_C1)
@@ -1226,8 +1232,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_PHASE) {
 			printf("%s: Phase Error, residue = %d\n",
-				device_xname(sc->sc_dev),
-				UGETDW(sc->csw.dCSWDataResidue));
+				device_xname(sc->sc_dev), residue);
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
@@ -1239,32 +1244,29 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				sc->transfer_actlen, sc->transfer_datalen);
 #if 0
 		} else if (sc->transfer_datalen - sc->transfer_actlen
-			   != UGETDW(sc->csw.dCSWDataResidue)) {
+			   != residue) {
 			DPRINTF(UDMASS_BBB, ("%s: actlen=%d != residue=%d\n",
 				device_xname(sc->sc_dev),
 				sc->transfer_datalen - sc->transfer_actlen,
-				UGETDW(sc->csw.dCSWDataResidue)));
+				residue));
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 #endif
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
 			DPRINTF(UDMASS_BBB, ("%s: Command Failed, res = %d\n",
-				device_xname(sc->sc_dev),
-				UGETDW(sc->csw.dCSWDataResidue)));
+				device_xname(sc->sc_dev), residue));
 
 			/* SCSI command failed but transfer was succesful */
 			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-					UGETDW(sc->csw.dCSWDataResidue),
+			sc->transfer_cb(sc, sc->transfer_priv, residue,
 					STATUS_CMD_FAILED);
 
 			return;
 
 		} else {	/* success */
 			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-					UGETDW(sc->csw.dCSWDataResidue),
+			sc->transfer_cb(sc, sc->transfer_priv, residue,
 					STATUS_CMD_OK);
 
 			return;
