@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2009/06/17 14:18:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.33 2009/10/30 10:57:40 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -70,11 +70,11 @@
 			    int mode); }
 3	NOARGS		{ int|sys||close(int fd); }
 4	STD		{ int|linux_sys||stat64(const char *path, \
-			    struct linux_stat *sp); }
+			    struct linux_stat64 *sp); }
 5	STD		{ int|linux_sys||fstat64(int fd, \
-			    struct linux_stat *sp); }
+			    struct linux_stat64 *sp); }
 6	STD		{ int|linux_sys||lstat64(const char *path, \
-			    struct linux_stat *sp); }
+			    struct linux_stat64 *sp); }
 7	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 8	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
