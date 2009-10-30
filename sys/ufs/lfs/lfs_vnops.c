@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.222 2009/10/29 17:10:32 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.223 2009/10/30 00:53:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.222 2009/10/29 17:10:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.223 2009/10/30 00:53:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1490,7 +1490,9 @@ lfs_fcntl(void *v)
 		/* FALLSTHROUGH */
 	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
+#ifdef COMPAT_50
 segwait_common:
+#endif /* COMPAT_50 */
 		mutex_enter(&lfs_lock);
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
