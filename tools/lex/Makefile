@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.8 2009/10/29 17:16:40 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2009/10/30 00:30:20 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	external/bsd/flex/bin
 
 .include "${.CURDIR}/../Makefile.host"
 HOST_CPPFLAGS+=	-DM4=\"${TOOL_M4}\"
+
+.y.c .l.c .y.h:
+	@true
 
 scan.c:
 	echo '#include <initscan.c>' >$@
