@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.534 2009/10/12 22:28:15 wiz Exp $
+$NetBSD: usbdevs,v 1.535 2009/10/30 16:22:32 is Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -464,6 +464,7 @@ vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
 vendor RALINK_2		0x148f	Ralink Technology
 vendor CONCEPTRONIC	0x14b2	Conceptronic
+vendor SUPERTOP		0x14cd  SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
@@ -2233,6 +2234,9 @@ product SUN KEYBOARD_TYPE_6	0x0005	Type 6 USB keyboard
 product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
+
+/* SuperTop products */
+product SUPERTOP IDEBRIDGE      0x6600  SuperTop IDE Bridge
 
 /* Supra products */
 product DIAMOND2 SUPRAEXPRESS56K 0x07da Supra Express 56K modem
