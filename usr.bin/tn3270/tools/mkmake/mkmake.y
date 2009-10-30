@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.13 2006/03/20 01:34:49 gdamore Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.14 2009/10/30 15:09:24 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.13 2006/03/20 01:34:49 gdamore Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.14 2009/10/30 15:09:24 uebayasi Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -961,7 +961,7 @@ yylex()
 			    printf("[%d]", c); \
 			    fflush(stdout); \
 			} \
-			yyval.intval = c; \
+			yylval.intval = c; \
 			return y;
 #else	/* defined(YYDEBUG) */
 #define	Return(y,c)	{ yylval.intval = c; return y; }
