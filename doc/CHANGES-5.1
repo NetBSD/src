@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.131 2009/10/31 13:35:37 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.132 2009/10/31 13:45:59 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14594,4 +14594,10 @@ sys/arch/alpha/pci/tsvar.h			1.7
 	structure so each tsp(4) gets it own.
 	Fixes PR port-alpha/38358.
 	[mhitch, ticket #1120]
+
+sys/dev/pci/ifpci2.c				1.17
+
+	Fix endianess issues with ifritz (4) when accessing the
+	B-channel fifos.
+	[martin, ticket #1119]
 
