@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_write.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_write.c,v 1.3 2009/10/31 14:30:55 dsl Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -134,6 +134,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 	size_t nlen;
 	const char *n;
 	int rc;
+	EX_PRIVATE *exp;
 
 	NEEDFILE(sp, cmdp);
 
@@ -162,6 +163,12 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		}
 		if (argv_exp1(sp, cmdp, p, STRLEN(p), 1))
 			return (1);
+
+		/* Set the last bang command */
+		exp = EXP(sp);
+		free(exp->lastbcomm);
+		exp->lastbcomm = v_wstrdup(sp, cmdp->argv[1]->bp,
+		    cmdp->argv[1]->len);
 
 		/*
 		 * Historically, vi waited after a write filter even if there
