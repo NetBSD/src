@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.128 2009/10/28 13:06:22 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.129 2009/10/31 12:54:08 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14569,4 +14569,10 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add sdhc(4), a driver for SD controllers following the SD Host
 	Controller Standard Simplified Specification.
 	[sborrill, ticket #1114]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.28
+
+	Fix stalled xbdback detach that would stall the whole xenbus
+	thread, preventing new domU from be created.
+	[bouyer, ticket #1117]
 
