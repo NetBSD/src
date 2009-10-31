@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.39 2008/07/11 07:35:05 cyber Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.40 2009/10/31 22:32:17 christos Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -296,7 +296,24 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_PREFIX_INFORMATION	3
 #define ND_OPT_REDIRECTED_HEADER	4
 #define ND_OPT_MTU			5
+#define ND_OPT_ADVINTERVAL		7
+#define ND_OPT_HOMEAGENT_INFO		8
+#define ND_OPT_SOURCE_ADDRLIST		9
+#define ND_OPT_TARGET_ADDRLIST		10
 #define ND_OPT_RDNSS			25
+/* draft-ietf-ipngwg-router-preference, not officially assigned yet */
+#define ND_OPT_ROUTE_INFO		200
+/* draft-ietf-mobileip-hmipv6, not officially assigned yet */
+#define ND_OPT_MAP			201
+
+struct nd_opt_route_info {	/* route info */
+	u_int8_t	nd_opt_rti_type;
+	u_int8_t	nd_opt_rti_len;
+	u_int8_t	nd_opt_rti_prefixlen;
+	u_int8_t	nd_opt_rti_flags;
+	u_int32_t	nd_opt_rti_lifetime;
+	/* prefix follows */
+};
 
 struct nd_opt_prefix_info {	/* prefix information */
 	u_int8_t	nd_opt_pi_type;
