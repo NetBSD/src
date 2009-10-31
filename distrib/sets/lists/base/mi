@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.837 2009/10/31 15:06:52 tnozaki Exp $
+# $NetBSD: mi,v 1.838 2009/10/31 22:56:38 kardel Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2114,6 +2114,7 @@
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-IT.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-PT.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-UK.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/EBCDIC/EBCDIC-US.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC			base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-CN.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-JIS-2004.esdb	base-sysutil-share	nls
