@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.8 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.8.88.1 2009/10/31 13:35:03 sborrill Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.8 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.8.88.1 2009/10/31 13:35:03 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.8 2005/12/11 12:16:17 christos Exp
 
 #define	CHIP_EX_MALLOC_SAFE(v)  (((struct tsp_config *)(v))->pc_mallocsafe)
 #define CHIP_MEM_EXTENT(v)       (((struct tsp_config *)(v))->pc_mem_ex)
+#define	CHIP_MEM_EX_STORE(v)	(((struct tsp_config *)(v))->pc_mem_exstorage)
+#define	CHIP_MEM_EX_STORE_SIZE(v)					\
+	(sizeof (((struct tsp_config *)(v))->pc_mem_exstorage))
 
 #define CHIP_MEM_SYS_START(v)    (((struct tsp_config *)(v))->pc_iobase)
 
