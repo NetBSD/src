@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.307.4.1 2009/02/02 03:30:32 snj Exp $ */
+/* $NetBSD: machdep.c,v 1.307.4.1.2.1 2009/10/31 13:29:53 sborrill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307.4.1 2009/02/02 03:30:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307.4.1.2.1 2009/10/31 13:29:53 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -965,8 +965,7 @@ cpu_reboot(howto, bootstr)
 {
 #if defined(MULTIPROCESSOR)
 	u_long cpu_id = cpu_number();
-	u_long wait_mask = (1UL << cpu_id) |
-			   (1UL << hwrpb->rpb_primary_cpu_id);
+	u_long wait_mask;
 	int i;
 #endif
 
@@ -1000,6 +999,9 @@ cpu_reboot(howto, bootstr)
 	 * Halt all other CPUs.  If we're not the primary, the
 	 * primary will spin, waiting for us to halt.
 	 */
+	cpu_id = cpu_number();		/* may have changed cpu */
+	wait_mask = (1UL << cpu_id) | (1UL << hwrpb->rpb_primary_cpu_id);
+
 	alpha_broadcast_ipi(ALPHA_IPI_HALT);
 
 	/* Ensure any CPUs paused by DDB resume execution so they can halt */
