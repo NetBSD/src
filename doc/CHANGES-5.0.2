@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.22 2009/10/19 09:02:02 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.23 2009/10/31 13:30:17 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -405,4 +405,10 @@ sys/arch/sparc64/sparc64/trap.c			1.158
 	there remove unnecessary #if 1. This should fix a performance
 	degradation of disk I/O on heavy load.
 	[nakayama, ticket #1103]
+
+sys/arch/alpha/alpha/machdep.c			1.321
+
+	Ensures the cpu running the shutdown waits for the correct
+	cpus to halt and thus stop the machine hanging at shutdown.
+	[mhitch, ticket #1118]
 
