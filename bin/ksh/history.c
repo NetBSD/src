@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.9 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.10 2009/10/31 21:54:01 dsl Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.9 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.10 2009/10/31 21:54:01 dsl Exp $");
 #endif
 
 
@@ -740,20 +740,27 @@ void
 hist_finish()
 {
   static int once;
+  int fd;
   FILE *fh;
   register int i;
   register char **hp;
 
   if (once++)
     return;
+  if (hname == NULL || hname[0] == 0)
+    return;
+
   /* check how many we have */
   i = histptr - histlist;
   if (i >= histsize)
     hp = &histptr[-histsize];
   else
     hp = histlist;
-  if (hname && (fh = fopen(hname, "w")))
-  {
+
+  fd = open(hname, O_WRONLY | O_CREAT | O_TRUNC | O_EXLOCK, 0777);
+  /* Remove anything written before we got the lock */
+  ftruncate(fd, 0);
+  if (fd >= 0 && (fh = fdopen(fd, "w"))) {
     for (i = 0; hp + i <= histptr && hp[i]; i++)
       fprintf(fh, "%s%c", hp[i], '\0');
     fclose(fh);
