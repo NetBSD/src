@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.123 2009/08/05 21:31:50 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.124 2009/10/31 20:41:00 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.123 2009/08/05 21:31:50 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.124 2009/10/31 20:41:00 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -993,7 +993,7 @@ init_sector0(int zappart)
 #ifdef DEFAULT_BOOTCODE
 	if (bootsize == 0)
 		bootsize = read_boot(DEFAULT_BOOTCODE, bootcode,
-			sizeof bootcode, 1);
+			sizeof bootcode, 0);
 #endif
 #ifdef BOOTSEL
 	if (mboot.mbr_bootsel_magic == LE_MBR_BS_MAGIC
