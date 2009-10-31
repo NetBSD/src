@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.129 2009/10/31 12:54:08 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.130 2009/10/31 13:26:21 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14575,4 +14575,10 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.28
 	Fix stalled xbdback detach that would stall the whole xenbus
 	thread, preventing new domU from be created.
 	[bouyer, ticket #1117]
+
+sys/arch/alpha/alpha/machdep.c			1.321
+
+	Ensures the cpu running the shutdown waits for the correct
+	cpus to halt and thus stop the machine hanging at shutdown.
+	[mhitch, ticket #1118]
 
