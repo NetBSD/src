@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.130 2009/10/31 13:26:21 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.131 2009/10/31 13:35:37 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14581,4 +14581,17 @@ sys/arch/alpha/alpha/machdep.c			1.321
 	Ensures the cpu running the shutdown waits for the correct
 	cpus to halt and thus stop the machine hanging at shutdown.
 	[mhitch, ticket #1118]
+
+sys/arch/alpha/pci/tsp_bus_io.c			1.6
+sys/arch/alpha/pci/tsp_bus_mem.c		1.9
+sys/arch/alpha/pci/tsvar.h			1.7
+
+	The tsc(4) bus initialization was using a single statically
+	allocated extent storage for each tsp(4), which caused a
+	LOCKDEBUG kernel to fail because the extent storage
+	contained a mutex which panics when the second mutex_init()
+	is attempted.  Put the extent storage into the tsp_config
+	structure so each tsp(4) gets it own.
+	Fixes PR port-alpha/38358.
+	[mhitch, ticket #1120]
 
