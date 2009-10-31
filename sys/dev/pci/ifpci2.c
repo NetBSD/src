@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.13 2008/04/10 19:13:37 cegger Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.13.14.1 2009/10/31 13:45:27 sborrill Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.13 2008/04/10 19:13:37 cegger Exp $
+ *	$Id: ifpci2.c,v 1.13.14.1 2009/10/31 13:45:27 sborrill Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.13 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.13.14.1 2009/10/31 13:45:27 sborrill Exp $");
 
 
 #include <sys/param.h>
@@ -419,20 +419,19 @@ avma1pp2_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 static void
 hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc)
 {
-	u_int32_t *ip;
-	size_t cnt;
-	int dataoff;
+	int dataoff;	
 
 	dataoff = chan ? HSCX_FIFO2 : HSCX_FIFO1;
+	bus_space_read_multi_stream_4(sc->sc_maps[0].t, sc->sc_maps[0].h,
+	    dataoff, buf, len/4);
+	if (__predict_false((len&3)>0)) {
+		uint32_t tmp;
 
-	ip = (u_int32_t *)buf;
-	cnt = 0;
-	/* what if len isn't a multiple of sizeof(int) and buf is */
-	/* too small ???? */
-	while (cnt < len)
-	{
-		*ip++ = bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, dataoff);
-		cnt += 4;
+		buf = ((unsigned char*)buf) + (len & ~3u);
+		len &= 3u;
+		tmp = bus_space_read_stream_4(sc->sc_maps[0].t,
+		    sc->sc_maps[0].h, dataoff);
+		memcpy(buf, &tmp, len);
 	}
 }
 
@@ -464,7 +463,6 @@ avma1pp2_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t siz
 static void
 hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 {
-	const u_int32_t *ip;
 	size_t cnt;
 	int dataoff;
 	l1_bchan_state_t *Bchan = &sc->sc_chan[chan];
@@ -485,13 +483,17 @@ hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 	AVMA1PPSETCMDLONG(cnt);
 	hscx_write_reg(chan, cnt, sc);
 
-	ip = (const u_int32_t *)buf;
-	cnt = 0;
-	while (cnt < len)
-	{
-		bus_space_write_4(sc->sc_maps[0].t, sc->sc_maps[0].h, dataoff, *ip);
-		ip++;
-		cnt += 4;
+	bus_space_write_multi_stream_4(sc->sc_maps[0].t, sc->sc_maps[0].h,
+	    dataoff, buf, (len+3)/4);
+	if (__predict_false((len&3)>0)) {
+		uint32_t tmp;
+
+		buf = (const unsigned char*)buf + (len & ~3u);
+		len &= 3u;
+		memset(&tmp, 0, sizeof(tmp));
+		memcpy(&tmp, buf, len);
+		bus_space_write_stream_4(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    dataoff, tmp);
 	}
 }
 
