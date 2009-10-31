@@ -1,4 +1,4 @@
-# $NetBSD: EBCDIC.part,v 1.1 2003/06/27 08:40:28 tshiozak Exp $
+# $NetBSD: EBCDIC.part,v 1.2 2009/10/31 15:06:52 tnozaki Exp $
 
 AT-DE
 AT-DE-A
@@ -14,3 +14,4 @@ FR
 IT
 PT
 UK
+US
