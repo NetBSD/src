@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.836 2009/10/25 04:38:05 christos Exp $
+# $NetBSD: mi,v 1.837 2009/10/31 15:06:52 tnozaki Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1785,6 +1785,7 @@
 ./usr/share/i18n/csmapper/EBCDIC/EBCDIC-IT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/EBCDIC-PT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/EBCDIC-UK%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/EBCDIC-US%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE-A.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-AT-DE.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-CA-FR.mps	base-sysutil-share	nls
@@ -1799,6 +1800,7 @@
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-IT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-PT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-UK.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-US.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB			base-sysutil-share
 ./usr/share/i18n/csmapper/GB/GB12345%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GB18030%UCS@BMP.mps	base-sysutil-share	nls

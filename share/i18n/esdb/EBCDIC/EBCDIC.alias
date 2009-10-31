@@ -1,4 +1,4 @@
-# $NetBSD: EBCDIC.alias,v 1.1 2003/06/27 08:40:53 tshiozak Exp $
+# $NetBSD: EBCDIC.alias,v 1.2 2009/10/31 15:06:52 tnozaki Exp $
 
 AT-DE                           ebcdic-at-de
 AT-DE-A                         ebcdic-at-de-a
@@ -14,4 +14,4 @@ FR                              ebcdic-fr
 IT                              ebcdic-it
 PT                              ebcdic-pt
 UK                              ebcdic-uk
-EBCDIC.alias                    ebcdic.alias
+US				ebcdic-us
