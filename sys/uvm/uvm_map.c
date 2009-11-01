@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.282 2009/09/06 23:14:19 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.283 2009/11/01 11:16:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.282 2009/09/06 23:14:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.283 2009/11/01 11:16:32 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3934,8 +3934,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	error = 0;
 	for (current = entry; start < end; current = current->next) {
-		amap = current->aref.ar_amap;	/* top layer */
-		uobj = current->object.uvm_obj;	/* bottom layer */
+		amap = current->aref.ar_amap;	/* upper layer */
+		uobj = current->object.uvm_obj;	/* lower layer */
 		KASSERT(start >= current->start);
 
 		/*
