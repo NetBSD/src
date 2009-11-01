@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.4.2.1 2009/05/13 17:18:50 jym Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.4.2.2 2009/11/01 13:58:46 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.4.2.1 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.4.2.2 2009/11/01 13:58:46 jym Exp $");
 
 
 #include <sys/types.h>
@@ -67,13 +62,9 @@ static u_long xen_shm_base_address_pg;
 static vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
-#ifdef XEN3
 /* Xen3 linux guests seems to eat more pages, gives enough for 10 vbd rings */
 #define BLKIF_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
 #define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1) * 10)
-#else
-#define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
-#endif
 
 static vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
@@ -126,23 +117,14 @@ xen_shm_init(void)
 }
 
 int
-#ifdef XEN3
 xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t *vap,
     grant_handle_t *handlep, int flags)
-#else
-xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
-#endif
 {
 	int s, i;
 	vaddr_t new_va;
 	u_long new_va_pg;
-#ifdef XEN3
 	int err;
 	gnttab_map_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
-#else
-	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
-	int remap_prot = PG_V | PG_RW | PG_U | PG_M;
-#endif
 
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
@@ -185,7 +167,6 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 	splx(s);
 
 	new_va = new_va_pg << PAGE_SHIFT;
-#ifdef XEN3
 	for (i = 0; i < nentries; i++) {
 		op[i].host_addr = new_va + i * PAGE_SIZE;
 		op[i].dom = domid;
@@ -201,42 +182,15 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 			return op[i].status;
 		handlep[i] = op[i].handle;
 	}
-#else /* !XEN3 */
-	for (i = 0; i < nentries; i++, new_va_pg++) {
-		mcl[i].op = __HYPERVISOR_update_va_mapping_otherdomain;
-		mcl[i].args[0] = new_va_pg;
-		mcl[i].args[1] = ma[i] | remap_prot;
-		mcl[i].args[2] = 0;
-		mcl[i].args[3] = domid;
-	}
-	if (HYPERVISOR_multicall(mcl, nentries) != 0)
-	    panic("xen_shm_map: HYPERVISOR_multicall");
-
-	for (i = 0; i < nentries; i++) {
-		if ((mcl[i].args[5] != 0)) {
-			printf("xen_shm_map: mcl[%d] failed\n", i);
-			xen_shm_unmap(new_va, ma, nentries, domid);
-			return EINVAL;
-		}
-	}
-#endif /* !XEN3 */
 	*vap = new_va;
 	return 0;
 }
 
 void
-#ifdef XEN3
 xen_shm_unmap(vaddr_t va, int nentries, grant_handle_t *handlep)
-#else
-xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
-#endif
 {
-#ifdef XEN3
 	gnttab_unmap_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
 	int ret;
-#else
-	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
-#endif
 	int i;
 	int s;
 	struct xen_shm_callback_entry *xshmc;
@@ -248,7 +202,6 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 	}
 #endif
 
-#ifdef XEN3
 	for (i = 0; i < nentries; i++) {
 		op[i].host_addr = va + i * PAGE_SIZE;
 		op[i].dev_bus_addr = 0;
@@ -259,18 +212,6 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 	if (__predict_false(ret))
 		panic("xen_shm_unmap: unmap failed");
 	va = va >> PAGE_SHIFT;
-#else /* !XEN3 */
-	va = va >> PAGE_SHIFT;
-	for (i = 0; i < nentries; i++) {
-		mcl[i].op = __HYPERVISOR_update_va_mapping;
-		mcl[i].args[0] = va + i;
-		mcl[i].args[1] = 0;
-		mcl[i].args[2] = 0;
-	}
-	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
-	if (HYPERVISOR_multicall(mcl, nentries) != 0)
-		panic("xen_shm_unmap");
-#endif /* !XEN3 */
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	vmem_free(xen_shm_arena, va, nentries);
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.7.14.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.7.14.2 2009/11/01 13:58:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.20.10.1 2009/05/13 17:16:08 jym Exp $	*/
+/*	$NetBSD: spl.S,v 1.20.10.2 2009/11/01 13:58:49 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

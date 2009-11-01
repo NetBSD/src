@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.23.2.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.23.2.2 2009/11/01 13:58:17 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23.2.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23.2.2 2009/11/01 13:58:17 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23.2.1 2009/05/13 17:18:45 jym Ex
 
 #include "ioapic.h"
 
-#include "acpi.h"
+#include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8.2.1 2009/05/13 17:18:50 jym Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.2 2009/11/01 13:58:46 jym Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,14 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.1 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.2 2009/11/01 13:58:46 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_nfs_boot.h"
-#include "xennet_hypervisor.h"
-#include "xennet_xenbus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +121,7 @@ cpu_configure(void)
 	startrtclock();
 
 #if NBIOS32 > 0 && defined(DOM0OPS)
-#ifdef XEN3
 	if (xendomain_is_dom0())
-#endif
 		bios32_init();
 #endif /* NBIOS32 > 0 && DOM0OPS */
 #ifdef PCIBIOS

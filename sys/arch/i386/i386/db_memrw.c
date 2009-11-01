@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.24.14.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.24.14.2 2009/11/01 13:58:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.24.14.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.24.14.2 2009/11/01 13:58:20 jym Exp $");
 
 #include "opt_xen.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.7.4.1 2009/05/13 17:18:44 jym Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.7.4.2 2009/11/01 13:58:16 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

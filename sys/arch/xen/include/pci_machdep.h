@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.10.12.1 2009/05/13 17:18:50 jym Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.10.12.2 2009/11/01 13:58:45 jym Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -75,7 +70,6 @@ extern struct x86_bus_dma_tag pci_bus_dma64_tag;
 #define __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 #define PCI_PREFER_IOSPACE
 
-#ifdef XEN3
 union x86_pci_tag_u {
 	uint32_t mode1;
 	struct {
@@ -92,24 +86,6 @@ int		xpci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
 #endif
-
-#else /* XEN3 */
-
-extern uint32_t pci_bus_attached[];
-
-#define PCI_MACHDEP_ENUMERATE_BUS xen_pci_enumerate_bus
-
-/* types provided to MI PCI */
-struct xen_pci_tag {
-	uint8_t bus;
-	uint8_t device;
-	uint8_t function;
-	uint8_t _pad; /* pad to 32bits */
-};
-
-typedef struct xen_pci_tag pcitag_t;
-#endif /* !XEN3 */
-
 typedef void *pci_chipset_tag_t;
 
 typedef struct xen_intr_handle pci_intr_handle_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.4 2009/07/24 11:30:28 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.5 2009/11/01 13:58:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,11 +38,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -63,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.4 2009/07/24 11:30:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.5 2009/11/01 13:58:47 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -73,26 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.4 2009/07/24 11:30:28 jym Exp
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/timetc.h>
-#include <sys/sysctl.h>
-#include <sys/pmf.h>
 
 #include <xen/hypervisor.h>
-
-#define DPRINTK(x) printk x
-#if 0
-#define DPRINTK(x)
-#endif
 
 u_int	tsc_get_timecount(struct timecounter *);
 
 uint64_t tsc_freq;	/* XXX */
-
-#ifdef XEN3
-static int sysctl_xen_sleepstate(SYSCTLFN_ARGS);
-void xen_suspend_domain(void);
-static void xen_prepare_suspend(void);
-static void xen_prepare_resume(void);
-#endif
 
 void
 xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
@@ -228,179 +204,3 @@ tsc_get_timecount(struct timecounter *tc)
 
 	panic("xen: tsc_get_timecount");
 }
-
-#ifdef XEN3
-/*
- * this function sets up the machdep.sleep_state sysctl equivalent
- * for guest domains with no ACPI support
- * This sysctl mimics the ACPI one, except it should be used only for 
- * Xen's save/restore functionalities of guest domains
- */
-void
-sysctl_xen_sleepstate_setup(void) {
-
-	int ret;
-
-	/*
-	 * dom0 implements sleep_state support through ACPI
-	 * it should not call this function to register
-	 * machdep.sleep_state sysctl
-	 */
-	KASSERT( !(xendomain_is_dom0()) );
-
-	ret = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-	     CTLTYPE_INT, "sleep_state", NULL, sysctl_xen_sleepstate, 0,
-	     NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	
-	if (ret)
-		aprint_error("sysctl_createv failed: %d\n", ret);
-}
-
-static int
-sysctl_xen_sleepstate(SYSCTLFN_ARGS) {
-
-	int error, t;
-	struct sysctlnode node;
-
-	node = *rnode;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error || newp == NULL)
-		return error;
-
-	xen_suspend_domain();
-
-	return 0;
-
-}
-
-/*
- * Last operations before suspending domain
- */
-static void
-xen_prepare_suspend(void) {
-
-	kpreempt_disable();
-
-	xen_suspendclocks();
-
-	xen_acquire_writer_ptom_lock();
-
-	/*
-	 * Xen lazy evaluation of recursive mappings requires
-	 * to flush the APDP entries
-	 */
-	pmap_unmap_all_apdp_pdes();
-
-#ifdef PAE
-	pmap_unmap_shadow_entries();
-#endif
-
-	/*
-	 * save/restore code does not translate these MFNs to their
-	 * associated PFNs, so we must do it
-	 */
-	xen_start_info.store_mfn = mfn_to_pfn(xen_start_info.store_mfn);
-	xen_start_info.console_mfn = mfn_to_pfn(xen_start_info.console_mfn);
-
-	DPRINTK(("suspending domain\n"));
-	aprint_verbose("suspending domain\n");
-
-	/* invalidate the shared_info page */
-	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
-	    0, UVMF_INVLPG)) {
-		DPRINTK(("HYPERVISOR_shared_info page invalidation failed"));
-		HYPERVISOR_crash();
-	}
-
-}
-
-/*
- * First operations before restoring domain context
- */
-static void
-xen_prepare_resume(void) {
-
-	/* map the new shared_info page */
-	if (HYPERVISOR_update_va_mapping((vaddr_t)HYPERVISOR_shared_info,
-	    xen_start_info.shared_info | PG_RW | PG_V,
-	    UVMF_INVLPG)) {
-		DPRINTK(("could not map new shared info page"));
-		HYPERVISOR_crash();
-	}
-
-#ifdef PAE
-	pmap_map_shadow_entries();
-#endif
-
-	if (xen_start_info.nr_pages != physmem) {
-		/*
-		 * XXX JYM for now, we crash - fix it with balloon when
-		 * supported
-		 */
-		DPRINTK(("xen_start_info.nr_pages != physmem"));
-		HYPERVISOR_crash();
-	}
-
-	xen_release_ptom_lock();
-
-	DPRINTK(("preparing domain resume\n"));
-	aprint_verbose("preparing domain resume\n");
-
-	xen_initclocks();
-
-	kpreempt_enable();
-
-}
-
-void
-xen_suspend_domain(void) {
-
-	paddr_t mfn;
-	int s = splvm();
-
-	/*
-	 * console becomes unavailable when suspended, so
-	 * direct communications to domain are hampered from there on.
-	 * We can only rely on low level primitives like printk(), until
-	 * console is fully restored
-	 */
-	if (!pmf_system_suspend(PMF_F_NONE)) {
-		DPRINTK(("devices suspend failed"));
-		HYPERVISOR_crash();
-	}
-
-	/*
-	 * obtain the MFN of the start_info page now, as we will not be
-	 * able to do it once pmap is locked
-	 */
-	pmap_extract_ma(pmap_kernel(), (vaddr_t)&xen_start_info, &mfn);
-	mfn >>= PAGE_SHIFT;
-
-	xen_prepare_suspend();
-
-	DPRINTK(("calling HYPERVISOR_suspend()\n"));
-	if (HYPERVISOR_suspend(mfn) != 0) {
-	/* XXX JYM: implement checkpoint/snapshot (ret == 1) */
-		DPRINTK(("HYPERVISOR_suspend() failed"));
-		HYPERVISOR_crash();
-	}
-
-	DPRINTK(("left HYPERVISOR_suspend()\n"));
-
-	xen_prepare_resume();
-
-	DPRINTK(("resuming devices\n"));
-	if (!pmf_system_resume(PMF_F_NONE)) {
-		DPRINTK(("devices resume failed\n"));
-		HYPERVISOR_crash();
-	}
-
-	splx(s);
-
-	/* xencons is back online, we can print to console */
-	aprint_verbose("domain resumed\n");
-
-}
-#endif /* XEN3 */

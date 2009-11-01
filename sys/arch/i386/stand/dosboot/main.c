@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.2.1 2009/05/13 17:17:51 jym Exp $	 */
+/*	$NetBSD: main.c,v 1.25.2.2 2009/11/01 13:58:36 jym Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997

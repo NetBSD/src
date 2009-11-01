@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.29 2008/05/04 16:16:56 xtraeme Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.29.14.1 2009/11/01 13:58:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.29 2008/05/04 16:16:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.29.14.1 2009/11/01 13:58:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.29 2008/05/04 16:16:56 xtraeme Exp $
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("vald_acpi")
 
 #define GHCI_WORDS 6
 #define GHCI_FIFO_EMPTY  0x8c00
@@ -350,7 +353,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	ArgList.Pointer = Arg;
 
 	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
@@ -374,7 +377,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (rv);
 }
 
@@ -408,7 +411,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	ArgList.Pointer = Arg;
 
 	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
@@ -427,7 +430,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (rv);
 }
 
@@ -457,10 +460,10 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 		printf("_BCL retrun: %d packages\n", param->Package.Count);
 
 		sc->lcd_num = param->Package.Count;
-		sc->lcd_level = AcpiOsAllocate(sizeof(int) * sc->lcd_num);
+		sc->lcd_level = ACPI_ALLOCATE(sizeof(int) * sc->lcd_num);
 		if (sc->lcd_level == NULL) {
 			if (buf.Pointer)
-				AcpiOsFree(buf.Pointer);
+				ACPI_FREE(buf.Pointer);
 			return (AE_NO_MEMORY);
 		}
 
@@ -490,7 +493,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (AE_OK);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.17.8.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.17.8.2 2009/11/01 13:58:45 jym Exp $	*/
 
 /*
  *
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,9 +35,6 @@ extern struct evtsource *evtsource[];
 
 void events_default_setup(void);
 void events_init(void);
-bool events_suspend(void);
-bool events_resume(void);
-
 unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 void call_xenevt_event(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.16.14.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: copy.S,v 1.16.14.2 2009/11/01 13:58:20 jym Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.16.14.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.16.14.2 2009/11/01 13:58:20 jym Exp $");
 
 #include "assym.h"
 

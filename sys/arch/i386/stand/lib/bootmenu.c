@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.4.6.1 2009/05/13 17:17:51 jym Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.4.6.2 2009/11/01 13:58:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -261,11 +261,15 @@ parsebootconf(const char *conf)
 static int
 getchoicefrominput(char *input, int def)
 {
-	int choice;
+	int choice, usedef;
+
 	choice = -1;
-	if (*input == '\0' || *input == '\r' || *input == '\n')
+	usedef = 0;
+
+	if (*input == '\0' || *input == '\r' || *input == '\n') {
 		choice = def;
-	else if (*input >= 'A' && *input < bootconf.nummenu + 'A')
+		usedef = 1;
+	} else if (*input >= 'A' && *input < bootconf.nummenu + 'A')
 		choice = (*input) - 'A';
 	else if (*input >= 'a' && *input < bootconf.nummenu + 'a')
 		choice = (*input) - 'a';
@@ -274,6 +278,11 @@ getchoicefrominput(char *input, int def)
 		if (choice < 0 || choice >= bootconf.nummenu)
 			choice = -1;
 	}
+
+	if (bootconf.menuformat != MENUFORMAT_LETTER &&
+	    !isnum(*input) && !usedef)
+		choice = -1;
+
 	return choice;
 }
 

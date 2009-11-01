@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.35.4.1 2009/05/13 17:16:08 jym Exp $
+# $NetBSD: XEN3_DOM0,v 1.35.4.2 2009/11/01 13:58:54 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -17,6 +17,13 @@ options 	MSGBUFSIZE=24576
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
+
+# Enhanced SpeedStep Technology in the Pentium M
+options		ENHANCED_SPEEDSTEP
+#options	EST_FREQ_USERWRITE	# any user can set frequency
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options		POWERNOW_K8
 
 #options 	MTRR		# memory-type range register syscall support
 
@@ -675,6 +682,10 @@ opl*	at eso?
 opl*	at fms?
 opl*	at sv?
 opl*	at yds?
+
+# High Definition Audio
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?

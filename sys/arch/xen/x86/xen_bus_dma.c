@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.14.2.2 2009/05/31 20:15:37 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.14.2.3 2009/11/01 13:58:46 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.2 2009/05/31 20:15:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.3 2009/11/01 13:58:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	bus_addr_t pa;
 	struct vm_page *pg, *pgnext;
 	int s, error;
-#ifdef XEN3
 	struct xen_memory_reservation res;
-#endif
 
 	/*
 	 * When requesting a contigous memory region, the hypervisor will
@@ -89,13 +87,11 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	if (error)
 		return (error);
 
-	xen_acquire_reader_ptom_lock();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.queue.tqe_next) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
-#ifdef XEN3
 		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
@@ -112,23 +108,8 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 			error = ENOMEM;
 			goto failed;
 		}
-#else
-		if (HYPERVISOR_dom_mem_op(MEMOP_decrease_reservation,
-		    &mfn, 1, 0) != 1) {
-#ifdef DEBUG
-			printf("xen_alloc_contig: MEMOP_decrease_reservation "
-			    "failed!\n");
-#endif
-			xpmap_phys_to_machine_mapping[
-			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
-			error = ENOMEM;
-			goto failed;
-		}
-#endif
 	}
-
 	/* Get the new contiguous memory extent */
-#ifdef XEN3
 	xenguest_handle(res.extent_start) = &mfn;
 	res.nr_extents = 1;
 	res.extent_order = order;
@@ -145,18 +126,6 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		pg = NULL;
 		goto failed;
 	}
-#else
-	if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
-	    &mfn, 1, order) != 1) {
-#ifdef DEBUG
-		printf("xen_alloc_contig: MEMOP_increase_reservation "
-		    "failed!\n");
-#endif
-		error = ENOMEM;
-		pg = NULL;
-		goto failed;
-	}
-#endif
 	s = splvm();
 	/* Map the new extent in place of the old pages */
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
@@ -171,13 +140,10 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 			uvm_pagefree(pg);
 		}
 	}
-
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
 	splx(s);
-
-	xen_release_ptom_lock();
 	return 0;
 
 failed:
@@ -199,7 +165,6 @@ failed:
 	s = splvm();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
 		pgnext = pg->pageq.queue.tqe_next;
-#ifdef XEN3
 		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
@@ -211,14 +176,6 @@ failed:
 			    "XENMEM_increase_reservation failed!\n");
 			break;
 		}
-#else
-		if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
-		    &mfn, 1, 0) != 1) {
-			printf("xen_alloc_contig: recovery "
-			    "MEMOP_increase_reservation failed!\n");
-			break;
-		}
-#endif
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
@@ -267,9 +224,6 @@ _xen_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
-
-	xen_acquire_reader_ptom_lock();
-
 again:
 
 	/*
@@ -305,11 +259,9 @@ again:
 	}
 
 	*rsegs = curseg + 1;
-	xen_release_ptom_lock();
 	return (0);
 
 badaddr:
-#ifdef XEN3
 	if (doingrealloc == 0)
 		goto dorealloc;
 	if (curaddr < low) {
@@ -318,26 +270,12 @@ badaddr:
 		    "enforce address range (0x%" PRIx64 " - 0x%" PRIx64 ")\n",
 		    (uint64_t)low, (uint64_t)high);
 		uvm_pglistfree(&mlist);
-		xen_release_ptom_lock();
 		return EINVAL;
 	}
 	printf("xen_bus_dmamem_alloc_range: "
 	    "curraddr=0x%lx > high=0x%lx\n",
 	    (u_long)curaddr, (u_long)high);
 	panic("xen_bus_dmamem_alloc_range 1");
-#else /* !XEN3 */
-	/*
-	 * If machine addresses are outside the allowed
-	 * range we have to bail. Xen2 doesn't offer an
-	 * interface to get memory in a specific address
-	 * range.
-	 */
-	printf("_xen_bus_dmamem_alloc_range: no way to "
-	    "enforce address range\n");
-	uvm_pglistfree(&mlist);
-	xen_release_ptom_lock();
-	return EINVAL;
-#endif /* XEN3 */
 dorealloc:
 	if (doingrealloc == 1)
 		panic("_xen_bus_dmamem_alloc_range: "
@@ -356,9 +294,7 @@ dorealloc:
 	}
 	error = _xen_alloc_contig(size, alignment,
 	    boundary, &mlist, flags, low, high);
-	if (error) {
-		xen_release_ptom_lock();
+	if (error)
 		return error;
-	}
 	goto again;
 }

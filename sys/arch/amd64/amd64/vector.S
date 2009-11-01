@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.29.4.1 2009/07/23 23:31:35 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.29.4.2 2009/11/01 13:58:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.

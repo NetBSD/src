@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.3.12.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.3.12.2 2009/11/01 13:58:18 jym Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.12.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.12.2 2009/11/01 13:58:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.18.24.1 2009/05/13 17:18:50 jym Exp $
+#	$NetBSD: files.compat,v 1.18.24.2 2009/11/01 13:58:44 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -8,7 +8,7 @@
 # MTRR support
 defflag                 MTRR
 
-defflag opt_xen.h		XEN XEN3 PAE
+defflag opt_xen.h		XEN PAE
 
 
 # XXX define fake options to make config create the .h files
@@ -57,14 +57,8 @@ defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD
 # Intel On Die Temperature sensor
 defflag opt_intel_coretemp.h		XXXINTEL_CORETEMP
 
-# AMD Powernow/Cool`n'Quiet Technology
-defflag opt_powernow_k8.h	XXPOWERNOW_K8
-
-# Intel Enhanced Speedstep
-defflag	opt_enhanced_speedstep.h XXXENHANCED_SPEEDSTEP
-defflag opt_est.h		XXXEST_FREQ_USERWRITE
-
-defflag opt_powernow_k7.h XXXPOWERNOW_K7
+# VIA C7 Temperature sensor
+defflag	opt_via_c7temp.h		XXXVIA_CORETEMP
 
 # Multiboot support
 defflag 	opt_multiboot.h		XXXMULTIBOOT

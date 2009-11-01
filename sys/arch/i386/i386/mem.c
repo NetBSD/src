@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.71.4.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: mem.c,v 1.71.4.2 2009/11/01 13:58:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.71.4.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.71.4.2 2009/11/01 13:58:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
