@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.14 2009/04/13 23:20:27 lukem Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.15 2009/11/01 22:08:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.14 2009/04/13 23:20:27 lukem Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.15 2009/11/01 22:08:14 dsl Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -94,7 +94,8 @@ global_help(char *args)
 		len = strlen(name);
 		if (col + len > COLS)
 			break;
-		addstr(name); col += len;
+		addstr(name);
+		col += len + 1;
 		if (col + 1 < COLS)
 			addch(' ');
 		if (prev)
