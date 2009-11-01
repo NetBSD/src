@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.126 2008/12/20 11:33:38 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.127 2009/11/01 11:16:32 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.126 2008/12/20 11:33:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.127 2009/11/01 11:16:32 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -65,11 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.126 2008/12/20 11:33:38 ad Exp $");
  *    read/write1     write>1                  read/write   +-cow_write/zero
  *         |             |                         |        |
  *      +--|--+       +--|--+     +-----+       +  |  +     | +-----+
- * amap |  V  |       |  ----------->new|          |        | |  ^  |
+ * amap |  V  |       |  ---------> new |          |        | |  ^  |
  *      +-----+       +-----+     +-----+       +  |  +     | +--|--+
  *                                                 |        |    |
  *      +-----+       +-----+                   +--|--+     | +--|--+
- * uobj | d/c |       | d/c |                   |  V  |     +----|  |
+ * uobj | d/c |       | d/c |                   |  V  |     +----+  |
  *      +-----+       +-----+                   +-----+       +-----+
  *
  * d/c = don't care
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.126 2008/12/20 11:33:38 ad Exp $");
  *
  *   case [1]: upper layer fault [anon active]
  *     1A: [read] or [write with anon->an_ref == 1]
- *		I/O takes place in top level anon and uobj is not touched.
+ *		I/O takes place in upper level anon and uobj is not touched.
  *     1B: [write with anon->an_ref > 1]
  *		new anon is alloc'd and data is copied off ["COW"]
  *
@@ -822,8 +822,8 @@ ReFault:
 	 * identify the players
 	 */
 
-	amap = ufi.entry->aref.ar_amap;		/* top layer */
-	uobj = ufi.entry->object.uvm_obj;	/* bottom layer */
+	amap = ufi.entry->aref.ar_amap;		/* upper layer */
+	uobj = ufi.entry->object.uvm_obj;	/* lower layer */
 
 	/*
 	 * check for a case 0 fault.  if nothing backing the entry then
@@ -1159,7 +1159,7 @@ ReFault:
 	/*
 	 * note that at this point we are done with any front or back pages.
 	 * we are now going to focus on the center page (i.e. the one we've
-	 * faulted on).  if we have faulted on the top (anon) layer
+	 * faulted on).  if we have faulted on the upper (anon) layer
 	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
 	 * not touched it yet).  if we have faulted on the bottom (uobj)
 	 * layer [i.e. case 2] and the page was both present and available,
