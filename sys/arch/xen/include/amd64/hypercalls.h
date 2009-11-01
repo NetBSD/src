@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.5.4.2 2009/11/01 13:58:45 jym Exp $ */
+/* $NetBSD: hypercalls.h,v 1.5.4.3 2009/11/01 21:43:28 jym Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -404,6 +404,12 @@ HYPERVISOR_machine_check(struct xen_mc *mc)
 {
 	mc->interface_version = XEN_MCA_INTERFACE_VERSION;
 	return _hypercall1(int, mca, mc);
+}
+
+static inline int
+HYPERVISOR_sysctl(void *sysctl)
+{
+	return _hypercall1(int, sysctl, sysctl);
 }
 
 #endif /* __HYPERCALL_H__ */

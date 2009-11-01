@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.5 2009/11/01 13:58:16 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.6 2009/11/01 21:43:29 jym Exp $	*/
 
 /*
  *
@@ -353,6 +353,12 @@ bool	sse2_idlezero_page(void *);
 
 
 #ifdef XEN
+
+void	pmap_unmap_all_apdp_pdes(void);
+#ifdef PAE
+void	pmap_map_recursive_entries(void);
+void	pmap_unmap_recursive_entries(void);
+#endif /* PAE */
 
 #define XPTE_MASK	L1_FRAME
 /* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
