@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.121 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.122 2009/11/01 20:57:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 /*
  * Lightweight process.  Field markings and the corresponding locks: 
  *
- * a:	proclist_mutex
+ * a:	proclist_lock
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_lock
@@ -200,7 +200,6 @@ struct lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
-extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
