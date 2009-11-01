@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.47 2009/10/22 13:12:47 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.48 2009/11/01 21:46:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.47 2009/10/22 13:12:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.48 2009/11/01 21:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,6 @@ lwp_unpark(lwpid_t target, const void *hint)
 int
 lwp_park(struct timespec *ts, const void *hint)
 {
-	struct timespec tsx;
 	sleepq_t *sq;
 	kmutex_t *mp;
 	wchan_t wchan;
@@ -548,16 +547,14 @@ lwp_park(struct timespec *ts, const void *hint)
 
 	/* Fix up the given timeout value. */
 	if (ts != NULL) {
-		getnanotime(&tsx);
-		timespecsub(ts, &tsx, &tsx);
-		if (tsx.tv_sec < 0 || (tsx.tv_sec == 0 && tsx.tv_nsec <= 0))
-			return ETIMEDOUT;
-		if ((error = itimespecfix(&tsx)) != 0)
+		error = abstimeout2timo(ts, &timo);
+		if (error) {
 			return error;
-		timo = tstohz(&tsx);
+		}
 		KASSERT(timo != 0);
-	} else
+	} else {
 		timo = 0;
+	}
 
 	/* Find and lock the sleep queue. */
 	l = curlwp;
