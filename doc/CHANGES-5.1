@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.132 2009/10/31 13:45:59 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.133 2009/11/01 16:13:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14600,4 +14600,18 @@ sys/dev/pci/ifpci2.c				1.17
 	Fix endianess issues with ifritz (4) when accessing the
 	B-channel fifos.
 	[martin, ticket #1119]
+
+dist/nvi/regex/regexec.c			1.4
+
+	Fix regexp on LP64 systems.
+	By the time 'states1' was expanded, it became 'char *' so the
+	code tried to put 64 bits into an int!  Fixed PR/41924
+	[dsl, ticket #1121]
+
+sys/dev/pckbport/wskbdmap_mfii.c		patch
+sys/dev/wscons/wsksymdef.h			patch
+sys/dev/wscons/wskbdutil.c			patch
+
+	Add hungarian keyboard layout.
+	[ahoka, ticket #1111]
 
