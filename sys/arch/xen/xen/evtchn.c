@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.42.2.4 2009/11/01 13:58:46 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42.2.5 2009/11/01 21:43:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.4 2009/11/01 13:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.5 2009/11/01 21:43:28 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -162,7 +162,7 @@ void
 events_init(void)
 {
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
-	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	aprint_verbose("VIRQ_DEBUG interrupt using event channel %d\n",
 	    debug_port);
 	/*
 	 * Don't call event_set_handler(), we'll use a shortcut. Just set
@@ -174,6 +174,33 @@ events_init(void)
 
 	x86_enable_intr();		/* at long last... */
 }
+
+bool
+events_suspend (void)
+{
+	int evtch;
+
+	x86_disable_intr();
+
+	/* VIRQ_DEBUG is the last interrupt to remove */
+	evtch = unbind_virq_from_evtch(VIRQ_DEBUG);
+	hypervisor_mask_event(evtch);
+	/* Remove the non-NULL value set in events_init() */
+	evtsource[evtch] = NULL;
+	aprint_verbose("VIRQ_DEBUG interrupt disabled, "
+	    "event channel %d removed\n", evtch);
+
+	return true;
+}
+
+bool
+events_resume (void)
+{
+	events_init();
+
+	return true;
+}
+
 
 unsigned int
 evtchn_do_event(int evtch, struct intrframe *regs)
