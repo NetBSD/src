@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.131 2009/08/18 02:41:31 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.132 2009/11/01 11:16:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.131 2009/08/18 02:41:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.132 2009/11/01 11:16:32 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -226,8 +226,8 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 			}
 		}
 
-		amap = entry->aref.ar_amap;	/* top layer */
-		uobj = entry->object.uvm_obj;	/* bottom layer */
+		amap = entry->aref.ar_amap;	/* upper layer */
+		uobj = entry->object.uvm_obj;	/* lower layer */
 
 		if (amap != NULL)
 			amap_lock(amap);
@@ -237,7 +237,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
 			pgi = 0;
 			if (amap != NULL) {
-				/* Check the top layer first. */
+				/* Check the upper layer first. */
 				anon = amap_lookup(&entry->aref,
 				    start - entry->start);
 				/* Don't need to lock anon here. */
@@ -252,7 +252,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 				}
 			}
 			if (uobj != NULL && pgi == 0) {
-				/* Check the bottom layer. */
+				/* Check the lower layer. */
 				pg = uvm_pagelookup(uobj,
 				    entry->offset + (start - entry->start));
 				if (pg != NULL) {
