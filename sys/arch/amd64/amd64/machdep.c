@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123.2.1 2009/05/13 17:16:08 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.2 2009/11/01 13:58:48 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -58,11 +58,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -112,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.1 2009/05/13 17:16:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.2 2009/11/01 13:58:48 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -138,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.1 2009/05/13 17:16:08 jym Exp $"
 #include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>	/* for MID_* */
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/mbuf.h>
@@ -179,7 +175,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.1 2009/05/13 17:16:08 jym Exp $"
 #include <machine/mpbiosvar.h>
 
 #include <x86/cputypes.h>
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/machdep.h>
 
@@ -202,9 +197,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123.2.1 2009/05/13 17:16:08 jym Exp $"
 #include <ddb/db_interface.h>
 #endif
 
-#include "acpi.h"
+#include "acpica.h"
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
@@ -420,13 +415,12 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
+	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
 #if !defined(XEN)
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap_kernel()->pm_ldt_sel);
 #else
 	{
 	struct physdev_op physop;
@@ -703,7 +697,7 @@ haltsys:
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
-#if NACPI > 0
+#if NACPICA > 0
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
 #endif
@@ -715,7 +709,7 @@ haltsys:
 	x86_broadcast_ipi(X86_IPI_HALT);
 
 	if (howto & RB_HALT) {
-#if NACPI > 0
+#if NACPICA > 0
 		AcpiDisable();
 #endif
 
@@ -1533,8 +1527,6 @@ init_x86_64(paddr_t first_avail)
 
 	splraise(IPL_HIGH);
 	x86_enable_intr();
-
-	x86_init();
 
 #ifdef DDB
 	if (boothowto & RB_KDB)

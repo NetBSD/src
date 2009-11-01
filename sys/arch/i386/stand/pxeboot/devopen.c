@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7.92.1 2009/05/13 17:17:52 jym Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7.92.2 2009/11/01 13:58:44 jym Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	dp = &devsw[0];
 
 	/* Set the default boot file system. */
-	memcpy( file_system, pxeboot_fstab[0].fst_ops, sizeof(struct fs_ops));
+	memcpy(file_system, pxeboot_fstab[0].fst_ops, sizeof(struct fs_ops));
 
 	/* if we got passed a filename, pass it to the BOOTP server */
 	if (fname)
@@ -111,7 +111,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		for (i = 0; i < npxeboot_fstab; i++) {
 			if (strncmp(fname, pxeboot_fstab[i].fst_name,
 			    fsnamelen) == 0) {
-				memcpy( file_system, pxeboot_fstab[i].fst_ops,
+				memcpy(file_system, pxeboot_fstab[i].fst_ops,
 				    sizeof(struct fs_ops));
 				break;
 			}

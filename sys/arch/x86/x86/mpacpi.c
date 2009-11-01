@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.75.2.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.75.2.2 2009/11/01 13:58:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,9 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.2 2009/11/01 13:58:18 jym Exp $");
 
-#include "acpi.h"
+#include "acpica.h"
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
@@ -74,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.1 2009/05/13 17:18:45 jym Exp $");
 #include <dev/acpi/acpi_madt.h>
 
 #include <dev/cons.h>
+
+#define _COMPONENT     ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME       ("mpacpi")
 
 #include "pci.h"
 #include "ioapic.h"
@@ -532,7 +535,6 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
 	ACPI_DEVICE_INFO *devinfo;
-	ACPI_BUFFER buf;
 	struct ac_dev {
 		TAILQ_ENTRY(ac_dev) list;
 		ACPI_HANDLE handle;
@@ -548,36 +550,29 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 	/* first, search parent root bus */
 	for (current = handle;; current = parent) {
-		buf.Pointer = NULL;
-		buf.Length = ACPI_ALLOCATE_BUFFER;
-		rv = AcpiGetObjectInfo(current, &buf);
+		rv = AcpiGetObjectInfo(current, &devinfo);
 		if (ACPI_FAILURE(rv))
 			return -1;
 
-		devinfo = buf.Pointer;
 		/* add this device to the list only if it's active */
 		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
 		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
-			AcpiOsFree(buf.Pointer);
+			ACPI_FREE(devinfo);
 			dev = kmem_zalloc(sizeof(struct ac_dev), KM_SLEEP);
 			if (dev == NULL)
 				return -1;
 			dev->handle = current;
 			TAILQ_INSERT_HEAD(&dev_list, dev, list);
 		} else
-			AcpiOsFree(buf.Pointer);
+			ACPI_FREE(devinfo);
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
 			return -1;
 
-		buf.Pointer = NULL;
-		buf.Length = ACPI_ALLOCATE_BUFFER;
-		rv = AcpiGetObjectInfo(parent, &buf);
+		rv = AcpiGetObjectInfo(parent, &devinfo);
 		if (ACPI_FAILURE(rv))
 			return -1;
-
-		devinfo = buf.Pointer;
 
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
 			rv = mpacpi_get_bbn(acpi, parent, &bus);
@@ -586,7 +581,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 			break;
 		}
 
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(devinfo);
 	}
 
 	/*
@@ -637,20 +632,14 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
     void **status)
 {
 	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
 	ACPI_DEVICE_INFO *devinfo;
 	struct mpacpi_pcibus *mpr;
 	struct acpi_softc *acpi = p;
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
-
 	/* get _HID, _CID and _STA */
-	rv = AcpiGetObjectInfo(handle, &buf);
+	rv = AcpiGetObjectInfo(handle, &devinfo);
 	if (ACPI_FAILURE(rv))
 		return AE_OK;
-
-	devinfo = buf.Pointer;
 
 	/* if this device is not active, ignore it */
 	if ((devinfo->Valid & ACPI_VALID_STA) &&
@@ -659,7 +648,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
 	if (mpr == NULL) {
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(devinfo);
 		return AE_NO_MEMORY;
 	}
 
@@ -711,7 +700,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	mpacpi_npci++;
 
  out:
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(devinfo);
 	return AE_OK;
 }
 
@@ -834,7 +823,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		mpb->mb_intrs = mpi;
 	}
 
-	AcpiOsFree(mpr->mpr_buf.Pointer);
+	ACPI_FREE(mpr->mpr_buf.Pointer);
 	mpr->mpr_buf.Pointer = NULL;	/* be preventive to bugs */
 
 	if (mp_verbose > 1)

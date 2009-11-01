@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.5 2009/07/24 11:30:28 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.6 2009/11/01 13:58:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -154,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.5 2009/07/24 11:30:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.6 2009/11/01 13:58:18 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -262,10 +257,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.5 2009/07/24 11:30:28 jym Exp $");
  *
  * if the kernel is totally out of virtual space
  * (i.e. uvm_km_alloc returns NULL), then we panic.
- *
- * XXX: the fork code currently has no way to return an "out of
- * memory, try again" error code since uvm_fork [fka vm_fork]
- * is a void function.
  *
  * [B] new page tables pages (PTP)
  * 	- call uvm_pagealloc()
@@ -557,12 +548,6 @@ static struct pool_allocator pmap_pdp_allocator = {
 	.pa_free = pmap_pdp_free,
 	.pa_pagesz = PAGE_SIZE * PDP_SIZE,
 };
-
-#ifdef XEN
-/* pool for allocation of the structures tracking L2 pinned shadow pages */
-//static struct pool_cache l2_pdirpte_cache;
-#endif /* XEN */
-
 #endif /* PAE */
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
@@ -598,15 +583,12 @@ static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static void		 pmap_map_ptes(struct pmap *, struct pmap **,
 				       pt_entry_t **, pd_entry_t * const **);
-static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, u_int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t, u_int,
+					 pt_entry_t *, vaddr_t,
 					 struct pv_entry **);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
-					  vaddr_t, vaddr_t, vaddr_t, u_int,
+					  vaddr_t, vaddr_t, vaddr_t,
 					  struct pv_entry **);
-#define PMAP_REMOVE_ALL		0	/* remove all mappings */
-#define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
 static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
@@ -746,131 +728,6 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 	    (pmap->pm_cpus & ci->ci_cpumask) != 0 ||
 	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
-
-/*
- * Flush the content of APDP_PDE
- */
-static inline
-void pmap_unmap_apdp_pde(void) {
-
-	int i;
-
-	for (i = 0; i < PDP_SIZE; i++) {
-		pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-		/* clear current pmap shadow entries too */
-    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-	}
-
-}
-
-#ifdef XEN3
-/*
- * Flush all APDP entries found in pmaps
- * Required during Xen save/restore operations, as it does not
- * handle alternative recursive mappings properly
- */
-void
-pmap_unmap_all_apdp_pdes(void) {
-
-	int i;
-	int s;
-	struct pmap *pm;
-
-	s = splvm();
-
-#ifdef PAE
-	/*
-	 * For PAE, there are two places where alternative recursive mappings
-	 * could be found: in the L2 shadow pages, and the "real" L2 kernel
-	 * page (pmap_kl2pd), which is unique and static.
-	 * We first clear the APDP for the current pmap. As L2 kernel page is
-	 * unique, we only need to do it once for all pmaps.
-	 */
-	pmap_unmap_apdp_pde();
-#endif
-
-	mutex_enter(&pmaps_lock);
-	/*
-	 * Set APDP entries to 0 in all pmaps.
-	 * Note that for PAE kernels, this only clears the APDP entries
-	 * found in the L2 shadow pages, as pmap_pdirpa() is used to obtain
-	 * the PA of the pmap->pm_pdir[] pages (forming the 4 contiguous
-	 * pages of PAE PD: 3 for user space, 1 for the L2 kernel shadow page)
-	 */
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		for (i = 0; i < PDP_SIZE; i++) {
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_APTE + i)), 0);
-		}
-	}
-	mutex_exit(&pmaps_lock);
-
-	xpq_flush_queue();
-
-	splx(s);
-
-}
-
-#ifdef PAE
-/*
- * NetBSD uses L2 shadow pages to support PAE with Xen. However, Xen does not
- * handle them correctly during save/restore, leading to incorrect page
- * tracking and pinning during restore.
- * For save/restore to succeed, two functions are introduced:
- * - pmap_map_shadow_entries(), used by resume code to set the last entry
- *   of PDIR_SLOT_PTE so that it points to the correct L2 shadow page
- *   entries to their correct values, so that pmap works again.
- * - pmap_unmap_shadow_entries(), used by suspend code to clear all
- *   PDIR_SLOT_PTE entries pointing to L2 shadow entries
- */ 
-void
-pmap_map_shadow_entries(void) {
-
-	struct pmap *pm;
-
-	mutex_enter(&pmaps_lock);
-
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		xpq_queue_pte_update(
-		    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + 3)),
-		    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_KERN)) | PG_V);
-	}
-
-	mutex_exit(&pmaps_lock);
-
-	xpq_queue_pte_update(
-	    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + 3)),
-	    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_KERN)) | PG_V);
-
-	xpq_flush_queue();
-}
-
-void
-pmap_unmap_shadow_entries(void) {
-
-	struct pmap *pm;
-
-	mutex_enter(&pmaps_lock);
-
-	LIST_FOREACH(pm, &pmaps, pm_list) {
-		xpq_queue_pte_update(
-		    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + 3)), 0);
-	}
-
-	mutex_exit(&pmaps_lock);
-
-	/* do it for pmap_kernel() too! */
-	xpq_queue_pte_update(
-	    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + 3)), 0);
-
-	xpq_flush_queue();
-
-}
-#endif /* PAE */
-#endif /* XEN3 */
-
 
 static void
 pmap_apte_flush(struct pmap *pmap)
@@ -1049,11 +906,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		return;
 	}
 	KASSERT(kpreempt_disabled());
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
@@ -1063,7 +915,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		KASSERT(curcpu()->ci_pmap == pmap2);
 #endif
 #if defined(MULTIPROCESSOR)
-		pmap_unmap_apdp_pde();
+		pmap_pte_set(APDP_PDE, 0);
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
@@ -1072,11 +924,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		mutex_exit(&pmap2->pm_lock);
 		pmap_destroy(pmap2);
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 
 inline static void
@@ -1168,10 +1015,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	KASSERT(!(prot & ~VM_PROT_ALL));
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
 	else
@@ -1199,11 +1042,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 		kpreempt_enable();
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 
 void
@@ -1320,10 +1158,6 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 
 	KASSERT(kpreempt_disabled());
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
 	else
@@ -1341,11 +1175,6 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 		pmap_pte_flush();
 		invlpg(va);
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 #endif /* defined(__x86_64__) */
 
@@ -1370,10 +1199,6 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 	eva = sva + len;
 	xpte = 0;
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			pte = vtopte(va);
@@ -1394,11 +1219,6 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
 		kpreempt_enable();
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 
 /*
@@ -1652,7 +1472,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -1713,10 +1533,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
 #ifdef PAE
-#ifdef XEN
-	//pool_cache_bootstrap(&l2_pdirpte_cache, sizeof(struct l2_pdirpte), 0, 0,
-	//    0, "l2_pdirptepl", NULL, IPL_NONE, NULL, NULL, NULL);
-#endif /* XEN */
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
 	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
 	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
@@ -1821,9 +1637,6 @@ pmap_init(void)
 		mutex_init(&pv_hash_locks[i].lock, MUTEX_NODEBUG, IPL_VM);
 	}
 
-#ifdef XEN3
-	xen_init_ptom_lock();
-#endif
 	/*
 	 * done: pmap module is up (and ready for business)
 	 */
@@ -2235,8 +2048,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 #ifdef XEN
 	int s;
-
-	xen_acquire_reader_ptom_lock();
 #endif
 
 	/*
@@ -2309,17 +2120,15 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
-		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
 #endif
 	xpq_flush_queue();
 	splx(s);
-
-	xen_release_ptom_lock();
 #endif /* XEN */
 
 	return (0);
@@ -2339,8 +2148,6 @@ pmap_pdp_dtor(void *arg, void *v)
 	int s = splvm();
 	pt_entry_t *pte;
 
-	xen_acquire_reader_ptom_lock();
-
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* fetch the physical address of the page directory. */
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
@@ -2355,9 +2162,6 @@ pmap_pdp_dtor(void *arg, void *v)
 		xpq_queue_invlpg((vaddr_t)object);
 	}
 	xpq_flush_queue();
-
-	xen_release_ptom_lock();
-
 	splx(s);
 #endif  /* XEN */
 }
@@ -2399,12 +2203,8 @@ pmap_create(void)
 {
 	struct pmap *pmap;
 	int i;
-#ifdef PAE
-	//struct l2_pdirpte *l2s;
-#endif /* PAE */
 
 	pmap = pool_cache_get(&pmap_cache, PR_WAITOK);
-	//l2p  = pool_cache_get(&l2_pdirpte_cache, PR_WAITOK);
 
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
@@ -2437,28 +2237,12 @@ pmap_create(void)
 		goto try_again;
 	}
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 #ifdef PAE
 	for (i = 0; i < PDP_SIZE; i++)
 		pmap->pm_pdirpa[i] =
 		    pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE + i]);
-
-	/*
-	 * We now have an L2 page with a valid PDIR_SLOT_PTE pointing
-	 * to a shadow L2, so track it
-	l2p->slot_pte = pdirpa;
-	l2p->slot_pte_content = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE + i]);
-	 */
-
 #else
 	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
-#endif
-
-#ifdef XEN3
-	xen_release_ptom_lock();
 #endif
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
@@ -2512,15 +2296,19 @@ pmap_destroy(struct pmap *pmap)
 	 * Xen lazy APDP handling:
 	 * clear APDP_PDE if pmap is the currently mapped
 	 */
-	xen_acquire_reader_ptom_lock();
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		kpreempt_disable();
-		pmap_unmap_apdp_pde();
+		for (i = 0; i < PDP_SIZE; i++) {
+	        	pmap_pte_set(&APDP_PDE[i], 0);
+#ifdef PAE
+			/* clear shadow entry too */
+	    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#endif
+		}
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
 	        kpreempt_enable();
 	}
-	xen_release_ptom_lock();
 #endif
 
 	/*
@@ -2601,10 +2389,6 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		return;
 	}
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
  retry:
 	if (pmap1->pm_ldt != NULL) {
 		len = pmap1->pm_ldt_len;
@@ -2650,13 +2434,7 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 		    UVM_KMF_WIRED);
 	}
-
 	mutex_exit(&cpu_lock);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
@@ -2806,7 +2584,7 @@ pmap_reactivate(struct pmap *pmap)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2852,19 +2630,11 @@ pmap_load(void)
 	struct pcb *pcb;
 	uint64_t ncsw;
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	kpreempt_disable();
-
  retry:
 	ci = curcpu();
 	if (!ci->ci_want_pmapload) {
 		kpreempt_enable();
-#ifdef XEN3
-		xen_release_ptom_lock();
-#endif
 		return;
 	}
 	cpumask = ci->ci_cpumask;
@@ -2900,9 +2670,6 @@ pmap_load(void)
 
 		ci->ci_want_pmapload = 0;
 		kpreempt_enable();
-#ifdef XEN3
-		xen_release_ptom_lock();
-#endif
 		return;
 	}
 
@@ -2924,7 +2691,7 @@ pmap_load(void)
 	    oldpmap == pmap_kernel());
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN)
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2983,7 +2750,14 @@ pmap_load(void)
 	 * been freed
 	 */
 	if (*APDP_PDE) {
-		pmap_unmap_apdp_pde();
+		int i;
+		for (i = 0; i < PDP_SIZE; i++) {
+			pmap_pte_set(&APDP_PDE[i], 0);
+#ifdef PAE
+			/* clear shadow entry too */
+			pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#endif
+		}
 	}
 	/* lldt() does pmap_pte_flush() */
 #else /* XEN */
@@ -3027,10 +2801,6 @@ pmap_load(void)
 	if (l->l_ncsw != ncsw) {
 		goto retry;
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 
 	kpreempt_enable();
 }
@@ -3084,22 +2854,14 @@ pmap_deactivate(struct lwp *l)
 		return;
 	}
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 
 	/*
 	 * we aren't interested in TLB invalidations for this pmap,
@@ -3157,11 +2919,6 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	l = curlwp;
 
 	KPREEMPT_DISABLE(l);
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	ci = l->l_cpu;
 	if (__predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap) ||
 	    pmap == pmap_kernel()) {
@@ -3170,9 +2927,8 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		 * own pmap and is active.  if a user pmap, the caller
 		 * will hold the vm_map write/read locked and so prevent
 		 * entries from disappearing while we are here.  ptps
-		 * can disappear via pmap_remove(), pmap_protect() and
-		 * pmap_collect(), but they are called with the vm_map
-		 * write locked.
+		 * can disappear via pmap_remove() and pmap_protect(),
+		 * but they are called with the vm_map write locked.
 		 */
 		hard = false;
 		ptes = PTE_BASE;
@@ -3199,11 +2955,6 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (pap != NULL) {
 		*pap = pa;
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 	return rv;
 }
 
@@ -3226,11 +2977,8 @@ vtophys(vaddr_t va)
 #ifdef XEN
 /*
  * pmap_extract_ma: extract a MA for the given VA
- * When used directly in a Xen domain, caller must ensure that this function
- * should not be used in a context where a reference to a MFN could be kept
- * between a suspend, resume, or migrate.
- * XXX JYM revisit for locking (MFNs may be invalid after a migration)
  */
+
 bool
 pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
@@ -3238,11 +2986,7 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
+ 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
@@ -3255,14 +2999,9 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
  
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
- 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
-
 		return true;
 	}
 				 
@@ -3340,10 +3079,6 @@ pmap_zero_page(paddr_t pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
@@ -3354,11 +3089,6 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 	kpreempt_enable();
 }
 
@@ -3383,10 +3113,6 @@ pmap_pageidlezero(paddr_t pa)
 	KASSERT(cpu_feature & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
@@ -3396,10 +3122,6 @@ pmap_pageidlezero(paddr_t pa)
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
-#endif
-
-#ifdef XEN3
-	xen_release_ptom_lock();
 #endif
 
 	return rv;
@@ -3427,10 +3149,6 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	
 	KASSERT(*spte == 0 && *dpte == 0);
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
 	pmap_pte_set(dpte,
 	    pmap_pa2pte(dstpa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
@@ -3444,11 +3162,6 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
 #endif
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 	kpreempt_enable();
 }
 
@@ -3468,16 +3181,11 @@ pmap_map_ptp(struct vm_page *ptp)
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_RW | PG_U | PG_k);
 #else
-	xen_acquire_reader_ptom_lock();
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_U | PG_k);
 #endif
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)ptpva);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 
 	return (pt_entry_t *)ptpva;
 }
@@ -3490,20 +3198,11 @@ pmap_unmap_ptp(void)
 
 	KASSERT(kpreempt_disabled());
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	pte = PTESLEW(ptp_pte, cpu_number());
 	if (*pte != 0) {
 		pmap_pte_set(pte, 0);
 		pmap_pte_flush();
 	}
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 #endif
 }
 
@@ -3547,8 +3246,7 @@ pmap_unmap_pte(void)
 
 static pt_entry_t
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-		 vaddr_t startva, vaddr_t endva, u_int flags,
-		 struct pv_entry **pv_tofree)
+		 vaddr_t startva, vaddr_t endva, struct pv_entry **pv_tofree)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
@@ -3573,9 +3271,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
-		if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-			continue;
-		}
 
 		/* atomically save the old PTE and zap! it */
 		opte = pmap_pte_testset(pte, 0);
@@ -3647,7 +3342,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-		vaddr_t va, u_int flags, struct pv_entry **pv_tofree)
+		vaddr_t va, struct pv_entry **pv_tofree)
 {
 	pt_entry_t opte;
 	struct pv_entry *pve;
@@ -3659,9 +3354,6 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 
 	if (!pmap_valid_entry(*pte))
 		return(false);		/* VA not mapped */
-	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-		return(false);
-	}
 
 	/* atomically save the old PTE and zap! it */
 	opte = pmap_pte_testset(pte, 0);
@@ -3719,31 +3411,13 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 }
 
 /*
- * pmap_remove: top level mapping removal function
+ * pmap_remove: mapping removal function.
  *
  * => caller should not be holding any pmap locks
  */
 
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
-{
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-}
-
-/*
- * pmap_do_remove: mapping removal guts
- *
- * => caller should not be holding any pmap locks
- */
-
-static void
-pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, u_int flags)
 {
 	pt_entry_t *ptes, xpte = 0;
 	pd_entry_t pde;
@@ -3783,7 +3457,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, u_int flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[pl1_i(va)], va, flags, &pv_tofree);
+			    &ptes[pl1_i(va)], va, &pv_tofree);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -3844,8 +3518,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, u_int flags)
 #endif
 		}
 		xpte |= pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[pl1_i(va)], va, blkendva,
-		    flags, &pv_tofree);
+		    (vaddr_t)&ptes[pl1_i(va)], va, blkendva, &pv_tofree);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
@@ -3976,18 +3649,6 @@ pmap_page_remove(struct vm_page *pg)
 	lwp_t *l;
 	int count;
 
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_page_remove: unmanaged page?");
-#endif
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
@@ -4064,10 +3725,6 @@ startover:
 
 	/* Now free unused pvs. */
 	pmap_free_pvs(killlist);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 }
 
 /*
@@ -4089,21 +3746,10 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	pt_entry_t expect;
 	u_int result;
 
-#if DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_test_attrs: unmanaged page?");
-#endif
-
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
 	}
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
@@ -4121,9 +3767,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	result = pp->pp_attrs & testbits;
 	pp_unlock(pp);
 
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 	/*
 	 * note that we will exit the for loop with a non-null pve if
 	 * we have found the bits we are testing for.
@@ -4146,17 +3789,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	u_int result;
 	pt_entry_t expect;
 	int count;
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_change_attrs: unmanaged page?");
-#endif
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
 
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
@@ -4183,10 +3815,6 @@ startover:
 	pp->pp_attrs &= ~clearbits;
 	pp_unlock(pp);
 	kpreempt_enable();
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 
 	return result != 0;
 }
@@ -4228,10 +3856,6 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct pmap *pmap2;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
@@ -4294,11 +3918,6 @@ next:;
 
 	pmap_unmap_ptes(pmap, pmap2);	/* unlocks pmap */
 	kpreempt_enable();
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 
 /*
@@ -4317,10 +3936,6 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pt_entry_t *ptes;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
 
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
@@ -4353,37 +3968,6 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	}
 #endif
 	kpreempt_enable();
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
-}
-
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-
-void
-pmap_collect(struct pmap *pmap)
-{
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-	/*
-	 * free all of the pt pages by removing the physical mappings
-	 * for its entire address space.
-	 */
-
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
-	    PMAP_REMOVE_SKIPWIRED);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
 }
 
 /*
@@ -4630,12 +4214,7 @@ out2:
 int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-	int ret;
         paddr_t ma;
-
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
 
 	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
 		ma = pa; /* XXX hack */
@@ -4643,13 +4222,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flag
 		ma = xpmap_ptom(pa);
 	}
 
-	ret = pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
-	return ret;
+	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
 }
 #endif /* XEN */
 
@@ -4785,10 +4358,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		return pmap_maxkvaddr;
 	}
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	maxkvaddr = x86_round_pdr(maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
@@ -4846,11 +4415,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		invalidate = true;
 	}
 	pmap_maxkvaddr = maxkvaddr;
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
@@ -4887,10 +4451,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
 		eva = VM_MAXUSER_ADDRESS;
 
-#ifdef XEN3
-	xen_acquire_reader_ptom_lock();
-#endif
-
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
@@ -4924,11 +4484,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	}
 	pmap_unmap_ptes(pmap, pmap2);
 	kpreempt_enable();
-
-#ifdef XEN3
-	xen_release_ptom_lock();
-#endif
-
 }
 #endif
 

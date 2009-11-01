@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.4.2 2009/07/23 23:31:35 jym Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.4.3 2009/11/01 13:58:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.4.2 2009/07/23 23:31:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.4.3 2009/11/01 13:58:49 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.4.2 2009/07/23 23:31:35 jym Exp $")
 #include "pci.h"
 #include "isa.h"
 #include "isadma.h"
-#include "acpi.h"
+#include "acpica.h"
 #include "ipmi.h"
 
 #include "opt_acpi.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.4.2 2009/07/23 23:31:35 jym Exp $")
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #endif
 
@@ -93,7 +93,7 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
-#if NACPI > 0
+#if NACPICA > 0
 	struct acpibus_attach_args mba_acpi;
 #endif
 	struct apic_attach_args aaa_caa;
@@ -117,7 +117,7 @@ struct isabus_attach_args mba_iba = {
 };
 #endif
 
-#if defined(MPBIOS) || NACPI > 0
+#if defined(MPBIOS) || NACPICA > 0
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
@@ -153,7 +153,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	union mainbus_attach_args mba;
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 	int acpi_present = 0;
 #endif
 #ifdef MPBIOS
@@ -191,7 +191,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
 		acpi_present = acpi_probe();
 	/*
@@ -221,7 +221,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-#if NISADMA > 0 && NACPI > 0
+#if NISADMA > 0 && NACPICA > 0
 	/*
 	 * ACPI needs ISA DMA initialized before they start probing.
 	 */
@@ -229,7 +229,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	    self);
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 	if (acpi_present) {
 		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
 		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
@@ -263,7 +263,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
-#if NACPI > 0 && defined(ACPI_SCANPCI)
+#if NACPICA > 0 && defined(ACPI_SCANPCI)
 		if (npcibus == 0 && mpacpi_active)
 			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 #endif
@@ -275,7 +275,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 			config_found_ia(self, "pcibus", &mba.mba_pba,
 			    pcibusprint);
 
-#if NACPI > 0
+#if NACPICA > 0
 		if (mp_verbose)
 			acpi_pci_link_state();
 #endif

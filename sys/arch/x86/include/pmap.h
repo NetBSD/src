@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.4 2009/07/24 11:30:28 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.5 2009/11/01 13:58:16 jym Exp $	*/
 
 /*
  *
@@ -354,34 +354,6 @@ bool	sse2_idlezero_page(void *);
 
 #ifdef XEN
 
-#ifdef PAE
-/*
- * Under PAE, Xen handles our recursive mappings to the L2 shadow pages
- * erroneously during a restore (the last entry of the PDIR_SLOT_PTE).
- * This pages are found in two places:
- * - the used ones are found in the pmaps list
- * - the unused ones (but still valid from a Xen's point of view) are cached
- *   inside the pmap_pdp_cache pool.
- * This list is not protected by locks, as it is expected to be accessed only
- * during pmap_create()/pmap_destroy(), and save/restore code, which
- * cannot run concurrently.
-struct l2_pdirpte {
-	SLIST_ENTRY(l2_pinned) l2_pdirpte_list;
-	paddr_t slot_pte;
-	paddr_t slot_pte_content;
-};
- */
-
-/*
- * Head of the list of all pages pinned as L2 and containing valid entry
- * in PDIR_SLOT_PTE
-SLIST_HEAD(l2_pdirpte_head, l2_pdirpte);
- */
-
-void	pmap_map_shadow_entries(void);
-void	pmap_unmap_shadow_entries(void);
-#endif /* PAE */
-
 #define XPTE_MASK	L1_FRAME
 /* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
 #if defined(__x86_64__) || defined(PAE)
@@ -434,7 +406,6 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
-void	pmap_unmap_all_apdp_pdes(void);
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)

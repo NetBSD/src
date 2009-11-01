@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.1.4.3 2009/05/31 14:32:34 jym Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.1.4.4 2009/11/01 13:58:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.4.3 2009/05/31 14:32:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.4.4 2009/11/01 13:58:17 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.11 2008/07/20 16:59:53 martin Exp $ */
+/* $NetBSD: viapcib.c,v 1.11.8.1 2009/11/01 13:58:35 jym Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.11 2008/07/20 16:59:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.11.8.1 2009/11/01 13:58:35 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,6 +148,7 @@ viapcib_match(device_t parent, cfdata_t match, void *opaque)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_VIATECH_VT8235:
 	case PCI_PRODUCT_VIATECH_VT8237:
+	case PCI_PRODUCT_VIATECH_VT8237A_ISA:
 		return 2; /* match above generic pcib(4) */
 	}
 

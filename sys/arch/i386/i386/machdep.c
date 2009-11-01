@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.659.2.2 2009/07/23 23:31:36 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.659.2.3 2009/11/01 13:58:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.2 2009/07/23 23:31:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.3 2009/11/01 13:58:21 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -131,8 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.2 2009/07/23 23:31:36 jym Exp $"
 
 #include <sys/sysctl.h>
 
-#include <x86/cpu_msr.h>
-
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -188,7 +186,7 @@ int arch_i386_is_xbox = 0;
 uint32_t arch_i386_xbox_memsize = 0;
 #endif
 
-#include "acpi.h"
+#include "acpica.h"
 #include "apmbios.h"
 #include "bioscall.h"
 
@@ -196,7 +194,7 @@ uint32_t arch_i386_xbox_memsize = 0;
 #include <machine/bioscall.h>
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
@@ -516,8 +514,6 @@ cpu_startup(void)
 	cpu_init_tss(&cpu_info_primary);
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif
-
-	x86_init();
 }
 
 /*
@@ -563,6 +559,7 @@ i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
 	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct physdev_op physop;
 
 	ci = curcpu();
 	if (ci->ci_fpused) {
@@ -572,20 +569,9 @@ i386_switch_context(lwp_t *l)
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-#ifdef XEN3
-	struct physdev_op physop;
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
 	HYPERVISOR_physdev_op(&physop);
-#else
-	if (xendomain_is_privileged()) {
-		dom0_op_t op;
-		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = pcb->pcb_iopl;
-		HYPERVISOR_dom0_op(&op);
-	}
-#endif
 }
 #endif /* XEN */
 
@@ -940,7 +926,7 @@ haltsys:
 			for (;;);
 		}
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 		if (acpi_softc != NULL) {
 			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 			printf("WARNING: ACPI powerdown failed!\n");
@@ -968,7 +954,7 @@ haltsys:
 #endif
 
 	if (howto & RB_HALT) {
-#if NACPI > 0
+#if NACPICA > 0
 		AcpiDisable();
 #endif
 
@@ -1189,17 +1175,10 @@ initgdt(union descriptor *tgdt)
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ);
-#ifdef XEN3
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
 		panic("HYPERVISOR_set_gdt failed!\n");
-#else
-	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
-	    LAST_RESERVED_GDT_ENTRY + 1));
-	if (HYPERVISOR_set_gdt(frames, LAST_RESERVED_GDT_ENTRY + 1))
-		panic("HYPERVISOR_set_gdt failed!\n");
-#endif
 	lgdt_finish();
 
 #endif /* !XEN */

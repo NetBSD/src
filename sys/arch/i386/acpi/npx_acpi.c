@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.17.18.1 2009/05/13 17:17:48 jym Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.17.18.2 2009/11/01 13:58:19 jym Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.17.18.1 2009/05/13 17:17:48 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.17.18.2 2009/11/01 13:58:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

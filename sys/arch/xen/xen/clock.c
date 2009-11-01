@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.2.2 2009/07/23 23:31:37 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.2.3 2009/11/01 13:58:46 jym Exp $	*/
 
 /*
  *
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.2 2009/07/23 23:31:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.3 2009/11/01 13:58:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +98,6 @@ static callout_t xen_timepush_co;
 static void
 get_time_values_from_xen(void)
 {
-#ifdef XEN3
 	volatile struct vcpu_time_info *t = &curcpu()->ci_vcpu->time;
 	uint32_t tversion;
 
@@ -124,18 +118,6 @@ get_time_values_from_xen(void)
 		xen_rmb();
 	} while ((HYPERVISOR_shared_info->wc_version & 1) ||
 	    (tversion != HYPERVISOR_shared_info->wc_version));
-#else /* XEN3 */
-	do {
-		shadow_time_version = HYPERVISOR_shared_info->time_version2;
-		xen_rmb();
-		shadow_ts.tv_sec = HYPERVISOR_shared_info->wc_sec;
-		shadow_ts.tv_nsec = HYPERVISOR_shared_info->wc_usec;
-		shadow_tsc_stamp = HYPERVISOR_shared_info->tsc_timestamp;
-		shadow_system_time = HYPERVISOR_shared_info->system_time;
-		xen_rmb();
-	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
-	shadow_ts.tv_nsec *= 1000;
-#endif
 }
 
 /*
@@ -147,17 +129,12 @@ time_values_up_to_date(void)
 	int rv;
 
 	xen_rmb();
-#ifndef XEN3
-	rv = shadow_time_version == HYPERVISOR_shared_info->time_version1;
-#else
 	rv = shadow_time_version == curcpu()->ci_vcpu->time.version;
-#endif
 	xen_rmb();
 
 	return rv;
 }
 
-#ifdef XEN3
 /*
  * Xen 3 helpfully provides the CPU clock speed in the form of a multiplier
  * and shift that can be used to convert a cycle count into nanoseconds
@@ -181,7 +158,6 @@ scale_delta(uint64_t delta, uint32_t mul_frac, int8_t shift)
 	return ((uint64_t)(uint32_t)(delta >> 32) * mul_frac)
 	    + ((((uint64_t)(uint32_t)(delta & 0xFFFFFFFF)) * mul_frac) >> 32);
 }
-#endif
 
 /* 
  * Use cycle counter to determine ns elapsed since last Xen time update.
@@ -191,17 +167,10 @@ static uint64_t
 get_tsc_offset_ns(void)
 {
 	uint64_t tsc_delta, offset;
-#ifndef XEN3
-	struct cpu_info *ci = curcpu();
-#endif
 
 	tsc_delta = cpu_counter() - shadow_tsc_stamp;
-#ifndef XEN3
-	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
-#else
 	offset = scale_delta(tsc_delta, shadow_freq_mul,
 	    shadow_freq_shift);
-#endif
 #ifdef XEN_CLOCK_DEBUG
 	if (tsc_delta > 100000000000ULL || offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu"
@@ -221,9 +190,6 @@ get_tsc_offset_ns(void)
 static uint64_t
 get_system_time(void)
 {
-#ifndef XEN3
-	static volatile uint64_t oldstime = 0;
-#endif
 	uint64_t offset, stime;
 	
 	for (;;) {
@@ -240,33 +206,10 @@ get_system_time(void)
 			 * domains).  Setting the timer into the past in
 			 * this way causes it to fire immediately.
 			 */
-#ifndef XEN3
-			if (offset > 4*10000000ULL) {
-#ifdef XEN_CLOCK_DEBUG
-				printf("get_system_time: overlarge offset %llu"
-				    " (pst=%llu sst=%llu); poking timer...\n",
-				    offset, processed_system_time,
-				    shadow_system_time);
-#endif
-				HYPERVISOR_set_timer_op(shadow_system_time);
-			}
-#endif
 			break;
 		}
 		get_time_values_from_xen();
 	}
-
-#ifndef XEN3
-	if (stime < oldstime) {
-#ifdef XEN_CLOCK_DEBUG
-		printf("xen_get_timecount: system_time backstep: %"
-		    PRIu64" -> %"PRIu64" (%"PRIu64" ns)\n",
-		    oldstime, stime, oldstime-stime);
-#endif
-		stime = oldstime;
-	}
-	oldstime = stime;
-#endif
 
 	return stime;
 }
@@ -281,16 +224,12 @@ xen_wall_time(struct timespec *wt)
 	get_time_values_from_xen();
 	*wt = shadow_ts;
 	nsec = wt->tv_nsec;
-#ifdef XEN3
+
 	/* Under Xen3, this is the wall time less system time */
 	nsec += get_system_time();
 	splx(s);
 	wt->tv_sec += nsec / 1000000000L;
 	wt->tv_nsec = nsec % 1000000000L;
-#else
-	/* Under Xen2 , this is the current wall time. */
-	splx(s);
-#endif
 }
 
 static int
@@ -317,12 +256,10 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 	int s;
 
 	if (xendomain_is_privileged()) {
-#ifdef XEN3
  		/* needs to set the RTC chip too */
  		struct clock_ymdhms dt;
  		clock_secs_to_ymdhms(tvp->tv_sec, &dt);
  		rtc_set_ymdhms(NULL, &dt);
-#endif
  
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
 		op.cmd = DOM0_SETTIME;
@@ -331,11 +268,7 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 #endif
 		/* XXX is rtc_offset handled correctly everywhere? */
 		op.u.settime.secs	 = tvp->tv_sec;
-#ifdef XEN3
 		op.u.settime.nsecs	 = tvp->tv_usec * 1000;
-#else
-		op.u.settime.usecs	 = tvp->tv_usec;
-#endif
 		s = splhigh();
 		op.u.settime.system_time = get_system_time();
 		splx(s);
@@ -492,20 +425,6 @@ xen_initclocks(void)
 		    &xen_timepush, &xen_timepush_co);
 	}
 #endif
-}
-
-void
-xen_suspendclocks(void) {
-
-	int evtch;
-
-	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
-	hypervisor_mask_event(evtch);
-	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, NULL);
-
-	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
-
-	tc_detach(&xen_timecounter);
 }
 
 /* ARGSUSED */

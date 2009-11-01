@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.6.4.2 2009/07/23 23:31:37 jym Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.2 2009/07/23 23:31:37 jym Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.3 2009/11/01 13:58:17 jym Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.2 2009/07/23 23:31:37 jym Exp $ ")
  *
  * Family10h:
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/31116.PDF
+ * Family10h Errata: #319
+ * http://support.amd.com/de/Processor_TechDocs/41322.pdf
  *
  * Family11h:
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
@@ -206,6 +208,16 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	family = CPUID2FAMILY(cpu_signature);
 	if (family == 0xf)
 		family += CPUID2EXTFAMILY(cpu_signature);
+
+	/* Errata #319: This has been fixed in Revision C2. */
+	if (family == 0x10) {
+		if (CPUID2MODEL(cpu_signature) < 4)
+			return 0;
+		if (CPUID2MODEL(cpu_signature) == 4
+		    && CPUID2STEPPING(cpu_signature) < 2)
+			return 0;
+	}
+
 
 	/* Not yet supported CPUs */
 	if (family >= 0x12)

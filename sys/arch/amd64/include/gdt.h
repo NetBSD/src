@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.5.14.1 2009/05/13 17:16:09 jym Exp $	*/
+/*	$NetBSD: gdt.h,v 1.5.14.2 2009/11/01 13:58:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

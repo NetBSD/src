@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.191.2.2 2009/07/23 23:31:35 jym Exp $
+# $NetBSD: ALL,v 1.191.2.3 2009/11/01 13:58:19 jym Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.191.2.2 $"
+#ident 		"ALL-$Revision: 1.191.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -114,8 +114,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#options 	IPKDB		# IP Kernel Debugger
-#options 	IPKDBKEY="\"yes\""
+options 	IPKDB		# IP Kernel Debugger
+options 	IPKDBKEY="\"Pass_phrase_to_debug_over_network\""
 makeoptions 	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES 	# per syscall times
@@ -180,6 +180,7 @@ file-system 	HFS		# experimental - Apple HFS+ file system
 file-system 	EFS		# Silicon Graphics Extent File System
 file-system 	FILECORE	# Acorn filecore file system
 file-system 	ADOSFS		# AmigaDOS file system
+file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -193,7 +194,6 @@ options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options 	VNODE_LOCKDEBUG
 
 # Networking options
 options 	GATEWAY		# packet forwarding
@@ -297,6 +297,10 @@ options 	WSDISPLAY_SCROLLSUPPORT
 #options 	SPLASHSCREEN
 #options 	SPLASHSCREEN_PROGRESS
 
+# Keylock support
+options		KEYLOCK
+options		secmodel_keylock
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
@@ -347,6 +351,7 @@ acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
@@ -364,6 +369,8 @@ pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -547,6 +554,7 @@ radeondrm*	at vga?		# ATI Radeon DRM driver
 savagedrm*	at vga?		# S3 Savage DRM driver
 sisdrm*		at vga?		# SiS DRM driver
 tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+viadrm* 	at vga?		# VIA UniChrome DRM driver
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -608,6 +616,17 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
+# ISA IEEE488 GPIB interfaces
+cec0	at isa? port 0x2b8 irq 5 drq 1
+gpib*	at cec?
+
+# IEEE488 GPIB support
+ppi*	at gpib?
+cs80bus* at gpib?
+ct*	at cs80bus? slave ? punit ?
+mt*	at cs80bus? slave ? punit ?
+rd*	at cs80bus? slave ? punit ?
+
 # Hardware monitors
 
 amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
@@ -618,6 +637,9 @@ iic*	at amdpm?			# sensors below are on this bus
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
+
+# VIA C7 Temperature sensor
+options 	VIA_C7TEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
@@ -680,9 +702,10 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # GPIO devices
 gpio*	at gscpcib?
+gpio*	at gpiosim?
 
 # 1-Wire support
-gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio
+gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
 onewire*	at gpioow?
 
 # 1-Wire devices
@@ -811,6 +834,7 @@ iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
 jmide* 		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
 ahcisata* 	at jmide?
+mvsata*		at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -921,6 +945,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -960,6 +985,7 @@ tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
 an*	at isapnp?			# Aironet 802.11
+cs*	at isapnp?			# CS8900 Ethernet
 ep*	at isapnp?			# 3Com 3c509 Ethernet
 fmv*	at isapnp?			# Fujitsu FMV-183
 le*	at isapnp?			# AMD PCnet-ISA Ethernet
@@ -1311,6 +1337,10 @@ opl*	at wss?
 opl*	at yds?
 opl*	at ym?
 
+# High Definition Audio
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
+
 # Audio support
 audio*	at audiobus?
 
@@ -1515,6 +1545,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	gpiosim		1	# GPIO simulator
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -1805,12 +1836,15 @@ options GEODE_DEBUG
 options GEOM_DEBUG
 options GE_DEBUG
 options GMAC_DEBUG
+options GPIO_DEBUG
 options GRE_DEBUG
 options GSFB_DEBUG_MONITOR
 options GTFDEBUG
 options HD64461PCMCIA_DEBUG
 options HD64461VIDEO_DEBUG
 options HD64465PCMCIA_DEBUG
+options HDAUDIO_DEBUG
+options HDAUDIO_AFG_DEBUG
 options HDLCDEBUG
 options HIFN_DEBUG
 options HMEDEBUG
@@ -1986,6 +2020,7 @@ options ROMDEBUG
 options RPC_DEBUG
 options RQDEBUG
 options RTC_DEBUG
+options RTSOCK_DEBUG
 options RTW_DEBUG
 options SACKBCDEBUG
 options SBC_DEBUG

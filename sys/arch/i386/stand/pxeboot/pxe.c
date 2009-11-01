@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.12.2.1 2009/05/13 17:17:52 jym Exp $	*/
+/*	$NetBSD: pxe.c,v 1.12.2.2 2009/11/01 13:58:44 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -222,7 +222,7 @@ pxe_netif_open(void)
 		return (-1);
 	}
 
-	memcpy( desc.myea, bootplayer.CAddr, ETHER_ADDR_LEN);
+	memcpy(desc.myea, bootplayer.CAddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Since the PXE BIOS has already done DHCP, make sure we

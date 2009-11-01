@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.3 2009/11/01 13:58:46 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,11 +38,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -63,21 +53,15 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.3 2009/11/01 13:58:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#ifndef XEN3
-#include <dev/sysmon/sysmonvar.h>
-#endif
-
 #include "xenbus.h"
 #include "xencons.h"
-#include "xennet_hypervisor.h"
-#include "xbd_hypervisor.h"
 #ifndef __x86_64__
 #include "npx.h"
 #else
@@ -85,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp 
 #endif /* __x86_64__ */
 #include "isa.h"
 #include "pci.h"
-#include "acpi.h"
+#include "acpica.h"
 
 #include "opt_xen.h"
 #include "opt_mpbios.h"
@@ -93,14 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp 
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#ifndef XEN3
-#include <xen/ctrl_if.h>
-#endif
-#ifdef XEN3
 #include <xen/xen3-public/version.h>
-#endif
 
-#if defined(DOM0OPS) || defined(XEN3)
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
@@ -109,14 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.2 2009/05/13 17:18:50 jym Exp 
 #include <miscfs/kernfs/kernfs.h>
 #include <xen/kernfs_machdep.h>
 #include <dev/isa/isavar.h>
-#endif /* DOM0OPS || XEN3 */
-#ifdef XEN3
 #include <xen/granttables.h>
 #include <xen/vcpuvar.h>
-#endif
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
 #include <machine/mpconfig.h>
@@ -176,13 +151,11 @@ union hypervisor_attach_cookie {
 #if defined(DOM0OPS) && NISA > 0
 	struct isabus_attach_args hac_iba;
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 	struct acpibus_attach_args hac_acpi;
 #endif
 #endif /* NPCI */
-#ifdef XEN3
 	struct vcpu_attach_args hac_vcaa;
-#endif
 };
 
 /* 
@@ -194,25 +167,6 @@ int     isa_has_been_seen;
 #if NISA > 0
 struct  x86_isa_chipset x86_isa_chipset;
 #endif
-#endif
-
-/* shutdown/reboot message stuff */
-#ifndef XEN3
-static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
-static struct sysmon_pswitch hysw_shutdown = {
-	.smpsw_type = PSWITCH_TYPE_POWER,
-	.smpsw_name = "hypervisor",
-};
-static struct sysmon_pswitch hysw_reboot = {
-	.smpsw_type = PSWITCH_TYPE_RESET,
-	.smpsw_name = "hypervisor",
-};
-#endif
-
-#ifdef XEN3
-/* power management, for save/restore */
-static bool hypervisor_suspend(device_t PMF_FN_PROTO);
-static bool hypervisor_resume(device_t PMF_FN_PROTO);
 #endif
 
 /*
@@ -234,15 +188,11 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
-#ifdef XEN3
 	int xen_version;
-#endif
 #if NPCI >0
-#ifndef XEN3
-	physdev_op_t physdev_op;
-	int i, j, busnum;
+#ifdef PCI_BUS_FIXUP
+	int pci_maxbus = 0;
 #endif
-
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
@@ -251,7 +201,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		xenkernfs_init();
 	}
 #endif
-#ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
@@ -264,9 +213,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_SP;
 	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
-#else
-	aprint_normal("\n");
-#endif
 
 	events_init();
 
@@ -290,10 +236,9 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_xennpx.xa_device = "npx";
 	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
-#if NPCI > 0
-#ifdef XEN3
 #ifdef DOM0OPS
-#if NACPI > 0
+#if NPCI > 0
+#if NACPICA > 0
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
 		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
@@ -305,7 +250,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
 		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
 	}
-#endif /* NACPI */
+#endif /* NACPICA */
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
@@ -317,7 +262,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
-#if NACPI > 0 && defined(ACPI_SCANPCI)
+#if NACPICA > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
 		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
@@ -328,49 +273,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
-#if NACPI > 0
+#if NACPICA > 0
 	if (mp_verbose)
 		acpi_pci_link_state();
 #endif
-#endif /* DOM0OPS */
-#else /* !XEN3 */
-	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
-	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
-		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);
-	} else {
-#ifdef DEBUG
-		printf("PCI_PROBE_ROOT_BUSES: ");
-		for (i = 0; i < 256/32; i++)
-			printf("0x%x ", physdev_op.u.pci_probe_root_buses.busmask[i]);
-		printf("\n");
-#endif
-		memset(pci_bus_attached, 0, sizeof(uint32_t) * 256 / 32);
-		for (i = 0, busnum = 0; i < 256/32; i++) {
-			uint32_t mask = 
-			    physdev_op.u.pci_probe_root_buses.busmask[i];
-			for (j = 0; j < 32; j++, busnum++) {
-				if ((mask & (1 << j)) == 0)
-					continue;
-				if (pci_bus_attached[i] & (1 << j)) {
-					printf("bus %d already attached\n",
-					    busnum);
-					continue;
-				}
-				hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
-				hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
-				hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
-				hac.hac_pba.pba_dmat64 = 0;
-				hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED |
-						PCI_FLAGS_IO_ENABLED;
-				hac.hac_pba.pba_bridgetag = NULL;
-				hac.hac_pba.pba_bus = busnum;
-				config_found_ia(self, "pcibus", &hac.hac_pba,
-				    pcibusprint);
-			}
-		} 
-	}
-#endif /* XEN3 */
-#if defined(DOM0OPS) && NISA > 0
+#if NISA > 0
 	if (isa_has_been_seen == 0) {
 		hac.hac_iba._iba_busname = "isa";
 		hac.hac_iba.iba_iot = X86_BUS_SPACE_IO;
@@ -379,59 +286,17 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
 		config_found_ia(self, "isabus", &hac.hac_iba, isabusprint);
 	}
-#endif
+#endif /* NISA */
 #endif /* NPCI */
 
-#ifdef DOM0OPS
 	if (xendomain_is_privileged()) {
 		xenprivcmd_init();
 		xen_shm_init();
-#ifndef XEN3
-		xbdback_init();
-		xennetback_init();
-#endif
 	}
-#endif
-#ifndef XEN3
-	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
-	    sysmon_pswitch_register(&hysw_shutdown) != 0)
-		aprint_error_dev(self, "unable to register with sysmon\n");
-	else
-		ctrl_if_register_receiver(CMSG_SHUTDOWN,
-		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
-#endif
+#endif /* DOM0OPS */
 
 	hypervisor_machdep_attach();
-
-#ifdef XEN3
-	if (!pmf_device_register(self, hypervisor_suspend, hypervisor_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-#endif
-
 }
-
-#ifdef XEN3
-static bool
-hypervisor_suspend(device_t dev PMF_FN_ARGS) {
-
-	events_suspend();
-	xengnt_suspend();
-	
-	return true;
-}
-
-static bool
-hypervisor_resume(device_t dev PMF_FN_ARGS) {
-
-	hypervisor_machdep_resume();
-
-	xengnt_resume();
-	events_resume();
-
-	return true;
-}
-#endif
-
 
 static int
 hypervisor_print(void *aux, const char *parent)
@@ -460,22 +325,3 @@ xenkernfs_init(void)
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
 #endif /* DOM0OPS */
-
-#ifndef XEN3
-/* handler for the shutdown messages */
-static void
-hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
-{
-	switch(msg->subtype) {
-	case CMSG_SHUTDOWN_POWEROFF:	
-		sysmon_pswitch_event(&hysw_shutdown, PSWITCH_EVENT_PRESSED);
-		break;
-	case CMSG_SHUTDOWN_REBOOT:	
-		sysmon_pswitch_event(&hysw_reboot, PSWITCH_EVENT_PRESSED);
-		break;
-	default:
-		printf("shutdown_handler: unknwon message %d\n",
-		    msg->type);
-	}
-}
-#endif

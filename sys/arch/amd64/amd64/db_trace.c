@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.8.1 2009/05/13 17:16:08 jym Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.8.2 2009/11/01 13:58:48 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14.8.1 2009/05/13 17:16:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14.8.2 2009/11/01 13:58:48 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,10 +355,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l->l_addr;
 			if (p == curproc && l == curlwp) {
 				frame = (long *)ddb_regs.tf_rbp;

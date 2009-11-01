@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.2.8.1 2009/05/31 14:32:33 jym Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2.8.2 2009/11/01 13:58:54 jym Exp $	*/
 
 #ifdef __x86_64__
 

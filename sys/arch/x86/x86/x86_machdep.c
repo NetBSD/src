@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.29.2.2 2009/07/23 23:31:37 jym Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.29.2.3 2009/11/01 13:58:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.2 2009/07/23 23:31:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.3 2009/11/01 13:58:19 jym Exp $");
 
 #include "opt_modular.h"
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.2 2009/07/23 23:31:37 jym Exp
 #include <sys/sysctl.h>
 #include <sys/extent.h>
 
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
@@ -74,6 +73,8 @@ int check_pa_acc(paddr_t, vm_prot_t);
 struct bootinfo bootinfo;
 
 /* --------------------------------------------------------------------- */
+
+static kauth_listener_t x86_listener;
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -122,17 +123,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
-}
-
-/*
- * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
- */
-void
-x86_init(void)
-{
-#ifndef XEN
-	msr_cpu_broadcast_initmtx();
-#endif
 }
 
 #ifdef MODULAR
@@ -827,4 +817,36 @@ x86_reset(void)
 		outb(0x92, b | 0x1);
 		DELAY(500000);  /* wait 0.5 sec to see if that did it */
 	}
+}
+
+static int
+x86_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	switch (action) {
+	case KAUTH_MACHDEP_IOPERM_GET:
+	case KAUTH_MACHDEP_LDT_GET:
+	case KAUTH_MACHDEP_LDT_SET:
+	case KAUTH_MACHDEP_MTRR_GET:
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+machdep_init(void)
+{
+
+	x86_listener = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	    x86_listener_cb, NULL);
 }

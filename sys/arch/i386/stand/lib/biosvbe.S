@@ -1,4 +1,4 @@
-/* $NetBSD: biosvbe.S,v 1.1.6.2 2009/05/13 17:17:51 jym Exp $ */
+/* $NetBSD: biosvbe.S,v 1.1.6.3 2009/11/01 13:58:36 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>

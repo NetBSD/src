@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.123.2.1 2009/05/13 17:17:49 jym Exp $
+#	$NetBSD: INSTALL_TINY,v 1.123.2.2 2009/11/01 13:58:20 jym Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.

@@ -1,4 +1,4 @@
-/* $NetBSD: rasops.c,v 1.1.6.2 2009/05/13 17:17:52 jym Exp $ */
+/* $NetBSD: rasops.c,v 1.1.6.3 2009/11/01 13:58:36 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

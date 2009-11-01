@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.6.2.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.6.2.2 2009/11/01 13:58:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.2 2009/11/01 13:58:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58.2.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: intr.c,v 1.58.2.2 2009/11/01 13:58:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.2 2009/11/01 13:58:18 jym Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -160,9 +160,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.1 2009/05/13 17:18:45 jym Exp $");
 #include "ioapic.h"
 #include "lapic.h"
 #include "pci.h"
-#include "acpi.h"
+#include "acpica.h"
 
-#if NIOAPIC > 0 || NACPI > 0
+#if NIOAPIC > 0 || NACPICA > 0
 #include <machine/i82093var.h> 
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
@@ -184,7 +184,7 @@ struct pic softintr_pic = {
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
 
-#if NIOAPIC > 0 || NACPI > 0
+#if NIOAPIC > 0 || NACPICA > 0
 static int intr_scan_bus(int, int, int *);
 #if NPCI > 0
 static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
@@ -299,7 +299,7 @@ intr_calculatemasks(struct cpu_info *ci)
  *
  * XXX should maintain one list, not an array and a linked list.
  */
-#if (NPCI > 0) && ((NIOAPIC > 0) || NACPI > 0)
+#if (NPCI > 0) && ((NIOAPIC > 0) || NACPICA > 0)
 struct intr_extra_bus {
 	int bus;
 	pcitag_t *pci_bridge_tag;
@@ -355,7 +355,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 }
 #endif
 
-#if NIOAPIC > 0 || NACPI > 0
+#if NIOAPIC > 0 || NACPICA > 0
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
 {
@@ -397,7 +397,7 @@ intr_scan_bus(int bus, int pin, int *handle)
 
 	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
-#if NACPI > 0
+#if NACPICA > 0
 			if (mip->linkdev != NULL)
 				if (mpacpi_findintr_linkdev(mip) != 0)
 					continue;

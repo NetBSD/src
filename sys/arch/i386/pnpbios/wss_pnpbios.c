@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.16.18.1 2009/05/13 17:17:51 jym Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.16.18.2 2009/11/01 13:58:35 jym Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.18.1 2009/05/13 17:17:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.18.2 2009/11/01 13:58:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

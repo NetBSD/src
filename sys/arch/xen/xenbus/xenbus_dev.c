@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.7.32.1 2009/05/13 17:18:51 jym Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.7.32.2 2009/11/01 13:58:48 jym Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7.32.1 2009/05/13 17:18:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.7.32.2 2009/11/01 13:58:48 jym Exp $");
 
 #include "opt_xen.h"
 

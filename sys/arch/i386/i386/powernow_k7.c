@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.32 2008/11/12 12:36:02 ad Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.32.4.1 2009/11/01 13:58:21 jym Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.32 2008/11/12 12:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.32.4.1 2009/11/01 13:58:21 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -468,7 +468,7 @@ k7_powernow_init(void)
 
 	aprint_normal("%s: AMD %s Technology %d MHz\n",
 	    cpuname, techname, cur_freq);
-	aprint_normal("%s: frequencies available (Mhz): %s\n",
+	aprint_normal("%s: frequencies available (MHz): %s\n",
 	    cpuname, freq_names);
 
 	return;

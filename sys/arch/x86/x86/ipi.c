@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.13.12.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: ipi.c,v 1.13.12.2 2009/11/01 13:58:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13.12.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13.12.2 2009/11/01 13:58:18 jym Exp $");
 
 #include "opt_mtrr.h"
 
@@ -53,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13.12.1 2009/05/13 17:18:45 jym Exp $");
 #include <machine/mtrr.h>
 #include <machine/gdt.h>
 
-#include <x86/cpu_msr.h>
-
-#include "acpi.h"
+#include "acpica.h"
 
 #ifdef __x86_64__
 #include <machine/fpu.h>
@@ -80,7 +78,7 @@ static void	x86_ipi_reload_mtrr(struct cpu_info *);
 #define		x86_ipi_reload_mtrr	NULL
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 void	acpi_cpu_sleep(struct cpu_info *);
 #else
 #define	acpi_cpu_sleep	NULL
@@ -94,7 +92,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_ipi_synch_fpu,
 	x86_ipi_reload_mtrr,
 	gdt_reload_cpu,
-	msr_write_ipi,
+	NULL,
 	acpi_cpu_sleep,
 	x86_ipi_kpreempt
 };

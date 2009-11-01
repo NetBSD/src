@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31.2.3 2009/07/23 23:31:37 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31.2.4 2009/11/01 13:58:46 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.3 2009/07/23 23:31:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.4 2009/11/01 13:58:46 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.3 2009/07/23 23:31:37 jym Exp $");
 #include <machine/mtrr.h>
 #include <machine/pio.h>
 
-#ifdef XEN3
 #include <xen/vcpuvar.h>
-#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -118,10 +116,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.3 2009/07/23 23:31:37 jym Exp $");
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
-#ifdef XEN3
 int     vcpu_match(device_t, cfdata_t, void *);
 void    vcpu_attach(device_t, device_t, void *);
-#endif
 void    cpu_attach_common(device_t, device_t, void *);
 void	cpu_offline_md(void);
 
@@ -138,10 +134,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 
 CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
-#ifdef XEN3
 CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
     vcpu_match, vcpu_attach, NULL, NULL);
-#endif
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -222,13 +216,18 @@ cpu_match(device_t parent, cfdata_t match, void *aux)
 void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
-#ifdef XEN3
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 	int cpunum = caa->cpu_number;
 
 	sc->sc_dev = self;
+
+	if (cpus_attached == ~0) {
+		aprint_error(": increase MAXCPUS\n");
+		return;
+	}
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -243,7 +242,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    KM_SLEEP);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
 		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -269,12 +271,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		break;
 
 	case CPU_ROLE_BP:
 		printf("(boot processor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		break;
 
 	case CPU_ROLE_AP:
@@ -288,16 +290,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	return;
-#else
-	cpu_attach_common(parent, self, aux);
-#endif
 }
 
-#ifdef XEN3
 int
 vcpu_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -314,11 +311,7 @@ vcpu_attach(device_t parent, device_t self, void *aux)
 	struct vcpu_attach_args *vcaa = aux;
 
 	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
-#endif
 
 static void
 cpu_vm_init(struct cpu_info *ci)
@@ -509,7 +502,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	}
 	cpu_vm_init(ci);
 
-	cpus_attached |= (1 << ci->ci_cpuid);
+	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 #if 0
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -571,10 +564,8 @@ cpu_init(struct cpu_info *ci)
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 
-#ifdef MULTIPROCESSOR
-	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
-#endif
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 }
 
 
@@ -1072,7 +1063,6 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 void    
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-#ifdef XEN3
 	const volatile vcpu_time_info_t *tinfo = &ci->ci_vcpu->time;
 	delay(1000000);
 	uint64_t freq = 1000000000ULL << 32;
@@ -1082,11 +1072,6 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	else
 		freq = freq >> tinfo->tsc_shift;
 	ci->ci_data.cpu_cc_freq = freq;
-#else
-	/* Xen2 */
-	/* XXX this needs to read the shared_info of the CPU being probed.. */
-	ci->ci_data.cpu_cc_freq = HYPERVISOR_shared_info->cpu_freq;
-#endif /* XEN3 */
 }
 
 void

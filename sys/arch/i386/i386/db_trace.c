@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60.10.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60.10.2 2009/11/01 13:58:20 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.10.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.10.2 2009/11/01 13:58:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,10 +453,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				    sizeof(l), (char *)&l);
 			}
 			(*pr)("lid %d ", l.l_lid);
-			if (!(l.l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
 			u = l.l_addr;
 #ifdef _KERNEL
 			if (l.l_proc == curproc &&
@@ -501,7 +497,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
 				    &narg);
 
-		if (lastframe == 0 && sym == (db_sym_t)0) {
+		if (lastframe == 0 && sym == (db_sym_t)0 && callpc != 0) {
 			/* Symbol not found, peek at code */
 			int	instr = db_get_value(callpc, 4, false);
 

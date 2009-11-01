@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.10.18.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.10.18.2 2009/11/01 13:58:16 jym Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI

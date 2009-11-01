@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5.14.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5.14.2 2009/11/01 13:58:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2009 The NetBSD Foundation, Inc.

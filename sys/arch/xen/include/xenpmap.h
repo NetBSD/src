@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.21.8.3 2009/07/24 11:30:28 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21.8.4 2009/11/01 13:58:45 jym Exp $	*/
 
 /*
  *
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -45,33 +40,9 @@ void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
-void xpq_queue_pin_table(paddr_t, unsigned int);
+void xpq_queue_pin_table(paddr_t);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(paddr_t, pt_entry_t, int);
-
-static void inline
-xpq_queue_pin_l1_table(paddr_t pa) {
-	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE);
-}
-
-static void inline
-xpq_queue_pin_l2_table(paddr_t pa) {
-	xpq_queue_pin_table(pa, MMUEXT_PIN_L2_TABLE);
-}
-
-#if defined(PAE) || defined(__x86_64__)
-static void inline
-xpq_queue_pin_l3_table(paddr_t pa) {
-	xpq_queue_pin_table(pa, MMUEXT_PIN_L3_TABLE);
-}
-#endif
-
-#if defined(__x86_64__)
-static void inline
-xpq_queue_pin_l4_table(paddr_t pa) {
-	xpq_queue_pin_table(pa, MMUEXT_PIN_L4_TABLE);
-}
-#endif
 
 extern unsigned long *xpmap_phys_to_machine_mapping;
 
@@ -83,7 +54,7 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
  * starting with xen-3.0.2, we can add notes so that virtual memory starts
  * at KERNBASE for domU as well.
  */  
-#if defined(XEN3) && (defined(DOM0OPS) || !defined(XEN_COMPAT_030001))
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 #define XPMAP_OFFSET	0
 #else
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
@@ -91,11 +62,6 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 
 #define mfn_to_pfn(mfn) (machine_to_phys_mapping[(mfn)])
 #define pfn_to_mfn(pfn) (xpmap_phys_to_machine_mapping[(pfn)])
-
-void xen_init_ptom_lock(void);
-void xen_acquire_reader_ptom_lock(void);
-void xen_acquire_writer_ptom_lock(void);
-void xen_release_ptom_lock(void);
 
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
@@ -128,7 +94,6 @@ xpmap_ptom_masked(paddr_t ppa)
 	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT);
 }
 
-#ifdef XEN3
 static inline void
 MULTI_update_va_mapping(
 	multicall_entry_t *mcl, vaddr_t va,
@@ -183,7 +148,5 @@ MULTI_update_va_mapping_otherdomain(
 #if defined(__x86_64__)
 void xen_set_user_pgd(paddr_t);
 #endif
-
-#endif /* XEN3 */
 
 #endif /* _XEN_XENPMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.7.14.1 2009/05/13 17:17:52 jym Exp $	*/
+/*	$NetBSD: realprot.S,v 1.7.14.2 2009/11/01 13:58:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

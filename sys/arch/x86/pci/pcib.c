@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7.8.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7.8.2 2009/11/01 13:58:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.2 2009/11/01 13:58:17 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.1 2009/05/13 17:18:45 jym Exp $");
 #include "pcibvar.h"
 
 int	pcibmatch(device_t, cfdata_t, void *);
-void	pcibattach(device_t, device_t, void *);
-int	pcibdetach(device_t, int);
-void	pcibchilddet(device_t, device_t);
 
 CFATTACH_DECL3_NEW(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet,
+    pcibmatch, pcibattach, pcibdetach, NULL, pcibrescan, pcibchilddet,
     DVF_DETACH_SHUTDOWN);
 
 void	pcib_callback(device_t);
@@ -191,14 +188,13 @@ pcibattach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 
 	aprint_naive("\n");
-	aprint_normal("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
@@ -229,22 +225,43 @@ pcibdetach(device_t self, int flags)
 void
 pcibchilddet(device_t self, device_t child)
 {
-	/* we keep no references to children, so do nothing */
+	struct pcib_softc *sc = device_private(self);
+
+	if (sc->sc_isabus == child)
+		sc->sc_isabus = NULL;
+}
+
+/* XXX share this with sys/arch/i386/pci/elan520.c */
+static bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+int
+pcibrescan(device_t self, const char *ifattr, const int *loc)
+{
+	struct pcib_softc *sc = device_private(self);
+	struct isabus_attach_args iba;
+
+	if (ifattr_match(ifattr, "isabus") && sc->sc_isabus == NULL) {
+		/*
+		 * Attach the ISA bus behind this bridge.
+		 */
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_iot = X86_BUS_SPACE_IO;
+		iba.iba_memt = X86_BUS_SPACE_MEM;
+#if NISA > 0
+		iba.iba_dmat = &isa_bus_dma_tag;
+#endif
+		sc->sc_isabus =
+		    config_found_ia(self, "isabus", &iba, isabusprint);
+	}
+	return 0;
 }
 
 void
 pcib_callback(device_t self)
 {
-	struct isabus_attach_args iba;
-
-	/*
-	 * Attach the ISA bus behind this bridge.
-	 */
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_iot = X86_BUS_SPACE_IO;
-	iba.iba_memt = X86_BUS_SPACE_MEM;
-#if NISA > 0
-	iba.iba_dmat = &isa_bus_dma_tag;
-#endif
-	config_found_ia(self, "isabus", &iba, isabusprint);
+	pcibrescan(self, "isabus", NULL);
 }

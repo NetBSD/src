@@ -1,4 +1,4 @@
-/* $NetBSD: pciif.h,v 1.4.8.1 2009/05/13 17:18:50 jym Exp $ */
+/* $NetBSD: pciif.h,v 1.4.8.2 2009/11/01 13:58:45 jym Exp $ */
 /*
  * PCI Backend/Frontend Common Data Structures & Macros
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.14.8.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.14.8.2 2009/11/01 13:58:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -195,7 +195,8 @@ struct btinfo_framebuffer {
 	uint8_t rpos;
 	uint8_t gpos;
 	uint8_t bpos;
-	uint8_t reserved[16];
+	uint16_t vbemode;
+	uint8_t reserved[14];
 };
 
 #endif /* _LOCORE */

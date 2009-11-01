@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.82.4.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: locore.S,v 1.82.4.2 2009/11/01 13:58:21 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -15,11 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -134,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.82.4.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.82.4.2 2009/11/01 13:58:21 jym Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -173,7 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.82.4.1 2009/05/13 17:17:49 jym Exp $");
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
-#ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
 #if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
@@ -190,9 +184,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.82.4.1 2009/05/13 17:17:49 jym Exp $");
 #ifdef PAE
 	.ascii  ",PAE=yes[extended-cr3]"
 #endif
-#else /* !XEN3 */
-	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
-#endif /* XEN3 */
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
@@ -727,11 +718,7 @@ start:
 	popfl
 
 	cld
-#ifdef XEN3
 	movl	%esp, %ebx		# save start of available space
-#else
-	movl    %esi,%ebx               # save start_info pointer
-#endif
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
         /* Clear BSS first so that there are no surprises... */
@@ -779,13 +766,13 @@ start:
 	addl	$4,%esp
 	call 	_C_LABEL(main)
 
-#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+#if defined(XEN) && !defined(XEN_COMPAT_030001)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN3) && !defined(XEN_COMPAT_030001) */
+#endif /* defined(XEN) && !defined(XEN_COMPAT_030001) */
 
 /*
  * void lgdt_finish(void);

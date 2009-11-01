@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.7.12.1 2009/05/13 17:17:52 jym Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.7.12.2 2009/11/01 13:58:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

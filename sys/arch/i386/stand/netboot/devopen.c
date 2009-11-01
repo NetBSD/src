@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7.92.1 2009/05/13 17:17:52 jym Exp $	 */
+/*	$NetBSD: devopen.c,v 1.7.92.2 2009/11/01 13:58:44 jym Exp $	 */
 
 /*
  * Copyright (c) 1996, 1998

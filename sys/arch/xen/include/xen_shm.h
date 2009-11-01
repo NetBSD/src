@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.7 2006/06/25 15:18:53 bouyer Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.7.76.1 2009/11/01 13:58:45 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -41,13 +36,8 @@
  * space, do I/O to it, and unmap it.
  */
 
-#ifdef XEN3
 int  xen_shm_map(int, int, grant_ref_t *, vaddr_t *, grant_handle_t *, int);
 void xen_shm_unmap(vaddr_t, int, grant_handle_t *);
-#else
-int  xen_shm_map(paddr_t *, int, int, vaddr_t *, int);
-void xen_shm_unmap(vaddr_t, paddr_t *, int, int);
-#endif
 int xen_shm_callback(int (*)(void *), void *);
 
 /* flags for xen_shm_map() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.3 2009/11/01 13:58:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.3 2009/11/01 13:58:17 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include "acpi.h"
+#include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Ex
 #include <machine/mpbiosvar.h>
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <machine/mpacpi.h>
 #endif
 
@@ -245,7 +245,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
 }

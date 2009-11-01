@@ -1,4 +1,4 @@
-/*	$NetBSD: dump_eax.S,v 1.2.14.1 2009/05/13 17:17:51 jym Exp $	*/
+/*	$NetBSD: dump_eax.S,v 1.2.14.2 2009/11/01 13:58:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

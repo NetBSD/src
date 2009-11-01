@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.9.12.2 2009/05/31 14:32:34 jym Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.9.12.3 2009/11/01 13:58:16 jym Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_

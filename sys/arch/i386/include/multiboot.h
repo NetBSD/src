@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.7.8.1 2009/05/13 17:17:50 jym Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.7.8.2 2009/11/01 13:58:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.14.14.1 2009/05/13 17:17:49 jym Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.14.14.2 2009/11/01 13:58:20 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.14.14.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.14.14.2 2009/11/01 13:58:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.35.4.1 2009/05/13 17:18:50 jym Exp $ */
+/* $NetBSD: privcmd.c,v 1.35.4.2 2009/11/01 13:58:47 jym Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.35.4.1 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.35.4.2 2009/11/01 13:58:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +286,7 @@ privcmd_ioctl(void *v)
 			"movl 16(%%eax),%%esi ;"
 			"movl 20(%%eax),%%edi ;"
 			"movl   (%%eax),%%eax ;"
-#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+#if !defined(XEN_COMPAT_030001)
 			"shll $5,%%eax ;"
 			"addl $hypercall_page,%%eax ;"
 			"call *%%eax ;"
@@ -335,21 +330,6 @@ privcmd_ioctl(void *v)
 		}
 		break;
 	}
-#ifndef XEN3
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
-		{
-		extern int initdom_ctrlif_domcontroller_port;
-		error = initdom_ctrlif_domcontroller_port;
-		}
-		break;
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
-		{
-		extern int initdom_ctrlif_domcontroller_port;
-		*(int *)ap->a_data = initdom_ctrlif_domcontroller_port;
-		}
-		error = 0;
-		break;
-#endif /* XEN3 */
 	case IOCTL_PRIVCMD_MMAP:
 	{
 		int i, j;
@@ -460,15 +440,6 @@ privcmd_ioctl(void *v)
 
 		break;
 	}
-#ifndef XEN3
-	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
-		{
-		unsigned long *mfn_start = ap->a_data;
-		*mfn_start = HYPERVISOR_shared_info->arch.mfn_to_pfn_start;
-		error = 0;
-		}
-		break;
-#endif /* !XEN3 */
 	default:
 		error = EINVAL;
 	}

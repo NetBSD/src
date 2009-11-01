@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.237.2.3 2009/07/23 23:31:35 jym Exp $
+# $NetBSD: GENERIC,v 1.237.2.4 2009/11/01 13:58:54 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.237.2.3 $"
+#ident 		"GENERIC-$Revision: 1.237.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -279,6 +279,7 @@ acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
@@ -294,9 +295,12 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*  	at acpi?                # AT-style speaker sound
 sony*		at acpi?		# Sony Notebook Controller
+spic* 		at acpi?		# Sony Programmable I/O Controller
+wsmouse* 	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
-wss* 		at acpi?		# NeoMagic 256AV in wss mode
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -366,6 +370,16 @@ wsmouse*	at pms? mux 0
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
+
+# DRI driver
+i915drm*	at vga?		# Intel i915, i945 DRM driver
+mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at vga?		# ATI Rage 128 DRM driver
+radeondrm*	at vga?		# ATI Radeon DRM driver
+savagedrm*	at vga?		# S3 Savage DRM driver
+sisdrm*		at vga?		# SiS DRM driver
+tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
 
 # Cryptographic Devices
 
@@ -541,6 +555,7 @@ iteide* at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* at pci? dev ? function ?	# ATI IXP IDE controllers
 jmide* at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* at jmide?
+mvsata* at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
@@ -550,6 +565,7 @@ siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
+toshide* at pci? dev ? function ?	# TOSHIBA PICCOLO controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
@@ -920,7 +936,7 @@ auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA AC'97 audio
-azalia*	at pci? dev ? function ?	# High Definition Audio
+#azalia*	at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
@@ -940,6 +956,10 @@ opl*	at cmpci? flags 1
 opl*	at eso?
 opl*	at fms?
 opl*	at sv?
+
+# High Definition Audio
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?

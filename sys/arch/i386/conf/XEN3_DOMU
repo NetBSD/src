@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.11.4.2 2009/07/23 23:31:36 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.11.4.3 2009/11/01 13:58:20 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -161,7 +161,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
-options 	XEN3	#Xen 3.x support
 #options         __XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 options 	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.30.2.1 2009/05/13 17:18:50 jym Exp $      */
+/*      $NetBSD: xenevt.c,v 1.30.2.2 2009/11/01 13:58:47 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.1 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.2 2009/11/01 13:58:47 jym Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -54,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.30.2.1 2009/05/13 17:18:50 jym Exp $");
 #include <xen/hypervisor.h>
 #include <xen/xenpmap.h>
 #include <xen/xenio.h>
-#ifdef XEN3
 #include <xen/xenio3.h>
-#endif
 #include <xen/xen.h>
 
 /*
@@ -107,10 +100,6 @@ const struct cdevsw xenevt_cdevsw = {
 #define XENEVT_RING_SIZE 2048
 #define XENEVT_RING_MASK 2047
 
-#ifndef XEN3
-typedef uint16_t evtchn_port_t;
-#endif
-
 #define BYTES_PER_PORT (sizeof(evtchn_port_t) / sizeof(uint8_t))
 
 struct xenevt_d {
@@ -138,13 +127,8 @@ static void xenevt_donotify(struct xenevt_d *);
 static void xenevt_record(struct xenevt_d *, evtchn_port_t);
 
 /* pending events */
-#ifdef XEN3
 long xenevt_ev1;
 long xenevt_ev2[NR_EVENT_CHANNELS];
-#else
-uint32_t xenevt_ev1;
-uint32_t xenevt_ev2[NR_EVENT_CHANNELS];
-#endif
 static int xenevt_processevt(void *);
 
 /* called at boot time */
@@ -322,11 +306,9 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 		simple_lock_init(&d->lock);
 		selinit(&d->sel);
 		return fd_clone(fp, fd, flags, &xenevt_fileops, d);
-#ifdef XEN3
 	case DEV_XSD:
 		/* no clone for /dev/xsd_kva */
 		return (0);
-#endif
 	default:
 		break;
 	}
@@ -337,7 +319,6 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 xenevtread(dev_t dev, struct uio *uio, int flags)
 {
-#ifdef XEN3
 #define LD_STRLEN 21 /* a 64bit integer needs 20 digits in base10 */
 	if (minor(dev) == DEV_XSD) {
 		char strbuf[LD_STRLEN], *bf;
@@ -359,7 +340,6 @@ xenevtread(dev_t dev, struct uio *uio, int flags)
 		error = uiomove(bf, len, uio);
 		return error;
 	}
-#endif
 	return ENODEV;
 }
 
@@ -367,7 +347,6 @@ xenevtread(dev_t dev, struct uio *uio, int flags)
 paddr_t
 xenevtmmap(dev_t dev, off_t off, int prot)
 {
-#ifdef XEN3
 	if (minor(dev) == DEV_XSD) {
 		/* only one page, so off is always 0 */
 		if (off != 0)
@@ -375,7 +354,6 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 		return x86_btop(
 		   xpmap_mtop((paddr_t)xen_start_info.store_mfn << PAGE_SHIFT));
 	}
-#endif
 	return -1;
 }
 
@@ -387,20 +365,18 @@ xenevt_fclose(struct file *fp)
 
 	for (i = 0; i < NR_EVENT_CHANNELS; i++ ) {
 		if (devevent[i] == d) {
-#ifdef XEN3
 			evtchn_op_t op = { .cmd = 0 };
 			int error;
-#endif
+
 			hypervisor_mask_event(i);
 			devevent[i] = NULL;
-#ifdef XEN3
+
 			op.cmd = EVTCHNOP_close;
 			op.u.close.port = i;
 			if ((error = HYPERVISOR_event_channel_op(&op))) {
 				printf("xenevt_fclose: error %d from "
 				    "hypervisor\n", -error);
 			}
-#endif
 		}
 	}
 	seldestroy(&d->sel);
@@ -519,22 +495,15 @@ static int
 xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct xenevt_d *d = fp->f_data;
-#ifdef XEN3
 	evtchn_op_t op = { .cmd = 0 };
 	int error;
-#else
-	u_int *arg = addr;
-#endif
 
 	switch(cmd) {
 	case EVTCHN_RESET:
-#ifdef XEN3
 	case IOCTL_EVTCHN_RESET:
-#endif
 		d->ring_read = d->ring_write = 0;
 		d->flags = 0;
 		break;
-#ifdef XEN3
 	case IOCTL_EVTCHN_BIND_VIRQ:
 	{
 		struct ioctl_evtchn_bind_virq *bind_virq = addr;
@@ -603,24 +572,6 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 		hypervisor_notify_via_evtchn(notify->port);
 		break;
 	}
-#else /* !XEN3 */
-	case EVTCHN_BIND:
-		if (*arg > NR_EVENT_CHANNELS)
-			return EINVAL;
-		if (devevent[*arg] != NULL)
-			return EISCONN;
-		devevent[*arg] = d;
-		hypervisor_unmask_event(*arg);
-		break;
-	case EVTCHN_UNBIND:
-		if (*arg > NR_EVENT_CHANNELS)
-			return EINVAL;
-		if (devevent[*arg] != d)
-			return ENOTCONN;
-		devevent[*arg] = NULL;
-		hypervisor_mask_event(*arg);
-		break;
-#endif /* !XEN3 */
 	case FIONBIO:
 		break;
 	default:

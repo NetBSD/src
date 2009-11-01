@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.50.8.2 2009/05/31 14:32:33 jym Exp $	*/
+/*	$NetBSD: segments.h,v 1.50.8.3 2009/11/01 13:58:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

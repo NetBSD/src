@@ -1,4 +1,4 @@
-/*	$Id: nmi.c,v 1.2.6.2 2009/05/13 17:18:45 jym Exp $	*/
+/*	$Id: nmi.c,v 1.2.6.3 2009/11/01 13:58:18 jym Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.2.6.2 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.2.6.3 2009/11/01 13:58:18 jym Exp $");
 
 /*
  * nmi dispatcher.
