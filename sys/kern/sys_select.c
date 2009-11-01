@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.17 2009/11/01 21:14:21 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.18 2009/11/01 21:46:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.17 2009/11/01 21:14:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.18 2009/11/01 21:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,33 +154,6 @@ sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
 
 	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
-}
-
-int
-inittimeleft(struct timespec *ts, struct timespec *sleepts)
-{
-	if (itimespecfix(ts))
-		return -1;
-	getnanouptime(sleepts);
-	return 0;
-}
-
-int
-gettimeleft(struct timespec *ts, struct timespec *sleepts)
-{
-	/*
-	 * We have to recalculate the timeout on every retry.
-	 */
-	struct timespec sleptts;
-	/*
-	 * reduce ts by elapsed time
-	 * based on monotonic time scale
-	 */
-	getnanouptime(&sleptts);
-	timespecadd(ts, sleepts, ts);
-	timespecsub(ts, &sleptts, ts);
-	*sleepts = sleptts;
-	return tstohz(ts);
 }
 
 int
