@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.223 2009/10/22 22:28:57 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.224 2009/11/01 21:05:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.223 2009/10/22 22:28:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.224 2009/11/01 21:05:30 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -684,17 +684,20 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 
 	if (child->p_stat == SZOMB) {
 		/* proc_free() will release the proc_lock. */
-		*was_zombie = 1;
-		if (options & WNOWAIT)
+		if (options & WNOWAIT) {
 			mutex_exit(proc_lock);
-		else {
+			memset(ru, 0, sizeof(*ru));
+		} else {
 			proc_free(child, ru);
 		}
+		*was_zombie = 1;
 	} else {
 		/* Child state must have been SSTOP. */
-		*was_zombie = 0;
 		mutex_exit(proc_lock);
+
+		*was_zombie = 0;
 		*status = W_STOPCODE(*status);
+		memset(ru, 0, sizeof(*ru));
 	}
 
 	return 0;
