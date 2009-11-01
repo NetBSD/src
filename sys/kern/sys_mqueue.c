@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.25 2009/10/05 23:49:46 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.26 2009/11/01 21:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.25 2009/10/05 23:49:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.26 2009/11/01 21:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -292,31 +292,6 @@ mqueue_linear_insert(struct mqueue *mq, struct mq_msg *msg)
 	} else {
 		TAILQ_INSERT_BEFORE(mit, msg, msg_queue);
 	}
-}
-
-/*
- * Calculate delta and convert from struct timespec to the ticks.
- * Used by mq_timedreceive(), mq_timedsend().
- */
-int
-abstimeout2timo(struct timespec *ts, int *timo)
-{
-	struct timespec tsd;
-	int error;
-
-	getnanotime(&tsd);
-	timespecsub(ts, &tsd, &tsd);
-	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
-		return ETIMEDOUT;
-	}
-	error = itimespecfix(&tsd);
-	if (error) {
-		return error;
-	}
-	*timo = tstohz(&tsd);
-	KASSERT(*timo != 0);
-
-	return 0;
 }
 
 static int

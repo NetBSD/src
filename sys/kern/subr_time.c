@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.4 2008/07/15 16:18:08 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.5 2009/11/01 21:46:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.4 2008/07/15 16:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.5 2009/11/01 21:46:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -168,4 +168,55 @@ itimespecfix(struct timespec *ts)
 	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
 		ts->tv_nsec = tick * 1000;
 	return (0);
+}
+
+int
+inittimeleft(struct timespec *ts, struct timespec *sleepts)
+{
+
+	if (itimespecfix(ts)) {
+		return -1;
+	}
+	getnanouptime(sleepts);
+	return 0;
+}
+
+int
+gettimeleft(struct timespec *ts, struct timespec *sleepts)
+{
+	struct timespec sleptts;
+
+	/*
+	 * Reduce ts by elapsed time based on monotonic time scale.
+	 */
+	getnanouptime(&sleptts);
+	timespecadd(ts, sleepts, ts);
+	timespecsub(ts, &sleptts, ts);
+	*sleepts = sleptts;
+
+	return tstohz(ts);
+}
+
+/*
+ * Calculate delta and convert from struct timespec to the ticks.
+ */
+int
+abstimeout2timo(struct timespec *ts, int *timo)
+{
+	struct timespec tsd;
+	int error;
+
+	getnanotime(&tsd);
+	timespecsub(ts, &tsd, &tsd);
+	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
+		return ETIMEDOUT;
+	}
+	error = itimespecfix(&tsd);
+	if (error) {
+		return error;
+	}
+	*timo = tstohz(&tsd);
+	KASSERT(*timo != 0);
+
+	return 0;
 }
