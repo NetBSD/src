@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.155 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.156 2009/11/01 20:59:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.155 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.156 2009/11/01 20:59:24 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1098,11 +1098,8 @@ static void
 orphanpg(struct pgrp *pg)
 {
 	struct proc *p;
-	int doit;
 
 	KASSERT(mutex_owned(proc_lock));
-
-	doit = 0;
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
