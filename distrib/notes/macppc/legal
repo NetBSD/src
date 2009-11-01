@@ -1,11 +1,9 @@
-.\"	$NetBSD: legal,v 1.5 2009/10/23 17:39:08 snj Exp $
+.\"	$NetBSD: legal,v 1.6 2009/11/01 01:55:39 snj Exp $
 .
 .It
 This product includes software developed by Apple Computer, Inc.
 .It
 This product includes software developed by Bill Studenmund.
-.It
-This product includes software developed by Bradley A. Grantham.
 .It
 This product includes software developed by Carnegie-Mellon University.
 .It
