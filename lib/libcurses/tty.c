@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.40 2007/05/28 15:01:58 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.41 2009/11/01 22:11:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.40 2007/05/28 15:01:58 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.41 2009/11/01 22:11:27 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -302,8 +302,13 @@ __delay(void)
 	_cursesi_screen->baset.c_cc[VMIN] = 1;
 	_cursesi_screen->baset.c_cc[VTIME] = 0;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
-		TCSASOFT : TCSANOW, _cursesi_screen->curt) ? ERR : OK);
+	if (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
+	    TCSASOFT : TCSANOW, _cursesi_screen->curt)) {
+		__restore_termios();
+		return ERR;
+	}
+
+	return OK;
 }
 
 int
@@ -325,8 +330,13 @@ __nodelay(void)
 	_cursesi_screen->baset.c_cc[VMIN] = 0;
 	_cursesi_screen->baset.c_cc[VTIME] = 0;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
-		TCSASOFT : TCSANOW, _cursesi_screen->curt) ? ERR : OK);
+	if (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
+	    TCSASOFT : TCSANOW, _cursesi_screen->curt)) {
+		__restore_termios();
+		return ERR;
+	}
+
+	return OK;
 }
 
 void
@@ -380,9 +390,14 @@ __timeout(int delay)
 	_cursesi_screen->baset.c_cc[VMIN] = 0;
 	_cursesi_screen->baset.c_cc[VTIME] = delay;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd),
+	if (tcsetattr(fileno(_cursesi_screen->infd),
 			  __tcaction ? TCSASOFT | TCSANOW : TCSANOW,
-			  _cursesi_screen->curt) ? ERR : OK);
+			  _cursesi_screen->curt)) {
+		__restore_termios();
+		return ERR;
+	}
+
+	return OK;
 }
 
 int
