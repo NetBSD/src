@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.13.2.2 2009/05/13 17:18:50 jym Exp $      */
+/*      $NetBSD: xengnt.c,v 1.13.2.3 2009/11/01 13:58:47 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.13.2.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.13.2.3 2009/11/01 13:58:47 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +67,7 @@ grant_entry_t *grant_table;
 
 static grant_ref_t xengnt_get_entry(void);
 static void xengnt_free_entry(grant_ref_t);
+static void xengnt_resume(void);
 static int xengnt_more_entries(void);
 
 void
@@ -104,6 +100,7 @@ xengnt_init(void)
 	for (i = 0; i <= nr_grant_entries; i++)
 		gnt_entries[i] = XENGNT_NO_ENTRY;
 
+	last_gnt_entry = 0;
 	xengnt_resume();
 
 }
@@ -111,43 +108,16 @@ xengnt_init(void)
 /*
  * Resume grant table state
  */
-bool
+static void
 xengnt_resume(void)
 {
 	int previous_nr_grant_frames = gnt_nr_grant_frames;
-
-	last_gnt_entry = 0;
 	gnt_nr_grant_frames = 0;
-
 	while (gnt_nr_grant_frames < previous_nr_grant_frames) {
 		if (xengnt_more_entries() != 0)
 			panic("xengnt_resume: can't restore grant frames");
 	}
-	return true;
 }
-
-/*
- * Suspend grant table state
- */
-bool
-xengnt_suspend() {
-
-	int i;
-
-	KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
-
-	for (i = 0; i < last_gnt_entry; i++) {
-		/* invalidate all grant entries (necessary for resume) */
-		gnt_entries[i] = XENGNT_NO_ENTRY;
-	}
-	
-	/* Remove virtual => machine mapping */
-	pmap_kremove((vaddr_t)grant_table, gnt_nr_grant_frames * PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	return true;
-}
-
 
 /*
  * Add another page to the grant table

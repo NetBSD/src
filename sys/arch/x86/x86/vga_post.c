@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.11.8.1 2009/05/13 17:18:45 jym Exp $ */
+/* $NetBSD: vga_post.c,v 1.11.8.2 2009/11/01 13:58:18 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.2 2009/11/01 13:58:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -224,6 +224,14 @@ vga_post_call(struct vga_post *sc)
 
 	/* Jump straight into the VGA BIOS POST code */
 	X86EMU_exec_call(&sc->emu, 0xc000, 0x0003);
+}
+
+void
+vga_post_set_vbe(struct vga_post *sc, uint16_t vbemode)
+{
+	sc->emu.x86.R_EBX = vbemode | 0x4000;
+	sc->emu.x86.R_EAX = 0x4f02;
+	X86EMU_exec_intr(&sc->emu, 0x10);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mp.c,v 1.1.6.3 2009/07/23 23:31:37 jym Exp $	*/
+/*	$NetBSD: mp.c,v 1.1.6.4 2009/11/01 13:58:18 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.1.6.3 2009/07/23 23:31:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.1.6.4 2009/11/01 13:58:18 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "pchb.h"

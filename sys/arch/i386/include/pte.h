@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.18.2.1 2009/05/13 17:17:50 jym Exp $	*/
+/*	$NetBSD: pte.h,v 1.18.2.2 2009/11/01 13:58:34 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

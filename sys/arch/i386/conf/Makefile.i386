@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.162.2.1 2009/05/13 17:17:49 jym Exp $
+#	$NetBSD: Makefile.i386,v 1.162.2.2 2009/11/01 13:58:20 jym Exp $
 
 # Makefile for NetBSD
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.80 2008/12/30 13:15:49 pooka Exp $
+#	$NetBSD: genassym.cf,v 1.80.2.1 2009/11/01 13:58:21 jym Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -100,11 +100,7 @@ include <machine/types.h>
 include <machine/segments.h>
 
 ifdef XEN
-ifdef XEN3
 include <xen/xen3-public/sched.h>
-else
-include <xen/xen-public/xen.h>
-endif
 endif
 
 if defined(_KERNEL) && defined(_KERNEL_OPT)
@@ -455,14 +451,10 @@ define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
-ifdef XEN3
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
 define START_INFO_FLAGS		offsetof(struct start_info, flags)
 define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console.domU.mfn)
 define START_INFO_STORE_MFN	offsetof(struct start_info, store_mfn)
-else
-define START_INFO_SHARED_INFO	offsetof(start_info_t, shared_info)
-endif
 define SIF_INITDOMAIN		SIF_INITDOMAIN
 define EVTCHN_UPCALL_PENDING	offsetof(struct vcpu_info, evtchn_upcall_pending)
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)

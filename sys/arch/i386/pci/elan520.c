@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.37.2.1 2009/05/13 17:17:50 jym Exp $	*/
+/*	$NetBSD: elan520.c,v 1.37.2.2 2009/11/01 13:58:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37.2.1 2009/05/13 17:17:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37.2.2 2009/11/01 13:58:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1262,7 +1262,6 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	uint16_t rev;
 	uint8_t cpuctl, picicr, ressta;
 #if NGPIO > 0
-	struct gpiobus_attach_args gba;
 	int pin, reg, shift;
 	uint16_t data;
 #endif
@@ -1386,10 +1385,6 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpio_gc.gp_pin_read = elansc_gpio_pin_read;
 	sc->sc_gpio_gc.gp_pin_write = elansc_gpio_pin_write;
 	sc->sc_gpio_gc.gp_pin_ctl = elansc_gpio_pin_ctl;
-
-	gba.gba_gc = &sc->sc_gpio_gc;
-	gba.gba_pins = sc->sc_gpio_pins;
-	gba.gba_npins = ELANSC_PIO_NPINS;
 
 #endif /* NGPIO */
 

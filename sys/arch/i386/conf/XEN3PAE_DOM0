@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOM0,v 1.1.6.2 2009/05/13 17:17:49 jym Exp $
+# $NetBSD: XEN3PAE_DOM0,v 1.1.6.3 2009/11/01 13:58:20 jym Exp $
 
 include "arch/i386/conf/XEN3_DOM0"
 

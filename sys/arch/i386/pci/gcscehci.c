@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.4.10.1 2009/05/13 17:17:50 jym Exp $ */
+/* $NetBSD: gcscehci.c,v 1.4.10.2 2009/11/01 13:58:35 jym Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.1 2009/05/13 17:17:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.2 2009/11/01 13:58:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

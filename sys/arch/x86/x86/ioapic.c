@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.38.10.2 2009/05/31 14:32:34 jym Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.38.10.3 2009/11/01 13:58:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.38.10.2 2009/05/31 14:32:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.38.10.3 2009/11/01 13:58:18 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,11 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.38.10.2 2009/05/31 14:32:34 jym Exp $")
 #include <machine/pmap.h>
 #include <machine/lock.h>
 
-#include "acpi.h"
+#include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
-#if !defined(MPBIOS) && NACPI == 0
+#if !defined(MPBIOS) && NACPICA == 0
 #error "ioapic needs at least one of the MPBIOS or ACPI options"
 #endif
 

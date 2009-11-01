@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.11.4.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.11.4.2 2009/11/01 13:58:15 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.1 2009/05/13 17:18:44 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.2 2009/11/01 13:58:15 jym Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.1 2009/05/13 17:18:44 jym Exp
 #endif
 #include <machine/i8259.h>
 
-#include "acpi.h"
+#include "acpica.h"
 
 #include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.1 2009/05/13 17:18:44 jym Exp
 #include <x86/cpuvar.h>
 #include <x86/x86/tsc.h>
 
+#include "opt_vga.h"
+
 #include "acpi_wakecode.h"
 
 /* Address is also hard-coded in acpi_wakecode.S */
@@ -111,6 +113,7 @@ static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
 int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
+int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
@@ -139,7 +142,7 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #define WAKECODE_BCOPY(offset, type, val) do	{		\
 	void	**addr;						\
 	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	memcpy( addr, &(val), sizeof(type));			\
+	memcpy(addr, &(val), sizeof(type));			\
 } while (0)
 
 	paddr_t				tmp_pdir;
@@ -147,12 +150,14 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
 	/* Execute Sleep */
-	memcpy( (void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
+	memcpy((void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
+		WAKECODE_FIXUP(WAKEUP_vesa_modenum, uint16_t, acpi_md_vesa_modenum);
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 	} else {
+		WAKECODE_FIXUP(WAKEUP_vesa_modenum, uint16_t, 0);
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, 0);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, 0);
 	}
@@ -203,7 +208,7 @@ enter_s4_with_bios(void)
 
 	/* clear wake status */
 
-	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1);
+	AcpiWriteBitRegister(ACPI_BITREG_WAKE_STATUS, 1);
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -219,7 +224,7 @@ enter_s4_with_bios(void)
 		AcpiOsStall(1000000);
 		AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
 				AcpiGbl_FADT.S4BiosRequest, 8);
-		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS, &ret);
+		status = AcpiReadBitRegister(ACPI_BITREG_WAKE_STATUS, &ret);
 		if (ACPI_FAILURE(status))
 			break;
 	} while (!ret);
@@ -459,6 +464,14 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 
 	if (t < 0 || t > 2)
 		return EINVAL;
+
+#ifndef VGA_POST
+	if (t == 2) {
+		aprint_error("WARNING: machdep.acpi_vbios_reset=2 "
+		    "unsupported (no option VGA_POST in kernel config)\n");
+		return EINVAL;
+	}
+#endif
 
 	acpi_md_vbios_reset = t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.17.4.1 2009/05/13 17:17:50 jym Exp $	*/
+/*	$NetBSD: vm86.h,v 1.17.4.2 2009/11/01 13:58:34 jym Exp $	*/
 
 #undef	VM86_USE_VIF
 

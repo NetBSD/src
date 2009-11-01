@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.17.14.2 2009/07/23 23:31:36 jym Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.17.14.3 2009/11/01 13:58:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.2 2009/07/23 23:31:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.17.14.3 2009/11/01 13:58:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,7 @@ CFATTACH_DECL(ess_pnpbios, sizeof(struct ess_softc),
     ess_pnpbios_match, ess_pnpbios_attach, NULL, NULL);
 
 int
-ess_pnpbios_match(device_t parent, cfdata_t match,
-    void *aux)
+ess_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -83,14 +82,13 @@ ess_pnpbios_match(device_t parent, cfdata_t match,
 }
 
 void
-ess_pnpbios_attach(device_t parent, device_t self,
-    void *aux)
+ess_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
 	struct ess_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -104,7 +102,7 @@ ess_pnpbios_attach(device_t parent, device_t self,
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_audio1.irq,
 	    NULL)) {
-		printf(": can't get IRQ\n");
+		aprint_error(": can't get IRQ\n");
 		return;
 	}
 
@@ -113,20 +111,21 @@ ess_pnpbios_attach(device_t parent, device_t self,
 		sc->sc_audio2.irq = -1;
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->sc_audio1.drq)) {
-		printf(": can't get DMA channel\n");
+		aprint_error(": can't get DMA channel\n");
 		return;
 	}
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->sc_audio2.drq))
 		sc->sc_audio2.drq = -1;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", device_xname(self));
+	aprint_normal_dev(self, "");
 
 	if (!essmatch(sc)) {
-		aprint_error_dev(&sc->sc_dev, "essmatch failed\n");
+		aprint_error_dev(self, "essmatch failed\n");
 		pnpbios_io_unmap(aa->pbt, aa->resc, 0, sc->sc_iot, sc->sc_ioh);
 		return;
 	}

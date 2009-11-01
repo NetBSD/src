@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.15 2008/06/24 16:32:53 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.15.10.1 2009/11/01 13:58:48 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ ENTRY(x86_stihlt)
 ENTRY(x86_monitor)
 	movq	%rdi, %rax
 	movq	%rsi, %rcx
-	monitor	%eax, %ecx, %edx	/* XXXgas %rax */
+	monitor	%rax, %rcx, %rdx
 	ret
 
 /* Waits - set up stack frame. */
@@ -342,7 +342,7 @@ ENTRY(x86_mwait)
 	movq	%rsp, %rbp
 	movq	%rdi, %rax
 	movq	%rsi, %rcx
-	mwait	%eax, %ecx
+	mwait	%rax, %rcx
 	leave
 	ret
 

@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.10.2.1 2009/05/13 17:18:45 jym Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.10.2.2 2009/11/01 13:58:19 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.2 2009/11/01 13:58:19 jym Exp $");
 
 #include "rnd.h"
 

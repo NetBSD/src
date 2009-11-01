@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.4.24.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.4.24.2 2009/11/01 13:58:16 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
