@@ -1,9 +1,7 @@
-.\"	$NetBSD: legal,v 1.16 2009/10/23 17:34:58 snj Exp $
+.\"	$NetBSD: legal,v 1.17 2009/11/01 01:55:39 snj Exp $
 .
 .It
 This product includes software developed by Allen Briggs.
-.It
-This product includes software developed by Bradley A. Grantham.
 .It
 This product includes softwarre developed by Daishi Kato.
 .It
