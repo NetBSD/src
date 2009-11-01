@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.6 2008/04/14 20:33:59 jdc Exp $ */
+/*   $NetBSD: get_wch.c,v 1.7 2009/11/01 22:11:27 dsl Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.6 2008/04/14 20:33:59 jdc Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.7 2009/11/01 22:11:27 dsl Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -557,10 +557,8 @@ wget_wch(WINDOW *win, wint_t *ch)
 					win->flags & __NOTIMEOUT ? 0 : 1, 0);
 				break;
 			case 0:
-				if (__nodelay() == ERR) {
-					__restore_termios();
+				if (__nodelay() == ERR)
 					return ERR;
-				}
 				ret = inkey(&inp, 0, 0);
 				break;
 			default:
@@ -576,16 +574,12 @@ wget_wch(WINDOW *win, wint_t *ch)
 			case -1:
 				break;
 			case 0:
-				if (__nodelay() == ERR) {
-					__restore_termios();
+				if (__nodelay() == ERR)
 					return ERR;
-				}
 				break;
 			default:
-				if (__timeout(win->delay) == ERR) {
-					__restore_termios();
+				if (__timeout(win->delay) == ERR)
 					return ERR;
-				}
 				break;
 		}
 
@@ -616,10 +610,8 @@ wget_wch(WINDOW *win, wint_t *ch)
 		__CTRACE(__CTRACE_INPUT, "wget_wch got '%s'\n", unctrl(inp));
 #endif
 	if (win->delay > -1) {
-		if (__delay() == ERR) {
-			__restore_termios();
+		if (__delay() == ERR)
 			return ERR;
-		}
 	}
 
 	__restore_termios();

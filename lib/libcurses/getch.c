@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.52 2009/02/09 12:45:59 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.53 2009/11/01 22:11:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.52 2009/02/09 12:45:59 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.53 2009/11/01 22:11:27 dsl Exp $");
 #endif
 #endif					/* not lint */
 
@@ -844,10 +844,8 @@ wgetch(WINDOW *win)
 			inp = inkey (win->flags & __NOTIMEOUT ? 0 : 1, 0);
 			break;
 		case 0:
-			if (__nodelay() == ERR) {
-				__restore_termios();
+			if (__nodelay() == ERR)
 				return ERR;
-			}
 			inp = inkey(0, 0);
 			break;
 		default:
@@ -858,22 +856,16 @@ wgetch(WINDOW *win)
 		switch (win->delay)
 		{
 		case -1:
-			if (__delay() == ERR) {
-				__restore_termios();
+			if (__delay() == ERR)
 				return ERR;
-			}
 			break;
 		case 0:
-			if (__nodelay() == ERR) {
-				__restore_termios();
+			if (__nodelay() == ERR)
 				return ERR;
-			}
 			break;
 		default:
-			if (__timeout(win->delay) == ERR) {
-				__restore_termios();
+			if (__timeout(win->delay) == ERR)
 				return ERR;
-			}
 			break;
 		}
 
@@ -902,10 +894,8 @@ wgetch(WINDOW *win)
 		__CTRACE(__CTRACE_INPUT, "wgetch got '%s'\n", unctrl(inp));
 #endif
 	if (win->delay > -1) {
-		if (__delay() == ERR) {
-			__restore_termios();
+		if (__delay() == ERR)
 			return ERR;
-		}
 	}
 
 	__restore_termios();
