@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.2.3 2009/11/01 13:58:46 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.2.4 2009/11/01 21:43:28 jym Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.3 2009/11/01 13:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.4 2009/11/01 21:43:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,22 +396,17 @@ xen_get_timecount(struct timecounter *tc)
 void
 xen_initclocks(void)
 {
-	int evtch;
 
 #ifdef DOM0OPS
 	callout_init(&xen_timepush_co, 0);
 #endif
-	evtch = bind_virq_to_evtch(VIRQ_TIMER);
-	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
 	get_time_values_from_xen();
 	processed_system_time = shadow_system_time;
 	tc_init(&xen_timecounter);
-	/* The splhigh requirements start here. */
 
-	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    NULL, IPL_CLOCK, "clock");
-	hypervisor_enable_event(evtch);
+	/* The splhigh requirements start here. */
+	xen_resumeclocks();
 
 #ifdef DOM0OPS
 	xen_timepush_ticks = 53 * hz + 3; /* avoid exact # of min/sec */
@@ -425,6 +420,31 @@ xen_initclocks(void)
 		    &xen_timepush, &xen_timepush_co);
 	}
 #endif
+}
+
+void
+xen_suspendclocks(void) {
+
+	int evtch;
+
+	evtch = unbind_virq_from_evtch(VIRQ_TIMER);
+	hypervisor_mask_event(evtch);
+	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, NULL);
+
+	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
+}
+
+void
+xen_resumeclocks(void) {
+
+	int evtch;
+
+	evtch = bind_virq_to_evtch(VIRQ_TIMER);
+	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
+	    NULL, IPL_CLOCK, "clock");
+	hypervisor_enable_event(evtch);
+
+	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.8.4.2 2009/11/01 13:58:45 jym Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.8.4.3 2009/11/01 21:43:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -531,6 +531,18 @@ HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
 
     _hypercall(__HYPERVISOR_vm_assist, _harg("1" (cmd), "2" (type)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
+}
+
+static __inline int
+HYPERVISOR_sysctl(void *sysctl)
+{
+    int ret;
+    unsigned long ign1;
+
+    _hypercall(__HYPERVISOR_sysctl, _harg("1" (sysctl)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }

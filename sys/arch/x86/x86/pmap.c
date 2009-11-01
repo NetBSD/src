@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.6 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.7 2009/11/01 21:43:29 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.6 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.7 2009/11/01 21:43:29 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -728,6 +728,147 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 	    (pmap->pm_cpus & ci->ci_cpumask) != 0 ||
 	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
+
+/*
+ * Flush the content of APDP_PDE
+ */
+static inline
+void pmap_unmap_apdp_pde(void) {
+
+	int i;
+
+	for (i = 0; i < PDP_SIZE; i++) {
+		pmap_pte_set(&APDP_PDE[i], 0);
+#ifdef PAE
+		/* clear current pmap shadow entries too */
+    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#endif
+	}
+
+}
+
+#ifdef XEN
+/*
+ * Flush all APDP entries found in pmaps
+ * Required during Xen save/restore operations, as it does not
+ * handle alternative recursive mappings properly
+ */
+void
+pmap_unmap_all_apdp_pdes(void) {
+
+	int i;
+	int s;
+	struct pmap *pm;
+
+	s = splvm();
+
+#ifdef PAE
+	/*
+	 * For PAE, there are two places where alternative recursive mappings
+	 * could be found: in the L2 shadow pages, and the "real" L2 kernel
+	 * page (pmap_kl2pd), which is unique and static.
+	 * We first clear the APDP for the current pmap. As L2 kernel page is
+	 * unique, we only need to do it once for all pmaps.
+	 */
+	pmap_unmap_apdp_pde();
+#endif
+
+	mutex_enter(&pmaps_lock);
+	/*
+	 * Set APDP entries to 0 in all pmaps.
+	 * Note that for PAE kernels, this only clears the APDP entries
+	 * found in the L2 shadow pages, as pmap_pdirpa() is used to obtain
+	 * the PA of the pmap->pm_pdir[] pages (forming the 4 contiguous
+	 * pages of PAE PD: 3 for user space, 1 for the L2 kernel shadow page)
+	 */
+	LIST_FOREACH(pm, &pmaps, pm_list) {
+		for (i = 0; i < PDP_SIZE; i++) {
+			xpq_queue_pte_update(
+			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_APTE + i)), 0);
+		}
+	}
+	mutex_exit(&pmaps_lock);
+
+	xpq_flush_queue();
+
+	splx(s);
+
+}
+
+#ifdef PAE
+/*
+ * NetBSD uses L2 shadow pages to support PAE with Xen. However, Xen does not
+ * handle them correctly during save/restore, leading to incorrect page
+ * tracking and pinning during restore.
+ * For save/restore to succeed, two functions are introduced:
+ * - pmap_map_shadow_entries(), used by resume code to set the last entry
+ *   of PDIR_SLOT_PTE so that it points to the correct L2 shadow page
+ * - pmap_unmap_shadow_entries(), used by suspend code to clear all
+ *   PDIR_SLOT_PTE entries pointing to L2 shadow entries
+ */ 
+void
+pmap_map_recursive_entries(void) {
+
+	int i;
+	struct pmap *pm;
+
+	mutex_enter(&pmaps_lock);
+
+	LIST_FOREACH(pm, &pmaps, pm_list) {
+		for (i = 0; i < PDP_SIZE; i++) {
+			xpq_queue_pte_update(
+			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)),
+			    xpmap_ptom((pm)->pm_pdirpa[i]) | PG_V);
+		}
+	}
+
+	mutex_exit(&pmaps_lock);
+
+	for (i = 0; i < PDP_SIZE; i++) {
+		xpq_queue_pte_update(
+		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
+		    xpmap_ptom(pmap_kernel()->pm_pdirpa[i]) | PG_V);
+	}
+
+	xpq_flush_queue();
+}
+
+void
+pmap_unmap_recursive_entries(void) {
+
+	int i;
+	struct pmap *pm;
+
+	/*
+	 * We must invalidate all shadow pages found inside the pmap_pdp_cache.
+	 * They are technically considered by Xen as L2 pages, although they
+	 * are not currently found inside pmaps list.
+	 */
+	pool_cache_invalidate(&pmap_pdp_cache);
+
+	mutex_enter(&pmaps_lock);
+
+	LIST_FOREACH(pm, &pmaps, pm_list) {
+		for (i = 0; i < PDP_SIZE; i++) {
+			xpq_queue_pte_update(
+			    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_PTE + i)), 0);
+		}
+	}
+
+	mutex_exit(&pmaps_lock);
+
+	/* do it for pmap_kernel() too! */
+	for (i = 0; i < PDP_SIZE; i++)
+		xpq_queue_pte_update(
+		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
+		    0);
+
+	xpq_flush_queue();
+
+}
+#endif /* PAE */
+#endif /* XEN */
+
 
 static void
 pmap_apte_flush(struct pmap *pmap)
@@ -1472,7 +1613,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -2120,12 +2261,12 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
 	xpq_flush_queue();
 	splx(s);
