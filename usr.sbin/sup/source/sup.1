@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.17 2009/11/01 20:25:57 joerg Exp $
+.\"	$NetBSD: sup.1,v 1.18 2009/11/02 00:29:04 joerg Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -127,7 +127,6 @@ network protocol.
 .B -P
 Sup will use a set of non-privileged network
 ports reserved for debugging purposes.
-.i0
 .DT
 .PP
 
@@ -350,7 +349,6 @@ to also print
 messages during normal progress showing what
 .I sup
 is doing.
-.i0
 .DT
 .PP
 .SH "SETTING UP UPGRADES"
@@ -408,7 +406,6 @@ option, or the
 .B -d
 flag is used to locate files previously upgraded that are no longer
 in the collection that should be deleted.
-.i0
 .DT
 .PP
 
@@ -552,7 +549,6 @@ and
 .I when
 files. This is necessary whenever you are supping more than one
 release in the same collection.
-.i0
 .DT
 .PP
 .SH "PREPARING A FILE COLLECTION REPOSITORY"
@@ -667,7 +663,6 @@ If a log file exists in the collection directory, the file server
 will append the last time an upgrade was successfully completed,
 the time the last upgrade started and finished, and the name of
 the host requesting the upgrade.
-.i0
 .DT
 .PP
 It should be noted that
@@ -778,7 +773,6 @@ will be read at this point.  This is useful
 when one collection subsumes other collections; the larger collection
 can simply specify the listfiles for the smaller collections contained
 within it.
-.i0
 .DT
 .PP
 The order in which the command lines appear in the list file does not
@@ -810,7 +804,6 @@ recorded time of last upgrade
 .TP
 \fB/usr/sup/\fR\*[Lt]\fIcollection\fR\*[Gt]
 default base directory for file collection
-.i0
 .DT
 .PP
 
@@ -847,7 +840,6 @@ scan file for a collection
 .TP
 \fB/usr/\fR\*[Lt]\fIcollection\fR\*[Gt]
 default base directory for a file collection
-.i0
 .DT
 .PP
 .SH "SEE ALSO"
