@@ -1,4 +1,4 @@
-.\" $NetBSD: amldb.8,v 1.3 2008/02/26 04:50:02 lukem Exp $
+.\" $NetBSD: amldb.8,v 1.4 2009/11/02 00:35:32 joerg Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 2000 Takanori Watanabe <takawata@FreeBSD.org>
@@ -288,7 +288,7 @@ Method: Arg 1 From 0x2805f0a3 To 0x2805f0db
   Arg0 ? n 5
 ==== Running _PTS. ====
 AML\*[Gt]s
-[\_PTS. START]
+[\\_PTS. START]
 If(LNot(LEqual(Arg0, 0x5)))
 AML\*[Gt]
 If(LEqual(Arg0, 0x1))
@@ -320,7 +320,7 @@ Store(Local2, DBG1)
 DEBUG[read(1, 0x80)\*[Am]mask:0xf5](default: 0xf5 / 245) \*[Gt]\*[Gt]
 [read(1, 0x80)-\*[Gt]0xf5]
 AML\*[Gt]
-[\_PTS. END]
+[\\_PTS. END]
 _PTS  Method: Arg 1 From 0x2805f0a3 To 0x2805f0db
 NO object
 ==== _PTS finished. ====
