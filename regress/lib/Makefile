@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.21 2009/02/14 00:26:14 cube Exp $
+#	$NetBSD: Makefile,v 1.22 2009/11/02 15:44:12 plunky Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= csu libc libevent libm libposix libpthread librt libutil
+SUBDIR+= csu libc libm libposix libpthread librt libutil
 
 .if (${MACHINE_CPU} != "alpha" && \
      ${MACHINE_CPU} != "mips" && \
