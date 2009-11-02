@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.838 2009/10/31 22:56:38 kardel Exp $
+# $NetBSD: mi,v 1.839 2009/11/02 22:16:29 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1160,7 +1160,7 @@
 ./usr/sbin/named-compilezone			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
-./usr/sbin/ncdcs				base-sysutil-root
+./usr/sbin/ncdcs				base-sysutil-root	binutils
 ./usr/sbin/ndbootd				base-bootserver-bin
 ./usr/sbin/ndc					base-obsolete		obsolete
 ./usr/sbin/ndp					base-netutil-bin	inet6
