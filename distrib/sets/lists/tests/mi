@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2009/10/20 22:00:38 jmmv Exp $
+# $NetBSD: mi,v 1.54 2009/11/02 10:15:45 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -139,6 +139,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug	debug
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug debug
+./usr/libdata/debug/usr/tests/lib/libevent/t_event.debug		tests-lib-debug debug
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug debug
@@ -858,6 +861,10 @@
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests
 ./usr/tests/lib/libc/string/t_popcount		tests-lib-tests
+./usr/tests/lib/libevent			tests-lib-tests
+./usr/tests/lib/libevent/Atffile		tests-lib-tests
+./usr/tests/lib/libevent/h_event		tests-lib-tests
+./usr/tests/lib/libevent/t_event		tests-lib-tests
 ./usr/tests/libexec				tests-lib-tests
 ./usr/tests/libexec/Atffile			tests-lib-tests
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
