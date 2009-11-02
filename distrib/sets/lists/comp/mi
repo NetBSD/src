@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1334 2009/10/25 15:11:00 njoly Exp $
+#	$NetBSD: mi,v 1.1335 2009/11/02 10:13:19 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3628,6 +3628,7 @@
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-levent.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint

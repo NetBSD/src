@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/10/26 21:37:36 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2009/11/02 10:13:19 plunky Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -25,5 +25,7 @@ SUBDIR+= ../bsd/flex/lib
 .if ${MKBINUTILS} != "no" && ${HAVE_BINUTILS} == "219"
 SUBDIR+=        ../gpl3/binutils/lib
 .endif
+
+SUBDIR+= ../bsd/libevent/lib
 
 .include <bsd.subdir.mk>

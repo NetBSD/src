@@ -7,7 +7,7 @@ srcdir=/usr/src
 rwsrcdir=/home/current/src
 MAKE=${MAKE-make}
 
-CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/atf/lib external/bsd/openldap/lib lib/libpam/modules external/bsd/bind/lib external/bsd/iscsi crypto/external/bsd/openssl/lib crypto/external/bsd/netpgp crypto/external/bsd/openssh"
+CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/atf/lib external/bsd/openldap/lib lib/libpam/modules external/bsd/bind/lib external/bsd/iscsi external/bsd/libevent crypto/external/bsd/openssl/lib crypto/external/bsd/netpgp crypto/external/bsd/openssh"
 
 # lib/csu is spsecial
 # lib/libm needs to be special -- i387
@@ -65,7 +65,7 @@ for _dir in ${CHECK_SUBDIRS}; do
 		(
 		 echo -n '#	$Net'
 		 echo 'BSD$'
-		 echo '#	Generated from: $NetBSD: build-makefiles,v 1.8 2009/07/21 01:05:35 mrg Exp $' | sed -e 's/\$//g'
+		 echo '#	Generated from: $NetBSD: build-makefiles,v 1.9 2009/11/02 10:13:19 plunky Exp $' | sed -e 's/\$//g'
 		 cat <<'EOF'
 
 NOLINT= # defined
