@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.16 2008/04/30 13:10:56 martin Exp $
+.\" $NetBSD: pcibios.4,v 1.17 2009/11/02 00:50:29 joerg Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,11 +66,11 @@ cannot guess an adequate IRQ for a device, the hint is used.
 .Pp
 The value is a logical or of power-of-2s of allowable interrupts:
 .Bl -column "XX-0xffff" "XX-0xffff" "XX-0xffff" "XX-0xffff" -compact -offset 2n
-.It Em   "IRQ Value" Em "\tIRQ Value" Em "\tIRQ Value" Em "\tIRQ Value"
-.It    "\& 0 0x0001"    "\t 4 0x0010"    "\t 8 0x0100"    "\t12 0x1000"
-.It    "\& 1 0x0002"    "\t 5 0x0020"    "\t 9 0x0200"    "\t13 0x2000"
-.It    "\& 2 0x0004"    "\t 6 0x0040"    "\t10 0x0400"    "\t14 0x4000"
-.It    "\& 3 0x0008"    "\t 7 0x0080"    "\t11 0x0800"    "\t15 0x8000"
+.It Em "IRQ Value"   Ta Em "IRQ Value" Ta Em "IRQ Value" Ta Em "IRQ Value"
+.It    "\& 0 0x0001" Ta    " 4 0x0010"  Ta    " 8 0x0100" Ta    "12 0x1000"
+.It    "\& 1 0x0002" Ta    " 5 0x0020"  Ta    " 9 0x0200" Ta    "13 0x2000"
+.It    "\& 2 0x0004" Ta    " 6 0x0040"  Ta    "10 0x0400" Ta    "14 0x4000"
+.It    "\& 3 0x0008" Ta    " 7 0x0080"  Ta    "11 0x0800" Ta    "15 0x8000"
 .El
 For example,
 .Qq Sy options PCIBIOS_IRQS_HINT=0x0a00
