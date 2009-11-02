@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.4 2009/10/12 08:54:19 tron Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.5 2009/11/02 10:15:45 plunky Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -209,6 +209,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
 ./usr/libdata/debug/usr/tests/lib/libc/string
+./usr/libdata/debug/usr/tests/lib/libevent
 ./usr/libdata/debug/usr/tests/libexec
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so
 ./usr/libdata/debug/usr/tests/modules
@@ -1096,6 +1097,7 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/stdlib
 ./usr/tests/lib/libc/string
+./usr/tests/lib/libevent
 ./usr/tests/libexec
 ./usr/tests/libexec/ld.elf_so
 ./usr/tests/modules
