@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/09/29 23:56:34 tsarna Exp $
+#	$NetBSD: Makefile,v 1.13 2009/11/02 10:13:19 plunky Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -30,6 +30,7 @@ SUBDIR+=	../bsd/iscsi/lib	# depends on libpthread
 
 SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
+SUBDIR+= ../bsd/libevent/lib
 SUBDIR+= ../bsd/am-utils/lib
 SUBDIR+= ../bsd/bind/lib
 SUBDIR+= ../bsd/file/lib
