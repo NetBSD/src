@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.5 2009/05/12 14:23:33 cegger Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.6 2009/11/02 21:37:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.5 2009/05/12 14:23:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.6 2009/11/02 21:37:44 christos Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -105,12 +105,18 @@ struct dbcool_power_control {
 
 struct chip_id;
 
+struct dbcool_chipset {
+	i2c_tag_t dc_tag;
+	i2c_addr_t dc_addr;
+	void (*dc_writereg)(struct dbcool_chipset *, uint8_t, uint8_t);
+	uint8_t (*dc_readreg)(struct dbcool_chipset *, uint8_t);
+	struct chip_id *dc_chip;
+};
+
 struct dbcool_softc {
 	device_t sc_dev;
-	i2c_tag_t sc_tag;
-	i2c_addr_t sc_addr;
-	struct chip_id *sc_chip;
 	struct sysmon_envsys *sc_sme;
+	struct dbcool_chipset sc_dc;
 	envsys_data_t sc_sensor[DBCOOL_MAXSENSORS];
 	int sc_sysctl_num[DBCOOL_MAXSENSORS];
 	struct reg_list *sc_regs[DBCOOL_MAXSENSORS];
@@ -118,8 +124,6 @@ struct dbcool_softc {
 	int sc_temp_offset;
 	int64_t sc_supply_voltage;
 	bool sc_suspend;
-	void (*sc_writereg)(struct dbcool_softc *, uint8_t, uint8_t);
-	uint8_t (*sc_readreg)(struct dbcool_softc *, uint8_t);
 #ifdef DBCOOL_DEBUG
 	uint8_t sc_user_reg;
 #endif
@@ -139,10 +143,10 @@ struct chip_id {
 /*
  * Expose some routines for the macppc's ki2c match/attach routines
  */
-uint8_t dbcool_readreg(struct dbcool_softc *, uint8_t);
-void dbcool_writereg(struct dbcool_softc *, uint8_t, uint8_t);
+uint8_t dbcool_readreg(struct dbcool_chipset *, uint8_t);
+void dbcool_writereg(struct dbcool_chipset *, uint8_t, uint8_t);
 void dbcool_setup(device_t); 
-int dbcool_chip_ident(struct dbcool_softc *);
+int dbcool_chip_ident(struct dbcool_chipset *);
 bool dbcool_pmf_suspend(device_t PMF_FN_PROTO);
 bool dbcool_pmf_resume(device_t PMF_FN_PROTO);
 
