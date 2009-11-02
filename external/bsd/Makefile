@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 2009/10/29 01:07:00 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2009/11/02 10:13:19 plunky Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= am-utils bind dhcpcd fetch file flex libarchive mdocml pkg_install \
-	top byacc
+SUBDIR+= am-utils bind dhcpcd fetch file flex libarchive libevent \
+	mdocml pkg_install top byacc
+
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
