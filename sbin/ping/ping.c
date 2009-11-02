@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.89 2009/04/11 06:49:50 lukem Exp $	*/
+/*	$NetBSD: ping.c,v 1.90 2009/11/02 00:47:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.89 2009/04/11 06:49:50 lukem Exp $");
+__RCSID("$NetBSD: ping.c,v 1.90 2009/11/02 00:47:09 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -78,18 +78,6 @@ __RCSID("$NetBSD: ping.c,v 1.89 2009/04/11 06:49:50 lukem Exp $");
 #include <math.h>
 #include <string.h>
 #include <err.h>
-#ifdef sgi
-#include <bstring.h>
-#include <getopt.h>
-#include <sys/prctl.h>
-#ifndef PRE_KUDZU
-#include <cap_net.h>
-#else
-#define cap_socket socket
-#endif
-#else
-#define cap_socket socket
-#endif
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -256,9 +244,9 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 #endif
 
-	if ((s = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
-	if ((sloop = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((sloop = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
 
 	/*
