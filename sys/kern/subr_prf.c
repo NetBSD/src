@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.136 2009/06/28 15:30:30 rmind Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.137 2009/11/03 05:23:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.136 2009/06/28 15:30:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.137 2009/11/03 05:23:28 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.136 2009/06/28 15:30:30 rmind Exp $")
 #include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/tprintf.h>
+#include <sys/spldebug.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/kprintf.h>
@@ -212,6 +213,8 @@ panic(const char *fmt, ...)
 	struct cpu_info *ci, *oci;
 	int bootopt;
 	va_list ap;
+
+	spldebug_stop();
 
 	if (lwp0.l_cpu && curlwp) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.18 2009/04/24 17:45:40 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.19 2009/11/03 05:23:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.18 2009/04/24 17:45:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.19 2009/11/03 05:23:28 dyoung Exp $");
 
 #include "opt_lockdebug.h"
+#include "opt_spldebug.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -200,6 +201,7 @@ x86_patch(bool early)
 	}
 #endif	/* i386 */
 
+#if !defined(SPLDEBUG)
 	if (!early && (cpu_feature & CPUID_CX8) != 0) {
 		/* Faster splx(), mutex_spin_exit(). */
 		patchfunc(
@@ -213,8 +215,9 @@ x86_patch(bool early)
 		    mutex_spin_exit, mutex_spin_exit_end,
 		    i686_mutex_spin_exit_patch
 		);
-#endif	/* !LOCKDEBUG */
+#endif	/* i386 && !LOCKDEBUG */
 	}
+#endif /* !SPLDEBUG */
 
 	/*
 	 * On some Opteron revisions, locked operations erroneously
