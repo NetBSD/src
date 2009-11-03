@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.407 2009/10/26 19:03:17 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.408 2009/11/03 05:23:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.407 2009/10/26 19:03:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.408 2009/11/03 05:23:28 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.407 2009/10/26 19:03:17 rmind Exp $"
 #include <sys/errno.h>
 #include <sys/callout.h>
 #include <sys/cpu.h>
+#include <sys/spldebug.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -485,6 +486,8 @@ main(void)
 
 	/* Initialize interfaces. */
 	ifinit1();
+
+	spldebug_start();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
