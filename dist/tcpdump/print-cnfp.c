@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cnfp.c,v 1.5 2007/07/24 11:53:43 drochner Exp $	*/
+/*	$NetBSD: print-cnfp.c,v 1.6 2009/11/03 01:13:38 snj Exp $	*/
 
 /*	$OpenBSD: print-cnfp.c,v 1.2 1998/06/25 20:26:59 mickey Exp $	*/
 
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,7 +35,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-cnfp.c,v 1.16.2.1 2005/04/20 20:53:39 guy Exp";
 #else
-__RCSID("$NetBSD: print-cnfp.c,v 1.5 2007/07/24 11:53:43 drochner Exp $");
+__RCSID("$NetBSD: print-cnfp.c,v 1.6 2009/11/03 01:13:38 snj Exp $");
 #endif
 #endif
 
