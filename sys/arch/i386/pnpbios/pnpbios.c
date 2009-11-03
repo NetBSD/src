@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.66 2009/05/04 12:13:19 cegger Exp $ */
+/* $NetBSD: pnpbios.c,v 1.67 2009/11/03 13:14:50 cegger Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.66 2009/05/04 12:13:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.67 2009/11/03 13:14:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ static int	pnpbios_sendmessage(int);
 #endif
 
 /* configuration stuff */
-static void *	pnpbios_mapit(paddr_t, u_long, int);
+static void *	pnpbios_mapit(paddr_t, u_long, vm_prot_t);
 static void *	pnpbios_find(void);
 static int	pnpbios_match(device_t, cfdata_t, void *);
 static void	pnpbios_attach(device_t, device_t, void *);
@@ -253,7 +253,7 @@ pnpbios_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void *
-pnpbios_mapit(paddr_t addr, u_long len, int prot)
+pnpbios_mapit(paddr_t addr, u_long len, vm_prot_t prot)
 {
 	paddr_t startpa, pa, endpa;
 	vaddr_t startva, va;
