@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.130 2009/11/03 18:22:16 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.131 2009/11/03 20:22:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.130 2009/11/03 18:22:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.131 2009/11/03 20:22:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -209,6 +209,12 @@ rump__init(int rump_version)
 	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
 	    rump_threads);
 
+	/* init minimal lwp/cpu context */
+	l = &lwp0;
+	l->l_lid = 1;
+	l->l_cpu = rump_cpu;
+	rumpuser_set_curlwp(l);
+
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
@@ -229,7 +235,7 @@ rump__init(int rump_version)
 	kauth_init();
 	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
-	l = &lwp0;
+	/* init proc0 and rest of lwp0 now that we can allocate memory */
 	p = &proc0;
 	p->p_stats = &rump_stats;
 	p->p_limit = &rump_limits;
@@ -241,7 +247,6 @@ rump__init(int rump_version)
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
-	l->l_lid = 1;
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -251,6 +256,9 @@ rump__init(int rump_version)
 	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
 	rump_scheduler_init();
+	/* revert temporary context and schedule a real context */
+	l->l_cpu = NULL;
+	rumpuser_set_curlwp(NULL);
 	rump_schedule();
 
 	callout_startup();
