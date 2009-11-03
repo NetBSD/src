@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.129 2009/10/24 11:36:59 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.130 2009/11/03 18:22:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.129 2009/10/24 11:36:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.130 2009/11/03 18:22:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -608,6 +608,20 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 	rump_unschedule();
 
 	return rv;
+}
+
+int
+rump_boot_gethowto()
+{
+
+	return boothowto;
+}
+
+void
+rump_boot_sethowto(int howto)
+{
+
+	boothowto = howto;
 }
 
 rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;

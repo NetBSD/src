@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.32 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.33 2009/11/03 18:22:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,10 @@ enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
 _BEGIN_DECLS
 #endif
 
-int rump__init(int);
+int	rump_boot_gethowto(void);
+void	rump_boot_sethowto(int);
+
+int	rump__init(int);
 
 #ifndef _RUMPKERNEL
 #include <rump/rumpkern_if_pub.h>
