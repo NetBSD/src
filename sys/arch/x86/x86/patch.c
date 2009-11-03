@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.19 2009/11/03 05:23:28 dyoung Exp $	*/
+/*	$NetBSD: patch.c,v 1.20 2009/11/03 20:11:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.19 2009/11/03 05:23:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.20 2009/11/03 20:11:53 dyoung Exp $");
 
 #include "opt_lockdebug.h"
+#ifdef i386
 #include "opt_spldebug.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/systm.h>
