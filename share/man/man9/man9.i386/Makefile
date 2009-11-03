@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/07/01 04:11:15 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.3 2009/11/03 05:12:11 dyoung Exp $
 
-MAN=	bioscall.9 bios32_service.9
+MAN=	bioscall.9 bios32_service.9 return_address.9
 MANSUBDIR=/i386
 
 .include <bsd.man.mk>
