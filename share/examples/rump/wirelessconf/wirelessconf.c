@@ -1,4 +1,4 @@
-/*	$NetBSD: wirelessconf.c,v 1.2 2009/10/14 23:51:22 pooka Exp $	*/
+/*	$NetBSD: wirelessconf.c,v 1.3 2009/11/03 18:24:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,9 @@
 #include <rump/rump_syscalls.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /*
@@ -48,25 +50,32 @@
 int
 main(void)
 {
-	extern int rumpns_boothowto;
 	struct ifreq ifr;
 	int s;
 
-	rumpns_boothowto = AB_VERBOSE;
+	rump_boot_sethowto(RUMP_AB_VERBOSE);
 	rump_init();
+
+	/* rum?  shouldn't that be marsala? */
+	s = rump_sys_socket(AF_INET, SOCK_DGRAM, 0);
+	if (s == -1)
+		err(1, "socket");
+	strcpy(ifr.ifr_name, "rum0");
+	if (rump_sys_ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
+		if (errno == ENXIO) {
+			printf("rum@usb not found!\n");
+			exit(0);
+		}
+		err(1, "get if flags");
+	}
 	printf("\ndevice autoconfiguration finished\n");
 
 	printf("tira-if-su ...\n");
 	if (rump_pub_etfs_register(RUMFW, RUMFW, RUMP_ETFS_REG) != 0)
 		errx(1, "firmware etfs registration failed");
 
-	/* rum?  shouldn't that be marsala? */
 	strcpy(ifr.ifr_name, "rum0");
 	ifr.ifr_flags = IFF_UP;
-	s = rump_sys_socket(AF_INET, SOCK_DGRAM, 0);
-	if (s == -1)
-		err(1, "socket");
-
 	if (rump_sys_ioctl(s, SIOCSIFFLAGS, &ifr) == -1)
 		err(1, "ioctl");
 	printf("... done\n");
