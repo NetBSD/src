@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.40 2009/10/05 23:39:27 rmind Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.41 2009/11/03 00:29:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.40 2009/10/05 23:39:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.41 2009/11/03 00:29:11 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -792,12 +792,18 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 	lockdebug_t *ld;
 
 	TAILQ_FOREACH(ld, &ld_all, ld_achain) {
-		if (ld->ld_lock == addr) {
+		if (ld->ld_lock == NULL)
+			continue;
+		if (addr == NULL || ld->ld_lock == addr) {
 			lockdebug_dump(ld, pr);
-			return;
+			if (addr != NULL)
+				return;
 		}
 	}
-	(*pr)("Sorry, no record of a lock with address %p found.\n", addr);
+	if (addr != NULL) {
+		(*pr)("Sorry, no record of a lock with address %p found.\n",
+		    addr);
+	}
 #else
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
