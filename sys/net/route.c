@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.120 2009/10/03 02:22:22 elad Exp $	*/
+/*	$NetBSD: route.c,v 1.121 2009/11/03 00:30:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.120 2009/10/03 02:22:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.121 2009/11/03 00:30:11 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -445,7 +445,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 {
 	struct rtentry *rt;
 	int error = 0;
-	u_quad_t *stat = NULL;
+	uint64_t *stat = NULL;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
 
