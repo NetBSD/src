@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.29 2009/03/18 16:00:19 cegger Exp $ */
+/* $NetBSD: piixpm.c,v 1.30 2009/11/03 12:51:56 pgoyette Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.29 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.30 2009/11/03 12:51:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,7 @@ nopowermanagement:
 	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
+	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 
