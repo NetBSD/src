@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.959 2009/10/02 15:48:41 pooka Exp $
+#	$NetBSD: files,v 1.960 2009/11/03 00:24:05 dyoung Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1478,22 +1478,22 @@ file	kern/subr_debug.c		debug
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_disk_open.c
-file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_exec_fd.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_humanize.c
+file	kern/subr_iostat.c
 file	kern/subr_kmem.c
 file	kern/subr_kobj.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_once.c
+file	kern/subr_optstr.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
-file	kern/subr_once.c
-file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c
