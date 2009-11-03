@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.4 2009/10/09 14:32:07 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.5 2009/11/03 18:23:15 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -70,5 +70,10 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 #define	RUMP_RB_MD2		0x20000000
 #define	RUMP_RB_MD3		0x40000000
 #define	RUMP_RB_MD4		0x80000000
+#define	RUMP_AB_NORMAL	0x00000000	
+#define	RUMP_AB_QUIET	0x00010000 	
+#define	RUMP_AB_VERBOSE	0x00020000	
+#define	RUMP_AB_SILENT	0x00040000	
+#define	RUMP_AB_DEBUG	0x00080000	
 
 #endif /* _RUMP_RUMPDEFS_H_ */
