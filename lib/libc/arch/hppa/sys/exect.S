@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: exect.S,v 1.2 2009/11/03 05:07:25 snj Exp $	*/
 
 /*	$OpenBSD: exect.S,v 1.5 2001/03/29 01:43:52 mickey Exp $	*/
 
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,7 +31,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.1 2002/06/06 20:31:23 fredette Exp $")
+	RCSID("$NetBSD: exect.S,v 1.2 2009/11/03 05:07:25 snj Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /* we do no tracing yet */

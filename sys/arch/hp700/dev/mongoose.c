@@ -1,9 +1,9 @@
-/*	$NetBSD: mongoose.c,v 1.16 2009/08/19 15:13:24 dyoung Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.17 2009/11/03 05:07:25 snj Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.16 2009/08/19 15:13:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.17 2009/11/03 05:07:25 snj Exp $");
 
 #define MONGOOSE_DEBUG 9
 
