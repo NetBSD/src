@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.83 2009/09/19 04:55:45 tsutsui Exp $	*/
+/*	$NetBSD: hme.c,v 1.84 2009/11/03 22:06:30 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.83 2009/09/19 04:55:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.84 2009/11/03 22:06:30 jakllsch Exp $");
 
 /* #define HMEDEBUG */
 
@@ -92,7 +92,7 @@ static int	hme_ioctl(struct ifnet *, u_long, void *);
 static void	hme_tick(void *);
 static void	hme_watchdog(struct ifnet *);
 static bool	hme_shutdown(device_t, int);
-static int	hme_init(struct hme_softc *);
+static int	hme_init(struct ifnet *);
 static void	hme_meminit(struct hme_softc *);
 static void	hme_mifinit(struct hme_softc *);
 static void	hme_reset(struct hme_softc *);  
@@ -239,6 +239,7 @@ hme_config(struct hme_softc *sc)
 	ifp->if_start = hme_start;
 	ifp->if_stop = hme_stop;
 	ifp->if_ioctl = hme_ioctl;
+	ifp->if_init = hme_init;
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
@@ -353,7 +354,7 @@ hme_reset(struct hme_softc *sc)
 	int s;
 
 	s = splnet();
-	(void)hme_init(sc);
+	(void)hme_init(&sc->sc_ethercom.ec_if);
 	splx(s);
 }
 
@@ -478,9 +479,9 @@ hme_meminit(struct hme_softc *sc)
  * and transmit/receive descriptor rings.
  */
 int
-hme_init(struct hme_softc *sc)
+hme_init(struct ifnet *ifp)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	bus_space_handle_t etx = sc->sc_etx;
@@ -1449,14 +1450,14 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				hme_setladrf(sc);
 			else {
 				ifp->if_flags |= IFF_UP;
-				error = hme_init(sc);
+				error = hme_init(ifp);
 			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			ifp->if_flags |= IFF_UP;
-			error = hme_init(sc);
+			error = hme_init(ifp);
 			break;
 		}
 		break;
@@ -1486,7 +1487,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = hme_init(sc);
+			error = hme_init(ifp);
 			break;
 		case IFF_UP|IFF_RUNNING:
 			/*
@@ -1500,7 +1501,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				    == (sc->sc_if_flags & (~RESETIGN)))
 					hme_setladrf(sc);
 				else
-					error = hme_init(sc);
+					error = hme_init(ifp);
 			}
 #undef RESETIGN
 			break;
@@ -1509,7 +1510,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		}
 
 		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
-			error = hme_init(sc);
+			error = hme_init(ifp);
 
 		break;
 
