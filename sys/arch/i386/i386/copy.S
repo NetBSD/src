@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.18 2009/03/28 22:46:52 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.19 2009/11/03 05:08:18 dyoung Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.18 2009/03/28 22:46:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.19 2009/11/03 05:08:18 dyoung Exp $");
 
 #include "assym.h"
 
@@ -128,6 +128,27 @@ NENTRY(do_pmap_load)
 	jnz	1b
 	popl	%ebx
 	leave
+	ret
+
+/*
+ * void *return_address(unsigned int level);
+ *
+ * The return address if level == 0, the return address of the caller
+ * `level' levels down the stack if level > 0.
+ */
+ENTRY(return_address)
+	movl	%ebp,%eax	/* frame pointer -> %eax */ 
+	movl	4(%esp),%ecx	/* level -> %ecx */
+	cmpl	$0,%ecx
+	je	2f
+1:
+.Lreturn_address_start:
+	movl	(%eax),%eax	/* next frame pointer */
+	decl	%ecx
+	jnz	1b
+2:
+	movl	0x4(%eax),%eax
+.Lreturn_address_end:
 	ret
 
 /*
@@ -294,6 +315,11 @@ NENTRY(kcopy_fault)
 NENTRY(copy_fault)
 	popl	%edi
 	popl	%esi
+	ret
+
+/* LINTSTUB: Ignore */
+NENTRY(return_address_fault)
+	movl $0,%eax
 	ret
 
 /*
@@ -788,6 +814,10 @@ _C_LABEL(onfault_table):
 	.long .Lx86_copyargs_start
 	.long .Lx86_copyargs_end
 	.long _C_LABEL(x86_copyargs_fault)
+
+	.long .Lreturn_address_start
+	.long .Lreturn_address_end
+	.long _C_LABEL(return_address_fault)
 
 	.long 0	/* terminate */
 
