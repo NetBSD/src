@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1335 2009/11/02 10:13:19 plunky Exp $
+#	$NetBSD: mi,v 1.1336 2009/11/03 05:12:10 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8703,6 +8703,7 @@
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman		.cat
+./usr/share/man/cat9/i386/return_address.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ieee80211.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ieee80211_chan2ieee.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ieee80211_chan2mode.0	comp-sys-catman		.cat
@@ -14125,6 +14126,7 @@
 ./usr/share/man/html9/hz.html			comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bios32_service.html	comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bioscall.html	comp-sys-htmlman	html
+./usr/share/man/html9/i386/return_address.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ieee80211.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ieee80211_chan2ieee.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ieee80211_chan2mode.html	comp-sys-htmlman	html
@@ -19702,6 +19704,7 @@
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
 ./usr/share/man/man9/i386/bioscall.9		comp-sys-man		.man
+./usr/share/man/man9/i386/return_address.9	comp-sys-man		.man
 ./usr/share/man/man9/ieee80211.9		comp-sys-man		.man
 ./usr/share/man/man9/ieee80211_chan2ieee.9	comp-sys-man		.man
 ./usr/share/man/man9/ieee80211_chan2mode.9	comp-sys-man		.man
