@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.83 2009/10/27 23:23:33 snj Exp $
+.\"	$NetBSD: legal.common,v 1.84 2009/11/03 05:17:17 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -333,8 +333,6 @@ This product includes software developed by Michael Graff.
 .It
 This product includes software developed by Michael L. Hitch.
 .It
-This product includes software developed by Michael Shalayeff.
-.It
 This product includes software developed by Michael Smith.
 .It
 This product includes software developed by Mike Pritchard.
@@ -401,8 +399,6 @@ for the NetBSD Project.
 This product includes software developed by Terrence R. Lambert.
 .It
 This product includes software developed by Tetsuya Isaki.
-.It
-This product includes software developed by Tobias Weingartner.
 .It
 This product includes software developed by TooLs GmbH.
 .It
