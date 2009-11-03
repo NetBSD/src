@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.89 2009/10/07 22:22:18 haad Exp $
+#	$NetBSD: sets.subr,v 1.90 2009/11/03 00:38:56 dyoung Exp $
 #
 
 #
@@ -237,7 +237,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.89 2009/10/07 22:22:18 haad Exp $
+# 	# $NetBSD: sets.subr,v 1.90 2009/11/03 00:38:56 dyoung Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -347,9 +347,12 @@ list_set_files()
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
-				wanted["binutils=" "'"${HAVE_BINUTILS}"'"] = 1
-				wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
-				wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
+				if ("binutils" in wanted)
+					wanted["binutils=" "'"${HAVE_BINUTILS}"'"] = 1
+				if ("gcc" in wanted)
+					wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
+				if ("gdb" in wanted)
+					wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
 			}
 			if (("man" in wanted) && ("catpages" in wanted))
 				wanted[".cat"] = 1
