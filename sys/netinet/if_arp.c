@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.147 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.148 2009/11/03 00:57:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.147 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.148 2009/11/03 00:57:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -968,15 +968,6 @@ in_arpinput(struct mbuf *m)
 		goto out;
 	}
 
-	/*
-	 * If the source IP address is zero, this is most likely a
-	 * confused host trying to use IP address zero. (Windoze?)
-	 * XXX: Should we bother trying to reply to these?
-	 */
-	if (in_nullhost(isaddr)) {
-		ARP_STATINC(ARP_STAT_RCVZEROSPA);
-		goto out;
-	}
 
 	/*
 	 * Search for a matching interface address
@@ -1052,6 +1043,14 @@ in_arpinput(struct mbuf *m)
 		    "%s: arp: link address is broadcast for IP address %s!\n",
 		    ifp->if_xname, in_fmtaddr(isaddr));
 		goto out;
+	}
+
+	/*
+	 * If the source IP address is zero, this is an RFC 5227 ARP probe
+	 */
+	if (in_nullhost(isaddr)) {
+		ARP_STATINC(ARP_STAT_RCVZEROSPA);
+		goto reply;
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
