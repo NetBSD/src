@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.20 2009/10/06 21:07:06 elad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.21 2009/11/03 05:23:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.20 2009/10/06 21:07:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.21 2009/11/03 05:23:28 dyoung Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -130,6 +130,8 @@ __weak_alias(ktruser,enosys);
 __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
+__weak_alias(spldebug_start, voidop);
+__weak_alias(spldebug_stop, voidop);
 __weak_alias(machdep_init,nullop);
 
 #if !defined(KERN_SA)
@@ -431,6 +433,14 @@ eopnotsupp(void)
 {
 
 	return (EOPNOTSUPP);
+}
+
+/*
+ * Generic null operation, void return value.
+ */
+void
+voidop(void)
+{
 }
 
 /*

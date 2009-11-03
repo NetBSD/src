@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.32 2008/07/01 18:49:21 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.33 2009/11/03 05:23:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.32 2008/07/01 18:49:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.33 2009/11/03 05:23:27 dyoung Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
+#include "opt_spldebug.h"
 #include "opt_xen.h"
 
 #include <machine/trap.h>
@@ -55,6 +56,16 @@ ENTRY(splraise)
 	ja	1f
 	movl	%edx,CPUVAR(ILEVEL)
 1:
+#ifdef SPLDEBUG
+	pushl	%ebp
+	movl	%esp,%ebp
+	pushl	%eax
+	pushl	%edx
+	call	_C_LABEL(spldebug_raise)
+	addl	$4, %esp
+	popl	%eax
+	popl	%ebp
+#endif /* SPLDEBUG */
 	ret
 END(splraise)
 
@@ -66,6 +77,15 @@ END(splraise)
  * early in boot where interrupts are disabled via eflags/IE.
  */
 ENTRY(spllower)
+#ifdef SPLDEBUG
+	movl	4(%esp), %ecx
+	pushl	%ebp
+	movl	%esp,%ebp
+	pushl	%ecx
+	call	_C_LABEL(spldebug_lower)
+	addl	$4, %esp
+	popl	%ebp
+#endif /* SPLDEBUG */
 	movl	4(%esp), %ecx
 	cmpl	CPUVAR(ILEVEL), %ecx
 	jae	1f
