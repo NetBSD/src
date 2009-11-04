@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.21 2007/12/20 23:02:44 dsl Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.21 2007/12/20 23:02:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.22 2009/11/04 21:23:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,24 +74,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.21 2007/12/20 23:02:44 dsl Exp $"
 int
 compat_43_sys_wait(struct lwp *l, const void *v, register_t *retval)
 {
-	int error, status, was_zombie;
-	int child_pid = WAIT_ANY;
-
-
-#ifdef PSL_ALLCC
-#else
-#endif
+	int error, status, child_pid = WAIT_ANY;
 
 #ifdef PSL_ALLCC
 	if ((GETPS(l->l_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
-		error = do_sys_wait(l, &child_pid, &status, 0, NULL, &was_zombie);
+		error = do_sys_wait(&child_pid, &status, 0, NULL);
 	} else {
-		error = do_sys_wait(l, &child_pid, &status,
-		    l->l_md.md_regs[R0], (struct rusage *)l->l_md.md_regs[R1],
-		    &was_zombie);
+		error = do_sys_wait(&child_pid, &status,
+		    l->l_md.md_regs[R0], (struct rusage *)l->l_md.md_regs[R1]);
 	}
 #else
-	error = do_sys_wait(l, &child_pid, &status, 0, NULL, &was_zombie);
+	error = do_sys_wait(&child_pid, &status, 0, NULL);
 #endif
 	retval[0] = child_pid;
 	retval[1] = status;

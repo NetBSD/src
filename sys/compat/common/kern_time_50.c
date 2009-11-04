@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.10 2009/10/12 23:41:51 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.11 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.10 2009/10/12 23:41:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.11 2009/11/04 21:23:02 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -823,7 +823,8 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 	return (error);
 }
 int
-compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap, register_t *retval)
+compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			pid;
@@ -831,14 +832,12 @@ compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap, r
 		syscallarg(int)			options;
 		syscallarg(struct rusage50 *)	rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	struct rusage50	ru50;
-	int pid = SCARG(uap, pid);
+	int status, error, pid = SCARG(uap, pid);
+	struct rusage50 ru50;
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)
