@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.216 2009/10/15 03:21:45 enami Exp $
+#	$NetBSD: build.sh,v 1.217 2009/11/04 12:58:01 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1159,9 +1159,11 @@ validatemakeparams()
 			case "$var" in
 			DESTDIR)
 				: ${newval:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
+				makeenv="${makeenv} DESTDIR"
 				;;
 			RELEASEDIR)
 				: ${newval:=${_SRC_TOP_OBJ_}/releasedir}
+				makeenv="${makeenv} RELEASEDIR"
 				;;
 			esac
 		fi
@@ -1313,7 +1315,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.216 2009/10/15 03:21:45 enami Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.217 2009/11/04 12:58:01 apb Exp $
 # with these arguments: ${_args}
 #
 
