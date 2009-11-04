@@ -1,4 +1,4 @@
-/*	$NetBSD: timeout.c,v 1.7 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: timeout.c,v 1.8 2009/11/04 21:24:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: timeout.c,v 1.7 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: timeout.c,v 1.8 2009/11/04 21:24:57 dsl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -71,6 +71,6 @@ wtimeout(WINDOW *win, int delay)
 		if (delay > 25500)
 			win->delay = 255;
 		else
-			win->delay = delay / 100;
+			win->delay = (delay - 1)/ 100 + 1;
 	}
 }
