@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.108 2009/08/09 22:49:00 haad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.109 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.108 2009/08/09 22:49:00 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.109 2009/11/04 21:23:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,7 @@ ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, regis
 		syscallarg(int) a3;
 	} */
 #endif
-	int error;
-	int pid, options, status, was_zombie;
+	int error, options, status, pid;
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
@@ -233,7 +232,7 @@ ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, regis
 	}
 #endif
 
-	error = do_sys_wait(l, &pid, &status, options, NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, options, NULL);
 	retval[0] = pid;
 	retval[1] = status;
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.209 2009/07/22 15:49:29 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.210 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.209 2009/07/22 15:49:29 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.210 2009/11/04 21:23:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,10 +219,9 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		syscallarg(int) options;
 		syscallarg(struct rusage50 *) rusage;
 	} */
-	int error, status, options, linux_options, was_zombie;
-	struct rusage ru;
+	int error, status, options, linux_options, pid = SCARG(uap, pid);
 	struct rusage50 ru50;
-	int pid = SCARG(uap, pid);
+	struct rusage ru;
 	proc_t *p;
 
 	linux_options = SCARG(uap, options);
@@ -246,17 +245,17 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 
 # endif
 
-	error = do_sys_wait(l, &pid, &status, options,
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, options,
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)
 		return error;
 
-        p = curproc;
-        mutex_enter(p->p_lock);
+	p = curproc;
+	mutex_enter(p->p_lock);
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
-        mutex_exit(p->p_lock);
+	mutex_exit(p->p_lock);
 
 	if (SCARG(uap, rusage) != NULL) {
 		rusage_to_rusage50(&ru, &ru50);
