@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.1 2009/11/04 17:01:45 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.2 2009/11/04 18:27:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.1 2009/11/04 17:01:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.2 2009/11/04 18:27:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -109,4 +109,3 @@ kcopy(const void *src, void *dst, size_t len)
 	memcpy(dst, src, len);
 	return 0;
 }
-
