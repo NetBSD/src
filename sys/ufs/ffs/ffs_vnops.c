@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.112 2009/03/29 10:29:00 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.113 2009/11/04 09:45:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.112 2009/03/29 10:29:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113 2009/11/04 09:45:05 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,12 +134,12 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ffs_lock },			/* lock */
-	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
+	{ &vop_lock_desc, ufs_lock },			/* lock */
+	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
 	{ &vop_strategy_desc, ufs_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -188,12 +188,12 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ffs_lock },			/* lock */
-	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
+	{ &vop_lock_desc, ufs_lock },			/* lock */
+	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -242,12 +242,12 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ffs_lock },			/* lock */
-	{ &vop_unlock_desc, ffs_unlock },		/* unlock */
+	{ &vop_lock_desc, ufs_lock },			/* lock */
+	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
 	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ffs_islocked },		/* islocked */
+	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -787,75 +787,4 @@ ffs_deleteextattr(void *v)
 
 	/* XXX Not implemented for UFS2 file systems. */
 	return (EOPNOTSUPP);
-}
-
-/*
- * Lock the node.
- */
-int
-ffs_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-	int flags = ap->a_flags;
-
-	if ((flags & LK_INTERLOCK) != 0) {
-		mutex_exit(&vp->v_interlock);
-		flags &= ~LK_INTERLOCK;
-	}
-
-	/*
-	 * Fake lock during file system suspension.
-	 */
-	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
-	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		return 0;
-	}
-
-	return (vlockmgr(vp->v_vnlock, flags));
-}
-
-/*
- * Unlock the node.
- */
-int
-ffs_unlock(void *v)
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-
-	KASSERT(ap->a_flags == 0);
-
-	/*
-	 * Fake unlock during file system suspension.
-	 */
-	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
-	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		return 0;
-	}
-	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
-}
-
-/*
- * Return whether or not the node is locked.
- */
-int
-ffs_islocked(void *v)
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return (vlockstatus(vp->v_vnlock));
 }
