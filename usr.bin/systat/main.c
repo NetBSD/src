@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2009/07/14 21:08:31 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2009/11/04 21:46:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.44 2009/07/14 21:08:31 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2009/11/04 21:46:24 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -267,8 +267,14 @@ labels(void)
 void
 display(int signo)
 {
+	static int skip;
 	int j;
 	struct mode *p;
+	int ms_delay;
+
+	if (signo == SIGALRM && skip-- > 0)
+		/* Don't display on this timeout */
+		return;
 
 	/* Get the load average over the last minute. */
 	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
@@ -308,9 +314,17 @@ display(int signo)
 			allcounter=0;
 		} else
 			allcounter++;
-       }
+	}
 
-	timeout(naptime * 1000);
+	/* curses timeout() uses VTIME, limited to 255 1/10th secs */
+	ms_delay = naptime * 1000;
+	if (ms_delay < 25500) {
+		timeout(ms_delay);
+		skip = 0;
+	} else {
+		skip = ms_delay / 25500;
+		timeout(ms_delay / (skip + 1));
+	}
 }
 
 void
