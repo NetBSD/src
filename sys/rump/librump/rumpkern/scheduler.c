@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.4 2009/10/16 00:14:53 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.5 2009/11/04 18:11:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.4 2009/10/16 00:14:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.5 2009/11/04 18:11:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -168,4 +168,24 @@ rump_unschedule_cpu(struct lwp *l)
 	SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
 	rumpuser_cv_signal(schedcv);
 	rumpuser_mutex_exit(schedmtx);
+}
+
+/* Give up and retake CPU (perhaps a different one) */
+void
+yield()
+{
+	struct lwp *l = curlwp;
+	int nlocks;
+
+	KERNEL_UNLOCK_ALL(l, &nlocks);
+	rump_unschedule_cpu(l);
+	rump_schedule_cpu(l);
+	KERNEL_LOCK(nlocks, l);
+}
+
+void
+preempt()
+{
+
+	yield();
 }

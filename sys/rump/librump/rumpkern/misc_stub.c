@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.24 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.25 2009/11/04 18:11:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.24 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.25 2009/11/04 18:11:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,25 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.24 2009/10/15 00:28:46 pooka Exp $")
   */
 int nbpg = 4096;
 #endif
-
-void
-yield(void)
-{
-
-	/*
-	 * Do nothing - doesn't really make sense as we're being
-	 * scheduled anyway.
-	 */
-	return;
-}
-
-void
-preempt(void)
-{
-
-	/* see yield */
-	return;
-}
 
 int
 syscall_establish(const struct emul *em, const struct syscall_package *sp)
