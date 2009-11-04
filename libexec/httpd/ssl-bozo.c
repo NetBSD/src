@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.5 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.6 2009/11/04 15:37:39 agc Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.9 2008/11/06 05:08:11 mrg Exp $	*/
 
@@ -122,6 +122,7 @@ ssl_printf(const char * fmt, ...)
 	if ((nbytes = vasprintf(&buf, fmt, ap)) != -1) 
 		SSL_write(bozossl, buf, nbytes);
 	va_end(ap);
+	free(buf);
 
 	return nbytes;
 }
