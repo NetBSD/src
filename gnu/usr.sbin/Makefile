@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.17 2009/08/18 15:11:25 skrll Exp $
+#	$NetBSD: Makefile,v 1.18 2009/11/04 19:02:28 dyoung Exp $
 
 .include <bsd.own.mk>
 
-.if ${HAVE_BINUTILS} == "216"
+.if ${MKBINUTILS} != "no" && ${HAVE_BINUTILS} == "216"
 SUBDIR=		dbsym mdsetimage ncdcs
 .endif
 
