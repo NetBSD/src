@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.106 2009/11/04 17:01:45 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.107 2009/11/04 18:25:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,10 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.106 2009/11/04 17:01:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.107 2009/11/04 18:25:36 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
@@ -141,46 +140,6 @@ getmicrouptime(struct timeval *tv)
 
 	getnanouptime(&ts);
 	TIMESPEC_TO_TIMEVAL(tv, &ts);
-}
-
-void
-malloc_type_attach(struct malloc_type *type)
-{
-
-	return;
-}
-
-void
-malloc_type_detach(struct malloc_type *type)
-{
-
-	return;
-}
-
-void *
-kern_malloc(unsigned long size, struct malloc_type *type, int flags)
-{
-	void *rv;
-
-	rv = rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
-	if (rv && flags & M_ZERO)
-		memset(rv, 0, size);
-
-	return rv;
-}
-
-void *
-kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
-{
-
-	return rumpuser_realloc(ptr, size, (flags & (M_CANFAIL|M_NOWAIT)) != 0);
-}
-
-void
-kern_free(void *ptr, struct malloc_type *type)
-{
-
-	rumpuser_free(ptr);
 }
 
 static void

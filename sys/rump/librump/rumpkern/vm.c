@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.66 2009/11/04 16:55:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.67 2009/11/04 18:25:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,6 @@
  * Virtual memory emulation routines.  Contents:
  *  + anon objects & pager
  *  + misc support routines
- *  + kmem
  */
 
 /*
@@ -42,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.66 2009/11/04 16:55:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.67 2009/11/04 18:25:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/kmem.h>
 
 #include <machine/pmap.h>
 
@@ -502,45 +501,6 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 
 	/* nada for now */
 }
-
-/*
- * Kmem
- */
-
-#ifndef RUMP_USE_REAL_ALLOCATORS
-void
-kmem_init()
-{
-
-	/* nothing to do */
-}
-
-void *
-kmem_alloc(size_t size, km_flag_t kmflag)
-{
-
-	return rumpuser_malloc(size, kmflag == KM_NOSLEEP);
-}
-
-void *
-kmem_zalloc(size_t size, km_flag_t kmflag)
-{
-	void *rv;
-
-	rv = kmem_alloc(size, kmflag);
-	if (rv)
-		memset(rv, 0, size);
-
-	return rv;
-}
-
-void
-kmem_free(void *p, size_t size)
-{
-
-	rumpuser_free(p);
-}
-#endif /* RUMP_USE_REAL_ALLOCATORS */
 
 /*
  * UVM km
