@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.53 2009/11/01 22:11:27 dsl Exp $	*/
+/*	$NetBSD: getch.c,v 1.54 2009/11/04 21:51:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.53 2009/11/01 22:11:27 dsl Exp $");
+__RCSID("$NetBSD: getch.c,v 1.54 2009/11/04 21:51:11 dsl Exp $");
 #endif
 #endif					/* not lint */
 
@@ -557,7 +557,7 @@ reread:
 		if (state == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			c = getchar();
+			c = fgetc(infd);
 			if (c == EOF) {
 				clearerr(infd);
 				return ERR;
@@ -599,7 +599,7 @@ reread:
 					return ERR;
 			}
 
-			c = getchar();
+			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -869,7 +869,7 @@ wgetch(WINDOW *win)
 			break;
 		}
 
-		c = getchar();
+		c = fgetc(infd);
 		if (feof(infd)) {
 			clearerr(infd);
 			__restore_termios();

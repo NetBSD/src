@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.7 2009/11/01 22:11:27 dsl Exp $ */
+/*   $NetBSD: get_wch.c,v 1.8 2009/11/04 21:51:11 dsl Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.7 2009/11/01 22:11:27 dsl Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.8 2009/11/04 21:51:11 dsl Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -99,7 +99,7 @@ inkey(wchar_t *wc, int to, int delay)
 		if (wstate == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			c = getchar();
+			c = fgetc(infd);
 			if (c == WEOF) {
 				clearerr(infd);
 				return ERR;
@@ -147,7 +147,7 @@ inkey(wchar_t *wc, int to, int delay)
 					return ERR;
 			}
 
-			c = getchar();
+			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -197,7 +197,7 @@ inkey(wchar_t *wc, int to, int delay)
 					return ERR;
 			}
 
-			c = getchar();
+			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
