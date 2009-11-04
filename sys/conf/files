@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.960 2009/11/03 00:24:05 dyoung Exp $
+#	$NetBSD: files,v 1.961 2009/11/04 13:29:45 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1439,6 +1439,7 @@ file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_mutex.c
+file	kern/kern_mutex_obj.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard
@@ -1451,6 +1452,7 @@ file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
+file	kern/kern_rwlock_obj.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c

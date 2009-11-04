@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.45 2009/01/25 04:45:14 rmind Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.46 2009/11/04 13:29:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,9 +40,10 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.45 2009/01/25 04:45:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.46 2009/11/04 13:29:45 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
@@ -50,10 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.45 2009/01/25 04:45:14 rmind Exp $"
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
 #include <sys/kernel.h>
-#include <sys/atomic.h>
 #include <sys/intr.h>
 #include <sys/lock.h>
-#include <sys/pool.h>
 
 #include <dev/lockstat.h>
 
@@ -273,18 +272,6 @@ syncobj_t mutex_syncobj = {
 	sleepq_lendpri,
 	(void *)mutex_owner,
 };
-
-/* Mutex cache */
-#define	MUTEX_OBJ_MAGIC	0x5aa3c85d
-struct kmutexobj {
-	kmutex_t	mo_lock;
-	u_int		mo_magic;
-	u_int		mo_refcnt;
-};
-
-static int	mutex_obj_ctor(void *, void *, int);
-
-static pool_cache_t	mutex_obj_cache;
 
 /*
  * mutex_dump:
@@ -940,88 +927,3 @@ mutex_spin_retry(kmutex_t *mtx)
 #endif	/* MULTIPROCESSOR */
 }
 #endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
-
-/*
- * mutex_obj_init:
- *
- *	Initialize the mutex object store.
- */
-void
-mutex_obj_init(void)
-{
-
-	mutex_obj_cache = pool_cache_init(sizeof(struct kmutexobj),
-	    coherency_unit, 0, 0, "mutex", NULL, IPL_NONE, mutex_obj_ctor,
-	    NULL, NULL);
-}
-
-/*
- * mutex_obj_ctor:
- *
- *	Initialize a new lock for the cache.
- */
-static int
-mutex_obj_ctor(void *arg, void *obj, int flags)
-{
-	struct kmutexobj * mo = obj;
-
-	mo->mo_magic = MUTEX_OBJ_MAGIC;
-
-	return 0;
-}
-
-/*
- * mutex_obj_alloc:
- *
- *	Allocate a single lock object.
- */
-kmutex_t *
-mutex_obj_alloc(kmutex_type_t type, int ipl)
-{
-	struct kmutexobj *mo;
-
-	mo = pool_cache_get(mutex_obj_cache, PR_WAITOK);
-	mutex_init(&mo->mo_lock, type, ipl);
-	mo->mo_refcnt = 1;
-
-	return (kmutex_t *)mo;
-}
-
-/*
- * mutex_obj_hold:
- *
- *	Add a single reference to a lock object.  A reference to the object
- *	must already be held, and must be held across this call.
- */
-void
-mutex_obj_hold(kmutex_t *lock)
-{
-	struct kmutexobj *mo = (struct kmutexobj *)lock;
-
-	KASSERT(mo->mo_magic == MUTEX_OBJ_MAGIC);
-	KASSERT(mo->mo_refcnt > 0);
-
-	atomic_inc_uint(&mo->mo_refcnt);
-}
-
-/*
- * mutex_obj_free:
- *
- *	Drop a reference from a lock object.  If the last reference is being
- *	dropped, free the object and return true.  Otherwise, return false.
- */
-bool
-mutex_obj_free(kmutex_t *lock)
-{
-	struct kmutexobj *mo = (struct kmutexobj *)lock;
-
-	KASSERT(mo->mo_magic == MUTEX_OBJ_MAGIC);
-	KASSERT(mo->mo_refcnt > 0);
-
-	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
-		return false;
-	}
-	mutex_destroy(&mo->mo_lock);
-	pool_cache_put(mutex_obj_cache, mo);
-	return true;
-}
