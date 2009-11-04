@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.6 2009/04/18 07:28:24 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.7 2009/11/04 18:32:27 joerg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.14 2009/04/18 01:48:18 mrg Exp $	*/
 
@@ -45,8 +45,8 @@
 
 #include "bozohttpd.h"
 
-	int	Xflag;		/* do directory indexing */
-	int	Hflag;		/* hide .* */
+int	Xflag;		/* do directory indexing */
+int	Hflag;		/* hide .* */
 
 static void
 directory_hr(void)
