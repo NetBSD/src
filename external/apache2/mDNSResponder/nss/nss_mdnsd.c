@@ -1,4 +1,4 @@
-/*	$NetBSD: nss_mdnsd.c,v 1.2 2009/10/26 00:46:19 tsarna Exp $	*/
+/*	$NetBSD: nss_mdnsd.c,v 1.3 2009/11/04 23:34:59 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <stdlib.h>  
 #include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -54,6 +55,51 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+
+
+/*
+ * Pool of mdnsd connections
+ */
+static SLIST_HEAD(, svc_ref) conn_list = LIST_HEAD_INITIALIZER(&conn_list);
+static unsigned int conn_count = 0;
+static pid_t my_pid;
+struct timespec last_config;
+
+typedef struct svc_ref {
+    SLIST_ENTRY(svc_ref)    entries;
+    DNSServiceRef           sdRef;
+    unsigned int            uses;
+} svc_ref;
+
+/*
+ * There is a large class of programs that do a few lookups at startup
+ * and then never again (ping, telnet, etc). Keeping a persistent connection
+ * for these would be a waste, so there is a kind of slow start mechanism.
+ * The first SLOWSTART_LOOKUPS times, dispose of the connection after use.
+ * After that we assume the program is a serious consumer of host lookup
+ * services and start keeping connections.
+ */
+#define SLOWSTART_LOOKUPS 5
+static unsigned int svc_puts = 0;
+
+/*
+ * Age out connections. Free connection instead of putting on the list
+ * if used more than REUSE_TIMES and there are others on the list.
+ */
+#define REUSE_TIMES          32
+ 
+/* protects above data */
+static pthread_mutex_t conn_list_lock = PTHREAD_MUTEX_INITIALIZER;
+
+extern int __isthreaded; /* libc private -- wish there was a better way */
+
+#define LOCK(x) do { if (__isthreaded) pthread_mutex_lock(x); } while (0)
+#define UNLOCK(x) do { if (__isthreaded) pthread_mutex_unlock(x); } while (0)
+
 
 #ifndef lint
 #define UNUSED(a)       (void)&a
@@ -85,9 +131,23 @@ typedef struct addrinfo_ctx {
 
 #define HCTX_BUFLEFT(c) (sizeof((c)->buf) - ((c)->next - (c)->buf))
 
+typedef struct res_conf {
+    unsigned int            refcount;
+    char                  **search_domains;
+    char                  **no_search;
+    short                   ndots;
+    short                   timeout;
+} res_conf;
+
+static res_conf *cur_res_conf;
+
+/* protects above data */
+static pthread_mutex_t res_conf_lock = PTHREAD_MUTEX_INITIALIZER;
+
 typedef struct search_iter {
+    res_conf       *conf;
     const char     *name;
-    char           **next_search;
+    char          **next_search;    
     size_t          baselen;
     bool            abs_first;
     bool            abs_last;
@@ -96,8 +156,6 @@ typedef struct search_iter {
 
 static hostent_ctx h_ctx;
 static DNSServiceFlags svc_flags = 0;
-static int ndots = 1, timeout = 1000;
-static char **search_domains, **no_search;
 
 ns_mtab *nss_module_register(const char *, u_int *, nss_module_unregister_fn *);
 static int load_config(res_state);
@@ -107,12 +165,12 @@ static int _mdns_gethtbyaddr(void *, void *, va_list);
 static int _mdns_gethtbyname(void *, void *, va_list);
 
 static int _mdns_getaddrinfo_abs(const char *, DNSServiceProtocol,
-    DNSServiceRef, addrinfo_ctx *);
+    svc_ref **, addrinfo_ctx *, short);
 static void _mdns_addrinfo_init(addrinfo_ctx *, const struct addrinfo *);
 static void _mdns_addrinfo_add_ai(addrinfo_ctx *, struct addrinfo *);
 static struct addrinfo *_mdns_addrinfo_done(addrinfo_ctx *);
 
-static int _mdns_gethtbyname_abs(const char *, int, DNSServiceRef);
+static int _mdns_gethtbyname_abs(const char *, int, svc_ref **, short);
 static void _mdns_hostent_init(hostent_ctx *, int, int);
 static void _mdns_hostent_add_host(hostent_ctx *, const char *);
 static void _mdns_hostent_add_addr(hostent_ctx *, const void *, uint16_t);
@@ -124,16 +182,26 @@ static void _mdns_addrinfo_cb(DNSServiceRef, DNSServiceFlags,
 static void _mdns_hostent_cb(DNSServiceRef, DNSServiceFlags,
     uint32_t, DNSServiceErrorType, const char *, uint16_t, uint16_t, uint16_t,
     const void *, uint32_t, void *);
-static void _mdns_eventloop(DNSServiceRef, callback_ctx *);
+static void _mdns_eventloop(svc_ref *, callback_ctx *, short);
 
 static char *_mdns_rdata2name(const unsigned char *, uint16_t,
     char *, size_t);
 
-void search_init(search_iter *, const char *);
-const char *search_next(search_iter *);
-bool searchable_domain(char *);
+static int search_init(search_iter *, const char *, const char **);
+static void search_done(search_iter *);
+static const char *search_next(search_iter *);
+static bool searchable_domain(char *);
 
+static void destroy_svc_ref(svc_ref *);
+static svc_ref *get_svc_ref(void);
+static void put_svc_ref(svc_ref *);
+static bool retry_query(svc_ref **, DNSServiceErrorType);
 
+static void decref_res_conf(res_conf *);
+static res_conf *get_res_conf(void);
+static void put_res_conf(res_conf *);
+static res_conf *new_res_conf(res_state);
+static short get_timeout(void);
 
 static ns_mtab mtab[] = {
     { NSDB_HOSTS, "getaddrinfo",    _mdns_getaddrinfo, NULL },
@@ -147,78 +215,16 @@ ns_mtab *
 nss_module_register(const char *source, u_int *nelems,
                     nss_module_unregister_fn *unreg)
 {
-    res_state res;
-
     *nelems = sizeof(mtab) / sizeof(mtab[0]);
     *unreg = NULL;
+
+    my_pid = getpid();
 
     if (!strcmp(source, "multicast_dns")) {
         svc_flags = kDNSServiceFlagsForceMulticast;
     }
 
-    res = __res_get_state();
-    if (res) {
-        load_config(res);
-        __res_put_state(res);
-    }
-
     return mtab;
-}
-
-
-
-static int
-load_config(res_state res)
-{
-    int count = 0;
-    char **sd;
-    
-    /* free old search list, if any */
-
-    if ((no_search = search_domains)) {
-        for (; *no_search; no_search++) {
-            free(*no_search);
-        }
-        
-        free(search_domains);
-    }
-
-    /* new search list */
-    
-    sd = res->dnsrch;
-    while (*sd) {
-        if (searchable_domain(*sd)) {
-            count++;
-        }
-        sd++;
-    }
-    
-    search_domains = calloc(sizeof(char *), count + 1);
-    if (!search_domains) {
-        return -1;
-    }
-    
-    sd = res->dnsrch;
-    no_search = search_domains;
-    while (*sd) {
-        if (searchable_domain(*sd)) {
-            *no_search = strdup(*sd);
-            no_search++;
-        }
-        sd++;
-    }
-
-    /* retrans in sec to timeout in msec */
-    timeout = res->retrans * 1000;
-
-    if (svc_flags & kDNSServiceFlagsForceMulticast) {
-        ndots = 1;
-        if (timeout > 2000) {
-            timeout = 2000;
-        }
-    } else {
-        ndots = res->ndots;
-    }
 }
 
 
@@ -229,10 +235,12 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
     const struct addrinfo *pai;
     const char *name, *sname;
     DNSServiceProtocol proto;
-    int err = NS_UNAVAIL;
     DNSServiceRef sdRef;
     addrinfo_ctx ctx;
     search_iter iter;
+    res_conf *rc;
+    svc_ref *sr;
+    int err;
     
     UNUSED(cbdata);
     
@@ -257,30 +265,29 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
         return NS_UNAVAIL;
     }
 
-    search_init(&iter, name);
-    sname = search_next(&iter);
-
-    if (!sname) {
-        h_errno = HOST_NOT_FOUND;
-        return NS_NOTFOUND;
-    }
-
-    /* use one connection for all searches */
-    if (DNSServiceCreateConnection(&sdRef)) {
+    sr = get_svc_ref();
+    if (!sr) {
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
     
+    if ((err = search_init(&iter, name, &sname)) != NS_SUCCESS) {
+        put_svc_ref(sr);
+        return err;
+    }
+    
     _mdns_addrinfo_init(&ctx, pai);
-
-    while (sname && (err != NS_SUCCESS)) {
-        err = _mdns_getaddrinfo_abs(sname, proto, sdRef, &ctx);
+    
+    err = NS_NOTFOUND;
+    while (sr && sname && (err != NS_SUCCESS)) {
+        err = _mdns_getaddrinfo_abs(sname, proto, &sr, &ctx, iter.conf->timeout);
         if (err != NS_SUCCESS) {
             sname = search_next(&iter);
         }
     };
 
-    DNSServiceRefDeallocate(sdRef);
+    search_done(&iter);
+    put_svc_ref(sr);
 
     if (err == NS_SUCCESS) {
         *(struct addrinfo **)cbrv = _mdns_addrinfo_done(&ctx);
@@ -293,25 +300,39 @@ _mdns_getaddrinfo(void *cbrv, void *cbdata, va_list ap)
 
 static int
 _mdns_getaddrinfo_abs(const char *name, DNSServiceProtocol proto,
-    DNSServiceRef sdRef, addrinfo_ctx *ctx)
+    svc_ref **sr, addrinfo_ctx *ctx, short timeout)
 {
-    DNSServiceErrorType err;
+    DNSServiceErrorType err = kDNSServiceErr_ServiceNotRunning;
+    DNSServiceRef sdRef;
+    bool retry = true;
+    
+    while (*sr && retry) {
+        /* We must always use a copy of the ref when using a shared
+           connection, per kDNSServiceFlagsShareConnection docs */
 
-    err = DNSServiceGetAddrInfo(
-        &sdRef,
-        svc_flags | kDNSServiceFlagsReturnIntermediates,
-        kDNSServiceInterfaceIndexAny,
-        proto,
-        name,
-        _mdns_addrinfo_cb,
-        ctx
-    );
+        sdRef = (*sr)->sdRef;
+
+        err = DNSServiceGetAddrInfo(
+            &sdRef,
+            svc_flags
+                | kDNSServiceFlagsShareConnection
+                | kDNSServiceFlagsReturnIntermediates,
+            kDNSServiceInterfaceIndexAny,
+            proto,
+            name,
+            _mdns_addrinfo_cb,
+            ctx
+        );
+        
+        retry = retry_query(sr, err);
+    }
 
     if (err) {
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
-    _mdns_eventloop(sdRef, (void *)ctx);
+    
+    _mdns_eventloop(*sr, (void *)ctx, timeout);
 
     DNSServiceRefDeallocate(sdRef);
 
@@ -334,6 +355,8 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     int advance, n;
     DNSServiceErrorType err;
     DNSServiceRef sdRef;
+    svc_ref *sr;
+    bool retry = true;
 
     UNUSED(cbdata);
     
@@ -392,25 +415,43 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
     _mdns_hostent_init(&h_ctx, af, addrlen);
     _mdns_hostent_add_addr(&h_ctx, addr, addrlen);
 
-    err = DNSServiceQueryRecord(
-        &sdRef,
-        svc_flags,
-        kDNSServiceInterfaceIndexAny,
-        qbuf,
-        kDNSServiceType_PTR,
-        kDNSServiceClass_IN,
-        _mdns_hostent_cb,
-        &h_ctx
-    );
-
-    if (err) {
+    sr = get_svc_ref();
+    if (!sr) {
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
     
-    _mdns_eventloop(sdRef, (void *)&h_ctx);
+    while (sr && retry) {
+        /* We must always use a copy of the ref when using a shared
+           connection, per kDNSServiceFlagsShareConnection docs */
+        sdRef = sr->sdRef;
+
+        err = DNSServiceQueryRecord(
+            &sdRef,
+            svc_flags
+                | kDNSServiceFlagsShareConnection
+                | kDNSServiceFlagsReturnIntermediates,
+            kDNSServiceInterfaceIndexAny,
+            qbuf,
+            kDNSServiceType_PTR,
+            kDNSServiceClass_IN,
+            _mdns_hostent_cb,
+            &h_ctx
+        );
+        
+        retry = retry_query(&sr, err);
+    }
+
+    if (err) {
+        put_svc_ref(sr);
+        h_errno = NETDB_INTERNAL;
+        return NS_UNAVAIL;
+    }
+
+    _mdns_eventloop(sr, (void *)&h_ctx, get_timeout());
 
     DNSServiceRefDeallocate(sdRef);
+    put_svc_ref(sr);
 
     if (h_ctx.naliases) {
         *(struct hostent **)cbrv = _mdns_hostent_done(&h_ctx);
@@ -427,10 +468,11 @@ _mdns_gethtbyaddr(void *cbrv, void *cbdata, va_list ap)
 static int
 _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
 {
-    int namelen, af, addrlen, rrtype, err = NS_UNAVAIL;
+    int namelen, af, addrlen, rrtype, err;
     const char *name, *sname;
     DNSServiceRef sdRef;
     search_iter iter;
+    svc_ref *sr;
 
     UNUSED(cbdata);
     
@@ -456,31 +498,30 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
         return NS_UNAVAIL;
     }
 
-    search_init(&iter, name);
-    sname = search_next(&iter);
-
-    if (!sname) {
-        h_errno = HOST_NOT_FOUND;
-        return NS_NOTFOUND;
-    }
-
-    /* use one connection for all searches */
-    if (DNSServiceCreateConnection(&sdRef)) {
+    sr = get_svc_ref();
+    if (!sr) {
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
     
+    if ((err = search_init(&iter, name, &sname)) != NS_SUCCESS) {
+        put_svc_ref(sr);
+        return err;
+    }
+
     _mdns_hostent_init(&h_ctx, af, addrlen);
 
-    while (sname && (err != NS_SUCCESS)) {
-        err = _mdns_gethtbyname_abs(sname, rrtype, sdRef);
+    err = NS_NOTFOUND;
+    while (sr && sname && (err != NS_SUCCESS)) {
+        err = _mdns_gethtbyname_abs(sname, rrtype, &sr, iter.conf->timeout);
         if (err != NS_SUCCESS) {
             sname = search_next(&iter);
         }
     };
 
-    DNSServiceRefDeallocate(sdRef);
-
+    search_done(&iter);
+    put_svc_ref(sr);
+    
     if (err == NS_SUCCESS) {
         _mdns_hostent_add_host(&h_ctx, sname);
         _mdns_hostent_add_host(&h_ctx, name);
@@ -493,27 +534,39 @@ _mdns_gethtbyname(void *cbrv, void *cbdata, va_list ap)
 
 
 static int
-_mdns_gethtbyname_abs(const char *name, int rrtype, DNSServiceRef sdRef)
+_mdns_gethtbyname_abs(const char *name, int rrtype, svc_ref **sr, short timeout)
 {
-    DNSServiceErrorType err;
+    DNSServiceErrorType err = kDNSServiceErr_ServiceNotRunning;
+    DNSServiceRef sdRef;
+    bool retry = true;    
 
-    err = DNSServiceQueryRecord(
-        &sdRef,
-        svc_flags | kDNSServiceFlagsReturnIntermediates,
-        kDNSServiceInterfaceIndexAny,
-        name,
-        rrtype,
-        kDNSServiceClass_IN,
-        _mdns_hostent_cb,
-        &h_ctx
-    );
+    while (*sr && retry) {
+        /* We must always use a copy of the ref when using a shared
+           connection, per kDNSServiceFlagsShareConnection docs */
+        sdRef = (*sr)->sdRef;
+
+        err = DNSServiceQueryRecord(
+            &sdRef,
+            svc_flags
+                | kDNSServiceFlagsShareConnection
+                | kDNSServiceFlagsReturnIntermediates,
+            kDNSServiceInterfaceIndexAny,
+            name,
+            rrtype,
+            kDNSServiceClass_IN,
+            _mdns_hostent_cb,
+            &h_ctx
+        );
+        
+        retry = retry_query(sr, err);
+    }
 
     if (err) {
         h_errno = NETDB_INTERNAL;
         return NS_UNAVAIL;
     }
-    
-    _mdns_eventloop(sdRef, (void *)&h_ctx);
+
+    _mdns_eventloop(*sr, (void *)&h_ctx, timeout);
 
     DNSServiceRefDeallocate(sdRef);
 
@@ -771,19 +824,19 @@ _mdns_hostent_cb(
 
 
 static void
-_mdns_eventloop(DNSServiceRef sdRef, callback_ctx *ctx)
+_mdns_eventloop(svc_ref *sr, callback_ctx *ctx, short timeout)
 {
     struct pollfd fds;
     int fd, ret;
 
-    fd = DNSServiceRefSockFD(sdRef);
+    fd = DNSServiceRefSockFD(sr->sdRef);
     fds.fd = fd;
     fds.events = POLLRDNORM;
 
     while (!ctx->done) {
-        ret = poll(&fds, 1, timeout);
+        ret = poll(&fds, 1, timeout * 1000);
         if (ret > 0) {
-            DNSServiceProcessResult(sdRef);
+            DNSServiceProcessResult(sr->sdRef);
         } else {
             break;
         }
@@ -859,17 +912,23 @@ _mdns_rdata2name(const unsigned char *rdata, uint16_t rdlen, char *buf, size_t b
 
 
 
-void
-search_init(search_iter *iter, const char *name)
+int
+search_init(search_iter *iter, const char *name, const char **first)
 {
     const char *c = name, *cmp;
     int dots = 0, enddot = 0;
     size_t len, cl;
+    
+    iter->conf = get_res_conf();
+    if (!iter->conf) {
+        h_errno = NETDB_INTERNAL;
+        return NS_UNAVAIL;
+    }
 
     iter->name = name;
     iter->baselen = 0;
     iter->abs_first = iter->abs_last = false;
-    iter->next_search = search_domains;
+    iter->next_search = iter->conf->search_domains;
         
     while (*c) {
         if (*c == '.') {
@@ -883,7 +942,7 @@ search_init(search_iter *iter, const char *name)
     
     if (svc_flags & kDNSServiceFlagsForceMulticast) {
         if (dots) {
-            iter->next_search = no_search;
+            iter->next_search = iter->conf->no_search;
             if ((dots - enddot) == 1) {
                 len = strlen(iter->name);
                 cl = strlen(".local") + enddot;
@@ -898,7 +957,7 @@ search_init(search_iter *iter, const char *name)
             }
         }
     } else {
-        if (dots >= ndots) {
+        if (dots >= iter->conf->ndots) {
             iter->abs_first = true;
         } else {
             iter->abs_last = true;
@@ -906,9 +965,18 @@ search_init(search_iter *iter, const char *name)
     
         if (enddot) {
             /* absolute; don't search */
-            iter->next_search = no_search;
+            iter->next_search = iter->conf->no_search;
         }
     }
+    
+    *first = search_next(iter);
+    if (!first) {
+        search_done(iter);
+        h_errno = HOST_NOT_FOUND;
+        return NS_NOTFOUND;
+    }
+    
+    return NS_SUCCESS;
 }
 
 
@@ -930,7 +998,7 @@ search_next(search_iter *iter)
             iter->baselen = strlcpy(iter->buf, iter->name, sizeof(iter->buf));
             if (iter->baselen >= sizeof(iter->buf) - 1) {
                 /* original is too long, don't try any search domains */
-                iter->next_search = no_search;
+                iter->next_search = iter->conf->no_search;
                 break;
             }
 
@@ -961,6 +1029,17 @@ search_next(search_iter *iter)
 
 
 
+void
+search_done(search_iter *iter)
+{
+    if (iter->conf) {
+        put_res_conf(iter->conf);
+        iter->conf = NULL;
+    }
+}
+
+
+
 /*
  * Is domain appropriate to be in the domain search list?
  * For mdnsd, take everything. For multicast_dns, only "local"
@@ -978,4 +1057,267 @@ searchable_domain(char *d)
     }
     
     return false;
+}
+
+
+
+static void
+destroy_svc_ref(svc_ref *sr)
+{
+    /* assumes not on conn list */
+    
+    if (sr) {
+        DNSServiceRefDeallocate(sr->sdRef);
+        free(sr);
+    }
+}
+
+
+
+static svc_ref *
+get_svc_ref(void)
+{
+    svc_ref *sr;
+    
+    LOCK(&conn_list_lock);
+    
+    if (getpid() != my_pid) {
+        my_pid = getpid();
+
+        /*
+         * We forked and kept running. We don't want to share
+         * connections with the parent or we'll garble each others
+         * comms, so throw away the parent's list and start over
+         */
+        while ((sr = SLIST_FIRST(&conn_list))) {
+            SLIST_REMOVE_HEAD(&conn_list, entries);
+            destroy_svc_ref(sr);
+        }
+
+        sr = NULL;
+    } else {
+        /* try to recycle a connection */
+        sr = SLIST_FIRST(&conn_list);
+        if (sr) {
+            SLIST_REMOVE_HEAD(&conn_list, entries);
+            conn_count--;
+        }
+    }
+    
+    UNLOCK(&conn_list_lock);
+    
+    if (!sr) {
+        /* none available, we need a new one */
+
+        sr = calloc(sizeof(svc_ref), 1);
+        if (sr) {
+            if (DNSServiceCreateConnection(&(sr->sdRef))) {
+                free(sr);
+                return NULL;
+            }
+            
+            if (fcntl(DNSServiceRefSockFD(sr->sdRef), F_SETFD, FD_CLOEXEC) < 0) {
+                destroy_svc_ref(sr);
+                sr = NULL;
+            }
+        }
+    }
+
+    return sr;
+}
+
+
+
+static void
+put_svc_ref(svc_ref *sr)
+{
+    if (sr) {
+        LOCK(&conn_list_lock);
+
+        sr->uses++;
+
+        /* if slow start or aged out, destroy */
+        if ((svc_puts++ < SLOWSTART_LOOKUPS)
+        ||  (conn_count && (sr->uses > REUSE_TIMES))) {
+            UNLOCK(&conn_list_lock);
+            destroy_svc_ref(sr);
+            return;
+        }
+
+        conn_count++;
+        
+        SLIST_INSERT_HEAD(&conn_list, sr, entries);
+        
+        UNLOCK(&conn_list_lock);
+    }
+}
+
+
+
+/*
+ * determine if this is a call we should retry with a fresh
+ * connection, for example if mdnsd went away and came back.
+ */
+static bool
+retry_query(svc_ref **sr, DNSServiceErrorType err)
+{
+    if ((err == kDNSServiceErr_Unknown)
+    ||  (err == kDNSServiceErr_ServiceNotRunning)) {
+        /* these errors might indicate a stale socket */
+        if ((*sr)->uses) {
+            /* this was an old socket, so kill it and get another */
+            destroy_svc_ref(*sr);
+            *sr = get_svc_ref();
+            if (*sr) {
+                /* we can retry */
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+
+
+static void
+decref_res_conf(res_conf *rc)
+{
+    rc->refcount--;
+    
+    if (rc->refcount < 1) {
+        if ((rc->no_search = rc->search_domains)) {
+            for (; *(rc->no_search); rc->no_search++) {
+                free(*(rc->no_search));
+            }
+        
+            free(rc->search_domains);
+        }
+        
+        free(rc);
+    }
+}
+
+
+
+res_conf *
+get_res_conf(void)
+{
+    struct timespec last_change;
+    res_state res;
+    res_conf *rc;
+
+    LOCK(&res_conf_lock);
+    
+    /* check if resolver config changed */
+
+    res = __res_get_state();
+    if (res) {
+        res_check(res, &last_change);
+        if (timespeccmp(&last_config, &last_change, <)) {
+            if (cur_res_conf) {
+                decref_res_conf(cur_res_conf);
+            }
+            cur_res_conf = new_res_conf(res);
+            if (cur_res_conf) {
+                last_config = last_change;
+            }
+        }
+        __res_put_state(res);
+    }
+
+    rc = cur_res_conf;
+    if (rc) {
+        rc->refcount++;
+    }
+
+    UNLOCK(&res_conf_lock);
+    
+    return rc;
+}
+
+
+
+static void
+put_res_conf(res_conf *rc)
+{
+    LOCK(&res_conf_lock);
+    
+    decref_res_conf(rc);
+    
+    UNLOCK(&res_conf_lock);
+}
+
+
+
+static res_conf *
+new_res_conf(res_state res)
+{
+    res_conf *rc;
+    int count = 0;
+    char **sd, *p;
+    
+    rc = calloc(sizeof(res_conf), 1);
+    if (rc) {
+        rc->refcount = 1;
+        
+        sd = res->dnsrch;
+        while (*sd) {
+            if (searchable_domain(*sd)) {
+                count++;
+            }
+            sd++;
+        }
+    
+        rc->search_domains = calloc(sizeof(char *), count + 1);
+        if (!(rc->search_domains)) {
+            decref_res_conf(rc);
+            return NULL;
+        }
+    
+        sd = res->dnsrch;
+        rc->no_search = rc->search_domains;
+        while (*sd) {
+            if (searchable_domain(*sd)) {
+                *(rc->no_search) = p = strdup(*sd);
+                if (!p) {
+                    decref_res_conf(rc);
+                    return NULL;
+                }
+                    
+                rc->no_search++;
+            }
+            sd++;
+        }
+
+        rc->timeout = res->retrans;
+
+        if (svc_flags & kDNSServiceFlagsForceMulticast) {
+            rc->ndots = 1;
+            if (rc->timeout > 2) {
+                rc->timeout = 2;
+            }
+        } else {
+            rc->ndots = res->ndots;
+        }
+    }
+    
+    return rc;
+}
+
+
+
+static short
+get_timeout(void)
+{
+    short timeout = 5;
+    res_conf *rc;
+    
+    rc = get_res_conf();
+    if (rc) {
+        timeout = rc->timeout;
+        put_res_conf(rc);
+    }
+
+    return timeout;
 }
