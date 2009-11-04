@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.961 2009/11/04 13:29:45 pooka Exp $
+#	$NetBSD: files,v 1.962 2009/11/04 16:54:00 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1476,6 +1476,7 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_copy.c
 file	kern/subr_debug.c		debug
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
