@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.224 2009/11/01 21:05:30 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.225 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.224 2009/11/01 21:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.225 2009/11/04 21:23:02 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -665,46 +665,41 @@ exit_lwps(struct lwp *l)
 }
 
 int
-do_sys_wait(struct lwp *l, int *pid, int *status, int options,
-    struct rusage *ru, int *was_zombie)
+do_sys_wait(int *pid, int *status, int options, struct rusage *ru)
 {
-	struct proc	*child;
-	int		error;
+	proc_t *child;
+	int error;
 
+	if (ru != NULL) {
+		memset(ru, 0, sizeof(*ru));
+	}
 	mutex_enter(proc_lock);
-	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
-
+	error = find_stopped_child(curproc, *pid, options, &child, status);
 	if (child == NULL) {
 		mutex_exit(proc_lock);
 		*pid = 0;
 		return error;
 	}
-
 	*pid = child->p_pid;
 
 	if (child->p_stat == SZOMB) {
 		/* proc_free() will release the proc_lock. */
 		if (options & WNOWAIT) {
 			mutex_exit(proc_lock);
-			memset(ru, 0, sizeof(*ru));
 		} else {
 			proc_free(child, ru);
 		}
-		*was_zombie = 1;
 	} else {
 		/* Child state must have been SSTOP. */
 		mutex_exit(proc_lock);
-
-		*was_zombie = 0;
 		*status = W_STOPCODE(*status);
-		memset(ru, 0, sizeof(*ru));
 	}
-
 	return 0;
 }
 
 int
-sys___wait450(struct lwp *l, const struct sys___wait450_args *uap, register_t *retval)
+sys___wait450(struct lwp *l, const struct sys___wait450_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			pid;
@@ -712,24 +707,22 @@ sys___wait450(struct lwp *l, const struct sys___wait450_args *uap, register_t *r
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	int pid = SCARG(uap, pid);
+	int error, status, pid = SCARG(uap, pid);
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
-	if (pid == 0)
+	if (pid == 0) {
 		return error;
-
-	if (SCARG(uap, rusage))
-		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
-
-	if (error == 0 && SCARG(uap, status))
+	}
+	if (SCARG(uap, status)) {
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
-
+	}
+	if (SCARG(uap, rusage) && error == 0) {
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	}
 	return error;
 }
 

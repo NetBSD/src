@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.292 2009/10/22 22:28:57 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.293 2009/11/04 21:23:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int) __dead;
-int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
+int	do_sys_wait(int *, int *, int, struct rusage *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 void	proc_free_pid(struct proc *);
