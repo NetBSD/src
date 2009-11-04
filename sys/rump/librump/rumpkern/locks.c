@@ -1,30 +1,4 @@
-/*	$NetBSD: locks.c,v 1.32 2009/10/16 00:14:53 pooka Exp $	*/
-
-/*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: locks.c,v 1.33 2009/11/04 13:32:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -55,10 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.32 2009/10/16 00:14:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.33 2009/11/04 13:32:39 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
@@ -395,42 +368,4 @@ rump_user_schedule(int nlocks)
 
 	if (nlocks)
 		_kernel_lock(nlocks);
-}
-
-struct kmutexobj {
-	kmutex_t	mo_lock;
-	u_int		mo_refcnt;
-};
-
-kmutex_t *
-mutex_obj_alloc(kmutex_type_t type, int ipl)
-{
-	struct kmutexobj *mo;
-
-	mo = kmem_alloc(sizeof(*mo), KM_SLEEP);
-	mutex_init(&mo->mo_lock, type, ipl);
-	mo->mo_refcnt = 1;
-
-	return (kmutex_t *)mo;
-}
-
-void
-mutex_obj_hold(kmutex_t *lock)
-{
-	struct kmutexobj *mo = (struct kmutexobj *)lock;
-
-	atomic_inc_uint(&mo->mo_refcnt);
-}
-
-bool
-mutex_obj_free(kmutex_t *lock)
-{
-	struct kmutexobj *mo = (struct kmutexobj *)lock;
-
-	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
-		return false;
-	}
-	mutex_destroy(&mo->mo_lock);
-	kmem_free(mo, sizeof(*mo));
-	return true;
 }
