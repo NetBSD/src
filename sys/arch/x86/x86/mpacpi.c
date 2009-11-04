@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.78 2009/09/16 10:47:54 mlelstv Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.79 2009/11/04 14:39:17 toshii Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.78 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.79 2009/11/04 14:39:17 toshii Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -1069,7 +1069,7 @@ mpacpi_find_interrupts(void *self)
 		arg.Type = ACPI_TYPE_INTEGER;
 		arg.Integer.Value = 1;	/* I/O APIC (0 = PIC, 2 = IOSAPIC) */
 		rv = AcpiEvaluateObject(NULL, "\\_PIC", &arglist, NULL);
-		if (ACPI_FAILURE(rv)) {
+		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
 			if (mp_verbose)
 				printf("mpacpi: switch to APIC mode failed\n");
 			return 0;
