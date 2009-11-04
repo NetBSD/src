@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.124 2009/10/31 20:41:00 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.125 2009/11/04 22:25:56 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.124 2009/10/31 20:41:00 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.125 2009/11/04 22:25:56 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2645,12 +2645,13 @@ int
 decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t maxval)
 {
 	int64_t acc = 0;
+	int valid;
+	int len;
 	char *cp;
-	char ch;
 
 	for (;;) {
 		if (flags & DEC_SEC) {
-			printf("%s: [%" PRId64 "..%" PRId64 "dcyl default: %" PRId64 ", %" PRId64 "dcyl, %uMB] ",
+			printf("%s: [%" PRId64 "..%" PRId64 "cyl default: %" PRId64 ", %" PRId64 "cyl, %uMB] ",
 			    prompt, SEC_TO_CYL(minval), SEC_TO_CYL(maxval),
 			    dflt, SEC_TO_CYL(dflt), SEC_TO_MB(dflt));
 		} else
@@ -2659,33 +2660,32 @@ decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t max
 
 		if (!fgets(lbuf, LBUF, stdin))
 			errx(1, "EOF");
-		lbuf[strlen(lbuf)-1] = '\0';
 		cp = lbuf;
 
 		cp += strspn(cp, " \t");
-		if (*cp == '\0')
+		if (*cp == '\n')
 			return dflt;
 
-		if (cp[0] == '$' && cp[1] == 0)
+		if (cp[0] == '$' && cp[1] == '\n')
 			return maxval;
 
 		if (isdigit((unsigned char)*cp) || *cp == '-') {
 			acc = strtoll(lbuf, &cp, 10);
-			if (flags & DEC_SEC) {
-				ch = *cp;
-				if (ch == 'g' || ch == 'G') {
+			len = strcspn(cp, " \t\n");
+			valid = 0;
+			if (len != 0 && (flags & DEC_SEC)) {
+				if (!strncasecmp(cp, "gb", len)) {
 					acc *= 1024;
-					ch = 'm';
+					valid = 1;
 				}
-				if (ch == 'm' || ch == 'M') {
+				if (valid || !strncasecmp(cp, "mb", len)) {
 					acc *= SEC_IN_1M;
 					/* round to whole number of cylinders */
 					acc += dos_cylindersectors / 2;
 					acc /= dos_cylindersectors;
-					ch = 'c';
+					valid = 1;
 				}
-				if (ch == 'c' || ch == 'C') {
-					cp++;
+				if (valid || !strncasecmp(cp, "cyl", len)) {
 					acc *= dos_cylindersectors;
 					/* adjustments for cylinder boundary */
 					if (acc == 0 && flags & DEC_RND_0)
@@ -2696,12 +2696,14 @@ decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t max
 						acc -= dos_sectors;
 					if (flags & DEC_RND_DOWN_2)
 						acc -= dos_sectors;
+					cp += len;
 				}
 			}
 		}
 
 		cp += strspn(cp, " \t");
-		if (*cp != '\0') {
+		if (*cp != '\n') {
+			lbuf[strlen(lbuf) - 1] = 0;
 			printf("%s is not a valid %s number.\n", lbuf,
 			    flags & DEC_SEC ? "sector" : "decimal");
 			continue;
