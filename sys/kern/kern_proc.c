@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.156 2009/11/01 20:59:24 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.157 2009/11/04 15:35:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.156 2009/11/01 20:59:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.157 2009/11/04 15:35:09 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -359,14 +359,12 @@ proc0_init(void)
 {
 	struct proc *p;
 	struct pgrp *pg;
-	struct session *sess;
 	struct lwp *l;
 	rlim_t lim;
 	int i;
 
 	p = &proc0;
 	pg = &pgrp0;
-	sess = &session0;
 	l = &lwp0;
 
 	KASSERT(l->l_lid == p->p_nlwpid);
