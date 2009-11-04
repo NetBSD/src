@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.65 2009/10/21 23:13:53 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.66 2009/11/04 16:55:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.65 2009/10/21 23:13:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.66 2009/11/04 16:55:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -659,6 +659,24 @@ uvm_wait(const char *msg)
 {
 
 	/* nothing to wait for */
+}
+
+void
+uvmspace_free(struct vmspace *vm)
+{
+
+	/* nothing for now */
+}
+
+int
+uvm_io(struct vm_map *map, struct uio *uio)
+{
+
+	/*
+	 * just do direct uio for now.  but this needs some vmspace
+	 * olympics for rump_sysproxy.
+	 */
+	return uiomove((void *)(vaddr_t)uio->uio_offset, uio->uio_resid, uio);
 }
 
 /*
