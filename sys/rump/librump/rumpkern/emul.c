@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.108 2009/11/04 19:17:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.109 2009/11/04 19:21:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.108 2009/11/04 19:17:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.109 2009/11/04 19:21:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.108 2009/11/04 19:17:53 pooka Exp $");
 #include <sys/module.h>
 #include <sys/tty.h>
 #include <sys/reboot.h>
+#include <sys/syscallvar.h>
+#include <sys/xcall.h>
 
 #include <dev/cons.h>
 
@@ -112,6 +114,11 @@ struct device *booted_wedge;
 int booted_partition;
 
 kmutex_t tty_lock;
+
+/* sparc doesn't sport constant page size */
+#ifdef __sparc__
+int nbpg = 4096;
+#endif
 
 devclass_t
 device_class(device_t dev)
@@ -464,4 +471,39 @@ pmf_device_deregister(struct device *dev)
 {
 
 	/* nada */
+}
+
+int
+syscall_establish(const struct emul *em, const struct syscall_package *sp)
+{
+	extern struct sysent rump_sysent[];
+	int i;
+
+	KASSERT(em == NULL || em == &emul_netbsd);
+
+	for (i = 0; sp[i].sp_call; i++)
+		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
+
+	return 0;
+}
+
+int
+syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+/* crosscalls not done, no other hardware CPUs */
+uint64_t
+xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+{
+
+	return -1;
+}
+
+void
+xc_wait(uint64_t where)
+{
+
 }
