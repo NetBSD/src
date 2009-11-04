@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.50 2009/03/18 16:00:16 cegger Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.51 2009/11/04 21:23:02 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.50 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.51 2009/11/04 21:23:02 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -800,7 +800,8 @@ out:
  * from svr4_misc.c, or push the irix_irix5_siginfo into svr4_siginfo.h
  */
 int
-irix_sys_waitsys(struct lwp *l, const struct irix_sys_waitsys_args *uap, register_t *retval)
+irix_sys_waitsys(struct lwp *l, const struct irix_sys_waitsys_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) type;
@@ -810,13 +811,12 @@ irix_sys_waitsys(struct lwp *l, const struct irix_sys_waitsys_args *uap, registe
 		syscallarg(struct rusage *) ru;
 	} */
 	struct proc *parent = l->l_proc;
-	int options, status, error;
-	int was_zombie;
+	int error, status, options, pid;
 	struct rusage ru;
-	int pid = SCARG(uap, pid);
 
 	switch (SCARG(uap, type)) {
 	case SVR4_P_PID:
+		pid = SCARG(uap, pid);
 		break;
 
 	case SVR4_P_PGID:
@@ -848,14 +848,12 @@ irix_sys_waitsys(struct lwp *l, const struct irix_sys_waitsys_args *uap, registe
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = do_sys_wait(l, &pid, &status, options, &ru, &was_zombie);
-
+	error = do_sys_wait(&pid, &status, options, &ru);
 	if (error != 0)
 		return error;
 
-	if (was_zombie) {
-		if (SCARG(uap, ru))
-			error = copyout(&ru, SCARG(uap, ru), sizeof(ru));
+	if (SCARG(uap, ru)) {
+		error = copyout(&ru, SCARG(uap, ru), sizeof(ru));
 		if (error != 0)
 			return error;
 	}

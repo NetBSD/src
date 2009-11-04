@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.10 2009/01/17 22:28:53 njoly Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.11 2009/11/04 21:23:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.10 2009/01/17 22:28:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.11 2009/11/04 21:23:03 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,11 +99,10 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusage50p_t) rusage;
 	} */
-	int error, status, linux_options, options, was_zombie;
-	struct rusage ru;
+	int error, status, linux_options, options, pid;
 	struct netbsd32_rusage50 ru32;
+	struct rusage ru;
 	proc_t *p;
-	int pid;
 
 	linux_options = SCARG(uap, options);
 	options = WOPTSCHECKED;
@@ -120,8 +119,8 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 		options |= WALTSIG;
 
 	pid = SCARG(uap, pid);
-	error = do_sys_wait(l, &pid, &status, options,
-	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, options,
+	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL);
 	retval[0] = pid;
 	if (pid == 0)
 		return error;

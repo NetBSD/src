@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.146 2009/08/09 22:49:01 haad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.147 2009/11/04 21:23:03 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.146 2009/08/09 22:49:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.147 2009/11/04 21:23:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,13 +109,12 @@ static int svr4_mknod(struct lwp *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t);
 
 int
-svr4_sys_wait(struct lwp *l, const struct svr4_sys_wait_args *uap, register_t *retval)
+svr4_sys_wait(struct lwp *l, const struct svr4_sys_wait_args *uap,
+    register_t *retval)
 {
-	int error, was_zombie;
-	int st, sig;
-	int pid = WAIT_ANY;
+	int error, st, sig, pid = WAIT_ANY;
 
-	error = do_sys_wait(l, &pid, &st, 0, NULL, &was_zombie);
+	error = do_sys_wait(&pid, &st, 0, NULL);
 
 	retval[0] = pid;
 	if (pid == 0)
