@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.105 2009/11/04 16:55:20 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.106 2009/11/04 17:01:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.105 2009/11/04 16:55:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.106 2009/11/04 17:01:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -116,80 +116,6 @@ struct device *booted_wedge;
 int booted_partition;
 
 kmutex_t tty_lock;
-
-int
-copyin(const void *uaddr, void *kaddr, size_t len)
-{
-
-	if (curproc->p_vmspace == &rump_vmspace)
-		memcpy(kaddr, uaddr, len);
-	else
-		rump_sysproxy_copyin(uaddr, kaddr, len);
-	return 0;
-}
-
-int
-copyout(const void *kaddr, void *uaddr, size_t len)
-{
-
-	if (curproc->p_vmspace == &rump_vmspace)
-		memcpy(uaddr, kaddr, len);
-	else
-		rump_sysproxy_copyout(kaddr, uaddr, len);
-	return 0;
-}
-
-int
-subyte(void *uaddr, int byte)
-{
-
-	if (curproc->p_vmspace == &rump_vmspace)
-		*(char *)uaddr = byte;
-	else
-		rump_sysproxy_copyout(&byte, uaddr, 1);
-	return 0;
-}
-
-int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-
-	return copyinstr(kfaddr, kdaddr, len, done);
-}
-
-int
-copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
-{
-
-	if (curproc->p_vmspace == &rump_vmspace)
-		strlcpy(kaddr, uaddr, len);
-	else
-		rump_sysproxy_copyin(uaddr, kaddr, len);
-	if (done)
-		*done = strlen(kaddr)+1; /* includes termination */
-	return 0;
-}
-
-int
-copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
-{
-
-	if (curproc->p_vmspace == &rump_vmspace)
-		strlcpy(uaddr, kaddr, len);
-	else
-		rump_sysproxy_copyout(kaddr, uaddr, len);
-	if (done)
-		*done = strlen(uaddr)+1; /* includes termination */
-	return 0;
-}
-
-int
-kcopy(const void *src, void *dst, size_t len)
-{
-
-	memcpy(dst, src, len);
-	return 0;
-}
 
 devclass_t
 device_class(device_t dev)
