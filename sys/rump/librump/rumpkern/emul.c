@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.104 2009/10/21 23:13:53 rmind Exp $	*/
+/*	$NetBSD: emul.c,v 1.105 2009/11/04 16:55:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.104 2009/10/21 23:13:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.105 2009/11/04 16:55:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -140,6 +140,17 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 }
 
 int
+subyte(void *uaddr, int byte)
+{
+
+	if (curproc->p_vmspace == &rump_vmspace)
+		*(char *)uaddr = byte;
+	else
+		rump_sysproxy_copyout(&byte, uaddr, 1);
+	return 0;
+}
+
+int
 copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
 
@@ -173,69 +184,11 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 }
 
 int
-copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
-{
-
-	return copyin(uaddr, kaddr, len);
-}
-
-int
-copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
-{
-
-	return copyout(kaddr, uaddr, len);
-}
-
-int
 kcopy(const void *src, void *dst, size_t len)
 {
 
 	memcpy(dst, src, len);
 	return 0;
-}
-
-int
-uiomove(void *buf, size_t n, struct uio *uio)
-{
-	struct iovec *iov;
-	uint8_t *b = buf;
-	size_t cnt;
-
-	if (uio->uio_vmspace != UIO_VMSPACE_SYS)
-		panic("%s: vmspace != UIO_VMSPACE_SYS", __func__);
-
-	while (n && uio->uio_resid) {
-		iov = uio->uio_iov;
-		cnt = iov->iov_len;
-		if (cnt == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			continue;
-		}
-		if (cnt > n)
-			cnt = n;
-
-		if (uio->uio_rw == UIO_READ)
-			memcpy(iov->iov_base, b, cnt);
-		else
-			memcpy(b, iov->iov_base, cnt);
-
-		iov->iov_base = (uint8_t *)iov->iov_base + cnt;
-		iov->iov_len -= cnt;
-		b += cnt;
-		uio->uio_resid -= cnt;
-		uio->uio_offset += cnt;
-		n -= cnt;
-	}
-
-	return 0;
-}
-
-void
-uio_setup_sysspace(struct uio *uio)
-{
-
-	uio->uio_vmspace = UIO_VMSPACE_SYS;
 }
 
 devclass_t
@@ -672,6 +625,15 @@ proc_sessrele(struct session *ss)
 {
 
 	panic("proc_sessrele() impossible, session %p", ss);
+}
+
+int
+proc_vmspace_getref(struct proc *p, struct vmspace **vm)
+{
+
+	/* XXX */
+	*vm = p->p_vmspace;
+	return 0;
 }
 
 int
