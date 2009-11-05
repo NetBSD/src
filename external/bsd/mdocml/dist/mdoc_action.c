@@ -205,7 +205,6 @@ static	const int rsord[RSORD_MAX] = {
 	MDOC__R,
 	MDOC__N,
 	MDOC__V,
-	MDOC__U,
 	MDOC__P,
 	MDOC__Q,
 	MDOC__D,
