@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.133 2009/11/04 13:32:39 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.134 2009/11/05 14:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.133 2009/11/04 13:32:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.134 2009/11/05 14:10:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -574,18 +574,35 @@ rump_nextlid(void)
 	return retid;
 }
 
+#define ERROUT(err) do { rv = err; goto out; } while (/*CONSTCOND*/0)
 int
 rump_module_init(struct modinfo *mi, prop_dictionary_t props)
 {
+	struct module *mod;
 	int rv;
 
+	/* module_dummy */
+	if (mi->mi_name == NULL)
+		return EINVAL;
+
+	mutex_enter(&module_lock);
+	if (module_lookup(mi->mi_name))
+		ERROUT(EEXIST);
+
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__))
-		return EPROGMISMATCH;
+		ERROUT(EPROGMISMATCH);
 
 	rv = mi->mi_modcmd(MODULE_CMD_INIT, props);
-	if (rv == 0 && mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_register();
+	if (rv == 0) {
+		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
+		mod->mod_info = mi;
+		module_enqueue(mod);
+		if (mi->mi_class == MODULE_CLASS_SECMODEL)
+			secmodel_register();
+	}
 
+ out:
+	mutex_exit(&module_lock);
 	return rv;
 }
 
