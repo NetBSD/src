@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.11 2009/11/05 12:00:18 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.12 2009/11/05 14:17:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -68,19 +68,6 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
-	p2m = p2k_init(0);
-	if (!p2m)
-		err(1, "init p2k");
-
-	/*
-	 * Load FFS and LFS already here.  we need both and link set
-	 * lossage does not allow them to be linked on the command line.
-	 */
-	ukfs_init();
-	if (ukfs_modload("librumpfs_ffs.so") != 1)
-		err(1, "modload ffs");
-	if (ukfs_modload("librumpfs_lfs.so") != 1)
-		err(1, "modload lfs");
 
 	UKFS_PARTITION_ARGVPROBE(part);
 	if (part != UKFS_PARTITION_NONE) {
@@ -88,6 +75,9 @@ main(int argc, char *argv[])
 	}
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 
+	p2m = p2k_init(0);
+	if (!p2m)
+		err(1, "init p2k");
 	/*
 	 * XXX: this particular piece inspired by the cleaner code.
 	 * obviously FIXXXME along with the cleaner.
