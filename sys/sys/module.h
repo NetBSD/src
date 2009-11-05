@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.16 2009/10/02 18:50:14 elad Exp $	*/
+/*	$NetBSD: module.h,v 1.17 2009/11/05 14:09:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -129,6 +129,9 @@ int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
+
+void		module_enqueue(module_t *);
+module_t *	module_lookup(const char *);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
