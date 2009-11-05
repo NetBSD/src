@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.14 2009/05/20 14:08:21 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.15 2009/11/05 13:28:20 pooka Exp $        */
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.14 2009/05/20 14:08:21 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.15 2009/11/05 13:28:20 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -261,11 +261,11 @@ psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va)
 	uint32_t flags;
 	flags = 0;
 
-	if (va->va_size != PUFFS_VNOVAL)
+	if (va->va_size != (uint64_t)PUFFS_VNOVAL)
 		flags |= SSH_FILEXFER_ATTR_SIZE;
-	if (va->va_uid != PUFFS_VNOVAL)
+	if (va->va_uid != (uid_t)PUFFS_VNOVAL)
 		flags |= SSH_FILEXFER_ATTR_UIDGID;
-	if (va->va_mode != PUFFS_VNOVAL)
+	if (va->va_mode != (mode_t)PUFFS_VNOVAL)
 		flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
 
 	if (va->va_atime.tv_sec != PUFFS_VNOVAL)
@@ -418,7 +418,7 @@ static int emap[] = {
 	EEXIST,			/* FILE_ALREADY_EXISTS	*/
 	ENODEV			/* WRITE_PROTECT	*/
 };
-#define NERRORS (sizeof(emap) / sizeof(emap[0]))
+#define NERRORS ((int)(sizeof(emap) / sizeof(emap[0])))
 
 static int
 sftperr_to_errno(int error)

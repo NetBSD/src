@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.46 2009/05/20 13:56:36 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.47 2009/11/05 13:28:20 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.46 2009/05/20 13:56:36 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.47 2009/11/05 13:28:20 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: subr.c,v 1.46 2009/05/20 13:56:36 pooka Exp $");
 static void
 freedircache(struct psshfs_dir *base, size_t count)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < count; i++) {
 		free(base[i].entryname);
@@ -89,7 +89,7 @@ struct psshfs_dir *
 lookup(struct psshfs_dir *bdir, size_t ndir, const char *name)
 {
 	struct psshfs_dir *test;
-	int i;
+	size_t i;
 
 	for (i = 0; i < ndir; i++) {
 		test = &bdir[i];
@@ -106,7 +106,7 @@ static struct psshfs_dir *
 lookup_by_entry(struct psshfs_dir *bdir, size_t ndir, struct puffs_node *entry)
 {
 	struct psshfs_dir *test;
-	int i;
+	size_t i;
 
 	for (i = 0; i < ndir; i++) {
 		test = &bdir[i];
@@ -260,7 +260,8 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 	char *dhand = NULL;
 	size_t nent;
 	char *longname = NULL;
-	int idx, rv;
+	size_t idx;
+	int rv;
 
 	assert(pn->pn_va.va_type == VDIR);
 	idx = 0;
