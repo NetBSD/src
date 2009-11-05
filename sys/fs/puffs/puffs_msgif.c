@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.73 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.74 2009/11/05 19:42:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.73 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.74 2009/11/05 19:42:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -366,38 +365,7 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 		}
 	}
 
-	/*
-	 * test for suspension lock.
-	 *
-	 * Note that we *DO NOT* keep the lock, since that might block
-	 * lock acquiring PLUS it would give userlandia control over
-	 * the lock.  The operation queue enforces a strict ordering:
-	 * when the fs server gets in the op stream, it knows things
-	 * are in order.  The kernel locks can't guarantee that for
-	 * userspace, in any case.
-	 *
-	 * BUT: this presents a problem for ops which have a consistency
-	 * clause based on more than one operation.  Unfortunately such
-	 * operations (read, write) do not reliably work yet.
-	 *
-	 * Ya, Ya, it's wrong wong wrong, me be fixink this someday.
-	 *
-	 * XXX: and there is one more problem.  We sometimes need to
-	 * take a lazy lock in case the fs is suspending and we are
-	 * executing as the fs server context.  This might happen
-	 * e.g. in the case that the user server triggers a reclaim
-	 * in the kernel while the fs is suspending.  It's not a very
-	 * likely event, but it needs to be fixed some day.
-	 */
-
-	/*
-	 * MOREXXX: once PUFFS_WCACHEINFO is enabled, we can't take
-	 * the mutex here, since getpages() might be called locked.
-	 */
-	fstrans_start(mp, FSTRANS_NORMAL);
 	mutex_enter(&pmp->pmp_lock);
-	fstrans_done(mp);
-
 	if (pmp->pmp_status != PUFFSTAT_RUNNING) {
 		mutex_exit(&pmp->pmp_lock);
 		park->park_flags |= PARKFLAG_HASERROR;
@@ -432,7 +400,6 @@ int
 puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
 	struct puffs_req *preq = park->park_preq; /* XXX: hmmm */
-	struct mount *mp = PMPTOMP(pmp);
 	int error = 0;
 	int rv;
 
@@ -502,20 +469,6 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	} else {
 		rv = preq->preq_rv;
 		mutex_exit(&park->park_mtx);
-	}
-
-	/*
-	 * retake the lock and release.  This makes sure (haha,
-	 * I'm humorous) that we don't process the same vnode in
-	 * multiple threads due to the locks hacks we have in
-	 * puffs_lock().  In reality this is well protected by
-	 * the biglock, but once that's gone, well, hopefully
-	 * this will be fixed for real.  (and when you read this
-	 * comment in 2017 and subsequently barf, my condolences ;).
-	 */
-	if (rv == 0 && !fstrans_is_owner(mp)) {
-		fstrans_start(mp, FSTRANS_NORMAL);
-		fstrans_done(mp);
 	}
 
  skipwait:
@@ -799,63 +752,6 @@ puffsop_msg(void *this, struct puffs_req *preq)
 	puffs_msgpark_release1(park, 2);
 }
 
-/*
- * helpers
- */
-static void
-dosuspendresume(void *arg)
-{
-	struct puffs_mount *pmp = arg;
-	struct mount *mp;
-	int rv;
-
-	mp = PMPTOMP(pmp);
-	/*
-	 * XXX?  does this really do any good or is it just
-	 * paranoid stupidity?  or stupid paranoia?
-	 */
-	if (mp->mnt_iflag & IMNT_UNMOUNT) {
-		printf("puffs dosuspendresume(): detected suspend on "
-		    "unmounting fs\n");
-		goto out;
-	}
-
-	/* Do the dance.  Allow only one concurrent suspend */
-	rv = vfs_suspend(PMPTOMP(pmp), 1);
-	if (rv == 0)
-		vfs_resume(PMPTOMP(pmp));
-
- out:
-	mutex_enter(&pmp->pmp_lock);
-	KASSERT(pmp->pmp_suspend == 1);
-	pmp->pmp_suspend = 0;
-	puffs_mp_release(pmp);
-	mutex_exit(&pmp->pmp_lock);
-
-	kthread_exit(0);
-}
-
-static void
-puffsop_suspend(struct puffs_mount *pmp)
-{
-	int rv = 0;
-
-	mutex_enter(&pmp->pmp_lock);
-	if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING) {
-		rv = EBUSY;
-	} else {
-		puffs_mp_reference(pmp);
-		pmp->pmp_suspend = 1;
-	}
-	mutex_exit(&pmp->pmp_lock);
-	if (rv)
-		return;
-	rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
-	    pmp, NULL, "puffsusp");
-
-	/* XXX: "return" rv */
-}
-
 static void
 puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
@@ -949,6 +845,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 {
 	struct puffs_mount *pmp = this;
 	struct puffs_req *preq = (struct puffs_req *)pth;
+	int rv = 0;
 
 	/* XXX: need to send error to userspace */
 	if (pth->pth_framelen < sizeof(struct puffs_req)) {
@@ -968,7 +865,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		break;
 	case PUFFSOP_SUSPEND:
 		DPRINTF(("dispatch: suspend\n"));
-		puffsop_suspend(pmp);
+		rv = EOPNOTSUPP;
 		break;
 	default:
 		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
@@ -976,7 +873,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		break;
 	}
 
-	return 0;
+	return rv;
 }
 
 int
