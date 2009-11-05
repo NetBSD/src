@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.136 2009/10/17 23:16:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.137 2009/11/05 19:22:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.136 2009/10/17 23:16:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.137 2009/11/05 19:22:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1028,7 +1028,10 @@ puffs_vnop_inactive(void *v)
 	 * file server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	*ap->a_recycle = ((pnode->pn_stat & PNODE_NOREFS) != 0);
+	if (pnode->pn_stat & PNODE_NOREFS) {
+		pnode->pn_stat |= PNODE_DYING;
+		*ap->a_recycle = true;
+	}
 
 	VOP_UNLOCK(vp, 0);
 
@@ -1295,7 +1298,8 @@ puffs_vnop_fsync(void *v)
 	pn = VPTOPP(vp);
 
 	/* flush out information from our metacache, see vop_setattr */
-	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+	if (pn->pn_stat & PNODE_METACACHE_MASK
+	    && (pn->pn_stat & PNODE_DYING) == 0) {
 		vattr_null(&va);
 		error = VOP_SETATTR(vp, &va, FSCRED); 
 		if (error)
@@ -1320,7 +1324,7 @@ puffs_vnop_fsync(void *v)
 	 * has references neither in the kernel or the fs server.
 	 * Otherwise we continue to issue fsync() forward.
 	 */
-	if (!EXISTSOP(pmp, FSYNC))
+	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_DYING))
 		return 0;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
@@ -2167,6 +2171,16 @@ puffs_vnop_strategy(void *v)
 	if ((BUF_ISREAD(bp) && !EXISTSOP(pmp, READ))
 	    || (BUF_ISWRITE(bp) && !EXISTSOP(pmp, WRITE)))
 		ERROUT(EOPNOTSUPP);
+
+	/*
+	 * Short-circuit optimization: don't flush buffer in between
+	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
+	 */
+	if (pn->pn_stat & PNODE_DYING) {
+		KASSERT(BUF_ISWRITE(bp));
+		bp->b_resid = 0;
+		goto out;
+	}
 
 #ifdef DIAGNOSTIC
 	if (bp->b_bcount > pmp->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX)
