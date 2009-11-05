@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2009/08/06 01:00:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2009/11/05 14:17:07 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 MOUNTNAME=	lfs
-DONOTLINKLIBS=	# FFS and LFS loaded dynamically
+
+LDADD+=		-lrumpfs_ffs
+DPADD+=		${LIBRUMPFS_FFS}
 
 ISRUMP=		# don't deny it
 
