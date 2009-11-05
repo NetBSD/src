@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.52 2009/10/16 00:27:07 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.53 2009/11/05 14:09:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.52 2009/10/16 00:27:07 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.53 2009/11/05 14:09:14 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -84,7 +84,6 @@ static kauth_listener_t	module_listener;
 static modinfo_t module_dummy;
 __link_set_add_rodata(modules, module_dummy);
 
-static module_t	*module_lookup(const char *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *);
@@ -452,10 +451,12 @@ module_rele(const char *name)
  *
  *	Put a module onto the global list and update counters.
  */
-static void
+void
 module_enqueue(module_t *mod)
 {
 	int i;
+
+	KASSERT(mutex_owned(&module_lock));
 
 	/*
 	 * If there are requisite modules, put at the head of the queue.
