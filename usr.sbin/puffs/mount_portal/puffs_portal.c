@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.18 2009/03/18 09:10:16 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.19 2009/11/05 13:09:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.18 2009/03/18 09:10:16 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.19 2009/11/05 13:09:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -300,7 +300,7 @@ sendfd(int s, int fd, int error)
 	n = sendmsg(s, &msg, 0);
 	if (n == -1)
 		rv = errno;
-	else if (n < sizeof(int))
+	else if (n < (ssize_t)sizeof(int))
 		rv = EPROTO;
 
 	free(cmp);
