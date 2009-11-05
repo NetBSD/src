@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.54 2009/05/20 15:04:36 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.55 2009/11/05 11:40:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.54 2009/05/20 15:04:36 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.55 2009/11/05 11:40:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: psshfs.c,v 1.54 2009/05/20 15:04:36 pooka Exp $");
 static int	pssh_connect(struct puffs_usermount *, int);
 static void	psshfs_loopfn(struct puffs_usermount *);
 static void	usage(void);
-static void	add_ssharg(char ***, int *, char *);
+static void	add_ssharg(char ***, int *, const char *);
 static void	psshfs_notify(struct puffs_usermount *, int, int);
 
 #define SSH_PATH "/usr/bin/ssh"
@@ -73,13 +73,13 @@ unsigned int max_reads;
 static int sighup;
 
 static void
-add_ssharg(char ***sshargs, int *nargs, char *arg)
+add_ssharg(char ***sshargs, int *nargs, const char *arg)
 {
 	
 	*sshargs = realloc(*sshargs, (*nargs + 2) * sizeof(char*));
 	if (!*sshargs)
 		err(1, "realloc");
-	(*sshargs)[(*nargs)++] = arg;
+	(*sshargs)[(*nargs)++] = estrdup(arg);
 	(*sshargs)[*nargs] = NULL;
 }
 
@@ -344,7 +344,7 @@ static int
 pssh_connect(struct puffs_usermount *pu, int which)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	char **sshargs = pctx->sshargs;
+	char * const *sshargs = pctx->sshargs;
 	int fds[2];
 	pid_t pid;
 	int dnfd, x;
