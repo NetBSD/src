@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_ki2c.c,v 1.5 2009/11/02 21:38:07 christos Exp $ */
+/*	$NetBSD: dbcool_ki2c.c,v 1.6 2009/11/05 05:39:41 dyoung Exp $ */
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.5 2009/11/02 21:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.6 2009/11/05 05:39:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,13 +96,13 @@ dbcool_ki2c_attach(device_t parent, device_t self, void *aux)
 
 	ver = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_REVISION_REG);
 
-	if (sc->sc_chip->flags & DBCFLAG_4BIT_VER)
+	if (sc->sc_dc.dc_chip->flags & DBCFLAG_4BIT_VER)
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
-			"(rev 0x%02x, stepping 0x%02x)\n", sc->sc_chip->name,
+			"(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
 			ver >> 4, ver & 0x0f);
 	else
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
-			"(rev 0x%04x)\n", sc->sc_chip->name, ver);
+			"(rev 0x%04x)\n", sc->sc_dc.dc_chip->name, ver);
 
 	dbcool_setup(self);
 
