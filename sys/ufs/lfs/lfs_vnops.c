@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.223 2009/10/30 00:53:29 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.224 2009/11/05 11:54:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.223 2009/10/30 00:53:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.224 2009/11/05 11:54:49 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1426,9 +1426,7 @@ lfs_fcntl(void *v)
 		int  a_fflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-#ifdef COMPAT_50
 	struct timeval tv;
-#endif
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;
@@ -1466,17 +1464,12 @@ lfs_fcntl(void *v)
 
 	error = 0;
 	switch ((int)ap->a_command) {
-#ifdef COMPAT_50
 	    case LFCNSEGWAITALL_COMPAT_50:
-#ifdef COMPAT_20
 	    case LFCNSEGWAITALL_COMPAT:
-#endif
 		fsidp = NULL;
 		/* FALLSTHROUGH */
 	    case LFCNSEGWAIT_COMPAT_50:
-#ifdef COMPAT_20
 	    case LFCNSEGWAIT_COMPAT:
-#endif
 		{
 			struct timeval50 *tvp50
 				= (struct timeval50 *)ap->a_data;
@@ -1484,15 +1477,12 @@ lfs_fcntl(void *v)
 			tvp = &tv;
 		}
 		goto segwait_common;
-#endif /* COMPAT_50 */
 	    case LFCNSEGWAITALL:
 		fsidp = NULL;
 		/* FALLSTHROUGH */
 	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
-#ifdef COMPAT_50
 segwait_common:
-#endif /* COMPAT_50 */
 		mutex_enter(&lfs_lock);
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
@@ -1564,7 +1554,6 @@ segwait_common:
 
 		return 0;
 
-#ifdef COMPAT_30
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_system(l->l_cred,
@@ -1574,11 +1563,8 @@ segwait_common:
 		fhp->fh_fsid = *fsidp;
 		fh_size = 16;	/* former VFS_MAXFIDSIZ */
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
-#endif
 
-#ifdef COMPAT_40
 	    case LFCNIFILEFH_COMPAT2:
-#endif
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
 		fhp = (struct fhandle *)ap->a_data;
@@ -1608,9 +1594,7 @@ segwait_common:
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
 
 	    case LFCNWRAPSTOP:
-#ifdef COMPAT_40
 	    case LFCNWRAPSTOP_COMPAT:
-#endif
 		/*
 		 * Hold lfs_newseg at segment 0; if requested, sleep until
 		 * the filesystem wraps around.  To support external agents
@@ -1629,10 +1613,7 @@ segwait_common:
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
 		if (*(int *)ap->a_data == 1
-#ifdef COMPAT_40
-		    || ap->a_command == LFCNWRAPSTOP_COMPAT
-#endif
-							   ) {
+		    || ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &lfs_lock);
@@ -1645,9 +1626,7 @@ segwait_common:
 		return 0;
 
 	    case LFCNWRAPGO:
-#ifdef COMPAT_40
 	    case LFCNWRAPGO_COMPAT:
-#endif
 		/*
 		 * Having done its work, the agent wakes up the writer.
 		 * If the argument is 1, it sleeps until a new segment
@@ -1655,9 +1634,7 @@ segwait_common:
 		 */
 		mutex_enter(&lfs_lock);
 		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
-#ifdef COMPAT_40
 				   ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
-#endif
 				    *((int *)ap->a_data));
 		mutex_exit(&lfs_lock);
 		return error;
