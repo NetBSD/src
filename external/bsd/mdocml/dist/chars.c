@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.c,v 1.9 2009/09/23 11:02:21 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.12 2009/11/01 07:44:32 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
-#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,7 +35,7 @@ struct	ln {
 	int		  type;
 #define	CHARS_CHAR	 (1 << 0)
 #define	CHARS_STRING	 (1 << 1)
-#define CHARS_BOTH	 (0x03)
+#define CHARS_BOTH	 (CHARS_CHAR | CHARS_STRING)
 };
 
 #define	LINES_MAX	  351
@@ -89,13 +89,17 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	if (NULL == (tab = malloc(sizeof(struct tbl))))
-		err(1, "malloc");
-	tab->type = type;
+	tab = malloc(sizeof(struct tbl));
+	if (NULL == tab) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 
 	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
-	if (NULL == htab)
-		err(1, "malloc");
+	if (NULL == htab) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < LINES_MAX; i++) {
 		hash = (int)lines[i].code[0] - PRINT_LO;
@@ -111,6 +115,7 @@ chars_init(enum chars type)
 	}
 
 	tab->htab = htab;
+	tab->type = type;
 	return(tab);
 }
 
