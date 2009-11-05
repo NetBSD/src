@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_term.c,v 1.45 2009/10/26 04:09:45 kristaps Exp $ */
+/*	$Vendor-Id: man_term.c,v 1.47 2009/10/30 18:53:08 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -939,25 +938,18 @@ print_man_foot(struct termp *p, const struct man_meta *meta)
 
 
 static void
-print_man_head(struct termp *p, const struct man_meta *meta)
+print_man_head(struct termp *p, const struct man_meta *m)
 {
-	char		*buf, *title;
+	char		buf[BUFSIZ], title[BUFSIZ];
 
 	p->rmargin = p->maxrmargin;
 	p->offset = 0;
+	buf[0] = title[0] = '\0';
 
-	if (NULL == (buf = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
-	if (NULL == (title = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
+	if (m->vol)
+		strlcpy(buf, m->vol, BUFSIZ);
 
-	if (meta->vol)
-		(void)strlcpy(buf, meta->vol, p->rmargin);
-	else
-		*buf = 0;
-
-	(void)snprintf(title, p->rmargin, "%s(%d)", 
-			meta->title, meta->msec);
+	snprintf(title, BUFSIZ, "%s(%d)", m->title, m->msec);
 
 	p->offset = 0;
 	p->rmargin = (p->maxrmargin - strlen(buf) + 1) / 2;
@@ -984,8 +976,4 @@ print_man_head(struct termp *p, const struct man_meta *meta)
 	p->rmargin = p->maxrmargin;
 	p->offset = 0;
 	p->flags &= ~TERMP_NOSPACE;
-
-	free(title);
-	free(buf);
 }
-

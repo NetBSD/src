@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tree.c,v 1.16 2009/10/13 10:57:25 kristaps Exp $ */
+/*	$Vendor-Id: tree.c,v 1.18 2009/10/30 18:53:09 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,9 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "mdoc.h"
 #include "man.h"

@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mandoc.1,v 1.44 2009/10/26 04:15:42 kristaps Exp $
+.\"	$Vendor-Id: mandoc.1,v 1.45 2009/10/26 15:44:51 kristaps Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -227,6 +227,11 @@ flag.
 When rewinding the scope of a block macro, forces the compiler to ignore
 scope violations.  This can seriously mangle the resulting tree.
 .Pq mdoc only
+.
+.It Fl f Ns Ar ign-escape
+Ignore invalid escape sequences.
+This is the default, but the option can be used to override an earlier
+.Fl f Ns Ar strict .
 .
 .It Fl f Ns Ar no-ign-escape
 Don't ignore invalid escape sequences.

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_term.c,v 1.96 2009/10/26 04:09:46 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_term.c,v 1.100 2009/10/31 06:50:25 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -315,7 +314,7 @@ print_node(DECL_ARGS)
 	bold = p->bold;
 	under = p->under;
 
-	bzero(&npair, sizeof(struct termpair));
+	memset(&npair, 0, sizeof(struct termpair));
 	npair.ppair = pair;
 
 	if (MDOC_TEXT != n->type) {
@@ -348,8 +347,7 @@ print_node(DECL_ARGS)
 static void
 print_foot(DECL_ARGS)
 {
-	char		 buf[DATESIZ];
-	char		*os;
+	char		buf[DATESIZ], os[BUFSIZ];
 
 	/* 
 	 * Output the footer in new-groff style, that is, three columns
@@ -359,12 +357,8 @@ print_foot(DECL_ARGS)
 	 * SYSTEM                  DATE                    SYSTEM
 	 */
 
-	if (NULL == (os = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
-
 	time2a(m->date, buf, DATESIZ);
-
-	(void)strlcpy(os, m->os, p->rmargin);
+	strlcpy(os, m->os, BUFSIZ);
 
 	term_vspace(p);
 
@@ -393,8 +387,6 @@ print_foot(DECL_ARGS)
 	p->offset = 0;
 	p->rmargin = p->maxrmargin;
 	p->flags = 0;
-
-	free(os);
 }
 
 
@@ -403,15 +395,10 @@ print_foot(DECL_ARGS)
 static void
 print_head(DECL_ARGS)
 {
-	char		*buf, *title;
+	char		buf[BUFSIZ], title[BUFSIZ];
 
 	p->rmargin = p->maxrmargin;
 	p->offset = 0;
-
-	if (NULL == (buf = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
-	if (NULL == (title = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
 
 	/*
 	 * The header is strange.  It has three components, which are
@@ -427,15 +414,15 @@ print_head(DECL_ARGS)
 	 */
 
 	assert(m->vol);
-	(void)strlcpy(buf, m->vol, p->rmargin);
+	strlcpy(buf, m->vol, BUFSIZ);
 
 	if (m->arch) {
-		(void)strlcat(buf, " (", p->rmargin);
-		(void)strlcat(buf, m->arch, p->rmargin);
-		(void)strlcat(buf, ")", p->rmargin);
+		strlcat(buf, " (", BUFSIZ);
+		strlcat(buf, m->arch, BUFSIZ);
+		strlcat(buf, ")", BUFSIZ);
 	}
 
-	snprintf(title, p->rmargin, "%s(%d)", m->title, m->msec);
+	snprintf(title, BUFSIZ, "%s(%d)", m->title, m->msec);
 
 	p->offset = 0;
 	p->rmargin = (p->maxrmargin - strlen(buf) + 1) / 2;
@@ -462,9 +449,6 @@ print_head(DECL_ARGS)
 	p->offset = 0;
 	p->rmargin = p->maxrmargin;
 	p->flags &= ~TERMP_NOSPACE;
-
-	free(title);
-	free(buf);
 }
 
 
@@ -1650,7 +1634,7 @@ termp_xx_pre(DECL_ARGS)
 		pp = "BSDI BSD/OS";
 		break;
 	case (MDOC_Dx):
-		pp = "DragonFlyBSD";
+		pp = "DragonFly";
 		break;
 	case (MDOC_Fx):
 		pp = "FreeBSD";
