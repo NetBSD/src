@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.32 2009/03/18 16:00:13 cegger Exp $	*/
+/*	$NetBSD: snapper.c,v 1.33 2009/11/05 05:37:30 dyoung Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.32 2009/03/18 16:00:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.33 2009/11/05 05:37:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -800,16 +800,20 @@ snapper_defer(device_t dev)
 {
 	struct snapper_softc *sc;
 	device_t dv;
+	deviter_t di;
 	struct deq_softc *deq;
 	
 	sc = device_private(dev);
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (device_is_a(dv, "deq")) {
 			deq = device_private(dv);
 			sc->sc_i2c = deq->sc_i2c;
 			sc->sc_deqaddr = deq->sc_address;
 		}
 	}
+	deviter_release(&di);
 
 	/* If we don't find a codec, it's not the end of the world;
 	 * we can control the volume in software in this case.
