@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.147 2009/11/04 21:23:03 rmind Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.148 2009/11/05 18:39:38 rafal Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.147 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.148 2009/11/05 18:39:38 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,6 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 {
 	int options, status;
 	int error;
-	int was_zombie;
 	struct rusage ru;
 	svr4_siginfo_t i;
 	int id = SCARG(uap, id);
@@ -1037,8 +1036,7 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 	         SCARG(uap, grp), id,
 		 SCARG(uap, info), SCARG(uap, options)));
 
-	error = do_sys_wait(l, &id, &status, options, &ru,
-	    &was_zombie);
+	error = do_sys_wait(&id, &status, options, &ru);
 
 	retval[0] = id;
 	if (error != 0)
