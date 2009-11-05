@@ -16,6 +16,8 @@ typedef enum devact_level {
 struct device_lock;
 struct device_suspensor;
 
+typedef uint64_t devgen_t;
+
 typedef struct device_lock *device_lock_t;
 typedef const struct device_suspensor *device_suspensor_t;
 #endif
