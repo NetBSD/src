@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.115 2009/11/03 16:08:00 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.116 2009/11/05 04:19:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.115 2009/11/03 16:08:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.116 2009/11/05 04:19:47 thorpej Exp $");
 
 #include "assym.h"
 
@@ -267,17 +267,16 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	/* yes */
 
 	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
-	GET_CPUINFO
-	mov	v0, s3				/* squirrel away our CPU info */
+3:	GET_CPUINFO
 
 	/* check for AST */
-3:	ldq	t1, CPU_INFO_CURLWP(s3)
+	ldq	t1, CPU_INFO_CURLWP(v0)
 	ldl	t3, L_MD_ASTPENDING(t1)		/* AST pending? */
 	bne	t3, 7f				/* yes */
 	/* no: headed back to user space */
 
 	/* Enable the FPU based on whether the current proc is fpcurlwp. */
-4:	ldq	t2, CPU_INFO_FPCURLWP(s3)
+4:	ldq	t2, CPU_INFO_FPCURLWP(v0)
 	cmpeq	t1, t2, t1
 	mov	zero, a0
 	cmovne	t1, 1, a0
