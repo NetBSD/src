@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.17 2009/10/20 00:51:15 snj Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.18 2009/11/05 15:23:55 chuck Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.17 2009/10/20 00:51:15 snj Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.18 2009/11/05 15:23:55 chuck Exp $");
 #endif
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: ypxfr.c,v 1.17 2009/10/20 00:51:15 snj Exp $");
 
 DBM	*db;
 
+static	int yperr2yppush(int);
 static	int ypxfr_foreach(int, char *, int, char *, int, char *);
 
 int	main(int, char *[]);
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "usage: %s [-cf] [-d domain] [-h host] %s\n",
 		   getprogname(),
 		   "[-s domain] [-C tid prog ipadd port] mapname");
-		goto punt;
+		exit(1);
 	}
 
 #ifdef DEBUG
@@ -190,7 +191,7 @@ main(int argc, char **argv)
 		if (status == 0)
 			status = YPPUSH_SUCC;
 		else {
-			status = -status;
+			status = YPPUSH_MADDR;
 			goto punt;
 		}
 	}
@@ -266,6 +267,30 @@ main(int argc, char **argv)
 	exit (0);
 }
 
+/*
+ * yperr2yppush: convert error codes from functions like yp_order_host,
+ * yp_master_host, and yp_match_host into YPPUSH rpc status values.
+ */
+static int
+yperr2yppush(int yperr) {
+	switch (yperr) {
+	case YPERR_DOMAIN:
+		return(YPPUSH_NODOM);
+	case YPERR_MAP:
+		return(YPPUSH_NOMAP);
+	case YPERR_KEY:
+		return(YPPUSH_YPERR);
+	case YPERR_BADDB:
+		return(YPPUSH_YPERR);
+	}
+
+	/*
+	 * generic error status for the rest (BADARGS, RPC, YPERR, RESRC,
+	 * NOMORE, PMAP, YPBIND, YPSERV, NODOM, VERS, ACCESS, BUSY)
+	 */
+	return(YPPUSH_XFRERR);   /* generic error status */
+}
+
 static int
 ypxfr_foreach(int status, char *keystr, int keylen, char *valstr,
 	      int vallen, char *data)
@@ -284,6 +309,7 @@ ypxfr_foreach(int status, char *keystr, int keylen, char *valstr,
 	val.dptr = valstr;
 	val.dsize = strlen(valstr);
 
+        /* XXX: suspect... ignoring return value here */
 	ypdb_store(db, key, val, YPDB_INSERT);
 
 	return (0);
@@ -365,6 +391,8 @@ get_remote_ordernum(CLIENT *client, char *domain, char *map,
 			status = YPPUSH_AGE;
 		else
 			status = YPPUSH_SUCC;
+	} else {
+		status = yperr2yppush(status);
 	}
 
 	return status;
@@ -470,6 +498,8 @@ add_master(CLIENT *client, char *domain, char *map, DBM *ldb)
 			status = YPPUSH_SUCC;
 		else
 			status = YPPUSH_DBM;
+	} else {
+		status = yperr2yppush(status);
 	}
 
 	return status;
@@ -502,6 +532,8 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *ldb)
 			else
 				status = YPPUSH_DBM;
 		}
+	} else {
+		status = yperr2yppush(status);
 	}
 
 	return status;
@@ -534,6 +566,8 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *ldb)
 			else
 				status = YPPUSH_DBM;
 		}
+	} else {
+		status = yperr2yppush(status);
 	}
 
 	return status;
