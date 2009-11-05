@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.181 2009/10/16 23:36:05 pooka Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.182 2009/11/05 08:11:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.181 2009/10/16 23:36:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.182 2009/11/05 08:11:24 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -1145,7 +1145,7 @@ tryagain:
 	/*
 	 * Wait for the reply from our send or the timer's.
 	 */
-	if (!error || error == EPIPE)
+	if (!error || error == EPIPE || error == EWOULDBLOCK)
 		error = nfs_reply(rep, lwp);
 
 	/*
