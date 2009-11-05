@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.2 2009/10/26 14:55:12 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.3 2009/11/05 18:28:10 joerg Exp $
 
 .include <bsd.own.mk>
 
-VERSION=	1.9.10
+VERSION=	1.9.13
 
 CPPFLAGS+=	-DVERSION=\"${VERSION}\"
 
