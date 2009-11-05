@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.5 2009/10/07 13:19:45 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.6 2009/11/05 18:39:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.5 2009/10/07 13:19:45 joerg Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.6 2009/11/05 18:39:07 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1.1.5 2009/10/07 13:19:45 joerg Exp $");
 
 static DB   *pkgdbp;
 static char *pkgdb_dir = NULL;
-static char  pkgdb_cache[MaxPathSize];
 
 /*
  *  Open the pkg-database
@@ -310,8 +309,13 @@ _pkgdb_getPKGDB_DIR(void)
 void
 _pkgdb_setPKGDB_DIR(const char *dir)
 {
-	(void) snprintf(pkgdb_cache, sizeof(pkgdb_cache), "%s", dir);
-	pkgdb_dir = pkgdb_cache;
+	char *new_dir;
+
+	if (dir == pkgdb_dir)
+		return;
+	new_dir = xstrdup(dir);
+	free(pkgdb_dir);
+	pkgdb_dir = new_dir;
 }
 
 char *
