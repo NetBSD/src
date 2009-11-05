@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.137 2009/11/05 19:22:57 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.138 2009/11/05 19:42:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.137 2009/11/05 19:22:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.138 2009/11/05 19:42:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -91,16 +90,9 @@ int	puffs_vnop_fifo_write(void *);
 
 int	puffs_vnop_checkop(void *);
 
-
-#if 0
-#define puffs_lock genfs_lock
-#define puffs_unlock genfs_unlock
-#define puffs_islocked genfs_islocked
-#else
-int puffs_vnop_lock(void *);
-int puffs_vnop_unlock(void *);
-int puffs_vnop_islocked(void *);
-#endif
+#define puffs_vnop_lock genfs_lock
+#define puffs_vnop_unlock genfs_unlock
+#define puffs_vnop_islocked genfs_islocked
 
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
@@ -2198,7 +2190,7 @@ puffs_vnop_strategy(void *v)
 		mutex_enter(&vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
-		if (pn->pn_stat & PNODE_SUSPEND)
+		if (pn->pn_stat & PNODE_FAF)
 			dofaf = 1;
 		mutex_exit(&vp->v_interlock);
 	}
@@ -2556,77 +2548,6 @@ puffs_vnop_getpages(void *v)
 
 	return error;
 }
-
-int
-puffs_vnop_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-	int flags = ap->a_flags;
-
-#if 0
-	DPRINTF(("puffs_lock: lock %p, args 0x%x\n", vp, ap->a_flags));
-#endif
-
-	if (flags & LK_INTERLOCK) {
-		mutex_exit(&vp->v_interlock);
-		flags &= ~LK_INTERLOCK;
-	}
-
-	/*
-	 * XXX: this avoids deadlocking when we're suspending.
-	 * e.g. some ops holding the vnode lock might be blocked for
-	 * the vfs transaction lock so we'd deadlock.
-	 *
-	 * Now once again this is skating on the thin ice of modern life,
-	 * since we are breaking the consistency guarantee provided
-	 * _to the user server_ by vnode locking.  Hopefully this will
-	 * get fixed soon enough by getting rid of the dependency on
-	 * vnode locks alltogether.
-	 */
-	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
-		return 0;
-	}
-
-	return vlockmgr(&vp->v_lock, flags);
-}
-
-int
-puffs_vnop_unlock(void *v)
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-
-#if 0
-	DPRINTF(("puffs_unlock: lock %p, args 0x%x\n", vp, ap->a_flags));
-#endif
-
-	/* XXX: see puffs_lock() */
-	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
-		return 0;
-	}
-
-	return vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE);
-}
-
-int
-puffs_vnop_islocked(void *v)
-{
-	struct vop_islocked_args *ap = v;
-	int rv;
-
-	rv = vlockstatus(&ap->a_vp->v_lock);
-	return rv;
-}
-
 
 /*
  * spec & fifo.  These call the miscfs spec and fifo vectors, but issue
