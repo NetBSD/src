@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.202 2009/11/04 16:54:00 pooka Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.203 2009/11/05 18:07:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.202 2009/11/04 16:54:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.203 2009/11/05 18:07:19 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -514,6 +514,7 @@ void
 setroot(device_t bootdv, int bootpartition)
 {
 	device_t dv;
+	deviter_t di;
 	int len, majdev;
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
@@ -844,10 +845,12 @@ setroot(device_t bootdv, int bootpartition)
 		}
 	} else {				/* (c) */
 		if (DEV_USES_PARTITIONS(rootdv) == 0) {
-			for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-			    dv = TAILQ_NEXT(dv, dv_list))
+			for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+			     dv != NULL;
+			     dv = deviter_next(&di))
 				if (isswap(dv))
 					break;
+			deviter_release(&di);
 			if (dv == NULL)
 				goto nodumpdev;
 
@@ -891,10 +894,12 @@ static device_t
 getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 {
 	device_t dv;
+	deviter_t di;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", device_xname(dv),
 				    'a' + MAXPARTITIONS - 1);
@@ -903,6 +908,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 			if (isdump == 0 && device_class(dv) == DV_IFNET)
 				printf(" %s", device_xname(dv));
 		}
+		deviter_release(&di);
 		dkwedge_print_wnames();
 		if (isdump)
 			printf(" none");
