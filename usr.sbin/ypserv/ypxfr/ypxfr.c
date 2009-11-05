@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.18 2009/11/05 15:23:55 chuck Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.19 2009/11/05 21:26:25 chuck Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.18 2009/11/05 15:23:55 chuck Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.19 2009/11/05 21:26:25 chuck Exp $");
 #endif
 
 #include <sys/param.h>
@@ -241,7 +241,7 @@ main(int argc, char **argv)
 		if (status > 0)
 			status = install_db(domain, map, temp_map);
 		else
-			status = unlink_db(domain, map, temp_map);
+			(void) unlink_db(domain, map, temp_map);
 	}
 	
  punt:
@@ -521,7 +521,10 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *ldb)
 	status = yp_match_host(client, domain, map,
 	    k.dptr, k.dsize, &value, &vallen);
 
-	if (status == 0 && value) {
+	if (status == YPERR_KEY) {
+		/* this is an optional key/val, so it may not be present */
+		status = YPPUSH_SUCC;  
+	} else if (status == 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
@@ -555,7 +558,10 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *ldb)
 	status = yp_match_host(client, domain, map,
 	    k.dptr, k.dsize, &value, &vallen);
 	
-	if (status == 0 && value != 0) {
+	if (status == YPERR_KEY) {
+		/* this is an optional key/val, so it may not be present */
+		status = YPPUSH_SUCC;  
+	} else if (status == 0 && value != 0) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
