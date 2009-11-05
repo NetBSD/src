@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libmdoc.h,v 1.29 2009/10/15 02:56:51 kristaps Exp $ */
+/*	$Vendor-Id: libmdoc.h,v 1.30 2009/10/30 05:58:37 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -44,7 +44,6 @@ enum	merr {
 	ETAILWS = 0,
 	EQUOTPARM,
 	EQUOTTERM,
-	EMALLOC,
 	EARGVAL,	
 	EBODYPROL,
 	EPROLBODY,

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.h,v 1.22 2009/10/24 05:45:04 kristaps Exp $ */
+/*	$Vendor-Id: man.h,v 1.23 2009/10/30 05:58:37 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -105,7 +105,7 @@ struct	man;
 
 void	 	  man_free(struct man *);
 struct	man	 *man_alloc(void *, int, const struct man_cb *);
-int		  man_reset(struct man *);
+void		  man_reset(struct man *);
 int	 	  man_parseln(struct man *, int, char *buf);
 int		  man_endparse(struct man *);
 

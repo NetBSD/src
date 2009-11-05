@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_strings.c,v 1.11 2009/10/26 04:09:46 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_strings.c,v 1.13 2009/11/02 06:22:46 kristaps Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -55,10 +55,6 @@ static	const struct mdoc_secname secnames[SECNAME_MAX] = {
 	{ "BUGS", SEC_BUGS },
 	{ "SECURITY CONSIDERATIONS", SEC_SECURITY }
 };
-
-#ifdef __linux__
-extern	char		*strptime(const char *, const char *, struct tm *);
-#endif
 
 
 int
@@ -122,28 +118,6 @@ mdoc_atosec(const char *p)
 			return(secnames[i].sec);
 
 	return(SEC_CUSTOM);
-}
-
-
-time_t
-mdoc_atotime(const char *p)
-{
-	struct tm	 tm;
-	char		*pp;
-
-	bzero(&tm, sizeof(struct tm));
-
-	if (0 == strcmp(p, "$" "Mdocdate$"))
-		return(time(NULL));
-	if ((pp = strptime(p, "$" "Mdocdate: %b %d %Y $", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	/* XXX - this matches "June 1999", which is wrong. */
-	if ((pp = strptime(p, "%b %d %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	if ((pp = strptime(p, "%b %d, %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-
-	return(0);
 }
 
 
