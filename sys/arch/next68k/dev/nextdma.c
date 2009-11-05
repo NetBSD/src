@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.44 2008/12/17 17:12:52 cegger Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.45 2009/11/05 18:11:09 dyoung Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.44 2008/12/17 17:12:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.45 2009/11/05 18:11:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,17 +137,22 @@ static int attached = 0;
 struct nextdma_softc *
 nextdma_findchannel(const char *name)
 {
-	struct device *dev = TAILQ_FIRST(&alldevs);
+	device_t dev;
+	deviter_t di;
 
-	while (dev != NULL) {
-		if (!strncmp(dev->dv_xname, "nextdma", 7)) {
-			struct nextdma_softc *nsc = (struct nextdma_softc *)dev;
-			if (!strcmp (nsc->sc_chan->nd_name, name))
-				return (nsc);
+	for (dev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dev != NULL;
+	     dev = deviter_next(&di)) {
+		if (strncmp(dev->dv_xname, "nextdma", 7) == 0) {
+			struct nextdma_softc *nsc = device_private(dev);
+			if (strcmp(nsc->sc_chan->nd_name, name) == 0)
+				break;
 		}
-		dev = TAILQ_NEXT(dev, dv_list);
 	}
-	return (NULL);
+	deviter_release(&di);
+	if (dev == NULL)
+		return NULL;
+	return device_private(dev);
 }
 
 int

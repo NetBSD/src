@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2009/11/05 18:15:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2009/11/05 18:15:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ cpu_configure(void)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 	const char *name;
 
@@ -78,7 +78,7 @@ is_valid_disk(struct device *dv)
  * Return non-zero if disk device matches bootinfo.
  */
 static int
-match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
+match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 {
 	struct vnode *tmpvn;
 	int error;
@@ -153,7 +153,8 @@ static void
 findroot(void)
 {
 	struct btinfo_bootdisk *bid;
-	struct device *dv;
+	device_t dv;
+	deviter_t di;
 
 	if (booted_device)
 		return;
@@ -166,8 +167,9 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (dv->dv_class != DV_DISK)
 				continue;
 
@@ -188,6 +190,7 @@ bootdisk_found:
 			booted_device = dv;
 			booted_partition = bid->partition;
 		}
+		deviter_release(&di);
 
 		if (booted_device)
 			return;

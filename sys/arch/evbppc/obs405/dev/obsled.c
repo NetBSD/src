@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.6 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: obsled.c,v 1.7 2009/11/05 18:16:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.6 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.7 2009/11/05 18:16:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -178,19 +178,21 @@ obsled_set_state(struct obsled_softc *sc)
 void
 obs266_led_set(int led)
 {
-	struct device *dp = NULL;
-	struct devicelist *dlp = &alldevs;
+	device_t dv;
+	deviter_t di;
 
 	/*
 	 * Sarching "obsled" devices from device tree.
 	 * Do you have something better idea?
 	 */
-        for (dp = TAILQ_FIRST(dlp); dp != NULL; dp = TAILQ_NEXT(dp, dv_list)) {
-		if (device_is_a(dp, "obsles")) {
-			struct obsled_softc *sc = (struct obsled_softc *)dp;
+        for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
+		if (device_is_a(dv, "obsles")) {
+			struct obsled_softc *sc = device_private(dv);
 			sc->sc_led_state =
-			    (led & (1 << device_unit(dp))) >> device_unit(dp);
+			    (led & (1 << device_unit(dv))) >> device_unit(dv);
 			obsled_set_state(sc);
 		}
 	}
+	deviter_release(&di);
 }
