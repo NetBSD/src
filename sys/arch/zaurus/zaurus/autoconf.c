@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2009/03/11 09:02:05 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2009/11/05 18:17:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2009/03/11 09:02:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2009/11/05 18:17:34 dyoung Exp $");
 
 #include "opt_md.h"
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2009/03/11 09:02:05 nonaka Exp $");
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 
-static void handle_wedges(struct device *dv, int par);
-static int is_valid_disk(struct device *dv);
-static int match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid);
+static void handle_wedges(device_t dv, int par);
+static int is_valid_disk(device_t dv);
+static int match_bootdisk(device_t dv, struct btinfo_bootdisk *bid);
 static void findroot(void);
 
 void
@@ -70,7 +70,7 @@ cpu_configure(void)
 }
 
 static void
-handle_wedges(struct device *dv, int par)
+handle_wedges(device_t dv, int par)
 {
 
 	if (config_handle_wedges(dv, par) == 0)
@@ -81,7 +81,7 @@ handle_wedges(struct device *dv, int par)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)
@@ -98,7 +98,7 @@ is_valid_disk(struct device *dv)
  * Return non-zero if disk device matches bootinfo.
  */
 static int
-match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
+match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 {
 	struct vnode *tmpvn;
 	int error;
@@ -148,12 +148,15 @@ findroot(void)
 	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	device_t dv;
+	deviter_t di;
 
 	if (booted_device)
 		return;
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			cfdata_t cd;
 			size_t len;
 
@@ -166,9 +169,12 @@ findroot(void)
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == cd->cf_unit) {
 				handle_wedges(dv, biv->devname[len + 1] - 'a');
-				return;
+				break;
 			}
 		}
+		deviter_release(&di);
+		if (dv != NULL)
+			return;
 	}
 
 	if ((bid = lookup_bootinfo(BTINFO_BOOTDISK)) != NULL) {
@@ -179,7 +185,9 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -206,6 +214,7 @@ findroot(void)
 			}
 			handle_wedges(dv, bid->partition);
 		}
+		deviter_release(&di);
 
 		if (booted_device)
 			return;
@@ -224,7 +233,7 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 
 	/* Nothing to do */
