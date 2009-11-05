@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.11 2009/10/08 16:19:59 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.12 2009/11/05 18:39:00 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.11 2009/10/08 16:19:59 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.12 2009/11/05 18:39:00 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -422,7 +422,12 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	pkg_install_config();
+	/*
+	 * config-var is reading the config file implicitly,
+	 * so skip it here.
+	 */
+	if (strcasecmp(argv[0], "config-var") != 0)
+		pkg_install_config();
 
 	if (use_default_sfx)
 		(void) strlcpy(sfx, DEFAULT_SFX, sizeof(sfx));

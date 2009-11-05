@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.4 2009/08/06 16:55:21 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.5 2009/11/05 18:39:02 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.4 2009/08/06 16:55:21 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.5 2009/11/05 18:39:02 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -167,13 +167,6 @@ pkg_perform(const char *pkg)
 	}
 
 	plist.head = plist.tail = NULL;
-
-	/* If a SrcDir override is set, add it now */
-	if (SrcDir) {
-		if (Verbose && !PlistOnly)
-			printf("Using SrcDir value of %s\n", (realprefix) ? realprefix : SrcDir);
-		add_plist(&plist, PLIST_SRC, SrcDir);
-	}
 
 	/* Stick the dependencies, if any, at the top */
 	if (Pkgdeps)
