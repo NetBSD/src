@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.66 2009/11/04 21:23:03 rmind Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.67 2009/11/05 18:39:38 rafal Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.66 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.67 2009/11/05 18:39:38 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1006,7 +1006,7 @@ svr4_32_setinfo(int pid, struct rusage *ru, int st, svr4_32_siginfo_tp si)
 int
 svr4_32_sys_waitsys(struct lwp *l, const struct svr4_32_sys_waitsys_args *uap, register_t *retval)
 {
-	int options, error, status, was_zombie;;
+	int options, error, status;
 	struct rusage ru;
 	int id = SCARG(uap, id);
 
@@ -1041,8 +1041,7 @@ svr4_32_sys_waitsys(struct lwp *l, const struct svr4_32_sys_waitsys_args *uap, r
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = do_sys_wait(l, &id, &status, options, &ru,
-	    &was_zombie);
+	error = do_sys_wait(&id, &status, options, &ru);
 
 	retval[0] = id;
 	if (error != 0)
