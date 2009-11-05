@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.131 2009/11/05 16:59:55 pooka Exp $	*/
+/*	$NetBSD: lfs.h,v 1.132 2009/11/05 17:16:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
-
-#include <compat/sys/time_types.h>
 
 /*
  * Compile-time options for LFS.
@@ -1103,7 +1101,13 @@ struct lfs_fhandle {
 # define LFS_WRAP_WAITING 0x1
 #define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
 
-/* Compat */
+/*
+ * Compat.  Defined for kernel only.  Userland always uses
+ * "the one true version".
+ */
+#ifdef _KERNEL
+#include <compat/sys/time_types.h>
+
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
@@ -1112,6 +1116,7 @@ struct lfs_fhandle {
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 #define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
+#endif
 
 #ifdef _KERNEL
 /* XXX MP */
