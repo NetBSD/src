@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.4 2009/10/24 11:36:59 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.5 2009/11/05 14:13:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.4 2009/10/24 11:36:59 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.5 2009/11/05 14:13:03 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -45,18 +45,19 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.4 2009/10/24 11:36:59 pooka Exp $");
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)				\
     || (defined(__sun__) && defined(__svr4__))
-static void
+static int
 process(const char *soname, rump_modinit_fn domodinit)
 {
 	void *handle;
 	struct modinfo **mi, **mi_end;
+	int loaded = 0;
 
 	if (strstr(soname, "librump") == NULL)
-		return;
+		return 0;
 
 	handle = dlopen(soname, RTLD_LAZY);
 	if (handle == NULL)
-		return;
+		return 0;
 
 	mi = dlsym(handle, "__start_link_set_modules");
 	if (!mi)
@@ -66,11 +67,13 @@ process(const char *soname, rump_modinit_fn domodinit)
 		goto out;
 
 	for (; mi < mi_end; mi++)
-		domodinit(*mi, NULL);
+		if (domodinit(*mi, NULL) == 0)
+			loaded = 1;
 	assert(mi == mi_end);
 
  out:
 	dlclose(handle);
+	return loaded;
 }
 
 /*
@@ -80,24 +83,28 @@ process(const char *soname, rump_modinit_fn domodinit)
 void
 rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit)
 {
-	struct link_map *map;
+	struct link_map *map, *origmap;
+	int couldload;
 
-	if (dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map) == -1) {
+	if (dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &origmap) == -1) {
 		fprintf(stderr, "warning: rumpuser module bootstrap "
 		    "failed: %s\n", dlerror());
 		return;
 	}
-
 	/*
-	 * Load starting from last object because of
-	 * possible dependencies.
-	 * XXX: not perfect.  this could retry the list until no (or all)
-	 * modules were be loaded?
+	 * Process last->first because that's the most probable
+	 * order for dependencies
 	 */
-	for (; map->l_next; map = map->l_next)
+	for (; origmap->l_next; origmap = origmap->l_next)
 		continue;
-	for (; map; map = map->l_prev)
-		process(map->l_name, domodinit);
+
+	do {
+		couldload = 0;
+		map = origmap;
+		for (; map; map = map->l_prev)
+			if (process(map->l_name, domodinit))
+				couldload = 1;
+	} while (couldload);
 }
 #else
 void
