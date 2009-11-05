@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.2 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3 2009/11/05 16:59:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,92 +37,7 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-/*
- * Structure returned by gettimeofday(2) system call,
- * and used in other calls.
- */
-struct timeval50 {
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
-};
-
-struct	itimerval50 {
-	struct	timeval50 it_interval;	/* timer interval */
-	struct	timeval50 it_value;	/* current value */
-};
-
-/*
- * Structure defined by POSIX.1b to be like a timeval.
- */
-struct timespec50 {
-	int32_t	tv_sec;		/* seconds */
-	long	tv_nsec;	/* and nanoseconds */
-};
-
-/*
- * Structure defined by POSIX.1b to be like a itimerval, but with
- * timespecs. Used in the timer_*() system calls.
- */
-struct	itimerspec50 {
-	struct	timespec50 it_interval;
-	struct	timespec50 it_value;
-};
-
-static __inline void timeval50_to_timeval(const struct timeval50 *ts50,
-    struct timeval *ts)
-{
-	ts->tv_sec = ts50->tv_sec;
-	ts->tv_usec = (suseconds_t)ts50->tv_usec;
-}
-
-static __inline void timeval_to_timeval50(const struct timeval *ts,
-    struct timeval50 *ts50)
-{
-	ts50->tv_sec = (long)ts->tv_sec;
-	ts50->tv_usec = ts->tv_usec;
-}
-
-static __inline void timespec50_to_timespec(const struct timespec50 *ts50,
-    struct timespec *ts)
-{
-	ts->tv_sec = ts50->tv_sec;
-	ts->tv_nsec = ts50->tv_nsec;
-}
-
-static __inline void timespec_to_timespec50(const struct timespec *ts,
-    struct timespec50 *ts50)
-{
-	ts50->tv_sec = (int32_t)ts->tv_sec;
-	ts50->tv_nsec = ts->tv_nsec;
-}
-
-static __inline void itimerval50_to_itimerval(const struct itimerval50 *ts50,
-    struct itimerval *ts)
-{
-	timeval50_to_timeval(&ts50->it_interval, &ts->it_interval);
-	timeval50_to_timeval(&ts50->it_value, &ts->it_value);
-}
-
-static __inline void itimerval_to_itimerval50(const struct itimerval *ts,
-    struct itimerval50 *ts50)
-{
-	timeval_to_timeval50(&ts->it_interval, &ts50->it_interval);
-	timeval_to_timeval50(&ts->it_value, &ts50->it_value);
-}
-
-static __inline void itimerspec50_to_itimerspec(const struct itimerspec50 *ts50,
-    struct itimerspec *ts)
-{
-	timespec50_to_timespec(&ts50->it_interval, &ts->it_interval);
-	timespec50_to_timespec(&ts50->it_value, &ts->it_value);
-}
-
-static __inline void itimerspec_to_itimerspec50(const struct itimerspec *ts,
-    struct itimerspec50 *ts50)
-{
-	timespec_to_timespec50(&ts->it_interval, &ts50->it_interval);
-	timespec_to_timespec50(&ts->it_value, &ts50->it_value);
-}
+#include <compat/sys/time_types.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 __BEGIN_DECLS
