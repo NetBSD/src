@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.8 2009/03/01 10:18:30 aymeric Exp $ */
+/* $Id: pbms.c,v 1.9 2009/11/05 05:37:30 dyoung Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -132,38 +132,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-
-/*
- * Debugging output.
- */
-
-
-/* XXX Should be redone, and its use should be added back. */
-
-#ifdef PBMS_DEBUG
-
-/*
- * Print the error message (preceded by the driver and function)
- * specified by the string literal fmt (followed by newline) if
- * pbmsdebug is greater than n. The macro may only be used in the
- * scope of sc, which must be castable to struct device *. There must
- * be at least one vararg. Do not define PBMS_DEBUG on non-C99
- * compilers.
- */
-
-#define DPRINTFN(n, fmt, ...)						      \
-do {									      \
-	if (pbmsdebug > (n))						      \
-		logprintf("%s: %s: " fmt "\n",				      \
-			  ((struct device *) sc)->dv_xname,		      \
-			  __func__, __VA_ARGS__);			      \
-} while ( /* CONSTCOND */ 0)
-
-int pbmsdebug = 0;
-
-#endif /* PBMS_DEBUG */
-
-
 /*
  * Magic numbers.
  */
@@ -266,7 +234,7 @@ struct pbms_softc {
 	int sc_acc[PBMS_SENSORS];     /* Accumulated sensor values. */
 	unsigned char sc_prev[PBMS_SENSORS];   /* Previous sample. */
 	unsigned char sc_sample[PBMS_SENSORS]; /* Current sample. */
-	struct device *sc_wsmousedev; /* WSMouse device. */
+	device_t sc_wsmousedev; /* WSMouse device. */
 	int sc_noise;		      /* Amount of noise. */
 	int sc_theshold;	      /* Threshold value. */
 	int sc_x;		      /* Virtual position in horizontal 
@@ -305,8 +273,14 @@ const struct wsmouse_accessops pbms_accessops = {
 };
 
 /* This take cares also of the basic device registration. */
-USB_DECLARE_DRIVER(pbms);
-
+int pbms_match(device_t, cfdata_t, void *);
+void pbms_attach(device_t, device_t, void *);
+int pbms_detach(device_t, int);
+void pbms_childdet(device_t, device_t);
+int pbms_activate(device_t, enum devact);
+extern struct cfdriver pbms_cd;
+CFATTACH_DECL2_NEW(pbms, sizeof(struct pbms_softc), pbms_match, pbms_attach,
+    pbms_detach, pbms_activate, NULL, pbms_childdet);
 
 /*
  * Basic driver. 
@@ -316,7 +290,7 @@ USB_DECLARE_DRIVER(pbms);
 /* Try to match the device at some uhidev. */
 
 int 
-pbms_match(struct device *parent, struct cfdata *match, void *aux)
+pbms_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	usb_device_descriptor_t *udd;
@@ -343,7 +317,7 @@ pbms_match(struct device *parent, struct cfdata *match, void *aux)
 /* Attach the device. */
 
 void
-pbms_attach(struct device *parent, struct device *self, void *aux)
+pbms_attach(device_t parent, device_t self, void *aux)
 {
 	struct wsmousedev_attach_args a;
 	struct uhidev_attach_arg *uha = aux;
@@ -399,37 +373,35 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 
 /* Detach the device. */
 
-int
-pbms_detach(struct device *self, int flags)
+void
+pbms_childdet(device_t self, device_t child)
 {
-	struct pbms_softc *sc = (struct pbms_softc *)self;
-	int ret;
+	struct pbms_softc *sc = device_private(self);
 
-	/* The wsmouse driver does all the work. */
-	ret = 0;
-	if (sc->sc_wsmousedev != NULL)
-		ret = config_detach(sc->sc_wsmousedev, flags);
+	if (sc->sc_wsmousedev == child)
+		sc->sc_wsmousedev = NULL;
+}
 
-	return ret;
+int
+pbms_detach(device_t self, int flags)
+{
+	/* XXX This could not possibly be sufficient! */
+	return config_detach_children(self, flags);
 }
 
 
 /* Activate the device. */
 
 int
-pbms_activate(device_ptr_t self, enum devact act)
+pbms_activate(device_t self, enum devact act)
 {
-	struct pbms_softc *sc = (struct pbms_softc *)self;
-	int ret;
+	struct pbms_softc *sc = device_private(self);
 
-	if (act == DVACT_DEACTIVATE) {
-		ret = 0;
-		if (sc->sc_wsmousedev != NULL)
-			ret = config_deactivate(sc->sc_wsmousedev);
-		sc->sc_status |= PBMS_DYING;
-		return ret;
-	}
-	return EOPNOTSUPP;
+	if (act != DVACT_DEACTIVATE)
+		return EOPNOTSUPP;
+
+	sc->sc_status |= PBMS_DYING;
+	return 0;
 }
 
 
