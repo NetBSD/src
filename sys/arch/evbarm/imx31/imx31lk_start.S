@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31lk_start.S,v 1.2 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: imx31lk_start.S,v 1.3 2009/11/05 16:28:09 uebayasi Exp $	*/
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
@@ -22,9 +22,12 @@
 #define SDRAM_START 0x80000000
 #endif
 
-#define IXM31_DCACHE_SIZE 0x4000	/* 16KB L1 */
+#define IMX31_DCACHE_SIZE 0x4000	/* 16KB L1 */
 
-
+/*
+ * L1 == "Level One" == "first-level"
+ * L2 == "Level Two" == "second-level"
+ */
 
 	.text
 
@@ -44,7 +47,7 @@ _C_LABEL(imx31lk_start):
 	 * Firmware already mapped SDRAM VA == PA. at 0x800..
 	 * now map SDRAM also at VA 0x800...
 	 */
-	mrc	p15, 0, r0, c2, c0, 0		/* L1 addr into r0 */
+	mrc	p15, 0, r0, c2, c0, 0		/* L1 table addr into r0 */
 	add	r0, r0, #(0x800 * 4)		/* offset to 0x80000000 */
 
 	mov	r3, #SDRAM_START		/* map to 0x800.. */
@@ -64,7 +67,7 @@ _C_LABEL(imx31lk_start):
 	 * Map an L1 section for each device to make this easy.
 	 */
 	/* UART1 */
-	mrc	p15, 0, r0, c2, c0, 0		/* Get L1 */
+	mrc	p15, 0, r0, c2, c0, 0		/* L1 table addr into r0 */
 	add	r0, r0, #(0xfd0 * 4)		/* offset to 0xfd000000 */
 
 	mov	r3,	#0x43000000	
@@ -88,7 +91,7 @@ _C_LABEL(imx31lk_start):
 	 *
 	 * XXX: should this take into account the XScale cache clean bug?
 	 */
-	mov	r3, #(IXM31_DCACHE_SIZE)
+	mov	r3, #(IMX31_DCACHE_SIZE)
 	subs	r3, r3, #32
 1:
 	mcr	p15, 0, r3, c7, c10, 2
