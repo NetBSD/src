@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.43 2009/10/26 07:11:06 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.46 2009/11/02 08:40:31 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,10 +24,10 @@
 #include <string.h>
 
 #include "libman.h"
+#include "libmandoc.h"
 
 const	char *const __man_merrnames[WERRMAX] = {		 
 	"invalid character", /* WNPRINT */
-	"system: malloc error", /* WNMEM */
 	"invalid manual section", /* WMSEC */
 	"invalid date format", /* WDATE */
 	"scope of prior line violated", /* WLNSCOPE */
@@ -67,7 +67,7 @@ static	int		 man_node_append(struct man *,
 static	int		 man_ptext(struct man *, int, char *);
 static	int		 man_pmacro(struct man *, int, char *);
 static	void		 man_free1(struct man *);
-static	int		 man_alloc1(struct man *);
+static	void		 man_alloc1(struct man *);
 static	int		 pstring(struct man *, int, int, 
 				const char *, size_t);
 static	int		 macrowarn(struct man *, int, const char *);
@@ -93,12 +93,12 @@ man_meta(const struct man *m)
 }
 
 
-int
+void
 man_reset(struct man *man)
 {
 
 	man_free1(man);
-	return(man_alloc1(man));
+	man_alloc1(man);
 }
 
 
@@ -116,19 +116,16 @@ man_alloc(void *data, int pflags, const struct man_cb *cb)
 {
 	struct man	*p;
 
-	if (NULL == (p = calloc(1, sizeof(struct man))))
-		return(NULL);
+	p = mandoc_calloc(1, sizeof(struct man));
 
-	if ( ! man_alloc1(p)) {
-		free(p);
-		return(NULL);
-	}
+	if (cb)
+		memcpy(&p->cb, cb, sizeof(struct man_cb));
 
 	man_hash_init();
-
 	p->data = data;
 	p->pflags = pflags;
-	(void)memcpy(&p->cb, cb, sizeof(struct man_cb));
+
+	man_alloc1(p);
 	return(p);
 }
 
@@ -171,19 +168,16 @@ man_free1(struct man *man)
 }
 
 
-static int
+static void
 man_alloc1(struct man *m)
 {
 
-	bzero(&m->meta, sizeof(struct man_meta));
+	memset(&m->meta, 0, sizeof(struct man_meta));
 	m->flags = 0;
-	m->last = calloc(1, sizeof(struct man_node));
-	if (NULL == m->last)
-		return(0);
+	m->last = mandoc_calloc(1, sizeof(struct man_node));
 	m->first = m->last;
 	m->last->type = MAN_ROOT;
 	m->next = MAN_NEXT_CHILD;
-	return(1);
 }
 
 
@@ -250,10 +244,7 @@ man_node_alloc(int line, int pos, enum man_type type, int tok)
 {
 	struct man_node *p;
 
-	p = calloc(1, sizeof(struct man_node));
-	if (NULL == p)
-		return(NULL);
-
+	p = mandoc_calloc(1, sizeof(struct man_node));
 	p->line = line;
 	p->pos = pos;
 	p->type = type;
@@ -268,8 +259,6 @@ man_elem_alloc(struct man *m, int line, int pos, int tok)
 	struct man_node *p;
 
 	p = man_node_alloc(line, pos, MAN_ELEM, tok);
-	if (NULL == p)
-		return(0);
 	if ( ! man_node_append(m, p))
 		return(0);
 	m->next = MAN_NEXT_CHILD;
@@ -283,8 +272,6 @@ man_head_alloc(struct man *m, int line, int pos, int tok)
 	struct man_node *p;
 
 	p = man_node_alloc(line, pos, MAN_HEAD, tok);
-	if (NULL == p)
-		return(0);
 	if ( ! man_node_append(m, p))
 		return(0);
 	m->next = MAN_NEXT_CHILD;
@@ -298,8 +285,6 @@ man_body_alloc(struct man *m, int line, int pos, int tok)
 	struct man_node *p;
 
 	p = man_node_alloc(line, pos, MAN_BODY, tok);
-	if (NULL == p)
-		return(0);
 	if ( ! man_node_append(m, p))
 		return(0);
 	m->next = MAN_NEXT_CHILD;
@@ -313,8 +298,6 @@ man_block_alloc(struct man *m, int line, int pos, int tok)
 	struct man_node *p;
 
 	p = man_node_alloc(line, pos, MAN_BLOCK, tok);
-	if (NULL == p)
-		return(0);
 	if ( ! man_node_append(m, p))
 		return(0);
 	m->next = MAN_NEXT_CHILD;
@@ -330,15 +313,7 @@ pstring(struct man *m, int line, int pos,
 	size_t		 sv;
 
 	n = man_node_alloc(line, pos, MAN_TEXT, -1);
-	if (NULL == n)
-		return(0);
-
-	n->string = malloc(len + 1);
-	if (NULL == n->string) {
-		free(n);
-		return(0);
-	}
-
+	n->string = mandoc_malloc(len + 1);
 	sv = strlcpy(n->string, p, len + 1);
 
 	/* Prohibit truncation. */
@@ -479,8 +454,8 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	fl = m->flags;
 
-	if (0 == buf[1])
-		goto out;
+	if ('\0' == buf[1])
+		return(1);
 
 	i = 1;
 
@@ -509,7 +484,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 		return(man_perr(m, ln, i, WNPRINT));
 	}
 
-	mac[j] = 0;
+	mac[j] = '\0';
 
 	if (j == 4 || j < 1) {
 		if ( ! (MAN_IGN_MACRO & m->pflags)) {

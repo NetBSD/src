@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_action.c,v 1.20 2009/10/24 05:45:04 kristaps Exp $ */
+/*	$Vendor-Id: man_action.c,v 1.24 2009/11/02 06:22:45 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -17,11 +17,11 @@
 #include <sys/utsname.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "libman.h"
+#include "libmandoc.h"
 
 struct	actions {
 	int	(*post)(struct man *);
@@ -65,11 +65,6 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* UC */
 	{ NULL }, /* PD */
 };
-
-static	time_t	  man_atotime(const char *);
-#ifdef __linux__
-extern	char	 *strptime(const char *, const char *, struct tm *);
-#endif
 
 
 int
@@ -141,16 +136,13 @@ post_TH(struct man *m)
 
 	n = m->last->child;
 	assert(n);
-
-	if (NULL == (m->meta.title = strdup(n->string)))
-		return(man_nerr(m, n, WNMEM));
+	m->meta.title = mandoc_strdup(n->string);
 
 	/* TITLE ->MSEC<- DATE SOURCE VOL */
 
 	n = n->next;
 	assert(n);
 
-	errno = 0;
 	lval = strtol(n->string, &ep, 10);
 	if (n->string[0] != '\0' && *ep == '\0')
 		m->meta.msec = (int)lval;
@@ -159,25 +151,28 @@ post_TH(struct man *m)
 
 	/* TITLE MSEC ->DATE<- SOURCE VOL */
 
-	if (NULL == (n = n->next))
+	n = n->next;
+	if (n) {
+		m->meta.date = mandoc_a2time
+			(MTIME_ISO_8601, n->string);
+
+		if (0 == m->meta.date) {
+			if ( ! man_nwarn(m, n, WDATE))
+				return(0);
+			m->meta.date = time(NULL);
+		}
+	} else
 		m->meta.date = time(NULL);
-	else if (0 == (m->meta.date = man_atotime(n->string))) {
-		if ( ! man_nwarn(m, n, WDATE))
-			return(0);
-		m->meta.date = time(NULL);
-	}
 
 	/* TITLE MSEC DATE ->SOURCE<- VOL */
 
 	if (n && (n = n->next))
-		if (NULL == (m->meta.source = strdup(n->string)))
-			return(man_nerr(m, n, WNMEM));
+		m->meta.source = mandoc_strdup(n->string);
 
 	/* TITLE MSEC DATE SOURCE ->VOL<- */
 
 	if (n && (n = n->next))
-		if (NULL == (m->meta.vol = strdup(n->string)))
-			return(man_nerr(m, n, WNMEM));
+		m->meta.vol = mandoc_strdup(n->string);
 
 	/* 
 	 * The end document shouldn't have the prologue macros as part
@@ -199,25 +194,4 @@ post_TH(struct man *m)
 
 	man_node_freelist(n);
 	return(1);
-}
-
-
-static time_t
-man_atotime(const char *p)
-{
-	struct tm	 tm;
-	char		*pp;
-
-	bzero(&tm, sizeof(struct tm));
-
-	if ((pp = strptime(p, "%b %d %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	if ((pp = strptime(p, "%d %b %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	if ((pp = strptime(p, "%b %d, %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	if ((pp = strptime(p, "%b %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-
-	return(0);
 }

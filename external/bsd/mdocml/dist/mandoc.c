@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.3 2009/07/24 20:22:24 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.7 2009/11/02 06:22:45 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,13 +14,23 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#if defined(__linux__) || defined(__MINT__)
+# define _GNU_SOURCE /* strptime() */
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 
 #include "libmandoc.h"
+
+static int	 a2time(time_t *, const char *, const char *);
+
 
 int
 mandoc_special(const char *p)
@@ -101,5 +111,117 @@ mandoc_special(const char *p)
 			break;
 
 	return(*p == ']' ? c : 0);
+}
+
+
+void *
+mandoc_calloc(size_t num, size_t size)
+{
+	void		*ptr;
+
+	ptr = calloc(num, size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+void *
+mandoc_malloc(size_t size)
+{
+	void		*ptr;
+
+	ptr = malloc(size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+void *
+mandoc_realloc(void *ptr, size_t size)
+{
+
+	ptr = realloc(ptr, size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+char *
+mandoc_strdup(const char *ptr)
+{
+	char		*p;
+
+	p = strdup(ptr);
+	if (NULL == p) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(p);
+}
+
+
+static int
+a2time(time_t *t, const char *fmt, const char *p)
+{
+	struct tm	 tm;
+	char		*pp;
+
+	memset(&tm, 0, sizeof(struct tm));
+
+	pp = strptime(p, fmt, &tm);
+	if (NULL != pp && '\0' == *pp) {
+		*t = mktime(&tm);
+		return(1);
+	}
+
+	return(0);
+}
+
+
+/*
+ * Convert from a manual date string (see mdoc(7) and man(7)) into a
+ * date according to the stipulated date type.
+ */
+time_t
+mandoc_a2time(int flags, const char *p)
+{
+	time_t		 t;
+
+	if (MTIME_MDOCDATE & flags) {
+		if (0 == strcmp(p, "$" "Mdocdate$"))
+			return(time(NULL));
+		if (a2time(&t, "$" "Mdocdate: %b %d %Y $", p))
+			return(t);
+	}
+
+	if (MTIME_CANONICAL & flags || MTIME_REDUCED & flags) 
+		if (a2time(&t, "%b %d, %Y", p))
+			return(t);
+
+	if (MTIME_ISO_8601 & flags) 
+		if (a2time(&t, "%Y-%m-%d", p))
+			return(t);
+
+	if (MTIME_REDUCED & flags) {
+		if (a2time(&t, "%d, %Y", p))
+			return(t);
+		if (a2time(&t, "%Y", p))
+			return(t);
+	}
+
+	return(0);
 }
 
