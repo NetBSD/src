@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.58 2009/05/20 14:08:21 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.59 2009/11/05 13:28:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.58 2009/05/20 14:08:21 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.59 2009/11/05 13:28:18 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -332,7 +332,8 @@ psshfs_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
-	int i, rv, set_readdir;
+	size_t i;
+	int rv, set_readdir;
 
  restart:
 	if (psn->stat & PSN_READDIR) {
@@ -580,7 +581,7 @@ psshfs_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	if (rv == 0)
 		*resid = 0;
 
-	if (pn->pn_va.va_size < offset + writelen)
+	if (pn->pn_va.va_size < (uint64_t)offset + writelen)
 		pn->pn_va.va_size = offset + writelen;
 
  out:
