@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.385 2009/10/06 04:28:10 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.386 2009/11/05 08:18:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.385 2009/10/06 04:28:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.386 2009/11/05 08:18:02 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -370,6 +370,17 @@ try_nextlist:
 	TAILQ_REMOVE(listhd, vp, v_freelist);
 	vp->v_freelisthd = NULL;
 	mutex_exit(&vnode_free_list_lock);
+
+	if (vp->v_usecount != 0) {
+		/*
+		 * was referenced again before we got the interlock
+		 * Don't return to freelist - the holder of the last
+		 * reference will destroy it.
+		 */
+		vrelel(vp, 0); /* releases vp->v_interlock */
+		mutex_enter(&vnode_free_list_lock);
+		goto retry;
+	}
 
 	/*
 	 * The vnode is still associated with a file system, so we must
@@ -1306,6 +1317,22 @@ vget(vnode_t *vp, int flags)
 		vrelel(vp, 0);
 		return ENOENT;
 	}
+
+	if ((vp->v_iflag & VI_INACTNOW) != 0) {
+		/*
+		 * if it's being desactived, wait for it to complete.
+		 * Make sure to not return a clean vnode.
+		 */
+		 if ((flags & LK_NOWAIT) != 0) {
+			vrelel(vp, 0);
+			return EBUSY;
+		}
+		vwait(vp, VI_INACTNOW);
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
+			vrelel(vp, 0);
+			return ENOENT;
+		}
+	}
 	if (flags & LK_TYPE_MASK) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
@@ -1445,6 +1472,7 @@ vrelel(vnode_t *vp, int flags)
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(&vp->v_interlock);
 			return;
 		}
@@ -1469,6 +1497,7 @@ vrelel(vnode_t *vp, int flags)
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
 		vp->v_iflag &= ~VI_INACTNOW;
+		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(&vp->v_interlock);
