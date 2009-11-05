@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.296 2009/10/15 22:59:12 jym Exp $
+#       $NetBSD: Makefile,v 1.297 2009/11/05 00:20:25 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -59,6 +59,12 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
+
+MAN+=	deviter.9
+MLINKS+=deviter.9 deviter_first.9 \
+	deviter.9 deviter_init.9 \
+	deviter.9 deviter_next.9 \
+	deviter.9 deviter_release.9
 
 MAN+=	dmover.9
 MLINKS+=dmover.9 dmover_backend_register.9 \
