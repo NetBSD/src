@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.h,v 1.72 2009/10/26 04:09:45 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.h,v 1.73 2009/10/30 05:58:38 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -292,7 +292,7 @@ struct	mdoc;
 
 void	 	  mdoc_free(struct mdoc *);
 struct	mdoc	 *mdoc_alloc(void *, int, const struct mdoc_cb *);
-int		  mdoc_reset(struct mdoc *);
+void		  mdoc_reset(struct mdoc *);
 int	 	  mdoc_parseln(struct mdoc *, int, char *buf);
 const struct mdoc_node *mdoc_node(const struct mdoc *);
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);
