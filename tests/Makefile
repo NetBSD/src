@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.17 2009/09/24 21:33:45 pooka Exp $
+# $NetBSD: Makefile,v 1.18 2009/11/05 17:34:25 dyoung Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	crypto fs games ipf kernel lib libexec net rump syscall util
 
-.if ${MACHINE} != "evbppc"
+.if ${MACHINE} != "evbppc" && ${MKKMOD} != "no"
 SUBDIR+= modules
 .endif
 
