@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.267 2009/10/13 22:46:28 pooka Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.268 2009/11/05 17:52:32 dyoung Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.267 2009/10/13 22:46:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.268 2009/11/05 17:52:32 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2871,6 +2871,7 @@ rf_find_raid_components(void)
 	struct vnode *vp;
 	struct disklabel label;
 	device_t dv;
+	deviter_t di;
 	dev_t dev;
 	int bmajor, bminor, wedge;
 	int error;
@@ -2883,8 +2884,8 @@ rf_find_raid_components(void)
 
 	/* we begin by trolling through *all* the devices on the system */
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	     dv = dv->dv_list.tqe_next) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 
 		/* we are only interested in disks... */
 		if (device_class(dv) != DV_DISK)
@@ -3005,6 +3006,7 @@ rf_find_raid_components(void)
 				label.d_partitions[i].p_size);
 		}
 	}
+	deviter_release(&di);
 	return ac_list;
 }
 
