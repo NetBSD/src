@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1336 2009/11/03 05:12:10 dyoung Exp $
+#	$NetBSD: mi,v 1.1337 2009/11/05 00:20:24 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8580,6 +8580,11 @@
 ./usr/share/man/cat9/disk_resetstat.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disklabel.0		comp-sys-catman		.cat
+./usr/share/man/cat9/deviter.0			comp-sys-catman		.cat
+./usr/share/man/cat9/deviter_first.0		comp-sys-catman		.cat
+./usr/share/man/cat9/deviter_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/deviter_next.0		comp-sys-catman		.cat
+./usr/share/man/cat9/deviter_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/dmover.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dmover_backend_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/dmover_backend_unregister.0	comp-sys-catman		.cat
@@ -14005,6 +14010,11 @@
 ./usr/share/man/html9/disk_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_unbusy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disklabel.html		comp-sys-htmlman	html
+./usr/share/man/html9/deviter.html		comp-sys-htmlman	html
+./usr/share/man/html9/deviter_first.html	comp-sys-htmlman	html
+./usr/share/man/html9/deviter_init.html		comp-sys-htmlman	html
+./usr/share/man/html9/deviter_next.html		comp-sys-htmlman	html
+./usr/share/man/html9/deviter_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/dmover.html		comp-sys-htmlman	html
 ./usr/share/man/html9/dmover_backend_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/dmover_backend_unregister.html	comp-sys-htmlman	html
@@ -19581,6 +19591,11 @@
 ./usr/share/man/man9/disk_resetstat.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/disklabel.9		comp-sys-man		.man
+./usr/share/man/man9/deviter.9			comp-sys-man		.man
+./usr/share/man/man9/deviter_first.9		comp-sys-man		.man
+./usr/share/man/man9/deviter_init.9		comp-sys-man		.man
+./usr/share/man/man9/deviter_next.9		comp-sys-man		.man
+./usr/share/man/man9/deviter_release.9		comp-sys-man		.man
 ./usr/share/man/man9/dmover.9			comp-sys-man		.man
 ./usr/share/man/man9/dmover_backend_register.9	comp-sys-man		.man
 ./usr/share/man/man9/dmover_backend_unregister.9	comp-sys-man		.man
