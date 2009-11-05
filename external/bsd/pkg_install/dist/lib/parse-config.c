@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.8 2009/10/15 13:01:26 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.9 2009/11/05 18:39:06 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.8 2009/10/15 13:01:26 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.9 2009/11/05 18:39:06 joerg Exp $");
 
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -99,6 +99,7 @@ static struct config_variable {
 	{ "PKGVULNURL", &pkg_vulnerabilities_url },
 	{ "VERBOSE_NETIO", &verbose_netio },
 	{ "VERIFIED_INSTALLATION", &verified_installation },
+	{ NULL, NULL }, /* For use by pkg_install_show_variable */
 	{ NULL, NULL }
 };
 
@@ -198,11 +199,19 @@ void
 pkg_install_show_variable(const char *var_name)
 {
 	struct config_variable *var;
+	const char *tmp_value = NULL;
 
 	for (var = config_variables; var->name != NULL; ++var) {
-		if (strcmp(var->name, var_name) != 0)
-			continue;
-		if (*var->var != NULL)
-			puts(*var->var);
+		if (strcmp(var->name, var_name) == 0)
+			break;
 	}
+	if (var->name == NULL) {
+		var->name = var_name;
+		var->var = &tmp_value;
+	}
+
+	pkg_install_config();
+
+	if (*var->var != NULL)
+		puts(*var->var);
 }
