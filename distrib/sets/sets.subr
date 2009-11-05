@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.90 2009/11/03 00:38:56 dyoung Exp $
+#	$NetBSD: sets.subr,v 1.91 2009/11/05 17:34:25 dyoung Exp $
 #
 
 #
@@ -200,7 +200,9 @@ IFS=$oIFS
 setsdir=${0%/*}
 obsolete=0
 module=yes
-if [ "${MACHINE}" = "evbppc" ]; then
+if [ "${MKKMOD}" = "no" ]; then
+	module=no			# MODULEs are off.
+elif [ "${MACHINE}" = "evbppc" ]; then
 	module=no			# Turn off MODULEs for some ports.
 fi
 # Determine lib type. Do this first so stlib also gets set.
@@ -237,7 +239,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.90 2009/11/03 00:38:56 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.91 2009/11/05 17:34:25 dyoung Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
