@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.593 2009/11/04 17:02:19 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.594 2009/11/05 20:06:29 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -48,24 +48,8 @@ HAVE_GCC=	4
 # default to GDB6
 HAVE_GDB?=	6
 
-# default to binutils 2.16
-.if \
-    ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "armeb" || ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "vax" || \
-    ${MACHINE_ARCH} == "x86_64"
+# default to binutils 2.19
 HAVE_BINUTILS?=	219
-.else
-HAVE_BINUTILS?=	216
-.endif
 
 CPPFLAG_ISYSTEM=	-isystem
 .if defined(HAVE_GCC)
