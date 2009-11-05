@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.10 2009/10/18 19:37:25 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.11 2009/11/05 12:00:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,9 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
+	p2m = p2k_init(0);
+	if (!p2m)
+		err(1, "init p2k");
 
 	/*
 	 * Load FFS and LFS already here.  we need both and link set
@@ -105,10 +108,6 @@ main(int argc, char *argv[])
 	    &args, sizeof(args));
 	cleaner(canon_dir);
 #endif
-
-	p2m = p2k_init(0);
-	if (!p2m)
-		err(1, "init p2k");
 	if (p2k_setup_diskfs(p2m, MOUNT_LFS, canon_dev, part, canon_dir,
 	    mntflags, &args, sizeof(args)) == -1)
 		err(1, "mount");
