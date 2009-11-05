@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.11 2009/10/07 20:51:00 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.12 2009/11/05 14:22:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -123,6 +123,7 @@ void *		ukfs_getspecific(struct ukfs *);
 	((a) != UKFS_PARTITION_NONE && (a) != UKFS_PARTITION_NA)
 #define UKFS_PARTITION_ARGVPROBE(part)					\
 do {									\
+	part = UKFS_PARTITION_NONE;					\
 	if (argc >= 3)							\
 		ukfs_partition_probe(argv[argc-2], &part);		\
 } while (/*CONSTCOND*/0)
