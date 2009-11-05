@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.130 2009/11/05 11:54:49 pooka Exp $	*/
+/*	$NetBSD: lfs.h,v 1.131 2009/11/05 16:59:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,8 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
-#include <compat/sys/time.h>
+
+#include <compat/sys/time_types.h>
 
 /*
  * Compile-time options for LFS.
