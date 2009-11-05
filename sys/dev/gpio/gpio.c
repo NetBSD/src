@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.28 2009/08/23 12:08:56 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.29 2009/11/05 18:20:40 dyoung Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.28 2009/08/23 12:08:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.29 2009/11/05 18:20:40 dyoung Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -64,9 +64,10 @@ struct gpio_softc {
 int	gpio_match(device_t, cfdata_t, void *);
 int	gpio_submatch(device_t, cfdata_t, const int *, void *);
 void	gpio_attach(device_t, device_t, void *);
+int	gpio_rescan(device_t, const char *, const int *);
+void	gpio_childdetached(device_t, device_t);
 bool	gpio_resume(device_t PMF_FN_PROTO);
 int	gpio_detach(device_t, int);
-int	gpio_activate(device_t, enum devact);
 int	gpio_search(device_t, cfdata_t, const int *, void *);
 int	gpio_print(void *, const char *);
 int	gpio_pinbyname(struct gpio_softc *, char *);
@@ -75,8 +76,8 @@ int	gpio_pinbyname(struct gpio_softc *, char *);
 int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int, kauth_cred_t);
 
 CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
-    gpio_match, gpio_attach, gpio_detach, gpio_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    gpio_match, gpio_attach, gpio_detach, NULL, gpio_rescan,
+    gpio_childdetached, DVF_DETACH_SHUTDOWN);
 
 dev_type_open(gpioopen);
 dev_type_close(gpioclose);
@@ -120,6 +121,22 @@ gpio_resume(device_t self PMF_FN_ARGS)
 }
 
 void
+gpio_childdetached(device_t self, device_t child)
+{
+	/* gpio(4) keeps no references to its children, so do nothing. */
+}
+
+int
+gpio_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct gpio_softc *sc = device_private(self);
+
+	config_search_loc(gpio_search, self, ifattr, locators, sc);
+
+	return 0;
+}
+
+void
 gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
@@ -139,12 +156,17 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	 * Attach all devices that can be connected to the GPIO pins
 	 * described in the kernel configuration file.
 	 */
-	config_search_ia(gpio_search, self, "gpio", sc);
+	gpio_rescan(self, "gpio", NULL);
 }
 
 int
 gpio_detach(device_t self, int flags)
 {
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
 #if 0
 	int maj, mn;
 
@@ -157,21 +179,6 @@ gpio_detach(device_t self, int flags)
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #endif
-	return 0;
-}
-
-int
-gpio_activate(device_t self, enum devact act)
-{
-	printf("gpio_active: ");
-	switch (act) {
-	case DVACT_ACTIVATE:
-		DPRINTF(("ACTIVATE\n"));
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		DPRINTF(("DEACTIVATE\n"));
-		break;
-	}
 	return 0;
 }
 
