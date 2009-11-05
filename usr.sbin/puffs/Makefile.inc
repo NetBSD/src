@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.11 2009/07/21 00:37:25 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2009/11/05 11:41:43 pooka Exp $
+
+WARNS?=	4
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
