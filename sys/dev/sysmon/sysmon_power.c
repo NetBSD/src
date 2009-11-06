@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.41 2009/06/08 00:55:35 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.42 2009/11/06 18:28:10 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.41 2009/06/08 00:55:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.42 2009/11/06 18:28:10 jakllsch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -546,6 +546,7 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case POWER_IOC_GET_TYPE:
+	case POWER_IOC_GET_TYPE_WITH_LOSSAGE:
 	    {
 		struct power_type *power_type = (void *) data;
 
