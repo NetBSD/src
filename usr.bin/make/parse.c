@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.158 2009/10/07 16:40:30 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -925,7 +925,8 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_FATAL,
 		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
 	    else
-		Parse_Error(PARSE_FATAL, "Need an operator");
+		Parse_Error(PARSE_FATAL, lstart[0] == '.' ? "Unknown directive"
+				     : "Need an operator");
 	    goto out;
 	}
 	*cp = '\0';
@@ -1148,7 +1149,8 @@ ParseDoDependency(char *line)
 	    op = OP_DEPENDS;
 	}
     } else {
-	Parse_Error(PARSE_FATAL, "Missing dependency operator");
+	Parse_Error(PARSE_FATAL, lstart[0] == '.' ? "Unknown directive"
+		    : "Missing dependency operator");
 	goto out;
     }
 
@@ -2479,8 +2481,10 @@ Parse_File(const char *name, int fd)
 			curFile->lineno, line);
 	    if (*line == '.') {
 		/*
-		 * Lines that begin with the special character are either
+		 * Lines that begin with the special character may be
 		 * include or undef directives.
+		 * On the other hand they can be suffix rules (.c.o: ...)
+		 * or just dependencies for filenames that start '.'.
 		 */
 		for (cp = line + 1; isspace((unsigned char)*cp); cp++) {
 		    continue;
