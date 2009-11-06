@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.19 2009/11/03 05:08:18 dyoung Exp $	*/
+/*	$NetBSD: copy.S,v 1.20 2009/11/06 18:18:57 dyoung Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.19 2009/11/03 05:08:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.20 2009/11/06 18:18:57 dyoung Exp $");
 
 #include "assym.h"
 
@@ -139,16 +139,18 @@ NENTRY(do_pmap_load)
 ENTRY(return_address)
 	movl	%ebp,%eax	/* frame pointer -> %eax */ 
 	movl	4(%esp),%ecx	/* level -> %ecx */
+	movl	CPUVAR(CURLWP),%edx
+	movl	L_ADDR(%edx),%edx
+	movl	$_C_LABEL(return_address_fault),PCB_ONFAULT(%edx)
 	cmpl	$0,%ecx
 	je	2f
 1:
-.Lreturn_address_start:
 	movl	(%eax),%eax	/* next frame pointer */
 	decl	%ecx
 	jnz	1b
 2:
 	movl	0x4(%eax),%eax
-.Lreturn_address_end:
+	movl	$0,PCB_ONFAULT(%edx)
 	ret
 
 /*
@@ -319,6 +321,7 @@ NENTRY(copy_fault)
 
 /* LINTSTUB: Ignore */
 NENTRY(return_address_fault)
+	movl $0,PCB_ONFAULT(%edx)
 	movl $0,%eax
 	ret
 
@@ -814,10 +817,6 @@ _C_LABEL(onfault_table):
 	.long .Lx86_copyargs_start
 	.long .Lx86_copyargs_end
 	.long _C_LABEL(x86_copyargs_fault)
-
-	.long .Lreturn_address_start
-	.long .Lreturn_address_end
-	.long _C_LABEL(return_address_fault)
 
 	.long 0	/* terminate */
 
