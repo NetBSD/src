@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.134 2009/08/31 12:37:59 yamt Exp $	*/
+/*	$NetBSD: nd6.c,v 1.135 2009/11/06 20:41:22 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.134 2009/08/31 12:37:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.135 2009/11/06 20:41:22 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -172,12 +172,11 @@ nd6_ifattach(struct ifnet *ifp)
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
 	/*
-	 * Note that the default value of ip6_accept_rtadv is 0, which means
-	 * we won't accept RAs by default even if we set ND6_IFF_ACCEPT_RTADV
-	 * here.
+	 * Note that the default value of ip6_accept_rtadv is 0.
+	 * Because we do not set ND6_IFF_OVERRIDE_RTADV here, we won't
+	 * accept RAs by default.
 	 */
-	nd->flags = (ND6_IFF_PERFORMNUD |
-		(ip6_accept_rtadv ? ND6_IFF_ACCEPT_RTADV : 0));
+	nd->flags = ND6_IFF_PERFORMNUD | ND6_IFF_ACCEPT_RTADV;
 
 	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
 	nd6_setmtu0(ifp, nd);
@@ -704,6 +703,21 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 	return -1;
 }
 
+bool
+nd6_accepts_rtadv(const struct nd_ifinfo *ndi)
+{
+	switch (ndi->flags & (ND6_IFF_ACCEPT_RTADV|ND6_IFF_OVERRIDE_RTADV)) {
+	case ND6_IFF_OVERRIDE_RTADV|ND6_IFF_ACCEPT_RTADV:
+		return true;
+	case ND6_IFF_ACCEPT_RTADV:
+		return ip6_accept_rtadv != 0;
+	case ND6_IFF_OVERRIDE_RTADV:
+	case 0:
+	default:
+		return false;
+	}
+}
+
 /*
  * Nuke neighbor cache/prefix/default router management table, right before
  * ifp goes away.
@@ -767,7 +781,7 @@ nd6_purge(struct ifnet *ifp)
 		nd6_setdefaultiface(0);
 
 	/* XXX: too restrictive? */
-	if (!ip6_forwarding && ndi && (ndi->flags & ND6_IFF_ACCEPT_RTADV)) {
+	if (!ip6_forwarding && ndi && nd6_accepts_rtadv(ndi)) {
 		/* refresh default router list */
 		defrouter_select();
 	}
@@ -1885,7 +1899,7 @@ fail:
 	 * cases for safety.
 	 */
 	if (do_update && ln->ln_router && !ip6_forwarding &&
-		(ndi->flags & ND6_IFF_ACCEPT_RTADV))
+	    nd6_accepts_rtadv(ndi))
 		defrouter_select();
 
 	return rt;
