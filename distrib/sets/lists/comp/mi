@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1337 2009/11/05 00:20:24 dyoung Exp $
+#	$NetBSD: mi,v 1.1338 2009/11/06 13:36:01 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3471,7 +3471,7 @@
 ./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/named.debug	comp-debugd-bin		debug
-./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	debug
+./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	binutils,debug
 ./usr/libdata/debug/usr/sbin/ndbootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/ndp.debug		comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/netgroup_mkdb.debug	comp-nis-debug		debug
