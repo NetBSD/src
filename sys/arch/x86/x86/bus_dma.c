@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.51 2009/04/21 21:30:01 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.52 2009/11/06 23:10:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.51 2009/04/21 21:30:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2009/11/06 23:10:10 dsl Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -896,13 +896,16 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
 	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
-	if (error)
-		goto out;
+	if (error) {
+		cookie->id_bouncebuflen = 0;
+		cookie->id_nbouncesegs = 0;
+		return error;
+	}
+
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
 	    (void **)&cookie->id_bouncebuf, flags);
 
- out:
 	if (error) {
 		_bus_dmamem_free(t, cookie->id_bouncesegs,
 		    cookie->id_nbouncesegs);
