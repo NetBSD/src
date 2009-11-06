@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.13 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: sha1.h,v 1.14 2009/11/06 20:31:19 joerg Exp $	*/
 
 /*
  * SHA-1 in C
@@ -18,19 +18,19 @@
 typedef struct {
 	uint32_t state[5];
 	uint32_t count[2];
-	u_char buffer[64];
+	uint8_t buffer[64];
 } SHA1_CTX;
 
 __BEGIN_DECLS
-void	SHA1Transform(uint32_t[5], const u_char[64]);
+void	SHA1Transform(uint32_t[5], const uint8_t[64]);
 void	SHA1Init(SHA1_CTX *);
-void	SHA1Update(SHA1_CTX *, const u_char *, u_int);
-void	SHA1Final(u_char[SHA1_DIGEST_LENGTH], SHA1_CTX *);
+void	SHA1Update(SHA1_CTX *, const uint8_t *, unsigned int);
+void	SHA1Final(uint8_t[SHA1_DIGEST_LENGTH], SHA1_CTX *);
 #ifndef _KERNEL
 char	*SHA1End(SHA1_CTX *, char *);
 char	*SHA1FileChunk(const char *, char *, off_t, off_t);
 char	*SHA1File(const char *, char *);
-char	*SHA1Data(const u_char *, size_t, char *);
+char	*SHA1Data(const uint8_t *, size_t, char *);
 #endif /* _KERNEL */
 __END_DECLS
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.4 2009/10/22 01:38:18 snj Exp $
+.\"	$NetBSD: sha1.3,v 1.5 2009/11/06 20:31:18 joerg Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -35,17 +35,17 @@
 .Ft void
 .Fn SHA1Init "SHA1_CTX *context"
 .Ft void
-.Fn SHA1Update "SHA1_CTX *context" "const u_char *data" "u_int len"
+.Fn SHA1Update "SHA1_CTX *context" "const uint8_t *data" "u_int len"
 .Ft void
-.Fn SHA1Final "u_char digest[20]" "SHA1_CTX *context"
+.Fn SHA1Final "uint8_t digest[20]" "SHA1_CTX *context"
 .Ft void
-.Fn SHA1Transform "uint32_t state[5]" "u_char buffer[64]"
+.Fn SHA1Transform "uint32_t state[5]" "uint8_t buffer[64]"
 .Ft "char *"
 .Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA1File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA1Data "u_char *data" "size_t len" "char *buf"
+.Fn SHA1Data "uint8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA1 functions implement the NIST Secure Hash Algorithm (SHA-1),
 FIPS PUB 180-1.
@@ -145,14 +145,14 @@ The follow code fragment will calculate the digest for
 the string "abc" which is ``0xa9993e36476816aba3e25717850c26c9cd0d89d''.
 .Bd -literal -offset indent
 SHA1_CTX sha;
-u_char results[20];
+uint8_t results[20];
 char *buf;
 int n;
 
 buf = "abc";
 n = strlen(buf);
 SHA1Init(\*[Am]sha);
-SHA1Update(\*[Am]sha, (u_char *)buf, n);
+SHA1Update(\*[Am]sha, (uint8_t *)buf, n);
 SHA1Final(results, \*[Am]sha);
 
 /* Print the digest as one long hex value */
@@ -165,7 +165,7 @@ putchar('\\n');
 Alternately, the helper functions could be used in the following way:
 .Bd -literal -offset indent
 SHA1_CTX sha;
-u_char output[41];
+uint8_t output[41];
 char *buf = "abc";
 
 printf("0x%s", SHA1Data(buf, strlen(buf), output));
