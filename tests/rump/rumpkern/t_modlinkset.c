@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modlinkset.c,v 1.1 2009/09/24 21:36:42 pooka Exp $	*/
+/*	$NetBSD: t_modlinkset.c,v 1.2 2009/11/06 15:26:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -68,4 +68,6 @@ ATF_TC_BODY(modlinkset, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, modlinkset);
+
+	return atf_no_error();
 }
