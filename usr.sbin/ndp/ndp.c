@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.37 2007/01/16 17:32:04 hubertf Exp $	*/
+/*	$NetBSD: ndp.c,v 1.38 2009/11/06 20:51:19 dyoung Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -941,6 +941,9 @@ ifinfo(char *ifname, int argc, char **argv)
 #ifdef ND6_IFF_ACCEPT_RTADV
 		SETFLAG("accept_rtadv", ND6_IFF_ACCEPT_RTADV);
 #endif
+#ifdef ND6_IFF_OVERRIDE_RTADV
+		SETFLAG("override_rtadv", ND6_IFF_OVERRIDE_RTADV);
+#endif
 #ifdef ND6_IFF_PREFER_SOURCE
 		SETFLAG("prefer_source", ND6_IFF_PREFER_SOURCE);
 #endif
@@ -1014,6 +1017,10 @@ ifinfo(char *ifname, int argc, char **argv)
 #ifdef ND6_IFF_ACCEPT_RTADV
 		if ((ND.flags & ND6_IFF_ACCEPT_RTADV))
 			(void)printf("accept_rtadv ");
+#endif
+#ifdef ND6_IFF_OVERRIDE_RTADV
+		if ((ND.flags & ND6_IFF_OVERRIDE_RTADV))
+			(void)printf("override_rtadv ");
 #endif
 #ifdef ND6_IFF_PREFER_SOURCE
 		if ((ND.flags & ND6_IFF_PREFER_SOURCE))
