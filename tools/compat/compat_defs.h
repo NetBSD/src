@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.73 2009/10/02 18:03:19 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.74 2009/11/06 18:26:06 joerg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -513,11 +513,11 @@ void *setmode(const char *);
 
 /* Various sources use this */
 #undef	__RCSID
-#define	__RCSID(x)
+#define	__RCSID(x) struct XXXNETBSD_RCSID
 #undef	__SCCSID
 #define	__SCCSID(x)
 #undef	__COPYRIGHT
-#define	__COPYRIGHT(x)
+#define	__COPYRIGHT(x) struct XXXNETBSD_COPYRIGHT
 #undef	__KERNEL_RCSID
 #define	__KERNEL_RCSID(x,y)
 
