@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.79 2009/07/25 23:12:09 tonnerre Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.80 2009/11/06 20:41:22 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.79 2009/07/25 23:12:09 tonnerre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.80 2009/11/06 20:41:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 
 	/* If I'm not a router, ignore it. */
-	if ((ndi->flags & ND6_IFF_ACCEPT_RTADV) || !ip6_forwarding)
+	if (nd6_accepts_rtadv(ndi) || !ip6_forwarding)
 		goto freeit;
 
 	/* Sanity checks */
@@ -210,7 +210,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	 * the system-wide variable allows the acceptance, and
 	 * per-interface variable allows RAs on the receiving interface.
 	 */
-	if (!(ndi->flags & ND6_IFF_ACCEPT_RTADV))
+	if (!nd6_accepts_rtadv(ndi))
 		goto freeit;
 
 	if (ip6->ip6_hlim != 255) {
@@ -490,7 +490,7 @@ defrtrlist_del(struct nd_defrouter *dr)
 	 * as a next hop.
 	 */
 	/* XXX: better condition? */
-	if (!ip6_forwarding && (ndi->flags & ND6_IFF_ACCEPT_RTADV))
+	if (!ip6_forwarding && nd6_accepts_rtadv(ndi))
 		rt6_flush(&dr->rtaddr, dr->ifp);
 
 	if (dr->installed) {
@@ -646,7 +646,7 @@ defrouter_select(void)
 	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
 	     dr = TAILQ_NEXT(dr, dr_entry)) {
 		ndi = ND_IFINFO(dr->ifp);
-		if ((ndi->flags & ND6_IFF_ACCEPT_RTADV))
+		if (nd6_accepts_rtadv(ndi))
 			continue;
 
 		if (selected_dr == NULL &&
