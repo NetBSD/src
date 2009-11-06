@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_stdtype.c,v 1.2 2008/10/14 14:17:49 pooka Exp $	*/
+/*	$NetBSD: kern_malloc_stdtype.c,v 1.3 2009/11/06 13:32:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_stdtype.c,v 1.2 2008/10/14 14:17:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_stdtype.c,v 1.3 2009/11/06 13:32:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -45,7 +45,6 @@ MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
 MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");
 MALLOC_DEFINE(M_FREE, "free", "should be on free list");
 MALLOC_DEFINE(M_PCB, "pcb", "protocol control block");
-MALLOC_DEFINE(M_SOFTINTR, "softintr", "Softinterrupt structures");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 
 /* XXX These should all be elsewhere. */
