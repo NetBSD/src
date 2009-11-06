@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2009/07/29 12:02:07 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2009/11/06 23:09:10 dyoung Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2009/07/29 12:02:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/11/06 23:09:10 dyoung Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -176,6 +176,7 @@ void
 findroot(void)
 {
 	device_t dv;
+	deviter_t di;
 	union xen_cmdline_parseinfo xcp;
 
 	if (booted_device)
@@ -183,7 +184,9 @@ findroot(void)
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL;
+	     dv = deviter_next(&di)) {
 		bool is_ifnet, is_disk;
 		const char *devname;
 
@@ -210,6 +213,7 @@ findroot(void)
 		booted_device = dv;
 		break;
 	}
+	deviter_release(&di);
 }
 
 #include "pci.h"
