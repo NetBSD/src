@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172 2009/10/26 21:38:01 christos Exp $
+# $NetBSD: mi,v 1.1173 2009/11/06 13:36:01 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2342,7 +2342,7 @@
 ./usr/share/man/cat8/named.0			man-bind-catman		.cat
 ./usr/share/man/cat8/named.reload.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named.restart.0		man-obsolete		obsolete
-./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	binutils,.cat
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ndc.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ndiscvt.0			man-obsolete		obsolete
@@ -4759,7 +4759,7 @@
 ./usr/share/man/html8/named-checkzone.html	man-bind-htmlman	html
 ./usr/share/man/html8/named-compilezone.html	man-bind-htmlman	html
 ./usr/share/man/html8/named.html		man-bind-htmlman	html
-./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/ndiscvt.html		man-obsolete		obsolete
 ./usr/share/man/html8/ndp.html			man-netutil-htmlman	inet6,html
@@ -7376,7 +7376,7 @@
 ./usr/share/man/man8/named.8			man-bind-man		.man
 ./usr/share/man/man8/named.reload.8		man-obsolete		obsolete
 ./usr/share/man/man8/named.restart.8		man-obsolete		obsolete
-./usr/share/man/man8/ncdcs.8			man-sysutil-man		.man
+./usr/share/man/man8/ncdcs.8			man-sysutil-man		binutils,.man
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ndc.8			man-obsolete		obsolete
 ./usr/share/man/man8/ndiscvt.8			man-obsolete		obsolete
