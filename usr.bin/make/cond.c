@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.60 2009/11/06 19:44:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.60 2009/11/06 19:44:06 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.60 2009/11/06 19:44:06 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -124,16 +124,20 @@ __RCSID("$NetBSD: cond.c,v 1.59 2009/01/30 23:07:17 dsl Exp $");
  * is applied.
  *
  * Tokens are scanned from the 'condExpr' string. The scanner (CondToken)
- * will return TOK_AND for '&' and '&&', TOK_OR for '|' and '||', TOK_NOT for '!',
- * TOK_LPAREN for '(', TOK_RPAREN for ')' and will evaluate the other terminal
- * symbols, using either the default function or the function given in the
- * terminal, and return the result as either TOK_TRUE or TOK_FALSE.
+ * will return TOK_AND for '&' and '&&', TOK_OR for '|' and '||',
+ * TOK_NOT for '!', TOK_LPAREN for '(', TOK_RPAREN for ')' and will evaluate
+ * the other terminal symbols, using either the default function or the
+ * function given in the terminal, and return the result as either TOK_TRUE
+ * or TOK_FALSE.
  *
- * All Non-Terminal functions (CondE, CondF and CondT) return TOK_ERROR on error.
+ * TOK_FALSE is 0 and TOK_TRUE 1 so we can directly assign C comparisons.
+ *
+ * All Non-Terminal functions (CondE, CondF and CondT) return TOK_ERROR on
+ * error.
  */
 typedef enum {
-    TOK_AND, TOK_OR, TOK_NOT, TOK_TRUE, TOK_FALSE, TOK_LPAREN, TOK_RPAREN,
-    TOK_EOF, TOK_NONE, TOK_ERROR
+    TOK_FALSE = 0, TOK_TRUE = 1, TOK_AND, TOK_OR, TOK_NOT,
+    TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
 
 /*-
@@ -678,21 +682,21 @@ compare_expression(Boolean doEval)
 	    }
 	    /* For .ifxxx "..." check for non-empty string. */
 	    if (lhsQuoted) {
-		t = lhs[0] != 0 ? TOK_TRUE : TOK_FALSE;
+		t = lhs[0] != 0;
 		goto done;
 	    }
 	    /* For .ifxxx <number> compare against zero */
 	    if (CondCvtArg(lhs, &left)) { 
-		t = left != 0.0 ? TOK_TRUE : TOK_FALSE;
+		t = left != 0.0;
 		goto done;
 	    }
 	    /* For .if ${...} check for non-empty string (defProc is ifdef). */
 	    if (if_info->form[0] == 0) {
-		t = lhs[0] != 0 ? TOK_TRUE : TOK_FALSE;
+		t = lhs[0] != 0;
 		goto done;
 	    }
 	    /* Otherwise action default test ... */
-	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot ? TOK_TRUE : TOK_FALSE;
+	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot;
 	    goto done;
     }
 
@@ -726,9 +730,9 @@ do_string_compare:
 	 * t is set to the result.
 	 */
 	if (*op == '=') {
-	    t = strcmp(lhs, rhs) ? TOK_FALSE : TOK_TRUE;
+	    t = strcmp(lhs, rhs) == 0;
 	} else {
-	    t = strcmp(lhs, rhs) ? TOK_TRUE : TOK_FALSE;
+	    t = strcmp(lhs, rhs) != 0;
 	}
     } else {
 	/*
@@ -750,7 +754,7 @@ do_string_compare:
 			    "Unknown operator");
 		goto done;
 	    }
-	    t = (left != right ? TOK_TRUE : TOK_FALSE);
+	    t = (left != right);
 	    break;
 	case '=':
 	    if (op[1] != '=') {
@@ -758,20 +762,20 @@ do_string_compare:
 			    "Unknown operator");
 		goto done;
 	    }
-	    t = (left == right ? TOK_TRUE : TOK_FALSE);
+	    t = (left == right);
 	    break;
 	case '<':
 	    if (op[1] == '=') {
-		t = (left <= right ? TOK_TRUE : TOK_FALSE);
+		t = (left <= right);
 	    } else {
-		t = (left < right ? TOK_TRUE : TOK_FALSE);
+		t = (left < right);
 	    }
 	    break;
 	case '>':
 	    if (op[1] == '=') {
-		t = (left >= right ? TOK_TRUE : TOK_FALSE);
+		t = (left >= right);
 	    } else {
-		t = (left > right ? TOK_TRUE : TOK_FALSE);
+		t = (left > right);
 	    }
 	    break;
 	}
@@ -872,7 +876,7 @@ compare_function(Boolean doEval)
 	    return arglen < 0 ? TOK_ERROR : TOK_FALSE;
 	}
 	/* Evaluate the argument using the required function. */
-	t = !doEval || fn_def->fn_proc(arglen, arg) ? TOK_TRUE : TOK_FALSE;
+	t = !doEval || fn_def->fn_proc(arglen, arg);
 	if (arg)
 	    free(arg);
 	condExpr = cp;
@@ -905,7 +909,7 @@ compare_function(Boolean doEval)
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
-    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot ? TOK_TRUE : TOK_FALSE;
+    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot;
     if (arg)
 	free(arg);
     return t;
