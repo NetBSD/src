@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.5 2009/11/04 18:11:11 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.6 2009/11/06 16:15:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.5 2009/11/04 18:11:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.6 2009/11/06 16:15:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -147,9 +147,31 @@ rump_unschedule()
 	KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex);
 	rump_unschedule_cpu(l);
 	l->l_mutex = NULL;
+
+	/*
+	 * If we're using a temp lwp, need to take lwp0 for rump_lwp_free().
+	 * (we could maybe cache idle lwp's to avoid constant bouncing)
+	 */
 	if (l->l_flag & LW_WEXIT) {
-		kmem_free(l, sizeof(*l));
 		rumpuser_set_curlwp(NULL);
+
+		/* busy lwp0 */
+		rumpuser_mutex_enter_nowrap(schedmtx);
+		while (lwp0busy)
+			rumpuser_cv_wait_nowrap(lwp0cv, schedmtx);
+		lwp0busy = true;
+		rumpuser_mutex_exit(schedmtx);
+
+		rump_schedule_cpu(&lwp0);
+		rumpuser_set_curlwp(&lwp0);
+		rump_lwp_free(l);
+		rump_unschedule_cpu(&lwp0);
+		rumpuser_set_curlwp(NULL);
+
+		rumpuser_mutex_enter_nowrap(schedmtx);
+		lwp0busy = false;
+		rumpuser_cv_signal(lwp0cv);
+		rumpuser_mutex_exit(schedmtx);
 	}
 }
 
