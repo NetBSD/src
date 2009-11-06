@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.10 2009/10/15 16:50:00 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.11 2009/11/06 15:28:21 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -191,4 +191,6 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cmsg_sendfd);
 	ATF_TP_ADD_TC(tp, cmsg_sendfd_bounds);
+
+	return atf_no_error();
 }
