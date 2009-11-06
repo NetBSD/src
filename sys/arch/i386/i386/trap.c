@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.248 2009/10/05 19:04:14 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.249 2009/11/06 18:18:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.248 2009/10/05 19:04:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2009/11/06 18:18:57 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -297,7 +297,8 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[], trapreturn[], IDTVEC(osyscall)[];
+	extern char fusubail[], kcopy_fault[], return_address_fault[],
+	    trapreturn[], IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -581,7 +582,7 @@ copyfault:
 		 * from inside the profiling interrupt.
 		 */
 		onfault = pcb->pcb_onfault;
-		if (onfault == fusubail) {
+		if (onfault == fusubail || onfault == return_address_fault) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
