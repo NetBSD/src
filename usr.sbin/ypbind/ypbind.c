@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.60 2009/11/06 15:36:55 christos Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.61 2009/11/06 15:41:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.60 2009/11/06 15:36:55 christos Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.61 2009/11/06 15:41:58 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -232,7 +232,7 @@ removelock(struct _dom_binding *ypdb)
  */
 static int
 purge_bindingdir(const char *dirpath)
- {
+{
 	DIR *dirp;
 	int unlinkedfiles, l;
 	struct dirent *dp;
