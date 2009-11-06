@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.38 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.38 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2009/11/06 15:13:27 joerg Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <err.h>
@@ -175,6 +175,8 @@ main(int argc, char *argv[])
 	int c;
 	int n;
 	char *p;
+
+	setprogname(argv[0]);
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);

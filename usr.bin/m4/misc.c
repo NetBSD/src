@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.19 2009/10/26 21:11:28 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.20 2009/11/06 15:13:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.19 2009/10/26 21:11:28 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2009/11/06 15:13:27 joerg Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -262,12 +262,10 @@ killdiv()
 		}
 }
 
-extern char *__progname;
-
 void
 m4errx(int exval, const char *fmt, ...)
 {
-	fprintf(stderr, "%s: ", __progname);
+	fprintf(stderr, "%s: ", getprogname());
 	fprintf(stderr, "%s at line %lu: ", CURRENT_NAME, CURRENT_LINE);
 	if (fmt != NULL) {
 		va_list ap;
