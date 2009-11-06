@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.23 2009/03/11 18:52:54 joerg Exp $
+.\"	$NetBSD: ndp.8,v 1.24 2009/11/06 20:51:19 dyoung Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -180,11 +180,24 @@ NUD is usually turned on by default.
 Specify whether or not to accept Router Advertisement messages
 received on the
 .Ar interface .
-Note that the kernel does not accept Router Advertisement messages
-unless the
+Note that the kernel does not accept Router Advertisement messages,
+even if the flag
+.Ic accept_rtadv
+is on, unless either the
 .Li net.inet6.ip6.accept_rtadv
-variable is non-0, even if the flag is on.
+variable is non-0, or the flag
+.Ic override_rtadv
+is on.
 This flag is set to 1 by default.
+.It Ic override_rtadv
+Specify whether or not to override the
+.Li net.inet6.ip6.accept_rtadv
+variable.
+If the flag is on, then it will suffice to set the flag
+.Ic accept_rtadv
+to make the kernel accept Router Advertisement messages on the
+.Ar interface .
+This flag is set to 0 by default.
 .It Ic prefer_source
 Prefer addresses on the
 .Ar interface
