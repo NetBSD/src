@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.134 2009/11/05 14:10:53 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.135 2009/11/06 15:22:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.134 2009/11/05 14:10:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.135 2009/11/06 15:22:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -441,11 +441,12 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 		p->p_vmspace = &rump_vmspace;
 		p->p_fd = fd_init(NULL);
 		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		l->l_cred = rump_cred_suserget();
 	} else {
 		p = &proc0;
+		l->l_cred = rump_susercred;
 	}
 
-	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
@@ -493,7 +494,6 @@ rump_lwp_free(struct lwp *l)
 
 	KASSERT(l->l_flag & LW_WEXIT);
 	KASSERT(l->l_mutex == NULL);
-	rump_cred_put(l->l_cred);
 	kmem_free(l, sizeof(*l));
 }
 
