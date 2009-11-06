@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.30 2009/10/07 21:02:57 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.31 2009/11/06 18:34:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,10 +65,7 @@
 
 #include "sort.h"
 
-#ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.30 2009/10/07 21:02:57 dsl Exp $");
-__SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
-#endif /* not lint */
+__RCSID("$NetBSD: fields.c,v 1.31 2009/11/06 18:34:22 joerg Exp $");
 
 #define SKIP_BLANKS(ptr) {					\
 	if (BLANK & d_mask[*(ptr)])				\
