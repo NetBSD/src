@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.22 2009/09/10 22:02:40 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.23 2009/11/06 18:34:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,10 +63,7 @@
 
 #include "sort.h"
 
-#ifndef lint
-__RCSID("$NetBSD: append.c,v 1.22 2009/09/10 22:02:40 dsl Exp $");
-__SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
-#endif /* not lint */
+__RCSID("$NetBSD: append.c,v 1.23 2009/11/06 18:34:22 joerg Exp $");
 
 #include <stdlib.h>
 

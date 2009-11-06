@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.56 2009/09/26 21:16:55 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.57 2009/11/06 18:34:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,10 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-#ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.56 2009/09/26 21:16:55 dsl Exp $");
-__SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
-#endif /* not lint */
+__RCSID("$NetBSD: sort.c,v 1.57 2009/11/06 18:34:22 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
