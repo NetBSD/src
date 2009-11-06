@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.59 2009/11/05 19:34:06 chuck Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.60 2009/11/06 15:36:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.59 2009/11/05 19:34:06 chuck Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.60 2009/11/06 15:36:55 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ static void yp_log(int, const char *, ...)
 static struct _dom_binding *makebinding(const char *);
 static int makelock(struct _dom_binding *);
 static void removelock(struct _dom_binding *);
-static int purge_bindingdir(char *);
+static int purge_bindingdir(const char *);
 static void *ypbindproc_null_2(SVCXPRT *, void *);
 static void *ypbindproc_domain_2(SVCXPRT *, void *);
 static void *ypbindproc_setdom_2(SVCXPRT *, void *);
@@ -223,7 +223,7 @@ removelock(struct _dom_binding *ypdb)
 }
 
 /*
- * purge_bindingdir: remove old binding files (i.e. "rm BINDINGDIR/*.[0-9]")
+ * purge_bindingdir: remove old binding files (i.e. "rm BINDINGDIR\/\*.[0-9]")
  *
  * local YP functions [e.g. yp_master()] will fail without even talking
  * to ypbind if there is a stale (non-flock'd) binding file present.
@@ -231,7 +231,8 @@ removelock(struct _dom_binding *ypdb)
  * ypbind may bind more than just the yp_get_default_domain() domain.
  */
 static int
-purge_bindingdir(char *dirpath) {
+purge_bindingdir(const char *dirpath)
+ {
 	DIR *dirp;
 	int unlinkedfiles, l;
 	struct dirent *dp;
