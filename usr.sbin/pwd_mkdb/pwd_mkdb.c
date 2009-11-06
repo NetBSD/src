@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.48 2009/08/25 09:27:25 enami Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.49 2009/11/06 15:00:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,8 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.48 2009/08/25 09:27:25 enami Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.49 2009/11/06 15:00:31 joerg Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
