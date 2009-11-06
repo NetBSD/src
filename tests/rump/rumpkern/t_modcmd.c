@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.3 2009/11/06 15:25:52 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.4 2009/11/06 15:26:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -106,4 +106,6 @@ ATF_TC_BODY(cmsg_modcmd, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cmsg_modcmd);
+
+	return atf_no_error();
 }
