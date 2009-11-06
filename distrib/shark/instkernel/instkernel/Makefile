@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2009/11/06 12:31:44 is Exp $
+#	$NetBSD: Makefile,v 1.20 2009/11/06 13:01:36 is Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,10 +19,5 @@ create-aout= \
 	    ${.TARGET:R} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
-
-.PHONY: release-aout-instkernel
-release-aout-instkernel:
-	${RELEASE_INSTALL} netbsd-INSTALL.aout.gz \
-	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/instkernel/netbsd.gz
 
 .include <bsd.prog.mk>
