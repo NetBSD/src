@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.2 2009/05/02 16:18:13 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.3 2009/11/06 15:25:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -85,14 +85,14 @@ ATF_TC_BODY(cmsg_modcmd, tc)
 	mi = dlsym(handle, "__start_link_set_modules");
 	if (mi == NULL)
 		atf_tc_fail("cannot find module info");
-	if ((rv = rump_module_init(*mi, NULL)) != 0)
+	if ((rv = rump_pub_module_init(*mi, NULL)) != 0)
 		atf_tc_fail("module init failed: %d (%s)", rv, strerror(rv));
 
 	if (rump_sys_mount(MOUNT_TMPFS, "/mp", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("still cannot mount");
 	if (rump_sys_unmount("/mp", 0) == -1)
 		atf_tc_fail("cannot unmount");
-	if ((rv = rump_module_fini(*mi)) != 0)
+	if ((rv = rump_pub_module_fini(*mi)) != 0)
 		atf_tc_fail("module fini failed: %d (%s)", rv, strerror(rv));
 	if (dlclose(handle)) {
 		const char *dlmsg = dlerror();
