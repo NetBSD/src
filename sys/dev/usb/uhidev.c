@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.43 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.44 2009/11/06 04:42:27 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.43 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.44 2009/11/06 04:42:27 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ USB_ATTACH(uhidev)
 	struct uhidev_attach_arg uha;
 	device_t dev;
 	struct uhidev *csc;
-	int size, nrepid, repid, repsz;
+	int maxinpktsize, size, nrepid, repid, repsz;
 	int *repsizes;
 	int i;
 	void *desc;
@@ -140,6 +140,7 @@ USB_ATTACH(uhidev)
 		(void)usbd_set_protocol(iface, 1);
 #endif
 
+	maxinpktsize = 0;
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
@@ -161,6 +162,7 @@ USB_ATTACH(uhidev)
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
+			maxinpktsize = UGETW(ed->wMaxPacketSize);
 			sc->sc_iep_addr = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
@@ -265,8 +267,10 @@ nomem:
 		aprint_error_dev(self, "no memory\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	/* Just request max packet size for the interrupt pipe */
+	sc->sc_isize = maxinpktsize;
 	sc->sc_nrepid = nrepid;
-	sc->sc_isize = 0;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -275,12 +279,8 @@ nomem:
 		repsz = hid_report_size(desc, size, hid_input, repid);
 		DPRINTF(("uhidev_match: repid=%d, repsz=%d\n", repid, repsz));
 		repsizes[repid] = repsz;
-		if (repsz > 0) {
-			if (repsz > sc->sc_isize)
-				sc->sc_isize = repsz;
-		}
 	}
-	sc->sc_isize += nrepid != 1;	/* space for report ID */
+
 	DPRINTF(("uhidev_attach: isize=%d\n", sc->sc_isize));
 
 	uha.parent = sc;
@@ -478,7 +478,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (!(scd->sc_state & UHIDEV_OPEN))
 		return;
-	if (scd->sc_in_rep_size != cc) {
+	if (scd->sc_in_rep_size > cc) {
 		printf("%s: bad input length %d != %d\n",
 		       USBDEVNAME(sc->sc_dev), scd->sc_in_rep_size, cc);
 		return;
