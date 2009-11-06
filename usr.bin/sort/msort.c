@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.28 2009/10/09 20:29:43 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.29 2009/11/06 18:34:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,10 +64,7 @@
 #include "sort.h"
 #include "fsort.h"
 
-#ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.28 2009/10/09 20:29:43 dsl Exp $");
-__SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
-#endif /* not lint */
+__RCSID("$NetBSD: msort.c,v 1.29 2009/11/06 18:34:22 joerg Exp $");
 
 #include <stdlib.h>
 #include <string.h>
