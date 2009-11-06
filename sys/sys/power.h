@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.13 2009/06/08 00:55:35 pgoyette Exp $	*/
+/*	$NetBSD: power.h,v 1.14 2009/11/06 18:28:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -245,6 +245,7 @@ typedef struct power_event {
 struct power_type {
 	char	power_type[32];
 };
-#define	POWER_IOC_GET_TYPE	 _IOR('P', 0, sizeof(struct power_type))
+#define	POWER_IOC_GET_TYPE	_IOR('P', 0, struct power_type)
+#define	POWER_IOC_GET_TYPE_WITH_LOSSAGE _IOR('P', 0, sizeof(struct power_type))
 
 #endif /* _SYS_POWER_H_ */
