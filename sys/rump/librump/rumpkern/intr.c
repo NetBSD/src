@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2009/09/19 14:18:01 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2009/11/06 15:22:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/09/19 14:18:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/11/06 15:22:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -288,6 +288,14 @@ softint_disestablish(void *cook)
 
 bool
 cpu_intr_p(void)
+{
+
+	return false;
+}
+
+/* yea, we lie a bit for now */
+bool
+cpu_softintr_p(void)
 {
 
 	return false;
