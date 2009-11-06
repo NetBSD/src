@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.64 2009/05/12 14:31:27 cegger Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.65 2009/11/06 18:41:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.64 2009/05/12 14:31:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.65 2009/11/06 18:41:25 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -536,19 +536,13 @@ mii_phy_delete_media(struct mii_softc *sc)
 int
 mii_phy_activate(device_t self, enum devact act)
 {
-	int rv = 0;
-
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		/* Nothing special to do. */
-		break;
+		/* XXX Invalidate parent's media setting? */
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return (rv);
 }
 
 /* ARGSUSED1 */
@@ -556,6 +550,8 @@ int
 mii_phy_detach(device_t self, int flags)
 {
 	struct mii_softc *sc = device_private(self);
+
+	/* XXX Invalidate parent's media setting? */
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
 		callout_stop(&sc->mii_nway_ch);
