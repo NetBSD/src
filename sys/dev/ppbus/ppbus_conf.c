@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.16 2008/04/29 14:07:37 cegger Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.17 2009/11/07 00:05:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.16 2008/04/29 14:07:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.17 2009/11/07 00:05:49 dyoung Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.16 2008/04/29 14:07:37 cegger Exp $
 /* Probe, attach, and detach functions for ppbus. */
 static int ppbus_probe(device_t, cfdata_t, void *);
 static void ppbus_attach(device_t, device_t, void *);
+static void ppbus_childdet(device_t, device_t);
 static int ppbus_detach(device_t, int);
 
 /* Utility function prototypes */
@@ -59,8 +60,8 @@ static int ppbus_search_children(device_t, cfdata_t,
 				 const int *, void *);
 
 
-CFATTACH_DECL_NEW(ppbus, sizeof(struct ppbus_softc), ppbus_probe, ppbus_attach,
-	ppbus_detach, NULL);
+CFATTACH_DECL2_NEW(ppbus, sizeof(struct ppbus_softc), ppbus_probe, ppbus_attach,
+	ppbus_detach, NULL, NULL, ppbus_childdet);
 
 /* Probe function for ppbus. */
 static int
@@ -177,6 +178,18 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
+static void
+ppbus_childdet(device_t self, device_t target)
+{
+	SLIST_FOREACH(child, &ppbus->sc_childlist_head, entries) {
+		if (child->sc_dev == target)
+			break;
+	}
+	if (child != NULL)
+		SLIST_REMOVE(&ppbus->sc_childlist_head, child,
+		    struct ppbus_device_softc, entries);
+}
+
 /* Detach function for ppbus. */
 static int
 ppbus_detach(device_t self, int flag)
@@ -198,9 +211,7 @@ ppbus_detach(device_t self, int flag)
 	mutex_destroy(&(ppbus->sc_lock));
 
 	/* Detach children devices */
-	while (!SLIST_EMPTY(&(ppbus->sc_childlist_head))) {
-		child = SLIST_FIRST(&(ppbus->sc_childlist_head));
-		config_deactivate(child->sc_dev);
+	while ((child = SLIST_FIRST(&ppbus->sc_childlist_head)) != NULL) {
 		if (config_detach(child->sc_dev, flag)) {
 			if(!(flag & DETACH_QUIET))
 				aprint_error_dev(ppbus->sc_dev, "error detaching %s.",
@@ -211,7 +222,6 @@ ppbus_detach(device_t self, int flag)
 				printf("%s: continuing (DETACH_FORCE).\n",
 					device_xname(ppbus->sc_dev));
 		}
-		SLIST_REMOVE_HEAD(&(ppbus->sc_childlist_head), entries);
 	}
 
 	if (!(flag & DETACH_QUIET))
