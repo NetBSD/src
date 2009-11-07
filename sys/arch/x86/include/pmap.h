@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2009/07/19 15:17:29 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 2009/11/07 07:27:48 cegger Exp $	*/
 
 /*
  *
@@ -402,7 +402,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
 /* pmap functions with machine addresses */
-void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
+void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);

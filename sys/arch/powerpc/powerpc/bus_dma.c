@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.34 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35 2009/11/07 07:27:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2009/11/07 07:27:46 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE |
 			    PMAP_WIRED |
-			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0));
+			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0), 0);
 		}
 	}
 

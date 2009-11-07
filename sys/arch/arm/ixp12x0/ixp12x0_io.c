@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.13 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.14 2009/11/07 07:27:41 cegger Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.13 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.14 2009/11/07 07:27:41 cegger Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -161,7 +161,7 @@ ixp12x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = va + offset;
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = vtopte(va);
 		*pte &= ~L2_S_CACHE_MASK;
 		PTE_SYNC(pte);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.67 2009/08/04 23:31:57 pooka Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.67 2009/08/04 23:31:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -551,7 +551,8 @@ again_faultbusy:
 				pgs[i] = pg;
 			}
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 		pmap_update(pmap_kernel());
 		umap->flags |= UMAP_PAGES_LOCKED;

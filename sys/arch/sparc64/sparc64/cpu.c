@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.82 2009/05/16 19:19:04 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.83 2009/11/07 07:27:47 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2009/05/16 19:19:04 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2009/11/07 07:27:47 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -136,7 +136,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpu0paddr += sz;
 
 	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	pmap_update(pmap_kernel());
 

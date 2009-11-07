@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.48 2009/05/17 18:24:23 bouyer Exp $	*/
+/*	$NetBSD: gdt.c,v 1.49 2009/11/07 07:27:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.48 2009/05/17 18:24:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.49 2009/11/07 07:27:44 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -140,7 +140,7 @@ gdt_init(void)
 			panic("gdt_init: no pages");
 		}
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
@@ -171,7 +171,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 			uvm_wait("gdt_alloc_cpu");
 		}
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
@@ -264,7 +264,7 @@ gdt_grow(int which)
 				uvm_wait("gdt_grow");
 			}
 			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 		return;
 	}
@@ -279,7 +279,7 @@ gdt_grow(int which)
 				uvm_wait("gdt_grow");
 			}
 			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 	}
 

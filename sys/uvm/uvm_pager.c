@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.96 2009/08/05 14:11:32 pooka Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.97 2009/11/07 07:27:50 cegger Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.96 2009/08/05 14:11:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.97 2009/11/07 07:27:50 cegger Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -201,7 +201,7 @@ enter:
 		pp = *pps++;
 		KASSERT(pp);
 		KASSERT(pp->flags & PG_BUSY);
-		pmap_kenter_pa(cva, VM_PAGE_TO_PHYS(pp), prot);
+		pmap_kenter_pa(cva, VM_PAGE_TO_PHYS(pp), prot, 0);
 	}
 	pmap_update(vm_map_pmap(pager_map));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.336 2009/10/30 15:05:54 he Exp $ */
+/*	$NetBSD: pmap.c,v 1.337 2009/11/07 07:27:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.336 2009/10/30 15:05:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -573,7 +573,7 @@ int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 bool		(*pmap_is_modified_p)(struct vm_page *);
 bool		(*pmap_is_referenced_p)(struct vm_page *);
-void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 void		(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
 void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
@@ -887,7 +887,7 @@ pgt_page_alloc(struct pool *pp, int flags)
 
 	/* Map the page */
 	pmap_kenter_pa(va, pa | (cacheit ? 0 : PMAP_NC),
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 	return ((void *)va);
@@ -1055,7 +1055,7 @@ pmap_growkernel(vaddr_t eva)
 			if (pg == NULL)
 				panic("growkernel: out of memory");
 			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ | VM_PROT_WRITE);
+					VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 	}
 
@@ -3874,7 +3874,7 @@ pmap_bootstrap4m(void *top)
 					    "(va=%p, pa=%p)\n", va, pa);
 				pmap_kremove(va, NBPG);
 				pmap_kenter_pa(va, pa,
-					       VM_PROT_READ | VM_PROT_WRITE);
+					       VM_PROT_READ | VM_PROT_WRITE, 0);
 			}
 
 		} else
@@ -4020,7 +4020,7 @@ pmap_alloc_cpu(struct cpu_info *sc)
 	/* Map the pages */
 	while (size != 0) {
 		pmap_kenter_pa(va, pa | (cachebit ? 0 : PMAP_NC),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += pagesz;
 		pa += pagesz;
 		size -= pagesz;
@@ -4139,7 +4139,7 @@ pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_kenter_pa(va, pa, prot);
+		pmap_kenter_pa(va, pa, prot, 0);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -5887,7 +5887,7 @@ out:
 }
 
 void
-pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
@@ -6482,7 +6482,7 @@ out:
 }
 
 void
-pmap_kenter_pa4m(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa4m(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;

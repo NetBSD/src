@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.19 2009/10/26 19:16:58 cegger Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.20 2009/11/07 07:27:48 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.19 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20 2009/11/07 07:27:48 cegger Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -424,7 +424,7 @@ acpi_md_sleep_init(void)
 		panic("acpi: can't allocate address for wakecode.\n");
 
 	pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 }
 

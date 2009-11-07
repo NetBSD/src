@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.86 2009/10/21 21:12:02 rmind Exp $ */
+/*	$NetBSD: pmap.h,v 1.87 2009/11/07 07:27:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -283,7 +283,7 @@ int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4_4c(struct vm_page *);
 bool		pmap_is_referenced4_4c(struct vm_page *);
-void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove4_4c(vaddr_t, vsize_t);
 void		pmap_kprotect4_4c(vaddr_t, vsize_t, vm_prot_t);
 void		pmap_page_protect4_4c(struct vm_page *, vm_prot_t);
@@ -303,7 +303,7 @@ int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4m(struct vm_page *);
 bool		pmap_is_referenced4m(struct vm_page *);
-void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove4m(vaddr_t, vsize_t);
 void		pmap_kprotect4m(vaddr_t, vsize_t, vm_prot_t);
 void		pmap_page_protect4m(struct vm_page *, vm_prot_t);
@@ -349,7 +349,7 @@ extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 extern bool	 (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern bool	(*pmap_is_modified_p)(struct vm_page *);
 extern bool	(*pmap_is_referenced_p)(struct vm_page *);
-extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int);
 extern void	(*pmap_kremove_p)(vaddr_t, vsize_t);
 extern void	(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
 extern void	(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);

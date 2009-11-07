@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.147 2009/09/27 17:19:07 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.148 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.147 2009/09/27 17:19:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.148 2009/11/07 07:27:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,7 +714,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp
 			/* map pages */
 			for (i = 0; i < npages; i++) {
 				pmap_kenter_pa(lva, VM_PAGE_TO_PHYS(pgpp[i]),
-				    VM_PROT_READ);
+				    VM_PROT_READ, 0);
 				lva += PAGE_SIZE;
 			}
 
