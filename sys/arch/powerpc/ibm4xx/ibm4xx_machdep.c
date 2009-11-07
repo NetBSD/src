@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.8 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.9 2009/11/07 07:27:45 cegger Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.8 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.9 2009/11/07 07:27:45 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -289,7 +289,8 @@ ibm4xx_cpu_startup(const char *model)
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
-		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbuf_paddr + i * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, 0);
 	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
 	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));

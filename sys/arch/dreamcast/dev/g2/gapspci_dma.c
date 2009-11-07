@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.16 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.17 2009/11/07 07:27:42 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.16 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.17 2009/11/07 07:27:42 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			if (size == 0)
 				panic("gaps_dmamem_map: size botch");
 			pmap_kenter_pa(va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 	}
 	pmap_update(pmap_kernel());

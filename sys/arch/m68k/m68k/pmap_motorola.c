@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.49 2009/10/22 19:50:55 rmind Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.50 2009/11/07 07:27:45 cegger Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.49 2009/10/22 19:50:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.50 2009/11/07 07:27:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1416,7 +1416,7 @@ validate:
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pmap_t pmap = pmap_kernel();
 	pt_entry_t *pte;

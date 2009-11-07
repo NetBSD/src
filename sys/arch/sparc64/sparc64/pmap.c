@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.241 2009/10/26 19:16:57 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.242 2009/11/07 07:27:47 cegger Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.241 2009/10/26 19:16:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2009/11/07 07:27:47 cegger Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1480,7 +1480,7 @@ pmap_deactivate(struct lwp *l)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pte_t tte;
 	paddr_t ptp;

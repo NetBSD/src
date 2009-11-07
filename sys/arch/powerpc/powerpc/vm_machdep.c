@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.78 2009/10/24 20:03:56 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.79 2009/11/07 07:27:46 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2009/10/24 20:03:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -211,7 +211,7 @@ vmaprange(struct proc *p, vaddr_t uaddr, vsize_t len, int prot)
 	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
 		    faddr, &pa);
-		pmap_kenter_pa(taddr, pa, prot);
+		pmap_kenter_pa(taddr, pa, prot, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
@@ -267,7 +267,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		 * Use pmap_enter so the referenced and modified bits are
 		 * appropriately set.
 		 */
-		pmap_kenter_pa(taddr, pa, prot);
+		pmap_kenter_pa(taddr, pa, prot, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.7 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.8 2009/11/07 07:27:42 cegger Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.7 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.8 2009/11/07 07:27:42 cegger Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -405,7 +405,7 @@ ixp425_pci_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	/* Now map the pages */
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = vtopte(va);
 		*pte &= ~L2_S_CACHE_MASK;
 		PTE_SYNC(pte);

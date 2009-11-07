@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2009/10/24 14:52:20 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.247 2009/11/07 07:27:47 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2009/10/24 14:52:20 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2009/11/07 07:27:47 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -822,7 +822,7 @@ dumpsys(void)
 				    todo / (1024*1024));
 			for (off = 0; off < n; off += PAGE_SIZE)
 				pmap_kenter_pa(dumpspace+off, maddr+off,
-				    VM_PROT_READ);
+				    VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(void *)dumpspace, (size_t)n);
@@ -1724,7 +1724,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 			__func__, 
 			(unsigned long long)pa, (char *)v,
 			(unsigned long long)hp->_ptr));
-		pmap_kenter_pa(v, pa | pm_flags, pm_prot);
+		pmap_kenter_pa(v, pa | pm_flags, pm_prot, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

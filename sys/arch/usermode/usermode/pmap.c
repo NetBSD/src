@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.4 2009/10/21 21:12:04 rmind Exp $ */
+/* $NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2009/10/21 21:12:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,7 +178,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 }
 

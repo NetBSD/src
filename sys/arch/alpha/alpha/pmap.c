@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.248 2009/10/26 03:51:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.249 2009/11/07 07:27:40 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2009/10/26 03:51:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2009/11/07 07:27:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1870,7 +1870,7 @@ out:
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte, npte;
 	long cpu_id = cpu_number();

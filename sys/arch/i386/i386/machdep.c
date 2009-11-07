@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.672 2009/10/05 23:59:30 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.673 2009/11/07 07:27:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.672 2009/10/05 23:59:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.673 2009/11/07 07:27:44 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -463,7 +463,8 @@ cpu_startup(void)
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
-			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 
@@ -1174,7 +1175,7 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ);
+	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ, 0);
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
@@ -1249,7 +1250,7 @@ init386_pte0(void)
 
 	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
-	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
@@ -1468,13 +1469,13 @@ init386(paddr_t first_avail)
 	KASSERT(biostramp_image_size <= PAGE_SIZE);
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL);		/* protection */
+		       VM_PROT_ALL, 0);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #endif
 #endif /* !XEN */
 
-	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
@@ -1483,7 +1484,7 @@ init386(paddr_t first_avail)
 	idt_init();
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
+	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 

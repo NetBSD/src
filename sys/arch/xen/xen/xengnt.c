@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.15 2009/10/19 18:41:11 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.16 2009/11/07 07:27:49 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.15 2009/10/19 18:41:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.16 2009/11/07 07:27:49 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,7 +165,7 @@ xengnt_more_entries(void)
 	 * the grant table frames
 	 */
 	pmap_kenter_ma(((vaddr_t)grant_table) + gnt_nr_grant_frames * PAGE_SIZE,
-	    pages[gnt_nr_grant_frames] << PAGE_SHIFT, VM_PROT_WRITE);
+	    pages[gnt_nr_grant_frames] << PAGE_SHIFT, VM_PROT_WRITE, 0);
 
 	/*
 	 * add the grant entries associated to the last grant table frame

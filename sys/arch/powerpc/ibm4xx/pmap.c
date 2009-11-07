@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2009/10/21 21:12:01 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2009/11/07 07:27:45 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2009/10/21 21:12:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2009/11/07 07:27:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -914,7 +914,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 	u_int tte;
@@ -1888,7 +1888,7 @@ pmap_testout(void)
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	pmap_kenter_pa(va, pa, VM_PROT_ALL);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL, 0);
 	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif

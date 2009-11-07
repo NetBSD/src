@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("_bus_dmamem_map: size botch");
 
 			pmap_kenter_pa(va, addr,
-				       VM_PROT_READ | VM_PROT_WRITE);
+				       VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 	}
 

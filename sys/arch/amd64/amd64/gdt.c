@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.21 2009/03/21 14:41:29 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22 2009/11/07 07:27:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.21 2009/03/21 14:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22 2009/11/07 07:27:40 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -140,7 +140,7 @@ gdt_init(void)
 			panic("gdt_init: no pages");
 		}
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
@@ -230,7 +230,7 @@ gdt_grow(void)
 			uvm_wait("gdt_grow");
 		}
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 }

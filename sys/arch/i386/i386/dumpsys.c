@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.7 2009/03/28 01:45:17 mrg Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.8 2009/11/07 07:27:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.7 2009/03/28 01:45:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.8 2009/11/07 07:27:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,7 +666,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 
 		for (m = 0; m < n; m += NBPG)
 			pmap_kenter_pa(dumpspace + m, maddr + m,
-			    VM_PROT_READ);
+			    VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);

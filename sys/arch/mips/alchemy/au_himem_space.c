@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.8 2008/04/28 20:23:27 martin Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.9 2009/11/07 07:27:45 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.8 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.9 2009/11/07 07:27:45 cegger Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -239,7 +239,7 @@ au_himem_map(void *cookie, bus_addr_t addr, bus_size_t size,
 	/* map the pages in the kernel pmap */
 	s = splhigh();
 	while (realsz) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pa += PAGE_SIZE;
 		va += PAGE_SIZE;
 		realsz -= PAGE_SIZE;

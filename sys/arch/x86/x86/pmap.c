@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2009/10/22 19:50:56 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2009/10/22 19:50:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1009,7 +1009,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
  */
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte, opte, npte;
 
@@ -1114,7 +1114,7 @@ pmap_emap_remove(vaddr_t sva, vsize_t len)
  */
 
 void
-pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot)
+pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte, opte, npte;
 
@@ -2110,7 +2110,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 		/* remap this page RO */
-		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
+		pmap_kenter_pa(object, pdirpa, VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 		/*
 		 * pin as L2/L4 page, we have to do the page with the
@@ -3050,7 +3050,7 @@ vaddr_t
 pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
 	while (spa < epa) {
-		pmap_kenter_pa(va, spa, prot);
+		pmap_kenter_pa(va, spa, prot, 0);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
@@ -4773,7 +4773,7 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 				panic("mapping of real mode PML failed\n");
 			pmap_kenter_pa(x86_tmp_pml_vaddr[level],
 			    x86_tmp_pml_paddr[level],
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 			pmap_update(pmap_kernel());
 		}
 		maps_loaded = true;

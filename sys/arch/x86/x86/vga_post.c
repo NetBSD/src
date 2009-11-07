@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.13 2009/08/24 11:33:49 jmcneill Exp $ */
+/* $NetBSD: vga_post.c,v 1.14 2009/11/07 07:27:49 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.13 2009/08/24 11:33:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.14 2009/11/07 07:27:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -168,7 +168,7 @@ vga_post_init(int bus, int device, int function)
 	sc->sys_image = sys_image;
 	sc->emu.sys_private = sc;
 
-	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ);
+	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)sc->bios_data, (void *)sys_bios_data, PAGE_SIZE);
 	pmap_kremove(sys_bios_data, PAGE_SIZE);
@@ -177,14 +177,14 @@ vga_post_init(int bus, int device, int function)
 	iter = 0;
 	TAILQ_FOREACH(pg, &sc->ram_backing, pageq.queue) {
 		pmap_kenter_pa(sc->sys_image + iter, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ | VM_PROT_WRITE);
+				VM_PROT_READ | VM_PROT_WRITE, 0);
 		iter += PAGE_SIZE;
 	}
 	KASSERT(iter == 65536);
 
 	for (iter = 640 * 1024; iter < 1024 * 1024; iter += PAGE_SIZE)
 		pmap_kenter_pa(sc->sys_image + iter, iter,
-				VM_PROT_READ | VM_PROT_WRITE);
+				VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 	memset(&sc->emu, 0, sizeof(sc->emu));

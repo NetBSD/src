@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.91 2009/03/18 16:00:14 cegger Exp $ */
+/*	$NetBSD: iommu.c,v 1.92 2009/11/07 07:27:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.91 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.92 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -235,7 +235,8 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 	/* Map the pages */
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
@@ -784,7 +785,8 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			panic("iommu_dmamem_map: size botch");
 
 		addr = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, addr | cbit, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, addr | cbit,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;

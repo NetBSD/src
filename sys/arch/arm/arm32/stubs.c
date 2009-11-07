@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.21 2009/03/15 22:20:10 cegger Exp $	*/
+/*	$NetBSD: stubs.c,v 1.22 2009/11/07 07:27:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.21 2009/03/15 22:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.22 2009/11/07 07:27:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ dodumpsys(void)
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 
-			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
+			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (void *) dumpspace, PAGE_SIZE);

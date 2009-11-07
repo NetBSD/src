@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.24 2009/09/03 23:25:04 jmcneill Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25 2009/11/07 07:27:48 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2009/09/03 23:25:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2009/11/07 07:27:48 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,9 +329,9 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 		 * save the extra invalidate!
 		 */
 #ifdef XEN
-		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 #else
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 #endif /* XEN */
 
 		pte = kvtopte(va);

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.66 2009/08/11 17:04:14 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.67 2009/11/07 07:27:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.66 2009/08/11 17:04:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.67 2009/11/07 07:27:41 cegger Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -223,7 +223,8 @@ cpu_startup(void)
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufphys + loop * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.12 2005/11/24 13:08:33 yamt Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.13 2009/11/07 07:27:42 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.12 2005/11/24 13:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.13 2009/11/07 07:27:42 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	*bshp = va + offset;
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = vtopte(va);
 		*pte &= ~L2_S_CACHE_MASK;
 		PTE_SYNC(pte);

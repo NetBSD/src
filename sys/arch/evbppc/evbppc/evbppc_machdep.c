@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.8 2006/08/31 22:53:40 freza Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.9 2009/11/07 07:27:43 cegger Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.8 2006/08/31 22:53:40 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.9 2009/11/07 07:27:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ mapiodev(paddr_t pa, psize_t len)
 
 	for (; len > 0; len -= PAGE_SIZE) {
 		pmap_kenter_pa(taddr, faddr, 
-			VM_PROT_READ|VM_PROT_WRITE|PME_NOCACHE);
+			VM_PROT_READ|VM_PROT_WRITE|PME_NOCACHE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

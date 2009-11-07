@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.67 2009/11/03 13:14:50 cegger Exp $ */
+/* $NetBSD: pnpbios.c,v 1.68 2009/11/07 07:27:44 cegger Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.67 2009/11/03 13:14:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.68 2009/11/07 07:27:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ pnpbios_mapit(paddr_t addr, u_long len, vm_prot_t prot)
 	if (!startva)
 		return (0);
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, prot);
+		pmap_kenter_pa(va, pa, prot, 0);
 	pmap_update(pmap_kernel());
 
 	return ((void *)(startva + (addr - startpa)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2009/11/07 07:27:43 cegger Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2009/11/07 07:27:43 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -385,7 +385,7 @@ cpu_startup(void)
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
-		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
 	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));

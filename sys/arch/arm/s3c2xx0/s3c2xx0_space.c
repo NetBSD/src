@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_space.c,v 1.7 2005/11/24 13:08:32 yamt Exp $ */
+/*	$NetBSD: s3c2xx0_space.c,v 1.8 2009/11/07 07:27:41 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.7 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_space.c,v 1.8 2009/11/07 07:27:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ s3c2xx0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t) (va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = vtopte(va);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0)
 			*pte &= ~L2_S_CACHE_MASK;

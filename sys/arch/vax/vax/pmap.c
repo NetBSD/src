@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171 2009/10/26 19:16:58 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.172 2009/11/07 07:27:48 cegger Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172 2009/11/07 07:27:48 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1001,7 +1001,7 @@ vaddrtopte(struct pv_entry *pv)
  * without tracking it in the MD code.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int *ptp, opte;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2009/10/21 21:12:00 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2009/11/07 07:27:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2009/10/21 21:12:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2009/11/07 07:27:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,7 +1029,7 @@ pmap_bootstrap(vaddr_t vstart)
 		else if (va == (vaddr_t)proc0paddr + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
-		pmap_kenter_pa(va, va, prot);
+		pmap_kenter_pa(va, va, prot, 0);
 	}
 
 	/* XXXNH update */
@@ -1754,7 +1754,7 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	volatile pt_entry_t *pde;
 	pt_entry_t pte, opte;

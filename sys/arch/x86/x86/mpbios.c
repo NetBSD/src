@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.55 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.56 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.55 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.56 2009/11/07 07:27:49 cegger Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -256,7 +256,7 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 	handle->vsize = endpa-pgpa;
 
 	do {
-		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, VM_PROT_READ, 0);
 		va += PAGE_SIZE;
 		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);

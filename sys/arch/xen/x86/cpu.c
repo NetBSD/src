@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2009/09/22 13:59:42 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.36 2009/11/07 07:27:49 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2009/09/22 13:59:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -799,7 +799,7 @@ cpu_copy_trampoline(void)
 		UVM_KMF_VAONLY);
 
 	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
-		VM_PROT_READ | VM_PROT_WRITE);
+		VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)mp_trampoline_vaddr,
 		cpu_spinup_trampoline,
@@ -917,7 +917,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	dwordptr[0] = 0;
 	dwordptr[1] = target >> 4;
 
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
 	memcpy ((uint8_t *) 0x467, dwordptr, 4);
 	pmap_kremove (0, PAGE_SIZE);
 

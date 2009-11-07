@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.19 2009/03/15 22:25:46 cegger Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.20 2009/11/07 07:27:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.19 2009/03/15 22:25:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.20 2009/11/07 07:27:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ mainbus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_ha
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;

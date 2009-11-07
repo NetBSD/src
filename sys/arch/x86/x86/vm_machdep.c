@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2009/10/29 09:50:49 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2009/10/29 09:50:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_mtrr.h"
 
@@ -329,7 +329,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	while (len) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
-		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.27 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.28 2009/11/07 07:27:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.27 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2009/11/07 07:27:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
 		t->base = va; /* kseg2 addr */
 				
 		for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 		pmap_update(pmap_kernel());
 	}

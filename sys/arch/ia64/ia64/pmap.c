@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.23 2009/10/26 19:16:56 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.24 2009/11/07 07:27:44 cegger Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2009/10/26 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2009/11/07 07:27:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1003,7 +1003,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
         struct ia64_lpte *pte;
 

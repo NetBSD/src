@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.295 2009/08/15 23:45:00 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.296 2009/11/07 07:27:46 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.295 2009/08/15 23:45:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -236,7 +236,7 @@ cpu_startup(void)
 
 	/* Map first 8192 */
 	while (va < va0 + 8192) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pa += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
@@ -247,7 +247,7 @@ cpu_startup(void)
 		if (va >= va0 + size)
 			panic("cpu_start: memory buffer size botch");
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
@@ -1657,7 +1657,7 @@ no_fit:
 #endif
 #endif
 		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		dva += pagesz;
 		va += sgsize;
@@ -1723,7 +1723,7 @@ sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 #endif
 #endif
 		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		dva += pagesz;
 		sgsize -= pagesz;
@@ -1816,7 +1816,8 @@ sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			panic("sun4_dmamem_map: size botch");
 
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -1973,7 +1974,7 @@ static	vaddr_t iobase;
 	pa = trunc_page(pa);
 	do {
 		pmap_kenter_pa(v, pa | pmtype | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

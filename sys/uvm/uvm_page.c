@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.151 2009/08/18 19:08:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.152 2009/11/07 07:27:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.151 2009/08/18 19:08:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.152 2009/11/07 07:27:50 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -599,7 +599,7 @@ uvm_pageboot_alloc(vsize_t size)
 		 * Note this memory is no longer managed, so using
 		 * pmap_kenter is safe.
 		 */
-		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 	return(addr);
@@ -1318,7 +1318,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	 *
 	 * it might be better to have "CPU-local temporary map" pmap interface.
 	 */
-	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	p = (int *)uvm_zerocheckkva;
 	ep = (int *)((char *)p + PAGE_SIZE);
 	pmap_update(pmap_kernel());

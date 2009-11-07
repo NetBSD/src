@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2009/10/21 21:12:03 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2009/11/07 07:27:48 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2009/10/21 21:12:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2009/11/07 07:27:48 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2149,7 +2149,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 void 
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	mmu_short_pte_t	*pte;
 
@@ -2471,8 +2471,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 #endif
 
 	/* Map pages as non-cacheable to avoid cache polution? */
-	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
-	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ, 0);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/* Hand-optimized version of memcpy(dst, src, PAGE_SIZE) */
 	copypage((char *)srcva, (char *)dstva);
@@ -2507,7 +2507,7 @@ pmap_zero_page(paddr_t dstpa)
 #endif
 
 	/* The comments in pmap_copy_page() above apply here also. */
-	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/* Hand-optimized version of memset(ptr, 0, PAGE_SIZE) */
 	zeropage((char *)dstva);

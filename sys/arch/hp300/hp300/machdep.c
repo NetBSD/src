@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 2009/08/15 23:44:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208 2009/11/07 07:27:43 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2009/08/15 23:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2009/11/07 07:27:43 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -241,7 +241,7 @@ hp300_init(void)
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
