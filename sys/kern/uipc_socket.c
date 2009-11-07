@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.193 2009/10/03 03:59:39 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.194 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.193 2009/10/03 03:59:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.194 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -386,7 +386,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
-		    VM_PROT_READ);
+		    VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.63 2009/03/27 19:53:19 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.64 2009/11/07 07:27:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.63 2009/03/27 19:53:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2009/11/07 07:27:49 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -199,7 +199,7 @@ cpu_init_first(void)
 	cmos_data_mapping = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if (cmos_data_mapping == 0)
 		panic("No KVA for page 0");
-	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 }
 
@@ -788,7 +788,7 @@ cpu_copy_trampoline(void)
 	    UVM_KMF_VAONLY);
 
 	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,

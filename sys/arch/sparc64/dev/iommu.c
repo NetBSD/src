@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.87 2009/10/24 14:52:19 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.88 2009/11/07 07:27:46 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.87 2009/10/24 14:52:19 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.88 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -162,7 +162,8 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	/* Map the pages */
 	TAILQ_FOREACH(pg, &pglist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | PMAP_NVC,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
@@ -1085,7 +1086,8 @@ iommu_dvmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		addr = VM_PAGE_TO_PHYS(pg);
 		DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: "
 		    "mapping va %lx at %llx\n", va, (unsigned long long)addr | cbit));
-		pmap_kenter_pa(va, addr | cbit, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, addr | cbit,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

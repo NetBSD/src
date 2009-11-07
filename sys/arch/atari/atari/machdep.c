@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2009/08/19 23:46:52 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2009/11/07 07:27:42 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2009/08/19 23:46:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2009/11/07 07:27:42 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -184,7 +184,7 @@ consinit(void)
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.89 2009/05/30 16:52:32 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.90 2009/11/07 07:27:47 cegger Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2009/05/30 16:52:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2009/11/07 07:27:47 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -100,7 +100,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
-		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;

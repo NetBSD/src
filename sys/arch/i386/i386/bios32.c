@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.26 2009/05/16 16:52:03 cegger Exp $	*/
+/*	$NetBSD: bios32.c,v 1.27 2009/11/07 07:27:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.26 2009/05/16 16:52:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.27 2009/11/07 07:27:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,9 +195,9 @@ bios32_init(void)
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
 #ifdef XEN
-			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+			pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
 #else
-			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+			pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
 #endif
 
 		aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",

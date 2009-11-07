@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.200 2009/10/22 19:50:55 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.201 2009/11/07 07:27:41 cegger Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2009/10/22 19:50:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2009/11/07 07:27:41 cegger Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3308,7 +3308,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
  * from here.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte;
@@ -4745,7 +4745,8 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 		 * pmap_kenter_pa and let that routine do the hard work.
 		 */
 		KASSERT(SLIST_EMPTY(&pg->mdpage.pvh_list));
-		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
+		pmap_kenter_pa(va, pa,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
 #endif
 	}
 
@@ -5432,7 +5433,7 @@ pmap_postinit(void)
 			paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 			pmap_kenter_pa(va, pa,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
 
 			/*
 			 * Make sure the L1 descriptor table is mapped

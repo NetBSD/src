@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.234 2009/03/18 16:00:14 cegger Exp $ */
+/*	$NetBSD: autoconf.c,v 1.235 2009/11/07 07:27:46 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.234 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.235 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -335,7 +335,7 @@ bootstrap(void)
 		/* Map Interrupt Enable Register */
 		pmap_kenter_pa(INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		pmap_update(pmap_kernel());
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;

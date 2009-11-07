@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:55 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2009/11/07 07:27:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2009/11/07 07:27:43 cegger Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1339,7 +1339,7 @@ hp700_pagezero_map(void)
 	was_mapped_before = pagezero_mapped;
 	if (!was_mapped_before) {
 		s = splhigh();
-		pmap_kenter_pa(0, 0, VM_PROT_ALL);
+		pmap_kenter_pa(0, 0, VM_PROT_ALL, 0);
 		pagezero_mapped = 1;
 		splx(s);
 	}
