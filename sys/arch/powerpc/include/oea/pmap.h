@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2009/10/21 21:12:01 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2009/11/07 07:27:45 cegger Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,7 +75,7 @@ struct pmap_ops {
 	void (*pmapop_update)(pmap_t);
 	int (*pmapop_enter)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 	void (*pmapop_remove)(pmap_t, vaddr_t, vaddr_t);
-	void (*pmapop_kenter_pa)(vaddr_t, paddr_t, vm_prot_t);
+	void (*pmapop_kenter_pa)(vaddr_t, paddr_t, vm_prot_t, u_int);
 	void (*pmapop_kremove)(vaddr_t, vsize_t);
 	bool (*pmapop_extract)(pmap_t, vaddr_t, paddr_t *);
 

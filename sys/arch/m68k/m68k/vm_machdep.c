@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2009/05/30 17:52:05 martin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 2009/11/07 07:27:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2009/05/30 17:52:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 2009/11/07 07:27:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ | VM_PROT_WRITE,
 		    PMAP_WIRED);
 #else
-		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 #endif
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;

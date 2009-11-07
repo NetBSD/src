@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155 2009/10/21 21:11:58 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.156 2009/11/07 07:27:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2009/10/21 21:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2009/11/07 07:27:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1187,7 +1187,7 @@ validate:
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct pmap *pmap = pmap_kernel();
 	pt_entry_t *pte;

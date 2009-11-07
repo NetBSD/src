@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2009/10/21 21:12:03 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2009/11/07 07:27:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2009/10/21 21:12:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2009/11/07 07:27:47 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2308,7 +2308,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 }
 
 void 
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
 	pmap_t pmap = kernel_pmap;

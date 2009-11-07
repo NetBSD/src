@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2009/10/27 03:05:27 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2009/11/07 07:27:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2009/10/27 03:05:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2009/11/07 07:27:40 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -328,7 +328,7 @@ cpu_startup(void)
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
 				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | UVM_PROT_WRITE);
+				       VM_PROT_READ | UVM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
@@ -1360,20 +1360,20 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
-	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #ifdef XEN
 	/* Steal one more page for LDT */
 	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #endif
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 #ifndef XEN

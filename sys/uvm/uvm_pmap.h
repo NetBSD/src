@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.31 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.32 2009/11/07 07:27:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -141,7 +141,7 @@ vaddr_t		pmap_growkernel(vaddr_t);
 
 void		pmap_init(void);
 
-void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove(vaddr_t, vsize_t);
 #if !defined(pmap_is_modified)
 bool		pmap_is_modified(struct vm_page *);

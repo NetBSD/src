@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.47 2009/06/07 13:37:29 phx Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.48 2009/11/07 07:27:46 cegger Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.47 2009/06/07 13:37:29 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.48 2009/11/07 07:27:46 cegger Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -751,7 +751,7 @@ oea_startup(const char *model)
 		v = (void *)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
-			    VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 		}
 		pmap_update(pmap_kernel());
 	}
@@ -859,7 +859,7 @@ mapiodev(paddr_t pa, psize_t len)
 		return NULL;
 
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
