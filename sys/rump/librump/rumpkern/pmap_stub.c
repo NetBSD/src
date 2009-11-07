@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.21 2009/10/22 19:50:56 rmind Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.22 2009/11/07 12:08:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.21 2009/10/22 19:50:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.22 2009/11/07 12:08:35 dsl Exp $");
 
 #include <sys/param.h>
 
@@ -90,7 +90,7 @@ pmap_update(pmap_t pmap)
 #endif
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
 {
 
 	panic("%s: unavailable", __func__);
