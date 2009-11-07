@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2009/11/07 07:32:53 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2009/11/07 07:32:53 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1030,6 +1030,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* DOM0OPS */
 		npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
+	if (flags & PMAP_NOCACHE)
+		npte |= PG_N;
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
 	/* XXX For now... */
@@ -1125,6 +1127,9 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 
 	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | PG_k;
+	if (flags & PMAP_NOCACHE)
+		npte |= PG_N;
+
 #ifndef XEN
 	if ((cpu_feature & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;

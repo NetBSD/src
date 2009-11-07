@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.25 2009/11/07 07:27:48 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26 2009/11/07 07:32:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2009/11/07 07:32:53 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,10 +293,13 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 {
 	paddr_t pa, endpa;
 	vaddr_t va, sva;
-	pt_entry_t *pte, xpte;
+	u_int pmapflags = 0;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
+
+	if (!cacheable)
+		pmapflags |= PMAP_NOCACHE;
 
 #ifdef DIAGNOSTIC
 	if (endpa != 0 && endpa <= pa)
@@ -316,35 +319,15 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	}
 
 	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
-	va = sva;
-	xpte = 0;
 
-	for (; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		/*
-		 * PG_N doesn't exist on 386's, so we assume that
-		 * the mainboard has wired up device space non-cacheable
-		 * on those machines.
-		 *
-		 * XXX should hand this bit to pmap_kenter_pa to
-		 * save the extra invalidate!
-		 */
+	for (va = sva; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 #ifdef XEN
-		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 #else
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 #endif /* XEN */
-
-		pte = kvtopte(va);
-		if (cacheable)
-			pmap_pte_clearbits(pte, PG_N);
-		else
-			pmap_pte_setbits(pte, PG_N);
-		xpte |= *pte;
 	}
-	kpreempt_disable();
-	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-	pmap_tlb_shootwait();
-	kpreempt_enable();
+	pmap_update(pmap_kernel());
 
 	return 0;
 }
