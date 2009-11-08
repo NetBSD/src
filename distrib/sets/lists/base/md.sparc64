@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.67 2009/11/02 10:13:19 plunky Exp $
+# $NetBSD: md.sparc64,v 1.68 2009/11/08 15:30:21 skrll Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -52,10 +52,8 @@
 ./usr/lib/sparc/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic
 ./usr/lib/sparc/libasn1.so.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libasn1.so.8.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbfd.so.10			base-compat-shlib	compat,pic,binutils=216
-./usr/lib/sparc/libbfd.so.10.0			base-compat-shlib	compat,pic,binutils=216
-./usr/lib/sparc/libbfd.so.11			base-compat-shlib	compat,pic,binutils=219
-./usr/lib/sparc/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils=219
+./usr/lib/sparc/libbfd.so.11			base-compat-shlib	compat,pic,binutils
+./usr/lib/sparc/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbind9.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbind9.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
@@ -134,10 +132,8 @@
 ./usr/lib/sparc/libnetpgp.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libopcodes.so.3			base-compat-shlib	compat,pic,binutils=216
-./usr/lib/sparc/libopcodes.so.3.0		base-compat-shlib	compat,pic,binutils=216
-./usr/lib/sparc/libopcodes.so.4			base-compat-shlib	compat,pic,binutils=219
-./usr/lib/sparc/libopcodes.so.4.0		base-compat-shlib	compat,pic,binutils=219
+./usr/lib/sparc/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
+./usr/lib/sparc/libopcodes.so.4.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libossaudio.so.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libossaudio.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libp2k.so.1			base-compat-shlib	compat,pic

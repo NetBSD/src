@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.504 2009/11/02 10:13:19 plunky Exp $
+# $NetBSD: shl.mi,v 1.505 2009/11/08 15:30:21 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -56,8 +56,7 @@
 ./usr/lib/libarchive.so.3.0			base-sys-shlib
 ./usr/lib/libasn1.so.8.0			base-krb5-shlib		kerberos
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
-./usr/lib/libbfd.so.10.0			base-sys-shlib		binutils=216
-./usr/lib/libbfd.so.11.0			base-sys-shlib		binutils=219
+./usr/lib/libbfd.so.11.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so.5.0			base-bind-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
