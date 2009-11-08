@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.72 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.73 2009/11/08 18:44:45 christos Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.72 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.73 2009/11/08 18:44:45 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -431,6 +431,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len - sizeof(struct ip);
 	return ip_output(m, NULL, &sc->sc_ro, 0, NULL, NULL);
 }
 
