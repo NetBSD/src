@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.93.4.2 2009/11/08 22:54:25 snj Exp $	*/
+/*	$NetBSD: gzip.c,v 1.93.4.3 2009/11/08 22:55:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.93.4.2 2009/11/08 22:54:25 snj Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.93.4.3 2009/11/08 22:55:24 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ static suffixes_t suffixes[] = {
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 #define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20060927";
+static	const char	gzip_version[] = "NetBSD gzip 20091011";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
