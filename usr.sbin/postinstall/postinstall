@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.22 2009/10/08 10:00:10 sborrill Exp $
+# $NetBSD: postinstall,v 1.76.2.23 2009/11/08 22:41:46 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@
 # This script is executed as part of a cross build.  Allow the build
 # environment to override the locations of some tools.
 : ${AWK:=awk}
+: ${EGREP:=egrep}
 : ${FGREP:=fgrep}
 : ${GREP:=grep}
 : ${MAKE:=make}
@@ -620,7 +621,7 @@ get_makevar()
 detect_x11()
 {
 	if $SOURCEMODE; then
-		get_makevar MKX11 X11ROOTDIR
+		get_makevar MKX11 X11ROOTDIR X11SRCDIR
 	else
 		if [ -f "${SRC_DIR}/etc/mtree/set.xetc" ]; then
 			MKX11=yes
@@ -629,6 +630,7 @@ detect_x11()
 			MKX11=no
 			X11ROOTDIR=
 		fi
+		X11SRCDIR=/nonexisent/xsrc
 	fi
 }
 
@@ -1352,6 +1354,71 @@ do_x11()
 	done
 
 	return ${failed}
+}
+
+#
+#	xkb
+#
+# /usr/X11R7/lib/X11/xkb/symbols/pc used to be a directory, but changed
+# to a file on 2009-06-12.  Fixing this requires removing the directory
+# (which we can do) and re-extracting the xbase set (which we can't do),
+# or at least adding that one file (which we may be able to do if X11SRCDIR
+# is available).
+#
+additem xkb "clean up for xkbdata to xkeyboard-config upgrade"
+do_xkb()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_xkb  fix|check"
+	op="$1"
+	failed=0
+
+	pcpath="/usr/X11R7/lib/X11/xkb/symbols/pc"
+	pcsrcdir="${X11SRCDIR}/external/mit/xkeyboard-config/dist/symbols"
+
+	filemsg="\
+${pcpath} was a directory, should be a file.
+    To fix, extract the xbase set again."
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed="${NOT_FIXED}"
+	fi
+
+	if [ ! -d "${DESTDIR}${pcpath}" ]; then
+		return 0
+	fi
+
+	# Delete obsolete files in the directory, and the directory
+	# itself.  If the directory contains unexpected extra files
+	# then it will not be deleted.
+	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
+	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
+	    | ${EGREP} "^\\.?${pcpath}/" ;
+	    echo "${pcpath}" ) \
+	| obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	# If the directory was removed above, then try to replace it with
+	# a file.
+	if [ -d "${DESTDIR}${pcpath}" ]; then
+		msg "${filemsg}${_notfixed}"
+		failed=$(( ${failed} + 1 ))
+	else
+		if ! find_file_in_dirlist pc "${pcpath}" \
+			"${pcsrcdir}" "${SRC_DIR}${pcpath%/*}"
+		then
+			msg "${filemsg}${_notfixed}"
+			failed=$(( ${failed} + 1 ))
+		else
+			# ${dir} is set by find_file_in_dirlist()
+			populate_dir "${op}" true \
+				"${dir}" "${DEST_DIR}${pcpath%/*}" 444 \
+				pc
+			failed=$(( ${failed} + $? ))
+		fi
+	fi
+
+	return $failed
 }
 
 #
