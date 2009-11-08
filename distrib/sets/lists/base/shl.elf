@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.190 2009/10/25 04:38:05 christos Exp $
+# $NetBSD: shl.elf,v 1.191 2009/11/08 15:30:21 skrll Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -96,8 +96,7 @@
 ./usr/lib/libasn1.so.8				base-krb5-shlib		kerberos
 ./usr/lib/libavl.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libavl.so.0				base-zfs-shlib		dynamicroot,zfs
-./usr/lib/libbfd.so.10				base-sys-shlib		binutils=216
-./usr/lib/libbfd.so.11				base-sys-shlib		binutils=219
+./usr/lib/libbfd.so.11				base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.5				base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
