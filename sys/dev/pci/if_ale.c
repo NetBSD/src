@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.3.2.3 2009/09/10 07:26:38 snj Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.3.2.4 2009/11/08 22:03:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.2.3 2009/09/10 07:26:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.2.4 2009/11/08 22:03:32 snj Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -933,30 +933,12 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	if (error == EFBIG) {
 		error = 0;
 
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
+		*m_head = m_pullup(*m_head, MHLEN);
+		if (*m_head == NULL) {
 			printf("%s: can't defrag TX mbuf\n",
 			    device_xname(sc->sc_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
 			return ENOBUFS;
 		}
-
-		M_COPY_PKTHDR(m, *m_head);
-		if ((*m_head)->m_pkthdr.len > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
-				m_freem(*m_head);
-				m_freem(m);
-				*m_head = NULL;
-				return ENOBUFS;
-			}
-		}
-		m_copydata(*m_head, 0, (*m_head)->m_pkthdr.len,
-		    mtod(m, void *));
-		m_freem(*m_head);
-		m->m_len = m->m_pkthdr.len;
-		*m_head = m;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
 		    BUS_DMA_NOWAIT);
@@ -964,10 +946,6 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 		if (error != 0) {
 			printf("%s: could not load defragged TX mbuf\n",
 			    device_xname(sc->sc_dev));
-			if (!error) {
-				bus_dmamap_unload(sc->sc_dmat, map);
-				error = EFBIG;
-			}
 			m_freem(*m_head);
 			*m_head = NULL;
 			return error;
@@ -1092,6 +1070,7 @@ ale_start(struct ifnet *ifp)
 		if (ale_encap(sc, &m_head)) {
 			if (m_head == NULL)
 				break;
+			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
