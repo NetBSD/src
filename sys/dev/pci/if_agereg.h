@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agereg.h,v 1.2.2.2 2009/05/03 23:45:47 snj Exp $ */
+/*	$NetBSD: if_agereg.h,v 1.2.2.3 2009/11/08 21:56:54 snj Exp $ */
 /*	$OpenBSD: if_agereg.h,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -86,6 +86,9 @@
 #define	AGE_SPI_OP_READ			0x217	/* 8bits */
 
 #define	AGE_TWSI_CTRL			0x218
+#define	TWSI_CTRL_SW_LD_START		0x00000800
+#define	TWSI_CTRL_HW_LD_START		0x00001000
+#define	TWSI_CTRL_LD_EXIST		0x00400000
 
 #define AGE_DEV_MISC_CTRL		0x21C
 
