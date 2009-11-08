@@ -1,4 +1,4 @@
-# $NetBSD: UCS%CP1163.src,v 1.1 2007/06/18 16:19:31 tnozaki Exp $
+# $NetBSD: UCS%CP1163.src,v 1.2 2009/11/08 10:37:51 tnozaki Exp $
 
 # Copyright (c)2007 Citrus Project,
 # All rights reserved.
@@ -29,7 +29,7 @@ TYPE		ROWCOL
 NAME		"UCS/CP1163"
 SRC_ZONE	0x0000-0x20AC
 OOB_MODE	INVALID
-DST_INVALID	0x100
+DST_INVALID	0xFFFF
 DST_UNIT_BITS	16
 
 BEGIN_MAP
