@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.28.2.2 2009/05/03 23:45:47 snj Exp $ */
+/*	$NetBSD: if_age.c,v 1.28.2.3 2009/11/08 21:55:46 snj Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.2.2 2009/05/03 23:45:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.2.3 2009/11/08 21:55:46 snj Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -275,7 +275,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, age_mediachange,
 	    age_mediastatus);
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	   MII_OFFSET_ANY, 0);
+	   MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -1166,12 +1166,10 @@ age_mac_config(struct age_softc *sc)
 	}
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		reg |= MAC_CFG_FULL_DUPLEX;
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			reg |= MAC_CFG_TX_FC;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			reg |= MAC_CFG_RX_FC;
-#endif
 	}
 
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);
