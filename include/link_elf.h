@@ -1,4 +1,4 @@
-/*	$NetBSD: link_elf.h,v 1.7 2006/01/11 22:50:35 uwe Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.7.28.1 2009/11/08 22:39:34 snj Exp $	*/
 
 /*
  * This only exists for GDB.
@@ -11,7 +11,7 @@
 
 #include <machine/elf_machdep.h>
 
-struct link_map {
+typedef struct link_map {
 	caddr_t		 l_addr;	/* Base Address of library */
 #ifdef __mips__
 	caddr_t		 l_offs;	/* Load Offset of library */
@@ -20,7 +20,7 @@ struct link_map {
 	void		*l_ld;		/* Pointer to .dynamic in memory */
 	struct link_map	*l_next;	/* linked list of of mapped libs */
 	struct link_map *l_prev;
-};
+} Link_map;
 
 struct r_debug {
 	int r_version;			/* not used */
