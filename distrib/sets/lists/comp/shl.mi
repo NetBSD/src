@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.91 2009/10/11 11:26:41 pooka Exp $
+# $NetBSD: shl.mi,v 1.92 2009/11/08 15:30:21 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,10 +64,8 @@
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
-./usr/lib/libopcodes.so.3			comp-c-shlib		binutils=216
-./usr/lib/libopcodes.so.3.0			comp-c-shlib		binutils=216
-./usr/lib/libopcodes.so.4			comp-c-shlib		binutils=219
-./usr/lib/libopcodes.so.4.0			comp-c-shlib		binutils=219
+./usr/lib/libopcodes.so.4			comp-c-shlib		binutils
+./usr/lib/libopcodes.so.4.0			comp-c-shlib		binutils
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
