@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.11 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.11.6.1 2009/11/08 22:51:56 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	if (bytes_in)
 		*bytes_in = prelen;
 
-	while (ret >= BZ_OK && ret != BZ_STREAM_END) {
+	while (ret == BZ_OK) {
 	        if (bzs.avail_in == 0 && !end_of_file) {
 			ssize_t	n;
 
@@ -86,7 +86,7 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	        case BZ_OK:
 	                if (ret == BZ_OK && end_of_file)
 	                        maybe_err("read");
-	                if (!tflag) {
+	                if (!tflag && bzs.avail_out != BUFLEN) {
 				ssize_t	n;
 
 	                        n = write(out, outbuf, BUFLEN - bzs.avail_out);
@@ -94,7 +94,13 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	                                maybe_err("write");
 	                	bytes_out += n;
 	                }
-	                break;
+			if (ret == BZ_STREAM_END && !end_of_file) {
+				if (BZ2_bzDecompressEnd(&bzs) != BZ_OK ||
+				    BZ2_bzDecompressInit(&bzs, 0, 0) != BZ_OK)
+					maybe_errx("bzip2 re-init");
+				ret = BZ_OK;
+			}
+			break;
 
 	        case BZ_DATA_ERROR:
 	                maybe_warnx("bzip2 data integrity error");
@@ -107,7 +113,10 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	        case BZ_MEM_ERROR:
 	                maybe_warnx("bzip2 out of memory");
 			break;
-
+		
+		default:	
+			maybe_warnx("unknown bzip2 error: %d", ret);
+			break;
 	        }
 	}
 
