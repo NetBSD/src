@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.3 2007/07/18 18:36:57 christos Exp $
+.\"	$NetBSD: chat.8,v 1.3.18.1 2009/11/08 21:51:38 snj Exp $
 .\"
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
@@ -227,14 +227,14 @@ SAY "Waiting up to 2 minutes for connection ... "
 .br
 CONNECT ''
 .br
-SAY "Connected, now logging in ...\n"
+SAY "Connected, now logging in ...\\n"
 .br
 ogin: account
 .br
 ssword: pass
 .br
 $ \c
-SAY "Logged in OK ...\n"
+SAY "Logged in OK ...\\n"
 \fIetc ...\fR
 .LP
 This sequence will only present the SAY strings to the user and all
@@ -377,7 +377,7 @@ to be sent. The break is a special signal on the transmitter. The
 normal processing on the receiver is to change the transmission rate.
 It may be used to cycle through the available transmission rates on
 the remote until you are able to receive a valid login prompt.
-.PR
+.PP
 The break sequence may be embedded into the send string using the
 \fI\\K\fR sequence.
 .SH ESCAPE SEQUENCES
