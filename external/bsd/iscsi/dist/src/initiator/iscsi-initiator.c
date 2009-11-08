@@ -619,7 +619,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (iscsi_initiator_getvar(&ini, "user") == NULL) {
-		iscsi_err(__FILE__, __LINE__, "user must be specified with -u");
+		iscsi_err(__FILE__, __LINE__, "user must be specified with -u\n");
 		exit(EXIT_FAILURE);
 	}
 
