@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.24 2009/09/04 16:54:32 dyoung Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.25 2009/11/08 15:32:52 ghen Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.24 2009/09/04 16:54:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.25 2009/11/08 15:32:52 ghen Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -273,6 +273,7 @@ Static const keysym_t ukbd_keydesc_us_colemak[] = {
     KC(55), 			KS_period,	KS_greater,	KS_asciitilde,	KS_asciitilde,
     KC(56), 			KS_slash,	KS_question,	KS_questiondown, KS_asciitilde,
     KC(57), 			KS_BackSpace,
+    KC(100), 			KS_minus,	KS_underscore,	KS_asciitilde,	KS_asciitilde,
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
