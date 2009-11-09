@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.249 2009/11/07 07:27:40 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.250 2009/11/09 04:31:03 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2009/11/07 07:27:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2009/11/09 04:31:03 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3581,6 +3581,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 		cpumask |= 1UL << ci->ci_cpuid;
 
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
+		mutex_spin_enter(&pq->pq_lock);
 
 		/*
 		 * Allocate a job.
@@ -3596,7 +3597,6 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 		 * If a global flush is already pending, we
 		 * don't really have to do anything else.
 		 */
-		mutex_spin_enter(&pq->pq_lock);
 		pq->pq_pte |= pte;
 		if (pq->pq_tbia) {
 			mutex_spin_exit(&pq->pq_lock);
