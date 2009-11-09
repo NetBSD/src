@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.1 2009/11/04 19:17:53 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.2 2009/11/09 19:00:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.1 2009/11/04 19:17:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.2 2009/11/09 19:00:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -52,16 +52,18 @@ static void *
 threadbouncer(void *arg)
 {
 	struct kthdesc *k = arg;
+	struct lwp *l = k->mylwp;
 	void (*f)(void *);
 	void *thrarg;
 
 	/* schedule ourselves first */
 	f = k->f;
 	thrarg = k->arg;
-	rumpuser_set_curlwp(k->mylwp);
+	rumpuser_free(k);
+
+	rumpuser_set_curlwp(l);
 	rump_schedule();
 
-	kmem_free(k, sizeof(struct kthdesc));
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
 
@@ -125,12 +127,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	if (ci != NULL)
 		panic("%s: bounded threads not supported", __func__);
 
-	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
+	k = rumpuser_malloc(sizeof(struct kthdesc), 0);
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
+	if (flags & KTHREAD_INTR)
+		l->l_pflag |= LP_INTR;
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
 	if (rv)
 		return rv;
