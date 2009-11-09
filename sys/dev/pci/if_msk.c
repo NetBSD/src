@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.21.6.1 2008/11/20 03:12:08 snj Exp $ */
+/* $NetBSD: if_msk.c,v 1.21.6.1.4.1 2009/11/09 10:11:47 cliff Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.21.6.1 2008/11/20 03:12:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.21.6.1.4.1 2009/11/09 10:11:47 cliff Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1221,8 +1221,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, SK_PCI_LOMEM,
 				   memtype, 0, &sc->sk_btag, &sc->sk_bhandle,
-				   NULL, &size) == 0)
+				   NULL, &size) == 0) {
 			break;
+		}
 	default:
 		aprint_error(": can't map mem space\n");
 		return;
@@ -1823,10 +1824,15 @@ msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
+	uint16_t gpsr;
 	int s;
 
 	s = splnet();
-	mii_tick(mii);
+	gpsr = SK_YU_READ_2(sc_if, YUKON_GPSR);
+	if ((gpsr & YU_GPSR_MII_PHY_STC) != 0) {
+		SK_YU_WRITE_2(sc_if, YUKON_GPSR, YU_GPSR_MII_PHY_STC);
+		mii_tick(mii);
+	}
 	splx(s);
 
 	callout_schedule(&sc_if->sk_tick_ch, hz);
