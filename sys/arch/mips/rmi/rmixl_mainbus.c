@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.2 2009/09/15 02:34:03 cliff Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.3 2009/11/09 10:03:28 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.2 2009/09/15 02:34:03 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.3 2009/11/09 10:03:28 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,18 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.2 2009/09/15 02:34:03 cliff 
 #include <machine/bus.h>
 #include "locators.h"
 
-static int  mainbusmatch(struct device *, struct cfdata *, void *);
-static void mainbusattach(struct device *, struct device *, void *);
-static int  mainbussearch(struct device *, struct cfdata *,
-				const int *, void *);
+static int  mainbusmatch(device_t,  cfdata_t, void *);
+static void mainbusattach(device_t,  device_t,  void *);
+static int  mainbussearch(device_t,  cfdata_t, const int *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbusmatch, mainbusattach, NULL, NULL);
+CFATTACH_DECL_NEW(mainbus, 0, mainbusmatch, mainbusattach, NULL, NULL);
 
 static int mainbus_found;
 
 static int
-mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	if (mainbus_found)
 		return 0;
@@ -73,8 +71,7 @@ mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
+mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, aux, NULL);
@@ -83,12 +80,11 @@ mainbussearch(struct device *parent, struct cfdata *cf,
 }
 
 static void
-mainbusattach(struct device *parent, struct device *self, void *aux)
+mainbusattach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 	mainbus_found = 1;
-
 	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
