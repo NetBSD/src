@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.15 2009/11/09 13:21:34 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.16 2009/11/09 13:33:08 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.15 2009/11/09 13:21:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.16 2009/11/09 13:33:08 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -114,7 +114,6 @@ struct dino_softc {
 	struct hp700_int_reg sc_int_reg;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
-	bus_space_handle_t sc_memh;
 	bus_dma_tag_t sc_dmat;
 	volatile struct dino_regs *sc_regs;
 
