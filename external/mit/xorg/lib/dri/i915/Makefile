@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/06/11 01:47:08 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2009/11/09 02:38:24 mrg Exp $
 
 MODULE=	i915
 
@@ -55,5 +55,9 @@ SRCS=	\
 	intel_tris.c \
 	intel_fbo.c \
 	intel_depthstencil.c
+
+CPPFLAGS+=	 -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP
+
+LIBS+=	-ldrm_intel
 
 .include "${.CURDIR}/../dri.mk"
