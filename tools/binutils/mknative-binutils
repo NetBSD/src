@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.6 2009/11/08 15:33:29 skrll Exp $
+#	$NetBSD: mknative-binutils,v 1.7 2009/11/09 13:50:41 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -74,6 +74,10 @@ get_binutils () {
 			VERSION DEFS INCLUDES PROGRAMS
 		getvars binutils/doc/Makefile \
 			man_MANS TEXINFOS
+		getvars bfd/doc/Makefile \
+			PKGVERSION | sed 's,\\\(.\),\1,'
+		getvars bfd/doc/Makefile \
+			REPORT_BUGS_TEXI
 
 		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
 			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
