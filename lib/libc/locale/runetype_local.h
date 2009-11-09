@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.3 2009/11/09 14:17:47 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.4 2009/11/09 14:20:49 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <ctype.h>
 
 /* for cross host tools on older systems */
 #ifndef UINT32_C
@@ -55,60 +54,27 @@ typedef uint64_t	__runepad_t;
 
 #define _NB_DEFAULT_INVALID_RUNE ((__nbrune_t)-3)
 
-/* XXX FIXME */
-#if defined(__NetBSD__) && defined(_CTYPE_A)
-#define _NB_CTYPE_A	_CTYPE_A
-#define _NB_CTYPE_C	_CTYPE_C
-#define _NB_CTYPE_D	_CTYPE_D
-#define _NB_CTYPE_G	_CTYPE_G
-#define _NB_CTYPE_L	_CTYPE_L
-#define _NB_CTYPE_P	_CTYPE_P
-#define _NB_CTYPE_S	_CTYPE_S
-#define _NB_CTYPE_U	_CTYPE_U
-#define _NB_CTYPE_X	_CTYPE_X
-#define _NB_CTYPE_B	_CTYPE_B
-#define _NB_CTYPE_R	_CTYPE_R
-#define _NB_CTYPE_I	_CTYPE_I
-#define _NB_CTYPE_T	_CTYPE_T
-#define _NB_CTYPE_Q	_CTYPE_Q
-#else
-#define _NB_CTYPE_A	0x0001
-#define _NB_CTYPE_C	0x0002
-#define _NB_CTYPE_D	0x0004
-#define _NB_CTYPE_G	0x0008
-#define _NB_CTYPE_L	0x0010
-#define _NB_CTYPE_P	0x0020
-#define _NB_CTYPE_S	0x0040
-#define _NB_CTYPE_U	0x0080
-#define _NB_CTYPE_X	0x0100
-#define _NB_CTYPE_B	0x0200
-#define _NB_CTYPE_R	0x0400
-#define _NB_CTYPE_I	0x0800
-#define _NB_CTYPE_T	0x1000
-#define _NB_CTYPE_Q	0x2000
-#endif
-
 /*
  * The lower 8 bits of runetype[] contain the digit value of the rune.
  */
 typedef uint32_t _RuneType;
-#define	_RUNETYPE_A	UINT32_C(_NB_CTYPE_A << 8) /* Alpha */
-#define	_RUNETYPE_C	UINT32_C(_NB_CTYPE_C << 8) /* Control */
-#define	_RUNETYPE_D	UINT32_C(_NB_CTYPE_D << 8) /* Digit */
-#define	_RUNETYPE_G	UINT32_C(_NB_CTYPE_G << 8) /* Graph */
-#define	_RUNETYPE_L	UINT32_C(_NB_CTYPE_L << 8) /* Lower */
-#define	_RUNETYPE_P	UINT32_C(_NB_CTYPE_P << 8) /* Punct */
-#define	_RUNETYPE_S	UINT32_C(_NB_CTYPE_S << 8) /* Space */
-#define	_RUNETYPE_U	UINT32_C(_NB_CTYPE_U << 8) /* Upper */
-#define	_RUNETYPE_X	UINT32_C(_NB_CTYPE_X << 8) /* X digit */
-#define	_RUNETYPE_B	UINT32_C(_NB_CTYPE_B << 8) /* Blank */
-#define	_RUNETYPE_R	UINT32_C(_NB_CTYPE_R << 8) /* Print */
-#define	_RUNETYPE_I	UINT32_C(_NB_CTYPE_I << 8) /* Ideogram */
-#define	_RUNETYPE_T	UINT32_C(_NB_CTYPE_T << 8) /* Special */
-#define	_RUNETYPE_Q	UINT32_C(_NB_CTYPE_Q << 8) /* Phonogram */
+#define	_RUNETYPE_A	UINT32_C(0x00000100)	/* Alpha */
+#define	_RUNETYPE_C	UINT32_C(0x00000200)	/* Control */
+#define	_RUNETYPE_D	UINT32_C(0x00000400)	/* Digit */
+#define	_RUNETYPE_G	UINT32_C(0x00000800)	/* Graph */
+#define	_RUNETYPE_L	UINT32_C(0x00001000)	/* Lower */
+#define	_RUNETYPE_P	UINT32_C(0x00002000)	/* Punct */
+#define	_RUNETYPE_S	UINT32_C(0x00004000)	/* Space */
+#define	_RUNETYPE_U	UINT32_C(0x00008000)	/* Upper */
+#define	_RUNETYPE_X	UINT32_C(0x00010000)	/* X digit */
+#define	_RUNETYPE_B	UINT32_C(0x00020000)	/* Blank */
+#define	_RUNETYPE_R	UINT32_C(0x00040000)	/* Print */
+#define	_RUNETYPE_I	UINT32_C(0x00080000)	/* Ideogram */
+#define	_RUNETYPE_T	UINT32_C(0x00100000)	/* Special */
+#define	_RUNETYPE_Q	UINT32_C(0x00200000)	/* Phonogram */
 #define	_RUNETYPE_SWM	UINT32_C(0xc0000000)/* Mask to get screen width data */
 #define	_RUNETYPE_SWS	30		/* Bits to shift to get width */
-#define	_RUNETYPE_SW0	UINT32_C(0x20000000)	/* 0 width character */
+#define	_RUNETYPE_SW0	UINT32_C(0x00000000)	/* 0 width character */
 #define	_RUNETYPE_SW1	UINT32_C(0x40000000)	/* 1 width character */
 #define	_RUNETYPE_SW2	UINT32_C(0x80000000)	/* 2 width character */
 #define	_RUNETYPE_SW3	UINT32_C(0xc0000000)	/* 3 width character */
@@ -242,16 +208,9 @@ typedef struct _NBRuneLocale {
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
 	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
 
-#if defined(__LIBC13_SOURCE__)
-	const unsigned short		*rl_ctype_tab;
-#else
 	const unsigned char		*rl_ctype_tab;
-#endif
 	const short			*rl_tolower_tab;
 	const short			*rl_toupper_tab;
-#if !defined(__LIBC13_SOURCE__)
-	const unsigned short		*rl_ctype50_tab;
-#endif
 } _NBRuneLocale;
 
 
