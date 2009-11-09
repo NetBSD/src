@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.6 2009/09/15 05:12:53 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.7 2009/11/09 10:00:02 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.6 2009/09/15 05:12:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.7 2009/11/09 10:00:02 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.6 2009/09/15 05:12:53 matt 
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_lex.h>
 #endif
 
 int		db_active = 0;
@@ -67,6 +68,8 @@ label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -434,10 +437,60 @@ do {									\
 	    "", __val);							\
 } while (0)
 
+#define	MIPS64_SHOW32(num, sel, name)						\
+do {									\
+	uint32_t __val;							\
+									\
+	__asm volatile(							\
+		".set mips64			\n\t"			\
+		"mfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+	    : "=r"(__val));						\
+	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
+	    "", __val);							\
+} while (0)
+
+/* XXX not 64-bit ABI safe! */
+#define	MIPS64_SHOW64(num, sel, name)						\
+do {									\
+	uint64_t __val;							\
+									\
+	__asm volatile(							\
+		".set push 			\n\t"			\
+		".set mips64			\n\t"			\
+		".set noat			\n\t"			\
+		"dmfc0 $1,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+		"dsll %L0,$1,32			\n\t"			\
+		"dsrl %L0,%L0,32		\n\t"			\
+		"dsrl %M0,$1,32			\n\t"			\
+		".set pop"						\
+	    : "=r"(__val));						\
+	printf("  %s:%*s %#"PRIx64"x\n", name, FLDWIDTH - (int) strlen(name), \
+	    "", __val);							\
+} while (0)
+
 void
 db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
+	int is_rmi_xls=0;
+
+	/* XXX FIXME what class define to use here ? */
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_XLS104:
+	case MIPS_XLS108:
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+	case MIPS_XLS404LITE:
+	case MIPS_XLS408LITE:
+	case MIPS_XLS404:
+	case MIPS_XLS408:
+	case MIPS_XLS416:
+	case MIPS_XLS608:
+	case MIPS_XLS616:
+		is_rmi_xls = 1;
+		break;
+	}
+
 
 	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
 	SHOW32(MIPS_COP_0_TLB_RANDOM, "random");
@@ -475,6 +528,12 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_COUNT, "count");
 	}
 
+	/* XXX FIXME what class define to use here ? */
+	if (is_rmi_xls) {
+		MIPS64_SHOW64(9, 6, "eirr");
+		MIPS64_SHOW64(9, 7, "eimr");
+	}
+
 	if (CPUIS64BITS) {
 		SHOW64(MIPS_COP_0_TLB_HI, "entryhi");
 	} else {
@@ -495,16 +554,24 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	SHOW32(MIPS_COP_0_PRID, "prid");
-	SHOW32(MIPS_COP_0_CONFIG, "config");
 
+	/* XXX FIXME what class define to use here ? */
+	if (is_rmi_xls) {
+		MIPS64_SHOW32(15, 1, "ebase");
+		MIPS64_SHOW32(16, 0, "config0");
+		MIPS64_SHOW32(16, 1, "config1");
+		MIPS64_SHOW32(16, 7, "config7");
+	} else {
+		SHOW32(MIPS_COP_0_CONFIG, "config");
 #if defined(MIPS32) || defined(MIPS64)
-	if (CPUISMIPSNN) {
-		uint32_t val;
+		if (CPUISMIPSNN) {
+			uint32_t val;
 
-		val = mipsNN_cp0_config1_read();
-		printf("  config1:    %#x\n", val);
-	}
+			val = mipsNN_cp0_config1_read();
+			printf("  config1:    %#x\n", val);
+		}
 #endif
+	}
 
 	if (MIPS_HAS_LLSC) {
 		if (MIPS_HAS_LLADDR) {
@@ -531,10 +598,12 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 		}
 
-#if !defined(MIPS64_XLS)					/* CP0 ECC and CACHE_ERR "not implemented" */
-		SHOW32(MIPS_COP_0_ECC, "ecc");
-		SHOW32(MIPS_COP_0_CACHE_ERR, "cacherr");
-#endif
+		/* CP0 ECC and CACHE_ERR "not implemented" on XLS */
+		if (!is_rmi_xls) {
+			SHOW32(MIPS_COP_0_ECC, "ecc");
+			SHOW32(MIPS_COP_0_CACHE_ERR, "cacherr");
+		}
+
 		SHOW32(MIPS_COP_0_TAG_LO, "cachelo");
 		SHOW32(MIPS_COP_0_TAG_HI, "cachehi");
 
@@ -544,6 +613,37 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			SHOW32(MIPS_COP_0_ERROR_PC, "errorpc");
 		}
 	}
+}
+
+void
+db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+		const char *modif)
+{
+	extern uint64_t rmixls_mfcr(u_int);
+
+	if (!have_addr)
+		return;
+	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr,
+		rmixls_mfcr(addr));
+}
+
+void
+db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+		const char *modif)
+{
+	db_expr_t value;
+	extern void rmixls_mtcr(uint64_t, u_int);
+
+	if (!have_addr)
+		return;
+	if (db_expression(&value) == 0) {
+		db_printf("Address missing\n");
+		db_flush_lex();
+		return;
+        }
+	db_skip_to_eol();
+	rmixls_mtcr(value, addr);
+	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
 }
 
 const struct db_command db_machine_command_table[] = {
@@ -556,6 +656,12 @@ const struct db_command db_machine_command_table[] = {
 		"   address:\tvirtual address to look up") },
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
+		NULL, NULL) },
+	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
+		"Dump processor control register",
+		NULL, NULL) },
+	{ DDB_ADD_CMD("mtcr", 	db_mtcr_cmd,		CS_NOREPEAT|CS_MORE,
+		"Dump processor control register",
 		NULL, NULL) },
 	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
