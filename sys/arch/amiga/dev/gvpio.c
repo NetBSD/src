@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.16 2007/03/04 05:59:20 christos Exp $ */
+/*	$NetBSD: gvpio.c,v 1.17 2009/11/09 15:35:27 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Ignatios Souvatzis
- *      for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.16 2007/03/04 05:59:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.17 2009/11/09 15:35:27 is Exp $");
 
 /*
  * GVP I/O Extender
