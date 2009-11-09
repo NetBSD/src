@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/05 02:42:53 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2009/11/09 00:41:42 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,8 @@ MLINKS=	Xau.3 XauDisposeAuth.3 \
 	Xau.3 XauWriteAuth.3
 
 PKGDIST=	${LIB}
+
+# libXaw 1.0.7 has 'spec' subdir with docs, maybe install them?
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
