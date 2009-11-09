@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.2 2009/11/09 09:43:22 cliff Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -50,8 +50,6 @@ include "dev/isa/files.isa"
 #
 ## TBD
 
-file	arch/evbmips/rmixl/pci/pci_machdep.c	pci
-file	arch/evbmips/rmixl/pci/pciide_machdep.c	pciide_common
 
 device	pchb
 attach	pchb at pci
