@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/13 19:39:57 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2009/11/09 01:46:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ SRCS+=	rhd_ddia.c rhd_dig.c rhd_driver.c rhd_edid.c rhd_hdmi.c
 SRCS+=	rhd_helper.c rhd_i2c.c rhd_id.c rhd_lut.c rhd_lvtma.c
 SRCS+=	rhd_mc.c rhd_modes.c rhd_monitor.c rhd_output.c rhd_pll.c
 SRCS+=	rhd_randr.c rhd_shadow.c rhd_tmds.c rhd_vga.c rhd_video.c
+SRCS+=	rhd_pm.c rhd_acpi.c
 
 SRCS+=		$(SRCS.EXA) $(SRCS.DRI) rhd_atomwrapper.c $(SRCS.ATOMBIOS)
 MAN=		radeonhd.4
