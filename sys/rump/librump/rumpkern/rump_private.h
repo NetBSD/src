@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.34 2009/10/16 00:14:53 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.35 2009/11/09 19:17:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #define _SYS_RUMP_PRIVATE_H_
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -100,5 +100,7 @@ void	rump_cpu_bootstrap(struct cpu_info *);
 bool	kernel_biglocked(void);
 void	kernel_unlock_allbutone(int *);
 void	kernel_ununlock_allbutone(int);
+
+void	rump_softint_run(struct cpu_info *);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

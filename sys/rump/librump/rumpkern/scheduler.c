@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.6 2009/11/06 16:15:16 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.7 2009/11/09 19:16:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.6 2009/11/06 16:15:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.7 2009/11/09 19:16:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -182,6 +182,9 @@ rump_unschedule_cpu(struct lwp *l)
 	struct cpu_info *ci;
 
 	ci = l->l_cpu;
+	if ((l->l_pflag & LP_INTR) == 0)
+		rump_softint_run(ci);
+
 	l->l_cpu = NULL;
 	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
 	KASSERT(rcpu->rcpu_ci == ci);
