@@ -1,20 +1,28 @@
-#	$NetBSD: files.rmixl,v 1.1.2.3 2009/09/22 06:58:20 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.4 2009/11/09 09:56:06 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
 
 file	arch/mips/rmi/rmixl_intr.c
+file	arch/mips/rmi/rmixls_subr.S
 
 # OBIO: offsets are from System Bridge Controller base
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
-device	obio: obio, pcibus
+device	obio: obio
 attach	obio at mainbus
 file	arch/mips/rmi/rmixl_obio.c		obio needs-count
 file    arch/mips/rmi/rmixl_el_space.c		obio
 file    arch/mips/rmi/rmixl_eb_space.c		obio
+file    arch/mips/rmi/rmixl_pcie_io_space.c	pci
+file    arch/mips/rmi/rmixl_pcie_mem_space.c	pci
 
 # NS16550 compatible serial ports
 attach com at obio with rmixl_com
 file	arch/mips/rmi/rmixl_com.c		rmixl_com
 defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
+
+# PCI
+device  rmixl_pcie: pcibus
+attach  rmixl_pcie at obio
+file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie
 
