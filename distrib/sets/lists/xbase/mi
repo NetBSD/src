@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81 2009/10/08 19:06:49 snj Exp $
+# $NetBSD: mi,v 1.82 2009/11/09 00:36:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2485,9 +2485,12 @@
 ./usr/X11R7/man/cat1/xhost.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xinit.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xinput.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xkbbell.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbcomp.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbevd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbprint.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xkbvleds.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xkbwatch.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkill.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xload.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xlogo.0				-unknown-	.cat,xorg
@@ -2610,9 +2613,12 @@
 ./usr/X11R7/man/html1/xhost.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xinit.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xinput.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xkbbell.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbcomp.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbevd.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbprint.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xkbvleds.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xkbwatch.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkill.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xload.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xlogo.html			-unknown-	html,xorg
@@ -2736,9 +2742,12 @@
 ./usr/X11R7/man/man1/xhost.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xinit.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xinput.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xkbbell.1				-unknown-	man,xorg
 ./usr/X11R7/man/man1/xkbcomp.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbevd.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbprint.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xkbvleds.1				-unknown-	man,xorg
+./usr/X11R7/man/man1/xkbwatch.1				-unknown-	man,xorg
 ./usr/X11R7/man/man1/xkill.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xload.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xlogo.1				-unknown-	.man,xorg
