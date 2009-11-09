@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1 2009/03/20 13:02:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.1 2009/11/09 10:13:14 cliff Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.1 2009/03/20 13:01:35 msaitoh Exp
  */
 
 /*
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Ralink Technologies",
 	},
 	{
+	    PCI_VENDOR_RMI,
+	    "Raza Microelectronics Inc.",
+	},
+	{
 	    PCI_VENDOR_BBELEC,
 	    "B & B Electronics",
 	},
@@ -2400,7 +2404,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 590;
+const int pci_nvendors = 591;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -4994,6 +4998,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_RMI, PCI_PRODUCT_RMI_XLS_PCIE,
+	    "XLS PCIe-PCIe bridge",
 	},
 	{
 	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT,
@@ -14512,4 +14520,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3027;
+const int pci_nproducts = 3028;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.1 2009/03/20 13:02:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.1 2009/11/09 10:13:14 cliff Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.1 2009/03/20 13:01:35 msaitoh Exp
  */
 
 /*
@@ -608,6 +608,7 @@
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
+#define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. */
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
@@ -1379,6 +1380,9 @@
 #define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz!PCI v2.0 ISDN Interface */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
+
+/* RMI products */
+#define	PCI_PRODUCT_RMI_XLS_PCIE	0xabcd		/* XLS PCIe-PCIe bridge */
 
 /* B & B Electronics Products */
 #define	PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT	0x4201		/* single-channel RS-485 PCI UART */
