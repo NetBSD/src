@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.9 2009/09/13 03:31:05 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.10 2009/11/09 10:01:14 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1054,9 +1054,12 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
 #if defined(MIPS64_XLS)
-	# CP0 ECC and CACHE_ERR "not implemented"
-	move	a2, $0
-	move	a3, $0
+	li	k1, 0x309	/* L1D_CACHE_ERROR_LOG */
+	.word	0x73660018	/* mfcr	a2, k1 */
+	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
+	.word	0x73670018	/* mfcr	a3, k1 */
+	mfc0	a4, MIPS_COP_0_STATUS
+	mfc0	a5, MIPS_COP_0_CAUSE
 #else
 	mfc0	a2, MIPS_COP_0_ECC
 	mfc0	a3, MIPS_COP_0_CACHE_ERR
@@ -1076,7 +1079,11 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 
 	eret
 
+#if defined(MIPS64_XLS)
+	MSG("cache error @ EPC %#x\nL1D_CACHE_ERROR_LOG %#lx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
+#else
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
+#endif
 	.set	at
 END(MIPSX(cacheException))
 
