@@ -802,6 +802,8 @@ const struct mips_opcode mips_builtin_opcodes[] =
 /* mthc2 is at the bottom of the table.  */
 {"mtc3",    "t,G",	0x4c800000, 0xffe007ff,	COD|RD_t|WR_C3|WR_CC,	0,		I1	},
 {"mtc3",    "t,G,H",    0x4c800000, 0xffe007f8, COD|RD_t|WR_C3|WR_CC,   0,		I32     },
+{"mfcr",    "t,s",	0x70000018, 0xfc00003f,	WR_t|RD_s,		0,		I64	},
+{"mtcr",    "t,s",	0x70000019, 0xfc00003f,	WR_t|RD_s,		0,		I64	},
 {"mtdr",    "t,G",	0x7080003d, 0xffe007ff,	COD|RD_t|WR_C0,		0,		N5	},
 {"mthi",    "s",	0x00000011, 0xfc1fffff,	RD_s|WR_HI,		0,		I1	},
 {"mtlo",    "s",	0x00000013, 0xfc1fffff,	RD_s|WR_LO,		0,		I1	},
