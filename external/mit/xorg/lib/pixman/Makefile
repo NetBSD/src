@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/07/09 02:15:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2009/11/09 01:11:59 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -37,12 +37,17 @@ SRCS=	\
 
 # XXX
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386"
+# SSE2 requires a gcc >= 4.2
+SRCS+= pixman-mmx.c
+COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -fvisibility=hidden
+.elif ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-mmx.c
 SRCS+=	pixman-sse2.c
-MKDEPFLAGS+=		-msse -mmmx -fvisibility=hidden
-COPTS.pixman-mmx.c=	-msse -mmmx -fvisibility=hidden
-COPTS.pixman-sse2.c=	-msse -mmmx -fvisibility=hidden
+COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
+COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
 .endif
 
 # .if VMX
