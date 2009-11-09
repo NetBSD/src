@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2009/11/06 15:22:16 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2009/11/09 19:16:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/11/06 15:22:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2009/11/09 19:16:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,46 +47,21 @@ time_t time_uptime = 0;
 #define SI_MPSAFE 0x01
 #define SI_ONLIST 0x02
 #define SI_KILLME 0x04
+
 struct softint {
 	void (*si_func)(void *);
 	void *si_arg;
 	int si_flags;
+	int si_level;
 
 	LIST_ENTRY(softint) si_entries;
 };
-static LIST_HEAD(, softint) si_pending = LIST_HEAD_INITIALIZER(si_pending);
-static kmutex_t si_mtx;
-static kcondvar_t si_cv;
 
-#define INTRTHREAD_DEFAULT	2
-#define INTRTHREAD_MAX		20
-static int wrkidle, wrktotal;
-
-static void sithread(void *);
-
-static void
-makeworker(bool bootstrap)
-{
-	int rv;
-
-	if (wrktotal > INTRTHREAD_MAX) {
-		/* XXX: ratecheck */
-		printf("maximum interrupt threads (%d) reached\n",
-		    INTRTHREAD_MAX);
-		return;
-	}
-	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
-	    sithread, NULL, NULL, "rumpsi");
-	if (rv) {
-		if (bootstrap)
-			panic("intr thread creation failed %d", rv);
-		else
-			printf("intr thread creation failed %d\n", rv);
-	} else {
-		wrkidle++;
-		wrktotal++;
-	}
-}
+static struct rumpuser_mtx *si_mtx;
+static struct softint_lev {
+	struct rumpuser_cv *si_cv;
+	LIST_HEAD(, softint) si_pending;
+} softints[SOFTINT_COUNT];
 
 /* rumpuser structures since we call rumpuser interfaces directly */
 static struct rumpuser_cv *clockcv;
@@ -160,7 +135,9 @@ doclock(void *noarg)
 }
 
 /*
- * run a scheduled soft interrupt
+ * Soft interrupt execution thread.  Note that we run without a CPU
+ * context until we start processing the interrupt.  This is to avoid
+ * lock recursion.
  */
 static void
 sithread(void *arg)
@@ -169,62 +146,78 @@ sithread(void *arg)
 	void (*func)(void *) = NULL;
 	void *funarg;
 	bool mpsafe;
+	int mylevel = (uintptr_t)arg;
+	struct softint_lev *si_lvl;
 
-	mutex_enter(&si_mtx);
+	rump_unschedule();
+
+	si_lvl = &softints[mylevel];
+	rumpuser_mutex_enter_nowrap(si_mtx);
 	for (;;) {
-		if (!LIST_EMPTY(&si_pending)) {
-			si = LIST_FIRST(&si_pending);
+		if (!LIST_EMPTY(&si_lvl->si_pending)) {
+			si = LIST_FIRST(&si_lvl->si_pending);
 			func = si->si_func;
 			funarg = si->si_arg;
 			mpsafe = si->si_flags & SI_MPSAFE;
 
 			si->si_flags &= ~SI_ONLIST;
 			LIST_REMOVE(si, si_entries);
-			if (si->si_flags & SI_KILLME)
+			if (si->si_flags & SI_KILLME) {
+				rumpuser_mutex_exit(si_mtx);
+				rump_schedule();
 				softint_disestablish(si);
+				rump_unschedule();
+				rumpuser_mutex_enter_nowrap(si_mtx);
+				continue;
+			}
 		} else {
-			cv_wait(&si_cv, &si_mtx);
+			rumpuser_cv_wait_nowrap(si_lvl->si_cv, si_mtx);
 			continue;
 		}
-		wrkidle--;
-		if (__predict_false(wrkidle == 0))
-			makeworker(false);
-		mutex_exit(&si_mtx);
+		rumpuser_mutex_exit(si_mtx);
 
+		rump_schedule();
 		if (!mpsafe)
 			KERNEL_LOCK(1, curlwp);
 		func(funarg);
 		if (!mpsafe)
 			KERNEL_UNLOCK_ONE(curlwp);
+		rump_unschedule();
 
-		mutex_enter(&si_mtx);
-		wrkidle++;
+		rumpuser_mutex_enter_nowrap(si_mtx);
 	}
+
+	panic("sithread unreachable");
 }
 
 void
 softint_init(struct cpu_info *ci)
 {
-	int rv;
+	int rv, i;
 
-	mutex_init(&si_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&si_cv, "intrw8"); /* cv of temporary w8ness */
+	rumpuser_mutex_init(&si_mtx);
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		rumpuser_cv_init(&softints[i].si_cv);
+		LIST_INIT(&softints[i].si_pending);
+	}
 
 	rumpuser_cv_init(&clockcv);
 	rumpuser_mutex_init(&clockmtx);
 
 	/* XXX: should have separate "wanttimer" control */
 	if (rump_threads) {
+		for (i = 0; i < SOFTINT_COUNT; i++) {
+			rv = kthread_create(PRI_NONE,
+			    KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+			    sithread, (void *)(uintptr_t)i,
+			    NULL, "rumpsi%d", i);
+		}
+
 		rumpuser_mutex_enter(clockmtx);
-		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, doclock,
-		    NULL, NULL, "rumpclk");
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR,
+		    NULL, doclock, NULL, NULL, "rumpclk");
 		if (rv)
 			panic("clock thread creation failed: %d", rv);
-		mutex_enter(&si_mtx);
-		while (wrktotal < INTRTHREAD_DEFAULT) {
-			makeworker(true);
-		}
-		mutex_exit(&si_mtx);
 
 		/* make sure we have a clocktime before returning */
 		rumpuser_cv_wait(clockcv, clockmtx);
@@ -251,6 +244,8 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	si->si_func = func;
 	si->si_arg = arg;
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
+	si->si_level = flags & SOFTINT_LVLMASK;
+	KASSERT(si->si_level < SOFTINT_COUNT);
 
 	return si;
 }
@@ -263,13 +258,13 @@ softint_schedule(void *arg)
 	if (!rump_threads) {
 		si->si_func(si->si_arg);
 	} else {
-		mutex_enter(&si_mtx);
+		rumpuser_mutex_enter(si_mtx);
 		if (!(si->si_flags & SI_ONLIST)) {
-			LIST_INSERT_HEAD(&si_pending, si, si_entries);
+			LIST_INSERT_HEAD(&softints[si->si_level].si_pending,
+			    si, si_entries);
 			si->si_flags |= SI_ONLIST;
 		}
-		cv_signal(&si_cv);
-		mutex_exit(&si_mtx);
+		rumpuser_mutex_exit(si_mtx);
 	}
 }
 
@@ -279,11 +274,26 @@ softint_disestablish(void *cook)
 {
 	struct softint *si = cook;
 
+	rumpuser_mutex_enter(si_mtx);
 	if (si->si_flags & SI_ONLIST) {
 		si->si_flags |= SI_KILLME;
 		return;
 	}
+	rumpuser_mutex_exit(si_mtx);
 	kmem_free(si, sizeof(*si));
+}
+
+void
+rump_softint_run(struct cpu_info *ci)
+{
+	int i;
+
+	rumpuser_mutex_enter_nowrap(si_mtx);
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		if (!LIST_EMPTY(&softints[i].si_pending))
+			rumpuser_cv_signal(softints[i].si_cv);
+	}
+	rumpuser_mutex_exit(si_mtx);
 }
 
 bool
@@ -293,10 +303,9 @@ cpu_intr_p(void)
 	return false;
 }
 
-/* yea, we lie a bit for now */
 bool
 cpu_softintr_p(void)
 {
 
-	return false;
+	return curlwp->l_pflag & LP_INTR;
 }
