@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.4 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic.S,v 1.5 2009/11/09 14:22:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,78 +42,95 @@
 ENTRY(_atomic_dec_32,1)
 	fetchadd4.rel	r8=[r32],-1
 	br.ret.sptk	rp
+END(_atomic_dec_32)
 
 ENTRY(_atomic_dec_64,1)
 	fetchadd8.rel	r8=[r32],-1
 	br.ret.sptk	rp
+END(_atomic_dec_64)
 
 ENTRY(_atomic_dec_32_nv,1)
 	fetchadd4.rel	r8=[r32],-1
 	br.ret.sptk	rp
+END(_atomic_dec_32_nv)
 
 ENTRY(_atomic_dec_64_nv,1)
 	fetchadd8.rel	r8=[r32],-1
 	br.ret.sptk	rp
+END(_atomic_dec_64_nv)
 
 ENTRY(_atomic_inc_32,1)
 	fetchadd4.rel	r8=[r32],1
 	br.ret.sptk	rp
+END(_atomic_inc_32)
 
 ENTRY(_atomic_inc_64,1)
 	fetchadd8.rel	r8=[r32],1
 	br.ret.sptk	rp
+END(_atomic_inc_64)
 
 ENTRY(_atomic_inc_32_nv,1)
 	fetchadd4.rel	r8=[r32],1
 	br.ret.sptk	rp
+END(_atomic_inc_32_nv)
 
 ENTRY(_atomic_inc_64_nv,1)
 	fetchadd8.rel	r8=[r32],1
 	br.ret.sptk	rp
+END(_atomic_inc_64_nv)
 
 ENTRY(_atomic_swap_32,2)
 	xchg4		r8=[r32],r33
 	;;
 	mov		r33=r8
 	br.ret.sptk	rp
+END(_atomic_swap_32)
 
 ENTRY(_atomic_swap_64,2)
 	xchg8		r8=[r32],r33
 	;;
 	mov		r33=r8
 	br.ret.sptk	rp
+END(_atomic_swap_64)
 
 ENTRY(_atomic_cas_32,3)
 	mov		ar.ccv=r33
 	;;
 	cmpxchg4.acq	r8=[r32],r34,ar.ccv
 	br.ret.sptk	rp
+END(_atomic_cas_32)
 
 ENTRY(_atomic_cas_64,3)
 	mov		ar.ccv=r33
 	;;
 	cmpxchg8.acq	r8=[r32],r34,ar.ccv
 	br.ret.sptk	rp
+END(_atomic_cas_64)
 
 ENTRY(_membar_consumer,0)
 	mf
 	br.ret.sptk	rp
+END(_membar_consumer)
 
 ENTRY(_membar_producer,0)
 	mf
 	br.ret.sptk	rp
+END(_membar_producer)
 
 ENTRY(_membar_enter,0)
 	mf
 	br.ret.sptk	rp
+END(_membar_enter)
 
 ENTRY(_membar_exit,0)
 	mf
 	br.ret.sptk	rp
+END(_membar_exit)
 
 ENTRY(_membar_sync,0)
 	mf
 	br.ret.sptk	rp
+END(_membar_sync)
 
 
 ALIAS(atomic_add_32,_atomic_add_32)
