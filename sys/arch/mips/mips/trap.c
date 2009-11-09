@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.9 2009/09/07 22:06:32 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.10 2009/11/09 10:02:30 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.9 2009/09/07 22:06:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.10 2009/11/09 10:02:30 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -585,8 +585,12 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	}
 #endif
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	if ((type & T_USER) == 0)
+	if ((type & T_USER) == 0) {
+#ifdef DDB
+		Debugger();
+#endif
 		panic("trapsignal");
+	}
 	userret(l);
 	return;
 }
