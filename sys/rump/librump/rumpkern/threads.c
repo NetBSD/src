@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.2 2009/11/09 19:00:52 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.3 2009/11/09 19:02:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.2 2009/11/09 19:00:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.3 2009/11/09 19:02:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -56,11 +56,11 @@ threadbouncer(void *arg)
 	void (*f)(void *);
 	void *thrarg;
 
-	/* schedule ourselves first */
 	f = k->f;
 	thrarg = k->arg;
 	rumpuser_free(k);
 
+	/* schedule ourselves */
 	rumpuser_set_curlwp(l);
 	rump_schedule();
 
