@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/11/09 00:30:27 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xprop
-SRCS=	xprop.c dsimple.c
+SRCS=	xprop.c dsimple.c clientwin.c
 
 CPPFLAGS+=-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
-CPPFLAGS+=-I${X11SRCDIR.xlsfonts} -I${X11SRCDIR.${PROG}}/../include
-.PATH:	${X11SRCDIR.xlsfonts}
+CPPFLAGS+=-I${X11SRCDIR.${PROG}}/../include
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
