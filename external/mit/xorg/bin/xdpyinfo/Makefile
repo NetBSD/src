@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/11/09 07:01:03 mrg Exp $
 
 .include <bsd.own.mk>
+
+# XXX add composite lib support
 
 PROG=	xdpyinfo
 
