@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.180 2009/02/12 22:49:05 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.181 2009/11/09 15:58:09 skrll Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -50,8 +50,10 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "hppa") || \
-	(${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+.if (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "hppa") || \
+    (${MACHINE_ARCH} == "ia64") || \
+    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
 HAS_SSP=	no
 .else
 HAS_SSP=	yes
