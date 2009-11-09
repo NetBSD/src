@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/11/09 07:21:18 mrg Exp $
 
 NOMAN=	1
 
@@ -19,3 +19,5 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 .include <bsd.x11.mk>
 BINDIR=	${XDMCHOOSERPATH:H}
 .include <bsd.prog.mk>
+
+.PATH: ${X11SRCDIR.xdm}/app-defaults
