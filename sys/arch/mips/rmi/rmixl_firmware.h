@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_firmware.h,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_firmware.h,v 1.1.2.2 2009/11/09 10:02:48 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -110,6 +110,11 @@ typedef struct rmixlfw_info {
 #define RMIXLFW_MMAP_TYPE_RAM		1
 #define RMIXLFW_MMAP_TYPE_ROM		2
 #define RMIXLFW_MMAP_TYPE_RESERVED	3
+#define RMIXLFW_MMAP_TYPE_DEV_IO	0x10
+#define RMIXLFW_MMAP_TYPE_PCI_IO	0x11
+#define RMIXLFW_MMAP_TYPE_PCI_CFG	0x12
+#define RMIXLFW_MMAP_TYPE_PCI_MEM	0x13
+#define RMIXLFW_MMAP_TYPE_UNKNOWN	0xff
 
 /*
  * struct at psb_mem_map, psb_physaddr_map, avail_mem_map
