@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.55 2009/09/08 07:08:01 skrll Exp $
+# $NetBSD: md.amd64,v 1.56 2009/11/09 15:55:47 njoly Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -340,10 +340,10 @@
 ./usr/lib/i386/libatf-c.a			comp-c-lib		compat
 ./usr/lib/i386/libatf-c_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libatf-c_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libbfd.a				comp-c-lib		compat,pic
-./usr/lib/i386/libbfd.so			comp-sys-shlib		compat,pic,binutils
-./usr/lib/i386/libbfd_p.a			comp-c-proflib		compat,profile,binutils
-./usr/lib/i386/libbfd_pic.a			comp-c-piclib		compat,pic,binutils
+./usr/lib/i386/libbfd.a				comp-obsolete		obsolete
+./usr/lib/i386/libbfd.so			comp-obsolete		obsolete
+./usr/lib/i386/libbfd_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libbfd_pic.a			comp-obsolete		obsolete
 ./usr/lib/i386/libbind9.a			comp-c-lib		compat
 ./usr/lib/i386/libbind9.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libbind9_p.a			comp-c-proflib		compat,profile
