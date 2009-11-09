@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.14 2009/07/23 13:34:26 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.15 2009/11/09 13:21:34 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.14 2009/07/23 13:34:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.15 2009/11/09 13:21:34 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -143,12 +143,15 @@ pcitag_t dino_make_tag(void *, int, int, int);
 void dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t dino_conf_read(void *, pcitag_t, int);
 void dino_conf_write(void *, pcitag_t, int, pcireg_t);
+
 int dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 void dino_intr_disestablish(void *, void *);
+
 void *dino_alloc_parent(device_t, struct pci_attach_args *, int);
+
 int dino_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t,
