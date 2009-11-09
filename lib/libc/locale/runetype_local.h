@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.4 2009/11/09 14:20:49 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.5 2009/11/09 14:22:31 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,7 +74,7 @@ typedef uint32_t _RuneType;
 #define	_RUNETYPE_Q	UINT32_C(0x00200000)	/* Phonogram */
 #define	_RUNETYPE_SWM	UINT32_C(0xc0000000)/* Mask to get screen width data */
 #define	_RUNETYPE_SWS	30		/* Bits to shift to get width */
-#define	_RUNETYPE_SW0	UINT32_C(0x00000000)	/* 0 width character */
+#define	_RUNETYPE_SW0	UINT32_C(0x20000000)	/* 0 width character */
 #define	_RUNETYPE_SW1	UINT32_C(0x40000000)	/* 1 width character */
 #define	_RUNETYPE_SW2	UINT32_C(0x80000000)	/* 2 width character */
 #define	_RUNETYPE_SW3	UINT32_C(0xc0000000)	/* 3 width character */
