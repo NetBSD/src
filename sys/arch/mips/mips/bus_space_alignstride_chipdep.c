@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.3 2009/09/22 07:20:39 cliff Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.4 2009/11/09 09:59:27 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.3 2009/09/22 07:20:39 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.4 2009/11/09 09:59:27 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -383,6 +383,7 @@ static long
 #else
 #define	CHIP_OFF64(o)	(o)
 #endif
+
 
 void
 __BS(init)(bus_space_tag_t t, void *v)
@@ -978,9 +979,15 @@ __BS(read_1)(void *v, bus_space_handle_t h, bus_size_t off)
 #else	/* CHIP_ACCESS_SIZE > 1 */
 	volatile uint8_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 1 */
+	uint8_t r;
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF8(off));
-	return (uint8_t)(CHIP_SWAP_ACCESS(*ptr) & 0xff);
+        h += CHIP_OFF8(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+        r = (uint8_t)(CHIP_SWAP_ACCESS(*ptr) >> shift);
+
+        return r;
 }
 
 inline uint16_t
@@ -991,9 +998,16 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 #else	/* CHIP_ACCESS_SIZE > 2 */
 	volatile uint16_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 2 */
+	uint16_t r;
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF16(off));
-	return (uint16_t)(CHIP_SWAP_ACCESS(*ptr) & 0xffff);
+	KASSERT((off & 1) == 0);
+        h += CHIP_OFF16(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+	r = (uint16_t)CHIP_SWAP16(*ptr >> shift);
+
+	return r;
 }
 
 inline uint32_t
@@ -1004,18 +1018,32 @@ __BS(read_4)(void *v, bus_space_handle_t h, bus_size_t off)
 #else	/* CHIP_ACCESS_SIZE > 4 */
 	volatile uint32_t *ptr;
 #endif
+	uint32_t r;
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF32(off));
-	return (uint32_t)(CHIP_SWAP_ACCESS(*ptr) & 0xffffffff);
+	KASSERT((off & 3) == 0);
+        h += CHIP_OFF32(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+	r = (uint32_t)CHIP_SWAP32(*ptr >> shift);
+
+	return r;
 }
 
 inline uint64_t
 __BS(read_8)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 	volatile uint64_t *ptr;
+	volatile uint64_t r;
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF64(off));
-	return CHIP_SWAP64(*ptr);
+	KASSERT((off & 7) == 0);
+        h += CHIP_OFF64(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+	r =  CHIP_SWAP64(*ptr >> shift);
+
+	return r;
 }
 
 
@@ -1052,6 +1080,7 @@ CHIP_read_region_N(2,uint16_t)
 CHIP_read_region_N(4,uint32_t)
 CHIP_read_region_N(8,uint64_t)
 
+
 inline void
 __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 {
@@ -1060,9 +1089,12 @@ __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 #else	/* CHIP_ACCESS_SIZE > 1 */
 	volatile uint8_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 1 */
+	int shift;
 
-	ptr = (void *)(h + CHIP_OFF8(off));
-	*ptr = CHIP_SWAP_ACCESS((CHIP_TYPE)val);
+	h += CHIP_OFF8(off);
+	shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+	*ptr = CHIP_SWAP_ACCESS(((CHIP_TYPE)val) << shift);
 }
 
 inline void
@@ -1073,10 +1105,14 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 #else	/* CHIP_ACCESS_SIZE > 2 */
 	volatile uint16_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 2 */
+	int shift;
 
-	ptr = (void *)(h + CHIP_OFF16(off));
+	KASSERT((off & 1) == 0);
+	h += CHIP_OFF16(off);
+	shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	if (CHIP_ACCESS_SIZE > 2)
-		*ptr = CHIP_SWAP_ACCESS((CHIP_TYPE)val);
+		*ptr = (CHIP_TYPE)(CHIP_SWAP16(val)) << shift;
 	else
 		*ptr = CHIP_SWAP16(val);
 }
@@ -1089,21 +1125,29 @@ __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
 #else	/* CHIP_ACCESS_SIZE > 4 */
 	volatile uint32_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 4 */
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF32(off));
-	if (CHIP_ACCESS_SIZE > 4)
-		*ptr = CHIP_SWAP_ACCESS((CHIP_TYPE)val);
-	else
-		*ptr = CHIP_SWAP32(val);
+	KASSERT((off & 3) == 0);
+        h += CHIP_OFF32(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+        if (CHIP_ACCESS_SIZE > 4)
+		*ptr = (CHIP_TYPE)(CHIP_SWAP32(val)) << shift;
+        else
+                *ptr = CHIP_SWAP32(val);
 }
 
 inline void
 __BS(write_8)(void *v, bus_space_handle_t h, bus_size_t off, uint64_t val)
 {
 	volatile uint64_t *ptr;
+        int shift;
 
-	ptr = (void *)(h + CHIP_OFF64(off));
-	*ptr = CHIP_SWAP64(val);
+	KASSERT((off & 7) == 0);
+        h += CHIP_OFF64(off);
+        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+	*ptr = CHIP_SWAP64(val) << shift;
 }
 
 #define CHIP_write_multi_N(BYTES,TYPE)					\
