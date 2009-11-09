@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.9 2009/09/13 03:28:22 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.10 2009/11/09 09:57:27 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,6 +115,7 @@
 #define	MIPS_XKSEG_START	(0x3ULL << 62)
 #define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
 
+#ifndef _LOCORE
 #define	MIPS_XKPHYS_START	(0x2ULL << 62)
 #define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
@@ -125,6 +126,7 @@
 #define	MIPS_XKPHYS_TO_PHYS(x)	((uint64_t)(x) & 0x07ffffffffffffffLL)
 #define	MIPS_XKPHYS_TO_CCA(x)	(((uint64_t)(x) >> 59) & 7)
 #define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
+#endif	/* _LOCORE */
 
 #define	CCA_UNCACHED		2
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
@@ -830,12 +832,12 @@
 /*
  * CPU processor revision IDs for company ID == 12 (RMI)
  */
-#define	MIPS_XLR732	0x00	/* RMI XLS732-C	 		ISA 64  */
-#define	MIPS_XLR716	0x02	/* RMI XLS716-C	 		ISA 64  */
-#define	MIPS_XLR532	0x08	/* RMI XLS532-C	 		ISA 64  */
-#define	MIPS_XLR516	0x0a	/* RMI XLS516-C	 		ISA 64  */
-#define	MIPS_XLR508	0x0b	/* RMI XLS508-C	 		ISA 64  */
-#define	MIPS_XLR308	0x0f	/* RMI XLS308-C	 		ISA 64  */
+#define	MIPS_XLR732	0x00	/* RMI XLR732-C	 		ISA 64  */
+#define	MIPS_XLR716	0x02	/* RMI XLR716-C	 		ISA 64  */
+#define	MIPS_XLR532	0x08	/* RMI XLR532-C	 		ISA 64  */
+#define	MIPS_XLR516	0x0a	/* RMI XLR516-C	 		ISA 64  */
+#define	MIPS_XLR508	0x0b	/* RMI XLR508-C	 		ISA 64  */
+#define	MIPS_XLR308	0x0f	/* RMI XLR308-C	 		ISA 64  */
 #define	MIPS_XLS616	0x40	/* RMI XLS616	 		ISA 64  */
 #define	MIPS_XLS416	0x44	/* RMI XLS416	 		ISA 64  */
 #define	MIPS_XLS608	0x4A	/* RMI XLS608	 		ISA 64  */
