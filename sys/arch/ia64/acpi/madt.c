@@ -1,4 +1,4 @@
-/*	$NetBSD: madt.c,v 1.1 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: madt.c,v 1.2 2009/11/09 14:15:15 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
-#include <dist/acpica/actables.h>
+#include <actables.h>
 
 
 extern uint64_t ia64_lapic_address;
