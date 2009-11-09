@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.84 2009/11/03 05:17:17 snj Exp $
+.\"	$NetBSD: legal.common,v 1.85 2009/11/09 20:54:51 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,6 @@ Foundation, Inc. and its contributors.
 This product includes software developed for the
 NetBSD Project.  See http://www.netbsd.org/ for
 information about NetBSD.
-.It
-This product contains software developed by Ignatios Souvatzis for
-the NetBSD project.
 .It
 This product contains software written by Ignatios Souvatzis and
 Michael L. Hitch for the NetBSD project.
