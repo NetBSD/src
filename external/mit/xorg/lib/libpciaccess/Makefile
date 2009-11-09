@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/11 01:52:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/11/09 07:24:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ SRCS=	common_bridge.c \
 	common_capability.c \
 	common_device_name.c \
 	common_map.c \
+	common_vgaarb_stub.c \
 	netbsd_pci.c
 
 CPPFLAGS+=	${X11FLAGS} -I${X11SRCDIR.${LIB}}/include \
