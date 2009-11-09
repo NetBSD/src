@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.6 2009/11/09 09:55:11 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.6 2009/11/09 09:55:11 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -132,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $"
 #include <sys/ksyms.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -159,6 +161,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2009/09/22 07:47:30 cliff Exp $"
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_firmware.h>
 #include <mips/rmi/rmixlreg.h>
+
+#ifdef MACHDEP_DEBUG
+int machdep_debug=MACHDEP_DEBUG;
+# define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
+#else
+# define DPRINTF(x)
+#endif
 
 #ifndef CONSFREQ
 # define CONSFREQ -1		/* inherit from firmware */
@@ -202,6 +211,17 @@ static rmixlfw_mmap_t rmixlfw_avail_mmap;
 #define RMIXLFW_INFOP_LEGAL	0x8c000000
 
 
+/*
+ * storage for fixed extent used to allocate physical address regions
+ * because extent(9) start and end values are u_long, they are only
+ * 32 bits on a 32 bit kernel, which is insuffucuent since XLS physical
+ * address is 40 bits wide.  So the "physaddr" map stores regions
+ * in units of megabytes.
+ */
+static u_long rmixl_physaddr_storage[
+	EXTENT_FIXED_STORAGE_SIZE(32)/sizeof(u_long)
+];
+
 /* For sysctl_hw. */
 extern char cpu_model[];
 
@@ -218,13 +238,17 @@ int	netboot;		/* Are we netbooting? */
 
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+u_int mem_cluster_cnt;
+
 
 void configure(void);
 void mach_init(int, int32_t *, void *, void *);
 static u_long rmixlfw_init(void *);
 static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
 static void __attribute__((__noreturn__)) rmixl_exit(int);
+static void rmixl_physaddr_init(void);
+static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
+void rmixlfw_mmap_print(rmixlfw_mmap_t *);
 
 
 /*
@@ -243,8 +267,9 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend, *v;
-        size_t first, last;
 	u_long memsize;
+	u_int vm_cluster_cnt;
+	phys_ram_seg_t vm_clusters[VM_PHYSSEG_MAX];
 	extern char edata[], end[];
 
 	/*
@@ -280,6 +305,8 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 	printf("\nNetBSD/rmixl\n");
 	printf("memsize = %#lx\n", memsize);
 
+	rmixl_physaddr_init();
+
 	/*
 	 * Obtain the cpu frequency
 	 * Compute the number of ticks for hz.
@@ -309,26 +336,48 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 
 			howto = 0;
 			BOOT_FLAG(*cp, howto);
-			if (! howto)
-				printf("bootflag '%c' not recognised\n", *cp);
-			else
+			if (howto != 0)
 				boothowto |= howto;
+#ifdef DIAGNOSTIC
+			else
+				printf("bootflag '%c' not recognised\n", *cp);
+#endif
 		}
 	}
+#ifdef DIAGNOSTIC
 	printf("boothowto %#x\n", boothowto);
+#endif
 
 	/*
-	 * Load the rest of the available pages into the VM system.
+	 * Reserve pages from the VM system.
+	 * to maintain mem_clusters[] as a map of raw ram,
+	 * copy into temporary table vm_clusters[]
+	 * work on that and use it to feed vm_physload()
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
-	for (int i = 1; i < mem_cluster_cnt; i++) {
-		first = round_page(mem_clusters[i].start);
-		last = mem_clusters[i].start + mem_clusters[i].size;
-		uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-			VM_FREELIST_DEFAULT);
+	KASSERT(sizeof(mem_clusters) == sizeof(vm_clusters));
+	memcpy(&vm_clusters, &mem_clusters, sizeof(vm_clusters));
+	vm_cluster_cnt = mem_cluster_cnt;
+
+	/* reserve 0..start..kernend pages */
+	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
+		0, round_page(MIPS_KSEG0_TO_PHYS(kernend)));
+
+	/* reserve reset exception vector page */
+	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
+		MIPS_KSEG1_TO_PHYS(MIPS_RESET_EXC_VEC),
+		MIPS_KSEG1_TO_PHYS(MIPS_RESET_EXC_VEC+NBPG));
+
+	/*
+	 * Load vm_clusters[] into the VM system.
+	 */
+	for (u_int i=0; i < vm_cluster_cnt; i++) {
+		u_quad_t first, last;
+
+		first = trunc_page(vm_clusters[i].start);
+		last = round_page(vm_clusters[i].start + vm_clusters[i].size);
+		DPRINTF(("%s: %d: %#lx, %#lx\n", __func__, i, first, last));
+		uvm_page_physload(atop(first), atop(last), atop(first),
+			atop(last), VM_FREELIST_DEFAULT);
 	}
 
 	/*
@@ -365,7 +414,180 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-	
+}
+
+
+/*
+ * ram_seg_resv - cut reserved regions out of segs, fragmenting as needed
+ *
+ * we simply build a new table of segs, then copy it back over the given one
+ * this is inefficient but simple and called only a few times
+ *
+ * note: 'last' here means 1st addr past the end of the segment (start+size)
+ */
+static u_int
+ram_seg_resv(phys_ram_seg_t *segs, u_int nsegs,
+	u_quad_t resv_first, u_quad_t resv_last)
+{
+        u_quad_t first, last;
+	int new_nsegs=0;
+	int resv_flag;
+	phys_ram_seg_t new_segs[VM_PHYSSEG_MAX];
+
+	for (u_int i=0; i < nsegs; i++) {
+		resv_flag = 0;
+		first = trunc_page(segs[i].start);
+		last = round_page(segs[i].start + segs[i].size);
+
+		KASSERT(new_nsegs < VM_PHYSSEG_MAX);
+		if ((resv_first <= first) && (resv_last >= last)) {
+			/* whole segment is resverved */
+			continue;
+		}
+		if ((resv_first > first) && (resv_first < last)) {
+			u_quad_t new_last;
+
+			/*
+			 * reserved start in segment
+			 * salvage the leading fragment
+			 */
+			resv_flag = 1;
+			new_last = last - (last - resv_first);
+			KASSERT (new_last > first);
+			new_segs[new_nsegs].start = first;
+			new_segs[new_nsegs].size = new_last - first;
+			new_nsegs++;
+		}
+		if ((resv_last > first) && (resv_last < last)) {
+			u_quad_t new_first;
+
+			/*
+			 * reserved end in segment
+			 * salvage the trailing fragment
+			 */
+			resv_flag = 1;
+			new_first = first + (resv_last - first);
+			KASSERT (last > (new_first + NBPG));
+			new_segs[new_nsegs].start = new_first;
+			new_segs[new_nsegs].size = last - new_first;
+			new_nsegs++;
+		}
+		if (resv_flag == 0) {
+			/*
+			 * nothing reserved here, take it all
+			 */
+			new_segs[new_nsegs].start = first;
+			new_segs[new_nsegs].size = last - first;
+			new_nsegs++;
+		}
+
+	}
+
+	memcpy(segs, new_segs, sizeof(new_segs));
+
+	return new_nsegs;
+}
+
+/*
+ * create an extent for physical address space
+ * these are in units of MB for sake of compression (for sake of 32 bit kernels)
+ * allocate the regions where we have known functions (DRAM, IO, etc)
+ * what remains can be allocated as needed for other stuff
+ * e.g. to configure BARs that are not already initialized and enabled.
+ */
+static void
+rmixl_physaddr_init(void)
+{
+	struct extent *ext;
+	unsigned long start = 0UL;
+	unsigned long end = (__BIT(40) / (1024 * 1024)) -1;
+	u_long base;
+	u_long size;
+	uint32_t r;
+
+	ext = extent_create("physaddr", start, end, M_DEVBUF,
+		(void *)rmixl_physaddr_storage, sizeof(rmixl_physaddr_storage),
+		EX_NOWAIT | EX_NOCOALESCE);
+
+	if (ext == NULL)
+		panic("%s: extent_create failed", __func__);
+
+	/*
+	 * grab regions per DRAM BARs
+	 */
+	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) { 
+		r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
+		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
+			continue;	/* not enabled */
+		base = (u_long)(DRAM_BAR_TO_BASE((uint64_t)r) / (1024 * 1024));
+		size = (u_long)(DRAM_BAR_TO_SIZE((uint64_t)r) / (1024 * 1024));
+
+		DPRINTF(("%s: %d: %d: 0x%08x -- 0x%010lx:%lu MB\n",
+			__func__, __LINE__, i, r, base * (1024 * 1024), size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	/*
+	 * grab regions per PCIe CFG, ECFG, IO, MEM BARs
+	 */
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_CFG_BAR);
+	if ((r & RMIXL_PCIE_CFG_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_CFG_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "CFG", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_ECFG_BAR);
+	if ((r & RMIXL_PCIE_ECFG_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_ECFG_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "ECFG", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_MEM_BAR);
+	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_MEM_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)(RMIXL_PCIE_MEM_BAR_TO_SIZE((uint64_t)r)
+			/ (1024 * 1024));
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "MEM", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_IO_BAR);
+	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_IO_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)(RMIXL_PCIE_IO_BAR_TO_SIZE((uint64_t)r)
+			/ (1024 * 1024));
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "IO", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	/*
+	 *  at this point all regions left in "physaddr" extent
+	 *  are unused holes in the physical adress space
+	 *  available for use as needed.
+	 */
+	rmixl_configuration.rc_phys_ex = ext;
+#ifdef MACHDEP_DEBUG
+	extent_print(ext);
+#endif
 }
 
 static u_long
@@ -389,80 +611,146 @@ rmixlfw_init(void *infop)
 	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(RMIXL_IO_DEV_PBASE);
 	rmixl_putchar_init(rcp->rc_io_pbase);
 
+#ifdef DIAGNOSTIC
 	rmixl_puts("\r\nWARNING: untested psb_version: ");
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");
+#endif
 
  found:
 	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
 	rmixl_putchar_init(rcp->rc_io_pbase);
+#ifdef MACHDEP_DEBUG
 	rmixl_puts("\r\ninfop: ");
 	rmixl_puthex64((uint64_t)infop);
+#endif
+#ifdef DIAGNOSTIC
 	rmixl_puts("\r\nrecognized psb_version: ");
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");
+#endif
 
 	return mem_clusters_init(
 		(rmixlfw_mmap_t *)rmixlfw_info.psb_physaddr_map,
 		(rmixlfw_mmap_t *)rmixlfw_info.avail_mem_map);
 }
 
+void
+rmixlfw_mmap_print(rmixlfw_mmap_t *map)
+{
+#ifdef MACHDEP_DEBUG
+	for (uint32_t i=0; i < map->nmmaps; i++) {
+		rmixl_puthex32(i);
+		rmixl_puts(", ");
+		rmixl_puthex64(map->entry[i].start);
+		rmixl_puts(", ");
+		rmixl_puthex64(map->entry[i].size);
+		rmixl_puts(", ");
+		rmixl_puthex32(map->entry[i].type);
+		rmixl_puts("\r\n");
+	}
+#endif
+}
+
+/*
+ * mem_clusters_init
+ *
+ * initialize mem_clusters[] table based on memory address mapping
+ * provided by boot firmware.
+ *
+ * prefer avail_mem_map if we can, otherwise use psb_physaddr_map.
+ * these will be limited by MEMSIZE if it is configured.
+ * if neither are available, just use MEMSIZE.
+ */
 static u_long
 mem_clusters_init(
 	rmixlfw_mmap_t *psb_physaddr_map,
 	rmixlfw_mmap_t *avail_mem_map)
 {
+	rmixlfw_mmap_t *map = NULL;
+	const char *mapname;
 	uint64_t tmp;
 	uint64_t sz;
 	uint64_t sum;
+	u_int cnt;
 #ifdef MEMSIZE
 	u_long memsize = MEMSIZE;
 #endif
 
+#ifdef MACHDEP_DEBUG
 	rmixl_puts("psb_physaddr_map: ");
 	rmixl_puthex64((uint64_t)psb_physaddr_map);
 	rmixl_puts("\r\n");
-
-	if (psb_physaddr_map == NULL)
+#endif
+	if (psb_physaddr_map != NULL) {
+		rmixlfw_phys_mmap = *psb_physaddr_map;
+		map = &rmixlfw_phys_mmap;
+		mapname = "psb_physaddr_map";
+		rmixlfw_mmap_print(map);
+	}
+#ifdef DIAGNOSTIC
+	else {
 		rmixl_puts("WARNING: no psb_physaddr_map\r\n");
-	else
-		rmixlfw_phys_mmap  = *psb_physaddr_map;
+	}
+#endif
 
+#ifdef MACHDEP_DEBUG
 	rmixl_puts("avail_mem_map: ");
 	rmixl_puthex64((uint64_t)avail_mem_map);
 	rmixl_puts("\r\n");
-	if (avail_mem_map == NULL) {
+#endif
+	if (avail_mem_map != NULL) {
+		rmixlfw_avail_mmap = *avail_mem_map;
+		map = &rmixlfw_avail_mmap;
+		mapname = "avail_mem_map";
+		rmixlfw_mmap_print(map);
+	}
+#ifdef DIAGNOSTIC
+	else {
+		rmixl_puts("WARNING: no avail_mem_map\r\n");
+	}
+#endif
+
+	if (map == NULL) {
 #ifndef MEMSIZE
-		rmixl_puts("ERROR: no avail_mem_map, "
-			"must define MEMSIZE\r\n");
+		rmixl_puts("panic: no firmware memory map, "
+			"must configure MEMSIZE\r\n");
+		for(;;);	/* XXX */
 #else
+#ifdef DIAGNOSTIC
 		rmixl_puts("WARNING: no avail_mem_map, "
 			"using MEMSIZE\r\n");
+#endif
+
 		mem_clusters[0].start = 0;
 		mem_clusters[0].size = MEMSIZE;
 		mem_cluster_cnt = 1;
 		return MEMSIZE;
-#endif
+#endif	/* MEMSIZE */
 	}
 
-	rmixl_puts("using avail_mem_map\r\n");
-	rmixlfw_avail_mmap = *(rmixlfw_mmap_t *)rmixlfw_info.avail_mem_map;
-	rmixl_puts("memory clusters map:\r\n");
+#ifdef DIAGNOSTIC
+	rmixl_puts("using ");
+	rmixl_puts(mapname);
+	rmixl_puts("\r\n");
+#endif
+#ifdef MACHDEP_DEBUG
+	rmixl_puts("memory clusters:\r\n");
+#endif
 	sum = 0;
-	mem_cluster_cnt = 0;
-	for (uint32_t i=0; i < rmixlfw_avail_mmap.nmmaps; i++) {
-		if (rmixlfw_avail_mmap.entry[i].type != RMIXLFW_MMAP_TYPE_RAM)
+	cnt = 0;
+	for (uint32_t i=0; i < map->nmmaps; i++) {
+		if (map->entry[i].type != RMIXLFW_MMAP_TYPE_RAM)
 			continue;
-		mem_clusters[i].start = rmixlfw_avail_mmap.entry[i].start;
-		sz = rmixlfw_avail_mmap.entry[i].size;
+		mem_clusters[cnt].start = map->entry[i].start;
+		sz = map->entry[i].size;
 		sum += sz;
-		mem_clusters[i].size = sz;
-		mem_cluster_cnt++;
-#ifdef DEBUG
+		mem_clusters[cnt].size = sz;
+#ifdef MACHDEP_DEBUG
 		rmixl_puthex32(i);
 		rmixl_puts(": ");
-		rmixl_puthex64(mem_clusters[i].start);
-		rmixl_puts(": ");
+		rmixl_puthex64(mem_clusters[cnt].start);
+		rmixl_puts(", ");
 		rmixl_puthex64(sz);
 		rmixl_puts(": ");
 		rmixl_puthex64(sum);
@@ -478,11 +766,13 @@ mem_clusters_init(
 			tmp = sum - memsize;
 			sz -= tmp;
 			sum -= tmp;
-			mem_clusters[i].size = sz;
+			mem_clusters[cnt].size = sz;
 			break;
 		}
 #endif
+		cnt++;
 	}
+	mem_cluster_cnt = cnt;
 	return sum;
 }
 
@@ -527,7 +817,7 @@ cpu_startup()
 
 	/*
 	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
+	 * are allocated via the pool allocator, and we use XKSEG to
 	 * map those pages.)
 	 */
 
