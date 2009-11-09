@@ -1,19 +1,18 @@
 #
-#	$NetBSD: XLS6ATX_7A,v 1.1.2.2 2009/09/25 22:22:27 cliff Exp $
+#	$NetBSD: XLS6ATX_7A,v 1.1.2.3 2009/11/09 09:42:33 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"XLS6ATX_7A-$Revision: 1.1.2.2 $"
+#ident 		"XLS6ATX_7A-$Revision: 1.1.2.3 $"
 
 maxusers	32
 
 #
-# XXX obtain memsize from firmware TBD
+# MEMSIZE can be used to limit memory size obtained from firmware or DRAM BARs
 #
 options		MEMSIZE=0x10000000		# 256MB 
-## options		MEMSIZE=0x100000000	# 4GB
 
 options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
@@ -23,7 +22,8 @@ options 	SOFTFLOAT	# emulate FPU insn
 # options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 # options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 # options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
-#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
+# options 	MEMORY_DISK_ROOT_SIZE=8224	# size of memory disk, in blocks
+# options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 # Standard system options
 options 	KTRACE		# system call tracing support
@@ -43,8 +43,8 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=0x500000	# size for embedded symbol table
-options		DDB_COMMANDONENTER="trace;show registers"
+##options 	SYMTAB_SPACE=0x500000	# size for embedded symbol table
+#options	DDB_COMMANDONENTER="trace;show registers"
 options		DB_MAX_LINE=-1
 
 # Compatibility options
@@ -133,7 +133,10 @@ options 	PCI_NETBSD_ENABLE_IDE=0x1
 
 options 	NFS_BOOT_DHCP
 
-config		netbsd	root on ? type ?
+config	netbsd		root on ? type ?
+config	netbsd-wm0	root on wm0 type nfs
+config	netbsd-msk0	root on msk0 type nfs
+##config	netbsd-md0	root on md0 type ffs
 
 
 mainbus0 	at root
@@ -141,6 +144,17 @@ cpu0 		at mainbus?
 obio0		at mainbus?
 com0		at obio0	addr 0x14000 mult 4 intr 9
 options		COM_REGMAP
+rmixl_pcie0	at obio0
+pci0		at rmixl_pcie0
+ppb*		at pci?
+pci*		at ppb?
+wm*		at pci? dev ? function ?	# Intel i82546EB Gig-E
+skc*		at pci? dev ? function ?
+sk*		at skc?
+mskc*		at pci? dev ? function ?
+msk*		at mskc?
+makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
+ukphy*		at mii? phy ?			# unknown PHY
 
 # Pseudo-devices
 
@@ -174,7 +188,7 @@ pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
 pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
-pseudo-device	ksyms				# /dev/ksyms
+##pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
