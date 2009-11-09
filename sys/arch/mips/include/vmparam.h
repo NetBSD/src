@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.4 2009/09/12 17:16:38 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.5 2009/11/09 09:58:19 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -186,7 +186,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 #endif
-#define VM_MAXUSER32_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default
