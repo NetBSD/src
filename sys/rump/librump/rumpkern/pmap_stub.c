@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.22 2009/11/07 12:08:35 dsl Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.23 2009/11/09 14:35:38 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.22 2009/11/07 12:08:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.23 2009/11/09 14:35:38 nakayama Exp $");
 
 #include <sys/param.h>
 
@@ -56,7 +56,7 @@ struct pmap *const kernel_pmap_ptr = (struct pmap *const)0x66;
 
 bool pmap_is_modified(struct vm_page *);
 bool pmap_clear_modify(struct vm_page *);
-void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
+void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 void pmap_kremove(vaddr_t, vsize_t);
 void pmap_page_protect(struct vm_page *, vm_prot_t);
 bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
@@ -256,11 +256,11 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 #endif
 
 #if defined(__sparc__) && !defined(__sparc_v9__)
-bool     (*pmap_clear_modify_p)(struct vm_page *) = pmap_clear_modify;
-bool     (*pmap_is_modified_p)(struct vm_page *) = pmap_is_modified;
-void     (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t) = pmap_kenter_pa;
-void     (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
-void     (*pmap_page_protect_p)(struct vm_page *, vm_prot_t)=pmap_page_protect;
-bool     (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) = pmap_extract;
-int      (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_enter;
+bool (*pmap_clear_modify_p)(struct vm_page *) = pmap_clear_modify;
+bool (*pmap_is_modified_p)(struct vm_page *) = pmap_is_modified;
+void (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_kenter_pa;
+void (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
+void (*pmap_page_protect_p)(struct vm_page *, vm_prot_t) = pmap_page_protect;
+bool (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) = pmap_extract;
+int (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_enter;
 #endif
