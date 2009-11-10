@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.60 2009/09/11 13:36:37 tron Exp $ */
+/* $NetBSD: cgd.c,v 1.61 2009/11/10 16:49:53 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.60 2009/09/11 13:36:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.61 2009/11/10 16:49:53 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -775,13 +775,9 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
-	char		*sink;
-	char		*zero_iv;
-	char		*blkno_buf;
-
-	sink = malloc(blocksize * 3, M_DEVBUF, M_WAITOK);
-	zero_iv = &sink[blocksize];
-	blkno_buf = &zero_iv[blocksize];
+	char		sink[blocksize];
+	char		zero_iv[blocksize];
+	char		blkno_buf[blocksize];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
@@ -792,7 +788,7 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	DIAGCONDPANIC(sizeof(daddr_t) > blocksize,
 	    ("cgd_cipher: sizeof(daddr_t) > blocksize"));
 
-	memset(zero_iv, 0x0, blocksize);
+	memset(zero_iv, 0x0, sizeof(zero_iv));
 
 	dstuio.uio_iov = dstiov;
 	dstuio.uio_iovcnt = 2;
@@ -811,13 +807,13 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		dstiov[1].iov_base = dst;
 		srciov[1].iov_base = src;
 
-		memset(blkno_buf, 0x0, blocksize);
+		memset(blkno_buf, 0x0, sizeof(blkno_buf));
 		blkno2blkno_buf(blkno_buf, blkno);
 		if (dir == CGD_CIPHER_DECRYPT) {
 			dstuio.uio_iovcnt = 1;
 			srcuio.uio_iovcnt = 1;
 			IFDEBUG(CGDB_CRYPTO, hexprint("step 0: blkno_buf",
-			    blkno_buf, blocksize));
+			    blkno_buf, sizeof(blkno_buf)));
 			cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio,
 			    zero_iv, CGD_CIPHER_ENCRYPT);
 			memcpy(blkno_buf, sink, blocksize);
@@ -826,17 +822,15 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		}
 
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 1: blkno_buf",
-		    blkno_buf, blocksize));
+		    blkno_buf, sizeof(blkno_buf)));
 		cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio, zero_iv, dir);
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: sink",
-		    sink, blocksize));
+		    sink, sizeof(sink)));
 
 		dst += secsize;
 		src += secsize;
 		blkno++;
 	}
-
-	free(sink, M_DEVBUF);
 }
 
 #ifdef DEBUG
