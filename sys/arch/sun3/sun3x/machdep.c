@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2009/08/15 23:45:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2009/11/10 17:37:15 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2009/08/15 23:45:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2009/11/10 17:37:15 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -688,7 +688,7 @@ dumpsys(void)
 				printf_nolog("\r%4d", todo);
 
 			/* Make a temporary mapping for the page. */
-			pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
+			pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 			error = (*dsw->d_dump)(dumpdev, blkno, vaddr,
 					       PAGE_SIZE);

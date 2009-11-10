@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.38 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: dvma.c,v 1.39 2009/11/10 17:37:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.39 2009/11/10 17:37:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,8 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 #endif	/* DEBUG */
 
 		iommu_enter((tva & IOMMU_VA_MASK), pa);
-		pmap_kenter_pa(tva, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(tva,
+		    pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 
@@ -350,7 +351,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			panic("%s: unmapped VA", __func__);
 #endif
 		iommu_enter((dva & IOMMU_VA_MASK), pa);
-		pmap_kenter_pa(dva, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(dva,
+		    pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE, 0);
 		kva += PAGE_SIZE;
 		dva += PAGE_SIZE;
 		sgsize -= PAGE_SIZE;
