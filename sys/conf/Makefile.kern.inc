@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.124 2009/05/13 18:06:26 cube Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.125 2009/11/10 20:24:50 tron Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -481,7 +481,7 @@ EXTRA_CLEAN+= .gdbinit
 
 # The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.
-VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
+VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c uvm/uvm_bio.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c
