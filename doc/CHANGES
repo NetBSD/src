@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1315 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1316 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -434,3 +434,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	yacc(1): Import byacc-20091028 [christos 20091028]
 	pm2fb: A driver for Permedia2-based graphics cards like Sun's PGX32
 		[macallan 20091028]
+	xf86-video-igs: an Xorg driver for IGS CyberPro 20x0 graphics
+		controllers, currently only for rev. 5 sharks
+		[macallan 20091110]
