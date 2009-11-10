@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/27 12:58:59 blymn Exp $
+#	$NetBSD: Makefile,v 1.4 2009/11/10 10:24:50 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -40,17 +40,17 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	${G_TEXINFOS}
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
-INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc -I${COMMONOBJDIR} -I${DIST}/libiberty
+INFOFLAGS=	-I${COMMONOBJDIR} -I${DIST}/ld -I${DIST}/bfd/doc -I${DIST}/libiberty
 
 FILESDIR=	${SCRIPTSDIR}/ldscripts
 
-.PATH: ${DIST}/ld ${DIST}/ld/emulparams \
+.PATH: ${COMMONOBJDIR} ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
 
 BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
 BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
 
-${PROG}.info: configdoc.texi
+${PROG}.info: configdoc.texi bfdver.texi
 
 .for f in ${G_EMULATION_OFILES:S/^e//:R}
 .if exists(.depend.${f})

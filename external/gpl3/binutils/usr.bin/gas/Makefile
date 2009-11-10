@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/27 12:58:59 blymn Exp $
+#	$NetBSD: Makefile,v 1.4 2009/11/10 10:24:50 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -51,7 +51,9 @@ TEXINFO=	as.texinfo
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
 INFOFLAGS=	-I${DIST}/gas/doc -I${COMMONOBJDIR} -I${DIST}/libiberty
 
-.PATH: ${DIST}/gas ${DIST}/gas/config ${DIST}/gas/doc
+as.info:	bfdver.texi
+
+.PATH: ${COMMONOBJDIR} ${DIST}/gas ${DIST}/gas/config ${DIST}/gas/doc
 
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
