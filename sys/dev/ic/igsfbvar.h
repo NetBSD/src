@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.16 2006/04/05 01:13:50 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.17 2009/11/10 22:23:22 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -104,6 +104,9 @@ struct igsfb_devconfig {
 
 	/* saved dc_ri.ri_ops.putchar */
 	void (*dc_ri_putchar)(void *, int, int, u_int, long);
+
+	/* optional MD mmap() method */
+	paddr_t (*dc_mmap)(void *, void *, off_t, int);
 
 	struct igs_hwcmap dc_cmap;	/* software copy of colormap */
 	struct igs_hwcursor dc_cursor;	/* software copy of cursor sprite */
