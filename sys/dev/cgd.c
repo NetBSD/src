@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.62 2009/11/10 20:05:50 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.63 2009/11/10 20:24:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.62 2009/11/10 20:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.63 2009/11/10 20:24:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -577,7 +577,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	    &cs->sc_cdata.cf_blocksize);
 	if (cs->sc_cdata.cf_blocksize > CGD_MAXBLOCKSIZE) {
 	    log(LOG_WARNING, "cgd: Disallowed cipher with blocksize %zu > %u\n",
-		cs->sc_data.cf_blocksize, CGD_MAXBLOCKSIZE);
+		cs->sc_cdata.cf_blocksize, CGD_MAXBLOCKSIZE);
 	    cs->sc_cdata.cf_priv = NULL;
 	}
 		
