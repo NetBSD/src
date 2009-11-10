@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.12 2008/09/12 16:51:55 christos Exp $ */
+/* $NetBSD: cgdvar.h,v 1.13 2009/11/10 20:05:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -86,5 +86,8 @@ struct cgd_softc {
 /* XXX XAX XXX elric:  check these out properly. */
 #define CGDIOCSET	_IOWR('F', 18, struct cgd_ioctl)
 #define CGDIOCCLR	_IOW('F', 19, struct cgd_ioctl)
+
+/* Maximum block sized to be used by the ciphers */
+#define CGD_MAXBLOCKSIZE	128
 
 #endif /* _DEV_CGDVAR_H_ */
