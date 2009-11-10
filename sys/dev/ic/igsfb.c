@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $ */
+/*	$NetBSD: igsfb.c,v 1.45 2009/11/10 22:23:22 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.45 2009/11/10 22:23:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $");
 #include <dev/ic/igsfbvar.h>
 
 
-struct igsfb_devconfig igsfb_console_dc;
+struct igsfb_devconfig igsfb_console_dc = {.dc_mmap = NULL,};
 
 /*
  * wsscreen
@@ -577,11 +577,12 @@ igsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct igsfb_devconfig *dc = vd->cookie;
 
-	if (offset >= dc->dc_memsz || offset < 0)
-		return -1;
-
-	return bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset, prot,
-			      dc->dc_memflags | BUS_SPACE_MAP_LINEAR);
+	if (offset < dc->dc_memsz && offset >= 0)
+		return bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset,
+		    prot, dc->dc_memflags | BUS_SPACE_MAP_LINEAR);
+	if (dc->dc_mmap)
+		return dc->dc_mmap(v, vs, offset, prot);
+	return -1;
 }
 
 
