@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.8 2008/05/08 02:10:52 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.9 2009/11/10 22:24:57 macallan Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.8 2008/05/08 02:10:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.9 2009/11/10 22:24:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static int igsfb_ofbus_phandle = 0;
 static int	igsfb_ofbus_match(struct device *, struct cfdata *, void *);
 static void	igsfb_ofbus_attach(struct device *, struct device *, void *);
 static int	igsfb_setup_dc(struct igsfb_devconfig *);
+static paddr_t	igsfb_ofbus_mmap(void *, void *, off_t, int);
 
 CFATTACH_DECL(igsfb_ofbus, sizeof(struct igsfb_softc),
     igsfb_ofbus_match, igsfb_ofbus_attach, NULL, NULL);
@@ -74,6 +75,7 @@ static const char const *compat_strings[] = { "igs,cyperpro2010", NULL };
 
 vaddr_t igsfb_mem_vaddr = 0, igsfb_mmio_vaddr = 0;
 paddr_t igsfb_mem_paddr;
+extern paddr_t isa_io_physaddr;
 struct bus_space igsfb_memt, igsfb_iot;
 
 #if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
@@ -106,8 +108,8 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 		return ENXIO;
 
 	igsfb_mem_paddr = be32toh(regs[13]);
-	/* 4MB VRAM */
-	igsfb_mem_vaddr = ofw_map(igsfb_mem_paddr, 0x00400000, 0);
+	/* 4MB VRAM aperture, bufferable and cacheable */
+	igsfb_mem_vaddr = ofw_map(igsfb_mem_paddr, 0x00400000, L2_B | L2_C);
 	/* MMIO registers */
 	igsfb_mmio_vaddr = ofw_map(igsfb_mem_paddr + IGS_MEM_MMIO_SELECT,
 	    0x00100000, 0);
@@ -163,7 +165,7 @@ igsfb_setup_dc(struct igsfb_devconfig *dc)
 	dc->dc_iot = &igsfb_iot;
 	dc->dc_iobase = 0;
 	dc->dc_ioflags = 0;
-
+	dc->dc_mmap = igsfb_ofbus_mmap;
 	if (bus_space_map(dc->dc_iot,
 			  dc->dc_iobase + IGS_REG_BASE, IGS_REG_SIZE,
 			  dc->dc_ioflags,
@@ -228,4 +230,29 @@ igsfb_ofbus_attach(struct device *parent, struct device *self, void *aux)
 	printf(": IGS CyberPro 2010 at 0x%08x\n", (uint32_t)igsfb_mem_paddr);
 
 	igsfb_attach_subr(sc, isconsole);
+}
+
+static paddr_t
+igsfb_ofbus_mmap(void *v, void *vs, off_t offset, int prot)
+{
+
+#ifdef PCI_MAGIC_IO_RANGE
+	/* access to IO ports */
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < (PCI_MAGIC_IO_RANGE + 0x10000))) {
+		paddr_t pa;
+
+		pa = isa_io_physaddr + offset - PCI_MAGIC_IO_RANGE;
+		return arm_btop(pa);
+	}
+#endif
+	/*
+	 * we also need to allow mapping of the whole aperture, including MMIO 	
+	 * registers on CyberPro at its physical address
+	 */
+	if ((offset >= igsfb_mem_paddr) && 
+	    (offset < (igsfb_mem_paddr + 0x01000000)))
+		return arm_btop(offset);
+
+	return -1;
 }
