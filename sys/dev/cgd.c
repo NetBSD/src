@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.63 2009/11/10 20:24:30 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.64 2009/11/10 20:39:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.63 2009/11/10 20:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.64 2009/11/10 20:39:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -796,7 +796,7 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	DIAGCONDPANIC(sizeof(daddr_t) > blocksize,
 	    ("cgd_cipher: sizeof(daddr_t) > blocksize"));
 
-	memset(zero_iv, 0x0, sizeof(zero_iv));
+	memset(zero_iv, 0x0, blocksize);
 
 	dstuio.uio_iov = dstiov;
 	dstuio.uio_iovcnt = 2;
@@ -815,13 +815,13 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		dstiov[1].iov_base = dst;
 		srciov[1].iov_base = src;
 
-		memset(blkno_buf, 0x0, sizeof(blkno_buf));
+		memset(blkno_buf, 0x0, blocksize);
 		blkno2blkno_buf(blkno_buf, blkno);
 		if (dir == CGD_CIPHER_DECRYPT) {
 			dstuio.uio_iovcnt = 1;
 			srcuio.uio_iovcnt = 1;
 			IFDEBUG(CGDB_CRYPTO, hexprint("step 0: blkno_buf",
-			    blkno_buf, sizeof(blkno_buf)));
+			    blkno_buf, blocksize));
 			cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio,
 			    zero_iv, CGD_CIPHER_ENCRYPT);
 			memcpy(blkno_buf, sink, blocksize);
@@ -830,10 +830,10 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		}
 
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 1: blkno_buf",
-		    blkno_buf, sizeof(blkno_buf)));
+		    blkno_buf, blocksize));
 		cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio, zero_iv, dir);
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: sink",
-		    sink, sizeof(sink)));
+		    sink, blocksize));
 
 		dst += secsize;
 		src += secsize;
