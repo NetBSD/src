@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.61 2009/11/10 16:49:53 tron Exp $ */
+/* $NetBSD: cgd.c,v 1.62 2009/11/10 20:05:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.61 2009/11/10 16:49:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.62 2009/11/10 20:05:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.61 2009/11/10 16:49:53 tron Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
+#include <sys/syslog.h>
 
 #include <dev/dkvar.h>
 #include <dev/cgdvar.h>
@@ -183,15 +184,16 @@ cgdattach(int num)
 		return;
 	}
 
-	cgd_softc = (void *)malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
+	cgd_softc = malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
 	if (!cgd_softc) {
-		printf("WARNING: unable to malloc(9) memory for crypt disks\n");
+		DPRINTF_FOLLOW(("WARNING: unable to malloc(9) memory for %d "
+		    "crypt disks\n", num));
 		DIAGPANIC(("cgdattach: cannot malloc(9) enough memory"));
 		return;
 	}
 
 	numcgd = num;
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 		cgdsoftc_init(&cgd_softc[i], i);
 }
 
@@ -362,7 +364,8 @@ cgdiodone(struct buf *nbp)
 	    nbp->b_bcount));
 	if (nbp->b_error != 0) {
 		obp->b_error = nbp->b_error;
-		printf("%s: error %d\n", dksc->sc_xname, obp->b_error);
+		DPRINTF(CGDB_IO, ("%s: error %d\n", dksc->sc_xname,
+		    obp->b_error));
 	}
 
 	/* Perform the decryption if we are reading.
@@ -572,6 +575,12 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_cdata.cf_mode = encblkno[i].v;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
 	    &cs->sc_cdata.cf_blocksize);
+	if (cs->sc_cdata.cf_blocksize > CGD_MAXBLOCKSIZE) {
+	    log(LOG_WARNING, "cgd: Disallowed cipher with blocksize %zu > %u\n",
+		cs->sc_data.cf_blocksize, CGD_MAXBLOCKSIZE);
+	    cs->sc_cdata.cf_priv = NULL;
+	}
+		
 	/*
 	 * The blocksize is supposed to be in bytes. Unfortunately originally
 	 * it was expressed in bits. For compatibility we maintain encblkno
@@ -580,7 +589,6 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_cdata.cf_blocksize /= encblkno[i].d;
 	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
-		printf("cgd: unable to initialize cipher\n");
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
 	}
@@ -775,9 +783,9 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
-	char		sink[blocksize];
-	char		zero_iv[blocksize];
-	char		blkno_buf[blocksize];
+	char		sink[CGD_MAXBLOCKSIZE];
+	char		zero_iv[CGD_MAXBLOCKSIZE];
+	char		blkno_buf[CGD_MAXBLOCKSIZE];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
