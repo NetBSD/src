@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.34 2009/10/05 22:32:58 haad Exp $
+#	$NetBSD: Makefile,v 1.35 2009/11/10 14:47:52 skrll Exp $
 
 # For all platforms
 
-SUBDIR=		accf_dataready
+SUBDIR=		xldscripts
+SUBDIR+=	accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio

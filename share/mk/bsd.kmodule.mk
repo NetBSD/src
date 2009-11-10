@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.20 2009/11/08 22:27:09 skrll Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.21 2009/11/10 14:47:52 skrll Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -27,8 +27,8 @@ _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
 
-.if exists($S/../external/gpl3/binutils/usr.bin/ld/xldscripts/kmodule)
-KMODSCRIPT=	$S/../external/gpl3/binutils/usr.bin/ld/xldscripts/kmodule
+.if exists($S/../sys/modules/xldscripts/kmodule)
+KMODSCRIPT=	$S/../sys/modules/xldscripts/kmodule
 .else
 KMODSCRIPT=	${DESTDIR}/usr/libdata/ldscripts/kmodule
 .endif
