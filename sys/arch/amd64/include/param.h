@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2009/11/11 23:53:39 haad Exp $	*/
+/*	$NetBSD: param.h,v 1.12 2009/11/11 23:59:36 haad Exp $	*/
 
 #ifdef __x86_64__
 
@@ -56,12 +56,12 @@
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
 
-#define	SSIZE		8		/* initial stack size/NBPG */
-#define	SINCR		2		/* increment of stack/NBPG */
+#define	SSIZE		1		/* initial stack size/NBPG */
+#define	SINCR		1		/* increment of stack/NBPG */
 #ifdef DIAGNOSTIC
-#define	UPAGES		16		/* pages of u-area (1 for redzone) */
+#define	UPAGES		4		/* pages of u-area (1 for redzone) */
 #else
-#define	UPAGES		12		/* pages of u-area */
+#define	UPAGES		3		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 #define	INTRSTACKSIZE	4096
