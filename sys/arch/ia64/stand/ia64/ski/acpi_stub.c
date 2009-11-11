@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_stub.c,v 1.5 2009/11/10 11:14:48 kiyohara Exp $	*/
+/*	$NetBSD: acpi_stub.c,v 1.6 2009/11/11 05:19:34 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/lock.h>
-#include <external/intel-public/acpica/dist/include/acpi.h>
+#include <dev/acpi/acpica.h>
 
 #define APIC_IO_SAPIC                   6
 #define APIC_LOCAL_SAPIC                7
