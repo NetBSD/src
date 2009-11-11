@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.17 2009/11/07 00:05:49 dyoung Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.18 2009/11/11 15:34:37 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.17 2009/11/07 00:05:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.18 2009/11/11 15:34:37 he Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -181,13 +181,16 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 static void
 ppbus_childdet(device_t self, device_t target)
 {
+	struct ppbus_softc * ppbus = device_private(self);
+	struct ppbus_device_softc * child;
+
 	SLIST_FOREACH(child, &ppbus->sc_childlist_head, entries) {
 		if (child->sc_dev == target)
 			break;
 	}
 	if (child != NULL)
 		SLIST_REMOVE(&ppbus->sc_childlist_head, child,
-		    struct ppbus_device_softc, entries);
+		    ppbus_device_softc, entries);
 }
 
 /* Detach function for ppbus. */
