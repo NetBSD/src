@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.181 2009/11/09 15:58:09 skrll Exp $
+#	$NetBSD: bsd.sys.mk,v 1.182 2009/11/11 16:35:45 tron Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -57,6 +57,11 @@ LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 HAS_SSP=	no
 .else
 HAS_SSP=	yes
+.endif
+
+.if ((${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386") && \
+     (_SRC_TOP_ != ""))
+USE_SSP?=	yes
 .endif
 
 .if defined(USE_FORT) && (${USE_FORT} != "no")
