@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.19 2009/10/15 00:28:46 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.20 2009/11/11 16:47:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.19 2009/10/15 00:28:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.20 2009/11/11 16:47:50 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/simplelock.h>
@@ -50,32 +51,49 @@ static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
+static int
+sleeper(struct ltsleeper *ltsp, int timo)
+{
+	int rv, nlocks;
+
+	LIST_INSERT_HEAD(&sleepers, ltsp, entries);
+	kernel_unlock_allbutone(&nlocks);
+
+	/* protected by biglock */
+	if (timo) {
+		rv = rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
+		    timo / hz, (timo % hz) * (1000000000/hz));
+	} else {
+		rumpuser_cv_wait(ltsp->cv, rump_giantlock);
+		rv = 0;
+	}
+
+	LIST_REMOVE(ltsp, entries);
+	rumpuser_cv_destroy(ltsp->cv);
+	kernel_ununlock_allbutone(nlocks);
+
+	return rv;
+}
+
 int
 ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
 	struct ltsleeper lts;
-	int nlocks;
+	int rv;
 
 	lts.id = ident;
 	rumpuser_cv_init(&lts.cv);
 
 	if (slock)
 		simple_unlock(slock);
-	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	kernel_unlock_allbutone(&nlocks);
 
-	/* protected by biglock */
-	rumpuser_cv_wait(lts.cv, rump_giantlock);
-
-	LIST_REMOVE(&lts, entries);
-	rumpuser_cv_destroy(lts.cv);
-	kernel_ununlock_allbutone(nlocks);
+	rv = sleeper(&lts, timo);
 
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
 
-	return 0;
+	return rv;
 }
 
 int
@@ -83,26 +101,19 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	kmutex_t *lock)
 {
 	struct ltsleeper lts;
-	int nlocks;
+	int rv;
 
 	lts.id = ident;
 	rumpuser_cv_init(&lts.cv);
 
 	mutex_exit(lock);
-	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	kernel_unlock_allbutone(&nlocks);
 
-	/* protected by biglock */
-	rumpuser_cv_wait(lts.cv, rump_giantlock);
-
-	LIST_REMOVE(&lts, entries);
-	rumpuser_cv_destroy(lts.cv);
-	kernel_ununlock_allbutone(nlocks);
+	rv = sleeper(&lts, timo);
 
 	if ((prio & PNORELOCK) == 0)
 		mutex_enter(lock);
 
-	return 0;
+	return rv;
 }
 
 static void
