@@ -163,6 +163,7 @@ c_common_missing_argument (const char *opt, size_t code)
     case OPT_isysroot:
     case OPT_isystem:
     case OPT_iquote:
+    case OPT_iremap:
       error ("missing path after %qs", opt);
       break;
 
@@ -839,6 +840,10 @@ c_common_handle_option (size_t scode, const char *arg, int value)
 
     case OPT_isystem:
       add_path (xstrdup (arg), SYSTEM, 0, true);
+      break;
+
+    case OPT_iremap:
+      add_cpp_remap_path (arg);
       break;
 
     case OPT_iwithprefix:

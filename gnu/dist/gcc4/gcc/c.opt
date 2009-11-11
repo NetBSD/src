@@ -783,6 +783,10 @@ iquote
 C ObjC C++ ObjC++ Joined Separate
 -iquote <dir>	Add <dir> to the end of the quote include path
 
+iremap
+C ObjC C++ ObjC++ Joined Separate
+-iremap <src:dst>	Convert <src> to <dst> if it occurs as prefix in __FILE__.
+
 iwithprefix
 C ObjC C++ ObjC++ Joined Separate
 -iwithprefix <dir>	Add <dir> to the end of the system include path
