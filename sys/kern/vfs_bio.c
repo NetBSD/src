@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.220 2009/11/11 07:22:33 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.221 2009/11/11 09:15:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -100,14 +100,30 @@
  */
 
 /*
+ * The buffer cache subsystem.
+ *
  * Some references:
  *	Bach: The Design of the UNIX Operating System (Prentice Hall, 1986)
  *	Leffler, et al.: The Design and Implementation of the 4.3BSD
  *		UNIX Operating System (Addison Welley, 1989)
+ *
+ * Locking
+ *
+ * There are three locks:
+ * - bufcache_lock: protects global buffer cache state.
+ * - BC_BUSY: a long term per-buffer lock.
+ * - buf_t::b_objlock: lock on completion (biowait vs biodone).
+ *
+ * For buffers associated with vnodes (a most common case) b_objlock points
+ * to the vnode_t::v_interlock.  Otherwise, it points to generic buffer_lock.
+ *
+ * Lock order:
+ *	bufcache_lock ->
+ *		buf_t::b_objlock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.220 2009/11/11 07:22:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.221 2009/11/11 09:15:42 rmind Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
