@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.9 2009/11/10 22:24:57 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.10 2009/11/11 17:05:11 macallan Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.9 2009/11/10 22:24:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.10 2009/11/11 17:05:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	int chosen_phandle, igs_node;
 	int stdout_ihandle, stdout_phandle;
 	uint32_t regs[16];
+	char mode_buffer[64];
 
 	stdout_phandle = 0;
 
@@ -138,6 +139,10 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	ret = igsfb_setup_dc(dc);
 	if (ret)
 		return ret;
+
+	if (of_get_mode_string(mode_buffer, sizeof(mode_buffer))) {
+		strcpy(dc->dc_modestring, mode_buffer);
+	}	
 
 	ret = igsfb_cnattach_subr(dc);
 	if (ret)
@@ -199,7 +204,6 @@ igsfb_ofbus_match(struct device *parent, struct cfdata *match, void *aux)
 	return 10;	/* beat vga etc. */
 }
 
-
 static void
 igsfb_ofbus_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -207,7 +211,7 @@ igsfb_ofbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	uint32_t regs[16];
 	int isconsole, ret;
-
+	
 	if (igsfb_ofbus_is_console(oba->oba_phandle)) {
 		isconsole = 1;
 		sc->sc_dc = &igsfb_console_dc;
