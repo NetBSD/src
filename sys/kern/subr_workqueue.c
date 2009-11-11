@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.29 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.30 2009/11/11 14:54:40 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.29 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.30 2009/11/11 14:54:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -205,14 +205,12 @@ static void
 workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 {
 	struct workqueue_exitargs wqe;
-	lwp_t *l;
 
 	KASSERT(wq->wq_func == workqueue_exit);
 
 	wqe.wqe_q = q;
 	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
 	KASSERT(q->q_worker != NULL);
-	l = curlwp;
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, &wqe.wqe_wk, wk_entry);
 	cv_signal(&q->q_cv);
