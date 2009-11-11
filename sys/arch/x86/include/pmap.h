@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2009/11/07 07:27:48 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2009/11/11 17:08:16 cegger Exp $	*/
 
 /*
  *
@@ -176,7 +176,7 @@ struct pmap {
 #endif
 
 /*
- * MD flags that we use for pmap_enter:
+ * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
 #define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
