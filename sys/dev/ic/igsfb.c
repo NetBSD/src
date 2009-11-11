@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.45 2009/11/10 22:23:22 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.46 2009/11/11 17:01:17 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.45 2009/11/10 22:23:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.46 2009/11/11 17:01:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.45 2009/11/10 22:23:22 macallan Exp $");
 #include <dev/ic/igsfbvar.h>
 
 
-struct igsfb_devconfig igsfb_console_dc = {.dc_mmap = NULL,};
+struct igsfb_devconfig igsfb_console_dc = {
+	.dc_mmap = NULL,
+	.dc_modestring = "",
+};
 
 /*
  * wsscreen
@@ -202,6 +205,9 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);
 
+	if (isconsole)
+		vcons_replay_msgbuf(&dc->dc_console);
+
 	/* attach wsdisplay */
 	waa.console = isconsole;
 	waa.scrdata = &igsfb_screenlist;
@@ -278,15 +284,10 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	 */
 	igsfb_hw_setup(dc);
 
-	dc->dc_width = 1024;
-	dc->dc_height = 768;
-	dc->dc_depth = 8;
-	dc->dc_stride = dc->dc_width;
-
 	/*
 	 * Don't map in all N megs, just the amount we need for the wsscreen.
 	 */
-	dc->dc_fbsz = dc->dc_width * dc->dc_height; /* XXX: 8bpp specific */
+	dc->dc_fbsz = dc->dc_stride * dc->dc_height;
 	if (bus_space_map(dc->dc_memt, fbaddr, dc->dc_fbsz,
 			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &dc->dc_fbh) != 0)
