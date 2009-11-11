@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.219 2009/11/05 16:15:51 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.220 2009/11/11 07:22:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.219 2009/11/05 16:15:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.220 2009/11/11 07:22:33 rmind Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -762,20 +762,6 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 }
 
 /*
- * Read with single-block read-ahead.  Defined in Bach (p.55), but
- * implemented as a call to breadn().
- * XXX for compatibility with old file systems.
- */
-int
-breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, kauth_cred_t cred, int flags, buf_t **bpp)
-{
-
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1,
-	    cred, flags, bpp));
-}
-
-/*
  * Block write.  Described in Bach (p.56)
  */
 int
@@ -954,28 +940,6 @@ bawrite(buf_t *bp)
 
 	SET(bp->b_flags, B_ASYNC);
 	VOP_BWRITE(bp);
-}
-
-/*
- * Same as first half of bdwrite, mark buffer dirty, but do not release it.
- * Call with the buffer interlock held.
- */
-void
-bdirty(buf_t *bp)
-{
-
-	KASSERT(mutex_owned(&bufcache_lock));
-	KASSERT(bp->b_objlock == &bp->b_vp->v_interlock);
-	KASSERT(mutex_owned(bp->b_objlock));
-	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
-
-	CLR(bp->b_cflags, BC_AGE);
-
-	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
-		SET(bp->b_oflags, BO_DELWRI);
-		curlwp->l_ru.ru_oublock++;
-		reassignbuf(bp, bp->b_vp);
-	}
 }
 
 /*
