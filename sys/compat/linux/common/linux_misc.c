@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.210 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.211 2009/11/11 09:48:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.210 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.211 2009/11/11 09:48:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,7 +851,8 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
  * 2) select never returns ERESTART on Linux, always return EINTR
  */
 int
-linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
+linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
+    fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
 	struct timespec ts0, ts1, uts, *ts = NULL;
 	struct linux_timeval ltv;
@@ -884,8 +885,7 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_s
 		nanotime(&ts0);
 	}
 
-	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
-	    ts, NULL);
+	error = selcommon(retval, nfds, readfds, writefds, exceptfds, ts, NULL);
 
 	if (error) {
 		/*
