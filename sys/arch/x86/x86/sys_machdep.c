@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.20 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21 2009/11/11 13:38:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.20 2009/07/29 12:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2009/11/11 13:38:53 yamt Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -647,7 +647,7 @@ x86_get_sdbase(void *arg, char which)
 	}
 
 	base = sd->sd_hibase << 24 | sd->sd_lobase;
-	return copyout(&base, &arg, sizeof(base));
+	return copyout(&base, arg, sizeof(base));
 #else
 	return EINVAL;
 #endif
