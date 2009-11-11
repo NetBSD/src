@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.33 2009/11/04 13:32:39 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.34 2009/11/11 16:46:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.33 2009/11/04 13:32:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.34 2009/11/11 16:46:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -236,7 +236,11 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 		cv_wait(cv, mtx);
 		return 0;
 	} else {
-		return rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx), &ts);
+		if (rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx),
+		    ts.tv_sec, ts.tv_nsec))
+			return EWOULDBLOCK;
+		else
+			return 0;
 	}
 }
 
