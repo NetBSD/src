@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.730 2009/10/29 00:58:06 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.731 2009/11/11 09:11:26 martti Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -445,7 +445,7 @@ Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
 Mailing List:	ipfilter@postbox.anu.edu.au
-Responsible:	darrenr, mike, martti
+Responsible:	darrenr, mike
 License:	BSD-based, see src/dist/ipf/IPFILTER.LICENSE
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
