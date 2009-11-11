@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.164 2009/09/03 20:54:03 dyoung Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.165 2009/11/11 15:49:05 pooka Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.164 2009/09/03 20:54:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.165 2009/11/11 15:49:05 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1130,8 +1130,9 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		/* Max packet size must be 64 (sec 5.5.3). */
 		if (dd->bMaxPacketSize != USB_2_MAX_CTRL_PACKET) {
 #ifdef DIAGNOSTIC
-			printf("usbd_new_device: addr=%d bad max packet size\n",
-			       addr);
+			printf("usbd_new_device: addr=%d bad max packet "
+			    "size=%d. adjusting to %d.\n",
+			    addr, dd->bMaxPacketSize, USB_2_MAX_CTRL_PACKET);
 #endif
 			dd->bMaxPacketSize = USB_2_MAX_CTRL_PACKET;
 		}
