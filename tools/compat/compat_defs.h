@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.74 2009/11/06 18:26:06 joerg Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.75 2009/11/11 21:53:46 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -345,34 +345,15 @@ int		string_to_flags(char **, unsigned long *, unsigned long *);
  * XXX host system has all of these functions, all of their interfaces
  * XXX and interactions are exactly the same as in our libc/libutil -- ugh.
  */
-#if !HAVE_USER_FROM_UID
-# define user_from_uid __nbcompat_user_from_uid
-# undef HAVE_DECL_USER_FROM_UID
-#endif
-
-#if !HAVE_UID_FROM_USER
-# define uid_from_user __nbcompat_uid_from_user
-# undef HAVE_DECL_UID_FROM_USER
-#endif
-
-#if !HAVE_PWCACHE_USERDB
-# define pwcache_userdb __nbcompat_pwcache_userdb
-# undef HAVE_DECL_PWCACHE_USERDB
-#endif
-
-#if !HAVE_GROUP_FROM_GID
-# define group_from_gid __nbcompat_group_from_gid
-# undef HAVE_DECL_GROUP_FROM_GID
-#endif
-
-#if !HAVE_GID_FROM_GROUP
-# define gid_from_group __nbcompat_gid_from_group
-# undef HAVE_DECL_GID_FROM_GROUP
-#endif
-
-#if !HAVE_PWCACHE_GROUDB
-# define pwcache_groupdb __nbcompat_pwcache_groupdb
-# undef HAVE_DECL_PWCACHE_GROUPDB
+#if !HAVE_USER_FROM_UID || !HAVE_UID_FROM_USER || !HAVE_GROUP_FROM_GID || \
+    !HAVE_GID_FROM_GROUP || !HAVE_PWCACHE_USERDB || !HAVE_PWCACHE_GROUDB
+/* Make them use our version */
+#  define user_from_uid __nbcompat_user_from_uid
+#  define uid_from_user __nbcompat_uid_from_user
+#  define pwcache_userdb __nbcompat_pwcache_userdb
+#  define group_from_gid __nbcompat_group_from_gid
+#  define gid_from_group __nbcompat_gid_from_group
+#  define pwcache_groupdb __nbcompat_pwcache_groupdb
 #endif
 
 #if !HAVE_DECL_UID_FROM_USER
@@ -385,7 +366,7 @@ const char *user_from_uid(uid_t, int);
 
 #if !HAVE_DECL_PWCACHE_USERDB
 int pwcache_userdb(int (*)(int), void (*)(void),
-    struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
+                struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
 #endif
 
 #if !HAVE_DECL_GID_FROM_GROUP
