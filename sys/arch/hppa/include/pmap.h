@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2009/05/24 06:53:35 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2009/11/11 16:08:31 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -55,8 +55,6 @@ struct pmap {
 
 	struct pmap_statistics	pm_stats;
 };
-
-#define	PMAP_NC		0x100
 
 /*
  * Flags that indicate attributes of pages or mappings of pages.
@@ -207,6 +205,11 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #define	pmap_sid(pmap, va) \
 	((((va) & 0xc0000000) != 0xc0000000) ? \
 	 (pmap)->pm_space : HPPA_SID_KERNEL)
+
+/*
+ * MD flags that we use for pmap_kenter_pa:
+ */
+#define PMAP_NOCACHE    0x01	/* set the non-cacheable bit */
 
 #endif /* _KERNEL */
 
