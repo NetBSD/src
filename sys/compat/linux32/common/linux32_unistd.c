@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.33 2009/06/02 13:00:24 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.33 2009/06/02 13:00:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -182,8 +182,7 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 	} else
 		timespecclear(&uts); /* XXX GCC4 */
 
-	error = selcommon(l, retval, nfds, 
-	    readfds, writefds, exceptfds, ts, NULL);
+	error = selcommon(retval, nfds, readfds, writefds, exceptfds, ts, NULL);
 
 	if (error) {
 		/*

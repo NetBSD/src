@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.15 2009/04/01 03:06:06 dogcow Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.16 2009/11/11 09:48:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.15 2009/04/01 03:06:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.16 2009/11/11 09:48:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,8 @@ osf1_sys_writev(struct lwp *l, const struct osf1_sys_writev_args *uap, register_
 }
 
 int
-osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap, register_t *retval)
+osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap,
+    register_t *retval)
 {
 	struct osf1_timeval otv;
 	struct timespec ats, *ts = NULL;
@@ -176,6 +177,6 @@ osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap, register_
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }

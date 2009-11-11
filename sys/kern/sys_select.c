@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.18 2009/11/01 21:46:09 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.19 2009/11/11 09:48:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.18 2009/11/01 21:46:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.19 2009/11/11 09:48:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,9 @@ typedef struct selcpu {
 	uint32_t	sc_mask;
 } selcpu_t;
 
-static int	selscan(char *, u_int, register_t *);
-static int	pollscan(struct pollfd *, u_int, register_t *);
-static void	selclear(void);
+static inline int	selscan(char *, u_int, register_t *);
+static inline int	pollscan(struct pollfd *, u_int, register_t *);
+static void		selclear(void);
 
 static syncobj_t select_sobj = {
 	SOBJ_SLEEPQ_FIFO,
@@ -152,7 +152,7 @@ sys___pselect50(struct lwp *l, const struct sys___pselect50_args *uap,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
 }
 
@@ -179,7 +179,7 @@ sys___select50(struct lwp *l, const struct sys___select50_args *uap,
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
 
@@ -265,19 +265,18 @@ sel_do_scan(void *fds, u_int nfds, struct timespec *ts, sigset_t *mask,
 }
 
 int
-selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
-	  fd_set *u_ou, fd_set *u_ex, struct timespec *ts, sigset_t *mask)
+selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
+    fd_set *u_ex, struct timespec *ts, sigset_t *mask)
 {
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
-	proc_t		* const p = l->l_proc;
 	char 		*bits;
 	int		error, nf;
 	size_t		ni;
 
 	if (nd < 0)
 		return (EINVAL);
-	nf = p->p_fd->fd_dt->dt_nfiles;
+	nf = curlwp->l_fd->fd_dt->dt_nfiles;
 	if (nd > nf) {
 		/* forgiving; slightly wrong */
 		nd = nf;
@@ -320,7 +319,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	return (error);
 }
 
-static int
+static inline int
 selscan(char *bits, u_int nfd, register_t *retval)
 {
 	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
@@ -376,8 +375,7 @@ sys_poll(struct lwp *l, const struct sys_poll_args *uap, register_t *retval)
 		ts = &ats;
 	}
 
-	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-		ts, NULL);
+	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds), ts, NULL);
 }
 
 /*
@@ -410,21 +408,19 @@ sys___pollts50(struct lwp *l, const struct sys___pollts50_args *uap,
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-	    ts, mask);
+	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds), ts, mask);
 }
 
 int
-pollcommon(lwp_t *l, register_t *retval, struct pollfd *u_fds, u_int nfds,
+pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
     struct timespec *ts, sigset_t *mask)
 {
 	struct pollfd	smallfds[32];
 	struct pollfd	*fds;
-	proc_t		* const p = l->l_proc;
 	int		error;
 	size_t		ni, nf;
 
-	nf = p->p_fd->fd_dt->dt_nfiles;
+	nf = curlwp->l_fd->fd_dt->dt_nfiles;
 	if (nfds > nf) {
 		/* forgiving; slightly wrong */
 		nfds = nf;
@@ -455,7 +451,7 @@ pollcommon(lwp_t *l, register_t *retval, struct pollfd *u_fds, u_int nfds,
 	return (error);
 }
 
-static int
+static inline int
 pollscan(struct pollfd *fds, u_int nfd, register_t *retval)
 {
 	int i, n;

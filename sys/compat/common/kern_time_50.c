@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.11 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.12 2009/11/11 09:48:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.11 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.12 2009/11/11 09:48:50 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -400,7 +400,8 @@ out:
 }
 
 int
-compat_50_sys_select(struct lwp *l, const struct compat_50_sys_select_args *uap, register_t *retval)
+compat_50_sys_select(struct lwp *l,
+    const struct compat_50_sys_select_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)			nd;
@@ -422,7 +423,7 @@ compat_50_sys_select(struct lwp *l, const struct compat_50_sys_select_args *uap,
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
 
@@ -457,7 +458,7 @@ compat_50_sys_pselect(struct lwp *l,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
 }
 int
@@ -489,8 +490,7 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-	    ts, mask);
+	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds), ts, mask);
 }
 
 int

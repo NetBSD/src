@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.6 2009/11/04 21:23:03 rmind Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.7 2009/11/11 09:48:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.6 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.7 2009/11/11 09:48:51 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -140,7 +140,7 @@ compat_50_netbsd32_select(struct lwp *l,
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, NULL);
 	return 0;
 }
@@ -724,7 +724,7 @@ compat_50_netbsd32_pselect(struct lwp *l,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, mask);
 	return 0;
 }
@@ -758,7 +758,7 @@ compat_50_netbsd32_pollts(struct lwp *l,
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG_P32(uap, fds),
+	return pollcommon(retval, SCARG_P32(uap, fds),
 	    SCARG(uap, nfds), ts, mask);
 }
 
