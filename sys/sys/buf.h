@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.114 2009/11/11 07:22:34 rmind Exp $ */
+/*     $NetBSD: buf.h,v 1.115 2009/11/11 09:15:42 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ extern kmutex_t buffer_lock;
  * b	thread of execution that holds BC_BUSY, does not correspond
  *	  directly to any particular LWP
  * c	bufcache_lock
- * l	b_objlock
+ * o	b_objlock
  *
  * For buffers associated with a vnode, b_objlock points to vp->v_interlock.
  * If not associated with a vnode, it points to the generic buffer_lock.
