@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.20 2009/11/11 16:47:50 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.21 2009/11/11 16:50:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.20 2009/11/11 16:47:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.21 2009/11/11 16:50:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,8 +61,11 @@ sleeper(struct ltsleeper *ltsp, int timo)
 
 	/* protected by biglock */
 	if (timo) {
-		rv = rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
-		    timo / hz, (timo % hz) * (1000000000/hz));
+		if (rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
+		    timo / hz, (timo % hz) * (1000000000/hz)) == 0)
+			rv = 0;
+		else
+			rv = EWOULDBLOCK;
 	} else {
 		rumpuser_cv_wait(ltsp->cv, rump_giantlock);
 		rv = 0;
