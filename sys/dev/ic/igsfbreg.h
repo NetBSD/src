@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.7 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.8 2009/11/11 17:01:17 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -420,5 +420,16 @@
 /* select fg/bg source: 0 - fg/bg color reg, 1 - src1 map */
 #define   IGS_COP_OP_FG_FROM_SRC	0x20
 #define   IGS_COP_OP_BG_FROM_SRC	0x80
+
+#define IGS_CLOCK_REF	14318 /*24576*/	/* KHz */
+
+#define IGS_SCALE(p)	((p) ? (2 * (p)) : 1)
+
+#define IGS_CLOCK(m,n,p) \
+	((IGS_CLOCK_REF * ((m) + 1)) / (((n) + 1) * IGS_SCALE(p)))
+
+#define IGS_MAX_CLOCK	260000
+
+#define IGS_MIN_VCO	115000
 
 #endif /* _DEV_IC_IGSFBREG_H_ */
