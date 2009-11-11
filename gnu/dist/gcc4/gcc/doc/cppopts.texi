@@ -513,6 +513,12 @@ Search @var{dir} only for header files requested with
 @xref{Search Path}.
 @end ifset
 
+@item -iremap @var{src}:@var{dst}
+@opindex iremap
+Replace the prefix @var{src} in __FILE__ with @var{dst} at expansion time.
+This option can be specified more than once.  Processing stops at the first
+match.
+
 @item -fdollars-in-identifiers
 @opindex fdollars-in-identifiers
 @anchor{fdollars-in-identifiers}
