@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.9 2007/10/19 11:59:53 ad Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.10 2009/11/11 17:01:17 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.9 2007/10/19 11:59:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.10 2009/11/11 17:01:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.9 2007/10/19 11:59:53 ad Exp $");
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
 
+#ifdef IGSFB_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 
 static void	igsfb_init_seq(struct igsfb_devconfig *);
 static void	igsfb_init_crtc(struct igsfb_devconfig *);
@@ -58,6 +63,7 @@ static void	igsfb_init_dac(struct igsfb_devconfig *);
 
 static void	igsfb_freq_latch(struct igsfb_devconfig *);
 static void	igsfb_video_on(struct igsfb_devconfig *);
+static void	igsfb_calc_pll(int, int *, int *, int *, int, int, int, int);
 
 
 
@@ -405,6 +411,11 @@ igsfb_1024x768_8bpp_60Hz(struct igsfb_devconfig *dc)
 	igs_ext_write(iot, ioh, 0x77, 0x01); /* 8bpp, indexed */
 	igs_ext_write(iot, ioh, 0x14, 0x81);
 	igs_ext_write(iot, ioh, 0x15, 0x00);
+
+	dc->dc_width = 1024;
+	dc->dc_height = 768;
+	dc->dc_depth = 8;
+	dc->dc_stride = dc->dc_width;
 }
 
 
@@ -414,6 +425,8 @@ igsfb_1024x768_8bpp_60Hz(struct igsfb_devconfig *dc)
 void
 igsfb_hw_setup(struct igsfb_devconfig *dc)
 {
+	const struct videomode *mode = NULL;
+	int i;
 
 	igsfb_init_seq(dc);
 	igsfb_init_crtc(dc);
@@ -422,6 +435,207 @@ igsfb_hw_setup(struct igsfb_devconfig *dc)
 	igsfb_init_ext(dc);
 	igsfb_init_dac(dc);
 
-	igsfb_1024x768_8bpp_60Hz(dc);
+	i = 0;
+	while ((strcmp(dc->dc_modestring, videomode_list[i].name) != 0) &&	
+	       ( i < videomode_count)) {
+		i++;
+	}
+
+	if (i < videomode_count) {
+		/* found a mode, now let's see if we can display it */
+		if ((videomode_list[i].dot_clock <= IGS_MAX_CLOCK) &&
+		    (videomode_list[i].hdisplay <= 2048) &&
+		    (videomode_list[i].hdisplay >= 320) &&
+		    (videomode_list[i].vdisplay <= 2048) &&
+		    (videomode_list[i].vdisplay >= 200)) {
+		 	mode = &videomode_list[i];
+		}
+	}
+
+	if (mode != NULL) {
+		igsfb_set_mode(dc, mode, 8);
+	} else
+		igsfb_1024x768_8bpp_60Hz(dc);
+
 	igsfb_video_on(dc);
+}
+
+void
+igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
+    int depth)
+{
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
+	int i, m, n, p, hoffset, bytes_per_pixel, memfetch;
+	int vsync_start, hsync_start, vsync_end, hsync_end;
+	int vblank_start, vblank_end, hblank_start, hblank_end;
+	uint8_t vclk1, vclk2, vclk3, overflow;
+
+	bytes_per_pixel = depth >> 3;
+	hoffset = (mode->hdisplay >> 3) * bytes_per_pixel;
+	memfetch = hoffset + 1;
+	overflow = (((mode->vtotal - 2) & 0x400) >> 10) | 
+	    (((mode->vdisplay -1) & 0x400) >> 9) |
+	    ((mode->vsync_start & 0x400) >> 8) |
+	    ((mode->vsync_start & 0x400) >> 7) |
+	    0x10; 
+
+	if (depth == 8) {
+		/* palette mode */
+		bus_space_write_1(dc->dc_iot, dc->dc_ioh, IGS_DAC_CMD, 0x06);
+	} else {
+		/* bypass palette */
+		bus_space_write_1(dc->dc_iot, dc->dc_ioh, IGS_DAC_CMD, 0x16);
+	}
+
+	igs_crtc_write(iot, ioh, 0x11, 0x00); /* write enable CRTC 0..7 */
+
+	hsync_start = mode->hsync_start;
+	hsync_end = mode->hsync_end;
+
+	hblank_start = min(mode->hsync_start, mode->hdisplay);
+	hblank_end = hsync_end;
+	if ((hblank_end - hblank_start) >= 63 * 8) {
+
+		/*
+		 * H Blanking size must be < 63*8. Same remark as above.
+		 */
+		hblank_start = hblank_end - 63 * 8;
+	}
+
+	vblank_start = min(mode->vsync_start, mode->vdisplay);
+	vblank_end = mode->vsync_end;
+
+	vsync_start = mode->vsync_start;
+	vsync_end = mode->vsync_end;
+	igs_crtc_write(iot, ioh, 0x00, (mode->htotal >> 3) - 5);
+	igs_crtc_write(iot, ioh, 0x01, (mode->hdisplay >> 3) - 1);
+	igs_crtc_write(iot, ioh, 0x02, (hblank_start >> 3) - 1);
+	igs_crtc_write(iot, ioh, 0x03, 0x80 | (((hblank_end >> 3) - 1) & 0x1f));
+	igs_crtc_write(iot, ioh, 0x04, hsync_start >> 3);
+	igs_crtc_write(iot, ioh, 0x05, ((((hblank_end >> 3) - 1)  & 0x20) << 2) 
+	    | ((hsync_end >> 3) & 0x1f));
+	igs_crtc_write(iot, ioh, 0x06, (mode->vtotal - 2) & 0xff);
+	igs_crtc_write(iot, ioh, 0x07, 
+	    ((vsync_start & 0x200) >> 2) |
+	    (((mode->vdisplay - 1) & 0x200) >> 3) |
+	    (((mode->vtotal - 2) & 0x200) >> 4) |
+	    0x10 |
+	    (((vblank_start - 1) & 0x100) >> 5) |
+	    ((vsync_start  & 0x100) >> 6) |
+	    (((mode->vdisplay - 1)  & 0x100) >> 7) |
+	    ((mode->vtotal  & 0x100) >> 8));
+
+	igs_crtc_write(iot, ioh, 0x08, 0x00);
+	igs_crtc_write(iot, ioh, 0x09, 0x40 | 
+	    (((vblank_start - 1) & 0x200) >> 4));
+	igs_crtc_write(iot, ioh, 0x0a, 0x00);
+	igs_crtc_write(iot, ioh, 0x0b, 0x00);
+	igs_crtc_write(iot, ioh, 0x0c, 0x00);
+	igs_crtc_write(iot, ioh, 0x0d, 0x00);
+	igs_crtc_write(iot, ioh, 0x0e, 0x00);
+	igs_crtc_write(iot, ioh, 0x0f, 0x00);
+
+	igs_crtc_write(iot, ioh, 0x10, vsync_start & 0xff);
+	igs_crtc_write(iot, ioh, 0x11, (vsync_end & 0x0f) | 0x20);
+	igs_crtc_write(iot, ioh, 0x12, (mode->vdisplay - 1) & 0xff);
+	igs_crtc_write(iot, ioh, 0x13, hoffset & 0xff);
+	igs_crtc_write(iot, ioh, 0x14, 0x0f);
+	igs_crtc_write(iot, ioh, 0x15, (vblank_start - 1) & 0xff);
+	igs_crtc_write(iot, ioh, 0x16, (vblank_end - 1) & 0xff);
+	igs_crtc_write(iot, ioh, 0x17, 0xe3);
+	igs_crtc_write(iot, ioh, 0x18, 0xff);
+
+	for (i = 0; i < 0x10; i++)	
+		igs_attr_write(iot, ioh, i, i);
+	
+	igs_attr_write(iot, ioh, 0x10, 0x01);
+	igs_attr_write(iot, ioh, 0x11, 0x00);
+	igs_attr_write(iot, ioh, 0x12, 0x0f);
+	igs_attr_write(iot, ioh, 0x13, 0x00);
+
+	igs_grfx_write(iot, ioh, 0x00, 0x00);
+	igs_grfx_write(iot, ioh, 0x01, 0x00);
+	igs_grfx_write(iot, ioh, 0x02, 0x00);
+	igs_grfx_write(iot, ioh, 0x03, 0x00);
+	igs_grfx_write(iot, ioh, 0x04, 0x00);
+	igs_grfx_write(iot, ioh, 0x05, 0x60);
+	igs_grfx_write(iot, ioh, 0x06, 0x05);
+	igs_grfx_write(iot, ioh, 0x07, 0x0f);
+	igs_grfx_write(iot, ioh, 0x08, 0xff);
+
+	/* crank up memory clock to 95MHz - needed for higher resolutions */
+	igs_ext_write(iot, ioh, 0xB2, 0x91);
+	igs_ext_write(iot, ioh, 0xB3, 0x6a);
+	igsfb_freq_latch(dc);
+
+	igs_ext_write(iot, ioh, 0x11, overflow);
+	igs_ext_write(iot, ioh, 0x77, bytes_per_pixel);
+	igs_ext_write(iot, ioh, 0x14, memfetch & 0xff);
+	igs_ext_write(iot, ioh, 0x15,
+	    ((memfetch & 0x300) >> 8) | ((hoffset & 0x300) >> 4));
+	igs_ext_write(iot, ioh, 0x56, 0x00);
+
+	/* finally set the dot clock */
+	igsfb_calc_pll(mode->dot_clock, &m, &n, &p, 2047, 255, 7, IGS_MIN_VCO);
+	DPRINTF("m: %x, n: %x, p: %x\n", m, n, p);
+	vclk1 = m & 0xff;
+	vclk2 = (n & 0x1f) | ((p << 6) & 0xc0) |
+	    (mode->dot_clock > 180000 ? 0x20 : 0);
+	vclk3 = ((m >> 8) & 0x7) | ((n >> 2) & 0x38) | ((p << 4) & 0x40);
+	DPRINTF("clk: %02x %02x %02x\n", vclk1, vclk2, vclk3);
+	igs_ext_write(iot, ioh, 0xB0, vclk1);
+	igs_ext_write(iot, ioh, 0xB1, vclk2);
+	igs_ext_write(iot, ioh, 0xBA, vclk3);
+	igsfb_freq_latch(dc);
+	DPRINTF("clock: %d\n", IGS_CLOCK(m, n, p));
+
+	dc->dc_width = mode->hdisplay;
+	dc->dc_height = mode->vdisplay;
+	dc->dc_depth = depth;
+	dc->dc_stride = dc->dc_width * bytes_per_pixel;
+}
+
+
+static void
+igsfb_calc_pll(int target, int *Mp, int *Np, int *Pp, int maxM, int maxN,
+    int maxP, int minVco)
+{
+    int	    M, N, P, bestM = 0, bestN = 0;
+    int	    f_vco, f_out;
+    int	    err, besterr;
+
+    /*
+     * Compute correct P value to keep VCO in range
+     */
+    for (P = 0; P <= maxP; P++)
+    {
+	f_vco = target * IGS_SCALE(P);
+	if (f_vco >= minVco)
+	    break;
+    }
+
+    /* M = f_out / f_ref * ((N + 1) * IGS_SCALE(P)); */
+    besterr = target;
+    for (N = 1; N <= maxN; N++)
+    {
+	M = ((target * (N + 1) * IGS_SCALE(P) + (IGS_CLOCK_REF/2)) + 
+	    IGS_CLOCK_REF/2) / IGS_CLOCK_REF - 1;
+	if (0 <= M && M <= maxM)
+	{
+	    f_out = IGS_CLOCK(M,N,P);
+	    err = target - f_out;
+	    if (err < 0)
+		err = -err;
+	    if (err < besterr)
+	    {
+		besterr = err;
+		bestM = M;
+		bestN = N;
+	    }
+	}
+    }
+    *Mp = bestM;
+    *Np = bestN;
+    *Pp = P;
 }
