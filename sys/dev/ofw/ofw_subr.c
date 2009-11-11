@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.15 2009/11/11 16:56:52 macallan Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.14 2009/03/14 21:04:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.15 2009/11/11 16:56:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,4 +290,35 @@ of_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
 
 	data = prop_data_create_data(prop, len);
 	return(prop_dictionary_set(dict, propname, data));
+}
+
+/*
+ * look at output-device, see if there's a Sun-typical video mode specifier as
+ * in screen:r1024x768x60 attached. If found copy it into *buffer, otherwise
+ * return NULL
+ */
+
+char *
+of_get_mode_string(char *buffer, int len)
+{
+	int options;
+	char *pos, output_device[256];
+
+	/*
+	 * finally, let's see if there's a video mode specified in
+	 * output-device and pass it on so there's at least some way
+	 * to program video modes
+	 */
+	options = OF_finddevice("/options");
+	if ((options == 0) || (options == -1))
+		return NULL;
+	if (OF_getprop(options, "output-device", output_device, 256) == 0)
+		return NULL;
+
+	/* find the mode string if there is one */
+	pos = strstr(output_device, ":r");
+	if (pos == NULL)
+		return NULL;
+	strncpy(buffer, pos + 2, len);
+	return buffer;
 }
