@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.66 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.67 2009/11/11 22:19:22 joerg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.66 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.67 2009/11/11 22:19:22 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -120,6 +120,10 @@ ip6_forward(struct mbuf *m, int srcrt)
     int s;
 #endif
 
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 #ifdef IPSEC
 	/*
