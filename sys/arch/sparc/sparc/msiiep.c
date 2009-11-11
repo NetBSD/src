@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.37 2009/05/16 17:42:35 martin Exp $ */
+/*	$NetBSD: msiiep.c,v 1.38 2009/11/11 14:20:01 he Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.37 2009/05/16 17:42:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.38 2009/11/11 14:20:01 he Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -701,7 +701,8 @@ mspcic_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
 			panic("mspcic_dmamem_map: size botch");
 
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va,
+		    pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += pagesz;
 		size -= pagesz;
 	}
