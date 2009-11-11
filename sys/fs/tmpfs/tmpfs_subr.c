@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.55 2009/09/03 11:22:05 pooka Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.55 2009/09/03 11:22:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -127,9 +127,12 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_links = 0;
-	getnanotime(&nnode->tn_atime);
-	nnode->tn_birthtime = nnode->tn_ctime = nnode->tn_mtime =
-	    nnode->tn_atime;
+
+	vfs_timestamp(&nnode->tn_atime);
+	nnode->tn_birthtime = nnode->tn_atime;
+	nnode->tn_ctime = nnode->tn_atime;
+	nnode->tn_mtime = nnode->tn_atime;
+
 	nnode->tn_uid = uid;
 	nnode->tn_gid = gid;
 	nnode->tn_mode = mode;
@@ -625,7 +628,7 @@ tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOT);
 
-	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
+	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
 
 	dentp->d_fileno = node->tn_id;
 	dentp->d_type = DT_DIR;
@@ -666,7 +669,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
+	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
 
 	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 	dentp->d_type = DT_DIR;
@@ -758,7 +761,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		return EINVAL;
 	}
 
-	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
+	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
 
 	/* Read as much entries as possible; i.e., until we reach the end of
 	 * the directory or we exhaust uio space. */
@@ -1238,8 +1241,8 @@ void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *birth)
 {
-	struct timespec now, *nowp = NULL;
 	struct tmpfs_node *node;
+	struct timespec nowtm;
 
 	node = VP_TO_TMPFS_NODE(vp);
 
@@ -1247,29 +1250,19 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
-	if (birth != NULL)
+	if (birth != NULL) {
 		node->tn_birthtime = *birth;
+	}
+	vfs_timestamp(&nowtm);
 
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
-		if (acc == NULL) {
-			if (nowp == NULL)
-				getnanotime(nowp = &now);
-			acc = nowp;
-		}
-		node->tn_atime = *acc;
+		node->tn_atime = acc ? *acc : nowtm;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
-		if (mod == NULL) {
-			if (nowp == NULL)
-				getnanotime(nowp = &now);
-			mod = nowp;
-		}
-		node->tn_mtime = *mod;
+		node->tn_mtime = mod ? *mod : nowtm;
 	}
 	if (node->tn_status & TMPFS_NODE_CHANGED) {
-		if (nowp == NULL)
-			getnanotime(nowp = &now);
-		node->tn_ctime = *nowp;
+		node->tn_ctime = nowtm;
 	}
 
 	node->tn_status &=
