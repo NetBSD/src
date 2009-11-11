@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.37 2009/11/09 18:00:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.38 2009/11/11 16:46:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.37 2009/11/09 18:00:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.38 2009/11/11 16:46:50 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -473,21 +473,23 @@ rumpuser_cv_wait_nowrap(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 
 int
 rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
-	struct timespec *ts)
+	int64_t sec, int64_t nsec)
 {
+	struct timespec ts;
 	int rv;
+
+	/* LINTED */
+	ts.tv_sec = sec; ts.tv_nsec = nsec;
 
 	cv->nwaiters++;
 	mtxexit(mtx);
-	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, ts));
+	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts));
 	mtxenter(mtx);
 	cv->nwaiters--;
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();
 
-	if (rv == ETIMEDOUT)
-		rv = EWOULDBLOCK;
-	return rv;
+	return rv == ETIMEDOUT;
 }
 
 void

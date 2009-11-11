@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2009/11/09 19:16:18 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2009/11/11 16:46:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2009/11/09 19:16:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2009/11/11 16:46:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -124,7 +124,7 @@ doclock(void *noarg)
 
 		/* wait until the next tick. XXX: what if the clock changes? */
 		while (rumpuser_cv_timedwait(clockcv, clockmtx,
-		    &curtime) != EWOULDBLOCK)
+		    curtime.tv_sec, curtime.tv_nsec) == 0)
 			continue;
 
 		clkgen++;
