@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.35 2009/03/29 19:21:20 christos Exp $	*/
+/*	$NetBSD: select.h,v 1.36 2009/11/11 09:48:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,8 +48,8 @@ struct timespec;
 struct cpu_info;
 struct socket;
 
-int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
-    fd_set *, struct timespec *, sigset_t *);
+int	selcommon(register_t *, int, fd_set *, fd_set *, fd_set *,
+    struct timespec *, sigset_t *);
 void	selrecord(struct lwp *selector, struct selinfo *);
 void	selnotify(struct selinfo *, int, long);
 void	selsysinit(struct cpu_info *);
