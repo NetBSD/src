@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.17 2009/11/10 22:23:22 macallan Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.18 2009/11/11 17:01:17 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -32,6 +32,8 @@
  */
 #ifndef _DEV_IC_IGSFBVAR_H_
 #define _DEV_IC_IGSFBVAR_H_
+
+#include <dev/videomode/videomode.h>
 
 #define	IGS_CMAP_SIZE	256	/* 256 R/G/B entries */
 struct igs_hwcmap {
@@ -76,6 +78,8 @@ struct igsfb_devconfig {
 
 	/* resolution */
 	int dc_width, dc_height, dc_depth, dc_stride;
+
+	char dc_modestring[128];
 
 	/* part of video memory mapped for wsscreen */
 	bus_space_handle_t dc_fbh;
@@ -199,6 +203,7 @@ igs_attr_write(bus_space_tag_t t, bus_space_handle_t h,
 int	igsfb_enable(bus_space_tag_t, bus_addr_t, int);
 void	igsfb_hw_setup(struct igsfb_devconfig *);
 void	igsfb_1024x768_8bpp_60Hz(struct igsfb_devconfig *);
+void	igsfb_set_mode(struct igsfb_devconfig *, const struct videomode *, int);
 
 /* igsfb.c */
 int	igsfb_cnattach_subr(struct igsfb_devconfig *);
