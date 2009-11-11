@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.113 2009/08/16 10:57:17 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.114 2009/11/11 07:22:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ do {									\
 #define B_METAONLY	0x04	/* Return indirect block buffer. */
 #define B_CONTIG	0x08	/* Allocate file contiguously. */
 
-/* Flags to bread(), breadn() and breada(). */
+/* Flags to bread() and breadn(). */
 #define B_MODIFY	0x01	/* Hint: caller might modify buffer */
 
 #ifdef _KERNEL
@@ -259,18 +259,14 @@ struct bqueue {
 };
 
 extern struct bqueue bufqueues[BQUEUES];
-extern struct simplelock bqueue_slock;
 
 __BEGIN_DECLS
 int	allocbuf(buf_t *, int, int);
 void	bawrite(buf_t *);
-void	bdirty(buf_t *);
 void	bdwrite(buf_t *);
 void	biodone(buf_t *);
 int	biowait(buf_t *);
 int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, int, buf_t **);
-int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
-	       int, buf_t **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 	       struct kauth_cred *, int, buf_t **);
 void	brelsel(buf_t *, int);
