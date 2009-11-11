@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2009/11/11 14:15:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
  */
 
 #include <machine/asm.h>
+
+RCSID("$NetBSD: rtld_start.S,v 1.10 2009/11/11 14:15:41 skrll Exp $")
 
 	.text
 	.align	0
