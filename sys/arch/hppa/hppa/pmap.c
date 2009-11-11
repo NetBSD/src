@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2009/11/07 07:27:44 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2009/11/11 16:08:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2009/11/11 16:08:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1780,7 +1780,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	opte = pmap_pte_get(pde, va);
 	pte = pa | PTE_PROT(TLB_WIRED | TLB_REFTRAP |
 	    pmap_prot(pmap_kernel(), prot & VM_PROT_ALL));
-	if (pa >= HPPA_IOBEGIN || (prot & PMAP_NC))
+	if (pa >= HPPA_IOBEGIN || (flags & PMAP_NOCACHE))
 		pte |= PTE_PROT(TLB_UNCACHEABLE);
 	pmap_kernel()->pm_stats.wired_count++;
 	pmap_kernel()->pm_stats.resident_count++;
@@ -1797,7 +1797,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 			mutex_enter(&pg->mdpage.pvh_lock);
 
-			if (prot & PMAP_NC)
+			if (flags & PMAP_NOCACHE)
 				pg->mdpage.pvh_attrs |= PVF_NC;
 			else {
 				struct pv_entry *pve;
