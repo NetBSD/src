@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.75 2009/11/06 04:42:27 rafal Exp $	*/
+/*	$NetBSD: ums.c,v 1.76 2009/11/12 19:58:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.75 2009/11/06 04:42:27 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.76 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,19 +320,14 @@ int
 ums_activate(device_ptr_t self, enum devact act)
 {
 	struct ums_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev != NULL)
-			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

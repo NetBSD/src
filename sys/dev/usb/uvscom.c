@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.23 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.24 2009/11/12 20:01:15 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.23 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.24 2009/11/12 20:01:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,19 +425,14 @@ int
 uvscom_activate(device_t self, enum devact act)
 {
 	struct uvscom_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 Static usbd_status

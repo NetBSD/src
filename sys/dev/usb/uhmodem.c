@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.8 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.9 2009/11/12 19:58:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.8 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.9 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,22 +422,14 @@ int
 uhmodem_activate(device_t self, enum devact act)
 {
 	struct uhmodem_softc *sc = device_private(self);
-	int rv = 0;
-	int i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_ubsa.sc_numif; i++) {
-			if (sc->sc_ubsa.sc_subdevs[i] != NULL)
-				rv |= config_deactivate(sc->sc_ubsa.sc_subdevs[i]);
-		}
 		sc->sc_ubsa.sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 Static int

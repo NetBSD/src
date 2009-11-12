@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.135 2009/10/30 16:22:32 is Exp $	*/
+/*	$NetBSD: umass.c,v 1.136 2009/11/12 19:58:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.135 2009/10/30 16:22:32 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.136 2009/11/12 19:58:27 dyoung Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -707,21 +707,14 @@ int
 umass_activate(device_t dev, enum devact act)
 {
 	struct umass_softc *sc = device_private(dev);
-	struct umassbus_softc *scbus = sc->bus;
-	int rv;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
-	    device_xname(sc->sc_dev), act));
+	    device_xname(dev), act));
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (scbus == NULL || scbus->sc_child == NULL)
-			return 0;
-		rv = config_deactivate(scbus->sc_child);
-		DPRINTF(UDMASS_USB, ("%s: umass_deactivate: child "
-		    "returned %d\n", device_xname(sc->sc_dev), rv));
-		return rv;
+		return 0;
 	default:
 		return EOPNOTSUPP;
 	}

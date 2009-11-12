@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.44 2009/11/06 04:42:27 rafal Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.45 2009/11/12 19:58:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.44 2009/11/06 04:42:27 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.45 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,25 +356,14 @@ int
 uhidev_activate(device_t self, enum devact act)
 {
 	struct uhidev_softc *sc = device_private(self);
-	int i, rv;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		rv = 0;
-		for (i = 0; i < sc->sc_nrepid; i++)
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(
-					sc->sc_subdevs[i]);
 		sc->sc_dying = 1;
-		break;
+		return 0;
 	default:
-		rv = 0;
-		break;
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

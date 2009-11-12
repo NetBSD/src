@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.39 2009/01/11 11:06:08 cegger Exp $	*/
+/*	$NetBSD: umidi.c,v 1.40 2009/11/12 19:58:27 dyoung Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.39 2009/01/11 11:06:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.40 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,12 +104,12 @@ static void close_in_jack(struct umidi_jack *);
 
 static usbd_status attach_mididev(struct umidi_softc *, struct umidi_mididev *);
 static usbd_status detach_mididev(struct umidi_mididev *, int);
-static usbd_status deactivate_mididev(struct umidi_mididev *);
+static void deactivate_mididev(struct umidi_mididev *);
 static usbd_status alloc_all_mididevs(struct umidi_softc *, int);
 static void free_all_mididevs(struct umidi_softc *);
 static usbd_status attach_all_mididevs(struct umidi_softc *);
 static usbd_status detach_all_mididevs(struct umidi_softc *, int);
-static usbd_status deactivate_all_mididevs(struct umidi_softc *);
+static void deactivate_all_mididevs(struct umidi_softc *);
 static char *describe_mididev(struct umidi_mididev *);
 
 #ifdef UMIDI_DEBUG
@@ -264,18 +264,15 @@ umidi_activate(device_t self, enum devact act)
 	struct umidi_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		DPRINTFN(1,("umidi_activate (activate)\n"));
-
-		return EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
 		DPRINTFN(1,("umidi_activate (deactivate)\n"));
 		sc->sc_dying = 1;
 		deactivate_all_mididevs(sc);
-		break;
+		return 0;
+	default:
+		DPRINTFN(1,("umidi_activate (%d)\n", act));
+		return EOPNOTSUPP;
 	}
-	return 0;
 }
 
 USB_DETACH(umidi)
@@ -1189,16 +1186,13 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 	return USBD_NORMAL_COMPLETION;
 }
 
-static usbd_status
+static void
 deactivate_mididev(struct umidi_mididev *mididev)
 {
 	if (mididev->out_jack)
 		mididev->out_jack->binded = 0;
 	if (mididev->in_jack)
 		mididev->in_jack->binded = 0;
-	config_deactivate(mididev->mdev);
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 static usbd_status
@@ -1253,20 +1247,15 @@ detach_all_mididevs(struct umidi_softc *sc, int flags)
 	return USBD_NORMAL_COMPLETION;
 }
 
-static usbd_status
+static void
 deactivate_all_mididevs(struct umidi_softc *sc)
 {
-	usbd_status err;
 	int i;
 
-	if (sc->sc_mididevs)
-		for (i=0; i<sc->sc_num_mididevs; i++) {
-			err = deactivate_mididev(&sc->sc_mididevs[i]);
-			if (err!=USBD_NORMAL_COMPLETION)
-				return err;
-		}
-
-	return USBD_NORMAL_COMPLETION;
+	if (sc->sc_mididevs) {
+		for (i=0; i<sc->sc_num_mididevs; i++)
+			deactivate_mididev(&sc->sc_mididevs[i]);
+	}
 }
 
 /*

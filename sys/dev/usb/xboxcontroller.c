@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.11 2009/09/23 19:07:19 plunky Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.12 2009/11/12 20:01:15 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.11 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.12 2009/11/12 20:01:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,21 +195,14 @@ int
 xboxcontroller_activate(device_ptr_t self, enum devact act)
 {
 	struct xboxcontroller_softc *sc = device_private(self);
-	int rv;
-
-	rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev != NULL)
-			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 static void
