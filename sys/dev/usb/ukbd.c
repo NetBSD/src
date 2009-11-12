@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.104 2009/07/11 18:26:58 jakllsch Exp $        */
+/*      $NetBSD: ukbd.c,v 1.105 2009/11/12 19:58:27 dyoung Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.104 2009/07/11 18:26:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.105 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,19 +416,14 @@ int
 ukbd_activate(device_t self, enum devact act)
 {
 	struct ukbd_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wskbddev != NULL)
-			rv = config_deactivate(sc->sc_wskbddev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 int

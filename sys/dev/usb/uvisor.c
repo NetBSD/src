@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.41 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.42 2009/11/12 20:01:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.41 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.42 2009/11/12 20:01:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,22 +377,14 @@ int
 uvisor_activate(device_ptr_t self, enum devact act)
 {
 	struct uvisor_softc *sc = device_private(self);
-	int rv = 0;
-	int i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_numcon; i++)
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(sc->sc_subdevs[i]);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
