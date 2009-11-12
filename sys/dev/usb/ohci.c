@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.202 2009/11/12 08:54:00 uebayasi Exp $	*/
+/*	$NetBSD: ohci.c,v 1.203 2009/11/12 19:49:03 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,25 +41,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.202 2009/11/12 08:54:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.203 2009/11/12 19:49:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/select.h>
 #include <uvm/uvm_extern.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/bus_pio.h>
-#include <machine/bus_memio.h>
-#if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
-#include <sys/cpu.h>
-#endif
-#endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 
@@ -76,25 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.202 2009/11/12 08:54:00 uebayasi Exp $");
 #include <dev/usb/ohcivar.h>
 #include <dev/usb/usbroothub_subr.h>
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
 
-#define delay(d)                DELAY(d)
-#endif
-
-#if defined(__OpenBSD__)
-struct cfdriver ohci_cd = {
-	NULL, "ohci", DV_DULL
-};
-#endif
 
 #ifdef OHCI_DEBUG
 #define DPRINTF(x)	if (ohcidebug) logprintf x
 #define DPRINTFN(n,x)	if (ohcidebug>(n)) logprintf x
 int ohcidebug = 0;
-#ifndef __NetBSD__
-#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
-#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -352,24 +329,18 @@ Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 	ohci_device_isoc_done,
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ohci_activate(device_t self, enum devact act)
 {
 	struct ohci_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
@@ -407,7 +378,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	return (rv);
 }
-#endif
 
 ohci_soft_ed_t *
 ohci_alloc_sed(ohci_softc_t *sc)
@@ -712,10 +682,8 @@ ohci_init(ohci_softc_t *sc)
 	}
 	sc->sc_bus.usbrev = USBREV_1_0;
 
-#ifdef __NetBSD__
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
-#endif
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
@@ -927,9 +895,7 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-#endif
 
 	/* Finally, turn on interrupts. */
 	DPRINTFN(1,("ohci_init: enabling\n"));
@@ -955,31 +921,23 @@ ohci_init(ohci_softc_t *sc)
 usbd_status
 ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = bus->hci_private;
-#endif
 	usbd_status status;
 
 	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-#ifdef __NetBSD__
 	if (status == USBD_NOMEM)
 		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-#endif
 	return status;
 }
 
 void
 ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = bus->hci_private;
-#endif
-#ifdef __NetBSD__
 	if (dma->block->flags & USB_DMA_RESERVE) {
 		usb_reserve_freem(&sc->sc_dma_reserve, dma);
 		return;
 	}
-#endif
 	usb_freemem(&sc->sc_bus, dma);
 }
 
