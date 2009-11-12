@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.28 2009/05/16 06:44:05 tsutsui Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.29 2009/11/12 19:21:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.28 2009/05/16 06:44:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.29 2009/11/12 19:21:03 dyoung Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -88,10 +88,9 @@ struct ahc_cardbus_softc {
 int	ahc_cardbus_match(device_t, cfdata_t, void *);
 void	ahc_cardbus_attach(device_t, device_t, void *);
 int	ahc_cardbus_detach(device_t, int);
-int	ahc_activate(device_t self, enum devact act);
 
 CFATTACH_DECL_NEW(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
-    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
+    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, NULL);
 
 int
 ahc_cardbus_match(device_t parent, cfdata_t match, void *aux)
@@ -284,28 +283,4 @@ ahc_cardbus_detach(device_t self, int flags)
 	}
 
 	return (0);
-}
-
-
-int
-ahc_activate(device_t self, enum devact act)
-{
-	struct ahc_cardbus_softc *csc = device_private(self);
-	struct ahc_softc *ahc = &csc->sc_ahc;
-	int s, rv = 0;
-
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (ahc->sc_child != NULL)
-			rv = config_deactivate(ahc->sc_child);
-		break;
-	}
-	splx(s);
-
-	return (rv);
 }
