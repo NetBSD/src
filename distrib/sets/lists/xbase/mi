@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.82 2009/11/09 00:36:22 mrg Exp $
+# $NetBSD: mi,v 1.83 2009/11/12 13:17:46 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2742,12 +2742,12 @@
 ./usr/X11R7/man/man1/xhost.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xinit.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xinput.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xkbbell.1				-unknown-	man,xorg
+./usr/X11R7/man/man1/xkbbell.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbcomp.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbevd.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbprint.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xkbvleds.1				-unknown-	man,xorg
-./usr/X11R7/man/man1/xkbwatch.1				-unknown-	man,xorg
+./usr/X11R7/man/man1/xkbvleds.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xkbwatch.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkill.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xload.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xlogo.1				-unknown-	.man,xorg
