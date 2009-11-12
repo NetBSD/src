@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.182.12.5 2009/11/12 08:50:05 uebayasi Exp $	*/
+/*	$NetBSD: ohci.c,v 1.182.12.6 2009/11/12 08:59:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.12.5 2009/11/12 08:50:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.12.6 2009/11/12 08:59:08 uebayasi Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/ohci.c,v 1.167 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -341,13 +341,13 @@ Static const struct usbd_bus_methods ohci_bus_methods = {
 	ohci_poll,
 	ohci_allocm,
 	ohci_freem,
+	ohci_allocx,
+	ohci_freex,
 	ohci_map_alloc,
 	ohci_map_free,
 	ohci_mapm,
 	ohci_mapm_mbuf,
 	ohci_unmapm,
-	ohci_allocx,
-	ohci_freex,
 };
 
 Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {

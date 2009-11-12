@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208.12.6 2008/05/21 05:03:27 itohy Exp $	*/
+/*	$NetBSD: uhci.c,v 1.208.12.7 2009/11/12 09:04:30 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.6 2008/05/21 05:03:27 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.7 2009/11/12 09:04:30 uebayasi Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -370,13 +370,13 @@ const struct usbd_bus_methods uhci_bus_methods = {
 	uhci_poll,
 	uhci_allocm,
 	uhci_freem,
+	uhci_allocx,
+	uhci_freex,
 	uhci_map_alloc,
 	uhci_map_free,
 	uhci_mapm,
 	uhci_mapm_mbuf,
 	uhci_unmapm,
-	uhci_allocx,
-	uhci_freex,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
