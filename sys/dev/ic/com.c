@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.289 2009/11/12 20:37:09 dyoung Exp $ */
+/* $NetBSD: com.c,v 1.290 2009/11/12 20:38:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.289 2009/11/12 20:37:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.290 2009/11/12 20:38:35 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -177,11 +177,6 @@ static void	com_common_putc(dev_t, struct com_regs *, int);
 
 int	cominit(struct com_regs *, int, int, int, tcflag_t);
 
-#if 0
-static int	comcngetc_detached(dev_t);
-static void	comcnputc_detached(dev_t, int);
-#endif
-
 static int comcnreattach(void);
 
 int	comcngetc(dev_t);
@@ -208,13 +203,6 @@ dev_type_tty(comtty);
 dev_type_poll(compoll);
 
 static struct comcons_info comcons_info;
-
-#if 0
-static struct consdev comcons_detached = {
-	NULL, NULL, comcngetc_detached, comcnputc_detached, comcnpollc,
-	NULL, NULL, NULL, NODEV, CN_NULL
-};
-#endif
 
 /*
  * Following are all routines needed for COM to act as console
@@ -631,19 +619,6 @@ com_config(struct com_softc *sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 		com_enable_debugport(sc);
 }
-
-#if 0
-static int
-comcngetc_detached(dev_t dev)
-{
-	return 0;
-}
-
-static void
-comcnputc_detached(dev_t dev, int c)
-{
-}
-#endif
 
 int
 com_detach(device_t self, int flags)
@@ -2420,11 +2395,6 @@ bool
 com_suspend(device_t self PMF_FN_ARGS)
 {
 	struct com_softc *sc = device_private(self);
-
-#if 0
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) && cn_tab == &comcons)
-		cn_tab = &comcons_suspend;
-#endif
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
 	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
