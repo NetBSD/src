@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.20 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.21 2009/11/12 20:14:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.20 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.21 2009/11/12 20:14:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,9 @@ static void	spc_pcmcia_attach(device_t, device_t, void *);
 static int	spc_pcmcia_detach(device_t, int);
 static int	spc_pcmcia_enable(device_t, int);
 
-CFATTACH_DECL_NEW(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
-    spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, spc_activate);
+CFATTACH_DECL2_NEW(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
+    spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, NULL, NULL,
+    spc_childdet);
 
 static const struct pcmcia_product spc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,

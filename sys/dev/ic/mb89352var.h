@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.13 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.14 2009/11/12 20:14:04 dyoung Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -230,6 +230,7 @@ extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 
 void	spc_attach(struct spc_softc *);
 int	spc_activate(device_t, enum devact);
+void	spc_childdet(device_t, device_t);
 int	spc_detach(device_t, int);
 int	spc_intr(void *);
 int	spc_find(bus_space_tag_t, bus_space_handle_t, int);
