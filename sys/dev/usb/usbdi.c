@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.6 2008/05/21 05:04:03 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.7 2009/11/12 07:55:42 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.6 2008/05/21 05:04:03 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.7 2009/11/12 07:55:42 uebayasi Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -503,6 +503,23 @@ usbd_map_buffer(usbd_xfer_handle xfer, void *buf, u_int32_t size)
 	xfer->rqflags |= URQ_DEV_MAP_BUFFER;
 }
 
+usbd_xfer_handle
+/* XXX API change */
+#if 0
+usbd_alloc_xfer(usbd_device_handle dev)
+#else
+usbd_alloc_xfer(usbd_device_handle dev, usbd_pipe_handle pipe)
+#endif
+{
+	return (usbd_alloc_xfer_flag(dev, pipe, U_WAITOK));
+}
+
+usbd_xfer_handle
+usbd_alloc_default_xfer(usbd_device_handle dev)
+{
+	return (usbd_alloc_xfer_flag(dev, dev->default_pipe, U_WAITOK));
+}
+
 /* Map mbuf(9) chain. */
 usbd_status
 usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
@@ -571,16 +588,11 @@ usbd_alloc_xfer_flag(usbd_device_handle dev, usbd_pipe_handle pipe,
 	return (xfer);
 }
 
-usbd_xfer_handle
-usbd_alloc_xfer(usbd_device_handle dev, usbd_pipe_handle pipe)
+usbd_status
+usbd_free_xfer(usbd_xfer_handle xfer)
 {
-	return (usbd_alloc_xfer_flag(dev, pipe, U_WAITOK));
-}
 
-usbd_xfer_handle
-usbd_alloc_default_xfer(usbd_device_handle dev)
-{
-	return (usbd_alloc_xfer_flag(dev, dev->default_pipe, U_WAITOK));
+	return (usbd_free_xfer_flag(xfer, U_WAITOK));
 }
 
 Static usbd_status
@@ -602,13 +614,6 @@ usbd_free_xfer_flag(usbd_xfer_handle xfer, enum usbd_waitflg waitflg)
 #endif
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status
-usbd_free_xfer(usbd_xfer_handle xfer)
-{
-
-	return (usbd_free_xfer_flag(xfer, U_WAITOK));
 }
 
 void
@@ -733,6 +738,12 @@ usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
 }
 
 usbd_status
+usbd_abort_default_pipe(usbd_device_handle dev)
+{
+	return (usbd_abort_pipe(dev->default_pipe));
+}
+
+usbd_status
 usbd_abort_pipe(usbd_pipe_handle pipe)
 {
 	usbd_status err;
@@ -748,12 +759,6 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 	err = usbd_ar_pipe(pipe);
 	splx(s);
 	return (err);
-}
-
-usbd_status
-usbd_abort_default_pipe(usbd_device_handle dev)
-{
-	return (usbd_abort_pipe(dev->default_pipe));
 }
 
 usbd_status
