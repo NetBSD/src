@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.56 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: an.c,v 1.57 2009/11/12 19:28:59 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.56 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.57 2009/11/12 19:28:59 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -173,11 +173,10 @@ an_attach(struct an_softc *sc)
 	int chan, chan_min, chan_max;
 
 	s = splnet();
-	sc->sc_invalid = 0;
 
 	an_wait(sc);
 	if (an_reset(sc) != 0) {
-		sc->sc_invalid = 1;
+		config_deactivate(sc->sc_dev);
 		splx(s);
 		return 1;
 	}
@@ -417,7 +416,6 @@ an_detach(struct an_softc *sc)
 		return 0;
 
 	s = splnet();
-	sc->sc_invalid = 1;
 	an_stop(ifp, 1);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
@@ -428,23 +426,15 @@ an_detach(struct an_softc *sc)
 int
 an_activate(device_t self, enum devact act)
 {
-	struct an_softc *sc = (struct an_softc *)self;
-	int s, error = 0;
+	struct an_softc *sc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		sc->sc_invalid = 1;
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return error;
 }
 
 int
@@ -455,8 +445,7 @@ an_intr(void *arg)
 	int i;
 	u_int16_t status;
 
-	if (!sc->sc_enabled || sc->sc_invalid ||
-	    !device_is_active(sc->sc_dev) ||
+	if (!sc->sc_enabled || !device_is_active(sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
@@ -468,12 +457,12 @@ an_intr(void *arg)
 
 	/* maximum 10 loops per interrupt */
 	for (i = 0; i < 10; i++) {
-		if (!sc->sc_enabled || sc->sc_invalid)
+		if (!sc->sc_enabled || !device_is_active(sc->sc_dev))
 			return 1;
 		if (CSR_READ_2(sc, AN_SW0) != AN_MAGIC) {
 			DPRINTF(("an_intr: magic number changed: %x\n",
 			    CSR_READ_2(sc, AN_SW0)));
-			sc->sc_invalid = 1;
+			config_deactivate(sc->sc_dev);
 			return 1;
 		}
 		status = CSR_READ_2(sc, AN_EVENT_STAT);
@@ -665,7 +654,7 @@ an_stop(struct ifnet *ifp, int disable)
 
 	s = splnet();
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
-	if (!sc->sc_invalid) {
+	if (device_is_active(sc->sc_dev)) {
 		an_cmd(sc, AN_CMD_FORCE_SYNCLOSS, 0);
 		CSR_WRITE_2(sc, AN_INT_EN, 0);
 		an_cmd(sc, AN_CMD_DISABLE, 0);
@@ -699,9 +688,9 @@ an_start(struct ifnet *ifp)
 	u_int16_t len;
 	int cur, fid;
 
-	if (!sc->sc_enabled || sc->sc_invalid) {
+	if (!sc->sc_enabled || !device_is_active(sc->sc_dev)) {
 		DPRINTF(("an_start: noop: enabled %d invalid %d\n",
-		    sc->sc_enabled, sc->sc_invalid));
+		    sc->sc_enabled, !device_is_active(sc->sc_dev)));
 		return;
 	}
 

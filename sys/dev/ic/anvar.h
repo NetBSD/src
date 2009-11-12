@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.18 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: anvar.h,v 1.19 2009/11/12 19:28:59 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -114,7 +114,6 @@ struct an_softc	{
 				    enum ieee80211_state, int);
 
 	int			sc_enabled;
-	int			sc_invalid;
 	int			sc_attached;
 
 	int			sc_bap_id;
