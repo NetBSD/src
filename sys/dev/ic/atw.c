@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.146 2009/09/16 16:34:50 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.147 2009/11/12 19:30:49 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.146 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.147 2009/11/12 19:30:49 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -310,20 +310,14 @@ int
 atw_activate(device_t self, enum devact act)
 {
 	struct atw_softc *sc = device_private(self);
-	int rv = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return rv;
 }
 
 bool
