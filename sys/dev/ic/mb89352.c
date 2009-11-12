@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.49 2008/06/12 22:30:30 cegger Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.50 2009/11/12 20:14:04 dyoung Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.49 2008/06/12 22:30:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.50 2009/11/12 20:14:04 dyoung Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -307,26 +307,13 @@ spc_attach(struct spc_softc *sc)
 	scsipi_adapter_delref(adapt);
 }
 
-int
-spc_activate(device_t self, enum devact act)
+void
+spc_childdet(device_t self, device_t child)
 {
 	struct spc_softc *sc = device_private(self);
-	int s, rv = 0;
 
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
-	}
-	splx(s);
-
-	return (rv);
+	if (sc->sc_child == child)
+		sc->sc_child = NULL;
 }
 
 int
