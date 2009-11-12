@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.35 2009/04/02 00:09:33 dyoung Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.36 2009/11/12 20:28:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.35 2009/04/02 00:09:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.36 2009/11/12 20:28:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
 
 
 CFATTACH_DECL3_NEW(com_isa, sizeof(struct com_isa_softc),
-    com_isa_probe, com_isa_attach, com_isa_detach, com_activate,
+    com_isa_probe, com_isa_attach, com_isa_detach, NULL,
     NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 int
@@ -252,13 +252,13 @@ com_isa_detach(device_t self, int flags)
 	const struct com_regs *cr = &sc->sc_regs;
 	int rc;
 
+	if ((rc = com_detach(self, flags)) != 0)
+		return rc;
+
 	if (isc->sc_ih != NULL)
 		isa_intr_disestablish(isc->sc_ic, isc->sc_ih);
 
 	pmf_device_deregister(self);
-
-	if ((rc = com_detach(self, flags)) != 0)
-		return rc;
 
 	com_cleanup(self, 0);
 
