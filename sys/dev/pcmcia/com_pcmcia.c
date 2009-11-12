@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.59 2008/08/27 05:39:01 christos Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.60 2009/11/12 20:29:30 dyoung Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.59 2008/08/27 05:39:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.60 2009/11/12 20:29:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ struct com_pcmcia_softc {
 };
 
 CFATTACH_DECL_NEW(com_pcmcia, sizeof(struct com_pcmcia_softc),
-    com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate);
+    com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, NULL);
 
 static const struct pcmcia_product com_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -230,10 +230,10 @@ com_pcmcia_detach(device_t self, int flags)
 	if (!psc->sc_attached)
 		return (0);
 
-	pmf_device_deregister(self);
-
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
+
+	pmf_device_deregister(self);
 
 	pcmcia_function_unconfigure(psc->sc_pf);
 	return (0);
