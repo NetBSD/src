@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.80.12.4 2008/05/21 05:04:03 itohy Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.12.5 2009/11/12 08:17:31 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.47 2006/09/07 00:06:42 imp Exp $	*/
 
 /*-
@@ -67,18 +67,31 @@ struct usbd_bus_methods {
 	usbd_status	      (*open_pipe)(struct usbd_pipe *pipe);
 	void		      (*soft_intr)(void *);
 	void		      (*do_poll)(struct usbd_bus *);
+/* XXX API change */
+#if 0
+	usbd_status	      (*allocm)(struct usbd_bus *, usb_dma_t *,
+					u_int32_t bufsize);
+	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
+#else
 	usbd_status	      (*allocm)(struct usbd_bus *, usbd_xfer_handle,
 					void *, size_t);
 	void		      (*freem)(struct usbd_bus *, usbd_xfer_handle,
 				       enum usbd_waitflg);
+#endif
+/* XXX API change */
+#if 0
+	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
+#else
+	struct usbd_xfer *    (*allocx)(struct usbd_bus *, usbd_pipe_handle,
+					enum usbd_waitflg);
+#endif
+	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 	usbd_status	      (*map_alloc)(usbd_xfer_handle);
 	void		      (*map_free)(usbd_xfer_handle);
 	void		      (*mapm)(usbd_xfer_handle, void *, size_t);
+	/* XXXUEBAYASI should not belong here */
 	usbd_status	      (*mapm_mbuf)(usbd_xfer_handle, struct mbuf *);
 	void		      (*unmapm)(usbd_xfer_handle);
-	struct usbd_xfer *    (*allocx)(struct usbd_bus *, usbd_pipe_handle,
-					enum usbd_waitflg);
-	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 };
 
 struct usbd_pipe_methods {
