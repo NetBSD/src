@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.124 2009/09/21 12:14:47 pooka Exp $ */
+/* $NetBSD: device.h,v 1.125 2009/11/12 19:10:30 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -174,6 +174,9 @@ struct device {
 	bool		(*dv_class_resume)(device_t PMF_FN_PROTO);
 	void		(*dv_class_deregister)(device_t);
 
+	devgen_t		dv_add_gen,
+				dv_del_gen;
+
 	struct device_lock	dv_lock;
 	device_suspensor_t	dv_bus_suspensors[DEVICE_SUSPENSORS_MAX];
 	device_suspensor_t	dv_driver_suspensors[DEVICE_SUSPENSORS_MAX];
@@ -205,6 +208,7 @@ struct deviter {
 	deviter_flags_t	di_flags;
 	int		di_curdepth;
 	int		di_maxdepth;
+	devgen_t	di_gen;
 };
 
 typedef struct deviter deviter_t;
@@ -412,7 +416,6 @@ struct pdevinit {
 #ifdef _KERNEL
 
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
-extern struct devicelist alldevs;	/* list of all devices */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
