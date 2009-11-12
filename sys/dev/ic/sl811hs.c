@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.23 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.24 2009/11/12 19:35:59 dyoung Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.23 2009/05/12 14:25:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.24 2009/11/12 19:35:59 dyoung Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -1231,19 +1231,15 @@ slhci_detach(struct slhci_softc *sc, int flags)
 int
 slhci_activate(device_t self, enum devact act)
 {
-	struct slhci_softc *sc;
+	struct slhci_softc *sc = device_private(self);
 
-	sc = device_private(self);
-
-	if (act != DVACT_DEACTIVATE)
-		return EOPNOTSUPP;
-
-	slhci_lock_call(sc, &slhci_halt, NULL, NULL);
-
-	if (sc->sc_child)
-		return config_deactivate(sc->sc_child);
-	else
+	switch (act) {
+	case DVACT_DEACTIVATE:
+		slhci_lock_call(sc, &slhci_halt, NULL, NULL);
 		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 void
