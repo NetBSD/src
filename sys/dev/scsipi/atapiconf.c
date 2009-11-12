@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.80 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.81 2009/11/12 19:44:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.80 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.81 2009/11/12 19:44:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ const struct scsipi_periphsw atapi_probe_periphsw = {
 
 static int	atapibusmatch(device_t, cfdata_t, void *);
 static void	atapibusattach(device_t, device_t, void *);
-static int	atapibusactivate(device_t, enum devact);
 static int	atapibusdetach(device_t, int flags);
 static void	atapibuschilddet(device_t, device_t);
 
@@ -64,7 +63,7 @@ static int	atapi_probe_bus(struct atapibus_softc *, int);
 static int	atapibusprint(void *, const char *);
 
 CFATTACH_DECL3_NEW(atapibus, sizeof(struct atapibus_softc),
-    atapibusmatch, atapibusattach, atapibusdetach, atapibusactivate, NULL,
+    atapibusmatch, atapibusattach, atapibusdetach, NULL, NULL,
     atapibuschilddet, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver atapibus_cd;
@@ -162,36 +161,6 @@ atapibusattach(device_t parent, device_t self, void *aux)
 
 	/* Probe the bus for devices. */
 	atapi_probe_bus(sc, -1);
-}
-
-static int
-atapibusactivate(device_t self, enum devact act)
-{
-	struct atapibus_softc *sc = device_private(self);
-	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int target, error = 0, s;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		for (target = 0; target < chan->chan_ntargets; target++) {
-			periph = scsipi_lookup_periph(chan, target, 0);
-			if (periph == NULL)
-				continue;
-			error = config_deactivate(periph->periph_dev);
-			if (error)
-				goto out;
-		}
-		break;
-	}
- out:
-	splx(s);
-	return (error);
 }
 
 static void
