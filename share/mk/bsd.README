@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.257 2009/11/12 13:22:34 tron Exp $
+#	$NetBSD: bsd.README,v 1.258 2009/11/12 14:46:37 tron Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -388,11 +388,7 @@ USE_SSP		If "no", disables GCC stack protection code, which
 		detects stack overflows and aborts the program. The
 		stack protecion code imposes a performance penalty
 		of about 5%
-		Default: no, unless "USE_FORT" is set to "yes"
-
-USE_SSP_DEFAULT	The default of "USE_SSP" for part of the tree (e.g. kernels)
-		that are not compiled with "USE_FORT" set to "yes".
-		Default: "yes" for amd64 and i386, "no" otherwise
+		Default: "no", unless "USE_FORT" is set to "yes"
 
 USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		functions that do not do bounds checking regularly, but
