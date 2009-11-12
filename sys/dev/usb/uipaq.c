@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.14 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.15 2009/11/12 19:58:27 dyoung Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.14 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.15 2009/11/12 19:58:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,20 +362,14 @@ int
 uipaq_activate(device_t self, enum devact act)
 {
 	struct uipaq_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
