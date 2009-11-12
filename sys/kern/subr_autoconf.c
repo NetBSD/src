@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.187 2009/11/12 19:10:30 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.188 2009/11/12 23:16:28 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.187 2009/11/12 19:10:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.188 2009/11/12 23:16:28 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1629,8 +1629,7 @@ config_defer(device_t dev, void (*func)(device_t))
 		panic("config_defer: can't defer config of a root device");
 
 #ifdef DIAGNOSTIC
-	for (dc = TAILQ_FIRST(&deferred_config_queue); dc != NULL;
-	     dc = TAILQ_NEXT(dc, dc_queue)) {
+	TAILQ_FOREACH(dc, &deferred_config_queue, dc_queue) {
 		if (dc->dc_dev == dev)
 			panic("config_defer: deferred twice");
 	}
@@ -1664,8 +1663,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	}
 
 #ifdef DIAGNOSTIC
-	for (dc = TAILQ_FIRST(&interrupt_config_queue); dc != NULL;
-	     dc = TAILQ_NEXT(dc, dc_queue)) {
+	TAILQ_FOREACH(dc, &interrupt_config_queue, dc_queue) {
 		if (dc->dc_dev == dev)
 			panic("config_interrupts: deferred twice");
 	}
