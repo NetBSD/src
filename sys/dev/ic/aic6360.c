@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.97 2009/09/22 12:56:06 tsutsui Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.98 2009/11/12 19:25:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.97 2009/09/22 12:56:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.98 2009/11/12 19:25:08 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -294,28 +294,6 @@ aicattach(struct aic_softc *sc)
 	 */
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 	scsipi_adapter_delref(adapt);
-}
-
-int
-aic_activate(device_t self, enum devact act)
-{
-	struct aic_softc *sc = device_private(self);
-	int s, rv = 0;
-
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
-	}
-	splx(s);
-
-	return (rv);
 }
 
 int
