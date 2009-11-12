@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.113 2009/10/30 20:57:30 joerg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.114 2009/11/12 10:10:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.113 2009/10/30 20:57:30 joerg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.114 2009/11/12 10:10:49 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,8 @@ int	haveopt_f, haveopt_g, haveopt_m, haveopt_o;
 int	numberedbackup;
 int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
-id_t	uid = -1, gid = -1;
+uid_t	uid = -1;
+gid_t	gid = -1;
 char	*group, *owner, *fflags, *tags;
 FILE	*metafp;
 char	*metafile;
@@ -312,13 +313,21 @@ main(int argc, char *argv[])
 
 	/* get group and owner id's */
 	if (group && !dounpriv) {
-		if (gid_from_group(group, &gid) == -1 && ! parseid(group, &gid))
-			errx(1, "unknown group %s", group);
+		if (gid_from_group(group, &gid) == -1) {
+			id_t id;
+			if (!parseid(group, &id))
+				errx(1, "unknown group %s", group);
+			gid = id;
+		}
 		iflags |= HASGID;
 	}
 	if (owner && !dounpriv) {
-		if (uid_from_user(owner, &uid) == -1 && ! parseid(owner, &uid))
-			errx(1, "unknown user %s", owner);
+		if (uid_from_user(owner, &uid) == -1) {
+			id_t id;
+			if (!parseid(owner, &id))
+				errx(1, "unknown user %s", owner);
+			uid = id;
+		}
 		iflags |= HASUID;
 	}
 
