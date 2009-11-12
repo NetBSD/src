@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.84 2009/09/15 18:37:02 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.85 2009/11/12 19:32:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.84 2009/09/15 18:37:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.85 2009/11/12 19:32:14 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -202,13 +202,13 @@ awi_attach(struct awi_softc *sc)
 	sc->sc_attached = 0;
 	sc->sc_substate = AWI_ST_NONE;
 	if ((error = awi_hw_init(sc)) != 0) {
-		sc->sc_invalid = 1;
+		config_deactivate(&sc->sc_dev);
 		splx(s);
 		return error;
 	}
 	error = awi_init_mibs(sc);
 	if (error != 0) {
-		sc->sc_invalid = 1;
+		config_deactivate(&sc->sc_dev);
 		splx(s);
 		return error;
 	}
@@ -303,7 +303,6 @@ awi_detach(struct awi_softc *sc)
 		return 0;
 
 	s = splnet();
-	sc->sc_invalid = 1;
 	awi_stop(ifp, 1);
 
 	while (sc->sc_sleep_cnt > 0) {
@@ -323,21 +322,14 @@ int
 awi_activate(device_t self, enum devact act)
 {
 	struct awi_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_if;
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
-		sc->sc_invalid = 1;
-		if_deactivate(ifp);
-		break;
+		if_deactivate(&sc->sc_if);
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return error;
 }
 
 void
@@ -397,10 +389,12 @@ awi_intr(void *arg)
 	};
 #endif
 
-	if (!sc->sc_enabled || !sc->sc_enab_intr || sc->sc_invalid) {
+	if (!sc->sc_enabled || !sc->sc_enab_intr ||
+	    !device_is_active(&sc->sc_dev)) {
 		DPRINTF(("awi_intr: stray interrupt: "
 		    "enabled %d enab_intr %d invalid %d\n",
-		    sc->sc_enabled, sc->sc_enab_intr, sc->sc_invalid));
+		    sc->sc_enabled, sc->sc_enab_intr,
+		    !device_is_active(&sc->sc_dev)));
 		return 0;
 	}
 
@@ -619,7 +613,7 @@ awi_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 
-	if (!sc->sc_invalid) {
+	if (device_is_active(&sc->sc_dev)) {
 		if (sc->sc_cmd_inprog)
 			(void)awi_cmd_wait(sc);
 		(void)awi_cmd(sc, AWI_CMD_KILL_RX, AWI_WAIT);
@@ -641,7 +635,7 @@ awi_stop(struct ifnet *ifp, int disable)
 	IFQ_PURGE(&ifp->if_snd);
 
 	if (disable) {
-		if (!sc->sc_invalid)
+		if (device_is_active(&sc->sc_dev))
 			am79c930_gcr_setbits(&sc->sc_chip,
 			    AM79C930_GCR_CORESET);
 		if (sc->sc_disable)
@@ -663,7 +657,7 @@ awi_start(struct ifnet *ifp)
 	u_int32_t txd, frame, ntxd;
 	u_int8_t rate;
 
-	if (!sc->sc_enabled || sc->sc_invalid)
+	if (!sc->sc_enabled || !device_is_active(&sc->sc_dev))
 		return;
 
 	for (;;) {
@@ -797,7 +791,7 @@ awi_watchdog(struct ifnet *ifp)
 	int ocansleep;
 
 	ifp->if_timer = 0;
-	if (!sc->sc_enabled || sc->sc_invalid)
+	if (!sc->sc_enabled || !device_is_active(&sc->sc_dev))
 		return;
 
 	ocansleep = sc->sc_cansleep;
@@ -1258,7 +1252,6 @@ awi_hw_init(struct awi_softc *sc)
 	int i, error;
 
 	sc->sc_enab_intr = 0;
-	sc->sc_invalid = 0;	/* XXX: really? */
 	awi_drvstate(sc, AWI_DRV_RESET);
 
 	/* reset firmware */
@@ -1272,7 +1265,7 @@ awi_hw_init(struct awi_softc *sc)
 
 	/* wait for selftest completion */
 	for (i = 0; ; i++) {
-		if (sc->sc_invalid)
+		if (!device_is_active(&sc->sc_dev))
 			return ENXIO;
 		if (i >= AWI_SELFTEST_TIMEOUT*hz/1000) {
 			printf("%s: failed to complete selftest (timeout)\n",
@@ -1565,12 +1558,12 @@ awi_cmd_wait(struct awi_softc *sc)
 
 	i = 0;
 	while (sc->sc_cmd_inprog) {
-		if (sc->sc_invalid)
+		if (!device_is_active(&sc->sc_dev))
 			return ENXIO;
 		if (awi_read_1(sc, AWI_CMD) != sc->sc_cmd_inprog) {
 			printf("%s: failed to access hardware\n",
 			    sc->sc_if.if_xname);
-			sc->sc_invalid = 1;
+			config_deactivate(&sc->sc_dev);
 			return ENXIO;
 		}
 		if (sc->sc_cansleep) {
@@ -1672,7 +1665,7 @@ awi_lock(struct awi_softc *sc)
 		 * ioctl requests in progress.
 		 */
 		if (sc->sc_busy) {
-			if (sc->sc_invalid)
+			if (!device_is_active(&sc->sc_dev))
 				return ENXIO;
 			return EWOULDBLOCK;
 		}
@@ -1681,7 +1674,7 @@ awi_lock(struct awi_softc *sc)
 		return 0;
 	}
 	while (sc->sc_busy) {
-		if (sc->sc_invalid)
+		if (!device_is_active(&sc->sc_dev))
 			return ENXIO;
 		sc->sc_sleep_cnt++;
 		error = tsleep(sc, PWAIT | PCATCH, "awilck", 0);
