@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.165 2009/11/11 15:49:05 pooka Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.166 2009/11/12 08:41:49 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.165 2009/11/11 15:49:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.166 2009/11/12 08:41:49 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -68,10 +68,8 @@ extern int usbdebug;
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
-Static void usbd_devinfo_vp(usbd_device_handle dev,
-			    char *v,
-			    char *p, int usedev,
-			    int useencoded );
+Static void usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p,
+			    int usedev, int useencoded);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
@@ -190,8 +188,8 @@ usbd_trim_spaces(char *p)
 }
 
 Static void
-usbd_devinfo_vp(usbd_device_handle dev, char *v,
-		char *p, int usedev, int useencoded)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
+		int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 #ifdef USBVERBOSE
