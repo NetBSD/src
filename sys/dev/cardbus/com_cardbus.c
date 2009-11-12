@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.22 2008/06/24 19:44:52 drochner Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.22 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static int com_cardbus_enable (struct com_softc*);
 static void com_cardbus_disable(struct com_softc*);
 
 CFATTACH_DECL_NEW(com_cardbus, sizeof(struct com_cardbus_softc),
-    com_cardbus_match, com_cardbus_attach, com_cardbus_detach, com_activate);
+    com_cardbus_match, com_cardbus_attach, com_cardbus_detach, NULL);
 
 static struct csdev {
 	int		vendor;
