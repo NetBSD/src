@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.183 2009/11/12 08:51:50 tron Exp $
+#	$NetBSD: bsd.sys.mk,v 1.184 2009/11/12 13:22:34 tron Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -61,7 +61,9 @@ HAS_SSP=	yes
 
 .if ((${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386")) && \
      defined(_SRC_TOP_) && (${_SRC_TOP_} != "")
-USE_SSP?=	yes
+USE_SSP_DEFAULT?=	yes
+.else
+USE_SSP_DEFAULT?=	no
 .endif
 
 .if defined(USE_FORT) && (${USE_FORT} != "no")
@@ -71,7 +73,9 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
 .endif
 
-.if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
+USE_SSP?=	${USE_SSP_DEFAULT}
+
+.if (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
