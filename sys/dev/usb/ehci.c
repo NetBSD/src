@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.12.4 2008/05/21 05:26:13 itohy Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.12.5 2009/11/12 09:04:11 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.4 2008/05/21 05:26:13 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.5 2009/11/12 09:04:11 uebayasi Exp $");
 /* __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehci.c,v 1.52 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -300,13 +300,13 @@ Static const struct usbd_bus_methods ehci_bus_methods = {
 	ehci_poll,
 	ehci_allocm,
 	ehci_freem,
+	ehci_allocx,
+	ehci_freex,
 	ehci_map_alloc,
 	ehci_map_free,
 	ehci_mapm,
 	ehci_mapm_mbuf,
 	ehci_unmapm,
-	ehci_allocx,
-	ehci_freex,
 };
 
 Static const struct usbd_pipe_methods ehci_root_ctrl_methods = {
