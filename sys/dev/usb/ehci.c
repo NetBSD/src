@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.162 2009/11/01 13:26:50 uebayasi Exp $ */
+/*	$NetBSD: ehci.c,v 1.163 2009/11/12 19:46:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.162 2009/11/01 13:26:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.163 2009/11/12 19:46:01 dyoung Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1102,19 +1102,14 @@ int
 ehci_activate(device_t self, enum devact act)
 {
 	struct ehci_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 /*
