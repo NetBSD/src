@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.108 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.109 2009/11/12 19:20:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.108 2009/10/19 18:41:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.109 2009/11/12 19:20:08 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -474,66 +474,6 @@ atabus_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * atabus_activate:
- *
- *	Autoconfiguration activation routine.
- */
-static int
-atabus_activate(device_t self, enum devact act)
-{
-	struct atabus_softc *sc = device_private(self);
-	struct ata_channel *chp = sc->sc_chan;
-	device_t dev = NULL;
-	int s, i, error = 0;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * We might deactivate the children of atapibus twice
-		 * (once bia atapibus, once directly), but since the
-		 * generic autoconfiguration code maintains the DVF_ACTIVE
-		 * flag, it's safe.
-		 */
-		if ((dev = chp->atapibus) != NULL) {
-			error = config_deactivate(dev);
-			if (error)
-				goto out;
-		}
-
-		for (i = 0; i < chp->ch_ndrive; i++) {
-			if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
-				continue;
-			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
-				ATADEBUG_PRINT(("atabus_activate: %s: "
-				    "deactivating %s\n", device_xname(self),
-				    device_xname(dev)),
-				    DEBUG_DETACH);
-				error = config_deactivate(dev);
-				if (error)
-					goto out;
-			}
-		}
-		break;
-	}
- out:
-	splx(s);
-
-#ifdef ATADEBUG
-	if (dev != NULL && error != 0)
-		ATADEBUG_PRINT(("atabus_activate: %s: "
-		    "error %d deactivating %s\n", device_xname(self),
-		    error, device_xname(dev)), DEBUG_DETACH);
-#endif /* ATADEBUG */
-
-	return (error);
-}
-
-/*
  * atabus_detach:
  *
  *	Autoconfiguration detach routine.
@@ -638,7 +578,7 @@ atabus_childdetached(device_t self, device_t child)
 }
 
 CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
-    atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
+    atabus_match, atabus_attach, atabus_detach, NULL, NULL,
     atabus_childdetached, DVF_DETACH_SHUTDOWN);
 
 /*****************************************************************************
