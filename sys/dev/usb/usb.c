@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.118 2009/06/16 19:42:44 dyoung Exp $	*/
+/*	$NetBSD: usb.c,v 1.119 2009/11/12 20:11:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.118 2009/06/16 19:42:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.119 2009/11/12 20:11:35 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -937,25 +937,14 @@ int
 usb_activate(device_t self, enum devact act)
 {
 	struct usb_softc *sc = device_private(self);
-	usbd_device_handle dev = sc->sc_port.device;
-	int i, rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (dev != NULL && dev->cdesc != NULL && dev->subdevlen > 0) {
-			for (i = 0; i < dev->subdevlen; i++) {
-				if (!dev->subdevs[i])
-					continue;
-				rv |= config_deactivate(dev->subdevs[i]);
-			}
-		}
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
@@ -978,20 +967,23 @@ usb_detach(device_t self, int flags)
 {
 	struct usb_softc *sc = device_private(self);
 	struct usb_event *ue;
+	int rc;
 
 	DPRINTF(("usb_detach: start\n"));
 
+	/* Make all devices disconnect. */
+	if (sc->sc_port.device != NULL &&
+	    (rc = usb_disconnect_port(&sc->sc_port, self, flags)) != 0)
+		return rc;
+
 	pmf_device_deregister(self);
 	/* Kill off event thread. */
+	sc->sc_dying = 1;
 	while (sc->sc_event_thread != NULL) {
 		wakeup(&sc->sc_bus->needs_explore);
 		tsleep(sc, PWAIT, "usbdet", hz * 60);
 	}
 	DPRINTF(("usb_detach: event thread dead\n"));
-
-	/* Make all devices disconnect. */
-	if (sc->sc_port.device != NULL)
-		usb_disconnect_port(&sc->sc_port, self);
 
 #ifdef USB_USE_SOFTINTR
 	if (sc->sc_bus->soft != NULL) {
