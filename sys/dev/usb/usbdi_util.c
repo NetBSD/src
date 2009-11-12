@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.52 2009/08/16 13:20:40 martin Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.53 2009/11/12 08:28:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.52 2009/08/16 13:20:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.53 2009/11/12 08:28:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,7 @@ usbd_get_desc(usbd_device_handle dev, int type, int index, int len, void *desc)
 	USETW2(req.wValue, type, index);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
-	return (usbd_do_request_flags(dev, &req, desc, 0, 0,
-	    USBD_CONFIG_TIMEOUT));
+	return (usbd_do_request(dev, &req, desc));
 }
 
 usbd_status
@@ -440,7 +439,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((void *)xfer, PZERO | PCATCH, lbl, 0);
+	error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
 	splx(s);
 	if (error) {
 		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
