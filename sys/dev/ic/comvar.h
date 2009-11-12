@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.66 2009/05/27 23:01:07 rjs Exp $	*/
+/*	$NetBSD: comvar.h,v 1.67 2009/11/12 20:37:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -143,6 +143,14 @@ struct com_regs {
 	} while (0)
 
 #endif
+
+struct comcons_info {
+	struct com_regs regs;
+	int rate;
+	int frequency;
+	int type;
+	tcflag_t cflag;
+};
 
 struct com_softc {
 	device_t sc_dev;
