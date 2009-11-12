@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.13 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uep.c,v 1.14 2009/11/12 19:51:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.13 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.14 2009/11/12 19:51:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,20 +258,14 @@ int
 uep_activate(device_t self, enum devact act)
 {
 	struct uep_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev != NULL)
-			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 Static int

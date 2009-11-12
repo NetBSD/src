@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.23 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.24 2009/11/12 19:51:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.23 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.24 2009/11/12 19:51:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,22 +258,16 @@ int
 ugensa_activate(device_t self, enum devact act)
 {
 	struct ugensa_softc *sc = device_private(self);
-	int rv = 0;
 
 	DPRINTF(("ugensa_activate: sc=%p\n", sc));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_subdev)
-			rv = config_deactivate(sc->sc_subdev);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 USB_DETACH(ugensa)

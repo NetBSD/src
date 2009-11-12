@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.43 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.44 2009/11/12 19:51:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.43 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.44 2009/11/12 19:51:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,20 +312,14 @@ int
 uftdi_activate(device_t self, enum devact act)
 {
 	struct uftdi_softc *sc = device_private(self);
-	int rv = 0,i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		for (i=0; i < sc->sc_numports; i++)
-			if (sc->sc_subdev[i] != NULL)
-				rv = config_deactivate(sc->sc_subdev[i]);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
