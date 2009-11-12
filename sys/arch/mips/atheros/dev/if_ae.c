@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.15 2008/11/07 00:20:02 dyoung Exp $ */
+/* $Id: if_ae.c,v 1.16 2009/11/12 19:18:55 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.15 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.16 2009/11/12 19:18:55 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -453,22 +453,14 @@ int
 ae_activate(device_t self, enum devact act)
 {
 	struct ae_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		mii_activate(&sc->sc_mii, act, MII_PHY_ANY, MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
 /*
