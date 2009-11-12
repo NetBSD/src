@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.182 2009/11/11 16:35:45 tron Exp $
+#	$NetBSD: bsd.sys.mk,v 1.183 2009/11/12 08:51:50 tron Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -59,8 +59,8 @@ HAS_SSP=	no
 HAS_SSP=	yes
 .endif
 
-.if ((${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386") && \
-     (_SRC_TOP_ != ""))
+.if ((${MACHINE_ARCH} == "amd64") || (${MACHINE_ARCH} == "i386")) && \
+     defined(_SRC_TOP_) && (${_SRC_TOP_} != "")
 USE_SSP?=	yes
 .endif
 
