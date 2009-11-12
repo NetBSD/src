@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.256 2009/10/23 22:14:37 joerg Exp $
+#	$NetBSD: bsd.README,v 1.257 2009/11/12 13:22:34 tron Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -385,9 +385,14 @@ USE_SKEY	If "no", disables building S/key authentication
 		Default: no
 
 USE_SSP		If "no", disables GCC stack protection code, which
-		detects stack overflows and aborts the program. This
-		imposes some performance penalty.
-		Default: no
+		detects stack overflows and aborts the program. The
+		stack protecion code imposes a performance penalty
+		of about 5%
+		Default: no, unless "USE_FORT" is set to "yes"
+
+USE_SSP_DEFAULT	The default of "USE_SSP" for part of the tree (e.g. kernels)
+		that are not compiled with "USE_FORT" set to "yes".
+		Default: "yes" for amd64 and i386, "no" otherwise
 
 USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		functions that do not do bounds checking regularly, but
@@ -395,7 +400,7 @@ USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		__builtin_object_size() function to determine the buffer 
 		size where it is known and detect buffer overflows.
 		These substitute functions are in /usr/include/ssp.
-		Default: no
+		Default: depends on the part of the source tree
 
 USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
