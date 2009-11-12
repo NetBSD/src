@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.107 2009/09/04 18:14:41 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.108 2009/11/12 20:11:35 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.107 2009/09/04 18:14:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.108 2009/11/12 20:11:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,13 +98,12 @@ void uhub_attach(device_t, device_t, void *);
 int uhub_rescan(device_t, const char *, const int *);
 void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
-int uhub_activate(device_t, enum devact);
 extern struct cfdriver uhub_cd;
 CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet,
+    uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
     DVF_DETACH_SHUTDOWN);
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
+    uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet);
 
 int
 uhub_match(device_t parent, cfdata_t match, void *aux)
@@ -470,7 +469,7 @@ uhub_explore(usbd_device_handle dev)
 			/* Disconnected */
 			DPRINTF(("uhub_explore: device addr=%d disappeared "
 				 "on port %d\n", up->device->address, port));
-			usb_disconnect_port(up, sc->sc_dev);
+			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
 		}
@@ -554,35 +553,6 @@ uhub_explore(usbd_device_handle dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-int
-uhub_activate(device_t self, enum devact act)
-{
-	struct uhub_softc *sc = device_private(self);
-	struct usbd_hub *hub = sc->sc_hub->hub;
-	usbd_device_handle dev;
-	int nports, port, i;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
-	case DVACT_DEACTIVATE:
-		if (hub == NULL) /* malfunctioning hub */
-			break;
-		nports = hub->hubdesc.bNbrPorts;
-		for(port = 0; port < nports; port++) {
-			dev = hub->ports[port].device;
-			if (!dev)
-				continue;
-			for (i = 0; i < dev->subdevlen; i++)
-				if (dev->subdevs[i])
-					config_deactivate(dev->subdevs[i]);
-		}
-		break;
-	}
-	return (0);
-}
-
 /*
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
@@ -593,23 +563,25 @@ uhub_detach(device_t self, int flags)
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	struct usbd_port *rup;
-	int port, nports;
+	int nports, port, rc;
 
 	DPRINTF(("uhub_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
-	pmf_device_deregister(self);
-	usbd_abort_pipe(sc->sc_ipipe);
-	usbd_close_pipe(sc->sc_ipipe);
-
 	nports = hub->hubdesc.bNbrPorts;
 	for(port = 0; port < nports; port++) {
 		rup = &hub->ports[port];
-		if (rup->device != NULL)
-			usb_disconnect_port(rup, self);
+		if (rup->device == NULL)
+			continue;
+		if ((rc = usb_disconnect_port(rup, self, flags)) != 0)
+			return rc;
 	}
+
+	pmf_device_deregister(self);
+	usbd_abort_pipe(sc->sc_ipipe);
+	usbd_close_pipe(sc->sc_ipipe);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub, sc->sc_dev);
 
