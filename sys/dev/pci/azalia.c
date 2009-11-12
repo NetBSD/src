@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.69 2009/05/06 09:25:14 cegger Exp $	*/
+/*	$NetBSD: azalia.c,v 1.70 2009/11/12 19:40:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.69 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.70 2009/11/12 19:40:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,7 +155,6 @@ typedef struct azalia_t {
 /* prototypes */
 static int	azalia_pci_match(device_t, cfdata_t, void *);
 static void	azalia_pci_attach(device_t, device_t, void *);
-static int	azalia_pci_activate(device_t, enum devact);
 static int	azalia_pci_detach(device_t, int);
 static bool	azalia_pci_resume(device_t PMF_FN_PROTO);
 static void	azalia_childdet(device_t, device_t);
@@ -226,7 +225,7 @@ static int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 
 /* variables */
 CFATTACH_DECL2_NEW(azalia, sizeof(azalia_t),
-    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, azalia_pci_activate,
+    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, NULL,
     NULL, azalia_childdet);
 
 static const struct audio_hw_if azalia_hw_if = {
@@ -362,25 +361,6 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	config_interrupts(self, azalia_attach_intr);
-}
-
-static int
-azalia_pci_activate(device_t self, enum devact act)
-{
-	azalia_t *sc;
-	int ret;
-
-	sc = device_private(self);
-	ret = 0;
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		if (sc->audiodev != NULL)
-			ret = config_deactivate(sc->audiodev);
-		return ret;
-	}
-	return EOPNOTSUPP;
 }
 
 static void

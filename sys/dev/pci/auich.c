@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.130 2009/09/03 14:29:42 sborrill Exp $	*/
+/*	$NetBSD: auich.c,v 1.131 2009/11/12 19:39:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.130 2009/09/03 14:29:42 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.131 2009/11/12 19:39:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,12 +248,10 @@ static int	auich_match(device_t, cfdata_t, void *);
 static void	auich_attach(device_t, device_t, void *);
 static int	auich_detach(device_t, int);
 static void	auich_childdet(device_t, device_t);
-static int	auich_activate(device_t, enum devact);
 static int	auich_intr(void *);
 
 CFATTACH_DECL2_NEW(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, auich_detach, auich_activate, NULL,
-    auich_childdet);
+    auich_match, auich_attach, auich_detach, NULL, NULL, auich_childdet);
 
 static int	auich_open(void *, int);
 static void	auich_close(void *);
@@ -689,24 +687,6 @@ auich_attach(device_t parent, device_t self, void *aux)
 	return;			/* failure of sysctl is not fatal. */
 }
 
-static int
-auich_activate(device_t self, enum devact act)
-{
-	struct auich_softc *sc = device_private(self);
-	int ret;
-
-	ret = 0;
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		if (sc->sc_audiodev != NULL)
-			ret = config_deactivate(sc->sc_audiodev);
-		return ret;
-	}
-	return EOPNOTSUPP;
-}
- 
 static void
 auich_childdet(device_t self, device_t child)
 {
