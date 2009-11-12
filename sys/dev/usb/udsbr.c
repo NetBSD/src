@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.16 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.17 2009/11/12 19:51:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.16 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.17 2009/11/12 19:51:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,20 +176,14 @@ int
 udsbr_activate(device_ptr_t self, enum devact act)
 {
 	struct udsbr_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 int

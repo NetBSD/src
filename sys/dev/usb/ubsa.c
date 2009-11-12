@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.24 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.25 2009/11/12 19:51:44 dyoung Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.24 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.25 2009/11/12 19:51:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,21 +354,12 @@ int
 ubsa_activate(device_ptr_t self, enum devact act)
 {
 	struct ubsa_softc *sc = device_private(self);
-	int rv = 0;
-	int i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_numif; i++) {
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(sc->sc_subdevs[i]);
-		}
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
-
