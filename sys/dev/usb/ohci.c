@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.201 2009/11/01 06:36:44 uebayasi Exp $	*/
+/*	$NetBSD: ohci.c,v 1.202 2009/11/12 08:54:00 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.201 2009/11/01 06:36:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.202 2009/11/12 08:54:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,7 +1231,7 @@ ohci_intr1(ohci_softc_t *sc)
 		 */
 		ohci_rhsc(sc, sc->sc_intrxfer);
 		/* Do not allow RHSC interrupts > 1 per second */
-                usb_callout(sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
+		usb_callout(sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
 	}
 
 	sc->sc_bus.intr_context--;
@@ -1812,7 +1812,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 	splx(s);
@@ -2416,7 +2416,7 @@ Static usb_device_descriptor_t ohci_devd = {
 	{0x00, 0x01},		/* USB version */
 	UDCLASS_HUB,		/* class */
 	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_FSHUB,
+	UDPROTO_FSHUB,		/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
 	1,2,0,			/* string indicies */
@@ -3041,7 +3041,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 
