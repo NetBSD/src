@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.8 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.9 2009/11/12 19:51:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.8 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.9 2009/11/12 19:51:44 dyoung Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -339,20 +339,15 @@ int
 uchcom_activate(device_t self, enum devact act)
 {
 	struct uchcom_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
 		close_intr_pipe(sc);
 		sc->sc_dying = 1;
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return rv;
 }
 
 static int
