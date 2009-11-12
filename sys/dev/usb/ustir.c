@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.27 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: ustir.c,v 1.28 2009/11/12 20:01:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.27 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.28 2009/11/12 20:01:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,19 +858,14 @@ Static int
 ustir_activate(device_t self, enum devact act)
 {
 	struct ustir_softc *sc = device_private(self);
-	int error = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_child != NULL)
-			error = config_deactivate(sc->sc_child);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return error;
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.10 2009/09/23 19:07:19 plunky Exp $ */
+/* $NetBSD: uslsa.c,v 1.11 2009/11/12 20:01:15 dyoung Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.10 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.11 2009/11/12 20:01:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,20 +327,14 @@ int
 uslsa_activate(device_t self, enum devact act)
 {
 	struct uslsa_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_subdev)
-			rv = config_deactivate(sc->sc_subdev);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
