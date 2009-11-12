@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.36.12.1 2007/05/22 14:57:50 itohy Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.36.12.2 2009/11/12 08:30:16 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.21 2007/01/03 10:50:03 luigi Exp $	*/
 
 /*-
@@ -38,8 +38,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _USBI_UTIL_H_
-#define _USBI_UTIL_H_
+#ifndef _USBDI_UTIL_H_
+#define _USBDI_UTIL_H_
 
 usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
 			      int index, int len, void *desc);
@@ -106,4 +106,4 @@ const usb_cdc_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type,
 					 usb_interface_descriptor_t *id);
 #define USBD_CDCSUBTYPE_ANY (~0)
 
-#endif	/* _USBI_UTIL_H_ */
+#endif	/* _USBDI_UTIL_H_ */
