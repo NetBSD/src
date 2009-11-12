@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.259 2009/10/19 18:41:13 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.260 2009/11/12 19:37:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.259 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.260 2009/11/12 19:37:17 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -773,34 +773,6 @@ wdcattach(struct ata_channel *chp)
 #endif
 
 	ata_channel_attach(chp);
-}
-
-int
-wdcactivate(device_t self, enum devact act)
-{
-	struct atac_softc *atac = device_private(self);
-	struct ata_channel *chp;
-	int s, i, error = 0;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		for (i = 0; i < atac->atac_nchannels; i++) {
-			chp = atac->atac_channels[i];
-			if (chp->atabus == NULL)
-				continue;
-			error = config_deactivate(chp->atabus);
-			if (error)
-				break;
-		}
-		break;
-	}
-	splx(s);
-	return (error);
 }
 
 void
