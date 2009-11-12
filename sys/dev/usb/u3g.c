@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.7 2009/05/29 18:49:21 plunky Exp $	*/
+/*	$NetBSD: u3g.c,v 1.8 2009/11/12 19:52:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 AnyWi Technologies
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.7 2009/05/29 18:49:21 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.8 2009/11/12 19:52:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,26 +500,5 @@ u3g_childdet(device_t self, device_t child)
 	}
 }
 
-static int
-u3g_activate(device_t self, enum devact act)
-{
-	struct u3g_softc *sc = device_private(self);
-	int i, rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
-	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->numports; i++) {
-			if (sc->sc_ucom[i] && config_deactivate(sc->sc_ucom[i]))
-				rv = -1;
-		}
-		break;
-	}
-	return (rv);
-}
-
 CFATTACH_DECL2_NEW(u3g, sizeof(struct u3g_softc), u3g_match,
-    u3g_attach, u3g_detach, u3g_activate, NULL, u3g_childdet);
+    u3g_attach, u3g_detach, NULL, NULL, u3g_childdet);
