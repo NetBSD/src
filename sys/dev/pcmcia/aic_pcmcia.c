@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.42 2009/09/22 13:20:36 tsutsui Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.43 2009/11/12 19:24:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.42 2009/09/22 13:20:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.43 2009/11/12 19:24:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static int	aic_pcmcia_detach(device_t, int);
 static int	aic_pcmcia_enable(device_t, int);
 
 CFATTACH_DECL_NEW(aic_pcmcia, sizeof(struct aic_pcmcia_softc),
-    aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, aic_activate);
+    aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, NULL);
 
 static const struct pcmcia_product aic_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
@@ -119,8 +119,7 @@ aic_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	error = pcmcia_function_configure(pf, aic_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 
