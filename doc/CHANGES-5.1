@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.136 2009/11/13 20:39:32 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.137 2009/11/13 20:51:04 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14706,8 +14706,15 @@ sys/nfs/nfs_socket.c				1.182
 
 sys/arch/amd64/include/Makefile.inc		1.1
 
-	Build kernel modules with -mno-red-zone like kernel is build.
+	Build kernel modules with -mno-red-zone like kernel is built.
 	This fixes frequent panics in amd64 zfs module, plus other
 	reported problems.
 	[cube, ticket #1140]
+
+external/mit/xorg/lib/dri/i915/Makefile		1.4
+external/mit/xorg/lib/dri/i965/Makefile		1.5
+
+	- Link in -ldrm_intel on i915 and i965 drivers.
+	- Build i915 driver with -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP.
+	[mrg, ticket #1132]
 
