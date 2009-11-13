@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.12.5 2009/11/12 09:04:11 uebayasi Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.12.6 2009/11/13 02:04:49 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
  * USB Enhanced Host Controller Driver, a.k.a. USB 2.0 controller.
  *
  * The EHCI 1.0 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
+ * http://www.intel.com/technology/usb/spec.htm
  * and the USB 2.0 spec at
- * http://www.usb.org/developers/docs/usb_20.zip
+ * http://www.usb.org/developers/docs/
  *
  */
 
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.5 2009/11/12 09:04:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.6 2009/11/13 02:04:49 uebayasi Exp $");
 /* __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehci.c,v 1.52 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -145,7 +145,10 @@ struct ehci_pipe {
 			u_int length;
 		} bulk;
 		/* Iso pipe */
-		/* XXX */
+		struct {
+			u_int next_frame;
+			u_int cur_xfers;
+		} isoc;
 	} u;
 };
 
