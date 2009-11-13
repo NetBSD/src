@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.5 2009/11/09 10:08:40 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.6 2009/11/13 05:27:30 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,8 +35,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MIPS_RMI_RMIXLVAR_H_
+#define _MIPS_RMI_RMIXLVAR_H_
+
+#include <mips/cpu.h>
 #include <dev/pci/pcivar.h>
 #include <machine/bus.h>
+
+static inline bool
+cpu_rmixl(const struct pridtab *ct)
+{
+	if (ct->cpu_cid == MIPS_PRID_CID_RMI)
+		return true;
+	return false;
+}
+
+static inline bool
+cpu_rmixlr(const struct pridtab *ct)
+{
+	u_int type = ct->cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
+	if (cpu_rmixl(ct) && type == CIDFL_RMI_TYPE_XLR)
+		return true;
+	return false;
+}
+
+static inline bool
+cpu_rmixls(const struct pridtab *ct)
+{
+	u_int type = ct->cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
+	if (cpu_rmixl(ct) && type == CIDFL_RMI_TYPE_XLS)
+		return true;
+	return false;
+}
+
+static inline bool
+cpu_rmixlp(const struct pridtab *ct)
+{
+	u_int type = ct->cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
+	if (cpu_rmixl(ct) && type == CIDFL_RMI_TYPE_XLP)
+		return true;
+	return false;
+}
+
 
 typedef enum {
 	RMIXL_INTR_EDGE=0,
@@ -83,6 +123,7 @@ extern void  rmixl_intr_disestablish(void *);
 extern void rmixl_addr_error_init(void);
 extern int  rmixl_addr_error_check(void);
 
-extern uint64_t rmixls_mfcr(u_int);
-extern void rmixls_mtcr(uint64_t, u_int);
+extern uint64_t rmixl_mfcr(u_int);
+extern void rmixl_mtcr(uint64_t, u_int);
 
+#endif	/* _MIPS_RMI_RMIXLVAR_H_ */
