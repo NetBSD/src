@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.1 2009/11/09 10:17:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.2 2009/11/13 05:22:19 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.1 2009/11/09 10:17:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.2 2009/11/13 05:22:19 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -224,9 +224,9 @@ rmixl_cache_err_dis(void)
 {
 	uint64_t r;
 
-	r = rmixls_mfcr(RMIXL_PCR_L1D_CONFIG0);
-	rmixls_mtcr(RMIXL_PCR_L1D_CONFIG0, r & ~0x2e);
-	rmixls_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
+	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r & ~0x2e);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
 	return r;
 }
 
@@ -239,16 +239,16 @@ rmixl_cache_err_dis(void)
 static inline void
 rmixl_cache_err_restore(uint64_t r)
 {
-	rmixls_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
-	rmixls_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_OVF_LO, 0);
-	rmixls_mtcr(RMIXL_PCR_L1D_CACHE_INTERRUPT, 0);
-	rmixls_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_OVF_LO, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_INTERRUPT, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
 }
 
 static inline uint64_t
 rmixl_cache_err_check(void)
 {
-	return rmixls_mfcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG);
+	return rmixl_mfcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG);
 }
 
 static int  
