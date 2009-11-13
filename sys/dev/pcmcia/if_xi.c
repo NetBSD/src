@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.67 2009/05/12 14:42:18 cegger Exp $ */
+/*	$NetBSD: if_xi.c,v 1.68 2009/11/13 01:14:35 dyoung Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.67 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.68 2009/11/13 01:14:35 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -259,7 +259,7 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 int
 xi_detach(device_t self, int flags)
 {
-	struct xi_softc *sc = (void *)self;
+	struct xi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	DPRINTF(XID_CONFIG, ("xi_detach()\n"));
@@ -276,28 +276,6 @@ xi_detach(device_t self, int flags)
 	if_detach(ifp);
 
 	return 0;
-}
-
-int
-xi_activate(device_t self, enum devact act)
-{
-	struct xi_softc *sc = (void *)self;
-	int s, rv = 0;
-
-	DPRINTF(XID_CONFIG, ("xi_activate()\n"));
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
-	}
-	splx(s);
-	return (rv);
 }
 
 int
@@ -597,7 +575,7 @@ xi_mdi_pulse_bits(struct xi_softc *sc, u_int32_t data, int len)
 STATIC int
 xi_mdi_read(device_t self, int phy, int reg)
 {
-	struct xi_softc *sc = (struct xi_softc *)self;
+	struct xi_softc *sc = device_private(self);
 	int i;
 	u_int32_t mask;
 	u_int32_t data = 0;
@@ -627,7 +605,7 @@ xi_mdi_read(device_t self, int phy, int reg)
 STATIC void
 xi_mdi_write(device_t self, int phy, int reg, int value)
 {
-	struct xi_softc *sc = (struct xi_softc *)self;
+	struct xi_softc *sc = device_private(self);
 	int i;
 
 	PAGE(sc, 2);
