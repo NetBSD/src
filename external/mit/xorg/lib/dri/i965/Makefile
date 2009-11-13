@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.6.1 2009/09/17 04:24:30 snj Exp $
+# $NetBSD: Makefile,v 1.3.6.2 2009/11/13 20:49:08 sborrill Exp $
 
 MODULE=	i965
 
@@ -89,5 +89,7 @@ SRCS=	\
 	intel_dri.c
 
 COPTS.brw_draw_upload.c=	-Wno-error
+
+LIBS+=	-ldrm_intel
 
 .include "${.CURDIR}/../dri.mk"
