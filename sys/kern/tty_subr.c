@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.36 2009/03/09 16:19:22 uebayasi Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.37 2009/11/13 19:00:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.36 2009/03/09 16:19:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.37 2009/11/13 19:00:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.36 2009/03/09 16:19:22 uebayasi Exp $
 #endif
 
 #ifdef QBITS
-static void	clrbits(u_char *, int, int);
+static void	clrbits(u_char *, unsigned int, unsigned int);
 #endif
 
 /*
@@ -301,10 +301,10 @@ out:
  *	clrbit(cp, off + len);
  */
 static void
-clrbits(u_char *cp, int off, int len)
+clrbits(u_char *cp, unsigned int off, unsigned int len)
 {
-	int sby, sbi, eby, ebi;
-	int i;
+	unsigned int sby, sbi, eby, ebi;
+	unsigned int i;
 	u_char mask;
 
 	if (len==1) {
