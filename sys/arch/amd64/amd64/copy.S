@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.14 2009/03/28 22:56:19 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.15 2009/11/13 22:49:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -386,7 +386,7 @@ ENTRY(fusword)
 	DEFERRED_SWITCH_CALL
 	
 ENTRY(fuswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -444,7 +444,7 @@ ENTRY(susword)
 	DEFERRED_SWITCH_CALL
 
 ENTRY(suswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
