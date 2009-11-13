@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.10 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.11 2009/11/13 21:45:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.10 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.11 2009/11/13 21:45:03 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.10 2008/11/19 18:36:04 ad Exp $
 #include <compat/linux32/common/linux32_ioctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
+int linux32_getifname(struct lwp *, register_t *, void *);
 int linux32_getifconf(struct lwp *, register_t *, void *);
 int linux32_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 
@@ -387,6 +388,31 @@ linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, registe
 }
 
 int
+linux32_getifname(struct lwp *l, register_t *retval, void *data)
+{
+	struct ifnet *ifp;
+	struct linux32_ifreq ifr;
+	int error;
+
+	error = copyin(data, &ifr, sizeof(ifr));
+	if (error)
+		return error;
+
+	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
+		return ENODEV;
+	
+	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	if (ifp == NULL)
+		return ENODEV;
+
+	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
+
+	error = copyout(&ifr, data, sizeof(ifr));
+
+	return 0;
+}
+
+int
 linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 {
 	struct linux32_ifreq ifr, *ifrp;
@@ -606,6 +632,10 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 	retval[0] = 0;
 
 	switch (com) {
+	case LINUX_SIOCGIFNAME:
+		error = linux32_getifname(l, retval, SCARG_P32(uap, data));
+		dosys = 0;
+		break;
 	case LINUX_SIOCGIFCONF:
 		error = linux32_getifconf(l, retval, SCARG_P32(uap, data));
 		dosys = 0;
