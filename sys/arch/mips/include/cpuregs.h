@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.10 2009/11/09 09:57:27 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.11 2009/11/13 05:23:23 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,11 +111,11 @@
 #define	MIPS3_VA_TO_CINDEX(x) \
 		(((intptr_t)(x) & 0xffffff) | MIPS_KSEG0_START) 
 
+#ifndef _LOCORE
 #define	MIPS_XSEG_MASK		(0x3fffffffffffffffLL)
 #define	MIPS_XKSEG_START	(0x3ULL << 62)
 #define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
 
-#ifndef _LOCORE
 #define	MIPS_XKPHYS_START	(0x2ULL << 62)
 #define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
