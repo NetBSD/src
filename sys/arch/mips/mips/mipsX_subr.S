@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.10 2009/11/09 10:01:14 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.11 2009/11/13 05:25:15 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -298,6 +298,27 @@
  * XXX: use linear mapped PTs at fixed VA in kseg2 in the future?
  */
 	.text
+
+
+/*
+ * some useful labels for debugging
+ */
+.global	mips_kseg0
+.equiv	mips_kseg0,		MIPS_KSEG0_START
+.global	mips_kseg1
+.equiv	mips_kseg1,		MIPS_KSEG1_START
+.global	mips_kseg2
+.equiv	mips_kseg2,		MIPS_KSEG2_START
+.global	mips_xkphys
+.equiv	mips_xkphys,		MIPS_XKPHYS_START
+.global	mips_xkphys_u
+.equiv	mips_xkphys_u,		MIPS_XKPHYS_UNCACHED
+.global	mips_xkphys_cca3
+.equiv	mips_xkphys_cca3,	MIPS_XKPHYS_CCA3
+.global	mips_xkphys_cca4
+.equiv	mips_xkphys_cca4,	MIPS_XKPHYS_CCA4
+.global	mips_xkseg
+.equiv	mips_xkseg,		MIPS_XKSEG_START
 
 
 /*
@@ -1055,9 +1076,9 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
 #if defined(MIPS64_XLS)
 	li	k1, 0x309	/* L1D_CACHE_ERROR_LOG */
-	.word	0x73660018	/* mfcr	a2, k1 */
+	mfcr	a2, k1
 	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
-	.word	0x73670018	/* mfcr	a3, k1 */
+	mfcr	a3, k1
 	mfc0	a4, MIPS_COP_0_STATUS
 	mfc0	a5, MIPS_COP_0_CAUSE
 #else
