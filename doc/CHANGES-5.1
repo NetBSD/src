@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.134 2009/11/08 23:03:58 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.135 2009/11/13 20:34:29 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14696,4 +14696,11 @@ usr.bin/gzip/unpack.c				1.1
 	- Avoid an overflow in suffix handling.
 	- Bump version number.
 	[mrg, ticket #1131]
+
+sys/nfs/nfs_socket.c				1.182
+
+	Handle EWOULDBLOCK the same way as EPIPE. It seems the TCP
+	socket layer can return EWOULDBLOCK on some occasion when
+	the connection is broken.
+	[bouyer, ticket #1128]
 
