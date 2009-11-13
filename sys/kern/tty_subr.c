@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.37 2009/11/13 19:00:15 dsl Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.38 2009/11/13 19:15:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.37 2009/11/13 19:00:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.38 2009/11/13 19:15:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,10 +312,11 @@ clrbits(u_char *cp, unsigned int off, unsigned int len)
 		return;
 	}
 
+	len--;
 	sby = off / NBBY;
 	sbi = off % NBBY;
 	eby = (off+len) / NBBY;
-	ebi = (off+len) % NBBY;
+	ebi = (off+len) % NBBY + 1;
 	if (sby == eby) {
 		mask = ((1 << (ebi - sbi)) - 1) << sbi;
 		cp[sby] &= ~mask;
