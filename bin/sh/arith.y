@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.18 2007/03/25 06:29:26 apb Exp $	*/
+/*	$NetBSD: arith.y,v 1.19 2009/11/13 13:49:09 gson Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.18 2007/03/25 06:29:26 apb Exp $");
+__RCSID("$NetBSD: arith.y,v 1.19 2009/11/13 13:49:09 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,6 @@ exp:	expr {
 			 * the desired result elsewhere.
 			 */
 			arith_result = $1;
-			return 0;
 		}
 	;
 
