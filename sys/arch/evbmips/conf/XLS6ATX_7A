@@ -1,11 +1,11 @@
 #
-#	$NetBSD: XLS6ATX_7A,v 1.1.2.3 2009/11/09 09:42:33 cliff Exp $
+#	$NetBSD: XLS6ATX_7A,v 1.1.2.4 2009/11/13 05:19:22 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"XLS6ATX_7A-$Revision: 1.1.2.3 $"
+#ident 		"XLS6ATX_7A-$Revision: 1.1.2.4 $"
 
 maxusers	32
 
@@ -43,7 +43,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-##options 	SYMTAB_SPACE=0x500000	# size for embedded symbol table
+options 	SYMTAB_SPACE=0x60000	# size for embedded symbol table
 #options	DDB_COMMANDONENTER="trace;show registers"
 options		DB_MAX_LINE=-1
 
@@ -188,7 +188,7 @@ pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
 pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
-##pseudo-device	ksyms				# /dev/ksyms
+pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
