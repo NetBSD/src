@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.135 2009/11/13 20:34:29 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.136 2009/11/13 20:39:32 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14703,4 +14703,11 @@ sys/nfs/nfs_socket.c				1.182
 	socket layer can return EWOULDBLOCK on some occasion when
 	the connection is broken.
 	[bouyer, ticket #1128]
+
+sys/arch/amd64/include/Makefile.inc		1.1
+
+	Build kernel modules with -mno-red-zone like kernel is build.
+	This fixes frequent panics in amd64 zfs module, plus other
+	reported problems.
+	[cube, ticket #1140]
 
