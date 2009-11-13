@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_comvar.h,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: rmixl_comvar.h,v 1.1.2.2 2009/11/13 05:26:42 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MIPS_RMIXL_RMIXL_COMVAR_H_
-#define _MIPS_RMIXL_RMIXL_COMVAR_H_
+#ifndef _MIPS_RMI_RMIXL_COMVAR_H_
+#define _MIPS_RMI_RMIXL_COMVAR_H_
 
 #include <sys/bus.h>
 
@@ -42,4 +42,4 @@ void rmixl_puts(const char *restrict);	/* XXX DEBUG */
 void rmixl_puthex32(uint32_t);		/* XXX DEBUG */
 void rmixl_puthex64(uint64_t);		/* XXX DEBUG */
 
-#endif /* _MIPS_RMIXL_RMIXL_COMVAR_H_ */
+#endif /* _MIPS_RMI_RMIXL_COMVAR_H_ */
