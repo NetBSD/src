@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.4 2009/09/15 06:10:14 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.5 2009/11/13 05:22:50 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,45 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
+
+struct pridtab {
+	int	cpu_cid;
+	int	cpu_pid;
+	int	cpu_rev;	/* -1 == wildcard */
+	int	cpu_copts;	/* -1 == wildcard */
+	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
+	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
+	int	cpu_flags;
+	u_int	cpu_cp0flags;	/* presence of some cp0 regs */
+	u_int	cpu_cidflags;	/* company-specific flags */
+	const char	*cpu_name;
+};
+
+extern const struct pridtab *mycpu;
+
+/*
+ * bitfield defines for cpu_cp0flags
+ */
+#define  MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
+#define  MIPS_CP0FL_ECC		__BIT(1)
+#define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
+#define  MIPS_CP0FL_EIRR	__BIT(3)
+#define  MIPS_CP0FL_EIMR	__BIT(4)
+#define  MIPS_CP0FL_EBASE	__BIT(5)
+#define  MIPS_CP0FL_CONFIG	__BIT(6)
+#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
+
+/*
+ * cpu_cidflags defines, by company
+ */
+/*
+ * RMI company-specific cpu_cidflags
+ */
+#define MIPS_CIDFL_RMI_TYPE     __BITS(0,2)
+#define  CIDFL_RMI_TYPE_XLR     0
+#define  CIDFL_RMI_TYPE_XLS     1
+#define  CIDFL_RMI_TYPE_XLP     2
+
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -174,6 +213,7 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	CPU_MIPS_NO_LLADDR		0x1000
+#define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
 #define	MIPS_NOT_SUPP			0x8000
 
 #endif	/* !_LOCORE */
