@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.23 2009/10/31 13:30:17 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.24 2009/11/13 20:43:07 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -411,4 +411,11 @@ sys/arch/alpha/alpha/machdep.c			1.321
 	Ensures the cpu running the shutdown waits for the correct
 	cpus to halt and thus stop the machine hanging at shutdown.
 	[mhitch, ticket #1118]
+
+sys/arch/amd64/include/Makefile.inc		1.1
+
+	Build kernel modules with -mno-red-zone like kernel is built.
+	This fixes frequent panics in amd64 zfs module, plus other
+	reported problems.
+	[cube, ticket #1140]
 
