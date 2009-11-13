@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.26 2009/09/20 23:19:53 abs Exp $
+#	$NetBSD: list,v 1.27 2009/11/13 08:20:29 he Exp $
 
-SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
+SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -48,7 +48,6 @@ PROG	usr/bin/gzip	usr/bin/gzcat	usr/bin/gunzip
 PROG	usr/bin/sed
 PROG	usr/bin/tset
 PROG	usr/bin/more	usr/bin/less
-#PROG	usr/bin/strings
 PROG	usr/bin/tip
 
 PROG	usr/sbin/chown	usr/bin/chgrp
