@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1173 2009/11/06 13:36:01 njoly Exp $
+# $NetBSD: mi,v 1.1174 2009/11/13 09:51:13 mishka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1780,6 +1780,7 @@
 ./usr/share/man/cat5/ipnat.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ipnat.conf.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ippool.0			man-ipf-catman		ipfilter,.cat
+./usr/share/man/cat5/ippool.conf.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ipsend.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
@@ -4324,6 +4325,7 @@
 ./usr/share/man/html5/ipnat.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html5/ipnat.conf.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html5/ippool.html		man-ipf-htmlman		ipfilter,html
+./usr/share/man/html5/ippool.conf.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html5/ipsec.conf.html		man-netutil-htmlman	html
 ./usr/share/man/html5/ipsend.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html5/isdnd.acct.html		man-isdn-htmlman	html
@@ -6814,6 +6816,7 @@
 ./usr/share/man/man5/ipnat.5			man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipnat.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ippool.5			man-ipf-man		ipfilter,.man
+./usr/share/man/man5/ippool.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ipsend.5			man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
