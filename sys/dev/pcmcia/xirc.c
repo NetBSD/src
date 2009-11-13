@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.29 2009/05/12 14:42:19 cegger Exp $	*/
+/*	$NetBSD: xirc.c,v 1.30 2009/11/13 01:14:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.29 2009/05/12 14:42:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.30 2009/11/13 01:14:35 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,10 +124,10 @@ struct xirc_softc {
 int	xirc_match(device_t, cfdata_t, void *);
 void	xirc_attach(device_t, device_t, void *);
 int	xirc_detach(device_t, int);
-int	xirc_activate(device_t, enum devact);
+void	xirc_childdet(device_t, device_t);
 
 CFATTACH_DECL(xirc, sizeof(struct xirc_softc),
-    xirc_match, xirc_attach, xirc_detach, xirc_activate);
+    xirc_match, xirc_attach, xirc_detach, NULL);
 
 int	xirc_print(void *, const char *);
 
@@ -170,7 +170,7 @@ xirc_match(device_t parent, cfdata_t match,
 void
 xirc_attach(device_t parent, device_t self, void *aux)
 {
-	struct xirc_softc *sc = (void *)self;
+	struct xirc_softc *sc = device_private(self);
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int rv;
@@ -383,24 +383,32 @@ xirc_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+void
+xirc_childdet(device_t self, device_t child)
+{
+	struct xirc_softc *sc = device_private(self);
+
+	if (sc->sc_ethernet == child)
+		sc->sc_ethernet = NULL;
+
+	if (sc->sc_modem == child)
+		sc->sc_modem = NULL;
+}
+
 int
 xirc_detach(device_t self, int flags)
 {
-	struct xirc_softc *sc = (void *)self;
+	struct xirc_softc *sc = device_private(self);
 	int rv;
 
 	if (sc->sc_ethernet != NULL) {
-		rv = config_detach(sc->sc_ethernet, flags);
-		if (rv != 0)
-			return (rv);
-		sc->sc_ethernet = NULL;
+		if ((rv = config_detach(sc->sc_ethernet, flags)) != 0)
+			return rv;
 	}
 
 	if (sc->sc_modem != NULL) {
-		rv = config_detach(sc->sc_modem, flags);
-		if (rv != 0)
-			return (rv);
-		sc->sc_modem = NULL;
+		if ((rv = config_detach(sc->sc_modem, flags)) != 0)
+			return rv;
 	}
 
 	/* Unmap our i/o windows. */
@@ -417,37 +425,6 @@ xirc_detach(device_t self, int flags)
 	sc->sc_flags = 0;
 
 	return (0);
-}
-
-int
-xirc_activate(device_t self, enum devact act)
-{
-	struct xirc_softc *sc = (void *)self;
-	int s, rv = 0;
-
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_ethernet != NULL) {
-			rv = config_deactivate(sc->sc_ethernet);
-			if (rv != 0)
-				goto out;
-		}
-
-		if (sc->sc_modem != NULL) {
-			rv = config_deactivate(sc->sc_modem);
-			if (rv != 0)
-				goto out;
-		}
-		break;
-	}
- out:
-	splx(s);
-	return (rv);
 }
 
 int
@@ -553,7 +530,7 @@ int	com_xirc_detach(device_t, int);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL_NEW(com_xirc, sizeof(struct com_softc),
-    com_xirc_match, com_xirc_attach, com_detach, com_activate);
+    com_xirc_match, com_xirc_attach, com_detach, NULL);
 
 int	com_xirc_enable(struct com_softc *);
 void	com_xirc_disable(struct com_softc *);
@@ -627,15 +604,14 @@ void	xi_xirc_attach(device_t, device_t, void *);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(xi_xirc, sizeof(struct xi_softc),
-    xi_xirc_match, xi_xirc_attach, xi_detach, xi_activate);
+    xi_xirc_match, xi_xirc_attach, xi_detach, NULL);
 
 int	xi_xirc_enable(struct xi_softc *);
 void	xi_xirc_disable(struct xi_softc *);
 int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
-xi_xirc_match(device_t parent, cfdata_t match,
-    void *aux)
+xi_xirc_match(device_t parent, cfdata_t match, void *aux)
 {
 	extern struct cfdriver xi_cd;
 	const char *name = aux;
@@ -649,8 +625,8 @@ xi_xirc_match(device_t parent, cfdata_t match,
 void
 xi_xirc_attach(device_t parent, device_t self, void *aux)
 {
-	struct xi_softc *sc = (void *)self;
-	struct xirc_softc *msc = (void *)parent;
+	struct xi_softc *sc = device_private(self);
+	struct xirc_softc *msc = device_private(parent);
 	u_int8_t myla[ETHER_ADDR_LEN];
 
 	aprint_normal("\n");
