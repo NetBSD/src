@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.4 2009/11/09 10:03:04 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.5 2009/11/13 05:27:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.4 2009/11/09 10:03:04 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.5 2009/11/13 05:27:09 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,7 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.4 2009/11/09 10:03:04 cliff Exp
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <mips/cpu.h>
 #include <mips/locore.h>
+
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 
@@ -313,6 +315,8 @@ evbmips_intr_init(void)
 {
 	uint32_t r;
 	int i;
+
+	KASSERT(cpu_rmixls(mycpu));
 
 #ifdef DIAGNOSTIC
 	if (evbmips_intr_init_done != 0)
