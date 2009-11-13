@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.105 2009/11/13 21:45:03 joerg Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.106 2009/11/13 22:39:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.105 2009/11/13 21:45:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.106 2009/11/13 22:39:35 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1025,9 +1025,7 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 
 	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
 
-	error = copyout(&ifr, data, sizeof(ifr));
-
-	return 0;
+	return copyout(&ifr, data, sizeof(ifr));
 }
 
 int

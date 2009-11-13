@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.11 2009/11/13 21:45:03 joerg Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.12 2009/11/13 22:39:35 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.11 2009/11/13 21:45:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.12 2009/11/13 22:39:35 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -407,9 +407,7 @@ linux32_getifname(struct lwp *l, register_t *retval, void *data)
 
 	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
 
-	error = copyout(&ifr, data, sizeof(ifr));
-
-	return 0;
+	return copyout(&ifr, data, sizeof(ifr));
 }
 
 int
