@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.7 2009/11/09 10:00:02 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.8 2009/11/13 05:24:43 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.7 2009/11/09 10:00:02 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.8 2009/11/13 05:24:43 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -433,7 +433,7 @@ do {									\
 		"dsrl %M0,$1,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
-	printf("  %s:%*s %#"PRIx64"x\n", name, FLDWIDTH - (int) strlen(name), \
+	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
 	    "", __val);							\
 } while (0)
 
@@ -442,8 +442,10 @@ do {									\
 	uint32_t __val;							\
 									\
 	__asm volatile(							\
+		".set push			\n\t"			\
 		".set mips64			\n\t"			\
 		"mfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+		".set pop			\n\t"			\
 	    : "=r"(__val));						\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
@@ -464,7 +466,7 @@ do {									\
 		"dsrl %M0,$1,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
-	printf("  %s:%*s %#"PRIx64"x\n", name, FLDWIDTH - (int) strlen(name), \
+	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
 	    "", __val);							\
 } while (0)
 
@@ -472,25 +474,7 @@ void
 db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
-	int is_rmi_xls=0;
-
-	/* XXX FIXME what class define to use here ? */
-	switch (MIPS_PRID_IMPL(cpu_id)) {
-	case MIPS_XLS104:
-	case MIPS_XLS108:
-	case MIPS_XLS204:
-	case MIPS_XLS208:
-	case MIPS_XLS404LITE:
-	case MIPS_XLS408LITE:
-	case MIPS_XLS404:
-	case MIPS_XLS408:
-	case MIPS_XLS416:
-	case MIPS_XLS608:
-	case MIPS_XLS616:
-		is_rmi_xls = 1;
-		break;
-	}
-
+	u_int cp0flags = mycpu->cpu_cp0flags;
 
 	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
 	SHOW32(MIPS_COP_0_TLB_RANDOM, "random");
@@ -528,11 +512,10 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_COUNT, "count");
 	}
 
-	/* XXX FIXME what class define to use here ? */
-	if (is_rmi_xls) {
+	if ((cp0flags & MIPS_CP0FL_EIRR) != 0)
 		MIPS64_SHOW64(9, 6, "eirr");
+	if ((cp0flags & MIPS_CP0FL_EIMR) != 0)
 		MIPS64_SHOW64(9, 7, "eimr");
-	}
 
 	if (CPUIS64BITS) {
 		SHOW64(MIPS_COP_0_TLB_HI, "entryhi");
@@ -555,12 +538,27 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	SHOW32(MIPS_COP_0_PRID, "prid");
 
-	/* XXX FIXME what class define to use here ? */
-	if (is_rmi_xls) {
-		MIPS64_SHOW32(15, 1, "ebase");
-		MIPS64_SHOW32(16, 0, "config0");
-		MIPS64_SHOW32(16, 1, "config1");
-		MIPS64_SHOW32(16, 7, "config7");
+	if ((cp0flags & MIPS_CP0FL_USE) != 0) {
+		if ((cp0flags & MIPS_CP0FL_EBASE) != 0)
+			MIPS64_SHOW32(15, 1, "ebase");
+		if ((cp0flags & MIPS_CP0FL_CONFIG) != 0)
+			SHOW32(MIPS_COP_0_CONFIG, "config");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(0)) != 0)
+			MIPS64_SHOW32(16, 0, "config0");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(1)) != 0)
+			MIPS64_SHOW32(16, 1, "config1");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(2)) != 0)
+			MIPS64_SHOW32(16, 2, "config2");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(3)) != 0)
+			MIPS64_SHOW32(16, 3, "config3");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(4)) != 0)
+			MIPS64_SHOW32(16, 4, "config4");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(5)) != 0)
+			MIPS64_SHOW32(16, 5, "config5");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(6)) != 0)
+			MIPS64_SHOW32(16, 6, "config6");
+		if ((cp0flags & MIPS_CP0FL_CONFIGn(7)) != 0)
+			MIPS64_SHOW32(16, 7, "config7");
 	} else {
 		SHOW32(MIPS_COP_0_CONFIG, "config");
 #if defined(MIPS32) || defined(MIPS64)
@@ -598,11 +596,13 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 		}
 
-		/* CP0 ECC and CACHE_ERR "not implemented" on XLS */
-		if (!is_rmi_xls) {
+		if (((cp0flags & MIPS_CP0FL_USE) == 0) ||
+		    ((cp0flags & MIPS_CP0FL_ECC) != 0))
 			SHOW32(MIPS_COP_0_ECC, "ecc");
+
+		if (((cp0flags & MIPS_CP0FL_USE) == 0) ||
+		    ((cp0flags & MIPS_CP0FL_CACHE_ERR) != 0))
 			SHOW32(MIPS_COP_0_CACHE_ERR, "cacherr");
-		}
 
 		SHOW32(MIPS_COP_0_TAG_LO, "cachelo");
 		SHOW32(MIPS_COP_0_TAG_HI, "cachehi");
@@ -619,12 +619,28 @@ void
 db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
 {
-	extern uint64_t rmixls_mfcr(u_int);
+	uint64_t value;
 
-	if (!have_addr)
+	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+		db_printf("mfcr not implemented on this CPU\n");
 		return;
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr,
-		rmixls_mfcr(addr));
+	}
+
+	if (!have_addr) {
+		db_printf("Address missing\n");
+		return;
+	}
+
+	/* value = CR[addr] */
+	__asm volatile(							\
+		".set push 			\n\t"			\
+		".set mips64			\n\t"			\
+		".set noat			\n\t"			\
+		"mfcr $1,$2			\n\t"			\
+		".set pop 			\n\t"			\
+	    : "=r"(value) : "r"(addr));
+	
+	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
 }
 
 void
@@ -632,18 +648,29 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
 {
 	db_expr_t value;
-	extern void rmixls_mtcr(uint64_t, u_int);
 
-	if (!have_addr)
+	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+		db_printf("mtcr not implemented on this CPU\n");
 		return;
-	if (db_expression(&value) == 0) {
+	}
+
+	if ((!have_addr) || (db_expression(&value) == 0)) {
 		db_printf("Address missing\n");
 		db_flush_lex();
 		return;
         }
 	db_skip_to_eol();
-	rmixls_mtcr(value, addr);
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
+
+	/* CR[addr] = value */
+	__asm volatile(							\
+		".set push 			\n\t"			\
+		".set mips64			\n\t"			\
+		".set noat			\n\t"			\
+		"mfcr $1,$2			\n\t"			\
+		".set pop 			\n\t"			\
+	    :: "r"(value), "r"(addr));
+
+	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
 }
 
 const struct db_command db_machine_command_table[] = {
