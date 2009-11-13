@@ -1,7 +1,7 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.4 2009/11/09 10:05:50 cliff Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.5 2009/11/13 05:26:42 cliff Exp $	*/
 
-#ifndef _MIPS_RMIXL_OBIOVAR_H_
-#define _MIPS_RMIXL_OBIOVAR_H_
+#ifndef _MIPS_RMI_RMIXL_OBIOVAR_H_
+#define _MIPS_RMI_RMIXL_OBIOVAR_H_
 
 #include <dev/pci/pcivar.h>
 #include <mips/bus_dma.h>
@@ -30,4 +30,4 @@ typedef struct obio_softc {
 	bus_size_t		sc_size;
 } obio_softc_t;
 
-#endif /* _MIPS_OMAP_RMIXL_OBIOVAR_H_ */
+#endif /* _MIPS_RMI_RMIXL_OBIOVAR_H_ */
