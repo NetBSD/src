@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.104 2009/06/17 14:18:51 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.105 2009/11/13 21:45:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.104 2009/06/17 14:18:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.105 2009/11/13 21:45:03 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -114,6 +114,7 @@ int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
+int linux_getifname(struct lwp *, register_t *, void *);
 int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
@@ -1005,6 +1006,31 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 }
 
 int
+linux_getifname(struct lwp *l, register_t *retval, void *data)
+{
+	struct ifnet *ifp;
+	struct linux_ifreq ifr;
+	int error;
+
+	error = copyin(data, &ifr, sizeof(ifr));
+	if (error)
+		return error;
+
+	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
+		return ENODEV;
+	
+	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	if (ifp == NULL)
+		return ENODEV;
+
+	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
+
+	error = copyout(&ifr, data, sizeof(ifr));
+
+	return 0;
+}
+
+int
 linux_getifconf(struct lwp *l, register_t *retval, void *data)
 {
 	struct linux_ifreq ifr, *ifrp;
@@ -1225,6 +1251,10 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	retval[0] = 0;
 
 	switch (com) {
+	case LINUX_SIOCGIFNAME:
+		error = linux_getifname(l, retval, SCARG(uap, data));
+		dosys = 0;
+		break;
 	case LINUX_SIOCGIFCONF:
 		error = linux_getifconf(l, retval, SCARG(uap, data));
 		dosys = 0;
