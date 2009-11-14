@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2009/11/11 16:08:31 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 2009/11/14 13:31:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2009/11/11 16:08:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2009/11/14 13:31:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1042,7 +1042,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 /*
  * Finishes the initialization of the pmap module.
- * This procedure is called from vm_mem_init() in vm/vm_init.c
+ * This procedure is called from uvm_init() in uvm/uvm_init.c
  * to initialize any remaining data structures that the pmap module
  * needs to map virtual memory (VM is already ON).
  */
@@ -1065,7 +1065,7 @@ pmap_init(void)
 	pool_sethiwat(&pmap_pv_pool, pmap_pvlowat * 32);
 
 	/*
-	 * map SysCall gateways page once for everybody
+	 * map SysCall gateway page once for everybody
 	 * NB: we'll have to remap the phys memory
 	 *     if we have any at SYSCALLGATE address (;
 	 *
