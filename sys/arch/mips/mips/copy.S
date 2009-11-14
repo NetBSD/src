@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.3 2009/10/24 18:30:29 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.4 2009/11/14 21:50:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -302,26 +302,67 @@ LEAF(suswintr)
 END(suswintr)
 
 /*
- * long fuword(void *)
- * Fetches a word of data from the user-space address.
+ * uint32_t ufetch_uint32(void *)
+ * Fetches a 32-bit datum from the user-space address.
  */
-LEAF(fuword)
-XLEAF(fuiword)
+LEAF(ufetch_uint32)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	LONG_L	v0, 0(a0)			# fetch word
+	INT_L	v0, 0(a0)			# fetch int
 	j	ra
 	PTR_S	zero, U_PCB_ONFAULT(v1)
-END(fuword)
+END(ufetch_uint32)
+STRONG_ALIAS(ufetch_int32, ufetch_uint32)
+STRONG_ALIAS(ufetch_int, ufetch_uint32)
+STRONG_ALIAS(ufetch_uint, ufetch_uint32)
+STRONG_ALIAS(ufetch_uint32_intrsafe, ufetch_uint32)
+STRONG_ALIAS(ufetch_int32_intrsafe, ufetch_uint32)
+STRONG_ALIAS(ufetch_int_intrsafe, ufetch_uint32)
+STRONG_ALIAS(ufetch_uint_intrsafe, ufetch_uint32)
+#ifndef _LP64
+STRONG_ALIAS(ufetch_ptr, ufetch_uint32)
+STRONG_ALIAS(ufetch_long, ufetch_uint32)
+STRONG_ALIAS(ufetch_ulong, ufetch_uint32)
+STRONG_ALIAS(ufetch_ptr_intrsafe, ufetch_uint32)
+STRONG_ALIAS(ufetch_long_intrsafe, ufetch_uint32)
+STRONG_ALIAS(ufetch_ulong_intrsafe, ufetch_uint32)
+STRONG_ALIAS(fuword, ufetch_uint32)
+STRONG_ALIAS(fuiword, ufetch_uint32)
+#endif
+
+#ifdef _LP64
+/*
+ * uint64_t ufetch_uint64(void *)
+ * Fetches a 64-bit datum from the user-space address.
+ */
+LEAF(ufetch_uint64)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(fswberr)
+	blt	a0, zero, _C_LABEL(fswberr)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	LONG_L	v0, 0(a0)			# fetch 64-bit datum
+	j	ra
+	PTR_S	zero, U_PCB_ONFAULT(v1)
+END(ufetch_uint64)
+STRONG_ALIAS(ufetch_int64, ufetch_uint64)
+STRONG_ALIAS(ufetch_ptr, ufetch_uint64)
+STRONG_ALIAS(ufetch_long, ufetch_uint64)
+STRONG_ALIAS(ufetch_ulong, ufetch_uint64)
+STRONG_ALIAS(ufetch_int64_intrsafe, ufetch_uint64)
+STRONG_ALIAS(ufetch_ptr_intrsafe, ufetch_uint64)
+STRONG_ALIAS(ufetch_long_intrsafe, ufetch_uint64)
+STRONG_ALIAS(ufetch_ulong_intrsafe, ufetch_uint64)
+STRONG_ALIAS(fuword, ufetch_uint64)
+STRONG_ALIAS(fuiword, ufetch_uint64)
+#endif
 
 /*
- * int fusword(void *)
- * Fetches a short word of data from the user-space address.
+ * uint16_t ufetch_uint16(void *)
+ * Fetches an unsigned 16-bit datum from the user-space address.
  */
-LEAF(fusword)
-XLEAF(fuisword)
+LEAF(ufetch_uint16)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -329,14 +370,35 @@ XLEAF(fuisword)
 	lhu	v0, 0(a0)			# fetch short
 	j	ra
 	PTR_S	zero, U_PCB_ONFAULT(v1)
-END(fusword)
+END(ufetch_uint16)
+STRONG_ALIAS(ufetch_ushort, ufetch_uint16)
+STRONG_ALIAS(ufetch_uint16_intrsafe, ufetch_uint16)
+STRONG_ALIAS(ufetch_ushort_intrsafe, ufetch_uint16)
+STRONG_ALIAS(fusword, ufetch_uint16)
+STRONG_ALIAS(fuisword, ufetch_uint16)
 
 /*
- * int fubyte(void *)
+ * uint16_t ufetch_int16(void *)
+ * Fetches a signed 16-bit datum from the user-space address.
+ */
+LEAF(ufetch_int16)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(fswberr)
+	blt	a0, zero, _C_LABEL(fswberr)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	lh	v0, 0(a0)			# fetch short
+	j	ra
+	PTR_S	zero, U_PCB_ONFAULT(v1)
+END(ufetch_int16)
+STRONG_ALIAS(ufetch_short, ufetch_int16)
+STRONG_ALIAS(ufetch_int16_intrsafe, ufetch_int16)
+STRONG_ALIAS(ufetch_short_intrsafe, ufetch_int16)
+
+/*
+ * uint8_t uftech_uint8(void *)
  * Fetch a byte from the user's address space.
  */
-LEAF(fubyte)
-XLEAF(fuibyte)
+LEAF(ufetch_uint8)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -344,28 +406,66 @@ XLEAF(fuibyte)
 	lbu	v0, 0(a0)			# fetch byte
 	j	ra
 	PTR_S	zero, U_PCB_ONFAULT(v1)
-END(fubyte)
+END(ufetch_uint8)
+STRONG_ALIAS(ufetch_uchar, ufetch_uint8)
+STRONG_ALIAS(ufetch_uint8_intrsafe, ufetch_uint8)
+STRONG_ALIAS(ufetch_uchar_intrsafe, ufetch_uint8)
+STRONG_ALIAS(fubyte, ufetch_uint8)
+STRONG_ALIAS(fuibyte, ufetch_uint8)
 
 /*
- * int suword(void *, long)
- * Stores a word of data to the user-space address.
+ * int8_t uftech_int8(void *)
+ * Fetch a byte from the user's address space.
  */
-LEAF(suword)
+LEAF(ufetch_int8)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	LONG_S	a1, 0(a0)			# store word
+	lb	v0, 0(a0)			# fetch byte
+	j	ra
+	PTR_S	zero, U_PCB_ONFAULT(v1)
+END(ufetch_int8)
+STRONG_ALIAS(ufetch_char, ufetch_int8)
+STRONG_ALIAS(ufetch_int8_intrsafe, ufetch_int8)
+STRONG_ALIAS(ufetch_char_intrsafe, ufetch_int8)
+
+/*
+ * int ustore_uint32(void *, uint32_t)
+ * Stores a 32-bit datum to the user-space address.
+ */
+LEAF(ustore_uint32)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(fswberr)
+	blt	a0, zero, _C_LABEL(fswberr)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	INT_S	a1, 0(a0)			# store word
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
-END(suword)
+END(ustore_uint32)
+STRONG_ALIAS(ustore_int32, ustore_uint32)
+STRONG_ALIAS(ustore_int, ustore_uint32)
+STRONG_ALIAS(ustore_uint, ustore_uint32)
+STRONG_ALIAS(ustore_uint32_intrsafe, ustore_uint32)
+STRONG_ALIAS(ustore_int32_intrsafe, ustore_uint32)
+STRONG_ALIAS(ustore_int_intrsafe, ustore_uint32)
+STRONG_ALIAS(ustore_uint_intrsafe, ustore_uint32)
+#ifndef _LP64
+STRONG_ALIAS(ustore_ptr, ustore_uint32)
+STRONG_ALIAS(ustore_long, ustore_uint32)
+STRONG_ALIAS(ustore_ulong, ustore_uint32)
+STRONG_ALIAS(ustore_ptr_intrsafe, ustore_uint32)
+STRONG_ALIAS(ustore_long_intrsafe, ustore_uint32)
+STRONG_ALIAS(ustore_ulong_intrsafe, ustore_uint32)
+STRONG_ALIAS(suword, ustore_uint32)
+#endif
 
 /*
- * int suiword(void *, int)
+ * int ustore_uint32_isync(void *, uint32_t)
  * Have to flush instruction cache afterwards.
  */
-LEAF(suiword)
+LEAF(ustore_uint32_isync)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -376,14 +476,43 @@ LEAF(suiword)
 	PTR_L	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
 	j	v1				# NOTE: must not clobber v0!
 	li	a1, 4				# size of word
-END(suiword)
+END(ustore_uint32_isync)
+
+#ifdef _LP64
+/*
+ * int ustore_uint64(void *, uint64_t)
+ * Stores a 64-bit datum to the user-space address.
+ */
+LEAF(ustore_uint64)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(fswberr)
+	blt	a0, zero, _C_LABEL(fswberr)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	LONG_S	a1, 0(a0)			# store word
+	PTR_S	zero, U_PCB_ONFAULT(v1)
+	j	ra
+	move	v0, zero
+END(ustore_uint64)
+STRONG_ALIAS(ustore_int64, ustore_uint64)
+STRONG_ALIAS(ustore_int, ustore_uint64)
+STRONG_ALIAS(ustore_uint, ustore_uint64)
+STRONG_ALIAS(ustore_uint64_intrsafe, ustore_uint64)
+STRONG_ALIAS(ustore_int64_intrsafe, ustore_uint64)
+STRONG_ALIAS(ustore_int_intrsafe, ustore_uint64)
+STRONG_ALIAS(ustore_uint_intrsafe, ustore_uint64)
+STRONG_ALIAS(ustore_ptr, ustore_uint64)
+STRONG_ALIAS(ustore_long, ustore_uint64)
+STRONG_ALIAS(ustore_ulong, ustore_uint64)
+STRONG_ALIAS(ustore_long_intrsafe, ustore_uint64)
+STRONG_ALIAS(ustore_ulong_intrsafe, ustore_uint64)
+STRONG_ALIAS(suword, ustore_uint64)
+#endif
 
 /*
- * int susword(void *, short)
+ * int ustore_uint16(void *, uint16_t)
  * Stores a short word of data to the user-space address.
  */
-LEAF(susword)
-XLEAF(suisword)
+LEAF(ustore_uint16)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -392,14 +521,18 @@ XLEAF(suisword)
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
-END(susword)
+END(ustore_uint16)
+STRONG_ALIAS(ustore_int16, ustore_uint16)
+STRONG_ALIAS(ustore_uint16_intrsafe, ustore_uint16)
+STRONG_ALIAS(ustore_int16_intrsafe, ustore_uint16)
+STRONG_ALIAS(susword, ustore_uint16)
+STRONG_ALIAS(suisword, ustore_uint16)
 
 /*
- * int subyte(void *, int)
+ * int ustore_uint8(void *, uint8_t)
  * Stores a byte of data to the user-space address.
  */
-LEAF(subyte)
-XLEAF(suibyte)
+LEAF(ustore_uint8)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
@@ -408,7 +541,12 @@ XLEAF(suibyte)
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
-END(subyte)
+END(ustore_uint8)
+STRONG_ALIAS(ustore_int8, ustore_uint8)
+STRONG_ALIAS(ustore_uint8_intrsafe, ustore_uint8)
+STRONG_ALIAS(ustore_int8_intrsafe, ustore_uint8)
+STRONG_ALIAS(subyte, ustore_uint8)
+STRONG_ALIAS(suibyte, ustore_uint8)
 
 /*
  * int badaddr(void addr, int len)
