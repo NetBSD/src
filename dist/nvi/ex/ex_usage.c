@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_usage.c,v 1.3 2009/11/14 23:40:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -77,10 +77,15 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 		    memcmp(ap->bp, cp->name, ap->len); ++cp);
 		if (cp->name == NULL ||
 		    (newscreen && !F_ISSET(cp, E_NEWSCREEN))) {
+			const char *nstr;
+			size_t nlen;
+
 			if (newscreen)
 				ap->bp[0] = toupper(ap->bp[0]);
+
+			INT2CHAR(sp, ap->bp, ap->len + 1, nstr, nlen);
 			(void)ex_printf(sp, "The %.*s command is unknown\n",
-			    (int)ap->len, ap->bp);
+			    (int)ap->len, nstr);
 		} else {
 			(void)ex_printf(sp,
 			    "Command: %s\n  Usage: %s\n", cp->help, cp->usage);
