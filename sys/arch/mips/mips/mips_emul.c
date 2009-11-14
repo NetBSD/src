@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.4 2009/08/24 12:08:01 uebayasi Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.5 2009/11/14 21:52:08 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.4 2009/08/24 12:08:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.5 2009/11/14 21:52:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,9 +224,9 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 	 *  Fetch the instruction.
 	 */
 	if (cause & MIPS_CR_BR_DELAY)
-		inst = fuword((uint32_t *)opc+1);
+		inst = ufetch_uint32((uint32_t *)opc+1);
 	else
-		inst = fuword((uint32_t *)opc);
+		inst = ufetch_uint32((uint32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
 	case OP_LWC0:
@@ -256,6 +256,9 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 		break;
 #endif
 	default:
+#ifdef DEBUG
+		printf("pid %d(%s): trap: bad vaddr %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
+#endif
 		frame->f_regs[_R_CAUSE] = cause;
 		frame->f_regs[_R_BADVADDR] = opc;
 		KSI_INIT_TRAP(&ksi);
@@ -937,7 +940,7 @@ bcemul_sw(uint32_t inst, struct frame *frame, uint32_t cause)
 		return;
 	}
 
-	if (suword((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+	if (ustore_uint32((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
@@ -973,7 +976,7 @@ bcemul_swl(uint32_t inst, struct frame *frame, uint32_t cause)
 	a &= ~(0xFFFFFFFFUL >> shift);
 	a |= x;
 
-	if (suword((void *)vaddr, a) < 0) {
+	if (ustore_uint32((void *)vaddr, a) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
@@ -1009,7 +1012,7 @@ bcemul_swr(uint32_t inst, struct frame *frame, uint32_t cause)
 	a &= ~(0xFFFFFFFFUL << shift);
 	a |= x;
 
-	if (suword((void *)vaddr, a) < 0) {
+	if (ustore_uint32((void *)vaddr, a) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
