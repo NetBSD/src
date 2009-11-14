@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_read.c,v 1.3 2009/11/14 23:31:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -345,7 +345,8 @@ ex_readfp(SCR *sp, const char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, in
 	if (!silent) {
 		char *q = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
-		    "148|%s: %lu lines, %lu characters", q, lcnt, ccnt);
+		    "148|%s: %lu lines, %lu characters", q, (unsigned long)lcnt,
+		    (unsigned long)ccnt);
 		if (nf)
 			FREE_SPACE(sp, q, 0);
 	}

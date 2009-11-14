@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.6 2009/08/07 16:19:53 lukem Exp $ */
+/*	$NetBSD: options.c,v 1.7 2009/11/14 23:31:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -475,8 +475,8 @@ opts_init(SCR *sp, int *oargs)
 	}
 	return (0);
 
-err:	msgq(sp, M_ERR,
-	    "031|Unable to set default %s option", optlist[optindx].name);
+err:	msgq_wstr(sp, M_ERR, optlist[optindx].name,
+	    "031|Unable to set default %s option");
 	return (1);
 }
 
