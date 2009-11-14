@@ -1,4 +1,4 @@
-# $NetBSD: CP.alias,v 1.13 2009/10/31 15:15:42 tnozaki Exp $
+# $NetBSD: CP.alias,v 1.14 2009/11/14 01:56:23 tnozaki Exp $
 
 037	cp037 ibm037 ebcdic-cp-us ebcdic-cp-ca ebcdic-cp-wt ebcdic-cp-nl
 038	cp038 ibm038 ebcdic-int
@@ -68,6 +68,16 @@
 1129	cp1129 ibm1129
 1131	cp1131 ibm1131
 1133	cp1133 ibm1133
+1140	cp1140 ibm1140
+1141	cp1141 ibm1141
+1142	cp1142 ibm1142
+1143	cp1143 ibm1143
+1144	cp1144 ibm1144
+1145	cp1145 ibm1145
+1146	cp1146 ibm1146
+1147	cp1147 ibm1147
+1148	cp1148 ibm1148
+1149	cp1149 ibm1149
 1161	cp1161 ibm1161
 1162	cp1162 ibm1162 mscp874 windows-874
 1163	cp1163 ibm1163
