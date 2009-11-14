@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.5 2009/11/13 05:22:50 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.6 2009/11/14 21:50:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -394,6 +394,83 @@ struct lwp;
 struct user;
 
 extern struct segtab *segbase;	/* current segtab base */
+
+/* copy.S */
+int8_t	ufetch_int8(void *);
+int16_t	ufetch_int16(void *);
+int32_t ufetch_int32(void *);
+uint8_t	ufetch_uint8(void *);
+uint16_t ufetch_uint16(void *);
+uint32_t ufetch_uint32(void *);
+int8_t	ufetch_int8_intrsafe(void *);
+int16_t	ufetch_int16_intrsafe(void *);
+int32_t ufetch_int32_intrsafe(void *);
+uint8_t	ufetch_uint8_intrsafe(void *);
+uint16_t ufetch_uint16_intrsafe(void *);
+uint32_t ufetch_uint32_intrsafe(void *);
+#ifdef _LP64
+int64_t ufetch_int64(void *);
+uint64_t ufetch_uint64(void *);
+int64_t ufetch_int64_intrsafe(void *);
+uint64_t ufetch_uint64_intrsafe(void *);
+#endif
+char	ufetch_char(void *);
+short	ufetch_short(void *);
+int	ufetch_int(void *);
+long	ufetch_long(void *);
+char	ufetch_char_intrsafe(void *);
+short	ufetch_short_intrsafe(void *);
+int	ufetch_int_intrsafe(void *);
+long	ufetch_long_intrsafe(void *);
+
+u_char	ufetch_uchar(void *);
+u_short	ufetch_ushort(void *);
+u_int	ufetch_uint(void *);
+u_long	ufetch_ulong(void *);
+u_char	ufetch_uchar_intrsafe(void *);
+u_short	ufetch_ushort_intrsafe(void *);
+u_int	ufetch_uint_intrsafe(void *);
+u_long	ufetch_ulong_intrsafe(void *);
+void 	*ufetch_ptr(void *);
+
+int	ustore_int8(void *, int8_t);
+int	ustore_int16(void *, int16_t);
+int	ustore_int32(void *, int32_t);
+int	ustore_uint8(void *, uint8_t);
+int	ustore_uint16(void *, uint16_t*);
+int	ustore_uint32(void *, uint32_t);
+int	ustore_int8_intrsafe(void *, int8_t);
+int	ustore_int16_intrsafe(void *, int16_t);
+int	ustore_int32_intrsafe(void *, int32_t);
+int	ustore_uint8_intrsafe(void *, uint8_t);
+int	ustore_uint16_intrsafe(void *, uint16_t);
+int	ustore_uint32_intrsafe(void *, uint32_t);
+#ifdef _LP64
+int	ustore_int64(void *, int64_t);
+int	ustore_uint64(void *, uint64_t);
+int	ustore_int64_intrsafe(void *, int64_t);
+int	ustore_uint64_intrsafe(void *, uint64_t);
+#endif
+int	ustore_char(void *, char);
+int	ustore_char_intrsafe(void *, char);
+int	ustore_short(void *, short);
+int	ustore_short_intrsafe(void *, short);
+int	ustore_int(void *, int);
+int	ustore_int_intrsafe(void *, int);
+int	ustore_long(void *, long);
+int	ustore_long_intrsafe(void *, long);
+int	ustore_uchar(void *, u_char);
+int	ustore_uchar_intrsafe(void *, u_char);
+int	ustore_ushort(void *, u_short);
+int	ustore_ushort_intrsafe(void *, u_short);
+int	ustore_uint(void *, u_int);
+int	ustore_uint_intrsafe(void *, u_int);
+int	ustore_ulong(void *, u_long);
+int	ustore_ulong_intrsafe(void *, u_long);
+int 	ustore_ptr(void *, void *);
+int	ustore_ptr_intrsafe(void *, void *);
+
+int	ustore_uint32_isync(void *, uint32_t);
 
 /* trap.c */
 void	netintr(void);
