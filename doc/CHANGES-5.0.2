@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.24 2009/11/13 20:43:07 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.25 2009/11/14 09:49:16 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -418,4 +418,12 @@ sys/arch/amd64/include/Makefile.inc		1.1
 	This fixes frequent panics in amd64 zfs module, plus other
 	reported problems.
 	[cube, ticket #1140]
+
+sys/netinet6/ip6_forward.c			1.67
+
+	Clear cksum flags before any further processing like
+	ip_forward does. Many drivers set the UDP/TCP v4 flags even
+	for v6 traffic and if the packet is encapsulated with gif,
+	the IPv6 header would get corrupted by ip_output.
+	[joerg, ticket #1139]
 
