@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.38 2009/11/13 19:15:24 dsl Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.39 2009/11/14 13:18:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.38 2009/11/13 19:15:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.39 2009/11/14 13:18:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,32 +303,28 @@ out:
 static void
 clrbits(u_char *cp, unsigned int off, unsigned int len)
 {
-	unsigned int sby, sbi, eby, ebi;
-	unsigned int i;
-	u_char mask;
+	unsigned int sbi, ebi;
+	u_char *scp, *ecp;
+	unsigned int end;
+	unsigned char mask;
 
-	if (len==1) {
-		clrbit(cp, off);
-		return;
-	}
-
-	len--;
-	sby = off / NBBY;
+	scp = cp + off / NBBY;
 	sbi = off % NBBY;
-	eby = (off+len) / NBBY;
-	ebi = (off+len) % NBBY + 1;
-	if (sby == eby) {
-		mask = ((1 << (ebi - sbi)) - 1) << sbi;
-		cp[sby] &= ~mask;
+	end = off + len + NBBY - 1;
+	ecp = cp + end / NBBY - 1;
+	ebi = end % NBBY + 1;
+	if (scp >= ecp) {
+		mask = ((1 << len) - 1) << sbi;
+		*scp &= ~mask;
 	} else {
 		mask = (1 << sbi) - 1;
-		cp[sby++] &= mask;
+		*scp++ &= mask;
 
 		mask = (1 << ebi) - 1;
-		cp[eby] &= ~mask;
+		*ecp &= ~mask;
 
-		for (i = sby; i < eby; i++)
-			cp[i] = 0x00;
+		while (scp < ecp)
+			*scp++ = 0x00;
 	}
 }
 #endif
