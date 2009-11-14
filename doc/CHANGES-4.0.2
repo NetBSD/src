@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.60 2009/10/18 15:49:45 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.61 2009/11/14 10:43:56 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -939,4 +939,12 @@ external/bsd/pkg_install/dist/lib/version.h		1.1.1.18 - 1.1.1.21
 	- Fix German accent
 	- Don't dereference a null pointer for pkg_admin add
 	[joerg, ticket #1364]
+
+sys/netinet6/ip6_forward.c			1.67
+
+	Clear cksum flags before any further processing like
+	ip_forward does. Many drivers set the UDP/TCP v4 flags even
+	for v6 traffic and if the packet is encapsulated with gif,
+	the IPv6 header would get corrupted by ip_output.
+	[joerg, ticket #1366]
 
