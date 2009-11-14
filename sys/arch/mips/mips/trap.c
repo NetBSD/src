@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.10 2009/11/09 10:02:30 cliff Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.11 2009/11/14 21:52:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.10 2009/11/09 10:02:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.11 2009/11/14 21:52:08 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -508,7 +508,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		/*
 		 * Restore original instruction and clear BP
 		 */
-		rv = suiword((void *)va, l->l_md.md_ss_instr);
+		rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
 		if (rv < 0) {
 			vaddr_t sa, ea;
 			sa = trunc_page(va);
@@ -516,7 +516,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_ALL, false);
 			if (rv == 0) {
-				rv = suiword((void *)va, l->l_md.md_ss_instr);
+				rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 			}
@@ -661,7 +661,7 @@ mips_singlestep(struct lwp *l)
 
 	l->l_md.md_ss_addr = va;
 	l->l_md.md_ss_instr = fuiword((void *)va);
-	rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+	rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
 	if (rv < 0) {
 		vaddr_t sa, ea;
 		sa = trunc_page(va);
@@ -669,7 +669,7 @@ mips_singlestep(struct lwp *l)
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_ALL, false);
 		if (rv == 0) {
-			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+			rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 		}
@@ -677,7 +677,7 @@ mips_singlestep(struct lwp *l)
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-		p->p_md.md_ss_instr, pc, fuword((void *)va)); /* XXX */
+		p->p_md.md_ss_instr, pc, ufetch_uint32((void *)va)); /* XXX */
 #endif
 	return 0;
 }
