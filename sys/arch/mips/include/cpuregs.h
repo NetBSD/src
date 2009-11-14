@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.11 2009/11/13 05:23:23 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.12 2009/11/14 21:49:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -242,6 +242,7 @@
 
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
+#define	MIPS3_SR_PX		0x00800000		/* MIPS64 */
 #define	MIPS3_SR_SR		0x00100000
 #define	MIPS3_SR_NMI		0x00080000		/* MIPS32/64 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
