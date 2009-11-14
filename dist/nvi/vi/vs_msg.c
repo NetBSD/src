@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: vs_msg.c,v 1.3 2009/11/14 23:40:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -179,7 +179,7 @@ vs_update(SCR *sp, const char *m1, const CHAR_T *m2)
 		if (m2 != NULL)
 			INT2CHAR(sp, m2, STRLEN(m2) + 1, np, nlen);
 		(void)ex_printf(sp,
-		    "%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : np);
+		    "%s%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : np);
 		(void)ex_fflush(sp);
 	}
 

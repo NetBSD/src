@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_txt.c,v 1.4 2009/08/07 16:19:54 lukem Exp $ */
+/*	$NetBSD: ex_txt.c,v 1.5 2009/11/14 23:40:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -363,8 +363,12 @@ txt_prompt(SCR *sp, TEXT *tp, ARG_CHAR_T prompt, u_int32_t flags)
 		(void)ex_printf(sp, "%6lu  ", (u_long)tp->lno);
 
 	/* Print out autoindent string. */
-	if (LF_ISSET(TXT_AUTOINDENT))
-		(void)ex_printf(sp, "%.*s", (int)tp->ai, tp->lb);
+	if (LF_ISSET(TXT_AUTOINDENT)) {
+		const char *nstr;
+		size_t nlen;
+		INT2CHAR(sp, tp->lb, tp->ai + 1, nstr, nlen);
+		(void)ex_printf(sp, "%.*s", (int)tp->ai, nstr);
+	}
 	(void)ex_fflush(sp);
 }
 
