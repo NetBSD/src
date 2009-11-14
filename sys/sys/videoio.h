@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.6 2009/08/18 02:17:09 christos Exp $ */
+/* $NetBSD: videoio.h,v 1.7 2009/11/14 10:37:27 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -323,7 +323,7 @@ struct v4l2_format {
 		struct v4l2_vbi_format vbi;
 		uint8_t		raw_data[200];
 	} fmt;
-} __attribute__((__packed__));
+} __packed;
 
 struct v4l2_frequency {
 	uint32_t	tuner;
