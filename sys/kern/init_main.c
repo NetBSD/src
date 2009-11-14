@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.408 2009/11/03 05:23:28 dyoung Exp $	*/
+/*	$NetBSD: init_main.c,v 1.409 2009/11/14 18:36:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.408 2009/11/03 05:23:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.409 2009/11/14 18:36:57 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -338,6 +338,11 @@ main(void)
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
+	/* Initialize the kernel authorization subsystem. */
+	kauth_init();
+
+	spec_init();
+
 	/* Start module system. */
 	module_init();
 
@@ -349,7 +354,6 @@ main(void)
 	 * credential inheritance policy, it is needed at least before
 	 * any process is created, specifically proc0.
 	 */
-	kauth_init();
 	module_init_class(MODULE_CLASS_SECMODEL);
 
 	/* Initialize the buffer cache */
