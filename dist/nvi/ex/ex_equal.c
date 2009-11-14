@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_equal.c,v 1.1.1.2 2008/05/18 14:31:14 aymeric Exp $ */
+/*	$NetBSD: ex_equal.c,v 1.2 2009/11/14 23:40:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -54,6 +54,6 @@ ex_equal(SCR *sp, EXCMD *cmdp)
 	} else
 		lno = cmdp->addr1.lno;
 
-	(void)ex_printf(sp, "%ld\n", lno);
+	(void)ex_printf(sp, "%ld\n", (unsigned long)lno);
 	return (0);
 }
