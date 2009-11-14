@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: extern.h,v 1.3 2009/11/14 23:31:37 christos Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 SCR *api_fscreen __P((int, char *));
@@ -93,7 +93,8 @@ int mark_end __P((SCR *, EXF *));
 int mark_get __P((SCR *, ARG_CHAR_T, MARK *, mtype_t));
 int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
 int mark_insdel __P((SCR *, lnop_t, db_recno_t));
-void msgq __P((SCR *, mtype_t, const char *, ...));
+void msgq __P((SCR *, mtype_t, const char *, ...))
+    __attribute__((__format__(__printf__, 3, 4)));
 void msgq_wstr __P((SCR *, mtype_t, const CHAR_T *, const char *));
 void msgq_str __P((SCR *, mtype_t, const char *, const char *));
 void mod_rpt __P((SCR *));
@@ -158,7 +159,8 @@ int seq_save __P((SCR *, FILE *, const char *, seq_t));
 int e_memcmp __P((CHAR_T *, EVENT *, size_t));
 void vtrace_end __P((void));
 void vtrace_init __P((char *));
-void vtrace __P((const char *, ...));
+void vtrace __P((const char *, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
 void *binc __P((SCR *, void *, size_t *, size_t));
 int nonblank __P((SCR *, db_recno_t, size_t *));
 const char *tail __P((const char *));

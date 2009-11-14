@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: ex.c,v 1.5 2009/11/14 23:31:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -583,8 +583,8 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 
 	/* Check for ex mode legality. */
 	if (F_ISSET(sp, SC_EX) && (F_ISSET(ecp->cmd, E_VIONLY) || newscreen)) {
-		msgq(sp, M_ERR,
-		    "082|%s: command not available in ex mode", ecp->cmd->name);
+		msgq_wstr(sp, M_ERR, ecp->cmd->name,
+		    "082|%s: command not available in ex mode");
 		goto err;
 	}
 
@@ -1208,10 +1208,15 @@ arg_cnt_chk:		if (*++np != 'N') {		/* N */
 					goto usage;
 			}
 			goto addr_verify;
-		default:
+		default: {
+			const char *nstr;
+			size_t nlen;
+			INT2CHAR(sp, ecp->cmd->name, STRLEN(ecp->cmd->name) + 1,
+			    nstr, nlen);
 			msgq(sp, M_ERR,
 			    "085|Internal syntax table error (%s: %s)",
-			    ecp->cmd->name, KEY_NAME(sp, *np));
+			    nstr, KEY_NAME(sp, *np));
+		}
 		}
 	}
 
@@ -2312,7 +2317,7 @@ ex_badaddr(SCR *sp, const EXCMDLIST *cp, enum badaddr ba, enum nresult nret)
 		if (lno != 0) {
 			msgq(sp, M_ERR,
 			    "102|Illegal address: only %lu lines in the file",
-			    lno);
+			    (unsigned long)lno);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -2323,9 +2328,8 @@ ex_badaddr(SCR *sp, const EXCMDLIST *cp, enum badaddr ba, enum nresult nret)
 		abort();
 		/* NOTREACHED */
 	case A_ZERO:
-		msgq(sp, M_ERR,
-		    "104|The %s command doesn't permit an address of 0",
-		    cp->name);
+		msgq_wstr(sp, M_ERR, cp->name,
+		    "104|The %s command doesn't permit an address of 0");
 		break;
 	}
 	return;
