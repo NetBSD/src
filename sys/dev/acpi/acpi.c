@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.133 2009/09/16 16:34:49 dyoung Exp $	*/
+/*	$NetBSD: acpi.c,v 1.134 2009/11/14 09:54:10 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.133 2009/09/16 16:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.134 2009/11/14 09:54:10 cegger Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -989,8 +989,8 @@ acpi_print(void *aux, const char *pnp)
 			else {
 				int i;
 
-				for (i = 0; i < sizeof(acpi_knowndevs) /
-				    sizeof(acpi_knowndevs[0]); i++) {
+				for (i = 0; i < __arraycount(acpi_knowndevs);
+				    i++) {
 					if (strcmp(acpi_knowndevs[i].pnp,
 					    pnpstr) == 0) {
 						aprint_normal("[%s] ",
