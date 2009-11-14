@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.3 2008/12/09 18:26:20 christos Exp $ */
+/*	$NetBSD: exf.c,v 1.4 2009/11/14 20:01:20 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -945,7 +945,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	 * Note that this code is harmless if you're using libc 4.6.x.
 	 */
 	if (LF_ISSET(FS_APPEND) && lseek(fd, (off_t)0, SEEK_END) < 0) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		return (1);
 	}
 #endif
@@ -1064,7 +1064,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 			*--s = '.';
 		}
 	}
-	msgq(sp, M_INFO, s);
+	msgq(sp, M_INFO, "%s", s);
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
