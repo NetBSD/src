@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.126 2009/10/06 04:28:10 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.126 2009/10/06 04:28:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -151,6 +151,8 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
 
+static kauth_listener_t rawio_listener;
+
 /* Returns true if vnode is /dev/mem or /dev/kmem. */
 bool
 iskmemvp(struct vnode *vp)
@@ -169,6 +171,32 @@ iskmemdev(dev_t dev)
 
 	/* minor 14 is /dev/io on i386 with COMPAT_10 */
 	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+}
+
+static int
+rawio_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if ((action != KAUTH_DEVICE_RAWIO_SPEC) &&
+	    (action != KAUTH_DEVICE_RAWIO_PASSTHRU))
+		return result;
+
+	/* Access is mandated by permissions. */
+	result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
+void
+spec_init(void)
+{
+
+	rawio_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    rawio_listener_cb, NULL);
 }
 
 /*

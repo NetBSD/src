@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.30 2009/10/07 01:31:41 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.31 2009/11/14 18:36:56 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.30 2009/10/07 01:31:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.31 2009/11/14 18:36:56 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -872,17 +872,6 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 		}
-
-	case KAUTH_DEVICE_RAWIO_SPEC:
-	case KAUTH_DEVICE_RAWIO_PASSTHRU:
-		/*
-		 * Decision is root-agnostic.
-		 *
-		 * Both requests can be issued on devices subject to their
-		 * permission bits.
-		 */
-		result = KAUTH_RESULT_ALLOW;
-		break;
 
 	case KAUTH_DEVICE_GPIO_PINSET:
 		/*
