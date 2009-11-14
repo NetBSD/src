@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.28 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.29 2009/11/14 03:43:52 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.28 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.29 2009/11/14 03:43:52 nakayama Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,6 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 	com_is_output = (ea->ea_node == prom_instance_to_package(prom_stdout()));
 
 	if (com_is_input || com_is_output) {
-		extern struct consdev comcons;
 		struct consdev *cn_orig;
 
 		/* Record some info to attach console. */
@@ -161,17 +160,17 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 			sc->sc_frequency, COM_TYPE_NORMAL, kma.kmta_cflag)) {
 			aprint_error("Error: comcnattach failed\n");
 		}
-		cn_tab = cn_orig;
 		if (com_is_input) {
-			cn_tab->cn_dev = comcons.cn_dev;
-			cn_tab->cn_probe = comcons.cn_probe;
-			cn_tab->cn_init = comcons.cn_init;
-			cn_tab->cn_getc = comcons.cn_getc;
-			cn_tab->cn_pollc = comcons.cn_pollc;
+			cn_orig->cn_dev = cn_tab->cn_dev;
+			cn_orig->cn_probe = cn_tab->cn_probe;
+			cn_orig->cn_init = cn_tab->cn_init;
+			cn_orig->cn_getc = cn_tab->cn_getc;
+			cn_orig->cn_pollc = cn_tab->cn_pollc;
 		}
 		if (com_is_output) {
-			cn_tab->cn_putc = comcons.cn_putc;
+			cn_orig->cn_putc = cn_tab->cn_putc;
 		}
+		cn_tab = cn_orig;
 		kma.kmta_consdev = cn_tab;
 	}
 	/* Now attach the driver */
