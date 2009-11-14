@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.841 2009/11/05 21:11:53 dyoung Exp $
+# $NetBSD: mi,v 1.842 2009/11/14 01:56:21 tnozaki Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1620,6 +1620,16 @@
 ./usr/share/i18n/csmapper/CP/CP1129%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1131%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1133%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1140%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1141%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1142%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1143%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1144%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1145%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1146%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1147%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1148%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP1149%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1161%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1162%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1163%UCS.mps	base-sysutil-share	nls
@@ -1703,6 +1713,16 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP1129.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1131.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1133.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1140.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1141.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1142.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1143.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1144.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1145.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1146.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1147.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1148.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP1149.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1161.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1162.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP1163.mps	base-sysutil-share	nls
@@ -2026,6 +2046,16 @@
 ./usr/share/i18n/esdb/CP/CP1129.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1131.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1133.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1140.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1141.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1142.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1143.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1144.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1145.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1146.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1147.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1148.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP1149.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1161.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1162.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1163.esdb		base-sysutil-share	nls
