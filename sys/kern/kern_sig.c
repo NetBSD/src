@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.299 2009/10/02 23:24:15 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.300 2009/11/14 19:06:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.299 2009/10/02 23:24:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.300 2009/11/14 19:06:54 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1418,15 +1418,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			goto out;
 	} else {
 		/*
-		 * Process is stopped or stopping.  If traced, then no
-		 * further action is necessary.
+		 * Process is stopped or stopping.
+		 * - If traced, then no action is needed, unless killing.
+		 * - Run the process only if sending SIGCONT or SIGKILL.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL)
+		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL) {
 			goto out;
-
-		/*
-		 * Run the process only if sending SIGCONT or SIGKILL.
-		 */
+		}
 		if ((prop & SA_CONT) != 0 || signo == SIGKILL) {
 			/*
 			 * Re-adjust p_nstopchild if the process wasn't
@@ -1434,9 +1432,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 */
 			p->p_stat = SACTIVE;
 			p->p_sflag &= ~PS_STOPPING;
-			if (!p->p_waited)
+			if (!p->p_waited) {
 				p->p_pptr->p_nstopchild--;
-
+			}
+			if (p->p_slflag & PSL_TRACED) {
+				KASSERT(signo == SIGKILL);
+				goto deliver;
+			}
 			/*
 			 * Do not make signal pending if SIGCONT is default.
 			 *
@@ -1459,6 +1461,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Make signal pending.
 	 */
+	KASSERT((p->p_slflag & PSL_TRACED) == 0);
 	sigput(&p->p_sigpend, p, kp);
 
  deliver:
