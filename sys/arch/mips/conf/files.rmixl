@@ -1,10 +1,10 @@
-#	$NetBSD: files.rmixl,v 1.1.2.4 2009/11/09 09:56:06 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.5 2009/11/14 21:59:15 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
 
 file	arch/mips/rmi/rmixl_intr.c
-file	arch/mips/rmi/rmixls_subr.S
+file	arch/mips/rmi/rmixl_subr.S
 
 # OBIO: offsets are from System Bridge Controller base
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
