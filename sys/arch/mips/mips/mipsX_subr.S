@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.11 2009/11/13 05:25:15 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.12 2009/11/14 21:49:34 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -714,7 +714,7 @@ END(MIPSX(KernGenException))
  * Handle an exception from user mode.
  * Save user context atop the kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curlwp->p_md.md_regs.
+ * curlwp->l_md.md_regs.
  */
 NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	.set	noat
