@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.5 2009/05/24 06:53:34 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.6 2009/11/15 15:53:05 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -102,11 +102,10 @@ uturnattach(device_t parent, device_t self, void *aux)
 	((struct iomod *)ioh)->io_control = 0x80;
 
 	/*
-	 * U2/UTurn is actually a combination of an Upper Bus
-	 * Converter (UBC) and a Lower Bus Converter (LBC).  This
-	 * driver attaches to the UBC; the LBC isn't very interesting,
-	 * so we skip it.  This is easy, since it always is module 63,
-	 * hence the MAXMODBUS - 1 below.
+	 * U2/UTurn is actually a combination of an Upper Bus Converter (UBC)
+	 * and a Lower Bus Converter (LBC).  This driver attaches to the UBC;
+	 * the LBC isn't very interesting, so we skip it.  This is easy, since
+	 * it always is module 63, hence the MAXMODBUS - 1 below.
 	 */
 	nca = *ca;
 	nca.ca_hpabase = 0;
