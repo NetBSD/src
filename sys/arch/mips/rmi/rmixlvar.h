@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.6 2009/11/13 05:27:30 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.7 2009/11/15 23:11:32 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -92,14 +92,19 @@ typedef enum {
 
 struct rmixl_config {
 	uint64_t		 rc_io_pbase;	
+	bus_addr_t		 rc_pcie_cfg_pbase;	
+	bus_size_t		 rc_pcie_cfg_size;
+	bus_addr_t		 rc_pcie_ecfg_pbase;	
+	bus_size_t		 rc_pcie_ecfg_size;
 	bus_addr_t		 rc_pci_mem_pbase;	
 	bus_size_t		 rc_pci_mem_size;
 	bus_addr_t		 rc_pci_io_pbase;	
 	bus_size_t		 rc_pci_io_size;
-	struct mips_bus_space	 rc_el_memt; 	/* little endian bus */
-	struct mips_bus_space	 rc_eb_memt; 	/* big    endian bus */
-	struct mips_bus_space	 rc_pci_memt; 	/* PCI MEM */
-	struct mips_bus_space	 rc_pci_iot; 	/* PCI IO  */
+	struct mips_bus_space	 rc_obio_memt; 		/* DEVIO */
+	struct mips_bus_space	 rc_pcie_cfg_memt; 	/* PCI CFG  */
+	struct mips_bus_space	 rc_pcie_ecfg_memt; 	/* PCI ECFG */
+	struct mips_bus_space	 rc_pci_memt; 		/* PCI MEM */
+	struct mips_bus_space	 rc_pci_iot; 		/* PCI IO  */
 	struct mips_bus_dma_tag	 rc_29bit_dmat;
 	struct mips_bus_dma_tag	 rc_32bit_dmat;
 	struct mips_bus_dma_tag	 rc_64bit_dmat;
@@ -109,8 +114,9 @@ struct rmixl_config {
 
 extern struct rmixl_config rmixl_configuration;
 
-extern void rmixl_el_bus_mem_init(bus_space_tag_t, void *);
-extern void rmixl_eb_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_obio_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_pcie_cfg_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_pcie_ecfg_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pcie_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pcie_bus_io_init(bus_space_tag_t, void *);
 
