@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.31 2008/04/13 04:55:52 tsutsui Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.32 2009/11/15 20:38:35 snj Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product contains software written by Ignatios Souvatzis and
- *	Michael L. Hitch for the NetBSD project.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.31 2008/04/13 04:55:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.32 2009/11/15 20:38:35 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
