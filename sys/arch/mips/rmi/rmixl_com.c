@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.6 2009/09/25 22:22:52 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.7 2009/11/15 23:10:04 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.6 2009/09/25 22:22:52 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.7 2009/11/15 23:10:04 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
 	struct com_regs	regs;
 	int rv;
 
-	bst = obio->obio_eb_bst;	/* com is always big endian */
+	bst = obio->obio_bst;
 	addr = obio->obio_addr;
 	size = obio->obio_size;
 
@@ -264,7 +264,7 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_frequency = -1;	/* XXX */
 
-	bst = obio->obio_eb_bst;
+	bst = obio->obio_bst;
 	addr = obio->obio_addr;
 	size = obio->obio_size;
 
@@ -308,7 +308,7 @@ rmixl_com_cnattach(bus_addr_t addr, int speed, int freq,
 	bus_size_t sz;
 	struct com_regs	regs;
 
-	bst = (bus_space_tag_t)&rmixl_configuration.rc_eb_memt;
+	bst = (bus_space_tag_t)&rmixl_configuration.rc_obio_memt;
 	sz = COM_NPORTS * sizeof(uint32_t);	/* span of UART regs in bytes */
 
 	memset(&regs, 0, sizeof(regs));
