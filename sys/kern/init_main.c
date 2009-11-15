@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.409 2009/11/14 18:36:57 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.410 2009/11/15 02:37:13 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.409 2009/11/14 18:36:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.410 2009/11/15 02:37:13 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -218,6 +218,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.409 2009/11/14 18:36:57 elad Exp $")
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/cpu.h>
 
