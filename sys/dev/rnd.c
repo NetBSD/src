@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.71.4.1 2009/09/16 04:01:55 snj Exp $	*/
+/*	$NetBSD: rnd.c,v 1.71.4.2 2009/11/15 05:46:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71.4.1 2009/09/16 04:01:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71.4.2 2009/11/15 05:46:23 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -775,7 +775,7 @@ rnd_sample_allocate_isr(rndsource_t *source)
 {
 	rnd_sample_t *c;
 
-	c = pool_get(&rnd_mempool, 0);
+	c = pool_get(&rnd_mempool, PR_NOWAIT);
 	if (c == NULL)
 		return (NULL);
 
