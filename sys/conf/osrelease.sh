@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.119 2009/11/15 14:40:18 dsl Exp $
+#	$NetBSD: osrelease.sh,v 1.120 2009/11/15 18:41:08 dsl Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,8 @@
 
 # We use the number specified in <sys/param.h>
 
-path="./$0"
+path="$0"
+[ "${path#/*}" = "$path" ] && path="./$path"
 exec < ${path%/*}/../sys/param.h
 
 # Search for line
