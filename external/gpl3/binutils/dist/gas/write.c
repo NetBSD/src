@@ -821,10 +821,12 @@ adjust_reloc_syms (bfd *abfd ATTRIBUTE_UNUSED,
 	      continue;
 	  }
 
-	/* Never adjust a reloc against local symbol in a merge section
-	   with non-zero addend.  */
+	/* Never adjust a reloc against local symbol in a merge section with
+	   a non-zero addend if the addend would place the relocation otside
+	   the section's limits.  */
 	if ((symsec->flags & SEC_MERGE) != 0
-	    && (fixp->fx_offset != 0 || fixp->fx_subsy != NULL))
+	    && (S_GET_VALUE(sym) + fixp->fx_offset >= bfd_get_section_size(symsec)
+	        || fixp->fx_subsy != NULL))
 	  continue;
 
 	/* Never adjust a reloc against TLS local symbol.  */
