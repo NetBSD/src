@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.6 2009/11/09 09:58:45 cliff Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.7 2009/11/15 23:00:00 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.6 2009/11/09 09:58:45 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.7 2009/11/15 23:00:00 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,8 +422,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		    offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR 
+			" (map size is %"PRIxPSIZE")",
+				offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad length");
 #endif
