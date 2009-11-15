@@ -549,7 +549,7 @@ get_alpha_reloc_tag (long sequence)
       strcpy (info->string, buffer);
       errmsg = hash_insert (alpha_literal_hash, info->string, (void *) info);
       if (errmsg)
-	as_fatal (errmsg);
+	as_fatal ("%s", errmsg);
     }
 
   return info;
@@ -1829,7 +1829,7 @@ insert_operand (unsigned insn,
 
       insn = (*operand->insert) (insn, val, &errmsg);
       if (errmsg)
-	as_warn (errmsg);
+	as_warn ("%s", errmsg);
     }
   else
     insn |= ((val & ((1 << operand->bits) - 1)) << operand->shift);
