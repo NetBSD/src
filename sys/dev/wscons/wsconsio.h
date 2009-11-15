@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.90 2009/02/08 22:58:56 uwe Exp $ */
+/* $NetBSD: wsconsio.h,v 1.91 2009/11/15 17:42:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -320,6 +320,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
 #define WSDISPLAY_TYPE_PXALCD	47	/* PXA2x0 LCD controller */
 #define WSDISPLAY_TYPE_AG10	48	/* Fujitsu AG-10e */
+#define WSDISPLAY_TYPE_DL	49	/* DisplayLink DL-1x0/DL-1x5 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
