@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.27 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: wchar.h,v 1.28 2009/11/15 22:21:03 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -66,7 +66,7 @@
 
 #include <stdio.h> /* for FILE* */
 
-#ifdef	_BSD_WCHAR_T_
+#if defined(_BSD_WCHAR_T_) && !defined(__cplusplus)
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
