@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.3 2009/11/15 18:23:08 dsl Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -532,7 +532,7 @@ cl_move(SCR *sp, size_t lno, size_t cno)
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 	/* See the comment in cl_cursor. */
 	if (wmove(win, RLNO(sp, lno), RCNO(sp, cno)) == ERR) {
-		msgq(sp, M_ERR, "Error: move: l(%u + %u) c(%u + %u)",
+		msgq(sp, M_ERR, "Error: move: l(%u + %zu) c(%u + %zu)",
 		    lno, sp->roff, cno, sp->coff);
 		return (1);
 	}
