@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.10 2009/03/18 16:00:16 cegger Exp $
+ *	$NetBSD: aout2hux.c,v 1.11 2009/11/15 18:24:23 dholland Exp $
  */
 
 #include <sys/types.h>
@@ -200,20 +200,20 @@ open_elf(const char *fn, FILE *fp, struct elf_m68k_hdr *hdr, struct exec_info *i
 
 	if ((i = get_uint16(&hdr->e_shentsize)) != SIZE_ELF68K_SHDR) {
 		fprintf(stderr, "%s: size shdr %d should be %d\n", fn, i,
-			SIZE_ELF68K_SHDR);
+			(int)SIZE_ELF68K_SHDR);
 		return 1;
 	}
 
 	if ((i = get_uint16(&hdr->e_phentsize)) != SIZE_ELF68K_PHDR) {
 		fprintf(stderr, "%s: size phdr %d should be %d\n", fn, i,
-			SIZE_ELF68K_PHDR);
+			(int)SIZE_ELF68K_PHDR);
 		return 1;
 	}
 
 	if ((nphdr = get_uint16(&hdr->e_phnum)) != 1 && nphdr != 2) {
 		fprintf(stderr,
-			"%s: has %d loadable segments (should be 1 or 2)\n",
-			fn, nphdr);
+			"%s: has %lu loadable segments (should be 1 or 2)\n",
+			fn, (unsigned long)nphdr);
 		return 1;
 	}
 
