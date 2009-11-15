@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.6 2008/08/04 21:19:45 matt Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.7 2009/11/15 22:21:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/inttypes.h>
 #include <machine/ansi.h>
 
-#ifdef	_BSD_WCHAR_T_
+#if defined(_BSD_WCHAR_T_) && !defined(__cplusplus)
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
