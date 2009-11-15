@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.2 2009/11/13 05:22:19 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.3 2009/11/15 23:11:06 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.2 2009/11/13 05:22:19 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.3 2009/11/15 23:11:06 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -86,16 +86,6 @@ int rmixl_pcie_debug = PCI_DEBUG;
 #else
 # define STATIC
 #endif
-
-
-/*
- * use XKPHYS in order to accomodate XLS 40 bit PCIe bus address
- * PCIe config space is all little endian for now
- */
-#define RMIXL_PCI_VADDR(ba)					\
-	(volatile uint32_t *)MIPS_PHYS_TO_XKPHYS_UNCACHED(ba)
-#define RMIXL_PCI_READ(o)     le32toh(*RMIXL_PCI_VADDR(o))
-#define RMIXL_PCI_WRITE(o,v)  *RMIXL_PCI_VADDR(o) = htole32(v)
 
 
 /*
@@ -149,9 +139,13 @@ static void	rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *);
 static void	rmixl_pcie_errata(struct rmixl_pcie_softc *);
 static void	rmixl_conf_interrupt(void *, int, int, int, int, int *);
 static int	rmixl_pcie_bus_maxdevs(void *, int);
+static pcitag_t	rmixl_tag_to_ecfg(pcitag_t);
 static pcitag_t	rmixl_pcie_make_tag(void *, int, int, int);
 static void	rmixl_pcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 void		rmixl_pcie_tag_print(const char *restrict, void *, pcitag_t,				int, vaddr_t, u_long);
+static int	rmixl_pcie_conf_setup(struct rmixl_pcie_softc *,
+			pcitag_t, int *, bus_space_tag_t *,
+			bus_space_handle_t *);
 static pcireg_t	rmixl_pcie_conf_read(void *, pcitag_t, int);
 static void	rmixl_pcie_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -306,7 +300,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 		u_long n = RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
 		RMIXL_PCIE_BAR_INIT(CFG, bar, n, n);
 	}
-	sc->sc_pcie_cfg_pbase = RMIXL_PCIE_CFG_BAR_TO_BA(bar);
+	rcp->rc_pcie_cfg_pbase = (bus_addr_t)RMIXL_PCIE_CFG_BAR_TO_BA(bar);
+	rcp->rc_pcie_cfg_size  = (bus_size_t)RMIXL_PCIE_CFG_SIZE;
 
 	/*
 	 * get PCIE Extended config space base addr from SBC PCIe ECFG BAR
@@ -318,7 +313,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 		u_long n = RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
 		RMIXL_PCIE_BAR_INIT(ECFG, bar, n, n);
 	}
-	sc->sc_pcie_ecfg_pbase = RMIXL_PCIE_ECFG_BAR_TO_BA(bar);
+	rcp->rc_pcie_ecfg_pbase = (bus_addr_t)RMIXL_PCIE_ECFG_BAR_TO_BA(bar);
+	rcp->rc_pcie_ecfg_size  = (bus_size_t)RMIXL_PCIE_ECFG_SIZE;
 
 	/*
 	 * get PCI MEM space base [addr, size] from SBC PCIe MEM BAR
@@ -347,7 +343,16 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	rcp->rc_pci_io_size  = (bus_size_t)RMIXL_PCIE_IO_BAR_TO_SIZE(bar);
 
 	/*
-	 * initialize the PCI bus spaces tag
+	 * initialize the PCI CFG, ECFG bus space tags
+	 */
+	rmixl_pcie_cfg_bus_mem_init(&rcp->rc_pcie_cfg_memt, rcp);
+	sc->sc_pcie_cfg_memt = &rcp->rc_pcie_cfg_memt;
+
+	rmixl_pcie_ecfg_bus_mem_init(&rcp->rc_pcie_ecfg_memt, rcp);
+	sc->sc_pcie_ecfg_memt = &rcp->rc_pcie_ecfg_memt;
+
+	/*
+	 * initialize the PCI MEM and IO bus space tags
 	 */
 	rmixl_pcie_bus_mem_init(&rcp->rc_pci_memt, rcp);
 	rmixl_pcie_bus_io_init(&rcp->rc_pci_iot, rcp);
@@ -769,18 +774,38 @@ rmixl_pcie_bus_maxdevs(void *v, int busno)
 }
 
 /*
+ * rmixl_tag_to_ecfg - convert cfg address (generic tag) to ecfg address
+ *
+ *	39:29   (reserved)
+ *	28      Swap (0=little, 1=big endian)
+ *	27:20   Bus number
+ *	19:15   Device number
+ *	14:12   Function number
+ *	11:8    Extended Register number
+ *	7:0     Register number
+ */
+static pcitag_t
+rmixl_tag_to_ecfg(pcitag_t tag)
+{
+	KASSERT((tag & __BITS(7,0)) == 0);
+	return (tag << 4);
+}
+
+/*
  * XLS pci tag is a 40 bit address composed thusly:
  *	39:25   (reserved)
  *	24      Swap (0=little, 1=big endian)
  *	23:16   Bus number
  *	15:11   Device number
  *	10:8    Function number
- *	0:7     Register number
+ *	7:0     Register number
+ *
+ * Note: this is the "native" composition for addressing CFG space, but not for ECFG space.
  */
 pcitag_t
-rmixl_pcie_make_tag(void *v, int b, int d, int f)
+rmixl_pcie_make_tag(void *v, int bus, int dev, int fun)
 {
-	return ((b << 16) | (d << 11) | (f << 8));
+	return ((bus << 16) | (dev << 11) | (fun << 8));
 }
 
 void
@@ -801,50 +826,116 @@ rmixl_pcie_tag_print(const char *restrict s, void *v, pcitag_t tag, int offset,
 	int bus, dev, fun;
 
 	rmixl_pcie_decompose_tag(v, tag, &bus, &dev, &fun);
-	printf("%s: %d/%d/%d/%d - %#lx:%#lx\n",
+	printf("%s: %d/%d/%d/%d - %#" PRIxVADDR ":%#lx\n",
 		s, bus, dev, fun, offset, va, r);
+}
+
+static int
+rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
+	pcitag_t tag, int *offp, bus_space_tag_t *bstp,
+	bus_space_handle_t *bshp)
+{
+	struct rmixl_config *rcp = &rmixl_configuration;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+	pcitag_t mask;
+	bus_addr_t ba;
+	int err;
+	static bus_space_handle_t cfg_bsh;
+	static pcitag_t cfg_oba = -1;
+	static bus_space_handle_t ecfg_bsh;
+	static pcitag_t ecfg_oba = -1;
+
+	/*
+	 * bus space depends on offset
+	 */
+	if ((*offp >= 0) && (*offp < 0x100)) {
+		mask = __BITS(15,0);
+		bst = sc->sc_pcie_cfg_memt;
+		ba = rcp->rc_pcie_cfg_pbase;
+		ba += (tag & ~mask);
+		*offp += (tag & mask);
+		if (ba != cfg_oba) {
+			size = (bus_size_t)(mask + 1);
+			if (cfg_oba != -1)
+				bus_space_unmap(bst, cfg_bsh, size);
+			err = bus_space_map(bst, ba, size, 0, &cfg_bsh);
+			if (err != 0) {
+#ifdef DEBUG
+				panic("%s: bus_space_map err %d, CFG space",
+					__func__, err);	/* XXX */
+#endif
+				return -1;
+			}
+			cfg_oba = ba;
+		}
+		bsh = cfg_bsh;
+	} else if ((*offp >= 0x100) && (*offp <= 0x700)) {
+		mask = __BITS(14,0);
+		tag = rmixl_tag_to_ecfg(tag);	/* convert to ECFG format */
+		bst = sc->sc_pcie_ecfg_memt;
+		ba = rcp->rc_pcie_ecfg_pbase;
+		ba += (tag & ~mask);
+		*offp += (tag & mask);
+		if (ba != ecfg_oba) {
+			size = (bus_size_t)(mask + 1);
+			if (ecfg_oba != -1)
+				bus_space_unmap(bst, ecfg_bsh, size);
+			err = bus_space_map(bst, ba, size, 0, &ecfg_bsh);
+			if (err != 0) {
+#ifdef DEBUH
+				panic("%s: bus_space_map err %d, ECFG space",
+					__func__, err);	/* XXX */
+#endif
+				return -1;
+			}
+			ecfg_oba = ba;
+		}
+		bsh = ecfg_bsh;
+	} else  {
+#ifdef DEBUG
+		panic("%s: offset %#x: unknown", __func__, *offp);
+#endif
+		return -1;
+	}
+
+	*bstp = bst;
+	*bshp = bsh;
+
+	return 0;
 }
 
 pcireg_t
 rmixl_pcie_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct rmixl_pcie_softc *sc = v;
-	bus_addr_t ba;
-	vaddr_t va;
+	static bus_space_handle_t bsh;
+	bus_space_tag_t bst;
 	pcireg_t rv;
 	uint64_t cfg0;
 	u_int s;
 
 	PCI_CONF_LOCK(s);
-	cfg0 = rmixl_cache_err_dis();
 
-	/*
-	 * base bus addr depends on offset
-	 */
-	if ((offset >= 0) && ( offset < 0x100)) {
-		ba = sc->sc_pcie_cfg_pbase;
-	} else if ((offset >= 0x100) && (offset <= 0x700)) {
-		ba = sc->sc_pcie_ecfg_pbase;
-		if (ba == -1)
-			return -1;
-	} else  {
-		panic("%s: offset %#x: unknown", __func__, offset);
-	}
-	ba += (tag + offset);
-	va = (vaddr_t)RMIXL_PCI_VADDR(ba);
-	rv = RMIXL_PCI_READ(va);
-	if (rmixl_cache_err_check() != 0) {
+	if (rmixl_pcie_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
+		cfg0 = rmixl_cache_err_dis();
+		rv = bus_space_read_4(bst, bsh, (bus_size_t)offset);
+		if (rmixl_cache_err_check() != 0) {
 #ifdef DIAGNOSTIC
-		int bus, dev, fun;
+			int bus, dev, fun;
 
-		rmixl_pcie_decompose_tag(v, tag, &bus, &dev, &fun);
-		printf("%s: %d/%d/%d, offset %#x: bad address\n",
-			__func__, bus, dev, fun, offset);
+			rmixl_pcie_decompose_tag(v, tag, &bus, &dev, &fun);
+			printf("%s: %d/%d/%d, offset %#x: bad address\n",
+				__func__, bus, dev, fun, offset);
 #endif
-		rv = (pcireg_t) -1;
+			rv = (pcireg_t) -1;
+		}
+		rmixl_cache_err_restore(cfg0);
+	} else {
+		rv = -1;
 	}
 
-	rmixl_cache_err_restore(cfg0);
 	PCI_CONF_UNLOCK(s);
 	return rv;
 }
@@ -853,41 +944,28 @@ void
 rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 {
 	struct rmixl_pcie_softc *sc = v;
-	bus_addr_t ba;
-	vaddr_t va;
+	static bus_space_handle_t bsh;
+	bus_space_tag_t bst;
 	uint64_t cfg0;
 	u_int s;
 
 	PCI_CONF_LOCK(s);
-	cfg0 = rmixl_cache_err_dis();
 
-	/*
-	 * base bus addr depends on offset
-	 */
-	if ((offset >= 0) && ( offset < 0x100)) {
-		ba = sc->sc_pcie_cfg_pbase;
-	} else if ((offset >= 0x100) && (offset <= 0x700)) {
-		ba = sc->sc_pcie_ecfg_pbase;
-		if (ba == -1)
-			panic("%s: offset %#x: PCIe ECFG space not connfigured",
-				__func__, offset);
-	} else  {
-		panic("%s: offset %#x: unknown", __func__, offset);
-	}
-	ba += (tag + offset);
-	va = (vaddr_t)RMIXL_PCI_VADDR(ba);
-	RMIXL_PCI_WRITE(ba, val);
+	if (rmixl_pcie_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
+		cfg0 = rmixl_cache_err_dis();
+		bus_space_write_4(bst, bsh, (bus_size_t)offset, val);
+		if (rmixl_cache_err_check() != 0) {
 #ifdef DIAGNOSTIC
-	if (rmixl_cache_err_check() != 0) {
-		int bus, dev, fun;
+			int bus, dev, fun;
 
-		rmixl_pcie_decompose_tag(v, tag, &bus, &dev, &fun);
-		printf("%s: %d/%d/%d, offset %#x: bad address\n",
-			__func__, bus, dev, fun, offset);
-	}
+			rmixl_pcie_decompose_tag(v, tag, &bus, &dev, &fun);
+			printf("%s: %d/%d/%d, offset %#x: bad address\n",
+				__func__, bus, dev, fun, offset);
 #endif
+		}
+		rmixl_cache_err_restore(cfg0);
+	}
 
-	rmixl_cache_err_restore(cfg0);
 	PCI_CONF_UNLOCK(s);
 }
 

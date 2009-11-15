@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.1 2009/11/09 10:17:06 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.2 2009/11/15 23:11:06 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_PCIE_VAR_H_
 #define _MIPS_RMI_PCIE_VAR_H_
@@ -25,8 +25,8 @@ typedef struct rmixl_pcie_lnktab {
 struct rmixl_pcie_softc {
 	device_t                	sc_dev;
 	struct mips_pci_chipset 	sc_pci_chipset;
-	bus_addr_t              	sc_pcie_cfg_pbase;
-	bus_addr_t              	sc_pcie_ecfg_pbase;
+	bus_space_tag_t              	sc_pcie_cfg_memt;
+	bus_space_tag_t              	sc_pcie_ecfg_memt;
 	bus_dma_tag_t			sc_29bit_dmat;
 	bus_dma_tag_t			sc_32bit_dmat;
 	bus_dma_tag_t			sc_64bit_dmat;
