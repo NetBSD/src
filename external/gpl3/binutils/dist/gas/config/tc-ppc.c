@@ -1656,7 +1656,7 @@ ppc_insert_operand (unsigned long insn,
       errmsg = NULL;
       insn = (*operand->insert) (insn, (long) val, ppc_cpu, &errmsg);
       if (errmsg != (const char *) NULL)
-	as_bad_where (file, line, errmsg);
+	as_bad_where (file, line, "%s", errmsg);
     }
   else
     insn |= ((long) val & operand->bitm) << operand->shift;
@@ -2387,7 +2387,7 @@ md_assemble (char *str)
 	{
 	  insn = (*operand->insert) (insn, 0L, ppc_cpu, &errmsg);
 	  if (errmsg != (const char *) NULL)
-	    as_bad (errmsg);
+	    as_bad ("%s", errmsg);
 	  continue;
 	}
 
@@ -2400,7 +2400,7 @@ md_assemble (char *str)
 	    {
 	      insn = (*operand->insert) (insn, 0L, ppc_cpu, &errmsg);
 	      if (errmsg != (const char *) NULL)
-		as_bad (errmsg);
+		as_bad ("%s", errmsg);
 	    }
 	  if ((operand->flags & PPC_OPERAND_NEXT) != 0)
 	    next_opindex = *opindex_ptr + 1;
