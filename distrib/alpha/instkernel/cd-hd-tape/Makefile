@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2004/05/10 00:08:49 ross Exp $
+#	$NetBSD: Makefile,v 1.19.34.1 2009/11/15 05:52:08 snj Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,7 @@ FLOPPYSIZE=	10000
 FLOPPYMETAFILE!=printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 FLOPPYFILES=	boot ${FLOPPYMETAFILE} netbsd
 FLOPPYMAX=	1
+FLOPPYPAD=	1
 
 FLOPPY_RELEASEDIR=	installation/diskimage
 
