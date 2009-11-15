@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.118 2009/11/15 13:39:00 dsl Exp $
+#	$NetBSD: osrelease.sh,v 1.119 2009/11/15 14:40:18 dsl Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,40 +35,54 @@
 path="./$0"
 exec < ${path%/*}/../sys/param.h
 
+# Search for line
+# #define __NetBSD_Version__ <ver_num> /* NetBSD <ver_text> */
+#
+# <ver_num> and <ver_text> should match!
+
 while
-	read define ver_tag release comment || exit 1
+	read define ver_tag rel_num comment_start NetBSD rel_text rest || exit 1
 do
 	[ "$define" = "#define" ] || continue;
 	[ "$ver_tag" = "__NetBSD_Version__" ] || continue
 	break
 done
 
-# ${release} is [M]Mmm00pp00
-#
 # default: return MM.mm.pp
 # -m: return MM, representing only the major number; however, for -current,
 #     return the next major number (e.g. for 5.99.nn, return 6)
 # -n: return MM.mm
 # -s: return MMmmpp (no dots)
 
-release=${release%??}
+option="$1"
 
-rel_MMmm=${release%????}
+# ${rel_num} is [M]Mmm00pp00
+rel_num=${rel_num%??}
+rel_MMmm=${rel_num%????}
 rel_MM=${rel_MMmm%??}
 rel_mm=${rel_MMmm#${rel_MM}}
-rel_pp=${release#${rel_MMmm}00}
+# rel_pp=${rel_num#${rel_MMmm}00}
 
-case $1 in
+# Get patch from text version
+IFS=.
+set -- - $rel_text
+shift 3
+IFS=' '
+set -- $rel_MM ${rel_mm#0} $*
+
+case "$option" in
 -m)
 	echo "$(((${rel_MMmm}+1)/100))"
 	;;
 -n)
-	echo "$rel_MM.$rel_mm"
+	echo "${rel_MM}.${rel_mm#0}"
 	;;
 -s)
-	echo "$rel_MM$rel_mm$rel_pp"
+	IFS=
+	echo "$*"
 	;;
 *)
-	echo "$rel_MM.$rel_mm.$rel_pp"
+	IFS=.
+	echo "$*"
 	;;
 esac
