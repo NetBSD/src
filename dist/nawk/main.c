@@ -35,7 +35,6 @@ const char	*version = "version 20070501";
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <locale.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -102,6 +101,7 @@ static void fpecatch(int n
 int main(int argc, char *argv[])
 {
 	const char *fs = NULL;
+	struct lconv *lconv;
 
 	setlocale(LC_CTYPE, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
@@ -114,6 +114,9 @@ int main(int argc, char *argv[])
 	}
 
 	(void) setlocale(LC_ALL, "");
+	lconv = localeconv();
+	lconv->decimal_point = ".";
+
 
 #ifdef SA_SIGINFO
 	{
