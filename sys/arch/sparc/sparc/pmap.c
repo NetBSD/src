@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322.20.1 2009/05/30 16:57:18 snj Exp $ */
+/*	$NetBSD: pmap.c,v 1.322.20.2 2009/11/15 05:58:38 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.20.1 2009/05/30 16:57:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.20.2 2009/11/15 05:58:38 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2061,7 +2061,9 @@ ctx_alloc(struct pmap *pm)
 	struct regmap *rp;
 	int gap_start, gap_end;
 	vaddr_t va;
+#if defined(SUN4M) || defined(SUN4D)
 	struct cpu_info *cpi;
+#endif
 
 /*XXX-GCC!*/gap_start=gap_end=0;
 #ifdef DEBUG
@@ -2228,8 +2230,10 @@ void
 ctx_free(struct pmap *pm)
 {
 	union ctxinfo *c;
-	struct cpu_info *cpi;
 	int ctx;
+#if defined(SUN4M) || defined(SUN4D)
+	struct cpu_info *cpi;
+#endif
 
 	c = pm->pm_ctx;
 	ctx = pm->pm_ctxnum;
