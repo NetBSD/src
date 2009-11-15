@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.4.18.1 2009/11/15 23:09:18 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -107,14 +107,14 @@ struct mips_bus_space_translation;
 /*
  * Addresses (in bus space).
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef paddr_t bus_addr_t;
+typedef psize_t bus_size_t;
 
 /*
  * Access methods for bus space.
  */
 typedef struct mips_bus_space *bus_space_tag_t;
-typedef u_long bus_space_handle_t;
+typedef intptr_t bus_space_handle_t;
 
 struct mips_bus_space {
 	/* cookie */
