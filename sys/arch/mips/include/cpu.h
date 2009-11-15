@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.6 2009/11/14 21:50:51 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.7 2009/11/15 00:42:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -437,7 +437,7 @@ int	ustore_int8(void *, int8_t);
 int	ustore_int16(void *, int16_t);
 int	ustore_int32(void *, int32_t);
 int	ustore_uint8(void *, uint8_t);
-int	ustore_uint16(void *, uint16_t*);
+int	ustore_uint16(void *, uint16_t);
 int	ustore_uint32(void *, uint32_t);
 int	ustore_int8_intrsafe(void *, int8_t);
 int	ustore_int16_intrsafe(void *, int16_t);
