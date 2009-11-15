@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_util.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_util.c,v 1.3 2009/11/15 18:43:28 dsl Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -111,7 +111,7 @@ ex_ncheck(SCR *sp, int force)
 
 		for (ap = sp->cargv + 1; *ap != NULL; ++ap);
 		msgq(sp, M_ERR,
-		    "167|%d more files to edit", (ap - sp->cargv) - 1);
+		    "167|%zd more files to edit", (ap - sp->cargv) - 1);
 
 		return (1);
 	}
