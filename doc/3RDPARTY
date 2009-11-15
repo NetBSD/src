@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.732 2009/11/11 15:35:57 plunky Exp $
+#	$NetBSD: 3RDPARTY,v 1.733 2009/11/15 20:16:41 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -619,7 +619,7 @@ Imported in to /usr/src/usr.bin/m4; uses libc's ohash, and strtonum
 
 Package:	mDNSResponder
 Version:	212.1
-Current Vers:	212.1
+Current Vers:	214
 Maintainer:	Apple
 Archive Site:	http://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	http://developer.apple.com/opensource/internet/bonjour.html
