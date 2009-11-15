@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2009/11/11 16:08:31 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2009/11/15 12:26:02 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -209,7 +209,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 /*
  * MD flags that we use for pmap_kenter_pa:
  */
-#define PMAP_NOCACHE    0x01	/* set the non-cacheable bit */
+#define	PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 #endif /* _KERNEL */
 
