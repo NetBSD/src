@@ -7714,7 +7714,7 @@ _bfd_mips_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		      || rel[-1].r_offset != rel->r_offset
 		      || r_type != R_MIPS_64
 		      || ELF_R_TYPE(abfd, rel[-1].r_info) != R_MIPS_GPREL32)
-		      && (MIPS_ELF_READONLY_SECTION (sec))
+		      && MIPS_ELF_READONLY_SECTION (sec))
 		    {
 		      /* We tell the dynamic linker that there are
 		         relocations against the text segment.  */
