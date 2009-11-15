@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.19 2009/11/15 18:17:18 dholland Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2009/11/03 05:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2009/11/15 18:17:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ void kdbprinttrap(int, int);
 
 extern label_t *db_recover;
 extern int db_active;
-extern char *trap_type[];
+extern const char *trap_type[];
 extern int trap_types;
 
 db_regs_t	ddb_regs;
