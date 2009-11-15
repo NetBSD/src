@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.5 2009/11/13 05:26:42 cliff Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.6 2009/11/15 22:58:15 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_RMIXL_OBIOVAR_H_
 #define _MIPS_RMI_RMIXL_OBIOVAR_H_
@@ -8,8 +8,7 @@
 #include <mips/pci_machdep.h>
 
 struct obio_attach_args {
-	bus_space_tag_t	obio_el_bst;
-	bus_space_tag_t	obio_eb_bst;
+	bus_space_tag_t	obio_bst;
 	bus_addr_t	obio_addr;
 	bus_size_t	obio_size;
 	int		obio_intr;
@@ -21,8 +20,7 @@ struct obio_attach_args {
 
 typedef struct obio_softc {
 	device_t		sc_dev;
-	bus_space_tag_t		sc_el_bst;
-	bus_space_tag_t		sc_eb_bst;
+	bus_space_tag_t		sc_bst;
 	bus_dma_tag_t		sc_29bit_dmat;
 	bus_dma_tag_t		sc_32bit_dmat;
 	bus_dma_tag_t		sc_64bit_dmat;

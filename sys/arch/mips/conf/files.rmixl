@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.5 2009/11/14 21:59:15 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.6 2009/11/15 22:58:15 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -11,8 +11,9 @@ define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio
 attach	obio at mainbus
 file	arch/mips/rmi/rmixl_obio.c		obio needs-count
-file    arch/mips/rmi/rmixl_el_space.c		obio
-file    arch/mips/rmi/rmixl_eb_space.c		obio
+file    arch/mips/rmi/rmixl_obio_space.c	obio
+file    arch/mips/rmi/rmixl_pcie_cfg_space.c	pci
+file    arch/mips/rmi/rmixl_pcie_ecfg_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_io_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_mem_space.c	pci
 
