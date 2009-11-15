@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.139 2009/11/14 09:46:25 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.140 2009/11/15 06:11:11 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14730,4 +14730,60 @@ sys/netinet6/ip6_forward.c			1.67
 	for v6 traffic and if the packet is encapsulated with gif,
 	the IPv6 header would get corrupted by ip_output.
 	[joerg, ticket #1139]
+
+sys/dev/rnd.c					1.77
+
+	rnd_sample_allocate_isr: pass correct flag to pool_get().
+	Addresses PR/39325.
+	[rmind, ticket #1134]
+
+sys/arch/alpha/conf/Makefile.alpha		1.82
+
+	Loading the kernel at 0xfffffc0000300000 doesn't work on some
+        configurations of ES40.  Change the kernel text to 0xfffffc0000430000
+        (which is where Tru64 has its kernel).
+	[mhitch, ticket #1135]
+
+distrib/alpha/instkernel/cd-hd-tape/Makefile	1.20
+
+	The tarfs image in cdhdinstall used to get padded out to an 18KB
+        boundary (the size of the read used to read it) with the
+        alpha-specific image creation.  This got lost when moved to using
+        common routines, so that burning the cdhdinstall image onto a CDROM
+        resulted in a failure to read the last block of the tarfs image.
+        Use the provided option to have the image padded out to the full
+        image size.
+	[mhitch, ticket #1136]
+
+sys/arch/alpha/alpha/pmap.c			1.250
+
+	The tlb shootdown IPI can interrupt the pool_cache_get() in places
+	that can cause a deadlock or pool cache corruption.  Take the
+	shootdown job queue mutex before calling pool_cache_get(), which
+	will block the IPI interrupts and seems to fix the remaining tlb
+	shootdown deadlocks and pool cache corruption I've been seeing.
+	Should address both PR port-alpha/38335 and PR port-alpha/42174.
+	[mhitch, ticket #1137]
+
+sys/arch/sparc/sparc/pmap.c			1.336
+
+	Avoid unused variable warnings on sun4c-only kernels.
+	Fixes PR#42249. 
+	[jdc, ticket #1138]
+
+sys/netkey/keysock.c				1.53
+
+	Replace splsoftnet() with proper mutexes.  Fixes PR kren/40940.
+	[mlelstv, ticket #1142]
+
+sys/dev/pckbport/wskbdmap_mfii.c		1.18
+
+	Add support for Swiss german kezboard to wskbd.
+	[mbalmer, ticket #1144]
+
+etc/rc.d/named					1.20
+
+	PR/41273: Martin Mersberger: missing '/' in /etc/rc.d/named in
+	section named_migrate
+	[dholland, ticket #1146]
 
