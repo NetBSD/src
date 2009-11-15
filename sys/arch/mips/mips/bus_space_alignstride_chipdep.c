@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.4 2009/11/09 09:59:27 cliff Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.5 2009/11/15 23:09:45 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.4 2009/11/09 09:59:27 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.5 2009/11/15 23:09:45 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -742,20 +742,43 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 
  mapit:
 #endif /* CHIP_EXTENT */
+
+	addr = mbst.mbst_sys_start + (addr - mbst.mbst_bus_start);
+
 #ifdef _LP64
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
-		*hp = MIPS_PHYS_TO_XKPHYS_CACHED(mbst.mbst_sys_start +
-		    (addr - mbst.mbst_bus_start));
+		*hp = MIPS_PHYS_TO_XKPHYS_CACHED(addr);
 	else
-		*hp = MIPS_PHYS_TO_XKPHYS_UNCACHED(mbst.mbst_sys_start +
-		    (addr - mbst.mbst_bus_start));
+		*hp = MIPS_PHYS_TO_XKPHYS_UNCACHED(addr);
 #else
-	if (flags & BUS_SPACE_MAP_CACHEABLE)
-		*hp = MIPS_PHYS_TO_KSEG0(mbst.mbst_sys_start +
-		    (addr - mbst.mbst_bus_start));
-	else
-		*hp = MIPS_PHYS_TO_KSEG1(mbst.mbst_sys_start +
-		    (addr - mbst.mbst_bus_start));
+	if (((addr + size) & ~MIPS_PHYS_MASK) != 0) {
+		vaddr_t va;
+		paddr_t pa;
+		int s;
+
+		size = round_page((addr % PAGE_SIZE) + size);
+		va = uvm_km_alloc(kernel_map, size, PAGE_SIZE,
+			UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+		if (va == 0)
+			return ENOMEM;
+		*hp = va + (addr & PAGE_MASK);
+		pa = trunc_page(addr);
+
+		s = splhigh();
+		while (size != 0) {
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pa += PAGE_SIZE;
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
+		pmap_update(pmap_kernel());
+		splx(s);
+	} else {
+		if (flags & BUS_SPACE_MAP_CACHEABLE)
+			*hp = MIPS_PHYS_TO_KSEG0(addr);
+		else
+			*hp = MIPS_PHYS_TO_KSEG1(addr);
+	}
 #endif
 
 	return (0);
@@ -1251,7 +1274,7 @@ __BS(read_stream_1)(void *v, bus_space_handle_t h, bus_size_t off)
 	volatile uint8_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 1 */
 
-	ptr = (void *)(h + CHIP_OFF8(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF8(off));
 	return *ptr & 0xff;
 }
 
@@ -1264,7 +1287,7 @@ __BS(read_stream_2)(void *v, bus_space_handle_t h, bus_size_t off)
 	volatile uint16_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 2 */
 
-	ptr = (void *)(h + CHIP_OFF16(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF16(off));
 	return *ptr & 0xffff;
 }
 
@@ -1277,7 +1300,7 @@ __BS(read_stream_4)(void *v, bus_space_handle_t h, bus_size_t off)
 	volatile uint32_t *ptr;
 #endif
 
-	ptr = (void *)(h + CHIP_OFF32(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF32(off));
 	return *ptr & 0xffffffff;
 }
 
@@ -1286,7 +1309,7 @@ __BS(read_stream_8)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 	volatile uint64_t *ptr;
 
-	ptr = (void *)(h + CHIP_OFF64(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF64(off));
 	return *ptr;
 }
 
@@ -1333,7 +1356,7 @@ __BS(write_stream_1)(void *v, bus_space_handle_t h, bus_size_t off,
 	volatile uint8_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 1 */
 
-	ptr = (void *)(h + CHIP_OFF8(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF8(off));
 	*ptr = val;
 }
 
@@ -1347,7 +1370,7 @@ __BS(write_stream_2)(void *v, bus_space_handle_t h, bus_size_t off,
 	volatile uint16_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 2 */
 
-	ptr = (void *)(h + CHIP_OFF16(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF16(off));
 	*ptr = val;
 }
 
@@ -1361,7 +1384,7 @@ __BS(write_stream_4)(void *v, bus_space_handle_t h, bus_size_t off,
 	volatile uint32_t *ptr;
 #endif	/* CHIP_ACCESS_SIZE > 4 */
 
-	ptr = (void *)(h + CHIP_OFF32(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF32(off));
 	*ptr = val;
 }
 
@@ -1371,7 +1394,7 @@ __BS(write_stream_8)(void *v, bus_space_handle_t h, bus_size_t off,
 {
 	volatile uint64_t *ptr;
 
-	ptr = (void *)(h + CHIP_OFF64(off));
+	ptr = (void *)(intptr_t)(h + CHIP_OFF64(off));
 	*ptr = val;
 }
 
