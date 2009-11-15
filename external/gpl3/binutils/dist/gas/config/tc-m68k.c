@@ -7545,7 +7545,7 @@ md_show_usage (FILE *stream)
     {
       if (i)
 	fprintf (stream, " | ");
-      fprintf (stream, m68k_archs[i].name);
+      fprintf (stream, "%s", m68k_archs[i].name);
     }
   fprintf (stream, "\n");
 
@@ -7554,7 +7554,7 @@ md_show_usage (FILE *stream)
     {
       if (i)
 	fprintf (stream, " | ");
-      fprintf (stream, m68k_cpus[i].name);
+      fprintf (stream, "%s", m68k_cpus[i].name);
     }
   fprintf (stream, _("\n"));
 }
