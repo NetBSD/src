@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.6 2009/11/09 09:55:11 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.7 2009/11/15 22:59:36 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.6 2009/11/09 09:55:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.7 2009/11/15 22:59:36 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -162,6 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.6 2009/11/09 09:55:11 cliff Exp $"
 #include <mips/rmi/rmixl_firmware.h>
 #include <mips/rmi/rmixlreg.h>
 
+#define MACHDEP_DEBUG 1
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
 # define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
@@ -196,8 +197,8 @@ struct rmixl_config rmixl_configuration;
  * please add them
  */
 static uint64_t rmiclfw_psb_versions[] = {
-	0x4958d4fb00000056,
-	0x49a5a8fa00000056,
+	0x4958d4fb00000056ULL,
+	0x49a5a8fa00000056ULL,
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
 	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
@@ -242,8 +243,8 @@ u_int mem_cluster_cnt;
 
 
 void configure(void);
-void mach_init(int, int32_t *, void *, void *);
-static u_long rmixlfw_init(void *);
+void mach_init(int, int32_t *, void *, int64_t);
+static u_long rmixlfw_init(int64_t);
 static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
 static void __attribute__((__noreturn__)) rmixl_exit(int);
 static void rmixl_physaddr_init(void);
@@ -263,7 +264,7 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(int argc, int32_t *argv, void *envp, void *infop)
+mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend, *v;
@@ -294,8 +295,7 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 
 	physmem = btoc(memsize);
 
-	rmixl_eb_bus_mem_init(&rcp->rc_eb_memt, rcp); /* need for console */
-	rmixl_el_bus_mem_init(&rcp->rc_el_memt, rcp); /* XXX defer ? */
+	rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp); /* need for console */
 
 #if NCOM > 0
 	rmixl_com_cnattach(comcnaddr, comcnspeed, -1,
@@ -328,7 +328,7 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 	 */
 	boothowto = RB_AUTOBOOT;
 	for (int i = 1; i < argc; i++) {
-		for (char *cp = (char *)(uint64_t)argv[i]; *cp; cp++) {
+		for (char *cp = (char *)(intptr_t)argv[i]; *cp; cp++) {
 			int howto;
 			/* Ignore superfluous '-', if there is one */
 			if (*cp == '-')
@@ -375,7 +375,8 @@ mach_init(int argc, int32_t *argv, void *envp, void *infop)
 
 		first = trunc_page(vm_clusters[i].start);
 		last = round_page(vm_clusters[i].start + vm_clusters[i].size);
-		DPRINTF(("%s: %d: %#lx, %#lx\n", __func__, i, first, last));
+		DPRINTF(("%s: %d: %#"PRIx64", %#"PRIx64"\n",
+			__func__, i, first, last));
 		uvm_page_physload(atop(first), atop(last), atop(first),
 			atop(last), VM_FREELIST_DEFAULT);
 	}
@@ -591,24 +592,21 @@ rmixl_physaddr_init(void)
 }
 
 static u_long
-rmixlfw_init(void *infop)
+rmixlfw_init(int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
-	uint64_t tmp;
 
 	strcpy(cpu_model, "RMI XLS616ATX VIIA");	/* XXX */
 
-	tmp = (int64_t)infop;
-	tmp |= 0xffffffffULL << 32;
-	infop = (void *)tmp;
-	rmixlfw_info = *(rmixlfw_info_t *)infop;
+	infop |= MIPS_KSEG0_START;
+	rmixlfw_info = *(rmixlfw_info_t *)(intptr_t)infop;
 
 	for (int i=0; i < RMICLFW_PSB_VERSIONS_LEN; i++) {
 		if (rmiclfw_psb_versions[i] == rmixlfw_info.psb_version)
 			goto found;
 	}
 
-	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(RMIXL_IO_DEV_PBASE);
+	rcp->rc_io_pbase = RMIXL_IO_DEV_PBASE;
 	rmixl_putchar_init(rcp->rc_io_pbase);
 
 #ifdef DIAGNOSTIC
@@ -616,13 +614,14 @@ rmixlfw_init(void *infop)
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");
 #endif
+	return MEMSIZE;
 
  found:
 	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
 	rmixl_putchar_init(rcp->rc_io_pbase);
 #ifdef MACHDEP_DEBUG
 	rmixl_puts("\r\ninfop: ");
-	rmixl_puthex64((uint64_t)infop);
+	rmixl_puthex64((uint64_t)(intptr_t)infop);
 #endif
 #ifdef DIAGNOSTIC
 	rmixl_puts("\r\nrecognized psb_version: ");
@@ -631,8 +630,8 @@ rmixlfw_init(void *infop)
 #endif
 
 	return mem_clusters_init(
-		(rmixlfw_mmap_t *)rmixlfw_info.psb_physaddr_map,
-		(rmixlfw_mmap_t *)rmixlfw_info.avail_mem_map);
+		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.psb_physaddr_map,
+		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.avail_mem_map);
 }
 
 void
@@ -679,7 +678,7 @@ mem_clusters_init(
 
 #ifdef MACHDEP_DEBUG
 	rmixl_puts("psb_physaddr_map: ");
-	rmixl_puthex64((uint64_t)psb_physaddr_map);
+	rmixl_puthex64((uint64_t)(intptr_t)psb_physaddr_map);
 	rmixl_puts("\r\n");
 #endif
 	if (psb_physaddr_map != NULL) {
@@ -696,7 +695,7 @@ mem_clusters_init(
 
 #ifdef MACHDEP_DEBUG
 	rmixl_puts("avail_mem_map: ");
-	rmixl_puthex64((uint64_t)avail_mem_map);
+	rmixl_puthex64((uint64_t)(intptr_t)avail_mem_map);
 	rmixl_puts("\r\n");
 #endif
 	if (avail_mem_map != NULL) {
@@ -888,7 +887,7 @@ void __attribute__((__noreturn__))
 rmixl_exit(int howto)
 {
 	/* use firmware callbak to reboot */
-	void (*reset)(void) = (void *)rmixlfw_info.warm_reset;
+	void (*reset)(void) = (void *)(intptr_t)rmixlfw_info.warm_reset;
 	if (reset != 0) {
 		(*reset)();
 		printf("warm reset callback failed, spinning...\n");
