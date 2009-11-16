@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.7 2009/11/02 06:22:45 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.8 2009/11/05 10:16:01 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,7 +35,9 @@ static int	 a2time(time_t *, const char *, const char *);
 int
 mandoc_special(const char *p)
 {
-	int		 c;
+	int		 terminator;	/* Terminator for \s. */
+	int		 lim;		/* Limit for N in \s. */
+	int		 c, i;
 	
 	if ('\\' != *p++)
 		return(0);
@@ -74,9 +76,84 @@ mandoc_special(const char *p)
 	case ('e'):
 		return(2);
 	case ('f'):
-		if (0 == *++p || ! isgraph((u_char)*p))
+		if ('\0' == *++p || ! isgraph((u_char)*p))
 			return(0);
 		return(3);
+	case ('s'):
+		if ('\0' == *++p)
+			return(2);
+
+		c = 2;
+		terminator = 0;
+		lim = 1;
+
+		if (*p == '\'') {
+			lim = 0;
+			terminator = 1;
+			++p;
+			++c;
+		} else if (*p == '[') {
+			lim = 0;
+			terminator = 2;
+			++p;
+			++c;
+		} else if (*p == '(') {
+			lim = 2;
+			terminator = 3;
+			++p;
+			++c;
+		}
+
+		if (*p == '+' || *p == '-') {
+			++p;
+			++c;
+		}
+
+		if (*p == '\'') {
+			if (terminator)
+				return(0);
+			lim = 0;
+			terminator = 1;
+			++p;
+			++c;
+		} else if (*p == '[') {
+			if (terminator)
+				return(0);
+			lim = 0;
+			terminator = 2;
+			++p;
+			++c;
+		} else if (*p == '(') {
+			if (terminator)
+				return(0);
+			lim = 2;
+			terminator = 3;
+			++p;
+			++c;
+		}
+
+		/* TODO: needs to handle floating point. */
+
+		if ( ! isdigit((u_char)*p))
+			return(0);
+
+		for (i = 0; isdigit((u_char)*p); i++) {
+			if (lim && i >= lim)
+				break;
+			++p;
+			++c;
+		}
+
+		if (terminator && terminator < 3) {
+			if (1 == terminator && *p != '\'')
+				return(0);
+			if (2 == terminator && *p != ']')
+				return(0);
+			++p;
+			++c;
+		}
+
+		return(c);
 	case ('*'):
 		if (0 == *++p || ! isgraph((u_char)*p))
 			return(0);

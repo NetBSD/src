@@ -60,7 +60,7 @@ a.link-man	{ } /* Manual links (Xr). */
 a.link-sec	{ } /* Section links (Sx). */
 
 div.emph	{ font-style: italic; } /* Emphasis (Bl -emphasis). */
-div.lit		{ } /* Literal (D1, Bd -literal, Dl, Bd -literal). */
+div.lit		{ font-family: monospace; } /* Literal (D1, Bd -literal, Dl, Bd -literal). */
 div.symb	{ font-weight: bold; } /* Symbols (Bl -symbolic). */
 
 table.header	{ border-bottom: 1px dotted #cccccc; }/* Document footer. */

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.h,v 1.17 2009/10/28 08:00:18 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.21 2009/11/16 06:07:49 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -62,6 +62,13 @@ enum	htmlattr {
 	ATTR_MAX
 };
 
+enum	htmlfont {
+	HTMLFONT_NONE = 0,
+	HTMLFONT_BOLD,
+	HTMLFONT_ITALIC,
+	HTMLFONT_MAX
+};
+
 struct	tag {
 	struct tag	 *next;
 	enum htmltag	  tag;
@@ -101,7 +108,6 @@ struct	htmlpair {
 struct	html {
 	int		  flags;
 #define	HTML_NOSPACE	 (1 << 0)
-#define	HTML_NEWLINE	 (1 << 1)
 #define	HTML_IGNDELIM	 (1 << 2)
 	struct tagq	  tags;
 	struct ordq	  ords;
@@ -112,12 +118,16 @@ struct	html {
 	char		 *style;
 	char		  buf[BUFSIZ];
 	size_t		  buflen;
+	struct tag	 *metaf;
+	enum htmlfont	  metal;
+	enum htmlfont	  metac;
 };
 
 struct	roffsu;
 
 void		  print_gen_doctype(struct html *);
 void		  print_gen_head(struct html *);
+struct tag	 *print_ofont(struct html *, enum htmlfont);
 struct tag	 *print_otag(struct html *, enum htmltag, 
 				int, const struct htmlpair *);
 void		  print_tagq(struct html *, const struct tag *);
