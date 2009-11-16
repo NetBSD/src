@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipc.h,v 1.2 2009/11/16 08:49:32 joerg Exp $ */
+/* $NetBSD: linux32_ipc.h,v 1.3 2009/11/16 13:32:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -64,15 +64,15 @@ struct linux32_msqid_ds {
 	linux_time_t		l_msg_ctime;
 	netbsd32_pointer_t	l_wwait;	/* Linux internal */
 	netbsd32_pointer_t	l_rwait;	/* Linux internal */
-	netbsd32_u_short	l_msg_cbytes;
-	netbsd32_u_short	l_msg_qnum;
-	netbsd32_u_short	l_msg_qbytes;
-	netbsd32_u_short	l_msg_lspid;
-	netbsd32_u_short	l_msg_lrpid;
+	ushort	l_msg_cbytes;
+	ushort	l_msg_qnum;
+	ushort	l_msg_qbytes;
+	ushort	l_msg_lspid;
+	ushort	l_msg_lrpid;
 };
 
-struct linux_msqid64_ds {
-	struct linux_ipc64_perm	l_msg_perm;
+struct linux32_msqid64_ds {
+	struct linux32_ipc64_perm	l_msg_perm;
 	linux32_time_t		l_msg_stime;
 	netbsd32_u_long		l___unused1;
 	linux32_time_t		l_msg_rtime;
@@ -82,8 +82,8 @@ struct linux_msqid64_ds {
 	netbsd32_u_long		l_msg_cbytes;
 	netbsd32_u_long		l_msg_qnum;
 	netbsd32_u_long		l_msg_qbytes;
-	netbsd32_int		l_msg_lspid;
-	netbsd32_int		l_msg_lrpid;
+	int			l_msg_lspid;
+	int			l_msg_lrpid;
 	netbsd32_u_long		l___unused4;
 	netbsd32_u_long		l___unused5;
 	
