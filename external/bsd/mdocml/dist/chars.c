@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.c,v 1.12 2009/11/01 07:44:32 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.13 2009/11/05 07:21:01 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -47,9 +47,10 @@ struct	ln {
 #define BOTH(w, x, y, z, a, b) \
 	{ NULL, (w), (y), (a), (x), (z), (b), CHARS_BOTH },
 
-static	struct ln lines[LINES_MAX] = {
+#define	CHAR_TBL_START	  static struct ln lines[LINES_MAX] = {
+#define	CHAR_TBL_END	  };
+
 #include "chars.in"
-};
 
 struct	tbl {
 	enum chars	  type;
