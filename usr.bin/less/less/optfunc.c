@@ -267,7 +267,7 @@ opt_p(type, s)
 		 * In "more" mode, the -p argument is a command,
 		 * not a search string, so we don't need a slash.
 		 */
-		if (!less_is_more);
+		if (!less_is_more)
 			ungetsc("/");
 		break;
 	}
