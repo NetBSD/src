@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.8 2009/11/13 05:24:43 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.9 2009/11/16 23:59:19 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.8 2009/11/13 05:24:43 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.9 2009/11/16 23:59:19 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -427,10 +427,10 @@ do {									\
 		".set push 			\n\t"			\
 		".set mips3			\n\t"			\
 		".set noat			\n\t"			\
-		"dmfc0 $1,$" ___STRING(reg) "	\n\t"			\
-		"dsll %L0,$1,32			\n\t"			\
+		"dmfc0 %0,$" ___STRING(reg) "	\n\t"			\
+		"dsll %L0,%0,32			\n\t"			\
 		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,$1,32			\n\t"			\
+		"dsrl %M0,%0,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
 	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
@@ -460,10 +460,10 @@ do {									\
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"dmfc0 $1,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
-		"dsll %L0,$1,32			\n\t"			\
+		"dmfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+		"dsll %L0,%0,32			\n\t"			\
 		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,$1,32			\n\t"			\
+		"dsrl %M0,%0,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
 	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
@@ -636,7 +636,7 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"mfcr $1,$2			\n\t"			\
+		"mfcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
 	
@@ -666,7 +666,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"mfcr $1,$2			\n\t"			\
+		"mfcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
