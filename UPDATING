@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.205 2009/11/16 07:39:54 dholland Exp $
+$NetBSD: UPDATING,v 1.206 2009/11/16 07:45:50 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,6 +21,10 @@ Recent changes:
         target in src/tools/yacc/ and in src/usr.bin/yacc/ before a
         'build.sh -u tools' or 'build.sh -u distribution'.  Ditto
         src/tools/lex/ and src/usr.bin/lex/.
+
+20091001:
+	On amd64 you must rebuild tools (to get the new binutils)
+	before building a kernel, or the build fails on cpufunc.S.
 
 20091001:
 	An error will create a ./usr/X11R7/lib/X11/xkb/compiled/xkb
