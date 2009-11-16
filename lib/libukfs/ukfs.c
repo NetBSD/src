@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.41 2009/10/15 16:41:08 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.42 2009/11/16 17:21:26 njoly Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -896,7 +896,7 @@ ukfs_modload(const char *fname)
 	struct modinfo **mi;
 	int error;
 
-	handle = dlopen(fname, RTLD_GLOBAL);
+	handle = dlopen(fname, RTLD_LAZY|RTLD_GLOBAL);
 	if (handle == NULL) {
 		const char *dlmsg = dlerror();
 		if (strstr(dlmsg, "Undefined symbol"))
