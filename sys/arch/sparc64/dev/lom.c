@@ -1,5 +1,5 @@
-/*	$NetBSD: lom.c,v 1.1 2009/10/02 15:09:16 nakayama Exp $	*/
-/*	$OpenBSD: lom.c,v 1.15 2009/09/27 18:08:42 kettenis Exp $	*/
+/*	$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $	*/
+/*	$OpenBSD: lom.c,v 1.19 2009/11/10 22:26:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.1 2009/10/02 15:09:16 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,17 +190,20 @@ CFATTACH_DECL_NEW(lom, sizeof(struct lom_softc),
 static int	lom_read(struct lom_softc *, uint8_t, uint8_t *);
 static int	lom_write(struct lom_softc *, uint8_t, uint8_t);
 static void	lom_queue_cmd(struct lom_softc *, struct lom_cmd *);
+static void	lom_dequeue_cmd(struct lom_softc *, struct lom_cmd *);
 static int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
 static int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
 static int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
 static int	lom1_write_polled(struct lom_softc *, uint8_t, uint8_t);
 static void	lom1_queue_cmd(struct lom_softc *, struct lom_cmd *);
-static void	lom1_dequeue_cmd(struct lom_softc *, struct lom_cmd *);
 static void	lom1_process_queue(void *);
 static void	lom1_process_queue_locked(struct lom_softc *);
 static int	lom2_read(struct lom_softc *, uint8_t, uint8_t *);
 static int	lom2_write(struct lom_softc *, uint8_t, uint8_t);
+static int	lom2_read_polled(struct lom_softc *, uint8_t, uint8_t *);
+static int	lom2_write_polled(struct lom_softc *, uint8_t, uint8_t);
 static void	lom2_queue_cmd(struct lom_softc *, struct lom_cmd *);
+static int	lom2_intr(void *);
 
 static int	lom_init_desc(struct lom_softc *);
 static void	lom_refresh(struct sysmon_envsys *, envsys_data_t *);
@@ -209,6 +212,8 @@ static void	lom2_write_hostname(struct lom_softc *);
 
 static int	lom_wdog_tickle(struct sysmon_wdog *);
 static int	lom_wdog_setmode(struct sysmon_wdog *);
+
+static bool	lom_shutdown(device_t, int);
 
 static int
 lom_match(device_t parent, cfdata_t match, void *aux)
@@ -231,8 +236,13 @@ lom_attach(device_t parent, device_t self, void *aux)
 	uint8_t cal, low;
 	int i;
 
-	if (strcmp(ea->ea_name, "SUNW,lomh") == 0)
+	if (strcmp(ea->ea_name, "SUNW,lomh") == 0) {
+		if (ea->ea_nintr < 1) {
+			aprint_error(": no interrupt\n");
+			return;
+		}
 		sc->sc_type = LOM_LOMLITE2;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_iot = ea->ea_bustag;
@@ -246,11 +256,6 @@ lom_attach(device_t parent, device_t self, void *aux)
 		/* XXX Magic */
 		(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3, 0xca);
-
-		TAILQ_INIT(&sc->sc_queue);
-		mutex_init(&sc->sc_queue_mtx, MUTEX_DEFAULT, IPL_VM);
-		callout_init(&sc->sc_state_to, 0);
-		callout_setfunc(&sc->sc_state_to, lom1_process_queue, sc);
 	}
 
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
@@ -266,10 +271,23 @@ lom_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_type < LOM_LOMLITE2 ? "LOMlite" : "LOMlite2",
 	    fw_rev >> 4, fw_rev & 0x0f);
 
+	TAILQ_INIT(&sc->sc_queue);
+	mutex_init(&sc->sc_queue_mtx, MUTEX_DEFAULT, IPL_BIO);
+
 	config2 = config3 = 0;
-	if (sc->sc_type >= LOM_LOMLITE2) {
+	if (sc->sc_type < LOM_LOMLITE2) {
+		/*
+		 * LOMlite doesn't do interrupts so we limp along on
+		 * timeouts.
+		 */
+		callout_init(&sc->sc_state_to, 0);
+		callout_setfunc(&sc->sc_state_to, lom1_process_queue, sc);
+	} else {
 		lom_read(sc, LOM_IDX_CONFIG2, &config2);
 		lom_read(sc, LOM_IDX_CONFIG3, &config3);
+
+		bus_intr_establish(sc->sc_iot, ea->ea_intr[0],
+		    IPL_BIO, lom2_intr, sc);
 	}
 
 	sc->sc_num_fan = min((config >> 5) & 0x7, LOM_MAX_FAN);
@@ -357,6 +375,9 @@ lom_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_verbose_dev(self, "Watchdog timer configured.\n");
+
+	if (!pmf_device_register1(self, NULL, NULL, lom_shutdown))
+		aprint_error_dev(self, "unable to register power handler\n");
 }
 
 static int
@@ -386,6 +407,21 @@ lom_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 		return lom2_queue_cmd(sc, lc);
 }
 
+static void
+lom_dequeue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	struct lom_cmd *lcp;
+
+	mutex_enter(&sc->sc_queue_mtx);
+	TAILQ_FOREACH(lcp, &sc->sc_queue, lc_next) {
+		if (lcp == lc) {
+			TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
+			break;
+		}
+	}
+	mutex_exit(&sc->sc_queue_mtx);
+}
+
 static int
 lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
@@ -401,7 +437,7 @@ lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 
 	error = tsleep(&lc, PZERO, "lomrd", hz);
 	if (error)
-		lom1_dequeue_cmd(sc, &lc);
+		lom_dequeue_cmd(sc, &lc);
 
 	*val = lc.lc_data;
 
@@ -409,7 +445,7 @@ lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 }
 
 static int
-lom1_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
+lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 {
 	struct lom_cmd lc;
 	int error;
@@ -421,9 +457,9 @@ lom1_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	lc.lc_data = val;
 	lom1_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lomwr", hz);
+	error = tsleep(&lc, PZERO, "lomwr", 2 * hz);
 	if (error)
-		lom1_dequeue_cmd(sc, &lc);
+		lom_dequeue_cmd(sc, &lc);
 
 	return (error);
 }
@@ -461,7 +497,7 @@ lom1_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 }
 
 static int
-lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+lom1_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t str;
 	int i;
@@ -507,21 +543,6 @@ lom1_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 }
 
 static void
-lom1_dequeue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
-{
-	struct lom_cmd *lcp;
-
-	mutex_enter(&sc->sc_queue_mtx);
-	TAILQ_FOREACH(lcp, &sc->sc_queue, lc_next) {
-		if (lcp == lc) {
-			TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
-			break;
-		}
-	}
-	mutex_exit(&sc->sc_queue_mtx);
-}
-
-static void
 lom1_process_queue(void *arg)
 {
 	struct lom_softc *sc = arg;
@@ -538,13 +559,26 @@ lom1_process_queue_locked(struct lom_softc *sc)
 	uint8_t str;
 
 	lc = TAILQ_FIRST(&sc->sc_queue);
-	KASSERT(lc != NULL);
+	if (lc == NULL) {
+		sc->sc_state = LOM_STATE_IDLE;
+		return;
+	}
 
 	str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
 	if (str & LOM1_STATUS_BUSY) {
-		if (sc->sc_retry++ > 30)
+		if (sc->sc_retry++ < 30) {
+			callout_schedule(&sc->sc_state_to, mstohz(1));
 			return;
-		callout_schedule(&sc->sc_state_to, mstohz(1));
+		}
+
+		/*
+		 * Looks like the microcontroller got wedged.  Unwedge
+		 * it by writing this magic value.  Give it some time
+		 * to recover.
+		 */
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA, 0xac);
+		callout_schedule(&sc->sc_state_to, mstohz(1000));
+		sc->sc_state = LOM_STATE_CMD;
 		return;
 	}
 
@@ -579,6 +613,28 @@ lom1_process_queue_locked(struct lom_softc *sc)
 static int
 lom2_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
+	struct lom_cmd lc;
+	int error;
+
+	if (cold)
+		return lom2_read_polled(sc, reg, val);
+
+	lc.lc_cmd = reg;
+	lc.lc_data = 0xff;
+	lom2_queue_cmd(sc, &lc);
+
+	error = tsleep(&lc, PZERO, "lom2rd", hz);
+	if (error)
+		aprint_error_dev(sc->sc_dev, "lom2_read failed\n");
+
+	*val = lc.lc_data;
+
+	return (error);
+}
+
+static int
+lom2_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
+{
 	uint8_t str;
 	int i;
 
@@ -611,6 +667,26 @@ lom2_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 static int
 lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 {
+	struct lom_cmd lc;
+	int error;
+
+	if (cold)
+		return lom2_write_polled(sc, reg, val);
+
+	lc.lc_cmd = reg | LOM_IDX_WRITE;
+	lc.lc_data = val;
+	lom2_queue_cmd(sc, &lc);
+
+	error = tsleep(&lc, PZERO, "lom2wr", hz);
+	if (error)
+		lom_dequeue_cmd(sc, &lc);
+
+	return (error);
+}
+
+static int
+lom2_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
+{
 	uint8_t str;
 	int i;
 
@@ -625,7 +701,7 @@ lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 		return (ETIMEDOUT);
 
 	if (sc->sc_space == LOM_IDX_CMD_GENERIC && reg != LOM_IDX_CMD)
-		reg |= 0x80;
+		reg |= LOM_IDX_WRITE;
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM2_CMD, reg);
 
@@ -675,8 +751,68 @@ lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 static void
 lom2_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 {
-	KASSERT(lc->lc_cmd & LOM_IDX_WRITE);
-	lom2_write(sc, lc->lc_cmd, lc->lc_data);
+	uint8_t str;
+
+	mutex_enter(&sc->sc_queue_mtx);
+	TAILQ_INSERT_TAIL(&sc->sc_queue, lc, lc_next);
+	if (sc->sc_state == LOM_STATE_IDLE) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
+		if ((str & LOM2_STATUS_IBF) == 0) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    LOM2_CMD, lc->lc_cmd);
+			sc->sc_state = LOM_STATE_DATA;
+		}
+	}
+	mutex_exit(&sc->sc_queue_mtx);
+}
+
+static int
+lom2_intr(void *arg)
+{
+	struct lom_softc *sc = arg;
+	struct lom_cmd *lc;
+	uint8_t str, obr;
+
+	mutex_enter(&sc->sc_queue_mtx);
+
+	str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
+	obr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_DATA);
+
+	lc = TAILQ_FIRST(&sc->sc_queue);
+	if (lc == NULL) {
+		mutex_exit(&sc->sc_queue_mtx);
+		return (0);
+	}
+
+	if (lc->lc_cmd & LOM_IDX_WRITE) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    LOM2_DATA, lc->lc_data);
+		lc->lc_cmd &= ~LOM_IDX_WRITE;
+		mutex_exit(&sc->sc_queue_mtx);
+		return (1);
+	}
+
+	KASSERT(sc->sc_state = LOM_STATE_DATA);
+	lc->lc_data = obr;
+
+	TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
+
+	wakeup(lc);
+
+	sc->sc_state = LOM_STATE_IDLE;
+
+	if (!TAILQ_EMPTY(&sc->sc_queue)) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
+		if ((str & LOM2_STATUS_IBF) == 0) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    LOM2_CMD, lc->lc_cmd);
+			sc->sc_state = LOM_STATE_DATA;
+		}
+	}
+
+	mutex_exit(&sc->sc_queue_mtx);
+
+	return (1);
 }
 
 static int
@@ -890,6 +1026,7 @@ lom_wdog_setmode(struct sysmon_wdog *smw)
 		lom_write(sc, LOM_IDX_WDOG_TIME, smw->smw_period);
 
 		/* enable watchdog */
+		lom_dequeue_cmd(sc, &sc->sc_wdog_pat);
 		sc->sc_wdog_ctl |= LOM_WDOG_ENABLE|LOM_WDOG_RESET;
 		sc->sc_wdog_pat.lc_cmd = LOM_IDX_WDOG_CTL | LOM_IDX_WRITE;
 		sc->sc_wdog_pat.lc_data = sc->sc_wdog_ctl;
@@ -897,4 +1034,14 @@ lom_wdog_setmode(struct sysmon_wdog *smw)
 	}
 
 	return 0;
+}
+
+static bool
+lom_shutdown(device_t dev, int how)
+{
+	struct lom_softc *sc = device_private(dev);
+
+	sc->sc_wdog_ctl &= ~LOM_WDOG_ENABLE;
+	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
+	return true;
 }
