@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.5 2009/11/16 08:49:32 joerg Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.6 2009/11/16 13:32:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.5 2009/11/16 08:49:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.6 2009/11/16 13:32:40 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -441,12 +441,12 @@ linux32_to_bsd_msqid_ds(struct linux32_msqid_ds *lmp, struct msqid_ds *bmp)
 	bmp->msg_ctime = lmp->l_msg_ctime;
 }
 
-void
+static void
 linux32_to_bsd_msqid64_ds(struct linux32_msqid64_ds *lmp, struct msqid_ds *bmp)
 {
 
 	memset(bmp, 0, sizeof(*bmp));
-	linux_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	linux32_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
 	bmp->msg_stime = lmp->l_msg_stime;
 	bmp->msg_rtime = lmp->l_msg_rtime;
 	bmp->msg_ctime = lmp->l_msg_ctime;
@@ -475,14 +475,14 @@ bsd_to_linux32_msqid_ds(struct msqid_ds *bmp, struct linux32_msqid_ds *lmp)
 	lmp->l_msg_ctime = bmp->msg_ctime;
 }
 
-void
+static void
 bsd_to_linux32_msqid64_ds(struct msqid_ds *bmp, struct linux32_msqid64_ds *lmp)
 {
 
 	memset(lmp, 0, sizeof(*lmp));
-	bsd_to_linux_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
-	NETBSD32PTR32(lmp->l_msg_stime, bmp->msg_stime);
-	NETBSD32PTR32(lmp->l_msg_rtime, bmp->msg_rtime);
+	bsd_to_linux32_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	lmp->l_msg_stime = bmp->msg_stime;
+	lmp->l_msg_rtime = bmp->msg_rtime;
 	lmp->l_msg_ctime = bmp->msg_ctime;
 	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_qnum = bmp->msg_qnum;
