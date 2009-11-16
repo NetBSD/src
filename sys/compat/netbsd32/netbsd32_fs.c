@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.55.14.1 2009/09/13 06:19:43 matt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.55.14.2 2009/11/16 22:52:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.55.14.1 2009/09/13 06:19:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.55.14.2 2009/11/16 22:52:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,10 +847,8 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 	}
 	error = do_sys_mount(l, NULL, type, path, flags, data, data_seg,
 	    data_len, retval);
-	if (error) {
-		printf("do_sys_mount(%s): %p, %p, %#x, %p, %d, %zu, %p: failed: error %d\n", mtype, type, path, flags, data, data_seg, data_len, retval, error);
+	if (error)
 		return error;
-	}
 	if (flags & MNT_GETARGS) {
 		data_len = *retval;
 		if (strcmp(mtype, MOUNT_MFS) == 0) {
