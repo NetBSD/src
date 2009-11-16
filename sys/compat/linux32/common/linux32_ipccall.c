@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.5 2009/11/16 08:49:32 joerg Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.5 2009/11/16 08:49:32 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Ex
 
 #include <sys/param.h>
 #include <sys/vnode.h>
+#include <sys/msg.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 
@@ -42,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.4 2009/04/27 13:24:18 njoly Ex
 
 #include <compat/netbsd32/netbsd32.h>
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/linux32_syscallargs.h>
@@ -99,6 +101,17 @@ static int
 linux32_shmctl(struct lwp *, const struct linux32_sys_ipc_args *, register_t *);
 #endif /* SYSVSHM */
 
+#ifdef SYSVMSG
+static int linux32_msgsnd(struct lwp *, const struct linux32_sys_ipc_args *,
+    register_t *);
+static int linux32_msgrcv(struct lwp *, const struct linux32_sys_ipc_args *,
+    register_t *);
+static int linux32_msgget(struct lwp *, const struct linux32_sys_ipc_args *,
+    register_t *);
+static int linux32_msgctl(struct lwp *, const struct linux32_sys_ipc_args *,
+    register_t *);
+#endif
+
 int
 linux32_sys_ipc(struct lwp *l, const struct linux32_sys_ipc_args *uap,
     register_t *retval)
@@ -120,6 +133,16 @@ linux32_sys_ipc(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	case LINUX32_IPC_semctl:
 		return linux32_semctl(l, uap, retval);
 #endif /* SYSVSEM */
+#ifdef SYSVMSG
+	case LINUX32_IPC_msgsnd:
+		return linux32_msgsnd(l, uap, retval);
+	case LINUX32_IPC_msgrcv:
+		return linux32_msgrcv(l, uap, retval);
+	case LINUX32_IPC_msgget:
+		return linux32_msgget(l, uap, retval);
+	case LINUX32_IPC_msgctl:
+		return linux32_msgctl(l, uap, retval);
+#endif
 #ifdef SYSVSHM
 	case LINUX32_IPC_shmat:
 		return linux32_shmat(l, uap, retval);
@@ -340,6 +363,189 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	return error;
 }
 #endif /* SYSVSEM */
+
+#ifdef SYSVMSG
+
+static int
+linux32_msgsnd(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
+{
+	struct sys_msgsnd_args bma;
+
+	SCARG(&bma, msqid) = SCARG(uap, a1);
+	SCARG(&bma, msgp) = SCARG_P32(uap, ptr);
+	SCARG(&bma, msgsz) = SCARG(uap, a2);
+	SCARG(&bma, msgflg) = SCARG(uap, a3);
+
+	printf("linux32_msgsnd: %d %zu\n", SCARG(&bma, msqid), SCARG(&bma, msgsz));
+
+	return sys_msgsnd(l, &bma, retval);
+}
+
+/*
+ * This kludge is used for the 6th argument to the msgrcv system
+ * call, to get around the maximum of 5 arguments to a syscall in Linux.
+ */
+struct linux32_msgrcv_msgarg {
+	netbsd32_pointer_t msg;
+	int type;
+};
+
+static int
+linux32_msgrcv(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
+{
+	struct sys_msgrcv_args bma;
+	struct linux32_msgrcv_msgarg kluge;
+	int error;
+
+	if ((error = copyin(SCARG_P32(uap, ptr), &kluge, sizeof kluge)))
+		return error;
+
+	SCARG(&bma, msqid) = SCARG(uap, a1);
+	SCARG(&bma, msgp) = NETBSD32PTR64(kluge.msg);
+	SCARG(&bma, msgsz) = SCARG(uap, a2);
+	SCARG(&bma, msgtyp) = kluge.type;
+	SCARG(&bma, msgflg) = SCARG(uap, a3);
+
+	printf("linux32_msgrcv: %d %zu\n", SCARG(&bma, msqid), SCARG(&bma, msgsz));
+
+	return sys_msgrcv(l, &bma, retval);
+}
+
+static int
+linux32_msgget(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
+{
+	struct sys_msgget_args bma;
+
+	SCARG(&bma, key) = (key_t)(linux32_key_t)SCARG(uap, a1);
+	SCARG(&bma, msgflg) = SCARG(uap, a2);
+
+	return sys_msgget(l, &bma, retval);
+}
+
+
+static void
+linux32_to_bsd_msqid_ds(struct linux32_msqid_ds *lmp, struct msqid_ds *bmp)
+{
+
+	memset(bmp, 0, sizeof(*bmp));
+	linux32_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	bmp->_msg_first = NETBSD32PTR64(lmp->l_msg_first);
+	bmp->_msg_last = NETBSD32PTR64(lmp->l_msg_last);
+	bmp->_msg_cbytes = lmp->l_msg_cbytes;
+	bmp->msg_qnum = lmp->l_msg_qnum;
+	bmp->msg_qbytes = lmp->l_msg_qbytes;
+	bmp->msg_lspid = lmp->l_msg_lspid;
+	bmp->msg_lrpid = lmp->l_msg_lrpid;
+	bmp->msg_stime = lmp->l_msg_stime;
+	bmp->msg_rtime = lmp->l_msg_rtime;
+	bmp->msg_ctime = lmp->l_msg_ctime;
+}
+
+void
+linux32_to_bsd_msqid64_ds(struct linux32_msqid64_ds *lmp, struct msqid_ds *bmp)
+{
+
+	memset(bmp, 0, sizeof(*bmp));
+	linux_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	bmp->msg_stime = lmp->l_msg_stime;
+	bmp->msg_rtime = lmp->l_msg_rtime;
+	bmp->msg_ctime = lmp->l_msg_ctime;
+	bmp->_msg_cbytes = lmp->l_msg_cbytes;
+	bmp->msg_qnum = lmp->l_msg_qnum;
+	bmp->msg_qbytes = lmp->l_msg_qbytes;
+	bmp->msg_lspid = lmp->l_msg_lspid;
+	bmp->msg_lrpid = lmp->l_msg_lrpid;
+}
+
+static void
+bsd_to_linux32_msqid_ds(struct msqid_ds *bmp, struct linux32_msqid_ds *lmp)
+{
+
+	memset(lmp, 0, sizeof(*lmp));
+	bsd_to_linux32_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	NETBSD32PTR32(lmp->l_msg_first, bmp->_msg_first);
+	NETBSD32PTR32(lmp->l_msg_last, bmp->_msg_last);
+	lmp->l_msg_cbytes = bmp->_msg_cbytes;
+	lmp->l_msg_qnum = bmp->msg_qnum;
+	lmp->l_msg_qbytes = bmp->msg_qbytes;
+	lmp->l_msg_lspid = bmp->msg_lspid;
+	lmp->l_msg_lrpid = bmp->msg_lrpid;
+	lmp->l_msg_stime = bmp->msg_stime;
+	lmp->l_msg_rtime = bmp->msg_rtime;
+	lmp->l_msg_ctime = bmp->msg_ctime;
+}
+
+void
+bsd_to_linux32_msqid64_ds(struct msqid_ds *bmp, struct linux32_msqid64_ds *lmp)
+{
+
+	memset(lmp, 0, sizeof(*lmp));
+	bsd_to_linux_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	NETBSD32PTR32(lmp->l_msg_stime, bmp->msg_stime);
+	NETBSD32PTR32(lmp->l_msg_rtime, bmp->msg_rtime);
+	lmp->l_msg_ctime = bmp->msg_ctime;
+	lmp->l_msg_cbytes = bmp->_msg_cbytes;
+	lmp->l_msg_qnum = bmp->msg_qnum;
+	lmp->l_msg_qbytes = bmp->msg_qbytes;
+	lmp->l_msg_lspid = bmp->msg_lspid;
+	lmp->l_msg_lrpid = bmp->msg_lrpid;
+}
+
+static int
+linux32_msgctl(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
+{
+	struct msqid_ds bm, *bmp = NULL;
+	struct linux32_msqid_ds lm;
+	struct linux32_msqid64_ds lm64;
+	int cmd, lcmd, error;
+	void *data = SCARG_P32(uap, ptr);
+
+	lcmd = SCARG(uap, a2);
+
+	switch (lcmd & ~LINUX32_IPC_64) {
+	case LINUX32_IPC_STAT:
+		cmd = IPC_STAT;
+		bmp = &bm;
+		break;
+	case LINUX32_IPC_SET:
+		if (lcmd & LINUX32_IPC_64) {
+			error = copyin(data, &lm64, sizeof lm64);
+			linux32_to_bsd_msqid64_ds(&lm64, &bm);
+		} else {
+			error = copyin(data, &lm, sizeof lm);
+			linux32_to_bsd_msqid_ds(&lm, &bm);
+		}
+		if (error)
+			return error;
+		cmd = IPC_SET;
+		bmp = &bm;
+		break;
+	case LINUX32_IPC_RMID:
+		cmd = IPC_RMID;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if ((error = msgctl1(l, SCARG(uap, a1), cmd, bmp)))
+		return error;
+
+	switch (lcmd) {
+	case LINUX32_IPC_STAT:
+		bsd_to_linux32_msqid_ds(&bm, &lm);
+		error = copyout(&lm, data, sizeof lm);
+		break;
+	case LINUX32_IPC_STAT|LINUX32_IPC_64:
+		bsd_to_linux32_msqid64_ds(&bm, &lm64);
+		error = copyout(&lm64, data, sizeof lm64);
+		break;
+	default:
+		break;
+	}
+
+	return error;
+}
+#endif /* SYSVMSG */
 
 #ifdef SYSVSHM
 static void
