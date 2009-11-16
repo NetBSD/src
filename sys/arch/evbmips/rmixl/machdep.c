@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.7 2009/11/15 22:59:36 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.8 2009/11/16 23:57:26 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.7 2009/11/15 22:59:36 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.8 2009/11/16 23:57:26 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -270,8 +270,19 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	void *kernend, *v;
 	u_long memsize;
 	u_int vm_cluster_cnt;
+	uint32_t r;
 	phys_ram_seg_t vm_clusters[VM_PHYSSEG_MAX];
 	extern char edata[], end[];
+
+	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
+
+	r = rmixl_mfcr(0x300);
+	r &= ~__BIT(14);		/* disabled Unaligned Access */
+	rmixl_mtcr(0x300, r);
+
+	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
+					/* set single MMU Thread Mode */
+					/* TLB is partitioned (but 1 partition) */
 
 	/*
 	 * Clear the BSS segment.
