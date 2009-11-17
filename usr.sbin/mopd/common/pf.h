@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.h,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: pf.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: pf.h,v 1.5 2009/10/20 00:51:13 snj Exp $
+ *	$NetBSD: pf.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
  *
  */
 
@@ -31,13 +31,13 @@
 #define _PF_H_
 
 __BEGIN_DECLS
-int	pfTrans	   __P((char *));
-int	pfInit     __P((char *, int, u_short, int));
+int	pfTrans	   __P((const char *));
+int	pfInit     __P((const char *, int, u_short, int));
 int	pfEthAddr  __P((int, u_char *));
-int	pfAddMulti __P((int, char *, char *));
-int	pfDelMulti __P((int, char *, char *));
+int	pfAddMulti __P((int, const char *, const char *));
+int	pfDelMulti __P((int, const char *, const char *));
 int	pfRead     __P((int, u_char *, int));
-int	pfWrite    __P((int, u_char *, int, int));
+int	pfWrite    __P((int, const u_char *, int, int));
 __END_DECLS
 
 #endif /* _PF_H_ */

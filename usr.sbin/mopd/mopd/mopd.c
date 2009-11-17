@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.12 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: mopd.c,v 1.13 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.12 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.13 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 /*
@@ -174,7 +174,7 @@ mopProcess(ii, pkt)
 	struct if_info *ii;
 	u_char *pkt;
 {
-	u_char	*dst, *src;
+	const u_char	*dst, *src;
 	u_short  ptype;
 	int	 idx, trans, len;
 
