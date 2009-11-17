@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.5 2009/11/15 23:09:45 cliff Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.6 2009/11/17 07:35:24 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.5 2009/11/15 23:09:45 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.6 2009/11/17 07:35:24 matt Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -840,7 +840,7 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 		    __S(__BS(map)), (u_long)CHIP_W3_SYS_START(v),
 		    (u_long)CHIP_W3_SYS_END(v));
 #endif
-		panic("%s: don't know how to unmap %lx", __S(__BS(unmap)), h);
+		panic("%s: don't know how to unmap %#"PRIxBSH, __S(__BS(unmap)), h);
 	}
 
 #ifdef EXTENT_DEBUG
@@ -849,7 +849,7 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
         error = extent_free(CHIP_EXTENT(v), addr, size,
             EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {
-		printf("%s: WARNING: could not unmap 0x%lx-0x%lx (error %d)\n",
+		printf("%s: WARNING: could not unmap %#"PRIxBUSADDR"-%#"PRIxBUSADDR" (error %d)\n",
 		    __S(__BS(unmap)), addr, addr + size - 1,
 		    error);
 #ifdef EXTENT_DEBUG
