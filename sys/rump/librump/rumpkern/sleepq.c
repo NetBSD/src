@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.5 2009/10/21 23:13:53 rmind Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.5 2009/10/21 23:13:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/queue.h>
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
@@ -46,13 +47,23 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.5 2009/10/21 23:13:53 rmind Exp $");
 syncobj_t sleep_syncobj;
 static kcondvar_t sq_cv;
 
+static int
+sqinit1(void)
+{
+
+	cv_init(&sq_cv, "sleepq");
+
+	return 0;
+}
+
 void
 sleepq_init(sleepq_t *sq)
 {
+	ONCE_DECL(sqctl);
+
+	RUN_ONCE(&sqctl, sqinit1);
 
 	TAILQ_INIT(sq);
-
-	cv_init(&sq_cv, "sleepq"); /* XXX */
 }
 
 void
