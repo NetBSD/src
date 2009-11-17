@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.217 2009/11/04 12:58:01 apb Exp $
+#	$NetBSD: build.sh,v 1.218 2009/11/17 20:49:34 apb Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -163,6 +163,9 @@ initdefaults()
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
+	# Set LC_ALL=C before we try to parse the output from any command
+	setmakeenv LC_ALL C
+
 	# Find information about the build platform.  This should be
 	# kept in sync with _HOST_OSNAME, _HOST_OSREL, and _HOST_ARCH
 	# variables in share/mk/bsd.sys.mk.
@@ -272,7 +275,6 @@ initdefaults()
 	#
 	unsetmakeenv INFODIR
 	unsetmakeenv LESSCHARSET
-	setmakeenv LC_ALL C
 }
 
 getarch()
@@ -1315,7 +1317,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.217 2009/11/04 12:58:01 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.218 2009/11/17 20:49:34 apb Exp $
 # with these arguments: ${_args}
 #
 
