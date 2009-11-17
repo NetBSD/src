@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: device.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: device.h,v 1.5 2009/10/20 00:51:13 snj Exp $
+ *	$NetBSD: device.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
  *
  */
 
@@ -32,9 +32,9 @@
 
 __BEGIN_DECLS
 #ifdef	DEV_NEW_CONF
-void	deviceEthAddr __P((char *, u_char *));
+void	deviceEthAddr __P((const char *, u_char *));
 #endif
-void	deviceInitOne __P((char *));
+void	deviceInitOne __P((const char *));
 void	deviceInitAll __P((void));
 
 /* from loop-bsd.c */

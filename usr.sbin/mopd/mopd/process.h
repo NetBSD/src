@@ -1,4 +1,4 @@
-/*	$NetBSD: process.h,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: process.h,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: process.h,v 1.5 2009/10/20 00:51:13 snj Exp $
+ *	$NetBSD: process.h,v 1.6 2009/11/17 18:58:07 drochner Exp $
  *
  */
 
@@ -32,9 +32,9 @@
 
 __BEGIN_DECLS
 void	mopProcessDL __P((FILE *, struct if_info *, u_char *, int *,
-			  u_char *, u_char *, int, u_short));
+			  const u_char *, const u_char *, int, u_short));
 void	mopProcessRC __P((FILE *, struct if_info *, u_char *, int *,
-			  u_char *, u_char *, int, u_short));
+			  const u_char *, const u_char *, int, u_short));
 __END_DECLS
 
 #endif /* _PROCESS_H_ */

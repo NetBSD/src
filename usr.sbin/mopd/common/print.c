@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: print.c,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include <sys/types.h>
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: print.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
 #define SHORT_PRINT
 
 void
-mopPrintHWA(fd, ap)
-	FILE	*fd;
-        u_char *ap;
+mopPrintHWA(FILE *fd, const u_char *ap)
 {
 	(void)fprintf(fd, "%x:%x:%x:%x:%x:%x",
 		      ap[0],ap[1],ap[2],ap[3],ap[4],ap[5]);
@@ -58,9 +56,7 @@ mopPrintHWA(fd, ap)
 }
 
 void
-mopPrintBPTY(fd, bpty)
-	FILE	*fd;
-	u_char 	bpty;
+mopPrintBPTY(FILE *fd, u_char bpty)
 {
 	switch(bpty) {
 	case MOP_K_BPTY_SYS:
@@ -76,9 +72,7 @@ mopPrintBPTY(fd, bpty)
 };
 
 void
-mopPrintPGTY(fd, pgty)
-	FILE	*fd;
-	u_char 	pgty;
+mopPrintPGTY(FILE *fd, u_char pgty)
 {
 	switch(pgty) {
 	case MOP_K_PGTY_SECLDR:
@@ -100,13 +94,11 @@ mopPrintPGTY(fd, pgty)
 }
 
 void
-mopPrintOneline(fd, pkt, trans)
-	FILE	*fd;
-	u_char	*pkt;
-	int	 trans;
+mopPrintOneline(FILE *fd, const u_char *pkt, int trans)
 {
 	int	 idx = 0;
-	u_char	*dst, *src, code;
+	const u_char	*dst, *src;
+	u_char   code;
 	u_short	 proto;
 	int	 len;
 
@@ -250,12 +242,9 @@ mopPrintOneline(fd, pkt, trans)
 }
 
 void
-mopPrintHeader(fd, pkt, trans)
-	FILE	*fd;
-	u_char	*pkt;
-	int	 trans;
+mopPrintHeader(FILE *fd, const u_char *pkt, int trans)
 {
-	u_char	*dst, *src;
+	const u_char	*dst, *src;
 	u_short	 proto;
 	int	 len, idx = 0;
 
@@ -314,12 +303,9 @@ mopPrintHeader(fd, pkt, trans)
 }
 
 void
-mopPrintMopHeader(fd, pkt, trans)
-	FILE	*fd;
-	u_char	*pkt;
-	int	 trans;
+mopPrintMopHeader(FILE *fd, const u_char *pkt, int trans)
 {
-	u_char	*dst, *src;
+	const u_char	*dst, *src;
 	u_short	 proto;
 	int	 len, idx = 0;
 	u_char   code;
@@ -426,9 +412,7 @@ mopPrintMopHeader(fd, pkt, trans)
 }
 
 void
-mopPrintDevice(fd, device)
-	FILE	*fd;
-        u_char device;
+mopPrintDevice(FILE *fd, u_char device)
 {
 	const char	*sname, *name;
 
@@ -439,9 +423,7 @@ mopPrintDevice(fd, device)
 }
 
 void
-mopPrintTime(fd, ap)
-	FILE	*fd;
-        u_char *ap;
+mopPrintTime(FILE *fd, const u_char *ap)
 {
 	(void)fprintf(fd,
 		      "%04d-%02d-%02d %02d:%02d:%02d.%02d %d:%02d",
@@ -450,15 +432,13 @@ mopPrintTime(fd, ap)
 }
 
 void
-mopPrintInfo(fd, pkt, idx, moplen, mopcode, trans)
-	FILE	*fd;
-	u_char  *pkt, mopcode;
-	int     *idx, trans;
-	u_short moplen;
+mopPrintInfo(FILE *fd, const u_char *pkt, int *idx,
+	     u_short moplen, u_char mopcode, int trans)
 {
         u_short itype,tmps;
 	u_char  ilen ,tmpc,device;
-	u_char  uc1,uc2,uc3,*ucp;
+	u_char  uc1,uc2,uc3;
+	const u_char *ucp;
 	int     i;
 	
 	device = 0;

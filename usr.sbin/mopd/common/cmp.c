@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.4 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: cmp.c,v 1.5 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,15 +26,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmp.c,v 1.4 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.5 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
 #include "cmp.h"
 
 int
-mopCmpEAddr(addr1, addr2)
-	u_char *addr1, *addr2;
+mopCmpEAddr(const u_char *addr1, const u_char *addr2)
 {
-        return(memcmp((char *)addr1, (char *)addr2, 6));
+        return(memcmp(addr1, addr2, 6));
 }

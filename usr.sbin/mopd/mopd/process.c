@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.16 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: process.c,v 1.17 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.16 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: process.c,v 1.17 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
@@ -48,26 +48,23 @@ extern char 	*MopdDir;
 
 struct dllist dllist[MAXDL];		/* dump/load list		*/
 
-void	mopNextLoad __P((u_char *, u_char *, u_char, int));
-void	mopProcessDL __P((FILE *, struct if_info *, u_char *, int *,
-	    u_char *, u_char *, int, u_short));
-void	mopProcessRC __P((FILE *, struct if_info *, u_char *, int *,
-	    u_char *, u_char *, int, u_short));
-void	mopProcessInfo __P((u_char *, int *, u_short, struct dllist *, int));
-void	mopSendASV __P((u_char *, u_char *, struct if_info *, int));
-void	mopStartLoad __P((u_char *, u_char *, struct dllist *, int));
+void	mopNextLoad(const u_char *, const u_char *, u_char, int);
+void	mopProcessDL(FILE *, struct if_info *, const u_char *, int *,
+	    const u_char *, const u_char *, int, u_short);
+void	mopProcessRC(FILE *, struct if_info *, const u_char *, int *,
+	    const u_char *, const u_char *, int, u_short);
+void	mopProcessInfo(const u_char *, int *, u_short, struct dllist *, int);
+void	mopSendASV(const u_char *, const u_char *, struct if_info *, int);
+void	mopStartLoad(const u_char *, const u_char *, struct dllist *, int);
 
 void
-mopProcessInfo(pkt, idx, moplen, dl_rpr, trans)
-	u_char  *pkt;
-	int     *idx;
-	u_short moplen;
-	struct  dllist  *dl_rpr;
-	int	trans;
+mopProcessInfo(const u_char *pkt, int *idx, u_short moplen, struct dllist *dl_rpr,
+	       int trans)
 {
         u_short itype,tmps;
 	u_char  ilen ,tmpc,device;
-	u_char  uc1,uc2,uc3,*ucp;
+	u_char  uc1,uc2,uc3;
+	const u_char *ucp;
 	
 	device = 0;
 
@@ -169,10 +166,7 @@ mopProcessInfo(pkt, idx, moplen, dl_rpr, trans)
 }
 
 void
-mopSendASV(dst, src, ii, trans)
-	u_char	*dst,*src;
-	struct if_info *ii;
-	int	 trans;
+mopSendASV(const u_char *dst, const u_char *src, struct if_info *ii, int trans)
 {
         u_char	 pkt[200], *p;
 	int	 idx;
@@ -211,10 +205,8 @@ mopSendASV(dst, src, ii, trans)
 #define MAX_ETH_PAYLOAD 1492
 
 void
-mopStartLoad(dst, src, dl_rpr, trans)
-	u_char	*dst,*src;
-	struct dllist *dl_rpr;
-	int	 trans;
+mopStartLoad(const u_char *dst, const u_char *src, struct dllist *dl_rpr,
+	     int trans)
 {
 	int	 len;
 	int	 i, slot;
@@ -244,7 +236,7 @@ mopStartLoad(dst, src, dl_rpr, trans)
 				if (slot == -1) {
 					slot = i;
 					memmove((char *)dle->eaddr,
-					    (char *)dst, 6);
+					    (const char *)dst, 6);
 				}
 			}
 		}
@@ -318,9 +310,7 @@ mopStartLoad(dst, src, dl_rpr, trans)
 }
 
 void
-mopNextLoad(dst, src, new_count, trans)
-	u_char	*dst, *src, new_count;
-	int	 trans;
+mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 {
 	int	 len;
 	int	 i, slot;
@@ -437,14 +427,8 @@ mopNextLoad(dst, src, new_count, trans)
 }
 
 void
-mopProcessDL(fd, ii, pkt, idx, dst, src, trans, len)
-	FILE	*fd;
-	struct if_info *ii;
-	u_char	*pkt;
-	int	*idx;
-	u_char	*dst, *src;
-	int	 trans;
-	u_short	 len;
+mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
+	     const u_char *dst, const u_char *src, int trans, u_short len)
 {
 	u_char  tmpc;
 	u_short moplen;
@@ -523,7 +507,7 @@ mopProcessDL(fd, ii, pkt, idx, dst, src, trans, len)
 		dl_rpr = &dl;
 		memset(dl_rpr, 0, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
-		memmove((char *)(dl_rpr->eaddr), (char *)src, 6);
+		memmove((char *)(dl_rpr->eaddr), (const char *)src, 6);
 		mopProcessInfo(pkt,idx,moplen,dl_rpr,trans);
 
 		snprintf(filename, sizeof(filename), "%s/%s.SYS",
@@ -581,14 +565,8 @@ mopProcessDL(fd, ii, pkt, idx, dst, src, trans, len)
 }
 
 void
-mopProcessRC(fd, ii, pkt, idx, dst, src, trans, len)
-	FILE	*fd;
-	struct if_info *ii;
-	u_char	*pkt;
-	int	*idx;
-	u_char	*dst, *src;
-	int	 trans;
-	u_short	 len;
+mopProcessRC(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
+	     const u_char *dst, const u_char *src, int trans, u_short len)
 {
 	u_char	 tmpc;
 	u_short	 tmps, moplen = 0;
@@ -632,7 +610,7 @@ mopProcessRC(fd, ii, pkt, idx, dst, src, trans, len)
 		dl_rpr = &dl;
 		memset(dl_rpr, 0, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
-		memmove((char *)(dl_rpr->eaddr), (char *)src, 6);
+		memmove((char *)(dl_rpr->eaddr), (const char *)src, 6);
 		mopProcessInfo(pkt,idx,moplen,dl_rpr,trans);
 		
 		break;

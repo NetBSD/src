@@ -1,4 +1,4 @@
-/*	$NetBSD: get.h,v 1.4 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: get.h,v 1.5 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: get.h,v 1.4 2009/10/20 00:51:13 snj Exp $
+ *	$NetBSD: get.h,v 1.5 2009/11/17 18:58:07 drochner Exp $
  *
  */
 
@@ -31,14 +31,14 @@
 #define _GET_H_
 
 __BEGIN_DECLS
-u_char		mopGetChar __P((u_char *, int *));
-u_short		mopGetShort __P((u_char *, int *));
-u_int32_t	mopGetLong __P((u_char *, int *));
-void		mopGetMulti __P((u_char *, int *, u_char *, int));
-int		mopGetTrans __P((u_char *, int));
-void		mopGetHeader __P((u_char *, int *, u_char **, u_char **,
+u_char		mopGetChar __P((const u_char *, int *));
+u_short		mopGetShort __P((const u_char *, int *));
+u_int32_t	mopGetLong __P((const u_char *, int *));
+void		mopGetMulti __P((const u_char *, int *, u_char *, int));
+int		mopGetTrans __P((const u_char *, int));
+void		mopGetHeader __P((const u_char *, int *, const u_char **, const u_char **,
 		    u_short *, int *, int));
-u_short		mopGetLength __P((u_char *, int));
+u_short		mopGetLength __P((const u_char *, int));
 __END_DECLS
 
 #endif /* _GET_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.10 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: device.c,v 1.11 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.10 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: device.c,v 1.11 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: device.c,v 1.10 2009/10/20 00:51:13 snj Exp $");
 
 struct	if_info *iflist;		/* Interface List		*/
 
-void	deviceOpen __P((char *, u_short, int));
+void	deviceOpen(const char *, u_short, int);
 
 #ifdef	DEV_NEW_CONF
 /*
@@ -46,9 +46,7 @@ void	deviceOpen __P((char *, u_short, int));
  */
 
 void
-deviceEthAddr(ifname, eaddr)
-	char *ifname;
-        u_char *eaddr;
+deviceEthAddr(const char *ifname, u_char *eaddr)
 {
 	struct sockaddr_dl *sdl;
 	struct ifaddrs *ifap, *ifa;
@@ -74,10 +72,7 @@ deviceEthAddr(ifname, eaddr)
 #endif	/* DEV_NEW_CONF */
 
 void
-deviceOpen(ifname, proto, trans)
-	char	*ifname;
-	u_short	 proto;
-	int	 trans;
+deviceOpen(const char *ifname, u_short proto, int trans)
 {
 	struct if_info *p, tmp;
 
@@ -127,8 +122,7 @@ deviceOpen(ifname, proto, trans)
 }
 
 void
-deviceInitOne(ifname)
-	char	*ifname;
+deviceInitOne(const char *ifname)
 {
 	char	interface[IFNAME_SIZE];
 	struct if_info *p;

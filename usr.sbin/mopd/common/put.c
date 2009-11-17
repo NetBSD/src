@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: put.c,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: put.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: put.c,v 1.6 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
@@ -34,20 +34,14 @@ __RCSID("$NetBSD: put.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
 #include "put.h"
 
 void
-mopPutChar(pkt, idx, value)
-	u_char  *pkt;
-	int     *idx;
-	u_char   value;
+mopPutChar(u_char *pkt, int *idx, u_char value)
 {
 	pkt[*idx] = value;
 	*idx = *idx + 1;
 }
 
 void
-mopPutShort(pkt, idx, value)
-	u_char  *pkt;
-	int     *idx;
-	u_short  value;
+mopPutShort(u_char *pkt, int *idx, u_short value)
 {
         int i;
 	for (i = 0; i < 2; i++) {
@@ -58,10 +52,7 @@ mopPutShort(pkt, idx, value)
 }
 
 void
-mopPutLong(pkt, idx, value)
-	u_char	       *pkt;
-	int	       *idx;
-	u_int32_t	value;
+mopPutLong(u_char *pkt, int *idx, u_int32_t value)
 {
         int i;
 	for (i = 0; i < 4; i++) {
@@ -72,10 +63,7 @@ mopPutLong(pkt, idx, value)
 }
 
 void
-mopPutMulti(pkt, idx, value, size)
-	u_char *pkt;
-	int    *idx,size;
-	const u_char *value;
+mopPutMulti(u_char *pkt, int *idx, const u_char *value, int size)
 {
 	int i;
 
@@ -86,10 +74,7 @@ mopPutMulti(pkt, idx, value, size)
 }
 
 void
-mopPutTime(pkt, idx, value)
-	u_char *pkt;
-	int    *idx;
-	time_t	value;
+mopPutTime(u_char *pkt, int *idx, time_t value)
 {
 	time_t tnow;
 	struct tm *timenow;
@@ -116,12 +101,8 @@ mopPutTime(pkt, idx, value)
 }
 
 void
-mopPutHeader(pkt, idx, dst, src, proto, trans)
-	u_char  *pkt;
-	int     *idx;
-	u_char	 dst[], src[];
-	u_short	 proto;
-	int	 trans;
+mopPutHeader(u_char *pkt, int *idx, const u_char *dst, const u_char *src,
+	     u_short proto, int trans)
 {
 	
 	mopPutMulti(pkt, idx, dst, 6);
@@ -153,10 +134,7 @@ mopPutHeader(pkt, idx, dst, src, proto, trans)
 }
 
 void
-mopPutLength(pkt, trans, len)
-	u_char  *pkt;
-	int	 trans;
-	u_short	 len;
+mopPutLength(u_char *pkt, int trans, u_short len)
 {
 	int	 idx = 0;
 	

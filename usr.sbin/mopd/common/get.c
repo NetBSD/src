@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.5 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: get.c,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: get.c,v 1.6 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
@@ -34,9 +34,7 @@ __RCSID("$NetBSD: get.c,v 1.5 2009/10/20 00:51:13 snj Exp $");
 #include "mopdef.h"
 
 u_char
-mopGetChar(pkt, idx)
-	u_char *pkt;
-	int    *idx;
+mopGetChar(const u_char *pkt, int *idx)
 {
         u_char ret;
 
@@ -46,9 +44,7 @@ mopGetChar(pkt, idx)
 }
 
 u_short
-mopGetShort(pkt, idx)
-	u_char *pkt;
-	int    *idx;
+mopGetShort(const u_char *pkt, int *idx)
 {
         u_short ret;
 	
@@ -58,9 +54,7 @@ mopGetShort(pkt, idx)
 }
 
 u_int32_t
-mopGetLong(pkt, idx)
-	u_char *pkt;
-	int    *idx;
+mopGetLong(const u_char *pkt, int *idx)
 {
         u_int32_t ret;
 	
@@ -73,9 +67,7 @@ mopGetLong(pkt, idx)
 }
 
 void
-mopGetMulti(pkt, idx, dest, size)
-	u_char *pkt,*dest;
-	int    *idx,size;
+mopGetMulti(const u_char *pkt, int *idx, u_char *dest, int size)
 {
 	int i;
 
@@ -87,14 +79,12 @@ mopGetMulti(pkt, idx, dest, size)
 }
 
 int
-mopGetTrans(pkt, trans)
-	u_char	*pkt;
-	int	 trans;
+mopGetTrans(const u_char *pkt, int trans)
 {
-	u_short	*ptype;
+	const u_short	*ptype;
 	
 	if (trans == 0) {
-		ptype = (u_short *)(pkt+12);
+		ptype = (const u_short *)(pkt+12);
 		if (ntohs(*ptype) < 1600) {
 			trans = TRANS_8023;
 		} else {
@@ -105,10 +95,8 @@ mopGetTrans(pkt, trans)
 }
 
 void
-mopGetHeader(pkt, idx, dst, src, proto, len, trans)
-	u_char	*pkt, **dst, **src;
-	int	*idx, *len, trans;
-	u_short	*proto;
+mopGetHeader(const u_char *pkt, int *idx, const u_char **dst, const u_char **src,
+	     u_short *proto, int *len, int trans)
 {
 	*dst = pkt;
 	*src = pkt + 6;
@@ -131,9 +119,7 @@ mopGetHeader(pkt, idx, dst, src, proto, len, trans)
 }
 
 u_short
-mopGetLength(pkt, trans)
-	u_char	*pkt;
-	int	 trans;
+mopGetLength(const u_char *pkt, int trans)
 {
 	switch(trans) {
 	case TRANS_ETHER:
