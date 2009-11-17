@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.37 2007/09/16 02:13:35 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.38 2009/11/17 18:54:26 jld Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -137,7 +137,7 @@ struct RF_Raid_s {
 	int     parity_good;    /* !0 if parity is known to be correct */
 	int     serial_number;  /* a "serial number" for this set */
 	int     mod_counter;    /* modification counter for component labels */
-	int     clean;          /* the clean bit for this array. */
+	int     clean;          /* completely unused and should be removed */
 
 	int     openings;       /* Number of IO's which can be scheduled
 				   simultaneously (high-level - not a
@@ -295,5 +295,6 @@ struct RF_Raid_s {
 	RF_Thread_t pLogDiskThreadHandle;
 
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
+	struct rf_paritymap *parity_map;
 };
 #endif				/* !_RF__RF_RAID_H_ */
