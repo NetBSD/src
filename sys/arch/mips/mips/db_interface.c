@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.9 2009/11/16 23:59:19 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.10 2009/11/17 07:34:37 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.9 2009/11/16 23:59:19 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.10 2009/11/17 07:34:37 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -68,8 +68,10 @@ label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef MIPS64
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -615,6 +617,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 }
 
+#ifdef MIPS64
 void
 db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
@@ -672,6 +675,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
 }
+#endif /* MIPS64 */
 
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,
@@ -684,12 +688,14 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
 		NULL, NULL) },
+#ifdef MIPS64
 	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
 		"Dump processor control register",
 		NULL, NULL) },
 	{ DDB_ADD_CMD("mtcr", 	db_mtcr_cmd,		CS_NOREPEAT|CS_MORE,
-		"Dump processor control register",
+		"Set processor control register",
 		NULL, NULL) },
+#endif
 	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 #endif	/* !KGDB */
