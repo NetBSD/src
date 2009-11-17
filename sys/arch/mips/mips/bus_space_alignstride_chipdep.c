@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.6 2009/11/17 07:35:24 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.7 2009/11/17 07:56:27 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.6 2009/11/17 07:35:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.7 2009/11/17 07:56:27 matt Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -875,7 +875,7 @@ __BS(alloc)(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 {
 #ifdef CHIP_EXTENT
 	struct mips_bus_space_translation mbst;
-	bus_addr_t addr;
+	u_long addr;	/* bogus but makes extent happy */
 	int error;
 #if CHIP_ALIGN_STRIDE != 0
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
