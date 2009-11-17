@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.7 2009/09/21 19:41:23 agc Exp $
+$NetBSD: system,v 1.8 2009/11/17 21:09:54 agc Exp $
 
 NetBSD System Roadmap
 =====================
@@ -6,13 +6,19 @@ NetBSD System Roadmap
 This is a small roadmap document, and deals with the main system
 aspects of the operating system.
 
-The following projects are expected to be included in NetBSD 6.0
+The following projects are already in NetBSD-current and will appear
+in NetBSD 6.0:
 
 1. 64-bit time values supported
 2. Better Kernel Modules support
+5. namei() tactical changes
+10. emap (ephemeral mapping) support for i386 and amd64
+11. support for mDNSResponder
+
+The following projects are expected to be included in NetBSD 6.0
+
 3. Full kernel preemption for real-time threads
 4. POSIX shared memory
-5. namei() tactical changes
 6. Better resource controls
 7. Improved observability: online crashdumps, remote debugging
 8. Processor and cache topology aware scheduler
@@ -46,7 +52,8 @@ ad, and GENERIC was switched over to be a MODULAR kernel.  Support
 from booting from modules, like ffs, was introduced at the same time. 
 Some work has been done by Luke Mewburn in this area to define module
 locations and paths so that effective kernel development can be done
-using modules.
+using modules. Kernel modules have been moved out of base.tgz and a new
+modules.tgz has been created.
 
 Responsible: ad, lukem
 
@@ -116,6 +123,21 @@ calls within the kernel to resolve path names within file systems.
 Responsible: dholland
 
 
+10. Ephemeral Mapping
+---------------------
+
+Responsible: rmind
+
+
+11. Multicast DNS and DNS Service Discovery
+-------------------------------------------
+
+mDNSResponder (also known as mdnsd on some systems) is a daemon invoked
+at boot time to implement Multicast DNS and DNS Service Discovery. On Mac
+OS X 10.6 (Snow Leopard), mDNSResponder is also the system-wide Unicast
+DNS Resolver. Ty Sarna added support for mdnsd to NetBSD-current, and it
+will appear in NetBSD 6.0.
+
 
 Alistair Crooks
-Mon 21 Sep 2009 08:39:16 BST
+Thu Nov  5 07:47:34 PST 2009

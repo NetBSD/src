@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.7 2009/10/02 07:43:01 cegger Exp $
+$NetBSD: storage,v 1.8 2009/11/17 21:09:54 agc Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -9,13 +9,17 @@ systems side of the operating system.
 The following elements and projects are pencilled in for 6.0, but
 please do not rely on them being there.
 
-1. devfs
+Features that will be in 6.0:
 2. logical volume management
 3. a native port of Sun's ZFS
+7. rump extensions
+10. RAIDframe parity map
+
+Features that are planned for 6.0:
+1. devfs
 4. ReFUSE-lowlevel
 5. web-based management tools for storage subsystems
 6. support for flash devices - NAND and MMC/SD
-7. rump extensions
 8. virtualised disks in userland
 9. in-kernel iSCSI initiator
 
@@ -103,6 +107,7 @@ client support.
 
 Responsible: pooka
 
+
 8. Virtualised disks in Userland
 --------------------------------
 
@@ -110,6 +115,7 @@ For better support of virtualization, a library which provides a consistent
 view of virtualized disk images has been developed by jmcneill.
 
 Responsible: jmcneill
+
 
 9. In-kernel iSCSI Initiator
 ----------------------------
@@ -122,5 +128,20 @@ interested in this functionality.
 Responsible: core
 
 
+10. RAIDframe parity map
+------------------------
+
+Jed Davis successfully completed a Summer of Code project to implement
+parity map zones for RAIDframe.  Parity mapping drastically reduces
+the amount of time spent rewriting parity after an unclean shutdown by
+keeping better track of which regions might have had outstanding
+writes.  Enabled by default; can be disabled on a per-set basis, or
+tuned, with the new raidctl(8) commands.
+
+Merged in 5.99.22 sources, and will be in 6.0.  A separate set of
+patches is available for NetBSD-5.
+
+Responsible: jld
+
 Alistair Crooks
-Tue 15 Sep 2009 08:44:14 PDT
+Tue Nov 17 07:17:20 PST 2009
