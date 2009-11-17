@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.14 2009/04/13 00:41:28 lukem Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.15 2009/11/17 18:31:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.14 2009/04/13 00:41:28 lukem Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.15 2009/11/17 18:31:13 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,19 +81,17 @@ char	*progname;
 const char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
 char	name[100], *np;
 
-void process __P((void));
-int main __P((int, char **));
-int match __P((const char *));
-int octdigit __P((char));
-void inithash __P((void));
-long hashit __P((char *, char, long));
-void copystr __P((void));
-int fgetNUL __P((char *, int, FILE *));
+void process(void);
+int main(int, char **);
+int match(const char *);
+int octdigit(char);
+void inithash(void);
+long hashit(const char *, char, long);
+void copystr(void);
+int fgetNUL(char *, int, FILE *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char addon = 0;
 
@@ -150,8 +148,7 @@ process()
 }
 
 int
-match(ocp)
-	const char *ocp;
+match(const char *ocp)
 {
 	const char *cp;
 	int c;
@@ -233,8 +230,7 @@ out:
 }
 
 int
-octdigit(c)
-	char c;
+octdigit(char c)
 {
 
 	return (c >= '0' && c <= '7');
@@ -262,16 +258,13 @@ struct	hash {
 } *bucket[NBUCKETS];
 
 long
-hashit(str, really, fakept)
-	char *str;
-	char really;
-	long fakept;
+hashit(const char *str, char really, long fakept)
 {
 	int i;
 	struct hash *hp;
 	char buf[512];
 	long hashval = 0;
-	char *cp;
+	const char *cp;
 
 #ifdef __GNUC__
 	hp = NULL;	/* XXX gcc */
@@ -315,10 +308,7 @@ hashit(str, really, fakept)
 #include <sys/stat.h>
 
 int
-fgetNUL(obuf, rmdr, file)
-	char *obuf;
-	int rmdr;
-	FILE *file;
+fgetNUL(char *obuf, int rmdr, FILE *file)
 {
 	int c;
 	char *buf = obuf;

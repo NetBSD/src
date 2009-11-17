@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.23 2009/04/14 09:18:41 lukem Exp $	*/
+/*	$NetBSD: xstr.c,v 1.24 2009/11/17 18:31:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.23 2009/04/14 09:18:41 lukem Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.24 2009/11/17 18:31:13 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,8 +361,7 @@ out:
 }
 
 static int
-octdigit(c)
-	char c;
+octdigit(char c)
 {
 
 	return (isdigit((unsigned char)c) && c != '8' && c != '9');
