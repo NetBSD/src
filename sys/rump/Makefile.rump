@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.41 2009/09/13 22:51:41 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.42 2009/11/17 16:17:06 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -25,6 +25,9 @@ CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
+
+# kernel libs should not get linked against libc
+LDFLAGS+=	-nodefaultlibs
 
 # make sure __NetBSD__ gets defined (for builds on non-NetBSD)
 CPPFLAGS+=	-D__NetBSD__
