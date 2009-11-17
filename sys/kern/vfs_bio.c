@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.221 2009/11/11 09:15:42 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.222 2009/11/17 14:38:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.221 2009/11/11 09:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.222 2009/11/17 14:38:31 pooka Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -492,7 +492,7 @@ bufinit(void)
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
-		char *name = kmem_alloc(8, KM_SLEEP);
+		char *name = kmem_alloc(8, KM_SLEEP); /* XXX: never freed */
 		if (__predict_true(size >= 1024))
 			(void)snprintf(name, 8, "buf%dk", size / 1024);
 		else
