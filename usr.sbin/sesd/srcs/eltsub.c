@@ -1,4 +1,4 @@
-/* $NetBSD: eltsub.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */
+/* $NetBSD: eltsub.c,v 1.3 2009/11/17 18:37:45 drochner Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -122,8 +122,7 @@ geteltnm(type)
 }
 
 static char *
-scode2ascii(code)
-	u_char code;
+scode2ascii(u_char code)
 {
 	static char rbuf[32];
 	switch (code & 0xf) {
