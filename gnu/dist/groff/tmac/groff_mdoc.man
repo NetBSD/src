@@ -44,7 +44,7 @@
 .\" for an already extremely slow package.
 .\"
 .
-.Dd August 28, 2005
+.Dd November 17, 2009
 .Os
 .Dt GROFF_MDOC 7
 .
@@ -1967,6 +1967,8 @@ Part 1: System API
 .St -p1003.1-2001
 .It Li -p1003.1-2004
 .St -p1003.1-2004
+.It Li -p1003.1-2008
+.St -p1003.1-2008
 .El
 .Pp
 .
