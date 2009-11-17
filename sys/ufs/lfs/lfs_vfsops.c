@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.279 2009/10/29 18:20:11 eeh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.280 2009/11/17 17:08:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.279 2009/10/29 18:20:11 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.280 2009/11/17 17:08:57 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -119,7 +119,6 @@ static bool lfs_issequential_hole(const struct ufsmount *,
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
-void lfs_sysctl_setup(struct sysctllog *);
 static struct sysctllog *lfs_sysctl_log;
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
@@ -206,8 +205,8 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 	return (0);
 }
 
-void
-lfs_sysctl_setup(struct sysctllog *clog)
+static void
+lfs_sysctl_setup(struct sysctllog **clog)
 {
 	int i;
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead,
@@ -253,12 +252,12 @@ lfs_sysctl_setup(struct sysctllog *clog)
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs",
 		       SYSCTL_DESCR("Log-structured file system"),
@@ -270,37 +269,37 @@ lfs_sysctl_setup(struct sysctllog *clog)
 	 * "5" is the order as taken from sys/mount.h
 	 */
 
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "flushindir", NULL,
 		       NULL, 0, &lfs_writeindir, 0,
 		       CTL_VFS, 5, LFS_WRITEINDIR, CTL_EOL);
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "clean_vnhead", NULL,
 		       NULL, 0, &lfs_clean_vnhead, 0,
 		       CTL_VFS, 5, LFS_CLEAN_VNHEAD, CTL_EOL);
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "dostats",
 		       SYSCTL_DESCR("Maintain statistics on LFS operations"),
 		       sysctl_lfs_dostats, 0, &lfs_dostats, 0,
 		       CTL_VFS, 5, LFS_DOSTATS, CTL_EOL);
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "pagetrip",
 		       SYSCTL_DESCR("How many dirty pages in fs triggers"
 				    " a flush"),
 		       NULL, 0, &lfs_fs_pagetrip, 0,
 		       CTL_VFS, 5, LFS_FS_PAGETRIP, CTL_EOL);
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ignore_lazy_sync",
 		       SYSCTL_DESCR("Lazy Sync is ignored entirely"),
 		       NULL, 0, &lfs_ignore_lazy_sync, 0,
 		       CTL_VFS, 5, LFS_IGNORE_LAZY_SYNC, CTL_EOL);
 #ifdef LFS_KERNEL_RFW
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rfw",
 		       SYSCTL_DESCR("Use in-kernel roll-forward on mount"),
@@ -308,14 +307,14 @@ lfs_sysctl_setup(struct sysctllog *clog)
 		       CTL_VFS, 5, LFS_DO_RFW, CTL_EOL);
 #endif
 
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "stats",
 		       SYSCTL_DESCR("Debugging options"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 5, LFS_STATS, CTL_EOL);
 	for (i = 0; i < sizeof(struct lfs_stats) / sizeof(u_int); i++) {
-		sysctl_createv(&clog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 			       CTLTYPE_INT, stat_names[i].sname,
 			       SYSCTL_DESCR(stat_names[i].lname),
@@ -324,14 +323,14 @@ lfs_sysctl_setup(struct sysctllog *clog)
 	}
 
 #ifdef DEBUG
-	sysctl_createv(&clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "debug",
 		       SYSCTL_DESCR("Debugging options"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 5, LFS_DEBUGLOG, CTL_EOL);
 	for (i = 0; i < DLOG_MAX; i++) {
-		sysctl_createv(&clog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			       CTLTYPE_INT, dlog_names[i].sname,
 			       SYSCTL_DESCR(dlog_names[i].lname),
@@ -351,7 +350,7 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&lfs_vfsops);
 		if (error != 0)
 			break;
-		lfs_sysctl_setup(lfs_sysctl_log);
+		lfs_sysctl_setup(&lfs_sysctl_log);
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&lfs_vfsops);
