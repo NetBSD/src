@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.380 2009/06/24 23:10:02 zafer Exp $
+.\"	$NetBSD: options.4,v 1.381 2009/11/17 17:54:14 dyoung Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 10, 2009
+.Dd November 17, 2009
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1168,6 +1168,22 @@ See
 and
 .Xr vnconfig 8
 for more information.
+.It Cd options SPLDEBUG
+Help the kernel programmer find bugs related to the interrupt priority
+level.
+When
+.Fn spllower
+or
+.Fn splraise
+changes the current CPU's interrupt priority level to or from
+.Dv IPL_HIGH ,
+record a backtrace.
+Read
+.Xr return_address 9
+for caveats about collecting backtraces.
+This feature is experimental, and it is only available on i386.
+See
+.Pa sys/kern/subr_spldebug.c .
 .It Cd options TFTPROOT
 Download the root memory disk through TFTP at root mount time.
 This enables the use of a root
