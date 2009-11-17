@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.24 2009/04/28 08:32:56 lukem Exp $ */
+/* $NetBSD: main.c,v 1.25 2009/11/17 18:37:45 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.24 2009/04/28 08:32:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2009/11/17 18:37:45 drochner Exp $");
 #endif
 
 /*
@@ -373,8 +373,7 @@ acct_load(pn, wr)
 }
 
 static u_quad_t
-decode_comp_t(comp)
-	comp_t comp;
+decode_comp_t(comp_t comp)
 {
 	u_quad_t rv;
 
