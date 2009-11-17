@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.27 2009/11/07 07:27:44 cegger Exp $	*/
+/*	$NetBSD: bios32.c,v 1.28 2009/11/17 23:45:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.27 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.28 2009/11/17 23:45:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ bios32_init(void)
 		bios32_entry.offset = (void *)ISA_HOLE_VADDR(entry);
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
-	/* see if we have SMBIOS extentions */
+	/* see if we have SMBIOS extensions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (char *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * sh = (struct smbhdr *)p;
