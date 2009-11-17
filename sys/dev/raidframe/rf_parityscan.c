@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.32 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.33 2009/11/17 18:54:26 jld Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.32 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.33 2009/11/17 18:54:26 jld Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.32 2006/11/16 01:33:23 christos 
 #include "rf_engine.h"
 #include "rf_parityscan.h"
 #include "rf_map.h"
+#include "rf_paritymap.h"
 
 /*****************************************************************************
  *
@@ -63,6 +64,20 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.32 2006/11/16 01:33:23 christos 
 int
 rf_RewriteParity(RF_Raid_t *raidPtr)
 {
+	if (raidPtr->parity_map != NULL)
+		return rf_paritymap_rewrite(raidPtr->parity_map);
+	else
+		return rf_RewriteParityRange(raidPtr, 0, raidPtr->totalSectors);
+}
+
+int
+rf_RewriteParityRange(RF_Raid_t *raidPtr, RF_SectorNum_t sec_begin,
+    RF_SectorNum_t sec_len)
+{
+	/* 
+	 * Note: It is the caller's responsibility to ensure that
+	 * sec_begin and sec_len are stripe-aligned.
+	 */
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_AccessStripeMapHeader_t *asm_h;
 	int ret_val;
@@ -86,7 +101,7 @@ rf_RewriteParity(RF_Raid_t *raidPtr)
 
 	rc = RF_PARITY_OKAY;
 
-	for (i = 0; i < raidPtr->totalSectors &&
+	for (i = sec_begin; i < sec_begin + sec_len &&
 		     rc <= RF_PARITY_CORRECTED;
 	     i += layoutPtr->dataSectorsPerStripe) {
 		if (raidPtr->waitShutdown) {

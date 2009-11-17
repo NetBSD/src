@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.56 2008/08/28 21:24:30 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.57 2009/11/17 18:54:26 jld Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,6 +94,16 @@
 .Nm
 .Op Fl v
 .Fl I Ar serial_number Ar dev
+.Nm
+.Op Fl v
+.Fl m Ar dev
+.Nm
+.Op Fl v
+.Fl M
+.Oo yes | no | set
+.Ar params
+.Oc
+.Ar dev
 .Nm
 .Op Fl v
 .Fl p Ar dev
@@ -222,6 +232,44 @@ different RAID sets.
 This step
 .Em MUST
 be performed when a new RAID set is created.
+.It Fl m Ar dev
+Display status information about the parity map on the RAID set, if any.
+If used with
+.Fl v
+then the current contents of the parity map will be output (in
+hexadecimal format) as well.
+.It Fl M Ic yes Ar dev
+.\"XXX should there be a section with more info on the parity map feature?
+Enable the use of a parity map on the RAID set; this is the default,
+and greatly reduces the time taken to check parity after unclean
+shutdowns at the cost of some very slight overhead during normal
+operation.
+Changes to this setting will take effect the next time the set is
+configured.
+Note that RAID-0 sets, having no parity, will not use a parity map in
+any case.
+.It Fl M Ic no Ar dev
+Disable the use of a parity map on the RAID set; doing this is not
+recommended.
+This will take effect the next time the set is configured.
+.It Fl M Ic set Ar cooldown Ar tickms Ar regions Ar dev
+Alter the parameters of the parity map; parameters to leave unchanged
+can be given as 0, and trailing zeroes may be omitted.
+.\"XXX should this explanation be deferred to another section as well?
+The RAID set is divided into 
+.Ar regions
+regions; each region is marked dirty for at most
+.Ar cooldown
+intervals of 
+.Ar tickms
+milliseconds each after a write to it, and at least
+.Ar cooldown
+\- 1 such intervals.
+Changes to
+.Ar regions
+take effect the next time is configured, while changes to the other
+parameters are applied immediately.
+The default parameters are expected to be reasonable for most workloads.
 .It Fl p Ar dev
 Check the status of the parity on the RAID set.
 Displays a status message,
