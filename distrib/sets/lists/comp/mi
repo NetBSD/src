@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1338 2009/11/06 13:36:01 njoly Exp $
+#	$NetBSD: mi,v 1.1339 2009/11/17 18:36:07 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9182,8 +9182,10 @@
 ./usr/share/man/cat9/splclock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splhigh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splimp.0			comp-sys-catman		.cat
+./usr/share/man/cat9/spllower.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/spllowersoftclock.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/splnet.0			comp-sys-catman		.cat
+./usr/share/man/cat9/splraise.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splraiseipl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/splsched.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splserial.0		comp-sys-catman		.cat
@@ -14585,8 +14587,10 @@
 ./usr/share/man/html9/splclock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splhigh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splimp.html		comp-sys-htmlman	html
+./usr/share/man/html9/spllower.html		comp-sys-htmlman	html
 ./usr/share/man/html9/spllowersoftclock.html	comp-sys-htmlman	html
 ./usr/share/man/html9/splnet.html		comp-sys-htmlman	html
+./usr/share/man/html9/splraise.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splraiseipl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splsched.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splserial.html		comp-sys-htmlman	html
@@ -20193,8 +20197,10 @@
 ./usr/share/man/man9/splclock.9			comp-sys-man		.man
 ./usr/share/man/man9/splhigh.9			comp-sys-man		.man
 ./usr/share/man/man9/splimp.9			comp-sys-man		.man
+./usr/share/man/man9/spllower.9			comp-sys-man		.man
 ./usr/share/man/man9/spllowersoftclock.9	comp-sys-man		.man
 ./usr/share/man/man9/splnet.9			comp-sys-man		.man
+./usr/share/man/man9/splraise.9			comp-sys-man		.man
 ./usr/share/man/man9/splraiseipl.9		comp-sys-man		.man
 ./usr/share/man/man9/splsched.9			comp-sys-man		.man
 ./usr/share/man/man9/splserial.9		comp-sys-man		.man
