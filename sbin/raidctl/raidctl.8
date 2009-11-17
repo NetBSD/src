@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.58 2009/11/17 19:09:38 jld Exp $
+.\"     $NetBSD: raidctl.8,v 1.59 2009/11/17 19:35:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,11 +256,11 @@ This will take effect the next time the set is configured.
 Alter the parameters of the parity map; parameters to leave unchanged
 can be given as 0, and trailing zeroes may be omitted.
 .\"XXX should this explanation be deferred to another section as well?
-The RAID set is divided into 
+The RAID set is divided into
 .Ar regions
 regions; each region is marked dirty for at most
 .Ar cooldown
-intervals of 
+intervals of
 .Ar tickms
 milliseconds each after a write to it, and at least
 .Ar cooldown
