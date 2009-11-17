@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.5 2009/01/18 16:37:19 christos Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.6 2009/11/17 18:54:26 jld Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,5 +126,10 @@
 #define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t *)
 #define RAIDFRAME_CONFIGURE         _IOW ('r',  35, void *)	/* configure the driver */
 #define RAIDFRAME_GET_INFO          _IOWR('r', 36, RF_DeviceConfig_t *)	/* get configuration */
+
+#define RAIDFRAME_PARITYMAP_STATUS  _IOR('r', 37, struct rf_pmstat)
+#define RAIDFRAME_PARITYMAP_GET_DISABLE _IOR('r', 38, int)
+#define RAIDFRAME_PARITYMAP_SET_DISABLE _IOW('r', 39, int)
+#define RAIDFRAME_PARITYMAP_SET_PARAMS _IOW('r', 40, struct rf_pmparams)
 
 #endif				/* !_RF_RAIDFRAMEIO_H_ */

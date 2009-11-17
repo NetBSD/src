@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.39 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.40 2009/11/17 18:54:26 jld Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.39 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.40 2009/11/17 18:54:26 jld Exp $");
 
 #include <sys/errno.h>
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.39 2006/11/16 01:33:23 christos Exp 
 #include "rf_shutdown.h"
 #include "rf_raid.h"
 #include "rf_kintf.h"
+#include "rf_paritymap.h"
 
 static void rf_ShutdownEngine(void *);
 static void DAGExecutionThread(RF_ThreadArg_t arg);
@@ -853,6 +854,13 @@ rf_RaidIOThread(RF_ThreadArg_t arg)
 		    rf_buf_queue_check(raidPtr->raidid)) {
 			ltsleep(&(raidPtr->iodone), PRIBIO, "raidiow", 0,
 				&(raidPtr->iodone_lock));
+		}
+
+		/* Check for deferred parity-map-related work. */
+		if (raidPtr->parity_map != NULL) {
+			simple_unlock(&(raidPtr->iodone_lock));
+			rf_paritymap_checkwork(raidPtr->parity_map);
+			simple_lock(&(raidPtr->iodone_lock));
 		}
 
 		/* See what I/Os, if any, have arrived */

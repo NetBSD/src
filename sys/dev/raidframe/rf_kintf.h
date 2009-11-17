@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.20 2006/08/27 05:07:12 christos Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.21 2009/11/17 18:54:26 jld Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -41,18 +41,24 @@ int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 void    raidstart(RF_Raid_t * raidPtr);
 int     rf_DispatchKernelIO(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req);
 
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidfetch_component_label(RF_Raid_t *, RF_RowCol_t);
+RF_ComponentLabel_t *raidget_component_label(RF_Raid_t *, RF_RowCol_t);
+int raidflush_component_label(RF_Raid_t *, RF_RowCol_t);
+
+void rf_paritymap_kern_write(RF_Raid_t *, struct rf_paritymap_ondisk *);
+void rf_paritymap_kern_read(RF_Raid_t *, struct rf_paritymap_ondisk *);
 
 #define RF_NORMAL_COMPONENT_UPDATE 0
 #define RF_FINAL_COMPONENT_UPDATE 1
 void rf_update_component_labels(RF_Raid_t *, int);
-int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
-int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
+int raidmarkclean(RF_Raid_t *, RF_RowCol_t);
+int raidmarkdirty(RF_Raid_t *, RF_RowCol_t);
 void raid_init_component_label(RF_Raid_t *, RF_ComponentLabel_t *);
 void rf_print_component_label(RF_ComponentLabel_t *);
 void rf_UnconfigureVnodes( RF_Raid_t * );
 void rf_close_component( RF_Raid_t *, struct vnode *, int);
 void rf_disk_unbusy(RF_RaidAccessDesc_t *);
 int rf_getdisksize(struct vnode *, struct lwp *, RF_RaidDisk_t *);
+int rf_sync_component_caches(RF_Raid_t *raidPtr);
 #endif				/* _RF__RF_KINTF_H_ */
+

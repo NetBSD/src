@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.121 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.122 2009/11/17 18:54:26 jld Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.121 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.122 2009/11/17 18:54:26 jld Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.121 2009/03/15 17:17:23 cegger Exp $
 #include "rf_options.h"
 #include "rf_shutdown.h"
 #include "rf_kintf.h"
+#include "rf_paritymap.h"
 
 #include <sys/buf.h>
 
@@ -240,6 +241,9 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 	}
 
 	raidPtr->valid = 0;
+
+	if (raidPtr->parity_map != NULL)
+		rf_paritymap_detach(raidPtr);
 
 	rf_update_component_labels(raidPtr, RF_FINAL_COMPONENT_UPDATE);
 
@@ -415,6 +419,11 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		DO_RAID_FAIL();
 		return(rc);
 	}
+
+	/* Set up parity map stuff, if applicable. */
+#ifndef RF_NO_PARITY_MAP
+	rf_paritymap_attach(raidPtr, cfgPtr->force);
+#endif
 
 	raidPtr->valid = 1;
 
@@ -675,6 +684,11 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 	RF_ETIMER_START(desc->tracerec.tot_timer);
 #endif
 	desc->async_flag = async_flag;
+
+	if (raidPtr->parity_map != NULL && 
+	    type == RF_IO_TYPE_WRITE)
+		rf_paritymap_begin(raidPtr->parity_map, raidAddress, 
+		    numBlocks);
 
 	rf_ContinueRaidAccess(desc);
 

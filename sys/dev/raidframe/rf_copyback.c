@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.41 2008/01/26 20:44:37 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.42 2009/11/17 18:54:26 jld Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.41 2008/01/26 20:44:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.42 2009/11/17 18:54:26 jld Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -86,7 +86,7 @@ rf_ConfigureCopyback(RF_ShutdownList_t **listp)
 void
 rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 {
-	RF_ComponentLabel_t c_label;
+	RF_ComponentLabel_t *c_label;
 	int     found, retcode;
 	RF_CopybackDesc_t *desc;
 	RF_RowCol_t fcol;
@@ -206,19 +206,17 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	/* Data has been restored.  Fix up the component label. */
 	/* Don't actually need the read here.. */
-	raidread_component_label( raidPtr->raid_cinfo[fcol].ci_dev,
-				  raidPtr->raid_cinfo[fcol].ci_vp,
-				  &c_label);
+	
+	c_label = raidget_component_label(raidPtr, fcol);
+	raid_init_component_label(raidPtr, c_label);
 
-	raid_init_component_label( raidPtr, &c_label );
+	c_label->row = 0;
+	c_label->column = fcol;
+	c_label->partitionSize = raidPtr->Disks[fcol].partitionSize;
 
-	c_label.row = 0;
-	c_label.column = fcol;
-	c_label.partitionSize = raidPtr->Disks[fcol].partitionSize;
+	raidflush_component_label(raidPtr, fcol);
 
-	raidwrite_component_label( raidPtr->raid_cinfo[fcol].ci_dev,
-				   raidPtr->raid_cinfo[fcol].ci_vp,
-				   &c_label);
+	/* XXXjld why is this here? */
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 }
 
