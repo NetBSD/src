@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.28 2009/04/13 07:04:54 lukem Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.29 2009/11/17 18:31:13 drochner Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -123,11 +123,11 @@ struct rpcbdump_short {
 
 
 #ifdef PORTMAP
-static void	ip_ping(u_short, char *, int, char **);
+static void	ip_ping(u_short, const char *, int, char **);
 static CLIENT	*clnt_com_create(struct sockaddr_in *, u_long, u_long, int *,
-				 char *);
+				 const char *);
 static void	pmapdump(int, char **);
-static void	get_inet_address(struct sockaddr_in *, char *);
+static void	get_inet_address(struct sockaddr_in *, const char *);
 #endif
 
 static bool_t	reply_proc(void *, struct netbuf *, struct netconfig *);
@@ -156,9 +156,7 @@ static bool_t	add_netid(struct rpcbdump_short *, char *);
 int		main(int argc, char **argv);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	register int c;
 	int errflg;
@@ -314,8 +312,7 @@ main(argc, argv)
 }
 
 static CLIENT *
-local_rpcb(prog, vers)
-	u_long prog, vers;
+local_rpcb(u_long prog, u_long vers)
 {
 	struct netbuf nbuf;
 	struct sockaddr_un sun;
@@ -337,12 +334,8 @@ local_rpcb(prog, vers)
 
 #ifdef PORTMAP
 static CLIENT *
-clnt_com_create(addr, prog, vers, fdp, trans)
-	struct sockaddr_in *addr;
-	u_long prog;
-	u_long vers;
-	int *fdp;
-	char *trans;
+clnt_com_create(struct sockaddr_in *addr, u_long prog, u_long vers,
+		int *fdp, const char *trans)
 {
 	CLIENT *clnt;
 
@@ -375,11 +368,7 @@ clnt_com_create(addr, prog, vers, fdp, trans)
  * version 0 calls succeeds, it tries for MAXVERS call and repeats the same.
  */
 static void
-ip_ping(portnum, trans, argc, argv)
-	u_short portnum;
-	char *trans;
-	int argc;
-	char **argv;
+ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 {
 	CLIENT *client;
 	int fd = RPC_ANYFD;
@@ -475,9 +464,7 @@ ip_ping(portnum, trans, argc, argv)
  * Dump all the portmapper registerations
  */
 static void
-pmapdump(argc, argv)
-	int argc;
-	char **argv;
+pmapdump(int argc, char **argv)
 {
 	struct sockaddr_in server_addr;
 	struct pmaplist *head = NULL;
@@ -565,9 +552,7 @@ pmapdump(argc, argv)
 }
 
 static void
-get_inet_address(addr, host)
-	struct sockaddr_in *addr;
-	char *host;
+get_inet_address(struct sockaddr_in *addr, const char *host)
 {
 	struct netconfig *nconf;
 	struct addrinfo hints, *res;
