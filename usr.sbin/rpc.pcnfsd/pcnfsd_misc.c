@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.11 2008/09/30 05:20:42 dholland Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.12 2009/11/17 18:37:45 drochner Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -192,10 +192,7 @@ get_password(usrnam)
 
 
 char   *
-mapfont(f, i, b)
-	char    f;
-	char    i;
-	char    b;
+mapfont(char f, char i, char b)
 {
 	static char fontname[64];
 
