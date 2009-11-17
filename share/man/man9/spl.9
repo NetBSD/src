@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.35 2009/11/17 18:36:07 dyoung Exp $
+.\"	$NetBSD: spl.9,v 1.36 2009/11/17 19:34:29 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -237,11 +237,10 @@ if
 .Fa s
 is greater than the current level, and returns the previous level.
 Otherwise, it does not change the level, and it returns the current level.
-Except in extraordinary circumstances, 
+Except in extraordinary circumstances,
 do not use
 .Fn splraise .
 Use one of the priority-raising functions above, instead.
-.Pp
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr mutex 9 ,
