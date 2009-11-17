@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19 2009/04/15 13:05:47 cegger Exp $	*/
+/*	$NetBSD: pte.h,v 1.20 2009/11/17 22:35:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #endif
 
 /*
- * i386 MMU hardware structure (without PAE extention):
+ * i386 MMU hardware structure (without PAE extension):
  *
  * the i386 MMU is a two-level MMU which maps 4GB of virtual memory.
  * the pagesize is 4K (4096 [0x1000] bytes), although newer pentium
@@ -162,7 +162,7 @@
  *    sense to flush these entries when switching from one process'
  *    pmap to another.
  *
- * The PAE extention extends the size of the PTE to 64 bits (52bits physical
+ * The PAE extension extends the size of the PTE to 64 bits (52bits physical
  * address) and is compatible with the amd64 PTE format. The first level
  * maps 2M, the second 1G, so a third level page table is intruduced to
  * map the 4GB virtual address space. This PD has only 4 entries.
