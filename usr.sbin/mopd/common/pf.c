@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.11 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: pf.c,v 1.12 2009/11/17 18:58:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.11 2009/10/20 00:51:13 snj Exp $");
+__RCSID("$NetBSD: pf.c,v 1.12 2009/11/17 18:58:07 drochner Exp $");
 #endif
 
 #include "os.h"
@@ -58,8 +58,7 @@ extern int promisc;
  */
 
 int
-pfTrans(interface)
-	char *interface;
+pfTrans(const char *interface)
 {
 	return TRANS_ETHER+TRANS_8023+TRANS_AND;
 }
@@ -69,10 +68,7 @@ pfTrans(interface)
  */
 
 int
-pfInit(interface, mode, protocol, typ)
-	char *interface;
-	u_short protocol;
-	int typ, mode;
+pfInit(const char *interface, int mode, u_short protocol, int typ)
 {
 	int	fd;
 	struct ifreq ifr;
@@ -150,9 +146,7 @@ pfInit(interface, mode, protocol, typ)
  */
 
 int
-pfAddMulti(s, interface, addr)
-	int s;
-	char *interface, *addr;
+pfAddMulti(int s, const char *interface, const char *addr)
 {
 	struct ifreq ifr;
 	int	fd;
@@ -185,9 +179,7 @@ pfAddMulti(s, interface, addr)
  */
 
 int
-pfDelMulti(s, interface, addr)
-	int s;
-	char *interface, *addr;
+pfDelMulti(int s, const char *interface, const char *addr)
 {
 	struct ifreq ifr;
 	int	fd;
@@ -220,9 +212,7 @@ pfDelMulti(s, interface, addr)
  */
 
 int
-pfRead(fd, buf, len)
-	int	fd, len;
-	u_char *buf;
+pfRead(int fd, u_char *buf, int len)
 {
 	return(read(fd, buf, len));
 }
@@ -232,24 +222,22 @@ pfRead(fd, buf, len)
  */
 
 int
-pfWrite(fd, buf, len, trans)
-	int fd, len, trans;
-	u_char *buf;
+pfWrite(int fd, const u_char *buf, int len, int trans)
 {
 	
 	struct iovec iov[2];
 	
 	switch (trans) {
 	case TRANS_8023:
-		iov[0].iov_base = (caddr_t)buf;
+		iov[0].iov_base = (caddr_t)__UNCONST(buf);
 		iov[0].iov_len = 22;
-		iov[1].iov_base = (caddr_t)buf+22;
+		iov[1].iov_base = (caddr_t)__UNCONST(buf+22);
 		iov[1].iov_len = len-22;
 		break;
 	default:
-		iov[0].iov_base = (caddr_t)buf;
+		iov[0].iov_base = (caddr_t)__UNCONST(buf);
 		iov[0].iov_len = 14;
-		iov[1].iov_base = (caddr_t)buf+14;
+		iov[1].iov_base = (caddr_t)__UNCONST(buf+14);
 		iov[1].iov_len = len-14;
 		break;
 	}
