@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.81 2009/09/24 21:21:34 pooka Exp $	 */
+/*	$NetBSD: rtld.h,v 1.82 2009/11/17 18:44:33 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -51,7 +51,7 @@
 #endif
 #define _PATH_LD_HINTS			"/etc/ld.so.conf"
 
-extern unsigned int _rtld_pagesz;
+extern size_t _rtld_pagesz;
 
 #define round_down(x)	((x) & ~(_rtld_pagesz - 1))
 #define round_up(x)	round_down((x) + _rtld_pagesz - 1)

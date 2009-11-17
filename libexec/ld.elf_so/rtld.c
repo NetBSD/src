@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.125 2009/09/24 21:21:34 pooka Exp $	 */
+/*	$NetBSD: rtld.c,v 1.126 2009/11/17 18:44:33 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.125 2009/09/24 21:21:34 pooka Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.126 2009/11/17 18:44:33 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -92,7 +92,7 @@ Elf_Sym		_rtld_sym_zero = {
     .st_info	= ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE),
     .st_shndx	= SHN_ABS,
 };
-unsigned int	_rtld_pagesz;	/* Page size, as provided by kernel */
+size_t	_rtld_pagesz;	/* Page size, as provided by kernel */
 
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
