@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.224 2009/11/05 11:54:49 pooka Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.225 2009/11/17 22:49:24 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.224 2009/11/05 11:54:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.225 2009/11/17 22:49:24 eeh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2286,8 +2286,10 @@ lfs_putpages(void *v)
 			mutex_enter(&vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
+				mutex_exit(&vp->v_interlock);
 				lfs_release_finfo(fs);
 				lfs_segunlock(fs);
+				mutex_enter(&vp->v_interlock);
 			}
 			sp->vp = NULL;
 			goto get_seglock;
