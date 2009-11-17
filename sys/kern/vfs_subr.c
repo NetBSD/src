@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.386 2009/11/05 08:18:02 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.387 2009/11/17 22:20:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.386 2009/11/05 08:18:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.387 2009/11/17 22:20:14 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -377,7 +377,7 @@ try_nextlist:
 		 * Don't return to freelist - the holder of the last
 		 * reference will destroy it.
 		 */
-		vrelel(vp, 0); /* releases vp->v_interlock */
+		mutex_exit(&vp->v_interlock);
 		mutex_enter(&vnode_free_list_lock);
 		goto retry;
 	}
