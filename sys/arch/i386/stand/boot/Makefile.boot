@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.40 2009/03/30 09:22:52 tsutsui Exp $
+# $NetBSD: Makefile.boot,v 1.41 2009/11/18 20:33:39 dsl Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -145,7 +145,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # explicitly pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
-	bb="$$( ${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
+	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
@@ -161,9 +161,8 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 \
+	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
-	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
-	rm -f ${PROG}.tmp
+	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
 .include <bsd.prog.mk>
