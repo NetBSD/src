@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie_io_space.c,v 1.1.2.1 2009/11/09 10:17:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie_io_space.c,v 1.1.2.2 2009/11/18 01:16:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_io_space.c,v 1.1.2.1 2009/11/09 10:17:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_io_space.c,v 1.1.2.2 2009/11/18 01:16:07 cliff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_io_space.c,v 1.1.2.1 2009/11/09 10:17:06 
 #define	CHIP_IO			/* defined */
 #define	CHIP_ACCESS_SIZE	1
 #define CHIP_LITTLE_ENDIAN
+
+#define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
+#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_pcie_io_ex)
 
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	(((struct rmixl_config *)(v))->rc_pci_io_pbase)

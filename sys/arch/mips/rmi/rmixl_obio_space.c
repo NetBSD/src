@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio_space.c,v 1.1.2.4 2009/11/15 22:58:15 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio_space.c,v 1.1.2.5 2009/11/18 01:16:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.4 2009/11/15 22:58:15 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.5 2009/11/18 01:16:07 cliff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio_space.c,v 1.1.2.4 2009/11/15 22:58:15 cli
 #define	CHIP_MEM		/* defined */
 #define	CHIP_ACCESS_SIZE	4
 #define CHIP_BIG_ENDIAN
+
+#define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
+#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_obio_ex)
+
 
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	0
