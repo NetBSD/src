@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1317 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1318 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -440,3 +440,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	raid(4): RAIDframe parity maps, which greatly improve parity rewrite
 		times after unclean shutdown; jld's GSoC 2009 project.
 		[jld 20091117]
+	bnx(4): Added support for Broadcom BCM5709 and BCM5716 chips.
+		[bouyer 20091118]
