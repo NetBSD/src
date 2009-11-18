@@ -1,18 +1,24 @@
-#	$NetBSD: vchain,v 1.5 2006/11/04 20:33:17 pooka Exp $
+#	$NetBSD: vchain,v 1.6 2009/11/18 18:04:26 eeh Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
-# Given a vnode, follow its mount pointers
+
 define vchain
 	set $num = 0
 
 	set $vp=(struct vnode *)$arg0
 	while ($vp)
-		printf "vp: 0x%x freelist_next: 0x%x usecount: %d flags: 0x%x\n", $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, $vp->v_flag
+		printf "vp: 0x%lx freelist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
+		       $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, \
+		       $vp->v_iflag, $vp->v_vflag, $vp->v_uflag
 		set $num++
 		set $vp = $vp->v_mntvnodes.tqe_next
 	end
 	printf "Number of vnodes: %d\n", $num
+end
+
+document vchain
+Given a vnode, follow its mount pointers
 end
 
 define vprint
@@ -20,13 +26,14 @@ define vprint
 	set $ip=(struct inode *)$vp->v_data
 end
 
-# print the vnode chain for a given mount point
 define mp_vchain
 	set $mp = (struct mount *)$arg0
 	vchain $mp->mnt_vnodelist.tqh_first
 end
+document mp_vchain
+print the vnode chain for a given mount point
+end
 
-# print vnode chains for all mount points
 define vall
 	set $mp=mountlist.cqh_first
 	while ($mp)
@@ -40,6 +47,9 @@ define vall
 		end
 	end
 end
+document vall
+print vnode chains for all mount points
+end
 
 define mountdump
 	set $mp=mountlist.cqh_first
@@ -52,3 +62,4 @@ define mountdump
 			set $mp = 0
 		end
 	end
+end
