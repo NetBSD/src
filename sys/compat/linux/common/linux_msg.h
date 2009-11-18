@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.12 2008/12/09 11:09:11 njoly Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.13 2009/11/18 15:19:24 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct linux_mymsg {
  */
 struct linux_msgrcv_msgarg {
 	struct linux_mymsg *msg;
-	int type;
+	long type;
 };
 /*
  * For msgctl calls.
