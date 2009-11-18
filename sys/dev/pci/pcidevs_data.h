@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.998 2009/10/13 11:56:16 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.999 2009/11/18 18:44:56 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.999 2009/10/13 11:55:54 cegger Exp
+ *	NetBSD: pcidevs,v 1.1000 2009/11/18 18:42:08 jakllsch Exp
  */
 
 /*
@@ -6607,8 +6607,6 @@ static const uint16_t pci_products[] = {
 	    24242, 692, 7775, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB, 
 	    23790, 6430, 0,
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_PCIB, 
-	    24242, 6314, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID, 
 	    24297, 9689, 6008, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3314_IG, 
@@ -6626,13 +6624,15 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378, 
 	    24369, 24356, 24376, 2560, 6480, 615, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237, 
-	    24242, 23803, 24382, 6314, 6116, 0,
+	    24242, 19704, 6116, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251, 
+	    24097, 19704, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HDA, 
-	    24389, 16236, 16241, 6503, 6013, 0,
+	    24382, 16236, 16241, 6503, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_ISA, 
-	    24404, 6314, 6116, 0,
+	    24397, 6314, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_ISA, 
-	    24422, 6314, 6116, 0,
+	    24415, 6314, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_PPB, 
 	    23928, 7573, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HB, 
@@ -6642,15 +6642,15 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_4351, 
 	    23818, 6430, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE, 
-	    24430, 6179, 6013, 0,
+	    24423, 6179, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA_2, 
 	    23928, 692, 7775, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC, 
-	    23818, 7733, 24444, 15448, 6013, 0,
+	    23818, 7733, 24437, 15448, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_SATA, 
-	    24422, 692, 7775, 6013, 0,
+	    24415, 692, 7775, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A, 
-	    24449, 24459, 5390, 5288, 0,
+	    24442, 24452, 5390, 5288, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG, 
 	    24369, 24376, 24317, 692, 1716, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5, 
@@ -6658,33 +6658,33 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_7351, 
 	    23818, 6430, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231, 
-	    24470, 6314, 6116, 0,
+	    24463, 6314, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR, 
-	    24470, 3757, 6527, 6013, 0,
+	    24463, 3757, 6527, 6013, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB, 
 	    23796, 23803, 23811, 615, 6480, 7586, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB, 
 	    23825, 23803, 23832, 7573, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP, 
-	    23839, 23803, 23846, 24477, 6116, 0,
+	    23839, 23803, 23846, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP, 
-	    23960, 23803, 23969, 24477, 6116, 0,
+	    23960, 23803, 23969, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP, 
-	    23974, 23803, 23983, 24477, 6116, 0,
+	    23974, 23803, 23983, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605AGP, 
 	    23989, 23803, 23996, 24005, 15964, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A238, 
 	    23777, 7573, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP, 
-	    24485, 23803, 6693, 24492, 24477, 6116, 0,
+	    24478, 23803, 6693, 24485, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP, 
-	    24207, 23803, 24214, 24477, 6116, 0,
+	    24207, 23803, 24214, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP, 
-	    24349, 24477, 6116, 0,
+	    24349, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_AGP, 
 	    23790, 7586, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP, 
-	    24497, 24477, 6116, 0,
+	    24490, 24470, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3237_PPB, 
 	    23777, 7597, 2198, 24242, 7525, 7573, 6116, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C238, 
@@ -6696,251 +6696,251 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_F238, 
 	    23777, 7573, 6116, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0, 
-	    24506, 0,
+	    24499, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B, 
-	    24524, 0,
+	    24517, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x10, 
-	    24538, 0,
+	    24531, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x20, 
-	    24551, 0,
+	    24544, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6530, 
-	    24564, 0,
+	    24557, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6550, 
-	    24572, 0,
+	    24565, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17, 
-	    24580, 0,
+	    24573, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27, 
-	    24593, 0,
+	    24586, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537, 
-	    24606, 0,
+	    24599, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557, 
-	    24614, 0,
+	    24607, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x15, 
-	    24631, 0,
+	    24624, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x25, 
-	    24644, 0,
+	    24637, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6535, 
-	    24657, 0,
+	    24650, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6555, 
-	    24665, 0,
+	    24658, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP, 
-	    24682, 0,
+	    24675, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP, 
-	    24695, 0,
+	    24688, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP, 
-	    24708, 0,
+	    24701, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RP, 
-	    24718, 0,
+	    24711, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP, 
-	    24728, 0,
+	    24721, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP, 
-	    24741, 0,
+	    24734, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD, 
-	    24754, 0,
+	    24747, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD, 
-	    24767, 0,
+	    24760, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD, 
-	    24780, 0,
+	    24773, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RD, 
-	    24790, 0,
+	    24783, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD, 
-	    24800, 0,
+	    24793, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD, 
-	    24813, 0,
+	    24806, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD, 
-	    24826, 0,
+	    24819, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD, 
-	    24840, 0,
+	    24833, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD, 
-	    24854, 0,
+	    24847, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD, 
-	    24867, 0,
+	    24860, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP2, 
-	    24880, 0,
+	    24873, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP2, 
-	    24894, 0,
+	    24887, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP2, 
-	    24908, 0,
+	    24901, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP2, 
-	    24919, 0,
+	    24912, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP2, 
-	    24933, 0,
+	    24926, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x13RS, 
-	    24947, 0,
+	    24940, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x23RS, 
-	    24957, 0,
+	    24950, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6518RS, 
-	    24967, 0,
+	    24960, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RS, 
-	    24977, 0,
+	    24970, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RS, 
-	    24987, 0,
+	    24980, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RS, 
-	    24997, 0,
+	    24990, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x33RS, 
-	    25007, 0,
+	    25000, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x43RS, 
-	    25017, 0,
+	    25010, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x53RS, 
-	    25027, 0,
+	    25020, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x63RS, 
-	    25037, 0,
+	    25030, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x13RN, 
-	    25047, 0,
+	    25040, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x23RN, 
-	    25057, 0,
+	    25050, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN, 
-	    25067, 0,
+	    25060, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN, 
-	    25081, 0,
+	    25074, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN, 
-	    25095, 0,
+	    25088, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN, 
-	    25108, 0,
+	    25101, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x43RN, 
-	    25121, 0,
+	    25114, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x53RN, 
-	    25134, 0,
+	    25127, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x63RN, 
-	    25144, 0,
+	    25137, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x13RZ, 
-	    25154, 0,
+	    25147, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x23RZ, 
-	    25164, 0,
+	    25157, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x13RZ, 
-	    25174, 0,
+	    25167, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x23RZ, 
-	    25184, 0,
+	    25177, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x33RZ, 
-	    25194, 0,
+	    25187, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x43RZ, 
-	    25204, 0,
+	    25197, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x53RZ, 
-	    25214, 0,
+	    25207, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x63RZ, 
-	    25224, 0,
+	    25217, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD, 
-	    25234, 0,
+	    25227, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD, 
-	    25247, 0,
+	    25240, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN, 
-	    25260, 0,
+	    25253, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN, 
-	    25273, 0,
+	    25266, 0,
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_ICP, 
-	    25286, 0,
+	    25279, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C592, 
-	    25290, 2560, 6116, 0,
+	    25283, 2560, 6116, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C593, 
-	    25297, 14163, 6116, 0,
+	    25290, 14163, 6116, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C594, 
-	    25304, 25311, 6, 6013, 0,
+	    25297, 25304, 6, 6013, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C596597, 
-	    25319, 25311, 14163, 6116, 0,
+	    25312, 25304, 14163, 6116, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C541, 
-	    25330, 0,
+	    25323, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C543, 
-	    25337, 0,
+	    25330, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C532, 
-	    25344, 0,
+	    25337, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C534, 
-	    25351, 0,
+	    25344, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C535, 
-	    25358, 0,
+	    25351, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C147, 
-	    25365, 0,
+	    25358, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C975, 
-	    25372, 0,
+	    25365, 0,
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C925, 
-	    25379, 0,
+	    25372, 0,
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL, 
-	    18000, 25386, 0,
+	    18000, 25379, 0,
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2, 
-	    18000, 25386, 7016, 0,
+	    18000, 25379, 7016, 0,
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000, 
-	    25391, 0,
+	    25384, 0,
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9100, 
-	    25397, 0,
+	    25390, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C193A, 
-	    25403, 0,
+	    25396, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C196A, 
-	    25413, 0,
+	    25406, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C197A, 
-	    25423, 0,
+	    25416, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7193, 
-	    25433, 0,
+	    25426, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7197, 
-	    25440, 0,
+	    25433, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C296A, 
-	    25447, 0,
+	    25440, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD34C296, 
-	    25457, 0,
+	    25450, 0,
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_90C, 
-	    25466, 0,
+	    25459, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83769F, 
-	    25470, 0,
+	    25463, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0, 
-	    25478, 6314, 6116, 0,
+	    25471, 6314, 6116, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1, 
-	    25478, 6179, 6013, 0,
+	    25471, 6179, 6013, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F, 
-	    25487, 5390, 5288, 0,
+	    25480, 5390, 5288, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, 
-	    25496, 5288, 0,
+	    25489, 5288, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1, 
-	    25496, 5288, 0,
+	    25489, 5288, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692, 
-	    25505, 8162, 0,
+	    25498, 8162, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI, 
 	    17210, 6223, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI, 
 	    17189, 6179, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE, 
-	    25511, 6223, 0,
+	    25504, 6223, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME, 
-	    17210, 6223, 25527, 0,
+	    17210, 6223, 25520, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI_KME, 
-	    17189, 6179, 25527, 0,
+	    17189, 6179, 25520, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA, 
-	    25511, 6223, 25533, 0,
+	    25504, 6223, 25526, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC, 
-	    25511, 6223, 25542, 0,
+	    25504, 6223, 25535, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2, 
-	    25511, 6223, 25552, 0,
+	    25504, 6223, 25545, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO, 
-	    25511, 6223, 25563, 0,
+	    25504, 6223, 25556, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A, 
-	    25573, 25579, 5480, 0,
+	    25566, 25572, 5480, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO, 
-	    25573, 25592, 5480, 25563, 0,
+	    25566, 25585, 5480, 25556, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME, 
-	    25595, 6179, 25527, 0,
+	    25588, 6179, 25520, 0,
 	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM, 
-	    25604, 25608, 2443, 0,
+	    25597, 25601, 2443, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3, 
-	    25617, 2455, 5288, 6013, 0,
+	    25610, 2455, 5288, 6013, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143, 
-	    25617, 2455, 5288, 6013, 25625, 0,
+	    25610, 2455, 5288, 6013, 25618, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL, 
-	    25633, 5335, 0,
+	    25626, 5335, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56, 
 	    5505, 5335, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724, 
-	    25643, 6503, 0,
+	    25636, 6503, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740, 
 	    22029, 6503, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C, 
-	    25647, 25652, 6503, 0,
+	    25640, 25645, 6503, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F, 
-	    25659, 25652, 6503, 0,
+	    25652, 25645, 6503, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B, 
-	    25664, 25668, 6503, 0,
+	    25657, 25661, 6503, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754, 
-	    25676, 25680, 6503, 0,
+	    25669, 25673, 6503, 0,
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221, 
-	    25688, 0,
+	    25681, 0,
 	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905, 
-	    25693, 6116, 0,
+	    25686, 6116, 0,
 	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120, 
 	    234, 6013, 0,
 };
@@ -7786,7 +7786,7 @@ static const char pci_words[] = { "."
 	    "M1435\0" /* 1 refs @ 6296 */
 	    "M1445\0" /* 1 refs @ 6302 */
 	    "M1449\0" /* 1 refs @ 6308 */
-	    "PCI-ISA\0" /* 47 refs @ 6314 */
+	    "PCI-ISA\0" /* 45 refs @ 6314 */
 	    "M1451\0" /* 1 refs @ 6322 */
 	    "Host-PCI\0" /* 42 refs @ 6328 */
 	    "M1461\0" /* 1 refs @ 6337 */
@@ -9666,7 +9666,7 @@ static const char pci_words[] = { "."
 	    "GS\0" /* 1 refs @ 19690 */
 	    "140M\0" /* 1 refs @ 19693 */
 	    "MCP65\0" /* 31 refs @ 19698 */
-	    "PCI-LPC\0" /* 3 refs @ 19704 */
+	    "PCI-LPC\0" /* 5 refs @ 19704 */
 	    "MCP67\0" /* 20 refs @ 19712 */
 	    "MCP73\0" /* 20 refs @ 19718 */
 	    "MCP77\0" /* 21 refs @ 19724 */
@@ -10191,7 +10191,7 @@ static const char pci_words[] = { "."
 	    "KT880\0" /* 6 refs @ 23784 */
 	    "K8HTB\0" /* 3 refs @ 23790 */
 	    "VT8363\0" /* 2 refs @ 23796 */
-	    "(Apollo\0" /* 25 refs @ 23803 */
+	    "(Apollo\0" /* 24 refs @ 23803 */
 	    "KT133)\0" /* 2 refs @ 23811 */
 	    "VT3351\0" /* 7 refs @ 23818 */
 	    "VT8371\0" /* 2 refs @ 23825 */
@@ -10229,7 +10229,7 @@ static const char pci_words[] = { "."
 	    "PCI-Ethernet\0" /* 1 refs @ 24065 */
 	    "VT82C570M\0" /* 2 refs @ 24078 */
 	    "(Apollo)\0" /* 2 refs @ 24088 */
-	    "VT8251\0" /* 4 refs @ 24097 */
+	    "VT8251\0" /* 5 refs @ 24097 */
 	    "PCIE\0" /* 2 refs @ 24104 */
 	    "Port1\0" /* 1 refs @ 24109 */
 	    "Port2\0" /* 1 refs @ 24115 */
@@ -10249,7 +10249,7 @@ static const char pci_words[] = { "."
 	    "CPU-PCI\0" /* 3 refs @ 24221 */
 	    "VT8653\0" /* 1 refs @ 24229 */
 	    "266T)\0" /* 1 refs @ 24236 */
-	    "VT8237\0" /* 5 refs @ 24242 */
+	    "VT8237\0" /* 4 refs @ 24242 */
 	    "VT6105\0" /* 1 refs @ 24249 */
 	    "VT612X\0" /* 1 refs @ 24256 */
 	    "(Velocity)\0" /* 1 refs @ 24263 */
@@ -10268,140 +10268,139 @@ static const char pci_words[] = { "."
 	    "KT400\0" /* 1 refs @ 24363 */
 	    "VT8378\0" /* 2 refs @ 24369 */
 	    "KM400\0" /* 2 refs @ 24376 */
-	    "KT600)\0" /* 1 refs @ 24382 */
-	    "VT8237A/VT8251\0" /* 1 refs @ 24389 */
-	    "VT8237A/VT82C586A\0" /* 1 refs @ 24404 */
-	    "VT8237S\0" /* 2 refs @ 24422 */
-	    "CX700M2/VX700\0" /* 1 refs @ 24430 */
-	    "APIC\0" /* 1 refs @ 24444 */
-	    "VT86C100A\0" /* 1 refs @ 24449 */
-	    "(Rhine-II)\0" /* 1 refs @ 24459 */
-	    "VT8231\0" /* 2 refs @ 24470 */
-	    "CPU-AGP\0" /* 7 refs @ 24477 */
-	    "VT8633\0" /* 1 refs @ 24485 */
-	    "266)\0" /* 1 refs @ 24492 */
-	    "VT8377CE\0" /* 1 refs @ 24497 */
-	    "GDT6000/6020/6050\0" /* 1 refs @ 24506 */
-	    "GDT6000B/6010\0" /* 1 refs @ 24524 */
-	    "GDT6110/6510\0" /* 1 refs @ 24538 */
-	    "GDT6120/6520\0" /* 1 refs @ 24551 */
-	    "GDT6530\0" /* 1 refs @ 24564 */
-	    "GDT6550\0" /* 1 refs @ 24572 */
-	    "GDT6117/6517\0" /* 1 refs @ 24580 */
-	    "GDT6127/6527\0" /* 1 refs @ 24593 */
-	    "GDT6537\0" /* 1 refs @ 24606 */
-	    "GDT6557/6557-ECC\0" /* 1 refs @ 24614 */
-	    "GDT6115/6515\0" /* 1 refs @ 24631 */
-	    "GDT6125/6525\0" /* 1 refs @ 24644 */
-	    "GDT6535\0" /* 1 refs @ 24657 */
-	    "GDT6555/6555-ECC\0" /* 1 refs @ 24665 */
-	    "GDT6[15]17RP\0" /* 1 refs @ 24682 */
-	    "GDT6[15]27RP\0" /* 1 refs @ 24695 */
-	    "GDT6537RP\0" /* 1 refs @ 24708 */
-	    "GDT6557RP\0" /* 1 refs @ 24718 */
-	    "GDT6[15]11RP\0" /* 1 refs @ 24728 */
-	    "GDT6[15]21RP\0" /* 1 refs @ 24741 */
-	    "GDT6[15]17RD\0" /* 1 refs @ 24754 */
-	    "GDT6[5]127RD\0" /* 1 refs @ 24767 */
-	    "GDT6537RD\0" /* 1 refs @ 24780 */
-	    "GDT6557RD\0" /* 1 refs @ 24790 */
-	    "GDT6[15]11RD\0" /* 1 refs @ 24800 */
-	    "GDT6[15]21RD\0" /* 1 refs @ 24813 */
-	    "GDT6[156]18RD\0" /* 1 refs @ 24826 */
-	    "GDT6[156]28RD\0" /* 1 refs @ 24840 */
-	    "GDT6[56]38RD\0" /* 1 refs @ 24854 */
-	    "GDT6[56]58RD\0" /* 1 refs @ 24867 */
-	    "GDT6[15]17RP2\0" /* 1 refs @ 24880 */
-	    "GDT6[15]27RP2\0" /* 1 refs @ 24894 */
-	    "GDT6537RP2\0" /* 1 refs @ 24908 */
-	    "GDT6[15]11RP2\0" /* 1 refs @ 24919 */
-	    "GDT6[15]21RP2\0" /* 1 refs @ 24933 */
-	    "GDT6513RS\0" /* 1 refs @ 24947 */
-	    "GDT6523RS\0" /* 1 refs @ 24957 */
-	    "GDT6518RS\0" /* 1 refs @ 24967 */
-	    "GDT6x28RS\0" /* 1 refs @ 24977 */
-	    "GDT6x38RS\0" /* 1 refs @ 24987 */
-	    "GDT6x58RS\0" /* 1 refs @ 24997 */
-	    "GDT6x33RS\0" /* 1 refs @ 25007 */
-	    "GDT6x43RS\0" /* 1 refs @ 25017 */
-	    "GDT6x53RS\0" /* 1 refs @ 25027 */
-	    "GDT6x63RS\0" /* 1 refs @ 25037 */
-	    "GDT7x13RN\0" /* 1 refs @ 25047 */
-	    "GDT7x23RN\0" /* 1 refs @ 25057 */
-	    "GDT7[156]18RN\0" /* 1 refs @ 25067 */
-	    "GDT7[156]28RN\0" /* 1 refs @ 25081 */
-	    "GDT7[56]38RN\0" /* 1 refs @ 25095 */
-	    "GDT7[56]58RN\0" /* 1 refs @ 25108 */
-	    "GDT7[56]43RN\0" /* 1 refs @ 25121 */
-	    "GDT7x53RN\0" /* 1 refs @ 25134 */
-	    "GDT7x63RN\0" /* 1 refs @ 25144 */
-	    "GDT4x13RZ\0" /* 1 refs @ 25154 */
-	    "GDT4x23RZ\0" /* 1 refs @ 25164 */
-	    "GDT8x13RZ\0" /* 1 refs @ 25174 */
-	    "GDT8x23RZ\0" /* 1 refs @ 25184 */
-	    "GDT8x33RZ\0" /* 1 refs @ 25194 */
-	    "GDT8x43RZ\0" /* 1 refs @ 25204 */
-	    "GDT8x53RZ\0" /* 1 refs @ 25214 */
-	    "GDT8x63RZ\0" /* 1 refs @ 25224 */
-	    "GDT6[56]19RD\0" /* 1 refs @ 25234 */
-	    "GDT6[56]29RD\0" /* 1 refs @ 25247 */
-	    "GDT7[56]19RN\0" /* 1 refs @ 25260 */
-	    "GDT7[56]29RN\0" /* 1 refs @ 25273 */
-	    "ICP\0" /* 1 refs @ 25286 */
-	    "82C592\0" /* 1 refs @ 25290 */
-	    "82C593\0" /* 1 refs @ 25297 */
-	    "82C594\0" /* 1 refs @ 25304 */
-	    "Wildcat\0" /* 2 refs @ 25311 */
-	    "82C596/597\0" /* 1 refs @ 25319 */
-	    "82C541\0" /* 1 refs @ 25330 */
-	    "82C543\0" /* 1 refs @ 25337 */
-	    "82C532\0" /* 1 refs @ 25344 */
-	    "82C534\0" /* 1 refs @ 25351 */
-	    "82C535\0" /* 1 refs @ 25358 */
-	    "82C147\0" /* 1 refs @ 25365 */
-	    "82C975\0" /* 1 refs @ 25372 */
-	    "82C925\0" /* 1 refs @ 25379 */
-	    "SVGA\0" /* 2 refs @ 25386 */
-	    "P9000\0" /* 1 refs @ 25391 */
-	    "P9100\0" /* 1 refs @ 25397 */
-	    "WD33C193A\0" /* 1 refs @ 25403 */
-	    "WD33C196A\0" /* 1 refs @ 25413 */
-	    "WD33C197A\0" /* 1 refs @ 25423 */
-	    "WD7193\0" /* 1 refs @ 25433 */
-	    "WD7197\0" /* 1 refs @ 25440 */
-	    "WD33C296A\0" /* 1 refs @ 25447 */
-	    "WD34C296\0" /* 1 refs @ 25457 */
-	    "90C\0" /* 1 refs @ 25466 */
-	    "W83769F\0" /* 1 refs @ 25470 */
-	    "W83C553F\0" /* 2 refs @ 25478 */
-	    "W89C840F\0" /* 1 refs @ 25487 */
-	    "W89C940F\0" /* 2 refs @ 25496 */
-	    "W6692\0" /* 1 refs @ 25505 */
-	    "NinjaSCSI-32UDE\0" /* 5 refs @ 25511 */
-	    "(KME)\0" /* 3 refs @ 25527 */
-	    "(IODATA)\0" /* 1 refs @ 25533 */
-	    "(LOGITEC)\0" /* 1 refs @ 25542 */
-	    "(LOGITEC2)\0" /* 1 refs @ 25552 */
-	    "(BUFFALO)\0" /* 2 refs @ 25563 */
-	    "CF32A\0" /* 2 refs @ 25573 */
-	    "CompactFlash\0" /* 1 refs @ 25579 */
-	    "CF\0" /* 1 refs @ 25592 */
-	    "NPATA-32\0" /* 1 refs @ 25595 */
-	    "Xen\0" /* 1 refs @ 25604 */
-	    "Platform\0" /* 1 refs @ 25608 */
-	    "X3201-3\0" /* 2 refs @ 25617 */
-	    "(21143)\0" /* 1 refs @ 25625 */
-	    "WinGlobal\0" /* 1 refs @ 25633 */
-	    "724\0" /* 1 refs @ 25643 */
-	    "740C\0" /* 1 refs @ 25647 */
-	    "(DS-1)\0" /* 2 refs @ 25652 */
-	    "724F\0" /* 1 refs @ 25659 */
-	    "744\0" /* 1 refs @ 25664 */
-	    "(DS-1S)\0" /* 1 refs @ 25668 */
-	    "754\0" /* 1 refs @ 25676 */
-	    "(DS-1E)\0" /* 1 refs @ 25680 */
-	    "1221\0" /* 1 refs @ 25688 */
-	    "PCI-ST32\0" /* 1 refs @ 25693 */
+	    "VT8237A/VT8251\0" /* 1 refs @ 24382 */
+	    "VT8237A/VT82C586A\0" /* 1 refs @ 24397 */
+	    "VT8237S\0" /* 2 refs @ 24415 */
+	    "CX700M2/VX700\0" /* 1 refs @ 24423 */
+	    "APIC\0" /* 1 refs @ 24437 */
+	    "VT86C100A\0" /* 1 refs @ 24442 */
+	    "(Rhine-II)\0" /* 1 refs @ 24452 */
+	    "VT8231\0" /* 2 refs @ 24463 */
+	    "CPU-AGP\0" /* 7 refs @ 24470 */
+	    "VT8633\0" /* 1 refs @ 24478 */
+	    "266)\0" /* 1 refs @ 24485 */
+	    "VT8377CE\0" /* 1 refs @ 24490 */
+	    "GDT6000/6020/6050\0" /* 1 refs @ 24499 */
+	    "GDT6000B/6010\0" /* 1 refs @ 24517 */
+	    "GDT6110/6510\0" /* 1 refs @ 24531 */
+	    "GDT6120/6520\0" /* 1 refs @ 24544 */
+	    "GDT6530\0" /* 1 refs @ 24557 */
+	    "GDT6550\0" /* 1 refs @ 24565 */
+	    "GDT6117/6517\0" /* 1 refs @ 24573 */
+	    "GDT6127/6527\0" /* 1 refs @ 24586 */
+	    "GDT6537\0" /* 1 refs @ 24599 */
+	    "GDT6557/6557-ECC\0" /* 1 refs @ 24607 */
+	    "GDT6115/6515\0" /* 1 refs @ 24624 */
+	    "GDT6125/6525\0" /* 1 refs @ 24637 */
+	    "GDT6535\0" /* 1 refs @ 24650 */
+	    "GDT6555/6555-ECC\0" /* 1 refs @ 24658 */
+	    "GDT6[15]17RP\0" /* 1 refs @ 24675 */
+	    "GDT6[15]27RP\0" /* 1 refs @ 24688 */
+	    "GDT6537RP\0" /* 1 refs @ 24701 */
+	    "GDT6557RP\0" /* 1 refs @ 24711 */
+	    "GDT6[15]11RP\0" /* 1 refs @ 24721 */
+	    "GDT6[15]21RP\0" /* 1 refs @ 24734 */
+	    "GDT6[15]17RD\0" /* 1 refs @ 24747 */
+	    "GDT6[5]127RD\0" /* 1 refs @ 24760 */
+	    "GDT6537RD\0" /* 1 refs @ 24773 */
+	    "GDT6557RD\0" /* 1 refs @ 24783 */
+	    "GDT6[15]11RD\0" /* 1 refs @ 24793 */
+	    "GDT6[15]21RD\0" /* 1 refs @ 24806 */
+	    "GDT6[156]18RD\0" /* 1 refs @ 24819 */
+	    "GDT6[156]28RD\0" /* 1 refs @ 24833 */
+	    "GDT6[56]38RD\0" /* 1 refs @ 24847 */
+	    "GDT6[56]58RD\0" /* 1 refs @ 24860 */
+	    "GDT6[15]17RP2\0" /* 1 refs @ 24873 */
+	    "GDT6[15]27RP2\0" /* 1 refs @ 24887 */
+	    "GDT6537RP2\0" /* 1 refs @ 24901 */
+	    "GDT6[15]11RP2\0" /* 1 refs @ 24912 */
+	    "GDT6[15]21RP2\0" /* 1 refs @ 24926 */
+	    "GDT6513RS\0" /* 1 refs @ 24940 */
+	    "GDT6523RS\0" /* 1 refs @ 24950 */
+	    "GDT6518RS\0" /* 1 refs @ 24960 */
+	    "GDT6x28RS\0" /* 1 refs @ 24970 */
+	    "GDT6x38RS\0" /* 1 refs @ 24980 */
+	    "GDT6x58RS\0" /* 1 refs @ 24990 */
+	    "GDT6x33RS\0" /* 1 refs @ 25000 */
+	    "GDT6x43RS\0" /* 1 refs @ 25010 */
+	    "GDT6x53RS\0" /* 1 refs @ 25020 */
+	    "GDT6x63RS\0" /* 1 refs @ 25030 */
+	    "GDT7x13RN\0" /* 1 refs @ 25040 */
+	    "GDT7x23RN\0" /* 1 refs @ 25050 */
+	    "GDT7[156]18RN\0" /* 1 refs @ 25060 */
+	    "GDT7[156]28RN\0" /* 1 refs @ 25074 */
+	    "GDT7[56]38RN\0" /* 1 refs @ 25088 */
+	    "GDT7[56]58RN\0" /* 1 refs @ 25101 */
+	    "GDT7[56]43RN\0" /* 1 refs @ 25114 */
+	    "GDT7x53RN\0" /* 1 refs @ 25127 */
+	    "GDT7x63RN\0" /* 1 refs @ 25137 */
+	    "GDT4x13RZ\0" /* 1 refs @ 25147 */
+	    "GDT4x23RZ\0" /* 1 refs @ 25157 */
+	    "GDT8x13RZ\0" /* 1 refs @ 25167 */
+	    "GDT8x23RZ\0" /* 1 refs @ 25177 */
+	    "GDT8x33RZ\0" /* 1 refs @ 25187 */
+	    "GDT8x43RZ\0" /* 1 refs @ 25197 */
+	    "GDT8x53RZ\0" /* 1 refs @ 25207 */
+	    "GDT8x63RZ\0" /* 1 refs @ 25217 */
+	    "GDT6[56]19RD\0" /* 1 refs @ 25227 */
+	    "GDT6[56]29RD\0" /* 1 refs @ 25240 */
+	    "GDT7[56]19RN\0" /* 1 refs @ 25253 */
+	    "GDT7[56]29RN\0" /* 1 refs @ 25266 */
+	    "ICP\0" /* 1 refs @ 25279 */
+	    "82C592\0" /* 1 refs @ 25283 */
+	    "82C593\0" /* 1 refs @ 25290 */
+	    "82C594\0" /* 1 refs @ 25297 */
+	    "Wildcat\0" /* 2 refs @ 25304 */
+	    "82C596/597\0" /* 1 refs @ 25312 */
+	    "82C541\0" /* 1 refs @ 25323 */
+	    "82C543\0" /* 1 refs @ 25330 */
+	    "82C532\0" /* 1 refs @ 25337 */
+	    "82C534\0" /* 1 refs @ 25344 */
+	    "82C535\0" /* 1 refs @ 25351 */
+	    "82C147\0" /* 1 refs @ 25358 */
+	    "82C975\0" /* 1 refs @ 25365 */
+	    "82C925\0" /* 1 refs @ 25372 */
+	    "SVGA\0" /* 2 refs @ 25379 */
+	    "P9000\0" /* 1 refs @ 25384 */
+	    "P9100\0" /* 1 refs @ 25390 */
+	    "WD33C193A\0" /* 1 refs @ 25396 */
+	    "WD33C196A\0" /* 1 refs @ 25406 */
+	    "WD33C197A\0" /* 1 refs @ 25416 */
+	    "WD7193\0" /* 1 refs @ 25426 */
+	    "WD7197\0" /* 1 refs @ 25433 */
+	    "WD33C296A\0" /* 1 refs @ 25440 */
+	    "WD34C296\0" /* 1 refs @ 25450 */
+	    "90C\0" /* 1 refs @ 25459 */
+	    "W83769F\0" /* 1 refs @ 25463 */
+	    "W83C553F\0" /* 2 refs @ 25471 */
+	    "W89C840F\0" /* 1 refs @ 25480 */
+	    "W89C940F\0" /* 2 refs @ 25489 */
+	    "W6692\0" /* 1 refs @ 25498 */
+	    "NinjaSCSI-32UDE\0" /* 5 refs @ 25504 */
+	    "(KME)\0" /* 3 refs @ 25520 */
+	    "(IODATA)\0" /* 1 refs @ 25526 */
+	    "(LOGITEC)\0" /* 1 refs @ 25535 */
+	    "(LOGITEC2)\0" /* 1 refs @ 25545 */
+	    "(BUFFALO)\0" /* 2 refs @ 25556 */
+	    "CF32A\0" /* 2 refs @ 25566 */
+	    "CompactFlash\0" /* 1 refs @ 25572 */
+	    "CF\0" /* 1 refs @ 25585 */
+	    "NPATA-32\0" /* 1 refs @ 25588 */
+	    "Xen\0" /* 1 refs @ 25597 */
+	    "Platform\0" /* 1 refs @ 25601 */
+	    "X3201-3\0" /* 2 refs @ 25610 */
+	    "(21143)\0" /* 1 refs @ 25618 */
+	    "WinGlobal\0" /* 1 refs @ 25626 */
+	    "724\0" /* 1 refs @ 25636 */
+	    "740C\0" /* 1 refs @ 25640 */
+	    "(DS-1)\0" /* 2 refs @ 25645 */
+	    "724F\0" /* 1 refs @ 25652 */
+	    "744\0" /* 1 refs @ 25657 */
+	    "(DS-1S)\0" /* 1 refs @ 25661 */
+	    "754\0" /* 1 refs @ 25669 */
+	    "(DS-1E)\0" /* 1 refs @ 25673 */
+	    "1221\0" /* 1 refs @ 25681 */
+	    "PCI-ST32\0" /* 1 refs @ 25686 */
 };
-const int pci_nwords = 3457;
+const int pci_nwords = 3456;
 
