@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.8 2009/11/18 12:27:58 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.9 2009/11/18 15:19:24 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.8 2009/11/18 12:27:58 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.9 2009/11/18 15:19:24 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -386,7 +386,7 @@ linux32_msgsnd(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
  */
 struct linux32_msgrcv_msgarg {
 	netbsd32_pointer_t msg;
-	int type;
+	netbsd32_long type;
 };
 
 static int
