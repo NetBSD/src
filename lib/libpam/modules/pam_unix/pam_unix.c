@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.13 2009/06/14 23:23:54 tonnerre Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.14 2009/11/18 17:06:23 drochner Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.13 2009/06/14 23:23:54 tonnerre Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.14 2009/11/18 17:06:23 drochner Exp $");
 #endif
 
 
@@ -557,7 +557,6 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 		/* Get the new password. */
 		for (tries = 0;;) {
-			pam_set_item(pamh, PAM_AUTHTOK, NULL);
 			retval = pam_get_authtok(pamh, PAM_AUTHTOK, &new_pass,
 			    NULL);
 			if (retval == PAM_TRY_AGAIN) {
@@ -576,12 +575,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			}
 			if (min_pw_len > 0 && strlen(new_pass) < (size_t)min_pw_len) {
 				pam_error(pamh, "Password is too short.");
-				continue;
+				goto retry;
 			}
 			if (strlen(new_pass) <= 5 && ++tries < 2) {
 				pam_error(pamh,
 				    "Please enter a longer password.");
-				continue;
+				goto retry;
 			}
 			for (p = new_pass; *p && islower((unsigned char)*p); ++p);
 			if (!*p && ++tries < 2) {
@@ -590,10 +589,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				    "password.\nUnusual capitalization, "
 				    "control characters or digits are "
 				    "suggested.");
-				continue;
+				goto retry;
 			}
 			/* Password is OK. */
 			break;
+retry:
+			pam_set_item(pamh, PAM_AUTHTOK, NULL);
 		}
 		pw_getpwconf(option, sizeof(option), pwd, 
 #ifdef YP
