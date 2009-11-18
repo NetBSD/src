@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.3 2009/11/15 23:11:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.4 2009/11/18 01:15:32 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.3 2009/11/15 23:11:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.4 2009/11/18 01:15:32 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -188,7 +188,7 @@ static int	rmixl_pcie_error_intr(void *);
 	ba *= (1024 * 1024);						\
 	bar = RMIXL_PCIE_CONCAT3(RMIXL_PCIE_,reg,_BAR)(ba, 1);		\
 	DPRINTF(("PCIE %s BAR was not enabled by firmware\n"		\
-		"enabling %s at phys %" PRIx64 ", size %lu MB\n",	\
+		"enabling %s at phys %#" PRIxBUSADDR ", size %lu MB\n",	\
 		__STRING(reg), __STRING(reg), ba, size));		\
 	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_BRIDGE + 			\
 		RMIXL_PCIE_CONCAT3(RMIXL_SBC_PCIE_,reg,_BAR), bar);	\
@@ -843,9 +843,9 @@ rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
 	bus_addr_t ba;
 	int err;
 	static bus_space_handle_t cfg_bsh;
-	static pcitag_t cfg_oba = -1;
+	static bus_addr_t cfg_oba = -1;
 	static bus_space_handle_t ecfg_bsh;
-	static pcitag_t ecfg_oba = -1;
+	static bus_addr_t ecfg_oba = -1;
 
 	/*
 	 * bus space depends on offset
