@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.31 2009/11/14 18:36:56 elad Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.32 2009/11/18 09:47:18 stacktic Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.31 2009/11/14 18:36:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.32 2009/11/18 09:47:18 stacktic Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -537,7 +537,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			}
 
 			if (secmodel_suser_curtain) {
-				if (kauth_cred_uidmatch(cred, p->p_cred) != 0)
+				if (!kauth_cred_uidmatch(cred, p->p_cred))
 					result = KAUTH_RESULT_DENY;
 			}
 
