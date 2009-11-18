@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.27 2009/11/18 12:25:15 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.28 2009/11/18 12:26:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.27 2009/11/18 12:25:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.28 2009/11/18 12:26:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -295,21 +295,11 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 			 */
 			break;
 		}
-
-		if (l == owner) {
-			/* owner has changed, restart from curlwp */
-			lwp_unlock(l);
-			l = cur;
-			lwp_lock(l);
-			prio = lwp_eprio(l);
-			continue;
-		}
-			
 		if (l->l_mutex != owner->l_mutex)
 			dolock = true;
 		else
 			dolock = false;
-		if (dolock && !lwp_trylock(owner)) {
+		if (l == owner || (dolock && !lwp_trylock(owner))) {
 			/*
 			 * restart from curlwp.
 			 * Note that there may be a livelock here:
