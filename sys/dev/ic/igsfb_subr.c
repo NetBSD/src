@@ -1,7 +1,8 @@
-/*	$NetBSD: igsfb_subr.c,v 1.10 2009/11/11 17:01:17 macallan Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.11 2009/11/18 06:10:50 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
+ *		 2009 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +32,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.10 2009/11/11 17:01:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.11 2009/11/18 06:10:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,7 +472,29 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	int vblank_start, vblank_end, hblank_start, hblank_end;
 	uint8_t vclk1, vclk2, vclk3, overflow;
 
-	bytes_per_pixel = depth >> 3;
+	switch (depth) {
+		case 8:
+			bytes_per_pixel = IGS_EXT_SEQ_8BPP;
+			break;
+		case 15:
+			bytes_per_pixel = IGS_EXT_SEQ_15BPP; /* 5-5-5 */
+			break;
+		case 16:
+			bytes_per_pixel = IGS_EXT_SEQ_16BPP; /* 5-6-5 */
+			break;
+		case 24:
+			bytes_per_pixel = IGS_EXT_SEQ_24BPP; /* 8-8-8 */
+			break;
+		case 32:
+			bytes_per_pixel = IGS_EXT_SEQ_32BPP;
+			break;
+		default:
+			aprint_error("igsfb: unsupported depth (%d), reverting"
+				     " to 8 bit\n", depth);
+			depth = 8;
+			bytes_per_pixel = IGS_EXT_SEQ_8BPP;
+	}
+
 	hoffset = (mode->hdisplay >> 3) * bytes_per_pixel;
 	memfetch = hoffset + 1;
 	overflow = (((mode->vtotal - 2) & 0x400) >> 10) | 
@@ -565,16 +588,16 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	igs_grfx_write(iot, ioh, 0x08, 0xff);
 
 	/* crank up memory clock to 95MHz - needed for higher resolutions */
-	igs_ext_write(iot, ioh, 0xB2, 0x91);
-	igs_ext_write(iot, ioh, 0xB3, 0x6a);
+	igs_ext_write(iot, ioh, IGS_EXT_MCLK0, 0x91);
+	igs_ext_write(iot, ioh, IGS_EXT_MCLK1, 0x6a);
 	igsfb_freq_latch(dc);
 
-	igs_ext_write(iot, ioh, 0x11, overflow);
-	igs_ext_write(iot, ioh, 0x77, bytes_per_pixel);
+	igs_ext_write(iot, ioh, IGS_EXT_VOVFL, overflow);
+	igs_ext_write(iot, ioh, IGS_EXT_SEQ_MISC, bytes_per_pixel);
 	igs_ext_write(iot, ioh, 0x14, memfetch & 0xff);
 	igs_ext_write(iot, ioh, 0x15,
 	    ((memfetch & 0x300) >> 8) | ((hoffset & 0x300) >> 4));
-	igs_ext_write(iot, ioh, 0x56, 0x00);
+	igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL, 0x00);
 
 	/* finally set the dot clock */
 	igsfb_calc_pll(mode->dot_clock, &m, &n, &p, 2047, 255, 7, IGS_MIN_VCO);
@@ -584,8 +607,8 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	    (mode->dot_clock > 180000 ? 0x20 : 0);
 	vclk3 = ((m >> 8) & 0x7) | ((n >> 2) & 0x38) | ((p << 4) & 0x40);
 	DPRINTF("clk: %02x %02x %02x\n", vclk1, vclk2, vclk3);
-	igs_ext_write(iot, ioh, 0xB0, vclk1);
-	igs_ext_write(iot, ioh, 0xB1, vclk2);
+	igs_ext_write(iot, ioh, IGS_EXT_VCLK0, vclk1);
+	igs_ext_write(iot, ioh, IGS_EXT_VCLK1, vclk2);
 	igs_ext_write(iot, ioh, 0xBA, vclk3);
 	igsfb_freq_latch(dc);
 	DPRINTF("clock: %d\n", IGS_CLOCK(m, n, p));
