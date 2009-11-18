@@ -1,8 +1,7 @@
-#	$NetBSD: vdump,v 1.4 2006/11/04 20:33:17 pooka Exp $
+#	$NetBSD: vdump,v 1.5 2009/11/18 18:02:00 eeh Exp $
 
 #	@(#)vdump	8.1 (Berkeley) 6/10/93
 #
-# dump the vnode list
 
 define dumpvnodes
 
@@ -11,4 +10,8 @@ define dumpvnodes
 		printf "vnode=0x%x freef=0x%x mountf=0x%x usecount=%d\n", $vp, $vp->v_freelist.tqe_next, $vp->v_mntvnodes.tqe_next, $vp->v_uobj.uo_refs
 		set $vp = (struct vnode *)$vp->v_freelist.tqe_next
 	end
+end
+
+document dumpvnodes
+dump the vnode list
 end
