@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.89 2009/08/12 13:33:02 simonb Exp $
+$NetBSD: miidevs,v 1.90 2009/11/18 23:00:46 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -164,7 +164,9 @@ model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
 model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
 model BROADCOM2 BCM5755		0x000c BCM5755 1000BASE-T media interface
 model BROADCOM2 BCM5754		0x000e BCM5754/5787 1000BASE-T media interface
+model BROADCOM2 BCM5709CAX	0x002c BCM5709CAX 10/100/1000baseT PHY
 model BROADCOM2 BCM5722		0x002d BCM5722 1000BASE-T media interface
+model BROADCOM2 BCM5709C	0x003c BCM5709 10/100/1000baseT PHY
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
