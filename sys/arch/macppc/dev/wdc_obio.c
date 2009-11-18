@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.51 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.52 2009/11/18 22:51:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.51 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.52 2009/11/18 22:51:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static void adjust_timing(struct ata_channel *);
 static void ata4_adjust_timing(struct ata_channel *);
 
 CFATTACH_DECL_NEW(wdc_obio, sizeof(struct wdc_obio_softc),
-    wdc_obio_match, wdc_obio_attach, wdc_obio_detach, wdcactivate);
+    wdc_obio_match, wdc_obio_attach, wdc_obio_detach, NULL);
 
 static const char * const ata_names[] = {
     "heathrow-ata",
