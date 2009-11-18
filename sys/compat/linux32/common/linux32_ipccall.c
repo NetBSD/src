@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.6 2009/11/16 13:32:40 joerg Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.7 2009/11/18 12:01:25 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.6 2009/11/16 13:32:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.7 2009/11/18 12:01:25 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -376,8 +376,6 @@ linux32_msgsnd(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
 	SCARG(&bma, msgflg) = SCARG(uap, a3);
 
-	printf("linux32_msgsnd: %d %zu\n", SCARG(&bma, msqid), SCARG(&bma, msgsz));
-
 	return sys_msgsnd(l, &bma, retval);
 }
 
@@ -405,8 +403,6 @@ linux32_msgrcv(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
 	SCARG(&bma, msgtyp) = kluge.type;
 	SCARG(&bma, msgflg) = SCARG(uap, a3);
-
-	printf("linux32_msgrcv: %d %zu\n", SCARG(&bma, msqid), SCARG(&bma, msgsz));
 
 	return sys_msgrcv(l, &bma, retval);
 }
