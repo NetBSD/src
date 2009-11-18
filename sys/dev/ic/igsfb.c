@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.46 2009/11/11 17:01:17 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.47 2009/11/18 21:59:38 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.46 2009/11/11 17:01:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.47 2009/11/18 21:59:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,8 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 		       ? "hardware bswap, " : "software bswap, "
 		   : "",
 	       dc->dc_width, dc->dc_height, dc->dc_depth);
-
+	printf("%s: using %dbpp for X\n", device_xname(&sc->sc_dev),
+	       dc->dc_maxdepth);
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);
 
@@ -613,13 +614,13 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
 		wsd_fbip->height = dc->dc_height;
 		wsd_fbip->width = dc->dc_width;
-		wsd_fbip->depth = dc->dc_depth;
+		wsd_fbip->depth = dc->dc_maxdepth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(int *)data = dc->dc_stride;
+		*(int *)data = dc->dc_width * (dc->dc_maxdepth >> 3);
 		return 0;
 
 	case WSDISPLAYIO_SMODE:
@@ -632,8 +633,14 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				igsfb_update_cursor(dc,
 					WSDISPLAY_CURSOR_DOCUR);
 			}
+			if ((dc->dc_mode != NULL) && (dc->dc_maxdepth != 8))
+				igsfb_set_mode(dc, dc->dc_mode,
+				    dc->dc_maxdepth);
 		} else {
 			dc->dc_mapped = 0;
+			if ((dc->dc_mode != NULL) && (dc->dc_maxdepth != 8))
+				igsfb_set_mode(dc, dc->dc_mode, 8);
+			igsfb_init_cmap(dc);
 			/* reinit sprite for text cursor */
 			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
 				igsfb_make_text_cursor(dc, dc->dc_vd.active);
@@ -1170,6 +1177,7 @@ igsfb_accel_wait(struct igsfb_devconfig *dc)
 	int timo = 100000;
 	uint8_t reg;
 
+	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG, (dc->dc_depth >> 3) - 1);
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
 		if ((reg & IGS_COP_CTL_BUSY) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.11 2009/11/18 06:10:50 macallan Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.12 2009/11/18 21:59:38 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.11 2009/11/18 06:10:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.12 2009/11/18 21:59:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,7 @@ void
 igsfb_hw_setup(struct igsfb_devconfig *dc)
 {
 	const struct videomode *mode = NULL;
-	int i;
+	int i, size, d;
 
 	igsfb_init_seq(dc);
 	igsfb_init_crtc(dc);
@@ -443,20 +443,36 @@ igsfb_hw_setup(struct igsfb_devconfig *dc)
 	}
 
 	if (i < videomode_count) {
+		size = videomode_list[i].hdisplay * videomode_list[i].vdisplay;
 		/* found a mode, now let's see if we can display it */
 		if ((videomode_list[i].dot_clock <= IGS_MAX_CLOCK) &&
 		    (videomode_list[i].hdisplay <= 2048) &&
 		    (videomode_list[i].hdisplay >= 320) &&
 		    (videomode_list[i].vdisplay <= 2048) &&
-		    (videomode_list[i].vdisplay >= 200)) {
+		    (videomode_list[i].vdisplay >= 200) &&
+		    (size <= (dc->dc_memsz - 0x1000))) {
 		 	mode = &videomode_list[i];
+			/*
+			 * now let's see which maximum depth we can support
+			 * in that mode
+			 */
+			d = (dc->dc_vmemsz - 0x1000) / size;
+			if (d >= 4) {
+				dc->dc_maxdepth = 32;
+			} else if (d >= 2) {
+				dc->dc_maxdepth = 16;
+			} else
+				dc->dc_maxdepth = 8;
 		}
 	}
+	dc->dc_mode = mode;
 
 	if (mode != NULL) {
 		igsfb_set_mode(dc, mode, 8);
-	} else
+	} else {
 		igsfb_1024x768_8bpp_60Hz(dc);
+		dc->dc_maxdepth = 8;
+	}
 
 	igsfb_video_on(dc);
 }
@@ -470,30 +486,32 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	int i, m, n, p, hoffset, bytes_per_pixel, memfetch;
 	int vsync_start, hsync_start, vsync_end, hsync_end;
 	int vblank_start, vblank_end, hblank_start, hblank_end;
-	uint8_t vclk1, vclk2, vclk3, overflow;
+	int croffset;
+	uint8_t vclk1, vclk2, vclk3, overflow, reg, seq_mode;
 
 	switch (depth) {
 		case 8:
-			bytes_per_pixel = IGS_EXT_SEQ_8BPP;
+			seq_mode = IGS_EXT_SEQ_8BPP;
 			break;
 		case 15:
-			bytes_per_pixel = IGS_EXT_SEQ_15BPP; /* 5-5-5 */
+			seq_mode = IGS_EXT_SEQ_15BPP; /* 5-5-5 */
 			break;
 		case 16:
-			bytes_per_pixel = IGS_EXT_SEQ_16BPP; /* 5-6-5 */
+			seq_mode = IGS_EXT_SEQ_16BPP; /* 5-6-5 */
 			break;
 		case 24:
-			bytes_per_pixel = IGS_EXT_SEQ_24BPP; /* 8-8-8 */
+			seq_mode = IGS_EXT_SEQ_24BPP; /* 8-8-8 */
 			break;
 		case 32:
-			bytes_per_pixel = IGS_EXT_SEQ_32BPP;
+			seq_mode = IGS_EXT_SEQ_32BPP;
 			break;
 		default:
 			aprint_error("igsfb: unsupported depth (%d), reverting"
 				     " to 8 bit\n", depth);
 			depth = 8;
-			bytes_per_pixel = IGS_EXT_SEQ_8BPP;
+			seq_mode = IGS_EXT_SEQ_8BPP;
 	}
+	bytes_per_pixel = depth >> 3;
 
 	hoffset = (mode->hdisplay >> 3) * bytes_per_pixel;
 	memfetch = hoffset + 1;
@@ -503,6 +521,11 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	    ((mode->vsync_start & 0x400) >> 7) |
 	    0x10; 
 
+	/* RAMDAC address 2 select */
+	reg = igs_ext_read(iot, ioh, IGS_EXT_SPRITE_CTL);
+	igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
+		      reg | IGS_EXT_SPRITE_DAC_PEL);
+
 	if (depth == 8) {
 		/* palette mode */
 		bus_space_write_1(dc->dc_iot, dc->dc_ioh, IGS_DAC_CMD, 0x06);
@@ -510,6 +533,10 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 		/* bypass palette */
 		bus_space_write_1(dc->dc_iot, dc->dc_ioh, IGS_DAC_CMD, 0x16);
 	}
+	/* restore */
+	igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL, reg);
+
+	bus_space_write_1(iot, ioh, IGS_PEL_MASK, 0xff);
 
 	igs_crtc_write(iot, ioh, 0x11, 0x00); /* write enable CRTC 0..7 */
 
@@ -593,11 +620,10 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	igsfb_freq_latch(dc);
 
 	igs_ext_write(iot, ioh, IGS_EXT_VOVFL, overflow);
-	igs_ext_write(iot, ioh, IGS_EXT_SEQ_MISC, bytes_per_pixel);
+	igs_ext_write(iot, ioh, IGS_EXT_SEQ_MISC, seq_mode);
 	igs_ext_write(iot, ioh, 0x14, memfetch & 0xff);
 	igs_ext_write(iot, ioh, 0x15,
 	    ((memfetch & 0x300) >> 8) | ((hoffset & 0x300) >> 4));
-	igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL, 0x00);
 
 	/* finally set the dot clock */
 	igsfb_calc_pll(mode->dot_clock, &m, &n, &p, 2047, 255, 7, IGS_MIN_VCO);
@@ -613,10 +639,30 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	igsfb_freq_latch(dc);
 	DPRINTF("clock: %d\n", IGS_CLOCK(m, n, p));
 
+	if (dc->dc_id > 0x2000) {
+		/* we have a blitter, so configure it as well */
+		bus_space_write_1(dc->dc_iot, dc->dc_coph, IGS_COP_MAP_FMT_REG,
+		    bytes_per_pixel - 1);
+		bus_space_write_2(dc->dc_iot, dc->dc_coph,
+		    IGS_COP_SRC_MAP_WIDTH_REG, dc->dc_width - 1);
+		bus_space_write_2(dc->dc_iot, dc->dc_coph,
+		    IGS_COP_DST_MAP_WIDTH_REG, dc->dc_width - 1);
+	}
+
+	/* re-init the cursor data address too */
+	croffset = dc->dc_vmemsz - IGS_CURSOR_DATA_SIZE;
+	croffset >>= 10;	/* bytes -> kilobytes */
+	igs_ext_write(dc->dc_iot, dc->dc_ioh,
+		      IGS_EXT_SPRITE_DATA_LO, croffset & 0xff);
+	igs_ext_write(dc->dc_iot, dc->dc_ioh,
+		      IGS_EXT_SPRITE_DATA_HI, (croffset >> 8) & 0xf);
+
 	dc->dc_width = mode->hdisplay;
 	dc->dc_height = mode->vdisplay;
 	dc->dc_depth = depth;
-	dc->dc_stride = dc->dc_width * bytes_per_pixel;
+	dc->dc_stride = dc->dc_width * (depth >> 3);
+
+	igsfb_video_on(dc);
 }
 
 
