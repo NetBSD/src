@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.57 2009/08/29 13:55:29 tsutsui Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.58 2009/11/18 00:28:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.57 2009/08/29 13:55:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.58 2009/11/18 00:28:09 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,6 +926,18 @@ const struct puc_device_description puc_devices[] = {
 	    {   0xffff, 0xffff, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* OEM of Oxford Semiconductor PCI UARTs? */
+	{   "Avlab LP PCI 4S Quartet",
+	    {	0x1415,	0x9501,	0x14db,	0x2150	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
 	    },
 	},
 
