@@ -1,4 +1,4 @@
-#	$NetBSD: lwps,v 1.2 2009/07/28 10:38:20 skrll Exp $
+#	$NetBSD: lwps,v 1.3 2009/11/18 18:12:00 eeh Exp $
 
 define lwps
 	set $i = 0
@@ -14,10 +14,12 @@ define lwps
 			set $l = $p->p_lwps.lh_first
 			set $j = 0
 			while ($j < $p->p_nlwps)
-				printf "%16lx %5d %5d %8x %16lx", \
+				printf "0x%16lx %5d %5d %8x 0x%16lx", \
 					$l, $p->p_pid, $l->l_lid, $l->l_flag, $l->l_wchan
 				if ($l->l_wmesg)
 					printf " (%s)", (char *)$l->l_wmesg
+# If the preceding command cannot dereference the pointer, use this instead:
+#					printf " (%lx)", $l->l_wmesg
 				end
 				set $l = $l->l_sibling.le_next
 				printf "\n"
@@ -27,4 +29,96 @@ define lwps
 		end
 		set $i++
 	end
+end
+document lwps
+ps for lwps
+end
+
+define threadlist
+	set $i = 0
+
+	while ($i < 2)
+		if ($i == 0)
+			set $p = allproc.lh_first
+		end
+		while ($p)
+			set $l = $p->p_lwps.lh_first
+			set $j = 0
+			while ($j < $p->p_nlwps)
+			        printf "\n"
+			printf "proc: %16lx %5d %8x %4x %5d %16lx %s", \
+				$p, $p->p_pid, \
+				$p->p_flag, $p->p_stat, $p->p_nlwps, $p->p_lwps.lh_first, \
+				(char *) $p->p_comm
+			printf "\n"
+				printf "Thread: %16lx %5d %5d %8x %16lx\n", \
+					$l, $p->p_pid, $l->l_lid, $l->l_flag, $l->l_wchan
+			        kvm proc $l
+				where
+			        printf "\n"
+			        printf "\n"
+				set $l = $l->l_sibling.le_next
+				set $j++
+		end
+			set $p = $p->p_list.le_next
+		end
+		set $i++
+	end
+end
+document threadlist
+Print out the stack of all threads in the system.
+end
+
+define lock
+	set $ld = (struct lockdebug *)ld_rb_tree
+	set $a = $ld->ld_lock
+	set $b = (volatile void *)$arg0
+
+	while ($ld && $a != $b)
+		if ($a < $b) 
+			set $ld = (struct lockdebug *)$ld->ld_rb_node.rb_nodes[1]
+		end
+		if ($a > $b) 
+			set $ld = (struct lockdebug *)$ld->ld_rb_node.rb_nodes[0]
+		end
+		if ($ld == 0)
+			loop_break
+		end
+		set $a = $ld->ld_lock
+# printf "a=%lx b=%lx ld=%lx a<b %d a>b %d\n", $a, $b, $ld,  ($a < $b), ($a > $b)
+	end
+	if ($ld)
+		printf "lock address : %#018lx type     : ", \
+			(long)$ld->ld_lock
+		if ($ld->ld_flags & 0x2)
+			printf "sleep/adaptive\n"
+		else
+			printf "spin\n"
+		end
+		printf "initialized  : %#018lx", \
+			(long)$ld->ld_initaddr
+		if ($ld->ld_lockops->lo_type == 0x2)
+			printf " interlock: %#018lx\n", $ld->ld_locked
+		else
+			printf "\n"
+			printf "shared holds : %18u exclusive: ", \
+				$ld->ld_shares
+			if (($ld->ld_flags & 0x1) != 0)
+				printf "1\n"
+			else
+				printf "0\n"
+			end
+			printf "shares wanted: %18u exclusive: %18u\n", \
+				(unsigned)$ld->ld_shwant, (unsigned)$ld->ld_exwant
+			printf "cpu last held: %18u\n", \
+				(unsigned)$ld->ld_cpu
+			printf "current lwp  : %#018lx last held: %#018lx\n", \
+				(long)0, (long)$ld->ld_lwp
+			printf "last locked  : %#018lx unlocked : %#018lx\n", \
+				(long)$ld->ld_locked, (long)$ld->ld_unlocked
+		end
+	end
+end
+document lock
+Print out lockdebug info like ddb does.
 end
