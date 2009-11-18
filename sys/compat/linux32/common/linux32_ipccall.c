@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.7 2009/11/18 12:01:25 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.8 2009/11/18 12:27:58 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.7 2009/11/18 12:01:25 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.8 2009/11/18 12:27:58 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.7 2009/11/18 12:01:25 njoly Ex
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux32/common/linux32_types.h>
@@ -369,14 +370,14 @@ linux32_semctl(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 static int
 linux32_msgsnd(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
 {
-	struct sys_msgsnd_args bma;
+	struct netbsd32_msgsnd_args bma;
 
 	SCARG(&bma, msqid) = SCARG(uap, a1);
-	SCARG(&bma, msgp) = SCARG_P32(uap, ptr);
+	SCARG(&bma, msgp) = SCARG(uap, ptr);
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
 	SCARG(&bma, msgflg) = SCARG(uap, a3);
 
-	return sys_msgsnd(l, &bma, retval);
+	return netbsd32_msgsnd(l, &bma, retval);
 }
 
 /*
@@ -391,7 +392,7 @@ struct linux32_msgrcv_msgarg {
 static int
 linux32_msgrcv(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t *retval)
 {
-	struct sys_msgrcv_args bma;
+	struct netbsd32_msgrcv_args bma;
 	struct linux32_msgrcv_msgarg kluge;
 	int error;
 
@@ -399,12 +400,12 @@ linux32_msgrcv(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 		return error;
 
 	SCARG(&bma, msqid) = SCARG(uap, a1);
-	SCARG(&bma, msgp) = NETBSD32PTR64(kluge.msg);
+	SCARG(&bma, msgp) = kluge.msg;
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
 	SCARG(&bma, msgtyp) = kluge.type;
 	SCARG(&bma, msgflg) = SCARG(uap, a3);
 
-	return sys_msgrcv(l, &bma, retval);
+	return netbsd32_msgrcv(l, &bma, retval);
 }
 
 static int
