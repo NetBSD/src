@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.6 2009/11/15 23:10:22 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.7 2009/11/18 01:14:49 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.6 2009/11/15 23:10:22 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.7 2009/11/18 01:14:49 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -105,7 +105,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 	obio_bus_init(sc);
 
-	aprint_normal(" addr %#"PRIxPADDR" size %#"PRIxPSIZE"\n",
+	aprint_normal(" addr %#"PRIxBUSADDR" size %#"PRIxBUSSIZE"\n",
 		ba, (bus_size_t)RMIXL_IO_DEV_SIZE);
 	aprint_naive("\n");
 
@@ -122,9 +122,9 @@ obio_print(void *aux, const char *pnp)
 	struct obio_attach_args *obio = aux;
 
 	if (obio->obio_addr != OBIOCF_ADDR_DEFAULT) {
-		aprint_normal(" addr %#"PRIxPADDR, obio->obio_addr);
+		aprint_normal(" addr %#"PRIxBUSADDR, obio->obio_addr);
 		if (obio->obio_size != OBIOCF_SIZE_DEFAULT)
-			aprint_normal("-%#"PRIxPADDR,
+			aprint_normal("-%#"PRIxBUSADDR,
 				obio->obio_addr + (obio->obio_size - 1));
 	}
 	if (obio->obio_mult != OBIOCF_MULT_DEFAULT)
