@@ -1,4 +1,4 @@
-#	$NetBSD: procs,v 1.1 2008/02/20 20:56:35 ad Exp $
+#	$NetBSD: procs,v 1.2 2009/11/18 18:05:51 eeh Exp $
 
 define procs
 	set $i = 0
@@ -8,12 +8,12 @@ define procs
 			set $p = allproc.lh_first
 		end
 		if ($p)
-			printf "            proc   pid     flag stat nlwps comm\n"
+			printf "            proc   pid     flag stat nlwps            lwp  comm\n"
 		end
 		while ($p)
-			printf "%16lx %5d %8x %4x %5d %s", \
+			printf "%16lx %5d %8x %4x %5d %16lx %s", \
 				$p, $p->p_pid, \
-				$p->p_flag, $p->p_stat, $p->p_nlwps, \
+				$p->p_flag, $p->p_stat, $p->p_nlwps, $p->p_lwps.lh_first, \
 				(char *) $p->p_comm
 			printf "\n"
 			set $p = $p->p_list.le_next
