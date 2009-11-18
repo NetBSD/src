@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1000 2009/11/18 18:42:08 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1001 2009/11/18 22:57:38 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1446,6 +1446,9 @@ product BLUESTEEL 5601		0x5601	5601
 product BROADCOM BCM5752	0x1600	BCM5752 10/100/1000 Ethernet
 product BROADCOM BCM5752M	0x1601	BCM5752M 10/100/1000 Ethernet
 product BROADCOM BCM5709	0x1639	BCM5709 NetXtreme II 1000baseT Ethernet
+product BROADCOM BCM5709S	0x163a	BCM5709 NetXtreme II 1000baseSX Ethernet
+product BROADCOM BCM5716	0x163b	BCM5716 NetXtreme II 1000baseT Ethernet
+product BROADCOM BCM5716S	0x163c	BCM5716 NetXtreme II 1000baseSX Ethernet
 product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
 product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
 product BROADCOM BCM5702	0x1646	BCM5702 10/100/1000 Ethernet
