@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.7 2009/11/17 07:56:27 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.8 2009/11/18 01:14:27 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.7 2009/11/17 07:56:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.8 2009/11/18 01:14:27 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -563,14 +563,15 @@ __BS(init)(bus_space_tag_t t, void *v)
 	 */
 	if (CHIP_W1_BUS_START(v) == (bus_addr_t) -1) {
 #ifdef EXTENT_DEBUG
-		printf("xxx: this space is disabled\n");
+		printf("%s: this space is disabled\n", __S(__BS(init)));
 #endif
 		return;
 	}
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: freeing from 0x%x to 0x%x\n", CHIP_W1_BUS_START(v),
-	    CHIP_W1_BUS_END(v));
+	printf("%s: freeing from %#"PRIxBUSADDR" to %#"PRIxBUSADDR"\n",
+	    __S(__BS(init)), (bus_addr_t)CHIP_W1_BUS_START(v),
+	    (bus_addr_t)CHIP_W1_BUS_END(v));
 #endif
 	extent_free(ex, CHIP_W1_BUS_START(v),
 	    CHIP_W1_BUS_END(v) - CHIP_W1_BUS_START(v) + 1, EX_NOWAIT);
@@ -728,13 +729,14 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 		goto mapit;
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: allocating 0x%lx to 0x%lx\n", addr, addr + size - 1);
+	printf("%s: allocating %#"PRIxBUSADDR" to %#"PRIxBUSADDR"\n",
+		__S(__BS(map)), addr, addr + size - 1);
 #endif
         error = extent_alloc_region(CHIP_EXTENT(v), addr, size,
             EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {
 #ifdef EXTENT_DEBUG
-		printf("xxx: allocation failed (%d)\n", error);
+		printf("%s: allocation failed (%d)\n", __S(__BS(map)), error);
 		extent_print(CHIP_EXTENT(v));
 #endif
 		return (error);
@@ -761,6 +763,10 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 			UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 		if (va == 0)
 			return ENOMEM;
+
+		/* check use of handle_is_kseg2 in BS(unmap) */
+		KASSERT((va & ~MIPS_PHYS_MASK) == MIPS_KSEG2_START);
+
 		*hp = va + (addr & PAGE_MASK);
 		pa = trunc_page(addr);
 
@@ -787,40 +793,76 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 void
 __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 {
+	bus_addr_t addr = 0;	/* initialize to appease gcc */
+	bool handle_is_kseg2;
+
+	/* determine if h is addr obtained from uvm_km_alloc */
+	handle_is_kseg2 = ((h & ~MIPS_PHYS_MASK) == MIPS_KSEG2_START);
+
+#if 0
+	printf("%s:%d: is_kseg2 %d\n", __func__, __LINE__, handle_is_kseg2);
+#endif
+
+	if (handle_is_kseg2 == true) {
+		paddr_t pa;
+		vaddr_t va = (vaddr_t)trunc_page(h);
+		vsize_t sz = (vsize_t)round_page((h % PAGE_SIZE) + size);
+		int s;
+
+		s = splhigh();
+
+		if (pmap_extract(pmap_kernel(), (vaddr_t)h, &pa) == false)
+			panic("%s: pmap_extract failed", __func__);
+		addr = (bus_addr_t)pa;
+#if 0
+		printf("%s:%d: addr %#"PRIxBUSADDR", sz %#"PRIxVSIZE"\n",
+			__func__, __LINE__, addr, sz);
+#endif
+		/* sanity check: this is why we couldn't map w/ kseg[0,1] */
+		KASSERT (((addr + sz) & ~MIPS_PHYS_MASK) != 0);
+
+		pmap_kremove(va, sz);
+		pmap_update(pmap_kernel());
+		uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
+
+		splx(s);
+	}
+
 #ifdef CHIP_EXTENT
-	bus_addr_t addr;
-	int error;
 
 	if (acct == 0)
 		return;
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: freeing handle 0x%lx for 0x%lx\n", h, size);
+	printf("%s: freeing handle %#"PRIxBSH" for %#"PRIxBUSSIZE"\n",
+		__S(__BS(unmap)), h, size);
 #endif
 
+	if (handle_is_kseg2 == false) {
 #ifdef _LP64
-	KASSERT(MIPS_XKPHYS_P(h));
-	h = MIPS_XKPHYS_TO_PHYS(h);
+		KASSERT(MIPS_XKPHYS_P(h));
+		addr = MIPS_XKPHYS_TO_PHYS(h);
 #else
-	if (MIPS_KSEG0_P(h))
-		h = MIPS_KSEG0_TO_PHYS(h);
-	else
-		h = MIPS_KSEG1_TO_PHYS(h);
+		if (MIPS_KSEG0_P(h))
+			addr = MIPS_KSEG0_TO_PHYS(h);
+		else
+			addr = MIPS_KSEG1_TO_PHYS(h);
 #endif
+	}
 
 #ifdef CHIP_W1_BUS_START
-	if (h >= CHIP_W1_SYS_START(v) && h <= CHIP_W1_SYS_END(v)) {
-		addr = CHIP_W1_BUS_START(v) + (h - CHIP_W1_SYS_START(v));
+	if (addr >= CHIP_W1_SYS_START(v) && addr <= CHIP_W1_SYS_END(v)) {
+		addr = CHIP_W1_BUS_START(v) + (addr - CHIP_W1_SYS_START(v));
 	} else
 #endif
 #ifdef CHIP_W2_BUS_START
-	if (h >= CHIP_W2_SYS_START(v) && h <= CHIP_W2_SYS_END(v)) {
-		addr = CHIP_W2_BUS_START(v) + (h - CHIP_W2_SYS_START(v));
+	if (addr >= CHIP_W2_SYS_START(v) && addr <= CHIP_W2_SYS_END(v)) {
+		addr = CHIP_W2_BUS_START(v) + (addr - CHIP_W2_SYS_START(v));
 	} else
 #endif
 #ifdef CHIP_W3_BUS_START
-	if (h >= CHIP_W3_SYS_START(v) && h <= CHIP_W3_SYS_END(v)) {
-		addr = CHIP_W3_BUS_START(v) + (h - CHIP_W3_SYS_START(v));
+	if (addr >= CHIP_W3_SYS_START(v) && addr <= CHIP_W3_SYS_END(v)) {
+		addr = CHIP_W3_BUS_START(v) + (addr - CHIP_W3_SYS_START(v));
 	} else
 #endif
 	{
@@ -837,21 +879,22 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 #endif
 #ifdef CHIP_W3_BUS_START
 		printf("%s: sys window[3]=0x%lx-0x%lx\n",
-		    __S(__BS(map)), (u_long)CHIP_W3_SYS_START(v),
+		    __S(__BS(unmap)), (u_long)CHIP_W3_SYS_START(v),
 		    (u_long)CHIP_W3_SYS_END(v));
 #endif
 		panic("%s: don't know how to unmap %#"PRIxBSH, __S(__BS(unmap)), h);
 	}
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: freeing 0x%lx to 0x%lx\n", addr, addr + size - 1);
+	printf("%s: freeing %#"PRIxBUSADDR" to %#"PRIxBUSADDR"\n",
+	    __S(__BS(unmap)), addr, addr + size - 1);
 #endif
-        error = extent_free(CHIP_EXTENT(v), addr, size,
+        int error = extent_free(CHIP_EXTENT(v), addr, size,
             EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {
-		printf("%s: WARNING: could not unmap %#"PRIxBUSADDR"-%#"PRIxBUSADDR" (error %d)\n",
-		    __S(__BS(unmap)), addr, addr + size - 1,
-		    error);
+		printf("%s: WARNING: could not unmap"
+		    " %#"PRIxBUSADDR"-%#"PRIxBUSADDR" (error %d)\n",
+		    __S(__BS(unmap)), addr, addr + size - 1, error);
 #ifdef EXTENT_DEBUG
 		extent_print(CHIP_EXTENT(v));
 #endif
@@ -891,7 +934,8 @@ __BS(alloc)(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	 * Do the requested allocation.
 	 */
 #ifdef EXTENT_DEBUG
-	printf("xxx: allocating from 0x%lx to 0x%lx\n", rstart, rend);
+	printf("%s: allocating from %#"PRIxBUSADDR" to %#"PRIxBUSADDR"\n",
+		__S(__BS(alloc)), rstart, rend);
 #endif
 	error = extent_alloc_subregion(CHIP_EXTENT(v), rstart, rend, size,
 	    align, boundary,
@@ -899,14 +943,15 @@ __BS(alloc)(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	    &addr);
 	if (error) {
 #ifdef EXTENT_DEBUG
-		printf("xxx: allocation failed (%d)\n", error);
+		printf("%s: allocation failed (%d)\n", __S(__BS(alloc)), error);
 		extent_print(CHIP_EXTENT(v));
 #endif
 		return (error);
 	}
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: allocated 0x%lx to 0x%lx\n", addr, addr + size - 1);
+	printf("%s: allocated 0x%lx to %#"PRIxBUSSIZE"\n",
+		__S(__BS(alloc)), addr, addr + size - 1);
 #endif
 
 	error = __BS(translate)(v, addr, size, flags, &mbst);
