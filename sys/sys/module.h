@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.17 2009/11/05 14:09:14 pooka Exp $	*/
+/*	$NetBSD: module.h,v 1.18 2009/11/18 17:40:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -135,6 +135,19 @@ module_t *	module_lookup(const char *);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
+
+#ifdef _MODULE_INTERNAL
+int	module_load_vfs(const char *, int, bool, module_t *,
+			prop_dictionary_t *);
+void	module_error(const char *, ...)
+			     __attribute__((__format__(__printf__,1,2)));
+void	module_print(const char *, ...)
+			     __attribute__((__format__(__printf__,1,2)));
+
+#define MODULE_BASE_SIZE 64
+extern char	module_base[MODULE_BASE_SIZE];
+#endif /* _MODULE_INTERNAL */
+
 #else	/* _KERNEL */
 
 #include <stdint.h>

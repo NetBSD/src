@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.963 2009/11/12 18:37:10 snj Exp $
+#	$NetBSD: files,v 1.964 2009/11/18 17:40:45 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1438,6 +1438,7 @@ file	kern/kern_malloc.c
 file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
+file	kern/kern_module_vfs.c
 file	kern/kern_mutex.c
 file	kern/kern_mutex_obj.c
 file	kern/kern_fileassoc.c		fileassoc
