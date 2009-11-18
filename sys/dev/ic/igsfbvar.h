@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.18 2009/11/11 17:01:17 macallan Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.19 2009/11/18 21:59:38 macallan Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -78,6 +78,8 @@ struct igsfb_devconfig {
 
 	/* resolution */
 	int dc_width, dc_height, dc_depth, dc_stride;
+	int dc_maxdepth;
+	const struct videomode *dc_mode;
 
 	char dc_modestring[128];
 
