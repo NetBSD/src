@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.26 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.27 2009/11/18 12:25:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.26 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.27 2009/11/18 12:25:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -253,7 +253,6 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	ts->ts_waiters[q]++;
 	sleepq_enter(sq, l, tc->tc_mutex);
-	/* now tc->tc_mutex is also cur->l_mutex and l->l_mutex */
 	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
 	l->l_kpriority = true;
 	obase = l->l_kpribase;
@@ -276,7 +275,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	 * compiling a kernel with LOCKDEBUG to pinpoint the problem.
 	 */
 	prio = lwp_eprio(l);
-
+	KASSERT(cur == l);
+	KASSERT(tc->tc_mutex == cur->l_mutex);
 	for (;;) {
 		bool dolock;
 
