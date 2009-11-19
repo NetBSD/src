@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/11/02 10:23:40 stacktic Exp $
+#	$NetBSD: Makefile,v 1.10 2009/11/19 19:57:40 drochner Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ NETBSD_DIST_X11_FILE=	${.CURDIR}/NetBSD.dist.XFree86
 NETBSD_DIST_X11_FILE=
 .endif
 
-${.OBJDIR}/NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE}
+NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE}
 	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} > \
 	    ${.TARGET}
 
@@ -28,7 +28,7 @@ TOOL_MTREE.unpriv=
 TOOL_MTREE.unpriv=	-W
 .endif
 
-distrib-dirs: .PHONY check_DESTDIR ${.OBJDIR}/NetBSD.dist
+distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .if !defined(DISTRIBUTION_DONE)						# {
 # Create DESTDIR using HOST_INSTALL_DIR, not INSTALL_DIR, because
 # INSTALL_DIR would want to write to the metalog, and it can't do that
@@ -44,5 +44,7 @@ distrib-dirs: .PHONY check_DESTDIR ${.OBJDIR}/NetBSD.dist
 	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
+
+CLEANFILES+=	NetBSD.dist
 
 .include <bsd.prog.mk>
