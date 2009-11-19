@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.10 2009/05/24 06:53:35 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.11 2009/11/19 19:28:14 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -389,14 +389,25 @@ struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
 		cc_hvers: 2;	/* H-VERSION dependent */
 };
 
-struct tlb_cf {		/* PDC_CACHE (for "struct pdc_cache") */
+struct itlb_cf {		/* PDC_CACHE (for "struct pdc_cache") */
 	u_int	tc_resv1:12,	/* (reserved) */
 		tc_sh	: 2,	/* separate I and D = 0, shared I and D = 1 */
 		tc_hvers: 1,	/* H-VERSION dependent */
 		tc_page : 1,	/* 2K page size = 0, 4k page size = 1 */
 		tc_cst  : 3,	/* incoherent = 0, coherent = 1 */
-		tc_resv2: 5,	/* (reserved) */
-		tc_assoc: 8;	/* associativity of TLB */
+		tc_aid  : 5,	/* access id width = 15 + aid */
+		tc_sr   : 6,	/* space id width */
+		tc_hv2  : 2;	/* H-VERSION dependent */
+};
+
+struct dtlb_cf {		/* PDC_CACHE (for "struct pdc_cache") */
+	u_int	tc_resv1:12,	/* (reserved) */
+		tc_sh	: 2,	/* separate I and D = 0, shared I and D = 1 */
+		tc_hvers: 1,	/* H-VERSION dependent */
+		tc_u    : 1,	/* TLB U bit implemented  */
+		tc_cst  : 3,	/* incoherent = 0, coherent = 1 */
+		tc_resv2: 11,	/* (reserved) */
+		tc_hv2  : 2;	/* H-VERSION dependent */
 };
 
 struct pdc_cache {	/* PDC_CACHE */
@@ -416,7 +427,7 @@ struct pdc_cache {	/* PDC_CACHE */
 	u_int	dc_loop;	/* number of FDCE's per addr stride (flush) */
 /* Instruction TLB */
 	u_int	it_size;	/* number of entries in I-TLB */
-	struct tlb_cf it_conf;	/* I-TLB configuration (see above) */
+	struct itlb_cf it_conf;	/* I-TLB configuration (see above) */
 	u_int	it_sp_base;	/* start space of I-TLB (for PITLBE flush) */
 	u_int	it_sp_stride;	/* space incr per sp_count iteration (flush) */
 	u_int	it_sp_count;	/* number of off_count iterations (flush) */
@@ -426,7 +437,7 @@ struct pdc_cache {	/* PDC_CACHE */
 	u_int	it_loop;	/* number of PITLBE's per off_stride (flush) */
 /* Data TLB */
 	u_int	dt_size;	/* number of entries in D-TLB */
-	struct tlb_cf dt_conf;	/* D-TLB configuration (see above) */
+	struct dtlb_cf dt_conf;	/* D-TLB configuration (see above) */
 	u_int	dt_sp_base;	/* start space of D-TLB (for PDTLBE flush) */
 	u_int	dt_sp_stride;	/* space incr per sp_count iteration (flush) */
 	u_int	dt_sp_count;	/* number of off_count iterations (flush) */
