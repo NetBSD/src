@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.6 2009/04/29 14:58:50 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.7 2009/11/19 14:44:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.6 2009/04/29 14:58:50 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.7 2009/11/19 14:44:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -75,11 +75,12 @@ rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 }
 
 /*ARGSUSED*/
-int
-rumpuser_bioinit(rump_biodone_fn biodone)
+void
+rumpuser_biothread(void *arg)
 {
 
-	return 0;
+	fprintf(stderr, "rumpuser: threads not available\n");
+	abort();
 }
 
 /*ARGSUSED*/
@@ -240,10 +241,16 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 /*ARGSUSED*/
 int
 rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
-	struct timespec *ts)
+	int64_t sec, int64_t nsec)
 {
+	struct timespec ts;
 
-	nanosleep(ts, NULL);
+	/*LINTED*/
+	ts.tv_sec = sec;
+	/*LINTED*/
+	ts.tv_nsec = nsec;
+
+	nanosleep(&ts, NULL);
 	return 0;
 }
 
