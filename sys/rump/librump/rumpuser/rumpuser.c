@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.44 2009/10/24 11:29:55 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.45 2009/11/19 13:25:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.44 2009/10/24 11:29:55 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.45 2009/11/19 13:25:48 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -46,6 +46,10 @@ __RCSID("$NetBSD: rumpuser.c,v 1.44 2009/10/24 11:29:55 pooka Exp $");
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
+
+#ifdef __NetBSD__
+#include <sys/disklabel.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -68,15 +72,13 @@ int
 rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 {
 	struct stat sb;
-	int rv;
+	int needsdev = 0;
 
-	rv = stat(path, &sb);
-	if (rv == -1) {
+	if (stat(path, &sb) == -1) {
 		*error = errno;
-		return rv;
+		return -1;
 	}
 
-	*size = sb.st_size;
 	switch (sb.st_mode & S_IFMT) {
 	case S_IFDIR:
 		*ft = RUMPUSER_FT_DIR;
@@ -86,16 +88,77 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 		break;
 	case S_IFBLK:
 		*ft = RUMPUSER_FT_BLK;
+		needsdev = 1;
 		break;
 	case S_IFCHR:
 		*ft = RUMPUSER_FT_CHR;
+		needsdev = 1;
 		break;
 	default:
 		*ft = RUMPUSER_FT_OTHER;
 		break;
 	}
 
-	return rv;
+	if (!needsdev) {
+		*size = sb.st_size;
+	} else {
+		/*
+		 * Welcome to the jungle.  Of course querying the kernel
+		 * for a device partition size is supposed to be far from
+		 * trivial.  On NetBSD we use ioctl.  On $other platform
+		 * we have a problem.  We try "the lseek trick" and just
+		 * fail if that fails.  Platform specific code can later
+		 * be written here if appropriate.
+		 *
+		 * On NetBSD we hope and pray that for block devices nobody
+		 * else is holding them open, because otherwise the kernel
+		 * will not permit us to open it.  Thankfully, this is
+		 * usually called only in bootstrap and then we can
+		 * forget about it.
+		 */
+#ifndef __NetBSD__
+		off_t off;
+		int fd;
+
+		fd = open(path, O_RDONLY);
+		if (fd == -1) {
+			*error = errno;
+			return -1;
+		}
+
+		off = lseek(fd, 0, SEEK_END);
+		close(fd);
+		if (off != 0) {
+			*size = off;
+			return 0;
+		}
+		fprintf(stderr, "error: device size query not implemented on "
+		    "this platform\n");
+		*error = EOPNOTSUPP;
+		return -1;
+#else
+		struct disklabel lab;
+		struct partition *parta;
+		int fd;
+
+		fd = open(path, O_RDONLY);
+		if (fd == -1) {
+			*error = errno;
+			return -1;
+		}
+
+		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
+			*error = errno;
+			return -1;
+		}
+		close(fd);
+
+		parta = &lab.d_partitions[DISKPART(sb.st_dev)];
+		*size = lab.d_secsize * parta->p_size;
+#endif /* __NetBSD__ */
+	}
+
+	return 0;
 }
 
 int
