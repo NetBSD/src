@@ -1,4 +1,4 @@
-/*	$NetBSD: message.S,v 1.3 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: message.S,v 1.4 2009/11/19 22:10:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 
 	.global	message, message_1
 
+#if defined(BOOT_MSG_COM0) && !defined(COM_PORT_VAL)
+#define COM_PORT_VAL $0x3f8		/* Value for COM1 */
+#endif
+
 /*
  * message: write the error message in %ds:%esi to the console
  */
@@ -49,9 +53,18 @@ message:
 message_1:			/* for dump_eax */
 	lodsb
 1:
+#ifdef COM_PORT_VAL
+	mov     COM_PORT_VAL, %dx
+	outb    %al, %dx
+	add     $5, %dl
+2:	inb     %dx
+	test    $0x40, %al
+	jz      2b
+#else
 	movb	$0x0e, %ah
 	movw	$0x0001, %bx
 	int	$0x10
+#endif
 	lodsb
 	testb	%al, %al
 	jnz	1b

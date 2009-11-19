@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.21 2009/11/18 20:51:22 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.22 2009/11/19 22:10:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -602,26 +602,7 @@ num_com_args = (. - com_args)/2
 message_crlf:
 	call	message
 	movw	$crlf, %si
-#ifdef COM_PORT_VAL
-message:
-	pusha
-message_1:
-	lodsb
-	test	%al, %al
-	jz	3f
-	mov	COM_PORT_VAL, %dx
-	outb	%al, %dx
-	add	$5, %dl
-2:	inb	%dx
-	test	$0x40, %al
-	jz	2b
-	jmp	message_1
-3:	popa
-	ret
-#else
 #include <message.S>
-#endif
-
 #if 0
 #include <dump_eax.S>
 #endif
