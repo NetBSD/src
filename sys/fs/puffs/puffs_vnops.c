@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.138 2009/11/05 19:42:44 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.139 2009/11/19 15:50:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.138 2009/11/05 19:42:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.139 2009/11/19 15:50:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2114,16 +2114,16 @@ puffs_vnop_abortop(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
 	struct componentname *cnp = ap->a_cnp;
-	int error;
 
 	if (EXISTSOP(pmp, ABORTOP)) {
 		PUFFS_MSG_ALLOC(vn, abortop);
 		puffs_makecn(&abortop_msg->pvnr_cn, &abortop_msg->pvnr_cn_cred,
 		    cnp, PUFFS_USE_FULLPNBUF(pmp));
+		puffs_msg_setfaf(park_abortop);
 		puffs_msg_setinfo(park_abortop, PUFFSOP_VN,
 		    PUFFS_VN_ABORTOP, VPTOPNC(dvp));
 
-		PUFFS_MSG_ENQUEUEWAIT(pmp, park_abortop, error);
+		puffs_msg_enqueue(pmp, park_abortop);
 		PUFFS_MSG_RELEASE(abortop);
 	}
 
