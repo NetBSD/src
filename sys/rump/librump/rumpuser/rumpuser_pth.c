@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.38 2009/11/11 16:46:50 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.39 2009/11/19 14:44:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.38 2009/11/11 16:46:50 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.39 2009/11/19 14:44:58 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -124,14 +124,18 @@ kernel_lockfn	rumpuser__klock;
 kernel_unlockfn	rumpuser__kunlock;
 int		rumpuser__wantthreads;
 
-static void *
+void
 /*ARGSUSED*/
-iothread(void *arg)
+rumpuser_biothread(void *arg)
 {
 	struct rumpuser_aio *rua;
 	rump_biodone_fn biodone = arg;
 	ssize_t rv;
 	int error, dummy;
+
+	/* unschedule from CPU.  we reschedule before running the interrupt */
+	rumpuser__kunlock(0, &dummy);
+	assert(dummy == 0);
 
 	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
 	for (;;) {
@@ -169,9 +173,8 @@ iothread(void *arg)
 			}
 		}
 		rumpuser__klock(0);
-		biodone(rua->rua_bp, rv, error);
+		biodone(rua->rua_bp, (size_t)rv, error);
 		rumpuser__kunlock(0, &dummy);
-		assert(dummy == 0);
 			
 		rua->rua_bp = NULL;
 
@@ -179,6 +182,10 @@ iothread(void *arg)
 		rumpuser_aio_tail = (rumpuser_aio_tail+1) % N_AIOS;
 		pthread_cond_signal(&rumpuser_aio_cv.pthcv);
 	}
+
+	/*NOTREACHED*/
+	fprintf(stderr, "error: rumpuser_biothread reached unreachable\n");
+	abort();
 }
 
 void
@@ -193,17 +200,6 @@ rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 	rumpuser__klock = lockfn;
 	rumpuser__kunlock = unlockfn;
 	rumpuser__wantthreads = threads;
-}
-
-int
-rumpuser_bioinit(rump_biodone_fn biodone)
-{
-	pthread_t iothr;
-
-	if (rumpuser__wantthreads)
-		pthread_create(&iothr, NULL, iothread, biodone);
-
-	return 0;
 }
 
 #if 0

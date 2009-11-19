@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.32 2009/11/11 16:46:50 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.33 2009/11/19 14:44:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -108,7 +108,7 @@ int rumpuser_dprintf(const char *, ...);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
-int  rumpuser_bioinit(rump_biodone_fn);
+void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *);
 void rumpuser_thread_exit(void);
