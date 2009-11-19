@@ -104,17 +104,12 @@ unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
 void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
 
 /* Standard Interface */
-unsigned   __ops_sign_file_as_cleartext(__ops_io_t *,
-			const char *,
-			const char *,
-			const __ops_seckey_t *,
-			const char *,
-			const unsigned);
 unsigned   __ops_sign_file(__ops_io_t *,
 			const char *,
 			const char *,
 			const __ops_seckey_t *,
 			const char *,
+			const unsigned,
 			const unsigned,
 			const unsigned);
 
@@ -148,16 +143,12 @@ unsigned __ops_writer_use_armored_sig(__ops_output_t *);
 
 void __ops_writer_push_armoured(__ops_output_t *, __ops_armor_type_t);
 
-unsigned __ops_sign_buf_as_cleartext(const char *,
+__ops_memory_t   *__ops_sign_buf(__ops_io_t *,
+				const void *,
 				const size_t,
-				__ops_memory_t **,
 				const __ops_seckey_t *,
-				const char *);
-
-__ops_memory_t   *__ops_sign_buf(const void *,
-				const size_t,
-				const __ops_sig_type_t,
-				const __ops_seckey_t *,
+				const char *,
+				const unsigned,
 				const unsigned);
 
 unsigned __ops_keyring_read_from_mem(__ops_io_t *,

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.19 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.20 2009/11/19 21:56:00 agc Exp $");
 #endif
 
 #include <string.h>
@@ -394,6 +394,62 @@ __ops_print_pubkeydata(__ops_io_t *io, const __ops_key_t *key)
 		(void) fprintf(io->res, "uid              %s\n",
 			key->uids[i].userid);
 	}
+}
+
+/* return the hexdump as a string */
+static char *
+strhexdump(char *dest, const unsigned char *src, size_t length, const char *sep)
+{
+	unsigned i;
+	int	n;
+
+	for (n = 0, i = 0 ; i < length ; i += 2) {
+		n += snprintf(&dest[n], 3, "%02x", *src++);
+		n += snprintf(&dest[n], 10, "%02x%s", *src++, sep);
+	}
+	return dest;
+}
+
+/* return the time as a string */
+static char * 
+ptimestr(char *dest, size_t size, time_t t)
+{
+	struct tm      *tm;
+
+	tm = gmtime(&t);
+	(void) snprintf(dest, size, "%04d-%02d-%02d",
+		tm->tm_year + 1900,
+		tm->tm_mon + 1,
+		tm->tm_mday);
+	return dest;
+}
+
+#ifndef KB
+#define KB(x)	((x) * 1024)
+#endif
+
+/* print into a string (malloc'ed) the pubkeydata */
+int
+__ops_sprint_pubkeydata(const __ops_key_t *key, char **buf)
+{
+	unsigned	 i;
+	char		 uidbuf[KB(128)];
+	char		 keyid[OPS_KEY_ID_SIZE * 3];
+	char		 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	char		 t[32];
+	int		 n;
+
+	for (i = 0, n = 0; i < key->uidc; i++) {
+		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
+			"uid              %s\n", key->uids[i].userid);
+	}
+	return asprintf(buf, "pub %d/%s %s %s\nKey fingerprint: %s\n%s",
+			numkeybits(&key->key.pubkey),
+			__ops_show_pka(key->key.pubkey.alg),
+			strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
+			ptimestr(t, sizeof(t), key->key.pubkey.birthtime),
+			strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " "),
+			uidbuf);
 }
 
 /**

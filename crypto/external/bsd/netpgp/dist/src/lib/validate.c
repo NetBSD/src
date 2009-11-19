@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.22 2009/11/19 21:56:01 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -91,8 +91,8 @@ __RCSID("$NetBSD: validate.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
 
 /* Does the signed hash match the given hash? */
 static unsigned
-check_binary_sig(const unsigned len,
-		const unsigned char *data,
+check_binary_sig(const unsigned char *data,
+		const unsigned len,
 		const __ops_sig_t *sig,
 		const __ops_pubkey_t *signer)
 {
@@ -116,7 +116,7 @@ check_binary_sig(const unsigned len,
 		trailer[2] = (unsigned)(sig->info.birthtime) >> 16;
 		trailer[3] = (unsigned)(sig->info.birthtime) >> 8;
 		trailer[4] = (unsigned char)(sig->info.birthtime);
-		hash.add(&hash, &trailer[0], 5);
+		hash.add(&hash, trailer, 5);
 		break;
 
 	case OPS_V4:
@@ -479,8 +479,8 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				data->mem = __ops_memory_new();
 				__ops_mem_readfile(data->mem, data->detachname);
 			}
-			valid = check_binary_sig(__ops_mem_len(data->mem),
-					__ops_mem_data(data->mem),
+			valid = check_binary_sig(__ops_mem_data(data->mem),
+					__ops_mem_len(data->mem),
 					&content->sig,
 					__ops_get_pubkey(signer));
 			break;
@@ -813,7 +813,7 @@ __ops_validate_mem(__ops_io_t *io,
 	__ops_stream_t	*stream = NULL;
 	const int		 printerrors = 1;
 
-	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb,				1);
+	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb, 1);
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;

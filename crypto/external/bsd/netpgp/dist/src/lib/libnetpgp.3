@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.8 2009/05/14 09:42:09 wiz Exp $
+.\" $NetBSD: libnetpgp.3,v 1.9 2009/11/19 21:56:00 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 2009
+.Dd November 19, 2009
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -82,6 +82,20 @@
 .Ft int
 .Fo netpgp_verify_file
 .Fa "netpgp_t *netpgp" "char *f" "int armored"
+.Fc
+.Ft int
+.Fo netpgp_sign_memory
+.Fa "netpgp_t *netpgp" "const char *userid" "char *mem"
+.Fa "size_t size" "char *out" "size_t outsize"
+.Fa "const unsigned armored" "const unsigned cleartext"
+.Fc
+.Ft int
+.Fo netpgp_verify_memory
+.Fa "netpgp_t *netpgp" "const void *in" "const size_t size" "const int armored"
+.Fc
+.Ft char *
+.Fo netpgp_get_key
+.Fa "netpgp_t *netpgp" "const char *id"
 .Fc
 .Ft int
 .Fo netpgp_set_debug
@@ -179,6 +193,12 @@ is used, and the resulting signed file can be verified
 using the
 .Fn netpgp_verify_file
 function.
+.Pp
+.Fn netpgp_sign_memory
+is a function which can sign an area
+of memory, and
+.Fn netpgp_verify_memory
+verifies the digital signature produced.
 .Pp
 Internally, an encrypted or signed file
 is made up of

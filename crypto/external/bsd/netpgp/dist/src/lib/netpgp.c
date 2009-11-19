@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.29 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.30 2009/11/19 21:56:00 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -374,6 +374,26 @@ netpgp_find_key(netpgp_t *netpgp, char *id)
 	return __ops_getkeybyname(netpgp->io, netpgp->pubring, id) != NULL;
 }
 
+/* get a key in a keyring */
+char *
+netpgp_get_key(netpgp_t *netpgp, const char *id)
+{
+	const __ops_key_t	*key;
+	__ops_io_t		*io;
+	char			*newkey;
+
+	io = netpgp->io;
+	if (id == NULL) {
+		(void) fprintf(io->errs, "NULL id to search for\n");
+		return NULL;
+	}
+	if ((key = __ops_getkeybyname(netpgp->io, netpgp->pubring, id)) == NULL) {
+		(void) fprintf(io->errs, "Can't find key '%s'\n", id);
+		return NULL;
+	}
+	return (__ops_sprint_pubkeydata(key, &newkey) > 0) ? newkey : NULL;
+}
+
 /* export a given key */
 int
 netpgp_export_key(netpgp_t *netpgp, char *userid)
@@ -567,14 +587,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 	} while (seckey == NULL);
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
-	if (cleartext) {
-		ret = __ops_sign_file_as_cleartext(io, f, out, seckey,
-						hashalg, overwrite);
-	} else if (detached) {
+	if (detached) {
 		ret = __ops_sign_detached(io, f, out, seckey, hashalg);
 	} else {
 		ret = __ops_sign_file(io, f, out, seckey, hashalg,
-					(unsigned)armored, overwrite);
+				(unsigned)armored, (unsigned)cleartext, overwrite);
 	}
 	__ops_forget(seckey, sizeof(*seckey));
 	return ret;
@@ -607,6 +624,101 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 		(void) fprintf(io->errs,
 "\"%s\": verification failure: %u invalid signatures, %u unknown signatures\n",
 			in, result.invalidc, result.unknownc);
+	}
+	return 0;
+}
+
+/* sign some memory */
+int
+netpgp_sign_memory(netpgp_t *netpgp,
+		const char *userid,
+		char *mem,
+		size_t size,
+		char *out,
+		size_t outsize,
+		const unsigned armored,
+		const unsigned cleartext)
+{
+	const __ops_key_t	*keypair;
+	__ops_seckey_t		*seckey;
+	__ops_memory_t		*signedmem;
+	__ops_io_t		*io;
+	char			*hashalg;
+	int			 ret;
+
+	io = netpgp->io;
+	if (mem == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_sign_memory: no memory to sign\n");
+		return 0;
+	}
+	if (userid == NULL) {
+		userid = netpgp_getvar(netpgp, "userid");
+	}
+	/* get key with which to sign */
+	keypair = __ops_getkeybyname(io, netpgp->secring, userid);
+	if (keypair == NULL) {
+		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
+				userid);
+		return 0;
+	}
+	ret = 1;
+	do {
+		/* print out the user id */
+		__ops_print_pubkeydata(io, keypair);
+		/* now decrypt key */
+		seckey = __ops_decrypt_seckey(keypair);
+		if (seckey == NULL) {
+			(void) fprintf(io->errs, "Bad passphrase\n");
+		}
+	} while (seckey == NULL);
+	/* sign file */
+	hashalg = netpgp_getvar(netpgp, "hash");
+	signedmem = __ops_sign_buf(io, mem, size, seckey, hashalg,
+						armored, cleartext);
+	if (signedmem) {
+		size_t	m;
+
+		m = MIN(__ops_mem_len(signedmem), outsize);
+		(void) memcpy(out, __ops_mem_data(signedmem), m);
+		__ops_memory_free(signedmem);
+	}
+	__ops_forget(seckey, sizeof(*seckey));
+	return ret;
+}
+
+/* verify memory */
+int
+netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size, const int armored)
+{
+	__ops_validation_t	 result;
+	__ops_memory_t		*signedmem;
+	__ops_io_t		*io;
+	int			 ret;
+
+	(void) memset(&result, 0x0, sizeof(result));
+	io = netpgp->io;
+	if (in == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_verify_memory: no memory to verify\n");
+		return 0;
+	}
+	signedmem = __ops_memory_new();
+	__ops_memory_add(signedmem, in, size);
+	ret = __ops_validate_mem(io, &result, signedmem, armored,
+						netpgp->pubring);
+	__ops_memory_free(signedmem);
+	if (ret) {
+		resultp(io, in, &result, netpgp->pubring);
+		return 1;
+	}
+	if (result.validc + result.invalidc + result.unknownc == 0) {
+		(void) fprintf(io->errs,
+		"No signatures found - is this memory signed?\n");
+	} else {
+		(void) fprintf(io->errs,
+"memory verification failure: %u invalid signatures, %u unknown signatures\n",
+			result.invalidc, result.unknownc);
 	}
 	return 0;
 }
