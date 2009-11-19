@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.29 2009/10/07 09:42:14 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.30 2009/11/19 13:46:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.29 2009/10/07 09:42:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.30 2009/11/19 13:46:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -344,16 +344,10 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	struct rblkdev *rblk;
 	uint64_t flen;
 	size_t len;
-	int ftype, error, dummy, i;
-	int fd;
+	int ftype, error, i;
 
 	/* devices might not report correct size unless they're open */
-	fd = rumpuser_open(path, O_RDONLY, &error);
-	if (fd == -1)
-		return error;
-	rumpuser_getfileinfo(path, &flen, &ftype, &error);
-	rumpuser_close(fd, &dummy);
-	if (error)
+	if (rumpuser_getfileinfo(path, &flen, &ftype, &error) == -1)
 		return error;
 
 	/* verify host file is of supported type */
@@ -403,7 +397,6 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	uint64_t fsize, off;
 	int dummy;
 	int error, fd;
 
@@ -423,10 +416,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		return error;
 #endif
 
-	fsize = rblk->rblk_size;
-	off = rblk->rblk_hostoffset;
-
 	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
+		uint64_t fsize = rblk->rblk_size, off = rblk->rblk_hostoffset;
 		struct blkwin *win;
 		int i, winsize;
 
@@ -473,14 +464,14 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		rblk->rblk_dl.d_secsize = DEV_BSIZE;
 		rblk->rblk_curpi = &rblk->rblk_pi;
 	} else {
-		if (rumpuser_ioctl(fd, DIOCGDINFO, &rblk->rblk_dl,
-		    &error) == -1) {
-			KASSERT(error);
+		rblk->rblk_fd = fd;
+
+		if ((error = rumpblk_ioctl(dev, DIOCGDINFO, &rblk->rblk_dl,
+		    0, curlwp)) != 0) {
 			rumpuser_close(fd, &dummy);
 			return error;
 		}
 
-		rblk->rblk_fd = fd;
 		rblk->rblk_curpi = &rblk->rblk_dl.d_partitions[0];
 	}
 
