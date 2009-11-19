@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.387 2009/11/17 22:20:14 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.388 2009/11/19 02:59:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.387 2009/11/17 22:20:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.388 2009/11/19 02:59:33 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2208,6 +2208,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
@@ -2220,6 +2221,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				return (error);
 			}
