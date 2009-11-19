@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.388 2009/11/19 02:59:33 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.389 2009/11/19 03:01:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.388 2009/11/19 02:59:33 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.389 2009/11/19 03:01:05 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2165,7 +2165,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
 	vnode_t *vp, *mvp, vbuf;
-	char *bp = where, *savebp;
+	char *bp = where;
 	char *ewhere;
 	int error;
 
@@ -2185,17 +2185,17 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	    mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		savebp = bp;
 		/* Allocate a marker vnode. */
 		mvp = vnalloc(mp);
 		/* Should never fail for mp != NULL */
 		KASSERT(mvp != NULL);
 		mutex_enter(&mntvnode_lock);
-		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp;
+		    vp = vunmark(mvp)) {
 			vmark(mvp, vp);
 			/*
 			 * Check that the vp is still associated with
@@ -2216,7 +2216,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			memcpy(&vbuf, vp, VNODESZ);
 			mutex_exit(&mntvnode_lock);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
-			   (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
+			    (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
 			   	mutex_enter(&mntvnode_lock);
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
