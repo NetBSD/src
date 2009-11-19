@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.165 2009/11/19 00:30:24 sjg Exp $
+.\"	$NetBSD: make.1,v 1.166 2009/11/19 06:48:37 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1290,21 +1290,22 @@ is equivalent to exporting a variable.
 The opposite of
 .Ql .export .
 The specified global
-.Va variable 
-will be removed from 
+.Va variable
+will be removed from
 .Va .MAKE.EXPORTED .
 If no variable list is provided, all globals are unexported,
 and
-.Va .MAKE.EXPORTED 
+.Va .MAKE.EXPORTED
 deleted.
 .It Ic .unexport-env
 Unexport all globals previously exported and
 clear the environment inherited from the parent.
-This operation will cause a memory leak of the original environment, 
-so should be used sparingly.  Testing for 
+This operation will cause a memory leak of the original environment,
+so should be used sparingly.
+Testing for
 .Va .MAKE.LEVEL
 being 0, would make sense.
-Also note that any variables which originated in the parent environment 
+Also note that any variables which originated in the parent environment
 should be explicitly preserved if desired.
 For example:
 .Bd -literal -offset indent
@@ -1315,11 +1316,11 @@ PATH := ${PATH}
 .Li .endif
 .Pp
 .Ed
-Would result in an environment containing only 
+Would result in an environment containing only
 .Ql Ev PATH ,
 which is the minimal useful environment.
 Actually
-.Ql Ev .MAKE.LEVEL 
+.Ql Ev .MAKE.LEVEL
 will also be pushed into the new environment.
 .It Ic .undef Ar variable
 Un-define the specified global variable.
