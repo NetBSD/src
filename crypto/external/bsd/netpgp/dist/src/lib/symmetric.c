@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.8 2009/10/07 04:18:47 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.9 2009/11/19 21:56:01 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -293,7 +293,7 @@ aes_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
 static void 
 aes_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
-	AES_cfb128_encrypt(in, out, (unsigned long)count,
+	AES_cfb128_encrypt(in, out, (unsigned)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
 			   AES_ENCRYPT);
 }
@@ -301,7 +301,7 @@ aes_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 static void 
 aes_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
-	AES_cfb128_encrypt(in, out, (unsigned long)count,
+	AES_cfb128_encrypt(in, out, (unsigned)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
 			   AES_DECRYPT);
 }
