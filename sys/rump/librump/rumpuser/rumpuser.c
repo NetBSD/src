@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.45 2009/11/19 13:25:48 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.46 2009/11/19 13:42:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.45 2009/11/19 13:25:48 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.46 2009/11/19 13:42:29 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -153,8 +153,8 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 		}
 		close(fd);
 
-		parta = &lab.d_partitions[DISKPART(sb.st_dev)];
-		*size = lab.d_secsize * parta->p_size;
+		parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
+		*size = (uint64_t)lab.d_secsize * parta->p_size;
 #endif /* __NetBSD__ */
 	}
 
