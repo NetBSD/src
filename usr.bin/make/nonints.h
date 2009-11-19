@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.56 2009/01/28 21:38:13 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.57 2009/11/19 00:30:24 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -193,3 +193,4 @@ void Var_End(void);
 void Var_Dump(GNode *);
 void Var_ExportVars(void);
 void Var_Export(char *, int);
+void Var_UnExport(char *);
