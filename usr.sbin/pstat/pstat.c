@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.115 2009/09/16 07:27:41 mlelstv Exp $	*/
+/*	$NetBSD: pstat.c,v 1.116 2009/11/19 02:52:54 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.115 2009/09/16 07:27:41 mlelstv Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.116 2009/11/19 02:52:54 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -491,7 +491,7 @@ ufs_print(struct vnode *vp, int ovflw)
 	if (ump.um_fstype == UFS1) {
 		KGETRET(ip->i_din.ffs1_din, &dip, sizeof (struct ufs1_dinode),
 		    "inode's dinode");
-		rdev = dip.dp1.di_rdev;
+		rdev = (uint32_t)dip.dp1.di_rdev;
 	} else {
 		KGETRET(ip->i_din.ffs2_din, &dip, sizeof (struct ufs2_dinode),
 		    "inode's UFS2 dinode");
