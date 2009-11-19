@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.159 2009/11/06 20:20:56 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2509,6 +2509,9 @@ Parse_File(const char *name, int fd)
 		    for (cp += 6; isspace((unsigned char) *cp); cp++)
 			continue;
 		    Var_Export(cp, 1);
+		    continue;
+		} else if (strncmp(cp, "unexport", 8) == 0) {
+		    Var_UnExport(cp);
 		    continue;
 		}
 	    }
