@@ -302,6 +302,10 @@ The answer is empty
 The answer is known
 The answer is 42
 The answer is 42
+UT_DOLLAR=This is $UT_FU
+UT_FU=fubar
+UT_TEST=unexport
+UT_TEST=unexport-env
 default FU=<v>fu</v> FOO=<v>foo</v> VAR=<v></v>
 two FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
 three FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
