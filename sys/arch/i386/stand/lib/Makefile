@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/03/30 09:22:52 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.29 2009/11/19 22:13:17 dsl Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -23,7 +23,7 @@ SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
 SRCS+= startprog.S multiboot.S panic.c
 SRCS+= biosgetsystime.S cpufunc.S bootmenu.c
-SRCS+= realprot.S message.S dump_eax.S pvcopy.S putstr.S
+SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S
 SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
