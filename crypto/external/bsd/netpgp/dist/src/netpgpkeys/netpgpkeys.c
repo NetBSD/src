@@ -53,6 +53,7 @@ static const char *usage =
 	"\t--generate-key [options] OR\n"
 	"\t--import-key [options] OR\n"
 	"\t--list-keys [options] OR\n"
+	"\t--get-key keyid [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
 	"\t[--coredumps] AND/OR\n"
@@ -70,6 +71,7 @@ enum optdefs {
 	GENERATE_KEY,
 	VERSION_CMD,
 	HELP_CMD,
+	GET_KEY,
 
 	/* options */
 	KEYRING,
@@ -95,6 +97,7 @@ static struct option options[] = {
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
 	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
 	{"generate-key", no_argument,		NULL,	GENERATE_KEY},
+	{"get-key", 	no_argument,		NULL,	GET_KEY},
 	/* debugging commands */
 	{"help",	no_argument,		NULL,	HELP_CMD},
 	{"version",	no_argument,		NULL,	VERSION_CMD},
@@ -137,6 +140,8 @@ print_usage(const char *usagemsg, char *progname)
 static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
+	char	*key;
+
 	switch (p->cmd) {
 	case LIST_KEYS:
 		return netpgp_list_keys(netpgp);
@@ -150,6 +155,14 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case GENERATE_KEY:
 		return netpgp_generate_key(netpgp,
 				netpgp_getvar(netpgp, "userid"), p->numbits);
+	case GET_KEY:
+		key = netpgp_get_key(netpgp, f);
+		if (key) {
+			printf("%s", key);
+			return 1;
+		}
+		(void) fprintf(stderr, "key '%s' not found\n", f);
+		return 0;
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
@@ -237,6 +250,7 @@ main(int argc, char **argv)
 		case FIND_KEY:
 		case EXPORT_KEY:
 		case IMPORT_KEY:
+		case GET_KEY:
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
 			break;

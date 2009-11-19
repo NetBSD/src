@@ -70,6 +70,7 @@ char *netpgp_getvar(netpgp_t *, const char *);
 /* key management */
 int netpgp_list_keys(netpgp_t *);
 int netpgp_find_key(netpgp_t *, char *);
+char *netpgp_get_key(netpgp_t *, const char *);
 int netpgp_export_key(netpgp_t *, char *);
 int netpgp_import_key(netpgp_t *, char *);
 int netpgp_generate_key(netpgp_t *, char *, int);
@@ -79,6 +80,10 @@ int netpgp_encrypt_file(netpgp_t *, const char *, const char *, char *, int);
 int netpgp_decrypt_file(netpgp_t *, const char *, char *, int);
 int netpgp_sign_file(netpgp_t *, const char *, const char *, char *, int, int, int);
 int netpgp_verify_file(netpgp_t *, const char *, const char *, int);
+
+/* memory signing */
+int netpgp_sign_memory(netpgp_t *, const char *, char *, size_t, char *, size_t, const unsigned, const unsigned);
+int netpgp_verify_memory(netpgp_t *, const void *, const size_t, const int);
 
 __END_DECLS
 

@@ -113,6 +113,7 @@ void __ops_keydata_init(__ops_key_t *, const __ops_content_tag_t);
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 
 void __ops_print_pubkeydata(__ops_io_t *, const __ops_key_t *);
+int __ops_sprint_pubkeydata(const __ops_key_t *, char **);
 void __ops_print_pubkey(const __ops_pubkey_t *);
 
 void __ops_print_seckeydata(__ops_io_t *, const __ops_key_t *);
