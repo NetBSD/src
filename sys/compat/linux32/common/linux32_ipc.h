@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipc.h,v 1.3 2009/11/16 13:32:40 joerg Exp $ */
+/* $NetBSD: linux32_ipc.h,v 1.4 2009/11/20 11:54:08 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -59,9 +59,9 @@ struct linux32_msqid_ds {
 	struct linux32_ipc_perm	l_msg_perm;
 	netbsd32_pointer_t	l_msg_first;
 	netbsd32_pointer_t	l_msg_last;
-	linux_time_t		l_msg_stime;
-	linux_time_t		l_msg_rtime;
-	linux_time_t		l_msg_ctime;
+	linux32_time_t		l_msg_stime;
+	linux32_time_t		l_msg_rtime;
+	linux32_time_t		l_msg_ctime;
 	netbsd32_pointer_t	l_wwait;	/* Linux internal */
 	netbsd32_pointer_t	l_rwait;	/* Linux internal */
 	ushort	l_msg_cbytes;
