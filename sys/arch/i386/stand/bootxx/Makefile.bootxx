@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.36 2009/04/03 10:38:12 tsutsui Exp $
+# $NetBSD: Makefile.bootxx,v 1.37 2009/11/20 17:28:19 dsl Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -10,7 +10,7 @@ PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
 
-PRIMARY_LOAD_ADDRESS=0x600
+PRIMARY_LOAD_ADDRESS=0x8800
 SECONDARY_LOAD_ADDRESS=0x10000
 
 # We ought (need?) to fit into track 0 of a 1.2M floppy.
@@ -46,6 +46,7 @@ CPPFLAGS+= -DXXfs_close=${FS}_close
 CPPFLAGS+= -DXXfs_read=${FS}_read
 CPPFLAGS+= -DXXfs_stat=${FS}_stat
 CPPFLAGS+= -DFS=${FS}
+# CPPFLAGS+= -DBOOT_MSG_COM0
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os -momit-leaf-frame-pointer
