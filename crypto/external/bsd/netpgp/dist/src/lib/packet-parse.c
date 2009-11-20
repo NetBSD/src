@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.26 2009/10/09 06:02:55 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.27 2009/11/20 07:17:07 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2637,6 +2637,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 						j - OPS_SALT_SIZE);
 					}
 				}
+				break;
 			default:
 				break;
 			}

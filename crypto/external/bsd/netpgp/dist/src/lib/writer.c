@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.15 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.16 2009/11/20 07:17:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -747,7 +747,7 @@ armoured_message_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 		return 0;
 	}
 
-	return __ops_stacked_write(trailer, sizeof(trailer)-1, errors, writer);
+	return __ops_stacked_write(trailer, strlen(trailer), errors, writer);
 }
 
 /**

@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.22 2009/11/19 21:56:01 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.23 2009/11/20 07:17:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -695,12 +695,14 @@ __ops_validate_file(__ops_io_t *io,
 	int64_t		 	 sigsize;
 	char			 origfile[MAXPATHLEN];
 	char			*detachname;
+	int			 realarmour;
 	int			 outfd = 0;
 	int			 infd;
 	int			 cc;
 
 #define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
 
+	realarmour = armoured;
 	if (stat(infile, &st) < 0) {
 		(void) fprintf(io->errs, "can't validate \"%s\"\n", infile);
 		return 0;
@@ -714,6 +716,9 @@ __ops_validate_file(__ops_io_t *io,
 		    st.st_size > sigsize - SIG_OVERHEAD) {
 			detachname = strdup(origfile);
 		}
+	}
+	if (strcmp(&origfile[cc - 4], ".asc") == 0) {
+		realarmour = 1;
 	}
 
 	(void) memset(&validation, 0x0, sizeof(validation));
@@ -735,7 +740,7 @@ __ops_validate_file(__ops_io_t *io,
 	/* is never used. */
 	validation.reader = parse->readinfo.arg;
 
-	if (armoured) {
+	if (realarmour) {
 		__ops_reader_push_dearmour(parse);
 	}
 
@@ -743,7 +748,7 @@ __ops_validate_file(__ops_io_t *io,
 	__ops_parse(parse, !printerrors);
 
 	/* Tidy up */
-	if (armoured) {
+	if (realarmour) {
 		__ops_reader_pop_dearmour(parse);
 	}
 	__ops_teardown_file_read(parse, infd);
