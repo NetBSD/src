@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.172 2009/05/29 04:57:04 darran Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.173 2009/11/20 02:14:56 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.172 2009/05/29 04:57:04 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.173 2009/11/20 02:14:56 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -301,7 +301,10 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		else {
 			void *tha = ar_tha(ah);
 
-			KASSERT(tha);
+			if (tha == NULL) {
+				/* fake with ARPHDR_IEEE1394 */
+				return 0;
+			}
 			memcpy(edst, tha, sizeof(edst));
 		}
 

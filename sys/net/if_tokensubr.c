@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.57 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.57 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -308,10 +308,10 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			memcpy(edst, tokenbroadcastaddr, sizeof(edst));
 		}
 		else {
-			void *tha = (void *)ar_tha(ah);
-			KASSERT(tha);
-			if (tha)
-				memcpy((void *)edst, tha, sizeof(edst));
+			void *tha = ar_tha(ah);
+			if (tha == NULL)
+				return 0;
+			memcpy(edst, tha, sizeof(edst));
 			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
