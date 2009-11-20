@@ -1,3 +1,108 @@
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2009-02-15  Alan Modra  <amodra@bigpond.net.au>
+	* elf64-ppc.c (struct _ppc64_elf_section_data): Delete t_symndx,
+	add toc.symndx and toc.add.
+	(ppc64_elf_check_relocs): Don't set htab->tls_get_addr here.
+	Set up toc.add.
+	(get_tls_mask): Add toc_addend param, set from toc.add.  Adjust all
+	callers.
+	(ppc64_elf_tls_setup): Set htab->tls_get_addr and tls_get_addr_fd.
+	(branch_reloc_hash_match): New function, extracted from..
+	(ppc64_elf_tls_optimize): ..here.
+	(ppc64_elf_relocate_section): Properly set addends when optimizing
+	tls sequences.  Avoid unnecessary reading and writing of insns.
+	Only redo reloc when symbol changed.  Bypass symbol checks when
+	using tlsld_got.
+	* elf32-ppc.c (ppc_elf_tls_setup): Correct comment.
+	(branch_reloc_hash_match): New function, extracted from..
+	(ppc_elf_tls_optimize): ..here.
+	(ppc_elf_relocate_section): Avoid unnecessary reading of insns.
+	Don't clear addend on zapped __tls_get_addr reloc.
+
+	2009-02-01  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	* elf-eh-frame.c (REQUIRE_CLEARED_RELOCS) Remove.
+	(_bfd_elf_parse_eh_frame): Do not check relocations for removed FDEs.
+
+	2009-01-26  Nathan Sidwell  <nathan@codesourcery.com>
+	* elf32-ppc.c (ppc_elf_relax_section): Add space for relocs
+	describing the trampolines.
+	(ppc_elf_relocate_section): Update relocs to describe the
+	trampolines.
+
+	2009-01-22  Alan Modra  <amodra@bigpond.net.au>
+	PR 6832
+	* dwarf2.c (find_line): Don't update stash->sec_info_ptr until
+	after comp_unit_find_line call.
+
+	2009-01-14  Alan Modra  <amodra@bigpond.net.au>
+	PR 9735
+	* syms.c (_bfd_stab_section_find_nearest_line): Don't free
+	saved filename, use bfd_alloc rather than bfd_malloc for it.
+
+	2009-01-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	* elflink.c (_bfd_elf_section_already_linked): Handle g++-3.4
+	relocations in `.gnu.linkonce.r.*' referencing its `.gnu.linkonce.t.*'.
+
+	2008-12-11  Alan Modra  <amodra@bigpond.net.au>
+	PR 7041
+	* elf64-ppc.c (func_desc_adjust): Correct logic making fake function
+	descriptors.  Similarly correct making function descriptors dynamic.
+
+	2008-11-14  Nathan Sidwell  <nathan@codesourcery.com>
+	* elf.c (assign_file_positions_for_load_sections): Use header_size
+	to avoid moving the load address of file headers.
+	(assign_file_positions_for_load_sections): Set header_size for
+	segments containing the file header.
+
+	2008-11-13  Hans-Peter Nilsson  <hp@axis.com>
+	PR ld/7028
+	* elf.c (assign_file_positions_for_load_sections): Allocate phrds
+	with bfd_zalloc2 instead of bfd_alloc2.  For the amount, use
+	the possibly-preset header-size, not the computed one.
+
+	2008-11-13  Alan Modra  <amodra@bigpond.net.au>
+	PR 7023
+	* elf.c (bfd_section_from_shdr <SHT_SYMTAB>): Fail on invalid sh_info.
+
+	2008-11-11  Alan Modra  <amodra@bigpond.net.au>
+	PR 7012
+	* dwarf2.c (find_line): Don't keep stale pointers into realloc'd
+	memory.  Return on errors.  Fix memory leak.
+	(_bfd_dwarf2_cleanup_debug_info): Free dwarf_str_buffer.
+
+	2008-10-10  Nathan Froyd  <froydnj@codesourcery.com>
+	* elf32-ppc.c (ppc_elf_merge_obj_attributes): Merge
+	Tag_GNU_Power_ABI_Struct_Return.
+
+	2008-10-03  Alan Modra  <amodra@bigpond.net.au>
+	* elf.c (bfd_elf_set_group_contents): Assign sh_info for ld -r when
+	the signature symbol is global.
+	* elflink.c (elf_link_input_bfd): Ensure group signature symbol
+	is output when ld -r.  Set group sh_info when local.
+	* linker.c (default_indirect_link_order): Handle group sections
+	specially.
+
+	2008-09-28  Alan Modra  <amodra@bigpond.net.au>
+	* elf.c (_bfd_elf_init_private_section_data): Tweak union copy.
+	(bfd_section_from_shdr): Don't change SHT_GROUP section name.
+	* elflink.c (section_signature): New function.
+	(_bfd_elf_section_already_linked): Use it.
+
+2009-02-15  Bjoern Haase  <bjoern.m.haase@web.de>
+
+	PR 9841
+	* elf32-avr.c: Handle case where no local symbos exist correctly.
+
+2009-02-04  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* elf32-avr.c (avr_final_link_relocate): Allow avr25 to wraparound.
+
+2009-02-03  Tristan Gingold  <gingold@adacore.com>
+
+	* Makefile.am (RELEASE): Unset.
+	* Makefile.in: Regenerated.
+
 2009-02-02  Tristan Gingold  <gingold@adacore.com>
 
 	* configure.in: Bump version to 2.19.1

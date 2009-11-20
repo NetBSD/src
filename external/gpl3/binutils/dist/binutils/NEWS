@@ -1,5 +1,9 @@
 -*- text -*-
 
+* Support for PowerPC booke64 instructions has been removed.  The assembler no
+  longer accepts -mbooke32 or -mbooke64 and the disassembler no longer accepts
+  -Mbooke32 or -Mbooke64.  Instead, -mbooke and -Mbooke should be used.
+
 Changes in 2.19:
 
 * Added -wL switch to dump decoded contents of .debug_line.

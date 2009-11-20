@@ -1,3 +1,16 @@
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2008-12-04  Ben Elliston  <bje@au.ibm.com>
+	* doc/binutils.texi (objdump): Update booke documentation.
+	* NEWS: Document user-visible changes to command line options.
+
+	2008-10-10  Nathan Froyd  <froydnj@codesourcery.com>
+	* readelf.c (display_power_gnu_attribute): Decode
+	Tag_GNU_Power_ABI_Struct_Return.
+
+	2008-09-28  Alan Modra  <amodra@bigpond.net.au>
+	* objcopy.c (setup_section): Set elf_group_id.
+
 2008-12-23  Nick Clifton  <nickc@redhat.com>
 
 	* windmc.c (main): Use correct type for file length.

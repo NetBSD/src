@@ -1,3 +1,56 @@
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2009-02-26  Peter Bergner  <bergner@vnet.ibm.com>
+	* gas/ppc/e500mc.d ("wait", "waitsrv", "waitimpl"): Add tests.
+	* gas/ppc/e500mc.s: Likewise.
+	* gas/ppc/power6.d ("cdtbcd", "cbcdtd", "addg6s"): Add tests.
+	* gas/ppc/power6.s: Likewise.
+	* gas/ppc/power7.d ("lfdpx", "mffgpr", "mftgpr"): Remove invalid tests.
+	("wait", "waitsrv", "waitimpl", "divwe", "divwe.", "divweo", "divweo.",
+	"divweu", "divweu.", "divweuo", "divweuo.", "bpermd", "popcntw",
+	"popcntd", "ldbrx", "stdbrx", "lfiwzx", "lfiwzx", "fcfids", "fcfids.",
+	"fcfidus", "fcfidus.", "fctiwu", "fctiwu.", "fctiwuz", "fctiwuz.",
+	"fctidu", "fctidu.", "fctiduz", "fctiduz.", "fcfidu", "fcfidu.",
+	"ftdiv", "ftdiv", "ftsqrt", "ftsqrt", "dcbtt", "dcbtstt", "dcffix",
+	"dcffix.", "lbarx", "lbarx", "lbarx", "lharx", "lharx", "lharx",
+	"stbcx.", "sthcx.", "fre", "fre.", "fres", "fres.", "frsqrte",
+	"frsqrte.", "frsqrtes", "frsqrtes.", "isel"): Add tests.
+	* gas/ppc/power7.s: Likewise.
+	* gas/ppc/vsx.d: New test.
+	* gas/ppc/vsx.s: Likewise.
+	* gas/ppc/ppc.exp: Run it.
+
+	2009-02-19  Peter Bergner  <bergner@vnet.ibm.com>
+	* gas/ppc/e500mc.d ("lfdepx", "stfdepx"): Fix tests to expect a
+	floating point register.
+
+	2009-02-05  Peter Bergner  <bergner@vnet.ibm.com>
+	* gas/ppc/booke.s ("dcbt", "dcbtst"): New tests.
+	* gas/ppc/booke.d: Likewise.
+	* gas/ppc/power4_32.s: Likewise.
+	* gas/ppc/power4_32.d: Likewise.
+
+	2009-01-14  Peter Bergner  <bergner@vnet.ibm.com>
+	* gas/ppc/power6.s ("mtfsf", "mtfsf.", "mtfsfi", "mtfsfi."): Add tests.
+	* gas/ppc/power6.d: Likewise.
+
+	2008-12-04  Ben Elliston  <bje@au.ibm.com>
+	* gas/ppc/booke.s: Remove booke64 instructions.
+	* gas/ppc/booke.d: Update expected disassembly output.
+	* gas/ppc/booke_xcoff.s: Use -mbooke/-Mbooke.
+	* gas/ppc/booke_xcoff.d: Likewise.
+	* gas/ppc/booke_xcoff64.d: Likewise.
+	* gas/ppc/booke_xcoff64.s: Likewise.
+
+	2008-09-09  Peter Bergner  <bergner@vnet.ibm.com>
+	* gas/ppc/common.s: New test.
+	* gas/ppc/common.d: Likewise.
+	* gas/ppc/power4_32.s: Likewise.
+	* gas/ppc/power4_32.d: Likewise.
+	* gas/ppc/power6.s: Add attn, mtcr, mtcrf, mfcr, dcbz.
+	* gas/ppc/power6.d: Likewise.
+	* gas/ppc/ppc.exp: Run power4_32 test.
+
 2009-01-08  Adam Nemet  <anemet@caviumnetworks.com>
 
 	* gas/mips/mips1-fp.s, gas/mips/mips1-fp.d, gas/mips/mips1-fp.l:

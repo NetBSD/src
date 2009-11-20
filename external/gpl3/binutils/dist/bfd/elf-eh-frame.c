@@ -549,16 +549,6 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 	     < (bfd_size_type) ((buf) - ehbuf)))	\
     cookie->rel++
 
-#define REQUIRE_CLEARED_RELOCS(buf)			\
-  while (cookie->rel < cookie->relend			\
-	 && (cookie->rel->r_offset			\
-	     < (bfd_size_type) ((buf) - ehbuf)))	\
-    {							\
-      REQUIRE (cookie->rel->r_info == 0);		\
-      REQUIRE (cookie->rel->r_addend == 0);		\
-      cookie->rel++;					\
-    }
-
 #define GET_RELOC(buf)					\
   ((cookie->rel < cookie->relend			\
     && (cookie->rel->r_offset				\
@@ -817,16 +807,16 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 
 	  buf = last_fde + 4 + hdr_length;
 
-	  /* Cleared FDE?  The instructions will not be cleared but verify all
-	     the relocation entries for them are cleared.  */
-	  if (rsec == NULL)
-	    {
-	      REQUIRE_CLEARED_RELOCS (buf);
-	    }
-	  else
-	    {
-	      SKIP_RELOCS (buf);
-	    }
+	  /* For NULL RSEC (cleared FDE belonging to a discarded section)
+	     the relocations are commonly cleared.  We do not sanity check if
+	     all these relocations are cleared as (1) relocations to
+	     .gcc_except_table will remain uncleared (they will get dropped
+	     with the drop of this unused FDE) and (2) BFD already safely drops
+	     relocations of any type to .eh_frame by
+	     elf_section_ignore_discarded_relocs.
+	     TODO: The .gcc_except_table entries should be also filtered as
+	     .eh_frame entries; or GCC could rather use COMDAT for them.  */
+	  SKIP_RELOCS (buf);
 	}
 
       /* Try to interpret the CFA instructions and find the first

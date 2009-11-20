@@ -1,6 +1,7 @@
 /* ldctor.c -- constructor support routines
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2006, 2007, 2008, 2009
+   Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -198,7 +199,6 @@ void
 ldctor_build_sets (void)
 {
   static bfd_boolean called;
-  lang_statement_list_type *old;
   bfd_boolean header_printed;
   struct set_info *p;
 
@@ -244,10 +244,8 @@ ldctor_build_sets (void)
 	}
     }
 
-  old = stat_ptr;
-  stat_ptr = &constructor_list;
-
-  lang_list_init (stat_ptr);
+  lang_list_init (&constructor_list);
+  push_stat_ptr (&constructor_list);
 
   header_printed = FALSE;
   for (p = sets; p != NULL; p = p->next)
@@ -372,5 +370,5 @@ ldctor_build_sets (void)
       lang_add_data (size, exp_intop (0));
     }
 
-  stat_ptr = old;
+  pop_stat_ptr ();
 }

@@ -1,5 +1,5 @@
 # Motorola PowerPC BookE tests
-#as: -a64 -mppc64 -mbooke64
+#as: -a64 -mppc64 -mbooke
 	.csect .text[PR]
 	.csect main[DS]
 main:

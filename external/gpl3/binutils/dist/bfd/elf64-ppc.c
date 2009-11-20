@@ -1,6 +1,6 @@
 /* PowerPC64-specific support for 64-bit ELF.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+   2009 Free Software Foundation, Inc.
    Written by Linus Nordberg, Swox AB <info@swox.com>,
    based on elf32-ppc.c by Ian Lance Taylor.
    Largely rewritten by Alan Modra <amodra@bigpond.net.au>
@@ -2608,9 +2608,15 @@ struct _ppc64_elf_section_data
       long *adjust;
     } opd;
 
-    /* An array for toc sections, indexed by offset/8.
-       Specifies the relocation symbol index used at a given toc offset.  */
-    unsigned *t_symndx;
+    /* An array for toc sections, indexed by offset/8.  */
+    struct _toc_sec_data
+    {
+      /* Specifies the relocation symbol index used at a given toc offset.  */
+      unsigned *symndx;
+
+      /* And the relocation addend.  */
+      bfd_vma *add;
+    } toc;
   } u;
 
   enum _ppc64_sec_type sec_type:2;
@@ -4578,6 +4584,7 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   const Elf_Internal_Rela *rel_end;
   asection *sreloc;
   asection **opd_sym_map;
+  struct elf_link_hash_entry *tga, *dottga;
 
   if (info->relocatable)
     return TRUE;
@@ -4594,6 +4601,10 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   BFD_ASSERT (is_ppc64_elf (abfd));
 
   htab = ppc_hash_table (info);
+  tga = elf_link_hash_lookup (&htab->elf, "__tls_get_addr",
+			      FALSE, FALSE, TRUE);
+  dottga = elf_link_hash_lookup (&htab->elf, ".__tls_get_addr",
+				 FALSE, FALSE, TRUE);
   symtab_hdr = &elf_symtab_hdr (abfd);
 
   sym_hashes = elf_sym_hashes (abfd);
@@ -4829,25 +4840,8 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (!update_plt_info (abfd, (struct ppc_link_hash_entry *) h,
 				    rel->r_addend))
 		return FALSE;
-	      if (h == &htab->tls_get_addr->elf
-		  || h == &htab->tls_get_addr_fd->elf)
+	      if (h == tga || h == dottga)
 		sec->has_tls_reloc = 1;
-	      else if (htab->tls_get_addr == NULL
-		       && CONST_STRNEQ (h->root.root.string, ".__tls_get_addr")
-		       && (h->root.root.string[15] == 0
-			   || h->root.root.string[15] == '@'))
-		{
-		  htab->tls_get_addr = (struct ppc_link_hash_entry *) h;
-		  sec->has_tls_reloc = 1;
-		}
-	      else if (htab->tls_get_addr_fd == NULL
-		       && CONST_STRNEQ (h->root.root.string, "__tls_get_addr")
-		       && (h->root.root.string[14] == 0
-			   || h->root.root.string[14] == '@'))
-		{
-		  htab->tls_get_addr_fd = (struct ppc_link_hash_entry *) h;
-		  sec->has_tls_reloc = 1;
-		}
 	    }
 	  break;
 
@@ -4891,23 +4885,30 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  ppc64_sec = ppc64_elf_section_data (sec);
 	  if (ppc64_sec->sec_type != sec_toc)
 	    {
+	      bfd_size_type amt;
+
 	      /* One extra to simplify get_tls_mask.  */
-	      bfd_size_type amt = sec->size * sizeof (unsigned) / 8 + 1;
-	      ppc64_sec->u.t_symndx = bfd_zalloc (abfd, amt);
-	      if (ppc64_sec->u.t_symndx == NULL)
+	      amt = sec->size * sizeof (unsigned) / 8 + sizeof (unsigned);
+	      ppc64_sec->u.toc.symndx = bfd_zalloc (abfd, amt);
+	      if (ppc64_sec->u.toc.symndx == NULL)
+		return FALSE;
+	      amt = sec->size * sizeof (bfd_vma) / 8;
+	      ppc64_sec->u.toc.add = bfd_zalloc (abfd, amt);
+	      if (ppc64_sec->u.toc.add == NULL)
 		return FALSE;
 	      BFD_ASSERT (ppc64_sec->sec_type == sec_normal);
 	      ppc64_sec->sec_type = sec_toc;
 	    }
 	  BFD_ASSERT (rel->r_offset % 8 == 0);
-	  ppc64_sec->u.t_symndx[rel->r_offset / 8] = r_symndx;
+	  ppc64_sec->u.toc.symndx[rel->r_offset / 8] = r_symndx;
+	  ppc64_sec->u.toc.add[rel->r_offset / 8] = rel->r_addend;
 
 	  /* Mark the second slot of a GD or LD entry.
 	     -1 to indicate GD and -2 to indicate LD.  */
 	  if (tls_type == (TLS_EXPLICIT | TLS_TLS | TLS_GD))
-	    ppc64_sec->u.t_symndx[rel->r_offset / 8 + 1] = -1;
+	    ppc64_sec->u.toc.symndx[rel->r_offset / 8 + 1] = -1;
 	  else if (tls_type == (TLS_EXPLICIT | TLS_TLS | TLS_LD))
-	    ppc64_sec->u.t_symndx[rel->r_offset / 8 + 1] = -2;
+	    ppc64_sec->u.toc.symndx[rel->r_offset / 8 + 1] = -2;
 	  goto dodyn;
 
 	case R_PPC64_TPREL16:
@@ -5847,7 +5848,7 @@ func_desc_adjust (struct elf_link_hash_entry *h, void *inf)
       fdh = (struct ppc_link_hash_entry *) fdh->elf.root.u.i.link;
 
   if (fdh == NULL
-      && info->shared
+      && !info->executable
       && (fh->elf.root.type == bfd_link_hash_undefined
 	  || fh->elf.root.type == bfd_link_hash_undefweak))
     {
@@ -5880,7 +5881,7 @@ func_desc_adjust (struct elf_link_hash_entry *h, void *inf)
 
   if (fdh != NULL
       && !fdh->elf.forced_local
-      && (info->shared
+      && (!info->executable
 	  || fdh->elf.def_dynamic
 	  || fdh->elf.ref_dynamic
 	  || (fdh->elf.root.type == bfd_link_hash_undefweak
@@ -6258,9 +6259,12 @@ get_sym_h (struct elf_link_hash_entry **hp,
    type suitable for optimization, and 1 otherwise.  */
 
 static int
-get_tls_mask (char **tls_maskp, unsigned long *toc_symndx,
+get_tls_mask (char **tls_maskp,
+	      unsigned long *toc_symndx,
+	      bfd_vma *toc_addend,
 	      Elf_Internal_Sym **locsymsp,
-	      const Elf_Internal_Rela *rel, bfd *ibfd)
+	      const Elf_Internal_Rela *rel,
+	      bfd *ibfd)
 {
   unsigned long r_symndx;
   int next_r;
@@ -6288,12 +6292,14 @@ get_tls_mask (char **tls_maskp, unsigned long *toc_symndx,
     off = sym->st_value;
   off += rel->r_addend;
   BFD_ASSERT (off % 8 == 0);
-  r_symndx = ppc64_elf_section_data (sec)->u.t_symndx[off / 8];
-  next_r = ppc64_elf_section_data (sec)->u.t_symndx[off / 8 + 1];
-  if (!get_sym_h (&h, &sym, &sec, tls_maskp, locsymsp, r_symndx, ibfd))
-    return 0;
+  r_symndx = ppc64_elf_section_data (sec)->u.toc.symndx[off / 8];
+  next_r = ppc64_elf_section_data (sec)->u.toc.symndx[off / 8 + 1];
   if (toc_symndx != NULL)
     *toc_symndx = r_symndx;
+  if (toc_addend != NULL)
+    *toc_addend = ppc64_elf_section_data (sec)->u.toc.add[off / 8];
+  if (!get_sym_h (&h, &sym, &sec, tls_maskp, locsymsp, r_symndx, ibfd))
+    return 0;
   if ((h == NULL
        || ((h->root.type == bfd_link_hash_defined
 	    || h->root.type == bfd_link_hash_defweak)
@@ -6898,36 +6904,49 @@ ppc64_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
   struct ppc_link_hash_table *htab;
 
   htab = ppc_hash_table (info);
-  if (htab->tls_get_addr != NULL)
-    {
-      struct ppc_link_hash_entry *h = htab->tls_get_addr;
-
-      while (h->elf.root.type == bfd_link_hash_indirect
-	     || h->elf.root.type == bfd_link_hash_warning)
-	h = (struct ppc_link_hash_entry *) h->elf.root.u.i.link;
-
-      htab->tls_get_addr = h;
-
-      if (htab->tls_get_addr_fd == NULL
-	  && h->oh != NULL
-	  && h->oh->is_func_descriptor
-	  && (h->oh->elf.root.type == bfd_link_hash_defined
-	      || h->oh->elf.root.type == bfd_link_hash_defweak))
-	htab->tls_get_addr_fd = h->oh;
-    }
-
-  if (htab->tls_get_addr_fd != NULL)
-    {
-      struct ppc_link_hash_entry *h = htab->tls_get_addr_fd;
-
-      while (h->elf.root.type == bfd_link_hash_indirect
-	     || h->elf.root.type == bfd_link_hash_warning)
-	h = (struct ppc_link_hash_entry *) h->elf.root.u.i.link;
-
-      htab->tls_get_addr_fd = h;
-    }
-
+  htab->tls_get_addr = ((struct ppc_link_hash_entry *)
+			elf_link_hash_lookup (&htab->elf, ".__tls_get_addr",
+					      FALSE, FALSE, TRUE));
+  htab->tls_get_addr_fd = ((struct ppc_link_hash_entry *)
+			   elf_link_hash_lookup (&htab->elf, "__tls_get_addr",
+						 FALSE, FALSE, TRUE));
   return _bfd_elf_tls_setup (obfd, info);
+}
+
+/* Return TRUE iff REL is a branch reloc with a global symbol matching
+   HASH1 or HASH2.  */
+
+static bfd_boolean
+branch_reloc_hash_match (const bfd *ibfd,
+			 const Elf_Internal_Rela *rel,
+			 const struct ppc_link_hash_entry *hash1,
+			 const struct ppc_link_hash_entry *hash2)
+{
+  Elf_Internal_Shdr *symtab_hdr = &elf_symtab_hdr (ibfd);
+  enum elf_ppc64_reloc_type r_type = ELF64_R_TYPE (rel->r_info);
+  unsigned int r_symndx = ELF64_R_SYM (rel->r_info);
+
+  if (r_symndx >= symtab_hdr->sh_info
+      && (r_type == R_PPC64_REL24
+	  || r_type == R_PPC64_REL14
+	  || r_type == R_PPC64_REL14_BRTAKEN
+	  || r_type == R_PPC64_REL14_BRNTAKEN
+	  || r_type == R_PPC64_ADDR24
+	  || r_type == R_PPC64_ADDR14
+	  || r_type == R_PPC64_ADDR14_BRTAKEN
+	  || r_type == R_PPC64_ADDR14_BRNTAKEN))
+    {
+      struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (ibfd);
+      struct elf_link_hash_entry *h;
+
+      h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+      while (h->root.type == bfd_link_hash_indirect
+	     || h->root.type == bfd_link_hash_warning)
+	h = (struct elf_link_hash_entry *) h->root.u.i.link;
+      if (h == &hash1->elf || h == &hash2->elf)
+	return TRUE;
+    }
+  return FALSE;
 }
 
 /* Run through all the TLS relocs looking for optimization
@@ -7173,55 +7192,26 @@ ppc64_elf_tls_optimize (bfd *obfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 		      if (!expecting_tls_get_addr)
 			continue;
 
-		      if (rel + 1 < relend)
+		      if (rel + 1 < relend
+			  && branch_reloc_hash_match (ibfd, rel + 1,
+						      htab->tls_get_addr,
+						      htab->tls_get_addr_fd))
 			{
-			  Elf_Internal_Shdr *symtab_hdr;
-			  enum elf_ppc64_reloc_type r_type2;
-			  unsigned long r_symndx2;
-			  struct elf_link_hash_entry *h2;
-
-			  symtab_hdr = &elf_symtab_hdr (ibfd);
-
-			  /* The next instruction should be a call to
-			     __tls_get_addr.  Peek at the reloc to be sure.  */
-			  r_type2 = ELF64_R_TYPE (rel[1].r_info);
-			  r_symndx2 = ELF64_R_SYM (rel[1].r_info);
-			  if (r_symndx2 >= symtab_hdr->sh_info
-			      && (r_type2 == R_PPC64_REL14
-				  || r_type2 == R_PPC64_REL14_BRTAKEN
-				  || r_type2 == R_PPC64_REL14_BRNTAKEN
-				  || r_type2 == R_PPC64_REL24))
+			  if (expecting_tls_get_addr == 2)
 			    {
-			      struct elf_link_hash_entry **sym_hashes;
+			      /* Check for toc tls entries.  */
+			      char *toc_tls;
+			      int retval;
 
-			      sym_hashes = elf_sym_hashes (ibfd);
-
-			      h2 = sym_hashes[r_symndx2 - symtab_hdr->sh_info];
-			      while (h2->root.type == bfd_link_hash_indirect
-				     || h2->root.type == bfd_link_hash_warning)
-				h2 = ((struct elf_link_hash_entry *)
-				      h2->root.u.i.link);
-			      if (h2 != NULL
-				  && (h2 == &htab->tls_get_addr->elf
-				      || h2 == &htab->tls_get_addr_fd->elf))
-				{
-				  if (expecting_tls_get_addr == 2)
-				    {
-				      /* Check for toc tls entries.  */
-				      char *toc_tls;
-				      int retval;
-
-				      retval = get_tls_mask (&toc_tls, NULL,
-							     &locsyms,
-							     rel, ibfd);
-				      if (retval == 0)
-					goto err_free_rel;
-				      if (retval > 1 && toc_tls != NULL)
-					toc_ref[toc_ref_index] = 1;
-				    }
-				  continue;
-				}
+			      retval = get_tls_mask (&toc_tls, NULL, NULL,
+						     &locsyms,
+						     rel, ibfd);
+			      if (retval == 0)
+				goto err_free_rel;
+			      if (retval > 1 && toc_tls != NULL)
+				toc_ref[toc_ref_index] = 1;
 			    }
+			  continue;
 			}
 
 		      if (expecting_tls_get_addr != 1)
@@ -8036,6 +8026,10 @@ readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	{
 	  struct bfd_link_info *info = inf;
 
+          if (info->warn_shared_textrel)
+            (*_bfd_error_handler)
+              (_("warning: dynamic relocation in readonly section `%s'"),
+              h->root.root.string);
 	  info->flags |= DF_TEXTREL;
 
 	  /* Not an error, just cut short the traversal.  */
@@ -9744,7 +9738,7 @@ ppc64_elf_size_stubs (bfd *output_bfd,
 		      /* Get tls info.  */
 		      char *tls_mask;
 
-		      if (!get_tls_mask (&tls_mask, NULL, &local_syms,
+		      if (!get_tls_mask (&tls_mask, NULL, NULL, &local_syms,
 					 irela - 1, input_bfd))
 			goto error_ret_free_internal;
 		      if (*tls_mask != 0)
@@ -10236,6 +10230,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
       struct ppc_link_hash_entry *fdh;
       const char *sym_name;
       unsigned long r_symndx, toc_symndx;
+      bfd_vma toc_addend;
       char tls_mask, tls_gd, tls_type;
       char sym_type;
       bfd_vma relocation;
@@ -10344,8 +10339,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	      /* Check for toc tls entries.  */
 	      char *toc_tls;
 
-	      if (!get_tls_mask (&toc_tls, &toc_symndx, &local_syms,
-				 rel, input_bfd))
+	      if (!get_tls_mask (&toc_tls, &toc_symndx, &toc_addend,
+				 &local_syms, rel, input_bfd))
 		return FALSE;
 
 	      if (toc_tls)
@@ -10407,8 +10402,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	    char *toc_tls;
 	    int retval;
 
-	    retval = get_tls_mask (&toc_tls, &toc_symndx, &local_syms,
-				   rel, input_bfd);
+	    retval = get_tls_mask (&toc_tls, &toc_symndx, &toc_addend,
+				   &local_syms, rel, input_bfd);
 	    if (retval == 0)
 	      return FALSE;
 
@@ -10456,6 +10451,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	      if (toc_symndx != 0)
 		{
 		  rel->r_info = ELF64_R_INFO (toc_symndx, r_type);
+		  rel->r_addend = toc_addend;
 		  /* We changed the symbol.  Start over in order to
 		     get h, sym, sec etc. right.  */
 		  rel--;
@@ -10509,6 +10505,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	      if (toc_symndx != 0)
 		{
 		  rel->r_info = ELF64_R_INFO (toc_symndx, r_type);
+		  rel->r_addend = toc_addend;
 		  /* We changed the symbol.  Start over in order to
 		     get h, sym, sec etc. right.  */
 		  rel--;
@@ -10555,20 +10552,18 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	case R_PPC64_GOT_TLSLD16_LO:
 	  if (tls_mask != 0 && (tls_mask & TLS_LD) == 0)
 	    {
-	      bfd_vma insn1, insn2, insn3;
+	      unsigned int insn1, insn2, insn3;
 	      bfd_vma offset;
 
 	    tls_ldgd_opt:
 	      /* We know that the next reloc is on a tls_get_addr
 		 call, since ppc64_elf_tls_optimize checks this.  */
 	      offset = rel[1].r_offset;
-	      insn1 = bfd_get_32 (output_bfd,
-				  contents + rel->r_offset - d_offset);
-	      insn3 = bfd_get_32 (output_bfd,
-				  contents + offset + 4);
 	      if ((tls_mask & tls_gd) != 0)
 		{
 		  /* IE */
+		  insn1 = bfd_get_32 (output_bfd,
+				      contents + rel->r_offset - d_offset);
 		  insn1 &= (1 << 26) - (1 << 2);
 		  insn1 |= 58 << 26;	/* ld */
 		  insn2 = 0x7c636a14;	/* add 3,3,13 */
@@ -10603,28 +10598,33 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 			rel->r_addend -= (local_syms[r_symndx].st_value
 					  + sec->output_offset
 					  + sec->output_section->vma);
-		      rel[1].r_addend = rel->r_addend;
 		    }
 		  else if (toc_symndx != 0)
-		    r_symndx = toc_symndx;
+		    {
+		      r_symndx = toc_symndx;
+		      rel->r_addend = toc_addend;
+		    }
 		  r_type = R_PPC64_TPREL16_HA;
 		  rel->r_info = ELF64_R_INFO (r_symndx, r_type);
 		  rel[1].r_info = ELF64_R_INFO (r_symndx,
 						R_PPC64_TPREL16_LO);
 		  rel[1].r_offset += d_offset;
-		}
-	      if (insn3 == NOP
-		  || insn3 == CROR_151515 || insn3 == CROR_313131)
-		{
-		  insn3 = insn2;
-		  insn2 = NOP;
-		  rel[1].r_offset += 4;
+		  rel[1].r_addend = rel->r_addend;
 		}
 	      bfd_put_32 (output_bfd, insn1,
 			  contents + rel->r_offset - d_offset);
+	      insn3 = bfd_get_32 (output_bfd,
+				  contents + offset + 4);
+	      if (insn3 == NOP
+		  || insn3 == CROR_151515 || insn3 == CROR_313131)
+		{
+		  rel[1].r_offset += 4;
+		  bfd_put_32 (output_bfd, insn2, contents + offset + 4);
+		  insn2 = NOP;
+		}
 	      bfd_put_32 (output_bfd, insn2, contents + offset);
-	      bfd_put_32 (output_bfd, insn3, contents + offset + 4);
-	      if (tls_gd == 0 || toc_symndx != 0)
+	      if ((tls_mask & tls_gd) == 0
+		  && (tls_gd == 0 || toc_symndx != 0))
 		{
 		  /* We changed the symbol.  Start over in order
 		     to get h, sym, sec etc. right.  */
@@ -11001,7 +11001,8 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 
 		*offp = off | 1;
 		if ((info->shared || indx != 0)
-		    && (h == NULL
+		    && (offp == &ppc64_tlsld_got (input_bfd)->offset
+			|| h == NULL
 			|| ELF_ST_VISIBILITY (h->elf.other) == STV_DEFAULT
 			|| h->elf.root.type != bfd_link_hash_undefweak))
 		  {

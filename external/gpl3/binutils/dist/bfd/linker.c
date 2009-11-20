@@ -2796,18 +2796,36 @@ default_indirect_link_order (bfd *output_bfd,
 	}
     }
 
-  /* Get and relocate the section contents.  */
-  sec_size = (input_section->rawsize > input_section->size
-	      ? input_section->rawsize
-	      : input_section->size);
-  contents = bfd_malloc (sec_size);
-  if (contents == NULL && sec_size != 0)
-    goto error_return;
-  new_contents = (bfd_get_relocated_section_contents
-		  (output_bfd, info, link_order, contents, info->relocatable,
-		   _bfd_generic_link_get_symbols (input_bfd)));
-  if (!new_contents)
-    goto error_return;
+  if ((output_section->flags & (SEC_GROUP | SEC_LINKER_CREATED)) == SEC_GROUP
+      && input_section->size != 0)
+    {
+      /* Group section contents are set by bfd_elf_set_group_contents.  */
+      if (!output_bfd->output_has_begun)
+	{
+	  /* FIXME: This hack ensures bfd_elf_set_group_contents is called.  */
+	  if (!bfd_set_section_contents (output_bfd, output_section, "", 0, 1))
+	    goto error_return;
+	}
+      new_contents = output_section->contents;
+      BFD_ASSERT (new_contents != NULL);
+      BFD_ASSERT (input_section->output_offset == 0);
+    }
+  else
+    {
+      /* Get and relocate the section contents.  */
+      sec_size = (input_section->rawsize > input_section->size
+		  ? input_section->rawsize
+		  : input_section->size);
+      contents = bfd_malloc (sec_size);
+      if (contents == NULL && sec_size != 0)
+	goto error_return;
+      new_contents = (bfd_get_relocated_section_contents
+		      (output_bfd, info, link_order, contents,
+		       info->relocatable,
+		       _bfd_generic_link_get_symbols (input_bfd)));
+      if (!new_contents)
+	goto error_return;
+    }
 
   /* Output the section contents.  */
   loc = input_section->output_offset * bfd_octets_per_byte (output_bfd);

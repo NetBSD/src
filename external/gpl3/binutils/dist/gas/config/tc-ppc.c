@@ -1,6 +1,6 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -358,9 +358,42 @@ static const struct pd_reg pre_defined_registers[] =
   { "f.3", 3 },
   { "f.30", 30 },
   { "f.31", 31 },
+
+  { "f.32", 32 },    /* Extended floating point scalar registers (ISA 2.06).  */
+  { "f.33", 33 },
+  { "f.34", 34 },
+  { "f.35", 35 },
+  { "f.36", 36 },
+  { "f.37", 37 },
+  { "f.38", 38 },
+  { "f.39", 39 },
   { "f.4", 4 },
+  { "f.40", 40 },
+  { "f.41", 41 },
+  { "f.42", 42 },
+  { "f.43", 43 },
+  { "f.44", 44 },
+  { "f.45", 45 },
+  { "f.46", 46 },
+  { "f.47", 47 },
+  { "f.48", 48 },
+  { "f.49", 49 },
   { "f.5", 5 },
+  { "f.50", 50 },
+  { "f.51", 51 },
+  { "f.52", 52 },
+  { "f.53", 53 },
+  { "f.54", 54 },
+  { "f.55", 55 },
+  { "f.56", 56 },
+  { "f.57", 57 },
+  { "f.58", 58 },
+  { "f.59", 59 },
   { "f.6", 6 },
+  { "f.60", 60 },
+  { "f.61", 61 },
+  { "f.62", 62 },
+  { "f.63", 63 },
   { "f.7", 7 },
   { "f.8", 8 },
   { "f.9", 9 },
@@ -391,9 +424,42 @@ static const struct pd_reg pre_defined_registers[] =
   { "f3", 3 },
   { "f30", 30 },
   { "f31", 31 },
+
+  { "f32", 32 },    /* Extended floating point scalar registers (ISA 2.06).  */
+  { "f33", 33 },
+  { "f34", 34 },
+  { "f35", 35 },
+  { "f36", 36 },
+  { "f37", 37 },
+  { "f38", 38 },
+  { "f39", 39 },
   { "f4", 4 },
+  { "f40", 40 },
+  { "f41", 41 },
+  { "f42", 42 },
+  { "f43", 43 },
+  { "f44", 44 },
+  { "f45", 45 },
+  { "f46", 46 },
+  { "f47", 47 },
+  { "f48", 48 },
+  { "f49", 49 },
   { "f5", 5 },
+  { "f50", 50 },
+  { "f51", 51 },
+  { "f52", 52 },
+  { "f53", 53 },
+  { "f54", 54 },
+  { "f55", 55 },
+  { "f56", 56 },
+  { "f57", 57 },
+  { "f58", 58 },
+  { "f59", 59 },
   { "f6", 6 },
+  { "f60", 60 },
+  { "f61", 61 },
+  { "f62", 62 },
+  { "f63", 63 },
   { "f7", 7 },
   { "f8", 8 },
   { "f9", 9 },
@@ -501,7 +567,7 @@ static const struct pd_reg pre_defined_registers[] =
   { "srr0", 26 }, /* Machine Status Save/Restore Register 0 */
   { "srr1", 27 }, /* Machine Status Save/Restore Register 1 */
 
-  { "v.0", 0 },     /* Vector registers */
+  { "v.0", 0 },     /* Vector (Altivec/VMX) registers */
   { "v.1", 1 },
   { "v.10", 10 },
   { "v.11", 11 },
@@ -566,6 +632,136 @@ static const struct pd_reg pre_defined_registers[] =
   { "v7", 7 },
   { "v8", 8 },
   { "v9", 9 },
+
+  { "vs.0", 0 },     /* Vector Scalar (VSX) registers (ISA 2.06).  */
+  { "vs.1", 1 },
+  { "vs.10", 10 },
+  { "vs.11", 11 },
+  { "vs.12", 12 },
+  { "vs.13", 13 },
+  { "vs.14", 14 },
+  { "vs.15", 15 },
+  { "vs.16", 16 },
+  { "vs.17", 17 },
+  { "vs.18", 18 },
+  { "vs.19", 19 },
+  { "vs.2", 2 },
+  { "vs.20", 20 },
+  { "vs.21", 21 },
+  { "vs.22", 22 },
+  { "vs.23", 23 },
+  { "vs.24", 24 },
+  { "vs.25", 25 },
+  { "vs.26", 26 },
+  { "vs.27", 27 },
+  { "vs.28", 28 },
+  { "vs.29", 29 },
+  { "vs.3", 3 },
+  { "vs.30", 30 },
+  { "vs.31", 31 },
+  { "vs.32", 32 },
+  { "vs.33", 33 },
+  { "vs.34", 34 },
+  { "vs.35", 35 },
+  { "vs.36", 36 },
+  { "vs.37", 37 },
+  { "vs.38", 38 },
+  { "vs.39", 39 },
+  { "vs.4", 4 },
+  { "vs.40", 40 },
+  { "vs.41", 41 },
+  { "vs.42", 42 },
+  { "vs.43", 43 },
+  { "vs.44", 44 },
+  { "vs.45", 45 },
+  { "vs.46", 46 },
+  { "vs.47", 47 },
+  { "vs.48", 48 },
+  { "vs.49", 49 },
+  { "vs.5", 5 },
+  { "vs.50", 50 },
+  { "vs.51", 51 },
+  { "vs.52", 52 },
+  { "vs.53", 53 },
+  { "vs.54", 54 },
+  { "vs.55", 55 },
+  { "vs.56", 56 },
+  { "vs.57", 57 },
+  { "vs.58", 58 },
+  { "vs.59", 59 },
+  { "vs.6", 6 },
+  { "vs.60", 60 },
+  { "vs.61", 61 },
+  { "vs.62", 62 },
+  { "vs.63", 63 },
+  { "vs.7", 7 },
+  { "vs.8", 8 },
+  { "vs.9", 9 },
+
+  { "vs0", 0 },
+  { "vs1", 1 },
+  { "vs10", 10 },
+  { "vs11", 11 },
+  { "vs12", 12 },
+  { "vs13", 13 },
+  { "vs14", 14 },
+  { "vs15", 15 },
+  { "vs16", 16 },
+  { "vs17", 17 },
+  { "vs18", 18 },
+  { "vs19", 19 },
+  { "vs2", 2 },
+  { "vs20", 20 },
+  { "vs21", 21 },
+  { "vs22", 22 },
+  { "vs23", 23 },
+  { "vs24", 24 },
+  { "vs25", 25 },
+  { "vs26", 26 },
+  { "vs27", 27 },
+  { "vs28", 28 },
+  { "vs29", 29 },
+  { "vs3", 3 },
+  { "vs30", 30 },
+  { "vs31", 31 },
+  { "vs32", 32 },
+  { "vs33", 33 },
+  { "vs34", 34 },
+  { "vs35", 35 },
+  { "vs36", 36 },
+  { "vs37", 37 },
+  { "vs38", 38 },
+  { "vs39", 39 },
+  { "vs4", 4 },
+  { "vs40", 40 },
+  { "vs41", 41 },
+  { "vs42", 42 },
+  { "vs43", 43 },
+  { "vs44", 44 },
+  { "vs45", 45 },
+  { "vs46", 46 },
+  { "vs47", 47 },
+  { "vs48", 48 },
+  { "vs49", 49 },
+  { "vs5", 5 },
+  { "vs50", 50 },
+  { "vs51", 51 },
+  { "vs52", 52 },
+  { "vs53", 53 },
+  { "vs54", 54 },
+  { "vs55", 55 },
+  { "vs56", 56 },
+  { "vs57", 57 },
+  { "vs58", 58 },
+  { "vs59", 59 },
+  { "vs6", 6 },
+  { "vs60", 60 },
+  { "vs61", 61 },
+  { "vs62", 62 },
+  { "vs63", 63 },
+  { "vs7", 7 },
+  { "vs8", 8 },
+  { "vs9", 9 },
 
   { "xer", 1 },
 
@@ -919,12 +1115,6 @@ parse_cpu (const char *arg)
     {
       ppc_cpu = PPC_OPCODE_PPC | PPC_OPCODE_BOOKE | PPC_OPCODE_32;
     }
-  /* -mbooke64 means enable 64-bit BookE support.  */
-  else if (strcmp (arg, "booke64") == 0)
-    {
-      ppc_cpu = (PPC_OPCODE_PPC | PPC_OPCODE_BOOKE
-		 | PPC_OPCODE_BOOKE64 | PPC_OPCODE_64);
-    }
   else if (strcmp (arg, "power4") == 0)
     {
       ppc_cpu = (PPC_OPCODE_PPC | PPC_OPCODE_CLASSIC
@@ -946,8 +1136,9 @@ parse_cpu (const char *arg)
   else if (strcmp (arg, "power7") == 0)
     {
       ppc_cpu = (PPC_OPCODE_PPC | PPC_OPCODE_CLASSIC
-		 | PPC_OPCODE_64 | PPC_OPCODE_POWER4
-		 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
+		 | PPC_OPCODE_ISEL | PPC_OPCODE_64
+		 | PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5
+		 | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7
 		 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX);
     }
   else if (strcmp (arg, "cell") == 0)
@@ -1149,8 +1340,7 @@ PowerPC options:\n\
   fprintf (stream, _("\
 -mppc64, -m620		generate code for PowerPC 620/625/630\n\
 -mppc64bridge		generate code for PowerPC 64, including bridge insns\n\
--mbooke64		generate code for 64-bit PowerPC BookE\n\
--mbooke, mbooke32	generate code for 32-bit PowerPC BookE\n\
+-mbooke			generate code for 32-bit PowerPC BookE\n\
 -mpower4		generate code for Power4 architecture\n\
 -mpower5		generate code for Power5 architecture\n\
 -mpower6		generate code for Power6 architecture\n\
@@ -1359,8 +1549,7 @@ ppc_setup_opcodes (void)
 
 		 There are also cases where the table needs to be out
 		 of order to disassemble the correct instruction for
-		 processor variants.  eg. "lhae" booke64 insn must be
-		 found before "ld" ppc64 insn.  */
+		 processor variants.  */
 	      else if (0)
 		{
 		  unsigned long t1 = op[0].opcode;
@@ -1420,23 +1609,7 @@ ppc_setup_opcodes (void)
 	      || ((op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64))
 		  == (ppc_cpu & (PPC_OPCODE_32 | PPC_OPCODE_64)))
 	      || (ppc_cpu & PPC_OPCODE_64_BRIDGE) != 0)
-	  /* Certain instructions (eg: extsw) do not exist in the
-	     32-bit BookE instruction set, but they do exist in the
-	     64-bit BookE instruction set, and other PPC instruction
-	     sets.  Check to see if the opcode has the BOOKE64 flag set.
-	     If it does make sure that the target CPU is not the BookE32.  */
-	  && ((op->flags & PPC_OPCODE_BOOKE64) == 0
-	      || (ppc_cpu & PPC_OPCODE_BOOKE64) == PPC_OPCODE_BOOKE64
-	      || (ppc_cpu & PPC_OPCODE_BOOKE) == 0)
-	  && ((op->flags & (PPC_OPCODE_POWER4 | PPC_OPCODE_NOPOWER4)) == 0
-	      || ((op->flags & PPC_OPCODE_POWER4)
-		  == (ppc_cpu & PPC_OPCODE_POWER4)))
-	  && ((op->flags & PPC_OPCODE_POWER5) == 0
-	      || ((op->flags & PPC_OPCODE_POWER5)
-		  == (ppc_cpu & PPC_OPCODE_POWER5)))
-	  && ((op->flags & PPC_OPCODE_POWER6) == 0
-	      || ((op->flags & PPC_OPCODE_POWER6)
-		  == (ppc_cpu & PPC_OPCODE_POWER6))))
+	  && !(ppc_cpu & op->deprecated))
 	{
 	  const char *retval;
 
@@ -2792,10 +2965,7 @@ md_assemble (char *str)
 
 #ifdef OBJ_ELF
   /* Do we need/want a APUinfo section? */
-  if (ppc_cpu & (PPC_OPCODE_SPE
-   	       | PPC_OPCODE_ISEL | PPC_OPCODE_EFS
-	       | PPC_OPCODE_BRLOCK | PPC_OPCODE_PMR | PPC_OPCODE_CACHELCK
-	       | PPC_OPCODE_RFMCI))
+  if ((ppc_cpu & PPC_OPCODE_E500MC) != 0)
     {
       /* These are all version "1".  */
       if (opcode->flags & PPC_OPCODE_SPE)

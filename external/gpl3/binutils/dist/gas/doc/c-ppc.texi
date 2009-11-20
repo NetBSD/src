@@ -70,10 +70,7 @@ Generate code for Motorola SPE instructions.
 @item -mppc64bridge
 Generate code for PowerPC 64, including bridge insns.
 
-@item -mbooke64
-Generate code for 64-bit BookE.
-
-@item -mbooke, mbooke32
+@item -mbooke
 Generate code for 32-bit BookE.
 
 @item -me300

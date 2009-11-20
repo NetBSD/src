@@ -35,11 +35,27 @@ if {![check_as_cfi]} {
     return
 }
 
-set build_tests_ld {
-  {"Build eh-group1.o"
-   "-r" ""
-   {eh-group1.s eh-group2.s} {} "eh-group.o"}
+# alpha-linux-gnu does not support 64-bit relocations:
+#   relocation truncated to fit: REFLONG against `.gcc_except_table'
+# arm-eabi does not support 64-bit relocations:
+#   bad relocation fixup type (1)
+set testname "Guess the target size from eh-group1size.o"
+if [ld_assemble $as "$srcdir/$subdir/eh-group1.s" "tmpdir/eh-group1size.o"] {
+    pass $testname
+} else {
+    fail $testname
 }
+
+set as_options ""
+if [is_elf64 "tmpdir/eh-group1size.o"] {
+    set as_options "$as_options --defsym ELF64=1"
+}
+
+set build_tests_ld [list			\
+  [list "Build eh-group1.o"			\
+   "-r" "$as_options"				\
+   {eh-group1.s eh-group2.s} {} "eh-group.o"]	\
+]
 
 run_ld_link_tests $build_tests_ld
 

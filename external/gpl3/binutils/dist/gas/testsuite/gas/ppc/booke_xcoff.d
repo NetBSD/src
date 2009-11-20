@@ -1,5 +1,5 @@
-#as: -mppc32 -mbooke32
-#objdump: -mpowerpc -dr -Mbooke32
+#as: -mppc32 -mbooke
+#objdump: -mpowerpc -dr -Mbooke
 #name: xcoff BookE tests
 
 .*:     file format aixcoff-rs6000
