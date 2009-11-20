@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.28 2009/11/20 14:11:38 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.29 2009/11/20 14:24:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -102,7 +102,7 @@ cred_create(const struct puffs_cred *pcr)
 	gid_t groups[NGROUPS];
 	uid_t uid;
 	gid_t gid;
-	short ngroups = 0;
+	short ngroups = __arraycount(groups);
 
 	if (haswizard) {
 		uid = wizarduid;
