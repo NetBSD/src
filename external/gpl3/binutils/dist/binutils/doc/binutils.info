@@ -44,7 +44,7 @@ Introduction
 ************
 
 This brief manual contains documentation for the GNU binary utilities
-(GNU Binutils) version 2.18.90:
+(GNU Binutils) version 2.19.1:
 
    This document is distributed under the terms of the GNU Free
 Documentation License.  A copy of the license is included in the
@@ -1576,8 +1576,8 @@ equivalent.  At least one option from the list
      disassembler to print a mnemonic suffix even when the suffix could
      be inferred by the operands.
 
-     For PPC, `booke', `booke32' and `booke64' select disassembly of
-     BookE instructions.  `32' and `64' select PowerPC and PowerPC64
+     For PowerPC, `booke' controls the disassembly of BookE
+     instructions.  `32' and `64' select PowerPC and PowerPC64
      disassembly, respectively.  `e300' selects disassembly for the
      e300 family.  `440' selects disassembly for the PowerPC 440.
      `ppcps' selects disassembly for the paired single instructions of
@@ -4142,13 +4142,13 @@ Binutils Index
 * ELF program header information:        readelf.             (line  59)
 * ELF reloc information:                 readelf.             (line  93)
 * ELF section group information:         readelf.             (line  70)
-* ELF section information:               readelf.             (line  65)
+* ELF section information:               readelf.             (line  75)
 * ELF segment information:               readelf.             (line  59)
 * ELF symbol table information:          readelf.             (line  80)
 * ELF version sections informations:     readelf.             (line 108)
 * endianness:                            objdump.             (line 127)
 * error on valid input:                  Bug Criteria.        (line  12)
-* external symbols:                      nm.                  (line 164)
+* external symbols:                      nm.                  (line 237)
 * extract from archive:                  ar cmdline.          (line 103)
 * fatal signal:                          Bug Criteria.        (line   9)
 * file name:                             nm.                  (line 126)
@@ -4163,14 +4163,14 @@ Binutils Index
 * name duplication in archive:           ar cmdline.          (line  97)
 * name length:                           ar.                  (line  18)
 * nm:                                    nm.                  (line   6)
-* nm compatibility:                      nm.                  (line 136)
+* nm compatibility:                      nm.                  (line 158)
 * nm format:                             nm.                  (line 136)
 * not writing archive index:             ar cmdline.          (line 175)
 * objdump:                               objdump.             (line   6)
-* object code format <1>:                addr2line.           (line  50)
-* object code format <2>:                strings.             (line  67)
-* object code format <3>:                size.                (line  84)
-* object code format <4>:                objdump.             (line  75)
+* object code format <1>:                objdump.             (line  75)
+* object code format <2>:                size.                (line  84)
+* object code format <3>:                strings.             (line  67)
+* object code format <4>:                addr2line.           (line  50)
 * object code format:                    nm.                  (line 228)
 * object file header:                    objdump.             (line 133)
 * object file information:               objdump.             (line   6)
@@ -4230,34 +4230,34 @@ Binutils Index
 
 
 Tag Table:
-Node: Top1923
-Node: ar3557
-Node: ar cmdline6344
-Node: ar scripts14724
-Node: nm20412
-Node: objcopy28917
-Node: objdump54369
-Node: ranlib72909
-Node: size73730
-Node: strings76735
-Node: strip79187
-Node: c++filt85138
-Ref: c++filt-Footnote-190085
-Node: addr2line90191
-Node: nlmconv93462
-Node: windmc96068
-Node: windres99715
-Node: dlltool105742
-Node: def file format116579
-Node: readelf118317
-Node: Common Options123871
-Node: Selecting the Target System124911
-Node: Target Selection125843
-Node: Architecture Selection127825
-Node: Reporting Bugs128653
-Node: Bug Criteria129432
-Node: Bug Reporting129985
-Node: GNU Free Documentation License136855
-Node: Binutils Index159299
+Node: Top2101
+Node: ar3734
+Node: ar cmdline6521
+Node: ar scripts14901
+Node: nm20589
+Node: objcopy29094
+Node: objdump54546
+Node: ranlib73071
+Node: size73892
+Node: strings76897
+Node: strip79349
+Node: c++filt85300
+Ref: c++filt-Footnote-190247
+Node: addr2line90353
+Node: nlmconv93624
+Node: windmc96230
+Node: windres99877
+Node: dlltool105904
+Node: def file format116741
+Node: readelf118479
+Node: Common Options124033
+Node: Selecting the Target System125073
+Node: Target Selection126005
+Node: Architecture Selection127987
+Node: Reporting Bugs128815
+Node: Bug Criteria129594
+Node: Bug Reporting130147
+Node: GNU Free Documentation License137017
+Node: Binutils Index159461
 
 End Tag Table

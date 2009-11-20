@@ -1,8 +1,8 @@
 
 Relocation section '\.rela\.plt' at offset .* contains 2 entries:
  Offset     Info    Type            Sym\.Value  Sym\. Name \+ Addend
-0009040c  .*15 R_PPC_JMP_SLOT    00080820   sglobal \+ 0
-00090410  .*15 R_PPC_JMP_SLOT    00080840   foo \+ 0
+0009040c  .*15 R_PPC_JMP_SLOT    00000000   sglobal \+ 0
+00090410  .*15 R_PPC_JMP_SLOT    00000000   foo \+ 0
 
 Relocation section '\.rela\.text' at offset .* contains 3 entries:
  Offset     Info    Type            Sym\.Value  Sym\. Name \+ Addend

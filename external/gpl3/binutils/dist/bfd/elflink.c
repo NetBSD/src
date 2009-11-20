@@ -9046,6 +9046,63 @@ elf_link_input_bfd (struct elf_final_link_info *finfo, bfd *input_bfd)
 	  continue;
 	}
 
+      if (finfo->info->relocatable
+	  && (o->flags & (SEC_LINKER_CREATED | SEC_GROUP)) == SEC_GROUP)
+	{
+	  /* Deal with the group signature symbol.  */
+	  struct bfd_elf_section_data *sec_data = elf_section_data (o);
+	  unsigned long symndx = sec_data->this_hdr.sh_info;
+	  asection *osec = o->output_section;
+
+	  if (symndx >= locsymcount
+	      || (elf_bad_symtab (input_bfd)
+		  && finfo->sections[symndx] == NULL))
+	    {
+	      struct elf_link_hash_entry *h = sym_hashes[symndx - extsymoff];
+	      while (h->root.type == bfd_link_hash_indirect
+		     || h->root.type == bfd_link_hash_warning)
+		h = (struct elf_link_hash_entry *) h->root.u.i.link;
+	      /* Arrange for symbol to be output.  */
+	      h->indx = -2;
+	      elf_section_data (osec)->this_hdr.sh_info = -2;
+	    }
+	  else if (ELF_ST_TYPE (isymbuf[symndx].st_info) == STT_SECTION)
+	    {
+	      /* We'll use the output section target_index.  */
+	      asection *sec = finfo->sections[symndx]->output_section;
+	      elf_section_data (osec)->this_hdr.sh_info = sec->target_index;
+	    }
+	  else
+	    {
+	      if (finfo->indices[symndx] == -1)
+		{
+		  /* Otherwise output the local symbol now.  */
+		  Elf_Internal_Sym sym = isymbuf[symndx];
+		  asection *sec = finfo->sections[symndx]->output_section;
+		  const char *name;
+
+		  name = bfd_elf_string_from_elf_section (input_bfd,
+							  symtab_hdr->sh_link,
+							  sym.st_name);
+		  if (name == NULL)
+		    return FALSE;
+
+		  sym.st_shndx = _bfd_elf_section_from_bfd_section (output_bfd,
+								    sec);
+		  if (sym.st_shndx == SHN_BAD)
+		    return FALSE;
+
+		  sym.st_value += o->output_offset;
+
+		  finfo->indices[symndx] = bfd_get_symcount (output_bfd);
+		  if (! elf_link_output_sym (finfo, name, &sym, o, NULL))
+		    return FALSE;
+		}
+	      elf_section_data (osec)->this_hdr.sh_info
+		= finfo->indices[symndx];
+	    }
+	}
+
       if ((o->flags & SEC_HAS_CONTENTS) == 0
 	  || (o->size == 0 && (o->flags & SEC_RELOC) == 0))
 	continue;
@@ -11989,8 +12046,21 @@ bfd_elf_discard_info (bfd *output_bfd, struct bfd_link_info *info)
   return ret;
 }
 
+/* For a SHT_GROUP section, return the group signature.  For other
+   sections, return the normal section name.  */
+
+static const char *
+section_signature (asection *sec)
+{
+  if ((sec->flags & SEC_GROUP) != 0
+      && elf_next_in_group (sec) != NULL
+      && elf_group_name (elf_next_in_group (sec)) != NULL)
+    return elf_group_name (elf_next_in_group (sec));
+  return sec->name;
+}
+
 void
-_bfd_elf_section_already_linked (bfd *abfd, struct bfd_section *sec,
+_bfd_elf_section_already_linked (bfd *abfd, asection *sec,
 				 struct bfd_link_info *info)
 {
   flagword flags;
@@ -12030,7 +12100,7 @@ _bfd_elf_section_already_linked (bfd *abfd, struct bfd_section *sec,
      causes trouble for MIPS ELF, which relies on link once semantics
      to handle the .reginfo section correctly.  */
 
-  name = bfd_get_section_name (abfd, sec);
+  name = section_signature (sec);
 
   if (CONST_STRNEQ (name, ".gnu.linkonce.")
       && (p = strchr (name + sizeof (".gnu.linkonce.") - 1, '.')) != NULL)
@@ -12045,7 +12115,7 @@ _bfd_elf_section_already_linked (bfd *abfd, struct bfd_section *sec,
       /* We may have 2 different types of sections on the list: group
 	 sections and linkonce sections.  Match like sections.  */
       if ((flags & SEC_GROUP) == (l->sec->flags & SEC_GROUP)
-	  && strcmp (name, l->sec->name) == 0
+	  && strcmp (name, section_signature (l->sec)) == 0
 	  && bfd_coff_get_comdat_section (l->sec->owner, l->sec) == NULL)
 	{
 	  /* The section has already been linked.  See if we should
@@ -12166,6 +12236,28 @@ _bfd_elf_section_already_linked (bfd *abfd, struct bfd_section *sec,
 	      sec->kept_section = first;
 	      break;
 	    }
+	}
+
+  /* Do not complain on unresolved relocations in `.gnu.linkonce.r.F'
+     referencing its discarded `.gnu.linkonce.t.F' counterpart - g++-3.4
+     specific as g++-4.x is using COMDAT groups (without the `.gnu.linkonce'
+     prefix) instead.  `.gnu.linkonce.r.*' were the `.rodata' part of its
+     matching `.gnu.linkonce.t.*'.  If `.gnu.linkonce.r.F' is not discarded
+     but its `.gnu.linkonce.t.F' is discarded means we chose one-only
+     `.gnu.linkonce.t.F' section from a different bfd not requiring any
+     `.gnu.linkonce.r.F'.  Thus `.gnu.linkonce.r.F' should be discarded.
+     The reverse order cannot happen as there is never a bfd with only the
+     `.gnu.linkonce.r.F' section.  The order of sections in a bfd does not
+     matter as here were are looking only for cross-bfd sections.  */
+
+  if ((flags & SEC_GROUP) == 0 && CONST_STRNEQ (name, ".gnu.linkonce.r."))
+    for (l = already_linked_list->entry; l != NULL; l = l->next)
+      if ((l->sec->flags & SEC_GROUP) == 0
+	  && CONST_STRNEQ (l->sec->name, ".gnu.linkonce.t."))
+	{
+	  if (abfd != l->sec->owner)
+	    sec->output_section = bfd_abs_section_ptr;
+	  break;
 	}
 
   /* This is the first section with this name.  Record it.  */

@@ -9062,6 +9062,29 @@ display_power_gnu_attribute (unsigned char *p, int tag)
       return p;
    }
 
+  if (tag == Tag_GNU_Power_ABI_Struct_Return)
+    {
+      val = read_uleb128 (p, &len);
+      p += len;
+      printf ("  Tag_GNU_Power_ABI_Struct_Return: ");
+      switch (val)
+       {
+       case 0:
+         printf ("Any\n");
+         break;
+       case 1:
+         printf ("r3/r4\n");
+         break;
+       case 2:
+         printf ("Memory\n");
+         break;
+       default:
+         printf ("??? (%d)\n", val);
+         break;
+       }
+      return p;
+    }
+
   if (tag & 1)
     type = 1; /* String.  */
   else
