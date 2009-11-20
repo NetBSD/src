@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.27 2009/10/19 17:34:07 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.28 2009/11/20 14:11:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -93,6 +93,9 @@ struct p2k_node {
 
 #define OPC2VP(opc) (((struct p2k_node *)opc)->p2n_vp)
 
+static int haswizard;
+static uid_t wizarduid;
+
 static kauth_cred_t
 cred_create(const struct puffs_cred *pcr)
 {
@@ -101,8 +104,12 @@ cred_create(const struct puffs_cred *pcr)
 	gid_t gid;
 	short ngroups = 0;
 
-	if (puffs_cred_getuid(pcr, &uid) == -1)
-		uid = 0;
+	if (haswizard) {
+		uid = wizarduid;
+	} else {
+		if (puffs_cred_getuid(pcr, &uid) == -1)
+			uid = 0;
+	}
 	if (puffs_cred_getgid(pcr, &gid) == -1)
 		gid = 0;
 	puffs_cred_getgroups(pcr, groups, &ngroups);
@@ -257,6 +264,7 @@ p2k_init(uint32_t puffs_flags)
 {
 	struct puffs_ops *pops;
 	struct p2k_mount *p2m;
+	char *envbuf;
 	bool dodaemon;
 
 	PUFFSOP_INIT(pops);
@@ -312,6 +320,12 @@ p2k_init(uint32_t puffs_flags)
 	}
 	if (getenv("P2K_NOCACHE") != NULL) {
 		puffs_flags |= PUFFS_KFLAG_NOCACHE;
+	}
+	if ((envbuf = getenv("P2K_WIZARDUID")) != NULL) {
+		/* default to 0 in error cases */
+		wizarduid = atoi(envbuf);
+		haswizard = 1;
+		printf("P2K WIZARD MODE: using uid %d\n", wizarduid);
 	}
 
 	p2m = allocp2m();
