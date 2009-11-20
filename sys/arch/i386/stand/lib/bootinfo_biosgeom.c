@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.19 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.20 2009/11/20 19:25:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -117,7 +117,7 @@ bi_getbiosgeom(void)
 
 		/* The v3.0 stuff will help identify the disks */
 		if (ed.size >= offsetof(struct biosdisk_ext13info, checksum)
-		    && ed.devpath_sig == EXT13_DEVPATH_SIGNATURE) {
+		    && ed.devpath_sig == EXTINFO_DEVPATH_SIGNATURE) {
 			char *cp;
 
 			for (cp = (void *)&ed.devpath_sig, cksum = 0;
