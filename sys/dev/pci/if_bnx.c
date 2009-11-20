@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.29 2009/11/18 23:11:16 bouyer Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.30 2009/11/20 18:24:29 bouyer Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.29 2009/11/18 23:11:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.30 2009/11/20 18:24:29 bouyer Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -151,11 +151,6 @@ static const struct bnx_product {
 	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
 	  0, 0,
 	  "Broadcom NetXtreme II BCM5708 1000Base-SX"
-	},
-	{
-	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
-	  0, 0,
-	  "Broadcom NetXtreme II BCM5709 1000Base-SX"
 	},
 	{
 	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
@@ -2393,8 +2388,8 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	 * Create DMA maps for the Rx buffer mbufs.
 	 */
 	for (i = 0; i < TOTAL_RX_BD; i++) {
-		if (bus_dmamap_create(sc->bnx_dmatag, BNX_MAX_MRU,
-		    BNX_MAX_SEGMENTS, BNX_MAX_MRU, 0, BUS_DMA_NOWAIT,
+		if (bus_dmamap_create(sc->bnx_dmatag, BNX_MAX_JUMBO_MRU,
+		    BNX_MAX_SEGMENTS, BNX_MAX_JUMBO_MRU, 0, BUS_DMA_NOWAIT,
 		    &sc->rx_mbuf_map[i])) {
 			aprint_error_dev(sc->bnx_dev,
 			    "Could not create Rx mbuf %d DMA map!\n", i);
@@ -3697,7 +3692,7 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	if (sc->mbuf_alloc_size == MCLBYTES)
 		min_free_bd = (MCLBYTES + PAGE_SIZE - 1) / PAGE_SIZE;
 	else
-		min_free_bd = (BNX_MAX_MRU + PAGE_SIZE - 1) / PAGE_SIZE;
+		min_free_bd = (BNX_MAX_JUMBO_MRU + PAGE_SIZE - 1) / PAGE_SIZE;
 	while (sc->free_rx_bd >= min_free_bd) {
 		/* Simulate an mbuf allocation failure. */
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_mbuf_allocation_failure),
@@ -4699,7 +4694,7 @@ bnx_init(struct ifnet *ifp)
 		sc->mbuf_alloc_size = MCLBYTES;
 	} else {
 		ether_mtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN;
-		sc->mbuf_alloc_size = BNX_MAX_MRU;
+		sc->mbuf_alloc_size = BNX_MAX_JUMBO_MRU;
 	}
 
 
