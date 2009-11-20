@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.30 2009/11/19 13:46:55 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.31 2009/11/20 17:48:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.30 2009/11/19 13:46:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.31 2009/11/20 17:48:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,9 +113,7 @@ static struct rblkdev {
 	TAILQ_HEAD(winlru, blkwin) rblk_lruq;
 	bool rblk_waiting;
 
-	struct partition *rblk_curpi;
-	struct partition rblk_pi;
-	struct disklabel rblk_dl;
+	struct disklabel rblk_label;
 } minors[RUMPBLK_SIZE];
 
 static struct evcnt ev_io_total;
@@ -158,6 +156,42 @@ static const struct cdevsw rumpblk_cdevsw = {
 static int blkfail;
 static unsigned randstate;
 static kmutex_t rumpblk_lock;
+
+static void
+makedefaultlabel(struct disklabel *lp, off_t size, int part)
+{
+	int i;
+
+	memset(lp, 0, sizeof(*lp));
+
+	lp->d_secperunit = size;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_nsectors = size >> DEV_BSHIFT;
+	lp->d_ntracks = 1;
+	lp->d_ncylinders = 1;
+	lp->d_secpercyl = lp->d_nsectors;
+
+	/* oh dear oh dear */
+	strncpy(lp->d_typename, "rumpd", sizeof(lp->d_typename));
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+
+	lp->d_type = DTYPE_RUMPD;
+	lp->d_rpm = 11;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	/* XXX: RAW_PART handling? */
+	for (i = 0; i < part; i++) {
+		lp->d_partitions[i].p_fstype = FS_UNUSED;
+	}
+	lp->d_partitions[part].p_size = size;
+	lp->d_npartitions = part+1;
+	/* XXX: file system type? */
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = 0; /* XXX */
+}
 
 static struct blkwin *
 getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
@@ -387,6 +421,7 @@ rumpblk_register(const char *path, devminor_t *dmin,
 		rblk->rblk_size = flen - offset;
 	}
 	rblk->rblk_ftype = ftype;
+	makedefaultlabel(&rblk->rblk_label, rblk->rblk_size, i);
 	mutex_exit(&rumpblk_lock);
 
 	*dmin = i;
@@ -397,7 +432,6 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	int dummy;
 	int error, fd;
 
 	if (rblk->rblk_path == NULL)
@@ -458,21 +492,6 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 				break;
 			}
 		}
-
-		memset(&rblk->rblk_dl, 0, sizeof(rblk->rblk_dl));
-		rblk->rblk_pi.p_size = fsize >> DEV_BSHIFT;
-		rblk->rblk_dl.d_secsize = DEV_BSIZE;
-		rblk->rblk_curpi = &rblk->rblk_pi;
-	} else {
-		rblk->rblk_fd = fd;
-
-		if ((error = rumpblk_ioctl(dev, DIOCGDINFO, &rblk->rblk_dl,
-		    0, curlwp)) != 0) {
-			rumpuser_close(fd, &dummy);
-			return error;
-		}
-
-		rblk->rblk_curpi = &rblk->rblk_dl.d_partitions[0];
 	}
 
 	KASSERT(rblk->rblk_fd != -1);
@@ -497,23 +516,28 @@ rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
-	struct rblkdev *rblk = &minors[minor(dev)];
-	int rv, error;
+	devminor_t dmin = minor(dev);
+	struct rblkdev *rblk = &minors[dmin];
+	struct partinfo *pi;
+	int error = 0;
 
-	if (xfer == DIOCGPART) {
-		struct partinfo *pi = (struct partinfo *)addr;
+	/* well, me should support a few more, but we don't for now */
+	switch (xfer) {
+	case DIOCGDINFO:
+		*(struct disklabel *)addr = rblk->rblk_label;
+		break;
 
-		pi->part = rblk->rblk_curpi;
-		pi->disklab = &rblk->rblk_dl;
-
-		return 0;
+	case DIOCGPART:
+		pi = addr;
+		pi->part = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
+		pi->disklab = &rblk->rblk_label;
+		break;
+	default:
+		error = ENOTTY;
+		break;
 	}
 
-	rv = rumpuser_ioctl(rblk->rblk_fd, xfer, addr, &error);
-	if (rv == -1)
-		return error;
-
-	return 0;
+	return error;
 }
 
 static int
