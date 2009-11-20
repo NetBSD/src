@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.122 2009/11/01 20:57:34 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.123 2009/11/20 03:12:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct lwp {
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
-	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */
+	struct user	*l_addr;	/* l: PCB address; use lwp_getpcb() */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
@@ -389,6 +389,13 @@ lwp_eprio(lwp_t *l)
 	if (l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
+}
+
+static inline void *
+lwp_getpcb(lwp_t *l)
+{
+
+	return &l->l_addr->u_pcb;
 }
 
 int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
