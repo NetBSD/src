@@ -1,6 +1,6 @@
 /* DWARF 2 support.
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -2989,8 +2989,6 @@ find_line (bfd *abfd,
 			      symbols, 0,
 			      &stash->info_ptr_memory, &total_size))
 	    goto done;
-	  stash->info_ptr = stash->info_ptr_memory;
-	  stash->info_ptr_end = stash->info_ptr + total_size;
 	}
       else
 	{
@@ -3008,63 +3006,64 @@ find_line (bfd *abfd,
 	      if (stash->info_ptr_memory == NULL)
 		goto done;
 
-	      stash->info_ptr = stash->info_ptr_memory;
-	      stash->info_ptr_end = stash->info_ptr;
-
+	      total_size = 0;
 	      for (msec = find_debug_info (debug_bfd, NULL);
 		   msec;
 		   msec = find_debug_info (debug_bfd, msec))
 		{
 		  bfd_size_type size;
-		  bfd_size_type start;
 
 		  size = msec->size;
 		  if (size == 0)
 		    continue;
 
-		  start = stash->info_ptr_end - stash->info_ptr;
+		  if (!(bfd_simple_get_relocated_section_contents
+			(debug_bfd, msec, stash->info_ptr_memory + total_size,
+			 symbols)))
+		    goto done;
 
-		  if ((bfd_simple_get_relocated_section_contents
-		       (debug_bfd, msec, stash->info_ptr + start, symbols))
-		      == NULL)
-		    continue;
-
-		  stash->info_ptr_end = stash->info_ptr + start + size;
+		  total_size += size;
 		}
-
-	      BFD_ASSERT (stash->info_ptr_end == stash->info_ptr + total_size);
 	    }
 	  else
 	    {
 	      /* Case 3: multiple sections, some or all compressed.  */
-	      stash->info_ptr_memory = bfd_malloc (1);
-	      stash->info_ptr = stash->info_ptr_memory;
-	      stash->info_ptr_end = stash->info_ptr;
+	      stash->info_ptr_memory = NULL;
+	      total_size = 0;
 	      for (msec = find_debug_info (debug_bfd, NULL);
 		   msec;
 		   msec = find_debug_info (debug_bfd, msec))
 		{
 		  bfd_size_type size = msec->size;
-		  bfd_byte* buffer
-		      = (bfd_simple_get_relocated_section_contents
-			 (debug_bfd, msec, NULL, symbols));
-		  if (! buffer)
+		  bfd_byte* buffer;
+
+		  if (size == 0)
 		    continue;
+
+		  buffer = (bfd_simple_get_relocated_section_contents
+			    (debug_bfd, msec, NULL, symbols));
+		  if (! buffer)
+		    goto done;
+
 		  if (strcmp (msec->name, DWARF2_COMPRESSED_DEBUG_INFO) == 0)
 		    {
 		      if (! bfd_uncompress_section_contents (&buffer, &size))
-			continue;
+			{
+			  free (buffer);
+			  goto done;
+			}
 		    }
-		  stash->info_ptr = bfd_realloc (stash->info_ptr,
-						 stash->info_ptr_end
-						 - stash->info_ptr + size);
-		  memcpy (stash->info_ptr_end, buffer, size);
+		  stash->info_ptr_memory = bfd_realloc (stash->info_ptr_memory,
+							total_size + size);
+		  memcpy (stash->info_ptr_memory + total_size, buffer, size);
 		  free (buffer);
-		  stash->info_ptr_end += size;
+		  total_size += size;
 		}
 	    }
 	}
 
+      stash->info_ptr = stash->info_ptr_memory;
+      stash->info_ptr_end = stash->info_ptr + total_size;
       stash->sec = find_debug_info (debug_bfd, NULL);
       stash->sec_info_ptr = stash->info_ptr;
       stash->syms = symbols;
@@ -3187,13 +3186,6 @@ find_line (bfd *abfd,
 	    break;
 	  stash->info_ptr += length;
 
-	  if ((bfd_vma) (stash->info_ptr - stash->sec_info_ptr)
-	      == stash->sec->size)
-	    {
-	      stash->sec = find_debug_info (stash->bfd, stash->sec);
-	      stash->sec_info_ptr = stash->info_ptr;
-	    }
-
 	  if (stash->all_comp_units)
 	    stash->all_comp_units->prev_unit = each;
 	  else
@@ -3223,6 +3215,14 @@ find_line (bfd *abfd,
 						     functionname_ptr,
 						     linenumber_ptr,
 						     stash));
+
+	  if ((bfd_vma) (stash->info_ptr - stash->sec_info_ptr)
+	      == stash->sec->size)
+	    {
+	      stash->sec = find_debug_info (stash->bfd, stash->sec);
+	      stash->sec_info_ptr = stash->info_ptr;
+	    }
+
 	  if (found)
 	    goto done;
 	}
@@ -3364,8 +3364,14 @@ _bfd_dwarf2_cleanup_debug_info (bfd *abfd)
 	}
     }
 
-  free (stash->dwarf_abbrev_buffer);
-  free (stash->dwarf_line_buffer);
-  free (stash->dwarf_ranges_buffer);
-  free (stash->info_ptr_memory);
+  if (stash->dwarf_abbrev_buffer)
+    free (stash->dwarf_abbrev_buffer);
+  if (stash->dwarf_line_buffer)
+    free (stash->dwarf_line_buffer);
+  if (stash->dwarf_str_buffer)
+    free (stash->dwarf_str_buffer);
+  if (stash->dwarf_ranges_buffer)
+    free (stash->dwarf_ranges_buffer);
+  if (stash->info_ptr_memory)
+    free (stash->info_ptr_memory);
 }

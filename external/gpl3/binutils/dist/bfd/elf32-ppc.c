@@ -1,6 +1,6 @@
 /* PowerPC-specific support for 32-bit ELF
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -3964,6 +3964,33 @@ ppc_elf_merge_obj_attributes (bfd *ibfd, bfd *obfd)
 	   ibfd, obfd, in_abi, out_abi);
     }
 
+  /* Check for conflicting Tag_GNU_Power_ABI_Struct_Return attributes
+     and merge non-conflicting ones.  */
+  in_attr = &in_attrs[Tag_GNU_Power_ABI_Struct_Return];
+  out_attr = &out_attrs[Tag_GNU_Power_ABI_Struct_Return];
+  if (in_attr->i != out_attr->i)
+    {
+      out_attr->type = 1;
+      if (out_attr->i == 0)
+       out_attr->i = in_attr->i;
+      else if (in_attr->i == 0)
+       ;
+      else if (out_attr->i == 1 && in_attr->i == 2)
+       _bfd_error_handler
+         (_("Warning: %B uses r3/r4 for small structure returns, %B uses memory"), obfd, ibfd);
+      else if (out_attr->i == 2 && in_attr->i == 1)
+       _bfd_error_handler
+         (_("Warning: %B uses r3/r4 for small structure returns, %B uses memory"), ibfd, obfd);
+      else if (in_attr->i > 2)
+       _bfd_error_handler
+         (_("Warning: %B uses unknown small structure return convention %d"), ibfd,
+          in_attr->i);
+      else
+       _bfd_error_handler
+         (_("Warning: %B uses unknown small structure return convention %d"), obfd,
+          out_attr->i);
+    }
+
   /* Merge Tag_compatibility attributes and any common GNU ones.  */
   _bfd_elf_merge_object_attributes (ibfd, obfd);
 
@@ -4298,7 +4325,8 @@ ppc_elf_gc_sweep_hook (bfd *abfd,
   return TRUE;
 }
 
-/* Set htab->tls_get_addr and call the generic ELF tls_setup function.  */
+/* Set plt output section type, htab->tls_get_addr, and call the
+   generic ELF tls_setup function.  */
 
 asection *
 ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
@@ -4317,6 +4345,43 @@ ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
   htab->tls_get_addr = elf_link_hash_lookup (&htab->elf, "__tls_get_addr",
 					     FALSE, FALSE, TRUE);
   return _bfd_elf_tls_setup (obfd, info);
+}
+
+/* Return TRUE iff REL is a branch reloc with a global symbol matching
+   HASH.  */
+
+static bfd_boolean
+branch_reloc_hash_match (const bfd *ibfd,
+			 const Elf_Internal_Rela *rel,
+			 const struct elf_link_hash_entry *hash)
+{
+  Elf_Internal_Shdr *symtab_hdr = &elf_symtab_hdr (ibfd);
+  enum elf_ppc_reloc_type r_type = ELF32_R_TYPE (rel->r_info);
+  unsigned int r_symndx = ELF32_R_SYM (rel->r_info);
+
+  if (r_symndx >= symtab_hdr->sh_info
+      && (r_type == R_PPC_PLTREL24
+	  || r_type == R_PPC_LOCAL24PC
+	  || r_type == R_PPC_REL14
+	  || r_type == R_PPC_REL14_BRTAKEN
+	  || r_type == R_PPC_REL14_BRNTAKEN
+	  || r_type == R_PPC_REL24
+	  || r_type == R_PPC_ADDR24
+	  || r_type == R_PPC_ADDR14
+	  || r_type == R_PPC_ADDR14_BRTAKEN
+	  || r_type == R_PPC_ADDR14_BRNTAKEN))
+    {
+      struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (ibfd);
+      struct elf_link_hash_entry *h;
+
+      h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+      while (h->root.type == bfd_link_hash_indirect
+	     || h->root.type == bfd_link_hash_warning)
+	h = (struct elf_link_hash_entry *) h->root.u.i.link;
+      if (h == hash)
+	return TRUE;
+    }
+  return FALSE;
 }
 
 /* Run through all the TLS relocs looking for optimization
@@ -4446,35 +4511,10 @@ ppc_elf_tls_optimize (bfd *obfd ATTRIBUTE_UNUSED,
 		      if (!expecting_tls_get_addr)
 			continue;
 
-		      if (rel + 1 < relend)
-			{
-			  enum elf_ppc_reloc_type r_type2;
-			  unsigned long r_symndx2;
-			  struct elf_link_hash_entry *h2;
-
-			  /* The next instruction should be a call to
-			     __tls_get_addr.  Peek at the reloc to be sure.  */
-			  r_type2 = ELF32_R_TYPE (rel[1].r_info);
-			  r_symndx2 = ELF32_R_SYM (rel[1].r_info);
-			  if (r_symndx2 >= symtab_hdr->sh_info
-			      && (r_type2 == R_PPC_REL14
-				  || r_type2 == R_PPC_REL14_BRTAKEN
-				  || r_type2 == R_PPC_REL14_BRNTAKEN
-				  || r_type2 == R_PPC_REL24
-				  || r_type2 == R_PPC_PLTREL24))
-			    {
-			      struct elf_link_hash_entry **sym_hashes;
-
-			      sym_hashes = elf_sym_hashes (ibfd);
-			      h2 = sym_hashes[r_symndx2 - symtab_hdr->sh_info];
-			      while (h2->root.type == bfd_link_hash_indirect
-				     || h2->root.type == bfd_link_hash_warning)
-				h2 = ((struct elf_link_hash_entry *)
-				      h2->root.u.i.link);
-			      if (h2 == htab->tls_get_addr)
-				continue;
-			    }
-			}
+		      if (rel + 1 < relend
+			  && branch_reloc_hash_match (ibfd, rel + 1,
+						      htab->tls_get_addr))
+			continue;
 
 		      /* Uh oh, we didn't find the expected call.  We
 			 could just mark this symbol to exclude it
@@ -5573,7 +5613,7 @@ ppc_elf_relax_section (bfd *abfd,
   Elf_Internal_Rela *internal_relocs = NULL;
   Elf_Internal_Rela *irel, *irelend;
   struct one_fixup *fixups = NULL;
-  bfd_boolean changed;
+  unsigned changes = 0;
   struct ppc_elf_link_hash_table *htab;
   bfd_size_type trampoff;
   asection *got2;
@@ -5820,6 +5860,7 @@ ppc_elf_relax_section (bfd *abfd,
 	  fixups = f;
 
 	  trampoff += size;
+	  changes++;
 	}
       else
 	{
@@ -5870,7 +5911,6 @@ ppc_elf_relax_section (bfd *abfd,
     }
 
   /* Write out the trampolines.  */
-  changed = fixups != NULL;
   if (fixups != NULL)
     {
       const int *stub;
@@ -5936,7 +5976,7 @@ ppc_elf_relax_section (bfd *abfd,
   if (contents != NULL
       && elf_section_data (isec)->this_hdr.contents != contents)
     {
-      if (!changed && !link_info->keep_memory)
+      if (!changes && !link_info->keep_memory)
 	free (contents);
       else
 	{
@@ -5945,15 +5985,35 @@ ppc_elf_relax_section (bfd *abfd,
 	}
     }
 
-  if (elf_section_data (isec)->relocs != internal_relocs)
+  if (changes != 0)
     {
-      if (!changed)
-	free (internal_relocs);
-      else
-	elf_section_data (isec)->relocs = internal_relocs;
-    }
+      /* Append sufficient NOP relocs so we can write out relocation
+	 information for the trampolines.  */
+      Elf_Internal_Rela *new_relocs = bfd_malloc ((changes + isec->reloc_count)
+						  * sizeof (*new_relocs));
+      unsigned ix;
+      
+      if (!new_relocs)
+	goto error_return;
+      memcpy (new_relocs, internal_relocs,
+	      isec->reloc_count * sizeof (*new_relocs));
+      for (ix = changes; ix--;)
+	{
+	  irel = new_relocs + ix + isec->reloc_count;
 
-  *again = changed;
+	  irel->r_info = ELF32_R_INFO (0, R_PPC_NONE);
+	}
+      if (internal_relocs != elf_section_data (isec)->relocs)
+	free (internal_relocs);
+      elf_section_data (isec)->relocs = new_relocs;
+      isec->reloc_count += changes;
+      elf_section_data (isec)->rel_hdr.sh_size
+	+= changes * elf_section_data (isec)->rel_hdr.sh_entsize;
+    }
+  else if (elf_section_data (isec)->relocs != internal_relocs)
+    free (internal_relocs);
+
+  *again = changes != 0;
   return TRUE;
 
  error_return:
@@ -6321,22 +6381,21 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	case R_PPC_GOT_TLSLD16_LO:
 	  if (tls_mask != 0 && (tls_mask & TLS_LD) == 0)
 	    {
-	      bfd_vma insn1, insn2;
+	      unsigned int insn1, insn2;
 	      bfd_vma offset;
 
 	    tls_ldgd_opt:
 	      offset = rel[1].r_offset;
-	      insn1 = bfd_get_32 (output_bfd,
-				  contents + rel->r_offset - d_offset);
 	      if ((tls_mask & tls_gd) != 0)
 		{
 		  /* IE */
+		  insn1 = bfd_get_32 (output_bfd,
+				      contents + rel->r_offset - d_offset);
 		  insn1 &= (1 << 26) - 1;
 		  insn1 |= 32 << 26;	/* lwz */
 		  insn2 = 0x7c631214;	/* add 3,3,2 */
 		  rel[1].r_info
 		    = ELF32_R_INFO (ELF32_R_SYM (rel[1].r_info), R_PPC_NONE);
-		  rel[1].r_addend = 0;
 		  r_type = (((r_type - (R_PPC_GOT_TLSGD16 & 3)) & 3)
 			    + R_PPC_GOT_TPREL16);
 		  rel->r_info = ELF32_R_INFO (r_symndx, r_type);
@@ -6959,6 +7018,17 @@ ppc_elf_relocate_section (bfd *output_bfd,
 
 	    bfd_put_32 (output_bfd, t0, contents + rel->r_offset);
 	    bfd_put_32 (output_bfd, t1, contents + rel->r_offset + 4);
+
+	    /* Rewrite the reloc and convert one of the trailing nop
+	       relocs to describe this relocation.  */
+	    BFD_ASSERT (ELF32_R_TYPE (relend[-1].r_info) == R_PPC_NONE);
+	    /* The relocs are at the bottom 2 bytes */
+	    rel[0].r_offset += 2;
+	    memmove (rel + 1, rel, (relend - rel - 1) * sizeof (*rel));
+	    rel[0].r_info = ELF32_R_INFO (r_symndx, R_PPC_ADDR16_HA);
+	    rel[1].r_offset += 4;
+	    rel[1].r_info = ELF32_R_INFO (r_symndx, R_PPC_ADDR16_LO);
+	    rel++;
 	  }
 	  continue;
 

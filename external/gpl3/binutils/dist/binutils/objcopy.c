@@ -2345,19 +2345,24 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
   if (extract_symbol)
     return;
 
+  if ((isection->flags & SEC_GROUP) != 0)
+    {
+      asymbol *gsym = group_signature (isection);
+
+      if (gsym != NULL)
+	{
+	  gsym->flags |= BSF_KEEP;
+	  if (ibfd->xvec->flavour == bfd_target_elf_flavour)
+	    elf_group_id (isection) = gsym;
+	}
+    }
+
   /* Allow the BFD backend to copy any private data it understands
      from the input section to the output section.  */
   if (!bfd_copy_private_section_data (ibfd, isection, obfd, osection))
     {
       err = _("failed to copy private data");
       goto loser;
-    }
-  else if ((isection->flags & SEC_GROUP) != 0)
-    {
-      asymbol *gsym = group_signature (isection);
-
-      if (gsym != NULL)
-	gsym->flags |= BSF_KEEP;
     }
 
   /* All went well.  */

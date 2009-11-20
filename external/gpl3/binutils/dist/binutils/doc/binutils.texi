@@ -1852,12 +1852,12 @@ option string.  Lastly, @option{suffix}, when in AT&T mode,
 instructs the disassembler to print a mnemonic suffix even when the
 suffix could be inferred by the operands.
 
-For PPC, @option{booke}, @option{booke32} and @option{booke64} select
-disassembly of BookE instructions.  @option{32} and @option{64} select
-PowerPC and PowerPC64 disassembly, respectively.  @option{e300}
-selects disassembly for the e300 family.  @option{440} selects
-disassembly for the PowerPC 440.  @option{ppcps} selects disassembly
-for the paired single instructions of the PPC750CL.
+For PowerPC, @option{booke} controls the disassembly of BookE
+instructions.  @option{32} and @option{64} select PowerPC and
+PowerPC64 disassembly, respectively.  @option{e300} selects
+disassembly for the e300 family.  @option{440} selects disassembly for
+the PowerPC 440.  @option{ppcps} selects disassembly for the paired
+single instructions of the PPC750CL.
 
 For MIPS, this option controls the printing of instruction mnemonic
 names and register names in disassembled instructions.  Multiple

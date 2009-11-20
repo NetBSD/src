@@ -10,7 +10,7 @@ rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
 /* Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -697,7 +697,6 @@ gld_${EMULATION_NAME}_set_symbols (void)
   /* Run through and invent symbols for all the
      names and insert the defaults.  */
   int j;
-  lang_statement_list_type *save;
 
   if (!init[IMAGEBASEOFF].inited)
     {
@@ -720,9 +719,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
     return;
 
   /* Glue the assignments into the abs section.  */
-  save = stat_ptr;
-
-  stat_ptr = &(abs_output_section->children);
+  push_stat_ptr (&abs_output_section->children);
 
   for (j = 0; init[j].ptr; j++)
     {
@@ -744,7 +741,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
 	image_base_statement = rv;
     }
   /* Restore the pointer.  */
-  stat_ptr = save;
+  pop_stat_ptr ();
 
   if (pe.FileAlignment >
       pe.SectionAlignment)
@@ -1613,40 +1610,37 @@ gld_${EMULATION_NAME}_finish (void)
    sort_sections.  */
 
 static bfd_boolean
-gld_${EMULATION_NAME}_place_orphan (asection *s)
+gld_${EMULATION_NAME}_place_orphan (asection *s,
+				    const char *secname,
+				    int constraint)
 {
-  const char *secname;
-  const char *orig_secname;
+  const char *orig_secname = secname;
   char *dollar = NULL;
   lang_output_section_statement_type *os;
   lang_statement_list_type add_child;
 
-  secname = bfd_get_section_name (s->owner, s);
-
   /* Look through the script to see where to place this section.  */
-  orig_secname = secname;
   if (!link_info.relocatable
       && (dollar = strchr (secname, '$')) != NULL)
     {
-      size_t len = dollar - orig_secname;
+      size_t len = dollar - secname;
       char *newname = xmalloc (len + 1);
-      memcpy (newname, orig_secname, len);
+      memcpy (newname, secname, len);
       newname[len] = '\0';
       secname = newname;
     }
 
-  os = lang_output_section_find (secname);
-
   lang_list_init (&add_child);
 
-  if (os != NULL
-      && (os->bfd_section == NULL
-	  || os->bfd_section->flags == 0
+  if (constraint == 0
+      && (os = lang_output_section_find (secname)) != NULL
+      && os->bfd_section != NULL
+      && (os->bfd_section->flags == 0
 	  || ((s->flags ^ os->bfd_section->flags)
 	      & (SEC_LOAD | SEC_ALLOC)) == 0))
     {
       /* We already have an output section statement with this
-	 name, and its bfd section, if any, has compatible flags.
+	 name, and its bfd section has compatible flags.
 	 If the section already exists but does not have any flags set,
 	 then it has been created by the linker, probably as a result of
 	 a --section-start command line switch.  */
@@ -1723,21 +1717,10 @@ gld_${EMULATION_NAME}_place_orphan (asection *s)
 		     ->output_section_statement);
 	}
 
-      /* Choose a unique name for the section.  This will be needed if the
-	 same section name appears in the input file with different
-	 loadable or allocatable characteristics.  */
-      if (bfd_get_section_by_name (link_info.output_bfd, secname) != NULL)
-	{
-	  static int count = 1;
-	  secname = bfd_get_unique_section_name (link_info.output_bfd,
-						 secname, &count);
-	  if (secname == NULL)
-	    einfo ("%F%P: place_orphan failed: %E\n");
-	}
-
       /* All sections in an executable must be aligned to a page boundary.  */
       address = exp_unop (ALIGN_K, exp_nameop (NAME, "__section_alignment__"));
-      os = lang_insert_orphan (s, secname, after, place, address, &add_child);
+      os = lang_insert_orphan (s, secname, constraint, after, place, address,
+			       &add_child);
     }
 
   {

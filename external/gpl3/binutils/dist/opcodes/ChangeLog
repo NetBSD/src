@@ -1,3 +1,93 @@
+2009-03-03  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* ppc-opc.c (powerpc_opcodes): Reorder the opcode table so that
+	instructions from newer processors are listed before older ones.
+
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2009-02-26  Peter Bergner  <bergner@vnet.ibm.com>
+	* ppc-dis.c (powerpc_init_dialect): Extend -Mpower7 to disassemble
+	the power7 and the isel instructions.
+	* ppc-opc.c (insert_xc6, extract_xc6): New static functions.
+	(insert_dm, extract_dm): Likewise.
+	(XB6): Update comment to include XX2 form.
+	(WC, XC6, SHW, DMEX, UIM, XX2, XX3RC, XX4, XX2_MASK, XX2UIM_MASK,
+	XX2BF_MASK, XX3BF_MASK, XX3SHW_MASK, XX4_MASK, XWC_MASK, POWER7): New.
+	(RemoveXX3DM): Delete.
+	(powerpc_opcodes): <"lfdp", "lfdpx", "mcrxr", "mftb", "mffgpr",
+	"mftgpr">: Deprecate for POWER7.
+	<"fres", "fres.", "frsqrtes", "frsqrtes.", "fre", "fre.", "frsqrte",
+	"frsqrte.">: Deprecate the three operand form and enable the two
+	operand form for POWER7 and later.
+	<"wait">: Extend to accept optional parameter.  Enable for POWER7.
+	<"waitsrv", "waitimpl">: Add extended opcodes.
+	<"ldbrx", "stdbrx">: Enable for POWER7.
+	<"cdtbcd", "cbcdtd", "addg6s">: Add POWER6 opcodes.
+	<"bpermd", "dcbtstt", "dcbtt", "dcffix.", "dcffix", "divde.", "divde",
+	"divdeo.", "divdeo", "divdeu.", "divdeu", "divdeuo.", "divdeuo",
+	"divwe.", "divwe", "divweo.", "divweo", "divweu.", "divweu", "divweuo.",
+	"divweuo", "fcfids.", "fcfids", "fcfidu.", "fcfidu", "fcfidus.",
+	"fcfidus", "fctidu.", "fctidu", "fctiduz.", "fctiduz", "fctiwu.",
+	"fctiwu", "fctiwuz.", "fctiwuz", "ftdiv", "ftsqrt", "lbarx", "lfiwzx",
+	"lharx", "popcntd", "popcntw", "stbcx.", "sthcx.">: Add POWER7 opcodes.
+	<"lxsdux", "lxsdx", "lxvdsx", "lxvw4ux", "lxvw4x", "stxsdux", "stxsdx",
+	"stxvw4ux", "stxvw4x", "xsabsdp", "xsadddp", "xscmpodp", "xscmpudp",
+	"xscpsgndp", "xscvdpsp", "xscvdpsxds", "xscvdpsxws", "xscvdpuxds",
+	"xscvdpuxws", "xscvspdp", "xscvsxddp", "xscvuxddp", "xsdivdp",
+	"xsmaddadp", "xsmaddmdp", "xsmaxdp", "xsmindp", "xsmsubadp",
+	"xsmsubmdp", "xsmuldp", "xsnabsdp", "xsnegdp", "xsnmaddadp",
+	"xsnmaddmdp", "xsnmsubadp", "xsnmsubmdp", "xsrdpi", "xsrdpic",
+	"xsrdpim", "xsrdpip", "xsrdpiz", "xsredp", "xsrsqrtedp", "xssqrtdp",
+	"xssubdp", "xstdivdp", "xstsqrtdp", "xvabsdp", "xvabssp", "xvadddp",
+	"xvaddsp", "xvcmpeqdp.", "xvcmpeqdp", "xvcmpeqsp.", "xvcmpeqsp",
+	"xvcmpgedp.", "xvcmpgedp", "xvcmpgesp.", "xvcmpgesp", "xvcmpgtdp.",
+	"xvcmpgtdp", "xvcmpgtsp.", "xvcmpgtsp", "xvcpsgnsp", "xvcvdpsp",
+	"xvcvdpsxds", "xvcvdpsxws", "xvcvdpuxds", "xvcvdpuxws", "xvcvspdp",
+	"xvcvspsxds", "xvcvspsxws", "xvcvspuxds", "xvcvspuxws", "xvcvsxddp",
+	"xvcvsxdsp", "xvcvsxwdp", "xvcvsxwsp", "xvcvuxddp", "xvcvuxdsp",
+	"xvcvuxwdp", "xvcvuxwsp", "xvdivdp", "xvdivsp", "xvmaddadp",
+	"xvmaddasp", "xvmaddmdp", "xvmaddmsp", "xvmaxdp", "xvmaxsp",
+	"xvmindp", "xvminsp", "xvmovsp", "xvmsubadp", "xvmsubasp", "xvmsubmdp",
+	"xvmsubmsp", "xvmuldp", "xvmulsp", "xvnabsdp", "xvnabssp", "xvnegdp",
+	"xvnegsp", "xvnmaddadp", "xvnmaddasp", "xvnmaddmdp", "xvnmaddmsp",
+	"xvnmsubadp", "xvnmsubasp", "xvnmsubmdp", "xvnmsubmsp", "xvrdpi",
+	"xvrdpic", "xvrdpim", "xvrdpip", "xvrdpiz", "xvredp", "xvresp",
+	"xvrspi", "xvrspic", "xvrspim", "xvrspip", "xvrspiz", "xvrsqrtedp",
+	"xvrsqrtesp", "xvsqrtdp", "xvsqrtsp", "xvsubdp", "xvsubsp", "xvtdivdp",
+	"xvtdivsp", "xvtsqrtdp", "xvtsqrtsp", "xxland", "xxlandc", "xxlnor",
+	"xxlor", "xxlxor", "xxmrghw", "xxmrglw", "xxsel", "xxsldwi", "xxspltd",
+	"xxspltw", "xxswapd">: Add VSX opcodes.
+
+	2009-02-19  Peter Bergner  <bergner@vnet.ibm.com>
+	* ppc-opc.c (powerpc_opcodes) <"lfdepx", "stfdepx">: Fix the first
+	operand to be a float point register (FRT/FRS).
+
+	2009-02-05  Peter Bergner  <bergner@vnet.ibm.com>
+	* ppc-opc.c: Update copyright year.
+	(powerpc_opcodes) <"dcbt", "dcbtst">: Deprecate the Embedded operand
+	ordering for POWER4 and later and use the correct Server ordering.
+
+	2009-01-14  Peter Bergner  <bergner@vnet.ibm.com>
+	* ppc-dis.c (print_insn_powerpc): Skip insn if it is deprecated.
+	* ppc-opc.c (powerpc_opcodes) <mtfsf, mtfsf.>: Deprecate the two
+	operand form and enable the four operand form for POWER6 and later.
+	<mtfsfi, mtfsfi.>: Deprecate the two operand form and enable the
+	three operand form for POWER6 and later.
+
+	2009-01-09  Peter Bergner  <bergner@vnet.ibm.com>
+	* ppc-opc.c (PPCNONE): Define.
+	(NOPOWER4): Delete.
+	(powerpc_opcodes): Initialize the new "deprecated" field.
+
+	2008-12-04  Ben Elliston  <bje@au.ibm.com>
+	* ppc-dis.c (powerpc_init_dialect): Do not set PPC_OPCODE_BOOKE
+	for -Mbooke.
+	(print_ppc_disassembler_options): Update usage.
+	* ppc-opc.c (DE, DES, DEO, DE_MASK): Remove.
+	(BOOKE64): Remove.
+	(PPCCHLK64): Likewise.
+	(powerpc_opcodes): Remove all BOOKE64 instructions.
+
 2008-11-27  Alan Modra  <amodra@bigpond.net.au>
 
 	* ppc-opc.c (extract_sprg): Correct operand range check.
