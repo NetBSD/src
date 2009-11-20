@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.41 2009/11/18 20:33:39 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.42 2009/11/20 17:28:19 dsl Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -36,7 +36,7 @@ LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
-
+#CPPFLAGS+= -DBOOT_MSG_COM0
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
