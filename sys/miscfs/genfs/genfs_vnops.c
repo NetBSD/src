@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.173 2009/11/20 13:19:46 pooka Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.174 2009/11/20 13:42:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.173 2009/11/20 13:19:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.174 2009/11/20 13:42:43 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,8 +695,8 @@ genfs_can_chown(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
 		ismember = 0;
 		error = kauth_cred_ismember_gid(cred, new_gid,
 		    &ismember);
-		if (error || !ismember)
-			return (EPERM);
+		if (!error && ismember)
+			return (0);
 	}
 
 	return (EPERM);
