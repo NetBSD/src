@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.105 2009/07/18 16:31:43 reinoud Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.106 2009/11/20 17:43:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,6 +306,7 @@ x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
 x(DM,           20,     "dm")           /* device-mapper pseudo-disk devices */\
+x(RUMPD,	21,     "rumpd")	/* rump virtual disk */ \
     
 #ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
