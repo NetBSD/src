@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/14 19:29:32 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2009/11/20 15:37:44 pooka Exp $
 #
 
 PROG=	rumptest
@@ -9,6 +9,9 @@ LDADD=	${RUMPFSLDADD} -lrumpvfs -lrump -lrumpuser
 
 # for NFS
 LDADD+=	-lrumpnet_sockin -lrumpnet
+
+# for SMBFS
+LDADD+=	-lrumpcrypto -lrumpdev_netsmb -lrumpdev
 
 LDADD+=	-lpthread
 
