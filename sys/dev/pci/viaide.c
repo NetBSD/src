@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.62 2009/11/18 19:42:18 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.63 2009/11/20 20:16:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.62 2009/11/18 19:42:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.63 2009/11/20 20:16:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    struct pci_attach_args *, int);
-static void	via_sata_chip_map_0(struct pciide_softc *,
-		    struct pci_attach_args *);
 static void	via_sata_chip_map_6(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map_7(struct pciide_softc *,
@@ -332,7 +330,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
 	  0,
 	  "VIA Technologies VT8237R SATA Controller",
-	  via_sata_chip_map_0,
+	  via_sata_chip_map_7,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
 	  0,
@@ -961,12 +959,6 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
 	}
-}
-
-static void
-via_sata_chip_map_0(struct pciide_softc *sc, struct pci_attach_args *pa)
-{
-	via_sata_chip_map(sc, pa, 0);
 }
 
 static void
