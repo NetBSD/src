@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.22 2009/11/19 21:56:00 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.23 2009/11/20 07:17:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1071,15 +1071,17 @@ __ops_sign_file(__ops_io_t *io,
 		__ops_add_birthtime(sig, time(NULL));
 		/* add key id to signature */
 		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
-		ret = __ops_add_issuer_keyid(sig, keyid) &&
-			__ops_end_hashed_subpkts(sig) &&
-			__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+		__ops_add_issuer_keyid(sig, keyid);
+		__ops_end_hashed_subpkts(sig);
+		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
 		/* tidy up */
 		__ops_teardown_file_write(output, fd_out);
 
 		__ops_create_sig_delete(sig);
 		__ops_memory_free(infile);
+
+		ret = 1;
 	}
 
 	return ret;
