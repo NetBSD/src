@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.16 2009/11/20 07:17:07 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.17 2009/11/20 15:21:18 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -650,11 +650,11 @@ linebreak_writer(const unsigned char *src,
 	linebreak_t *linebreak = __ops_writer_get_arg(writer);
 	unsigned        n;
 
+printf("in linebreak writer, len %d\n", len);
 	for (n = 0; n < len; ++n, ++linebreak->pos) {
 		if (src[n] == '\r' || src[n] == '\n') {
 			linebreak->pos = 0;
 		}
-
 		if (linebreak->pos == BREAKPOS) {
 			if (!__ops_stacked_write("\r\n", 2, errors, writer)) {
 				return 0;
@@ -759,18 +759,28 @@ void
 __ops_writer_push_armor_msg(__ops_output_t *output)
 {
 	static const char	 header[] = "-----BEGIN PGP MESSAGE-----\r\n";
+	linebreak_t		*linebreak;
 	base64_t		*base64;
 
 	__ops_write(output, header, sizeof(header) - 1);
 	__ops_write(output, "\r\n", 2);
-	if ((base64 = calloc(1, sizeof(*base64))) == NULL) {
-		(void) fprintf(stderr, "__ops_writer_push_armor_msg: bad alloc\n");
-	} else {
-		base64->checksum = CRC24_INIT;
-		__ops_writer_push(output, base64_writer,
-			armoured_message_finaliser, generic_destroyer,
-			base64);
+	if ((linebreak = calloc(1, sizeof(*linebreak))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_writer_push_armor_msg: bad lb alloc\n");
+		return;
 	}
+	__ops_writer_push(output, linebreak_writer, NULL,
+		generic_destroyer,
+		linebreak);
+	if ((base64 = calloc(1, sizeof(*base64))) == NULL) {
+		(void) fprintf(stderr,
+			"__ops_writer_push_armor_msg: bad alloc\n");
+		return;
+	}
+	base64->checksum = CRC24_INIT;
+	__ops_writer_push(output, base64_writer,
+		armoured_message_finaliser, generic_destroyer,
+		base64);
 }
 
 static unsigned 
