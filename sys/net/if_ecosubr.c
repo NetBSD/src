@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.32 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.33 2009/11/20 02:14:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.32 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.33 2009/11/20 02:14:56 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -265,7 +265,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ECO_ADDR_LEN);
 		else {
 			tha = ar_tha(ah);
-			KASSERT(tha != NULL);
+			if (tha == NULL)
+				return 0;
 			memcpy(ehdr.eco_dhost, tha, ECO_ADDR_LEN);
 		}
 
