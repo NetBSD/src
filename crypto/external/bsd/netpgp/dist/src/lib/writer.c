@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.17 2009/11/20 15:21:18 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.18 2009/11/20 15:23:37 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -650,7 +650,6 @@ linebreak_writer(const unsigned char *src,
 	linebreak_t *linebreak = __ops_writer_get_arg(writer);
 	unsigned        n;
 
-printf("in linebreak writer, len %d\n", len);
 	for (n = 0; n < len; ++n, ++linebreak->pos) {
 		if (src[n] == '\r' || src[n] == '\n') {
 			linebreak->pos = 0;
