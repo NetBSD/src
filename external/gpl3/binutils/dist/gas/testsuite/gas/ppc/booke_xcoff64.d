@@ -1,5 +1,5 @@
-#as: -a64 -mppc64 -mbooke64
-#objdump: -dr -Mbooke64
+#as: -a64 -mppc64 -mbooke
+#objdump: -dr -Mbooke
 #name: xcoff64 BookE tests
 
 .*:     file format aix5?coff64-rs6000

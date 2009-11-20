@@ -1,6 +1,6 @@
 /* ldlang.h - linker command language support
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -536,7 +536,7 @@ extern lang_output_section_statement_type *lang_output_section_find_by_flags
   (const asection *, lang_output_section_statement_type **,
    lang_match_sec_type_func);
 extern lang_output_section_statement_type *lang_insert_orphan
-  (asection *, const char *, lang_output_section_statement_type *,
+  (asection *, const char *, int, lang_output_section_statement_type *,
    struct orphan_save *, etree_type *, lang_statement_list_type *);
 extern lang_input_statement_type *lang_add_input_file
   (const char *, lang_input_file_enum_type, const char *);
@@ -550,6 +550,10 @@ extern void lang_add_output_format
   (const char *, const char *, const char *, int);
 extern void lang_list_init
   (lang_statement_list_type *);
+extern void push_stat_ptr
+  (lang_statement_list_type *);
+extern void pop_stat_ptr
+  (void);
 extern void lang_add_data
   (int type, union etree_union *);
 extern void lang_add_reloc
@@ -604,8 +608,6 @@ extern void lang_register_vers_node
 extern void lang_append_dynamic_list (struct bfd_elf_version_expr *);
 extern void lang_append_dynamic_list_cpp_typeinfo (void);
 extern void lang_append_dynamic_list_cpp_new (void);
-bfd_boolean unique_section_p
-  (const asection *);
 extern void lang_add_unique
   (const char *);
 extern const char *lang_get_output_target

@@ -114,12 +114,7 @@ spu_place_special_section (asection *s, asection *o, const char *output_name)
 
   os = lang_output_section_find (o != NULL ? o->name : output_name);
   if (os == NULL)
-    {
-      const char *save = s->name;
-      s->name = output_name;
-      gld${EMULATION_NAME}_place_orphan (s);
-      s->name = save;
-    }
+    gld${EMULATION_NAME}_place_orphan (s, output_name, 0);
   else if (o != NULL && os->children.head != NULL)
     {
       lang_statement_list_type add;

@@ -120,10 +120,10 @@ ldemul_open_dynamic_archive (const char *arch, search_dirs_type *search,
 }
 
 bfd_boolean
-ldemul_place_orphan (asection *s)
+ldemul_place_orphan (asection *s, const char *name, int constraint)
 {
   if (ld_emulation->place_orphan)
-    return (*ld_emulation->place_orphan) (s);
+    return (*ld_emulation->place_orphan) (s, name, constraint);
   return FALSE;
 }
 

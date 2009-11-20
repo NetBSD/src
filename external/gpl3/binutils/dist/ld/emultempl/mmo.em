@@ -47,7 +47,9 @@ fragment <<EOF
    from elf32.em.  */
 
 static bfd_boolean
-mmo_place_orphan (asection *s)
+mmo_place_orphan (asection *s,
+		  const char *secname,
+		  int constraint ATTRIBUTE_UNUSED)
 {
   static struct orphan_save hold_text =
     {
@@ -56,7 +58,6 @@ mmo_place_orphan (asection *s)
       0, 0, 0, 0
     };
   struct orphan_save *place;
-  const char *secname;
   lang_output_section_statement_type *after;
   lang_output_section_statement_type *os;
 
@@ -66,7 +67,6 @@ mmo_place_orphan (asection *s)
     return FALSE;
 
   /* Only care for sections we're going to load.  */
-  secname = s->name;
   os = lang_output_section_find (secname);
 
   /* We have an output section by this name.  Place the section inside it
@@ -93,7 +93,7 @@ mmo_place_orphan (asection *s)
 
   /* If there's an output section by this name, we'll use it, regardless
      of section flags, in contrast to what's done in elf32.em.  */
-  os = lang_insert_orphan (s, secname, after, place, NULL, NULL);
+  os = lang_insert_orphan (s, secname, 0, after, place, NULL, NULL);
 
   /* We need an output section for .text as a root, so if there was none
      (might happen with a peculiar linker script such as in "map

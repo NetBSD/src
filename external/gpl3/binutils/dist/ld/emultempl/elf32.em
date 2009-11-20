@@ -62,7 +62,8 @@ fragment <<EOF
 static void gld${EMULATION_NAME}_before_parse (void);
 static void gld${EMULATION_NAME}_after_open (void);
 static void gld${EMULATION_NAME}_before_allocation (void);
-static bfd_boolean gld${EMULATION_NAME}_place_orphan (asection *s);
+static bfd_boolean gld${EMULATION_NAME}_place_orphan
+  (asection *, const char *, int);
 static void gld${EMULATION_NAME}_finish (void);
 
 EOF
@@ -1635,7 +1636,9 @@ output_rel_find (asection *sec, int isdyn)
    sections in the right segment.  */
 
 static bfd_boolean
-gld${EMULATION_NAME}_place_orphan (asection *s)
+gld${EMULATION_NAME}_place_orphan (asection *s,
+				   const char *secname,
+				   int constraint)
 {
   static struct orphan_save hold[] =
     {
@@ -1673,14 +1676,11 @@ gld${EMULATION_NAME}_place_orphan (asection *s)
     };
   static int orphan_init_done = 0;
   struct orphan_save *place;
-  const char *secname;
   lang_output_section_statement_type *after;
   lang_output_section_statement_type *os;
   int isdyn = 0;
   int iself = s->owner->xvec->flavour == bfd_target_elf_flavour;
   unsigned int sh_type = iself ? elf_section_type (s) : SHT_NULL;
-
-  secname = bfd_get_section_name (s->owner, s);
 
   if (! link_info.relocatable
       && link_info.combreloc
@@ -1707,28 +1707,23 @@ gld${EMULATION_NAME}_place_orphan (asection *s)
 	}
     }
 
-  if (isdyn || (!config.unique_orphan_sections && !unique_section_p (s)))
+  /* Look through the script to see where to place this section.  */
+  if (constraint == 0
+      && (os = lang_output_section_find (secname)) != NULL
+      && os->bfd_section != NULL
+      && (os->bfd_section->flags == 0
+	  || (_bfd_elf_match_sections_by_type (link_info.output_bfd,
+					       os->bfd_section, s->owner, s)
+	      && ((s->flags ^ os->bfd_section->flags)
+		  & (SEC_LOAD | SEC_ALLOC)) == 0)))
     {
-      /* Look through the script to see where to place this section.  */
-      os = lang_output_section_find (secname);
-
-      if (os != NULL
-	  && (os->bfd_section == NULL
-	      || os->bfd_section->flags == 0
-	      || (_bfd_elf_match_sections_by_type (link_info.output_bfd,
-						   os->bfd_section,
-						   s->owner, s)
-		  && ((s->flags ^ os->bfd_section->flags)
-		      & (SEC_LOAD | SEC_ALLOC)) == 0)))
-	{
-	  /* We already have an output section statement with this
-	     name, and its bfd section, if any, has compatible flags.
-	     If the section already exists but does not have any flags
-	     set, then it has been created by the linker, probably as a
-	     result of a --section-start command line switch.  */
-	  lang_add_section (&os->children, s, os);
-	  return TRUE;
-	}
+      /* We already have an output section statement with this
+	 name, and its bfd section has compatible flags.
+	 If the section already exists but does not have any flags
+	 set, then it has been created by the linker, probably as a
+	 result of a --section-start command line switch.  */
+      lang_add_section (&os->children, s, os);
+      return TRUE;
     }
 
   if (!orphan_init_done)
@@ -1748,7 +1743,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s)
      sections into the .text section to get them out of the way.  */
   if (link_info.executable
       && ! link_info.relocatable
-      && CONST_STRNEQ (secname, ".gnu.warning.")
+      && CONST_STRNEQ (s->name, ".gnu.warning.")
       && hold[orphan_text].os != NULL)
     {
       lang_add_section (&hold[orphan_text].os->children, s,
@@ -1804,19 +1799,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s)
 	after = &lang_output_section_statement.head->output_section_statement;
     }
 
-  /* Choose a unique name for the section.  This will be needed if the
-     same section name appears in the input file with different
-     loadable or allocatable characteristics.  */
-  if (bfd_get_section_by_name (link_info.output_bfd, secname) != NULL)
-    {
-      static int count = 1;
-      secname = bfd_get_unique_section_name (link_info.output_bfd,
-					     secname, &count);
-      if (secname == NULL)
-	einfo ("%F%P: place_orphan failed: %E\n");
-    }
-
-  lang_insert_orphan (s, secname, after, place, NULL, NULL);
+  lang_insert_orphan (s, secname, constraint, after, place, NULL, NULL);
 
   return TRUE;
 }
