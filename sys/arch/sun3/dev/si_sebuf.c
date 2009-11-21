@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.27 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.28 2009/11/21 04:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.27 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.28 2009/11/21 04:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.27 2008/04/28 20:23:38 martin Exp $")
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
