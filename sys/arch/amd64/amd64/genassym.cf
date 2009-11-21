@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2008/12/30 13:15:49 pooka Exp $
+#	$NetBSD: genassym.cf,v 1.41 2009/11/21 03:11:01 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
-include <sys/user.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.249 2009/11/06 18:18:57 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.250 2009/11/21 03:11:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2009/11/06 18:18:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.250 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2009/11/06 18:18:57 dyoung Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
@@ -192,6 +191,7 @@ trap_tss(struct i386tss *tss, int trapno, int code)
 static inline int
 xmm_si_code(struct lwp *l)
 {
+	struct pcb *pcb;
 	uint32_t mxcsr, mask;
 
 	if (!i386_use_fxsave) {
@@ -200,7 +200,8 @@ xmm_si_code(struct lwp *l)
 #endif
 		return 0;
 	}
-	mxcsr = l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
+	pcb = lwp_getpcb(l);
+	mxcsr = pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
 
 	/*
          * Since we only have a single status and control register,
@@ -307,7 +308,7 @@ trap(struct trapframe *frame)
 	bool pfail;
 
 	if (__predict_true(l != NULL)) {
-		pcb = &l->l_addr->u_pcb;
+		pcb = lwp_getpcb(l);
 		p = l->l_proc;
 	} else {
 		/*
@@ -492,7 +493,7 @@ copyfault:
 			 * let's retry the trap.
 			 */
 			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
-			    &l->l_addr->u_pcb)) {
+			    lwp_getpcb(l))) {
 				goto out;
 			}
 			ksi.ksi_signo = SIGSEGV;

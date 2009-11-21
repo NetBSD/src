@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.65 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2009/11/21 03:11:01 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2009/11/07 07:27:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
@@ -425,14 +424,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
+		struct pcb *pcb = lwp_getpcb(l);
 
 		aprint_verbose_dev(self,
 		    "idle lwp at %p, idle sp at %p\n",
 		    l,
 #ifdef i386
-		    (void *)l->l_addr->u_pcb.pcb_esp
+		    (void *)pcb->pcb_esp
 #else
-		    (void *)l->l_addr->u_pcb.pcb_rsp
+		    (void *)pcb->pcb_rsp
 #endif
 		);
 	}
@@ -543,7 +543,7 @@ static void
 cpu_init_idle_lwp(struct cpu_info *ci)
 {
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	pcb->pcb_cr0 = rcr0();
 }
@@ -664,6 +664,7 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
+	struct pcb *pcb;
 	int s, i;
 
 #ifdef __x86_64__
@@ -712,8 +713,11 @@ cpu_hatch(void *v)
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr3(pmap_kernel()->pm_pdirpa);
-	curlwp->l_addr->u_pcb.pcb_cr3 = pmap_kernel()->pm_pdirpa;
-	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
+	pcb = lwp_getpcb(curlwp);
+	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
+	lcr0(pcb->pcb_cr0);
+
 	cpu_init_idt();
 	gdt_init_cpu(ci);
 	lapic_enable();

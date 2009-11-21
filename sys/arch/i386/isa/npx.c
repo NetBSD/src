@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.134 2008/11/25 21:53:50 bouyer Exp $	*/
+/*	$NetBSD: npx.c,v 1.135 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.134 2008/11/25 21:53:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.135 2009/11/21 03:11:01 rmind Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.134 2008/11/25 21:53:50 bouyer Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
@@ -378,6 +377,7 @@ npxintr(void *arg, struct intrframe *frame)
 	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
 	struct npx_softc *sc;
+	struct pcb *pcb;
 	ksiginfo_t ksi;
 
 	sc = npx_softc;
@@ -415,20 +415,19 @@ npxintr(void *arg, struct intrframe *frame)
 		return 1;
 	}
 
-#ifdef DIAGNOSTIC
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS
 	 * bit should be set, and we should have gotten a DNA exception.
 	 */
-	if (l != curlwp)
-		panic("npxintr: wrong process");
-#endif
+	KASSERT(l == curlwp);
+	pcb = lwp_getpcb(l);
 
 	/*
 	 * Find the address of fpcurproc's saved FPU state.  (Given the
 	 * invariant above, this is always the one in curpcb.)
 	 */
-	addr = &l->l_addr->u_pcb.pcb_savefpu;
+	addr = &pcb->pcb_savefpu;
+
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the CPU or we'll hang.
@@ -550,6 +549,7 @@ static int
 npxdna(struct cpu_info *ci)
 {
 	struct lwp *l, *fl;
+	struct pcb *pcb;
 	int s;
 
 	if (ci->ci_fpsaving) {
@@ -562,9 +562,10 @@ npxdna(struct cpu_info *ci)
 #ifndef XEN
 	x86_enable_intr();
 #endif
-
 	/* Save state on current CPU. */
 	l = ci->ci_curlwp;
+	pcb = lwp_getpcb(l);
+
 	fl = ci->ci_fpcurlwp;
 	if (fl != NULL) {
 		/*
@@ -572,7 +573,7 @@ npxdna(struct cpu_info *ci)
 		 * switch lwp.  In this case do nothing
 		 */
 		if (fl == l) {
-			KASSERT(l->l_addr->u_pcb.pcb_fpcpu == ci);
+			KASSERT(pcb->pcb_fpcpu == ci);
 			ci->ci_fpused = 1;
 			clts();
 			splx(s);
@@ -584,12 +585,12 @@ npxdna(struct cpu_info *ci)
 	}
 
 	/* Save our state if on a remote CPU. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+	if (pcb->pcb_fpcpu != NULL) {
 		/* Explicitly disable preemption before dropping spl. */
 		KPREEMPT_DISABLE(l);
 		splx(s);
 		npxsave_lwp(l, true);
-		KASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
+		KASSERT(pcb->pcb_fpcpu == NULL);
 		s = splhigh();
 		KPREEMPT_ENABLE(l);
 	}
@@ -600,16 +601,16 @@ npxdna(struct cpu_info *ci)
 	 */
 	clts();
 	ci->ci_fpcurlwp = l;
-	l->l_addr->u_pcb.pcb_fpcpu = ci;
+	pcb->pcb_fpcpu = ci;
 	ci->ci_fpused = 1;
 
 	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
 		if (i386_use_fxsave) {
-			fldcw(&l->l_addr->u_pcb.pcb_savefpu.
+			fldcw(&pcb->pcb_savefpu.
 			    sv_xmm.sv_env.en_cw);
 		} else {
-			fldcw(&l->l_addr->u_pcb.pcb_savefpu.
+			fldcw(&pcb->pcb_savefpu.
 			    sv_87.sv_env.en_cw);
 		}
 		l->l_md.md_flags |= MDL_USEDFPU;
@@ -634,9 +635,9 @@ npxdna(struct cpu_info *ci)
 		 * fxrstor() anyway.
 		 */
 		fldummy(&zero);
-		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+		fxrstor(&pcb->pcb_savefpu.sv_xmm);
 	} else {
-		frstor(&l->l_addr->u_pcb.pcb_savefpu.sv_87);
+		frstor(&pcb->pcb_savefpu.sv_87);
 	}
 
 	KASSERT(ci == curcpu());
@@ -652,6 +653,7 @@ npxsave_cpu(bool save)
 {
 	struct cpu_info *ci;
 	struct lwp *l;
+	struct pcb *pcb;
 
 	KASSERT(curcpu()->ci_ilevel == IPL_HIGH);
 
@@ -659,6 +661,8 @@ npxsave_cpu(bool save)
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
 		return;
+
+	pcb = lwp_getpcb(l);
 
 	if (save) {
 		 /*
@@ -670,15 +674,15 @@ npxsave_cpu(bool save)
 		clts();
 		ci->ci_fpsaving = 1;
 		if (i386_use_fxsave) {
-			fxsave(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+			fxsave(&pcb->pcb_savefpu.sv_xmm);
 		} else {
-			fnsave(&l->l_addr->u_pcb.pcb_savefpu.sv_87);
+			fnsave(&pcb->pcb_savefpu.sv_87);
 		}
 		ci->ci_fpsaving = 0;
 	}
 
 	stts();
-	l->l_addr->u_pcb.pcb_fpcpu = NULL;
+	pcb->pcb_fpcpu = NULL;
 	ci->ci_fpcurlwp = NULL;
 	ci->ci_fpused = 1;
 }
@@ -693,13 +697,15 @@ void
 npxsave_lwp(struct lwp *l, bool save)
 {
 	struct cpu_info *oci;
+	struct pcb *pcb;
 	int s, spins, ticks;
 
 	spins = 0;
 	ticks = hardclock_ticks;
 	for (;;) {
 		s = splhigh();
-		oci = l->l_addr->u_pcb.pcb_fpcpu;
+		pcb = lwp_getpcb(l);
+		oci = pcb->pcb_fpcpu;
 		if (oci == NULL) {
 			splx(s);
 			break;
@@ -712,7 +718,7 @@ npxsave_lwp(struct lwp *l, bool save)
 		}
 		splx(s);
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
-		while (l->l_addr->u_pcb.pcb_fpcpu == oci &&
+		while (pcb->pcb_fpcpu == oci &&
 		    ticks == hardclock_ticks) {
 			x86_pause();
 			spins++;
