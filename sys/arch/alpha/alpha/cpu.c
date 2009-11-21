@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.86 2009/09/06 18:06:24 mhitch Exp $ */
+/* $NetBSD: cpu.c,v 1.87 2009/11/21 05:35:40 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2009/09/06 18:06:24 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2009/11/21 05:35:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2009/09/06 18:06:24 mhitch Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
@@ -425,7 +424,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pcb *pcb;
 	u_long cpumask;
 
-	pcb = &ci->ci_data.cpu_idlelwp->l_addr->u_pcb;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	pcsp = LOCATE_PCS(hwrpb, ci->ci_cpuid);
 	cpumask = (1UL << ci->ci_cpuid);

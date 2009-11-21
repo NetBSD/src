@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.45 2008/01/05 00:31:50 ad Exp $ */
+/* $NetBSD: prom.c,v 1.46 2009/11/21 05:35:40 rmind Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.45 2008/01/05 00:31:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.46 2009/11/21 05:35:40 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.45 2008/01/05 00:31:50 ad Exp $");
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
@@ -302,13 +301,14 @@ hwrpb_checksum(void)
 void
 hwrpb_primary_init(void)
 {
+	struct pcb *pcb;
 	struct pcs *p;
 
 	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 
 	/* Initialize the primary's HWPCB and the Virtual Page Table Base. */
-	memcpy(p->pcs_hwpcb, &lwp0.l_addr->u_pcb.pcb_hw,
-	    sizeof lwp0.l_addr->u_pcb.pcb_hw);
+	pcb = lwp_getpcb(&lwp0);
+	memcpy(p->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
 	hwrpb->rpb_vptb = VPTBASE;
 
 	hwrpb->rpb_checksum = hwrpb_checksum();

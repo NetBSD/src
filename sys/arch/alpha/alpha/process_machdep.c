@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.24 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: process_machdep.c,v 1.25 2009/11/21 05:35:40 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,13 +54,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2009/11/21 05:35:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
@@ -70,26 +69,26 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2007/03/04 05:59:10 christo
 #include <machine/alpha.h>
 
 #define	lwp_frame(l)	((l)->l_md.md_tf)
-#define	lwp_pcb(l)	(&(l)->l_addr->u_pcb)
-#define	lwp_fpframe(l)	(&(lwp_pcb(l)->pcb_fp))
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	frametoreg(lwp_frame(l), regs);
 	regs->r_regs[R_ZERO] = lwp_frame(l)->tf_regs[FRAME_PC];
-	regs->r_regs[R_SP] = lwp_pcb(l)->pcb_hw.apcb_usp;
+	regs->r_regs[R_SP] = pcb->pcb_hw.apcb_usp;
 	return (0);
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	regtoframe(regs, lwp_frame(l));
 	lwp_frame(l)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
-	lwp_pcb(l)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
+	pcb->pcb_hw.apcb_usp = regs->r_regs[R_SP];
 	return (0);
 }
 
@@ -115,21 +114,23 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_proc(l, 1);
 
-	memcpy(regs, lwp_fpframe(l), sizeof(struct fpreg));
+	memcpy(regs, &pcb->pcb_fp, sizeof(struct fpreg));
 	return (0);
 }
 
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_proc(l, 0);
 
-	memcpy(lwp_fpframe(l), regs, sizeof(struct fpreg));
+	memcpy(&pcb->pcb_fp, regs, sizeof(struct fpreg));
 	return (0);
 }
