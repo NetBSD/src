@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.143 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.143.6.1 2009/11/21 19:56:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.143 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.143.6.1 2009/11/21 19:56:35 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1385,7 +1385,8 @@ in_revarpinput(struct mbuf *m)
 	if (myip_initialized)
 		goto wake;
 	tha = ar_tha(ah);
-	KASSERT(tha);
+	if (tha == NULL)
+		goto out;
 	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
@@ -1426,7 +1427,8 @@ revarprequest(struct ifnet *ifp)
 
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
-	KASSERT(tha);
+	if (tha == NULL)
+		return;
 	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
