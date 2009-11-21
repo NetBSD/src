@@ -32,16 +32,19 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.2 2007/11/12 18:41:59 ad Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.3 2009/11/21 19:52:54 dsl Exp $")
 #endif
 
 	/*
 	 * (ov)bcopy (src,dst,cnt)
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
+	 *
+	 * Hacked about by dsl@netnsd.org
 	 */
 
 #ifdef MEMCOPY
 ENTRY(memcpy)
+#define NO_OVERLAP
 #else
 #ifdef MEMMOVE
 ENTRY(memmove)
@@ -49,45 +52,82 @@ ENTRY(memmove)
 ENTRY(bcopy)
 #endif
 #endif
+	movq	%rdx,%rcx
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movq	%rdi,%r11	/* save dest */
+	movq	%rdi,%rax	/* must return destination address */
 #else
-	xchgq	%rdi,%rsi
+	xchgq	%rdi,%rsi	/* bcopy() has arg order reversed */
 #endif
-	movq	%rdx,%rcx
-	movq	%rdi,%rax
-	subq	%rsi,%rax
-	cmpq	%rcx,%rax	/* overlapping? */
-	jb	1f
-	/* nope, copy forwards. */
-	shrq	$3,%rcx		/* copy by words */
+
+#if !defined(NO_OVERLAP)
+	movq	%rdi,%r8
+	subq	%rsi,%r8
+#endif
+
+	shrq	$3,%rcx		/* count for copy by words */
+	jz	8f		/* j if less than 8 bytes */
+
+	lea	-8(%rdi,%rdx),%r9	/* target address of last 8 */
+	mov	-8(%rsi,%rdx),%r10	/* get last bytes */
+#if !defined(NO_OVERLAP)
+	cmpq	%rdx,%r8	/* overlapping? */
+	jb	10f
+#endif
+
+/*
+ * Non-overlaping, copy forwards.
+ * Newer Intel cpus (Nehalem) will do 16byte read/write transfers
+ * if %ecx is more than 76.
+ * AMD might do something similar some day.
+ */
 	rep
 	movsq
-	movq	%rdx,%rcx
-	andq	$7,%rcx		/* any bytes left? */
-	rep
-	movsb
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movq	%r11,%rax
-#endif
+	mov	%r10,(%r9)	/* write last bytes */
 	ret
-1:
-	addq	%rcx,%rdi	/* copy backwards. */
-	addq	%rcx,%rsi
+
+#if !defined(NO_OVERLAP)
+/* Must copy backwards.
+ * Reverse copy is probably easy to code faster than 'rep movds'
+ * since that requires (IIRC) an extra clock per iteration.
+ * However I don't suppose anything cares that much!
+ * The copy is aligned with the buffer start (more likely to
+ * be a multiple of 8 than the end).
+ */
+10:
+	lea	-8(%rsi,%rcx,8),%rsi
+	lea	-8(%rdi,%rcx,8),%rdi
 	std
-	andq	$7,%rcx		/* any fractional bytes? */
-	decq	%rdi
-	decq	%rsi
-	rep
-	movsb
-	movq	%rdx,%rcx	/* copy remainder by words */
-	shrq	$3,%rcx
-	subq	$7,%rsi
-	subq	$7,%rdi
 	rep
 	movsq
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movq	%r11,%rax
+	cld
+	mov	%r10,(%r9)	/* write last bytes */
+	ret
 #endif
+
+/* Less than 8 bytes to copy, copy by bytes */
+/* Intel Nehalem optimise 'rep movsb' for <= 7 bytes (9-15 clocks).
+ * For long transfers it is 50+ !
+ */
+8:	mov	%rdx,%rcx
+
+#if !defined(NO_OVERLAP)
+	cmpq	%rdx,%r8	/* overlapping? */
+	jb	81f
+#endif
+
+	/* nope, copy forwards. */
+	rep
+	movsb
+	ret
+
+#if !defined(NO_OVERLAP)
+/* Must copy backwards */
+81:
+	lea	-1(%rsi,%rcx),%rsi
+	lea	-1(%rdi,%rcx),%rdi
+	std
+	rep
+	movsb
 	cld
 	ret
+#endif
