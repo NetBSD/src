@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.140 2009/11/15 06:11:11 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.141 2009/11/21 20:10:39 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14786,4 +14786,20 @@ etc/rc.d/named					1.20
 	PR/41273: Martin Mersberger: missing '/' in /etc/rc.d/named in
 	section named_migrate
 	[dholland, ticket #1146]
+
+sys/net/if_arcsubr.c				1.61
+sys/net/if_ethersubr.c				1.173
+sys/net/if_fddisubr.c				1.78
+sys/net/if_tokensubr.c				1.58 via patch
+sys/netinet/if_arp.c				1.149
+
+	ar_tha() can return NULL; treat this as an error.
+	[christos, ticket #1156]
+
+sys/kern/vfs_subr.c				1.387
+
+	Fix getcleanvnode() in previous: in the if (vp->v_usecount != 0)
+	case we didn't bump the refcount, so don't decrease it through
+	vrelel().  call mutex_exit() on v_interlock directly instead.
+	[bouyer, ticket #1152]
 
