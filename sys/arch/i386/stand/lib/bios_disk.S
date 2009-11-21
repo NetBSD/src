@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.18 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.19 2009/11/21 11:52:57 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -287,6 +287,7 @@ ENTRY(biosdisk_extread)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%ds
 	movl	%esi, %eax
 	shrl	$4, %eax
 	movw	%ds, %bx
@@ -298,6 +299,7 @@ ENTRY(biosdisk_extread)
 	int	$0x13
 	setc	%bl
 	movb	%ah, %bh	# save error code
+	pop	%ds
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
@@ -328,6 +330,7 @@ ENTRY(biosdisk_getextinfo)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%ds
 	movl	%esi, %eax
 	shrl	$4, %eax
 	andw	$0xf, %si
@@ -338,6 +341,7 @@ ENTRY(biosdisk_getextinfo)
 	movb	$0x48, %ah	# subfunction
 	int	$0x13
 	setc	%bl
+	pop	%ds
 
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
