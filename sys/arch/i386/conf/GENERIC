@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.951 2009/11/21 12:09:15 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.952 2009/11/21 12:15:55 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.951 $"
+#ident 		"GENERIC-$Revision: 1.952 $"
 
 maxusers	64		# estimated number of users
 
@@ -924,7 +924,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
-jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -994,9 +994,9 @@ sm*	at mhzc?
 ate0	at isa? port 0x2a0 irq ?		# AT1700
 cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+eg0	at isa? port 0x280 irq 9		# 3C505 Ethernet cards
+el0	at isa? port 0x300 irq 9		# 3C501 Ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 Ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
@@ -1010,7 +1010,7 @@ le*	at nele?
 #ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
-ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne0	at isa? port 0x280 irq 9		# NE[12]000 Ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
@@ -1232,7 +1232,7 @@ radio*	at udsbr?
 # USB Generic driver
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
-options UGEN_BULK_RA_WB
+options 	UGEN_BULK_RA_WB
 
 # USB 3G datacards
 u3g*	at uhub? port ?
@@ -1568,12 +1568,12 @@ pseudo-device	veriexec
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-options VERIFIED_EXEC_FP_RMD160
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
-options VERIFIED_EXEC_FP_SHA1
-options VERIFIED_EXEC_FP_MD5
+options 	VERIFIED_EXEC_FP_RMD160
+options 	VERIFIED_EXEC_FP_SHA256
+options 	VERIFIED_EXEC_FP_SHA384
+options 	VERIFIED_EXEC_FP_SHA512
+options 	VERIFIED_EXEC_FP_SHA1
+options 	VERIFIED_EXEC_FP_MD5
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
