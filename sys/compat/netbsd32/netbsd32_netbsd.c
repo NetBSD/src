@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.159 2009/10/25 01:14:03 rmind Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.160 2009/11/21 11:54:54 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.159 2009/10/25 01:14:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.160 2009/11/21 11:54:54 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -369,7 +369,6 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 	} */
 	struct sys_obreak_args ua;
 
-	SCARG(&ua, nsize) = SCARG_P32(uap, nsize);
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(l, &ua, retval));
 }
