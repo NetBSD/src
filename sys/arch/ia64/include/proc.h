@@ -1,7 +1,9 @@
 #ifndef _IA64_PROC_H_
 #define _IA64_PROC_H_
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
+
 /*
  * Machine-dependent part of the lwp structure for ia64
  */
