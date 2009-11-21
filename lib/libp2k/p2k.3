@@ -1,4 +1,4 @@
-.\"     $NetBSD: p2k.3,v 1.5 2009/11/21 11:40:52 pooka Exp $
+.\"     $NetBSD: p2k.3,v 1.6 2009/11/21 12:28:51 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -33,10 +33,32 @@
 p2k Library (libp2k, \-lp2k)
 .Sh SYNOPSIS
 .In rump/p2k.h
+.Ft struct p2k_mount *
+.Fn p2k_init "uint32_t puffs_flags"
+.Ft void
+.Fn p2k_cancel "struct p2k_mount *p2m" "int error"
+.Ft int
+.Fo p2k_setup_fs
+.Fa "struct p2k_mount *p2m" "const char *vfsname" "const char *devpath"
+.Fa "const char *mountpath" "int mntflags" "void *arg" "size_t alen"
+.Fc
+.Fo p2k_setup_diskfs
+.Fa "struct p2k_mount *p2m" "const char *vfsname" "const char *devpath"
+.Fa "int partition" "const char *mountpath" "int mntflags"
+.Fa "void *arg" "size_t alen"
+.Fc
+.Ft int
+.Fn p2k_mainloop "struct p2k_mount *p2m"
 .Ft int
 .Fo p2k_run_fs
 .Fa "const char *vfsname" "const char *devpath" "const char *mountpath"
 .Fa "int mntflags" "void *arg" "size_t alen" "uint32_t puffs_flags"
+.Fc
+.Ft int
+.Fo p2k_run_diskfs
+.Fa "const char *vfsname" "const char *devpath" "int partition"
+.Fa "const char *mountpath" "int mntflags" "void *arg" "size_t alen"
+.Fa "uint32_t puffs_flags"
 .Fc
 .Sh DESCRIPTION
 The
@@ -58,6 +80,9 @@ and
 .Fa puffs_flags
 are handled by
 .Xr puffs 3 .
+The "run_fs" variants of the interfaces are provided as a convenience
+for the common case.
+They execute all of init, setup and mainloop in one call.
 .Pp
 The following environment variables affect the behaviour of
 .Nm .
@@ -105,6 +130,8 @@ If the variable is set but does not contain an integer value, 0
 .Xr rump_msdos 8 ,
 .Xr rump_nfs 8 ,
 .Xr rump_ntfs 8 ,
+.Xr rump_smbfs 8 ,
 .Xr rump_syspuffs 8 ,
+.Xr rump_sysvbfs 8 ,
 .Xr rump_tmpfs 8 ,
 .Xr rump_udf 8
