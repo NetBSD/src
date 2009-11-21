@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.217 2009/08/09 22:22:51 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.218 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.217 2009/08/09 22:22:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.218 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -1145,6 +1145,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	memset(f, 0, sizeof(struct frame));
 	f->f_regs[_R_SP] = (int)stack;
@@ -1167,7 +1168,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = NULL;
-	memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
+	memset(&pcb->pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
 }
@@ -1530,6 +1531,7 @@ savefpregs(struct lwp *l)
 #ifndef NOFPU
 	u_int32_t status, fpcsr, *fp;
 	struct frame *f;
+	struct pcb *pcb;
 
 	if (l == NULL)
 		return;
@@ -1557,7 +1559,8 @@ savefpregs(struct lwp *l)
 	/*
 	 * save FPCSR and 32bit FP register values.
 	 */
-	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	pcb = lwp_getpcb(l);
+	fp = (int *)pcb->pcb_fpregs.r_regs;
 	fp[32] = fpcsr;
 	__asm volatile (
 		".set noreorder		;"
@@ -1608,6 +1611,7 @@ loadfpregs(struct lwp *l)
 #ifndef NOFPU
 	u_int32_t status, *fp;
 	struct frame *f;
+	struct pcb *pcb;
 
 	if (l == NULL)
 		panic("loading fpregs for NULL proc");
@@ -1626,7 +1630,8 @@ loadfpregs(struct lwp *l)
 		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
 
 	f = (struct frame *)l->l_md.md_regs;
-	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	pcb = lwp_getpcb(l);
+	fp = (int *)pcb->pcb_fpregs.r_regs;
 	/*
 	 * load 32bit FP registers and establish processes' FP context.
 	 */
@@ -1771,6 +1776,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	if (l->l_md.md_flags & MDP_FPUSED) {
+		struct pcb *pcb;
+
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
@@ -1782,10 +1789,10 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 * The PCB FP regs struct includes the FP CSR, so use the
 		 * size of __fpregs.__fp_r when copying.
 		 */
-		memcpy(&mcp->__fpregs.__fp_r,
-		    &l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		pcb = lwp_getpcb(l);
+		memcpy(&mcp->__fpregs.__fp_r, &pcb->pcb_fpregs.r_regs,
 		    sizeof(mcp->__fpregs.__fp_r));
-		mcp->__fpregs.__fp_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
+		mcp->__fpregs.__fp_csr = pcb->pcb_fpregs.r_regs[32];
 		*flags |= _UC_FPU;
 	}
 }
@@ -1813,6 +1820,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
+		struct pcb *pcb;
+
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		if (l == fpcurlwp)
@@ -1822,9 +1831,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * The PCB FP regs struct includes the FP CSR, so use the
 		 * size of __fpregs.__fp_r when copying.
 		 */
-		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs,
-		    &mcp->__fpregs.__fp_r, sizeof(mcp->__fpregs.__fp_r));
-		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
+		pcb = lwp_getpcb(l);
+		memcpy(&pcb->pcb_fpregs.r_regs, &mcp->__fpregs.__fp_r,
+		    sizeof(mcp->__fpregs.__fp_r));
+		pcb->pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
 	}
 
 	mutex_enter(p->p_lock);

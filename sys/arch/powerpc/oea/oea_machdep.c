@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.48 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.49 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.48 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.49 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.48 2009/11/07 07:27:46 cegger Exp 
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
@@ -157,7 +156,7 @@ oea_init(void (*handler)(void))
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 	memset(curpcb, 0, sizeof(*curpcb));
 #ifdef ALTIVEC
 	/*

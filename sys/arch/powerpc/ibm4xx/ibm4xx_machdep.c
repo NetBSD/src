@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.9 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.10 2009/11/21 17:40:28 rmind Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.9 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.10 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.9 2009/11/07 07:27:45 cegger Ex
 #include <sys/param.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -146,8 +145,8 @@ ibm4xx_init(void (*handler)(void))
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = &proc0paddr->u_pcb;
-        memset(curpcb, 0, sizeof(*curpcb));
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(*curpcb));
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

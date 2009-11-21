@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.81 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.82 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.81 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.82 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -221,13 +221,14 @@ sh_proc0_init()
 	 * stack bottom  ... r7_bank
 	 * current stack ... r15
 	 */
-	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	lwp0.l_md.md_pcb = curpcb;
 
 	sf = &curpcb->pcb_sf;
 
 #ifdef KSTACK_DEBUG
-	memset((char *)(u + sizeof(struct user)), 0x5a,
-	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)(u + sizeof(struct pcb)), 0x5a,
+	    PAGE_SIZE - sizeof(struct pcb));
 	memset((char *)(u + PAGE_SIZE), 0xa5, USPACE - PAGE_SIZE);
 	memset(sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */

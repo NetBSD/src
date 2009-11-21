@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 2009/07/29 17:45:39 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.131 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2009/07/29 17:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2009/07/29 17:45:39 rmind Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
@@ -702,7 +701,7 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
 		{
-			struct pcb * const pcb = &l->l_addr->u_pcb;
+			struct pcb * const pcb = lwp_getpcb(l);
 			const int reg = EXC_ALI_RST(frame->dsisr);
 			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 
@@ -763,7 +762,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 #define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
 
 	if (OPC_MFMSR_P(opcode)) {
-		struct pcb * const pcb = &l->l_addr->u_pcb;
+		struct pcb * const pcb = lwp_getpcb(l);
 		register_t msr = tf->srr1 & PSL_USERSRR1;
 
 		if (pcb->pcb_flags & PCB_FPU)
@@ -784,7 +783,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 #define	OPC_MTMSR_P(o)		(((o) & OPC_MTMSR_MASK) == OPC_MTMSR_CODE)
 
 	if (OPC_MTMSR_P(opcode)) {
-		struct pcb * const pcb = &l->l_addr->u_pcb;
+		struct pcb * const pcb = lwp_getpcb(l);
 		register_t msr = tf->fixreg[OPC_MTMSR_REG(opcode)];
 
 		/*
