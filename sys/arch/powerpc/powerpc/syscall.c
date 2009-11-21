@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.44 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/ktrace.h>
@@ -64,20 +63,21 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2009/11/21 17:40:29 rmind Exp $");
 
 void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct trapframe * const tf = trapframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
 					   be them. */
-	l->l_addr->u_pcb.pcb_fpcpu = NULL;
+	pcb->pcb_fpcpu = NULL;
 	ktrsysret(SYS_fork, 0, 0);
 	/* Profiling?							XXX */
 }

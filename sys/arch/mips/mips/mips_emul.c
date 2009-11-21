@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.15 2009/03/14 15:36:10 dsl Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.16 2009/11/21 17:40:28 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.15 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.16 2009/11/21 17:40:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>

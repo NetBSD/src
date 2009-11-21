@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.58 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.59 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2009/03/18 10:22:36 cegger Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -671,14 +670,13 @@ db_stackcheck_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		  const char *modif)
 {
 	struct lwp *l;
-	struct user *u;
 	struct pcb *pcb;
 	uint32_t *t32;
 	uint8_t *t8;
 	int i, j;
 
 #define	MAX_STACK	(USPACE - PAGE_SIZE)
-#define	MAX_FRAME	(PAGE_SIZE - sizeof(struct user))
+#define	MAX_FRAME	(PAGE_SIZE - sizeof(struct pcb))
 
 	db_printf("stack max: %d byte, frame max %d byte,"
 	    " sizeof(struct trapframe) %d byte\n", MAX_STACK, MAX_FRAME,
@@ -688,8 +686,7 @@ db_stackcheck_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		  "  nest\n");
 
 	LIST_FOREACH(l, &alllwp, l_list) {
-		u = l->l_addr;
-		pcb = &u->u_pcb;
+		pcb = lwp_getpcb(l);
 		/* stack */
 		t32 = (uint32_t *)(pcb->pcb_sf.sf_r7_bank - MAX_STACK);
 		for (i = 0; *t32++ == 0xa5a5a5a5; i++)
