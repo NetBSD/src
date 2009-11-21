@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.674 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.675 2009/11/21 15:38:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.674 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.675 2009/11/21 15:38:43 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1320,7 +1320,7 @@ init386(paddr_t first_avail)
 #ifdef XEN
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
-	pcb->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
+	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
 	XENPRINTK(("proc0 pcb %p first_avail %p\n",
