@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.172 2009/11/07 07:27:48 cegger Exp $	   */
+/*	$NetBSD: pmap.c,v 1.173 2009/11/21 04:45:39 rmind Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2009/11/21 04:45:39 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1664,7 +1664,7 @@ pmap_remove_pcb(struct pmap *pm, struct pcb *thispcb)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMDEBUG(("pmap_activate: l %p\n", l));
@@ -1694,7 +1694,7 @@ pmap_activate(struct lwp *l)
 void	
 pmap_deactivate(struct lwp *l)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMDEBUG(("pmap_deactivate: l %p\n", l));

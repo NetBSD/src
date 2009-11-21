@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.57 2009/10/26 19:16:58 cegger Exp $ */
+/*	$NetBSD: vsbus.c,v 1.58 2009/11/21 04:45:39 rmind Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.57 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.58 2009/11/21 04:45:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.57 2009/10/26 19:16:58 cegger Exp $");
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>

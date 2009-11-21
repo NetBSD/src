@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.40 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.41 2009/11/21 04:45:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.40 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.41 2009/11/21 04:45:39 rmind Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.40 2008/04/28 20:23:39 martin Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/queue.h>
 

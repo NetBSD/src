@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.26 2009/10/26 19:16:58 cegger Exp $	*/
+/*	$NetBSD: qv.c,v 1.27 2009/11/21 04:45:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.26 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.27 2009/11/21 04:45:39 rmind Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.26 2009/10/26 19:16:58 cegger Exp $");
 
 #include "sys/param.h"
 #include "sys/conf.h"
-#include "sys/user.h"
 #include "qvioctl.h"
 #include "sys/tty.h"
 #include "sys/buf.h"
