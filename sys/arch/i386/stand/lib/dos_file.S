@@ -1,4 +1,4 @@
-/*	$NetBSD: dos_file.S,v 1.5 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: dos_file.S,v 1.6 2009/11/21 11:52:57 dsl Exp $	*/
 	
 /* extracted from Tor Egge's patches for NetBSD boot */
 
@@ -29,6 +29,7 @@ ENTRY(dosopen)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%ds
 	movl	%edx, %eax
 	shrl	$4, %eax
 	mov	%ds, %si
@@ -42,6 +43,7 @@ ENTRY(dosopen)
 	sti
 	int	$0x21
 	cli
+	pop	%ds
 
 	jnc	ok1
 	mov	%ax, _C_LABEL(doserrno)
@@ -80,6 +82,7 @@ ENTRY(dosread)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
+	push	%ds
 	movl	%edx, %eax
 	shrl	$4, %eax
 	mov	%ds, %si
@@ -92,6 +95,7 @@ ENTRY(dosread)
 	sti
 	int	$0x21
 	cli
+	pop	%ds
 
 	jnc	ok2
 	mov	%ax, _C_LABEL(doserrno)
