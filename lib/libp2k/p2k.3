@@ -1,4 +1,4 @@
-.\"     $NetBSD: p2k.3,v 1.4 2009/05/03 20:26:42 pooka Exp $
+.\"     $NetBSD: p2k.3,v 1.5 2009/11/21 11:40:52 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 3, 2009
+.Dd November 21, 2009
 .Dt P2K 3
 .Os
 .Sh NAME
@@ -59,13 +59,15 @@ and
 are handled by
 .Xr puffs 3 .
 .Pp
-The following environment variables affect the behaviour of puffs.
+The following environment variables affect the behaviour of
+.Nm .
 They are useful mostly for debugging purposes.
 The flags are environment variables because typically the command line
 arguments to
 .Nm
-utilities are parsed using versions not aware of possible puffs flags:
-for example, the
+utilities are parsed using versions not aware of
+.Nm
+options; for example, the
 .Xr rump_cd9660 8
 arguments are really parsed by
 .Xr mount_cd9660 8 .
@@ -80,6 +82,15 @@ Do not use the puffs page cache.
 Do not use the puffs name cache.
 .It Dv P2K_NOCACHE
 Do not use the puffs page or name cache.
+.It Dv P2K_WIZARDUID
+If set, use the value of the variable to determine to uid of the
+caller of each operation instead of the actual caller supplied
+by
+.Xr puffs 3 .
+This can be used for example to simplify modifying an OS installations
+root image as a non-root user.
+If the variable is set but does not contain an integer value, 0
+(root) is used.
 .El
 .Sh SEE ALSO
 .Xr puffs 3 ,
