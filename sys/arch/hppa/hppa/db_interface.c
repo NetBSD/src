@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 2009/11/15 18:17:18 dholland Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,12 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2009/11/15 18:17:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20 2009/11/21 15:36:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h> 
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>

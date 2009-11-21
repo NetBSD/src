@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2009/11/21 15:36:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2009/11/21 15:36:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

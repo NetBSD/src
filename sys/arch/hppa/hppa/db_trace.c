@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,12 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2009/11/03 05:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2009/11/21 15:36:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h> 
 
 #include <machine/db_machdep.h>
 
@@ -77,8 +76,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	} else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
 			struct lwp *l;
+
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
 				p = l->l_proc;
@@ -94,14 +93,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			u = l->l_addr;
 			if (p == curproc && l == curlwp) {
 				fp = (int *)ddb_regs.tf_r3;
 				pc = ddb_regs.tf_iioq_head;
 				rp = ddb_regs.tf_rp;
 			} else {
+				struct pcb *pcb = lwp_getpcb(l);
 				/* cpu_switchto fp, and return point */
-				fp = (int *)(u->u_pcb.pcb_ksp -
+				fp = (int *)(pcb->pcb_ksp -
 				    (HPPA_FRAME_SIZE + 16*4));
 				pc = 0;
 				rp = fp[-5];

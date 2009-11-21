@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.17 2009/06/01 07:10:14 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.18 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.17 2009/06/01 07:10:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.18 2009/11/21 15:36:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/lwp.h>
 #include <sys/savar.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/cpu.h>
@@ -141,6 +140,7 @@ void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 	__greg_t *gr = mcp->__gregs;
 	__greg_t ras_pc;
 
@@ -207,10 +207,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	}
 
 	hppa_fpu_flush(l);
-	memcpy(&mcp->__fpregs, l->l_addr->u_pcb.pcb_fpregs,
-	       sizeof(mcp->__fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr->u_pcb.pcb_fpregs,
-		sizeof(l->l_addr->u_pcb.pcb_fpregs));
+	memcpy(&mcp->__fpregs, pcb->pcb_fpregs, sizeof(mcp->__fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
+	    sizeof(pcb->pcb_fpregs));
 	*flags |= _UC_FPU;
 }
 
@@ -317,11 +316,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 
 	if ((flags & _UC_FPU) != 0) {
+		struct pcb *pcb = lwp_getpcb(l);
+
 		hppa_fpu_flush(l);
-		memcpy(l->l_addr->u_pcb.pcb_fpregs, &mcp->__fpregs,
-		       sizeof(mcp->__fpregs));
-		fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr->u_pcb.pcb_fpregs,
-			sizeof(l->l_addr->u_pcb.pcb_fpregs));
+		memcpy(pcb->pcb_fpregs, &mcp->__fpregs, sizeof(mcp->__fpregs));
+		fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
+		    sizeof(pcb->pcb_fpregs));
 	}
 
 	mutex_enter(p->p_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2009/10/22 22:28:57 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2009/11/21 15:36:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <machine/frame.h>
 #include <machine/md_var.h>
@@ -84,23 +83,24 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 
-        /* Copy pcb from lwp l1 to l2. */
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
+
+	/* Copy pcb from lwp l1 to l2. */
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
-		savectx(&l1->l_addr->u_pcb);
+		savectx(pcb1);
 #if 0
-//		ia64_highfp_save(???);
+		/* ia64_highfp_save(???); */
 #endif
+	} else {
+		KASSERT(l1 == &lwp0);
 	}
-#ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
-	pcb = &l2->l_addr->u_pcb;
-	*pcb = l1->l_addr->u_pcb;
+
+	*pcb2 = *pcb1;
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 	l2->l_md.md_tf = (struct trapframe *)((vaddr_t)l2->l_addr + USPACE) - 1;
@@ -130,9 +130,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
 	tf->tf_scratch.gr3 = (unsigned long)arg;
-	pcb->pcb_special.sp = (unsigned long)tf - 16;
-	pcb->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
-	pcb->pcb_special.pfs = 0;
+	pcb2->pcb_special.sp = (unsigned long)tf - 16;
+	pcb2->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
+	pcb2->pcb_special.pfs = 0;
 
 	return;
 }

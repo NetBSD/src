@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2009/11/21 15:36:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2009/11/03 05:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2009/11/21 15:36:34 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2009/11/03 05:07:26 snj Exp $");
 #include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/signal.h>
 #include <sys/device.h>
@@ -481,7 +480,7 @@ trap(int type, struct trapframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
-	struct pcb *pcbp;
+	struct pcb *pcb;
 	vaddr_t va;
 	struct vm_map *map;
 	struct vmspace *vm;
@@ -579,6 +578,8 @@ trap(int type, struct trapframe *frame)
 		}
 	}
 #endif
+	pcb = lwp_getpcb(l);
+
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
@@ -639,13 +640,11 @@ trap(int type, struct trapframe *frame)
 		break;
 
 	case T_DATALIGN:
-		if (l->l_addr->u_pcb.pcb_onfault) {
+		if (pcb->pcb_onfault) {
 do_onfault:
-			pcbp = &l->l_addr->u_pcb;
-			frame->tf_iioq_tail = 4 +
-				(frame->tf_iioq_head =
-				 pcbp->pcb_onfault);
-			pcbp->pcb_onfault = 0;
+			frame->tf_iioq_head = pcb->pcb_onfault;
+			frame->tf_iioq_tail = 4 + frame->tf_iioq_head;
+			pcb->pcb_onfault = 0;
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -721,7 +720,7 @@ do_onfault:
 		int i;
 
 		hppa_fpu_flush(l);
-		fpp = l->l_addr->u_pcb.pcb_fpregs;
+		fpp = pcb->pcb_fpregs;
 		pex = (uint32_t *)&fpp[1];
 		for (i = 1; i < 8 && !*pex; i++, pex++)
 			;
@@ -856,10 +855,10 @@ do_onfault:
 		/* Never call uvm_fault in interrupt context. */
 		KASSERT(hppa_intr_depth == 0);
 
-		onfault = l->l_addr->u_pcb.pcb_onfault;
-		l->l_addr->u_pcb.pcb_onfault = 0;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = 0;
 		ret = uvm_fault(map, va, vftype);
-		l->l_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
 		printf("uvm_fault(%p, %x, %d)=%d\n",
@@ -896,7 +895,7 @@ do_onfault:
 				ksi.ksi_addr = (void *)va;
 				trapsignal(l, &ksi);
 			} else {
-				if (l->l_addr->u_pcb.pcb_onfault) {
+				if (pcb->pcb_onfault) {
 					goto do_onfault;
 				}
 				panic("trap: uvm_fault(%p, %lx, %d): %d",

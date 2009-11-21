@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.18 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.19 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.18 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.19 2009/11/21 15:36:33 rmind Exp $");
 
 #define GSCDEBUG
 
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.18 2009/11/03 05:07:25 snj Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 
