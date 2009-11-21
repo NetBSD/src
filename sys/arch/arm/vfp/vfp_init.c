@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.2 2009/03/18 10:22:24 cegger Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.3 2009/11/21 20:32:28 rmind Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -162,6 +162,7 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
     int fault_code)
 {
 	struct cpu_info *ci = curcpu();
+	struct pcb *pcb;
 	struct lwp *l;
 
 	/* This shouldn't ever happen.  */
@@ -173,10 +174,11 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
 		return 1;
 
 	l = curlwp;
+	pcb = lwp_getpcb(l);
 
 	if ((l->l_md.md_flags & MDP_VFPUSED) && ci->ci_vfp.vfp_fpcurlwp == l) {
 		uint32_t fpexc;
-		
+
 		printf("VFP bounce @%x (insn=%x) lwp=%p\n", address,
 		    instruction, l);
 		read_fpexc(&fpexc);
@@ -184,10 +186,10 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
 			printf("vfp not enabled\n");
 		vfp_saveregs_lwp(l, 1);
 		printf(" fpexc = 0x%08x  fpscr = 0x%08x\n", fpexc,
-		    l->l_addr->u_pcb.pcb_vfp.vfp_fpscr);
+		    pcb->pcb_vfp.vfp_fpscr);
 		printf(" fpinst = 0x%08x fpinst2 = 0x%08x\n", 
-		    l->l_addr->u_pcb.pcb_vfp.vfp_fpinst,
-		    l->l_addr->u_pcb.pcb_vfp.vfp_fpinst2);
+		    pcb->pcb_vfp.vfp_fpinst,
+		    pcb->pcb_vfp.vfp_fpinst2);
 		return 1;
 	}
 
@@ -196,14 +198,14 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
 
 	KDASSERT(ci->ci_vfp.vfp_fpcurlwp == NULL);
 
-	KDASSERT(l->l_addr->u_pcb.pcb_vfpcpu == NULL);
+	KDASSERT(pcb->pcb_vfpcpu == NULL);
 
-//	VFPCPU_LOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_LOCK(pcb, s);
 
-	l->l_addr->u_pcb.pcb_vfpcpu = ci;
+	pcb->pcb_vfpcpu = ci;
 	ci->ci_vfp.vfp_fpcurlwp = l;
 
-//	VFPCPU_UNLOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_UNLOCK(pcb, s);
 
 	/*
 	 * Instrument VFP usage -- if a process has not previously
@@ -216,12 +218,12 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
 	if ((l->l_md.md_flags & MDP_VFPUSED) == 0) {
 		vfpevent_use.ev_count++;
 		l->l_md.md_flags |= MDP_VFPUSED;
-		l->l_addr->u_pcb.pcb_vfp.vfp_fpscr =
+		pcb->pcb_vfp.vfp_fpscr =
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
 	} else
 		vfpevent_reuse.ev_count++;
 
-	vfp_load_regs(&l->l_addr->u_pcb.pcb_vfp);
+	vfp_load_regs(&pcb->pcb_vfp);
 
 	/* Need to restart the faulted instruction.  */
 //	frame->tf_pc -= INSN_SIZE;
@@ -260,6 +262,7 @@ void
 vfp_saveregs_cpu(struct cpu_info *ci, int save)
 {
 	struct lwp *l;
+	struct pcb *pcb;
 	uint32_t fpexc;
 
 	KDASSERT(ci == curcpu());
@@ -268,10 +271,11 @@ vfp_saveregs_cpu(struct cpu_info *ci, int save)
 	if (l == NULL)
 		return;
 
+	pcb = lwp_getpcb(l);
 	read_fpexc(&fpexc);
 
 	if (save) {
-		struct vfpreg *fregs = &l->l_addr->u_pcb.pcb_vfp;
+		struct vfpreg *fregs = &pcb->pcb_vfp;
 
 		/*
 		 * Enable the VFP (so we can read the registers).  
@@ -298,11 +302,11 @@ vfp_saveregs_cpu(struct cpu_info *ci, int save)
 	}
 	/* Disable the VFP.  */
 	write_fpexc(fpexc & ~VFP_FPEXC_EN);
-//	VFPCPU_LOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_LOCK(pcb, s);
 
-        l->l_addr->u_pcb.pcb_vfpcpu = NULL;
+        pcb->pcb_vfpcpu = NULL;
         ci->ci_vfp.vfp_fpcurlwp = NULL;
-//	VFPCPU_UNLOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_UNLOCK(pcb, s);
 }
 
 void
@@ -310,14 +314,16 @@ vfp_saveregs_lwp(struct lwp *l, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
+	struct pcb *pcb;
 
-	KDASSERT(l->l_addr != NULL);
+	pcb = lwp_getpcb(l);
+	KDASSERT(pcb != NULL);
 
-//	VFPCPU_LOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_LOCK(pcb, s);
 
-	oci = l->l_addr->u_pcb.pcb_vfpcpu;
+	oci = pcb->pcb_vfpcpu;
 	if (oci == NULL) {
-		// VFPCPU_UNLOCK(&l->l_addr->u_pcb, s);
+		// VFPCPU_UNLOCK(pcb, s);
 		return;
 	}
 
@@ -329,7 +335,7 @@ vfp_saveregs_lwp(struct lwp *l, int save)
 #error MULTIPROCESSOR
 #else
 	KASSERT(ci->ci_vfp.vfp_fpcurlwp == l);
-//	VFPCPU_UNLOCK(&l->l_addr->u_pcb, s);
+//	VFPCPU_UNLOCK(pcb, s);
 	vfp_saveregs_cpu(ci, save);
 #endif
 }

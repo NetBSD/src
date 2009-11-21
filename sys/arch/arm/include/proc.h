@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 2008/08/29 18:58:22 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 2009/11/21 20:32:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -34,6 +34,8 @@
 
 #ifndef	_ARM32_PROC_H_
 #define	_ARM32_PROC_H_
+
+#include <sys/user.h> /* for sizeof(struct user) */
 
 /*
  * Machine-dependent part of the proc structure for arm.

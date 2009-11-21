@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.67 2009/11/07 07:27:41 cegger Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.68 2009/11/21 20:32:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.67 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.68 2009/11/21 20:32:17 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -255,7 +255,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 	curpcb->pcb_flags = 0;
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;

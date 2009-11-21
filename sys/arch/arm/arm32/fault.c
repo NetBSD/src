@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.72 2008/11/19 06:32:58 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.73 2009/11/21 20:32:18 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,12 +82,11 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.72 2008/11/19 06:32:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.73 2009/11/21 20:32:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 
@@ -260,7 +259,7 @@ data_abort_handler(trapframe_t *tf)
 		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);;
 
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
@@ -291,8 +290,9 @@ data_abort_handler(trapframe_t *tf)
 		return;
 	}
 
-	if (user)
-		l->l_addr->u_pcb.pcb_tf = tf;
+	if (user) {
+		pcb->pcb_tf = tf;
+	}
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
@@ -589,13 +589,14 @@ dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 static int
 dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Alignment faults are always fatal if they occur in kernel mode */
 	if (!TRAP_USERMODE(tf))
 		dab_fatal(tf, fsr, far, l, NULL);
 
 	/* pcb_onfault *must* be NULL at this point */
-	KDASSERT(l->l_addr->u_pcb.pcb_onfault == NULL);
+	KDASSERT(pcb->pcb_onfault == NULL);
 
 	/* See if the CPU state needs to be fixed up */
 	(void) data_abort_fixup(tf, fsr, far, l);
@@ -607,7 +608,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	l->l_addr->u_pcb.pcb_tf = tf;
+	pcb->pcb_tf = tf;
 
 	return (1);
 }
@@ -638,7 +639,7 @@ static int
 dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
     ksiginfo_t *ksi)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 #ifdef __XSCALE__
 	if ((fsr & FAULT_IMPRECISE) != 0 &&
@@ -714,7 +715,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	l->l_addr->u_pcb.pcb_tf = tf;
+	pcb->pcb_tf = tf;
 
 	return (1);
 }
@@ -775,6 +776,7 @@ void
 prefetch_abort_handler(trapframe_t *tf)
 {
 	struct lwp *l;
+	struct pcb *pcb;
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
 	ksiginfo_t ksi;
@@ -786,6 +788,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	uvmexp.traps++;
 
 	l = curlwp;
+	pcb = lwp_getpcb(l);
 
 	if ((user = TRAP_USERMODE(tf)) != 0)
 		LWP_CACHE_CREDS(l, l->l_proc);
@@ -810,7 +813,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)(intptr_t) tf->tf_pc;
-		l->l_addr->u_pcb.pcb_tf = tf;
+		pcb->pcb_tf = tf;
 		goto do_trapsignal;
 	default:
 		break;
@@ -822,8 +825,7 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
-	l = curlwp;
-	l->l_addr->u_pcb.pcb_tf = tf;
+	pcb->pcb_tf = tf;
 	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)", fault_pc, l, tf,
 	    0);
 
@@ -928,7 +930,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	 */
 	s = splhigh();
 	if ((curpcb_save = curpcb) == NULL)
-		curpcb = &lwp0.l_addr->u_pcb;
+		curpcb = lwp_getpcb(&lwp0);
 
 	/* Read from the test address. */
 	switch (size) {

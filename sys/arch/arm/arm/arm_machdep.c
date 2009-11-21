@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.25 2009/08/15 23:44:58 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.26 2009/11/21 20:32:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,12 +79,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.25 2009/08/15 23:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.26 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
@@ -149,9 +148,11 @@ EVCNT_ATTACH_STATIC(_lock_cas_fail);
 void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
+	struct pcb *pcb;
 	struct trapframe *tf;
 
-	tf = l->l_addr->u_pcb.pcb_tf;
+	pcb = lwp_getpcb(l);
+	tf = pcb->pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
@@ -170,13 +171,13 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 #ifdef EXEC_AOUT
 	if (pack->ep_esch->es_makecmds == exec_aout_makecmds)
-		l->l_addr->u_pcb.pcb_flags = PCB_NOALIGNFLT;
+		pcb->pcb_flags = PCB_NOALIGNFLT;
 	else
 #endif
-	l->l_addr->u_pcb.pcb_flags = 0;
+	pcb->pcb_flags = 0;
 #ifdef FPU_VFP
 	l->l_md.md_flags &= ~MDP_VFPUSED;
-	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
+	if (pcb->pcb_vfpcpu != NULL)
 		vfp_saveregs_lwp(l, 0);
 #endif
 }
