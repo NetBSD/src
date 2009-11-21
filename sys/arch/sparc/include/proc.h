@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: proc.h,v 1.16 2009/11/21 04:04:07 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _SPARC_PROC_H_
 #define _SPARC_PROC_H_
+
+#include <sys/user.h> /* for sizeof(struct user) */
 
 /*
  * Machine-dependent parts of the lwp and proc structures for SPARC.
