@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2009/11/21 15:13:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,6 +34,7 @@
 #ifndef _M68K_PROC_H
 #define _M68K_PROC_H
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*
