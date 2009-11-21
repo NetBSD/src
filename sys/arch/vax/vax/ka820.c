@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.50 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: ka820.c,v 1.51 2009/11/21 04:45:39 rmind Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.50 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.51 2009/11/21 04:45:39 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.50 2008/12/16 22:35:28 christos Exp $");
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -535,6 +534,7 @@ ka820_settime(volatile struct timeval *tvp)
 static void
 ka820_startslave(struct cpu_info *ci)
 {
+	const struct pcb *pcb = lwp_getpcb(ci->ci_data.cpu_onproc);
 	const int id = ci->ci_slotid;
 	int i;
 
@@ -548,8 +548,7 @@ ka820_startslave(struct cpu_info *ci)
 	ka820_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka820_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka820_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka820_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
-	    ci->ci_data.cpu_onproc->l_addr->u_pcb.pcb_paddr);
+	ka820_txrx(id, "D/I 10 %x\r", pcb->pcb_paddr);	/* PCB for idle proc */
 	ka820_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka820_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN));	/* Enable MM */
 	ka820_txrx(id, "S %x\r", (int)&vax_mp_tramp);	/* Start! */

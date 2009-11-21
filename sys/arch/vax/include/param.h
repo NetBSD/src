@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.56 2008/07/02 17:28:57 ad Exp $    */
+/*      $NetBSD: param.h,v 1.57 2009/11/21 04:45:39 rmind Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
 
 #define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)
-#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct user) */
+#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct pcb) */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */

@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.18 2009/01/13 23:56:13 mjf Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.19 2009/11/21 04:45:39 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2009/01/13 23:56:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2009/11/21 04:45:39 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2009/01/13 23:56:13 mjf Exp $")
 #include <sys/systm.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/kernel.h>
@@ -224,7 +223,8 @@ sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = pcb->framep;
 	struct sigaltstack *ss = &l->l_sigstk;
 	const struct sigact_sigdesc *sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];

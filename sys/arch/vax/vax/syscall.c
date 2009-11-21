@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16 2009/06/02 23:21:37 pooka Exp $     */
+/*	$NetBSD: syscall.c,v 1.17 2009/11/21 04:45:39 rmind Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2009/06/02 23:21:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2009/11/21 04:45:39 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2009/06/02 23:21:37 pooka Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/systm.h>
@@ -87,6 +86,7 @@ syscall(struct trapframe *frame)
 	struct trapframe * const exptr = frame;
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
 	const struct emul * const emul = p->p_emul;
 	const struct sysent *callp = emul->e_sysent;
 	const u_quad_t oticks = p->p_sticks;
@@ -99,7 +99,7 @@ syscall(struct trapframe *frame)
  
  	LWP_CACHE_CREDS(l, p);
 
-	l->l_addr->u_pcb.framep = frame;
+	pcb->framep = frame;
 
 	if ((unsigned long) frame->code >= emul->e_nsysent)
 		callp += emul->e_nosys;
@@ -131,7 +131,7 @@ syscall(struct trapframe *frame)
 		error = sy_call(callp, curlwp, args, rval);
 	}
 
-	KASSERT(exptr == l->l_addr->u_pcb.framep);
+	KASSERT(exptr == pcb->framep);
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
 	    "frame %p\n", syscallnames[exptr->code], exptr->pc, exptr->psl,
 	    exptr->sp, p->p_pid, error, rval[0], rval[1], exptr));
@@ -167,8 +167,9 @@ bad:
 void
 child_return(void *arg)
 {
-        struct lwp *l = arg;
+	struct lwp *l = arg;
+	struct pcb *pcb = lwp_getpcb(l);
 
-	userret(l, l->l_addr->u_pcb.framep, 0);
+	userret(l, pcb->framep, 0);
 	ktrsysret(SYS_fork, 0, 0);
 }

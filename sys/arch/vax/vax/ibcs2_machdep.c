@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.10 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.11 2009/11/21 04:45:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.10 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.11 2009/11/21 04:45:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/signalvar.h>
 #include <sys/signal.h>
 
