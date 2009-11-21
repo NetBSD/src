@@ -1,4 +1,4 @@
-.\"     $NetBSD: p2k.3,v 1.6 2009/11/21 12:28:51 pooka Exp $
+.\"     $NetBSD: p2k.3,v 1.7 2009/11/21 22:32:52 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -108,9 +108,8 @@ Do not use the puffs name cache.
 .It Dv P2K_NOCACHE
 Do not use the puffs page or name cache.
 .It Dv P2K_WIZARDUID
-If set, use the value of the variable to determine to uid of the
-caller of each operation instead of the actual caller supplied
-by
+If set, use the value of the variable to determine the UID of the
+caller of each operation instead of the actual caller supplied by
 .Xr puffs 3 .
 This can be used for example to simplify modifying an OS installations
 root image as a non-root user.
