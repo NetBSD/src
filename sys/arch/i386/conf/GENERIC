@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.950 2009/10/03 13:37:27 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.951 2009/11/21 12:09:15 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,15 +22,15 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.950 $"
+#ident 		"GENERIC-$Revision: 1.951 $"
 
 maxusers	64		# estimated number of users
 
 # For GENERIC, we build the exec formats as modules by default.
-no options	EXEC_AOUT       # exec a.out binaries
-no options	EXEC_ELF32      # exec ELF binaries
-no options	EXEC_SCRIPT     # exec #! scripts
-no options	COREDUMP
+no options 	EXEC_AOUT       # exec a.out binaries
+no options 	EXEC_ELF32      # exec ELF binaries
+no options 	EXEC_SCRIPT     # exec #! scripts
+no options 	COREDUMP
 
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
@@ -97,10 +97,10 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-no options	AIO		# POSIX asynchronous I/O, built as a module
-no options	MQUEUE		# POSIX messsage queues, built as a module
+no options 	AIO		# POSIX asynchronous I/O, built as a module
+no options 	MQUEUE		# POSIX messsage queues, built as a module
 
-options		MODULAR		# new style module framework
+options 	MODULAR		# new style module framework
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -305,8 +305,8 @@ options 	WSDISPLAY_SCROLLSUPPORT
 #options 	SPLASHSCREEN_PROGRESS
 
 # Keylock support
-#options	KEYLOCK
-#options	secmodel_keylock	# Requires options KEYLOCK
+#options 	KEYLOCK
+#options 	secmodel_keylock	# Requires options KEYLOCK
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -811,7 +811,7 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
-jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+jmide* 		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
 ahcisata* 	at jmide?
 mvsata*		at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
@@ -847,7 +847,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
-options	ATADEBUG
+options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -1491,8 +1491,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-options		MEMORY_DISK_HOOKS	# enable root ramdisk
-options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
+options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
