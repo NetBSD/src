@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.177 2009/10/26 19:16:58 cegger Exp $	 */
+/* $NetBSD: machdep.c,v 1.178 2009/11/21 04:45:39 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2009/11/21 04:45:39 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2009/10/26 19:16:58 cegger Exp $")
 #include <sys/systm.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/kernel.h>
@@ -329,8 +328,8 @@ consinit(void)
 	}
 #endif
 #ifdef DEBUG
-	if (sizeof(struct user) > REDZONEADDR)
-		panic("struct user inside red zone");
+	if (sizeof(struct pcb) > REDZONEADDR)
+		panic("struct pcb inside red zone");
 #endif
 }
 
@@ -462,7 +461,8 @@ dumpsys(void)
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = pcb->framep;
 
 	memcpy(&regs->r0, &tf->r0, 12 * sizeof(int));
 	regs->ap = tf->ap;
@@ -476,7 +476,8 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = pcb->framep;
 
 	memcpy(&tf->r0, &regs->r0, 12 * sizeof(int));
 	tf->ap = regs->ap;
@@ -491,10 +492,11 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 	struct	trapframe *tf;
 	void	*ptr;
 
-	ptr = (char *) l->l_addr->u_pcb.framep;
+	ptr = (char *)pcb->framep;
 	tf = ptr;
 
 	tf->pc = (unsigned) addr;
@@ -505,10 +507,11 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_sstep(struct lwp *l, int sstep)
 {
-	void	       *ptr;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
+	void *ptr;
 
-	ptr = l->l_addr->u_pcb.framep;
+	ptr = pcb->framep;
 	tf = ptr;
 
 	if (sstep)
@@ -637,7 +640,8 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = pcb->framep;
 	uint32_t saframe[11], *fp = saframe;
 
 	sp = (void *)((uintptr_t)sp - sizeof(saframe));
@@ -682,7 +686,8 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
-	const struct trapframe *tf = l->l_addr->u_pcb.framep;
+	const struct pcb *pcb = lwp_getpcb(l);
+	const struct trapframe *tf = pcb->framep;
 	__greg_t *gr = mcp->__gregs;
 
 	gr[_REG_R0] = tf->r0;
@@ -708,7 +713,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = pcb->framep;
 	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) == 0)

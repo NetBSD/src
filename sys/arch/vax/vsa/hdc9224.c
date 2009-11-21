@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.49 2009/10/26 19:16:58 cegger Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.50 2009/11/21 04:45:39 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.49 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.50 2009/11/21 04:45:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.49 2009/10/26 19:16:58 cegger Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
