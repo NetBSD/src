@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.64 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.65 2009/11/21 19:59:51 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.64 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.65 2009/11/21 19:59:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				    sizeof(l), (char *)&l);
 			}
 			(*pr)("lid %d ", l.l_lid);
-			pcb = lwp_getpcb(&l);
 #ifdef _KERNEL
 			if (l.l_proc == curproc &&
 			    (lwp_t *)lwpaddr == curlwp) {
@@ -462,6 +461,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			} else
 #endif
 			{
+#ifdef _KERNEL
+				pcb = lwp_getpcb(&l);
+#else
+				pcb = &l.l_addr->u_pcb;
+#endif
 				db_read_bytes((db_addr_t)&pcb->pcb_ebp,
 				    sizeof(frame), (char *)&frame);
 				db_read_bytes((db_addr_t)(frame + 1),
