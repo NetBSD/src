@@ -76,7 +76,6 @@
 #include <arm/cpuconf.h>
 
 #ifndef _LOCORE
-#include <sys/user.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #ifdef FPU_VFP
@@ -181,9 +180,9 @@ extern int cpu_do_powersave;
  * LWP_PC: Find out the program counter for the given lwp.
  */
 #ifdef __PROG32
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
+#define LWP_PC(l)	(((struct pcb *)lwp_getpcb(l))->pcb_tf->tf_pc)
 #else
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
+#define LWP_PC(l)	(((struct pcb *)lwp_getpcb(l))->pcb_tf->tf_r15 & R15_PC)
 #endif
 
 /*

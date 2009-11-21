@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.14 2009/03/18 16:00:08 cegger Exp $ */
+/* $NetBSD: start.c,v 1.15 2009/11/21 20:32:17 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,12 +31,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.14 2009/03/18 16:00:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.15 2009/11/21 20:32:17 rmind Exp $");
 
 #include "opt_modular.h"
 
 #include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 

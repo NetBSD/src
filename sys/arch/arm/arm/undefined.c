@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.37 2009/03/15 22:23:16 cegger Exp $	*/
+/*	$NetBSD: undefined.c,v 1.38 2009/11/21 20:32:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,14 +54,13 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.37 2009/03/15 22:23:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.38 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
 #ifdef FAST_FPE

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2009/05/12 06:31:37 cegger Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11 2009/11/21 20:32:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,12 +32,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2009/05/12 06:31:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <arm/undefined.h>
 #include <machine/fpureg.h>
 #include <machine/pcb.h>

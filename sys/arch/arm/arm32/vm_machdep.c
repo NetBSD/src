@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2009/10/21 21:11:59 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2009/11/21 20:32:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2009/10/21 21:11:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2009/11/21 20:32:25 rmind Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2009/10/21 21:11:59 rmind Exp $"
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/pmc.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
@@ -105,7 +104,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
@@ -132,8 +131,11 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -154,18 +156,18 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Copy the floating point state from the VFP to the PCB
 	 * if this process has state stored there.
 	 */
-	if (l1->l_addr->u_pcb.pcb_vfpcpu != NULL)
+	if (pcb1->pcb_vfpcpu != NULL)
 		vfp_saveregs_lwp(l1, 1);
 #endif
 
 	/* Copy the pcb */
-	*pcb = l1->l_addr->u_pcb;
+	*pcb2 = *pcb1;
 
 	/* 
 	 * Set up the stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
+	pcb2->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the kernel stack with a known pattern */
@@ -175,12 +177,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("l1->procaddr=%p l1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    l1->l_addr, &l1->l_addr->u_pcb, l1->l_lid,
-		    l1->l_proc->p_vmspace->vm_map.pmap);
-		printf("l2->procaddr=%p l2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    l2->l_addr, &l2->l_addr->u_pcb, l2->l_lid,
-		    l2->l_proc->p_vmspace->vm_map.pmap);
+		printf("l1: pcb=%p pid=%d pmap=%p\n",
+		    pcb1, l1->l_lid, l1->l_proc->p_vmspace->vm_map.pmap);
+		printf("l2: pcb=%p pid=%d pmap=%p\n",
+		    pcb2, l2->l_lid, l2->l_proc->p_vmspace->vm_map.pmap);
 	}
 #endif	/* PMAP_DEBUG */
 
@@ -190,9 +190,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	arm_fpe_copycontext(FP_CONTEXT(l1), FP_CONTEXT(l2));
 #endif	/* ARMFPE */
 
-	l2->l_addr->u_pcb.pcb_tf = tf =
-	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
-	*tf = *l1->l_addr->u_pcb.pcb_tf;
+	tf = (struct trapframe *)pcb2->pcb_un.un_32.pcb32_sp - 1;
+	pcb2->pcb_tf = tf;
+	*tf = *pcb1->pcb_tf;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -214,6 +214,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+#ifdef FPU_VFP
+	struct pcb *pcb;
+#endif
+
 #ifdef ARMFPE
 	/* Abort any active FP operation and deactivate the context */
 	arm_fpe_core_abort(FP_CONTEXT(l), NULL, NULL);
@@ -221,7 +225,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 #endif	/* ARMFPE */
 
 #ifdef FPU_VFP
-	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
+	pcb = lwp_getpcb(l);
+	if (pcb->pcb_vfpcpu != NULL)
 		vfp_saveregs_lwp(l, 0);
 #endif
 

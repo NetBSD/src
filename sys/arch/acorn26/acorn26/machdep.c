@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.31 2009/08/11 17:04:14 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.32 2009/11/21 20:32:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2009/08/11 17:04:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -168,7 +168,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 
 #if 0
 	/* Test exception handlers */

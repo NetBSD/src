@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.17 2008/12/19 15:20:10 njoly Exp $	*/
+/*	$NetBSD: ast.c,v 1.18 2009/11/21 20:32:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,13 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.17 2008/12/19 15:20:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.18 2009/11/21 20:32:17 rmind Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -78,7 +77,10 @@ userret(struct lwp *l)
 	mi_userret(l);
 
 #ifdef __PROG32
-	KASSERT((l->l_addr->u_pcb.pcb_tf->tf_spsr & IF32_bits) == 0);
+	{
+		struct pcb *pcb = lwp_getpcb(l);
+		KASSERT((pcb->pcb_tf->tf_spsr & IF32_bits) == 0);
+	}
 #endif
 }
 
@@ -115,7 +117,7 @@ ast(struct trapframe *tf)
 	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
 	if (l == NULL)
 		panic("ast: no curlwp!");
-	if (&l->l_addr->u_pcb == NULL)
+	if (lwp_getpcb(l) == NULL)
 		panic("ast: no pcb!");
 #endif	
 
