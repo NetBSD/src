@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.733 2009/11/15 20:16:41 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.734 2009/11/21 03:29:14 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -740,6 +740,17 @@ Responsible:	christos
 License:	BSD (3-clause)
 Notes:
 Next import will need $ Id removal..
+
+Package:	openresolv
+Version:	3.3.3
+Current Vers:	3.3.3
+Maintainer:	roy
+Archive Site:	ftp://roy.marples.name/pub/openresolv/
+Home Page:	http://roy.marples.name/projects/openresolv/
+Mailing List: 	openresolv-discuss@marples.name
+License:	BSD (2-clause)
+Notes:
+Please submit all changes to the author.
 
 Package:	HPN-SSH
 Version:	5.2p1 13 v6
