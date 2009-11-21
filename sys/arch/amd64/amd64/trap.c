@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2009/07/29 18:47:15 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2009/07/29 18:47:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2009/11/21 03:11:01 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2009/07/29 18:47:15 rmind Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
@@ -205,7 +204,7 @@ trap(struct trapframe *frame)
 	bool pfail;
 
 	if (__predict_true(l != NULL)) {
-		pcb = &l->l_addr->u_pcb;
+		pcb = lwp_getpcb(l);
 		p = l->l_proc;
 	} else {
 		/*

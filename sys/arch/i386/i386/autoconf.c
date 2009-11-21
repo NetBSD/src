@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94 2009/04/07 18:24:23 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.95 2009/11/21 03:11:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2009/04/07 18:24:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2009/04/07 18:24:23 dyoung Exp $")
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -103,6 +102,7 @@ extern void platform_init(void);
 void
 cpu_configure(void)
 {
+	struct pcb *pcb;
 
 	startrtclock();
 
@@ -129,7 +129,8 @@ cpu_configure(void)
 	ioapic_enable();
 #endif
 	/* resync cr0 after FPU configuration */
-	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0() & ~CR0_TS;
+	pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_lwps();

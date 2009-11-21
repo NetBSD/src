@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22 2009/11/07 07:27:40 cegger Exp $	*/
+/*	$NetBSD: gdt.c,v 1.23 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22 2009/11/07 07:27:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.23 2009/11/21 03:11:01 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22 2009/11/07 07:27:40 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
-#include <sys/user.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.71 2009/10/21 21:12:00 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.72 2009/11/21 03:11:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.71 2009/10/21 21:12:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.72 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.71 2009/10/21 21:12:00 rmind E
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
@@ -87,8 +86,9 @@ process_frame(struct lwp *l)
 static inline union savefpu *
 process_fpframe(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
-	return (&l->l_addr->u_pcb.pcb_savefpu);
+	return &pcb->pcb_savefpu;
 }
 
 static int
@@ -402,8 +402,11 @@ process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		struct pcb *pcb = lwp_getpcb(l);
+
+		if (pcb->pcb_fpcpu != NULL) {
 			npxsave_lwp(l, true);
+		}
 #endif
 	} else {
 		/*
@@ -438,9 +441,12 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
+		struct pcb *pcb = lwp_getpcb(l);
+
 		/* If we were using the FPU, drop it. */
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		if (pcb->pcb_fpcpu != NULL) {
 			npxsave_lwp(l, false);
+		}
 #endif
 	} else {
 		l->l_md.md_flags |= MDL_USEDFPU;

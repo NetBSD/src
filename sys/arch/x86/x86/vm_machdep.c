@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2009/11/21 03:11:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2009/11/21 03:11:02 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2009/11/07 07:27:49 cegger Exp $"
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
@@ -142,8 +141,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 
-	pcb1 = &l1->l_addr->u_pcb;
-	pcb2 = &l2->l_addr->u_pcb;
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	/*
 	 * If parent LWP was using FPU, then we have to save the FPU h/w
@@ -228,7 +227,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
@@ -258,9 +257,10 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+	if (pcb->pcb_fpcpu != NULL) {
 		fpusave_lwp(l, false);
 	}
 

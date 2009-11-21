@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.673 2009/11/07 07:27:44 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.674 2009/11/21 03:11:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.673 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.674 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.673 2009/11/07 07:27:44 cegger Exp $")
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -527,7 +526,7 @@ i386_proc0_tss_ldt_init(void)
 	struct pcb *pcb;
 
 	l = &lwp0;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
@@ -559,9 +558,10 @@ void
 i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb;
 	struct physdev_op physop;
 
+	pcb = lwp_getpcb(l);
 	ci = curcpu();
 	if (ci->ci_fpused) {
 		HYPERVISOR_fpu_taskswitch();
@@ -1001,13 +1001,14 @@ void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		npxsave_lwp(l, false);
+	}
 #endif
 
 #ifdef USER_LDT
@@ -1288,6 +1289,7 @@ void
 init386(paddr_t first_avail)
 {
 	extern void consinit(void);
+	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
@@ -1313,15 +1315,16 @@ init386(paddr_t first_avail)
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
+	pcb = (void *)proc0paddr;
 
 #ifdef XEN
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
-	lwp0.l_addr->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
+	pcb->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
-	XENPRINTK(("proc0paddr %p first_avail %p\n",
-	    proc0paddr, (void *)(long)first_avail));
+	XENPRINTK(("proc0 pcb %p first_avail %p\n",
+	    pcb, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif
@@ -1368,8 +1371,7 @@ init386(paddr_t first_avail)
 	 * Saving SSE registers won't work if the save area isn't
 	 * 16-byte aligned.
 	 */
-	if (offsetof(struct user, u_pcb.pcb_savefpu) & 0xf)
-		panic("init386: pcb_savefpu not 16-byte aligned");
+	KASSERT(offsetof(struct pcb, pcb_savefpu) & 0xf);
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
@@ -1746,28 +1748,30 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
+		struct pcb *pcb = lwp_getpcb(l);
 #if NNPX > 0
+
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		if (l->l_addr->u_pcb.pcb_fpcpu) {
+		if (pcb->pcb_fpcpu) {
 			npxsave_lwp(l, true);
 		}
 #endif
 		if (i386_use_fxsave) {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-			    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+			    &pcb->pcb_savefpu.sv_xmm,
 			    sizeof (mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm));
 			*flags |= _UC_FXSAVE;
 		} else {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-			    &l->l_addr->u_pcb.pcb_savefpu.sv_87,
+			    &pcb->pcb_savefpu.sv_87,
 			    sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
 		}
 #if 0
 		/* Apparently nothing ever touches this. */
-		ucp->mcp.mc_fp.fp_emcsts = l->l_addr->u_pcb.pcb_saveemc;
+		ucp->mcp.mc_fp.fp_emcsts = pcb->pcb_saveemc;
 #endif
 		*flags |= _UC_FPU;
 	}
@@ -1778,6 +1782,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
@@ -1835,8 +1840,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/*
 	 * If we were using the FPU, forget that we were.
 	 */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		npxsave_lwp(l, false);
+	}
 #endif
 
 	/* Restore floating point register context, if any. */
@@ -1844,24 +1850,24 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
-					&l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+					&pcb->pcb_savefpu.sv_xmm,
 					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-					sizeof (&l->l_addr->u_pcb.pcb_savefpu.sv_xmm));
+					sizeof (&pcb->pcb_savefpu.sv_xmm));
 			} else {
 				/* This is a weird corner case */
 				process_xmm_to_s87((struct savexmm *)
 				    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-				    &l->l_addr->u_pcb.pcb_savefpu.sv_87);
+				    &pcb->pcb_savefpu.sv_87);
 			}
 		} else {
 			if (i386_use_fxsave) {
 				process_s87_to_xmm((struct save87 *)
 				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-				    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+				    &pcb->pcb_savefpu.sv_xmm);
 			} else {
-				memcpy(&l->l_addr->u_pcb.pcb_savefpu.sv_87,
+				memcpy(&pcb->pcb_savefpu.sv_87,
 				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
+				    sizeof (pcb->pcb_savefpu.sv_87));
 			}
 		}
 		l->l_md.md_flags |= MDL_USEDFPU;
