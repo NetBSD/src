@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.16 2009/08/11 17:04:15 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.17 2009/11/21 08:41:38 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
+ * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
  * All rights reserved.
  *
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -44,7 +44,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -60,9 +60,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Genetec G4250EBX 
+ * Machine dependant functions for kernel setup for Genetec G4250EBX
  * evaluation board.
- * 
+ *
  * Based on iq80310_machhdep.c
  */
 /*
@@ -483,10 +483,10 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	/*
-	 * U-Boot doesn't use the virtual memory. 
+	 * U-Boot doesn't use the virtual memory.
 	 *
-	 * Physical Address Range     Description 
-	 * -----------------------    ---------------------------------- 
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
 	 * 0x00000000 - 0x00ffffff    flash Memory   (16MB or 4MB)
 	 * 0x40000000 - 0x480fffff    Processor Registers
 	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB)
@@ -644,13 +644,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	/*
@@ -1024,7 +1024,10 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
+#if defined(FFUARTCONSOLE) || defined(STUARTCONSOLE) || \
+    defined(BTUARTCONSOLE) || defined(HWUARTCONSOLE)
 	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+#endif
 
 	if (consinit_called != 0)
 		return;
@@ -1037,10 +1040,10 @@ consinit(void)
 #ifdef KGDB
 	if (0 == strcmp(kgdb_devname, "ffuart")){
 		/* port is reserved for kgdb */
-	} else 
+	} else
 #endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
+		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
 			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
 			    ckenreg|CKEN_FFUART);
