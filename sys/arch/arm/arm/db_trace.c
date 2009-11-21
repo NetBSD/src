@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.20 2009/10/21 21:11:59 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.21 2009/11/21 20:32:17 rmind Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,10 +31,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.20 2009/10/21 21:11:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/db_machdep.h>
@@ -108,7 +107,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
+			struct pcb *pcb;
 			struct lwp *l;
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -125,11 +124,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			u = l->l_addr;
+			pcb = lwp_getpcb(l);
 #ifdef acorn26
-			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
+			frame = (uint32_t *)(pcb->pcb_sf->sf_r11);
 #else
-			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
+			frame = (uint32_t *)(pcb->pcb_un.un_32.pcb32_r11);
 #endif
 			(*pr)("at %p\n", frame);
 		} else

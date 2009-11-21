@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.15 2009/03/18 10:22:23 cegger Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,11 +43,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.15 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/acct.h>
 #include <uvm/uvm_extern.h>

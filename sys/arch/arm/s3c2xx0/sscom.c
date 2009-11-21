@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
+/*	$NetBSD: sscom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
