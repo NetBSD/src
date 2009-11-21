@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2008/11/19 18:36:00 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.64 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2008/11/19 18:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2008/11/19 18:36:00 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
@@ -193,7 +192,7 @@ sh3_setup_uarea(struct lwp *l)
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 #ifdef SH3
 	/*
 	 * Accessing context store space must not cause exceptions.
@@ -231,8 +230,8 @@ sh3_setup_uarea(struct lwp *l)
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
-	memset((char *)fptop - PAGE_SIZE + sizeof(struct user), 0x5a,
-	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)fptop - PAGE_SIZE + sizeof(struct pcb), 0x5a,
+	    PAGE_SIZE - sizeof(struct pcb));
 	memset((char *)spbase, 0xa5, (USPACE - PAGE_SIZE));
 	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,12 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2009/11/21 17:40:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/pool.h>

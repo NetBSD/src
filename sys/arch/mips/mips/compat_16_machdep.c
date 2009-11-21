@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.13 2008/11/21 06:57:35 he Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.14 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13 2008/11/21 06:57:35 he Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14 2009/11/21 17:40:28 rmind Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13 2008/11/21 06:57:35 he Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
@@ -88,6 +87,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct pcb *pcb;
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
 	struct sigcontext *scp = getframe(l, sig, &onstack), ksc;
@@ -116,16 +116,17 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 
 	/* Save the FP state, if necessary, then copy it. */
+	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
 	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
 		if (l == fpcurlwp)
 			savefpregs(l);
-		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
+		*(struct fpreg *)ksc.sc_fpregs = pcb->pcb_fpregs;
 	}
 #else
-	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
+	*(struct fpreg *)ksc.sc_fpregs = pcb->pcb_fpregs;
 #endif
 
 	/* Save signal stack. */
@@ -226,6 +227,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	struct sigcontext *scp, ksc;
 	struct frame *f;
 	struct proc *p = l->l_proc;
+	struct pcb *pcb;
 	int error;
 
 	/*
@@ -251,16 +253,18 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	f->f_regs[_R_MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
+
+	pcb = lwp_getpcb(l);
 #ifndef	SOFTFLOAT
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		if (l == fpcurlwp)
 			fpcurlwp = NULL;
-		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+		pcb->pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	}
 #else
-	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+	pcb->pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 #endif
 
 	mutex_enter(p->p_lock);

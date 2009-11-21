@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.39 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.40 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.39 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.40 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_altivec.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.39 2008/10/15 06:51:18 wrstude
 #include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
 #include <sys/cpu.h>
 
 int cpu_timebase;
@@ -67,6 +66,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
@@ -104,7 +104,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #ifdef ALTIVEC
 	tf->tf_xtra[TF_VRSAVE] = 0;
 #endif
-	l->l_addr->u_pcb.pcb_flags = PSL_FE_DFLT;
+	pcb->pcb_flags = PSL_FE_DFLT;
 }
 
 /*

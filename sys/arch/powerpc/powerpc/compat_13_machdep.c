@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.15 2008/11/21 20:17:51 he Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.16 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2008/11/21 20:17:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16 2009/11/21 17:40:29 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2008/11/21 20:17:51 he Ex
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mount.h>  
 #include <sys/syscallargs.h>
 

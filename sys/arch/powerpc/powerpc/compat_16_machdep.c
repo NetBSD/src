@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12 2008/11/21 20:21:12 he Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.13 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12 2008/11/21 20:21:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13 2009/11/21 17:40:29 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12 2008/11/21 20:21:12 he Ex
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
@@ -65,6 +64,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigcontext *fp, frame;
 	struct trapframe *tf;
 	struct utrapframe *utf = &frame.sc_frame;
+	struct pcb *pcb;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
@@ -93,11 +93,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	utf->ctr  = tf->ctr;
 	utf->srr0 = tf->srr0;
 	utf->srr1 = tf->srr1 & PSL_USERSRR1;
+
+	pcb = lwp_getpcb(l);
 #ifdef PPC_HAVE_FPU
-	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & (PCB_FE0|PCB_FE1);
+	utf->srr1 |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef ALTIVEC
-	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
+	utf->srr1 |= pcb->pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
 #endif
 #ifdef PPC_OEA
 	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
@@ -172,7 +174,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
  * System call to cleanup state after a signal handler returns.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l,
+    const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -180,6 +183,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	struct proc *p = l->l_proc;
 	struct sigcontext sc;
 	struct trapframe *tf;
+	struct pcb *pcb;
 	struct utrapframe * const utf = &sc.sc_frame;
 	int error;
 
@@ -208,9 +212,11 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->ctr  = utf->ctr;
 	tf->srr0 = utf->srr0;
 	tf->srr1 = utf->srr1;
+
+	pcb = lwp_getpcb(l);
 #ifdef PPC_HAVE_FPU
-	l->l_addr->u_pcb.pcb_flags &= ~(PCB_FE0|PCB_FE1);
-	l->l_addr->u_pcb.pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
+	pcb->pcb_flags &= ~(PCB_FE0|PCB_FE1);
+	pcb->pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef PPC_OEA
 	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;

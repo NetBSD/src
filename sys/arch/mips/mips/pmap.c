@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2009/11/21 17:40:28 rmind Exp $");
 
 /*
  *	Manages physical address maps.
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2009/11/07 07:27:45 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>

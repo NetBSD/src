@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.5 2008/06/11 23:55:20 cegger Exp $ */
+/* $NetBSD: uart.c,v 1.6 2009/11/21 17:40:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.5 2008/06/11 23:55:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.6 2009/11/21 17:40:27 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.5 2008/06/11 23:55:20 cegger Exp $");
 #include <sys/device.h>
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>

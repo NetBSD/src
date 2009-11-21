@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2009/11/21 17:40:29 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2009/11/21 17:40:29 rmind Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2009/11/07 07:27:46 cegger Exp $");
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for evcnt */
@@ -2357,7 +2356,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2008/02/15 02:34:46 uwe Exp $	*/
+/*	$NetBSD: proc.h,v 1.14 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -39,6 +39,7 @@
  * Machine-dependent part of the proc structure for sh3.
  */
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/param.h>
 
 /* Kernel stack PTE */

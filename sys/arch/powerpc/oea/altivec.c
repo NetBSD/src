@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: altivec.c,v 1.15 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.15 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 
@@ -60,7 +59,7 @@ enable_vec(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = trapframe(l);
 	struct vreg *vr = &pcb->pcb_vr;
 	register_t msr;
@@ -144,7 +143,7 @@ save_vec_cpu(void)
 	l = ci->ci_veclwp;
 	if (l == NULL)
 		goto out;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	vr = &pcb->pcb_vr;
 	tf = trapframe(l);
 
@@ -202,7 +201,7 @@ save_vec_cpu(void)
 static void
 mp_save_vec_lwp(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct cpu_info *veccpu;
 	int i;
 
@@ -239,7 +238,7 @@ mp_save_vec_lwp(struct lwp *l)
 void
 save_vec_lwp(struct lwp *l, int discard)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct cpu_info * const ci = curcpu();
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.126 2009/10/21 21:12:01 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.127 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.126 2009/10/21 21:12:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.127 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.126 2009/10/21 21:12:01 rmind Exp $
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/sa.h>
@@ -126,8 +125,11 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct frame *f;
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
@@ -148,7 +150,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
-	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
+	memcpy(pcb2, pcb1, sizeof(struct pcb));
 	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
 	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
 
@@ -172,14 +174,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif
 
-	pcb = &l2->l_addr->u_pcb;
-	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
-	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
-	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
-	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
+	pcb2->pcb_context[0] = (intptr_t)func;		/* S0 */
+	pcb2->pcb_context[1] = (intptr_t)arg;		/* S1 */
+	pcb2->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
+	pcb2->pcb_context[8] = (intptr_t)f;		/* SP */
+	pcb2->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
 #ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
+	pcb2->pcb_ppl = 0;	/* machine dependent interrupt mask */
 #endif
 }
 
@@ -196,7 +197,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	f = (struct frame *)((char *)l->l_addr + USPACE) - 1;
 	KASSERT(l->l_md.md_regs == f);
 
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */

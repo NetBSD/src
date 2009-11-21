@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.53 2009/03/18 10:22:34 cegger Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.54 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2009/03/18 10:22:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2009/03/18 10:22:34 cegger Exp $")
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -1114,7 +1113,7 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 
 	/* Initialize secondary cpu's initial lwp to its idlelwp. */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
+	ci->ci_curpcb = lwp_getpcb(ci->ci_curlwp);
 	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
 
 	cpu_hatch_data = h;
@@ -1182,6 +1181,7 @@ cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
 	struct cpu_info * const ci = h->ci;
+	struct pcb *pcb;
 	u_int msr;
 	int i;
 
@@ -1262,7 +1262,8 @@ cpu_hatch(void)
 	ci->ci_cpl = 0;
 
 	mtmsr(mfmsr() | PSL_EE);
-	return ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_sp;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
+	return pcb->pcb_sp;
 }
 
 void

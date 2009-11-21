@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.79 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.80 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2009/11/21 17:40:29 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2009/11/07 07:27:46 cegger Exp $
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
@@ -88,27 +87,26 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct callframe *cf;
 	struct switchframe *sf;
 	char *stktop1, *stktop2;
-	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct pcb *pcb1, *pcb2;
 
-#ifdef DIAGNOSTIC
-	/*
-	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
-	 */
-	if (l1 != curlwp && l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
+	/* If p1 != curlwp && p1 == &proc0, we're creating a kernel thread. */
+	KASSERT(l1 == curlwp || l1 == &lwp0);
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 #ifdef PPC_HAVE_FPU
-	if (l1->l_addr->u_pcb.pcb_fpcpu)
+	if (pcb1->pcb_fpcpu)
 		save_fpu_lwp(l1, FPU_SAVE);
 #endif
 #ifdef ALTIVEC
-	if (l1->l_addr->u_pcb.pcb_veccpu)
+	if (pcb1->pcb_veccpu)
 		save_vec_lwp(l1, ALTIVEC_SAVE);
 #endif
-	*pcb = l1->l_addr->u_pcb;
+	/* Copy PCB. */
+	*pcb2 = *pcb1;
 
-	pcb->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
+	pcb2->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
 
 	l2->l_md.md_flags = 0;
 
@@ -162,16 +160,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #ifndef PPC_IBM4XX
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
-	pcb->pcb_sp = (register_t)stktop2;
-	pcb->pcb_kmapsr = 0;
-	pcb->pcb_umapsr = 0;
+	pcb2->pcb_sp = (register_t)stktop2;
+	pcb2->pcb_kmapsr = 0;
+	pcb2->pcb_umapsr = 0;
 }
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 #endif
 
 #ifdef PPC_HAVE_FPU
@@ -305,7 +303,7 @@ void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	extern void setfunc_trampoline(void);
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.23 2009/08/20 01:33:39 cliff Exp $	*/
+/*	$NetBSD: proc.h,v 1.24 2009/11/21 17:40:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 #define _MIPS_PROC_H_
 
 #include <sys/param.h>
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <mips/vmparam.h>
 
 struct lwp;

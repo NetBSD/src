@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.53 2008/12/19 15:20:10 njoly Exp $	*/
+/*	$NetBSD: exception.c,v 1.54 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.53 2008/12/19 15:20:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.54 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.53 2008/12/19 15:20:10 njoly Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 

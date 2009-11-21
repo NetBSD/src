@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.91 2009/10/21 21:12:00 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.92 2009/11/21 17:40:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
 #define	curcpu()		(curlwp->l_cpu)
-#define	curpcb			((struct pcb *)curlwp->l_addr)
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
 #define	cpu_number()		(0)
 #define	cpu_proc_fork(p1, p2)

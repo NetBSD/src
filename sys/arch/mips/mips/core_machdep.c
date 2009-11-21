@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.2 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/11/21 17:40:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:59 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 
@@ -105,6 +104,7 @@ int
 cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	int error;
+	struct pcb *pcb;
 	struct coreseg cseg;
 	struct cpustate {
 		struct frame frame;
@@ -122,8 +122,9 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
+	pcb = lwp_getpcb(l);
 	cpustate.frame = *(struct frame *)l->l_md.md_regs;
-	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
+	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
