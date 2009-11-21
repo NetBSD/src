@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.12 2006/10/08 17:09:32 riz Exp $
+# $NetBSD: dhclient-script,v 1.13 2009/11/21 07:53:59 roy Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -8,34 +8,39 @@ RESOLV=/etc/resolv.conf
 SIGNATURE="# Created by dhclient from"
 INTSIG="$SIGNATURE $interface"
 
+echo_resolv_conf() {
+	echo "$INTSIG"
+	echo search $new_domain_name
+	for nameserver in $new_domain_name_servers; do
+		echo nameserver $nameserver
+	done
+}
+
 make_resolv_conf() {
 	if [ ! -z "$new_domain_name_servers" ]; then
-		if [ -f $RESOLV ]
-		then
-			while read line; do
-				case $line in
-				"$SIGNATURE"*)
-					;;
-				*)
-					mv $RESOLV $RESOLV.save;;
-				esac
-				break
-			done < $RESOLV
+		if [ -x /sbin/resolvconf ]; then
+			echo_resolv_conf | /sbin/resolvconf -a $interface
+		else
+			if [ -f $RESOLV ]; then
+				while read line; do
+					case $line in
+					"$SIGNATURE"*)
+						;;
+					*)
+						mv $RESOLV $RESOLV.save;;
+					esac
+					break
+				done < $RESOLV
+			fi
+			echo_resolv_conf > $RESOLV
 		fi
-		echo "$INTSIG" > $RESOLV
-		if [ ! -z "$new_domain_name" ]
-		then
-			echo search $new_domain_name >> $RESOLV
-		fi
-		for nameserver in $new_domain_name_servers; do
-			echo nameserver $nameserver
-		done >> $RESOLV
 	fi
 }
 
 restore_resolv_conf() {
-	if [ -f $RESOLV.save -a -f $RESOLV ]
-	then
+	if [ -x /sbin/resolvconf ]; then
+		/sbin/resolvconf -d $interface
+	elif [ -f $RESOLV.save -a -f $RESOLV ]; then
 		while read line; do
 			case $line in
 			"$INTSIG"*)
