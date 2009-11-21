@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1001 2009/11/18 22:57:38 bouyer Exp $
+$NetBSD: pcidevs,v 1.1002 2009/11/21 22:58:17 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4150,6 +4150,8 @@ product VIATECH VT3351_HB_7351	0x7351	VT3351 Host Bridge
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
+product VIATECH CX700		0x8324	CX700 PCI-LPC Bridge
+product VIATECH VX800		0x8353	VX800/VX820 PCI-LPC Bridge
 product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 (Apollo MVP4) CPU-AGP Bridge
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
