@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.201 2009/11/07 07:27:41 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202 2009/11/21 20:32:18 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/cdefs.h>
 #include <sys/cpu.h>
@@ -212,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2009/11/21 20:32:18 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 

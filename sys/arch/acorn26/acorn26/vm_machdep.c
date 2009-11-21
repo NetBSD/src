@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.22 2009/10/21 21:11:58 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,14 +64,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2009/10/21 21:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
-#include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/mutex.h>
 
@@ -98,16 +97,15 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.22 2009/10/21 21:11:58 rmind Exp $"
 /*
  * Note:
  * 
- * p->p_addr points to a page containing the user structure
- * (see <sys/user.h>) and the kernel stack.  The user structure has to be
- * at the start of the area -- we start the kernel stack from the end.
+ * The pcb structure has to be* at the start of the area -- we start the
+ * kernel stack from the end.
  */
 
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct switchframe *sf;
 	char *stacktop;
@@ -115,9 +113,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #if 0
 	printf("cpu_lwp_fork: %p -> %p\n", p1, p2);
 #endif
-	pcb = &l2->l_addr->u_pcb;
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
+
 	/* Copy the pcb */
-	*pcb = l1->l_addr->u_pcb;
+	*pcb2 = *pcb1;
 
 	/* pmap_activate(l2); XXX Other ports do.  Why?  */
 
@@ -126,14 +126,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf = (struct trapframe *)stacktop - 1;
 	sf = (struct switchframe *)tf - 1;
 	/* Duplicate old process's trapframe (if it had one) */
-	if (l1->l_addr->u_pcb.pcb_tf == NULL)
+	if (pcb1->pcb_tf == NULL)
 		memset(tf, 0, sizeof(*tf));
 	else
-		*tf = *l1->l_addr->u_pcb.pcb_tf;
+		*tf = *pcb1->pcb_tf;
 	/* If specified, give the child a different stack. */
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
-	l2->l_addr->u_pcb.pcb_tf = tf;
+	pcb2->pcb_tf = tf;
 	/* Fabricate a new switchframe */
 	memset(sf, 0, sizeof(*sf));
 
@@ -143,7 +143,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
