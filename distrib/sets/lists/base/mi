@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.842 2009/11/14 01:56:21 tnozaki Exp $
+# $NetBSD: mi,v 1.843 2009/11/21 03:24:30 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -171,6 +171,11 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
+./libexec/resolvconf				base-resolvconf-root
+./libexec/resolvconf/libc			base-resolvconf-root
+./libexec/resolvconf/dnsmasq			base-resolvconf-root
+./libexec/resolvconf/named			base-resolvconf-root
+./libexec/resolvconf/unbound			base-resolvconf-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
 ./rescue					base-sys-root
@@ -275,6 +280,7 @@
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root
 ./sbin/reboot					base-sysutil-root
+./sbin/resolvconf				base-resolvconf-root
 ./sbin/resize_lfs				base-sysutil-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root

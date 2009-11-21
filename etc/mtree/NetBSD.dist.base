@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.5 2009/11/02 10:15:45 plunky Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.6 2009/11/21 03:24:30 roy Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -67,6 +67,7 @@
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
+./libexec/resolvconf
 ./mnt
 ./rescue
 ./root
