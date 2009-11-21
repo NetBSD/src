@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.36 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37 2009/11/21 05:54:04 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2009/11/21 05:54:04 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -512,13 +512,14 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
+		struct pcb *pcb = lwp_getpcb(l);
 
 		aprint_verbose_dev(sc->sc_dev, "idle lwp at %p, idle sp at 0x%p\n",
 		    l,
 #ifdef i386
-		    (void *)l->l_addr->u_pcb.pcb_esp
+		    (void *)pcb->pcb_esp
 #else
-		    (void *)l->l_addr->u_pcb.pcb_rsp
+		    (void *)pcb->pcb_rsp
 #endif
 		);
 		
@@ -596,7 +597,7 @@ static void
 cpu_init_idle_lwp(struct cpu_info *ci)
 {
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	pcb->pcb_cr0 = rcr0();
 }
@@ -692,8 +693,9 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s, i;
+	struct pcb *pcb;
 	uint32_t blacklist_features;
+	int s, i;
 
 #ifdef __x86_64__
         cpu_init_msrs(ci, true);
@@ -720,9 +722,12 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
+	pcb = lwp_getpcb(curlwp);
 	lcr3(pmap_kernel()->pm_pdirpa);
-	curlwp->l_addr->u_pcb.pcb_cr3 = pmap_kernel()->pm_pdirpa;
-	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
+	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
+	lcr0(pcb->pcb_cr0);
+
 	cpu_init_idt();
 	gdt_init_cpu(ci);
 	lapic_enable();
