@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.269 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.270 2009/11/21 21:57:47 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.269 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.270 2009/11/21 21:57:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1914,9 +1914,9 @@ raidinit(RF_Raid_t *raidPtr)
 
 	rs->sc_dev = config_attach_pseudo(cf);
 
-	if (rs->sc_dev==NULL) {
+	if (rs->sc_dev == NULL) {
 		printf("raid%d: config_attach_pseudo failed\n",
-		       raidPtr->raidid);
+		    raidPtr->raidid);
 		rs->sc_flags &= ~RAIDF_INITED;
 		free(cf, M_RAIDFRAME);
 		return;
