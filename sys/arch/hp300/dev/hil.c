@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.82 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: hil.c,v 1.83 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.82 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.83 2009/11/21 15:36:33 rmind Exp $");
 
 #include "ite.h"
 #include "rnd.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.82 2008/06/13 09:41:15 cegger Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
