@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.15 2007/11/06 02:52:53 simonb Exp $	*/
+/*	$NetBSD: userret.h,v 1.16 2009/11/21 17:40:29 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@ userret(struct lwp *l, struct trapframe *frame)
 	struct cpu_info * const ci = curcpu();
 #endif
 #ifdef PPC_HAVE_FPU
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 #endif
 
 	/* Invoke MI userret code */

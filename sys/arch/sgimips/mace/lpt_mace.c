@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mace.c,v 1.7 2008/03/07 17:15:51 cube Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.8 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.7 2008/03/07 17:15:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.8 2009/11/21 17:40:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.7 2008/03/07 17:15:51 cube Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

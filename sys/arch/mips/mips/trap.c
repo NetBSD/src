@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.219 2009/08/18 18:06:53 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.220 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.219 2009/08/18 18:06:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.220 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.219 2009/08/18 18:06:53 thorpej Exp $");
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/ktrace.h>
 #include <sys/sa.h>
@@ -202,6 +201,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	int type;
 	struct lwp *l = curlwp;
 	struct proc *p = curproc;
+	struct pcb *pcb;
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 	struct frame *fp;
@@ -347,10 +347,15 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL) {
 			goto dopanic;
+		}
+		pcb = lwp_getpcb(l);
+		if (pcb->pcb_onfault == NULL) {
+			goto dopanic;
+		}
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
+		if (pcb->pcb_onfault == (void *)fswintrberr) {
 			frame->tf_regs[TF_EPC] = (int)fswintrberr;
 			return; /* KERN */
 		}
@@ -442,9 +447,14 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
 	copyfault:
-		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL) {
 			goto dopanic;
-		frame->tf_regs[TF_EPC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
+		}
+		pcb = lwp_getpcb(l);
+		if (pcb->pcb_onfault == NULL) {
+			goto dopanic;
+		}
+		frame->tf_regs[TF_EPC] = (intptr_t)pcb->pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -631,9 +641,11 @@ mips_singlestep(struct lwp *l)
 		return EFAULT;
 	}
 	pc = (vaddr_t)f->f_regs[_R_PC];
-	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
-		va = MachEmulateBranch(f, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
-	else
+	if (fuiword((void *)pc) != 0) {
+		struct pcb *pcb = lwp_getpcb(l);
+		/* not a NOP instruction */
+		va = MachEmulateBranch(f, pc, PCB_FSR(pcb), 1);
+	} else
 		va = pc + sizeof(int);
 
 	/*

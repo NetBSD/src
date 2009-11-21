@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64 2008/05/23 17:01:32 tsutsui Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.65 2009/11/21 17:40:28 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2008/05/23 17:01:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2009/11/21 17:40:28 rmind Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2008/05/23 17:01:32 tsutsui Ex
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
@@ -715,7 +714,12 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	vaddr_t ra;
 	unsigned fpucsr;
 
-	fpucsr = curlwp ? PCB_FSR(&curlwp->l_addr->u_pcb) : 0;
+	if (curlwp) {
+		struct pcb *pcb = lwp_getpcb(curlwp);
+		fpucsr = PCB_FSR(pcb);
+	} else {
+		fpucsr = 0;
+	}
 	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
 	return ra;
 }
