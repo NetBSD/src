@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1174 2009/11/13 09:51:13 mishka Exp $
+# $NetBSD: mi,v 1.1175 2009/11/21 03:24:30 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1850,6 +1850,7 @@
 ./usr/share/man/cat5/relocated.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/remote.0			man-sys-catman		.cat
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman		.cat
+./usr/share/man/cat5/resolvconf.conf.0		man-resolvconf-catman		.cat
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman	.cat
 ./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
 ./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
@@ -2495,6 +2496,7 @@
 ./usr/share/man/cat8/repquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/rescue.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/resize_lfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/resolvconf.0		man-resolvconf-catman	.cat
 ./usr/share/man/cat8/restore.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/revnetgroup.0		man-nis-catman		yp,.cat
 ./usr/share/man/cat8/revoke.0			man-sysutil-catman	.cat
@@ -4386,6 +4388,7 @@
 ./usr/share/man/html5/relocated.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/remote.html		man-sys-htmlman		html
 ./usr/share/man/html5/resolv.conf.html		man-net-htmlman		html
+./usr/share/man/html5/resolvconf.conf.html	man-resolvconf-htmlman		html
 ./usr/share/man/html5/rhosts.html		man-netutil-htmlman	html
 ./usr/share/man/html5/rndc.conf.html		man-bind-htmlman	html
 ./usr/share/man/html5/route.conf.html		man-sys-htmlman		html
@@ -4875,6 +4878,7 @@
 ./usr/share/man/html8/repquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/rescue.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/resize_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/resolvconf.html		man-resolvconf-htmlman	html
 ./usr/share/man/html8/restore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/revnetgroup.html		man-nis-htmlman		yp,html
 ./usr/share/man/html8/revoke.html		man-sysutil-htmlman	html
@@ -6886,6 +6890,7 @@
 ./usr/share/man/man5/relocated.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/remote.5			man-sys-man		.man
 ./usr/share/man/man5/resolv.conf.5		man-net-man		.man
+./usr/share/man/man5/resolvconf.conf.5		man-resolvconf-man	.man
 ./usr/share/man/man5/rhosts.5			man-netutil-man		.man
 ./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
 ./usr/share/man/man5/route.conf.5		man-sys-man		.man
@@ -7531,6 +7536,7 @@
 ./usr/share/man/man8/repquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/rescue.8			man-sysutil-man		.man
 ./usr/share/man/man8/resize_lfs.8		man-sysutil-man		.man
+./usr/share/man/man8/resolvconf.8		man-resolvconf-man	.man
 ./usr/share/man/man8/restore.8			man-sysutil-man		.man
 ./usr/share/man/man8/revnetgroup.8		man-nis-man		yp,.man
 ./usr/share/man/man8/revoke.8			man-sysutil-man		.man
