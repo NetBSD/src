@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.39 2009/11/10 17:37:15 he Exp $	*/
+/*	$NetBSD: dvma.c,v 1.40 2009/11/21 04:16:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.39 2009/11/10 17:37:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.40 2009/11/21 04:16:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.39 2009/11/10 17:37:15 he Exp $");
 #include <sys/extent.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 

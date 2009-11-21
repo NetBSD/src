@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.100 2009/05/29 22:06:56 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,14 +49,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2009/05/29 22:06:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -187,8 +186,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 	     void *stack, size_t stacksize,
 	     void (*func)(void *), void *arg)
 {
-	struct pcb *opcb = &l1->l_addr->u_pcb;
-	struct pcb *npcb = &l2->l_addr->u_pcb;
+	struct pcb *opcb = lwp_getpcb(l1);
+	struct pcb *npcb = lwp_getpcb(l2);
 	struct trapframe *tf2;
 	struct rwindow *rp;
 
@@ -328,7 +327,7 @@ cpu_lwp_free2(struct lwp *l)
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	/*struct trapframe *tf = l->l_md.md_tf;*/
 	struct rwindow *rp;
 

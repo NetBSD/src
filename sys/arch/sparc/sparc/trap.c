@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.178 2008/12/17 19:16:56 cegger Exp $ */
+/*	$NetBSD: trap.c,v 1.179 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2008/12/17 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2008/12/17 19:16:56 cegger Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -308,7 +307,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
 #ifdef FPU_DEBUG
@@ -712,7 +711,7 @@ badtrap:
 int
 rwindow_save(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct rwindow *rw = &pcb->pcb_rw[0];
 	int i;
 
@@ -754,9 +753,10 @@ rwindow_save(struct lwp *l)
 void
 kill_user_windows(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	write_user_windows();
-	l->l_addr->u_pcb.pcb_nsaved = 0;
+	pcb->pcb_nsaved = 0;
 }
 
 /*
@@ -777,6 +777,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 #if defined(SUN4) || defined(SUN4C)
 	struct proc *p;
 	struct lwp *l;
+	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -836,6 +837,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
+
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 		        snprintb(bits, sizeof(bits), SER_BITS, ser);
@@ -847,7 +849,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -934,8 +937,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = l->l_addr ?
-			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
+			pcb = lwp_getpcb(l);
+			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SER_BITS, ser);
@@ -985,6 +988,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	int pc, psr;
 	struct proc *p;
 	struct lwp *l;
+	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -1165,7 +1169,8 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -1219,8 +1224,8 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = l->l_addr ?
-			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
+			pcb = lwp_getpcb(l);
+			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);

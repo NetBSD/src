@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.49 2008/07/17 14:43:38 cegger Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.50 2009/11/21 04:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.49 2008/07/17 14:43:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.50 2009/11/21 04:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.49 2008/07/17 14:43:38 cegger Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

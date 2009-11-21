@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.89 2009/08/18 00:15:37 macallan Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.90 2009/11/21 04:16:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.89 2009/08/18 00:15:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.90 2009/11/21 04:16:52 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.89 2009/08/18 00:15:37 macall
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/buf.h>

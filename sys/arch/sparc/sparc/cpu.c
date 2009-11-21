@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.218 2009/06/11 14:42:47 tsutsui Exp $ */
+/*	$NetBSD: cpu.c,v 1.219 2009/11/21 04:16:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.218 2009/06/11 14:42:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.219 2009/11/21 04:16:51 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -428,7 +428,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 	 * The %wim register will be initialized in cpu_hatch().
 	 */
 	cpi->ci_curlwp = cpi->ci_data.cpu_idlelwp;
-	cpi->curpcb = (struct pcb *)cpi->ci_curlwp->l_addr;
+	cpi->curpcb = lwp_getpcb(cpi->ci_curlwp);
 	cpi->curpcb->pcb_wim = 1;
 
 	/* for now use the fixed virtual addresses setup in autoconf.c */

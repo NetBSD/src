@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2009/11/07 07:27:47 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2009/11/21 04:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2009/11/07 07:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2009/11/07 07:27:47 cegger Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.42 2009/10/21 21:12:03 rmind Exp $ */
+/*	$NetBSD: db_trace.c,v 1.43 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2009/10/21 21:12:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2009/11/21 04:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <machine/db_machdep.h>
 #include <machine/ctlreg.h>
 
@@ -85,7 +84,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (trace_thread) {
 			struct proc *p;
 			struct lwp *l;
-			struct user *u;
+			struct pcb *pcb;
 			if (lwpaddr) {
 				l = (struct lwp *)(uintptr_t)addr;
 				p = l->l_proc;
@@ -101,8 +100,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			u = l->l_addr;
-			frame = (vaddr_t)u->u_pcb.pcb_sp;
+			pcb = lwp_getpcb(l);
+			frame = (vaddr_t)pcb->pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;

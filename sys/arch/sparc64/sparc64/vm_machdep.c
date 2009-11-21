@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.90 2009/11/07 07:27:47 cegger Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.91 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,14 +50,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2009/11/07 07:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -161,7 +160,7 @@ void setfunc_trampoline(void);
 inline void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct pcb *npcb = lwp_getpcb(l);
 	struct rwindow *rp;
 
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
@@ -194,8 +193,8 @@ void lwp_trampoline(void);
 void
 cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size_t stacksize, void (*func)(void *), void *arg)
 {
-	struct pcb *opcb = &l1->l_addr->u_pcb;
-	struct pcb *npcb = &l2->l_addr->u_pcb;
+	struct pcb *opcb = lwp_getpcb(l1);
+	struct pcb *npcb = lwp_getpcb(l2);
 	struct trapframe *tf2;
 	struct rwindow *rp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.60 2009/09/20 16:18:21 tsutsui Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.61 2009/11/21 04:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.60 2009/09/20 16:18:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.61 2009/11/21 04:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.60 2009/09/20 16:18:21 tsutsui Exp
 #include <sys/errno.h>
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
@@ -680,7 +679,7 @@ vmeintr4m(void *arg)
 
 	s = splhigh();
 
-	xpcb = &curlwp->l_addr->u_pcb;
+	xpcb = lwp_getpcb(curlwp);
 	saveonfault = (u_long)xpcb->pcb_onfault;
 	vec = fkbyte(addr, xpcb);
 	xpcb->pcb_onfault = (void *)saveonfault;

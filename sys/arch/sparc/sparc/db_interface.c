@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.84 2009/05/18 01:36:11 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.85 2009/11/21 04:16:51 rmind Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.84 2009/05/18 01:36:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2009/11/21 04:16:51 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.84 2009/05/18 01:36:11 mrg Exp $"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
@@ -380,7 +379,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("profile timer: %lld sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_nsec);
-	db_printf("pcb: %p\n", &l->l_addr->u_pcb);
+	db_printf("pcb: %p\n", lwp_getpcb(l));
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2009/11/07 07:27:47 cegger Exp $ */
+/*	$NetBSD: machdep.c,v 1.248 2009/11/21 04:16:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2009/11/07 07:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2009/11/07 07:27:47 cegger Exp $")
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/buf.h>

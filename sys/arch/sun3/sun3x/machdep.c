@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2009/11/10 17:37:15 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2009/11/21 04:16:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2009/11/10 17:37:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2009/11/21 04:16:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2009/11/10 17:37:15 he Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
@@ -294,6 +293,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;
@@ -315,9 +315,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 
 	l->l_md.md_flags = 0;
 }

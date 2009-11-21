@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.83 2009/11/07 07:27:47 cegger Exp $ */
+/*	$NetBSD: cpu.c,v 1.84 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2009/11/07 07:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -244,7 +244,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #ifdef MULTIPROCESSOR
 	else {
 		mi_cpu_attach(ci);
-		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
+		ci->ci_cpcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
 		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_MISC,

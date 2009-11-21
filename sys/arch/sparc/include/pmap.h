@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.87 2009/11/07 07:27:46 cegger Exp $ */
+/*	$NetBSD: pmap.h,v 1.88 2009/11/21 04:16:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -267,7 +267,6 @@ vaddr_t		pmap_growkernel(vaddr_t);
 #endif
 void		pmap_redzone(void);
 void		kvm_uncache(char *, int);
-struct user;
 int		mmu_pagein(struct pmap *pm, vaddr_t, int);
 void		pmap_writetext(unsigned char *, int);
 void		pmap_globalize_boot_cpuinfo(struct cpu_info *);

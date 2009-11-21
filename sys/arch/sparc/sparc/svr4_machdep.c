@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.69 2009/05/16 17:01:15 cegger Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.70 2009/11/21 04:16:52 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.69 2009/05/16 17:01:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.70 2009/11/21 04:16:52 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.69 2009/05/16 17:01:15 cegger Exp
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>

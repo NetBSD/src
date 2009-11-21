@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.158 2009/10/17 08:50:49 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.159 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2009/10/17 08:50:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2009/10/17 08:50:49 nakayama Exp $");
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -547,7 +546,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
 	sig = 0;
@@ -706,8 +705,9 @@ badtrap:
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault) {
-			tf->tf_pc = (vaddr_t)l->l_addr->u_pcb.pcb_onfault;
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault) {
+			tf->tf_pc = (vaddr_t)pcb->pcb_onfault;
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
 		}
@@ -882,7 +882,7 @@ badtrap:
 int
 rwindow_save(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct rwindow64 *rw = &pcb->pcb_rw[0];
 	uint64_t rwdest;
 	int i, j;
@@ -974,9 +974,10 @@ rwindow_save(struct lwp *l)
 void
 kill_user_windows(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	write_user_windows();
-	l->l_addr->u_pcb.pcb_nsaved = 0;
+	pcb->pcb_nsaved = 0;
 }
 
 /*
@@ -990,6 +991,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	uint64_t tstate;
 	struct lwp *l;
 	struct proc *p;
+	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv;
@@ -1084,7 +1086,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -1141,10 +1144,11 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	onfault = (vaddr_t)l->l_addr->u_pcb.pcb_onfault;
-	l->l_addr->u_pcb.pcb_onfault = NULL;
+	pcb = lwp_getpcb(l);
+	onfault = (vaddr_t)pcb->pcb_onfault;
+	pcb->pcb_onfault = NULL;
 	rv = uvm_fault(&vm->vm_map, va, access_type);
-	l->l_addr->u_pcb.pcb_onfault = (void *)onfault;
+	pcb->pcb_onfault = (void *)onfault;
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
@@ -1177,8 +1181,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		 */
 		if (tstate & TSTATE_PRIV) {
 kfault:
-			onfault = l->l_addr ?
-			    (long)l->l_addr->u_pcb.pcb_onfault : 0;
+			pcb = lwp_getpcb(l);
+			onfault = pcb ? (long)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				extern int trap_trace_dis;
 
@@ -1269,6 +1273,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	u_long pc;
 	uint64_t tstate;
 	struct lwp *l;
+	struct pcb *pcb;
 	vaddr_t onfault;
 	u_quad_t sticks;
 	ksiginfo_t ksi;
@@ -1323,7 +1328,8 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
 
-	onfault = l->l_addr ? (long)l->l_addr->u_pcb.pcb_onfault : 0;
+	pcb = lwp_getpcb(l);
+	onfault = pcb ? (long)pcb->pcb_onfault : 0;
 	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		type, sfsr, sfva, afsr, afva, tf);
 
