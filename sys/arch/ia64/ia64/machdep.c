@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2009/08/23 16:15:45 ahoka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2009/11/21 15:36:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -741,7 +741,8 @@ ia64_init(void)
 	 * sane) context as the initial context for new threads that are
 	 * forked from us.
 	 */
-	if (savectx(&lwp0.l_addr->u_pcb)) panic("savectx failed");
+	if (savectx(lwp_getpcb(&lwp0)))
+		panic("savectx failed");
 
 	/*
 	 * Initialize debuggers, and break into them if appropriate.

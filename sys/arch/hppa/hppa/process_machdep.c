@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2009/11/03 05:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2009/11/21 15:36:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -110,10 +109,11 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 	hppa_fpu_flush(l);
-	memcpy(fpregs, l->l_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
-		sizeof(*fpregs));
+	memcpy(fpregs, pcb->pcb_fpregs, sizeof(*fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&pcb->pcb_fpregs, sizeof(*fpregs));
 	return 0;
 }
 
@@ -174,19 +174,19 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 	hppa_fpu_flush(l);
-	memcpy(l->l_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
-		sizeof(*fpregs));
+	memcpy(pcb->pcb_fpregs, fpregs, sizeof(*fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&pcb->pcb_fpregs, sizeof(*fpregs));
 	return 0;
 }
 
 int
 process_set_pc(struct lwp *l, void *addr)
 {
+
 	l->l_md.md_regs->tf_iioq_head = (register_t)addr | HPPA_PC_PRIV_USER;
 	l->l_md.md_regs->tf_iioq_tail = l->l_md.md_regs->tf_iioq_head + 4;
-
 	return 0;
 }
-

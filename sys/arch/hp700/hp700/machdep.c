@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2009/11/07 07:27:43 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2009/11/21 15:36:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2009/11/07 07:27:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2009/11/21 15:36:33 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1835,11 +1835,12 @@ dumpsys(void)
 int
 kcopy(const void *from, void *to, size_t size)
 {
-	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
+	struct pcb *pcb = lwp_getpcb(curlwp);
+	u_int oldh = pcb->pcb_onfault;
 
-	curlwp->l_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
+	pcb->pcb_onfault = (u_int)&copy_on_fault;
 	memcpy(to, from, size);
-	curlwp->l_addr->u_pcb.pcb_onfault = oldh;
+	pcb->pcb_onfault = oldh;
 
 	return 0;
 }
@@ -1854,7 +1855,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct trapframe *tf = l->l_md.md_regs;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pm_space;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
