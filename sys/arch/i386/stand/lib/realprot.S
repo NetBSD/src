@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.8 2009/02/16 22:39:30 jmcneill Exp $	*/
+/*	$NetBSD: realprot.S,v 1.9 2009/11/21 11:54:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -184,33 +184,31 @@ ENTRY(real_to_prot)
 /*
  * EPIA_HACK
  *
- * VIA C3 processors don't seem to correctly switch back to executing
- * 16 bit code after the switch to real mode and subsequent jump.
+ * VIA C3 processors (Eden, Samuel 2) don't seem to correctly switch back to
+ * executing 16 bit code after the switch to real mode and subsequent jump.
  *
  * It is speculated that the CPU is prefetching and decoding branch
  * targets and not invalidating this buffer on the long jump.
+ * Further investication indicates that the caching of return addresses
+ * is most likely the problem.
  *
- * The precise reason for this hack working is still unknown, but
- * it was determined experimentally on two theories:
- * 1) Flush the pipeline with NOPs
- * 2) call/ret after the return from prot_to_real seems to improve matters,
- *    perhaps by making more work for the branch prediction/prefetch logic.
+ * Previous versions just used some extra call/ret and a few NOPs, these
+ * only helped a bit, but booting compressed kernels would still fail.
  *
- * Neither of these individually are effective, but this combination is
- * determined experimentally to be sufficient.
+ * Trashing the return address stack (by doing 'call' without matched 'ret')
+ * Seems to fix things completely. 1 iteration isn't enough, 16 is plenty.
  */
 ENTRY(prot_to_real)
-#ifdef EPIA_HACK
-	.code32
-	call prot_to_real_main
-	.code16
-	call epia_nops
-	retl
-
-prot_to_real_main:
-#endif
 	.code32
 	pushl	%eax
+#ifdef EPIA_HACK
+	push	%ecx
+	push	$0x10
+	pop	%ecx
+1:	call	trash_return_cache
+	loop	1b
+	pop	%ecx
+#endif
 
 	/*
 	 * Load the segment registers while still in protected mode.
@@ -260,10 +258,6 @@ xreal:
 	jne	1f
 	pop	%bp
 
-#ifdef EPIA_HACK
-	call epia_nops
-#endif
-
 	sti
 	popl	%eax
 	retl
@@ -283,15 +277,10 @@ dump_eax_buff:
 	. = . + 16
 
 #ifdef EPIA_HACK
-epia_nops:
-	.code16
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	ret
+trash_return_cache:
+	.code32
+	pop	%eax
+	jmp	*%eax
 #endif
 
 /* vtophys(void *)
