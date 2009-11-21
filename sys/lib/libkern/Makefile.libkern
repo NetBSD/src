@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.6 2009/11/21 13:30:23 uebayasi Exp $
+#	$NetBSD: Makefile.libkern,v 1.7 2009/11/21 13:37:18 uebayasi Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -42,12 +42,12 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .include "$M/Makefile.inc"
 .endif
 
-.if (${MACHINE_ARCH} != "alpha") || \
-    (${MACHINE_ARCH} != "x86_64") || \
-    (${MACHINE_ARCH} != "mips64eb") || \
-    (${MACHINE_ARCH} != "mips64el") || \
-    (${MACHINE_ARCH} != "powerpc64") || \
-    (${MACHINE_ARCH} != "sparc64")
+.if (${MACHINE_ARCH} != "alpha") && \
+    (${MACHINE_ARCH} != "mips64eb") && \
+    (${MACHINE_ARCH} != "mips64el") && \
+    (${MACHINE_ARCH} != "powerpc64") && \
+    (${MACHINE_ARCH} != "sparc64") && \
+    (${MACHINE_ARCH} != "x86_64")
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
