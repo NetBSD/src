@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.17 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: proc.h,v 1.18 2009/11/21 05:35:41 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,6 +30,7 @@
 #ifndef _ALPHA_PROC_H
 #define _ALPHA_PROC_H
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*

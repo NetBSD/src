@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.250 2009/11/09 04:31:03 mhitch Exp $ */
+/* $NetBSD: pmap.c,v 1.251 2009/11/21 05:35:40 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2009/11/09 04:31:03 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2009/11/21 05:35:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2009/11/09 04:31:03 mhitch Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/shm.h>
 #include <sys/atomic.h>
@@ -584,12 +583,12 @@ do {									\
  */
 #define	PMAP_ACTIVATE(pmap, l, cpu_id)					\
 do {									\
+	struct pcb *pcb = lwp_getpcb(l);				\
 	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);				\
 									\
-	(l)->l_addr->u_pcb.pcb_hw.apcb_ptbr =				\
+	pcb->pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
-	(l)->l_addr->u_pcb.pcb_hw.apcb_asn = 				\
-	    (pmap)->pm_asni[(cpu_id)].pma_asn;				\
+	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[(cpu_id)].pma_asn;	\
 									\
 	if ((l) == curlwp) {						\
 		/*							\
@@ -749,6 +748,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
 	vsize_t bufsz;
+	struct pcb *pcb;
 	int i;
 
 #ifdef DEBUG
@@ -949,10 +949,10 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Set up proc0's PCB such that the ptbr points to the right place
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
-	lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr =
+	pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
-	lwp0.l_addr->u_pcb.pcb_hw.apcb_asn =
-	    pmap_kernel()->pm_asni[cpu_number()].pma_asn;
+	pcb->pcb_hw.apcb_asn = pmap_kernel()->pm_asni[cpu_number()].pma_asn;
 
 	/*
 	 * Mark the kernel pmap `active' on this processor.
