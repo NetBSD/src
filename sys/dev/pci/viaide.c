@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.63 2009/11/20 20:16:30 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.64 2009/11/21 23:44:25 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.63 2009/11/20 20:16:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.64 2009/11/21 23:44:25 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,12 +513,8 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("VT8237A ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
-		case PCI_PRODUCT_VIATECH_CX700_IDE:
+		case PCI_PRODUCT_VIATECH_CX700:
 			aprint_normal("CX700 ATA133 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			break;
-		case PCI_PRODUCT_VIATECH_CX700M2_IDE:
-			aprint_normal("CX700M2/VX700 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8251:
@@ -932,7 +928,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 		wdr->sata_iot = sc->sc_ba5_st;
 		wdr->sata_baseioh = sc->sc_ba5_sh;
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << satareg_shift) + 0x0, 1,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x0, 4,
 		    &wdr->sata_status) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_status regs\n",
@@ -940,7 +936,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 			continue;
 		}
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << satareg_shift) + 0x4, 1,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x4, 4,
 		    &wdr->sata_error) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_error regs\n",
@@ -948,7 +944,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 			continue;
 		}
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << satareg_shift) + 0x8, 1,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x8, 4,
 		    &wdr->sata_control) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_control regs\n",
@@ -1028,7 +1024,7 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 		wdr->sata_iot = sc->sc_ba5_st;
 		wdr->sata_baseioh = sc->sc_ba5_sh;
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << 6) + 0x0, 1,
+		    (wdc_cp->ch_channel << 6) + 0x0, 4,
 		    &wdr->sata_status) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_status regs\n",
@@ -1036,7 +1032,7 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		}
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << 6) + 0x4, 1,
+		    (wdc_cp->ch_channel << 6) + 0x4, 4,
 		    &wdr->sata_error) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_error regs\n",
@@ -1044,7 +1040,7 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		}
 		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
-		    (wdc_cp->ch_channel << 6) + 0x8, 1,
+		    (wdc_cp->ch_channel << 6) + 0x8, 4,
 		    &wdr->sata_control) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map channel %d sata_control regs\n",
@@ -1053,7 +1049,7 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 
-		if (pci_mapreg_map(pa, (0x10 + (4 * (channel))),
+		if (pci_mapreg_map(pa, (PCI_MAPREG_START + (4 * (channel))),
 		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
 		    NULL, &cmdsize) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
