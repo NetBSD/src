@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.13 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.14 2009/11/21 04:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.13 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.14 2009/11/21 04:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.13 2008/07/06 13:29:50 tsutsui Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

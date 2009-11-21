@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.34 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: locore2.c,v 1.35 2009/11/21 04:16:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.34 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.35 2009/11/21 04:16:53 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.34 2008/04/28 20:23:38 martin Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
 

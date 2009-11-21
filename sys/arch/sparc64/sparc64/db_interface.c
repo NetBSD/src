@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.117 2009/03/18 10:22:37 cegger Exp $ */
+/*	$NetBSD: db_interface.c,v 1.118 2009/11/21 04:16:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,14 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.117 2009/03/18 10:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.118 2009/11/21 04:16:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
@@ -831,7 +830,7 @@ db_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("lwp %p: lid %d\n", l, l->l_lid);
 	db_printf("wchan:%p pri:%d epri:%d tf:%p\n",
 		  l->l_wchan, l->l_priority, lwp_eprio(l), l->l_md.md_tf);
-	db_printf("pcb: %p fpstate: %p\n", &l->l_addr->u_pcb, 
+	db_printf("pcb: %p fpstate: %p\n", lwp_getpcb(l),
 		l->l_md.md_fpstate);
 	return;
 }
@@ -867,6 +866,7 @@ db_ctx_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p;
 	struct lwp *l;
+	struct pcb *pcb;
 
 	/* XXX LOCKING XXX */
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -876,11 +876,12 @@ db_ctx_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 				p->p_pid, p->p_vmspace->vm_map.pmap,
 				pmap_ctx(p->p_vmspace->vm_map.pmap));
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+				pcb = lwp_getpcb(l);
 				db_printf("\tlwp %p: lid:%d tf:%p fpstate %p "
 					"lastcall:%s\n",
 					l, l->l_lid, l->l_md.md_tf, l->l_md.md_fpstate,
-					(l->l_addr->u_pcb.lastcall)?
-					l->l_addr->u_pcb.lastcall : "Null");
+					(pcb->lastcall) ?
+					pcb->lastcall : "Null");
 			}
 		}
 	}
