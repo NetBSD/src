@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.141 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.142 2009/11/21 17:45:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.141 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.142 2009/11/21 17:45:02 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -329,6 +329,20 @@ uvm_uarea_free(vaddr_t uaddr)
 {
 
 	pool_cache_put(uvm_uarea_cache, (void *)uaddr);
+}
+
+vaddr_t
+uvm_lwp_getuarea(lwp_t *l)
+{
+
+	return USER_TO_UAREA(l->l_addr);
+}
+
+void
+uvm_lwp_setuarea(lwp_t *l, vaddr_t addr)
+{
+
+	l->l_addr = UAREA_TO_USER(addr);
 }
 
 /*
