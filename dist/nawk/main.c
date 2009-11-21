@@ -101,9 +101,8 @@ static void fpecatch(int n
 int main(int argc, char *argv[])
 {
 	const char *fs = NULL;
-	struct lconv *lconv;
 
-	setlocale(LC_CTYPE, "");
+	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	cmdname = argv[0];
 	if (argc == 1) {
@@ -112,11 +111,6 @@ int main(int argc, char *argv[])
 		  cmdname);
 		exit(1);
 	}
-
-	(void) setlocale(LC_ALL, "");
-	lconv = localeconv();
-	lconv->decimal_point = ".";
-
 
 #ifdef SA_SIGINFO
 	{
