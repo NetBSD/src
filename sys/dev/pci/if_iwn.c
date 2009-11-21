@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.33 2009/09/11 01:28:20 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.34 2009/11/21 14:51:04 njoly Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.33 2009/09/11 01:28:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.34 2009/11/21 14:51:04 njoly Exp $");
 
 #include "bpfilter.h"
 
@@ -389,7 +389,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%2x)\n", devinfo, revision);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -398,7 +398,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
 	if (error == 0) {
-		printf(": PCIe capability structure not found!\n");
+		aprint_error_dev(self, "PCIe capability structure not found!\n");
 		return;
 	}
 
@@ -435,7 +435,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* Install interrupt handler. */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(sc->sc_pct, ih);
@@ -514,7 +514,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/* Clear pending interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 
-	printf(", MIMO %dT%dR, %.4s, address %s\n", sc->ntxchains,
+	aprint_normal_dev(self, "MIMO %dT%dR, %.4s, address %s\n", sc->ntxchains,
 	    sc->nrxchains, sc->eeprom_domain, ether_sprintf(ic->ic_myaddr));
 
 	/* Initialization firmware has not been loaded yet. */
