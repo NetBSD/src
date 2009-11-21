@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: cpu.c,v 1.5 2009/11/21 05:54:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2009/10/21 16:06:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2009/11/21 05:54:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -145,8 +145,8 @@ lwp_t *
 cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 {
 	extern int errno;
-	struct pcb *oldpcb = (struct pcb *)(oldlwp ? oldlwp->l_addr : NULL);
-	struct pcb *newpcb = (struct pcb *)newlwp->l_addr;
+	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
 
 #ifdef CPU_DEBUG
@@ -243,7 +243,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_lwp_free2(struct lwp *l)
 {
-	struct pcb *pcb = (struct pcb *)l->l_addr;
+	struct pcb *pcb = lwp_getpcb(l);
 
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_free2\n");
@@ -273,7 +273,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	extern int errno;
-	struct pcb *pcb = (struct pcb *)l2->l_addr;
+	struct pcb *pcb = lwp_getpcb(l2);
 
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",

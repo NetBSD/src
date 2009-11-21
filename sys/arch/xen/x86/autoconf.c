@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2009/11/06 23:09:10 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2009/11/21 05:54:04 rmind Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/11/06 23:09:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2009/11/21 05:54:04 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -117,6 +117,7 @@ int x86_ndisks;
 void
 cpu_configure(void)
 {
+	struct pcb *pcb;
 
 	startrtclock();
 
@@ -140,7 +141,8 @@ cpu_configure(void)
 #endif
 
 	/* resync cr0 after FPU configuration */
-	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
+	pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_lwps();
