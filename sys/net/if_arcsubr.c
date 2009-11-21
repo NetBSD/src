@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.59 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.59.22.1 2009/11/21 19:56:35 snj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.59 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.59.22.1 2009/11/21 19:56:35 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -197,8 +197,12 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		arph = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
 			adst = arcbroadcastaddr;
-		else
-			adst = *ar_tha(arph);
+		else {
+			uint8_t *tha = ar_tha(arph);
+			if (tha == NULL)
+				return 0;
+			adst = *tha;
+		}
 
 		arph->ar_hrd = htons(ARPHRD_ARCNET);
 
