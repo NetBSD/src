@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.120 2008/10/15 06:51:17 wrstuden Exp $ */
+/* $NetBSD: trap.c,v 1.121 2009/11/21 05:35:41 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,14 +93,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2009/11/21 05:35:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
@@ -396,6 +395,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			vaddr_t va;
 			struct vmspace *vm = NULL;
 			struct vm_map *map;
+			struct pcb *pcb;
 			int rv;
 
 			switch (a2) {
@@ -442,12 +442,12 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				 * [fs]uswintr, in case another fault happens
 				 * when they are running.
 				 */
-				if (l->l_addr->u_pcb.pcb_onfault ==
-					(unsigned long)fswintrberr &&
-				    l->l_addr->u_pcb.pcb_accessaddr == a0) {
+				pcb = lwp_getpcb(l);
+				if (pcb->pcb_onfault == (u_long)fswintrberr &&
+				    pcb->pcb_accessaddr == a0) {
 					framep->tf_regs[FRAME_PC] =
-					    l->l_addr->u_pcb.pcb_onfault;
-					l->l_addr->u_pcb.pcb_onfault = 0;
+					    pcb->pcb_onfault;
+					pcb->pcb_onfault = 0;
 					goto out;
 				}
 
@@ -468,8 +468,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			 * argument space is lazy-allocated.
 			 */
 do_fault:
+			pcb = lwp_getpcb(l);
 			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
-			    l->l_addr->u_pcb.pcb_onfault == 0))
+			    pcb->pcb_onfault == 0))
 				map = kernel_map;
 			else {
 				vm = l->l_proc->p_vmspace;
@@ -503,12 +504,15 @@ do_fault:
 
 			if (user == 0) {
 				/* Check for copyin/copyout fault */
-				if (l != NULL &&
-				    l->l_addr->u_pcb.pcb_onfault != 0) {
+				if (l == NULL) {
+					goto dopanic;
+				}
+				pcb = lwp_getpcb(l);
+				if (pcb->pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
-					    l->l_addr->u_pcb.pcb_onfault;
+					    pcb->pcb_onfault;
 					framep->tf_regs[FRAME_V0] = rv;
-					l->l_addr->u_pcb.pcb_onfault = 0;
+					pcb->pcb_onfault = 0;
 					goto out;
 				}
 				goto dopanic;
@@ -581,6 +585,7 @@ alpha_enable_fp(struct lwp *l, int check)
 	int s;
 #endif
 	struct cpu_info *ci = curcpu();
+	struct pcb *pcb;
 
 	if (check && ci->ci_fpcurlwp == l) {
 		alpha_pal_wrfen(1);
@@ -594,22 +599,23 @@ alpha_enable_fp(struct lwp *l, int check)
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 
+	pcb = lwp_getpcb(l);
 #if defined(MULTIPROCESSOR)
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_proc(l, 1);
 #else
-	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
+	KDASSERT(pcb->pcb_fpcpu == NULL);
 #endif
 
 #if defined(MULTIPROCESSOR)
 	s = splhigh();		/* block IPIs */
 #endif
-	FPCPU_LOCK(&l->l_addr->u_pcb);
+	FPCPU_LOCK(pcb);
 
-	l->l_addr->u_pcb.pcb_fpcpu = ci;
+	pcb->pcb_fpcpu = ci;
 	ci->ci_fpcurlwp = l;
 
-	FPCPU_UNLOCK(&l->l_addr->u_pcb);
+	FPCPU_UNLOCK(pcb);
 #if defined(MULTIPROCESSOR)
 	splx(s);
 #endif
@@ -629,7 +635,7 @@ alpha_enable_fp(struct lwp *l, int check)
 		atomic_inc_ulong(&fpevent_reuse.ev_count);
 
 	alpha_pal_wrfen(1);
-	restorefpstate(&l->l_addr->u_pcb.pcb_fp);
+	restorefpstate(&pcb->pcb_fp);
 }
 
 /*
@@ -690,10 +696,10 @@ static const int reg_to_framereg[32] = {
 	    &(l)->l_md.md_tf->tf_regs[reg_to_framereg[(reg)]])
 
 #define	frp(l, reg)							\
-	(&(l)->l_addr->u_pcb.pcb_fp.fpr_regs[(reg)])
+	(&pcb->pcb_fp.fpr_regs[(reg)])
 
-#define	dump_fp_regs()							\
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)				\
+#define	dump_fp_regs(pcb)						\
+	if (pcb->pcb_fpcpu != NULL)					\
 		fpusave_proc(l, 1)
 
 #define	unaligned_load(storage, ptrf, mod)				\
@@ -718,13 +724,17 @@ static const int reg_to_framereg[32] = {
 #define	unaligned_store_integer(storage)				\
 	unaligned_store(storage, irp, )
 
-#define	unaligned_load_floating(storage, mod)				\
-	dump_fp_regs();							\
-	unaligned_load(storage, frp, mod)
+#define	unaligned_load_floating(storage, mod) do {			\
+	struct pcb *pcb = lwp_getpcb(l);				\
+	dump_fp_regs(pcb);						\
+	unaligned_load(storage, frp, mod)				\
+} while (/*CONSTCOND*/0)
 
-#define	unaligned_store_floating(storage, mod)				\
-	dump_fp_regs();							\
-	unaligned_store(storage, frp, mod)
+#define	unaligned_store_floating(storage, mod) do {			\
+	struct pcb *pcb = lwp_getpcb(l);				\
+	dump_fp_regs(pcb);						\
+	unaligned_store(storage, frp, mod)				\
+} while (/*CONSTCOND*/0)
 
 static unsigned long
 Sfloat_to_reg(u_int s)

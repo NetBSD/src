@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.25 2009/10/21 21:11:58 rmind Exp $ */
+/* $NetBSD: db_trace.c,v 1.26 2009/11/21 05:35:40 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,12 +35,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2009/10/21 21:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26 2009/11/21 05:35:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/alpha.h>
 #include <machine/db_machdep.h>
@@ -230,7 +229,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			pcbp = &l->l_addr->u_pcb;
+			pcbp = lwp_getpcb(l);
 			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
 			callpc = pcbp->pcb_context[7];
 			(*pr)("at 0x%lx\n", addr);
