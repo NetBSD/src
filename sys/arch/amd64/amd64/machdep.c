@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2009/11/07 07:27:40 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2009/11/07 07:27:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2009/11/21 03:11:01 rmind Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -131,7 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2009/11/07 07:27:40 cegger Exp $")
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>	/* for MID_* */
 #include <sys/reboot.h>
@@ -408,7 +407,7 @@ x86_64_proc0_tss_ldt_init(void)
 	struct pcb *pcb;
 
 	l = &lwp0;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	pcb->pcb_flags = 0;
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
@@ -1001,12 +1000,13 @@ dodumpsys(void)
 void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		fpusave_lwp(l, false);
+	}
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
@@ -1051,7 +1051,7 @@ int xen_idt_idx;
 #endif
 char *ldtstore;
 char *gdtstore;
-extern  struct user *proc0paddr;
+extern	struct user *proc0paddr;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
@@ -1249,6 +1249,7 @@ init_x86_64(paddr_t first_avail)
 	extern void consinit(void);
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
+	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	int ist;
@@ -1271,8 +1272,10 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	lwp0.l_addr = proc0paddr;
+	pcb = (void *)proc0paddr;
+
 #ifdef XEN
-	lwp0.l_addr->u_pcb.pcb_cr3 = xen_start_info.pt_base - KERNBASE;
+	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
 
@@ -1595,9 +1598,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_CPU;
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
-		if (l->l_addr->u_pcb.pcb_fpcpu)
+		struct pcb *pcb = lwp_getpcb(l);
+
+		if (pcb->pcb_fpcpu) {
 			fpusave_lwp(l, true);
-		memcpy(mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		}
+		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}
@@ -1608,6 +1614,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 	int error;
 	int err, trapno;
@@ -1645,11 +1652,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_IRET;
 	}
 
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_lwp(l, false);
 
 	if ((flags & _UC_FPU) != 0) {
-		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, mcp->__fpregs,
+		memcpy(&pcb->pcb_savefpu.fp_fxsave, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}

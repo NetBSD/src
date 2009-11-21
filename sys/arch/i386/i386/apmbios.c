@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.14 2009/05/04 12:22:41 cegger Exp $ */
+/*	$NetBSD: apmbios.c,v 1.15 2009/11/21 03:11:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.14 2009/05/04 12:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.15 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.14 2009/05/04 12:22:41 cegger Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>

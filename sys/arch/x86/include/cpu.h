@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2009/04/30 00:07:23 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -285,7 +285,7 @@ extern uint32_t cpus_attached;
 #define curcpu()		(&cpu_info_primary)
 #define curlwp			curcpu()->ci_curlwp
 #endif
-#define	curpcb			(&curlwp->l_addr->u_pcb)
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
  * Arguments to hardclock, softclock and statclock
