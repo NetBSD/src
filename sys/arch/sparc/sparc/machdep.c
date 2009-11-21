@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.296 2009/11/07 07:27:46 cegger Exp $ */
+/*	$NetBSD: machdep.c,v 1.297 2009/11/21 04:16:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2009/11/21 04:16:51 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2009/11/07 07:27:46 cegger Exp $")
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/extent.h>
 #include <sys/savar.h>
 #include <sys/buf.h>
@@ -167,6 +166,7 @@ cpu_startup(void)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
+	struct pcb *pcb;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	paddr_t pa;
@@ -177,8 +177,9 @@ cpu_startup(void)
 #endif
 
 	/* XXX */
-	if (lwp0.l_addr && lwp0.l_addr->u_pcb.pcb_psr == 0)
-		lwp0.l_addr->u_pcb.pcb_psr = getpsr();
+	pcb = lwp_getpcb(&lwp0);
+	if (pcb && pcb->pcb_psr == 0)
+		pcb->pcb_psr = getpsr();
 
 	/*
 	 * Re-map the message buffer from its temporary address
@@ -1181,7 +1182,6 @@ int
 ldcontrolb(void *addr)
 {
 	struct pcb *xpcb;
-	extern struct user *proc0paddr;
 	u_long saveonfault;
 	int res;
 	int s;
@@ -1193,9 +1193,9 @@ ldcontrolb(void *addr)
 
 	s = splhigh();
 	if (curlwp == NULL)
-		xpcb = (struct pcb *)proc0paddr;
+		xpcb = lwp_getpcb(&lwp0);
 	else
-		xpcb = &curlwp->l_addr->u_pcb;
+		xpcb = lwp_getpcb(curlwp);
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2009/01/27 20:30:13 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.137 2009/11/21 04:16:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2009/01/27 20:30:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2009/11/21 04:16:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2009/01/27 20:30:13 martin Exp $");
 #include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 #ifdef	KGDB
@@ -255,6 +254,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 {
 	struct lwp *l;
 	struct proc *p;
+	struct pcb *pcb;
 	ksiginfo_t ksi;
 	int tmp;
 	u_quad_t sticks;
@@ -267,11 +267,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	ksi.ksi_trap = type & ~T_USER;
 
 	p = l->l_proc;
+	pcb = lwp_getpcb(l);
 
-#ifdef	DIAGNOSTIC
-	if (l->l_addr == NULL)
-		panic("trap: no pcb");
-#endif
+	KASSERT(pcb != NULL);
 
 	if (USERMODE(tf->tf_sr)) {
 		type |= T_USER;
@@ -320,7 +318,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		panic("trap type 0x%x", type);
 
 	case T_BUSERR:		/* kernel bus error */
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (pcb->pcb_onfault == NULL)
 			goto dopanic;
 		/*FALLTHROUGH*/
 
@@ -333,7 +331,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		 */
 		tf->tf_stackadj = exframesize[tf->tf_format];
 		tf->tf_format = tf->tf_vector = 0;
-		tf->tf_pc = (int) l->l_addr->u_pcb.pcb_onfault;
+		tf->tf_pc = (int)pcb->pcb_onfault;
 		goto done;
 
 	case T_BUSERR|T_USER:	/* bus error */
@@ -392,7 +390,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef	FPU_EMULATE
-		if (fpu_emulate(tf, &l->l_addr->u_pcb.pcb_fpregs, &ksi) == 0)
+		if (fpu_emulate(tf, &pcb->pcb_fpregs, &ksi) == 0)
 			; /* XXX - Deal with tracing? (tf->tf_sr & PSL_T) */
 #else
 		uprintf("pid %d killed: no floating point support\n", p->p_pid);
@@ -486,8 +484,8 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (l->l_addr->u_pcb.pcb_onfault == (void *)fubail ||
-		    l->l_addr->u_pcb.pcb_onfault == (void *)subail)
+		if (pcb->pcb_onfault == (void *)fubail ||
+		    pcb->pcb_onfault == (void *)subail)
 		{
 #ifdef	DEBUG
 			if (mmudebug & MDB_CPFAULT) {
@@ -524,7 +522,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		map = &vm->vm_map;
 		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
-			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
+			if (pcb->pcb_onfault == NULL || KDFAULT(code))
 				map = kernel_map;
 		} else if (l->l_flag & LW_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)v;
@@ -548,10 +546,10 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		 * faults in the kernel text segment, etc.
 		 */
 
-		onfault = l->l_addr->u_pcb.pcb_onfault;
-		l->l_addr->u_pcb.pcb_onfault = NULL;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		rv = _pmap_fault(map, va, ftype);
-		l->l_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
@@ -584,7 +582,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			ksi.ksi_code = SEGV_MAPERR;
 		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
-			if (l->l_addr->u_pcb.pcb_onfault) {
+			if (pcb->pcb_onfault) {
 #ifdef	DEBUG
 				if (mmudebug & MDB_CPFAULT) {
 					printf("trap: copyfault pcb_onfault\n");

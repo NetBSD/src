@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.25 2005/11/16 23:24:44 uwe Exp $ */
+/*	$NetBSD: fpu.c,v 1.26 2009/11/21 04:16:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2005/11/16 23:24:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2009/11/21 04:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -255,11 +255,12 @@ fpu_emulate(l, tf, fs)
 		fetch instr from pc
 		decode
 		if (integer instr) {
+			struct pcb *pcb = lwp_getpcb(l);
 			/*
 			 * We do this here, rather than earlier, to avoid
 			 * losing even more badly than usual.
 			 */
-			if (l->l_addr->u_pcb.pcb_uw) {
+			if (pcb->pcb_uw) {
 				write_user_windows();
 				if (rwindow_save(l))
 					sigexit(l, SIGILL);

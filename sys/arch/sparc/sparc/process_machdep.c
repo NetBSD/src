@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 2009/05/16 17:01:15 cegger Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.17 2009/11/21 04:16:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,14 +95,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2009/05/16 17:01:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2009/11/21 04:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
