@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.59 2009/09/25 13:56:32 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.60 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.59 2009/09/25 13:56:32 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.60 2009/11/21 03:11:01 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.59 2009/09/25 13:56:32 mlelst
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -129,14 +128,15 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		fpusave_lwp(l, false);
+	}
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
@@ -560,7 +560,8 @@ xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
-	struct savefpu *sf = &l->l_addr->u_pcb.pcb_savefpu;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct savefpu *sf = &pcb->pcb_savefpu;
 	struct fpreg regs64;
 	struct save87 *s87 = (struct save87 *)regs;
 	int error, i;
@@ -862,12 +863,15 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
+		struct pcb *pcb = lwp_getpcb(l);
+
 		/*
 		 * If we were using the FPU, forget that we were.
 		 */
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		if (pcb->pcb_fpcpu != NULL) {
 			fpusave_lwp(l, false);
-		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, &mcp->__fpregs,
+		}
+		memcpy(&pcb->pcb_savefpu.fp_fxsave, &mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
@@ -919,9 +923,12 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
-		if (l->l_addr->u_pcb.pcb_fpcpu)
+		struct pcb *pcb = lwp_getpcb(l);
+
+		if (pcb->pcb_fpcpu) {
 			fpusave_lwp(l, true);
-		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		}
+		memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}

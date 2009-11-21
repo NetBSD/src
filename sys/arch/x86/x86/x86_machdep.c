@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.35 2009/10/06 21:07:05 elad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.36 2009/11/21 03:11:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.35 2009/10/06 21:07:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.36 2009/11/21 03:11:02 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -249,6 +249,7 @@ bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
 	struct cpu_info *ci;
+	struct pcb *pcb;
 	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
@@ -267,7 +268,8 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 	}
 
 	/* Must save cr2 or it could be clobbered. */
-	((struct pcb *)l->l_addr)->pcb_cr2 = rcr2();
+	pcb = lwp_getpcb(l);
+	pcb->pcb_cr2 = rcr2();
 
 	return true;
 }
@@ -280,6 +282,7 @@ void
 cpu_kpreempt_exit(uintptr_t where)
 {
 	extern char x86_copyfunc_start, x86_copyfunc_end;
+	struct pcb *pcb;
 
 	KASSERT(kpreempt_disabled());
 
@@ -294,7 +297,8 @@ cpu_kpreempt_exit(uintptr_t where)
 	}
 
 	/* Restore cr2 only after the pmap, as pmap_load can block. */
-	lcr2(((struct pcb *)curlwp->l_addr)->pcb_cr2);
+	pcb = lwp_getpcb(curlwp);
+	lcr2(pcb->pcb_cr2);
 }
 
 /*

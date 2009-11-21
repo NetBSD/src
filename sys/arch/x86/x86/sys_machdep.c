@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 2009/11/11 13:38:53 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22 2009/11/21 03:11:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2009/11/11 13:38:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22 2009/11/21 03:11:02 rmind Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2009/11/11 13:38:53 yamt Exp $"
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
@@ -405,14 +404,19 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		iopl = SEL_UPL;
 	else
 		iopl = SEL_KPL;
-	l->l_addr->u_pcb.pcb_iopl = iopl;
+
+    {
+	struct physdev_op physop;
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+	pcb->pcb_iopl = iopl;
+
 	/* Force the change at ring 0. */
-	{
-		struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = iopl;
-		HYPERVISOR_physdev_op(&physop);
-	}
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = iopl;
+	HYPERVISOR_physdev_op(&physop);
+    }
 #elif defined(__x86_64__)
 	if (ua.iopl)
 		tf->tf_rflags |= PSL_IOPL;
@@ -433,7 +437,7 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef IOPERM
 	int error;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct x86_get_ioperm_args ua;
 	void *dummymap = NULL;
 	void *iomap;
@@ -467,7 +471,7 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 #ifdef IOPERM
 	struct cpu_info *ci;
 	int error;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct x86_set_ioperm_args ua;
 	void *new;
 	void *old;
@@ -606,7 +610,7 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 	usd.sd.sd_gran = 1;
 
 	kpreempt_disable();
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	if (which == 'f') {
 		memcpy(&pcb->pcb_fsd, &usd.sd,
 		    sizeof(struct segment_descriptor));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2009/11/07 07:32:53 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2009/11/21 03:11:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2009/11/07 07:32:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2009/11/21 03:11:01 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -163,7 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2009/11/07 07:32:53 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -1249,6 +1248,7 @@ pmap_bootstrap(vaddr_t kva_start)
 {
 	struct pmap *kpm;
 	pt_entry_t *pte;
+	struct pcb *pcb;
 	int i;
 	vaddr_t kva;
 #ifdef XEN
@@ -1300,13 +1300,13 @@ pmap_bootstrap(vaddr_t kva_start)
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
-	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
+	pcb = lwp_getpcb(&lwp0);
+	kpm->pm_pdir = (pd_entry_t *)(pcb->pcb_cr3 + KERNBASE);
 #ifdef PAE
 	for (i = 0; i < PDP_SIZE; i++)
-		kpm->pm_pdirpa[i] =
-		    (paddr_t)lwp0.l_addr->u_pcb.pcb_cr3 + PAGE_SIZE * i;
+		kpm->pm_pdirpa[i] = (paddr_t)pcb->pcb_cr3 + PAGE_SIZE * i;
 #else
-	kpm->pm_pdirpa = (paddr_t) lwp0.l_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdirpa = (paddr_t)pcb->pcb_cr3;
 #endif
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
@@ -2555,7 +2555,7 @@ pmap_activate(struct lwp *l)
 			return;
 		}
 
-		pcb = &l->l_addr->u_pcb;
+		pcb = lwp_getpcb(l);
 		ci->ci_want_pmapload = 1;
 
 #if defined(__x86_64__)
@@ -2658,7 +2658,7 @@ pmap_load(void)
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 
 	if (pmap == oldpmap) {
 		if (!pmap_reactivate(pmap)) {

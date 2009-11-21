@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.34 2009/03/14 15:36:07 dsl Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.35 2009/11/21 03:11:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.34 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.35 2009/11/21 03:11:00 rmind Exp $");
 
 #include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
