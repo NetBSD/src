@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.21 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.22 2009/11/21 23:47:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.21 2009/10/19 18:41:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.22 2009/11/21 23:47:01 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -383,19 +383,19 @@ ahci_attach(struct ahci_softc *sc)
 		ahci_setup_port(sc, i);
 		chp->ch_ndrive = 1;
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SSTS(i), 1,  &achp->ahcic_sstatus) != 0) {
+		    AHCI_P_SSTS(i), 4,  &achp->ahcic_sstatus) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_status regs\n", AHCINAME(sc), i);
 			break;
 		}
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SCTL(i), 1,  &achp->ahcic_scontrol) != 0) {
+		    AHCI_P_SCTL(i), 4,  &achp->ahcic_scontrol) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_control regs\n", AHCINAME(sc), i);
 			break;
 		}
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SERR(i), 1,  &achp->ahcic_serror) != 0) {
+		    AHCI_P_SERR(i), 4,  &achp->ahcic_serror) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_error regs\n", AHCINAME(sc), i);
 			break;
