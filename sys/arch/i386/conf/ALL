@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.219 2009/11/12 14:58:09 tron Exp $
+# $NetBSD: ALL,v 1.220 2009/11/21 13:19:04 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,15 +17,16 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.219 $"
+#ident 		"ALL-$Revision: 1.220 $"
 
-maxusers	32		# estimated number of users
+maxusers	64		# estimated number of users
 
 makeoptions	USE_SSP=yes
 
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
+options 	X86EMU		# 386 Real Mode emulator
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
@@ -70,6 +71,13 @@ options 	CONS_OVERRIDE	# Always use above! independent of boot info
 options 	REALBASEMEM=639		# size of base memory (in KB)
 options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
+# The following options limit the overall size of physical memory
+# and/or the maximum address used by the system.
+# Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
+# and can deal with holes in the memory layout.
+options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
+
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
@@ -79,6 +87,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SEMMNI=10	# number of semaphore identifiers
@@ -88,7 +97,7 @@ options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	MODULAR		# new modules framework
+options 	MODULAR		# new style module framework
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -101,14 +110,15 @@ options 	BEEP_ONHALT_COUNT=3	# Times to beep
 options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
 options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Likely stable but not yet the default.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
+options 	LOCKDEBUG	# expensive locking checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
@@ -136,6 +146,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -152,7 +163,12 @@ options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-options 	X86EMU		# 386 Real Mode emulator
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -188,10 +204,8 @@ file-system	NILFS		# experimental - NTT's NiLFS(2)
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
-# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
-# It is not recommended for general use.
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options		UFS_EXTATTR
+options 	UFS_EXTATTR
 options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -217,7 +231,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	TCP_SIGNATURE	# RFC2385 support, used with BGP
 
 options 	ALTQ		# Manipulate network interfaces' output queues
@@ -246,7 +260,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
-options		I2C_SCAN	# Scan i2c bus for responses
+options 	I2C_SCAN	# Scan i2c bus for responses
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -300,8 +314,8 @@ options 	WSDISPLAY_SCROLLSUPPORT
 #options 	SPLASHSCREEN_PROGRESS
 
 # Keylock support
-options		KEYLOCK
-options		secmodel_keylock
+options 	KEYLOCK
+options 	secmodel_keylock	# Requires options KEYLOCK
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -334,8 +348,8 @@ ipmi0		at mainbus?
 
 # This option can be used to retrieve CPU and APIC information.
 # that I/O APICs can be used if ACPI is enabled below.
-#options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	ACPI_SCANPCI	# find PCI roots using ACPI
+options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
+options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
 acpi0 		at mainbus0
 
@@ -343,9 +357,11 @@ options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
+apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.
@@ -356,7 +372,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
+aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
@@ -419,6 +435,7 @@ pciide* 	at pnpbios? index ?
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
+pci*	at elansc? bus ?
 
 # Configure PCI using BIOS information
 options 	PCIBIOS			# PCI BIOS support
@@ -444,14 +461,17 @@ gpio* 	at elansc?
 elanpar*	at elansc?
 elanpex*	at elansc?
 
+# Temperatures
+amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
+
 # PCI bridges
 amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 hpet* 	at amdpcib?
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog, SpeedStep and HPET
 hpet0 		at ichlpcib?		# High Precision Event Timer
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
-gpio* 	at gcscpcib? 			# timecounter, watchdog and GPIO
+gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -530,12 +550,12 @@ options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 genfb*		at pci? dev ? function ? # generic linear framebuffer driver
+machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
-wsdisplay* 	at machfb? console ?
 wsdisplay*	at wsemuldisplaydev?
+wsdisplay* 	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -550,11 +570,11 @@ wsdisplay*	at xboxfb? console ?
 # DRI driver
 i915drm*	at vga?		# Intel i915, i945 DRM driver
 mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+mgadrm* 	at vga?		# Matrox G[24]00, G[45]50 DRM driver
 r128drm*	at vga?		# ATI Rage 128 DRM driver
 radeondrm*	at vga?		# ATI Radeon DRM driver
 savagedrm*	at vga?		# S3 Savage DRM driver
-sisdrm*		at vga?		# SiS DRM driver
+sisdrm* 	at vga?		# SiS DRM driver
 tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
 viadrm* 	at vga?		# VIA UniChrome DRM driver
 
@@ -631,8 +651,6 @@ rd*	at cs80bus? slave ? punit ?
 
 # Hardware monitors
 
-amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
-
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
@@ -656,7 +674,7 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-# dbCool thermal monitor and fan controller
+# dbCool Thermal monitor and fan controller
 dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 dbcool* at iic? addr 0x2D		# Tyan S2881
 dbcool* at iic? addr 0x2E		# Tyan S2882-D
@@ -694,6 +712,9 @@ viaenv* 	at pci? dev ? function ?
 
 # Serial Presence Detect capable memory modules and optional temp sensors
 spdmem*	at iic? addr 0x50
+spdmem*	at iic? addr 0x51
+spdmem*	at iic? addr 0x52
+spdmem*	at iic? addr 0x53
 sdtemp*	at iic? addr 0x18
 
 # I2O devices
@@ -708,10 +729,14 @@ gpio*	at gpiosim?
 
 # 1-Wire support
 gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
+gpioow* 	at gpio?
 onewire*	at gpioow?
 
 # 1-Wire devices
 owtemp* 	at onewire?			# Temperature sensors
+
+# Keylock support
+gpiolock*	at gpio?
 
 # SCSI Controllers and Devices
 
@@ -848,6 +873,7 @@ siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
+toshide*	at pci? dev ? function ?	# TOSHIBA PICCOLO controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ISA Plug-and-Play IDE controllers
@@ -869,7 +895,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
-options	ATADEBUG
+options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -925,7 +951,7 @@ ed*	at edc?
 # Network Interfaces
 
 # PCI network interfaces
-age*	at pci? dev ? function ?	# Attansic/Atheros L1 gigabit Ethernet
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
@@ -946,7 +972,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
-iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -1018,9 +1044,9 @@ sm*	at mhzc?
 ate0	at isa? port 0x2a0 irq ?		# AT1700
 cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+eg0	at isa? port 0x280 irq 9		# 3C505 Ethernet cards
+el0	at isa? port 0x300 irq 9		# 3C501 Ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 Ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
@@ -1034,7 +1060,7 @@ le*	at nele?
 ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
-ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne0	at isa? port 0x280 irq 9		# NE[12]000 Ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
@@ -1048,9 +1074,9 @@ ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
+ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139
-ral*	at cardbus? function ?	# Ralink Technology
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?	# DECchip 21143
 
@@ -1065,9 +1091,9 @@ tra*	at mca? slot ?			# Tiara LANCard/E and clones
 le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
-atphy*  at mii? phy ?			# Attansic F1 10/100/1000 PHYs
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
@@ -1105,9 +1131,9 @@ ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-ehci*	at cardbus? function ?	# Enhanced Host Controller
-ohci*	at cardbus? function ?	# Open Host Controller
-uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
+ehci*	at cardbus? function ?		# Enhanced Host Controller
+ohci*	at cardbus? function ?		# Open Host Controller
+uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
 # ISA USB controllers
 slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
@@ -1173,6 +1199,9 @@ umidi* at uhub? port ? configuration ?
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
 
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
+
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir* at uhub? port ?
 irframe* at ustir?
@@ -1199,8 +1228,8 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*   at uchcom? portno ?
+uchcom*	at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
@@ -1257,8 +1286,15 @@ wsmouse*	at xboxcontroller? mux 0
 # USB Generic driver
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
+options 	UGEN_BULK_RA_WB
 
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
+
+# USB generic serial port (e.g., data over cellular)
+ugensa*	at uhub? port ?
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 
@@ -1408,6 +1444,9 @@ isv* at isa? port 0x3e0			# IDEC Supervision/16 image capture
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
+# Bluetooth SDIO Controller
+sbt* at sdmmc?
+
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
@@ -1416,6 +1455,7 @@ bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
+bthub* at sbt?
 bthub* at ubt?
 
 # Bluetooth HID support
@@ -1490,6 +1530,7 @@ pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
@@ -1505,13 +1546,15 @@ options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
+options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
+
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 pseudo-device 	dm			# device-mapper disk driver
 
 # network pseudo-devices
-pseudo-device	agr			# Link aggregation agr(4)
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
@@ -1530,12 +1573,18 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if
 pseudo-device	kttcp
 pseudo-device	etherip			# EtherIP
 # srt is EXPERIMENTAL
 pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters, built as modules by default
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -1545,6 +1594,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	gpiosim		1	# GPIO simulator
@@ -1559,22 +1609,17 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-options 	FILEASSOC		# fileassoc(9) - required for Veriexec
-
-# Veriexec
-pseudo-device	veriexec
-
-# drvctl - needed to show device dictionary via drvctl(8)
-pseudo-device	drvctl
-
-# pseudo-device lockstat needed for lockstat(8)
-pseudo-device	lockstat
-
 # software watchdog driver - swwdog(4)
 pseudo-device	swwdog
 
 # cmos(4) pseudo-device
 pseudo-device	cmos
+
+# pseudo audio device driver
+pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 # Pass-to-Userspace Transporter
 pseudo-device	putter
@@ -1582,23 +1627,25 @@ pseudo-device	putter
 # Userspace block/char drivers
 pseudo-device	pud
 
-# pseudo audio device driver
-pseudo-device	pad
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
+# Veriexec
+pseudo-device	veriexec
+#
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-options VERIFIED_EXEC_FP_RMD160
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
-options VERIFIED_EXEC_FP_SHA1
-options VERIFIED_EXEC_FP_MD5
+options 	VERIFIED_EXEC_FP_RMD160
+options 	VERIFIED_EXEC_FP_SHA256
+options 	VERIFIED_EXEC_FP_SHA384
+options 	VERIFIED_EXEC_FP_SHA512
+options 	VERIFIED_EXEC_FP_SHA1
+options 	VERIFIED_EXEC_FP_MD5
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
-options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
-options PAX_ASLR=0			# PaX Address Space Layout Randomization
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 
 options ATHHAL_DEBUG
 options A9PCIC_DEBUG
@@ -1910,7 +1957,6 @@ options LLCDEBUG
 options LLC_DEBUG
 options LOADER_DEBUG
 options LOAD_DEBUG_INFO
-options LOCKDEBUG
 options LOCKF_DEBUG
 options LPT_DEBUG
 options MAGMA_DEBUG
@@ -2085,7 +2131,6 @@ options TCICDEBUG
 options TCICISADEBUG
 options TCPISS_DEBUG
 options TCPREASS_DEBUG
-options TCP_DEBUG
 options TCTRLDEBUG
 options TIMECOUNTER_DEBUG
 options TIMEKEEPER_DEBUG
