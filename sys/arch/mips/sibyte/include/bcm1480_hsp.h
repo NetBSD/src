@@ -4,7 +4,7 @@
     *  High-Speed Port Block constants           File: bcm1480_hsp.h
     *
     *  This module contains constants and macros useful for
-    *  programming the the high-speed (HT/SPI-4) ports.
+    *  programming the high-speed (HT/SPI-4) ports.
     *
     *  BCM1400 specification level:  1X55_1X80-UM100-R (12/18/03)
     *

@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.10 2007/03/04 06:00:39 christos Exp $	 */
+/* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.10 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ grtwo_fill_rectangle(struct grtwo_devconfig * dc, int x1, int y1, int x2,
 	   y axis. */
 
 	/* There appears to be a limit to the number of vertical lines that we
-	   can run through the the graphics engine at one go.  This probably has
+	   can run through the graphics engine at one go.  This probably has
 	   something to do with vertical refresh.  Single-row fills are okay,
 	   multiple-row screw up the board in exciting ways.  The copy_rectangle
 	   workaround doesn't work for fills. */

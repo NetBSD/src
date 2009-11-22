@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.8 2009/07/19 02:41:27 rmind Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.9 2009/11/22 19:09:16 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.8 2009/07/19 02:41:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.9 2009/11/22 19:09:16 mbalmer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -289,7 +289,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 			return EBUSY;
 		}
 #endif
-		/* Unlink the the system calls. */
+		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_syscalls);
 		if (error != 0) {
 			return error;

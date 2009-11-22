@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 2009/11/22 19:09:15 mbalmer Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2009/11/22 19:09:15 mbalmer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -333,7 +333,7 @@ device_register(device_t dev, void *aux)
 	 * is the HPA or device path (DP) to get the boot device.
 	 * If the boot device is a SCSI device below a GSC attached SCSI
 	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI
-	 * controller. In that case we remember the the pointer to the
+	 * controller. In that case we remember the pointer to the
 	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */

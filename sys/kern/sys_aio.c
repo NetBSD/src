@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.29 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.30 2009/11/22 19:09:16 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.29 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.30 2009/11/22 19:09:16 mbalmer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -334,7 +334,7 @@ aio_worker(void *arg)
 			pool_put(&aio_lio_pool, lio);
 		}
 
-		/* Destroy the the job */
+		/* Destroy the job */
 		pool_put(&aio_job_pool, a_job);
 	}
 
