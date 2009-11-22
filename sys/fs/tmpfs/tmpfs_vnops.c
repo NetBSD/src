@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.64 2009/10/17 22:20:56 njoly Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.65 2009/11/22 17:09:58 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.64 2009/10/17 22:20:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.65 2009/11/22 17:09:58 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -728,7 +728,10 @@ out:
 		vrele(dvp);
 	else
 		vput(dvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
+	if (cnp->cn_flags & HASBUF) {
+		PNBUF_PUT(cnp->cn_pnbuf);
+		cnp->cn_flags &= ~HASBUF;
+	}
 
 	return error;
 }
