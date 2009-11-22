@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.17 2009/11/21 08:41:38 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.18 2009/11/22 12:05:14 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -1104,11 +1104,7 @@ consinit(void)
 #endif /* NCOM */
 
 #if NLCD > 0
-	{
-		extern void gxlcd_cnattach(void);
-
-		gxlcd_cnattach();
-	}
+	gxlcd_cnattach();
 #endif
 }
 
