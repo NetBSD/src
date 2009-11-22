@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.11 2009/11/22 18:40:27 mbalmer Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.12 2009/11/22 18:43:27 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.11 2009/11/22 18:40:27 mbalmer Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.12 2009/11/22 18:43:27 mbalmer Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -502,7 +502,7 @@ cd9660_write_rr(FILE *fd, cd9660node *writenode, int offset, int sector)
 	}
 
 	/*
-	 * If we had to go the continuation area, head back to
+	 * If we had to go to the continuation area, head back to
 	 * where we should be.
 	 */
 	if (in_ca)
