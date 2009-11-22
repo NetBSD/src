@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.98 2009/04/12 09:31:32 apb Exp $	*/
+/*	$NetBSD: init.c,v 1.99 2009/11/22 18:40:26 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.98 2009/04/12 09:31:32 apb Exp $");
+__RCSID("$NetBSD: init.c,v 1.99 2009/11/22 18:40:26 mbalmer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1138,7 +1138,7 @@ read_ttys(void)
 		make_utmpx("", BOOT_MSG, BOOT_TIME, 0, &boot_time, 0);
 
 		/*
-		 * If wtmpx is not empty, pick the the down time from there
+		 * If wtmpx is not empty, pick the down time from there
 		 */
 		if (stat(_PATH_WTMPX, &st) != -1 && st.st_size != 0) {
 			struct timeval down_time;
