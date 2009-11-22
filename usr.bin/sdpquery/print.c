@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2009/08/20 11:07:42 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.5 2009/11/22 18:53:44 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.4 2009/08/20 11:07:42 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 2009/11/22 18:53:44 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -1374,6 +1374,7 @@ print_bnep(sdp_data_t *data)
 		switch (v) {
 		case 0x0800:	printf("IPv4");		break;
 		case 0x0806:	printf("ARP");		break;
+		case 0x8100:	printf("802.1Q");	break;
 		case 0x86dd:	printf("IPv6");		break;
 		default:	printf("0x%04x", v);	break;
 		}
