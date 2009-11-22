@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.9 2009/09/14 20:54:34 pooka Exp $
+.\"     $NetBSD: ukfs.3,v 1.10 2009/11/22 18:14:49 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 28, 2008
+.Dd November 22, 2009
 .Dt UKFS 3
 .Os
 .Sh NAME
@@ -74,7 +74,11 @@ which should be released after use.
 .It Ft struct ukfs *
 .Fn ukfs_mount "const char *vfsname" "const char *devpath" \
 "const char *mountpath"  "int mntflags" "void *arg" "size_t alen"
-.It Ft void
+.It Ft struct ukfs *
+.Fn ukfs_mount_disk "const char *vfsname" "const char *devpath" \
+"int partition" "const char *mountpath"  "int mntflags" \
+"void *arg" "size_t alen"
+.It Ft int
 .Fn ukfs_release "struct ukfs *ukfs" "int flags"
 .El
 .Pp
@@ -173,16 +177,44 @@ expects.
 Size of said structure.
 .El
 .Pp
-.Fn ukfs_release
-releases the resources associated with
-.Fa ukfs .
+The
+.Fn ukfs_mount_disk
+function must be used to mount disk-based file systems.
+It takes the same arguments as
+.Fn ukfs_mount ,
+except for an additional argument signifying the
+.Fa partition
+number.
+If the image
+.Fa devpath
+contains a disklabel, this value specifies the number of the partition
+within the image used as the file system backend.
 If
-.Fa flags
-is
-.Dv UKFS_RELFLAG_NOUNMOUNT ,
-the file system is not unmounted.
-This is required if the file system has already been unmounted due
-to prior activity, otherwise 0 should be passed.
+.Fa devpath
+does not contain a disklabel, the value
+.Dv UKFS_PARTITION_NONE
+must be used to signal that the file system backend is the entire
+image.
+.Pp
+.Fn ukfs_release
+unmounts the file system and releases the resources associated with
+.Fa ukfs .
+The return value signals the return value of the unmount operation.
+If non-zero,
+.Fa ukfs
+will continue to remain valid.
+The possible values for flags are:
+.Bl -tag -width XUKFS_RELFLAG_NOUNMOUT -offset indent
+.It Dv UKFS_RELFLAG_NOUNMOUNT
+Do not unmount file system, just release ukfs handle.
+Release always succeeds.
+.It Dv UKFS_RELFLAG_FORCE
+Forcefully unmount the file system.
+This means that any busy nodes (due to e.g.
+.Fn ukfs_chdir )
+will be ignored.
+Release always succeeds.
+.El
 .Sh OPERATION
 .Bl -ohang
 .It Ft int
@@ -286,13 +318,11 @@ first appeared in
 .Nm
 should be considered experimental technology and may change without warning.
 .Sh BUGS
-Due to how the runtime linker works, it is possible to include
-support for only one file system in dynamic binaries at linktime.
-The remaining desired file systems can be loaded with
+On Linux, dynamically linked binaries can include support for only
+one file system due to restrictions with the dynamic linker.
+If more are desired, they must be loaded at runtime using
 .Fn ukfs_modload .
-Statically linked binaries do not have this limitation, but cannot use
-.Fn ukfs_modload
-at all.
-The recommended approach is to use dynamically linked binaries and load all
-file system modules with
-.Fn ukfs_modload .
+Even though
+.Nx
+does not have this restriction, portable programs should load all
+file system drivers dynamically.
