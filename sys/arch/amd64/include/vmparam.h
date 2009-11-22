@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2009/03/06 20:31:47 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 2009/11/22 21:41:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -152,9 +152,10 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
-#define	VM_NFREELIST		2
+#define	VM_NFREELIST		3
 #define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST16	1
+#define	VM_FREELIST_FIRST4G	1
+#define	VM_FREELIST_FIRST16	2
 
 #include <x86/pmap_pv.h>
 
