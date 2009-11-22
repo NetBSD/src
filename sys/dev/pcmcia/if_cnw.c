@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.51 2009/05/12 14:42:18 cegger Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.52 2009/11/22 21:18:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.51 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.52 2009/11/22 21:18:42 dsl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -895,12 +895,9 @@ cnw_intr(void *arg)
 		status = bus_space_read_1(sc->sc_memt, sc->sc_memh,
 		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_CCSR);
 #endif
-		if (!(status & 0x02)) {
-			if (ret == 0)
-				printf("%s: spurious interrupt\n",
-				    device_xname(&sc->sc_dev));
+		if (!(status & 0x02))
+			/* No more commands, or shared IRQ */
 			return (ret);
-		}
 		ret = 1;
 #ifndef MEMORY_MAPPED
 		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
