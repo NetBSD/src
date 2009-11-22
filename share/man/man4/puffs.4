@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.4,v 1.8 2008/04/13 16:02:33 pooka Exp $
+.\"	$NetBSD: puffs.4,v 1.9 2009/11/22 18:02:22 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -134,7 +134,7 @@ This array is ignored if
 .Dv PUFFS_KFLAG_ALLOPS
 is given.
 .Pp
-After a successful mount system call, the the ioctl
+After a successful mount system call, the ioctl
 .Dv PUFFSSTARTOP
 must be issued through the open device node.
 The parameter for this ioctl is the following structure:
