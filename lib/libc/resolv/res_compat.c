@@ -1,4 +1,4 @@
-/*	$NetBSD: res_compat.c,v 1.2 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: res_compat.c,v 1.3 2009/11/22 18:04:37 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_compat.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: res_compat.c,v 1.3 2009/11/22 18:04:37 mbalmer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: res_compat.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
  * Most userland programs use this to set res_options before res_init()
  * is called. There are hooks to res_init() to consult the data in this
  * structure. The hooks are provided indirectly by the two functions below.
- * We depend on the fact the the first 440 [32 bit machines] bytes are
+ * We depend on the fact the first 440 [32 bit machines] bytes are
  * shared between the two structures.
  */
 #ifndef __BIND_NOSTATIC 
