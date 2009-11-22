@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: QMQueue.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: QMQueue.c,v 1.2 2009/11/22 19:09:16 mbalmer Exp $";
 /*****************************************************************************/
 /** @file QMQueue.c
  *  @brief Public Key Encryption / Encryption Authentication
@@ -515,7 +515,7 @@ QMgrCheckQueue(N8_Component_t    unit,
  *           blocks into the command queue.
  *
  *           Requests consist of (>=1) commands.  Requests are kept
- *           in a circular queue while the the commands persist in the
+ *           in a circular queue while the commands persist in the
  *           command queue. Once the commands have been executed, the
  *           request is marked as complete and is removed from the circular
  *           queue.
