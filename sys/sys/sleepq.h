@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.17 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.18 2009/11/22 18:40:26 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ sleepq_dontsleep(lwp_t *l)
 }
 
 /*
- * Find the correct sleep queue for the the specified wait channel.  This
+ * Find the correct sleep queue for the specified wait channel.  This
  * acquires and holds the per-queue interlock.
  */
 static inline sleepq_t *

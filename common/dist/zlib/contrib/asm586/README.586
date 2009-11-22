@@ -5,7 +5,7 @@ changed/added by this patch are:
 README.586
 match.S
 
-The effectiveness of these modifications is a bit marginal, as the the
+The effectiveness of these modifications is a bit marginal, as the
 program's bottleneck seems to be mostly L1-cache contention, for which
 there is no real way to work around without rewriting the basic
 algorithm. The speedup on average is around 5-10% (which is generally
