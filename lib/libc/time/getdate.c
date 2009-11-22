@@ -1,4 +1,4 @@
-/*	$NetBSD: getdate.c,v 1.1 2009/05/14 02:37:36 ginsbach Exp $	*/
+/*	$NetBSD: getdate.c,v 1.2 2009/11/22 18:07:39 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -226,7 +226,7 @@ getdate(const char *str)
 		 * XXX More undocumented functionality but observed.
 		 *
 		 * Given the weekday find the first matching weekday
-		 * starting with the weekday of the first day of the the
+		 * starting with the weekday of the first day of the
 		 * month and moving into the future.
 		 */
 		if (rtm.tm_wday != TMSENTINEL) {
