@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.12 2009/11/14 21:49:34 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.13 2009/11/22 05:37:39 cyber Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2168,7 +2168,7 @@ entry0:
 	nop
 	bltz	t0, entry0set
 	sll	t0, t0, PGSHIFT + 1		# PAGE_SHIFT + 1
-	PTR_LA	t0, MIPS_KSEG0_START(s0)
+	PTR_LA	t0, MIPS_KSEG0_START(t0)
 	_MTC0	t0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0
