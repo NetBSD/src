@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.1 2009/08/09 06:40:10 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.2 2009/11/23 09:41:53 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1 2009/08/09 06:40:10 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.2 2009/11/23 09:41:53 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -503,7 +503,7 @@ lan9118_init(struct ifnet *ifp)
 	s = splnet();
 
 	/* wait for PMT_CTRL[READY] */
-	timo = mstohz(5);	/* XXXX 5sec */
+	timo = mstohz(5000);	/* XXXX 5sec */
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_PMT_CTRL) &
 	    LAN9118_PMT_CTRL_READY)) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_BYTE_TEST,
@@ -770,7 +770,7 @@ lan9118_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active |= IFM_NONE;
 		return;
 	}
-	ifmr->ifm_active |= IFM_ACTIVE;
+	ifmr->ifm_status |= IFM_ACTIVE;
 	physcs = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, LAN9118_PHYSCSR);
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
 		if (!(physcs & LAN9118_PHYSCSR_AUTODONE)) {
