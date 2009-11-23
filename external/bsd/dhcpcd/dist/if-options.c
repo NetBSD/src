@@ -55,8 +55,9 @@ const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
 	{"script",          required_argument, NULL, 'c'},
 	{"debug",           no_argument,       NULL, 'd'},
-	{"reconfigure",     no_argument,       NULL, 'e'},
+	{"env",             required_argument, NULL, 'e'},
 	{"config",          required_argument, NULL, 'f'},
+	{"reconfigure",     no_argument,       NULL, 'g'},
 	{"hostname",        optional_argument, NULL, 'h'},
 	{"vendorclassid",   optional_argument, NULL, 'i'},
 	{"release",         no_argument,       NULL, 'k'},
@@ -71,6 +72,7 @@ const struct option cf_options[] = {
 	{"timeout",         required_argument, NULL, 't'},
 	{"userclass",       required_argument, NULL, 'u'},
 	{"vendor",          required_argument, NULL, 'v'},
+	{"waitip",          no_argument,       NULL, 'w'},
 	{"exit",            no_argument,       NULL, 'x'},
 	{"allowinterfaces", required_argument, NULL, 'z'},
 	{"reboot",          required_argument, NULL, 'y'},
@@ -90,6 +92,7 @@ const struct option cf_options[] = {
 	{"static",          required_argument, NULL, 'S'},
 	{"test",            no_argument,       NULL, 'T'},
 	{"variables",       no_argument,       NULL, 'V'},
+	{"whitelist",       required_argument, NULL, 'W'},
 	{"blacklist",       required_argument, NULL, 'X'},
 	{"denyinterfaces",  required_argument, NULL, 'Z'},
 	{"arping",          required_argument, NULL, O_ARPING},
@@ -201,20 +204,24 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 		}
 		if (*str == '\\') {
 			str++;
-			switch(*str++) {
+			switch(*str) {
 			case '\0':
 				break;
 			case 'b':
 				*sbuf++ = '\b';
+				str++;
 				break;
 			case 'n':
 				*sbuf++ = '\n';
+				str++;
 				break;
 			case 'r':
 				*sbuf++ = '\r';
+				str++;
 				break;
 			case 't':
 				*sbuf++ = '\t';
+				str++;
 				break;
 			case 'x':
 				/* Grab a hex code */
@@ -252,8 +259,10 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, const char *str, int clid)
 		} else
 			*sbuf++ = *str++;
 	}
-	if (punt_last)
+	if (punt_last) {
 		*--sbuf = '\0';
+		l--;
+	}
 	return l;
 }
 
@@ -318,7 +327,8 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 	struct rt *rt;
 
 	switch(opt) {
-	case 'e': /* FALLTHROUGH */
+	case 'f': /* FALLTHROUGH */
+	case 'g': /* FALLTHROUGH */
 	case 'n': /* FALLTHROUGH */
 	case 'x': /* FALLTHROUGH */
 	case 'T': /* We need to handle non interface options */
@@ -331,6 +341,9 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		break;
 	case 'd':
 		ifo->options |= DHCPCD_DEBUG;
+		break;
+	case 'e':
+		add_environ(ifo, arg, 1);
 		break;
 	case 'h':
 		if (arg) {
@@ -444,6 +457,27 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			syslog(LOG_ERR, "invalid vendor format");
 			return -1;
 		}
+
+		/* If vendor starts with , then it is not encapsulated */
+		if (p == arg) {
+			arg++;
+			s = parse_string((char *)ifo->vendor + 1,
+			    VENDOR_MAX_LEN, arg);
+			if (s == -1) {
+				syslog(LOG_ERR, "vendor: %m");
+				return -1;
+			}
+			ifo->vendor[0] = (uint8_t)s;
+			ifo->options |= DHCPCD_VENDORRAW;
+			break;
+		}
+
+		/* Encapsulated vendor options */
+		if (ifo->options & DHCPCD_VENDORRAW) {
+			ifo->options &= ~DHCPCD_VENDORRAW;
+			ifo->vendor[0] = 0;
+		}
+
 		*p = '\0';
 		i = atoint(arg);
 		arg = p + 1;
@@ -473,6 +507,9 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			ifo->vendor[ifo->vendor[0] + 2] = s;
 			ifo->vendor[0] += s + 2;
 		}
+		break;
+	case 'w':
+		ifo->options |= DHCPCD_WAITIP;
 		break;
 	case 'y':
 		ifo->reboot = atoint(arg);
@@ -653,6 +690,16 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			ifo->config[s + 1] = NULL;
 		}
 		break;
+	case 'W':
+		if (parse_addr(&addr, &addr2, arg) != 0)
+			return -1;
+		if (strchr(arg, '/') == NULL)
+			addr2.s_addr = INADDR_BROADCAST;
+		ifo->whitelist = xrealloc(ifo->whitelist,
+		    sizeof(in_addr_t) * (ifo->whitelist_len + 2));
+		ifo->whitelist[ifo->whitelist_len++] = addr.s_addr;
+		ifo->whitelist[ifo->whitelist_len++] = addr2.s_addr;
+		break;
 	case 'X':
 		if (parse_addr(&addr, &addr2, arg) != 0)
 			return -1;
@@ -739,8 +786,11 @@ read_config(const char *file,
 
 	/* Parse our options file */
 	f = fopen(file ? file : CONFIG, "r");
-	if (!f)
+	if (f == NULL) {
+		if (file != NULL)
+			syslog(LOG_ERR, "fopen `%s': %m", file);
 		return ifo;
+	}
 
 	while ((line = get_line(f))) {
 		option = strsep(&line, " \t");
@@ -791,7 +841,7 @@ read_config(const char *file,
 	}
 
 	/* Terminate the encapsulated options */
-	if (ifo && ifo->vendor[0]) {
+	if (ifo && ifo->vendor[0] && !(ifo->options & DHCPCD_VENDORRAW)) {
 		ifo->vendor[0]++;
 		ifo->vendor[ifo->vendor[0]] = DHO_END;
 	}
@@ -811,7 +861,7 @@ add_options(struct if_options *ifo, int argc, char **argv)
 			break;
 	}
 	/* Terminate the encapsulated options */
-	if (r == 1 && ifo->vendor[0]) {
+	if (r == 1 && ifo->vendor[0] && !(ifo->options & DHCPCD_VENDORRAW)) {
 		ifo->vendor[0]++;
 		ifo->vendor[ifo->vendor[0]] = DHO_END;
 	}

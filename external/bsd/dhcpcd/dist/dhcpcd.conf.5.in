@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 18, 2009
+.Dd October 16, 2009
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -76,6 +76,21 @@ carrier status.
 .It Ic blacklist Ar address Ns Op /cidr
 Ignores all packets from
 .Ar address Ns Op /cidr .
+.It Ic whitelist Ar address Ns Op /cidr
+Only accept packets from
+.Ar address Ns Op /cidr .
+.Ic blacklist
+is ignored if
+.Ic whitelist
+is set.
+.It Ic env Ar value
+Push
+.Ar value
+to the environment for use in
+.Xr dhcpcd-run-hooks 8 .
+For example, you can force the hostname hook to always set the hostname with
+.Ic env
+.Va force_hostname=YES .
 .It Ic clientid Ar string
 Send the
 .Ar clientid .
@@ -102,11 +117,15 @@ and should not be copied to other hosts.
 Fallback to using this profile if DHCP fails.
 This allows you to configure a static profile instead of using ZeroConf.
 .It Ic hostname Ar name
-Sends specified
+Sends
 .Ar hostname
-to the DHCP server so it can be registered in DNS. If
+to the DHCP server so it can be registered in DNS.
+If
 .Ar hostname
-if a FQDN (ie, contains a .) then it will be encoded as such.
+is an empty string then the current system hostname is sent.
+If
+.Ar hostname
+is a FQDN (ie, contains a .) then it will be encoded as such.
 .It Ic fqdn Op none | ptr | both
 none disables FQDN encoding, ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
@@ -158,6 +177,10 @@ It can be a variable to be used in
 .Xr dhcpcd-run-hooks 8
 or the numerical value.
 You can specify more options seperated by commas, spaces or more option lines.
+.It Ic nooption Ar option
+Remove the option from the DHCP message.
+This should only be used when a DHCP server sends a non requested option
+that should not be processed.
 .It Ic destination Ar option
 If
 .Nm
@@ -233,6 +256,9 @@ You can specify more than one.
 Add an enscapulated vendor option.
 .Ar code
 should be between 1 and 254 inclusive.
+To add a raw vendor string, omit
+.Ar code
+but keep the comma.
 Examples.
 .Pp
 Set the vendor option 01 with an IP address.
@@ -241,9 +267,13 @@ Set the vendor option 02 with a hex code.
 .D1 vendor 02,01:02:03:04:05
 Set the vendor option 03 with an IP address as a string.
 .D1 vendor 03,\e"192.168.0.2\e"
+Set un-encapulated vendor option to hello world.
+.D1 vendor ,"hello world"
 .It Ic vendorclassid Ar string
 Change the default vendorclassid sent from dhcpcd-version.
 If not set then none is sent.
+.It Ic waitip
+Wait for an address to be assigned before forking to the background.
 .El
 .Sh SEE ALSO
 .Xr dhcpcd-run-hooks 8 ,

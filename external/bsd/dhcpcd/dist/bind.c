@@ -26,6 +26,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/time.h>
+
 #include <fcntl.h>
 #ifdef BSD
 #  include <paths.h>

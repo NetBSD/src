@@ -23,7 +23,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd March 23, 2009
-.Dt DHCPCD.SH 8 SMM
+.Dt DHCPCD-RUN-HOOKS 8 SMM
 .Os
 .Sh NAME
 .Nm dhcpcd-run-hooks

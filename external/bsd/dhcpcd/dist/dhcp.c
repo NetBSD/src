@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -70,7 +71,7 @@ static const struct dhcp_opt const dhcp_opts[] = {
 		/* RFC 3442 states that the CSR has to come before all other
 		 * routes. For completeness, we also specify static routes,
 		 * then routers. */
-	{ 121,  RFC3442 | REQUEST,	"classless_static_routes" },
+	{ 121,  RFC3442,	"classless_static_routes" },
 	{ 249,  RFC3442,	"ms_classless_static_routes" },
 	{ 33,	IPV4 | ARRAY | REQUEST,	"static_routes" },
 	{ 3,	IPV4 | ARRAY | REQUEST,	"routers" },
@@ -370,25 +371,27 @@ exit:
 }
 
 int
-get_option_addr(uint32_t *a, const struct dhcp_message *dhcp, uint8_t option)
+get_option_addr(struct in_addr *a, const struct dhcp_message *dhcp,
+    uint8_t option)
 {
 	const uint8_t *p = get_option_raw(dhcp, option);
 
 	if (!p)
 		return -1;
-	memcpy(a, p, sizeof(*a));
+	memcpy(&a->s_addr, p, sizeof(a->s_addr));
 	return 0;
 }
 
 int
 get_option_uint32(uint32_t *i, const struct dhcp_message *dhcp, uint8_t option)
 {
-	uint32_t a;
+	const uint8_t *p = get_option_raw(dhcp, option);
+	uint32_t d;
 
-	if (get_option_addr(&a, dhcp, option) == -1)
+	if (!p)
 		return -1;
-
-	*i = ntohl(a);
+	memcpy(&d, p, sizeof(d));
+	*i = ntohl(d);
 	return 0;
 }
 
@@ -698,7 +701,7 @@ route_netmask(uint32_t ip_in)
  * If we have a CSR then we only use that.
  * Otherwise we add static routes and then routers. */
 struct rt *
-get_option_routes(const struct dhcp_message *dhcp)
+get_option_routes(const char *ifname, const struct dhcp_message *dhcp)
 {
 	const uint8_t *p;
 	const uint8_t *e;
@@ -713,8 +716,11 @@ get_option_routes(const struct dhcp_message *dhcp)
 		p = get_option(dhcp, DHO_MSCSR, &len, NULL);
 	if (p) {
 		routes = decode_rfc3442_rt(len, p);
-		if (routes)
+		if (routes) {
+			syslog(LOG_DEBUG, "%s: using Classless Static Routes (RFC3442)",
+			       ifname);
 			return routes;
+		}
 	}
 
 	/* OK, get our static routes first. */
@@ -1039,9 +1045,14 @@ write_lease(const struct interface *iface, const struct dhcp_message *dhcp)
 		return 0;
 	}
 
+	syslog(LOG_DEBUG, "%s: writing lease `%s'",
+	    iface->name, iface->leasefile);
+
 	fd = open(iface->leasefile, O_WRONLY | O_CREAT | O_TRUNC, 0400);
-	if (fd == -1)
+	if (fd == -1) {
+		syslog(LOG_ERR, "%s: open: %m", iface->name);
 		return -1;
+	}
 
 	/* Only write as much as we need */
 	while (p < e) {
@@ -1069,8 +1080,14 @@ read_lease(const struct interface *iface)
 	ssize_t bytes;
 
 	fd = open(iface->leasefile, O_RDONLY);
-	if (fd == -1)
+	if (fd == -1) {
+		if (errno != ENOENT)
+			syslog(LOG_ERR, "%s: open `%s': %m",
+			    iface->name, iface->leasefile);
 		return NULL;
+	}
+	syslog(LOG_DEBUG, "%s: reading lease `%s'",
+	    iface->name, iface->leasefile);
 	dhcp = xmalloc(sizeof(*dhcp));
 	memset(dhcp, 0, sizeof(*dhcp));
 	bytes = read(fd, dhcp, sizeof(*dhcp));
@@ -1303,14 +1320,14 @@ configure_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		 * message but are not necessarily in the options */
 		addr.s_addr = dhcp->yiaddr ? dhcp->yiaddr : dhcp->ciaddr;
 		setvar(&ep, prefix, "ip_address", inet_ntoa(addr));
-		if (get_option_addr(&net.s_addr, dhcp, DHO_SUBNETMASK) == -1) {
+		if (get_option_addr(&net, dhcp, DHO_SUBNETMASK) == -1) {
 			net.s_addr = get_netmask(addr.s_addr);
 			setvar(&ep, prefix, "subnet_mask", inet_ntoa(net));
 		}
 		i = inet_ntocidr(net);
 		snprintf(cidr, sizeof(cidr), "%d", inet_ntocidr(net));
 		setvar(&ep, prefix, "subnet_cidr", cidr);
-		if (get_option_addr(&brd.s_addr, dhcp, DHO_BROADCAST) == -1) {
+		if (get_option_addr(&brd, dhcp, DHO_BROADCAST) == -1) {
 			brd.s_addr = addr.s_addr | ~net.s_addr;
 			setvar(&ep, prefix, "broadcast_address", inet_ntoa(brd));
 		}
@@ -1360,9 +1377,9 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 		lease->addr.s_addr = dhcp->yiaddr;
 	else
 		lease->addr.s_addr = dhcp->ciaddr;
-	if (get_option_addr(&lease->net.s_addr, dhcp, DHO_SUBNETMASK) == -1)
+	if (get_option_addr(&lease->net, dhcp, DHO_SUBNETMASK) == -1)
 		lease->net.s_addr = get_netmask(lease->addr.s_addr);
-	if (get_option_addr(&lease->brd.s_addr, dhcp, DHO_BROADCAST) == -1)
+	if (get_option_addr(&lease->brd, dhcp, DHO_BROADCAST) == -1)
 		lease->brd.s_addr = lease->addr.s_addr | ~lease->net.s_addr;
 	if (get_option_uint32(&lease->leasetime, dhcp, DHO_LEASETIME) == 0) {
 		/* Ensure that we can use the lease */

@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 
+#include "common.h"
+
 /* Max MTU - defines dhcp option length */
 #define MTU_MAX             1500
 #define MTU_MIN             576
@@ -175,14 +177,14 @@ struct dhcp_lease {
 int make_option_mask(uint8_t *, const char *, int);
 void print_options(void);
 char *get_option_string(const struct dhcp_message *, uint8_t);
-int get_option_addr(uint32_t *, const struct dhcp_message *, uint8_t);
+int get_option_addr(struct in_addr *, const struct dhcp_message *, uint8_t);
 int get_option_uint32(uint32_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint16(uint16_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 #define is_bootp(m) (m &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
-struct rt *get_option_routes(const struct dhcp_message *);
+struct rt *get_option_routes(const char *, const struct dhcp_message *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
     const struct if_options *);
 
