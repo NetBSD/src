@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.50 2009/04/05 02:14:41 uwe Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.51 2009/11/23 02:13:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.50 2009/04/05 02:14:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.51 2009/11/23 02:13:45 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.50 2009/04/05 02:14:41 uwe Exp $");
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>

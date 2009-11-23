@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.c,v 1.16 2009/03/14 15:36:17 dsl Exp $        */
+/*      $NetBSD: adwmcode.c,v 1.17 2009/11/23 02:13:46 rmind Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.16 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.17 2009/11/23 02:13:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: adwmcode.c,v 1.16 2009/03/14 15:36:17 dsl Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

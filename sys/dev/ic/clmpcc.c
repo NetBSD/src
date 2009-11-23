@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.42 2009/03/14 21:04:19 dsl Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.43 2009/11/23 02:13:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.42 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.43 2009/11/23 02:13:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.42 2009/03/14 21:04:19 dsl Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

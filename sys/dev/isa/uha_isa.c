@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.37 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.38 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.37 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.38 2009/11/23 02:13:47 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.37 2009/05/12 09:10:16 cegger Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

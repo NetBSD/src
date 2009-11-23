@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.63 2008/04/04 16:00:58 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.64 2009/11/23 02:13:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.63 2008/04/04 16:00:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.64 2009/11/23 02:13:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.63 2008/04/04 16:00:58 tsutsui Exp 
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.78 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: ss.c,v 1.79 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.78 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.79 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.78 2009/05/12 14:44:31 cegger Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
