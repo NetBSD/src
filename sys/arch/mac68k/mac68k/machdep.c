@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.332 2009/10/26 19:16:56 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.333 2009/11/23 00:11:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2009/10/26 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.333 2009/11/23 00:11:44 rmind Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -140,7 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2009/10/26 19:16:56 cegger Exp $")
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
 #ifdef	KGDB
@@ -484,6 +483,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -505,10 +505,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 
 	if (fputype)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 }
 
 int	waittime = -1;
@@ -517,11 +517,12 @@ struct pcb dumppcb;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	struct pcb *pcb = lwp_getpcb(curlwp);
 	extern u_long maxaddr;
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp->l_addr)
-		savectx(&curlwp->l_addr->u_pcb);
+	if (pcb != NULL)
+		savectx(pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {

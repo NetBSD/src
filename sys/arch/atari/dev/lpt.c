@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.31 2009/07/08 12:23:10 tsutsui Exp $ */
+/*	$NetBSD: lpt.c,v 1.32 2009/11/23 00:11:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,13 +56,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.31 2009/07/08 12:23:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.32 2009/11/23 00:11:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2009/10/26 19:16:55 cegger Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2009/11/23 00:11:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2009/10/26 19:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2009/11/23 00:11:43 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2009/10/26 19:16:55 cegger Exp $");
 #include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 #ifdef	KGDB
@@ -298,6 +297,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 	extern char fubail[], subail[];
 	struct lwp *l;
 	struct proc *p;
+	struct pcb *pcb;
 	ksiginfo_t ksi;
 	int s;
 	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
@@ -309,11 +309,8 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 	ksi.ksi_trap = type & ~T_USER;
 
 	p = l->l_proc;
-
-#ifdef DIAGNOSTIC
-	if (l->l_addr == NULL)
-		panic("trap: no pcb");
-#endif
+	pcb = lwp_getpcb(l);
+	KASSERT(pcb != NULL);
 
 	if (USERMODE(fp->f_sr)) {
 		type |= T_USER;
@@ -360,7 +357,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (l->l_addr->u_pcb.pcb_onfault == 0)
+		if (pcb->pcb_onfault == 0)
 			goto dopanic;
 		/* FALLTHROUGH */
 
@@ -373,7 +370,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		 */
 		fp->f_stackadj = exframesize[fp->f_format];
 		fp->f_format = fp->f_vector = 0;
-		fp->f_pc = (int) l->l_addr->u_pcb.pcb_onfault;
+		fp->f_pc = (int)pcb->pcb_onfault;
 		return;
 
 	case T_BUSERR|T_USER:	/* bus error */
@@ -552,8 +549,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (l->l_addr->u_pcb.pcb_onfault == fubail ||
-		    l->l_addr->u_pcb.pcb_onfault == subail)
+		if (pcb->pcb_onfault == fubail || pcb->pcb_onfault == subail)
 			goto copyfault;
 		/* fall into ... */
 
@@ -580,7 +576,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		 * argument space is lazy-allocated.
 		 */
 		if ((type & T_USER) == 0 &&
-		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
+		    ((pcb->pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
@@ -638,7 +634,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		} else
 			ksi.ksi_code = SEGV_MAPERR;
 		if (type == T_MMUFLT) {
-			if (l->l_addr->u_pcb.pcb_onfault)
+			if (pcb->pcb_onfault)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
@@ -691,9 +687,10 @@ writeback(struct frame *fp, int docachepush)
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
 	int err = 0;
 	u_int fa;
-	void *oonfault = l->l_addr->u_pcb.pcb_onfault;
+	void *oonfault = pcb->pcb_onfault;
 	paddr_t pa;
 
 #ifdef DEBUG
@@ -914,7 +911,7 @@ writeback(struct frame *fp, int docachepush)
 #endif
 		}
 	}
-	l->l_addr->u_pcb.pcb_onfault = oonfault;
+	pcb->pcb_onfault = oonfault;
 	if (err)
 		err = SIGSEGV;
 	return (err);

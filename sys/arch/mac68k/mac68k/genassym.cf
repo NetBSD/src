@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.33 2009/11/23 00:11:44 rmind Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,6 @@ include	<sys/mbuf.h>
 include	<sys/msgbuf.h>
 include	<sys/proc.h>
 include	<sys/syscall.h>
-include	<sys/user.h>
 
 include <uvm/uvm_extern.h>
 

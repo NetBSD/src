@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.71 2009/10/26 19:16:56 cegger Exp $ */
+/* $NetBSD: machdep.c,v 1.72 2009/11/23 00:11:44 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2009/11/23 00:11:44 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2009/10/26 19:16:56 cegger Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
@@ -288,6 +287,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 	extern int fputype;
 
 	frame->f_sr = PSL_USERSET;
@@ -310,9 +310,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 }
 
 void
@@ -368,11 +368,12 @@ void
 cpu_reboot(volatile int howto, char *bootstr)
 	/* howto:  XXX to shutup GCC XXX */
 {
+	struct pcb *pcb = lwp_getpcb(curlwp);
 	extern void doboot(void);
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp->l_addr)
-		savectx(&curlwp->l_addr->u_pcb);
+	if (pcb != NULL)
+		savectx(pcb);
 
 	/* If system is hold, just halt. */
 	if (cold) {

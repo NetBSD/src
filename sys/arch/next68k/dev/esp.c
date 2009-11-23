@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.58 2009/09/02 10:34:05 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.59 2009/11/23 00:11:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.58 2009/09/02 10:34:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59 2009/11/23 00:11:45 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.58 2009/09/02 10:34:05 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
