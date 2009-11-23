@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.27.14.1 2009/11/23 18:28:47 matt Exp $ */
+/* $NetBSD: sbscn.c,v 1.27.14.2 2009/11/23 18:46:50 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.27.14.1 2009/11/23 18:28:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.27.14.2 2009/11/23 18:46:50 matt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -170,7 +170,7 @@ void	sbscn_iflush(struct sbscn_channel *);
 int	sbscn_init(u_long addr, int chan, int rate, tcflag_t cflag);
 int	sbscn_common_getc(u_long addr, int chan);
 void	sbscn_common_putc(u_long addr, int chan, int c);
-void	sbscn_intr(void *arg, uint32_t status, uint32_t pc);
+void	sbscn_intr(void *arg, uint32_t status, vaddr_t pc);
 
 int	sbscn_cngetc(dev_t dev);
 void	sbscn_cnputc(dev_t dev, int c);
@@ -1471,7 +1471,7 @@ sbscn_soft(void *arg)
 }
 
 void
-sbscn_intr(void *arg, uint32_t status, uint32_t pc)
+sbscn_intr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct sbscn_channel *ch = arg;
 	u_char *put, *end;
