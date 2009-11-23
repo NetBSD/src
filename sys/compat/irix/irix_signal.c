@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.51 2009/11/04 21:23:02 rmind Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.52 2009/11/23 00:46:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.51 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.52 2009/11/23 00:46:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.51 2009/11/04 21:23:02 rmind Exp $
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/wait.h>
-#include <sys/user.h>
 
 #include <machine/regnum.h>
 #include <machine/trap.h>
@@ -370,10 +369,12 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 static void
-irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask, int code, struct lwp *l)
+irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask,
+    int code, struct lwp *l)
 {
-	int i;
 	struct frame *f;
+	struct pcb *pcb;
+	int i;
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
@@ -400,19 +401,19 @@ irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask, int code
 	/*
 	 * Save the floating-pointstate, if necessary, then copy it.
 	 */
+	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
 	scp->isc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
 	if (scp->isc_ownedfp) {
 		/* if FPU has current state, save it first */
 		if (l == fpcurlwp)
 			savefpregs(l);
-		(void)memcpy(&scp->isc_fpregs, &l->l_addr->u_pcb.pcb_fpregs,
+		memcpy(&scp->isc_fpregs, &pcb->pcb_fpregs,
 		    sizeof(scp->isc_fpregs));
-		scp->isc_fpc_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
+		scp->isc_fpc_csr = pcb->pcb_fpregs.r_regs[32];
 	}
 #else
-	(void)memcpy(&scp->isc_fpregs, &l->l_addr->u_pcb.pcb_fpregs,
-	    sizeof(scp->isc_fpregs));
+	memcpy(&scp->isc_fpregs, &pcb->pcb_fpregs, sizeof(scp->isc_fpregs));
 #endif
 	/*
 	 * Save signal stack
@@ -424,9 +425,11 @@ irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask, int code
 }
 
 void
-irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask, int code, struct lwp *l)
+irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask,
+    int code, struct lwp *l)
 {
 	struct frame *f;
+	struct pcb *pcb;
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
@@ -450,21 +453,20 @@ irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask, int code, str
 	/*
 	 * Save the floating-pointstate, if necessary, then copy it.
 	 */
+	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
 	if (l->l_md.md_flags & MDP_FPUSED) {
 		/* if FPU has current state, save it first */
 		if (l == fpcurlwp)
 			savefpregs(l);
-		(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs,
-		    &l->l_addr->u_pcb.pcb_fpregs,
-		    sizeof(ucp->iuc_mcontext.svr4___fpregs));
+		memcpy(&ucp->iuc_mcontext.svr4___fpregs,
+		    &pcb->pcb_fpregs, sizeof(ucp->iuc_mcontext.svr4___fpregs));
 		ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr =
-		    l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
+		    pcb->pcb_fpregs.r_regs[32];
 	}
 #else
-	(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs,
-	    &l->l_addr->u_pcb.pcb_fpregs,
-	    sizeof(ucp->iuc_mcontext.svr4___fpregs));
+	memcpy(&ucp->iuc_mcontext.svr4___fpregs,
+	    &pcb->pcb_fpregs, sizeof(ucp->iuc_mcontext.svr4___fpregs));
 #endif
 	/*
 	 * Save signal stack
@@ -570,20 +572,19 @@ irix_get_ucontext(struct irix_ucontext *ucp, struct lwp *l)
 	}
 
 	if (ucp->iuc_flags & IRIX_UC_MAU) {
+		struct pcb *pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		if (l == fpcurlwp)
 			fpcurlwp = NULL;
-		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs,
-		    &ucp->iuc_mcontext.svr4___fpregs,
-		    sizeof(l->l_addr->u_pcb.pcb_fpregs));
-		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] =
+		memcpy(&pcb->pcb_fpregs, &ucp->iuc_mcontext.svr4___fpregs,
+		    sizeof(pcb->pcb_fpregs));
+		pcb->pcb_fpregs.r_regs[32] =
 		     ucp->iuc_mcontext.svr4___fpregs.svr4___fp_csr;
 #else
-		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs,
-		    &ucp->iuc_mcontext.svr4___fpregs,
-		    sizeof(l->l_addr->u_pcb.pcb_fpregs));
+		memcpy(&pcb->pcb_fpregs, &ucp->iuc_mcontext.svr4___fpregs,
+		    sizeof(pcb->pcb_fpregs));
 #endif
 	}
 
@@ -620,9 +621,10 @@ irix_get_ucontext(struct irix_ucontext *ucp, struct lwp *l)
 static void
 irix_get_sigcontext(struct irix_sigcontext *scp, struct lwp *l)
 {
-	int i;
 	struct frame *f;
+	struct pcb *pcb;
 	sigset_t mask;
+	int i;
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
@@ -635,19 +637,19 @@ irix_get_sigcontext(struct irix_sigcontext *scp, struct lwp *l)
 	f->f_regs[_R_MULHI] = scp->isc_mdhi;
 	f->f_regs[_R_PC] = scp->isc_pc;
 
+	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
 	if (scp->isc_ownedfp) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		if (l == fpcurlwp)
 			fpcurlwp = NULL;
-		(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
+		memcpy(&pcb->pcb_fpregs, &scp->isc_fpregs,
 		    sizeof(scp->isc_fpregs));
-		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;
+		pcb->pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;
 	}
 #else
-	(void)memcpy(&l->l_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
-	    sizeof(l->l_addr->u_pcb.pcb_fpregs));
+	memcpy(&pcb->pcb_fpregs, &scp->isc_fpregs, sizeof(pcb->pcb_fpregs));
 #endif
 
 	/* Restore signal stack. */

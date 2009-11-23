@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.145 2009/05/29 14:19:13 njoly Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.146 2009/11/23 00:46:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.145 2009/05/29 14:19:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.146 2009/11/23 00:46:06 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.145 2009/05/29 14:19:13 njoly Ex
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -126,7 +125,7 @@ extern char linux_sigcode[], linux_rt_sigcode[];
 void
 linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 #if NNPX > 0
@@ -199,8 +198,11 @@ linux_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, s
 }
 
 static void
-linux_save_sigcontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct linux_sigcontext *sc)
+linux_save_sigcontext(struct lwp *l, struct trapframe *tf,
+    const sigset_t *mask, struct linux_sigcontext *sc)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 	/* Save register context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -232,7 +234,7 @@ linux_save_sigcontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask,
 	sc->sc_ss = tf->tf_ss;
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
-	sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
+	sc->sc_cr2 = pcb->pcb_cr2;
 	sc->sc_387 = NULL;
 
 	/* Save signal stack. */
@@ -270,7 +272,8 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	DPRINTF(("rt: onstack = %d, fp = %p sig = %d eip = 0x%x cr2 = 0x%x\n",
-	    onstack, fp, sig, tf->tf_eip, l->l_addr->u_pcb.pcb_cr2));
+	    onstack, fp, sig, tf->tf_eip,
+	    ((struct pcb *)lwp_getpcb(l))->pcb_cr2));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
@@ -377,7 +380,8 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x cr2 = 0x%x\n",
-	    onstack, fp, sig, tf->tf_eip, l->l_addr->u_pcb.pcb_cr2));
+	    onstack, fp, sig, tf->tf_eip,
+	    ((struct pcb *)lwp_getpcb(l))->pcb_cr2));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;

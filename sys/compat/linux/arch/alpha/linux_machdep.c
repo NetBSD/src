@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.44 2009/03/18 17:06:48 cegger Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.45 2009/11/23 00:46:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.44 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2009/11/23 00:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -256,11 +255,13 @@ void setup_linux_sigframe(tf, sig, mask)
 	sigframe.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
 	if (l == fpcurlwp) {
-	    alpha_pal_wrfen(1);
-	    savefpstate(&l->l_addr->u_pcb.pcb_fp);
-	    alpha_pal_wrfen(0);
-	    sigframe.sf_sc.sc_fpcr = l->l_addr->u_pcb.pcb_fp.fpr_cr;
-	    fpcurlwp = NULL;
+		struct pcb *pcb = lwp_getpcb(l);
+
+		alpha_pal_wrfen(1);
+		savefpstate(&pcb->pcb_fp);
+		alpha_pal_wrfen(0);
+		sigframe.sf_sc.sc_fpcr = pcb->pcb_fp.fpr_cr;
+		fpcurlwp = NULL;
 	}
 	/* XXX ownedfp ? etc...? */
 
@@ -374,6 +375,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 			 sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
+	struct pcb *pcb;
 
 	/*
 	 * Linux doesn't (yet) have alternate signal stacks.
@@ -407,7 +409,8 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 	    fpcurlwp = NULL;
 
 	/* Restore fp regs and fpr_cr */
-	memcpy( &l->l_addr->u_pcb.pcb_fp, (struct fpreg *)context.sc_fpregs,
+	pcb = lwp_getpcb(l);
+	memcpy(&pcb->pcb_fp, (struct fpreg *)context.sc_fpregs,
 	    sizeof(struct fpreg));
 	/* XXX sc_ownedfp ? */
 	/* XXX sc_fp_control ? */
