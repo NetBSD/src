@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.7 2009/11/15 00:42:17 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.8 2009/11/23 23:48:58 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -315,16 +315,16 @@ extern u_int mips3_pg_shift;
  */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
-void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
 struct clockframe {
-	int	pc;	/* program counter at time of interrupt */
-	int	sr;	/* status register at time of interrupt */
-	int	ppl;	/* previous priority level at time of interrupt */
+	vaddr_t	pc;	/* program counter at time of interrupt */
+	uint32_t	sr;	/* status register at time of interrupt */
+	u_int		ppl;	/* previous priority level at time of interrupt */
 };
 
 /*
