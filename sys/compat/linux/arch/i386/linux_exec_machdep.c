@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.13 2009/09/20 10:29:30 taca Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.14 2009/11/23 00:46:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.13 2009/09/20 10:29:30 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14 2009/11/23 00:46:06 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -145,7 +145,7 @@ int
 linux_init_thread_area(struct lwp *l, struct lwp *l2)
 {
 	struct trapframe *tf = l->l_md.md_regs, *tf2 = l2->l_md.md_regs;
-	struct pcb *pcb2 = &l2->l_addr->u_pcb;
+	struct pcb *pcb2 = lwp_getpcb(l2);
 	struct linux_user_desc info;
 	struct segment_descriptor sd;
 	int error, idx, a[2];
@@ -195,7 +195,7 @@ int
 linux_sys_set_thread_area(struct lwp *l,
     const struct linux_sys_set_thread_area_args *uap, register_t *retval)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct linux_user_desc info;
 	struct segment_descriptor sd;
 	int error, idx, a[2];
@@ -277,7 +277,7 @@ int
 linux_sys_get_thread_area(struct lwp *l,
     const struct linux_sys_get_thread_area_args *uap, register_t *retval)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct linux_user_desc info;
 	struct linux_desc_struct desc;
 	struct segment_descriptor sd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.36 2009/05/29 14:19:12 njoly Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.37 2009/11/23 00:46:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.36 2009/05/29 14:19:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2009/11/23 00:46:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.36 2009/05/29 14:19:12 njoly Exp
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h> /* for process_read_fpregs() */
-#include <sys/user.h>
 #include <sys/ucontext.h>
 #include <sys/conf.h>
 
@@ -82,11 +81,11 @@ static void linux_buildcontext(struct lwp *, void *, void *);
 void
 linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_lwp(l, 0);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
@@ -133,6 +132,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
@@ -220,7 +220,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigframe.uc.luc_mcontext.trapno = tf->tf_trapno;
 	native_to_linux_sigset(&lmask, mask);
 	sigframe.uc.luc_mcontext.oldmask = lmask.sig[0];
-	sigframe.uc.luc_mcontext.cr2 = (long)l->l_addr->u_pcb.pcb_onfault;
+	sigframe.uc.luc_mcontext.cr2 = (long)pcb->pcb_onfault;
 	sigframe.uc.luc_mcontext.fpstate = fpsp;
 	native_to_linux_sigset(&sigframe.uc.luc_sigmask, mask);
 
@@ -482,13 +482,14 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 }
 
 int
-linux_sys_arch_prctl(struct lwp *l, const struct linux_sys_arch_prctl_args *uap, register_t *retval)
+linux_sys_arch_prctl(struct lwp *l,
+    const struct linux_sys_arch_prctl_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) code;
 		syscallarg(unsigned long) addr;
 	} */
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = l->l_md.md_regs;
 	int error;
 	uint64_t taddr;
