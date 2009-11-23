@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.32 2009/11/15 20:38:35 snj Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.33 2009/11/23 00:11:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.32 2009/11/15 20:38:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.33 2009/11/23 00:11:43 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.32 2009/11/15 20:38:35 snj Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>

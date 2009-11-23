@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.41 2009/01/27 20:30:12 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.42 2009/11/23 00:11:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.41 2009/01/27 20:30:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.42 2009/11/23 00:11:44 rmind Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.41 2009/01/27 20:30:12 martin Exp 
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -311,7 +310,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 
 	if (fputype != FPU_NONE) {
 		/* Save FPU context. */
-		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
+		struct pcb *pcb = lwp_getpcb(l);
+		struct fpframe *fpf = &pcb->pcb_fpregs;
 
 		/*
 		 * If we're dealing with the current lwp, we need to
@@ -399,7 +399,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 
 	if (fputype != FPU_NONE) {
 		const __fpregset_t *fpr = &mcp->__fpregs;
-		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
+		struct pcb *pcb = lwp_getpcb(l);
+		struct fpframe *fpf = &pcb->pcb_fpregs;
 
 		switch (flags & (_UC_FPU | _UC_M68K_UC_USER)) {
 		case _UC_FPU:

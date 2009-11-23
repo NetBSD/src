@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.50 2009/11/07 07:27:45 cegger Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.51 2009/11/23 00:11:44 rmind Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,13 +117,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.50 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.51 2009/11/23 00:11:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 
 #include <machine/pte.h>

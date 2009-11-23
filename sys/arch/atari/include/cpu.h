@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2009/10/21 21:11:59 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64 2009/11/23 00:11:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -223,7 +223,6 @@ int	fpu_probe(void);
  * Prototypes from locore.s
  */
 struct fpframe;
-struct user;
 
 void	clearseg(paddr_t);
 void	doboot(void);

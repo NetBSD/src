@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 2009/03/14 15:36:00 dsl Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 2009/11/23 00:11:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,13 +65,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.6 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7 2009/11/23 00:11:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm.h>
 

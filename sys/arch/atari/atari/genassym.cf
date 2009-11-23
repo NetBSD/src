@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2008/12/31 11:11:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.29 2009/11/23 00:11:43 rmind Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
-include <sys/user.h>
 
 include <uvm/uvm_extern.h>
 
