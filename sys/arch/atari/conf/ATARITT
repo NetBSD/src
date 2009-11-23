@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.93 2009/03/06 23:38:41 abs Exp $
+# $NetBSD: ATARITT,v 1.94 2009/11/23 00:18:38 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -12,7 +12,6 @@ maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
-options FPU_EMULATE # Support for MC68881/MC68882 emulator
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
