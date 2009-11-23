@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.675 2009/11/21 15:38:43 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.676 2009/11/23 05:01:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.675 2009/11/21 15:38:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.676 2009/11/23 05:01:12 dholland Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1371,7 +1371,7 @@ init386(paddr_t first_avail)
 	 * Saving SSE registers won't work if the save area isn't
 	 * 16-byte aligned.
 	 */
-	KASSERT(offsetof(struct pcb, pcb_savefpu) & 0xf);
+	KASSERT((offsetof(struct pcb, pcb_savefpu) & 0xf) == 0);
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
