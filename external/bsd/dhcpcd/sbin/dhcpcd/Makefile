@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.2.2 2009/05/10 21:29:56 snj Exp $
+# $NetBSD: Makefile,v 1.3.2.3 2009/11/23 03:13:29 snj Exp $
 #
 
 PROG=		dhcpcd
@@ -7,10 +7,13 @@ SRCS=		arp.c bind.c common.c control.c configure.c dhcp.c dhcpcd.c \
 		signals.c
 SRCS+=		bpf.c if-bsd.c
 
+# getline is only available in NetBSD-6, so build the compat shim
+SRCS+=		getline.c
+
 .include <bsd.own.mk>
 
-DIST=	${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
-.PATH: ${DIST}
+DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
+.PATH: ${DIST} ${DIST}/compat
 
 CPPFLAGS+=	-I${DIST}
 

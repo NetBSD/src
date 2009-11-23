@@ -25,58 +25,51 @@
  * SUCH DAMAGE.
  */
 
-#ifndef COMMON_H
-#define COMMON_H
-
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <string.h>
 
-#include "config.h"
-#include "defs.h"
+#include "getline.h"
 
-#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+/* Redefine a small buffer for our simple text config files */
+#undef BUFSIZ
+#define BUFSIZ 128
 
-#define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
-#define timernorm(tvp)							\
-	do {								\
-		while ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (0 /* CONSTCOND */);
-
-#if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# define _noreturn __attribute__((__noreturn__))
-# define _packed   __attribute__((__packed__))
-# define _unused   __attribute__((__unused__))
-#else
-# define _noreturn
-# define _packed
-# define _unused
-#endif
-
-/* We don't really need this as our supported systems define __restrict
- * automatically for us, but it is here for completeness. */
-#ifndef __restrict
-# if defined(__lint__)
-#  define __restrict
-# elif __STDC_VERSION__ >= 199901L
-#  define __restrict restrict
-# elif !(2 < __GNUC__ || (2 == __GNU_C && 95 <= __GNUC_VERSION__))
-#  define __restrict
-# endif
-#endif
-
-int set_cloexec(int);
-int set_nonblock(int);
-char *get_line(FILE * __restrict);
-extern int clock_monotonic;
-int get_monotonic(struct timeval *);
-time_t uptime(void);
-int writepid(int, pid_t);
-void *xrealloc(void *, size_t);
-void *xmalloc(size_t);
-void *xzalloc(size_t);
-char *xstrdup(const char *);
-
-#endif
+ssize_t
+getline(char ** __restrict buf, size_t * __restrict buflen,
+    FILE * __restrict fp)
+{
+	size_t bytes, newlen;
+	char *newbuf, *p;
+	
+	if (buf == NULL || buflen == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (*buf == NULL)
+		*buflen = 0;
+	
+	bytes = 0;
+	do {
+		if (feof(fp))
+			break;
+		if (*buf == NULL || bytes != 0) {
+			newlen = *buflen + BUFSIZ;
+			newbuf = realloc(*buf, newlen);
+			if (newbuf == NULL)
+				return -1;
+			*buf = newbuf;
+			*buflen = newlen;
+		}
+		p = *buf + bytes;
+		memset(p, 0, BUFSIZ);
+		if (fgets(p, BUFSIZ, fp) == NULL)
+			break;
+		bytes += strlen(p);
+	} while (bytes == 0 || *(*buf + (bytes - 1)) != '\n');
+	if (bytes == 0)
+		return -1;
+	return bytes;
+}
