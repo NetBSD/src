@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3 2009/03/13 19:08:20 abs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.4 2009/11/23 00:11:43 rmind Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,7 +69,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm.h>
 
