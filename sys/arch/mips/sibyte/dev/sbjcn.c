@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.21 2008/06/13 12:08:01 cegger Exp $ */
+/* $NetBSD: sbjcn.c,v 1.21.14.1 2009/11/23 18:28:46 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.21 2008/06/13 12:08:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.21.14.1 2009/11/23 18:28:46 matt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -225,8 +225,8 @@ static void	sbjcn_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
     sbjcn_match, sbjcn_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 #define	JTAG_CONS_CONTROL  0x00
 #define	JTAG_CONS_INPUT    0x20
