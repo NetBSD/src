@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.7 2006/01/12 04:40:50 simonb Exp $ */
+/* $NetBSD: sbwdog.c,v 1.7.94.1 2009/11/23 18:28:47 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.7 2006/01/12 04:40:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.7.94.1 2009/11/23 18:28:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ static int sbwdog_setmode(struct sysmon_wdog *);
 CFATTACH_DECL(sbwdog, sizeof(struct sbwdog_softc),
     sbwdog_match, sbwdog_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 static int
 sbwdog_match(struct device *parent, struct cfdata *cf, void *aux)

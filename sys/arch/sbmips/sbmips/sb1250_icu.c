@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9 2007/12/03 15:34:16 ad Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.1 2009/11/23 18:28:47 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9 2007/12/03 15:34:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.1 2009/11/23 18:28:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 #define	SB1250_I_MAP_I2		0x02
 /* XXX */
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 static void	sb1250_cpu_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	*sb1250_intr_establish(u_int, u_int,

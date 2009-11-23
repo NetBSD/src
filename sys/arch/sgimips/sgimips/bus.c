@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.55.16.1 2009/09/10 01:51:32 matt Exp $	*/
+/*	$NetBSD: bus.c,v 1.55.16.2 2009/11/23 18:28:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55.16.1 2009/09/10 01:51:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.55.16.2 2009/11/23 18:28:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,14 +375,14 @@ bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 			s = splhigh();
 			delay(10);
 #endif
-			reg = mips3_ld( (u_int64_t *)(vaddr_t)(bsh + o));
+			reg = mips3_ld((volatile uint64_t *)(vaddr_t)(bsh + o));
 #ifdef MACE_NEEDS_DELAYS
 			delay(10);
 			splx(s);
 #endif
 			break;
 		default:
-			reg = mips3_ld( (u_int64_t *)(vaddr_t)(bsh + o));
+			reg = mips3_ld((volatile uint64_t *)(vaddr_t)(bsh + o));
 			break;
 	}
 	return reg;
@@ -404,14 +404,14 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			s = splhigh();
 			delay(10);
 #endif
-			mips3_sd( (u_int64_t *)(vaddr_t)(bsh + o), v);
+			mips3_sd((volatile uint64_t *)(vaddr_t)(bsh + o), v);
 #ifdef MACE_NEEDS_DELAYS
 			delay(10);
 			splx(s);
 #endif
 			break;
 		default:
-			mips3_sd( (u_int64_t *)(vaddr_t)(bsh + o), v);
+			mips3_sd((volatile uint64_t *)(vaddr_t)(bsh + o), v);
 			break;
 	}
 }
