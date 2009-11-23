@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28.24.1 2009/08/19 07:33:30 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.24.2 2009/11/23 18:28:46 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.24.1 2009/08/19 07:33:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.24.2 2009/11/23 18:28:46 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -119,8 +119,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 #define	dprintf(x)
 #endif
 
-#define	SBMAC_READCSR(t) mips3_ld((uint64_t *) (t))
-#define	SBMAC_WRITECSR(t, v) mips3_sd((uint64_t *) (t), (v))
+#define	SBMAC_READCSR(t) mips3_ld((volatile uint64_t *) (t))
+#define	SBMAC_WRITECSR(t, v) mips3_sd((volatile uint64_t *) (t), (v))
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 

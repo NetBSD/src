@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.4 2009/09/05 03:18:49 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.5 2009/11/23 18:28:46 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -140,7 +140,7 @@ void	mips3_cp0_pg_mask_write(uint32_t);
 
 #if defined(__GNUC__) && !defined(__mips_o32)
 static inline uint64_t
-mips3_ld(const uint64_t *va)
+mips3_ld(const volatile uint64_t *va)
 {
 	uint64_t rv;
 #if defined(__mips_o32)
@@ -173,7 +173,7 @@ mips3_ld(const uint64_t *va)
 	return rv;
 }
 static inline void
-mips3_sd(uint64_t *va, uint64_t v)
+mips3_sd(volatile uint64_t *va, uint64_t v)
 {
 #if defined(__mips_o32)
 	uint32_t sr;
@@ -202,8 +202,8 @@ mips3_sd(uint64_t *va, uint64_t v)
 #endif
 }
 #else
-uint64_t mips3_ld(uint64_t *va);
-void	mips3_sd(uint64_t *, uint64_t);
+uint64_t mips3_ld(volatile uint64_t *va);
+void	mips3_sd(volatile uint64_t *, uint64_t);
 #endif	/* __GNUC__ */
 #endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
 
