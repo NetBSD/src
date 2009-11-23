@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.22 2009/05/29 14:19:13 njoly Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.23 2009/11/23 00:46:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,14 +31,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.22 2009/05/29 14:19:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.23 2009/11/23 00:46:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -281,13 +280,13 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 void
 linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_lwp(l, 0);
 
 #if defined(USER_LDT) && 0
@@ -340,8 +339,10 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 }
 
 static void
-linux32_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct sigaltstack *sas, struct linux32_ucontext *uc)
+linux32_save_ucontext(struct lwp *l, struct trapframe *tf,
+    const sigset_t *mask, struct sigaltstack *sas, struct linux32_ucontext *uc)
 {
+
 	uc->uc_flags = 0;
 	NETBSD32PTR32(uc->uc_link, NULL);
 	native_to_linux32_sigaltstack(&uc->uc_stack, sas);
@@ -354,6 +355,8 @@ static void
 linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
 			const sigset_t *mask, struct linux32_sigcontext *sc)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 	/* Save register context. */
 	sc->sc_gs = tf->tf_gs;
 	sc->sc_fs = tf->tf_fs;
@@ -374,7 +377,7 @@ linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
 	sc->sc_ss = tf->tf_ss;
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
-	sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
+	sc->sc_cr2 = pcb->pcb_cr2;
 	NETBSD32PTR32(sc->sc_387, NULL);
 
 	/* Save signal stack. */
@@ -385,7 +388,8 @@ linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
 }
 
 int
-linux32_sys_sigreturn(struct lwp *l, const struct linux32_sys_sigreturn_args *uap, register_t *retval)
+linux32_sys_sigreturn(struct lwp *l,
+    const struct linux32_sys_sigreturn_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(linux32_sigcontextp_t) scp;
@@ -400,7 +404,8 @@ linux32_sys_sigreturn(struct lwp *l, const struct linux32_sys_sigreturn_args *ua
 }
 
 int
-linux32_sys_rt_sigreturn(struct lwp *l, const struct linux32_sys_rt_sigreturn_args *uap, register_t *retval)
+linux32_sys_rt_sigreturn(struct lwp *l,
+    const struct linux32_sys_rt_sigreturn_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(linux32_ucontextp_t) ucp;
