@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2009/11/23 13:40:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Masaru Oki
@@ -58,6 +58,7 @@ struct dos_partition {
 #endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
+#define __HAVE_DISKLABEL_DKBAD
 	struct dkbad bad;
 };
 
