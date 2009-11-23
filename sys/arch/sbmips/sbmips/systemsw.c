@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.14 2008/01/08 14:38:48 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.14.28.1 2009/11/23 18:46:51 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14 2008/01/08 14:38:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14.28.1 2009/11/23 18:46:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14 2008/01/08 14:38:48 simonb Exp $")
 
 /* trivial functions for function switch */
 static void	clock_init_triv(void *);
-static void	cpu_intr_triv(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	cpu_intr_triv(uint32_t, uint32_t, vaddr_t, uint32_t);
 
 /* system function switch */
 struct systemsw systemsw = {
@@ -77,7 +77,7 @@ system_set_clockfns(void *arg, void (*init)(void *))
 }
 
 static void
-cpu_intr_triv(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr_triv(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("cpu_intr_triv");

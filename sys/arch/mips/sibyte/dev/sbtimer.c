@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.13.28.1 2009/11/23 18:28:47 matt Exp $ */
+/* $NetBSD: sbtimer.c,v 1.13.28.2 2009/11/23 18:46:50 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.13.28.1 2009/11/23 18:28:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.13.28.2 2009/11/23 18:46:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,10 +64,9 @@ static void	sbtimer_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbtimer, sizeof(struct sbtimer_softc),
     sbtimer_match, sbtimer_attach, NULL, NULL);
 
-static void	sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc);
-static void	sbtimer_statclockintr(void *arg, uint32_t status,
-		    uint32_t pc);
-static void	sbtimer_miscintr(void *arg, uint32_t status, uint32_t pc);
+static void	sbtimer_clockintr(void *arg, uint32_t status, vaddr_t pc);
+static void	sbtimer_statclockintr(void *arg, uint32_t status, vaddr_t pc);
+static void	sbtimer_miscintr(void *arg, uint32_t status, vaddr_t pc);
 
 static void	sbtimer_clock_init(void *arg);
 
@@ -87,7 +86,7 @@ sbtimer_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbscd_attach_args *sa = aux;
 	struct sbtimer_softc *sc = (struct sbtimer_softc *)self;
-	void (*fun)(void *, uint32_t, uint32_t);
+	void (*fun)(void *, uint32_t, vaddr_t);
 	int ipl;
 	const char *comment = "";
 
@@ -164,7 +163,7 @@ sbtimer_clock_init(void *arg)
 }
 
 static void
-sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc)
+sbtimer_clockintr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct sbtimer_softc *sc = arg;
 	struct clockframe cf;
@@ -186,7 +185,7 @@ sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc)
 }
 
 static void
-sbtimer_statclockintr(void *arg, uint32_t status, uint32_t pc)
+sbtimer_statclockintr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct sbtimer_softc *sc = arg;
 	struct clockframe cf;
@@ -202,7 +201,7 @@ sbtimer_statclockintr(void *arg, uint32_t status, uint32_t pc)
 }
 
 static void
-sbtimer_miscintr(void *arg, uint32_t status, uint32_t pc)
+sbtimer_miscintr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct sbtimer_softc *sc = arg;
 
