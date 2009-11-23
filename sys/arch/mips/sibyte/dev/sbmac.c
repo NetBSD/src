@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28.24.2 2009/11/23 18:28:46 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.24.3 2009/11/23 18:46:50 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.24.2 2009/11/23 18:28:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.24.3 2009/11/23 18:46:50 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -252,7 +252,7 @@ static sbmac_state_t sbmac_set_channel_state(struct sbmac_softc *,
 static void sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff);
 static void sbmac_init_and_start(struct sbmac_softc *sc);
 static uint64_t sbmac_addr2reg(u_char *ptr);
-static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
+static void sbmac_intr(void *xsc, uint32_t status, vaddr_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
@@ -1731,7 +1731,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 
 /* ARGSUSED */
 static void
-sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
+sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 {
 	struct sbmac_softc *sc = (struct sbmac_softc *) xsc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
