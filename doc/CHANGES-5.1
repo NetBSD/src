@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.141 2009/11/21 20:10:39 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.142 2009/11/23 03:21:04 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14802,4 +14802,65 @@ sys/kern/vfs_subr.c				1.387
 	case we didn't bump the refcount, so don't decrease it through
 	vrelel().  call mutex_exit() on v_interlock directly instead.
 	[bouyer, ticket #1152]
+
+external/bsd/dhcpcd/dist/compat			patch
+external/bsd/dhcpcd/dist/defs.h			patch
+external/bsd/dhcpcd/dist/arp.c			patch
+external/bsd/dhcpcd/dist/bind.c			patch
+external/bsd/dhcpcd/dist/common.c		patch
+external/bsd/dhcpcd/dist/common.h		patch
+external/bsd/dhcpcd/dist/config.h		patch
+external/bsd/dhcpcd/dist/configure.c		patch
+external/bsd/dhcpcd/dist/control.c		patch
+external/bsd/dhcpcd/dist/dhcp.c			patch
+external/bsd/dhcpcd/dist/dhcp.h			patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in	patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in	patch
+external/bsd/dhcpcd/dist/dhcpcd.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd.c		patch
+external/bsd/dhcpcd/dist/dhcpcd.conf		patch
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in	patch
+external/bsd/dhcpcd/dist/duid.c			patch
+external/bsd/dhcpcd/dist/if-bsd.c		patch
+external/bsd/dhcpcd/dist/if-options.c		patch
+external/bsd/dhcpcd/dist/if-options.h		patch
+external/bsd/dhcpcd/dist/if-pref.c		patch
+external/bsd/dhcpcd/dist/ipv4ll.c		patch
+external/bsd/dhcpcd/dist/net.c			patch
+external/bsd/dhcpcd/dist/net.h			patch
+external/bsd/dhcpcd/dist/signals.c		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf patch
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile	patch
+
+	Update dhcpcd to 5.1.3.  Changes:
+	* Fixed correct dstaddr detection at startup on PtP links.
+	* Default to requesting an MTU.
+	* Fix crash on MIPS
+	* Save and restore interface MTU when changing
+	* IP whitelist
+	* Ensure that the lease and pidfile directories exist at startup
+	* Fix -f path/to/config
+	* -e, --env var=value for profile specific env vars
+	* Many issues resolved when running in test mode
+	* Don't print a (null) string when there is no NAK message
+	* Only allow hardware families we know by default (over-ridable)
+	* Fix persistent and timeout 0 options
+	* Fix parsing of escape code sequencies
+	* Don't bring up interfaces brought down when handling new interfaces
+	* Allow un-encapsulated vendor option
+	* Don't null terminate gratuitously when handling quotes.
+	* Fix various typos and grammatical errors. Thanks to Stephen Borrill.
+	* ClientID is now reported when interface starts
+	* -w, --wait forces dhcpcd to wait until an interface gets a lease ar
+	  times out
+	* 50-ypbind hook added for BSD style NIS
+	* Ensure DHCP socket is open when sending a DECLINE
+	* Uses new hwaddr if existing interface is downed and then changed.
+	* No longer works on firewire interfaces by default.
+	* waitip is enabled when running on a single interface.
+	* Classless Static Routes are now enabled by default in dhcpcd.conf
+	  instead of being always being requested.
+	[roy, ticket #1099]
 
