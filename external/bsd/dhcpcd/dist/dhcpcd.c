@@ -30,6 +30,7 @@ const char copyright[] = "Copyright (c) 2006-2009 Roy Marples";
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -136,14 +137,15 @@ read_pid(void)
 static void
 usage(void)
 {
-	printf("usage: "PACKAGE" [-deknpqxyADEGHKLOTV] [-c script] [-f file ]"
-	    " [-h hostname]\n"
-	    "              [-i classID ] [-l leasetime] [-m metric]"
-	    " [-o option] [-r ipaddr]\n"
-	    "              [-s ipaddr] [-t timeout] [-u userclass]"
-	    " [-F none|ptr|both]\n"
-	    "              [-I clientID] [-C hookscript] [-Q option]"
-	    " [-X ipaddr] <interface>\n");
+	printf("usage: "PACKAGE" [-dgknpqwxyADEGHKLOTV] [-c script] [-f file]"
+	    " [-e var=val]\n"
+	    "              [-h hostname] [-i classID ] [-l leasetime]"
+	    " [-m metric] [-o option]\n"
+	    "              [-r ipaddr] [-s ipaddr] [-t timeout]"
+	    " [-u userclass]\n"
+	    "              [-F none|ptr|both] [-I clientID] [-C hookscript]"
+	    " [-Q option]\n"
+	    "              [-X ipaddr] <interface>\n");
 }
 
 static void
@@ -183,11 +185,18 @@ cleanup(void)
 }
 
 /* ARGSUSED */
-_noreturn void
+void
 handle_exit_timeout(_unused void *arg)
 {
+	int timeout;
+
 	syslog(LOG_ERR, "timed out");
-	exit(EXIT_FAILURE);
+	if (!(options & DHCPCD_TIMEOUT_IPV4LL))
+		exit(EXIT_FAILURE);
+	options &= ~DHCPCD_TIMEOUT_IPV4LL;
+	timeout = (PROBE_NUM * PROBE_MAX) + PROBE_WAIT + 1;
+	syslog(LOG_WARNING, "allowing %d seconds for IPv4LL timeout", timeout);
+	add_timeout_sec(timeout, handle_exit_timeout, NULL);
 }
 
 void
@@ -253,7 +262,7 @@ stop_interface(struct interface *iface)
 	else
 		ifaces = ifp->next;
 	free_interface(ifp);
-	if (!(options & DHCPCD_MASTER))
+	if (!(options & (DHCPCD_MASTER | DHCPCD_TEST)))
 		exit(EXIT_FAILURE);
 }
 
@@ -321,7 +330,8 @@ send_message(struct interface *iface, int type,
 		 * stopping the interface. */
 		if (r == -1) {
 			syslog(LOG_ERR, "%s: send_raw_packet: %m", iface->name);
-			drop_config(iface, "FAIL");
+			if (!(options & DHCPCD_TEST))
+				drop_config(iface, "FAIL");
 			close_sockets(iface);
 			delete_timeout(NULL, iface);
 			callback = NULL;
@@ -384,12 +394,6 @@ start_expire(void *arg)
 		start_interface(iface);
 }
 
-void
-send_decline(struct interface *iface)
-{
-	send_message(iface, DHCP_DECLINE, NULL);
-}
-
 static void
 log_dhcp(int lvl, const char *msg,
     const struct interface *iface, const struct dhcp_message *dhcp)
@@ -405,14 +409,18 @@ log_dhcp(int lvl, const char *msg,
 		a = xstrdup(inet_ntoa(addr));
 	} else
 		a = NULL;
-	r = get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID);
+	r = get_option_addr(&addr, dhcp, DHO_SERVERID);
 	if (dhcp->servername[0] && r == 0)
 		syslog(lvl, "%s: %s %s from %s `%s'", iface->name, msg, a,
 		    inet_ntoa(addr), dhcp->servername);
-	else if (r == 0)
-		syslog(lvl, "%s: %s %s from %s",
-		    iface->name, msg, a, inet_ntoa(addr));
-	else if (a != NULL)
+	else if (r == 0) {
+		if (a == NULL)
+			syslog(lvl, "%s: %s from %s",
+			    iface->name, msg, inet_ntoa(addr));
+		else
+			syslog(lvl, "%s: %s %s from %s",
+			    iface->name, msg, a, inet_ntoa(addr));
+	} else if (a != NULL)
 		syslog(lvl, "%s: %s %s", iface->name, msg, a);
 	else
 		syslog(lvl, "%s: %s", iface->name, msg);
@@ -426,6 +434,19 @@ blacklisted_ip(const struct if_options *ifo, in_addr_t addr)
 	
 	for (i = 0; i < ifo->blacklist_len; i += 2)
 		if (ifo->blacklist[i] == (addr & ifo->blacklist[i + 1]))
+			return 1;
+	return 0;
+}
+
+static int
+whitelisted_ip(const struct if_options *ifo, in_addr_t addr)
+{
+	size_t i;
+
+	if (ifo->whitelist_len == 0)
+		return -1;
+	for (i = 0; i < ifo->whitelist_len; i += 2)
+		if (ifo->whitelist[i] == (addr & ifo->whitelist[i + 1]))
 			return 1;
 	return 0;
 }
@@ -451,15 +472,17 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	if (type == DHCP_NAK) {
 		/* For NAK, only check if we require the ServerID */
 		if (has_option_mask(ifo->requiremask, DHO_SERVERID) &&
-		    get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == -1)
+		    get_option_addr(&addr, dhcp, DHO_SERVERID) == -1)
 		{
 			log_dhcp(LOG_WARNING, "reject NAK", iface, dhcp);
 			return;
 		}
 		/* We should restart on a NAK */
 		log_dhcp(LOG_WARNING, "NAK:", iface, dhcp);
-		drop_config(iface, "NAK");
-		unlink(iface->leasefile);
+		if (!(options & DHCPCD_TEST)) {
+			drop_config(iface, "NAK");
+			unlink(iface->leasefile);
+		}
 		delete_event(iface->raw_fd);
 		close(iface->raw_fd);
 		iface->raw_fd = -1;
@@ -497,7 +520,8 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 		lease->addr.s_addr = dhcp->yiaddr;
 		lease->server.s_addr = INADDR_ANY;
 		if (type != 0)
-			get_option_addr(&lease->server.s_addr, dhcp, DHO_SERVERID);
+			get_option_addr(&lease->server,
+			    dhcp, DHO_SERVERID);
 		log_dhcp(LOG_INFO, "offered", iface, dhcp);
 		free(state->offer);
 		state->offer = dhcp;
@@ -551,6 +575,11 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	lease->frominfo = 0;
 
 	delete_timeout(NULL, iface);
+	/* We now have an offer, so close the DHCP sockets.
+	 * This allows us to safely ARP when broken DHCP servers send an ACK
+	 * follows by an invalid NAK. */
+	close_sockets(iface);
+
 	if (ifo->options & DHCPCD_ARP &&
 	    iface->addr.s_addr != state->offer->yiaddr)
 	{
@@ -579,6 +608,7 @@ handle_dhcp_packet(void *arg)
 	const uint8_t *pp;
 	ssize_t bytes;
 	struct in_addr from;
+	int i;
 
 	/* We loop through until our buffer is empty.
 	 * The benefit is that if we get >1 DHCP packet in our buffer and
@@ -594,7 +624,15 @@ handle_dhcp_packet(void *arg)
 			    iface->name, inet_ntoa(from));
 			continue;
 		}
-		if (blacklisted_ip(iface->state->options, from.s_addr)) {
+		i = whitelisted_ip(iface->state->options, from.s_addr);
+		if (i == 0) {
+			syslog(LOG_WARNING,
+			    "%s: non whitelisted DHCP packet from %s",
+			    iface->name, inet_ntoa(from));
+			continue;
+		} else if (i != 1 &&
+		    blacklisted_ip(iface->state->options, from.s_addr) == 1)
+		{
 			syslog(LOG_WARNING,
 			    "%s: blacklisted DHCP packet from %s",
 			    iface->name, inet_ntoa(from));
@@ -675,6 +713,14 @@ send_release(struct interface *iface)
 		send_message(iface, DHCP_RELEASE, NULL);
 		drop_config(iface, "RELEASE");
 	}
+	unlink(iface->leasefile);
+}
+
+void
+send_decline(struct interface *iface)
+{
+	open_sockets(iface);
+	send_message(iface, DHCP_DECLINE, NULL);
 }
 
 static void
@@ -690,7 +736,7 @@ configure_interface1(struct interface *iface)
 	if (iface->flags & IFF_NOARP ||
 	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
 		ifo->options &= ~(DHCPCD_ARP | DHCPCD_IPV4LL);
-	if (ifo->options & DHCPCD_LINK && carrier_status(iface->name) == -1)
+	if (ifo->options & DHCPCD_LINK && carrier_status(iface) == -1)
 		ifo->options &= ~DHCPCD_LINK;
 	
 	if (ifo->metric != -1)
@@ -735,6 +781,9 @@ configure_interface1(struct interface *iface)
 			    iface->hwlen);
 		}
 	}
+	if (ifo->options & DHCPCD_CLIENTID)
+		syslog(LOG_DEBUG, "%s: using ClientID %s", iface->name,
+		    hwaddr_ntoa(iface->clientid + 1, *iface->clientid));
 }
 
 int
@@ -783,6 +832,7 @@ static void
 handle_carrier(const char *ifname)
 {
 	struct interface *iface;
+	int carrier;
 
 	if (!(options & DHCPCD_LINK))
 		return;
@@ -791,11 +841,10 @@ handle_carrier(const char *ifname)
 			break;
 	if (!iface || !(iface->state->options->options & DHCPCD_LINK))
 		return;
-	switch (carrier_status(iface->name)) {
-	case -1:
-		syslog(LOG_ERR, "carrier_status: %m");
-		break;
-	case 0:
+	carrier = carrier_status(iface);
+	if (carrier == -1)
+		syslog(LOG_ERR, "%s: carrier_status: %m", ifname);
+	else if (carrier == 0 || !(iface->flags & IFF_RUNNING)) {
 		if (iface->carrier != LINK_DOWN) {
 			iface->carrier = LINK_DOWN;
 			syslog(LOG_INFO, "%s: carrier lost", iface->name);
@@ -803,8 +852,7 @@ handle_carrier(const char *ifname)
 			delete_timeouts(iface, start_expire, NULL);
 			drop_config(iface, "NOCARRIER");
 		}
-		break;
-	default:
+	} else if (carrier == 1 && (iface->flags & IFF_RUNNING)) {
 		if (iface->carrier != LINK_UP) {
 			iface->carrier = LINK_UP;
 			syslog(LOG_INFO, "%s: carrier acquired", iface->name);
@@ -816,7 +864,6 @@ handle_carrier(const char *ifname)
 			run_script(iface);
 			start_interface(iface);
 		}
-		break;
 	}
 }
 
@@ -871,7 +918,7 @@ start_rebind(void *arg)
 {
 	struct interface *iface = arg;
 
-	syslog(LOG_ERR, "%s: failed to renew, attmepting to rebind",
+	syslog(LOG_ERR, "%s: failed to renew, attempting to rebind",
 	    iface->name);
 	iface->state->state = DHS_REBIND;
 	delete_timeout(send_renew, iface);
@@ -952,9 +999,13 @@ start_inform(struct interface *iface)
 	if (handle_3rdparty(iface))
 		return;
 
-	iface->state->options->options |= DHCPCD_STATIC;
-	start_static(iface);
-	iface->state->options->options &= ~DHCPCD_STATIC;
+	if (options & DHCPCD_TEST) {
+		iface->addr.s_addr = iface->state->options->req_addr.s_addr;
+		iface->net.s_addr = iface->state->options->req_mask.s_addr;
+	} else {
+		iface->state->options->options |= DHCPCD_STATIC;
+		start_static(iface);
+	}
 
 	iface->state->state = DHS_INFORM;
 	iface->state->xid = arc4random();
@@ -1033,10 +1084,6 @@ start_interface(void *arg)
 	free(iface->state->offer);
 	iface->state->offer = NULL;
 
-	if (options & DHCPCD_TEST) {
-		start_discover(iface);
-		return;
-	}
 	if (iface->state->arping_index < ifo->arping_len) {
 		start_arping(iface);
 		return;
@@ -1127,7 +1174,7 @@ init_state(struct interface *iface, int argc, char **argv)
 		run_script(iface);
 
 	if (ifs->options->options & DHCPCD_LINK) {
-		switch (carrier_status(iface->name)) {
+		switch (carrier_status(iface)) {
 		case 0:
 			iface->carrier = LINK_DOWN;
 			ifs->reason = "NOCARRIER";
@@ -1150,7 +1197,7 @@ void
 handle_interface(int action, const char *ifname)
 {
 	struct interface *ifs, *ifp, *ifn, *ifl = NULL;
-	const char * const argv[] = { "dhcpcd", ifname };
+	const char * const argv[] = { ifname }; 
 	int i;
 
 	if (action == -1) {
@@ -1172,23 +1219,30 @@ handle_interface(int action, const char *ifname)
 			return;
 	}
 
-	if ((ifs = discover_interfaces(2, UNCONST(argv)))) {
-		for (ifp = ifs; ifp; ifp = ifp->next) {
-			/* Check if we already have the interface */
-			for (ifn = ifaces; ifn; ifn = ifn->next) {
-				if (strcmp(ifn->name, ifp->name) == 0)
-					break;
-				ifl = ifn;
-			}
-			if (ifn)
-				continue;
-			init_state(ifp, 2, UNCONST(argv));
+	ifs = discover_interfaces(-1, UNCONST(argv));
+	for (ifp = ifs; ifp; ifp = ifp->next) {
+		if (strcmp(ifp->name, ifname) != 0)
+			continue;
+		/* Check if we already have the interface */
+		for (ifn = ifaces; ifn; ifn = ifn->next) {
+			if (strcmp(ifn->name, ifp->name) == 0)
+				break;
+			ifl = ifn;
+		}
+		if (ifn) {
+			/* The flags and hwaddr could have changed */
+			ifn->flags = ifp->flags;
+			ifn->hwlen = ifp->hwlen;
+			if (ifp->hwlen != 0)
+				memcpy(ifn->hwaddr, ifp->hwaddr, ifn->hwlen);
+		} else {
 			if (ifl)
 				ifl->next = ifp;
 			else
 				ifaces = ifp;
-			start_interface(ifp);
 		}
+		init_state(ifp, 0, NULL);
+		start_interface(ifp);
 	}
 }
 
@@ -1296,6 +1350,9 @@ handle_signal(_unused void *arg)
 		return;
 	}
 
+	if (options & DHCPCD_TEST)
+		exit(EXIT_FAILURE);
+
 	/* As drop_config could re-arrange the order, we do it like this. */
 	for (;;) {
 		/* Be sane and drop the last config first */
@@ -1359,7 +1416,10 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 			iov[0].iov_len = sizeof(ssize_t);
 			iov[1].iov_base = UNCONST(VERSION);
 			iov[1].iov_len = len;
-			writev(fd->fd, iov, 2);
+			if (writev(fd->fd, iov, 2) == -1) {
+				syslog(LOG_ERR, "writev: %m");
+				return -1;
+			}
 			return 0;
 		} else if (strcmp(*argv, "--getconfigfile") == 0) {
 			len = strlen(cffile ? cffile : CONFIG) + 1;
@@ -1367,7 +1427,10 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 			iov[0].iov_len = sizeof(ssize_t);
 			iov[1].iov_base = cffile ? cffile : UNCONST(CONFIG);
 			iov[1].iov_len = len;
-			writev(fd->fd, iov, 2);
+			if (writev(fd->fd, iov, 2) == -1) {
+				syslog(LOG_ERR, "writev: %m");
+				return -1;
+			}
 			return 0;
 		} else if (strcmp(*argv, "--getinterfaces") == 0) {
 			len = 0;
@@ -1422,7 +1485,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 	while ((opt = getopt_long(argc, argv, IF_OPTS, cf_options, &oi)) != -1)
 	{
 		switch (opt) {
-		case 'e':
+		case 'g':
 			do_reconf = 1;
 			break;
 		case 'k':
@@ -1518,11 +1581,11 @@ main(int argc, char **argv)
 	while ((opt = getopt_long(argc, argv, IF_OPTS, cf_options, &oi)) != -1)
 	{
 		switch (opt) {
-		case 'e':
-			sig = SIGUSR1;
-			break;
 		case 'f':
 			cffile = optarg;
+			break;
+		case 'g':
+			sig = SIGUSR1;
 			break;
 		case 'k':
 			sig = SIGHUP;
@@ -1555,9 +1618,11 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	options = ifo->options;
-	if (i)
+	if (i != 0) {
 		options |= DHCPCD_TEST | DHCPCD_PERSISTENT;
-
+		options &= ~DHCPCD_DAEMONISE;
+	}
+	
 #ifdef THERE_IS_NO_FORK
 	options &= ~DHCPCD_DAEMONISE;
 #endif
@@ -1567,22 +1632,24 @@ main(int argc, char **argv)
 	else if (options & DHCPCD_QUIET)
 		setlogmask(LOG_UPTO(LOG_WARNING));
 
-	/* If we have any other args, we should run as a single dhcpcd instance
-	 * for that interface. */
-	len = strlen(PIDFILE) + IF_NAMESIZE + 2;
-	pidfile = xmalloc(len);
-	if (optind == argc - 1 && !(options & DHCPCD_TEST)) {
-		snprintf(pidfile, len, PIDFILE, "-", argv[optind]);
-	} else {
-		snprintf(pidfile, len, PIDFILE, "", "");
-		options |= DHCPCD_MASTER;
+	if (!(options & DHCPCD_TEST)) {
+		/* If we have any other args, we should run as a single dhcpcd
+		 *  instance for that interface. */
+		len = strlen(PIDFILE) + IF_NAMESIZE + 2;
+		pidfile = xmalloc(len);
+		if (optind == argc - 1)
+			snprintf(pidfile, len, PIDFILE, "-", argv[optind]);
+		else {
+			snprintf(pidfile, len, PIDFILE, "", "");
+			options |= DHCPCD_MASTER;
+		}
 	}
 
 	if (chdir("/") == -1)
 		syslog(LOG_ERR, "chdir `/': %m");
 	atexit(cleanup);
 
-	if (!(options & DHCPCD_MASTER)) {
+	if (!(options & (DHCPCD_MASTER | DHCPCD_TEST))) {
 		control_fd = open_control();
 		if (control_fd != -1) {
 			syslog(LOG_INFO,
@@ -1613,6 +1680,10 @@ main(int argc, char **argv)
 		if (pid == 0 || kill(pid, sig) != 0) {
 			if (sig != SIGALRM)
 				syslog(LOG_ERR, ""PACKAGE" not running");
+			if (pid != 0 && errno != ESRCH) {
+				syslog(LOG_ERR, "kill: %m");
+				exit(EXIT_FAILURE);
+			}
 			unlink(pidfile);
 			if (sig != SIGALRM)
 				exit(EXIT_FAILURE);
@@ -1640,6 +1711,16 @@ main(int argc, char **argv)
 			syslog(LOG_ERR, ""PACKAGE
 			    " already running on pid %d (%s)",
 			    pid, pidfile);
+			exit(EXIT_FAILURE);
+		}
+
+		/* Ensure we have the needed directories */
+		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST) {
+			syslog(LOG_ERR, "mkdir `%s': %m", RUNDIR);
+			exit(EXIT_FAILURE);
+		}
+		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST) {
+			syslog(LOG_ERR, "mkdir `%s': %m", DBDIR);
 			exit(EXIT_FAILURE);
 		}
 
@@ -1674,7 +1755,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (init_socket() == -1) {
+	if (init_sockets() == -1) {
 		syslog(LOG_ERR, "init_socket: %m");
 		exit(EXIT_FAILURE);
 	}
@@ -1688,19 +1769,11 @@ main(int argc, char **argv)
 
 	ifc = argc - optind;
 	ifv = argv + optind;
-	if (options & DHCPCD_BACKGROUND ||
-	    (ifc == 0 &&
-		options & DHCPCD_LINK &&
-		options & DHCPCD_DAEMONISE))
-	{
-		daemonise();
-	} else if (options & DHCPCD_DAEMONISE) {
-		oi = ifo->timeout;
-		if (ifo->options & DHCPCD_IPV4LL)
-			oi += 10;
-		add_timeout_sec(oi, handle_exit_timeout, NULL);
-	}
-	free_options(ifo);
+
+	/* When running dhcpcd against a single interface, we need to retain
+	 * the old behaviour of waiting for an IP address */
+	if (ifc == 1)
+		options |= DHCPCD_WAITIP;
 
 	ifaces = discover_interfaces(ifc, ifv);
 	for (i = 0; i < ifc; i++) {
@@ -1714,15 +1787,37 @@ main(int argc, char **argv)
 	if (!ifaces) {
 		if (ifc == 0)
 			syslog(LOG_ERR, "no valid interfaces found");
+		else
+			exit(EXIT_FAILURE);
 		if (!(options & DHCPCD_LINK)) {
-			syslog(LOG_ERR, "aborting as we're not backgrounding"
-			    " with link detection");
+			syslog(LOG_ERR,
+			    "aborting as link detection is disabled");
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	for (iface = ifaces; iface; iface = iface->next)
+	if (options & DHCPCD_BACKGROUND)
+		daemonise();
+
+	opt = 0;
+	for (iface = ifaces; iface; iface = iface->next) {
 		init_state(iface, argc, argv);
+		if (iface->carrier != LINK_DOWN)
+			opt = 1;
+	}
+	if (opt == 0 &&
+	    options & DHCPCD_LINK &&
+	    !(options & DHCPCD_WAITIP))
+	{
+		syslog(LOG_WARNING, "no interfaces have a carrier");
+		daemonise();
+	} else if (options & DHCPCD_DAEMONISE && ifo->timeout > 0) {
+		if (options & DHCPCD_IPV4LL)
+			options |= DHCPCD_TIMEOUT_IPV4LL;
+		add_timeout_sec(ifo->timeout, handle_exit_timeout, NULL);
+	}
+	free_options(ifo);
+
 	sort_interfaces();
 	for (iface = ifaces; iface; iface = iface->next)
 		add_timeout_sec(0, start_interface, iface);

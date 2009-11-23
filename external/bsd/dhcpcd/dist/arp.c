@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -81,9 +82,8 @@ handle_arp_failure(struct interface *iface)
 		handle_ipv4ll_failure(iface);
 		return;
 	}
-	if (iface->state->lease.frominfo)
-		unlink(iface->leasefile);
-	else
+	unlink(iface->leasefile);
+	if (!iface->state->lease.frominfo)
 		send_decline(iface);
 	close_sockets(iface);
 	delete_timeout(NULL, iface);
