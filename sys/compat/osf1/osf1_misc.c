@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.83 2009/11/04 21:23:03 rmind Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.84 2009/11/23 00:46:07 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.83 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.84 2009/11/23 00:46:07 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.83 2009/11/04 21:23:03 rmind Exp $")
 #include <sys/socketvar.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
-#include <sys/user.h>
 #include <sys/wait.h>
 
 #include <machine/alpha.h>
