@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2009/11/23 13:40:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -63,6 +63,7 @@
 
 struct cpu_disklabel {
 	struct mbr_partition mbrparts[MBR_PART_COUNT];
+#define __HAVE_DISKLABEL_DKBAD
 	struct dkbad bad;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2008/10/28 02:19:27 mrg Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2009/11/23 13:40:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -59,6 +59,7 @@
 #include <sys/dkbad.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
+#define __HAVE_DISKLABEL_DKBAD
 	struct dkbad bad;
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.36 2009/06/03 15:07:30 pooka Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.37 2009/11/23 13:40:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.36 2009/06/03 15:07:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.37 2009/11/23 13:40:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.36 2009/06/03 15:07:30 pooka Exp
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/cdio.h>
+#include <sys/dkbad.h>
 #include <fs/udf/ecma167-udf.h>
 
 #include <sys/kauth.h>
@@ -394,7 +395,6 @@ const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
-	struct dkbad *bdp;
 	int rval;
 	int i;
 	mbr_args_t a;
@@ -462,8 +462,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 #endif
 
 	/* Obtain bad sector table if requested and present */
+#ifdef __HAVE_DISKLABEL_DKBAD
 	if (rval == SCAN_FOUND && osdep && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *db;
+		struct dkbad *bdp, *db;
 		int blkno;
 
 		bdp = &osdep->bad;
@@ -493,6 +494,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		} while (a.bp->b_error && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
+#endif /* __HAVE_DISKLABEL_DKBAD */
 
 	brelse(a.bp, 0);
 	if (rval == SCAN_ERROR || rval == SCAN_CONTINUE)
