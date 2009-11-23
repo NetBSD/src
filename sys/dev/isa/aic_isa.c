@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.25 2009/09/22 13:18:28 tsutsui Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.26 2009/11/23 02:13:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.25 2009/09/22 13:18:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.26 2009/11/23 02:13:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.25 2009/09/22 13:18:28 tsutsui Exp $")
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>

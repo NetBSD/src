@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.28 2009/05/12 08:44:19 cegger Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.29 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.28 2009/05/12 08:44:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.29 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.28 2009/05/12 08:44:19 cegger Exp $"
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

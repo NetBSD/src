@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.24 2009/09/16 16:34:49 dyoung Exp $ */
+/*	$NetBSD: apm.c,v 1.25 2009/11/23 02:13:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24 2009/09/16 16:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.25 2009/11/23 02:13:45 rmind Exp $");
 
 #include "opt_apm.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24 2009/09/16 16:34:49 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>

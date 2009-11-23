@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.19 2007/11/19 18:51:45 ad Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.20 2009/11/23 02:13:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,10 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.19 2007/11/19 18:51:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.20 2009/11/23 02:13:45 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

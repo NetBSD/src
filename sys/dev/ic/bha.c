@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.71 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: bha.c,v 1.72 2009/11/23 02:13:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.71 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.72 2009/11/23 02:13:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.71 2008/04/28 20:23:49 martin Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

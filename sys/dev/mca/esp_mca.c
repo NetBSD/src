@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.20 2009/01/20 20:49:51 christos Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.21 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.20 2009/01/20 20:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.21 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.20 2009/01/20 20:49:51 christos Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <dev/scsipi/scsi_all.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.67 2008/05/31 14:07:03 jmcneill Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.68 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,12 +54,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.67 2008/05/31 14:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.68 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>

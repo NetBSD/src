@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.14 2009/03/14 15:36:16 dsl Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.15 2009/11/23 02:13:45 rmind Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.14 2009/03/14 15:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.15 2009/11/23 02:13:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 

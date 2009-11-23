@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.73 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: wds.c,v 1.74 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.73 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.74 2009/11/23 02:13:47 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.73 2009/05/12 09:10:16 cegger Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

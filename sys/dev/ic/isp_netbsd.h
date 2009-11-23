@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.68 2009/09/07 13:39:19 tsutsui Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.69 2009/11/23 02:13:46 rmind Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -44,7 +44,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kthread.h>
 
 #include <sys/bus.h>

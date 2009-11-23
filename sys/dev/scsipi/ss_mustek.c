@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.39 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.40 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.39 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.40 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.39 2009/10/21 21:12:06 rmind Exp $")
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>
