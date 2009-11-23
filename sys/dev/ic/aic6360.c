@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.98 2009/11/12 19:25:08 dyoung Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.98 2009/11/12 19:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.98 2009/11/12 19:25:08 dyoung Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>

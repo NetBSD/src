@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.147 2009/10/05 17:58:15 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.148 2009/11/23 02:13:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.147 2009/10/05 17:58:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.148 2009/11/23 02:13:48 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.147 2009/10/05 17:58:15 christos Exp $");
 #include <sys/buf.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.85 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: ch.c,v 1.86 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.85 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.86 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.85 2009/10/21 21:12:05 rmind Exp $");
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/chio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

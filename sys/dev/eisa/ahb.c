@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.56 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: ahb.c,v 1.57 2009/11/23 02:13:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.56 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.57 2009/11/23 02:13:45 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.56 2009/05/12 14:21:32 cegger Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

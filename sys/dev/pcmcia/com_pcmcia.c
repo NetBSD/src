@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.60 2009/11/12 20:29:30 dyoung Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.61 2009/11/23 02:13:47 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.60 2009/11/12 20:29:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.61 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.60 2009/11/12 20:29:30 dyoung Exp $
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

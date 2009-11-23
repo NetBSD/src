@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.15 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.16 2009/11/23 02:13:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -84,12 +84,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.15 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.16 2009/11/23 02:13:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
