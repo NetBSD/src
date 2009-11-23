@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.40 2009/02/11 13:52:28 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.40 2009/02/11 13:52:28 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -120,13 +120,20 @@ do {									      \
 static char *
 do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
 {
-	if (!isascii(c) || !isalnum(c) || strchr("$-_.+!*'(),", c) != NULL) {
+
+	if ((isascii(c) && isalnum(c))
+	    /* safe */
+	    || c == '$' || c == '-' || c == '_' || c == '.' || c == '+'
+	    /* extra */
+	    || c == '!' || c == '*' || c == '\'' || c == '(' || c == ')'
+	    || c == ',') {
+		dst = do_svis(dst, c, flag, nextc, extra);
+	} else {
 		*dst++ = '%';
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);
 		*dst++ = xtoa((unsigned int)c & 0xf);
-	} else {
-		dst = do_svis(dst, c, flag, nextc, extra);
 	}
+
 	return dst;
 }
 
