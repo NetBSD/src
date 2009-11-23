@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.23 2009/04/03 05:01:10 uwe Exp $ */
+/*	$NetBSD: apmdev.c,v 1.24 2009/11/23 02:13:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.23 2009/04/03 05:01:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.24 2009/11/23 02:13:45 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.23 2009/04/03 05:01:10 uwe Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>

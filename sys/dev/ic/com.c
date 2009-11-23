@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.290 2009/11/12 20:38:35 dyoung Exp $ */
+/* $NetBSD: com.c,v 1.291 2009/11/23 02:13:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.290 2009/11/12 20:38:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.291 2009/11/23 02:13:46 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.290 2009/11/12 20:38:35 dyoung Exp $");
 #include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
