@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2009/09/19 14:57:29 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.42 2009/11/23 13:25:02 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,6 +153,31 @@ int
 md_post_newfs(void)
 {
 	const char *bootfile = "/boot";
+
+	/*
+	 * XXX
+	 * Only OpenFirmware version 1 and 2 machines need installboot(8)
+	 * and it uses a faked Apple partition map with the primary bootxx.
+	 * installboot(8) assumes that root partition is at the beginning of
+	 * the disk and put a faked Apple partition map at the top of
+	 * the partition, so it won't work if root partition has some
+	 * offset from physical block 0 where the Apple driver descriptor
+	 * map resides on.
+	 * 
+	 * On OpenFirmware version 3 machines, the strategy used on OF1/2
+	 * machines doesn't work (they don't recognize boot code info
+	 * in Apple partition map entries) and they need to have
+	 * an extra native partition (HFS or MSDOSFS) which can be
+	 * recognized by the newer firmware to put a loadable bootloader.
+	 * installboot(8) against partition `a' on such machines might
+	 * corrupt existing disklabel or a valid Apple partition map.
+	 *
+	 * Currently there is no way to see OF version on running machine
+	 * yet, so assume partition a has some offset on OF3 machines
+	 * and don't try installboot(8) in that case.
+	 */
+	if (bsdlabel[PART_A].pi_offset != 0)
+		return 0;
 
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/ofwboot", bootfile);
