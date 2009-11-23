@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/10/06 09:12:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2009/11/23 11:20:25 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern					\
@@ -13,7 +13,7 @@ LIB=	rumpdev_disk
 
 .if ${MACHINE} == "i386"
 # sys/kern
-SRCS=	kern_physio.c subr_disk.c subr_disk_mbr.c subr_disk_open.c
+SRCS=	subr_disk.c subr_disk_mbr.c subr_disk_open.c
 # sys/dev
 SRCS+=	dksubr.c dk.c
 .else
