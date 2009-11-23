@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.47 2009/09/16 10:47:54 mlelstv Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.48 2009/11/23 14:42:39 cegger Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.47 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.48 2009/11/23 14:42:39 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ struct acpitz_zone {
 	UINT32 hot;
 	/* Package of references to processor objects for passive cooling */
 	ACPI_BUFFER psl;
+	/* Conveys if temperatures are absolute or relative values. */
+	UINT32 rtv;
 	/* Passive cooling temperature threshold */
 	UINT32 psv;
 	/* Thermal constants for use in passive cooling formulas */
@@ -480,6 +482,13 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);
 	acpitz_get_integer(dv, "_TC1", &sc->sc_zone.tc1);
 	acpitz_get_integer(dv, "_TC2", &sc->sc_zone.tc2);
+
+	/* ACPI spec: If _RTV is not present or present and zero,
+	 * values are absolute. */
+	acpitz_get_integer(dv, "_RTV", &sc->sc_zone.rtv);
+	if (sc->sc_zone.rtv == ATZ_TMP_INVALID)
+		sc->sc_zone.rtv = 0;
+
 
 	acpitz_sane_temp(&sc->sc_zone.tmp);
 	acpitz_sane_temp(&sc->sc_zone.crt);
