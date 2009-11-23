@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.41 2008/04/13 04:55:52 tsutsui Exp $ */
+/*	$NetBSD: flsc.c,v 1.42 2009/11/23 00:11:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.41 2008/04/13 04:55:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.42 2009/11/23 00:11:43 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.41 2008/04/13 04:55:52 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>

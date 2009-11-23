@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.51 2008/06/02 12:01:11 hauke Exp $	*/
+/*	$NetBSD: esp.c,v 1.52 2009/11/23 00:11:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.51 2008/06/02 12:01:11 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.52 2009/11/23 00:11:44 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.51 2008/06/02 12:01:11 hauke Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <dev/scsipi/scsi_all.h>

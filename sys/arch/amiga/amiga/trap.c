@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126 2009/05/19 18:39:26 phx Exp $	*/
+/*	$NetBSD: trap.c,v 1.127 2009/11/23 00:11:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2009/05/19 18:39:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2009/11/23 00:11:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2009/05/19 18:39:26 phx Exp $");
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 
@@ -290,6 +289,8 @@ panictrap(int type, u_int code, u_int v, struct frame *fp)
 void
 trapcpfault(struct lwp *l, struct frame *fp)
 {
+	struct pcb *pcb = lwp_getpcb(l);
+
 	/*
 	 * We have arranged to catch this fault in one of the
 	 * copy to/from user space routines, set PC to return to
@@ -298,7 +299,7 @@ trapcpfault(struct lwp *l, struct frame *fp)
 	 */
 	fp->f_stackadj = exframesize[fp->f_format];
 	fp->f_format = fp->f_vector = 0;
-	fp->f_pc = (int) l->l_addr->u_pcb.pcb_onfault;
+	fp->f_pc = (int)pcb->pcb_onfault;
 }
 
 int donomore = 0;
@@ -313,6 +314,7 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 	extern struct vm_map *kernel_map;
 	struct proc *p = l->l_proc;
 	struct vmspace *vm = NULL;
+	struct pcb *pcb;
 	vm_prot_t ftype;
 	vaddr_t va;
 	struct vm_map *map;
@@ -375,8 +377,8 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 	if (p)
 		vm = p->p_vmspace;
 
-	if (type == T_MMUFLT &&
-	    (l == &lwp0 || !l->l_addr || l->l_addr->u_pcb.pcb_onfault == 0 || (
+	pcb = lwp_getpcb(l);
+	if (type == T_MMUFLT && (l == &lwp0 || !pcb|| pcb->pcb_onfault == 0 || (
 #ifdef M68060
 	     machineid & AMIGA_68060 ? code & FSLW_TM_SV :
 #endif
@@ -501,7 +503,7 @@ nogo:
 	} else
 		ksi.ksi_code = SEGV_MAPERR;
 	if (type == T_MMUFLT) {
-		if (l->l_addr->u_pcb.pcb_onfault) {
+		if (pcb->pcb_onfault) {
 			trapcpfault(l, fp);
 			return;
 		}
@@ -537,6 +539,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 {
 	struct lwp *l;
 	struct proc *p;
+	struct pcb *pcb;
 	ksiginfo_t ksi;
 	u_quad_t sticks = 0;
 
@@ -547,6 +550,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	ksi.ksi_trap = type & ~T_USER;
 
 	p = l->l_proc;
+	pcb = lwp_getpcb(l);
 
 	if (USERMODE(fp->f_sr)) {
 		type |= T_USER;
@@ -574,7 +578,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	 * Kernel Bus error
 	 */
 	case T_BUSERR:
-		if (!l || !l->l_addr || !l->l_addr->u_pcb.pcb_onfault)
+		if (!l || !pcb || !pcb->pcb_onfault)
 			panictrap(type, code, v, fp);
 		trapcpfault(l, fp);
 		return;
@@ -613,8 +617,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	case T_FPEMULI|T_USER:
 	case T_FPEMULD|T_USER:
 #ifdef FPU_EMULATE
-		if (fpu_emulate(fp, &l->l_addr->u_pcb.pcb_fpregs,
-			&ksi) == 0)
+		if (fpu_emulate(fp, &pcb->pcb_fpregs, &ksi) == 0)
 			; /* XXX - Deal with tracing? (fp->f_sr & PSL_T) */
 #else
 		printf("pid %d killed: no floating point support\n", p->p_pid);
@@ -731,9 +734,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
-		if (l && l->l_addr &&
-		    (l->l_addr->u_pcb.pcb_onfault == (void *)fubail ||
-		    l->l_addr->u_pcb.pcb_onfault == (void *)subail)) {
+		if (l && pcb && (pcb->pcb_onfault == (void *)fubail ||
+		    pcb->pcb_onfault == (void *)subail)) {
 			trapcpfault(l, fp);
 			return;
 		}

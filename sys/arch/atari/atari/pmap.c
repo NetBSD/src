@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2009/11/07 07:27:42 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2009/11/23 00:11:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,13 +100,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2009/11/07 07:27:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2009/11/23 00:11:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm.h>
 
