@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.18 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: ast.c,v 1.19 2009/11/23 18:20:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.18 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.19 2009/11/23 18:20:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,7 +76,7 @@ userret(struct lwp *l)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-#ifdef __PROG32
+#if defined(__PROG32) && defined(DIAGNOSTIC)
 	{
 		struct pcb *pcb = lwp_getpcb(l);
 		KASSERT((pcb->pcb_tf->tf_spsr & IF32_bits) == 0);
