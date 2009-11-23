@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
 #
 # Generic atari
 #
@@ -50,8 +50,10 @@ options 	INSECURE	# disable kernel security levels
 #
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 options 	M68030		# support for 030
-options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #endif /* TT030_KERNEL || FALCON_KERNEL */
+#if defined(FALCON_KERNEL)
+options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
+#endif /* FALCON_KERNEL */
 #if (defined(FALCON_KERNEL) && !defined(SMALL030_KERNEL)) || \
 	defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	M68040		# support for 040
