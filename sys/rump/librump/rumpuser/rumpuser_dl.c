@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.5 2009/11/05 14:13:03 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.6 2009/11/23 14:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,21 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.5 2009/11/05 14:13:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.6 2009/11/23 14:39:35 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
 
 #include <assert.h>
 #include <dlfcn.h>
-#include <link_elf.h>
+#include <link.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <rump/rumpuser.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)				\
-    || (defined(__sun__) && defined(__svr4__))
+#if defined(__ELF__) && (defined(__NetBSD__) || defined(__FreeBSD__)	\
+    || (defined(__sun__) && defined(__svr4__)))
 static int
 process(const char *soname, rump_modinit_fn domodinit)
 {
