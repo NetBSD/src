@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2009/06/08 13:26:57 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.44 2009/11/24 10:42:44 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -263,7 +263,7 @@
 133	NOARGS		{ int|sys||fchdir(int fd); }
 134	UNIMPL		bdflush
 135	UNIMPL		sysfs
-136	STD		{ int|linux_sys||personality(int per); }
+136	STD		{ int|linux_sys||personality(unsigned long per); }
 137	UNIMPL		afs_syscall
 138	STD		{ int|linux_sys||setfsuid(uid_t uid); }
 139	STD		{ int|linux_sys||setfsgid(gid_t gid); }
