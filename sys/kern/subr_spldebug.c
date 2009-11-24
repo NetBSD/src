@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_spldebug.c,v 1.1 2009/11/03 05:23:28 dyoung Exp $	*/
+/*	$NetBSD: subr_spldebug.c,v 1.2 2009/11/24 17:28:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_spldebug.c,v 1.1 2009/11/03 05:23:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_spldebug.c,v 1.2 2009/11/24 17:28:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/spldebug.h>
@@ -42,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_spldebug.c,v 1.1 2009/11/03 05:23:28 dyoung Exp
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <machine/return.h>
-
-__strong_alias(spldebug_start, _spldebug_start);
-__strong_alias(spldebug_stop, _spldebug_stop);
 
 #define SPLRAISE_STACKLEN 32
 
@@ -54,17 +51,17 @@ int spllowered_to[MAXCPUS] = {0};
 void *spllowered_from[MAXCPUS][2] = {{0}};
 bool spldebug = false;
 
-void	_spldebug_start(void);
-void	_spldebug_stop(void);
+void	spldebug_start(void);
+void	spldebug_stop(void);
 
 void
-_spldebug_start(void)
+spldebug_start(void)
 {
 	spldebug = true;
 }
 
 void
-_spldebug_stop(void)
+spldebug_stop(void)
 {
 	spldebug = false;
 }
@@ -72,27 +69,23 @@ _spldebug_stop(void)
 void
 spldebug_lower(int ipl)
 {
-	struct cpu_info *ci;
+	u_int cidx;
 
 	if (!spldebug)
 		return;
 
-	if (ipl >= IPL_HIGH)
+	if (ipl == IPL_HIGH)
 		return;
 
-	if (cold)
-		ci = &cpu_info_primary;
-	else
-		ci = curcpu();
+	cidx = cpu_index(curcpu());
 
-	if (cpu_index(ci) > MAXCPUS)
-		return;
+	KASSERT(cidx < MAXCPUS);
 
-	splraise_depth[cpu_index(ci)] = 0;
-	spllowered_to[cpu_index(ci)] = ipl;
+	splraise_depth[cidx] = 0;
+	spllowered_to[cidx] = ipl;
 #if 0
-	spllowered_from[cpu_index(ci)][0] = return_address(0);
-	spllowered_from[cpu_index(ci)][1] = return_address(1);
+	spllowered_from[cidx][0] = return_address(0);
+	spllowered_from[cidx][1] = return_address(1);
 #endif
 }
 
@@ -100,28 +93,23 @@ void
 spldebug_raise(int ipl)
 {
 	int i;
+	u_int cidx;
 	void **retaddrs;
-	struct cpu_info *ci;
 
 	if (!spldebug)
 		return;
 
-	if (ipl < IPL_HIGH)
+	if (ipl != IPL_HIGH)
 		return;
 
-	if (cold)
-		ci = &cpu_info_primary;
-	else
-		ci = curcpu();
+	cidx = cpu_index(curcpu());
 
-	if (cpu_index(ci) >= MAXCPUS)
+	KASSERT(cidx < MAXCPUS);
+
+	if (splraise_depth[cidx] >= SPLRAISE_STACKLEN)
 		return;
 
-	if (splraise_depth[cpu_index(ci)] >= SPLRAISE_STACKLEN)
-		return;
-
-	retaddrs = &splraise_retaddrs[cpu_index(ci)]
-	    [splraise_depth[cpu_index(ci)]++][0];
+	retaddrs = &splraise_retaddrs[cidx][splraise_depth[cidx]++][0];
 
 	retaddrs[0] = retaddrs[1] = retaddrs[2] = retaddrs[3] = NULL;
 
