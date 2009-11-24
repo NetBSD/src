@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.8 2008/05/10 22:39:40 christos Exp $	*/
+/*	$NetBSD: basename.c,v 1.9 2009/11/24 13:34:20 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.8 2008/05/10 22:39:40 christos Exp $");
+__RCSID("$NetBSD: basename.c,v 1.9 2009/11/24 13:34:20 tnozaki Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -47,7 +47,6 @@ __weak_alias(basename,_basename)
 char *
 basename(char *path)
 {
-	static char singledot[] = ".";
 	static char result[PATH_MAX];
 	const char *p, *lastp;
 	size_t len;
@@ -56,8 +55,12 @@ basename(char *path)
 	 * If `path' is a null pointer or points to an empty string,
 	 * return a pointer to the string ".".
 	 */
-	if ((path == NULL) || (*path == '\0'))
-		return (singledot);
+	if ((path == NULL) || (*path == '\0')) {
+		result[0] = '.';
+		result[1] = '\0';
+
+		return (result);
+	}
 
 	/* Strip trailing slashes, if any. */
 	lastp = path + strlen(path) - 1;
