@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_callback.c,v 1.6 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: subr_callback.c,v 1.7 2009/11/24 20:11:50 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.6 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.7 2009/11/24 20:11:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ callback_register(struct callback_head *ch, struct callback_entry *ce,
     void *obj, int (*fn)(struct callback_entry *, void *, void *))
 {
 
+	KASSERT(fn != NULL);
 	ce->ce_func = fn;
 	ce->ce_obj = obj;
 	mutex_enter(&ch->ch_lock);
@@ -100,6 +101,7 @@ callback_runone(struct callback_head *ch, void *arg)
 		ce = TAILQ_FIRST(&ch->ch_q);
 	}
 	KASSERT(ce != NULL);
+	KASSERT(ce->ce_func != NULL);
 	result = (*ce->ce_func)(ce, ce->ce_obj, arg);
 	ch->ch_next = TAILQ_NEXT(ce, ce_q);
 	return result;
