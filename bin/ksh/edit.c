@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.22 2009/04/25 05:11:37 lukem Exp $	*/
+/*	$NetBSD: edit.c,v 1.23 2009/11/24 16:00:42 seanb Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.22 2009/04/25 05:11:37 lukem Exp $");
+__RCSID("$NetBSD: edit.c,v 1.23 2009/11/24 16:00:42 seanb Exp $");
 #endif
 
 
@@ -880,7 +880,7 @@ add_glob(str, slen)
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
 			s++;
-		else if (*s == '*' || *s == '?' || *s == '$'
+		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
 		else if (ISDIRSEP(*s))
