@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70 2009/06/17 14:18:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.71 2009/11/24 10:42:43 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -514,7 +514,7 @@
 321	UNIMPL		oldumount
 322	STD		{ int|linux_sys||swapon(const char *name); }
 323	STD		{ int|linux_sys||times(struct times *tms); }
-324	STD		{ int|linux_sys||personality(int per); }
+324	STD		{ int|linux_sys||personality(unsigned long per); }
 325	STD		{ int|linux_sys||setfsuid(uid_t uid); }
 326	STD		{ int|linux_sys||setfsgid(gid_t gid); }
 327	UNIMPL		ustat

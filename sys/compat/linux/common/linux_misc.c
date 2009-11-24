@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.211 2009/11/11 09:48:50 rmind Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.212 2009/11/24 10:42:44 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.211 2009/11/11 09:48:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.212 2009/11/24 10:42:44 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,7 +931,7 @@ int
 linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) per;
+		syscallarg(unsigned long) per;
 	} */
 
 	switch (SCARG(uap, per)) {

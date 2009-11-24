@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.17 2009/06/05 16:45:33 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.18 2009/11/24 10:42:44 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.17 2009/06/05 16:45:33 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.18 2009/11/24 10:42:44 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,7 +174,7 @@ int
 linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) per;
+		syscallarg(netbsd32_u_long) per;
 	} */
 
 	switch (SCARG(uap, per)) {
