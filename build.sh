@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.220 2009/11/23 14:07:45 pooka Exp $
+#	$NetBSD: build.sh,v 1.221 2009/11/24 13:39:07 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1323,7 +1323,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.220 2009/11/23 14:07:45 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.221 2009/11/24 13:39:07 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1548,18 +1548,27 @@ dorump()
 	# if we just wanted to build & install rump, we're done
 	[ "${1}" != "rumptest" ] && return
 
+	${runcmd} cd "${NETBSDSRCDIR}/sys/rump/librump/rumpkern" \
+	    || bomb "cd to rumpkern failed"
+	md_quirks=`${runcmd} "${makewrapper}" -V '${_SYMQUIRK}'`
+	# one little, two little, three little backslashes ...
+	md_quirks="`echo ${md_quirks} | sed 's,\\\,\\\\\\\,g'";s/'//g" `"
+	${runcmd} cd "${TOP}" || bomb "cd to ${TOP} failed"
 	tool_ld=`${runcmd} "${makewrapper}" -V '${LD}'`
+
 	local oIFS="${IFS}"
 	IFS=","
 	for set in ${RUMP_LIBSETS} ; do
 		IFS="${oIFS}"
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
-		    -static --whole-archive ${set} 2>&1 | awk '
+		    -static --whole-archive ${set} 2>&1 |		\
+		      awk -v quirks="${md_quirks}" '
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
-				if (match($NF, "`rumpuser_") == 0)
+				if (match($NF,
+				    "`(rumpuser_|__" quirks ")") == 0)
 					fails[NR] = $0
-				}
+			}
 			END{
 				for (x in fails)
 					print fails[x]
