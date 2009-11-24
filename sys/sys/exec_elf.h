@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.97 2009/05/22 21:44:50 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.98 2009/11/24 16:55:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ typedef struct {
  * Symbol Table
  */
 typedef struct {
-	Elf32_Word	st_name;	/* Symbol name (.symtab index) */
+	Elf32_Word	st_name;	/* Symbol name (.strtab index) */
 	Elf32_Word	st_value;	/* value of symbol */
 	Elf32_Word	st_size;	/* size of symbol */
 	Elf_Byte	st_info;	/* type / binding attrs */
@@ -420,7 +420,7 @@ typedef struct {
 } Elf32_Sym;
 
 typedef struct {
-	Elf64_Half	st_name;	/* Symbol name (.symtab index) */
+	Elf64_Half	st_name;	/* Symbol name (.strtab index) */
 	Elf_Byte	st_info;	/* type / binding attrs */
 	Elf_Byte	st_other;	/* unused */
 	Elf64_Quarter	st_shndx;	/* section index of symbol */
