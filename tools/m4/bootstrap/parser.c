@@ -20,7 +20,7 @@ __IDSTRING(yyrcsid, "NetBSD: skeleton.c,v 1.29 2008/07/18 14:25:37 drochner Exp 
 #define yyerrok (yyerrflag=0)
 #define YYRECOVERING (yyerrflag!=0)
 #define YYPREFIX "yy"
-#line 2 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 2 "../../../usr.bin/m4/parser.y"
 /* NetBSD: parser.y,v 1.2 2009/10/26 21:11:28 christos Exp  */
 /* $OpenBSD: parser.y,v 1.6 2008/08/21 21:00:14 espie Exp $ */
 /*
@@ -312,7 +312,7 @@ short *yysslim;
 YYSTYPE *yyvs;
 int yystacksize;
 int yyparse(void);
-#line 85 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 85 "../../../usr.bin/m4/parser.y"
 
 #line 315 "parser.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
@@ -483,23 +483,23 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 45 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 45 "../../../usr.bin/m4/parser.y"
 { end_result = yyvsp[0]; }
 break;
 case 2:
-#line 47 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 47 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] + yyvsp[0]; }
 break;
 case 3:
-#line 48 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 48 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] - yyvsp[0]; }
 break;
 case 4:
-#line 49 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 49 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] * yyvsp[0]; }
 break;
 case 5:
-#line 50 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 50 "../../../usr.bin/m4/parser.y"
 {
 		if (yyvsp[0] == 0) {
 			yyerror("division by zero");
@@ -509,7 +509,7 @@ case 5:
 	}
 break;
 case 6:
-#line 57 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 57 "../../../usr.bin/m4/parser.y"
 { 
 		if (yyvsp[0] == 0) {
 			yyerror("modulo zero");
@@ -519,75 +519,75 @@ case 6:
 	}
 break;
 case 7:
-#line 64 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 64 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] << yyvsp[0]; }
 break;
 case 8:
-#line 65 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 65 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] >> yyvsp[0]; }
 break;
 case 9:
-#line 66 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 66 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] < yyvsp[0]; }
 break;
 case 10:
-#line 67 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 67 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] > yyvsp[0]; }
 break;
 case 11:
-#line 68 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 68 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] <= yyvsp[0]; }
 break;
 case 12:
-#line 69 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 69 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] >= yyvsp[0]; }
 break;
 case 13:
-#line 70 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 70 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] == yyvsp[0]; }
 break;
 case 14:
-#line 71 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 71 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] != yyvsp[0]; }
 break;
 case 15:
-#line 72 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 72 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] & yyvsp[0]; }
 break;
 case 16:
-#line 73 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 73 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] ^ yyvsp[0]; }
 break;
 case 17:
-#line 74 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 74 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] | yyvsp[0]; }
 break;
 case 18:
-#line 75 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 75 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] && yyvsp[0]; }
 break;
 case 19:
-#line 76 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 76 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-2] || yyvsp[0]; }
 break;
 case 20:
-#line 77 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 77 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[-1]; }
 break;
 case 21:
-#line 78 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 78 "../../../usr.bin/m4/parser.y"
 { yyval = -yyvsp[0]; }
 break;
 case 22:
-#line 79 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 79 "../../../usr.bin/m4/parser.y"
 { yyval = yyvsp[0]; }
 break;
 case 23:
-#line 80 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 80 "../../../usr.bin/m4/parser.y"
 { yyval = !yyvsp[0]; }
 break;
 case 24:
-#line 81 "/usr/src/tools/m4/../../usr.bin/m4/parser.y"
+#line 81 "../../../usr.bin/m4/parser.y"
 { yyval = ~yyvsp[0]; }
 break;
 #line 591 "parser.c"
