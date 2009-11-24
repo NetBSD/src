@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.10 2008/05/10 22:39:40 christos Exp $	*/
+/*	$NetBSD: dirname.c,v 1.11 2009/11/24 13:34:20 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.10 2008/05/10 22:39:40 christos Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.11 2009/11/24 13:34:20 tnozaki Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -47,7 +47,6 @@ __weak_alias(dirname,_dirname)
 char *
 dirname(char *path)
 {
-	static char singledot[] = ".";
 	static char result[PATH_MAX];
 	const char *lastp;
 	size_t len;
@@ -57,7 +56,8 @@ dirname(char *path)
 	 * return a pointer to the string ".".
 	 */
 	if ((path == NULL) || (*path == '\0'))
-		return (singledot);
+		goto singledot;
+
 
 	/* Strip trailing slashes, if any. */
 	lastp = path + strlen(path) - 1;
@@ -84,6 +84,10 @@ dirname(char *path)
 	} while (--lastp >= path);
 
 	/* No /'s found, return a pointer to the string ".". */
-	return (singledot);
+singledot:
+	result[0] = '.';
+	result[1] = '\0';
+
+	return (result);
 }
 #endif
