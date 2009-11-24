@@ -472,8 +472,8 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
-#line 2 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 1 "../../../usr.bin/m4/tokenizer.l"
+#line 2 "../../../usr.bin/m4/tokenizer.l"
 /* NetBSD: tokenizer.l,v 1.2 2009/10/26 21:11:28 christos Exp  */
 /* $OpenBSD: tokenizer.l,v 1.6 2008/08/21 21:00:14 espie Exp $ */
 /*
@@ -694,7 +694,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 45 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 45 "../../../usr.bin/m4/tokenizer.l"
 
 #line 697 "tokenizer.c"
 
@@ -782,17 +782,17 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 46 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 46 "../../../usr.bin/m4/tokenizer.l"
 {/* just skip it */}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 47 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 47 "../../../usr.bin/m4/tokenizer.l"
 { yylval = number(); return(NUMBER); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 48 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 48 "../../../usr.bin/m4/tokenizer.l"
 { if (mimic_gnu) {
 				yylval = parse_radix(); return(NUMBER);
 			  } else {
@@ -802,52 +802,52 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 54 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 54 "../../../usr.bin/m4/tokenizer.l"
 { return(LE); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 55 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 55 "../../../usr.bin/m4/tokenizer.l"
 { return(GE); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 56 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 56 "../../../usr.bin/m4/tokenizer.l"
 { return(LSHIFT); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 57 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 57 "../../../usr.bin/m4/tokenizer.l"
 { return(RSHIFT); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 58 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 58 "../../../usr.bin/m4/tokenizer.l"
 { return(EQ); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 59 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 59 "../../../usr.bin/m4/tokenizer.l"
 { return(NE); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 60 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 60 "../../../usr.bin/m4/tokenizer.l"
 { return(LAND); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 61 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 61 "../../../usr.bin/m4/tokenizer.l"
 { return(LOR); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 62 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 62 "../../../usr.bin/m4/tokenizer.l"
 { return yytext[0]; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 63 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 63 "../../../usr.bin/m4/tokenizer.l"
 ECHO;
 	YY_BREAK
 #line 851 "tokenizer.c"
@@ -1852,7 +1852,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 63 "/usr/src/tools/m4/../../usr.bin/m4/tokenizer.l"
+#line 63 "../../../usr.bin/m4/tokenizer.l"
 
 
 
