@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 2009/11/21 05:54:04 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.38 2009/11/24 13:04:04 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2009/11/21 05:54:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2009/11/24 13:04:04 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -112,7 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2009/11/21 05:54:04 rmind Exp $");
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
 
-#define	X86_MAXPROCS	32
+#if MAXCPUS > 32
+#error cpu_info contains 32bit bitmasks
+#endif
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
@@ -146,7 +148,7 @@ CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
 #include <machine/tlog.h>
 struct tlog tlog_primary;
 #endif
-struct cpu_info cpu_info_primary = {
+struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
@@ -157,30 +159,26 @@ struct cpu_info cpu_info_primary = {
 #endif
 
 };
-struct cpu_info phycpu_info_primary = {
+struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &phycpu_info_primary,
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
+struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 
 uint32_t cpus_attached = 0;
 uint32_t cpus_running = 0;
 
+uint32_t phycpus_attached = 0;
+uint32_t phycpus_running = 0;
+
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
-struct cpu_info *phycpu_info[X86_MAXPROCS] = { &cpu_info_primary };
-
-#ifdef MULTIPROCESSOR
-/*
- * Array of CPU info structures.  Must be statically-allocated because
- * curproc, etc. are used early.
- */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
-
+#if defined(MULTIPROCESSOR)
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
@@ -195,16 +193,11 @@ static void	cpu_copy_trampoline(void);
 void
 cpu_init_first(void)
 {
-	int cpunum = lapic_cpu_number();
 
-	if (cpunum != 0) {
-		cpu_info[0] = NULL;
-		cpu_info[cpunum] = &cpu_info_primary;
-	}
-
+	cpu_info_primary.ci_cpuid = lapic_cpu_number();
 	cpu_copy_trampoline();
 }
-#endif
+#endif	/* MULTIPROCESSOR */
 
 int
 cpu_match(device_t parent, cfdata_t match, void *aux)
@@ -220,11 +213,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-	int cpunum = caa->cpu_number;
+	static bool again = false;
 
 	sc->sc_dev = self;
 
-	if (cpus_attached == ~0) {
+	if (phycpus_attached == ~0) {
 		aprint_error(": increase MAXCPUS\n");
 		return;
 	}
@@ -247,17 +240,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
 		    ~(CACHE_LINE_SIZE - 1));
 		ci->ci_curldt = -1;
-		if (phycpu_info[cpunum] != NULL)
-			panic("cpu at apic id %d already attached?", cpunum);
-		phycpu_info[cpunum] = ci;
 	} else {
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &phycpu_info_primary;
-		if (cpunum != 0) {
-			phycpu_info[0] = NULL;
-			phycpu_info[cpunum] = ci;
-		}
 	}
 
 	ci->ci_self = ci;
@@ -267,16 +253,26 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 
+	/*
+	 * Boot processor may not be attached first, but the below
+	 * must be done to allow booting other processors.
+	 */
+	if (!again) {
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
+		/* Basic init */
+		again = true;
+	}
+
 	printf(": ");
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
+		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		break;
 
 	case CPU_ROLE_BP:
 		printf("(boot processor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
+		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		break;
 
 	case CPU_ROLE_AP:
@@ -284,13 +280,22 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		 * report on an AP
 		 */
 		printf("(application processor)\n");
+		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
+			tmp = phycpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
+		}
 		break;
 
 	default:
 		panic("unknown processor type??\n");
 	}
 
-	atomic_or_32(&cpus_attached, ci->ci_cpumask);
+	atomic_or_32(&phycpus_attached, ci->ci_cpumask);
 
 	return;
 }
@@ -356,6 +361,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	struct cpu_info *ci;
 	uintptr_t ptr;
 	int cpunum = caa->cpu_number;
+	static bool again = false;
 
 	sc->sc_dev = self;
 
@@ -364,22 +370,12 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		if (cpunum >= X86_MAXPROCS) {
-			aprint_error(": apic id %d ignored, "
-				"please increase X86_MAXPROCS\n", cpunum);
-		}
-
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
-#if defined(MULTIPROCESSOR)
-		if (cpu_info[cpunum] != NULL)
-			panic("cpu at apic id %d already attached?", cpunum);
-		cpu_info[cpunum] = ci;
-#endif
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
 #endif
@@ -387,18 +383,26 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
-#if defined(MULTIPROCESSOR)
+#if NLAPIC > 0
 		if (cpunum != lapic_cpu_number()) {
-			panic("%s: running CPU is at apic %d"
-			    " instead of at expected %d",
-			    device_xname(sc->sc_dev), lapic_cpu_number(), cpunum);
+			/* XXX should be done earlier */
+			uint32_t reg;
+			aprint_verbose("\n");
+			aprint_verbose_dev(self, "running CPU at apic %d"
+			    " instead of at expected %d", lapic_cpu_number(),
+			    cpunum);
+			reg = i82489_readreg(LAPIC_ID);
+			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
+			    (cpunum << LAPIC_ID_SHIFT));
+		}
+		if (cpunum != lapic_cpu_number()) {
+			aprint_error_dev(self, "unable to reset apic id\n");
 		}
 #endif
 	}
 
 	ci->ci_self = ci;
 	sc->sc_info = ci;
-
 	ci->ci_dev = self;
 	ci->ci_cpuid = cpunum;
 
@@ -407,18 +411,19 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	ci->ci_func = caa->cpu_func;
 
+	/* Must be called before mi_cpu_attach(). */
+	cpu_vm_init(ci);
+
 	if (caa->cpu_role == CPU_ROLE_AP) {
-#if defined(MULTIPROCESSOR)
 		int error;
 
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error_dev(sc->sc_dev, "mi_cpu_attach failed with %d\n",
-			    error);
+			aprint_error_dev(self,
+			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
-#endif
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
@@ -428,45 +433,51 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
 
+	/*
+	 * Boot processor may not be attached first, but the below
+	 * must be done to allow booting other processors.
+	 */
+	if (!again) {
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
+		/* Basic init. */
+		cpu_intr_init(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_init(ci);
+		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
+#if NLAPIC > 0
+		if (caa->cpu_role != CPU_ROLE_SP) {
+			/* Enable lapic. */
+			lapic_enable();
+			lapic_set_lvt();
+			lapic_calibrate_timer();
+		}
+#endif
+		/* Make sure DELAY() is initialized. */
+		DELAY(1);
+		again = true;
+	}
+
 	/* further PCB init done later. */
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		atomic_or_32(&ci->ci_flags,
-		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
-		cpu_intr_init(ci);
-		cpu_get_tsc_freq(ci);
+		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
-		cpu_init(ci);
-		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
-		x86_cpu_idle_init();
 #if 0
 		x86_errata();
 #endif
+		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_BP:
-		atomic_or_32(&ci->ci_flags, 
-		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
-		cpu_intr_init(ci);
-		cpu_get_tsc_freq(ci);
+		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
 		cpu_init(ci);
-		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
-		x86_cpu_idle_init();
-#if NLAPIC > 0
-		/*
-		 * Enable local apic
-		 */
-		lapic_enable();
-		lapic_set_lvt();
-		lapic_calibrate_timer(ci);
-#endif
 #if 0
 		x86_errata();
 #endif
+		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_AP:
@@ -492,7 +503,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 			tmp->ci_next = ci;
 		}
 #else
-		aprint_normal_dev(sc->sc_dev, "not started\n");
+		aprint_error_dev(self, "not started\n");
 #endif
 		break;
 
@@ -500,7 +511,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
-	cpu_vm_init(ci);
 
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
@@ -514,7 +524,8 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 		struct pcb *pcb = lwp_getpcb(l);
 
-		aprint_verbose_dev(sc->sc_dev, "idle lwp at %p, idle sp at 0x%p\n",
+		aprint_verbose_dev(self,
+		    "idle lwp at %p, idle sp at 0x%p\n",
 		    l,
 #ifdef i386
 		    (void *)pcb->pcb_esp
@@ -577,8 +588,8 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i = 0; i < X86_MAXPROCS; i++) {
-		ci = cpu_info[i];
+	for (i = 0; i < maxcpus; i++) {
+		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
@@ -608,8 +619,8 @@ cpu_init_idle_lwps(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i = 0; i < X86_MAXPROCS; i++) {
-		ci = cpu_info[i];
+	for (i = 0; i < maxcpus; i++) {
+		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
@@ -787,7 +798,7 @@ cpu_debug_dump(void)
 		    ci->ci_fpcurlwp);
 	}
 }
-#endif
+#endif /* DDB */
 
 static void
 cpu_copy_trampoline(void)
@@ -815,7 +826,7 @@ cpu_copy_trampoline(void)
 	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
-#endif
+#endif /* MULTIPROCESSOR */
 
 #ifdef i386
 #if 0
