@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gmakehost,v 1.5 2008/10/19 22:05:23 apb Exp $
+#	$NetBSD: Makefile.gmakehost,v 1.6 2009/11/25 11:49:36 uebayasi Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 # This version runs ${TOOL_GMAKE} instead of ${MAKE}
@@ -110,8 +110,6 @@ GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/.*(-j ?[0-9]*).*/\1/W}
 .install_done! ${BUILD:D.build_done}
 	@(cd ${.OBJDIR}/build && /usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} -e ${MAKE_ARGS} ${INSTALL_TARGET})
 	@touch $@
-
-.PHONY: .build_done .install_done
 
 # Mapping to standard targets.
 
