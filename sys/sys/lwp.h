@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.125 2009/11/21 19:54:49 dsl Exp $	*/
+/*	$NetBSD: lwp.h,v 1.126 2009/11/25 13:53:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -197,6 +197,13 @@ struct lwp {
 #define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
 #endif /* !defined(UAREA_TO_USER) */
 
+static inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return &l->l_addr->u_pcb;
+}
+
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
@@ -389,13 +396,6 @@ lwp_eprio(lwp_t *l)
 	if (l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
-}
-
-static inline struct pcb *
-lwp_getpcb(lwp_t *l)
-{
-
-	return &l->l_addr->u_pcb;
 }
 
 int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
