@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.46 2009/11/06 23:10:22 dyoung Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.47 2009/11/25 19:46:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.46 2009/11/06 23:10:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.47 2009/11/25 19:46:19 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,15 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.46 2009/11/06 23:10:22 dyoung Exp
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#if NPCI > 0
 #include <dev/pci/genfb_pcivar.h>
+#endif
 #include <dev/ic/vgareg.h>
 
+#if NPCI > 0
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
+#endif
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
 #endif
