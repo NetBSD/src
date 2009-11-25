@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.48 2009/11/23 14:42:39 cegger Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.49 2009/11/25 13:54:23 cegger Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.48 2009/11/23 14:42:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.49 2009/11/25 13:54:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,13 +100,17 @@ struct acpitz_zone {
 	/* Thermal constants for use in passive cooling formulas */
 	UINT32 tc1, tc2;
 	/* Current temperature of the thermal zone */
-	UINT32 tmp;
+	UINT32 prevtmp, tmp;
 	/* Thermal sampling period for passive cooling, in tenths of seconds */
 	UINT32 tsp;
 	/* Package of references to devices in this TZ (optional) */
 	ACPI_BUFFER tzd;
 	/* Recommended TZ polling frequency, in tenths of seconds */
 	UINT32 tzp;
+	/* Thermal zone name */
+	char *name;
+	/* FAN min, max, current rpms */
+	UINT32 fanmin, fanmax, fancurrent;
 };
 
 struct acpitz_softc {
@@ -114,13 +118,15 @@ struct acpitz_softc {
 	struct acpitz_zone sc_zone;
 	struct callout sc_callout;
 	struct sysmon_envsys *sc_sme;
-	envsys_data_t sc_sensor;
+	envsys_data_t sc_temp_sensor;
+	envsys_data_t sc_fan_sensor;
 	int sc_active;		/* active cooling level */
 	int sc_flags;
 	int sc_rate;		/* tz poll rate */
 	int sc_zone_expire;
 
 	int sc_first;
+	int sc_have_fan;	/* FAN sensor is optional */
 };
 
 static void	acpitz_get_status(void *);
@@ -139,6 +145,11 @@ static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(device_t);
 static void	acpitz_get_limits(struct sysmon_envsys *, envsys_data_t *,
 				  sysmon_envsys_lim_t *);
+static int	acpitz_get_fanspeed(device_t, UINT32 *, UINT32 *, UINT32 *);
+#ifdef notyet
+static ACPI_STATUS
+		acpitz_set_fanspeed(device_t, UINT32);
+#endif
 
 CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc), acpitz_match,
     acpitz_attach, NULL, NULL);
@@ -190,7 +201,16 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 	sc->sc_first = 1;
+	sc->sc_have_fan = 0;
+	if (acpitz_get_fanspeed(self,
+	    &sc->sc_zone.fanmin, &sc->sc_zone.fanmax, &sc->sc_zone.fancurrent)
+	    == 0)
+		sc->sc_have_fan = 1;
 
+	rv = acpi_eval_string(sc->sc_devnode->ad_handle,
+	    "REGN", &sc->sc_zone.name);
+	if (ACPI_FAILURE(rv))
+		sc->sc_zone.name = __UNCONST("temperature");
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
 
@@ -226,6 +246,7 @@ acpitz_get_status(void *opaque)
 	struct acpitz_softc *sc = device_private(dv);
 	UINT32 tmp, active;
 	int i, flags;
+	UINT32 fmin, fmax, fcurrent;
 
 	sc->sc_zone_expire--;
 	if (sc->sc_zone_expire <= 0) {
@@ -239,8 +260,17 @@ acpitz_get_status(void *opaque)
 		aprint_error_dev(dv, "failed to evaluate _TMP\n");
 		return;
 	}
+
+	sc->sc_zone.prevtmp = sc->sc_zone.tmp;
 	sc->sc_zone.tmp = tmp;
+	if (sc->sc_first)
+		sc->sc_zone.prevtmp = tmp;
 	/* XXX sanity check for tmp here? */
+
+	if (acpitz_get_fanspeed(dv, &fmin, &fmax, &fcurrent) == 0) {
+		if (fcurrent != ATZ_TMP_INVALID)
+			sc->sc_zone.fancurrent = fcurrent;
+	}
 
 	/*
 	 * The temperature unit for envsys(4) is microKelvin, so convert to
@@ -248,8 +278,11 @@ acpitz_get_status(void *opaque)
 	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
-	sc->sc_sensor.value_cur = ATZ2UKELVIN(sc->sc_zone.tmp);
-	sc->sc_sensor.state = ENVSYS_SVALID;
+	sc->sc_temp_sensor.value_cur = ATZ2UKELVIN(sc->sc_zone.tmp);
+	sc->sc_temp_sensor.state = ENVSYS_SVALID;
+
+	sc->sc_fan_sensor.value_cur = sc->sc_zone.fancurrent;
+	sc->sc_fan_sensor.state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(dv);
@@ -271,7 +304,7 @@ acpitz_get_status(void *opaque)
 				active = i;
 		}
 		if (active != ATZ_ACTIVE_NONE)
-			sc->sc_sensor.state = ENVSYS_SWARNOVER;
+			sc->sc_temp_sensor.state = ENVSYS_SWARNOVER;
 
 		flags = sc->sc_flags &
 		    ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
@@ -289,12 +322,12 @@ acpitz_get_status(void *opaque)
 			int changed = (sc->sc_flags ^ flags) & flags;
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
-				sc->sc_sensor.state = ENVSYS_SCRITOVER;
+				sc->sc_temp_sensor.state = ENVSYS_SCRITOVER;
 				aprint_debug_dev(dv,
 				    "zone went critical at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
-				sc->sc_sensor.state = ENVSYS_SCRITOVER;
+				sc->sc_temp_sensor.state = ENVSYS_SCRITOVER;
 				aprint_debug_dev(dv,
 				    "zone went hot at temp %sC\n",
 				    acpitz_celcius_string(tmp));
@@ -338,6 +371,10 @@ acpitz_print_status(device_t dv)
 
 	printf("%s: zone temperature is now %sC\n", device_xname(dv),
 	    acpitz_celcius_string(sc->sc_zone.tmp));
+	if (sc->sc_have_fan) {
+		printf("%s: fan rpm %u\n", device_xname(dv),
+		    sc->sc_zone.fancurrent);
+	}
 
 	return;
 }
@@ -478,7 +515,8 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_get_integer(dv, "_HOT", &sc->sc_zone.hot);
 	sc->sc_zone.psl.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	sc->sc_zone.psl.Pointer = NULL;
-	AcpiEvaluateObject(sc, "_PSL", NULL, &sc->sc_zone.psl);
+	AcpiEvaluateObject(sc->sc_devnode->ad_handle,
+	    "_PSL", NULL, &sc->sc_zone.psl);
 	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);
 	acpitz_get_integer(dv, "_TC1", &sc->sc_zone.tc1);
 	acpitz_get_integer(dv, "_TC2", &sc->sc_zone.tc2);
@@ -584,6 +622,59 @@ acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
 	return 0;
 }
 
+static int
+acpitz_get_fanspeed(device_t dv,
+    UINT32 *fanmin, UINT32 *fanmax, UINT32 *fancurrent)
+{
+	struct acpitz_softc *sc = device_private(dv);
+	ACPI_STATUS rv;
+	ACPI_HANDLE handle;
+	ACPI_INTEGER fmin, fmax, fcurr;
+	int rc = 0;
+
+	handle = sc->sc_devnode->ad_handle;
+	rv = acpi_eval_integer(handle, "FMIN", &fmin);
+	if (ACPI_FAILURE(rv)) {
+		fmin = ATZ_TMP_INVALID;
+		rc = 1;
+	}
+	rv = acpi_eval_integer(handle, "FMAX", &fmax);
+	if (ACPI_FAILURE(rv)) {
+		fmax = ATZ_TMP_INVALID;
+		rc = 1;
+	}
+	rv = acpi_eval_integer(handle, "FRSP", &fcurr);
+	if (ACPI_FAILURE(rv)) {
+		fcurr = ATZ_TMP_INVALID;
+		rc = 1;
+	}
+
+	if (fanmin)
+		*fanmin = fmin;
+	if (fanmax)
+		*fanmax = fmax;
+	if (fancurrent)
+		*fancurrent = fcurr;
+	return rc;
+}
+
+#ifdef notyet
+static ACPI_STATUS
+acpitz_set_fanspeed(device_t dv, UINT32 fanspeed)
+{
+	struct acpitz_softc *sc = device_private(dv);
+	ACPI_STATUS rv;
+	ACPI_HANDLE handle;
+	handle = sc->sc_devnode->ad_handle;
+
+	rv = acpi_eval_set_integer(handle, "FSSP", fanspeed);
+	if (ACPI_FAILURE(rv))
+		aprint_debug_dev(dv, "failed to set fanspeed to %u rpm: %s\n",
+			fanspeed, AcpiFormatException(rv));
+	return rv;
+}
+#endif
+
 static void
 acpitz_tick(void *opaque)
 {
@@ -605,16 +696,31 @@ acpitz_init_envsys(device_t dv)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
-	sc->sc_sensor.monitor = true;
-	sc->sc_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
-	sc->sc_sensor.units = ENVSYS_STEMP;
-	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor))
+
+	sc->sc_temp_sensor.monitor = true;
+	sc->sc_temp_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
+	sc->sc_temp_sensor.units = ENVSYS_STEMP;
+	strlcpy(sc->sc_temp_sensor.desc,
+	    sc->sc_zone.name, sizeof(sc->sc_temp_sensor.desc));
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_temp_sensor))
 		goto out;
+
+	if (sc->sc_have_fan) {
+		sc->sc_fan_sensor.monitor = true;
+		sc->sc_fan_sensor.flags =
+		    ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
+		sc->sc_fan_sensor.units = ENVSYS_SFANRPM;
+		strlcpy(sc->sc_fan_sensor.desc,
+		    "FAN", sizeof(sc->sc_fan_sensor.desc));
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_fan_sensor))
+			/* ignore error because fan sensor is optional */
+			aprint_error_dev(dv, "unable to attach fan sensor\n");
+	}
 
 	/* hook into sysmon */
 	if (sysmon_envsys_register(sc->sc_sme) == 0)
 		return;
+
 out:
 	aprint_error_dev(dv, "unable to register with sysmon\n");
 	sysmon_envsys_destroy(sc->sc_sme);
@@ -627,19 +733,40 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct acpitz_softc *sc = sme->sme_cookie;
 	int i;
 
-	limits->sel_flags = 0;
+	printf("%s: units: %u\n", __func__, edata->units);
 
-	if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
-		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.hot);
-	} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
-		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
-	}
-	for (i = 0; i < ATZ_NLEVELS; i++) 
-		if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
-			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.ac[i]);
-			limits->sel_flags |= PROP_WARNMAX;
-			break;
+	switch (edata->units) {
+	case ENVSYS_STEMP:
+		limits->sel_flags = 0;
+		if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
+			limits->sel_flags |= PROP_CRITMAX;
+			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.hot);
+		} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
+			limits->sel_flags |= PROP_CRITMAX;
+			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
 		}
+		for (i = 0; i < ATZ_NLEVELS; i++) {
+			if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
+				limits->sel_critmax =
+				    ATZ2UKELVIN(sc->sc_zone.ac[i]);
+				limits->sel_flags |= PROP_WARNMAX;
+				break;
+			}
+		}
+		break;
+
+	case ENVSYS_SFANRPM:
+		limits->sel_flags = 0;
+		if (sc->sc_zone.fanmin != ATZ_TMP_INVALID) {
+			limits->sel_flags |= PROP_WARNMIN;
+			limits->sel_warnmin = sc->sc_zone.fanmin;
+			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MIN;
+		}
+		if (sc->sc_zone.fanmax != ATZ_TMP_INVALID) {
+			limits->sel_flags |= PROP_WARNMAX;
+			limits->sel_warnmax = sc->sc_zone.fanmax;
+			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MAX;
+		}
+		break;
+	}
 }
