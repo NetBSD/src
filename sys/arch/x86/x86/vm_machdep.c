@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2009/11/21 03:11:02 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2009/11/25 13:38:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2009/11/21 03:11:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2009/11/25 13:38:38 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -203,7 +203,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Child LWP might get aston() before returning to userspace. */
 	tf->tf_trapno = T_ASTFLT;
 
-#ifdef DIAGNOSTIC
+#if 0 /* DIAGNOSTIC */
 	/* Set a red zone in the kernel stack after the uarea. */
 	pmap_kremove(USER_TO_UAREA(l2->l_addr), PAGE_SIZE);
 	pmap_update(pmap_kernel());
