@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.292 2009/10/17 20:03:06 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.293 2009/11/25 02:34:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5062,7 +5062,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	sethi	%hi(CPUINFO_VA+CI_CURLWP), %l0
 	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_CURLWP)], %l0
 	set	USPACE - TF_SIZE - CC64FSZ, %l1
-	LDPTR	[%l0 + L_ADDR], %l0
+	LDPTR	[%l0 + L_PCB], %l0
  	add	%l1, %l0, %l0
 #ifdef _LP64
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
@@ -5266,7 +5266,7 @@ ENTRY(cpu_mp_startup)
 	sethi	%hi(CPUINFO_VA+CI_IDLELWP), %l0
 	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_IDLELWP)], %l0
 	set	USPACE - TF_SIZE - CC64FSZ, %l1
-	LDPTR	[%l0 + L_ADDR], %l0
+	LDPTR	[%l0 + L_PCB], %l0
 	add	%l0, %l1, %l0
 #ifdef _LP64
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
@@ -6717,7 +6717,7 @@ ENTRY(cpu_switchto)
 	 sethi	%hi(CPCB), %l6
 
 	rdpr	%pstate, %o1			! oldpstate = %pstate;
-	LDPTR	[%i0 + L_ADDR], %l5
+	LDPTR	[%i0 + L_PCB], %l5
 
 	stx	%i7, [%l5 + PCB_PC]
 	stx	%i6, [%l5 + PCB_SP]
@@ -6729,7 +6729,7 @@ ENTRY(cpu_switchto)
 1:
 	sethi	%hi(CURLWP), %l7
 
-	LDPTR   [%i1 + L_ADDR], %l1	! newpcb = l->l_addr;
+	LDPTR   [%i1 + L_PCB], %l1	! newpcb = l->l_pcb;
 
 	/*
 	 * Load the new lwp.  To load, we must change stacks and
