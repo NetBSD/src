@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.28 2009/10/01 12:28:34 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.29 2009/11/25 14:43:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.28 2009/10/01 12:28:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.29 2009/11/25 14:43:31 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -501,7 +501,6 @@ wapbl_discard(struct wapbl *wl)
 
 #ifdef WAPBL_DEBUG_PRINT
 	{
-		struct wapbl_entry *we;
 		pid_t pid = -1;
 		lwpid_t lid = -1;
 		if (curproc)
@@ -691,7 +690,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	bp->b_blkno = pbn;
 
 	WAPBL_PRINTF(WAPBL_PRINT_IO,
-	    ("wapbl_doio: %s %d bytes at block %"PRId64" on dev 0x%x\n",
+	    ("wapbl_doio: %s %d bytes at block %"PRId64" on dev 0x%"PRIx64"\n",
 	    BUF_ISWRITE(bp) ? "write" : "read", bp->b_bcount,
 	    bp->b_blkno, bp->b_dev));
 
@@ -703,7 +702,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
 		    ("wapbl_doio: %s %zu bytes at block %" PRId64
-		    " on dev 0x%x failed with error %d\n",
+		    " on dev 0x%"PRIx64" failed with error %d\n",
 		    (((flags & (B_WRITE | B_READ)) == B_WRITE) ?
 		     "write" : "read"),
 		    len, pbn, devvp->v_rdev, error));
@@ -1833,8 +1832,8 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
+		    " returned %d\n", wl->wl_devvp->v_rdev, error));
 	}
 
 	wc->wc_head = head;
@@ -1862,8 +1861,8 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
+		    " returned %d\n", wl->wl_devvp->v_rdev, error));
 	}
 
 	/*
