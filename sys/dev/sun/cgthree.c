@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.25 2009/09/19 07:07:43 tsutsui Exp $ */
+/*	$NetBSD: cgthree.c,v 1.26 2009/11/25 21:10:56 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.25 2009/09/19 07:07:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.26 2009/11/25 21:10:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ dev_type_mmap(cgthreemmap);
 
 const struct cdevsw cgthree_cdevsw = {
 	cgthreeopen, nullclose, noread, nowrite, cgthreeioctl,
-	nostop, notty, nopoll, cgthreemmap, nokqfilter
+	nostop, notty, nopoll, cgthreemmap, nokqfilter, D_OTHER
 };
 
 /* frame buffer generic driver */
