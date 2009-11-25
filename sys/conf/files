@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.964 2009/11/18 17:40:45 pooka Exp $
+#	$NetBSD: files,v 1.965 2009/11/25 08:52:38 kiyohara Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1038,7 +1038,7 @@ file 	dev/ic/hpet.c		hpet			needs-flag
 
 # SMSC LAN9118 Family Ethernet Controller
 #
-device	smsh: arp, ether, ifnet
+device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
 # DRM - Direct Rendering Infrastructure: dev/drm
