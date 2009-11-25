@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.28 2008/12/11 05:27:42 alc Exp $
+#	$NetBSD: Makefile.xen,v 1.29 2009/11/25 17:08:09 tron Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -22,6 +22,8 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+USE_SSP?=	yes
 
 ##
 ## (1) port identification
