@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.89 2009/10/19 18:41:10 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.90 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.89 2009/10/19 18:41:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.90 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -989,13 +989,13 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:
 #ifndef XEN
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 

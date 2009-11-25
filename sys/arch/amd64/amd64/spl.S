@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.21 2009/04/02 00:19:02 enami Exp $	*/
+/*	$NetBSD: spl.S,v 1.22 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -265,7 +265,7 @@ LABEL(cx8_spllower_end)
  * It is important that the bit scan instruction is bsr, it will get
  * the highest 2 bits (currently the IPI and clock handlers) first,
  * to avoid deadlocks where one CPU sends an IPI, another one is at
- * splipi() and defers it, lands in here via splx(), and handles
+ * splhigh() and defers it, lands in here via splx(), and handles
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).

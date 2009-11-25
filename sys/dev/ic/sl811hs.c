@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.24 2009/11/12 19:35:59 dyoung Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.25 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -59,9 +59,7 @@
  * This driver does fine grained locking for its own data structures, however 
  * the general USB code does not yet have locks, some of which would need to 
  * be used in this driver.  This is mostly for debug use on single processor 
- * systems.  Actual MP use of this driver would be unreliable on ports where 
- * splipi is above splhigh unless splipi can be safely blocked when 
- * calculating remaining bus time prior to transfers.
+ * systems.
  *
  * The theory of the wait lock is that start is the only function that would 
  * be frequently called from arbitrary processors, so it should not need to 
@@ -86,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.24 2009/11/12 19:35:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25 2009/11/25 14:28:50 rmind Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -2204,8 +2202,8 @@ slhci_tstart(struct slhci_softc *sc)
 	/* We have about 6 us to get from the bus time check to 
 	 * starting the transfer or we might babble or the chip might fail to 
 	 * signal transfer complete.  This leaves no time for any other 
-	 * interrupts.  Some ports have splipi (MP only) higher than splhigh 
-	 * which might cause longer delays. */
+	 * interrupts.
+	 */
 	s = splhigh();
 	remaining_bustime = (int)(slhci_read(sc, SL811_CSOF)) << 6;
 	remaining_bustime -= SLHCI_END_BUSTIME;

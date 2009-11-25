@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82 2009/11/21 03:11:00 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.83 2009/11/25 14:28:50 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -391,7 +391,6 @@ define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
-define	IPL_IPI			IPL_IPI
 
 define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
