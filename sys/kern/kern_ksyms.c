@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.51 2009/03/15 17:14:40 cegger Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.52 2009/11/25 13:16:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.51 2009/03/15 17:14:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.52 2009/11/25 13:16:55 pooka Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -141,7 +141,6 @@ ksyms_verify(void *symstart, void *strstart)
 #endif
 	if (symstart == NULL || strstart == NULL)
 		return 0;
-	KASSERT(symstart <= strstart);
 	return 1;
 }
 
