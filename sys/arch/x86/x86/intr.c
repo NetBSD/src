@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.65 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: intr.c,v 1.66 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.65 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.66 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1005,7 +1005,7 @@ cpu_intr_init(struct cpu_info *ci)
 	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
-	fake_ipi_intrhand.ih_level = IPL_IPI;
+	fake_ipi_intrhand.ih_level = IPL_HIGH;
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;

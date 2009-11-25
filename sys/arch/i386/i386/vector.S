@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.48 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.49 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.48 2009/07/29 12:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.49 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -150,14 +150,14 @@ IDTVEC(intr_lapic_ipi)
 	INTRENTRY		
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	movl	CPUVAR(ILEVEL),%ebx
-	cmpl	$IPL_IPI,%ebx
+	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 IDTVEC_END(intr_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
 	pushl	%ebx
 	IDEPTH_INCR
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
 	call	_C_LABEL(x86_ipi_handler)
 	cli

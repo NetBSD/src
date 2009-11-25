@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.33 2009/11/03 05:23:27 dyoung Exp $	*/
+/*	$NetBSD: spl.S,v 1.34 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.33 2009/11/03 05:23:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.34 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -157,7 +157,7 @@ END(cx8_spllower)
  * It is important that the bit scan instruction is bsr, it will get
  * the highest 2 bits (currently the IPI and clock handlers) first,
  * to avoid deadlocks where one CPU sends an IPI, another one is at
- * splipi() and defers it, lands in here via splx(), and handles
+ * splhigh() and defers it, lands in here via splx(), and handles
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).

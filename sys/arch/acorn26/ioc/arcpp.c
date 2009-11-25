@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.10 2009/01/07 23:05:46 bjh21 Exp $ */
+/* $NetBSD: arcpp.c,v 1.11 2009/11/25 14:28:49 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.10 2009/01/07 23:05:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.11 2009/11/25 14:28:49 rmind Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -158,9 +158,9 @@ arcpp_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "ack intr");
 	evcnt_attach_dynamic(&sc->sc_bintrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(self), "busy intr");
-	sc->sc_aih = irq_establish(IRQ_PACK, IPL_LPT, arcppintr, sc,
+	sc->sc_aih = irq_establish(IRQ_PACK, IPL_VM, arcppintr, sc,
 	    &sc->sc_aintrcnt);
-	sc->sc_bih = irq_establish(IRQ_PBSY, IPL_LPT, arcppintr, sc,
+	sc->sc_bih = irq_establish(IRQ_PBSY, IPL_VM, arcppintr, sc,
 	    &sc->sc_bintrcnt);
 
 	/* We're not interested in interrupts while the device is closed. */
@@ -200,7 +200,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	s = spllpt();
+	s = splvm();
 	/* wait till ready (printer running diagnostics) */
 	irq_enable(sc->sc_bih);
 	/* XXX Is it really appropriate to time out? */
@@ -253,7 +253,7 @@ arcpppushbytes(struct arcpp_softc *sc)
 	while (sc->sc_count > 0) {
 		/* if the printer is ready for a char, give it one */
 		if ((sc->sc_state & ARCPP_OBUSY) == 0) {
-			s = spllpt();
+			s = splvm();
 			arcppintr(sc);
 			splx(s);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2647,7 +2647,7 @@ pmap_load(void)
 	ncsw = l->l_ncsw;
 
 	/* should be able to take ipis. */
-	KASSERT(ci->ci_ilevel < IPL_IPI); 
+	KASSERT(ci->ci_ilevel < IPL_HIGH); 
 #ifdef XEN
 	/* XXX not yet KASSERT(x86_read_psl() != 0); */
 #else

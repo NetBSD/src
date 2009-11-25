@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.41 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.42 2009/11/25 14:28:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -478,8 +478,6 @@ SPLHOLD(splstatclock, PIL_STATCLOCK)
 SPLHOLD(splsched, PIL_SCHED)
 SPLHOLD(spllock, PIL_LOCK)
 
-SPLHOLD(splipi, PIL_HIGH)
-
 SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
@@ -500,7 +498,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define	spllock()	spllockX(__FILE__, __LINE__)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
-#define splipi()	splhighX(__FILE__, __LINE__)
 
 static __inline void splxX(int newpil, const char *file, int line)
 #else
