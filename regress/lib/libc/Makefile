@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2009/05/07 20:40:25 christos Exp $
+#	$NetBSD: Makefile,v 1.57 2009/11/25 09:22:36 uebayasi Exp $
 
 SUBDIR+= _setjmp atexit basename citrus clone context convfp db dirname \
 	div divrem gen gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
@@ -8,7 +8,7 @@ SUBDIR+= _setjmp atexit basename citrus clone context convfp db dirname \
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
-.if (${HAS_SSP} == "yes")
+.if (${USE_SSP} == "yes")
 SUBDIR+= ssp
 .endif
 .if (${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000")
