@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.31 2009/11/20 17:48:52 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.32 2009/11/25 15:01:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.31 2009/11/20 17:48:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.32 2009/11/25 15:01:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -184,7 +184,7 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	for (i = 0; i < part; i++) {
 		lp->d_partitions[i].p_fstype = FS_UNUSED;
 	}
-	lp->d_partitions[part].p_size = size;
+	lp->d_partitions[part].p_size = size >> DEV_BSHIFT;
 	lp->d_npartitions = part+1;
 	/* XXX: file system type? */
 
@@ -532,6 +532,11 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		pi->part = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
 		pi->disklab = &rblk->rblk_label;
 		break;
+
+	/* it's synced enough along the write path */
+	case DIOCCACHESYNC:
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
