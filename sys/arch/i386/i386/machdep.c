@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.676 2009/11/23 05:01:12 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.677 2009/11/25 14:28:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.676 2009/11/23 05:01:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.677 2009/11/25 14:28:50 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1598,7 +1598,7 @@ init386(paddr_t first_avail)
 	intr_default_setup();
 #endif
 
-	splraise(IPL_IPI);
+	splraise(IPL_HIGH);
 	x86_enable_intr();
 
 #ifdef DDB
