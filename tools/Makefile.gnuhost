@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.33 2008/10/19 22:05:23 apb Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.34 2009/11/25 11:49:36 uebayasi Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -102,8 +102,6 @@ INSTALL_TARGET?=install
 .install_done! ${BUILD:D.build_done}
 	@(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET})
 	@touch $@
-
-.PHONY: .build_done .install_done
 
 # Mapping to standard targets.
 
