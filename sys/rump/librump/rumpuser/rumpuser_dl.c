@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.7 2009/11/26 09:50:38 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.8 2009/11/26 10:57:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.7 2009/11/26 09:50:38 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.8 2009/11/26 10:57:26 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -59,7 +59,7 @@ static unsigned char eident;
 
 static void *
 reservespace(void *store, size_t *storesize,
-	size_t storeoff, int64_t required)
+	size_t storeoff, size_t required)
 {
 	size_t chunk, newsize;
 
@@ -88,9 +88,11 @@ reservespace(void *store, size_t *storesize,
 do {									\
 	if (eident == ELFCLASS32) {					\
 		Elf32_Ehdr *ehdr = base;				\
+		/*LINTED*/						\
 		result = ehdr->thevar;					\
 	} else {							\
 		Elf64_Ehdr *ehdr = base;				\
+		/*LINTED*/						\
 		result = ehdr->thevar;					\
 	}								\
 } while (/*CONSTCOND*/0)
@@ -99,9 +101,11 @@ do {									\
 do {									\
 	if (eident == ELFCLASS32) {					\
 		Elf32_Shdr *shdr = base;				\
+		/*LINTED*/						\
 		result = shdr[n].thevar;				\
 	} else {							\
 		Elf64_Shdr *shdr = base;				\
+		/*LINTED*/						\
 		result = shdr[n].thevar;				\
 	}								\
 } while (/*CONSTCOND*/0)
@@ -154,9 +158,10 @@ getsymbols(struct link_map *map)
 	int i = 0, fd;
 	char *str_base;
 	void *syms_base = NULL; /* XXXgcc */
-	int64_t cursymsize, curstrsize;
+	size_t cursymsize, curstrsize;
 	void *shdr_base;
-	size_t shnum, shsize;
+	size_t shsize;
+	int shnum;
 	uint64_t shoff;
 	void *ed_base;
 	uint64_t ed_tag;
@@ -180,7 +185,8 @@ getsymbols(struct link_map *map)
 	EHDR_GETMEMBER(libbase, e_shentsize, shsize);
 	EHDR_GETMEMBER(libbase, e_shoff, shoff);
 	shdr_base = malloc(shnum * shsize);
-	if (pread(fd, shdr_base, shnum * shsize, (off_t)shoff) != shnum*shsize){
+	if (pread(fd, shdr_base, shnum * shsize, (off_t)shoff)
+	    != (ssize_t)(shnum*shsize)){
 		sverrno = errno;
 		fprintf(stderr, "read section headers for %s failed\n",
 		    map->l_name);
@@ -188,7 +194,7 @@ getsymbols(struct link_map *map)
 		close(fd);
 		return sverrno;
 	}
-	cursymsize = -1;
+	cursymsize = (size_t)-1;
 	for (i = 1; i <= shnum; i++) {
 		int shtype;
 
@@ -200,7 +206,7 @@ getsymbols(struct link_map *map)
 	}
 	free(shdr_base);
 	close(fd);
-	if (cursymsize == -1) {
+	if (cursymsize == (size_t)-1) {
 		fprintf(stderr, "could not find dynsym size from %s\n",
 		    map->l_name);
 		return ENOEXEC;
@@ -208,13 +214,13 @@ getsymbols(struct link_map *map)
 
 	/* find symtab, strtab and strtab size */
 	str_base = NULL;
-	curstrsize = -1;
+	curstrsize = (size_t)-1;
 	ed_base = map->l_ld;
 	i = 0;
 	DYNn_GETMEMBER(ed_base, i, d_tag, ed_tag);
 	while (ed_tag != DT_NULL) {
 		uintptr_t edptr;
-		uint64_t edval;
+		size_t edval;
 
 		switch (ed_tag) {
 		case DT_SYMTAB:
@@ -236,7 +242,7 @@ getsymbols(struct link_map *map)
 		DYNn_GETMEMBER(ed_base, i, d_tag, ed_tag);
 	} while (ed_tag != DT_NULL);
 
-	if (str_base == NULL || syms_base == NULL || curstrsize == -1) {
+	if (str_base == NULL || syms_base == NULL || curstrsize == (size_t)-1) {
 		fprintf(stderr, "could not find strtab, symtab or strtab size "
 		    "in %s\n", map->l_name);
 		return ENOEXEC;
