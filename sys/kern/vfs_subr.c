@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.389 2009/11/19 03:01:05 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.390 2009/11/26 20:52:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.389 2009/11/19 03:01:05 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.390 2009/11/26 20:52:19 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2503,6 +2503,9 @@ vfs_mountroot(void)
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
 		}
+		break;
+
+	case DV_VIRTUAL:
 		break;
 
 	default:
