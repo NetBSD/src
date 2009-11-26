@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2009/03/18 16:00:12 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/03/18 16:00:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:17 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -260,7 +260,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #ifdef KLOADER
 	struct kloader_bootinfo kbi;
 #endif
-	extern struct user *proc0paddr;
 	extern char edata[], end[];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
@@ -456,14 +455,13 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.
 	 */
-	lwp0.l_addr = proc0paddr = (struct user *)kernend;
-	lwp0.l_md.md_regs =
-	    (struct frame *)((char *)kernend + UPAGES * PAGE_SIZE) - 1;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr = (struct user *)kernend;
+	lwp0.l_md.md_regs = (struct frame *)((char *)kernend + USPACE) - 1;
+	memset(kernend, 0, USPACE);
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
-	kernend = (char *)kernend + UPAGES * PAGE_SIZE;
+	kernend = (char *)kernend + USPACE;
 
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();

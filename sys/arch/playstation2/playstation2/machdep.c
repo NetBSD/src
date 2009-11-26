@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2009/11/26 00:19:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2009/11/26 00:19:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -90,7 +90,6 @@ void
 mach_init(void)
 {
 	extern char kernel_text[], edata[], end[];
-	extern struct user *proc0paddr;
 	void *kernend, *v;
 	paddr_t start;
 	size_t size;
@@ -155,11 +154,11 @@ mach_init(void)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *) v;
+	lwp0.l_addr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] = PSL_LOWIPL;	/* SR */
+	lwp0.l_addr->u_pcb.pcb_context[11] = PSL_LOWIPL;	/* SR */
 #ifdef IPL_ICU_MASK
-	proc0paddr->u_pcb.pcb_ppl = 0;
+	lwp0.l_addr->u_pcb.pcb_ppl = 0;
 #endif
 }
 

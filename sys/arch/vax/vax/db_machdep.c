@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.53 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.54 2009/11/26 00:19:23 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.53 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.54 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -481,13 +481,9 @@ db_stack_trace_print(
 		}
 #endif
 	}
-	if (p == NULL) {
-		pcb = lwp_getpcb(&lwp0);
-		curpid = 0;
-	} else {
-		pcb = lwp_getpcb(l);
-		curpid = p->p_pid;
-	}
+	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	curpid = p->p_pid;
 	(*pr)("Process %d.%d\n", curpid, l->l_lid);
 	(*pr)("	 PCB contents:\n");
 	(*pr)(" KSP = 0x%x\n", (unsigned int)(pcb->KSP));

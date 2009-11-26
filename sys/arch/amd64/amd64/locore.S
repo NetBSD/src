@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.53 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.54 2009/11/26 00:19:12 matt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -234,7 +234,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore),_C_LABEL(cpu)
 
@@ -253,7 +253,6 @@ _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(eblob):	.quad	0	# ptr to end of modules
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
@@ -696,7 +695,7 @@ longmode_hi:
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
-	movq	%rax,_C_LABEL(proc0paddr)(%rip)
+	movq	%rax,(_C_LABEL(lwp0)+L_ADDR)(%rip)
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
 	xorq	%rbp,%rbp               # mark end of frames
@@ -776,7 +775,7 @@ start:
 	 * First avail returned by xen_pmap_bootstrap in %rax
 	 */
 	movq	%rax, %rsi
-	movq	%rsi,_C_LABEL(proc0paddr)
+	movq	%rsi,(_C_LABEL(lwp0)+L_ADDR)
 	
 	xorq	%rax,%rax
 	movq	%rsi,%rdi

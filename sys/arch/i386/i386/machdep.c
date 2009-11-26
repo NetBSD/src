@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.677 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.678 2009/11/26 00:19:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.677 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.678 2009/11/26 00:19:18 matt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1055,7 +1055,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 union	descriptor *gdt, *ldt;
 union	descriptor *pentium_idt;
-struct user *proc0paddr;
 extern vaddr_t proc0uarea;
 
 void
@@ -1313,9 +1312,8 @@ init386(paddr_t first_avail)
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
-	proc0paddr = UAREA_TO_USER(proc0uarea);
-	lwp0.l_addr = proc0paddr;
-	pcb = (void *)proc0paddr;
+	lwp0.l_addr = UAREA_TO_USER(proc0uarea);
+	pcb = (void *)lwp0.l_addr;
 
 #ifdef XEN
 	/* not on Xen... */
@@ -1323,8 +1321,8 @@ init386(paddr_t first_avail)
 	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
-	XENPRINTK(("proc0 pcb %p first_avail %p\n",
-	    pcb, (void *)(long)first_avail));
+	XENPRINTK(("lwp0.l_addr %p first_avail %p\n",
+	    lwp0.l_addr, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif

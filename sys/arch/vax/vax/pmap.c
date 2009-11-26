@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2009/11/21 04:45:39 rmind Exp $	   */
+/*	$NetBSD: pmap.c,v 1.174 2009/11/26 00:19:23 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -259,8 +259,6 @@ calc_kvmsize(vsize_t usrptsize)
 	return kvmsize;
 }
 
-extern struct user *proc0paddr;
-
 /*
  * pmap_bootstrap().
  * Called as part of vm bootstrap, allocates internal pmap structures.
@@ -270,7 +268,7 @@ extern struct user *proc0paddr;
 void
 pmap_bootstrap(void)
 {
-	struct pcb * const pcb = &proc0paddr->u_pcb;
+	struct pcb * const pcb = &lwp0.l_addr->u_pcb;
 	struct pmap * const pmap = pmap_kernel();
 	struct cpu_info *ci;
 	extern unsigned int etext;
@@ -354,7 +352,7 @@ pmap_bootstrap(void)
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	*(struct rpb *) 0 = *(struct rpb *) ((char *)proc0paddr + REDZONEADDR);
+	*(struct rpb *) 0 = *(struct rpb *) ((char *)lwp0.l_addr + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();

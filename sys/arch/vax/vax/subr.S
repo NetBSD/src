@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.26 2009/04/10 13:40:38 tsutsui Exp $	   */
+/*	$NetBSD: subr.S,v 1.27 2009/11/26 00:19:23 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -122,19 +122,20 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	bisl3	$0x80000000,%r9,_C_LABEL(symtab_end)
 						#   save end of symtab
 3:	addl3	_C_LABEL(esym),$0x3ff,%r0	# Round symbol table end
-	bicl3	$0x3ff,%r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
-	bicl3	$0x80000000,_C_LABEL(proc0paddr),%r0 # get phys proc0 uarea addr
+	bicl3	$0x3ff,%r0,%r1			# 
+	movl	%r1,_C_LABEL(lwp0)+L_ADDR	# save lwp0 uarea pointer
+	bicl2	$0x80000000,%r1			# get phys lwp0 uarea addr
 	mtpr	%r0,$PR_PCBB			# Save in IPR PCBB
-	addl3	$USPACE,_C_LABEL(proc0paddr),%r0	# Get kernel stack top
+	addl3	$USPACE,%r1,%r0			# Get kernel stack top
 	mtpr	%r0,$PR_KSP			# put in IPR KSP
 	movl	%r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
-	movl	_C_LABEL(proc0paddr),%r0	# get PCB virtual address
+	movl	_C_LABEL(lwp0)+L_ADDR,%r0	# get PCB virtual address
 	mfpr	$PR_PCBB,PCB_PADDR(%r0)		# save PCB physical address
 	movab	IFTRAP(%r0),ESP(%r0)		# Save trap address in ESP
 	mtpr	4(%r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
-	movl	_C_LABEL(proc0paddr),%r0
+	movl	%r1,%r0				# get lwp0.l_addr
 	clrl	P0LR(%r0)
 	clrl	P1LR(%r0)
 	mtpr	$0,$PR_P0LR

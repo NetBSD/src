@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.293 2009/11/25 02:34:34 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.294 2009/11/26 00:19:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -10122,11 +10122,6 @@ _C_LABEL(esym):
 _C_LABEL(ssym):
 	POINTER	0
 #endif
-	! XXX should it called lwp0paddr
-	.globl	_C_LABEL(proc0paddr)
-_C_LABEL(proc0paddr):
-	POINTER	0
-
 	.comm	_C_LABEL(promvec), PTRSZ
 
 #ifdef DEBUG

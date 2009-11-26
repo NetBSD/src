@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.322 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.323 2009/11/26 00:19:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2009/11/26 00:19:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,8 +165,6 @@ u_int32_t no_optimize;
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];
-
-struct	user *proc0paddr;
 
 /* Number of machine cycles per microsecond */
 u_int64_t	cycles_per_usec;
@@ -638,8 +636,7 @@ nobootinfo:
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	lwp0.l_addr = proc0paddr =
-	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	lwp0.l_addr = (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
 	 * Initialize the virtual memory system, and set the
@@ -653,19 +650,19 @@ nobootinfo:
 	 * address.
 	 */
 	lwp0.l_md.md_pcbpaddr =
-	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vaddr_t)&proc0paddr->u_pcb);
+	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vaddr_t)&lwp0.l_addr->u_pcb);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
-	 * and make proc0's trapframe pointer point to it for sanity.
+	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
-	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
-	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
+	lwp0.l_addr->u_pcb.pcb_hw.apcb_ksp =
+	    (vaddr_t)lwp0.l_addr + USPACE - sizeof(struct trapframe);
 	lwp0.l_md.md_tf =
-	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
-	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
+	    (struct trapframe *)lwp0.l_addr->u_pcb.pcb_hw.apcb_ksp;
+	simple_lock_init(&lwp0.l_addr->u_pcb.pcb_fpcpu_slock);
 
-	/* Indicate that proc0 has a CPU. */
+	/* Indicate that lwp0 has a CPU. */
 	lwp0.l_cpu = ci;
 
 	/*

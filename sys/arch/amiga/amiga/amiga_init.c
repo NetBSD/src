@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.111 2009/11/23 00:11:42 rmind Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.112 2009/11/26 00:19:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.111 2009/11/23 00:11:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.112 2009/11/26 00:19:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.111 2009/11/23 00:11:42 rmind Exp $
 #define RELOC(v, t)	*((t*)((u_int)&(v) + loadbase))
 
 extern u_int	lowram;
-extern u_int	Umap, proc0paddr;
+extern u_int	Umap;
 extern u_int	Sysseg_pa;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
@@ -351,9 +351,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	avail -= vstart;
 
 	/*
-	 * save KVA of proc0 u-area and allocate it.
+	 * save KVA of lwp0 u-area and allocate it.
 	 */
-	RELOC(proc0paddr, u_int) = vstart;
+	RELOC(lwp0.l_addr, struct user *) = vstart;
 	pstart += USPACE;
 	vstart += USPACE;
 	avail -= USPACE;
@@ -574,7 +574,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 #endif
 	/*
 	 * go till end of data allocated so far
-	 * plus proc0 u-area (to be allocated)
+	 * plus lwp0 u-area (to be allocated)
 	 */
 	for (; kva < vstart; kva += PAGE_SIZE, pg_proto += PAGE_SIZE)
 		*pg++ = pg_proto;
@@ -788,7 +788,7 @@ start_c_finish(void)
 ((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
 #endif
 
-	bzero ((u_char *)proc0paddr, USPACE);
+	memset(lwp0.l_addr, 0, USPACE);
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
 
 	/*
@@ -821,11 +821,6 @@ start_c_finish(void)
 		z2mem_end = ZTWOMEMADDR + NZTWOMEMPG * PAGE_SIZE;
 		z2mem_start = ZTWOMEMADDR;
 	}
-
-#if 0
-	i = *(int *)proc0paddr;
-	*(volatile int *)proc0paddr = i;
-#endif
 
 	/*
 	 * disable all interrupts but enable allow them to be enabled

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.43 2009/03/18 16:00:14 cegger Exp $ */
+/* $NetBSD: machdep.c,v 1.44 2009/11/26 00:19:21 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2009/11/26 00:19:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -150,7 +150,6 @@ void	mach_init(long, long, long, long);
 int	safepri = MIPS_INT_MASK | MIPS_SR_INT_IE;
 
 extern void *esym;
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -321,9 +320,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Allocate space for proc0's USPACE
 	 */
 	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
-	lwp0.l_addr = proc0paddr = (struct user *)p0;
+	lwp0.l_addr = (struct user *)p0;
 	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	pmap_bootstrap();
