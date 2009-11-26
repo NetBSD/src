@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.136 2009/11/10 17:02:36 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.137 2009/11/26 09:20:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.136 2009/11/10 17:02:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.137 2009/11/26 09:20:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.136 2009/11/10 17:02:36 pooka Exp $");
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 #include <sys/event.h>
+#include <sys/exec_elf.h>
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
@@ -620,6 +621,27 @@ rump_module_fini(struct modinfo *mi)
 		secmodel_deregister();
 
 	return rv;
+}
+
+int
+rump_kernelfsym_load(void *symtab, uint64_t symsize,
+	char *strtab, uint64_t strsize)
+{
+	static int inited = 0;
+	Elf64_Ehdr ehdr;
+
+	if (inited)
+		return EBUSY;
+	inited = 1;
+
+	/*
+	 * Use 64bit header since it's bigger.  Shouldn't make a
+	 * difference, since we're passing in all zeroes anyway.
+	 */
+	memset(&ehdr, 0, sizeof(ehdr));
+	ksyms_addsyms_explicit(&ehdr, symtab, symsize, strtab, strsize);
+
+	return 0;
 }
 
 static int
