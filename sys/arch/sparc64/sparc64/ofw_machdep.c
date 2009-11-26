@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.35 2009/05/18 12:15:26 nakayama Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.36 2009/11/26 20:15:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.35 2009/05/18 12:15:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.36 2009/11/26 20:15:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -714,10 +714,14 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 					      sizeof(dev_type))) > 0) &&
 			    !strcmp(dev_type, "pci") &&
 			    (node != phc_node)) {
+#ifdef DEBUG
+				int ointerrupt = *interrupt;
+#endif
+
 				*interrupt = ((*interrupt +
 				    OFW_PCI_PHYS_HI_DEVICE(reg[0]) - 1) & 3) + 1;
-				DPRINTF(("OF_mapintr: interrupt %x, reg[0] %x\n",
-					 *interrupt, reg[0]));
+				DPRINTF(("OF_mapintr: interrupt %x -> %x, reg[0] %x\n",
+					 ointerrupt, *interrupt, reg[0]));
 			}
 
 			/* Get reg for next level compare. */
@@ -746,13 +750,13 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			/* How should I know. */
 			address_cells = 2;
 		}
-		DPRINTF(("#address-cells = %d len %d", address_cells, len));
+		DPRINTF(("#address-cells = %d len %d ", address_cells, len));
 		if ((len = OF_searchprop(node, "#size-cells", &size_cells,
 			sizeof(size_cells))) <= 0) {
 			/* How should I know. */
 			size_cells = 2;
 		}
-		DPRINTF(("#size-cells = %d len %d", size_cells, len));
+		DPRINTF(("#size-cells = %d len %d ", size_cells, len));
 		if ((len = OF_getprop(node, "#interrupt-cells", &interrupt_cells,
 			sizeof(interrupt_cells))) <= 0) {
 			/* How should I know. */
@@ -780,18 +784,18 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 #endif
 
 		/* finally we can attempt the compare */
-		i=0;
-		while ( i < interrupt_map_len ) {
+		i = 0;
+		while (i < interrupt_map_len) {
 			int pintr_cells;
 			int *imap = &interrupt_map[i];
 			int *parent = &imap[address_cells + interrupt_cells];
 
 #ifdef DEBUG
 			DPRINTF(("\ninterrupt-map addr "));
-			for (len=0; len<address_cells; len++)
+			for (len = 0; len < address_cells; len++)
 				DPRINTF(("%x.", imap[len]));
 			DPRINTF((" intr "));
-			for (; len<(address_cells+interrupt_cells); len++)
+			for (; len < (address_cells+interrupt_cells); len++)
 				DPRINTF(("%x.", imap[len]));
 			DPRINTF(("\nnode %x vs parent %x\n",
 				imap[len], *parent));
@@ -821,10 +825,11 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 				parent++;
 #ifdef DEBUG
 				DPRINTF(("Match! using "));
-				for (len=0; len<pintr_cells; len++)
+				for (len = 0; len < pintr_cells; len++)
 					DPRINTF(("%x.", parent[len]));
+				DPRINTF(("\n"));
 #endif
-				for (i=0; i<pintr_cells; i++)
+				for (i = 0; i < pintr_cells; i++)
 					interrupt[i] = parent[i];
 				rc = validlen = pintr_cells;
 				break;
@@ -834,7 +839,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			DPRINTF(("skip %d cells:",
 				address_cells + interrupt_cells +
 				pintr_cells + 1));
-			for (len=0; len<(address_cells +
+			for (len = 0; len < (address_cells +
 				interrupt_cells + pintr_cells + 1); len++)
 				DPRINTF(("%x.", imap[len]));
 #endif
