@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.33 2009/11/19 14:44:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.34 2009/11/26 09:50:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -196,6 +196,7 @@ typedef struct prop_dictionary *prop_dictionary_t;
 
 struct modinfo;
 typedef int (*rump_modinit_fn)(struct modinfo *, prop_dictionary_t);
-void rumpuser_dl_module_bootstrap(rump_modinit_fn);
+typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
+void rumpuser_dl_module_bootstrap(rump_modinit_fn, rump_symload_fn);
 
 #endif /* _RUMP_RUMPUSER_H_ */
