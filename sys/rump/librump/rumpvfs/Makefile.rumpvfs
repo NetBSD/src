@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.19 2009/11/26 07:30:24 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.20 2009/11/26 20:58:51 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
 
 LIB=	rumpvfs
 
-.PATH:	${RUMPTOP}/librump/rumpvfs				\
+.PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
@@ -17,7 +17,7 @@ LIB=	rumpvfs
 # 
 SRCS=	rump_vfs.c devnodes.c rumpblk.c rumpfs.c vm_vfs.c
 
-SRCS+=	fstrans_stub.c vfsops_stub.c
+SRCS+=	fstrans_stub.c vfsops_stub.c rump_module.c
 
 SRCS+=	rumpvfs_if_wrappers.c
 

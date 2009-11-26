@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.35 2009/11/09 19:17:42 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.36 2009/11/26 20:58:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ extern struct rumpuser_mtx *rump_giantlock;
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
 #define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
+#define RUMP_VFSROOTDEV ((struct device *)-11)
 
 extern int rump_threads;
 

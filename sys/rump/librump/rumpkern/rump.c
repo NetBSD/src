@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.139 2009/11/26 17:36:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.140 2009/11/26 20:58:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.139 2009/11/26 17:36:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.140 2009/11/26 20:58:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -123,6 +123,7 @@ int rump__unavailable(void);
 int rump__unavailable() {return EOPNOTSUPP;}
 __weak_alias(rump_net_init,rump__unavailable);
 __weak_alias(rump_vfs_init,rump__unavailable);
+__weak_alias(rump_vfs_init2,rump__unavailable);
 __weak_alias(rump_dev_init,rump__unavailable);
 
 __weak_alias(rump_vfs_fini,rump__unavailable);
@@ -300,6 +301,11 @@ rump__init(int rump_version)
 
 	sysctl_finalize();
 
+	rumpuser_dl_module_bootstrap(rump_module_init, rump_kernelfsym_load);
+
+	/* mount rootfs, etcetc. */
+	rump_vfs_init2();
+
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
 
@@ -312,7 +318,6 @@ rump__init(int rump_version)
 		vmem_rehash_start();
 #endif
 
-	rumpuser_dl_module_bootstrap(rump_module_init, rump_kernelfsym_load);
 	rump_unschedule();
 
 	return 0;

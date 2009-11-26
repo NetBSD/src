@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.34 2009/11/19 14:44:58 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.35 2009/11/26 20:58:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.34 2009/11/19 14:44:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.35 2009/11/26 20:58:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -102,7 +102,17 @@ rump_vfs_init(void)
 		    rumpuser_biothread, rump_biodone, NULL, "rmpabio")) != 0)
 			panic("syncer thread create failed: %d", rv);
 	}
-	rumpfs_init();
+}
+
+void
+rump_vfs_init2()
+{
+	int rv;
+
+	rootfstype = ROOT_FSTYPE_ANY;
+	root_device = RUMP_VFSROOTDEV;
+	vfs_mountroot();
+	VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
 
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
@@ -113,6 +123,8 @@ rump_vfs_init(void)
 	vref(cwdi0.cwdi_cdir);
 	proc0.p_cwdi = &cwdi0;
 	proc0.p_cwdi = cwdinit();
+
+	VOP_UNLOCK(rootvnode, 0);
 
 	if (rump_threads) {
 		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,
