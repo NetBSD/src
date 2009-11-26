@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 2009/10/28 03:41:30 macallan Exp $
+# $NetBSD: GENERIC,v 1.113 2009/11/26 02:03:42 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.112 $"
+#ident 		"GENERIC-$Revision: 1.113 $"
 
 maxusers	64
 
@@ -845,8 +845,8 @@ midi*		at midibus?
 #bwtwo*		at sbus? slot ? offset ?
 
 ## Sun "cgthree" Sbus color framebuffer
-#cgthree0	at sbus? slot ? offset ?
-#cgthree*	at sbus? slot ? offset ?
+cgthree0	at sbus? slot ? offset ?
+cgthree*	at sbus? slot ? offset ?
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
