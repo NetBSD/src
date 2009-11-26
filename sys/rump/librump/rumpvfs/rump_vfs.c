@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.35 2009/11/26 20:58:51 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.36 2009/11/26 21:04:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.35 2009/11/26 20:58:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.36 2009/11/26 21:04:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -107,10 +107,20 @@ rump_vfs_init(void)
 void
 rump_vfs_init2()
 {
+	extern struct vfsops rumpfs_vfsops;
 	int rv;
 
 	rootfstype = ROOT_FSTYPE_ANY;
 	root_device = RUMP_VFSROOTDEV;
+
+	/*
+	 * XXX: make sure rumpfs is attached.  The opposite can
+	 * happen e.g. on Linux where the dynlinker doesn't work
+	 * like we would want it to.
+	 */
+	if (!vfs_getopsbyname(MOUNT_RUMPFS))
+		vfs_attach(&rumpfs_vfsops);
+
 	vfs_mountroot();
 	VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
 
