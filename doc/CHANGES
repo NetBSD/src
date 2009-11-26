@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1319 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1320 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -94,8 +94,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rump: i386 and amd64 can use kernel module binaries [pooka 20081230]
 	mount_cd9660(8): Add nocasetrans option as a synonym for nomaplcase.
 		[christos 20090103]
+	rump: Include libkern in rumpkern. [pooka 20090104]
 	rc.d(8): Add a script for rndctl(8). [apb 20090104]
 	module: Add sysvbfs module. [pooka 20090105]
+	rump: Prepend all symbols within the rump virtual kernel image
+		with the string "rump".  This prevents conflicts with the
+		host system symbols.  [pooka 20090108]
 	bwi(4): Add a driver for Broadcom AirForce / Apple Airport Extreme
 		wireless network controllers. From Taylor Campbell.
 		[macallan 20090109]
@@ -106,7 +110,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	time_t, dev_t: Change time_t and dev_t to be 64 bit quantities. Fixed
 		POSIX issues in timeval and timespec. [christos 20090110]
 	make(1): Changes to the way .for loops are processed. [dsl 20090111]
+	mount(8): Add -o rump, which mounts the file system as a userspace
+		server via puffs and rump instead of using a
+		kernel driver. [pooka 20090111]
 	openpgpsdk: Initial import of openpgpsdk v0.9. [agc 20090112]
+	rump: Implement a virtual block device driver.  [pooka 20090113]
+	rump: Support __RENAME in syscall interfaces and expose the
+		non-compat symbol name in the header.  [pooka 20090113]
 	age(4):	Add a driver for Attensic/Atheros L1 Gigabit Ethernet.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atphy(4): Add a driver for Attensic/Atheros F1 PHY.
@@ -166,6 +176,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-4.0.12. [roy 20090226]
 	evbarm: Improved support for GPIO support on the EP93xx ARM processors.
 		[kenh 20090227]
+	rumpnet: Add virtual interface based on inter-process shared
+		memory.  [pooka 20090228]
 	ext2fs: Add support for >128 byte inode. From Frederic Sausmikat.
 		[christos 20090301]
 	zaurus: Add zboot from OpenBSD. [nonaka 20090302]
@@ -228,6 +240,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		DHCID, NSEC3, NSEC3PARAM, HIP and DLV, various new API
 		functions.  [christos 20090412]
 	re(4): Add support for RTL8168CP and RTL8168D. [tsutsui 20090413]
+	makefs(8): Add an experimental source-only makefs based on rump
+		and fs-utils.  It currently supports FFS, ext2fs, FAT,
+		cd9660 and sysvbfs.  [pooka 20090414]
 	dhcpcd(8): Import dhcpcd-4.0.13 [roy 20090417]
 	zaurus: Add recoding support to zaudio(4). [nonaka 20090418]
 	httpd(8): Import bozohttpd-20090418. [mrg 20090418]
@@ -330,6 +345,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		lower than the option value. [minskim 20090717]
 	openssl(1): Import SNAP-20090710 under the new crypto/external
 		framework [christos 20090719]
+	rumpdev: Support devices and kernel config framework.  [pooka 20090720]
 	gpio(4): Complete rework to integrate with kauth(9), allow for
 		runtime driver attachment, naming of individual pins.
 		[mbalmer 20090725]
@@ -346,6 +362,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bind: Update to 9.6.1-P1.  [christos 20090728]
 	xen: dropped Xen 2 support. [cegger 20090728]
 	libbluetooth: add device access API bt_dev(3). [plunky 20090803]
+	rumpfs: Add support for registering external files which are
+		accessed from the host OS fs namespace instead of from
+		inside the rump virtual kernel.  [pooka 20090803]
 	acpi(4): It is now possible to configure devices other than the lid
 		switch and sleep/power buttons as a method of waking the
 		machine from sleep. Any ACPI device node with a _PRW method
@@ -357,6 +376,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	openssl(1): Import SNAP-20090805 to fix the namespace issues
 		(BLOCK, CSTRING, etc) [christos 20090805]
 	tcx(8):	support wsdisplay and acceleration [macallan 20090806]
+	rumpvfs: Use unmodified kernel vnode pager.  [pooka 20090806]
 	zfs: Import OpenSolaris zfs source code to NetBSD, add NetBSD
 		patches. [haad 20090808]
 	gpioiic(4): New driver to create an I2C bus using GPIO pins in
@@ -379,10 +399,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	postfix(1): Import version 2.6.5 [tron 20090831]
 	unzip(1): A libarchive-based unzip frontend, emulating most of
 		infozip's command line. [joerg 20090903]
+	rumpcrypto: Add rump component for kernel crypto routines.
+		[pooka 20090903]
 	sunleo(4): imported the xf86-video-sunleo 1.2.0 driver from Xorg
 		[macallan 20090905]
 	hdaudio(4): New standards-compliant Intel High Definition Audio driver
 		written to replace azalia(4). [sborrill 20090906]
+	rump_smbfs(8): Support smbfs as a userspace server.  [pooka 20090906]
 	sets: Move kernel modules out of base.tgz and into a new modules.tgz.
 		[jnemeth 20090907]
 	sysinst(8): Install the new modules.tgz set. [jnemeth 20090907]
@@ -393,10 +416,15 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		option suppresses output to the console; it can be set
 		in rc.conf(5) or by booting in silent mode (e.g. "boot
 		netbsd -z" on i386 or amd64).  [apb 20090911]
+	kernel: remove POOL_INIT from the kernel, replace with dynamic
+		constructors which call pool_init().  [pooka 20090913]
 	pfsync(4): PFSYNC from OpenBSD 4.2 imported [degroote 20090914]
 	xen: add support for feature-flush-cache in block device backend.
 		Use it in block device frontend for DIOCCACHESYNC.
 		[bouyer 20090923]
+	ld.elf_so(1): Support dlinfo(), currently limited to RTLD_DI_LINKMAP.
+		[pooka 20090924]
+	rump: Support autoloading of modules from linksets.  [pooka 20090924]
 	gpio(4): Add the GPIO_PIN_PULSATE attribute to let a pin pulsate at
 		a hardware defined frequency and duty cycle. [mbalmer 20090925]
 	gpioctl(8): Support the new GPIO_PIN_PULSATE attribute for pins using
@@ -418,9 +446,17 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	i386: Add support for VIA C7 temperature sensors. [jmcneill 20091002]
 	dhcpcd(8): Import dhcpcd-5.1.1. [roy 20091002]
 	libm(3): Add f{dim,max,min}{,f,l} from FreeBSD [christos 20091004]
+	ukfs(3): Support disklabel partitions.  [pooka 20091007]
 	man(1): Display manpage when specified with a path [cegger 20091007]
 	hdaudioctl(8): Add tool to manipulate hdaudio(4) devices
 		[sborrill 20091011]
+	rump: Create proper prototypes for varargs system calls.
+		[pooka 20091013]
+	rump: Introduce public interface specifications and autogenerate
+		entrypoint wrappers.  [pooka 20091014]
+	rump: Add a virtual CPU scheduler which maps the current thread
+		to an available virtual CPU on entry to the rump kernel.
+		[pooka 20091015]
 	dhcpcd(8): Import dhcpcd-5.1.2. [roy 20091016]
 	sysinst(8): Give the option to use tmpfs for /tmp in sysinst instead of
 		the older mfs on i386 and amd64. [ahoka 20091018]
@@ -442,4 +478,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jld 20091117]
 	bnx(4): Added support for Broadcom BCM5709 and BCM5716 chips.
 		[bouyer 20091118]
+	build.sh: Add "rumptest" for fast testing of rump compilation
+		and linking.  It is useful mostly for developers.
+		[pooka 20091118]
 	resolvconf(8): Import openreslv-3.3.3. [roy 20091121]
+	rump: Load rump virtual kernel symbol table at boot.  This enables
+		the use of the kernel linker in a rump kernel.
+		[pooka 20091126]
