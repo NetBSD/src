@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.88 2009/10/13 21:54:29 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.89 2009/11/26 16:34:24 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -622,7 +622,8 @@ function putent(type, compatwrap) {
 			printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
 	printf("%s %s)\n", argtype[argc], argname[argc]) > rumpcalls
-	printf("{\n\tregister_t retval = 0;\n\tint error = 0;\n") > rumpcalls
+	printf("{\n\tregister_t rval[2] = {0, 0};\n\tint error = 0;\n") \
+	    > rumpcalls
 
 	argarg = "NULL"
 	argsize = 0;
@@ -645,12 +646,12 @@ function putent(type, compatwrap) {
 		printf("\n") > rumpcalls
 	}
 	printf("\terror = rump_sysproxy(%s%s, rump_sysproxy_arg,\n\t" \
-	    "    (uint8_t *)%s, %s, &retval);\n", constprefix, funcalias, \
+	    "    (uint8_t *)%s, %s, rval);\n", constprefix, funcalias, \
 	    argarg, argsize) > rumpcalls
-	printf("\tif (error) {\n\t\tretval = -1;\n") > rumpcalls
+	printf("\tif (error) {\n\t\trval[0] = -1;\n") > rumpcalls
 	if (returntype != "void") {
 		printf("\t\trumpuser_seterrno(error);\n\t}\n") > rumpcalls
-		printf("\treturn retval;\n") > rumpcalls
+		printf("\treturn rval[0];\n") > rumpcalls
 	} else {
 		printf("\t}\n") > rumpcalls
 	}
