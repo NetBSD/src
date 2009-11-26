@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.229 2009/07/21 23:59:00 pooka Exp $
+	$NetBSD: syscalls.master,v 1.230 2009/11/26 09:00:45 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -488,7 +488,7 @@
 			    siginfo_t *info, \
 			    struct timespec50 *timeout); }
 245	UNIMPL		sys_sigqueue
-246	STD 	 	{ int|sys||modctl(int cmd, void *arg); }
+246	STD RUMP 	{ int|sys||modctl(int cmd, void *arg); }
 247	STD MODULAR 	{ int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
 248	STD MODULAR 	{ int|sys||_ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, intptr_t *idp); }
