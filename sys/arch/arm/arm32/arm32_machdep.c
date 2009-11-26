@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.68 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.69 2009/11/26 00:19:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.68 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.69 2009/11/26 00:19:12 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -83,8 +83,6 @@ void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
-
-struct user *proc0paddr;
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.42 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.43 2009/11/26 00:19:15 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.42 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.43 2009/11/26 00:19:15 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -197,8 +197,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 #ifdef CPU_IXP12X0
 #define CPU_IXP12X0_CACHE_CLEAN_SIZE (0x4000 * 2)
@@ -623,8 +621,7 @@ initarm(void *arg)
 	 * Moved here from cpu_startup() as data_abort_handler() references
 	 * this during init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 	/*
 	 * We must now clean the cache again....

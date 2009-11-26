@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.10 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.11 2009/11/26 00:19:20 matt Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.10 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.11 2009/11/26 00:19:20 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.10 2009/11/21 17:40:28 rmind Ex
 /*
  * Global variables used here and there
  */
-extern struct user *proc0paddr;
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 char msgbuf[MSGBUFSIZE];
@@ -141,12 +140,10 @@ ibm4xx_init(void (*handler)(void))
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
+	curpcb = lwp_getpcb(&lwp0);
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = lwp_getpcb(&lwp0);
-	memset(curpcb, 0, sizeof(*curpcb));
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

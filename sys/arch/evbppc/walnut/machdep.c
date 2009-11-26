@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2009/11/07 07:27:43 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:17 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2009/11/07 07:27:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:17 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -130,8 +130,6 @@ struct vm_map *phys_map = NULL;
 char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-extern struct user *proc0paddr;
 
 char bootpath[256];
 paddr_t msgbuf_paddr;
@@ -206,10 +204,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	 * Initialize lwp0 and current pcb and pmap pointers.
 	 */
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = &lwp0.laddr->u_pcb;
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

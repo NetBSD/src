@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.76 2009/01/22 18:49:03 christos Exp $	*/
+/*	$NetBSD: locore.c,v 1.77 2009/11/26 00:19:23 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.76 2009/01/22 18:49:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.77 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -62,7 +62,6 @@ void	main(void);
 
 extern	paddr_t avail_end;
 paddr_t esym;
-struct user *proc0paddr;
 
 /*
  * The strict CPU-dependent information is set up here, in
@@ -321,13 +320,13 @@ _start(struct rpb *prpb)
 	 */
 #if defined(COMPAT_14)
 	if (prpb == 0) {
-		memset((char *)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
-		prpb = (struct rpb *)(proc0paddr + REDZONEADDR);
+		memset((char *)lwp0.l_addr + REDZONEADDR, 0, sizeof(struct rpb));
+		prpb = (struct rpb *)((char *)lwp0.l_addr + REDZONEADDR);
 		prpb->pfncnt = avail_end >> VAX_PGSHIFT;
 		prpb->rpb_base = (void *)-1;	/* RPB is fake */
 	} else
 #endif
-	memcpy((char *)proc0paddr + REDZONEADDR, prpb, sizeof(struct rpb));
+	memcpy((char *)lwp0.l_addr + REDZONEADDR, prpb, sizeof(struct rpb));
 	if (prpb->pfncnt)
 		avail_end = prpb->pfncnt << VAX_PGSHIFT;
 	else
@@ -337,15 +336,13 @@ _start(struct rpb *prpb)
 
 	avail_end &= ~PGOFSET; /* be sure */
 
-	lwp0.l_addr = (void *)proc0paddr; /* XXX */
-
 	pmap_bootstrap();
 
 	/* Now running virtual. set red zone for proc0 */
 	pt = kvtopte((u_int)lwp0.l_addr + REDZONEADDR);
 	pt->pg_v = 0;
 
-	((struct pcb *)proc0paddr)->framep = (void *)scratch;
+	lwp0.l_addr->u_pcb.framep = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack

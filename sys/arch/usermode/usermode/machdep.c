@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2009/11/26 00:19:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2009/11/26 00:19:23 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2009/10/21 16:07:00 snj Exp $");
 char machine[] = "usermode";
 char machine_arch[] = "usermode";
 
-paddr_t		proc0paddr = 0;
 int		usermode_x = IPL_NONE;
 /* XXX */
 int		physmem = MEMSIZE * 1024 / PAGE_SIZE;

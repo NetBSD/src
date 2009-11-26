@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.66 2009/08/18 09:22:47 he Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.67 2009/11/26 00:19:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.66 2009/08/18 09:22:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.67 2009/11/26 00:19:13 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -158,8 +158,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 /* Prototypes */
 
@@ -741,8 +739,7 @@ initarm(void *arm_bootargs)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 	/*
 	 * XXX this should only be done in main() but it useful to
 	 * have output earlier ...

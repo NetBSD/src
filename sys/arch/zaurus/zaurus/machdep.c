@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2009/11/26 00:19:23 matt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,8 +242,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-extern struct user *proc0paddr;
 
 const char *console = "glass";
 int glass_console = 0;
@@ -994,8 +992,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

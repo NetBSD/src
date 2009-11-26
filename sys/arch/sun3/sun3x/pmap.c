@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2009/11/21 04:16:53 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2009/11/26 00:19:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2009/11/21 04:16:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1120,7 +1120,7 @@ pmap_init_a_tables(void)
 		a_tbl->at_dtbl = &mmuAbase[i * MMU_A_TBL_SIZE];
 
 		/*
-		 * Initialize the MMU A table with the table in the `proc0',
+		 * Initialize the MMU A table with the table in the `lwp0',
 		 * or kernel, mapping.  This ensures that every process has
 		 * the kernel mapped in the top part of its address space.
 		 */

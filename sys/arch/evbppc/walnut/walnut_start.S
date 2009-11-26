@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.16 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.17 2009/11/26 00:19:17 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -98,12 +98,6 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
-
-/*
- * Globals
- */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.49 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.50 2009/11/26 00:19:20 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.49 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.50 2009/11/26 00:19:20 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -94,8 +94,6 @@ struct vm_map *phys_map = NULL;
 /*
  * Global variables used here and there
  */
-extern struct user *proc0paddr;
-
 static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
@@ -152,12 +150,10 @@ oea_init(void (*handler)(void))
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
+	curpcb = lwp_getpcb(&lwp0);
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = lwp_getpcb(&lwp0);
-	memset(curpcb, 0, sizeof(*curpcb));
 #ifdef ALTIVEC
 	/*
 	 * Initialize the vectors with NaNs

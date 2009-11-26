@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.78 2009/08/11 17:04:18 matt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.79 2009/11/26 00:19:18 matt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.78 2009/08/11 17:04:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.79 2009/11/26 00:19:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.78 2009/08/11 17:04:18 matt Exp
 #define PA2VA(v, t)	(t)((u_int)(v) - firstpa)
 
 extern char *etext;
-extern char *extiobase, *proc0paddr;
+extern char *extiobase;
 
 extern paddr_t avail_start;
 extern paddr_t avail_end;
@@ -110,7 +110,7 @@ void	bootstrap_mac68k(int);
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, p0upa;
+	paddr_t kstpa, kptpa, kptmpa, l0upa;
 	u_int nptpages, kstsize;
 	paddr_t avail_next;
 	int avail_remaining;
@@ -138,7 +138,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	p0upa		proc 0 u-area		UPAGES pages
+	 *	l0upa		lwp 0 u-area		UPAGES pages
 	 *
 	 */
 	if (mmutype == MMU_68040)
@@ -149,7 +149,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
-	p0upa = nextpa;
+	l0upa = nextpa;
 	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = Sysptsize +
@@ -405,15 +405,15 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = PA2VA(p0upa, u_int *);
-	epte = (u_int *)(PA2VA(p0upa, u_int) + USPACE);
+	pte = PA2VA(l0upa, u_int *);
+	epte = (u_int *)(PA2VA(l0upa, u_int) + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
+
 	/*
-	 * Remember the u-area address so it can be loaded in the
-	 * proc struct p_addr field later.
+	 * Store the u-area address
 	 */
-	proc0paddr = PA2VA(p0upa, char *);
+	lwp0.l_addr = PA2VA(l0upa, struct user *);
 
 	/*
 	 * VM data structures are now initialized, set up data for

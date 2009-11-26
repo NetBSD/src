@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.12 2009/08/11 17:04:15 matt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.13 2009/11/26 00:19:14 matt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.12 2009/08/11 17:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.13 2009/11/26 00:19:14 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -259,8 +259,6 @@ unsigned long gemini_ipmq_vbase = GEMINI_IPMQ_VBASE;
 #endif	/* DEBUG */
 #endif	/* NGEMINIIPM > 0 */
 
-
-extern struct user *proc0paddr;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -687,8 +685,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

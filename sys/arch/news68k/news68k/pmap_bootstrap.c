@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.22 2009/01/17 07:17:36 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.23 2009/11/26 00:19:19 matt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.22 2009/01/17 07:17:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.23 2009/11/26 00:19:19 matt Exp $");
 
 #include <sys/param.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.22 2009/01/17 07:17:36 tsutsui 
 #define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
-extern char *extiobase, *proc0paddr;
+extern char *extiobase;
 extern char *cache_ctl, *cache_clr;
 
 extern int maxmem, physmem;
@@ -89,7 +89,7 @@ void *msgbufaddr;
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, p0upa;
+	paddr_t kstpa, kptpa, kptmpa, l0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -110,7 +110,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	p0upa		proc 0 u-area		UPAGES pages
+	 *	l0upa		lwp 0 u-area		UPAGES pages
 	 *
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
@@ -136,7 +136,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
-	p0upa = nextpa;
+	l0upa = nextpa;
 	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
@@ -367,15 +367,15 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = (u_int *)p0upa;
-	epte = (u_int *)(p0upa + USPACE);
+	pte = (u_int *)l0upa;
+	epte = (u_int *)(l0upa + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
 	/*
 	 * Remember the u-area address so it can be loaded in the
 	 * proc struct p_addr field later.
 	 */
-	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
+	RELOC(lwp0.l_addr, struct user *) = (struct user *)(l0upa - firstpa);
 
 	/*
 	 * VM data structures are now initialized, set up data for

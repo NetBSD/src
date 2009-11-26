@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2009/11/26 00:19:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/11/26 00:19:16 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -114,8 +114,6 @@ void isa_intr_init(void);
 /*
  * Global variables used here and there
  */
-extern struct user *proc0paddr;
-
 #define	PMONMEMREGIONS	32
 struct mem_region physmemr[PMONMEMREGIONS], availmemr[PMONMEMREGIONS];
 

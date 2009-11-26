@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.71 2009/08/11 17:04:18 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.72 2009/11/26 00:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.71 2009/08/11 17:04:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.72 2009/11/26 00:19:19 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -178,8 +178,6 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 #else
 #define KERNEL_VM_SIZE		0x0C000000
 #endif
-
-extern struct user *proc0paddr;	/* in arm32_machdep.c */
 
 /* Prototypes */
 
@@ -704,8 +702,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

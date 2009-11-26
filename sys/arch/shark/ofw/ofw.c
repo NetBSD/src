@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.50 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.51 2009/11/26 00:19:22 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.50 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.51 2009/11/26 00:19:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -788,13 +788,9 @@ ofw_configmem(void)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	{
-		extern struct user *proc0paddr;
-		proc0paddr = (struct user *)kernelstack.pv_va;
-		lwp0.l_addr = proc0paddr;
-	}
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
-	/* Aaaaaaaah, running in the proc0 address space! */
+	/* Aaaaaaaah, running in the lwp0 address space! */
 	/* I feel good... */
 
 	/* Set-up the various globals which describe physical memory for pmap. */

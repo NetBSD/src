@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.12 2009/08/11 17:04:17 matt Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.13 2009/11/26 00:19:16 matt Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.12 2009/08/11 17:04:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.13 2009/11/26 00:19:16 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -227,8 +227,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 /* Prototypes */
 
@@ -730,8 +728,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

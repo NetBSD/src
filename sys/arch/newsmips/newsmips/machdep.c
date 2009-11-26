@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:19 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -205,7 +205,6 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_2,
 };
 
-extern struct user *proc0paddr;
 extern u_long bootdev;
 extern char edata[], end[];
 
@@ -379,9 +378,9 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 * Allocate space for lwp0's USPACE.
 	 */
 	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

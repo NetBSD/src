@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 2009/01/11 06:02:18 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 2009/11/26 00:19:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -335,11 +335,10 @@ Lenab1:
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
 /* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1   | get lwp0 pcb addr
+	lea	_C_LABEL(lwp0),%a2	| get lwp0 pcb addr and initialize
+	movl	%a2,_C_LABEL(curlwp)	|   curlwp so that
+	movl	%a2@(L_ADDR),%a1	|   we don't deref NULL in trap()
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
@@ -1139,8 +1138,6 @@ GLOBAL(protorp)
 GLOBAL(prototc)
 	.long	0		| prototype translation control
 
-GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:

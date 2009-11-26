@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 2009/01/11 06:02:19 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 2009/11/26 00:19:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -460,11 +460,10 @@ Lpushpc:
 
 
 /* set kernel stack, user %SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get lwp0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+	lea	_C_LABEL(lwp0),%a2	| get lwp0.l_addr
+	movl	%a2@(L_ADDR),%a1	|   set kernel stack to end of area 
+	lea	%a1@(USPACE-4),%sp	|   and curlwp so that we don't
+	movl	%a2,_C_LABEL(curlwp)	|   deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
@@ -1383,9 +1382,6 @@ GLOBAL(protorp)
 
 GLOBAL(prototc)
 	.long	0		| prototype translation control
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
 
 GLOBAL(intiobase)
 	.long	INTIOBASE	| KVA of base of internal IO space

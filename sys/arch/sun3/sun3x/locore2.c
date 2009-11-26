@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.35 2009/11/21 04:16:53 rmind Exp $	*/
+/*	$NetBSD: locore2.c,v 1.36 2009/11/26 00:19:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.35 2009/11/21 04:16:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.36 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,7 +76,6 @@ int mmutype = MMU_68030;
  * Now our own stuff.
  */
 
-struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
@@ -168,16 +167,15 @@ _vm_init(void)
 	 * fault handler works in case we hit an early bug.
 	 * (The fault handler may reference lwp0 stuff.)
 	 */
-	proc0paddr = (struct user *) nextva;
+	lwp0.l_addr = (struct user *) nextva;
 	nextva += USPACE;
-	memset((void *)proc0paddr, 0, USPACE);
-	lwp0.l_addr = proc0paddr;
+	memset(lwp0.l_addr, 0, USPACE);
 
 	/*
 	 * Now that lwp0 exists, make it the "current" one.
 	 */
 	curlwp = &lwp0;
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 
 	/* This does most of the real work. */
 	pmap_bootstrap(nextva);

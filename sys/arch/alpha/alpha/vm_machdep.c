@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.102 2009/11/21 05:35:41 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.103 2009/11/26 00:19:11 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2009/11/21 05:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2009/11/26 00:19:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,16 +63,16 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with thread l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
+ * lwp_trampoline() and call child_return() with l2 as an
+ * argument. This causes the newly-created child thread to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the thread being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *

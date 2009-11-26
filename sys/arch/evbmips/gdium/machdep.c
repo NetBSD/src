@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2009/08/17 18:57:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2009/11/26 00:19:16 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2009/08/17 18:57:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2009/11/26 00:19:16 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -185,8 +185,6 @@ void	mach_init(int, char **, char **, void *);
  * autoconfiguration or after a panic.  Used as an argument to splx().
  */
 int	safepri = MIPS1_PSL_LOWIPL;
-
-extern struct user *proc0paddr;
 
 /*
  * For some reason, PMON doesn't assign a real address to the Ralink's BAR.
@@ -392,9 +390,9 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

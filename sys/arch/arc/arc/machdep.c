@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 2009/11/26 00:19:12 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2009/11/26 00:19:12 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -218,7 +218,6 @@ int	safepri = MIPS3_PSL_LOWIPL;
 const uint32_t *ipl_sr_bits;
 
 extern char kernel_text[], edata[], end[];
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -490,12 +489,12 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate space for lwp0's USPACE.
 	 */
 	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 

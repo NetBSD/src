@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: locore.S,v 1.42 2009/11/26 00:19:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,8 +64,6 @@
 	.data
 GLOBAL(esym)
 	.long	0			/* end of symbol table */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 GLOBAL(oeacpufeat)
 	.long	0			/* cpu features */
 

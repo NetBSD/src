@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.7 2009/10/23 06:53:13 snj Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.8 2009/11/26 00:19:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.7 2009/10/23 06:53:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.8 2009/11/26 00:19:12 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -137,9 +137,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
-
 
 /* prototypes: */
 void		consinit(void);
@@ -461,8 +458,7 @@ at91bus_setup(BootConfig *mem)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

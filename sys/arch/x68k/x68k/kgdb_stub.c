@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.16 2007/10/17 19:58:04 garbled Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.17 2009/11/26 00:19:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.16 2007/10/17 19:58:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.17 2009/11/26 00:19:23 matt Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.16 2007/10/17 19:58:04 garbled Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.17 2009/11/26 00:19:23 matt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -521,12 +521,12 @@ kgdb_trap(int type, struct frame *frame)
 int
 kgdb_acc(void *addr, int len, int rw)
 {
-	extern char proc0paddr[], kstack[];	/* XXX */
+	extern char kstack[];	/* XXX */
 	extern char *kernel_map;		/* XXX! */
 
 	if (kernel_map != NULL)
 		return (kernacc(addr, len, rw));
-	if (addr < proc0paddr + USPACE  ||
+	if (addr < (char *)lwp0.l_addr + USPACE  ||
 	    kstack <= addr && addr < kstack + USPACE)
 		return (1);
 	return (0);

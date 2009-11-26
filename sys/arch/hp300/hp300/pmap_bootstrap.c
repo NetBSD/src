@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.37 2009/01/17 07:17:35 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.38 2009/11/26 00:19:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.37 2009/01/17 07:17:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2009/11/26 00:19:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.37 2009/01/17 07:17:35 tsutsui 
 #define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
-extern char *proc0paddr;
 extern vaddr_t CLKbase, MMUbase;
 extern paddr_t bootinfo_pa;
 extern vaddr_t bootinfo_va;
@@ -410,7 +409,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Remember the u-area address so it can be loaded in the
 	 * proc struct p_addr field later.
 	 */
-	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
+	RELOC(lwp.l_addr, struct user *) = (struct user *)(p0upa - firstpa);
 
 	/*
 	 * VM data structures are now initialized, set up data for

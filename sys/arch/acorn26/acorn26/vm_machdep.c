@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.24 2009/11/26 00:19:11 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2009/11/26 00:19:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $"
 #include <machine/machdep.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with thread l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the thread being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -97,8 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23 2009/11/21 20:32:17 rmind Exp $"
 /*
  * Note:
  * 
- * The pcb structure has to be* at the start of the area -- we start the
- * kernel stack from the end.
+ * l->l_addr points to a page containing the user structure
+ * (see <sys/user.h>) and the kernel stack.  The pcb structure has to be
+ * at the start of the area -- we start the kernel stack from the end.
  */
 
 void

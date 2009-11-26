@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.168 2009/11/26 00:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ _C_LABEL(kernel_text):
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 
-	lw	sp, _C_LABEL(proc0paddr)	# switch to proc0 stack
+	lw	sp, L_ADDR(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
 	addu	sp, sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)

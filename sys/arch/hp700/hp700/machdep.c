@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2009/11/26 00:19:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2009/11/26 00:19:17 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -242,7 +242,6 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
 /*
  * Things for MI glue to stick on.
  */
-struct user *proc0paddr;
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 

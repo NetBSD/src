@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2009/11/26 00:19:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2009/11/26 00:19:16 matt Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -74,8 +74,6 @@ char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 static const unsigned int cpuspeed = 66000000;
-
-extern struct user *proc0paddr;
 
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
@@ -211,10 +209,9 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 * Initialize lwp0 and current pcb and pmap pointers.
 	 */
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

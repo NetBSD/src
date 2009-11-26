@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2009/11/21 15:36:34 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2009/11/26 00:19:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -160,8 +160,6 @@ struct bootinfo bootinfo;
 extern vaddr_t kernel_text, end;
 
 struct fpswa_iface *fpswa_iface;
-
-struct	user *proc0paddr; /* XXX: See: kern/kern_proc.c:proc0_init() */
 
 #define Mhz     1000000L
 #define Ghz     (1000L*Mhz)
@@ -440,6 +438,7 @@ void
 ia64_init(void)
 {
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
+	struct pcb *pcb0;
 	struct efi_md *md;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
@@ -661,8 +660,8 @@ ia64_init(void)
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	lwp0.l_addr = proc0paddr =
-	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	lwp0.l_addr = (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	pcb0 = &lwp0.l_addr->u_pcb;
 
 
 	/*
@@ -688,19 +687,18 @@ ia64_init(void)
 	 */
 
 
-	lwp0.l_md.md_tf = (struct trapframe *)((uint64_t)proc0paddr +
+	lwp0.l_md.md_tf = (struct trapframe *)((vaddr_t)lwp0.l_addr +
 					USPACE - sizeof(struct trapframe));
 
-	proc0paddr->u_pcb.pcb_special.sp =
-	    (uint64_t)lwp0.l_md.md_tf - 16;	/* 16 bytes is the
+	pcb0->pcb_special.sp =
+	    (vaddr_t)lwp0.l_md.md_tf - 16;	/* 16 bytes is the
 						 * scratch area defined
 						 * by the ia64 ABI
 						 */
 
-	proc0paddr->u_pcb.pcb_special.bspstore =
-	    (uint64_t) proc0paddr + sizeof(struct user);
+	pcb0->pcb_special.bspstore = (vaddr_t) (lwp0.l_addr + 1);
 
-	mutex_init(&proc0paddr->u_pcb.pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
+	mutex_init(&pcb0.pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
 
 
 	/*
@@ -727,7 +725,7 @@ ia64_init(void)
 	 * MULTIPROCESSOR configuration, each CPU will later get
 	 * its own idle PCB when autoconfiguration runs.
 	 */
-	ci->ci_idle_pcb = &proc0paddr->u_pcb;
+	ci->ci_idle_pcb = pcb0;
 
 	/* Indicate that proc0 has a CPU. */
 	lwp0.l_cpu = ci;

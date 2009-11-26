@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 2009/11/21 20:32:25 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52 2009/11/26 00:19:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2009/11/21 20:32:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2009/11/26 00:19:12 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -207,7 +207,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * cpu_exit is called as the last action during exit.
  *
  * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
+ * argument.  switch_exit() first switches to lwp0's context, and finally
  * jumps into switch() to wait for another process to wake up.
  */
 

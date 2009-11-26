@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.157 2009/11/04 15:35:09 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.158 2009/11/26 00:19:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.157 2009/11/04 15:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.158 2009/11/26 00:19:11 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -206,8 +206,6 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 kauth_cred_t cred0;
-
-extern struct user *proc0paddr;
 
 int nofile = NOFILE;
 int maxuprc = MAXUPRC;
@@ -367,6 +365,7 @@ proc0_init(void)
 	pg = &pgrp0;
 	l = &lwp0;
 
+	KASSERT(l->l_addr != NULL);
 	KASSERT(l->l_lid == p->p_nlwpid);
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
@@ -438,8 +437,6 @@ proc0_init(void)
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS));
-
-	l->l_addr = proc0paddr;				/* XXX */
 
 	/* Initialize signal state for proc0. XXX IPL_SCHED */
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.242 2009/11/07 07:27:47 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.243 2009/11/26 00:19:22 matt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2009/11/07 07:27:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.243 2009/11/26 00:19:22 matt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1044,7 +1044,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/* Let's keep 1 page of redzone after the kernel */
 	vmmap += PAGE_SIZE;
 	{
-		extern struct pcb *proc0paddr;
 		extern void main(void);
 		vaddr_t u0va;
 		paddr_t pa;
@@ -1052,7 +1051,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		u0va = vmmap;
 
 		BDPRINTF(PDB_BOOT1,
-			("Inserting proc0 USPACE into pmap_kernel() at %p\n",
+			("Inserting lwp0 USPACE into pmap_kernel() at %p\n",
 				vmmap));
 
 		while (vmmap < u0va + 2*USPACE) {
@@ -1129,7 +1128,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
 		cpus->ci_cpcb = (struct pcb *)u0va;
-		proc0paddr = cpus->ci_cpcb;
 		cpus->ci_idepth = -1;
 		memset(cpus->ci_intrpending, -1, sizeof(cpus->ci_intrpending));
 
