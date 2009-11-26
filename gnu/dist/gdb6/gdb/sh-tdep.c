@@ -2486,10 +2486,12 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       break;
 
 #ifdef BFD64
+#if 0
     case bfd_mach_sh5:
       sh_show_regs = sh64_show_regs;
       /* SH5 is handled entirely in sh64-tdep.c */
       return sh64_gdbarch_init (info, arches);
+#endif
 #endif
     }
 
