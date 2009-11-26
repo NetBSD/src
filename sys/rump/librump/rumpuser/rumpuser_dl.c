@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.8 2009/11/26 10:57:26 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.9 2009/11/26 15:44:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.8 2009/11/26 10:57:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.9 2009/11/26 15:44:26 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -363,8 +363,33 @@ rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit,
 		if (strstr(map->l_name, "librump") != NULL)
 			error = getsymbols(map);
 	}
-	if (error == 0)
-		symload(symtab, symtabsize, strtab, strtabsize);
+
+	if (error == 0) {
+		void *trimmedsym, *trimmedstr;
+
+		/*
+		 * Allocate optimum-sized memory for storing tables
+		 * and feed to kernel.  If memory allocation fails,
+		 * just give the ones with extra context (although
+		 * I'm pretty sure we'll die moments later due to
+		 * memory running out).
+		 */
+		if ((trimmedsym = malloc(symtaboff)) != NULL) {
+			memcpy(trimmedsym, symtab, symtaboff);
+		} else {
+			trimmedsym = symtab;
+			symtab = NULL;
+		}
+		if ((trimmedstr = malloc(strtaboff)) != NULL) {
+			memcpy(trimmedstr, strtab, strtaboff);
+		} else {
+			trimmedstr = strtab;
+			strtab = NULL;
+		}
+		symload(trimmedsym, symtaboff, trimmedstr, strtaboff);
+	}
+	free(symtab);
+	free(strtab);
 
 	do {
 		couldload = 0;
