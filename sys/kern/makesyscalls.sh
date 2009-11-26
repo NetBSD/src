@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.90 2009/11/26 17:19:54 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.91 2009/11/26 17:23:48 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -740,7 +740,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	exit 1
 }
 END {
-	# output pipe() with it's special rval[2] handling
+	# output pipe() syscall with its special rval[2] handling
 	if (rumphaspipe) {
 		printf("int rump_sys_pipe(int *);\n") > rumpcallshdr
 		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
