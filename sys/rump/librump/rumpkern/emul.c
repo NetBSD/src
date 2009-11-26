@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.109 2009/11/04 19:21:51 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.110 2009/11/26 20:58:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.109 2009/11/04 19:21:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.110 2009/11/26 20:58:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -67,7 +67,6 @@ time_t time_second = 1;
 kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
-struct device *root_device;
 dev_t rootdev;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
@@ -124,10 +123,10 @@ devclass_t
 device_class(device_t dev)
 {
 
-	if (dev != root_device)
+	if (dev != RUMP_VFSROOTDEV)
 		panic("%s: dev != root_device not supported", __func__);
 
-	return DV_DISK;
+	return DV_VIRTUAL;
 }
 
 void
