@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.112 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.113 2009/11/26 18:23:48 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.112 2009/11/26 00:19:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.113 2009/11/26 18:23:48 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	/*
 	 * save KVA of lwp0 u-area and allocate it.
 	 */
-	RELOC(lwp0.l_addr, struct user *) = vstart;
+	RELOC(lwp0.l_addr, struct user *) = (struct user *)vstart;
 	pstart += USPACE;
 	vstart += USPACE;
 	avail -= USPACE;
