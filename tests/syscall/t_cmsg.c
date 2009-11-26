@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.11 2009/11/06 15:28:21 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.12 2009/11/26 17:33:23 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -7,8 +7,6 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-
-#include <fs/tmpfs/tmpfs_args.h>
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -84,25 +82,14 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	char buf[128];
 	struct cmsghdr *cmp;
 	struct msghdr msg;
-	struct tmpfs_args args;
 	struct sockaddr_un sun;
 	struct lwp *l1, *l2;
 	struct iovec iov;
 	socklen_t sl;
 	int s1, s2, sgot;
-	int rfd, fd, storage;
-
-	memset(&args, 0, sizeof(args));
-	args.ta_version = TMPFS_ARGS_VERSION;
-	args.ta_root_mode = 0777;
+	int rfd, fd[2], storage;
 
 	rump_init();
-	/*
-	 * mount tmpfs as root -- rump root file system does not support
-	 * unix domain sockets.
-	 */
-	if (rump_sys_mount(MOUNT_TMPFS, "/", 0, &args, sizeof(args)) == -1)
-		atf_tc_fail_errno("mount tmpfs");
 
 	/* create first (non-proc0) process to be used in test */
 	l1 = rump_pub_newproc_switch();
@@ -133,16 +120,13 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	if (rump_sys_connect(s2, (struct sockaddr *)&sun, SUN_LEN(&sun)) == -1)
 		atf_tc_fail_errno("socket 2 connect");
 
-	/* open a file and write stuff to it */
-	fd = rump_sys_open("/foobie", O_RDWR | O_CREAT, 0777);
-	if (fd == -1)
-		atf_tc_fail_errno("can't open file");
+	/* open a pipe and write stuff to it */
+	if (rump_sys_pipe(fd) == -1)
+		atf_tc_fail_errno("can't open pipe");
 #define MAGICSTRING "duam xnaht"
-	if (rump_sys_write(fd, MAGICSTRING, sizeof(MAGICSTRING)) !=
+	if (rump_sys_write(fd[1], MAGICSTRING, sizeof(MAGICSTRING)) !=
 	    sizeof(MAGICSTRING))
-		atf_tc_fail_errno("file write"); /* XXX: errno */
-	/* reset offset */
-	rump_sys_lseek(fd, 0, SEEK_SET);
+		atf_tc_fail_errno("pipe write"); /* XXX: errno */
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
@@ -159,7 +143,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	msg.msg_namelen = 0;
 	msg.msg_control = cmp;
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
-	*(int *)CMSG_DATA(cmp) = fd;
+	*(int *)CMSG_DATA(cmp) = fd[0];
 
 	/* pass the fd */
 	if (rump_sys_sendmsg(s2, &msg, 0) == -1)
