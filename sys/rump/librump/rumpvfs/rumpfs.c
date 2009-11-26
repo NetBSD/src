@@ -1,9 +1,7 @@
-/*	$NetBSD: rumpfs.c,v 1.29 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.30 2009/11/26 20:58:51 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.29 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.30 2009/11/26 20:58:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.29 2009/10/14 18:18:53 pooka Exp $");
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/lock.h>
@@ -139,6 +138,10 @@ struct rumpfs_node {
 #define rn_writefd	rn_u.reg.writefd
 #define rn_offset	rn_u.reg.offset
 #define rn_dir		rn_u.dir
+
+struct rumpfs_mount {
+	struct vnode *rfsmp_rvp;
+};
 
 static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t);
 
@@ -310,7 +313,6 @@ rump_etfs_remove(const char *key)
  * rumpfs
  */
 
-static struct mount rump_mnt;
 static int lastino = 1;
 static kmutex_t reclock;
 
@@ -365,7 +367,7 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size)
 }
 
 static int
-makevnode(struct rumpfs_node *rn, struct vnode **vpp)
+makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 {
 	struct vnode *vp;
 	int (**vpops)(void *);
@@ -384,7 +386,7 @@ makevnode(struct rumpfs_node *rn, struct vnode **vpp)
 	    && va->va_type != VSOCK)
 		return EOPNOTSUPP;
 
-	rv = getnewvnode(VT_RUMP, &rump_mnt, vpops, &vp);
+	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
 	if (rv)
 		return rv;
 
@@ -476,7 +478,7 @@ rump_vop_lookup(void *v)
 			goto getvnode;
 		*vpp = vp;
 	} else {
-		rv = makevnode(rn, vpp);
+		rv = makevnode(dvp->v_mount, rn, vpp);
 		rn->rn_vp = *vpp;
 		mutex_exit(&reclock);
 		if (rv)
@@ -518,7 +520,7 @@ rump_vop_mkdir(void *v)
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
-	rv = makevnode(rn, vpp);
+	rv = makevnode(dvp->v_mount, rn, vpp);
 	mutex_exit(&reclock);
 	if (rv)
 		goto out;
@@ -554,7 +556,7 @@ rump_vop_mknod(void *v)
 
 	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
 	mutex_enter(&reclock);
-	rv = makevnode(rn, vpp);
+	rv = makevnode(dvp->v_mount, rn, vpp);
 	mutex_exit(&reclock);
 	if (rv)
 		goto out;
@@ -595,7 +597,7 @@ rump_vop_create(void *v)
 	}
 	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
-	rv = makevnode(rn, vpp);
+	rv = makevnode(dvp->v_mount, rn, vpp);
 	mutex_exit(&reclock);
 	if (rv)
 		goto out;
@@ -770,30 +772,133 @@ rump_vop_spec(void *v)
 	return VOCALL(opvec, ap->a_desc->vdesc_offset, v);
 }
 
-void
-rumpfs_init(void)
+/*
+ * Begin vfs-level stuff
+ */
+
+VFS_PROTOS(rumpfs);
+struct vfsops rumpfs_vfsops = {
+	.vfs_name =		MOUNT_RUMPFS,
+	.vfs_min_mount_data = 	0,
+	.vfs_mount =		rumpfs_mount,
+	.vfs_start =		(void *)nullop,
+	.vfs_unmount = 		rumpfs_unmount,
+	.vfs_root =		rumpfs_root,
+	.vfs_quotactl =		(void *)eopnotsupp,
+	.vfs_sync =		(void *)nullop,
+	.vfs_vget =		rumpfs_vget,
+	.vfs_fhtovp =		(void *)eopnotsupp,
+	.vfs_vptofh =		(void *)eopnotsupp,
+	.vfs_init =		rumpfs_init,
+	.vfs_reinit =		NULL,
+	.vfs_done =		rumpfs_done,
+	.vfs_mountroot =	rumpfs_mountroot,
+	.vfs_snapshot =		(void *)eopnotsupp,
+	.vfs_extattrctl =	(void *)eopnotsupp,
+	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_opv_descs =	rump_opv_descs,
+	/* vfs_refcount */
+	/* vfs_list */
+};
+
+int
+rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	struct rumpfs_node *rn;
-	int rv;
+
+	return EOPNOTSUPP;
+}
+
+int
+rumpfs_unmount(struct mount *mp, int flags)
+{
+
+	return EOPNOTSUPP; /* ;) */
+}
+
+int
+rumpfs_root(struct mount *mp, struct vnode **vpp)
+{
+	struct rumpfs_mount *rfsmp = mp->mnt_data;
+
+	vget(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
+	*vpp = rfsmp->rfsmp_rvp;
+	return 0;
+}
+
+int
+rumpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+{
+
+	return EOPNOTSUPP;
+}
+
+void
+rumpfs_init()
+{
 
 	CTASSERT(RUMP_ETFS_SIZE_ENDOFF == RUMPBLK_SIZENOTSET);
 
 	mutex_init(&reclock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&etfs_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
-	/* XXX: init properly instead of this crap */
-	rump_mnt.mnt_refcnt = 1;
-	rump_mnt.mnt_flag = MNT_ROOTFS;
-	rw_init(&rump_mnt.mnt_unmounting);
-	TAILQ_INIT(&rump_mnt.mnt_vnodelist);
+void
+rumpfs_done()
+{
 
-	vfs_opv_init(rump_opv_descs);
+	mutex_destroy(&reclock);
+	mutex_destroy(&etfs_lock);
+}
+
+int
+rumpfs_mountroot()
+{
+	struct mount *mp;
+	struct rumpfs_mount *rfsmp;
+	struct rumpfs_node *rn;
+	int error;
+
+	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
+		vrele(rootvp);
+		return error;
+	}
+
+	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
+
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
 	mutex_enter(&reclock);
-	rv = makevnode(rn, &rootvnode);
+	error = makevnode(mp, rn, &rfsmp->rfsmp_rvp);
 	mutex_exit(&reclock);
-	if (rv)
-		panic("could not create root vnode: %d", rv);
-	rootvnode->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(rootvnode, 0);
+	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
+	if (error)
+		panic("could not create root vnode: %d", error);
+	mp->mnt_data = rfsmp;
+	VOP_UNLOCK(rfsmp->rfsmp_rvp, 0);
+
+	mp->mnt_flag |= MNT_ROOTFS;
+	rumpfs_vfsops.vfs_refcount++;
+
+	mutex_enter(&mountlist_lock);
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mutex_exit(&mountlist_lock);
+
+	vfs_unbusy(mp, false, NULL);
+
+	return 0;
+}
+
+MODULE(MODULE_CLASS_VFS, rumpfs, NULL);
+
+static int
+rumpfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&rumpfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&rumpfs_vfsops);
+	default:
+		return ENOTTY;
+	}
 }
