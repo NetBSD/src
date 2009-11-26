@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.192 2009/10/05 04:20:13 elad Exp $	*/
+/*	$NetBSD: mount.h,v 1.193 2009/11/26 14:29:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -92,6 +92,7 @@
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
 #define MOUNT_NILFS	"nilfs"		/* NTT's NiLFS(2) logging file system */
+#define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
 
 #ifndef _STANDALONE
 
