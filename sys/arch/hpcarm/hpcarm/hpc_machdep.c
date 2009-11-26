@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.92 2009/08/11 17:04:18 matt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.93 2009/11/26 00:19:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.92 2009/08/11 17:04:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.93 2009/11/26 00:19:17 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -162,8 +162,6 @@ extern int pmap_debug_level;
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
 extern unsigned int sa1_cache_clean_addr;
@@ -661,8 +659,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);

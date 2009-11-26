@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.251 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: pmap.c,v 1.252 2009/11/26 00:19:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252 2009/11/26 00:19:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -946,7 +946,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 #endif
 
 	/*
-	 * Set up proc0's PCB such that the ptbr points to the right place
+	 * Set up lwp0's PCB such that the ptbr points to the right place
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
 	pcb = lwp_getpcb(&lwp0);

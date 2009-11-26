@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2009/11/26 00:19:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2009/11/26 00:19:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1015,9 +1015,6 @@ pmap_bootstrap(vaddr_t vstart)
 	/* TODO optimize/inline the kenter */
 	for (va = PAGE_SIZE; va < ptoa(physmem); va += PAGE_SIZE) {
 		vm_prot_t prot = UVM_PROT_RW;
-#ifdef DIAGNOSTIC
-		extern struct user *proc0paddr;
-#endif
 
 		if (va < resvmem)
 			prot = UVM_PROT_RX;
@@ -1026,7 +1023,7 @@ pmap_bootstrap(vaddr_t vstart)
 		else if (va >= ksro && va < kero)
 			prot = UVM_PROT_R;
 #ifdef DIAGNOSTIC
-		else if (va == (vaddr_t)proc0paddr + USPACE - PAGE_SIZE)
+		else if (va == (vaddr_t)lwp0.l_addr + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
 		pmap_kenter_pa(va, va, prot, 0);

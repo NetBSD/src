@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.77 2009/08/16 22:06:12 cegger Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.78 2009/11/26 00:19:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.77 2009/08/16 22:06:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.78 2009/11/26 00:19:11 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -180,8 +180,6 @@ extern int pmap_debug_level;
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 #ifdef CPU_SA110
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
@@ -843,8 +841,7 @@ initarm(void *cookie)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 	/* 
 	 * if there is support for a serial console ...we should now

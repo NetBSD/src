@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.3 2008/02/05 22:31:49 garbled Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.4 2009/11/26 00:19:16 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,8 +68,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 GLOBAL(oeacpufeat)
 	.long	0			/* cpu features */
 /*

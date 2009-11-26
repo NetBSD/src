@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2009/11/26 00:19:19 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -67,8 +67,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 GLOBAL(oeacpufeat)
 	.long	0			/* cpu features */
 

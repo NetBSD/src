@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2009/02/13 22:41:03 apb Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2009/11/26 00:19:20 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -102,9 +102,6 @@
 /*
  * Globals
  */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
-
 GLOBAL(intrnames)
 	.asciz	"clock", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"

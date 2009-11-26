@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2009/06/03 21:08:51 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.36 2009/11/26 00:19:17 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -148,7 +148,6 @@
 	.import	esym, data
 	.import virtual_avail, data
 	.import	lwp0, data
-	.import	proc0paddr, data
 	.import	kpsw, data
 	.import	panic, code
 	.import fpu_csw, data
@@ -262,8 +261,6 @@ L$start_zero_tf:
 	ldil	L%USPACE, %r4
 	add	%t3, %r4, %r4
 
-	ldil	L%proc0paddr, %t1
-	stw	%t3, R%proc0paddr(%t1)
 	ldil	L%lwp0, %t2
 	stw	%t3, R%lwp0+L_ADDR(%t2)
 	ldo	NBPG(%t3), %t1

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.297 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.298 2009/11/26 00:19:22 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2009/11/26 00:19:22 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1192,10 +1192,7 @@ ldcontrolb(void *addr)
 	}
 
 	s = splhigh();
-	if (curlwp == NULL)
-		xpcb = lwp_getpcb(&lwp0);
-	else
-		xpcb = lwp_getpcb(curlwp);
+	xpcb = lwp_getpcb(curlwp);
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);

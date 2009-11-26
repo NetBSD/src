@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.87 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -155,10 +155,10 @@ struct cputable_struct {
  *
  * As we find processors during the autoconfiguration sequence, all
  * processors have idle stacks and PCBs created for them, including
- * the primary (although the primary idles on proc0's PCB until its
+ * the primary (although the primary idles on lwp0's PCB until its
  * idle PCB is created).
  *
- * Right before calling uvm_scheduler(), main() calls, on proc0's
+ * Right before calling uvm_scheduler(), main() calls, on lwp0's
  * context, cpu_boot_secondary_processors().  This is our key to
  * actually spin up the additional processor's we've found.  We
  * run through our cpu_info[] array looking for secondary processors

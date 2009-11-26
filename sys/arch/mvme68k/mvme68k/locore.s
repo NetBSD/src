@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 2009/01/11 06:02:19 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 2009/11/26 00:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -668,11 +668,10 @@ Lenab1:
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
 /* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get lwp0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.p_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+	lea	_C_LABEL(lwp0),%a2	| get lwp0.l_addr
+	movl	%a2@(L_ADDR),%a1	|   set kernel stack to end of area 
+	lea	%a1@(USPACE-4),%sp	|   and curlwp so that we don't
+	movl	%a2,_C_LABEL(curlwp)	|   deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
@@ -1550,9 +1549,6 @@ GLOBAL(bootctrllun)
 	.long	0
 GLOBAL(bootaddr)
 	.long	0
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of proc0 u-area
 
 GLOBAL(intiobase)
 	.long	0		| KVA of base of internal IO space

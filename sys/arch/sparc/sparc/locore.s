@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.247 2009/06/05 01:36:07 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.248 2009/11/26 00:19:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6330,10 +6330,6 @@ _C_LABEL(kernel_top):
 	.globl	_C_LABEL(bootinfo)
 _C_LABEL(bootinfo):
 	.word	0
-
-	.globl	_C_LABEL(proc0paddr)
-_C_LABEL(proc0paddr):
-	.word	_C_LABEL(u0)	! KVA of proc0 uarea
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(romp), 4

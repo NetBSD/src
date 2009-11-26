@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2009/08/11 17:04:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 2009/11/26 00:19:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2009/08/11 17:04:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2009/11/26 00:19:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -265,7 +265,6 @@ struct platform platform = {
 int	safepri = MIPS1_PSL_LOWIPL;
 
 extern u_int32_t ssir;
-extern struct user *proc0paddr;
 extern char kernel_text[], edata[], end[];
 
 uint8_t *bootinfo;			/* pointer to bootinfo structure */
@@ -736,9 +735,9 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2009/02/13 22:41:01 apb Exp $ */
+/*	$NetBSD: machdep.c,v 1.11 2009/11/26 00:19:17 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/11/26 00:19:17 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,8 +99,6 @@ struct vm_map *phys_map = NULL;
 char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-extern struct user *proc0paddr;
 
 char bootpath[256];
 paddr_t msgbuf_paddr;
@@ -209,10 +207,9 @@ initppc(u_int startkernel, u_int endkernel)
 	    physmemr, availmemr);
 
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
 	memset(lwp0.l_addr, 0, sizeof(*lwp0.l_addr));
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_pm = pmap_kernel();
 
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
