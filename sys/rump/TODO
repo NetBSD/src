@@ -1,11 +1,14 @@
-	$NetBSD: TODO,v 1.6 2009/03/29 14:56:00 pooka Exp $
+	$NetBSD: TODO,v 1.7 2009/11/26 10:10:50 pooka Exp $
 
 * fix the build structure to work better on non-NetBSD
+  = available in pkgsrc/misc/rump
 * figure out how to handle mount parameters in fs-independent
   fashion (requires kernel changes)
+  = generic fs-mounting, GSoC 2009
 * integrate build framework with config(1) to stop the need to
   maintain a separate build infrastructure
 * find a better solution for rumpdefs.h, the sed "solution"
   doesn't really scale nicely
-* add a "proper" scheduler, i.e. map threads to virtual cpu's
-  + need to introduce a guard at all entry points into rumpspace
+* make rumpuser interface fully portable
+  + get rid of all non-standard binary types
+  + limit use of ioctl
