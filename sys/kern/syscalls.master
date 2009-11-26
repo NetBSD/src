@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.230 2009/11/26 09:00:45 pooka Exp $
+	$NetBSD: syscalls.master,v 1.231 2009/11/26 17:20:20 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -125,7 +125,7 @@
 40	COMPAT_43 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	STD 	RUMP	{ int|sys||dup(int fd); }
-42	STD 		{ int|sys||pipe(void); }
+42	STD 	RUMP	{ int|sys||pipe(void); }
 43	STD 		{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
