@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.4 2009/10/15 16:40:15 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5 2009/11/26 09:21:16 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.2 2009/10/15 16:39:22 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.3 2009/11/26 09:20:07 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -63,6 +63,18 @@ rump_pub_module_fini(struct modinfo *arg1)
 
 	rump_schedule();
 	rv = rump_module_fini(arg1);
+	rump_unschedule();
+
+	return rv;
+}
+
+int
+rump_pub_kernelfsym_load(void *arg1, uint64_t arg2, char *arg3, uint64_t arg4)
+{
+	int rv;
+
+	rump_schedule();
+	rv = rump_kernelfsym_load(arg1, arg2, arg3, arg4);
 	rump_unschedule();
 
 	return rv;
