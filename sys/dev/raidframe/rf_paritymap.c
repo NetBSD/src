@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.2 2009/11/26 01:23:56 kenh Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.3 2009/11/26 07:35:39 pooka Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.2 2009/11/26 01:23:56 kenh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.3 2009/11/26 07:35:39 pooka Exp $");
 
+#include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/kmem.h>
-#include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
