@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.43 2009/08/18 11:12:05 drochner Exp $ */
+/*      $NetBSD: sv.c,v 1.44 2009/11/26 15:17:10 njoly Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.43 2009/08/18 11:12:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.44 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,8 +443,8 @@ sv_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);

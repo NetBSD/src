@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.37 2009/09/05 14:13:50 tsutsui Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.38 2009/11/26 15:17:09 njoly Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.37 2009/09/05 14:13:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.38 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,8 +432,8 @@ gem_pci_estintr(struct gem_pci_softc *gsc)
 	if (gsc->gsc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return false;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);

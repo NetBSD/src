@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.99 2009/09/26 19:58:53 jmcneill Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.100 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.99 2009/09/26 19:58:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.100 2009/11/26 15:17:10 njoly Exp $");
 
 #include "rnd.h"
 
@@ -1541,11 +1541,10 @@ vr_attach(device_t parent, device_t self, void *aux)
 		if (sc->vr_ih == NULL) {
 			aprint_error_dev(self, "couldn't establish interrupt");
 			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
 		}
-		printf("%s: interrupting at %s\n",
-			device_xname(self), intrstr);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
 
 	/*

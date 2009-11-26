@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.19 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.20 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.19 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.20 2009/11/26 15:17:09 njoly Exp $");
 
 #include "bpfilter.h"
 
@@ -425,11 +425,11 @@ kse_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the

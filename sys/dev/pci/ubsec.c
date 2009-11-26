@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.23 2009/05/12 08:23:01 cegger Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.24 2009/11/26 15:17:10 njoly Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.23 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.24 2009/11/26 15:17:10 njoly Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -349,8 +349,8 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dv, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dv, "interrupting at %s\n", intrstr);

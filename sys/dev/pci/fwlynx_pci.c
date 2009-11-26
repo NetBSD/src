@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.17 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.18 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.17 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.18 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ fwlynx_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

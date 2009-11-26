@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.27 2009/09/27 12:52:59 tsutsui Exp $ */
+/*	$NetBSD: if_dge.c,v 1.28 2009/11/26 15:17:09 njoly Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.27 2009/09/27 12:52:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.28 2009/11/26 15:17:09 njoly Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -712,8 +712,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);

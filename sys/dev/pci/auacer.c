@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.24 2009/05/12 08:22:59 cegger Exp $	*/
+/*	$NetBSD: auacer.c,v 1.25 2009/11/26 15:17:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.24 2009/05/12 08:22:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.25 2009/11/26 15:17:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,8 +290,8 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
