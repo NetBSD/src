@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.125 2009/11/12 19:10:30 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.126 2009/11/26 20:52:19 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -102,7 +102,8 @@ typedef enum devclass {
 	DV_TTY,			/* serial line interface (?) */
 	DV_AUDIODEV,		/* audio device */
 	DV_DISPLAYDEV,		/* display device */
-	DV_BUS			/* bus device */
+	DV_BUS,			/* bus device */
+	DV_VIRTUAL,		/* unbacked virtual device */
 } devclass_t;
 
 /*
