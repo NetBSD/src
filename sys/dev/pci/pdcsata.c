@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.17 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.18 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.17 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.18 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -247,8 +247,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't establish native-PCI interrupt");
 		if (intrstr != NULL)
-		    aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+		    aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,

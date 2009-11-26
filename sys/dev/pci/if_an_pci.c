@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.30 2009/09/05 14:13:50 tsutsui Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.31 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.30 2009/09/05 14:13:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.31 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,8 @@ an_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

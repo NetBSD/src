@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.131 2009/11/12 19:39:26 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.132 2009/11/26 15:17:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.131 2009/11/12 19:39:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.132 2009/11/26 15:17:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,8 +540,8 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

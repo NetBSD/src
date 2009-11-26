@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.36 2009/11/12 19:41:05 dyoung Exp $	*/
+/*	$NetBSD: oboe.c,v 1.37 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.36 2009/11/12 19:41:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.37 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,11 +220,11 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)
-			printf(" at %s", intrstring);
-		printf("\n");
+			aprint_error(" at %s", intrstring);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstring);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstring);
 
 	selinit(&sc->sc_rsel);
 	selinit(&sc->sc_wsel);

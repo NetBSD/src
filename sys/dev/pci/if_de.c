@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.133 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: if_de.c,v 1.134 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.133 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.134 2009/11/26 15:17:09 njoly Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5897,8 +5897,8 @@ tulip_pci_attach(
 	    if (sc->tulip_ih == NULL) {
 		aprint_error_dev(&sc->tulip_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-		    printf(" at %s", intrstr);
-		printf("\n");
+		    aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	    }
 	    printf("%s: interrupting at %s\n", device_xname(&sc->tulip_dev), intrstr);

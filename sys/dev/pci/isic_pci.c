@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.35 2009/05/12 08:23:01 cegger Exp $ */
+/* $NetBSD: isic_pci.c,v 1.36 2009/11/26 15:17:10 njoly Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.35 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.36 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -255,12 +255,12 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	psc->sc_pc = pc;
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
