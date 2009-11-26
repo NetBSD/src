@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.89 2009/11/26 16:34:24 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.90 2009/11/26 17:19:54 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -425,6 +425,13 @@ function parseline() {
 	f++
 	fbase=$f
 
+	# pipe is special in how to returns its values.
+	# So just generate it manually if present.
+	if (rumpable == 1 && fbase == "pipe") {
+		rumpable = 0;
+		rumphaspipe = 1;
+	}
+
 	funcstdname=fprefix "_" fbase
 	if (fcompat != "") {
 		funcname=fprefix "___" fbase "" fcompat
@@ -533,6 +540,25 @@ function printproto(wrap) {
 	printf(";\n") > rumpcallshdr
 }
 
+function printrumpsysent(insysent, compatwrap) {
+	if (!insysent) {
+		printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = unrumped */\n", \
+		    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
+		return
+	}
+
+	printf("\t{ ") > rumpsysent
+	if (argc == 0) {
+		printf("0, 0, ") > rumpsysent
+	} else {
+		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > rumpsysent
+	}
+	printf("0,\n\t    %s },", wfn) > rumpsysent
+	for (i = 0; i < (41 - length(wfn)) / 8; i++)
+		printf("\t") > rumpsysent
+	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
+}
+
 function putent(type, compatwrap) {
 	# output syscall declaration for switch table.
 	if (compatwrap == "")
@@ -601,10 +627,18 @@ function putent(type, compatwrap) {
 		}
 	}
 
+	if (!rumpable) {
+		if (funcname == "sys_pipe" && rumphaspipe == 1)
+			insysent = 1
+		else
+			insysent = 0
+	} else {
+		insysent = 1
+	}
+	printrumpsysent(insysent, compatwrap)
+
 	# output rump marshalling code if necessary
 	if (!rumpable) {
-		printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = unrumped */\n", \
-		    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
 		return
 	}
 
@@ -658,17 +692,6 @@ function putent(type, compatwrap) {
 	printf("}\n") > rumpcalls
 	printf("__weak_alias(%s,rump_enosys);\n", funcname) > rumpcalls
 
-	# rumpsysent
-	printf("\t{ ") > rumpsysent
-	if (argc == 0) {
-		printf("0, 0, ") > rumpsysent
-	} else {
-		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > rumpsysent
-	}
-	printf("0,\n\t    %s },", wfn) > rumpsysent
-	for (i = 0; i < (41 - length(wfn)) / 8; i++)
-		printf("\t") > rumpsysent
-	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
@@ -717,6 +740,22 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	exit 1
 }
 END {
+	# output pipe() with it's special rval[2] handling
+	if (rumphaspipe) {
+		printf("int rump_sys_pipe(int *);\n") > rumpcallshdr
+		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
+		printf("int\nrump_sys_pipe(int *fd)\n{\n") > rumpcalls
+		printf("\tregister_t rval[2] = {0, 0};\n") > rumpcalls
+		printf("\tint error = 0;\n") > rumpcalls
+		printf("\n\terror = rump_sysproxy(SYS_pipe, ") > rumpcalls
+		printf("rump_sysproxy_arg, NULL, 0, rval);\n") > rumpcalls
+		printf("\tif (error) {\n") > rumpcalls
+		printf("\t\trumpuser_seterrno(error);\n") > rumpcalls
+		printf("\t} else {\n\t\tfd[0] = rval[0];\n") > rumpcalls
+		printf("\t\tfd[1] = rval[1];\n\t}\n") > rumpcalls
+		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
+	}
+
 	maxsyscall = syscall
 	if (nsysent) {
 		if (syscall > nsysent) {
