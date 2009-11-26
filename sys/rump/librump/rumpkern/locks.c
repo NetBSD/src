@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.34 2009/11/11 16:46:50 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.35 2009/11/26 17:29:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.34 2009/11/11 16:46:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.35 2009/11/26 17:29:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -270,6 +270,14 @@ cv_has_waiters(kcondvar_t *cv)
 {
 
 	return rumpuser_cv_has_waiters(RUMPCV(cv));
+}
+
+/* this is not much of an attempt, but ... */
+bool
+cv_is_valid(kcondvar_t *cv)
+{
+
+	return RUMPCV(cv) != NULL;
 }
 
 /*
