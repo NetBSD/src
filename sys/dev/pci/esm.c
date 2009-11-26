@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.50 2009/06/12 08:33:41 cegger Exp $      */
+/*      $NetBSD: esm.c,v 1.51 2009/11/26 15:17:09 njoly Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.50 2009/06/12 08:33:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.51 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1647,8 +1647,8 @@ esm_attach(device_t parent, device_t self, void *aux)
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(ess->sc_dev, "interrupting at %s\n",

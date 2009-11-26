@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.142 2009/09/16 16:34:50 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.143 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.142 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.143 2009/11/26 15:17:10 njoly Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1113,11 +1113,11 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return sipcom_do_detach(self, SIP_ATTACH_MAP);
 	}
-	printf("%s: interrupting at %s\n", device_xname(sc->sc_dev), intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
 	SIMPLEQ_INIT(&sc->sc_txdirtyq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.69 2009/05/06 18:25:28 cegger Exp $	*/
+/*	$NetBSD: auvia.c,v 1.70 2009/11/26 15:17:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.69 2009/05/06 18:25:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.70 2009/11/26 15:17:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,8 +414,8 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.61 2009/09/05 14:09:55 tsutsui Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.62 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.61 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.62 2009/11/26 15:17:10 njoly Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1620,7 +1620,8 @@ skc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail;
 	}
 	aprint_normal(": %s\n", intrstr);

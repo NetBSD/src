@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.38 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: satalink.c,v 1.39 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.38 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,8 +758,8 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't establish native-PCI interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 

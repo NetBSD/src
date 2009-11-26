@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.86 2009/09/27 12:52:59 tsutsui Exp $ */
+/* $NetBSD: if_ti.c,v 1.87 2009/11/26 15:17:10 njoly Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.86 2009/09/27 12:52:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.87 2009/11/26 15:17:10 njoly Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1673,11 +1673,11 @@ ti_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (ti_chipinit(sc)) {
 		aprint_error_dev(self, "chip initialization failed\n");

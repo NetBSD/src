@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.42 2009/05/12 08:23:01 cegger Exp $	*/
+/*	$NetBSD: neo.c,v 1.43 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.42 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.43 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,11 +603,11 @@ neo_attach(device_t parent, device_t self, void *aux)
 	if (sc->ih == NULL) {
 		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->dev), intrstr);
+	aprint_normal_dev(&sc->dev, "interrupting at %s\n", intrstr);
 
 	if (nm_init(sc) != 0)
 		return;

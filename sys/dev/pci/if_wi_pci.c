@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.49 2009/09/05 14:13:50 tsutsui Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.50 2009/11/26 15:17:10 njoly Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.49 2009/09/05 14:13:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.50 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,12 +333,12 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	switch (wpp->wpp_chip) {
 	case CHIP_PLX_OTHER:

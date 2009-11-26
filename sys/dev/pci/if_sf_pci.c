@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.17 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.18 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.17 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.18 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,11 +245,11 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Finish off the attach.

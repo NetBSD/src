@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.42 2009/04/28 22:43:50 dyoung Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.43 2009/11/26 15:17:09 njoly Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.42 2009/04/28 22:43:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.43 2009/11/26 15:17:09 njoly Exp $");
 
 #include "rnd.h"
 
@@ -371,8 +371,8 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dv, "couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail_mem;
 	}
 

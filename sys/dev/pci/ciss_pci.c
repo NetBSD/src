@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.8 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.9 2009/11/26 15:17:08 njoly Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.8 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9 2009/11/26 15:17:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,8 +326,8 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	if (!sc->sc_ih) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);

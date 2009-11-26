@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.50 2009/05/06 09:25:15 cegger Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.51 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.50 2009/05/06 09:25:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.51 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,8 +221,8 @@ ep_pci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);

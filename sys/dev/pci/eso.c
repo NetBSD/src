@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.56 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: eso.c,v 1.57 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.56 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57 2009/11/26 15:17:09 njoly Exp $");
 
 #include "mpu.h"
 
@@ -357,8 +357,8 @@ eso_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)
-			aprint_normal(" at %s", intrstring);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstring);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.31 2009/05/06 09:25:14 cegger Exp $ */
+/* $NetBSD: auixp.c,v 1.32 2009/11/26 15:17:08 njoly Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.31 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.32 2009/11/26 15:17:08 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1169,8 +1169,8 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);

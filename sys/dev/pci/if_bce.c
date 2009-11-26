@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.27 2009/09/05 14:09:55 tsutsui Exp $	 */
+/* $NetBSD: if_bce.c,v 1.28 2009/11/26 15:17:09 njoly Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.27 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.28 2009/11/26 15:17:09 njoly Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -331,8 +331,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	if (sc->bce_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

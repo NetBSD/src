@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.13 2009/08/08 20:44:36 matt Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.14 2009/11/26 15:17:09 njoly Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.13 2009/08/08 20:44:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.14 2009/11/26 15:17:09 njoly Exp $");
 
 #include "bpfilter.h"
 
@@ -169,7 +169,7 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error(": could not establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
+			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}

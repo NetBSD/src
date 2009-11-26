@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.11 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.12 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.11 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.12 2009/11/26 15:17:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,8 +211,8 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	psc->sc_pc = pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.55 2009/05/12 08:23:00 cegger Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.56 2009/11/26 15:17:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.55 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.56 2009/11/26 15:17:09 njoly Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -477,8 +477,8 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
     if (sc->sc_ih == NULL) {
 	aprint_error_dev(self, "couldn't establish interrupt");
 	if (intrstr != NULL)
-	    aprint_normal(" at %s", intrstr);
-	aprint_normal("\n");
+	    aprint_error(" at %s", intrstr);
+	aprint_error("\n");
 	return;
     }
 

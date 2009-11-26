@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.22 2009/05/12 08:23:01 cegger Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.23 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.22 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,8 +264,8 @@ mlx_pci_attach(device_t parent, device_t self, void *aux)
 	if (mlx->mlx_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 
