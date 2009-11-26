@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2009/11/26 00:19:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2009/11/26 00:19:12 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1051,7 +1051,6 @@ int xen_idt_idx;
 #endif
 char *ldtstore;
 char *gdtstore;
-extern	struct user *proc0paddr;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
@@ -1271,9 +1270,7 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
-	lwp0.l_addr = proc0paddr;
-	pcb = (void *)proc0paddr;
-
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));

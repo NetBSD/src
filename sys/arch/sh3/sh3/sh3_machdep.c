@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.82 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.83 2009/11/26 00:19:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.82 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.83 2009/11/26 00:19:21 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -114,7 +114,6 @@ char cpu_model[120];
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 
-struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
 
 #if !defined(IOM_RAM_BEGIN)
@@ -209,9 +208,9 @@ sh_proc0_init()
 	u = uvm_pageboot_alloc(USPACE);
 	memset((void *)u, 0, USPACE);
 
-	/* Setup proc0 */
-	proc0paddr = (struct user *)u;
-	lwp0.l_addr = proc0paddr;
+	/* Setup lwp0 */
+	lwp0.l_addr = (struct user *)u;
+
 	/*
 	 * u-area map:
 	 * |user| .... | .................. |

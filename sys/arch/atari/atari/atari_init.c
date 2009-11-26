@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.86 2009/08/23 01:27:13 mrg Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.87 2009/11/26 00:19:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.86 2009/08/23 01:27:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.87 2009/11/26 00:19:13 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -118,7 +118,6 @@ int iomem_malloc_safe;
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int 	lowram;
-extern u_int	proc0paddr;
 int		machineid, mmutype, cputype, astpending;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
@@ -275,9 +274,9 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	avail  = stphysize - pstart;
 
 	/*
-	 * Save KVA of proc0 user-area and allocate it
+	 * Save KVA of lwp0 user-area and allocate it
 	 */
-	proc0paddr = vstart;
+	lwp.l_addr = (struct user *)vstart;
 	pstart    += USPACE;
 	vstart    += USPACE;
 	avail     -= USPACE;
@@ -408,7 +407,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 
 	/*
 	 * go till end of data allocated so far
-	 * plus proc0 u-area (to be allocated)
+	 * plus lwp0 u-area (to be allocated)
 	 */
 	for (; kva < vstart; kva += PAGE_SIZE) {
 		*pg++ = pg_proto;
@@ -568,19 +567,14 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
 
-	/* Is this to fool the optimizer?? */
-	i = *(int *)proc0paddr;
-	*(volatile int *)proc0paddr = i;
-
 	/*
 	 * Initialize the "u-area" pages.
 	 * Must initialize p_addr before autoconfig or the
 	 * fault handler will get a NULL reference.
 	 */
-	memset((u_char *)proc0paddr, 0, USPACE);
-	lwp0.l_addr = (struct user *)proc0paddr;
+	memset(lwp0.l_addr, 0, USPACE);
 	curlwp = &lwp0;
-	curpcb  = &((struct user *)proc0paddr)->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 
 	/*
 	 * Get the hardware into a defined state

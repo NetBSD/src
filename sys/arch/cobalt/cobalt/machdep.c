@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2009/11/26 00:19:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/11/26 00:19:13 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,9 +139,6 @@ static u_int read_board_id(void);
 int	safepri = MIPS1_PSL_LOWIPL;
 
 extern char *esym;
-extern struct user *proc0paddr;
-
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -318,9 +315,9 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.7 2009/08/11 17:04:15 matt Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.8 2009/11/26 00:19:14 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.7 2009/08/11 17:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.8 2009/11/26 00:19:14 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -96,8 +96,6 @@ vm_offset_t msgbufphys;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
 pv_addr_t systempage;
-
-struct user *proc0paddr;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -418,8 +416,7 @@ initarm_common(const struct initarm_config *ic)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

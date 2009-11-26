@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.4 2009/08/11 17:04:15 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.5 2009/11/26 00:19:14 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.4 2009/08/11 17:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.5 2009/11/26 00:19:14 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -234,8 +234,6 @@ extern char _end[];
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-extern struct user *proc0paddr;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -533,8 +531,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = (struct user *)kernelstack.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

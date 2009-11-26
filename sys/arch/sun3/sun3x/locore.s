@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 2007/10/17 19:57:47 garbled Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 2009/11/26 00:19:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -166,7 +166,8 @@ L_high_code:
 	movc	%d0,%dfc
 
 | Setup process zero user/kernel stacks.
-	movl	_C_LABEL(proc0paddr),%a1| get lwp0 pcb addr
+	lea	_C_LABEL(lwp0),%a0	| get lwp0
+	movl	%a0@(L_ADDR),%a1	| get lwp0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set SSP to last word
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
@@ -187,8 +188,7 @@ L_high_code:
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	lea	_C_LABEL(lwp0),%a0	| proc0.p_md.md_regs = 
-	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
+	movl	%a1,%a0@(L_MD_REGS)	| lwp0.l_md.md_regs = trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
 	PANIC("main() returned")
 

@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.15 2009/11/21 20:32:17 rmind Exp $ */
+/* $NetBSD: start.c,v 1.16 2009/11/26 00:19:11 matt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.15 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.16 2009/11/26 00:19:11 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.15 2009/11/21 20:32:17 rmind Exp $");
 extern void main(void); /* XXX Should be in a header file */
 
 struct bootconfig bootconfig;
-
-struct user *proc0paddr;
 
 /* in machdep.h */
 extern i2c_tag_t acorn26_i2c_tag;
@@ -190,8 +188,8 @@ start(struct bootconfig *initbootconfig)
 	 * Locate process 0's user structure, in the bottom of its kernel
 	 * stack page.  That's our current stack page too.
 	 */
-	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
-	memset(proc0paddr, 0, sizeof(*proc0paddr));
+	lwp0.l_addr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
+	memset(lwp0.l_addr, 0, sizeof(*lwp0.l_addr));
 
 	/* TODO: anything else? */
 	

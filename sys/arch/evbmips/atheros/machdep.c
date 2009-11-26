@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18 2009/08/11 17:04:18 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.19 2009/11/26 00:19:16 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/08/11 17:04:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2009/11/26 00:19:16 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,8 +183,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/08/11 17:04:18 matt Exp $");
 
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
-
-struct	user *proc0paddr;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -311,9 +309,9 @@ mach_init(void)
 	 * Init mapping for u page(s) for proc0.
 	 */
 	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

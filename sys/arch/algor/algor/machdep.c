@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:11 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -183,8 +183,6 @@ struct p5064_config p5064_configuration;
 #include <algor/algor/algor_p6032var.h>
 struct p6032_config p6032_configuration;
 #endif 
-
-struct	user *proc0paddr;
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -566,9 +564,9 @@ mach_init(int argc, char *argv[], char *envp[])
 	 */
 	led_display('u', 's', 'p', 'c');
 	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *) v;
+	lwp0.l_addr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2009/11/26 00:19:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/11/26 00:19:19 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -181,7 +181,6 @@ extern void stacktrace(void); /*XXX*/
  * disables mips1 FPU interrupts.
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
 extern void mips_vector_init(void);
@@ -371,9 +370,9 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_addr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*

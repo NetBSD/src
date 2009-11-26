@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.235 2009/11/07 07:27:46 cegger Exp $ */
+/*	$NetBSD: autoconf.c,v 1.236 2009/11/26 00:19:22 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.235 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.236 2009/11/26 00:19:22 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -263,7 +263,7 @@ static void bootstrapIIep(void);
 void
 bootstrap(void)
 {
-	extern struct user *proc0paddr;
+	extern struct user u0;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #else
@@ -275,8 +275,7 @@ bootstrap(void)
 	/* Find the number of CPUs as early as possible */
 	sparc_ncpus = find_cpus();
 
-	/* Attach user structure to proc0 */
-	lwp0.l_addr = proc0paddr;
+	lwp0.l_addr = &u0;
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
@@ -970,14 +969,11 @@ cpu_configure(void)
 		panic("mainbus not configured");
 
 	/*
-	 * XXX Re-zero proc0's user area, to nullify the effect of the
+	 * XXX Re-zero lwp0's user area, to nullify the effect of the
 	 * XXX stack running into it during auto-configuration.
 	 * XXX - should fix stack usage.
 	 */
-	{
-		extern struct user *proc0paddr;
-		memset(proc0paddr, 0, sizeof(struct user));
-	}
+	memset(lwp0.l_addr, 0, sizeof(struct user));
 
 	spl0();
 }

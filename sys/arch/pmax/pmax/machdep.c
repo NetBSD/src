@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.235 2009/08/15 23:44:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.236 2009/11/26 00:19:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2009/08/15 23:44:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2009/11/26 00:19:20 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -181,7 +181,6 @@ struct platform platform = {
 };
 
 extern void *esym;			/* XXX */
-extern struct user *proc0paddr;		/* XXX */
 extern struct consdev promcd;		/* XXX */
 
 /*
@@ -340,10 +339,10 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	lwp0.l_addr = proc0paddr = (struct user *)kernend;
+	lwp0.l_addr = (struct user *)kernend;
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	memset(lwp0.l_addr, 0, USPACE);
-	proc0paddr->u_pcb.pcb_context[11] =
+	lwp0.l_addr->u_pcb.pcb_context[11] =
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += USPACE;
