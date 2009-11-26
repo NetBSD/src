@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.180 2009/09/05 14:09:55 tsutsui Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.181 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.180 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.181 2009/11/26 15:17:10 njoly Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1092,8 +1092,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);

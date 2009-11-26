@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.28 2009/05/12 08:23:01 cegger Exp $	*/
+/* $NetBSD: ifpci.c,v 1.29 2009/11/26 15:17:10 njoly Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.28 2009/05/12 08:23:01 cegger Exp $
+ *	$Id: ifpci.c,v 1.29 2009/11/26 15:17:10 njoly Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.28 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.29 2009/11/26 15:17:10 njoly Exp $");
 
 
 #include <sys/param.h>
@@ -972,12 +972,12 @@ avma1pp_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		avma1pp_disable(sc);
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 }
 
 static void

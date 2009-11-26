@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.32 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.33 2009/11/26 15:17:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -27,7 +27,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.32 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.33 2009/11/26 15:17:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,8 +340,8 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		aprint_error_dev(siop_sc->sc_dev,
 		    "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return 0;
 	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

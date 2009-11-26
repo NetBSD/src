@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.46 2009/09/05 14:09:55 tsutsui Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.47 2009/11/26 15:17:09 njoly Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.46 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.47 2009/11/26 15:17:09 njoly Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -253,8 +253,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
