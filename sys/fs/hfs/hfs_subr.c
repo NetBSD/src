@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.12 2009/03/26 20:05:07 pooka Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.13 2009/11/27 16:23:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.12 2009/03/26 20:05:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.13 2009/11/27 16:23:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ hfs_libcb_closedev(hfs_volume* in_vol, hfs_callback_args* cbargs)
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp,
 			    in_vol->readonly ? FREAD : FREAD | FWRITE, NOCRED);
-			/* XXX do we need a VOP_UNLOCK() here? */
+			VOP_UNLOCK(devvp, 0);
 		}
 
 		free(in_vol->cbdata, M_HFSMNT);
