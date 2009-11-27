@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.40 2009/11/27 17:54:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.40 2009/11/27 17:54:11 pooka Exp $");
 
 #include "opt_modular.h"
 
@@ -75,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $"
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
-#include <sys/fcntl.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
 
@@ -88,49 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $"
 static int	kobj_relocate(kobj_t, bool);
 static int	kobj_checksyms(kobj_t, bool);
 static void	kobj_error(const char *, ...);
-static int	kobj_read(kobj_t, void **, size_t, off_t);
-static int	kobj_read_bits(kobj_t, void *, size_t, off_t);
 static void	kobj_jettison(kobj_t);
 static void	kobj_free(kobj_t, void *, size_t);
 static void	kobj_close(kobj_t);
-static int	kobj_load(kobj_t);
+static int	kobj_read_mem(kobj_t, void **, size_t, off_t, bool);
+static void	kobj_close_mem(kobj_t);
 
 extern struct vm_map *module_map;
-
-/*
- * kobj_load_file:
- *
- *	Load an object located in the file system.
- */
-int
-kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
-{
-	struct nameidata nd;
-	kauth_cred_t cred;
-	int error;
-	kobj_t ko;
-
-	cred = kauth_cred_get();
-
-	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
-	if (ko == NULL) {
-		return ENOMEM;
-	}
-
-	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
-	    UIO_SYSSPACE, path);
-	error = vn_open(&nd, FREAD, 0);
-
- 	if (error != 0) {
-	 	kmem_free(ko, sizeof(*ko));
-	 	return error;
-	}
-
-	ko->ko_type = KT_VNODE;
-	ko->ko_source = nd.ni_vp;
-	*kop = ko;
-	return kobj_load(ko);
-}
 
 /*
  * kobj_load_mem:
@@ -151,6 +112,9 @@ kobj_load_mem(kobj_t *kop, void *base, ssize_t size)
 	ko->ko_type = KT_MEMORY;
 	ko->ko_source = base;
 	ko->ko_memsize = size;
+	ko->ko_read = kobj_read_mem;
+	ko->ko_close = kobj_close_mem;
+
 	*kop = ko;
 	return kobj_load(ko);
 }
@@ -168,20 +132,15 @@ kobj_close(kobj_t ko)
 		return;
 	}
 
-	switch (ko->ko_type) {
-	case KT_VNODE:
-		VOP_UNLOCK(ko->ko_source, 0);
-		vn_close(ko->ko_source, FREAD, kauth_cred_get());
-		break;
-	case KT_MEMORY:
-		/* nothing */
-		break;
-	default:
-		panic("kobj_close: unknown type");
-		break;
-	}
-
+	ko->ko_close(ko);
 	ko->ko_source = NULL;
+}
+
+static void
+kobj_close_mem(kobj_t ko)
+{
+
+	return;
 }
 
 /*
@@ -190,7 +149,7 @@ kobj_close(kobj_t ko)
  *	Load an ELF object and prepare to link into the running kernel
  *	image.
  */
-static int
+int
 kobj_load(kobj_t ko)
 {
 	Elf_Ehdr *hdr;
@@ -218,7 +177,7 @@ kobj_load(kobj_t ko)
 	/*
 	 * Read the elf header from the file.
 	 */
-	error = kobj_read(ko, (void **)&hdr, sizeof(*hdr), 0);
+	error = ko->ko_read(ko, (void **)&hdr, sizeof(*hdr), 0, true);
 	if (error != 0)
 		goto out;
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
@@ -264,7 +223,8 @@ kobj_load(kobj_t ko)
 		error = ENOEXEC;
 		goto out;
 	}
-	error = kobj_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff);
+	error = ko->ko_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff,
+	    true);
 	if (error != 0) {
 		goto out;
 	}
@@ -355,9 +315,9 @@ kobj_load(kobj_t ko)
 		kobj_error("no symbol table");
 		goto out;
 	}
-	error = kobj_read(ko, (void **)&ko->ko_symtab,
+	error = ko->ko_read(ko, (void **)&ko->ko_symtab,
 	    ko->ko_symcnt * sizeof(Elf_Sym),
-	    shdr[symtabindex].sh_offset);
+	    shdr[symtabindex].sh_offset, true);
 	if (error != 0) {
 		goto out;
 	}
@@ -370,8 +330,8 @@ kobj_load(kobj_t ko)
 		kobj_error("no symbol strings");
 		goto out;
 	}
-	error = kobj_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
-	    shdr[symstrindex].sh_offset);
+	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
+	    shdr[symstrindex].sh_offset, true);
 	if (error != 0) {
 		goto out;
 	}
@@ -382,9 +342,9 @@ kobj_load(kobj_t ko)
 	if (hdr->e_shstrndx != 0 && shdr[hdr->e_shstrndx].sh_size != 0 &&
 	    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
 		ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
-		error = kobj_read(ko, (void **)&ko->ko_shstrtab,
+		error = ko->ko_read(ko, (void **)&ko->ko_shstrtab,
 		    shdr[hdr->e_shstrndx].sh_size,
-		    shdr[hdr->e_shstrndx].sh_offset);
+		    shdr[hdr->e_shstrndx].sh_offset, true);
 		if (error != 0) {
 			goto out;
 		}
@@ -461,8 +421,8 @@ kobj_load(kobj_t ko)
 			ko->ko_progtab[pb].addr = addr;
 			if (shdr[i].sh_type == SHT_PROGBITS) {
 				ko->ko_progtab[pb].name = "<<PROGBITS>>";
-				error = kobj_read_bits(ko, addr,
-				    shdr[i].sh_size, shdr[i].sh_offset);
+				error = ko->ko_read(ko, &addr,
+				    shdr[i].sh_size, shdr[i].sh_offset, false);
 				if (error != 0) {
 					goto out;
 				}
@@ -501,10 +461,10 @@ kobj_load(kobj_t ko)
 				ko->ko_reltab[rl].nrel =
 				    shdr[i].sh_size / sizeof(Elf_Rel);
 				ko->ko_reltab[rl].sec = shdr[i].sh_info;
-				error = kobj_read(ko,
+				error = ko->ko_read(ko,
 				    (void **)&ko->ko_reltab[rl].rel,
 				    ko->ko_reltab[rl].size,
-				    shdr[i].sh_offset);
+				    shdr[i].sh_offset, true);
 				if (error != 0) {
 					goto out;
 				}
@@ -519,10 +479,10 @@ kobj_load(kobj_t ko)
 				ko->ko_relatab[ra].nrela =
 				    shdr[i].sh_size / sizeof(Elf_Rela);
 				ko->ko_relatab[ra].sec = shdr[i].sh_info;
-				error = kobj_read(ko,
+				error = ko->ko_read(ko,
 				    (void **)&ko->ko_relatab[ra].rela,
 				    shdr[i].sh_size,
-				    shdr[i].sh_offset);
+				    shdr[i].sh_offset, true);
 				if (error != 0) {
 					goto out;
 				}
@@ -995,98 +955,32 @@ kobj_error(const char *fmt, ...)
 	va_end(ap);
 }
 
-/*
- * kobj_read:
- *
- *	Utility function: read from the object.
- */
 static int
-kobj_read(kobj_t ko, void **basep, size_t size, off_t off)
+kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
+	bool allocate)
 {
-	size_t resid;
-	void *base;
+	void *base = *basep;
 	int error;
 
-	KASSERT(ko->ko_source != NULL);
-
-	switch (ko->ko_type) {
-	case KT_VNODE:
-		base = kmem_alloc(size, KM_SLEEP);
-		if (base == NULL) {
-			error = ENOMEM;
-			break;
-		}
-		error = vn_rdwr(UIO_READ, ko->ko_source, base, size, off,
-		    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid,
-		    curlwp);
-		if (error == 0 && resid != 0) {
-			error = EINVAL;
-		}
-		if (error != 0) {
-			kmem_free(base, size);
-			base = NULL;
-		}
-		break;
-	case KT_MEMORY:
-		if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
-			kobj_error("kobj_read: preloaded object short");
-			error = EINVAL;
-			base = NULL;
-		} else {
-			base = (uint8_t *)ko->ko_source + off;
-			error = 0;
-		}
-		break;
-	default:
-		panic("kobj_read: invalid type");
+	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
+		kobj_error("kobj_read_mem: preloaded object short");
+		error = EINVAL;
+		base = NULL;
+	} else if (allocate) {
+		base = (uint8_t *)ko->ko_source + off;
+		error = 0;
+	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
+		kobj_error("kobj_read_mem: object not aligned");
+		kobj_error("source=%p base=%p off=%d size=%zd",
+		    ko->ko_source, base, (int)off, size);
+		error = EINVAL;
+	} else {
+		/* Nothing to do.  Loading in-situ. */
+		error = 0;
 	}
 
-	*basep = base;
-	return error;
-}
-
-/*
- * kobj_read_bits:
- *
- *	Utility function: load a section from the object.
- */
-static int
-kobj_read_bits(kobj_t ko, void *base, size_t size, off_t off)
-{
-	size_t resid;
-	int error;
-
-	KASSERT(ko->ko_source != NULL);
-
-	switch (ko->ko_type) {
-	case KT_VNODE:
-		KASSERT((uintptr_t)base >= (uintptr_t)ko->ko_address);
-		KASSERT((uintptr_t)base + size <=
-		    (uintptr_t)ko->ko_address + ko->ko_size);
-		error = vn_rdwr(UIO_READ, ko->ko_source, base, size, off,
-		    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid,
-		    curlwp);
-		if (error == 0 && resid != 0) {
-			error = EINVAL;
-		}
-		break;
-	case KT_MEMORY:
-		if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
-			kobj_error("kobj_read_bits: preloaded object short");
-			error = EINVAL;
-		} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
-			kobj_error("kobj_read_bits: object not aligned");
-			kobj_error("source=%p base=%p off=%d size=%zd",
-			    ko->ko_source, base, (int)off, size);
-			error = EINVAL;
-		} else {
-			/* Nothing to do.  Loading in-situ. */
-			error = 0;
-		}
-		break;
-	default:
-		panic("kobj_read: invalid type");
-	}
+	if (allocate)
+		*basep = base;
 
 	return error;
 }
@@ -1105,13 +999,6 @@ kobj_free(kobj_t ko, void *base, size_t size)
 }
 
 #else	/* MODULAR */
-
-int
-kobj_load_file(kobj_t *kop, const char *name, const bool nochroot)
-{
-
-	return ENOSYS;
-}
 
 int
 kobj_load_mem(kobj_t *kop, void *base, ssize_t size)

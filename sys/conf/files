@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.965 2009/11/25 08:52:38 kiyohara Exp $
+#	$NetBSD: files,v 1.966 2009/11/27 17:54:11 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1490,6 +1490,7 @@ file	kern/subr_humanize.c
 file	kern/subr_iostat.c
 file	kern/subr_kmem.c
 file	kern/subr_kobj.c
+file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_once.c
