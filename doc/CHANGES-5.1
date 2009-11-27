@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.143 2009/11/27 08:55:38 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.144 2009/11/27 09:00:06 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14870,4 +14870,11 @@ sys/dev/usb/usbdevs				1.536
 
 	Fix kern/41737. Add quirks to make MS Wireless Laser Mouse 6000 work.
 	[rafal, ticket #1162]
+
+sbin/newfs_msdos/newfs_msdos.c			1.30
+
+	Make fs size detection get proper size rather than disk size.
+	Without this, newfs_msdos(8) assumes the target fs size is
+	whole disk size, so newfs_msdos(8) will fail or create wrong fs.
+	[tsutsui, ticket #1163]
 
