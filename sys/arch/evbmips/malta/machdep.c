@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2009/11/27 03:23:08 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2009/11/26 00:19:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2009/11/27 03:23:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2009/11/26 00:19:16 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -199,8 +198,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
 	bus_space_handle_t sh;
-	void *kernend, *v;
-        u_long first, last;
+	void *kernend;
+	u_long first, last;
+	struct pcb *pcb0;
+	vaddr_t v;
 	char *cp;
 	int freqok, i, howto;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
@@ -317,13 +318,15 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -391,7 +394,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

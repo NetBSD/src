@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.54 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.55 2009/11/27 03:23:04 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -695,7 +695,7 @@ longmode_hi:
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
-	movq	%rax,(_C_LABEL(lwp0)+L_ADDR)(%rip)
+	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
 	xorq	%rbp,%rbp               # mark end of frames
@@ -775,7 +775,7 @@ start:
 	 * First avail returned by xen_pmap_bootstrap in %rax
 	 */
 	movq	%rax, %rsi
-	movq	%rsi,(_C_LABEL(lwp0)+L_ADDR)
+	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
 	
 	xorq	%rax,%rax
 	movq	%rsi,%rdi
@@ -902,12 +902,12 @@ ENTRY(cpu_switchto)
 	jz	1f
 
 	/* Save old context. */
-	movq	L_ADDR(%r13),%rax
+	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
 
 	/* Switch to newlwp's stack. */
-1:	movq	L_ADDR(%r12),%r14
+1:	movq	L_PCB(%r12),%r14
 #ifdef XEN /* XXX debug code */
 	cmpq	$0, PCB_RSP(%r14)
 	jne 999f
@@ -1014,7 +1014,7 @@ IDTVEC(syscall)
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
-	movq	L_ADDR(%r15),%r15
+	movq	L_PCB(%r15),%r15
 	movq	PCB_RSP0(%r15),%r15
 	xchgq	%r15,%rsp
 

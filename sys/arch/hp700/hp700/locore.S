@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 2009/11/27 03:23:09 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ L$start_zero_tf:
 	stws,ma %r0, 4(%t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
-	 * kernel stack starts a page and a trapframe above l_addr.
+	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
 	mtctl	%t3, CR_UPADDR
@@ -802,7 +802,7 @@ switch_diag:
 	comb,=,n %arg0, %arg1, kstack_ok
 
 	/*
-	 * cpu_lwp_fork sets the initial stack to a page above l_addr.
+	 * cpu_lwp_fork sets the initial stack to a page above uarea address.
 	 * Check that the stack is above this value for curl.
 	 */
 	ldw	L_ADDR(%arg1), %arg2

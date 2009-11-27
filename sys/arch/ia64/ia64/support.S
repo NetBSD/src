@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.4 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: support.S,v 1.5 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -213,7 +213,7 @@ ENTRY(casuptr, 3)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -267,7 +267,7 @@ ENTRY(subyte, 2)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -313,7 +313,7 @@ ENTRY(suword16, 2)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -359,7 +359,7 @@ ENTRY(suword32, 2)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -406,7 +406,7 @@ XENTRY(suword)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -460,7 +460,7 @@ ENTRY(fubyte, 1)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -506,7 +506,7 @@ ENTRY(fuword16, 2)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -552,7 +552,7 @@ ENTRY(fuword32, 2)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -599,7 +599,7 @@ XENTRY(fuword)
 	;;
 }
 {	.mlx
-	add		r15=LWP_PCB,r15
+	add		r15=L_PCB,r15
 	movl		r14=fusufault
 	;;
 }
@@ -714,7 +714,7 @@ ENTRY(copyinstr, 4)
 	;;
 	ld8	r15=[r15]
 	;;
-	add	r15=LWP_PCB,r15			// find pcb
+	add	r15=L_PCB,r15			// find pcb
 	;;
 	ld8	r15=[r15]
 	;;
@@ -753,7 +753,7 @@ ENTRY(copyoutstr, 4)
 	;;
 	ld8	r15=[r15]
 	;;
-	add	r15=LWP_PCB,r15			// find pcb
+	add	r15=L_PCB,r15			// find pcb
 	;;
 	ld8	r15=[r15]
 	;;
@@ -866,7 +866,7 @@ ENTRY(kcopy, 3)
 	;;
 	ld8	r15=[r15]
 	;;
-	add	r15=LWP_PCB,r15			// find pcb
+	add	r15=L_PCB,r15			// find pcb
 	;;
 	ld8	r15=[r15]
 	;;
@@ -904,7 +904,7 @@ ENTRY(copyin, 3)
 	;;
 	ld8	r15=[r15]
 	;;
-	add	r15=LWP_PCB,r15			// find pcb
+	add	r15=L_PCB,r15			// find pcb
 	;;
 	ld8	r15=[r15]
 	;;
@@ -942,7 +942,7 @@ ENTRY(copyout, 3)
 	;;
 	ld8	r15=[r15]
 	;;
-	add	r15=LWP_PCB,r15			// find pcb
+	add	r15=L_PCB,r15			// find pcb
 	;;
 	ld8	r15=[r15]
 	;;
@@ -964,7 +964,7 @@ END(copyout)
 ENTRY(copyerr, 0)
 	add	r14=PC_CURLWP,r13 ;;		// find curthread
 	ld8	r14=[r14] ;;
-	add	r14=LWP_PCB,r14 ;;		// curthread->td_addr
+	add	r14=L_PCB,r14 ;;		// curthread->td_addr
 	ld8	r14=[r14] ;;
 	add	r14=PCB_ONFAULT,r14 ;;		// &curthread->td_pcb->pcb_onfault
 	st8	[r14]=r0			// reset fault handler

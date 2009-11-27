@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:09 rmind Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -131,7 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2009/11/26 00:19:17 matt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -264,6 +263,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
 #endif
+	struct pcb *pcb0;
 	void *kernend;
 	char *cp;
 	int i;
@@ -453,13 +453,15 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
-	 * Alloc u pages for lwp0 stealing KSEG0 memory.
+	 * Alloc uarea for lwp0 stealing KSEG0 memory.
 	 */
-	lwp0.l_addr = (struct user *)kernend;
-	lwp0.l_md.md_regs = (struct frame *)((char *)kernend + USPACE) - 1;
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)kernend);
 	memset(kernend, 0, USPACE);
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)((char *)kernend + USPACE) - 1;
 
 	kernend = (char *)kernend + USPACE;
 
@@ -598,7 +600,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

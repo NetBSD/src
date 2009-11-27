@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.16 2008/09/20 18:29:04 tsutsui Exp $
+# $NetBSD: genassym.cf,v 1.17 2009/11/27 03:23:04 rmind Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -160,12 +160,10 @@ define	VM_MAP_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
 # Important offsets into the user struct & associated constants
 define	UPAGES			UPAGES
-define	U_PCB			offsetof(struct user, u_pcb)
-define	U_PCB_HWPCB		offsetof(struct user, u_pcb.pcb_hw)
-define	U_PCB_HWPCB_KSP		offsetof(struct user, u_pcb.pcb_hw.apcb_ksp)
-define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context[0])
-define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
-define	U_PCB_ACCESSADDR	offsetof(struct user, u_pcb.pcb_accessaddr)
+define	PCB_HWPCB_KSP		offsetof(struct pcb, pcb_hw.apcb_ksp)
+define	PCB_CONTEXT		offsetof(struct pcb, pcb_context[0])
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_ACCESSADDR		offsetof(struct pcb, pcb_accessaddr)
 
 # Offsets into struct fpstate, for save, restore
 define	FPREG_FPR_REGS		offsetof(struct fpreg, fpr_regs[0])

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.28 2009/09/26 15:49:45 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.29 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.28 2009/09/26 15:49:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.29 2009/11/27 03:23:10 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.28 2009/09/26 15:49:45 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 

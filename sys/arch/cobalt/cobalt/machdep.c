@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2009/11/26 00:19:13 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2009/11/27 03:23:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/11/26 00:19:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2009/11/27 03:23:05 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/11/26 00:19:13 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -146,8 +145,10 @@ extern char *esym;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	char *kernend, *v;
+	char *kernend;
 	u_long first, last;
+	struct pcb *pcb0;
+	vaddr_t v;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -312,13 +313,15 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = (struct user *)v;
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 /*
@@ -363,7 +366,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

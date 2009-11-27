@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2009/11/27 03:23:10 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2008/11/11 06:46:42 dyoung Exp $");
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

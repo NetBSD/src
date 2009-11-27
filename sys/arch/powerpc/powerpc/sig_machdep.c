@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.35 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.36 2009/11/27 03:23:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36 2009/11/27 03:23:12 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35 2009/11/21 17:40:29 rmind Exp $
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <powerpc/fpu.h>
 #include <powerpc/altivec.h>

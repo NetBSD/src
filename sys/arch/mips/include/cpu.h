@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92 2009/11/21 17:40:27 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -341,7 +341,7 @@ do {									\
  * Misc prototypes and variable declarations.
  */
 struct lwp;
-struct user;
+struct pcb;
 
 extern struct segtab *segbase;	/* current segtab base */
 
@@ -351,7 +351,7 @@ int	kdbpeek(vaddr_t);
 
 /* mips_machdep.c */
 void	dumpsys(void);
-int	savectx(struct user *);
+int	savectx(struct pcb *);
 void	mips_init_msgbuf(void);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
