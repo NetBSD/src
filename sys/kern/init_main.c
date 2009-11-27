@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.410 2009/11/15 02:37:13 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.411 2009/11/27 16:43:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.410 2009/11/15 02:37:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.411 2009/11/27 16:43:51 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -253,7 +253,6 @@ struct timeval50 boottime50;
 
 extern struct proc proc0;
 extern struct lwp lwp0;
-extern struct cwdinfo cwdi0;
 extern time_t rootfstime;
 
 #ifndef curlwp
@@ -631,30 +630,6 @@ main(void)
 	 * don't have a non-volatile time-of-day device.
 	 */
 	inittodr(rootfstime);
-
-	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
-	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
-
-	/*
-	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
-	 * reference it.
-	 */
-	error = VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
-	if (error)
-		panic("cannot find root vnode, error=%d", error);
-	cwdi0.cwdi_cdir = rootvnode;
-	VREF(cwdi0.cwdi_cdir);
-	VOP_UNLOCK(rootvnode, 0);
-	cwdi0.cwdi_rdir = NULL;
-
-	/*
-	 * Now that root is mounted, we can fixup initproc's CWD
-	 * info.  All other processes are kthreads, which merely
-	 * share proc0's CWD info.
-	 */
-	initproc->p_cwdi->cwdi_cdir = rootvnode;
-	VREF(initproc->p_cwdi->cwdi_cdir);
-	initproc->p_cwdi->cwdi_rdir = NULL;
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
