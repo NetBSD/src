@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.83 2009/11/25 14:28:50 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.84 2009/11/27 03:23:10 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ define	IOMAPSIZE		IOMAPSIZE
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)

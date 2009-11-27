@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2009/11/21 05:54:04 rmind Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2009/11/27 03:23:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2009/11/21 05:54:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2009/11/27 03:23:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>

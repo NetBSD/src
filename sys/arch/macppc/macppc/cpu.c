@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2009/03/18 10:22:32 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.52 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2009/11/27 03:23:11 rmind Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>

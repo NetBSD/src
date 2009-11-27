@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.2 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: context.S,v 1.3 2009/11/27 03:23:10 rmind Exp $	*/
 	
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -826,8 +826,8 @@ ENTRY(cpu_switchto, 3)
 	;;
 }
 {	.mii
-	add		r2=L_ADDR,in0		// r2 = &oldlwp->l_addr
-	add		r3=L_ADDR,in1		// r3 = &newlwp->l_addr
+	add		r2=L_PCB,in0		// r2 = lwp_getpcb(&oldlwp)
+	add		r3=L_PCB,in1		// r3 = lwp_getpcb(&newlwp)
 	mov		loc1=rp			// save rp (loc1 = rp)
 	;;
 }
@@ -836,7 +836,7 @@ ENTRY(cpu_switchto, 3)
 	 * Switch to new context, if p6 == true.
 	 * We assum to return to restorectx_return_here for swapped context.
 	 */
-(p6)	ld8		out0=[r3]		// if (p6) out0 = newlwp->l_addr
+(p6)	ld8		out0=[r3]		// if (p6) out0 = pcb of &newlwp
 	xchg8		r9=[r14],in1		// ci->ci_curlwp = newlwp
 (p6)	br.call.sptk.many rp=restorectx		// if (p6) restorectx(out0)
 	;;

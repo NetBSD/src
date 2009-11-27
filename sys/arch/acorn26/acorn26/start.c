@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.16 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: start.c,v 1.17 2009/11/27 03:23:03 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.16 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.17 2009/11/27 03:23:03 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -92,6 +92,7 @@ void
 start(struct bootconfig *initbootconfig)
 {
 	int onstack;
+	vaddr_t v;
 
 	/*
 	 * State of the world as of BBBB 0.02:
@@ -185,11 +186,12 @@ start(struct bootconfig *initbootconfig)
 	fiq_off();
 
 	/*
-	 * Locate process 0's user structure, in the bottom of its kernel
-	 * stack page.  That's our current stack page too.
+	 * Locate lwp0's uarea, in the bottom of its kernel stack page.
+	 * That is our current stack page too.
 	 */
-	lwp0.l_addr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
-	memset(lwp0.l_addr, 0, sizeof(*lwp0.l_addr));
+	v = round_page((vaddr_t)&onstack) - USPACE;
+	uvm_lwp_setuarea(&lwp0, v);
+	memset((void *)v, 0, sizeof(struct pcb));
 
 	/* TODO: anything else? */
 	

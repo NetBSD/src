@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.38 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: undefined.c,v 1.39 2009/11/27 03:23:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.38 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.39 2009/11/27 03:23:04 rmind Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -300,12 +300,13 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 	if (user) {
+		struct pcb *pcb = lwp_getpcb(l);
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.
 		 */
 		fault_code = FAULT_USER;
-		l->l_addr->u_pcb.pcb_tf = frame;
+		pcb->pcb_tf = frame;
 	} else
 		fault_code = 0;
 

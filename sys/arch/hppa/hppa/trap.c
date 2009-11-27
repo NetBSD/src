@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2009/11/21 15:36:34 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 2009/11/27 03:23:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2009/11/21 15:36:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2009/11/27 03:23:09 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -413,6 +413,7 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern int kernel_text;
 	extern int etext;
 	extern register_t kpsw;
+
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -425,7 +426,7 @@ do {							\
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
-		vaddr_t minsp, maxsp;
+		vaddr_t minsp, maxsp, uv;
 
 		/*
 		 * If the trap happened in the gateway
@@ -451,14 +452,15 @@ do {							\
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 
-		maxsp = (u_int)(l->l_addr) + USPACE + PAGE_SIZE;
-		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
+		maxsp = uv + USPACE + PAGE_SIZE;
+		minsp = uv + PAGE_SIZE;
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == kvtop((void *)l->l_addr));
+		SANITY(l != NULL &&
+		    tf->tf_cr30 == kvtop((void *)uvm_lwp_getuarea(l)));
 	}
 #undef SANITY
 out:

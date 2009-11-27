@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.22 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: spl.S,v 1.23 2009/11/27 03:23:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -99,8 +99,8 @@ IDTVEC(softintr)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movq	CPUVAR(CURLWP),%r15
 	movq	IS_LWP(%rax),%rdi	/* switch to handler LWP */
-	movq	L_ADDR(%rdi),%rdx
-	movq	L_ADDR(%r15),%rcx
+	movq	L_PCB(%rdi),%rdx
+	movq	L_PCB(%r15),%rcx
 	movq	%rdi,CPUVAR(CURLWP)
 	movq	%rsp,PCB_RSP(%rcx)
 	movq	%rbp,PCB_RBP(%rcx)
@@ -110,7 +110,7 @@ IDTVEC(softintr)
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	cli
-	movq	L_ADDR(%r15),%rcx
+	movq	L_PCB(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
 	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */

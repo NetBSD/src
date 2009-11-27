@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 2009/11/26 00:19:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2009/11/26 00:19:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2009/11/26 00:19:20 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -194,6 +193,7 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	char *cp;
 	const char *bootinfo_msg;
 	u_long first, last;
+	struct pcb *pcb0;
 	int i;
 	char *kernend;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -337,13 +337,15 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 #endif
 
 	/*
-	 * Alloc u pages for proc0 stealing KSEG0 memory.
+	 * Alloc uarea for lwp0 stealing KSEG0 memory.
 	 */
-	lwp0.l_addr = (struct user *)kernend;
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)kernend);
+	memset(kernend, 0, USPACE);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
 	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
-	memset(lwp0.l_addr, 0, USPACE);
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	kernend += USPACE;
 
@@ -497,7 +499,7 @@ cpu_reboot(volatile int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

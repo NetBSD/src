@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.44 2009/11/26 00:19:21 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.45 2009/11/27 03:23:13 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2009/11/26 00:19:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2009/11/27 03:23:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2009/11/26 00:19:21 matt Exp $");
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -157,9 +156,11 @@ extern void *esym;
 void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
-	void *kernend, *p0;
+	void *kernend;
 	u_long first, last;
+	struct pcb *pcb0;
 	extern char edata[], end[];
+	vaddr_t v;
 	int i;
 	uint32_t config;
 
@@ -317,13 +318,15 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	mips_init_msgbuf();
 
 	/*
-	 * Allocate space for proc0's USPACE
+	 * Allocate uarea for lwp0 and set it.
 	 */
-	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
-	lwp0.l_addr = (struct user *)p0;
-	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	v = pmap_steal_memory(USPACE, NULL, NULL);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 
 	pmap_bootstrap();
 
@@ -384,7 +387,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

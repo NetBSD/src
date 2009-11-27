@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.83 2009/11/26 00:19:21 matt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.84 2009/11/27 03:23:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.83 2009/11/26 00:19:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.84 2009/11/27 03:23:13 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.83 2009/11/26 00:19:21 matt Exp $"
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -208,12 +207,12 @@ sh_proc0_init()
 	u = uvm_pageboot_alloc(USPACE);
 	memset((void *)u, 0, USPACE);
 
-	/* Setup lwp0 */
-	lwp0.l_addr = (struct user *)u;
+	/* Setup uarea for lwp0 */
+	uvm_lwp_setuarea(&lwp0, u);
 
 	/*
 	 * u-area map:
-	 * |user| .... | .................. |
+	 * |pcb| .... | .................. |
 	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
          *        frame bot        stack bot
 	 * current frame ... r6_bank

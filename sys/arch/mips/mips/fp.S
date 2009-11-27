@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.34 2009/08/18 21:28:07 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.35 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 #ifdef SOFTFLOAT
 	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	lw	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+	lw	a2, PCB_FPREGS+FRAME_FSR(t0)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
 	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
@@ -497,7 +497,7 @@ mfromc1:
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
-	lw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t0, a0, 16-SZREG_SHFT
 	andi	t0, t0, SZREG_MASK
@@ -523,7 +523,7 @@ mtoc1:
 	andi	t1, t1, 0x007C
 	addu	t0, t0, t1
 
-	sw	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	sw	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
 
@@ -535,7 +535,7 @@ cfromc1:
 	move	v0, zero
 	bne	t1, t2, cfinvalid
 
-	lw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	lw	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 cfinvalid:
 
@@ -567,7 +567,7 @@ ctoc1:
 	REG_EPILOGUE
 	lw	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	sw	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 	b	done
 
@@ -1124,7 +1124,7 @@ div_s:
 #ifdef SOFTFLOAT
 	lw	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	sw	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1204,7 +1204,7 @@ div_d:
 #ifdef SOFTFLOAT
 	lw	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	sw	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1820,7 +1820,7 @@ inexact_w:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1932,7 +1932,7 @@ set_cond:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -1955,7 +1955,7 @@ unordered:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2072,7 +2072,7 @@ inexact_nobias_s:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2193,7 +2193,7 @@ underflow_s:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2334,7 +2334,7 @@ inexact_nobias_d:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2477,7 +2477,7 @@ underflow_d:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2494,7 +2494,7 @@ invalid_s:					# trap invalid operation
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2515,7 +2515,7 @@ invalid_d:					# trap invalid operation
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2537,7 +2537,7 @@ invalid_w:					# trap invalid operation
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2555,7 +2555,7 @@ fpe_trap:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
@@ -2568,7 +2568,7 @@ fpe_trap:
 
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
 	lw	a1, CALLFRAME_SIZ + 4(sp)	# frame
 	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
@@ -2583,7 +2583,7 @@ ill:
 #ifdef SOFTFLOAT
 	lw	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2671,7 +2671,7 @@ STATIC_LEAF(get_fs_int)
 	andi	t2, t2, 0x0078			# Even regs only
 	addu	t0, t0, t2
 
-	lw	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t2, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t0, t2, 31		# init the sign bit
 	bge	t2, zero, 1f
@@ -2784,7 +2784,7 @@ STATIC_LEAF(get_ft_fs_s)
 	andi	ta0, ta0, 0x0078			# Even regs only
 	addu	ta1, ta1, ta0
 
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0(ta1)
+	lw	ta0, PCB_FPREGS+FRAME_FP0(ta1)
 
 	srl	ta1, ta0, 23			# get exponent
 	and	ta1, ta1, 0xFF
@@ -2901,7 +2901,7 @@ STATIC_XLEAF(get_fs_s)
 	andi	t0, t0, 0x0078			# Even regs only
 	addu	t1, t1, t0
 
-	lw	t0, U_PCB_FPREGS+FRAME_FP0(t1)
+	lw	t0, PCB_FPREGS+FRAME_FP0(t1)
 
 	srl	t1, t0, 23			# get exponent
 	and	t1, t1, 0xFF
@@ -3024,8 +3024,8 @@ STATIC_LEAF(get_ft_fs_d)
 	andi	ta3, ta3, 0x0078			# Even regs only
 	addu	ta0, ta0, ta3
 
-	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta0)
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0+4(ta0)
+	lw	ta3, PCB_FPREGS+FRAME_FP0(ta0)
+	lw	ta0, PCB_FPREGS+FRAME_FP0+4(ta0)
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
@@ -3159,8 +3159,8 @@ STATIC_XLEAF(get_fs_d)
 	andi	t3, t3, 0x0078			# Even regs only
 	addu	t0, t0, t3
 
-	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
-	lw	t0, U_PCB_FPREGS+FRAME_FP0+4(t0)
+	lw	t3, PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, PCB_FPREGS+FRAME_FP0+4(t0)
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
@@ -3297,7 +3297,7 @@ STATIC_LEAF(get_cmp_s)
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, ta2, t1
 
-	lw	t0, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t1, t0, 23			# get exponent
 	and	t1, t1, 0xFF
@@ -3308,7 +3308,7 @@ STATIC_LEAF(get_cmp_s)
 	andi	ta0, ta0, 0x0078			# Even regs only
 	addu	ta2, ta2, ta0
 
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0(ta2)
+	lw	ta0, PCB_FPREGS+FRAME_FP0(ta2)
 
 	srl	ta1, ta0, 23			# get exponent
 	and	ta1, ta1, 0xFF
@@ -3501,8 +3501,8 @@ STATIC_LEAF(get_cmp_d)
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, ta2, t1
 
-	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
-	lw	t0, U_PCB_FPREGS+FRAME_FP0+4(t0)
+	lw	t3, PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, PCB_FPREGS+FRAME_FP0+4(t0)
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
@@ -3513,8 +3513,8 @@ STATIC_LEAF(get_cmp_d)
 	andi	ta0, ta0, 0x0078			# Even regs only
 	addu	ta2, ta2, ta0
 
-	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta2)
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0+4(ta2)
+	lw	ta3, PCB_FPREGS+FRAME_FP0(ta2)
+	lw	ta0, PCB_FPREGS+FRAME_FP0+4(ta2)
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
@@ -3748,7 +3748,7 @@ STATIC_XLEAF(set_fd_word)
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t0, t0, t1
 
-	sw	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+	sw	t2, PCB_FPREGS+FRAME_FP0(t0)
 	j	ra
 #else
 	srl	a3, a0, 7 - 2			# get FD field (even regs only)
@@ -3854,8 +3854,8 @@ STATIC_LEAF(set_fd_d)
 	andi	t1, t1, 0x0078			# Even regs only
 	addu	t2, t2, t1
 
-	sw	t3, U_PCB_FPREGS+FRAME_FP0(t2)
-	sw	t0, U_PCB_FPREGS+FRAME_FP0+4(t2)
+	sw	t3, PCB_FPREGS+FRAME_FP0(t2)
+	sw	t0, PCB_FPREGS+FRAME_FP0+4(t2)
 	j	ra
 #else
 	sll	t0, t0, 31			# set sign

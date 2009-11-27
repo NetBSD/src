@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.38 2009/11/24 13:04:04 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.39 2009/11/27 03:23:15 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2009/11/24 13:04:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2009/11/27 03:23:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2009/11/24 13:04:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>

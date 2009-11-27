@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2009/11/26 00:19:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/11/26 00:19:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2009/11/27 03:23:11 rmind Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/11/26 00:19:19 matt Exp $");
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -230,7 +229,9 @@ void
 mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 {
 	u_long first, last;
-	char *kernend, *v;
+	struct pcb *pcb0;
+	char *kernend;
+	vaddr_t v;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];
@@ -367,13 +368,15 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = (struct user *)v;
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
@@ -470,7 +473,7 @@ cpu_reboot(volatile int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

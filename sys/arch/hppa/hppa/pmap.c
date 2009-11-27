@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2009/11/27 03:23:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,12 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2009/11/26 00:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2009/11/27 03:23:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
@@ -1023,7 +1022,7 @@ pmap_bootstrap(vaddr_t vstart)
 		else if (va >= ksro && va < kero)
 			prot = UVM_PROT_R;
 #ifdef DIAGNOSTIC
-		else if (va == (vaddr_t)lwp0.l_addr + USPACE - PAGE_SIZE)
+		else if (va == uvm_lwp_getuarea(&lwp0) + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
 		pmap_kenter_pa(va, va, prot, 0);
@@ -1666,8 +1665,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 /*
  * pmap_activate(lwp)
- *	Activates the vmspace for the given LWP.  This isn't necessarily the
- * current LWP.
+ *
+ *	Activates the vmspace for the given LWP.
+ *	This is not necessarily the current LWP.
  */
 void
 pmap_activate(struct lwp *l)
@@ -1677,11 +1677,11 @@ pmap_activate(struct lwp *l)
 	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb = lwp_getpcb(l);
 
-	KASSERT(pcb->pcb_uva == (vaddr_t)l->l_addr);
+	KASSERT(pcb->pcb_uva == uvm_lwp_getuarea(l));
 
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcb->pcb_space = space;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, PAGE_SIZE);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, PAGE_SIZE);
 
 	if (p == curproc)
 		mtctl(pmap->pm_pid, CR_PIDR2);
