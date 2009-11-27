@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.21 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.21 2009/05/12 09:10:15 cegger Exp $
+ * $Id: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.21 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,6 +705,9 @@ ntwoc_isa_shutdown(void *aux)
 	mcr = bus_space_read_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_MCR);
 	mcr |= (NTWOC_MCR_DTR0 | NTWOC_MCR_DTR1);
 	bus_space_write_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_MCR, mcr);
+
+	/* turn off the card */
+	bus_space_write_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_PCR, 0);
 }
 
 static void
