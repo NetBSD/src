@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 2009/11/27 20:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2009/11/27 20:32:10 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -427,6 +427,8 @@ do {							\
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp, uv;
+
+		uv = uvm_lwp_getuarea(l);
 
 		/*
 		 * If the trap happened in the gateway
