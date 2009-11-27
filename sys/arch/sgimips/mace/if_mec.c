@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.39 2009/09/02 17:22:53 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.40 2009/11/27 11:04:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.39 2009/09/02 17:22:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.40 2009/11/27 11:04:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1714,7 +1714,7 @@ mec_rxintr(struct mec_softc *sc)
 		}
 
 		/*
-		 * If 802.1Q VLAN MTU is enabled, ignore the bad packet errror.
+		 * If 802.1Q VLAN MTU is enabled, ignore the bad packet error.
 		 */
 		if ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) != 0)
 			rxstat &= ~MEC_RXSTAT_BADPACKET;
