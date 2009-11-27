@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.22 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.23 2009/11/27 16:11:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.22 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.23 2009/11/27 16:11:35 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -279,14 +279,16 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * updating the mount is okay (for example, as far as securelevel goes)
 	 * which leaves us with the normal check.
 	 */
-	accessmode = VREAD;
-	if (update ?
-		(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-		(mp->mnt_flag & MNT_RDONLY) == 0)
-		accessmode |= VWRITE;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	if (error == 0) {
+		accessmode = VREAD;
+		if (update ?
+			(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+			(mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		VOP_UNLOCK(devvp, 0);
+	}
 
 	if (error != 0)
 		goto error;
