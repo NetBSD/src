@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.28 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.29 2009/11/27 11:16:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,6 +198,7 @@ struct m_ext2fs {
 
 /* compatible/incompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_HASJOURNAL		0x0004
 #define EXT2F_COMPAT_RESIZE		0x0010
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
