@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.219 2009/11/26 00:19:19 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.220 2009/11/27 01:37:30 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.219 2009/11/26 00:19:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.220 2009/11/27 01:37:30 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -458,17 +458,12 @@ static const struct pridtab fputab[] = {
  * by pridtab->cpu_cid.
  */
 static const char * const cidnames[] = {
-	[MIPS_PRID_CID_PREHISTORIC]	= "Prehistoric",
-	[MIPS_PRID_CID_MIPS]		= "MIPS",
-					/* or "MIPS Technologies, Inc.	*/
-	[MIPS_PRID_CID_BROADCOM]	= "Broadcom",
-					/* or "Broadcom Corp."		*/
-	[MIPS_PRID_CID_ALCHEMY]		= "Alchemy",
-					/* or "Alchemy Semiconductor"	*/
-	[MIPS_PRID_CID_SIBYTE]		= "SiByte",
-					/* or "Broadcom Corp. (SiByte)"	*/
-	[MIPS_PRID_CID_SANDCRAFT]	= "SandCraft",
-	[MIPS_PRID_CID_RMI]		= "RMI",
+	"Prehistoric",
+	"MIPS",		/* or "MIPS Technologies, Inc.	*/
+	"Broadcom",	/* or "Broadcom Corp."		*/
+	"Alchemy",	/* or "Alchemy Semiconductor"	*/
+	"SiByte",	/* or "Broadcom Corp. (SiByte)"	*/
+	"SandCraft",
 };
 #define	ncidnames (sizeof(cidnames) / sizeof(cidnames[0]))
 
