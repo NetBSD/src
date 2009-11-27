@@ -211,6 +211,27 @@ bsd_kvm_fetch_registers (int regnum)
       return;
     }
 
+#if 1 /* TODO: HAVE_STRUCT_LWP_L_ADDR */
+  memset (nl, 0, sizeof nl);
+  nl[0].n_name = "_lwp0";
+
+  if (kvm_nlist (core_kd, nl) == -1)
+    error (("%s"), kvm_geterr (core_kd));
+
+  if (nl[0].n_value != 0)
+    {
+      struct pcb *paddr;
+
+      /* Found lwp0.  */
+      nl[0].n_value += offsetof (struct lwp, l_addr);
+      if (kvm_read (core_kd, nl[0].n_value, &paddr, sizeof paddr) == -1)
+	error (("%s"), kvm_geterr (core_kd));
+
+      bsd_kvm_fetch_pcb (paddr);
+      return;
+    }
+#endif
+
 #ifdef HAVE_STRUCT_THREAD_TD_PCB
   /* In FreeBSD kernels for 5.0-RELEASE and later, the PCB no longer
      lives in `struct proc' but in `struct thread'.  The `struct
