@@ -229,7 +229,7 @@ compress_buffer_input (void *closure, char *data, size_t need, size_t size,
 	   would fetch all the available bytes, and at least one byte.  */
 
 	status = (*cb->buf->input) (cb->buf->closure, bd->text,
-				    need, BUFFER_DATA_SIZE, &nread);
+				    need > 0, BUFFER_DATA_SIZE, &nread);
 
 	if (status == -2)
 	    /* Don't try to recover from memory allcoation errors.  */
