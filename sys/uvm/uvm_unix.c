@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.41 2009/03/04 21:52:38 christos Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.42 2009/11/27 12:25:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.41 2009/03/04 21:52:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.42 2009/11/27 12:25:10 njoly Exp $");
 
 #include "opt_pax.h"
 
@@ -86,7 +86,8 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 	mutex_enter(&p->p_auxlock);
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old) {
+	if (new == 0 ||
+	    ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)) {
 		mutex_exit(&p->p_auxlock);
 		return (ENOMEM);
 	}
