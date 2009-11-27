@@ -1,10 +1,10 @@
-/*	$NetBSD: skeleton.c,v 1.5 2009/10/29 21:03:59 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.6 2009/11/27 12:37:19 enami Exp $	*/
 /* Id: skeleton.c,v 1.19 2008/12/24 14:52:28 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.5 2009/10/29 21:03:59 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.6 2009/11/27 12:37:19 enami Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -115,17 +115,13 @@ const char * const body[] =
     "        newsize = YYMAXDEPTH;",
     "",
     "    i = *yyssp - *yyss;",
-    "    newss = (*yyss != 0)",
-    "          ? (short *)realloc(*yyss, newsize * sizeof(*newss))",
-    "          : (short *)malloc(newsize * sizeof(*newss));",
+    "    newss = (short *)realloc(*yyss, newsize * sizeof(*newss));",
     "    if (newss == 0)",
     "        return -1;",
     "",
     "    *yyss  = newss;",
     "    *yyssp = newss + i;",
-    "    newvs = (yyvs != 0)",
-    "          ? (YYSTYPE *)realloc(*yyvs, newsize * sizeof(*newvs))",
-    "          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));",
+    "    newvs = (YYSTYPE *)realloc(*yyvs, newsize * sizeof(*newvs));",
     "    if (newvs == 0)",
     "        return -1;",
     "",
@@ -171,12 +167,10 @@ const char * const body[] =
     "    yystate = 0;",
     "",
     "    yystacksize = 0;",
-    "    yyvs = NULL;",
-    "    yyss = NULL;",
+    "    yyvs = yyvsp = NULL;",
+    "    yyss = yyssp = NULL;",
     "    if (yygrowstack(&yyss, &yyssp, &yysslim, &yyvs, &yyvsp, &yystacksize))",
     "        goto yyoverflow;",
-    "    yyssp = yyss;",
-    "    yyvsp = yyvs;",
     "    yystate = 0;",
     "    *yyssp = 0;",
     "",
