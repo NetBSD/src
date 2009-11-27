@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.73 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ums.c,v 1.73.8.1 2009/11/27 08:54:13 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73.8.1 2009/11/27 08:54:13 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ struct ums_softc {
 #define UMS_Z		0x01	/* z direction available */
 #define UMS_SPUR_BUT_UP	0x02	/* spurious button up events */
 #define UMS_REVZ	0x04	/* Z-axis is reversed */
+#define UMS_W		0x08	/* w direction/tilt available */
 
 	int nbuttons;
 
@@ -152,7 +153,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 	int size;
 	void *desc;
 	u_int32_t flags, quirks;
-	int i, wheel;
+	int i, hl;
+	struct hid_location *zloc;
 	struct hid_location loc_btn;
 
 	aprint_naive("\n");
@@ -198,10 +200,16 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Try the wheel first as the Z activator since it's tradition. */
-	wheel = hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
-						  HUG_WHEEL),
-			   uha->reportid, hid_input, &sc->sc_loc_z, &flags);
-	if (wheel) {
+	hl = hid_locate(desc, 
+			size, 
+			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL), 
+			uha->reportid, 
+			hid_input, 
+			&sc->sc_loc_z, 
+			&flags);
+
+	zloc = &sc->sc_loc_z;
+	if (hl) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 			aprint_verbose("\n%s: Wheel report 0x%04x not "
 			    "supported\n", USBDEVNAME(sc->sc_hdev.sc_dev),
@@ -211,33 +219,59 @@ ums_attach(device_t parent, device_t self, void *aux)
 			sc->flags |= UMS_Z;
 			/* Wheels need the Z axis reversed. */
 			sc->flags ^= UMS_REVZ;
-		}
-		/*
-		 * We might have both a wheel and Z direction, if so put
-		 * put the Z on the W coordinate.
-		 */
-		if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
-						      HUG_Z),
-			uha->reportid, hid_input, &sc->sc_loc_w, &flags)) {
-			if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-				aprint_verbose("\n%s: Z report 0x%04x not "
-				    "supported\n",
-				       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-				sc->sc_loc_w.size = 0;	/* Bad Z, ignore */
-			}
-		}
-	 } else if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP,
-						      HUG_Z),
-		      uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
-		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-			aprint_verbose("\n%s: Z report 0x%04x not supported\n",
-			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
-		} else {
-			sc->flags |= UMS_Z;
+			/* Put Z on the W coordinate */
+			zloc = &sc->sc_loc_w;
 		}
 	}
 
+	hl = hid_locate(desc, 
+			size, 
+			HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
+			uha->reportid,
+			hid_input,
+			zloc,
+			&flags);
+
+	/*
+	 * The horizontal component of the scrollball can also be given by
+	 * Application Control Pan in the Consumer page, so if we didnt see
+	 * any Z then check that.
+	 */
+	if (!hl) {
+		hl = hid_locate(desc, 
+				size, 
+				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN), 
+				uha->reportid,
+				hid_input,
+				zloc,
+				&flags);
+	}
+
+	if (hl) {
+		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+			aprint_verbose("\n%s: Z report 0x%04x not supported\n",
+			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
+			zloc->size = 0;	/* Bad Z coord, ignore it */
+		} else {
+			if (sc->flags & UMS_Z)
+				sc->flags |= UMS_W;
+			else
+				sc->flags |= UMS_Z;
+		}
+	}
+
+	/*
+	 * The Microsoft Wireless Laser Mouse 6000 v2.0 reports a bad
+	 * position for the wheel and wheel tilt controls -- should be
+	 * in bytes 3 & 4 of the report.  Fix this if necessary.
+	 */
+	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
+	    uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR) {
+		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
+			sc->sc_loc_z.pos = 24;
+		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
+			sc->sc_loc_w.pos = sc->sc_loc_z.pos + 8;
+	}
 
 	/* figure out the number of buttons */
 	for (i = 1; i <= MAX_BUTTONS; i++)
@@ -246,9 +280,11 @@ ums_attach(device_t parent, device_t self, void *aux)
 			break;
 	sc->nbuttons = i - 1;
 
-	aprint_normal(": %d button%s%s\n",
+	aprint_normal(": %d button%s%s%s%s\n",
 	    sc->nbuttons, sc->nbuttons == 1 ? "" : "s",
-	    sc->flags & UMS_Z ? " and Z dir." : "");
+	    sc->flags & UMS_W ? ", W" : "",
+	    sc->flags & UMS_Z ? " and Z dir" : "",
+	    sc->flags & UMS_W ? "s" : "");
 
 	for (i = 1; i <= sc->nbuttons; i++)
 		hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
@@ -264,6 +300,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	if (sc->flags & UMS_Z)
 		DPRINTF(("ums_attach: Z\t%d/%d\n",
 			 sc->sc_loc_z.pos, sc->sc_loc_z.size));
+	if (sc->flags & UMS_W)
+		DPRINTF(("ums_attach: W\t%d/%d\n",
+			 sc->sc_loc_w.pos, sc->sc_loc_w.size));
 	for (i = 1; i <= sc->nbuttons; i++) {
 		DPRINTF(("ums_attach: B%d\t%d/%d\n",
 			 i, sc->sc_loc_btn[i-1].pos,sc->sc_loc_btn[i-1].size));
