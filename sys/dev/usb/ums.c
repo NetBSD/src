@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.73.8.1 2009/11/27 08:54:13 sborrill Exp $	*/
+/*	$NetBSD: ums.c,v 1.73.8.2 2009/11/27 09:49:42 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73.8.1 2009/11/27 08:54:13 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.73.8.2 2009/11/27 09:49:42 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ struct ums_softc {
 #define UMS_SPUR_BUT_UP	0x02	/* spurious button up events */
 #define UMS_REVZ	0x04	/* Z-axis is reversed */
 #define UMS_W		0x08	/* w direction/tilt available */
+#define UMS_ABS		0x10	/* absolute position, touchpanel */
 
 	int nbuttons;
 
@@ -106,7 +107,6 @@ struct ums_softc {
 };
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
-#define MOUSE_FLAGS (HIO_RELATIVE)
 
 Static void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
 
@@ -181,7 +181,13 @@ ums_attach(device_t parent, device_t self, void *aux)
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
-	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+	switch (flags & MOUSE_FLAGS_MASK) {
+	case 0:
+		sc->flags |= UMS_ABS;
+		break;
+	case HIO_RELATIVE:
+		break;
+	default:
 		aprint_error("\n%s: X report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 		USB_ATTACH_ERROR_RETURN;
@@ -193,7 +199,13 @@ ums_attach(device_t parent, device_t self, void *aux)
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
-	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+	switch (flags & MOUSE_FLAGS_MASK) {
+	case 0:
+		sc->flags |= UMS_ABS;
+		break;
+	case HIO_RELATIVE:
+		break;
+	default:
 		aprint_error("\n%s: Y report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 		USB_ATTACH_ERROR_RETURN;
@@ -210,7 +222,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	zloc = &sc->sc_loc_z;
 	if (hl) {
-		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+		if ((flags & MOUSE_FLAGS_MASK) != HIO_RELATIVE) {
 			aprint_verbose("\n%s: Wheel report 0x%04x not "
 			    "supported\n", USBDEVNAME(sc->sc_hdev.sc_dev),
 			    flags);
@@ -248,7 +260,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (hl) {
-		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
+		if ((flags & MOUSE_FLAGS_MASK) != HIO_RELATIVE) {
 			aprint_verbose("\n%s: Z report 0x%04x not supported\n",
 			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 			zloc->size = 0;	/* Bad Z coord, ignore it */
@@ -368,15 +380,21 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 	struct ums_softc *sc = (struct ums_softc *)addr;
 	int dx, dy, dz, dw;
 	u_int32_t buttons = 0;
-	int i;
-	int s;
+	int i, flags, s;
 
 	DPRINTFN(5,("ums_intr: len=%d\n", len));
 
+	flags = WSMOUSE_INPUT_DELTA;	/* equals 0 */
+
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
-	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
+	if (sc->flags & UMS_ABS) {
+		flags |= (WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+		dy = hid_get_data(ibuf, &sc->sc_loc_y);
+	} else
+		dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
 	dw =  hid_get_data(ibuf, &sc->sc_loc_w);
+
 	if (sc->flags & UMS_REVZ)
 		dz = -dz;
 	for (i = 0; i < sc->nbuttons; i++)
@@ -390,10 +408,8 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
 			s = spltty();
-			wsmouse_input(sc->sc_wsmousedev,
-					buttons,
-					dx, dy, dz, dw,
-					WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz,
+			    dw, flags);
 			splx(s);
 		}
 	}
@@ -440,9 +456,14 @@ ums_ioctl(void *v, u_long cmd, void *data, int flag,
     struct lwp * p)
 
 {
+	struct ums_softc *sc = v;
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_USB;
+		if (sc->flags & UMS_ABS)
+			*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+		else
+			*(u_int *)data = WSMOUSE_TYPE_USB;
 		return (0);
 	}
 
