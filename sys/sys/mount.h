@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.193 2009/11/26 14:29:09 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.194 2009/11/27 16:46:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -245,10 +245,6 @@ int	VFS_STATVFS(struct mount *, struct statvfs *);
 int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
 int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
 int	VFS_VPTOFH(struct vnode *, struct fid *, size_t *);
-void	VFS_INIT(void);
-void	VFS_REINIT(void);
-void	VFS_DONE(void);
-int	VFS_MOUNTROOT(void);
 int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
