@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.8 2008/12/16 22:35:26 christos Exp $	*/
+/*	$NetBSD: schizo.c,v 1.9 2009/11/27 22:31:29 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -776,7 +776,7 @@ schizo_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *cookie;
 	struct schizo_pbm *pbm = (struct schizo_pbm *)pc->cookie;
 
-	DPRINTF(SDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
+	DPRINTF(SDB_INTR, ("%s: ih %lx; level %d", __func__, (u_long)ih, level));
 	cookie = bus_intr_establish(pbm->sp_memt, ih, level, func, arg);
 
 	DPRINTF(SDB_INTR, ("; returning handle %p\n", cookie));
