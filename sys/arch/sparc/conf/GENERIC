@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216 2009/09/27 13:27:44 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.217 2009/11/27 11:05:45 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.216 $"
+#ident 		"GENERIC-$Revision: 1.217 $"
 
 maxusers	32
 
@@ -484,14 +484,6 @@ fd*	at fdc0					# the drive itself
 #atabus* at ata?
 #wd*	at atabus? drive ? flags 0x0000
 
-## PCMCIA wavelan card
-#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-
-#
-# accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
-
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
@@ -576,6 +568,9 @@ en0	at sbus? slot ? offset ?
 #ne*	at pcmcia?
 #sm*	at pcmcia?
 
+## PCMCIA wavelan card
+#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
@@ -632,6 +627,10 @@ pseudo-device	vlan
 pseudo-device	bridge
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+## accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 #### Audio and video devices
 
