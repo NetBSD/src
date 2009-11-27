@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.21 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.22 2009/11/27 11:16:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -75,9 +75,15 @@
  * the root inode is 2.
  * Inode 3 to 10 are reserved in ext2fs.
  */
-#define	EXT2_ROOTINO	((ino_t)2)
-#define	EXT2_RESIZEINO	((ino_t)7)
-#define	EXT2_FIRSTINO	((ino_t)11)
+#define	EXT2_BADBLKINO		((ino_t)1)
+#define	EXT2_ROOTINO		((ino_t)2)
+#define	EXT2_ACLIDXINO		((ino_t)3)
+#define	EXT2_ACLDATAINO		((ino_t)4)
+#define	EXT2_BOOTLOADERINO	((ino_t)5)
+#define	EXT2_UNDELDIRINO	((ino_t)6)
+#define	EXT2_RESIZEINO		((ino_t)7)
+#define	EXT2_JOURNALINO		((ino_t)8)
+#define	EXT2_FIRSTINO		((ino_t)11)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.
