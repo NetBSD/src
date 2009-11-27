@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.36 2009/11/26 21:04:42 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.37 2009/11/27 16:43:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.36 2009/11/26 21:04:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.37 2009/11/27 16:43:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,6 +113,11 @@ rump_vfs_init2()
 	rootfstype = ROOT_FSTYPE_ANY;
 	root_device = RUMP_VFSROOTDEV;
 
+	/* bootstrap cwdi (rest done in vfs_mountroot() */
+	rw_init(&cwdi0.cwdi_lock);
+	proc0.p_cwdi = &cwdi0;
+	proc0.p_cwdi = cwdinit();
+
 	/*
 	 * XXX: make sure rumpfs is attached.  The opposite can
 	 * happen e.g. on Linux where the dynlinker doesn't work
@@ -122,19 +127,9 @@ rump_vfs_init2()
 		vfs_attach(&rumpfs_vfsops);
 
 	vfs_mountroot();
-	VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
 
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
-
-	/* bootstrap cwdi */
-	rw_init(&cwdi0.cwdi_lock);
-	cwdi0.cwdi_cdir = rootvnode;
-	vref(cwdi0.cwdi_cdir);
-	proc0.p_cwdi = &cwdi0;
-	proc0.p_cwdi = cwdinit();
-
-	VOP_UNLOCK(rootvnode, 0);
 
 	if (rump_threads) {
 		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,

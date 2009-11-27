@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.30 2009/11/26 20:58:51 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.31 2009/11/27 16:43:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.30 2009/11/26 20:58:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.31 2009/11/27 16:43:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -874,9 +874,6 @@ rumpfs_mountroot()
 		panic("could not create root vnode: %d", error);
 	mp->mnt_data = rfsmp;
 	VOP_UNLOCK(rfsmp->rfsmp_rvp, 0);
-
-	mp->mnt_flag |= MNT_ROOTFS;
-	rumpfs_vfsops.vfs_refcount++;
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
