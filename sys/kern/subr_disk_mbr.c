@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.37 2009/11/23 13:40:11 pooka Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.38 2009/11/27 13:29:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.37 2009/11/23 13:40:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.38 2009/11/27 13:29:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,11 +79,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.37 2009/11/23 13:40:11 pooka Exp
 typedef struct mbr_partition mbr_partition_t;
 
 /*
- * We allocate a buffer 2 sectors large, and look in both....
+ * We allocate a buffer 3 sectors large, and look in all....
  * That means we find labels written by other ports with different offsets.
  * LABELSECTOR and LABELOFFSET are only used if the disk doesn't have a label.
  */
-#if LABELSECTOR > 1 || LABELOFFSET > 512
+#define SCANBLOCKS 3
+#define DISKLABEL_SIZE 404
+#if LABELSECTOR*DEV_BSIZE + LABELOFFSET > SCANBLOCKS*DEV_BSIZE - DISKLABEL_SIZE
 #error Invalid LABELSECTOR or LABELOFFSET
 #endif
 
@@ -428,10 +430,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	/*
 	 * Get a buffer big enough to read a disklabel in and initialize it
-	 * make it two sectors long for the validate_label(); see comment at
+	 * make it three sectors long for the validate_label(); see comment at
 	 * start of file.
 	 */
-	a.bp = geteblk(2 * (int)lp->d_secsize);
+	a.bp = geteblk(SCANBLOCKS * (int)lp->d_secsize);
 	a.bp->b_dev = dev;
 
 	if (osdep)
@@ -572,7 +574,7 @@ validate_label(mbr_args_t *a, uint label_sector)
 	int error;
 
 	/* Next, dig out disk label */
-	if (read_sector(a, label_sector, 2)) {
+	if (read_sector(a, label_sector, SCANBLOCKS)) {
 		a->msg = "disk label read failed";
 		return SCAN_ERROR;
 	}
@@ -706,7 +708,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	a.strat = strat;
 
 	/* get a buffer and initialize it */
-	a.bp = geteblk(2 * (int)lp->d_secsize);
+	a.bp = geteblk(SCANBLOCKS * (int)lp->d_secsize);
 	a.bp->b_dev = dev;
 
 	/* osdep => we expect an mbr with label in netbsd ptn */
