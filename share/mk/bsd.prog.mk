@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.242 2009/05/12 18:07:54 plunky Exp $
+#	$NetBSD: bsd.prog.mk,v 1.243 2009/11/27 11:44:36 tsutsui Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -53,8 +53,12 @@ LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
 ##### Default values
+.if empty(CPPFLAGS:M-nostdinc)
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
+.endif
+.if empty(CXXFLAGS:M-nostdinc++)
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
+.endif
 CFLAGS+=	${COPTS}
 OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
