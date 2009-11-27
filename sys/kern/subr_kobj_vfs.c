@@ -1,7 +1,7 @@
-/*	$NetBSD: kobj_impl.h,v 1.2 2009/11/27 17:54:11 pooka Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.1 2009/11/27 17:54:11 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software developed for The NetBSD Foundation
@@ -57,80 +57,119 @@
  */
 
 /*
- * Data structures private to kobj, shared only with kernel grovellers.
+ * Kernel loader vfs routines.
  */
 
-#ifndef _SYS_KOBJ_IMPL_H_
-#define	_SYS_KOBJ_IMPL_H_
+#include <sys/kobj_impl.h>
+#include "opt_modular.h"
 
-#define	ELFSIZE		ARCH_ELFSIZE
+#ifdef MODULAR
 
-#include <sys/systm.h>
-#include <sys/kobj.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
+#include <sys/param.h>
+#include <sys/fcntl.h>
 #include <sys/module.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
 
-typedef struct {
-	void		*addr;
-	Elf_Off		size;
-	int		flags;
-	int		sec;		/* Original section */
-	const char	*name;
-} progent_t;
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.1 2009/11/27 17:54:11 pooka Exp $");
 
-typedef struct {
-	Elf_Rel		*rel;
-	int 		nrel;
-	int 		sec;
-	size_t		size;
-} relent_t;
+static void
+kobj_close_file(kobj_t ko)
+{
 
-typedef struct {
-	Elf_Rela	*rela;
-	int		nrela;
-	int		sec;
-	size_t		size;
-} relaent_t;
+	VOP_UNLOCK(ko->ko_source, 0);
+	vn_close(ko->ko_source, FREAD, kauth_cred_get());
+}
 
-typedef enum kobjtype {
-	KT_UNSET,
-	KT_VNODE,
-	KT_MEMORY
-} kobjtype_t;
+/*
+ * kobj_read:
+ *
+ *	Utility function: read from the object.
+ */
+static int
+kobj_read_file(kobj_t ko, void **basep, size_t size, off_t off,
+	bool allocate)
+{
+	size_t resid;
+	void *base;
+	int error;
 
-typedef int (*kobj_read_fn)(kobj_t, void **, size_t, off_t, bool);
-typedef void (*kobj_close_fn)(kobj_t);
+	KASSERT(ko->ko_source != NULL);
 
-struct kobj {
-	char		ko_name[MAXMODNAME];
-	kobjtype_t	ko_type;
-	void		*ko_source;
-	ssize_t		ko_memsize;
-	vaddr_t		ko_address;	/* Relocation address */
-	Elf_Shdr	*ko_shdr;
-	progent_t	*ko_progtab;
-	relaent_t	*ko_relatab;
-	relent_t	*ko_reltab;
-	Elf_Sym		*ko_symtab;	/* Symbol table */
-	char		*ko_strtab;	/* String table */
-	char		*ko_shstrtab;	/* Section name string table */
-	size_t		ko_size;	/* Size of text/data/bss */
-	size_t		ko_symcnt;	/* Number of symbols */
-	size_t		ko_strtabsz;	/* Number of bytes in string table */
-	size_t		ko_shstrtabsz;	/* Number of bytes in scn str table */
-	size_t		ko_shdrsz;
-	int		ko_nrel;
-	int		ko_nrela;
-	int		ko_nprogtab;
-	bool		ko_ksyms;
-	bool		ko_loaded;
-	kobj_read_fn	ko_read;
-	kobj_close_fn	ko_close;
-};
+	if (allocate) {
+		base = kmem_alloc(size, KM_SLEEP);
+	} else {
+		base = *basep;
+		KASSERT((uintptr_t)base >= (uintptr_t)ko->ko_address);
+		KASSERT((uintptr_t)base + size <=
+		    (uintptr_t)ko->ko_address + ko->ko_size);
+	}
 
-#ifdef _KERNEL
-int	kobj_load(kobj_t);
+	error = vn_rdwr(UIO_READ, ko->ko_source, base, size, off,
+	    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid,
+	    curlwp);
+
+	if (error == 0 && resid != 0) {
+		error = EINVAL;
+	}
+
+	if (allocate && error != 0) {
+		kmem_free(base, size);
+		base = NULL;
+	}
+
+	if (allocate)
+		*basep = base;
+
+	return error;
+}
+
+/*
+ * kobj_load_file:
+ *
+ *	Load an object located in the file system.
+ */
+int
+kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
+{
+	struct nameidata nd;
+	kauth_cred_t cred;
+	int error;
+	kobj_t ko;
+
+	cred = kauth_cred_get();
+
+	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
+	if (ko == NULL) {
+		return ENOMEM;
+	}
+
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
+	    UIO_SYSSPACE, path);
+	error = vn_open(&nd, FREAD, 0);
+
+ 	if (error != 0) {
+	 	kmem_free(ko, sizeof(*ko));
+	 	return error;
+	}
+
+	ko->ko_type = KT_VNODE;
+	ko->ko_source = nd.ni_vp;
+	ko->ko_read = kobj_read_file;
+	ko->ko_close = kobj_close_file;
+
+	*kop = ko;
+	return kobj_load(ko);
+}
+
+#else /* MODULAR */
+
+int
+kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
+{
+
+	return ENOSYS;
+}
+
 #endif
-
-#endif	/* _SYS_KOBJ_IMPL_H_ */
