@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1320 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1321 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -485,3 +485,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rump: Load rump virtual kernel symbol table at boot.  This enables
 		the use of the kernel linker in a rump kernel.
 		[pooka 20091126]
+	ums(4): Added touchpanel support. [mbalmer 20091127]
