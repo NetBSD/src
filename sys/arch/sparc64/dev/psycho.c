@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.95 2008/12/16 22:35:26 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.96 2009/11/27 22:31:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.95 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.96 2009/11/27 22:31:29 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1396,7 +1396,7 @@ psycho_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *cookie;
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
 
-	DPRINTF(PDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
+	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d", __func__, (u_long)ih, level));
 	cookie = bus_intr_establish(pp->pp_memt, ih, level, func, arg);
 
 	DPRINTF(PDB_INTR, ("; returning handle %p\n", cookie));
