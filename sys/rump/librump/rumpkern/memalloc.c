@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.1 2009/11/04 20:38:58 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.2 2009/11/27 13:45:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/vmem.h>
 
 #include <rump/rumpuser.h>
 
@@ -94,7 +95,7 @@ kern_free(void *ptr, struct malloc_type *type)
  * Kmem
  */
 
-#ifndef RUMP_USE_REAL_ALLOCATORS
+#ifdef RUMP_USE_UNREAL_ALLOCATORS
 void
 kmem_init()
 {
@@ -310,4 +311,11 @@ pool_page_free_nointr(struct pool *pp, void *item)
 
 	return pool_put(pp, item);
 }
-#endif /* RUMP_USE_REAL_ALLOCATORS */
+
+void
+vmem_rehash_start()
+{
+
+	return;
+}
+#endif /* RUMP_USE_UNREAL_ALLOCATORS */
