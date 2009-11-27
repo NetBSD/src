@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2009/11/27 03:23:04 rmind Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2009/11/26 00:19:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2009/11/27 03:23:04 rmind Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2009/11/26 00:19:12 matt Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <uvm/uvm_extern.h>
 #include <sys/mount.h>
@@ -232,6 +231,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
+	struct pcb *pcb0;
 	vaddr_t v;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
@@ -489,13 +489,15 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for lwp0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
 	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = (struct user *)v;
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void
@@ -625,7 +627,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

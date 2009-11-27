@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2009/11/27 03:23:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/11/26 00:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2009/11/27 03:23:09 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/11/26 00:19:17 matt Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -90,7 +89,8 @@ void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
-	void *v;
+	struct pcb *pcb0;
+	vaddr_t v;
 	int i;
 
 	/* Clear BSS */
@@ -168,11 +168,13 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	pmap_bootstrap();
 
-	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
-	lwp0.l_addr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 }
 
 void
@@ -261,7 +263,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

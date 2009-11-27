@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.90 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.91 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.90 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.91 2009/11/27 03:23:10 rmind Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -201,7 +201,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.90 2009/11/25 14:28:50 rmind Exp $");
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
@@ -232,7 +232,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
 _C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0uarea):	.long	0
+_C_LABEL(lwp0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 _C_LABEL(tablesize):	.long	0
 
@@ -667,7 +667,7 @@ begin:
 
 	/* Set up bootstrap stack. */
  	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0uarea)
+	movl	%eax,_C_LABEL(lwp0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
@@ -750,7 +750,7 @@ start:
 	 * First avail returned by xen_pmap_bootstrap in %eax
 	 */
 	movl	%eax, %esi;
-	movl	%esi, _C_LABEL(proc0uarea)
+	movl	%esi, _C_LABEL(lwp0uarea)
 
 #define PROC0PDIR       ((0)              * PAGE_SIZE)
 #define PROC0STACK      ((1)              * PAGE_SIZE)
@@ -931,12 +931,12 @@ ENTRY(cpu_switchto)
 	jz	1f
 
 	/* Save old context. */
-	movl	L_ADDR(%esi),%eax
+	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
 
 	/* Switch to newlwp's stack. */
-1:	movl	L_ADDR(%edi),%ebx
+1:	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 

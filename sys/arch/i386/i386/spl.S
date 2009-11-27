@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.34 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: spl.S,v 1.35 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.34 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.35 2009/11/27 03:23:10 rmind Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -379,8 +379,8 @@ IDTVEC(softintr)
 	movl	CPUVAR(CURLWP),%esi
 	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
 	movl	%edi,CPUVAR(CURLWP)
-	movl	L_ADDR(%edi),%edx
-	movl	L_ADDR(%esi),%ecx
+	movl	L_PCB(%edi),%edx
+	movl	L_PCB(%esi),%ecx
 	movl	%esp,PCB_ESP(%ecx)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
@@ -390,7 +390,7 @@ IDTVEC(softintr)
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
 	cli
-	movl	L_ADDR(%esi),%ecx
+	movl	L_PCB(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
 	popl	%edi			/* unwind switchframe */

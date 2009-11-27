@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.24 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.25 2009/11/27 03:23:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2009/11/27 03:23:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -95,11 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 2009/11/26 00:19:11 matt Exp $")
  */
 
 /*
- * Note:
- * 
- * l->l_addr points to a page containing the user structure
- * (see <sys/user.h>) and the kernel stack.  The pcb structure has to be
- * at the start of the area -- we start the kernel stack from the end.
+ * Note: the pcb structure has to be at the start of the uarea -- we start
+ * the kernel stack from the end.
  */
 
 void

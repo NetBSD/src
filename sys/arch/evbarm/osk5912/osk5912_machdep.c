@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.6 2009/11/26 00:19:15 matt Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.7 2009/11/27 03:23:07 rmind Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.6 2009/11/26 00:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.7 2009/11/27 03:23:07 rmind Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -421,7 +421,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

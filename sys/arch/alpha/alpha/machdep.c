@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.323 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.324 2009/11/27 03:23:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.324 2009/11/27 03:23:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2009/11/26 00:19:11 matt Exp $");
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/exec_ecoff.h>
@@ -220,7 +219,8 @@ alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
 	struct mddt_cluster *memc;
 	int i, mddtweird;
 	struct vm_physseg *vps;
-	vaddr_t kernstart, kernend;
+	struct pcb *pcb0;
+	vaddr_t kernstart, kernend, v;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	cpuid_t cpu_id;
 	struct cpu_info *ci;
@@ -634,9 +634,10 @@ nobootinfo:
 	 */
 
 	/*
-	 * Init mapping for u page(s) for proc 0
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	lwp0.l_addr = (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	v = uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	uvm_lwp_setuarea(&lwp0, v);
 
 	/*
 	 * Initialize the virtual memory system, and set the
@@ -646,21 +647,18 @@ nobootinfo:
 	    hwrpb->rpb_max_asn, hwrpb->rpb_pcs_cnt);
 
 	/*
-	 * Initialize the rest of proc 0's PCB, and cache its physical
-	 * address.
+	 * Initialize the rest of lwp0's PCB and cache its physical address.
 	 */
-	lwp0.l_md.md_pcbpaddr =
-	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vaddr_t)&lwp0.l_addr->u_pcb);
+	pcb0 = lwp_getpcb(&lwp0);
+	lwp0.l_md.md_pcbpaddr = (void *)ALPHA_K0SEG_TO_PHYS((vaddr_t)pcb0);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
-	lwp0.l_addr->u_pcb.pcb_hw.apcb_ksp =
-	    (vaddr_t)lwp0.l_addr + USPACE - sizeof(struct trapframe);
-	lwp0.l_md.md_tf =
-	    (struct trapframe *)lwp0.l_addr->u_pcb.pcb_hw.apcb_ksp;
-	simple_lock_init(&lwp0.l_addr->u_pcb.pcb_fpcpu_slock);
+	pcb0->pcb_hw.apcb_ksp = v + USPACE - sizeof(struct trapframe);
+	lwp0.l_md.md_tf = (struct trapframe *)pcb0->pcb_hw.apcb_ksp;
+	simple_lock_init(&pcb0->pcb_fpcpu_slock);
 
 	/* Indicate that lwp0 has a CPU. */
 	lwp0.l_cpu = ci;

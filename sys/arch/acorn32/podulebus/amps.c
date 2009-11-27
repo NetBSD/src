@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.16 2009/03/14 21:04:01 dsl Exp $	*/
+/*	$NetBSD: amps.c,v 1.17 2009/11/27 03:23:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.16 2009/03/14 21:04:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.17 2009/11/27 03:23:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.16 2009/03/14 21:04:01 dsl Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

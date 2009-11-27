@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.10 2008/06/23 17:58:17 matt Exp $
+# $NetBSD: genassym.cf,v 1.11 2009/11/27 03:23:03 rmind Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -46,7 +46,6 @@ endif
 
 define	__PROG26	1
 
-define	U_PCB		offsetof(struct user, u_pcb)
 define	PCB_SF		offsetof(struct pcb, pcb_sf)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	L_ADDR		offsetof(struct lwp, l_addr)

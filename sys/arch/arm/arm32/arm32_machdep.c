@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.69 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.70 2009/11/27 03:23:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.69 2009/11/26 00:19:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.70 2009/11/27 03:23:05 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.69 2009/11/26 00:19:12 matt Exp 
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.17 2009/11/26 00:19:11 matt Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.18 2009/11/27 03:23:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.17 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.18 2009/11/27 03:23:03 rmind Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -781,7 +781,7 @@ initarm(void *cookie)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 	/* 
 	 * if there is support for a serial console ...we should now

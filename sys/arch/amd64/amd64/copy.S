@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.15 2009/11/13 22:49:46 dsl Exp $	*/
+/*	$NetBSD: copy.S,v 1.16 2009/11/27 03:23:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 
 #define GET_CURPCB(reg)	\
 	movq	CPUVAR(CURLWP), reg; \
-	movq	L_ADDR(reg), reg
+	movq	L_PCB(reg), reg
 
 /*
  * These are arranged so that the abnormal case is a forwards

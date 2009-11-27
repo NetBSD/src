@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.16 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -46,11 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16 2009/11/21 17:40:29 rmind
 #include <sys/mount.h>  
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
 int
-compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
+compat_13_sys_sigreturn(struct lwp *l,
+    const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;

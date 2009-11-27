@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46 2009/08/20 03:33:53 cliff Exp $
+#	$NetBSD: genassym.cf,v 1.47 2009/11/27 03:23:11 rmind Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -110,10 +110,10 @@ define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
-define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
-define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)
-define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
-define	U_PCB_PPL		offsetof(struct user, u_pcb.pcb_ppl)
+define	PCB_FPREGS		offsetof(struct pcb, pcb_fpregs)
+define	PCB_CONTEXT		offsetof(struct pcb, pcb_context)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_PPL			offsetof(struct pcb, pcb_ppl)
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS

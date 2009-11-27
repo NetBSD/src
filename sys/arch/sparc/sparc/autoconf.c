@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.236 2009/11/26 00:19:22 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.237 2009/11/27 03:23:14 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.236 2009/11/26 00:19:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.237 2009/11/27 03:23:14 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.236 2009/11/26 00:19:22 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 
@@ -263,7 +262,7 @@ static void bootstrapIIep(void);
 void
 bootstrap(void)
 {
-	extern struct user u0;
+	extern uint8_t u0[];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #else
@@ -274,8 +273,7 @@ bootstrap(void)
 
 	/* Find the number of CPUs as early as possible */
 	sparc_ncpus = find_cpus();
-
-	lwp0.l_addr = &u0;
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)u0);
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
@@ -914,6 +912,7 @@ st_crazymap(int n)
 void
 cpu_configure(void)
 {
+	struct pcb *pcb0;
 
 	/* initialise the softintr system */
 	sparc_softintr_init();
@@ -969,11 +968,12 @@ cpu_configure(void)
 		panic("mainbus not configured");
 
 	/*
-	 * XXX Re-zero lwp0's user area, to nullify the effect of the
+	 * XXX Re-zero lwp0's pcb, to nullify the effect of the
 	 * XXX stack running into it during auto-configuration.
 	 * XXX - should fix stack usage.
 	 */
-	memset(lwp0.l_addr, 0, sizeof(struct user));
+	pcb0 = lwp_getpcb(&lwp0);
+	memset(pcb0, 0, sizeof(struct pcb));
 
 	spl0();
 }
