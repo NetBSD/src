@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.142 2009/11/23 03:21:04 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.143 2009/11/27 08:55:38 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14863,4 +14863,11 @@ external/bsd/dhcpcd/sbin/dhcpcd/Makefile	patch
 	* Classless Static Routes are now enabled by default in dhcpcd.conf
 	  instead of being always being requested.
 	[roy, ticket #1099]
+
+sys/dev/usb/uhidev.c				1.44
+sys/dev/usb/ums.c				1.75
+sys/dev/usb/usbdevs				1.536
+
+	Fix kern/41737. Add quirks to make MS Wireless Laser Mouse 6000 work.
+	[rafal, ticket #1162]
 
