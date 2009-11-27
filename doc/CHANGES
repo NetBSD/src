@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.9 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.10 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1164,3 +1164,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	dhcpcd(8): Import dhcpcd-5.0.1 [roy 20090510]
 	hdaudio(4): New standards-compliant Intel High Definition Audio driver
 		written to replace azalia(4). [sborrill 20090906]
+	ums(4):	Add touchpanel support. [mbalmer 20091127]
