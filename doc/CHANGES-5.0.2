@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.28 2009/11/27 09:04:12 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.29 2009/11/27 09:19:36 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -458,4 +458,11 @@ sbin/newfs_msdos/newfs_msdos.c			1.30
 	Without this, newfs_msdos(8) assumes the target fs size is
 	whole disk size, so newfs_msdos(8) will fail or create wrong fs.
 	[tsutsui, ticket #1163]
+
+sys/kern/tty_subr.c				1.38
+
+	Fix clrbits() so that it doesn't mask no bits out of the byte after
+	the range (when the last bit to be cleared is the msb of a byte).
+	Fixes PR/42312.
+	[dsl, ticket #1141]
 
