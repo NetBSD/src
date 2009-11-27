@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.77 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.78 2009/11/27 03:23:14 rmind Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.77 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.78 2009/11/27 03:23:14 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.77 2009/11/26 00:19:23 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
@@ -98,7 +97,9 @@ void
 _start(struct rpb *prpb)
 {
 	extern uintptr_t scratch;
+	struct pcb *pcb0;
 	struct pte *pt;
+	vaddr_t uv;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
@@ -318,15 +319,17 @@ _start(struct rpb *prpb)
 	 *
 	 * In post-1.4 a RPB is always provided from the boot blocks.
 	 */
+	uv = uvm_lwp_getuarea(&lwp0);
+	uv += REDZONEADDR;
 #if defined(COMPAT_14)
 	if (prpb == 0) {
-		memset((char *)lwp0.l_addr + REDZONEADDR, 0, sizeof(struct rpb));
-		prpb = (struct rpb *)((char *)lwp0.l_addr + REDZONEADDR);
+		memset((void *)uv, 0, sizeof(struct rpb));
+		prpb = (struct rpb *)uv;
 		prpb->pfncnt = avail_end >> VAX_PGSHIFT;
 		prpb->rpb_base = (void *)-1;	/* RPB is fake */
 	} else
 #endif
-	memcpy((char *)lwp0.l_addr + REDZONEADDR, prpb, sizeof(struct rpb));
+	memcpy((void *)uv, prpb, sizeof(struct rpb));
 	if (prpb->pfncnt)
 		avail_end = prpb->pfncnt << VAX_PGSHIFT;
 	else
@@ -339,10 +342,11 @@ _start(struct rpb *prpb)
 	pmap_bootstrap();
 
 	/* Now running virtual. set red zone for proc0 */
-	pt = kvtopte((u_int)lwp0.l_addr + REDZONEADDR);
+	pt = kvtopte(uv);
 	pt->pg_v = 0;
 
-	lwp0.l_addr->u_pcb.framep = (void *)scratch;
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->framep = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack

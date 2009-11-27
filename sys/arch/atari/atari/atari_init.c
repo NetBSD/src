@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.87 2009/11/26 00:19:13 matt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.88 2009/11/27 03:23:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.87 2009/11/26 00:19:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.88 2009/11/27 03:23:05 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.87 2009/11/26 00:19:13 matt Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
@@ -274,9 +273,9 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	avail  = stphysize - pstart;
 
 	/*
-	 * Save KVA of lwp0 user-area and allocate it
+	 * Save KVA of lwp0 uarea and allocate it.
 	 */
-	lwp.l_addr = (struct user *)vstart;
+	uvm_lwp_setuarea(&lwp0, vstart);
 	pstart    += USPACE;
 	vstart    += USPACE;
 	avail     -= USPACE;
@@ -569,12 +568,13 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 
 	/*
 	 * Initialize the "u-area" pages.
-	 * Must initialize p_addr before autoconfig or the
-	 * fault handler will get a NULL reference.
+	 *
+	 * Must initialize uarea before autoconfig or the fault handler
+	 * will get a NULL reference.
 	 */
-	memset(lwp0.l_addr, 0, USPACE);
+	memset((void*)uvm_lwp_getuarea(&lwp0), 0, USPACE);
 	curlwp = &lwp0;
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 
 	/*
 	 * Get the hardware into a defined state

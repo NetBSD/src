@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.22 2009/11/26 00:19:22 matt Exp $	*/
+/*	$NetBSD: locore2.c,v 1.23 2009/11/27 03:23:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.22 2009/11/26 00:19:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.23 2009/11/27 03:23:14 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.22 2009/11/26 00:19:22 matt Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
 
@@ -187,15 +186,16 @@ _vm_init(void)
 	 * fault handler works in case we hit an early bug.
 	 * (The fault handler may reference lwp0 stuff.)
 	 */
-	lwp0.l_addr = (struct user *) nextva;
+	uvm_lwp_setuarea(&lwp0, nextva);
+	memset(nextva, 0, USPACE);
+
 	nextva += USPACE;
-	memset(lwp0.l_addr, 0, USPACE);
 
 	/*
 	 * Now that lwp0 exists, make it the "current" one.
 	 */
 	curlwp = &lwp0;
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 
 	/* This does most of the real work. */
 	pmap_bootstrap(nextva);

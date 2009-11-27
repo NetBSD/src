@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2009/11/26 00:19:23 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.175 2009/11/27 03:23:14 rmind Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2009/11/27 03:23:14 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2009/11/26 00:19:23 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -268,7 +267,7 @@ calc_kvmsize(vsize_t usrptsize)
 void
 pmap_bootstrap(void)
 {
-	struct pcb * const pcb = &lwp0.l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(&lwp0);
 	struct pmap * const pmap = pmap_kernel();
 	struct cpu_info *ci;
 	extern unsigned int etext;
@@ -352,7 +351,7 @@ pmap_bootstrap(void)
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	*(struct rpb *) 0 = *(struct rpb *) ((char *)lwp0.l_addr + REDZONEADDR);
+	*(struct rpb *)0 = *(struct rpb *)(uvm_lwp_getuarea(&lwp0) + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();

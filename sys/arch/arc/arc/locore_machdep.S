@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.15 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.16 2009/11/27 03:23:04 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ L* }
  */
 LEAF(mdbpeek)
 	li	v0, MDBERR
-	sw	v0, UADDR+U_PCB_ONFAULT
+	sw	v0, UADDR+PCB_ONFAULT
 	and	v0, a0, 3		# unaligned address?
 	bne	v0, zero, 1f
 	nop
@@ -222,7 +222,7 @@ LEAF(mdbpeek)
 	LWLO	v0, 3(a0)
 2:
 	j	ra			# made it w/o errors
-	sw	zero, UADDR+U_PCB_ONFAULT
+	sw	zero, UADDR+PCB_ONFAULT
 mdberr:
 	li	v0, 1			# trap sends us here
 	sw	v0, mdbmkfault
@@ -244,7 +244,7 @@ L* }
  */
 LEAF(mdbpoke)
 	li	v0, MDBERR
-	sw	v0, UADDR+U_PCB_ONFAULT
+	sw	v0, UADDR+PCB_ONFAULT
 	and	v0, a0, 3		# unaligned address?
 	bne	v0, zero, 1f
 	nop
@@ -255,7 +255,7 @@ LEAF(mdbpoke)
 	SWLO	a1, 3(a0)
 	and	a0, a0, ~3		# align address for cache flush
 2:
-	sw	zero, UADDR+U_PCB_ONFAULT
+	sw	zero, UADDR+PCB_ONFAULT
 	b	R4K_FlushICache		# flush instruction cache
 	li	a1, 8
 END(mdbpoke)

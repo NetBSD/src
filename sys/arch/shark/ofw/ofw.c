@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.51 2009/11/26 00:19:22 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.52 2009/11/27 03:23:13 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.51 2009/11/26 00:19:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.52 2009/11/27 03:23:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -788,10 +788,7 @@ ofw_configmem(void)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
-
-	/* Aaaaaaaah, running in the lwp0 address space! */
-	/* I feel good... */
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 	/* Set-up the various globals which describe physical memory for pmap. */
 	{

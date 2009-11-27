@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.19 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.19 2009/11/27 03:23:10 rmind Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -224,7 +224,7 @@ mp_cont:
 	HALT(0x15)
 
 	movl	CPU_INFO_IDLELWP(%ecx),%esi
-	movl	L_ADDR(%esi),%esi
+	movl	L_PCB(%esi),%esi
 	
 	/* %esi now points at our PCB. */
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.94 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -448,7 +448,7 @@ LEAF(badaddr64)
 	or	a0, a0, a1
 
 	bne	a2, 1, 2f
-	sw	v0, U_PCB_ONFAULT(v1)
+	sw	v0, PCB_ONFAULT(v1)
 	b	9f
 	lbu	v0, (a0)
 2:
@@ -466,7 +466,7 @@ LEAF(badaddr64)
 9:
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	zero, PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# made it w/o errors
 END(badaddr64)
@@ -474,7 +474,7 @@ END(badaddr64)
 LEAF(baderr64)
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	zero, PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
 END(baderr64)

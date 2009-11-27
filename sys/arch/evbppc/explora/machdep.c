@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2009/11/26 00:19:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2009/11/26 00:19:16 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
@@ -209,9 +208,9 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 * Initialize lwp0 and current pcb and pmap pointers.
 	 */
 	lwp0.l_cpu = ci;
-	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));	/* XXX why? */
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

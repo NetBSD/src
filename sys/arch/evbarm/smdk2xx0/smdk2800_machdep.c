@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.32 2009/11/26 00:19:15 matt Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.33 2009/11/27 03:23:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.32 2009/11/26 00:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.33 2009/11/27 03:23:07 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -710,7 +710,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

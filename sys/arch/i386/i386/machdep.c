@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.678 2009/11/26 00:19:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.679 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.678 2009/11/26 00:19:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.679 2009/11/27 03:23:10 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1055,7 +1055,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 union	descriptor *gdt, *ldt;
 union	descriptor *pentium_idt;
-extern vaddr_t proc0uarea;
+extern vaddr_t lwp0uarea;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
@@ -1312,8 +1312,8 @@ init386(paddr_t first_avail)
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
-	lwp0.l_addr = UAREA_TO_USER(proc0uarea);
-	pcb = (void *)lwp0.l_addr;
+	uvm_lwp_setuarea(&lwp0, lwp0uarea);
+	pcb = lwp_getpcb(&lwp0);
 
 #ifdef XEN
 	/* not on Xen... */

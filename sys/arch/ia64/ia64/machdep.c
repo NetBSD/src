@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2009/11/26 00:19:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2009/11/27 03:23:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -100,7 +100,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <machine/ia64_cpu.h>
 #include <machine/pal.h>
@@ -440,6 +439,7 @@ ia64_init(void)
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	struct pcb *pcb0;
 	struct efi_md *md;
+	vaddr_t v;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
 
@@ -660,13 +660,12 @@ ia64_init(void)
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	lwp0.l_addr = (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
-	pcb0 = &lwp0.l_addr->u_pcb;
-
+	v = uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	uvm_lwp_setuarea(&lwp0, v);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
-	 * and make proc0's trapframe pointer point to it for sanity.
+	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
 
 	/*
@@ -683,29 +682,23 @@ ia64_init(void)
 	 *                 --------------------------->
          *                       Higher Addresses
 	 *
-	 *	PCB: struct user;    TF: struct trapframe;
+	 *	PCB: struct pcb;    TF: struct trapframe;
 	 */
 
 
-	lwp0.l_md.md_tf = (struct trapframe *)((vaddr_t)lwp0.l_addr +
-					USPACE - sizeof(struct trapframe));
+	lwp0.l_md.md_tf = (struct trapframe *)(v + USPACE) - 1;
 
-	pcb0->pcb_special.sp =
-	    (vaddr_t)lwp0.l_md.md_tf - 16;	/* 16 bytes is the
-						 * scratch area defined
-						 * by the ia64 ABI
-						 */
+	pcb0 = lwp_getpcb(&lwp0);
 
-	pcb0->pcb_special.bspstore = (vaddr_t) (lwp0.l_addr + 1);
+	/* 16 bytes is the scratch area defined by the ia64 ABI. */
+	pcb0->pcb_special.sp = (vaddr_t)lwp0.l_md.md_tf - 16;
+	pcb0->pcb_special.bspstore = v + 1;
 
 	mutex_init(&pcb0.pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
-
 
 	/*
 	 * Setup global data for the bootstrap cpu.
 	 */
-
-
 	ci = curcpu();
 
 	/* ar.k4 contains the cpu_info pointer to the
@@ -730,7 +723,6 @@ ia64_init(void)
 	/* Indicate that proc0 has a CPU. */
 	lwp0.l_cpu = ci;
 
-
 	ia64_set_tpr(0);
 	ia64_srlz_d();
 
@@ -739,7 +731,7 @@ ia64_init(void)
 	 * sane) context as the initial context for new threads that are
 	 * forked from us.
 	 */
-	if (savectx(lwp_getpcb(&lwp0)))
+	if (savectx(pcb0))
 		panic("savectx failed");
 
 	/*
@@ -776,9 +768,10 @@ setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf;
 	uint64_t *ksttop, *kst, regstkp;
+	vaddr_t uv = uvm_lwp_getuarea(l);
 
 	tf = l->l_md.md_tf;
-	regstkp = (uint64_t) (l->l_addr) + sizeof(struct user);
+	regstkp = uv + sizeof(struct pcb);
 
 	ksttop =
 	    (uint64_t*)(regstkp + tf->tf_special.ndirty +

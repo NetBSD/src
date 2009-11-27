@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.20 2009/11/06 18:18:57 dyoung Exp $	*/
+/*	$NetBSD: copy.S,v 1.21 2009/11/27 03:23:10 rmind Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.20 2009/11/06 18:18:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.21 2009/11/27 03:23:10 rmind Exp $");
 
 #include "assym.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.20 2009/11/06 18:18:57 dyoung Exp $");
 
 #define GET_CURPCB(reg)	\
 	movl	CPUVAR(CURLWP), reg; \
-	movl	L_ADDR(reg), reg
+	movl	L_PCB(reg), reg
 
 /*
  * These are arranged so that the abnormal case is a forwards
@@ -140,7 +140,7 @@ ENTRY(return_address)
 	movl	%ebp,%eax	/* frame pointer -> %eax */ 
 	movl	4(%esp),%ecx	/* level -> %ecx */
 	movl	CPUVAR(CURLWP),%edx
-	movl	L_ADDR(%edx),%edx
+	movl	L_PCB(%edx),%edx
 	movl	$_C_LABEL(return_address_fault),PCB_ONFAULT(%edx)
 	cmpl	$0,%ecx
 	je	2f
@@ -540,7 +540,7 @@ ENTRY(fuswintr)
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
 	movl	CPUVAR(CURLWP),%ecx
-	movl	L_ADDR(%ecx),%ecx
+	movl	L_PCB(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -646,7 +646,7 @@ ENTRY(suswintr)
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
 	movl	CPUVAR(CURLWP),%ecx
-	movl	L_ADDR(%ecx),%ecx
+	movl	L_PCB(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movl	8(%esp),%eax
 	movw	%ax,(%edx)

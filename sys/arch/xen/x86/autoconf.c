@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2009/11/21 05:54:04 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2009/11/27 03:23:15 rmind Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2009/11/21 05:54:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2009/11/27 03:23:15 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2009/11/21 05:54:04 rmind Exp $");
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kauth.h>
 
 #ifdef NFS_BOOT_BOOTSTATIC

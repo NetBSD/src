@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.13 2009/03/14 15:36:13 dsl Exp $	*/
+/*	$NetBSD: profile.c,v 1.14 2009/11/27 03:23:13 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.13 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.14 2009/11/27 03:23:13 rmind Exp $");
 
 #include "profiler.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.13 2009/03/14 15:36:13 dsl Exp $");
 #include <sys/buf.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/errno.h>

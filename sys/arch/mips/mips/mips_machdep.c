@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.220 2009/11/27 01:37:30 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.221 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.220 2009/11/27 01:37:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.221 2009/11/27 03:23:11 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.220 2009/11/27 01:37:30 rmind Exp
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/lwp.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
 #include <sys/core.h>
@@ -1240,7 +1239,7 @@ u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
-struct user dumppcb;		/* Actually, struct pcb would do. */
+struct pcb dumppcb;
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.

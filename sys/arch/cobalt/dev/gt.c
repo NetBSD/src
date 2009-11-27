@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.21 2008/05/09 10:59:55 tsutsui Exp $	*/
+/*	$NetBSD: gt.c,v 1.22 2009/11/27 03:23:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.21 2008/05/09 10:59:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22 2009/11/27 03:23:05 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.21 2008/05/09 10:59:55 tsutsui Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

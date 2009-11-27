@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.43 2009/11/26 00:19:15 matt Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.44 2009/11/27 03:23:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.43 2009/11/26 00:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.44 2009/11/27 03:23:07 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -621,7 +621,7 @@ initarm(void *arg)
 	 * Moved here from cpu_startup() as data_abort_handler() references
 	 * this during init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 	/*
 	 * We must now clean the cache again....

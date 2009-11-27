@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.12 2009/11/26 00:19:15 matt Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.13 2009/11/27 03:23:08 rmind Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.12 2009/11/26 00:19:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.13 2009/11/27 03:23:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -686,7 +686,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

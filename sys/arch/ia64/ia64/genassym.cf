@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.7 2009/11/27 03:23:10 rmind Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ define	ENAMETOOLONG		ENAMETOOLONG
 define	EFAULT			EFAULT
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -166,7 +166,5 @@ define	UPAGES			UPAGES
 
 define 	FRAME_SYSCALL		FRAME_SYSCALL
 
-#XXX: LWP_PCB should be lwp->l_addr->u_pcb
 define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp) 
-define	LWP_PCB			offsetof(struct lwp, l_addr) 
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault) 

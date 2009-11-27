@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.24 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: scr.c,v 1.25 2009/11/27 03:23:13 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.24 2009/03/14 14:46:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.25 2009/11/27 03:23:13 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.24 2009/03/14 14:46:07 dsl Exp $");
 /* #include <sys/select.h> */
 /* #include <sys/tty.h> */
 #include <sys/proc.h>
-/* #include <sys/user.h> */
 #include <sys/conf.h>
 /* #include <sys/file.h> */
 /* #include <sys/uio.h> */

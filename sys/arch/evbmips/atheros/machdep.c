@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2009/11/26 00:19:16 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.20 2009/11/27 03:23:08 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2009/11/26 00:19:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2009/11/27 03:23:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2009/11/26 00:19:16 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -220,8 +219,9 @@ mach_init(void)
 {
 	void *kernend;
 	u_long first, last;
-	void *				v;
-	uint32_t			memsize;
+	struct pcb *pcb0;
+	vaddr_t v;
+	uint32_t memsize;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -306,13 +306,15 @@ mach_init(void)
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for proc0.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 
 	/*
 	 * Initialize busses.
@@ -401,7 +403,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

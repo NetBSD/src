@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:11 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2009/11/27 03:23:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2009/11/27 03:23:03 rmind Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -123,8 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2009/11/26 00:19:11 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
-#include <sys/mount.h> 
+#include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
@@ -210,9 +209,10 @@ mach_init(int argc, char *argv[], char *envp[])
 	vaddr_t kernstart, kernend;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vsize_t size;
+	struct pcb *pcb0;
+	vaddr_t v;
 	const char *cp;
 	char *cp0;
-	void *v;
 	int i;
 
 	/* Disable interrupts. */
@@ -560,14 +560,17 @@ mach_init(int argc, char *argv[], char *envp[])
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for lwp0.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
 	led_display('u', 's', 'p', 'c');
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	v = uvm_pageboot_alloc(USPACE);
+	uvm_lwp_setuarea(&lwp0, v);
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -656,7 +659,7 @@ cpu_startup(void)
 }
 
 int	waittime = -1;
-struct user dumppcb;	/* Actually, struct pcb would do. */
+struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -665,7 +668,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *) curpcb);
+		savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

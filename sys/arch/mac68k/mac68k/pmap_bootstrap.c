@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.79 2009/11/26 00:19:18 matt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.80 2009/11/27 03:23:10 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.79 2009/11/26 00:19:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.80 2009/11/27 03:23:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -413,7 +413,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Store the u-area address
 	 */
-	lwp0.l_addr = PA2VA(l0upa, struct user *);
+	uvm_lwp_setuarea(&lwp0, PA2VA(l0upa, vaddr_t));
 
 	/*
 	 * VM data structures are now initialized, set up data for

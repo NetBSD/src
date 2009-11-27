@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2009/03/18 10:22:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2009/11/27 03:23:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2009/11/27 03:23:11 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2009/03/18 10:22:32 cegger Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>

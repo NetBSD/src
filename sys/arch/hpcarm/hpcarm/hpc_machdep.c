@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.93 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.94 2009/11/27 03:23:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.93 2009/11/26 00:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.94 2009/11/27 03:23:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -659,7 +659,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);

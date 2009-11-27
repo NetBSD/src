@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.17 2009/11/26 00:19:14 matt Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.18 2009/11/27 03:23:06 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -802,7 +802,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	lwp0.l_addr = (struct user *)kernelstack.pv_va;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2009/11/26 00:19:17 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.12 2009/11/27 03:23:08 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/11/26 00:19:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2009/11/27 03:23:08 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2009/11/26 00:19:17 matt Exp $");
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
@@ -207,9 +206,9 @@ initppc(u_int startkernel, u_int endkernel)
 	    physmemr, availmemr);
 
 	lwp0.l_cpu = ci;
-	memset(lwp0.l_addr, 0, sizeof(*lwp0.l_addr));
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));
 	curpcb->pcb_pm = pmap_kernel();
 
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
