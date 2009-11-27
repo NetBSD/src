@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.145 2009/11/27 09:16:06 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.146 2009/11/27 09:50:03 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14884,4 +14884,14 @@ sys/kern/tty_subr.c				1.38
 	the range (when the last bit to be cleared is the msb of a byte).
 	Fixes PR/42312.
 	[dsl, ticket #1141]
+
+doc/CHANGES					1.320 via patch
+share/man/man4/ums.4				1.9
+sys/dev/usb/ums.c				1.77
+
+	Add support for USB HID devices that report absolute coordinates
+	instead of relative movement data, e.g. touchpanels.  Please
+	note that calibration must be done outside the wscons(4) driver
+	for now.
+	[mbalmer, ticket #1164]
 
