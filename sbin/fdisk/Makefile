@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2009/06/01 19:57:33 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2009/11/27 15:37:32 tsutsui Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c
@@ -16,8 +16,6 @@ CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rwd0c"'
 .include <bsd.prog.mk>
 
 .if (${HOSTPROG:U} == "")
-SUBDIR=	mbr
 DPADD+=	${LIBUTIL} ${LIBZ}
 LDADD+=	-lutil -lz
-.include <bsd.subdir.mk>
 .endif
