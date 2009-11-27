@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/11/10 14:47:52 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2009/11/27 14:39:39 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -59,9 +59,9 @@ ${PROG}.info: configdoc.texi bfdver.texi
 	${_MKTARGET_CREATE}
 	(srcdir=${DIST}/ld EMULATION_NAME=$f . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
-			temp_emul=$$TEMPLATE_NAME.em; \
+			temp_name=$$TEMPLATE_NAME.em; \
 		else \
-			temp_emul=; \
+			temp_name=; \
 		fi; \
 		if [ x"$$SCRIPT_NAME" != x ]; then \
 			script=$$SCRIPT_NAME.sc; \
