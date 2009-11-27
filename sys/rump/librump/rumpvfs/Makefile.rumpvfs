@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.20 2009/11/26 20:58:51 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.21 2009/11/27 17:54:24 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -30,7 +30,7 @@ SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
 	vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vfs_xattr.c
 
 # sys/kern module (and syscall)
-SRCS+=	kern_module_vfs.c sys_module.c
+SRCS+=	kern_module_vfs.c subr_kobj_vfs.c sys_module.c
 
 # sys/uvm
 SRCS+=	uvm_vnode.c
