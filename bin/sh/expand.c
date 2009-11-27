@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.82 2009/01/18 00:30:54 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.83 2009/11/27 10:50:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.82 2009/01/18 00:30:54 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.83 2009/11/27 10:50:04 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -1565,7 +1565,7 @@ wordexpcmd(int argc, char **argv)
 	out1c('\0');
 	for (i = 1, len = 0; i < argc; i++)
 		len += strlen(argv[i]);
-	out1fmt("%zd", len);
+	out1fmt("%zu", len);
 	out1c('\0');
 	for (i = 1; i < argc; i++) {
 		out1str(argv[i]);
