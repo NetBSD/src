@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.43 2009/11/20 12:24:17 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.44 2009/11/27 13:36:30 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -85,3 +85,6 @@ __archivebuild: .USE
 	    renametab.${.TARGET} ${.TARGET}
 	rm -f renametab.${.TARGET}
 	${AR} ${_ARRANFL} ${.TARGET}
+
+.-include "${NETBSDSRCDIR}/sys/arch/${MACHINE_CPU}/include/Makefile.inc"
+.-include "${NETBSDSRCDIR}/sys/arch/${MACHINE}/include/Makefile.inc"
