@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.17 2009/01/18 04:48:53 isaki Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.18 2009/11/28 03:10:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.17 2009/01/18 04:48:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.18 2009/11/28 03:10:09 isaki Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -122,7 +122,7 @@ ne_neptune_match(device_t parent, cfdata_t match, void *aux)
 
  out:
 	bus_space_unmap(nict, nich, NE2000_NPORTS);
-	return (rv);
+	return (rv != 0) ? 1 : 0;
 }
 
 void

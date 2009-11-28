@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.13 2009/01/18 04:48:53 isaki Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.14 2009/11/28 03:10:09 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.13 2009/01/18 04:48:53 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.14 2009/11/28 03:10:09 isaki Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -136,7 +136,7 @@ ne_intio_match(device_t parent, cfdata_t cf, void *aux)
 
  out:
 	bus_space_unmap(iot, ioh, NE2000_NPORTS);
-	return rv;
+	return (rv != 0) ? 1 : 0;
 }
 
 static void
