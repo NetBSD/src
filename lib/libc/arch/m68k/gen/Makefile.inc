@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2006/07/03 12:54:34 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2009/11/28 23:46:38 christos Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -33,6 +33,9 @@ SRCS+=	_lwp.c
 .if	(${MACHINE_ARCH} == "m68000" || ${MKSOFTFLOAT} == "yes")
 SRCS+=	modf_ieee754.c			# generic ieee754 version
 SRCS+=	flt_rounds_softfloat.S
+.if ${MKSOFTFLOAT} != "yes"
+SRCS+=	fpfake.c
+.endif
 .else
 SRCS+=	modf.S
 SRCS+=	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S fpsetmask.S \
