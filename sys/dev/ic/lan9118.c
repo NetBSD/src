@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.3 2009/11/28 08:44:00 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.4 2009/11/28 12:16:57 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.3 2009/11/28 08:44:00 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.4 2009/11/28 12:16:57 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -360,6 +360,7 @@ lan9118_start(struct ifnet *ifp)
 	unsigned tdfree, totlen, dso;
 	uint32_t txa, txb;
 	uint8_t *p;
+	int n;
 
 	DPRINTFN(3, ("%s\n", __func__));
 
@@ -389,6 +390,33 @@ lan9118_start(struct ifnet *ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
+		/*
+		 * Check mbuf chain -- "middle" buffers must be >= 4 bytes
+		 * and maximum # of buffers is 86.
+		 */
+		m = m0;
+		n = 0;
+		while (m) {
+			if (m->m_len < 4 || ++n > 86) {
+				/* Copy mbuf chain. */
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL)
+					goto discard;   /* discard packet */
+				MCLGET(m, M_DONTWAIT);
+				if ((m->m_flags & M_EXT) == 0) {
+					m_freem(m);
+					goto discard;	/* discard packet */
+				}
+				m_copydata(m0, 0, m0->m_pkthdr.len,
+				    mtod(m, void *));
+				m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+				m_freem(m0);
+				m0 = m;
+				break;
+			}
+			m = m->m_next;
+		}
+
 		m = m0;
 		totlen = m->m_pkthdr.len;
 		p = mtod(m, uint8_t *);
@@ -404,11 +432,6 @@ lan9118_start(struct ifnet *ifp)
 			    LAN9118_TXDFIFOP, txa);
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			    LAN9118_TXDFIFOP, txb);
-			/*
-			 * XXXX:
-			 * We are assuming that the size of mbus always align
-			 * in 4 bytes.
-			 */
 			bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
 			    LAN9118_TXDFIFOP, (uint32_t *)(p - dso),
 			    (m->m_len + dso + 3) >> 2);
@@ -428,6 +451,8 @@ lan9118_start(struct ifnet *ifp)
 		bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
 		    LAN9118_TXDFIFOP, (uint32_t *)(p - dso),
 		    (m->m_len + dso + 3) >> 2);
+
+discard:
 #if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
