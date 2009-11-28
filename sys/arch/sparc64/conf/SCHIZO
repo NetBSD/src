@@ -1,0 +1,28 @@
+# $NetBSD: SCHIZO,v 1.1 2009/11/28 21:39:42 mrg Exp $
+#
+# GENERIC with schizo support enabled, with the annoying schizo interupt
+# option
+#
+
+#include 	"arch/sparc64/conf/GENERIC.MP"
+include 	"arch/sparc64/conf/GENERIC"
+
+#ident		"SCHIZO.$Revision: 1.1 $"
+
+options 	SCHIZO_BUS_SPACE_BROKEN
+#options 	SYSCALL_DEBUG
+
+makeoptions	DEBUG="-g"
+options 	DEBUG
+options 	DIAGNOSTIC
+options 	DB_MAX_WIDTH=160
+options 	DDB_ONPANIC=2   # print stack trace
+
+schizo*	at mainbus?
+pci* at schizo?
+
+no machfb
+no esiop
+no siop
+
+bge* at pci? dev ? function ?
