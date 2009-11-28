@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1321 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1322 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -486,3 +486,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		the use of the kernel linker in a rump kernel.
 		[pooka 20091126]
 	ums(4): Added touchpanel support. [mbalmer 20091127]
+	ws(4): Added the xf86-input-ws input driver for touchpanels that
+		report absolute position data through wscons(4), e.g. those
+		support by ums(4). [mbalmer 20091128]
