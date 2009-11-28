@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.106 2009/11/13 22:39:35 joerg Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.106 2009/11/13 22:39:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -849,6 +849,8 @@ linux_to_bsd_ip_sockopt(int lopt)
 		return IP_TOS;
 	case LINUX_IP_TTL:
 		return IP_TTL;
+	case LINUX_IP_HDRINCL:
+		return IP_HDRINCL;
 	case LINUX_IP_MULTICAST_TTL:
 		return IP_MULTICAST_TTL;
 	case LINUX_IP_MULTICAST_LOOP:
@@ -1274,6 +1276,9 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		break;
 	case LINUX_SIOCGIFNETMASK:
 		SCARG(&ia, com) = OOSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCGIFMTU:
+		SCARG(&ia, com) = OSIOCGIFMTU;
 		break;
 	case LINUX_SIOCADDMULTI:
 		SCARG(&ia, com) = OSIOCADDMULTI;
