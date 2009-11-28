@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.21 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.22 2009/11/28 20:09:56 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.21 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.22 2009/11/28 20:09:56 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -152,7 +152,6 @@ irix_sysmp_sasz(int cmd, register_t *retval)
 static int
 irix_sysmp_saget(int cmd, char *buf, size_t len)
 {
-	extern u_int bufpages;
 	void *kbuf;
 	int error = 0;
 
@@ -169,7 +168,7 @@ irix_sysmp_saget(int cmd, char *buf, size_t len)
 		irm->availsmem = uvmexp.free + active + inactive
 		    + uvmexp.wired + (uvmexp.swpages - uvmexp.swpgonly);
 		irm->availrmem = uvmexp.free + active + inactive + uvmexp.wired;
-		irm->bufmem = bufpages;
+		irm->bufmem = uvmexp.filepages;
 		irm->physmem = uvmexp.npages;
 		irm->dchunkpages = 0; /* unsupported */
 		irm->pmapmem = 0;     /* unsupported */
