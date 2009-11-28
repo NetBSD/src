@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.146 2009/11/27 09:50:03 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.147 2009/11/28 16:04:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14894,4 +14894,81 @@ sys/dev/usb/ums.c				1.77
 	note that calibration must be done outside the wscons(4) driver
 	for now.
 	[mbalmer, ticket #1164]
+
+sys/arch/i386/stand/lib/pcio.c			1.26
+
+	Have the boot countdown on i386 display "starting in N seconds."
+	instead of "starting in N" and eliminate a use of sprintf.
+	[mbalmer, ticket #1143]
+
+dist/nvi/common/exf.c				1.4
+
+	fix format string bug, filename may contain % character, don't use it
+	as format string.
+	[tnozaki, ticket #1145]
+
+sys/compat/linux/common/linux_socket.c		1.105, 1.106
+sys/compat/linux/common/linux_sockio.h		1.17
+sys/compat/linux32/common/linux32_socket.c	1.11, 1.12
+sys/compat/linux32/common/linux32_sockio.h	1.3
+
+	Provide SIOCGIFNAME.
+	[joerg, ticket #1147]
+
+sys/net/if.c					1.241
+
+	Simplify ifreq_setaddr:
+	- Drop the INET6 block. The commands are never given to this function
+	  and truncating the sockaddr is arguably not the desired result anyway.
+	- Clear the address before copying. This fixes SIOCGIFNETMASK and
+	  possible other ioctls for users that don't check sa_len. This
+	  includes COMPAT_43 and Linux emulation.
+
+	[joerg, ticket #1148]
+
+share/man/man4/man4.sparc64/lom.4		1.3
+sys/arch/sparc64/dev/lom.c			1.2, 1.3
+
+	Merge changes between revision 1.16 and 1.19 of OpenBSD with
+	shutdownhook_establish(9) to pmf(9) conversion:
+	- LOMlite seems to get wedged from time to time; add some code to
+	  unwedge it.
+	- Make sure we don't insert and entry into the list of pending
+	  commends twice.
+	- Establish a shutdown hook to disable the watchdog timer to prevent
+	  watchdog triggers after the kernel has been halted.
+	- Handle LOMlite2 in an interrupt-driven way; avoids using delay(9)
+	  once the machine is up and running.
+
+	Add support for monitoring Fault LED and Alarms status.
+	[nakayama, ticket #1151]
+
+sys/fs/puffs/puffs_vnops.c			1.139
+
+	Send VOP_ABORTOP() as a FAF -- we don't care about the return value.
+	[pooka, ticket #1153]
+
+sys/fs/puffs/puffs_vnops.c			1.140
+
+	Send VOP_ABORTOP() in case attempting cross-dev rename, part of
+	PR kern/42210.  Also, fix a memory management error in said case.
+	[pooka, ticket #1154]
+
+lib/libpuffs/creds.c				1.15
+
+	In getgroups(), copy only up to the number of supplementary groups
+	that actually exist.
+	[pooka, ticket #1155]
+
+sbin/savecore/savecore.c			1.81
+
+	Instead of exiting with an obscure error message if -N /kernelname isn't
+	specified, blithely assume the kernel will consume around 20 megs.
+	[dogcow, ticket #1157]
+
+dist/nvi/ex/ex_cscope.c				1.5
+dist/nvi/ex/ex_tag.c				1.7
+
+	don't use pathname directly as msgq()'s first argument of format string.
+	[tnozaki, ticket #1159]
 
