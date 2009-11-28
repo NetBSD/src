@@ -1,5 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/05 03:54:17 tsarna Exp $
+#	$NetBSD: Makefile,v 1.3 2009/11/28 22:15:48 he Exp $
 
-SUBDIR=	usr.bin usr.sbin nss
+.include <bsd.own.mk>
+
+SUBDIR=	usr.bin usr.sbin
+.if (${MKPIC} != "no")
+SUBDIR+= nss
+.endif
 
 .include <bsd.subdir.mk>
