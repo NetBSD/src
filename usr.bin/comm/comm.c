@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.15 2005/02/17 17:31:28 xtraeme Exp $	*/
+/*	$NetBSD: comm.c,v 1.15.12.1 2009/11/28 21:37:03 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.15 2005/02/17 17:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: comm.c,v 1.15.12.1 2009/11/28 21:37:03 sborrill Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -60,6 +60,7 @@ char *tabs[] = { "", "\t", "\t\t" };
 FILE   *file(const char *);
 void	show(FILE *, char *, char *);
 void	usage(void);
+char   *getnextln(char *buf, FILE *);
 
 int
 main(int argc, char **argv)
@@ -116,9 +117,9 @@ main(int argc, char **argv)
 	for (read1 = read2 = 1;;) {
 		/* read next line, check for EOF */
 		if (read1)
-			file1done = !fgets(line1, MAXLINELEN, fp1);
+			file1done = !getnextln(line1, fp1);
 		if (read2)
-			file2done = !fgets(line2, MAXLINELEN, fp2);
+			file2done = !getnextln(line2, fp2);
 
 		/* if one file done, display the rest of the other file */
 		if (file1done) {
@@ -136,7 +137,7 @@ main(int argc, char **argv)
 		if (!(comp = compare(line1, line2))) {
 			read1 = read2 = 1;
 			if (col3)
-				if (printf("%s%s", col3, line1) < 0)
+				if (printf("%s%s\n", col3, line1) < 0)
 					break;
 			continue;
 		}
@@ -146,13 +147,13 @@ main(int argc, char **argv)
 			read1 = 1;
 			read2 = 0;
 			if (col1)
-				if (printf("%s%s", col1, line1) < 0)
+				if (printf("%s%s\n", col1, line1) < 0)
 					break;
 		} else {
 			read1 = 0;
 			read2 = 1;
 			if (col2)
-				if (printf("%s%s", col2, line2) < 0)
+				if (printf("%s%s\n", col2, line2) < 0)
 					break;
 		}
 	}
@@ -166,7 +167,7 @@ main(int argc, char **argv)
 void
 show(FILE *fp, char *offset, char *buf)
 {
-	while (printf("%s%s", offset, buf) >= 0 && fgets(buf, MAXLINELEN, fp))
+	while (printf("%s%s\n", offset, buf) >= 0 && getnextln(buf, fp))
 		;
 }
 
@@ -189,3 +190,24 @@ usage(void)
 	(void)fprintf(stderr, "usage: comm [-123f] file1 file2\n");
 	exit(1);
 }
+
+char *
+getnextln(char *buf, FILE *fp)
+{
+	size_t i = 0;
+	int c;
+
+	while ((c = fgetc(fp)) != '\n' && c != EOF) {
+		buf[i++] = c;
+
+		if (i >= MAXLINELEN)
+			i--; /* consumes extra characters till newline */
+	}
+
+	if (c == EOF && !i)
+		return NULL;
+
+	buf[i] = 0;
+	return buf;
+}
+
