@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.72 2009/11/28 12:10:25 mbalmer Exp $
+# $NetBSD: md.i386,v 1.73 2009/11/28 16:48:25 mbalmer Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -481,6 +481,8 @@
 ./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	-obsolete-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/elographics_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/elographics_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so		-unknown-	xorg
@@ -702,6 +704,7 @@
 ./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				-unknown-	obsolete
+./usr/X11R7/man/cat4/elographics.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
@@ -745,6 +748,7 @@
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			-unknown-	obsolete
+./usr/X11R7/man/html4/elographics.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/i128.html				-unknown-	html,xorg
@@ -788,6 +792,7 @@
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				-unknown-	obsolete
+./usr/X11R7/man/man4/elographics.4			-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i128.4				-unknown-	.man,xorg
