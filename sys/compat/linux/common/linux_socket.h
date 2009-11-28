@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.18 2009/06/17 14:18:51 njoly Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.19 2009/11/28 22:11:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 
 #define LINUX_IP_TOS		1
 #define LINUX_IP_TTL		2
+#define LINUX_IP_HDRINCL	3
 #define	LINUX_IP_MULTICAST_IF	32
 #define	LINUX_IP_MULTICAST_TTL	33
 #define	LINUX_IP_MULTICAST_LOOP	34
