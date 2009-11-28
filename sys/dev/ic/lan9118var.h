@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118var.h,v 1.1 2009/08/09 06:40:10 kiyohara Exp $	*/
+/*	$NetBSD: lan9118var.h,v 1.2 2009/11/28 08:44:00 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -69,6 +69,7 @@ struct lan9118_softc {
 
 	uint32_t sc_afc_cfg;		/* AFC_CFG configuration */
 	int sc_use_extphy;
+	struct callout sc_tick;
 
 	int sc_flags;
 #define LAN9118_FLAGS_SWAP	0x00000001
