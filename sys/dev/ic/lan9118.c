@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.4 2009/11/28 12:16:57 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.5 2009/11/28 13:20:41 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.4 2009/11/28 12:16:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.5 2009/11/28 13:20:41 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -316,12 +316,14 @@ lan9118_intr(void *arg)
 			break;
 		datum = int_sts;
 
+#if 0	/* not yet... */
 		if (int_sts & LAN9118_INT_PHY_INT) { /* PHY */
 			/* Shall we need? */
 		}
 		if (int_sts & LAN9118_INT_PME_INT) { /*Power Management Event*/
 			/* not yet... */
 		}
+#endif
 		if (int_sts & LAN9118_INT_RXE) {
 			ifp->if_ierrors++;
 			aprint_error_ifnet(ifp, "Receive Error\n");
@@ -606,8 +608,10 @@ lan9118_init(struct ifnet *ifp)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_FIFO_INT,
 	    LAN9118_FIFO_INT_TXSL(0) | LAN9118_FIFO_INT_RXSL(0));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN,
+#if 0	/* not yet... */
 	    LAN9118_INT_PHY_INT | /* PHY */
 	    LAN9118_INT_PME_INT | /* Power Management Event */
+#endif
 	    LAN9118_INT_RXE     | /* Receive Error */
 	    LAN9118_INT_TSFL    | /* TX Status FIFO Level */
 	    LAN9118_INT_RXDF_INT| /* RX Dropped Frame Interrupt */
