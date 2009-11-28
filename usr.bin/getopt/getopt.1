@@ -1,5 +1,5 @@
-.\"	$NetBSD: getopt.1,v 1.17 2009/03/11 13:53:30 joerg Exp $
-.Dd November 9, 2000
+.\"	$NetBSD: getopt.1,v 1.18 2009/11/28 20:36:45 dsl Exp $
+.Dd November 28, 2009
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -34,6 +34,11 @@ preceded by a
 .Dq \-
 and in its own shell argument;
 each option argument is also in its own shell argument.
+.Pp
+.Nm
+should not be used in new scripts, use the shell builtin
+.Nm getopts
+instead.
 .Sh EXAMPLES
 The following code fragment shows how one might process the arguments
 for a command that can take the options
