@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.2 2009/05/24 12:59:54 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.3 2009/11/28 10:00:24 nonaka Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.2 2009/05/24 12:59:54 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.3 2009/11/28 10:00:24 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -343,11 +343,8 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		m = MMC_CSD_TRAN_SPEED_MANT(resp);
 		csd->tran_speed = speed_exponent[e] * speed_mantissa[m] / 10;
 	}
-	csd->sector_size = MIN((1 << csd->read_bl_len),
-	    sdmmc_chip_host_maxblklen(sc->sc_sct, sc->sc_sch));
-	if (csd->sector_size < (1 << csd->read_bl_len))
-		csd->capacity *= (1 << csd->read_bl_len) / csd->sector_size;
-	csd->sector_size_sb = ffs(csd->sector_size) - 1;
+	if ((1 << csd->read_bl_len) > SDMMC_SECTOR_SIZE)
+		csd->capacity *= (1 << csd->read_bl_len) / SDMMC_SECTOR_SIZE;
 
 	if (sc->sc_busclk > csd->tran_speed)
 		sc->sc_busclk = csd->tran_speed;
@@ -420,7 +417,6 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 	printf("write_cl_len = %d\n", csd->write_bl_len);
 	printf("r2w_factor = %d\n", csd->r2w_factor);
 	printf("tran_speed = %d\n", csd->tran_speed);
-	printf("sector_size = %d\n", csd->sector_size);
 }
 #endif
 
@@ -526,13 +522,13 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_opcode = MMC_SET_BLOCKLEN;
-	cmd.c_arg = sf->csd.sector_size;
+	cmd.c_arg = SDMMC_SECTOR_SIZE;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 
 	DPRINTF(("%s: sdmmc_mem_set_blocklen: read_bl_len=%d sector_size=%d\n",
-	    SDMMCDEVNAME(sc), 1 << sf->csd.read_bl_len, sf->csd.sector_size));
+	    SDMMCDEVNAME(sc), 1 << sf->csd.read_bl_len, SDMMC_SECTOR_SIZE));
 
 	return error;
 }
@@ -552,12 +548,12 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, uint32_t blkno,
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = sf->csd.sector_size;
+	cmd.c_blklen = SDMMC_SECTOR_SIZE;
 	cmd.c_opcode = (cmd.c_datalen / cmd.c_blklen) > 1 ?
 	    MMC_READ_BLOCK_MULTIPLE : MMC_READ_BLOCK_SINGLE;
 	cmd.c_arg = blkno;
 	if (!ISSET(sf->flags, SFF_SDHC))
-		cmd.c_arg <<= sf->csd.sector_size_sb;
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = sc->sc_dmap;
@@ -646,12 +642,12 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, uint32_t blkno,
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = sf->csd.sector_size;
+	cmd.c_blklen = SDMMC_SECTOR_SIZE;
 	cmd.c_opcode = (cmd.c_datalen / cmd.c_blklen) > 1 ?
 	    MMC_WRITE_BLOCK_MULTIPLE : MMC_WRITE_BLOCK_SINGLE;
 	cmd.c_arg = blkno;
 	if (!ISSET(sf->flags, SFF_SDHC))
-		cmd.c_arg <<= sf->csd.sector_size_sb;
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = sc->sc_dmap;
