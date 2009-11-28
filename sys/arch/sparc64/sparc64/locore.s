@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.294 2009/11/26 00:19:22 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.295 2009/11/28 21:38:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -55,7 +55,9 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
+#ifndef SCHIZO_BUS_SPACE_BROKEN /* Need phys access for USIII so far */
 #define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
+#endif
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #undef	TRAPSTATS		/* Count traps */
@@ -2529,7 +2531,11 @@ winfixsave:
 1:
 #if 1
 	/* Now we need to blast away the D$ to make sure we're in sync */
+#ifdef SPITFIRE
 	stxa	%g0, [%g7] ASI_DCACHE_TAG
+#else
+	stxa	%g0, [%g7] ASI_DCACHE_INVALIDATE
+#endif
 	brnz,pt	%g7, 1b
 	 dec	8, %g7
 #endif
@@ -3811,7 +3817,7 @@ ENTRY(sparc64_ipi_flush_pte)
 	membar	#Sync
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
 #else
-	! Not yet
+	WRITEME
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -3845,7 +3851,7 @@ ENTRY(sparc64_ipi_flush_ctx)
 	membar	#Sync
 	IPIEVC_INC(IPI_EVCNT_TLB_CTX,%g2,%g3)
 #else
-	! Not yet
+	WRITEME
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -5491,6 +5497,9 @@ ENTRY(sp_tlb_flush_pte)
 	 nop
 #endif
 #else
+#ifdef MULTIPROCESSOR
+	WRITEME
+#endif
 	!!
 	!! Cheetahs do not support flushing the IMMU from secondary context
 	!!
@@ -5519,7 +5528,7 @@ ENTRY(sp_tlb_flush_pte)
 	 nop
 1:	
 	retl
-	 wrpr	%g0, 0, %tl				! Return to kernel mode.
+	 wrpr	%g0, %o3, %tl				! Return to kernel mode.
 #endif
 
 /*
@@ -5585,6 +5594,9 @@ ENTRY(sp_tlb_flush_ctx)
 	 nop
 #endif
 #else
+#ifdef MULTIPROCESSOR
+	WRITEME
+#endif
 	rdpr	%tl, %o3
 	mov	CTX_PRIMARY, %o2
 	brnz	%o3, 1f
@@ -5607,7 +5619,7 @@ ENTRY(sp_tlb_flush_ctx)
 	 nop
 1:	
 	retl
-	 wrpr	%g0, 0, %tl			! Return to kernel mode.
+	 wrpr	%g0, %o3, %tl			! Return to kernel mode.
 #endif
 
 /*
@@ -5631,8 +5643,9 @@ ENTRY(sp_tlb_flush_all)
 	! %o1 = ctx value
 	! %o2 = TLB tag value
 	! %o3 = saved %pstate
-	! %o4 = saved secondary ctx
+	! %o4 = saved primary ctx
 	! %o5 = CTX_MASK
+	! %xx = saved %tl
 
 0:
 	ldxa	[%o0] ASI_DMMU_TLB_TAG, %o2		! fetch the TLB tag
@@ -5682,7 +5695,82 @@ ENTRY(sp_tlb_flush_all)
 	retl
 	 wrpr	%o3, %pstate
 #else
-	WRITEME
+	! XXX bump up %tl around this call always
+	rdpr	%tl, %o4
+	inc	%o4
+	wrpr	%o4, 0, %tl
+
+	rdpr	%pstate, %o3
+	andn	%o3, PSTATE_IE, %o4			! disable interrupts
+	wrpr	%o4, 0, %pstate
+	set	(63 * 8), %o0				! last TLB entry
+	set	CTX_PRIMARY, %o4
+	ldxa	[%o4] ASI_DMMU, %o4			! save secondary context
+	set	CTX_MASK, %o5
+	membar	#Sync
+
+	! %o0 = loop counter
+	! %o1 = ctx value
+	! %o2 = TLB tag value
+	! %o3 = saved %pstate
+	! %o4 = saved primary ctx
+	! %o5 = CTX_MASK
+	! %xx = saved %tl
+
+0:
+	ldxa	[%o0] ASI_DMMU_TLB_TAG, %o2		! fetch the TLB tag
+	andcc	%o2, %o5, %o1				! context 0?
+	bz,pt	%xcc, 1f				! if so, skip
+	 mov	CTX_PRIMARY, %o2
+
+	stxa	%o1, [%o2] ASI_DMMU			! set the context
+	set	DEMAP_CTX_PRIMARY, %o2
+	membar	#Sync
+	stxa	%o2, [%o2] ASI_DMMU_DEMAP		! do the demap
+	membar	#Sync
+
+1:
+	dec	8, %o0
+	brgz,pt %o0, 0b					! loop over all entries
+	 nop
+
+/*
+ * now do the IMMU
+ */
+
+	set	(63 * 8), %o0				! last TLB entry
+
+0:
+	ldxa	[%o0] ASI_IMMU_TLB_TAG, %o2		! fetch the TLB tag
+	andcc	%o2, %o5, %o1				! context 0?
+	bz,pt	%xcc, 1f				! if so, skip
+	 mov	CTX_PRIMARY, %o2
+
+	stxa	%o1, [%o2] ASI_DMMU			! set the context
+	set	DEMAP_CTX_PRIMARY, %o2
+	membar	#Sync
+	stxa	%o2, [%o2] ASI_IMMU_DEMAP		! do the demap
+	membar	#Sync
+
+1:
+	dec	8, %o0
+	brgz,pt %o0, 0b					! loop over all entries
+	 nop
+
+	set	CTX_PRIMARY, %o2
+	stxa	%o4, [%o2] ASI_DMMU			! restore secondary ctx
+	sethi	%hi(KERNBASE), %o4
+	membar	#Sync
+	flush	%o4
+
+	! XXX bump up %tl around this call always
+	rdpr	%tl, %o4
+	dec	%o4
+	wrpr	%o4, 0, %tl
+
+	retl
+	 wrpr	%o3, %pstate
+
 #endif
 
 /*
@@ -5706,7 +5794,11 @@ ENTRY(blast_dcache)
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
+#ifdef SPITFIRE
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
+#else
+	stxa	%g0, [%o1] ASI_DCACHE_INVALIDATE
+#endif
 	brnz,pt	%o1, 1b
 	 dec	32, %o1
 	sethi	%hi(KERNBASE), %o2
@@ -5779,7 +5871,11 @@ ENTRY(dcache_flush_page)
 	bne,pt	%xcc, 1b
 	 membar	#LoadStore
 
+#ifdef SPITFIRE
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
+#else
+	stxa	%g0, [%o0] ASI_DCACHE_INVALIDATE
+#endif
 	ba,pt	%icc, 1b
 	 membar	#StoreLoad
 2:
@@ -5883,7 +5979,11 @@ ENTRY(cache_flush_phys)
 	 nop
 
 	membar	#LoadStore
+#ifdef SPITFIRE
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
+#else
+	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
+#endif
 2:
 #ifndef SPITFIRE
 	cmp	%o0, %g1
@@ -5891,7 +5991,7 @@ ENTRY(cache_flush_phys)
 	 cmp	%o1, %g1
 	bgt,pt	%icc, 3f
 	 nop
-	stxa	%g0, [%o4] ASI_ICACHE_TAG
+	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE
 3:
 #endif
 	membar	#StoreLoad
