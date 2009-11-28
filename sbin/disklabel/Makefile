@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2009/11/28 11:26:36 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.64 2009/11/28 12:14:53 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -48,6 +48,16 @@ CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 .if (${MACHINE} == "acorn32" || ${MACHINE} == "acorn26")
 # Support FileCore boot block
 CPPFLAGS+= -DUSE_ACORN
+.endif
+
+.if (${MACHINE_ARCH} == "alpha")
+# alpha requires boot block checksum
+CPPFLAGS+= -DALPHA_BOOTBLOCK_CKSUM
+.endif
+
+.if (${MACHINE_ARCH} == "vax")
+# vax requires labels in alternative sectors on SMD disk
+CPPFLAGS+= -DVAX_ALTLABELS
 .endif
 
 .include <bsd.prog.mk>

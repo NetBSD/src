@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/05/04 18:09:04 mhitch Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/11/28 12:14:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2009/05/04 18:09:04 mhitch Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2009/11/28 12:14:53 tsutsui Exp $");
 #endif
 #endif	/* not lint */
 
@@ -535,7 +535,7 @@ write_label(int f)
 		}
 	}
 
-#ifdef __vax__
+#ifdef VAX_ALTLABELS
 	if (lab.d_type == DTYPE_SMD && lab.d_flags & D_BADSECT &&
 	    lab.d_secsize == 512) {
 		/* Write the label to the odd sectors of the last track! */
@@ -554,7 +554,7 @@ write_label(int f)
 				warn("alternate label %d write", i/2);
 		}
 	}
-#endif	/* __vax__ */
+#endif	/* VAX_ALTLABELS */
 
 	return 0;
 }
@@ -978,10 +978,10 @@ write_bootarea(int f, u_int sector)
 	if (bootarea_len <= 0)
 		errx(1, "attempting to write after failed read");
 
-#ifdef __alpha__
+#ifdef ALPHA_BOOTBLOCK_CKSUM
 	/*
 	 * The Alpha requires that the boot block be checksummed.
-	 * The NetBSD/alpha disklabel.h provides a macro to do it.
+	 * <sys/bootblock.h> provides a macro to do it.
 	 */
 	if (sector == 0) {
 		struct alpha_boot_block *bb;
@@ -990,7 +990,7 @@ write_bootarea(int f, u_int sector)
 		bb->bb_cksum = 0;
 		ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 	}
-#endif	/* __alpha__ */
+#endif	/* ALPHA_BOOTBLOCK_CKSUM */
 
 	wlen = pwrite(f, bootarea, bootarea_len, sector * (off_t)DEV_BSIZE);
 	if (wlen == bootarea_len)
