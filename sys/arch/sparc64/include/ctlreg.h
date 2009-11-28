@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.45 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.46 2009/11/28 21:07:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -62,6 +62,10 @@
 #define	ASI_FLUSH_D_PAGE_SECONDARY	0x39	/* [4u] flush D-cache page using secondary context */
 #define	ASI_FLUSH_D_CTX_PRIMARY		0x3a	/* [4u] flush D-cache context using primary context */
 #define	ASI_FLUSH_D_CTX_SECONDARY	0x3b	/* [4u] flush D-cache context using secondary context */
+
+#define	ASI_DCACHE_INVALIDATE		0x42	/* [III] invalidate D-cache */
+#define	ASI_DCACHE_UTAG			0x43	/* [III] diagnostic access to D-cache micro tag */
+#define	ASI_DCACHE_SNOOP_TAG		0x44	/* [III] diagnostic access to D-cache snoop tag RAM */
 
 #define	ASI_LSU_CONTROL_REGISTER	0x45	/* [4u] load/store unit control register */
 
@@ -244,6 +248,7 @@
 /* 
  * The following are the control registers 
  * They work on both MMUs unless noted.
+ * III = cheetah only
  *
  * Register contents are defined later on individual registers.
  */
@@ -257,6 +262,9 @@
 #define	TLB_TAG_ACCESS		0x30
 #define	VIRTUAL_WATCHPOINT	0x38
 #define	PHYSICAL_WATCHPOINT	0x40
+#define	TSB_PEXT		0x48	/* III primary ext */
+#define	TSB_SEXT		0x50	/* III 2ndary ext -- DMMU only */
+#define	TSB_NEXT		0x58	/* III nucleus ext */
 
 /* Tag Target bits */
 #define	TAG_TARGET_VA_MASK	0x03ffffffffffffffffLL
