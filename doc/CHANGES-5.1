@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.147 2009/11/28 16:04:18 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.148 2009/11/28 19:00:03 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14971,4 +14971,18 @@ dist/nvi/ex/ex_tag.c				1.7
 
 	don't use pathname directly as msgq()'s first argument of format string.
 	[tnozaki, ticket #1159]
+
+sys/kern/vfs_subr.c				1.392
+
+	Previous caused a deadlock with layered FS: the vrele thread can
+	sleep on the vnode lock, while vget is sleeping on the
+	VI_INACTNOW flag (or the vget caller is looping on vget returning
+	failure because of the VI_INACTNOW flag). With layered FSes,
+	the upper and lower vnodes share the same lock, so the vget()
+	caller above can be already holding the vnode lock.
+	Fix by dropping VI_INACTNOW before sleeping on the vnode lock in
+	vrelel(), and check the ref count again once we have the lock.
+	If the vnode has more than one reference, don't VOP_INACTIVE it.
+	Fix PR kern/42318 and PR kern/42377
+	[bouyer, ticket #1171]
 
