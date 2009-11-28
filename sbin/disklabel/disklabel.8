@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.61 2007/01/27 19:20:28 perry Exp $
+.\"	$NetBSD: disklabel.8,v 1.62 2009/11/28 10:28:22 abs Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 26, 2006
+.Dd November 28, 2009
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -238,6 +238,20 @@ Subtract 100 to get the number of warnings detected.
 Display the in-core label for sd0 as obtained via
 .Pa /dev/rsd0c .
 .Pp
+.Dl Ic disklabel -i -r sd0
+.Pp
+Read the on-disk label for sd0, edit it using the built-in interactive editor and reinstall in-core as well
+as on-disk.
+.Pp
+.Dl Ic disklabel -i -I sd0
+.Pp
+As previous, but don't fail if there was no label on the disk yet;
+provide some default values instead.
+.Pp
+.Dl Ic disklabel -e -I sd0
+.Pp
+As previous, only edit using $EDITOR
+.Pp
 .Dl Ic disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
 Create a label for sd0 based on information for
@@ -255,20 +269,6 @@ Then dump the label to a file (using
 .Ic disklabel sd0 \*[Gt] protofile ) ,
 editing the file, and replacing the label with
 .Ic disklabel -R sd0 protofile .
-.Pp
-.Dl Ic disklabel -e -r sd0
-.Pp
-Read the on-disk label for sd0, edit it and reinstall in-core as well
-as on-disk.
-.Pp
-.Dl Ic disklabel -e -I sd0
-.Pp
-As previous, but don't fail if there was no label on the disk yet;
-provide some default values instead.
-.Pp
-.Dl Ic disklabel -i -I sd0
-.Pp
-As previous, only use the built-in interactive editor.
 .Pp
 .Dl Ic disklabel -R sd0 mylabel
 .Pp
