@@ -1,4 +1,4 @@
-.\"     $NetBSD: lom.4,v 1.2 2009/10/02 17:48:39 wiz Exp $
+.\"     $NetBSD: lom.4,v 1.3 2009/11/28 04:14:27 nakayama Exp $
 .\"     $OpenBSD: lom.4,v 1.4 2009/09/23 22:08:07 kettenis Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 2, 2009
+.Dd November 28, 2009
 .Dt LOM 4 sparc64
 .Os
 .Sh NAME
@@ -29,8 +29,8 @@ The
 driver provides support for the LOMlite lights out management module
 found on Sun Netra t1 systems and the LOMlite2 module found on Sun
 Fire V100/V120 and Sun Netra T1/X1 systems.
-Temperature readings, PSU status and fan status provided by the LOM
-are made available through the
+Fault LED and alarms status, temperature readings, PSU status and
+fan status provided by the LOM are made available through the
 .Xr envstat 8
 interface.
 The integrated watchdog timer can be configured through the

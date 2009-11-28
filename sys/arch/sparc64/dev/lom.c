@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $	*/
+/*	$NetBSD: lom.c,v 1.3 2009/11/28 04:14:27 nakayama Exp $	*/
 /*	$OpenBSD: lom.c,v 1.19 2009/11/10 22:26:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.3 2009/11/28 04:14:27 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $");
 #define LOM_IDX_LED1		0x25
 
 #define LOM_IDX_ALARM		0x30
+#define  LOM_ALARM_1		0x01
+#define  LOM_ALARM_2		0x02
+#define  LOM_ALARM_3		0x04
+#define  LOM_ALARM_FAULT	0xf0
 #define LOM_IDX_WDOG_CTL	0x31
 #define  LOM_WDOG_ENABLE	0x01
 #define  LOM_WDOG_RESET		0x02
@@ -131,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.2 2009/11/16 13:11:51 nakayama Exp $");
 #define LOM_IDX5_FAN_NAME_START		0x40
 #define LOM_IDX5_FAN_NAME_END		0xff
 
+#define LOM_MAX_ALARM	4
 #define LOM_MAX_FAN	4
 #define LOM_MAX_PSU	3
 #define LOM_MAX_TEMP	8
@@ -153,10 +158,12 @@ struct lom_softc {
 	int			sc_space;
 
 	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_alarm[LOM_MAX_ALARM];
 	envsys_data_t		sc_fan[LOM_MAX_FAN];
 	envsys_data_t		sc_psu[LOM_MAX_PSU];
 	envsys_data_t		sc_temp[LOM_MAX_TEMP];
 
+	int			sc_num_alarm;
 	int			sc_num_fan;
 	int			sc_num_psu;
 	int			sc_num_temp;
@@ -290,6 +297,7 @@ lom_attach(device_t parent, device_t self, void *aux)
 		    IPL_BIO, lom2_intr, sc);
 	}
 
+	sc->sc_num_alarm = LOM_MAX_ALARM;
 	sc->sc_num_fan = min((config >> 5) & 0x7, LOM_MAX_FAN);
 	sc->sc_num_psu = min((config >> 3) & 0x3, LOM_MAX_PSU);
 	sc->sc_num_temp = min((config2 >> 4) & 0xf, LOM_MAX_TEMP);
@@ -309,6 +317,16 @@ lom_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize sensor data. */
 	sc->sc_sme = sysmon_envsys_create();
+	for (i = 0; i < sc->sc_num_alarm; i++) {
+		sc->sc_alarm[i].units = ENVSYS_INDICATOR;
+		snprintf(sc->sc_alarm[i].desc, sizeof(sc->sc_alarm[i].desc),
+		    i == 0 ? "Fault LED" : "Alarm%d", i);
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_alarm[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			aprint_error_dev(self, "can't attach alarm sensor\n");
+			return;
+		}
+	}
 	for (i = 0; i < sc->sc_num_fan; i++) {
 		sc->sc_fan[i].units = ENVSYS_SFANRPM;
 		snprintf(sc->sc_fan[i].desc, sizeof(sc->sc_fan[i].desc),
@@ -899,6 +917,27 @@ lom_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct lom_softc *sc = sme->sme_cookie;
 	uint8_t val;
 	int i;
+
+	if (lom_read(sc, LOM_IDX_ALARM, &val)) {
+		for (i = 0; i < sc->sc_num_alarm; i++)
+			sc->sc_alarm[i].state = ENVSYS_SINVALID;
+	} else {
+		/* Fault LED */
+		if ((val & LOM_ALARM_FAULT) == LOM_ALARM_FAULT)
+			sc->sc_alarm[0].value_cur = 0;
+		else
+			sc->sc_alarm[0].value_cur = 1;
+		sc->sc_alarm[0].state = ENVSYS_SVALID;
+
+		/* Alarms */
+		for (i = 1; i < sc->sc_num_alarm; i++) {
+			if ((val & (LOM_ALARM_1 << (i - 1))) == 0)
+				sc->sc_alarm[i].value_cur = 0;
+			else
+				sc->sc_alarm[i].value_cur = 1;
+			sc->sc_alarm[i].state = ENVSYS_SVALID;
+		}
+	}
 
 	for (i = 0; i < sc->sc_num_fan; i++) {
 		if (lom_read(sc, LOM_IDX_FAN1 + i, &val)) {
