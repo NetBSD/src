@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.9 2009/03/14 21:04:17 dsl Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.10 2009/11/28 02:56:14 isaki Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -44,24 +44,19 @@
 #include <sys/ioctl.h>
 #include <machine/powioctl.h>
 
-char           *prog;
-
 static void usage(void) __attribute__((__noreturn__));
-static void myperror(const char *, int) __attribute__((__noreturn__));
-
 static void showinfo(void);
-static char    *numstr(unsigned int);
+static char *numstr(unsigned int);
 static void showontime(unsigned int);
-
 static void disablealarm(void);
-
 static void setinfo(int, char **);
 static int strnum(const char *, int);
+
+static char *devicefile = "/dev/pow0";	/* default path */
 
 int
 main(int argc, char *argv[])
 {
-	prog = argv[0];
 
 	if (argc == 1)
 		showinfo();
@@ -76,24 +71,13 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [[-w day-of-the-week] [-d day-of-the-month]\n", prog);
-	fprintf(stderr, "                [-m minites] [-s seconds] [-c channel] HH:MM]\n");
+	fprintf(stderr,
+		"Usage: %s [[-w day-of-the-week] [-d day-of-the-month]\n" 
+		"                [-m minites] [-s seconds] [-c channel] HH:MM]\n",
+		getprogname());
 
 	exit(1);
 }
-
-static void
-myperror(const char *str, int fd)
-{
-	fprintf(stderr, "%s: %s: %s\n", prog, str, strerror(errno));
-
-	if (fd >= 0)
-		close(fd);
-
-	exit(1);
-}
-
-
 
 static void
 showinfo(void)
@@ -101,12 +85,12 @@ showinfo(void)
 	struct x68k_alarminfo alarminfo;
 	int             fd;
 
-	fd = open("/dev/pow0", O_RDONLY);
+	fd = open(devicefile, O_RDONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow0", -1);
+		err("Opening %s", devicefile);
 
 	if (ioctl(fd, POWIOCGALARMINFO, &alarminfo) < 0)
-		myperror("powiocgalarminfo", fd);
+		err("POWIOCGALARMINFO");
 	close(fd);
 
 	if (alarminfo.al_enable) {
@@ -119,6 +103,7 @@ showinfo(void)
 			printf("TV mode.\n");
 		else
 			printf("Computer mode. ADDR=%8.8x\n", alarminfo.al_dowhat);
+
 		if (alarminfo.al_offtime == 0)
 			printf("Never shut down automatically.\n");
 		else
@@ -130,7 +115,7 @@ showinfo(void)
 	}
 }
 
-static char    *
+static char *
 numstr(unsigned int num)
 {
 	static char     buffer[4];
@@ -150,8 +135,7 @@ numstr(unsigned int num)
 	return buffer;
 }
 
-const char     *weekname[] =
-{
+const char * const weekname[] = {
 	"Sunday",
 	"Monday",
 	"Tuesday",
@@ -164,6 +148,7 @@ const char     *weekname[] =
 static void
 showontime(unsigned int ontime)
 {
+
 	printf("At %s:", numstr((ontime & 0x0000ff00) >> 8));
 	printf("%s ", numstr(ontime & 0x000000ff));
 
@@ -176,14 +161,14 @@ showontime(unsigned int ontime)
 			else
 				printf("on every %s, \n",
 				     weekname[(ontime & 0x0f000000) >> 24]);
-		} else
+		} else {
 			printf("on %sth in every month, \n",
 			       numstr((ontime & 0x00ff0000) >> 16));
-	} else
+		}
+	} else {
 		printf("everyday.\n");
+	}
 }
-
-
 
 static void
 disablealarm(void)
@@ -193,15 +178,13 @@ disablealarm(void)
 
 	alarminfo.al_enable = 0;
 
-	fd = open("/dev/pow0", O_WRONLY);
+	fd = open(devicefile, O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow0", -1);
+		err("Opening %s", devicefile);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
-		myperror("powiocsalarminfo", fd);
+		err("POWIOCSALARMINFO");
 	close(fd);
 }
-
-
 
 static void
 setinfo(int argc, char **argv)
@@ -212,12 +195,10 @@ setinfo(int argc, char **argv)
 	int             day = 0xff;
 	int             offtime = 0;
 	int             dowhat = 0;
-	extern char    *optarg;
-	extern int      optind;
 	int             fd;
 	struct x68k_alarminfo alarminfo;
 
-	while ((ch = getopt(argc, argv, "w:d:m:s:c:")) != -1)
+	while ((ch = getopt(argc, argv, "w:d:m:s:c:")) != -1) {
 		switch (ch) {
 		case 'w':	/* day of the week */
 			if ((week = strnum(optarg, 1)) < 0)
@@ -239,6 +220,7 @@ setinfo(int argc, char **argv)
 				usage();
 			break;
 		}
+	}
 	if (optind != argc - 1)
 		usage();
 
@@ -256,11 +238,11 @@ setinfo(int argc, char **argv)
 	alarminfo.al_dowhat = dowhat;
 	alarminfo.al_offtime = offtime * 60;
 
-	fd = open("/dev/pow0", O_WRONLY);
+	fd = open(devicefile, O_WRONLY);
 	if (fd < 0)
-		myperror("Opening /dev/pow0", -1);
+		err("Opening %s", devicefile);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
-		myperror("powiocsalarminfo", fd);
+		err("POWIOCSALARMINFO");
 	close(fd);
 }
 
