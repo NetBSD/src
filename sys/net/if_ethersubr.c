@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.173 2009/11/20 02:14:56 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.174 2009/11/28 02:58:21 isaki Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.173 2009/11/20 02:14:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.174 2009/11/28 02:58:21 isaki Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -283,7 +283,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if (!arpresolve(ifp, rt, m, dst, edst))
@@ -297,7 +297,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
 			void *tha = ar_tha(ah);
 
@@ -898,14 +898,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			break;
 #endif
 #ifdef NETATALK
-        	case ETHERTYPE_ATALK:
-                	schednetisr(NETISR_ATALK);
-                	inq = &atintrq1;
-                	break;
-        	case ETHERTYPE_AARP:
+		case ETHERTYPE_ATALK:
+			schednetisr(NETISR_ATALK);
+			inq = &atintrq1;
+			break;
+		case ETHERTYPE_AARP:
 			/* probably this should be done with a NETISR as well */
-                	aarpinput(ifp, m); /* XXX */
-                	return;
+			arpinput(ifp, m); /* XXX */
+			return;
 #endif /* NETATALK */
 		default:
 			m_freem(m);
