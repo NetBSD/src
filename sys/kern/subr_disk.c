@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.98 2009/11/27 11:23:50 tsutsui Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.99 2009/11/28 22:38:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.98 2009/11/27 11:23:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.99 2009/11/28 22:38:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -315,8 +315,8 @@ disk_blocksize(struct disk *diskp, int blocksize)
 
 /*
  * Bounds checking against the media size, used for the raw partition.
- * The sector size passed in should currently always be DEV_BSIZE,
- * and the media size the size of the device in DEV_BSIZE sectors.
+ * secsize, mediasize and b_blkno must all be the same units.
+ * Possibly this has to be DEV_BSIZE (512).
  */
 int
 bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
@@ -338,7 +338,7 @@ bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 			return 0;
 		}
 		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
+		bp->b_bcount = sz * secsize;
 	}
 
 	return 1;
