@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.174 2009/11/28 02:58:21 isaki Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.174 2009/11/28 02:58:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -904,7 +904,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			break;
 		case ETHERTYPE_AARP:
 			/* probably this should be done with a NETISR as well */
-			arpinput(ifp, m); /* XXX */
+			aarpinput(ifp, m); /* XXX */
 			return;
 #endif /* NETATALK */
 		default:
