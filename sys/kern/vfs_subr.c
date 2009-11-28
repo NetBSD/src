@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.7 2009/11/21 20:07:49 snj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.8 2009/11/28 18:59:11 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.7 2009/11/21 20:07:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.8 2009/11/28 18:59:11 sborrill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1411,14 +1411,30 @@ vrelel(vnode_t *vp, int flags)
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
-			/* We have to try harder. */
-			vp->v_iflag &= ~VI_INACTREDO;
+			/*
+			 * We have to try harder. But we can't sleep
+			 * with VI_INACTNOW as vget() may be waiting on it.
+			 */
+			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
+			cv_broadcast(&vp->v_cv);
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
 			    LK_RETRY);
 			if (error != 0) {
 				/* XXX */
 				vpanic(vp, "vrele: unable to lock %p");
 			}
+			mutex_enter(&vp->v_interlock);
+			/*
+			 * if we did get another reference while
+			 * sleeping, don't try to inactivate it yet.
+			 */
+			if (__predict_false(vtryrele(vp))) {
+				VOP_UNLOCK(vp, 0);
+				mutex_exit(&vp->v_interlock);
+				return;
+			}
+			vp->v_iflag |= VI_INACTNOW;
+			mutex_exit(&vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
