@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.2 2009/11/23 09:41:53 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.3 2009/11/28 08:44:00 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.2 2009/11/23 09:41:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.3 2009/11/28 08:44:00 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.2 2009/11/23 09:41:53 kiyohara Exp $")
 #include "rnd.h"
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/bus.h>
@@ -106,6 +107,8 @@ static void lan9118_mac_writereg(struct lan9118_softc *, int, uint32_t);
 static void lan9118_set_filter(struct lan9118_softc *);
 static void lan9118_rxintr(struct lan9118_softc *);
 static void lan9118_txintr(struct lan9118_softc *);
+
+static void lan9118_tick(void *);
 
 /* This values refer from Linux's smc911x.c */
 static uint32_t afc_cfg[] = {
@@ -280,6 +283,8 @@ lan9118_attach(struct lan9118_softc *sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	callout_init(&sc->sc_tick, 0);
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -595,6 +600,8 @@ lan9118_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	callout_reset(&sc->sc_tick, hz, lan9118_tick, sc);
+
 	splx(s);
 
 	return 0;
@@ -631,6 +638,8 @@ lan9118_stop(struct ifnet *ifp, int disable)
 	/* Clear RX Status/Data FIFOs */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_RX_CFG,
 	    LAN9118_RX_CFG_RX_DUMP);
+
+	callout_stop(&sc->sc_tick);
 }
 
 static void
@@ -1103,4 +1112,16 @@ lan9118_txintr(struct lan9118_softc *sc)
 		 * for the most fragmented frame.
 		 */
 		ifp->if_flags &= ~IFF_OACTIVE;
+}
+
+void
+lan9118_tick(void *v)
+{
+	struct lan9118_softc *sc = v;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	callout_schedule(&sc->sc_tick, hz);
+	splx(s);
 }
