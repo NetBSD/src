@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.134 2009/11/14 09:54:10 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.135 2009/11/28 17:03:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.134 2009/11/14 09:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.135 2009/11/28 17:03:17 cegger Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -304,7 +304,7 @@ acpi_probe(void)
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialise SystemMemory handler: %s\n",
+		printf("ACPI: unable to initialize SystemMemory handler: %s\n",
 		    AcpiFormatException(rv));
 		AcpiTerminate();
 		return 0;
@@ -312,7 +312,7 @@ acpi_probe(void)
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_SYSTEM_IO, ACPI_DEFAULT_HANDLER, NULL, NULL);
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialise SystemIO handler: %s\n",
+		printf("ACPI: unable to initialize SystemIO handler: %s\n",
 		     AcpiFormatException(rv));
 		AcpiTerminate();
 		return 0;
@@ -320,7 +320,7 @@ acpi_probe(void)
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unabled to initialise PciConfig handler: %s\n",
+		printf("ACPI: unable to initialize PciConfig handler: %s\n",
 		    AcpiFormatException(rv));
 		AcpiTerminate();
 		return 0;
@@ -1163,7 +1163,8 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 	buf.Pointer = &param;
 	buf.Length = sizeof(param);
 
-	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_INTEGER);
+	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf,
+	    ACPI_TYPE_INTEGER);
 	if (ACPI_SUCCESS(rv))
 		*valp = param.Integer.Value;
 
