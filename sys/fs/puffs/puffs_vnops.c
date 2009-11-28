@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129.4.4 2009/11/28 15:56:08 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.5 2009/11/28 16:00:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.4 2009/11/28 15:56:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.5 2009/11/28 16:00:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1711,19 +1711,23 @@ puffs_vnop_rename(void *v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, rename);
-	struct vnode *fdvp = ap->a_fdvp;
+	struct vnode *fdvp = ap->a_fdvp, *fvp = ap->a_fvp;
+	struct vnode *tdvp = ap->a_tdvp, *tvp = ap->a_tvp;
 	struct puffs_node *fpn = ap->a_fvp->v_data;
 	struct puffs_mount *pmp = MPTOPUFFSMP(fdvp->v_mount);
 	int error;
+	bool doabort = true;
 
-	if (ap->a_fvp->v_mount != ap->a_tdvp->v_mount)
+	if ((fvp->v_mount != tdvp->v_mount) ||
+	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		ERROUT(EXDEV);
+	}
 
 	PUFFS_MSG_ALLOC(vn, rename);
-	rename_msg->pvnr_cookie_src = VPTOPNC(ap->a_fvp);
-	rename_msg->pvnr_cookie_targdir = VPTOPNC(ap->a_tdvp);
-	if (ap->a_tvp)
-		rename_msg->pvnr_cookie_targ = VPTOPNC(ap->a_tvp);
+	rename_msg->pvnr_cookie_src = VPTOPNC(fvp);
+	rename_msg->pvnr_cookie_targdir = VPTOPNC(tdvp);
+	if (tvp)
+		rename_msg->pvnr_cookie_targ = VPTOPNC(tvp);
 	else
 		rename_msg->pvnr_cookie_targ = NULL;
 	puffs_makecn(&rename_msg->pvnr_cn_src, &rename_msg->pvnr_cn_src_cred,
@@ -1734,6 +1738,8 @@ puffs_vnop_rename(void *v)
 	    PUFFS_VN_RENAME, VPTOPNC(fdvp));
 
 	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_rename, fdvp->v_data, NULL, error);
+	doabort = false;
+	PUFFS_MSG_RELEASE(rename);
 	error = checkerr(pmp, error, __func__);
 
 	/*
@@ -1744,16 +1750,19 @@ puffs_vnop_rename(void *v)
 		puffs_updatenode(fpn, PUFFS_UPDATECTIME, 0);
 
  out:
-	PUFFS_MSG_RELEASE(rename);
-	if (ap->a_tvp != NULL)
-		vput(ap->a_tvp);
-	if (ap->a_tdvp == ap->a_tvp)
-		vrele(ap->a_tdvp);
+	if (doabort)
+		VOP_ABORTOP(tdvp, ap->a_tcnp);
+	if (tvp != NULL)
+		vput(tvp);
+	if (tdvp == tvp)
+		vrele(tdvp);
 	else
-		vput(ap->a_tdvp);
+		vput(tdvp);
 
-	vrele(ap->a_fdvp);
-	vrele(ap->a_fvp);
+	if (doabort)
+		VOP_ABORTOP(fdvp, ap->a_fcnp);
+	vrele(fdvp);
+	vrele(fvp);
 
 	return error;
 }
