@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.595 2009/11/10 21:41:31 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.596 2009/11/28 12:10:24 mbalmer Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -910,7 +910,7 @@ X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
 
 .for _i in \
-	keyboard mouse vmmouse void
+	keyboard mouse vmmouse void ws
 X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
