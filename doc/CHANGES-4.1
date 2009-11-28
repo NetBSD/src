@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.183 2009/11/14 10:40:43 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.184 2009/11/28 21:38:26 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3900,4 +3900,10 @@ sys/netinet6/ip6_forward.c			1.67
 	for v6 traffic and if the packet is encapsulated with gif,
 	the IPv6 header would get corrupted by ip_output.
 	[joerg, ticket #1366]
+
+usr.bin/comm/comm.c				1.18
+
+	Don't include newlines when comparing to prevent errors when
+	lines have characters that sort lower such as tabs.
+	[darcy, ticket #1367]
 
