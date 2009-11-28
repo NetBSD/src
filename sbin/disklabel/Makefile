@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2009/02/14 13:52:51 abs Exp $
+#	$NetBSD: Makefile,v 1.63 2009/11/28 11:26:36 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -22,7 +22,9 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "arc" \
 	|| ${MACHINE} == "cats" \
 	|| ${MACHINE} == "cobalt" \
+	|| ${MACHINE} == "dreamcast" \
 	|| ${MACHINE} == "evbarm" \
+	|| ${MACHINE} == "evbsh3" \
 	|| ${MACHINE} == "hpcarm" \
 	|| ${MACHINE} == "hpcmips" \
 	|| ${MACHINE} == "hpcsh" \
@@ -30,6 +32,7 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "iyonix" \
 	|| ${MACHINE} == "landisk" \
 	|| ${MACHINE} == "macppc" \
+	|| ${MACHINE} == "mmeye" \
 	|| ${MACHINE} == "netwinder" \
 	|| ${MACHINE} == "playstation2" \
 	|| ${MACHINE} == "prep" \
