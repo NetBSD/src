@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.36 2009/05/12 09:50:28 cegger Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.37 2009/11/28 17:02:14 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -78,11 +78,11 @@ struct acpibus_attach_args {
 struct acpi_devnode {
 	TAILQ_ENTRY(acpi_devnode) ad_list;
 	ACPI_HANDLE	ad_handle;	/* our ACPI handle */
-	u_int32_t	ad_level;	/* ACPI level */
-	u_int32_t	ad_type;	/* ACPI object type */
+	uint32_t	ad_level;	/* ACPI level */
+	uint32_t	ad_type;	/* ACPI object type */
 	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
 	struct acpi_scope *ad_scope;	/* backpointer to scope */
-	struct device	*ad_device;	/* pointer to configured device */
+	device_t	ad_device;	/* pointer to configured device */
 	char		ad_name[5];	/* Human-readable device name */
 };
 
