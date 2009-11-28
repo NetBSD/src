@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.63 2009/11/27 22:31:29 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.64 2009/11/28 21:32:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.63 2009/11/27 22:31:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.64 2009/11/28 21:32:46 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -402,12 +402,14 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		KASSERT(pa->pa_pc->spc_find_ino);
 		pa->pa_pc->spc_find_ino(pa, &interrupts);
 	}
+	DPRINTF(SPDB_INTMAP, ("OF_mapintr() gave %x\n", interrupts));
 
 	/* Try to find an IPL for this type of device. */
 	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
 	for (len = 0; intrmap[len].in_class != NULL; len++)
 		if (strcmp(intrmap[len].in_class, devtype) == 0) {
 			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
+			DPRINTF(SPDB_INTMAP, ("reset to %x\n", interrupts));
 			break;
 		}
 
