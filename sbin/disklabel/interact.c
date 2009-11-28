@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.32 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: interact.c,v 1.33 2009/11/28 10:52:10 abs Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.32 2009/10/21 01:07:46 snj Exp $");
+__RCSID("$NetBSD: interact.c,v 1.33 2009/11/28 10:52:10 abs Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -702,7 +702,7 @@ static void
 defnum(struct disklabel *lp, char *buf, uint32_t size)
 {
 
-	(void) snprintf(buf, BUFSIZ, "%gc, %us, %gM",
+	(void) snprintf(buf, BUFSIZ, "%.40gc, %us, %.40gM",
 	    size / (float) lp->d_secpercyl,
 	    size, size  * (lp->d_secsize / (float) (1024 * 1024)));
 }
@@ -776,6 +776,7 @@ interact(struct disklabel *lp, int fd)
 {
 	char	line[BUFSIZ];
 
+	puts("Enter '?' for help");
 	for (;;) {
 		if (getinput(">", "partition", NULL, line) == -1)
 			return;
