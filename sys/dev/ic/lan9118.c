@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.6 2009/11/29 05:07:49 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.7 2009/11/29 09:34:20 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.6 2009/11/29 05:07:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.7 2009/11/29 09:34:20 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -693,9 +693,11 @@ static int
 lan9118_ifm_change(struct ifnet *ifp)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_mii.mii_media;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia *ifm = &mii->mii_media;
 	struct ifmedia_entry *ife = ifm->ifm_cur;
-	uint32_t pmt_ctrl, cr, bmc, bms, ana, anlpa;
+	uint32_t pmt_ctrl, bmc, bms, ana, anlpa;
+	int i;
 
 	DPRINTFN(3, ("%s: ifm inst %d\n", __func__, IFM_INST(ife->ifm_media)));
 
@@ -717,6 +719,9 @@ lan9118_ifm_change(struct ifnet *ifp)
 
 	/* Setup Internal PHY */
 
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG,
 	    LAN9118_HW_CFG_MBO |
 	    LAN9118_HW_CFG_PHY_CLK_SEL_IPHY);
@@ -733,6 +738,21 @@ lan9118_ifm_change(struct ifnet *ifp)
 		bmc = BMCR_AUTOEN | BMCR_STARTNEG;
 		bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
 		ana = ANAR_FC | BMSR_MEDIA_TO_ANAR(bms) | ANAR_CSMA;
+
+		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
+		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
+
+		/* Wait 5sec for it to complete. */
+		for (i = 0; i < 5000; i++) {
+			if (lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR)
+								& BMSR_ACOMP)
+				break;
+			delay(1000);
+		}
+		if (i == 5000) {
+			aprint_error_ifnet(ifp, "Auto-Negotiate failed\n");
+			return EIO;
+		}
 	} else {
 		switch (IFM_SUBTYPE(ifm->ifm_media)) {
 		case IFM_10_T:
@@ -758,25 +778,35 @@ lan9118_ifm_change(struct ifnet *ifp)
 			bmc |= BMCR_FDX;
 		if (ifm->ifm_media & IFM_FLOW)
 			ana |= ANAR_FC;
+
+		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
+		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
 	}
-	lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
-	lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
 
 	bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
 	if (bms & BMSR_LINK) {
-		anlpa = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_ANLPAR);
+		mii->mii_media_status |= IFM_ACTIVE;
 
 		bmc = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMCR);
-		cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
-		if (anlpa & (ANLPAR_TX_FD | ANLPAR_10_FD)) {
-			bmc |= BMCR_FDX;
-			cr |= LAN9118_MAC_CR_RCVOWN;
-		} else {
-			bmc &= ~BMCR_FDX;
-			cr &= ~LAN9118_MAC_CR_RCVOWN;
-		}
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
-		lan9118_mac_writereg(sc, LAN9118_MAC_CR, cr);
+		if (bmc & BMCR_AUTOEN) {
+			anlpa = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR,
+			    MII_ANLPAR);
+			if (anlpa & ANLPAR_TX_FD)
+				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
+			else if (anlpa & ANLPAR_T4)
+				mii->mii_media_active |= IFM_100_T4;
+			else if (anlpa & ANLPAR_TX)
+				mii->mii_media_active |= IFM_100_TX;
+			else if (anlpa & ANLPAR_10_FD)
+				mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			else if (anlpa & ANLPAR_10)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_NONE;
+		} else
+			mii->mii_media_active = ife->ifm_media;
+
+		lan9118_miibus_statchg(sc->sc_dev);
 	}
 	return 0;
 }
@@ -842,8 +872,18 @@ lan9118_miibus_writereg(device_t dev, int phy, int reg, int val)
 static void
 lan9118_miibus_statchg(device_t dev)
 {
+	struct lan9118_softc *sc = device_private(dev);
+	u_int cr;
 
-	/* nothing to do */
+	cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
+	if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) {
+		cr &= ~LAN9118_MAC_CR_RCVOWN;
+		cr |= LAN9118_MAC_CR_FDPX;
+	} else {
+		cr |= LAN9118_MAC_CR_RCVOWN;
+		cr &= ~LAN9118_MAC_CR_FDPX;
+	}
+	lan9118_mac_writereg(sc, LAN9118_MAC_CR, cr);
 }
 
 
@@ -1090,6 +1130,7 @@ lan9118_txintr(struct lan9118_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t tx_fifo_inf, tx_status;
+	int fdx = IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX;
 	int tdfree;
 
 	DPRINTFN(3, ("%s\n", __func__));
@@ -1107,7 +1148,7 @@ lan9118_txintr(struct lan9118_softc *sc)
 			if (tx_status & LAN9118_TXS_LOC)
 				aprint_error_dev(sc->sc_dev,
 				    "Loss Of Carrier\n");
-			if (tx_status & LAN9118_TXS_NC)
+			if ((tx_status & LAN9118_TXS_NC) && !fdx)
 				aprint_error_dev(sc->sc_dev, "No Carrier\n");
 			if (tx_status & LAN9118_TXS_LCOL)
 				aprint_error_dev(sc->sc_dev,
