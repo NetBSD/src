@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.20 2009/09/25 20:26:26 dyoung Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.21 2009/11/29 21:32:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.20 2009/09/25 20:26:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.21 2009/11/29 21:32:50 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,9 +419,7 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 	}
 
 	/* Enable hotkey events */
-	params.Count = 1;
-	param[0].Integer.Value = 1;
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "MHKC", &params, NULL);
+	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, "MHKC", 1);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(sc->sc_dev, "couldn't enable hotkeys: %s\n",
 		    AcpiFormatException(rv));
@@ -429,8 +427,7 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 	}
 
 	/* Claim ownership of brightness control */
-	param[0].Integer.Value = 0;
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "PWMS", &params, NULL);
+	(void)acpi_eval_set_integer(sc->sc_node->ad_handle, "PWMS", 0);
 
 	return AE_OK;
 }
@@ -601,18 +598,12 @@ thinkpad_brightness_down(device_t self)
 static void
 thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 {
-	ACPI_OBJECT param;
-	ACPI_OBJECT_LIST params;
 	ACPI_STATUS rv;
 
 	if (sc->sc_cmoshdl_valid == false)
 		return;
 	
-	params.Count = 1;
-	params.Pointer = &param;
-	param.Type = ACPI_TYPE_INTEGER;
-	param.Integer.Value = cmd;
-	rv = AcpiEvaluateObject(sc->sc_cmoshdl, NULL, &params, NULL);
+	rv = acpi_eval_set_integer(sc->sc_cmoshdl, NULL, cmd);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
 		    AcpiFormatException(rv));

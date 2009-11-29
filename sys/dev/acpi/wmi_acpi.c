@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.2 2009/10/03 15:49:21 jmcneill Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.2 2009/10/03 15:49:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -541,8 +541,6 @@ static ACPI_STATUS
 acpi_wmi_enable(const ACPI_HANDLE hdl, const char * const oid,
     const bool data, const bool flag)
 {
-	ACPI_OBJECT_LIST arg;
-	ACPI_OBJECT obj;
 	char path[5];
 	const char *str;
 
@@ -551,13 +549,7 @@ acpi_wmi_enable(const ACPI_HANDLE hdl, const char * const oid,
 	(void)strlcpy(path, str, sizeof(path));
 	(void)strlcat(path, oid, sizeof(path));
 
-	obj.Type = ACPI_TYPE_INTEGER;
-	obj.Integer.Value = (flag != false) ? 0x01 : 0x00;
-
-	arg.Count = 0x01;
-	arg.Pointer = &obj;
-
-	return AcpiEvaluateObject(hdl, path, &arg, NULL);
+	return acpi_eval_set_integer(hdl, path, (flag != false) ? 0x01 : 0x00);
 }
 /*
  * Makes a WMI data block query (WQxx). The corresponding control

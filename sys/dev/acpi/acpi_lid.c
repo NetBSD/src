@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.28 2009/08/25 10:34:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.29 2009/11/29 21:32:50 cegger Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.28 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.29 2009/11/29 21:32:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,17 +155,9 @@ acpilid_wake_event(device_t dv, bool enable)
 	struct acpilid_softc *sc = device_private(dv);
 
 	ACPI_STATUS rv;
-        ACPI_OBJECT_LIST ArgList;
-        ACPI_OBJECT Arg;
 
-        ArgList.Count = 1;
-	ArgList.Pointer = &Arg;
-
-	Arg.Type = ACPI_TYPE_INTEGER;
-	Arg.Integer.Value = enable ? 1 : 0;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_PSW",
-	    &ArgList, NULL);
+	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, "_PSW",
+	    enable ? 1 : 0);
 	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
 		aprint_error_dev(dv,
 		    "unable to evaluate _PSW handler: %s\n",
