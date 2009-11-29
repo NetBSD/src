@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.97 2009/11/29 15:06:40 pooka Exp $	*/
+/*	$NetBSD: locore2.c,v 1.98 2009/11/29 15:13:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.97 2009/11/29 15:06:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.98 2009/11/29 15:13:22 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -201,8 +201,8 @@ _vm_init(void)
 	 * fault handler works in case we hit an early bug.
 	 * (The fault handler may reference lwp0 stuff.)
 	 */
-	uvm_lwp_setuarea(&lwp0, nextva);
 	memset((void *)nextva, 0, USPACE);
+	uvm_lwp_setuarea(&lwp0, nextva);
 
 	nextva += USPACE;
 
