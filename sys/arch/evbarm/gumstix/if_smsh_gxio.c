@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsh_gxio.c,v 1.1 2009/08/09 07:10:13 kiyohara Exp $	*/
+/*	$NetBSD: if_smsh_gxio.c,v 1.2 2009/11/29 10:08:15 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsh_gxio.c,v 1.1 2009/08/09 07:10:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsh_gxio.c,v 1.2 2009/11/29 10:08:15 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,9 +107,6 @@ smsh_gxio_attach(device_t parent, device_t self, void *aux)
 	struct smsh_gxio_softc *gsc = device_private(self);
 	struct lan9118_softc *sc = &gsc->sc_smsh;
 	struct gxio_attach_args *gxa = aux;
-
-	aprint_normal("\n");
-	aprint_naive("\n");
 
 	KASSERT(system_serial_high != 0 || system_serial_low != 0);
 
