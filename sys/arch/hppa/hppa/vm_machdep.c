@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2009/11/21 15:36:34 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2009/11/21 15:36:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2009/11/29 04:15:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	register_t sp, osp;
+	vaddr_t uv;
 
 	KASSERT(round_page(sizeof(struct pcb)) <= PAGE_SIZE);
 
@@ -105,7 +106,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_fpregs[2] = 0;
 	pcb2->pcb_fpregs[3] = 0;
 
-	sp = (register_t)l2->l_addr + PAGE_SIZE;
+	uv = uvm_lwp_getuarea(l2);
+	sp = (register_t)uv + PAGE_SIZE;
 	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 
@@ -166,13 +168,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcb2->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
+	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
 }
 
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = lwp_getpcb(l);
+	vaddr_t uv = uvm_lwp_getuarea(l);
 	struct trapframe *tf;
 	register_t sp, osp;
 
@@ -202,7 +205,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcb->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
+	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
 }
 
 void

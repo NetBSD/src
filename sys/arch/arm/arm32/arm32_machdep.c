@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.70 2009/11/27 03:23:05 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.71 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.70 2009/11/27 03:23:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.71 2009/11/29 04:15:42 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -254,10 +254,9 @@ cpu_startup(void)
 
 	curpcb = lwp_getpcb(&lwp0);
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
-	    USPACE_SVC_STACK_TOP;
-
-        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
+	curpcb->pcb_un.un_32.pcb32_sp =
+	    uvm_lwp_getuarea(&lwp0) + USPACE_SVC_STACK_TOP;
+	curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
 
 /*
