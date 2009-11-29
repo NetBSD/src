@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65 2009/11/29 04:15:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2009/11/29 04:15:43 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -162,9 +162,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 /*
  * Reset the stack pointer for the lwp and arrange for it to call the
  * specified function with the specified argument on next switch.
- *
- * XXX: Scheduler activations relics!  Not used anymore but keep
- * around for reference in case we gonna revive SA.
  */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
@@ -182,14 +179,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf->sf_r12 = (int)func;
 }
 
-
 static void
 sh3_setup_uarea(struct lwp *l)
 {
 	struct pcb *pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	vaddr_t spbase, fptop;
+	vaddr_t uv, spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
 	pcb = lwp_getpcb(l);
@@ -211,14 +207,15 @@ sh3_setup_uarea(struct lwp *l)
 	l->l_md.md_regs = tf;
 
 	/* set up the kernel stack pointer */
-	spbase = (vaddr_t)l->l_addr + PAGE_SIZE;
+	uv = uvm_lwp_getuarea(l);
+	spbase = uv + PAGE_SIZE;
 #ifdef P1_STACK
 	/*
 	 * wbinv u-area to avoid cache-aliasing, since kernel stack
 	 * is accessed from P1 instead of P3.
 	 */
 	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_dcache_wbinv_range((vaddr_t)l->l_addr, USPACE);
+		sh_dcache_wbinv_range(uv, USPACE);
 	spbase = P1ADDR(spbase);
 #else /* !P1_STACK */
 #ifdef SH4

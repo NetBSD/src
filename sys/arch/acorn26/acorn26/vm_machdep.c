@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.25 2009/11/27 03:23:03 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.26 2009/11/29 04:15:42 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2009/11/27 03:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 2009/11/29 04:15:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -106,7 +106,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	char *stacktop;
 
 #if 0
 	printf("cpu_lwp_fork: %p -> %p\n", p1, p2);
@@ -120,8 +119,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* pmap_activate(l2); XXX Other ports do.  Why?  */
 
 	/* Set up the kernel stack */
-	stacktop = (char *)l2->l_addr + USPACE;
-	tf = (struct trapframe *)stacktop - 1;
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	sf = (struct switchframe *)tf - 1;
 	/* Duplicate old process's trapframe (if it had one) */
 	if (pcb1->pcb_tf == NULL)

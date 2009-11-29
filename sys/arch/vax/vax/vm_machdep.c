@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.109 2009/11/21 04:45:39 rmind Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.110 2009/11/29 04:15:43 rmind Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110 2009/11/29 04:15:43 rmind Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -98,6 +98,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct callsframe *cf;
+	vaddr_t uv;
 	extern int sret; /* Return address in trap routine */
 
 	pcb1 = lwp_getpcb(l1);
@@ -114,7 +115,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
+	uv = uvm_lwp_getuarea(l2);
+	tf = (struct trapframe *)(uv + USPACE) - 1;
 	pcb2->framep = tf;
 	*tf = *(struct trapframe *)pcb1->framep;
 
@@ -126,7 +128,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pmap_activate(l2);
 
 	/* Mark guard page invalid in kernel stack */
-	kvtopte((uintptr_t)l2->l_addr + REDZONEADDR)->pg_v = 0;
+	kvtopte((uintptr_t)uv + REDZONEADDR)->pg_v = 0;
 
 	/*
 	 * Set up the calls frame above (below) the trapframe and populate
@@ -181,12 +183,13 @@ void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
+	struct trapframe *tf;
 	struct callsframe *cf;
 	extern int sret;
 
 	panic("cpu_setfunc() called\n");
 
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l) + USPACE) - 1;
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
 	cf->ca_maskpsw = 0x20000000;

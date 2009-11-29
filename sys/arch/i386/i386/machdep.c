@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.679 2009/11/27 03:23:10 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.680 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.679 2009/11/27 03:23:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.680 2009/11/29 04:15:42 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -522,15 +522,12 @@ cpu_startup(void)
 void
 i386_proc0_tss_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb;
-
-	l = &lwp0;
-	pcb = lwp_getpcb(l);
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
-	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
@@ -1321,8 +1318,8 @@ init386(paddr_t first_avail)
 	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
-	XENPRINTK(("lwp0.l_addr %p first_avail %p\n",
-	    lwp0.l_addr, (void *)(long)first_avail));
+	XENPRINTK(("lwp0uarea %p first_avail %p\n",
+	    lwp0uarea, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif

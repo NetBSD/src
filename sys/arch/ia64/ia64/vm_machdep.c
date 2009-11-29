@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 2009/11/21 15:36:34 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*pcb2 = *pcb1;
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
-	l2->l_md.md_tf = (struct trapframe *)((vaddr_t)l2->l_addr + USPACE) - 1;
+	l2->l_md.md_tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	l2->l_md.md_astpending = 0;
 
         /*

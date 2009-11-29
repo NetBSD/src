@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.103 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.104 2009/11/29 04:15:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2009/11/29 04:15:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		 * will be to right address, with correct registers.
 		 */
 		l2tf = l2->l_md.md_tf = (struct trapframe *)
-		    ((char *)l2->l_addr + USPACE - sizeof(struct trapframe));
+		    (uvm_lwp_getuarea(l2) + USPACE - sizeof(struct trapframe));
 		memcpy(l2->l_md.md_tf, l1->l_md.md_tf,
 		    sizeof(struct trapframe));
 

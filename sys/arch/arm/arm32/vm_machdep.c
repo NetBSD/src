@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2009/11/26 00:19:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2009/11/29 04:15:42 rmind Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -133,6 +133,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+	vaddr_t uv;
 
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
@@ -164,14 +165,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*pcb2 = *pcb1;
 
 	/* 
-	 * Set up the stack for the process.
+	 * Set up the kernel stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb2->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
+	uv = uvm_lwp_getuarea(l2);
+	pcb2->pcb_un.un_32.pcb32_sp = uv + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the kernel stack with a known pattern */
-	memset(((u_char *)l2->l_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	memset((void *)(uv + USPACE_SVC_STACK_BOTTOM), 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
 
