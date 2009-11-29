@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.3 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.4 2009/11/29 10:30:07 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -241,15 +241,13 @@ apic_intr(void *v)
 		if (iv->handler(iv->arg)) {
 			if (iv->cnt)
 				iv->cnt->ev_count++;
-			else
-				claimed = 1;
+			/* Signal EOI. */
+			elroy_write32(&r->apic_eoi,
+			    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
+			claimed = 1;
 		}
 		iv = iv->next;
 	}
-
-	/* Signal EOI. */
-	elroy_write32(&r->apic_eoi,
-	    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
 
 	return (claimed);
 }
