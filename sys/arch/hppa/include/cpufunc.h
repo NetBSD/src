@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2009/11/29 10:08:10 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14 2009/11/29 10:09:54 skrll Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -88,6 +88,19 @@ ldsid(vaddr_t p) {
 
 #define ssm(v,r) __asm volatile("ssm %1,%0": "=r" (r): "i" (v))
 #define rsm(v,r) __asm volatile("rsm %1,%0": "=r" (r): "i" (v))
+
+
+/* Get coherence index for an address */
+static __inline register_t
+lci(pa_space_t sp, vaddr_t va) {
+	register_t ret;
+
+	mtsp((sp), 1);	\
+	__asm volatile("lci 0(%%sr1, %1), %0" : "=r" (ret) : "r" (va));
+
+	return ret;
+}
+
 
 /* Move to system mask. Old value of system mask is returned. */
 static __inline register_t mtsm(register_t mask) {
