@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.5 2009/11/28 13:20:41 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.6 2009/11/29 05:07:49 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.5 2009/11/28 13:20:41 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.6 2009/11/29 05:07:49 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -854,7 +854,7 @@ lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg)
 
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
-	acc = LAN9118_MII_ACC_MIIRINDA(phy) | LAN9118_MII_ACC_PHYA(reg);
+	acc = LAN9118_MII_ACC_PHYA(phy) | LAN9118_MII_ACC_MIIRINDA(reg);
 	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
@@ -868,9 +868,10 @@ lan9118_mii_writereg(struct lan9118_softc *sc, int phy, int reg, uint16_t val)
 
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
-	acc = LAN9118_MII_ACC_MIIRINDA(phy) | LAN9118_MII_ACC_PHYA(reg) |
+	acc = LAN9118_MII_ACC_PHYA(phy) | LAN9118_MII_ACC_MIIRINDA(reg) |
 	    LAN9118_MII_ACC_MIIWNR;
 	lan9118_mac_writereg(sc, LAN9118_MII_DATA, val);
+	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
 }
