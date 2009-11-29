@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2009/11/27 03:23:10 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2009/11/29 04:09:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -694,7 +694,7 @@ ia64_init(void)
 	pcb0->pcb_special.sp = (vaddr_t)lwp0.l_md.md_tf - 16;
 	pcb0->pcb_special.bspstore = v + 1;
 
-	mutex_init(&pcb0.pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
+	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
 
 	/*
 	 * Setup global data for the bootstrap cpu.
