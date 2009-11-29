@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.5 2009/05/08 09:33:57 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.6 2009/11/29 10:15:07 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -730,8 +730,7 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	}
 #endif
 
-	mtsp(HPPA_SID_KERNEL, 1);
-	__asm volatile("lci 0(%%sr1, %1), %0" : "=r" (ci) : "r" (va));
+	ci = lci(HPPA_SID_KERNEL, va);
 
 	tte = (pa & IOTTE_PAMASK) | ((ci >> 12) & IOTTE_CI);
 	tte |= IOTTE_V;
