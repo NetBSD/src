@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.8 2009/11/29 10:06:19 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.9 2009/11/29 10:17:01 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.8 2009/11/29 10:06:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.9 2009/11/29 10:17:01 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -179,7 +179,7 @@ lan9118_attach(struct lan9118_softc *sc)
 	sc->sc_rev = LAN9118_ID_REV_REV(val);
 
 #define LAN9xxx_ID(id)	((id) >= 0x9000 ? (id) & 0xfff : \
-			    ((id) >= 0x1000 ? ((id) >> 4) | 0x100 : (id)))
+			    ((id) >= 0x1000 ? ((id) >> 4) + 0x100 : (id)))
 
 	aprint_normal(": SMSC LAN9%03x Rev %d\n",
 	    LAN9xxx_ID(sc->sc_id), sc->sc_rev);
