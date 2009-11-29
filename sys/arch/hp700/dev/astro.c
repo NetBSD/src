@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.7 2009/11/29 10:33:56 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.8 2009/11/29 13:51:33 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -736,7 +736,7 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	tte |= IOTTE_V;
 
 	*tte_ptr = htole64(tte);
-	fdcache(HPPA_SID_KERNEL, tte_ptr, sizeof(*tte_ptr));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)tte_ptr, sizeof(*tte_ptr));
 }
 
 /*
