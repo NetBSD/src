@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.295 2009/11/28 21:38:55 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.296 2009/11/29 03:31:33 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5948,6 +5948,7 @@ ENTRY(cache_flush_phys)
 	tnz	1		! Error!
 #endif
 	add	%o0, %o1, %o1	! End PA
+	dec	%o1
 
 	!!
 	!! Both D$ and I$ tags match pa bits 40-13, but
@@ -5973,7 +5974,9 @@ ENTRY(cache_flush_phys)
 	and	%o3, %o2, %o3	! Mask out trash
 	cmp	%o0, %o3
 	blt,pt	%xcc, 2f	! Too low
+#ifdef SPITFIRE
 	 sllx	%g1, 40-35, %g1	! Shift I$ tag into place
+#endif
 	cmp	%o1, %o3
 	bgt,pt	%xcc, 2f	! Too high
 	 nop
@@ -5985,13 +5988,14 @@ ENTRY(cache_flush_phys)
 	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
 #endif
 2:
-#ifndef SPITFIRE
+#ifdef SPITFIRE
+	and	%g1, %o2, %g1	! Mask out trash
 	cmp	%o0, %g1
 	blt,pt	%xcc, 3f
 	 cmp	%o1, %g1
-	bgt,pt	%icc, 3f
+	bgt,pt	%xcc, 3f
 	 nop
-	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE
+	stxa	%g0, [%o4] ASI_ICACHE_TAG
 3:
 #endif
 	membar	#StoreLoad
