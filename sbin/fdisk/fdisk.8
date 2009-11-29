@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.65 2009/11/28 17:25:45 tsutsui Exp $
+.\"	$NetBSD: fdisk.8,v 1.66 2009/11/29 04:19:55 tsutsui Exp $
 .\"
 .Dd November 28, 2009
 .Dt FDISK 8
@@ -568,10 +568,49 @@ Default location of i386 bootselect code
 Default location of i386 bootselect for extended partitions
 .El
 .Sh EXAMPLES
-Install MBR bootcode /usr/mdec/mbr_bootsel into /dev/rwd0d:
-.Bd -literal -offset indent
-fdisk -c /usr/mdec/mbr_bootsel /dev/rwd0d
-.Ed
+Update MBR partition data of
+.Pa /dev/rwd0d
+in interactive mode:
+.Pp
+.Dl Ic fdisk -u /dev/rwd0d
+.Pp
+Change active MBR partition of
+.Pa /dev/rwd0d
+in interactive mode:
+.Pp
+.Dl Ic fdisk -a /dev/rwd0d
+.Pp
+Install MBR bootcode
+.Pa /usr/mdec/mbr_bootsel
+into
+.Pa /dev/rwd0d :
+.Pp
+.Dl Ic fdisk -c /usr/mdec/mbr_bootsel /dev/rwd0d
+.Pp
+Set MBR partition data for slot 0 of
+.Pa /dev/rwd0d
+specifying values without prompt:
+.Pp
+.Dl Ic fdisk -f -u -0 -s 169/63/2097089 /dev/rwd0d
+.Pp
+Make partition slot 0 of
+.Pa /dev/rwd0d
+active without prompt:
+.Pp
+.Dl Ic fdisk -f -a -0 /dev/rwd0d
+.Pp
+Initialize and create MBR partition data using bootcode
+.Pa destdir/usr/mdec/mbr
+without prompt against 1GB disk image file
+.Pa diskimg :
+.Pp
+.Dl Ic fdisk -f -i -b 130/255/63 -c destdir/usr/mdec/mbr -F diskimg
+.Pp
+Create MBR partition data for slot 0 which has an active NetBSD partition
+using whole disk without prompt against 1GB disk image file
+.Pa diskimg :
+.Pp
+.Dl Ic fdisk -f -a -u -0 -s 169/63/2097089 -F diskimg
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr boot 8 ,
