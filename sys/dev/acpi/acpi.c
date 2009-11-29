@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.135 2009/11/28 17:03:17 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.136 2009/11/29 21:32:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.135 2009/11/28 17:03:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.136 2009/11/29 21:32:50 cegger Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1169,6 +1169,24 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 		*valp = param.Integer.Value;
 
 	return rv;
+}
+
+ACPI_STATUS
+acpi_eval_set_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER arg)
+{
+	ACPI_OBJECT param_arg;
+	ACPI_OBJECT_LIST param_args;
+
+	if (handle == NULL)
+		handle = ACPI_ROOT_OBJECT;
+
+	param_arg.Type = ACPI_TYPE_INTEGER;
+	param_arg.Integer.Value = arg;
+
+	param_args.Count = 1;
+	param_args.Pointer = &param_arg;
+
+	return AcpiEvaluateObject(handle, path, &param_args, NULL);
 }
 
 /*
