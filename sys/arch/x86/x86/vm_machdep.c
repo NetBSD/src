@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 2009/11/25 13:38:38 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 2009/11/29 04:15:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2009/11/25 13:38:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2009/11/29 04:15:43 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -140,6 +140,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+	vaddr_t uv;
 
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
@@ -181,14 +182,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * 
 	 * Also, copy PCB %fs/%gs base from parent.
 	 */
+	uv = uvm_lwp_getuarea(l2);
+
 #ifdef __x86_64__
-	pcb2->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
 
 	pcb2->pcb_fs = pcb1->pcb_fs;
 	pcb2->pcb_gs = pcb1->pcb_gs;
 #else
-	pcb2->pcb_esp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16);
+	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
 	memcpy(&pcb2->pcb_fsd, pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
@@ -197,7 +200,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #endif
 	l2->l_md.md_regs = tf;
 
-	/* Copy the trapframe from parent. */
+	/*
+	 * Copy the trapframe from parent, so that return to userspace
+	 * will be to right address, with correct registers.
+	 */
 	memcpy(tf, l1->l_md.md_regs, sizeof(struct trapframe));
 
 	/* Child LWP might get aston() before returning to userspace. */
@@ -205,7 +211,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #if 0 /* DIAGNOSTIC */
 	/* Set a red zone in the kernel stack after the uarea. */
-	pmap_kremove(USER_TO_UAREA(l2->l_addr), PAGE_SIZE);
+	pmap_kremove(uv, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 #endif
 

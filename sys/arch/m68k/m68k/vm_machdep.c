@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2009/11/29 04:15:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2009/11/29 04:15:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	l2->l_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)l1->l_md.md_regs;
 

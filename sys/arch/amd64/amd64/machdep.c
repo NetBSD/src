@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2009/11/26 00:19:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2009/11/29 04:15:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2009/11/26 00:19:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2009/11/29 04:15:42 rmind Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -403,15 +403,13 @@ x86_64_switch_context(struct pcb *new)
 void
 x86_64_proc0_tss_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb;
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
-	l = &lwp0;
-	pcb = lwp_getpcb(l);
 	pcb->pcb_flags = 0;
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
-	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + KSTACK_SIZE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
