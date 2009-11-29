@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.12 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.13 2009/11/29 10:08:10 skrll Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -68,7 +68,8 @@
 #define hptbtop(b) ((b) >> 17)
 
 /* Get space register for an address */
-static __inline register_t ldsid(vaddr_t p) {
+static __inline register_t
+ldsid(vaddr_t p) {
 	register_t ret;
 	__asm volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
 	return ret;
