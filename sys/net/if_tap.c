@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.59 2009/09/15 19:38:15 drochner Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.60 2009/11/29 10:44:23 plunky Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.59 2009/09/15 19:38:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.60 2009/11/29 10:44:23 plunky Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -859,6 +859,7 @@ tap_dev_close(struct tap_softc *sc)
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
 #endif
+			m_freem(m);
 		}
 	}
 	splx(s);
