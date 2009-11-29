@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.49 2009/11/25 13:54:23 cegger Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.50 2009/11/29 18:08:22 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.49 2009/11/25 13:54:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.50 2009/11/29 18:08:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,8 +732,6 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 {
 	struct acpitz_softc *sc = sme->sme_cookie;
 	int i;
-
-	printf("%s: units: %u\n", __func__, edata->units);
 
 	switch (edata->units) {
 	case ENVSYS_STEMP:
