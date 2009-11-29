@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.84 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: cpu.c,v 1.85 2009/11/29 19:38:45 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2009/11/29 19:38:45 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -105,6 +105,18 @@ int cpu_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
 
+static int
+upaid_from_node(u_int cpu_node)
+{
+	int portid;
+
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
+	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
+		panic("cpu node w/o upa-portid");
+
+	return portid;
+}
+
 struct cpu_info *
 alloc_cpuinfo(u_int cpu_node)
 {
@@ -118,9 +130,7 @@ alloc_cpuinfo(u_int cpu_node)
 	/*
 	 * Check for UPAID in the cpus list.
 	 */
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
-	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
-		panic("alloc_cpuinfo: upa-portid");
+	portid = upaid_from_node(cpu_node);
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
 		if (cpi->ci_cpuid == portid)
@@ -177,7 +187,18 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_name, ma->ma_name) == 0);
+	if (strcmp(cf->cf_name, ma->ma_name) != 0)
+		return 0;
+
+#ifndef MULTIPROCESSOR
+	/*
+	 * If we are going to only attach a single cpu, make sure
+	 * to pick the one we are running on right now.
+	 */
+	if (upaid_from_node(ma->ma_node) != CPU_UPAID)
+		return 0;
+#endif
+	return 1;
 }
 
 static void
