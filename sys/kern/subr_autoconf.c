@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.188 2009/11/12 23:16:28 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.189 2009/11/29 15:17:30 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.188 2009/11/12 23:16:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.189 2009/11/29 15:17:30 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1082,12 +1082,15 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	struct cfattach *ca;
 	size_t lname, lunit;
 	const char *xunit;
-	int myunit, s;
+	int myunit;
 	char num[10];
 	device_t dev;
 	void *dev_private;
 	const struct cfiattrdata *ia;
 	device_lock_t dvl;
+#ifndef __BROKEN_CONFIG_UNIT_USAGE
+	int s;
+#endif
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
