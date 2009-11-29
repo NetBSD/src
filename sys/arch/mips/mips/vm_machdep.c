@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.127 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.128 2009/11/29 04:11:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.127 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.128 2009/11/29 04:11:51 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,22 +104,15 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.127 2009/11/21 17:40:28 rmind Exp $
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * cpu_lwp_fork: finish a new LWP (l2) operation.
  *
- * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
- *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * First LWP (l1) is the process being forked.  If it is &lwp0, then we
+ * are creating a kthread, where return path and argument are specified
+ * with `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * in both the stack and stacksize arguments), then set up the user stack
+ * pointer accordingly.
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
@@ -127,6 +120,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct frame *f;
+	vaddr_t uv;
+
+	KASSERT(l1 == curlwp || l1 == &lwp0);
 
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
@@ -135,28 +131,22 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_ss_instr = 0;
 	l2->l_md.md_astpending = 0;
 
-#ifdef DIAGNOSTIC
-	/*
-	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
-	 */
-	if (l1 != curlwp && l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
+	/* If parent LWP was using FPU, then save the FPU h/w state. */
 	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
 		savefpregs(l1);
 
-	/*
-	 * Copy pcb from proc p1 to p2.
-	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
-	 * will be to right address, with correct registers.
-	 */
+	/* Copy the PCB from parent. */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
-	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
-	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
 
 	/*
-	 * If specified, give the child a different stack.
+	 * Copy the trapframe from parent, so that return to userspace
+	 * will be to right address, with correct registers.
 	 */
+	uv = uvm_lwp_getuarea(l2);
+	f = (struct frame *)(uv + USPACE) - 1;
+	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
+
+	/* If specified, set a different user stack for a child. */
 	if (stack != NULL)
 		f->f_regs[_R_SP] = (uintptr_t)stack + stacksize;
 
@@ -164,49 +154,49 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 #if USPACE > PAGE_SIZE
 	{
-		size_t i;
 		const int x = (MIPS_HAS_R4K_MMU) ?
-		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-		    MIPS1_PG_G;
-		pt_entry_t *pte = kvtopte(l2->l_addr);
+		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
+		pt_entry_t *pte = kvtopte(uv);
+		size_t i;
+
 		for (i = 0; i < UPAGES; i++)
 			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 	}
 #endif
-
-	pcb2->pcb_context[0] = (intptr_t)func;		/* S0 */
-	pcb2->pcb_context[1] = (intptr_t)arg;		/* S1 */
+	/*
+	 * Rig kernel stack so that it would start out in lwp_trampoline()
+	 * and call child_return() with l2 as an argument.  This causes the
+	 * newly-created child process to go directly to user level with a
+	 * parent return value of 0 from fork(), while the parent process
+	 * returns normally.
+	 */
+	pcb2->pcb_context[0] = (intptr_t)func;			/* S0 */
+	pcb2->pcb_context[1] = (intptr_t)arg;			/* S1 */
 	pcb2->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
-	pcb2->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb2->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
+	pcb2->pcb_context[8] = (intptr_t)f;			/* SP */
+	pcb2->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
 #ifdef IPL_ICU_MASK
-	pcb2->pcb_ppl = 0;	/* machine dependent interrupt mask */
+	/* Machine depenedend interrupt mask. */
+	pcb2->pcb_ppl = 0;
 #endif
 }
 
-/*
- * Set the given LWP to start at the given function via the
- * lwp_trampoline.
- */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
-	struct frame *f;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct frame *f = l->l_md.md_regs;
 
-	f = (struct frame *)((char *)l->l_addr + USPACE) - 1;
-	KASSERT(l->l_md.md_regs == f);
-
-	pcb = lwp_getpcb(l);
 	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
 	pcb->pcb_context[10] = (intptr_t)setfunc_trampoline;	/* RA */
 #ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
+	/* Machine depenedend interrupt mask. */
+	pcb->pcb_ppl = 0;
 #endif
-}	
+}
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
