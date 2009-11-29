@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.126 2009/11/25 13:53:19 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.127 2009/11/29 16:23:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ struct lwp {
 #define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
 #endif /* !defined(UAREA_TO_USER) */
 
-static inline void *
+static __inline void *
 lwp_getpcb(struct lwp *l)
 {
 
