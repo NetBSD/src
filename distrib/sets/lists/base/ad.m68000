@@ -1,0 +1,2 @@
+# $NetBSD: ad.m68000,v 1.1 2009/11/30 07:02:24 he Exp $
+./sbin/edlabel					base-sysutil-root
