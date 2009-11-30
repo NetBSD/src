@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.36 2009/11/30 09:32:13 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.37 2009/11/30 09:33:36 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -197,6 +197,31 @@ get_libgcc_new_analyze () {
 
 #####
 
+get_libgcc_gen_tmpsrcs_tmpsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
+}
+
+get_libgcc_gen_tmpsrcs_tmpfpsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPFPSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*}
+}
+
+get_libgcc_gen_tmpsrcs_tmpasmsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPASMSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*} | \
+	sed -e 's,LIB1ASMSRC,G_&,'
+}
+
 get_libgcc_gen_srcs () {
 	local _lib=$1
 
@@ -213,6 +238,11 @@ get_libgcc_gen_srcs () {
 
 get_libgcc_new_generate () {
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		for _tmp in tmpsrcs tmpfpsrcs tmpasmsrcs; do
+			eval get_libgcc_gen_tmpsrcs_${_tmp} $_lib | \
+			write_mk ${_machine_arch_subdir}/${_lib%.*}.tmpsrcs.${_tmp}.mk
+		done
+
 		get_libgcc_gen_srcs $_lib | \
 		write_mk ${_machine_arch_subdir}/${_lib%.*}.srcs.mk
 	done
