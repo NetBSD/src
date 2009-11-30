@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274 2009/09/04 17:21:33 pooka Exp $
+#	$NetBSD: Makefile,v 1.275 2009/11/30 16:13:22 uebayasi Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -108,6 +108,7 @@
 #   do-x11:          builds and installs X11 if ${MKX11} != "no"; either
 #                    X11R7 from src/external/mit/xorg if ${X11FLAVOUR} == "Xorg"
 #                    or X11R6 from src/x11
+#   do-extsrc:       builds and installs extsrc if ${MKEXTSRC} != "no".
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
 
@@ -251,6 +252,9 @@ BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
+.endif
+.if ${MKEXTSRC} != "no"
+BUILDTARGETS+=	do-extsrc
 .endif
 BUILDTARGETS+=	do-obsolete
 
@@ -479,6 +483,14 @@ do-x11: .PHONY .MAKE
 .endif
 .else
 	@echo "MKX11 is not enabled"
+	@false
+.endif
+
+do-extsrc: .PHONY .MAKE
+.if ${MKEXTSRC} != "no"
+	${MAKEDIRTARGET} extsrc build
+.else
+	@echo "MKEXTSRC is not enabled"
 	@false
 .endif
 

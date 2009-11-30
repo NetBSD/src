@@ -24,6 +24,7 @@ base-dhcpd-bin base-sys-usr
 base-dhcpd-examples base-sys-share
 base-efs-root base-sys-root
 base-ext2fs-root base-sys-root
+base-extsrc-root base-sys-root
 base-filecorefs-root base-sys-root
 base-fstab-examples base-sys-share
 base-games-root base-sys-root
