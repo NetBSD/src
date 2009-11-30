@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.38 2009/11/30 09:50:59 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.39 2009/11/30 09:57:59 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -274,11 +274,11 @@ get_libgcc_new_generate () {
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
 		for _tmp in tmpsrcs tmpfpsrcs tmpasmsrcs; do
 			eval get_libgcc_gen_tmpsrcs_${_tmp} $_lib | \
-			write_mk ${_machine_arch_subdir}/${_lib%.*}.tmpsrcs.${_tmp}.mk
+			write_mk ${libgcc_libs_mk}.${_lib%.*}.tmpsrcs.${_tmp}.mk
 		done
 
 		get_libgcc_gen_srcs $_lib | \
-		write_mk ${_machine_arch_subdir}/${_lib%.*}.srcs.mk
+		write_mk ${libgcc_libs_mk}.${_lib%.*}.srcs.mk
 	done
 
 	for _arg in tmpsrcs cppflags copts; do
@@ -306,6 +306,7 @@ get_libgcc_new () {
 
 	get_libgcc_new_analyze
 
+	libgcc_libs_mk=${_machine_arch_subdir}/libs
 	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
 	libgcc_srcs_mk_tmpsrcs=${_machine_arch_subdir}/srcs.tmpsrcs.mk
 	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
