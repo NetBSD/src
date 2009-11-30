@@ -257,6 +257,7 @@ etc-cron-root root file system support for cron(8) command scheduler
 etc-dhclient-etc configuration files for DHCP dyanamic host configuration protocol client utilities
 etc-dhclient-rc startup script for DHCP dynamic host configuration protocol client
 etc-dhcpd-rc startup script for DHCP dynamic host configuration protocol daemon
+etc-extsrc-rc startup scripts for externally added programs
 etc-games-etc configuration file for games
 etc-games-scores empty score files for games
 etc-ipf-rc startup scripts for IP filter

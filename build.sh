@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.221 2009/11/24 13:39:07 pooka Exp $
+#	$NetBSD: build.sh,v 1.222 2009/11/30 16:13:22 uebayasi Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -550,7 +550,8 @@ usage()
 Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                 [-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
                 [-O obj] [-R release] [-S seed] [-T tools]
-                [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+                [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
+                [-Z var]
                 operation [...]
 
  Build operations (all imply "obj" and "tools"):
@@ -618,6 +619,9 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
     -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
     -x          Set MKX11=yes; build X11 from X11SRCDIR
+    -Y extsrcsrc
+                Set EXTSRCSRCDIR to extsrcsrc.  [Default: /usr/extsrc]
+    -y          Set MKEXTSRC=yes; build extsrc from EXTSRCSRCDIR
     -Z v        Unset ("zap") variable \`v'.
 
 _usage_
@@ -626,7 +630,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:xX:Z:'
+	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:xX:yY:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -795,6 +799,15 @@ parseoptions()
 
 		-x)
 			setmakeenv MKX11 yes
+			;;
+
+		-Y)
+			eval ${optargcmd}; resolvepath OPTARG
+			setmakeenv EXTSRCSRCDIR "${OPTARG}"
+			;;
+
+		-y)
+			setmakeenv MKEXTSRC yes
 			;;
 
 		-Z)
@@ -1323,7 +1336,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.221 2009/11/24 13:39:07 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.222 2009/11/30 16:13:22 uebayasi Exp $
 # with these arguments: ${_args}
 #
 

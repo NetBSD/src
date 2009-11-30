@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.373 2009/09/29 23:56:27 tsarna Exp $
+#	$NetBSD: Makefile,v 1.374 2009/11/30 16:13:22 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -164,6 +164,9 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .  else
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
 .  endif
+. endif
+. if ${MKEXTSRC} != "no"
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/extsrc distribution
 . endif
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE
