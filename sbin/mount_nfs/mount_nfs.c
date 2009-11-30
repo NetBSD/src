@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.67 2009/04/03 07:26:07 pooka Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.68 2009/11/30 17:17:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.67 2009/04/03 07:26:07 pooka Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.68 2009/11/30 17:17:55 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ shownfsargs(const struct nfs_args *nfsargsp)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",
+	(void)fprintf(stderr, "usage: %s %s\n%s\n%s\n%s\n%s\n", getprogname(),
 "[-23bCcdilPpqsTUX] [-a maxreadahead] [-D deadthresh]",
 "\t[-g maxgroups] [-I readdirsize] [-L leaseterm]",
 "\t[-o options] [-R retrycnt] [-r readsize] [-t timeout]",
