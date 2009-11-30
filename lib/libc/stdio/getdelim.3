@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.3 2009/08/25 16:28:26 wiz Exp $
+.\"     $NetBSD: getdelim.3,v 1.4 2009/11/30 22:51:46 roy Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 25, 2009
+.Dd November 30, 2009
 .Dt GETDELIM 3
 .Os
 .Sh NAME
@@ -86,9 +86,23 @@ The
 and
 .Fn getline
 functions return the number of characters read, including the delimiter.
+If no characters were read and the stream is at end-of-file, the functions
+return \-1.
 If an error occurs, the functions return \-1 and the global variable
 .Va errno
 is set to indicate the error.
+.Sh EXAMPLE
+The following code fragment reads lines from a file and writes them to
+standard output.
+.Bd -literal -offset indent
+char *line = NULL;
+size_t linesize = 0;
+ssize_t linelen;
+while ((linelen = getline(&line, &linesize, fp)) != -1)
+	fwrite(line, linelen, 1, stdout);
+
+if (ferror(fp))
+	perror("getline");
 .Sh ERRORS
 .Bl -tag -width [EOVERFLOW]
 .It Bq Er EINVAL
@@ -99,7 +113,7 @@ is a
 .Dv NULL
 pointer.
 .It Bq Er EOVERFLOW
-More than ssize_t characters were read without encountering the delimiter.
+More than SSIZE_MAX characters were read without encountering the delimiter.
 .El
 .Pp
 The
