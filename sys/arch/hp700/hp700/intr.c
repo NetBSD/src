@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2009/05/08 10:12:55 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2009/11/30 16:58:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/05/08 10:12:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/11/30 16:58:40 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -127,7 +127,8 @@ hp700_intr_reg_establish(struct hp700_int_reg *int_reg)
 
 	/* Add this structure to the list. */
 	for (idx = 0; idx < HP700_INT_BITS; idx++)
-		if (hp700_int_regs[idx] == NULL) break;
+		if (hp700_int_regs[idx] == NULL)
+			break;
 	if (idx == HP700_INT_BITS)
 		panic("hp700_intr_reg_establish: too many regs");
 	hp700_int_regs[idx] = int_reg;
@@ -193,7 +194,8 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 	 */
 	if (handler == NULL) {
 		for (idx = 0; idx < HP700_INT_BITS; idx++)
-			if (hp700_int_regs[idx] == arg) break;
+			if (hp700_int_regs[idx] == arg)
+				break;
 		if (idx == HP700_INT_BITS)
 			panic("hp700_intr_establish: unknown int reg");
 		int_reg->int_reg_bits_map[31 ^ bit_pos] =
@@ -255,7 +257,8 @@ _hp700_intr_ipl_next(void)
 	int idx;
 
 	for (idx = 0; idx < HP700_INT_BITS; idx++)
-		if (hp700_int_bits[idx].int_bit_reg == NULL) break;
+		if (hp700_int_bits[idx].int_bit_reg == NULL)
+			break;
 	if (idx == HP700_INT_BITS)
 		panic("_hp700_intr_spl_bit: too many devices");
 	return idx;
