@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.89 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.90 2009/11/30 10:59:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.89 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.90 2009/11/30 10:59:20 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -195,25 +195,6 @@ kernfs_root(struct mount *mp, struct vnode **vpp)
 	return (kernfs_allocvp(mp, vpp, KFSkern, &kern_targets[0], 0));
 }
 
-int
-kernfs_statvfs(struct mount *mp, struct statvfs *sbp)
-{
-
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_frsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
-	sbp->f_blocks = 2;		/* 1K to keep df happy */
-	sbp->f_bfree = 0;
-	sbp->f_bavail = 0;
-	sbp->f_bresvd = 0;
-	sbp->f_files = 1024;	/* XXX lie */
-	sbp->f_ffree = 128;	/* XXX lie */
-	sbp->f_favail = 128;	/* XXX lie */
-	sbp->f_fresvd = 0;
-	copy_statvfs_info(sbp, mp);
-	return (0);
-}
-
 /*ARGSUSED*/
 int
 kernfs_sync(struct mount *mp, int waitfor,
@@ -250,7 +231,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_unmount,
 	kernfs_root,
 	(void *)eopnotsupp,		/* vfs_quotactl */
-	kernfs_statvfs,
+	genfs_statvfs,
 	kernfs_sync,
 	kernfs_vget,
 	(void *)eopnotsupp,		/* vfs_fhtovp */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.40 2009/03/21 01:11:53 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.41 2009/11/30 10:59:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.40 2009/03/21 01:11:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.41 2009/11/30 10:59:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,26 +323,6 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 
 /*ARGSUSED*/
 int
-ptyfs_statvfs(struct mount *mp, struct statvfs *sbp)
-{
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_frsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
-	sbp->f_blocks = 2;		/* 1K to keep df happy */
-	sbp->f_bfree = 0;
-	sbp->f_bavail = 0;
-	sbp->f_bresvd = 0;
-	sbp->f_files = 1024;	/* XXX lie */
-	sbp->f_ffree = 128;	/* XXX lie */
-	sbp->f_favail = 128;	/* XXX lie */
-	sbp->f_fresvd = 0;
-	sbp->f_namemax = MAXNAMLEN;
-	copy_statvfs_info(sbp, mp);
-	return 0;
-}
-
-/*ARGSUSED*/
-int
 ptyfs_sync(struct mount *mp, int waitfor,
     kauth_cred_t uc)
 {
@@ -376,7 +356,7 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_unmount,
 	ptyfs_root,
 	(void *)eopnotsupp,		/* vfs_quotactl */
-	ptyfs_statvfs,
+	genfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
 	(void *)eopnotsupp,		/* vfs_fhtovp */

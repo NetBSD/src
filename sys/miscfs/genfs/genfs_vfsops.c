@@ -1,7 +1,7 @@
-/*	$NetBSD: genfs_vfsops.c,v 1.2 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: genfs_vfsops.c,v 1.3 2009/11/30 10:59:20 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.2 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.3 2009/11/30 10:59:20 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
-
-/* required by genfs.h */
-#include <uvm/uvm.h>
+#include <sys/statvfs.h>
+#include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
+int
+genfs_statvfs(struct mount *mp, struct statvfs *sbp)
+{
+
+	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_frsize = DEV_BSIZE;
+	sbp->f_iosize = DEV_BSIZE;
+	sbp->f_blocks = 2;		/* 1k to keep df happy */
+	sbp->f_bfree = 0;
+	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
+	sbp->f_files = 0;
+	sbp->f_ffree = 0;
+	sbp->f_favail = 0;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
+
+	return 0;
+}
 
 int
 genfs_renamelock_enter(struct mount *mp)

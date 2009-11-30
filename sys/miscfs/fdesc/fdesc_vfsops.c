@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.82 2009/07/31 19:47:47 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.83 2009/11/30 10:59:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.82 2009/07/31 19:47:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.83 2009/11/30 10:59:20 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -153,25 +153,6 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 	return (0);
 }
 
-int
-fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
-{
-
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_frsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
-	sbp->f_blocks = 2;		/* 1K to keep df happy */
-	sbp->f_bfree = 0;
-	sbp->f_bavail = 0;
-	sbp->f_bresvd = 0;
-	sbp->f_files = 0;
-	sbp->f_ffree = 0;
-	sbp->f_favail = 0;
-	sbp->f_fresvd = 0;
-	copy_statvfs_info(sbp, mp);
-	return (0);
-}
-
 /*ARGSUSED*/
 int
 fdesc_sync(struct mount *mp, int waitfor,
@@ -208,7 +189,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_unmount,
 	fdesc_root,
 	(void *)eopnotsupp,		/* vfs_quotactl */
-	fdesc_statvfs,
+	genfs_statvfs,
 	fdesc_sync,
 	fdesc_vget,
 	(void *)eopnotsupp,		/* vfs_fhtovp */
