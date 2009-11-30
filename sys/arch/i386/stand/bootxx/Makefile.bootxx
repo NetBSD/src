@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.37 2009/11/20 17:28:19 dsl Exp $
+# $NetBSD: Makefile.bootxx,v 1.38 2009/11/30 21:40:35 dsl Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -10,7 +10,7 @@ PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
 
-PRIMARY_LOAD_ADDRESS=0x8800
+PRIMARY_LOAD_ADDRESS=0x1000
 SECONDARY_LOAD_ADDRESS=0x10000
 
 # We ought (need?) to fit into track 0 of a 1.2M floppy.
