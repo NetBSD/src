@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2008/04/28 20:23:37 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.26 2009/11/30 09:34:39 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,13 +75,10 @@ void	mp_resume_cpu(int);
 #endif	/* _LOCORE */
 
 #define IPI_EVCNT_TLB_PTE	0
-#define IPI_EVCNT_TLB_CTX	1
-#define IPI_EVCNT_TLB_ALL	2
-#define IPI_EVCNT_FPU_SYNCH	3
-#define IPI_EVCNT_FPU_FLUSH	4
-#define IPI_EVCNT_NUM		5
-#define IPI_EVCNT_NAMES { "TLB pte IPI", "TLB ctx IPI", "TLB all IPI", \
-			  "FPU synch IPI", "FPU flush IPI" }
+#define IPI_EVCNT_FPU_SYNCH	1
+#define IPI_EVCNT_FPU_FLUSH	2
+#define IPI_EVCNT_NUM		3
+#define IPI_EVCNT_NAMES { "TLB pte IPI", "FPU synch IPI", "FPU flush IPI" }
 #endif
 
 #endif /* _SPARC64_INTR_H_ */
