@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/05/01 15:27:20 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2009/11/30 13:07:38 uebayasi Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -21,8 +21,20 @@ SHLIB_MINOR=	0
 LDFLAGS+=	-nodefaultlibs
 LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
+.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
+
+.else	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
+# New style.
+TMPLSRCS=	${TMPLSRCS.libgcc_s.so}
+TMPLFPSRCS=	${TMPLFPSRCS.libgcc_s.so}
+TMPLASMSRCS=	${TMPLASMSRCS.libgcc_s.so}
+SRCS=		${SRCS.libgcc_s.so}
+
+.endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 
 COPTS.unwind-dw2.c = -Wno-stack-protector
 
