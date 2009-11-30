@@ -74,6 +74,9 @@ FILES
      x11/           ``Reachover'' build structure for X11R6; the source is in
                     X11SRCDIR.
 
+     extsrc/        ``Reachover'' build structure for externally added programs
+                    and libraries; the source is in EXTSRCSRCDIR.
+
    Build tree layout
      The NetBSD build tree is described in hier(7), and the release layout is
      described in release(7).
@@ -164,6 +167,13 @@ CONFIGURATION
                  Note: build.sh will provide a default of destdir.MACHINE (in
                  the top-level .OBJDIR) unless run in `expert' mode.
 
+     EXTSRCSRCDIR
+		 Directory containing sources of externally added programs
+		 and libraries.  If specified, must be an absolute path.
+
+                 Default: NETBSDRCDIR/../extsrc, if that exists; otherwise
+                 /usr/extsrc.
+
      MAKECONF    The name of the make(1) configuration file.  Only settable in
                  the process environment.
 
@@ -211,6 +221,11 @@ CONFIGURATION
                  installed during a build.
 
                  Default: ``yes''
+
+     MKEXTSRC    Can be set to ``yes'' or ``no''.  Indicates whether extsrc is
+                 built from EXTSRCSRCDIR.
+
+                 Default: ``no''
 
      MKHTML      Can be set to ``yes'' or ``no''.  Indicates whether prefor-
                  matted HTML manual pages will be built and installed
@@ -873,6 +888,13 @@ BUILDING
                being used.
 
      -x        Set MKX11=yes.
+
+     -Y extsrcsrc
+               Set the value of EXTSRCSRCDIR to extsrcsrc.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.
+
+     -y        Set MKEXTSRC=yes.
 
      -Z var    Unset ("zap") the environment variable var.  This is propagated
                to the nbmake wrapper.

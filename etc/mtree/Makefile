@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/11/19 19:57:40 drochner Exp $
+#	$NetBSD: Makefile,v 1.11 2009/11/30 16:13:22 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -8,12 +8,14 @@ NETBSD_DIST_X11_FILE=	${.CURDIR}/NetBSD.dist.Xorg
 . else
 NETBSD_DIST_X11_FILE=	${.CURDIR}/NetBSD.dist.XFree86
 . endif
-.else
-NETBSD_DIST_X11_FILE=
 .endif
 
-NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE}
-	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} > \
+.if ${MKEXTSRC} != "no"
+NETBSD_DIST_EXTSRC_FILE=	${.CURDIR}/NetBSD.dist.extsrc
+.endif
+
+NetBSD.dist:	NetBSD.dist.base ${NETBSD_DIST_X11_FILE} ${NETBSD_DIST_EXTSRC_FILE}
+	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${NETBSD_DIST_X11_FILE} ${NETBSD_DIST_EXTSRC_FILE} > \
 	    ${.TARGET}
 
 CONFIGFILES=	NetBSD.dist special
