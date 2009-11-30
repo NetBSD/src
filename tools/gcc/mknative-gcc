@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.33 2009/11/30 08:00:20 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.34 2009/11/30 08:05:41 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -145,7 +145,7 @@ get_libgcc_libgcc_mk_libs_list_tmpsrcs_files () {
 	local _lib=$1
 	local _tmpallsrcs=$( mktemp /tmp/mknative-gcc._tmpallsrcs.XXXXXX )
 
-	touch $_TOP/${libgcc_db_tmpsrcs}.tmpsrc.${_lib%.*}s
+	touch $_TOP/${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
 	touch $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*}
 	touch $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*}
 
@@ -168,7 +168,7 @@ get_libgcc_libgcc_mk_libs_list_tmpsrcs_files () {
 	cat $_tmpallsrcs | \
 	comm -23 /dev/stdin $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*} | \
 	comm -23 /dev/stdin $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*} | \
-	writefile ${libgcc_db_tmpsrcs}.tmpsrc.${_lib%.*}s
+	writefile ${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
 
 	rm -f $_tmpallsrcs
 }
