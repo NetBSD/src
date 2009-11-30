@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2008/12/12 18:16:58 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45 2009/11/30 01:45:04 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -212,15 +212,9 @@ void sp_tlb_flush_all(void);
 
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, pmap_t);
-void smp_tlb_flush_ctx(pmap_t);
-void smp_tlb_flush_all(void);
 #define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
-#define	tlb_flush_ctx(pm)	smp_tlb_flush_ctx(pm)
-#define	tlb_flush_all()		smp_tlb_flush_all()
 #else
 #define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
-#define	tlb_flush_ctx(pm)	sp_tlb_flush_ctx((pm)->pm_ctx)
-#define	tlb_flush_all()		sp_tlb_flush_all()
 #endif
 
 /* Installed physical memory, as discovered during bootstrap. */
