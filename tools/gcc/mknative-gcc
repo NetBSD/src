@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.35 2009/11/30 08:20:23 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.36 2009/11/30 09:32:13 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -197,7 +197,25 @@ get_libgcc_new_analyze () {
 
 #####
 
+get_libgcc_gen_srcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'SRCS.%s = \\\n' $_lib
+	{
+		comm -23 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,$,.c,; s,^,tmp_,'
+		comm -12 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,$,.S,; s,^,tmp_,'
+	} | sort | \
+	sed -e 's,^,	,; s,$, \\,'
+}
+
 get_libgcc_new_generate () {
+	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		get_libgcc_gen_srcs $_lib | \
+		write_mk ${_machine_arch_subdir}/${_lib%.*}.srcs.mk
+	done
 }
 
 #####
@@ -217,12 +235,12 @@ get_libgcc_new () {
 	libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
 	libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
 
+	get_libgcc_new_analyze
+
 	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
 	libgcc_srcs_mk_tmpsrc=${_machine_arch_subdir}/srcs.tmpsrc.mk
 	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
 	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
-
-	get_libgcc_new_analyze
 
 	get_libgcc_new_generate
 }
