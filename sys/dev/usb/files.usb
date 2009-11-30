@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.91 2009/06/19 01:16:23 mrg Exp $
+#	$NetBSD: files.usb,v 1.92 2009/11/30 16:18:34 tsutsui Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -331,3 +331,8 @@ file	dev/usb/xboxcontroller.c	xboxcontroller
 device	zyd: ether, ifnet, arp, wlan, firmload
 attach	zyd at usbdevif
 file	dev/usb/if_zyd.c		zyd
+
+# DisplayLink DL-1x0/DL-1x5
+device	udl: wsemuldisplaydev, rasops16, edid, firmload
+attach	udl at usbdevif
+file	dev/usb/udl.c			udl
