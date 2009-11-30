@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.27 2009/06/23 19:36:38 elad Exp $	*/
+/*	$NetBSD: genfs.h,v 1.28 2009/11/30 10:59:20 pooka Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -32,6 +32,8 @@ int	genfs_null_putpages(void *);
 int	genfs_compat_getpages(void *);
 
 int	genfs_do_putpages(struct vnode *, off_t, off_t, int, struct vm_page **);
+
+int	genfs_statvfs(struct mount *, struct statvfs *);
 
 int	genfs_renamelock_enter(struct mount *);
 void	genfs_renamelock_exit(struct mount *);
