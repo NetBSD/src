@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/11/30 13:07:38 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.5 2009/11/30 13:24:32 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -33,12 +33,14 @@ TMPLASMSRCS=	${TMPLASMSRCS.libgcov.a}
 
 .endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 
+.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
 CLEANFILES+=	${LIBGCOVSRCS}
 
-.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 ${LIBGCOVSRCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcov.c>\n' >${.TARGET}
+
 .endif	# !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 
 .include <bsd.lib.mk>
