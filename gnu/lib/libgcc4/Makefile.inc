@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2009/11/30 11:55:12 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2009/11/30 12:07:28 uebayasi Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -60,8 +60,6 @@ BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
 CPICFLAGS:=
-COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-_TRADITIONAL_CPP=
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
@@ -69,7 +67,8 @@ CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 
 .if ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb"
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "m68000"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
