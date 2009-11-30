@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.31 2009/11/27 16:43:51 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.32 2009/11/30 10:11:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.31 2009/11/27 16:43:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.32 2009/11/30 10:11:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -434,8 +434,13 @@ rump_vop_lookup(void *v)
 		return EOPNOTSUPP;
 	if (!((cnp->cn_flags & ISDOTDOT) == 0))
 		return EOPNOTSUPP;
-	if (!(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.'))
-		return EOPNOTSUPP;
+
+	/* check for dot, return directly if the case */
+	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
+		vref(dvp);
+		*vpp = dvp;
+		goto out;
+	}
 
 	/* check if we are returning a faked block device */
 	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
@@ -485,6 +490,7 @@ rump_vop_lookup(void *v)
 			return rv;
 	}
 
+ out:
 	return 0;
 }
 
