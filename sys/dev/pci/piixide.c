@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.51 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: piixide.c,v 1.52 2009/11/30 09:33:48 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.51 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.52 2009/11/30 09:33:48 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,48 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  PCI_PRODUCT_INTEL_82965PM_IDE,
 	  0,
 	  "Intel 82965PM IDE controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_2,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_3,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_4,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_5,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_6,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
 	  piixsata_chip_map,
 	},
 	{ 0,
