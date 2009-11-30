@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.9 2009/11/27 22:31:29 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.10 2009/11/30 05:00:58 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -94,13 +94,13 @@ bus_dma_tag_t schizo_alloc_dma_tag(struct schizo_pbm *);
 pcireg_t schizo_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void schizo_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
-int schizo_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int schizo_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	           int flags, vaddr_t unused, bus_space_handle_t *hp);
 static paddr_t schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
                                off_t off, int prot, int flags);
 static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
+static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
@@ -136,7 +136,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	uint64_t eccctrl, csr;
+	uint64_t eccctrl;
 	char *str;
 
 	printf(": addr %lx", ma->ma_reg[0].ur_paddr);
@@ -157,9 +157,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	csr = schizo_read(sc, SCZ_CONTROL_STATUS);
-	sc->sc_ign = ((csr & SCZ_CONTROL_STATUS_AID_MASK) >>
-		       SCZ_CONTROL_STATUS_AID_SHIFT);
+	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
 
 	/* enable schizo ecc error interrupts */
 	eccctrl = schizo_read(sc, SCZ_ECCCTRL);
@@ -587,6 +585,7 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 	npc->rootnode = node;
 	npc->spc_conf_read = schizo_conf_read;
 	npc->spc_conf_write = schizo_conf_write;
+	npc->spc_intr_map = schizo_pci_intr_map;
 	npc->spc_intr_establish = schizo_pci_intr_establish;
 	npc->spc_find_ino = schizo_pci_find_ino;
 	return (npc);
@@ -680,6 +679,51 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	}
 	DPRINTF(SDB_BUSMAP, ("%s: FAILED\n", __func__));
 	return (-1);
+}
+
+/*
+ * interrupt mapping foo.
+ * XXX: how does this deal with multiple interrupts for a device?
+ */
+int
+schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pcitag_t tag = pa->pa_tag;
+	struct schizo_pbm *pbm = pa->pa_pc->cookie;
+	struct schizo_softc *sc = pbm->sp_sc;
+	int interrupts, *intp;
+	int len, node = PCITAG_NODE(tag);
+	char devtype[30];
+
+	intp = &interrupts;
+	len = 1;
+	if (prom_getprop(node, "interrupts", sizeof(interrupts),
+			&len, &intp) != 0 || len != 1) {
+		DPRINTF(SDB_INTMAP,
+			("pci_intr_map: could not read interrupts\n"));
+		return (ENODEV);
+	}
+
+	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
+		sizeof(interrupts)) < 0) {
+		printf("OF_mapintr failed\n");
+		KASSERT(pa->pa_pc->spc_find_ino);
+		pa->pa_pc->spc_find_ino(pa, &interrupts);
+	}
+	DPRINTF(SDB_INTMAP, ("OF_mapintr() gave %x\n", interrupts));
+
+	/* Try to find an IPL for this type of device. */
+	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
+	for (len = 0; intrmap[len].in_class != NULL; len++)
+		if (strcmp(intrmap[len].in_class, devtype) == 0) {
+			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
+			DPRINTF(SDB_INTMAP, ("reset to %x\n", interrupts));
+			break;
+		}
+
+	*ihp = interrupts | sc->sc_ign;
+	DPRINTF(SDB_INTMAP, ("returning IGN adjusted to %x\n", *ihp));
+	return (0);
 }
 
 static void *
