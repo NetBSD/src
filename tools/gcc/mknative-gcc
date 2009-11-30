@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.27 2009/11/30 06:13:37 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.28 2009/11/30 06:29:58 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -49,22 +49,49 @@ get_libg2c () {
 
 ##### gnu/lib/libgcc #####
 
-_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH
-
-libgcc_db_funcs=${_machine_arch_subdir}/funcs
-libgcc_db_files=${_machine_arch_subdir}/files
-libgcc_db_objs_libs=${_machine_arch_subdir}/objs.libs
-libgcc_db_objs_srcs=${_machine_arch_subdir}/objs.srcs
-libgcc_db_objs_tmpsrcs=${_machine_arch_subdir}/objs.tmpsrcs
-libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
-libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
-
-libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
-libgcc_srcs_mk_tmpsrc=${_machine_arch_subdir}/srcs.tmpsrc.mk
-libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
-libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
+get_libgcc_list_funcs_asm () {
+	getvars gcc/Makefile LIB1ASMFUNCS | {
+		# print newline separated list
+		sed -e '
+			s,^.*=,,
+			s, *$,,
+			s,  *, ,g
+			s, ,\
+,g'
+	} | {
+		# print foo and foo_s
+		sed -ne '
+			/./ {
+				p
+				s,$,_s,
+				p
+			}
+		'
+	} | sort
+}
 
 get_libgcc_new () {
+	_subdir="$1"
+
+	_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH
+
+	libgcc_db_funcs=${_machine_arch_subdir}/funcs
+	libgcc_db_files=${_machine_arch_subdir}/files
+	libgcc_db_objs_libs=${_machine_arch_subdir}/objs.libs
+	libgcc_db_objs_srcs=${_machine_arch_subdir}/objs.srcs
+	libgcc_db_objs_tmpsrcs=${_machine_arch_subdir}/objs.tmpsrcs
+	libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
+	libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
+
+	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
+	libgcc_srcs_mk_tmpsrc=${_machine_arch_subdir}/srcs.tmpsrc.mk
+	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
+	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
+
+	# Collect data from libgcc.mk...
+
+	get_libgcc_list_funcs_asm | \
+	writefile ${libgcc_db_funcs}.S
 }
 
 get_libgcc () {
@@ -99,7 +126,7 @@ get_libgcc () {
 
 	# Generate new style files.
 	if [ -n "${MKNATIVE_LIBGCC_NEW}" ]; then
-		get_libgcc_new
+		get_libgcc_new $_subdir
 	fi
 }
 
