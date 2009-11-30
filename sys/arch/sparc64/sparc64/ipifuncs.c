@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.24 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.25 2009/11/30 01:45:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24 2009/05/16 19:15:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2009/11/30 01:45:04 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -361,55 +361,6 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 					 va, ctx);
 		}
 	}
-}
-
-/*
- * Flush context on all active processors.
- */
-void
-smp_tlb_flush_ctx(pmap_t pm)
-{
-	sparc64_cpuset_t cpuset;
-	struct cpu_info *ci;
-	int ctx;
-	bool kpm = (pm == pmap_kernel());
-
-	/* Flush our own TLB */
-	ctx = pm->pm_ctx[cpu_number()];
-	KASSERT(ctx >= 0);
-	if (kpm || ctx > 0)
-		sp_tlb_flush_ctx(ctx);
-
-	CPUSET_ASSIGN(cpuset, cpus_active);
-	CPUSET_DEL(cpuset, cpu_number());
-	if (CPUSET_EMPTY(cpuset))
-		return;
-
-	/* Flush others */
-	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (CPUSET_HAS(cpuset, ci->ci_index)) {
-			CPUSET_DEL(cpuset, ci->ci_index);
-			ctx = pm->pm_ctx[ci->ci_index];
-			KASSERT(ctx >= 0);
-			if (!kpm && ctx == 0)
-				continue;
-			sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_flush_ctx,
-					 ctx, 0);
-		}
-	}
-}
-
-/*
- * Flush whole TLB on all active processors.
- */
-void
-smp_tlb_flush_all(void)
-{
-	/* Flush our own TLB */
-	sp_tlb_flush_all();
-
-	/* Flush others */
-	sparc64_broadcast_ipi(sparc64_ipi_flush_all, 0, 0);
 }
 
 /*
