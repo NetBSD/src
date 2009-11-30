@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.39 2009/11/30 09:57:59 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.40 2009/11/30 10:03:57 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -106,7 +106,7 @@ get_libgcc_list_objs_srcs () {
 	} | sort
 }
 
-get_libgcc_list_objs_tmpsrcs () {
+get_libgcc_list_objs_tmplsrcs () {
 	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
 	sed -ne '
 		s,^.* -c \([^ ]*\).* -o .*/\([^ ]*\.o\)$,\2	\1,
@@ -141,36 +141,36 @@ get_libgcc_list_objs_copts () {
 	get_libgcc_list_objs_xflags fmx
 }
 
-get_libgcc_list_tmpsrcs () {
+get_libgcc_list_tmplsrcs () {
 	local _lib=$1
-	local _tmpallsrcs=$( mktemp /tmp/mknative-gcc._tmpallsrcs.XXXXXX )
+	local _tmplallsrcs=$( mktemp /tmp/mknative-gcc._tmplallsrcs.XXXXXX )
 
-	touch $_TOP/${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
-	touch $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*}
-	touch $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*}
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*}
 
 	# all files
 	local _lib_prefix=${_lib%.*}
 	local _lib_suffix=${_lib#*.}
-	join $_TOP/$libgcc_db_objs_libs $_TOP/$libgcc_db_objs_tmpsrcs | \
+	join $_TOP/$libgcc_db_objs_libs $_TOP/$libgcc_db_objs_tmplsrcs | \
 	grep ${_lib_prefix}'\.'${_lib_suffix} | cut -d' ' -f 3 | sort -u > \
-	$_tmpallsrcs
+	$_tmplallsrcs
 
-	# TMPFPSRCS = [fdp]p-bit.c
-	grep '[fdt]p-bit\.c' <$_tmpallsrcs | sort -u | \
-	writefile ${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*}
+	# TMPLFPSRCS = [fdp]p-bit.c
+	grep '[fdt]p-bit\.c' <$_tmplallsrcs | sort -u | \
+	writefile ${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
 
-	# TMPASMSRCS = $(LIB1ASMSRC)
-	grep '\$(LIB1ASMSRC)' <$_tmpallsrcs | sort -u | \
-	writefile ${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*}
+	# TMPLASMSRCS = $(LIB1ASMSRC)
+	grep '\$(LIB1ASMSRC)' <$_tmplallsrcs | sort -u | \
+	writefile ${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*}
 
-	# TMPSRCS is anything else; exclude TMPFPSRCS and TMPASMSRCS
-	cat $_tmpallsrcs | \
-	comm -23 /dev/stdin $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*} | \
-	comm -23 /dev/stdin $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*} | \
-	writefile ${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
+	# TMPLSRCS is anything else; exclude TMPLFPSRCS and TMPLASMSRCS
+	cat $_tmplallsrcs | \
+	comm -23 /dev/stdin $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*} | \
+	comm -23 /dev/stdin $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*} | \
+	writefile ${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
 
-	rm -f $_tmpallsrcs
+	rm -f $_tmplallsrcs
 }
 
 get_libgcc_new_analyze () {
@@ -186,39 +186,39 @@ get_libgcc_new_analyze () {
 
 	get_libgcc_list_objs_libs | writefile ${libgcc_db_objs_libs}
 	get_libgcc_list_objs_srcs | writefile ${libgcc_db_objs_srcs}
-	get_libgcc_list_objs_tmpsrcs | writefile ${libgcc_db_objs_tmpsrcs}
+	get_libgcc_list_objs_tmplsrcs | writefile ${libgcc_db_objs_tmplsrcs}
 	get_libgcc_list_objs_cppflags | writefile ${libgcc_db_objs_cppflags}
 	get_libgcc_list_objs_copts | writefile ${libgcc_db_objs_copts}
 
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
-		get_libgcc_list_tmpsrcs $_lib
+		get_libgcc_list_tmplsrcs $_lib
 	done
 }
 
 #####
 
-get_libgcc_gen_tmpsrcs_tmpsrcs () {
+get_libgcc_gen_tmplsrcs_tmplsrcs () {
 	local _lib=$1
 
 	printf '\n'
-	printf 'TMPSRCS.%s = \\\n' $_lib
-	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpsrcs.${_lib%.*}
+	printf 'TMPLSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
 }
 
-get_libgcc_gen_tmpsrcs_tmpfpsrcs () {
+get_libgcc_gen_tmplsrcs_tmplfpsrcs () {
 	local _lib=$1
 
 	printf '\n'
-	printf 'TMPFPSRCS.%s = \\\n' $_lib
-	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpfpsrcs.${_lib%.*}
+	printf 'TMPLFPSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
 }
 
-get_libgcc_gen_tmpsrcs_tmpasmsrcs () {
+get_libgcc_gen_tmplsrcs_tmplasmsrcs () {
 	local _lib=$1
 
 	printf '\n'
-	printf 'TMPASMSRCS.%s = \\\n' $_lib
-	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmpsrcs}.tmpasmsrcs.${_lib%.*} | \
+	printf 'TMPLASMSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*} | \
 	sed -e 's,LIB1ASMSRC,G_&,'
 }
 
@@ -242,12 +242,12 @@ _lookup_objs () {
 	eval grep \^$_obj\\\	 \$_TOP/\${libgcc_db_objs_${_key}} | cut -f2
 }
 
-get_libgcc_gen_srcs_tmpsrcs () {
+get_libgcc_gen_srcs_tmplsrcs () {
 	cut -f1 $_TOP/${libgcc_db_objs_libs} | \
 	while read _obj; do
 		printf 'SRCS.tmp_%s=%s\n' \
 			"$( _lookup_objs $_obj srcs )" \
-			"$( _lookup_objs $_obj tmpsrcs )"
+			"$( _lookup_objs $_obj tmplsrcs )"
 	done | \
 	sed -e 's,\$(\(.*\)),${G_\1},'
 }
@@ -272,16 +272,16 @@ get_libgcc_gen_srcs_copts () {
 
 get_libgcc_new_generate () {
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
-		for _tmp in tmpsrcs tmpfpsrcs tmpasmsrcs; do
-			eval get_libgcc_gen_tmpsrcs_${_tmp} $_lib | \
-			write_mk ${libgcc_libs_mk}.${_lib%.*}.tmpsrcs.${_tmp}.mk
+		for _tmpl in tmplsrcs tmplfpsrcs tmplasmsrcs; do
+			eval get_libgcc_gen_tmplsrcs_${_tmpl} $_lib | \
+			write_mk ${libgcc_libs_mk}.${_lib%.*}.tmplsrcs.${_tmpl}.mk
 		done
 
 		get_libgcc_gen_srcs $_lib | \
 		write_mk ${libgcc_libs_mk}.${_lib%.*}.srcs.mk
 	done
 
-	for _arg in tmpsrcs cppflags copts; do
+	for _arg in tmplsrcs cppflags copts; do
 		eval get_libgcc_gen_srcs_${_arg} | \
 		eval writefile \$libgcc_srcs_mk_${_arg}
 	done
@@ -297,10 +297,10 @@ get_libgcc_new () {
 	_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH
 
 	libgcc_db_funcs=${_machine_arch_subdir}/funcs
-	libgcc_db_tmpsrcs=${_machine_arch_subdir}/tmpsrcs
+	libgcc_db_tmplsrcs=${_machine_arch_subdir}/tmplsrcs
 	libgcc_db_objs_libs=${_machine_arch_subdir}/objs.libs
 	libgcc_db_objs_srcs=${_machine_arch_subdir}/objs.srcs
-	libgcc_db_objs_tmpsrcs=${_machine_arch_subdir}/objs.tmpsrcs
+	libgcc_db_objs_tmplsrcs=${_machine_arch_subdir}/objs.tmplsrcs
 	libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
 	libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
 
@@ -308,7 +308,7 @@ get_libgcc_new () {
 
 	libgcc_libs_mk=${_machine_arch_subdir}/libs
 	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
-	libgcc_srcs_mk_tmpsrcs=${_machine_arch_subdir}/srcs.tmpsrcs.mk
+	libgcc_srcs_mk_tmplsrcs=${_machine_arch_subdir}/srcs.tmplsrcs.mk
 	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
 	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
 
