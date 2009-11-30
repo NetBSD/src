@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.4 2009/11/30 22:51:46 roy Exp $
+.\"     $NetBSD: getdelim.3,v 1.5 2009/11/30 23:23:29 roy Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,13 @@ return \-1.
 If an error occurs, the functions return \-1 and the global variable
 .Va errno
 is set to indicate the error.
+.Pp
+The functions do not distinguish between end-of-file and error,
+and callers must use
+.Xr feof 3
+and
+.Xr ferror 3
+to determine which occurred.
 .Sh EXAMPLE
 The following code fragment reads lines from a file and writes them to
 standard output.
