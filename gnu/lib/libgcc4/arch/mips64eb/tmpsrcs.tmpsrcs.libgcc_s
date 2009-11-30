@@ -1,0 +1,6 @@
+gthr-gnat.c
+libgcc2.c
+unwind-c.c
+unwind-dw2-fde.c
+unwind-dw2.c
+unwind-sjlj.c
