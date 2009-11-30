@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.40 2009/11/30 10:03:57 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.41 2009/11/30 14:34:17 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -95,7 +95,7 @@ get_libgcc_list_objs_libs () {
 }
 
 get_libgcc_list_objs_srcs () {
-	{
+	if [ -e $_TOP/${libgcc_db_funcs}.S ]; then
 		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
 		comm -23 /dev/stdin $_TOP/${libgcc_db_funcs}.S | \
 		sed -e 's,\(.*\),\1.o	\1.c,'
@@ -103,7 +103,10 @@ get_libgcc_list_objs_srcs () {
 		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
 		comm -12 /dev/stdin $_TOP/${libgcc_db_funcs}.S | \
 		sed -e 's,\(.*\),\1.o	\1.S,'
-	} | sort
+	else
+		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
+		sed -e 's,\(.*\),\1.o	\1.c,'
+	fi | sort
 }
 
 get_libgcc_list_objs_tmplsrcs () {
@@ -176,10 +179,12 @@ get_libgcc_list_tmplsrcs () {
 get_libgcc_new_analyze () {
 	mkdir -p $_TOP/${_machine_arch_subdir}
 
+	touch $_TOP/${libgcc_db_funcs}.S
 	get_libgcc_list_funcs_asm | \
 	writefile ${libgcc_db_funcs}.S
 
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		touch $_TOP/${libgcc_db_funcs}.${_lib%.*}
 		get_libgcc_list_funcs_lib $_lib | \
 		writefile ${libgcc_db_funcs}.${_lib%.*}
 	done
@@ -227,12 +232,15 @@ get_libgcc_gen_srcs () {
 
 	printf '\n'
 	printf 'SRCS.%s = \\\n' $_lib
-	{
+	if [ -e $_TOP/${libgcc_db_funcs}.S ]; then
 		comm -23 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
 		sed -e 's,$,.c,; s,^,tmp_,'
 		comm -12 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
 		sed -e 's,$,.S,; s,^,tmp_,'
-	} | sort | \
+	else
+		cat $_TOP/${libgcc_db_funcs}.${_lib%.*} | \
+		sed -e 's,$,.c,; s,^,tmp_,'
+	fi | sort | \
 	sed -e 's,^,	,; s,$, \\,'
 }
 
