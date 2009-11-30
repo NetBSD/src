@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1322 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1323 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -489,3 +489,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ws(4): Added the xf86-input-ws input driver for touchpanels that
 		report absolute position data through wscons(4), e.g. those
 		support by ums(4). [mbalmer 20091128]
+	build.sh: Handle externally added programs and libraries and create
+		sets.  [uebayasi 20091130]
