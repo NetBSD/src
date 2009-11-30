@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/06 14:20:12 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2009/11/30 13:07:38 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -18,14 +18,28 @@ LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-Wno-stack-protector
 
+.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
 DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
 
+.else	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
+# New style.
+SRCS=		${SRCS.libgcov.a}
+TMPLSRCS=	${TMPLSRCS.libgcov.a}
+TMPLFPSRCS=	${TMPLFPSRCS.libgcov.a}
+TMPLASMSRCS=	${TMPLASMSRCS.libgcov.a}
+
+.endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
 CLEANFILES+=	${LIBGCOVSRCS}
 
+.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 ${LIBGCOVSRCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcov.c>\n' >${.TARGET}
+.endif	# !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
 
 .include <bsd.lib.mk>
 .else
