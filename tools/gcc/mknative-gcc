@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.25 2008/10/11 05:03:44 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.26 2009/11/30 05:50:07 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -49,6 +49,9 @@ get_libg2c () {
 
 ##### gnu/lib/libgcc #####
 
+get_libgcc_new () {
+}
+
 get_libgcc () {
 	_subdir="$1"
 	mkdir -p $_TOP/gnu/lib/lib$_subdir/arch
@@ -78,6 +81,11 @@ get_libgcc () {
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
 	} | write_mk gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
+
+	# Generate new style files.
+	if [ -n "${MKNATIVE_LIBGCC_NEW} ]
+		get_libgcc_new
+	fi
 }
 
 ##### gnu/lib/libgcov #####
