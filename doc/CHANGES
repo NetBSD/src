@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1323 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1324 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -491,3 +491,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		support by ums(4). [mbalmer 20091128]
 	build.sh: Handle externally added programs and libraries and create
 		sets.  [uebayasi 20091130]
+	udl(4): Add a driver for DisplayLink DL-1x0/1x5 based USB LCDs and
+		USB-VGA adaptors. Ported from OpenBSD by FUKAUMI Naoki
+		with many modification. [tsutsui 20091130]
