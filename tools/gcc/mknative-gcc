@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.28 2009/11/30 06:29:58 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.29 2009/11/30 06:40:17 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -70,8 +70,24 @@ get_libgcc_list_funcs_asm () {
 	} | sort
 }
 
+get_libgcc_list_funcs_lib () {
+	local _lib=$1
+	local _lib_prefix=${_lib%.*}
+	local _lib_suffix=${_lib#*.}
+
+	sed -ne '
+		/^\.\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
+			s,^.*/,,
+			s,\.o$,,
+			p
+		}
+	' build/gcc/libgcc.mk | sort
+}
+
 get_libgcc_new () {
 	_subdir="$1"
+
+	# List of generated files.
 
 	_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH
 
@@ -88,10 +104,15 @@ get_libgcc_new () {
 	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
 	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
 
-	# Collect data from libgcc.mk...
+	# Collect data from gcc/Makefile and gcc/libgcc.mk.
 
 	get_libgcc_list_funcs_asm | \
 	writefile ${libgcc_db_funcs}.S
+
+	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		get_libgcc_list_funcs_lib $_lib | \
+		writefile ${libgcc_db_funcs}.${_lib%.*}
+	done
 }
 
 get_libgcc () {
