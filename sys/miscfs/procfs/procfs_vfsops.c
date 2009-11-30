@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.84 2009/10/02 23:00:02 elad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.85 2009/11/30 10:59:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.84 2009/10/02 23:00:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.85 2009/11/30 10:59:20 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -219,18 +219,16 @@ int
 procfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
+	genfs_statvfs(mp, sbp);
+
 	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_frsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
-	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
-	sbp->f_bfree = 0;
-	sbp->f_bavail = 0;
-	sbp->f_bresvd = 0;
+	sbp->f_blocks = 1;
 	sbp->f_files = maxproc;			/* approx */
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
 	sbp->f_favail = maxproc - nprocs;	/* approx */
-	sbp->f_fresvd = 0;
-	copy_statvfs_info(sbp, mp);
+
 	return (0);
 }
 
