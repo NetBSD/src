@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2009/11/30 12:07:28 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2009/11/30 13:07:38 uebayasi Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -16,7 +16,21 @@ GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${G_EXTRA_HEADERS:M/*:H:u}
-CPPFLAGS+=	-I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
+CPPFLAGS+=	-I${DIST} -I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
+
+.if ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sh3el" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "m68000"
+_TRADITIONAL_CPP=
+COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
+.endif
+
+.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
+#
+# Old style libgcc build procedure.
+#
 
 # This is copied from gcc/mklibgcc.in:$lib2funcs
 LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
@@ -65,14 +79,6 @@ BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 .endif
 
-.if ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "m68000"
-_TRADITIONAL_CPP=
-COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-.endif
-
 .if ${MACHINE_ARCH} == "powerpc64"
 COPTS+=	-mlong-double-128
 .endif
@@ -110,6 +116,28 @@ ${G_LIB2_DIVMOD_FUNCS:=.so}:
 dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
+
+.else	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
+#
+# New style libgcc build procedure.
+#
+
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.tmplsrcs.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.cppflags.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.copts.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplsrcs.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplfpsrcs.mk"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplasmsrcs.mk"
+
+.include "${.CURDIR}/../Makefile.wrapper"
+
+.endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+
+#
+# Common rules.
+#
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
 	${G_CONFIGDIR}
