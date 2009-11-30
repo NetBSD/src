@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.32 2009/11/30 10:11:09 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.33 2009/11/30 11:18:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.32 2009/11/30 10:11:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.33 2009/11/30 11:18:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/filedesc.h>
+#include <sys/dirent.h>
 #include <sys/errno.h>
+#include <sys/filedesc.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/malloc.h>
@@ -791,6 +792,7 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_unmount = 		rumpfs_unmount,
 	.vfs_root =		rumpfs_root,
 	.vfs_quotactl =		(void *)eopnotsupp,
+	.vfs_statvfs =		genfs_statvfs,
 	.vfs_sync =		(void *)nullop,
 	.vfs_vget =		rumpfs_vget,
 	.vfs_fhtovp =		(void *)eopnotsupp,
@@ -878,12 +880,21 @@ rumpfs_mountroot()
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
 	if (error)
 		panic("could not create root vnode: %d", error);
-	mp->mnt_data = rfsmp;
 	VOP_UNLOCK(rfsmp->rfsmp_rvp, 0);
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+
+	mp->mnt_data = rfsmp;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_flag |= MNT_LOCAL;
+	vfs_getnewfsid(mp);
+
+	error = set_statvfs_info("/", UIO_SYSSPACE, "rumpfs", UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, curlwp);
+	if (error)
+		panic("set statvfsinfo for rootfs failed");
 
 	vfs_unbusy(mp, false, NULL);
 
