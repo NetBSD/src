@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.297 2009/11/30 01:45:04 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.298 2009/11/30 01:58:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3817,7 +3817,26 @@ ENTRY(sparc64_ipi_flush_pte)
 	membar	#Sync
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
 #else
-	WRITEME
+
+	andn	%g2, 0xfff, %g2			! drop unused va bits
+	mov	CTX_PRIMARY, %g5
+	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
+	sethi	%hi(KERNBASE), %g7
+	membar	#LoadStore
+	stxa	%g3, [%g5] ASI_DMMU		! Insert context to demap
+	membar	#Sync
+	or	%g2, DEMAP_PAGE_PRIMARY, %g2
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! to both TLBs
+#ifdef _LP64
+	srl	%g2, 0, %g2			! and make sure it's both 32- and 64-bit entries
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
+#endif
+	flush	%g7
+	stxa	%g6, [%g5] ASI_DMMU		! Restore primary context
+	membar	#Sync
+	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -5408,9 +5427,19 @@ ENTRY(sp_tlb_flush_pte)
 	 nop
 #endif
 #else
-#ifdef MULTIPROCESSOR
-	WRITEME
-#endif
+
+	! %o0 = VA [in]
+	! %o1 = ctx value [in] / KERNBASE
+	! %o2 = CTX_PRIMARY
+	! %o3 = saved %tl
+	! %o4 = saved %pstate
+	! %o5 = saved primary ctx 
+
+	! Need this for UP as well
+	rdpr	%pstate, %o4
+	andn	%o4, PSTATE_IE, %o3			! disable interrupts
+	wrpr	%o3, 0, %pstate
+
 	!!
 	!! Cheetahs do not support flushing the IMMU from secondary context
 	!!
@@ -5421,23 +5450,26 @@ ENTRY(sp_tlb_flush_pte)
 	wrpr	%g0, 1, %tl				! Make sure we're NUCLEUS
 1:	
 	ldxa	[%o2] ASI_DMMU, %o5			! Save primary context
-	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
+	sethi	%hi(KERNBASE), %o1
 	membar	#Sync
 	or	%o0, DEMAP_PAGE_PRIMARY, %o0
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
+#ifdef _LP64
 	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
-	flush	%o4
+#endif
+	flush	%o1
 	stxa	%o5, [%o2] ASI_DMMU			! Restore primary context
 	brz,pt	%o3, 1f
-	 flush	%o4
+	 flush	%o1
 	retl
 	 nop
 1:	
+	wrpr	%o4, %pstate				! restore interrupts
 	retl
 	 wrpr	%g0, %o3, %tl				! Return to kernel mode.
 #endif
