@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.31 2009/11/30 07:08:03 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.32 2009/11/30 07:19:58 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -106,6 +106,17 @@ get_libgcc_list_objs_srcs () {
 	} | sort
 }
 
+get_libgcc_list_objs_tmpsrcs () {
+	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
+	sed -ne '
+		s,^.* -c \([^ ]*\).* -o .*/\([^ ]*\.o\)$,\2	\1,
+		# basename
+		/\$/ { s,\$.*/,,; }
+		/\// { s,\/.*/,,; }
+		p
+	' | sort
+}
+
 get_libgcc_list_objs_xflags () {
 	local _flags=$1
 
@@ -164,6 +175,7 @@ get_libgcc_new () {
 
 	get_libgcc_list_objs_libs | writefile ${libgcc_db_objs_libs}
 	get_libgcc_list_objs_srcs | writefile ${libgcc_db_objs_srcs}
+	get_libgcc_list_objs_tmpsrcs | writefile ${libgcc_db_objs_tmpsrcs}
 	get_libgcc_list_objs_cppflags | writefile ${libgcc_db_objs_cppflags}
 	get_libgcc_list_objs_copts | writefile ${libgcc_db_objs_copts}
 }
