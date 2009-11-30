@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.74 2006/01/04 13:40:23 apb Exp $
+# $NetBSD: makeflist,v 1.75 2009/11/30 16:13:23 uebayasi Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -13,9 +13,11 @@ lists="${nlists}"
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${0##*/} [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
+Usage: ${0##*/} [-L base,x,ext] [-bxyo] [-a arch] [-m machine] [-s setsdir] [setname [...]]
+	-L base,x,ext	print specified lists
 	-b		print netbsd + x11 lists
 	-x		print make x11 lists
+	-y		print make extsrc lists
 	-l		just list the selected set names, not the contents
 	-o		only match obsolete files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
@@ -27,13 +29,28 @@ USAGE
 }
 
 # handle args
-while getopts bxloa:m:s: ch; do
+while getopts L:bxXloa:m:s: ch; do
 	case ${ch} in
+	L)
+		lists=$(
+			for _list in $( echo ${OPTARG} | tr , ' ' ); do
+				case $_list in
+				base)	echo "${nlists}" ;;
+				x)	echo "${xlists}" ;;
+				ext)	echo "${extlists}" ;;
+				esac
+			done
+		)
+		;;
+	# backward compat
 	b)
 		lists="${nlists} ${xlists}"
 		;;
 	x)
 		lists="${xlists}"
+		;;
+	y)
+		lists="${extlists}"
 		;;
 	l)
 		listonly=1

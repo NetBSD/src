@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.597 2009/11/28 16:48:25 mbalmer Exp $
+#	$NetBSD: bsd.own.mk,v 1.598 2009/11/30 16:13:23 uebayasi Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -518,7 +518,8 @@ MKGDB=		no
 # On the MIPS, all libs are compiled with ABIcalls (and are thus PIC),
 # not just shared libraries, so don't build the _pic version.
 #
-.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
 MKPICLIB:=	no
 .endif
 
@@ -690,6 +691,7 @@ ${var}?=	yes
 #
 .for var in \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
+	MKEXTSRC \
 	MKLVM \
 	MKMANDOC MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
@@ -930,6 +932,25 @@ X11DRI?=			yes
 X11DRI?=			no
 X11LOADABLE?=			yes
 
+
+#
+# Where extsrc sources are and where it is installed to.
+#
+.if !defined(EXTSRCSRCDIR)
+.if exists(${NETBSDSRCDIR}/../extsrc)
+EXTSRCSRCDIR!=		cd ${NETBSDSRCDIR}/../extsrc && pwd
+.else
+EXTSRCSRCDIR=		/usr/extsrc
+.endif
+.endif # !defined(EXTSRCSRCDIR)
+
+EXTSRCROOTDIR?=		/usr/ext
+EXTSRCBINDIR?=		${EXTSRCROOTDIR}/bin
+EXTSRCETCDIR?=		/etc/ext
+EXTSRCINCDIR?=		${EXTSRCROOTDIR}/include
+EXTSRCLIBDIR?=		${EXTSRCROOTDIR}/lib/ext
+EXTSRCMANDIR?=		${EXTSRCROOTDIR}/man
+EXTSRCUSRLIBDIR?=	${EXTSRCROOTDIR}/lib
 
 #
 # MAKEDIRTARGET dir target [extra make(1) params]

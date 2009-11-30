@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.69 2009/09/12 11:01:55 apb Exp $
+# $NetBSD: maketars,v 1.70 2009/11/30 16:13:23 uebayasi Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -8,10 +8,11 @@
 #
 # The default sets are "base comp etc games man misc tests text"
 # The X sets are "xbase xcomp xetc xfont xserver"
+# The extsrc sets are "extbase extcomp extetc"
 #
 # If '-i installdir' is given, copy the given sets to installdir
 # (using pax -rw ...) instead of creating tar files.
-# In this case, remove "etc" and "xetc" from the list of default sets.
+# In this case, remove "etc", "xetc", and "extetc" from the list of default sets.
 #
 
 prog="${0##*/}"
@@ -31,10 +32,13 @@ quiet=false
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir] [-S]
+Usage: ${prog} [-L base,x,ext] [-b] [-x] [-y] [-i idir] [-a arch] [-m machine] [-s setsdir] [-S]
 	    [-M metalog] [-N etcdir] [-d dest] [-t targetdir] [setname ...]
+	-L base,x,ext	Make specified lists
 	-b		Make both netbsd and x11 lists
 	-x		Only make x11 lists
+		[Default: make netbsd lists]
+	-y		Only make extsrc lists
 		[Default: make netbsd lists]
 	-i idir		Install sets to idir instead of creating tar files
 	-a arch		Set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
@@ -57,13 +61,28 @@ msg()
 }
 
 # handle args
-while getopts bxi:a:m:qs:SM:N:d:t: ch; do
+while getopts L:bxyi:a:m:qs:SM:N:d:t: ch; do
 	case ${ch} in
+	L)
+		lists=$(
+			for _list in $( echo ${OPTARG} | tr , ' ' ); do
+				case $_list in
+				base)	echo "${nlists}" ;;
+				x)	echo "${xlists}" ;;
+				ext)	echo "${extlists}" ;;
+				esac
+			done
+		)
+		;;
+	# backward compat
 	b)
 		lists="${nlists} ${xlists}"
 		;;
 	x)
 		lists="${xlists}"
+		;;
+	y)
+		lists="${extlists}"
 		;;
 	i)
 		installdir="${OPTARG}"
@@ -102,8 +121,8 @@ while getopts bxi:a:m:qs:SM:N:d:t: ch; do
 	esac
 done
 shift $((${OPTIND} - 1))
-if [ -n "${installdir}" ]; then	# if -i, remove etc & xetc from the default list
-	lists="$(echo ${lists} | ${SED} -e 's/ etc / /;s/ xetc / /')"
+if [ -n "${installdir}" ]; then	# if -i, remove etc + xetc + extetc from the default list
+	lists="$(echo ${lists} | ${SED} -e 's/ etc / /;s/ xetc / /;s/ extetc / /')"
 fi
 if [ -n "$*" ]; then
 	lists="$*"

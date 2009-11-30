@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.29 2006/01/28 19:01:23 apb Exp $
+# $NetBSD: makeobsolete,v 1.30 2009/11/30 16:13:23 uebayasi Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -17,8 +17,10 @@ usage()
 {
 	cat 1>&2 <<USAGE
 Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [setname ...]
+	-L base,x,ext	make specified lists
 	-b		make netbsd + x11 lists
 	-x 		only make x11 lists
+	-y 		only make extsrc lists
 	-a arch		set arch (e.g, m68k, mips, powerpc)	[${MACHINE_ARCH}]
 	-m machine	set machine (e.g, amiga, i386, macppc)	[${MACHINE}]
 	-s setsdir	directory to find sets	[${setd}]
@@ -28,13 +30,28 @@ USAGE
 	exit 1
 }
 
-while getopts bxa:m:s:t: ch; do
+while getopts L:bxya:m:s:t: ch; do
 	case ${ch} in
+	L)
+		lists=$(
+			for _list in $( echo ${OPTARG} | tr , ' ' ); do
+				case $_list in
+				base)	echo "${nlists}" ;;
+				x)	echo "${xlists}" ;;
+				ext)	echo "${extlists}" ;;
+				esac
+			done
+		)
+		;;
+	# backward compat
 	b)
-		lists="${xlists} ${nlists}"
+		lists="${nlists} ${xlists}"
 		;;
 	x)
 		lists="${xlists}"
+		;;
+	y)
+		lists="${extlists}"
 		;;
 	a)
 		MACHINE_ARCH="${OPTARG}"

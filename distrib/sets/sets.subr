@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.91 2009/11/05 17:34:25 dyoung Exp $
+#	$NetBSD: sets.subr,v 1.92 2009/11/30 16:13:23 uebayasi Exp $
 #
 
 #
@@ -6,6 +6,7 @@
 #	setsdir			path to src/distrib/sets
 #	nlists			list of base sets
 #	xlists			list of x11 sets
+#	extlists		list of extsrc sets
 #	obsolete		controls if obsolete files are selected instead
 #	module			if != "no", enable MODULE sets
 #	shlib			shared library format (a.out, elf, or "")
@@ -36,6 +37,7 @@ MKVARS="\
 	MKDEBUGLIB	\
 	MKDOC		\
 	MKDYNAMICROOT	\
+	MKEXTSRC	\
 	MKGCC		\
 	MKGCCCMDS	\
 	MKGDB		\
@@ -225,6 +227,7 @@ else
 	nlists="base comp etc games man misc tests text"
 fi
 xlists="xbase xcomp xetc xfont xserver"
+extlists="extbase extcomp extetc"
 
 OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
 MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
@@ -239,7 +242,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.91 2009/11/05 17:34:25 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.92 2009/11/30 16:13:23 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -272,6 +275,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	debuglib		${MKDEBUGLIB} != no
 #	doc			${MKDOC} != no
 #	dynamicroot		${MKDYNAMICROOT} != no
+#	extsrc			${MKEXTSRC} != no
 #	gcc			${MKGCC} != no
 #	gcccmds			${MKGCCCMDS} != no
 #	gdb			${MKGDB} != no
@@ -415,15 +419,18 @@ list_set_files()
 # For a given setname $set, the following files may be selected from
 # .../list/$set:
 #	mi
+#	mi.ext.*
 #	ad.${MACHINE_ARCH}
 # (or)	ad.${MACHINE_CPU}
 #	ad.${MACHINE_CPU}.shl
 #	md.${MACHINE}.${MACHINE_ARCH}
 # (or)	md.${MACHINE}
 #	stl.mi
-#	stl.stlib
+#	stl.${stlib}
 #	shl.mi
-#	shl.shlib
+#	shl.mi.ext.*
+#	shl.${shlib}
+#	shl.${shlib}.ext.*
 #	module.mi			if ${module} != no
 #	module.${MACHINE}		if ${module} != no
 #	module.ad.${MACHINE_ARCH}	if ${module} != no
@@ -444,6 +451,11 @@ list_set_lists()
 
 	setdir=$setsdir/lists/$setname
 	echo $setdir/mi
+	for _extsrc_pkg in ${EXTSRCS}; do
+		if [ -f $setdir/mi.ext.${_extsrc_pkg} ]; then
+			echo $setdir/mi.ext.${_extsrc_pkg}
+		fi
+	done
 	if [ "${MACHINE}" != "${MACHINE_ARCH}" ]; then
 		# Prefer an ad.${MACHINE_ARCH} over an ad.${MACHINE_CPU},
 		# since the arch-specific one will be more specific than
@@ -473,9 +485,19 @@ list_set_lists()
 		if [ -f $setdir/shl.mi ]; then
 			echo $setdir/shl.mi
 		fi
+		for _extsrc_pkg in ${EXTSRCS}; do
+			if [ -f $setdir/shl.mi.ext.${_extsrc_pkg} ]; then
+				echo $setdir/shl.mi.ext.${_extsrc_pkg}
+			fi
+		done
 		if [ -f $setdir/shl.${shlib} ]; then
 			echo $setdir/shl.${shlib}
 		fi
+		for _extsrc_pkg in ${EXTSRCS}; do
+			if [ -f $setdir/shl.${shlib}.ext.${_extsrc_pkg} ]; then
+				echo $setdir/shl.${shlib}.ext.${_extsrc_pkg}
+			fi
+		done
 	fi
 	if [ "$module" != "no" ]; then
 		if [ -f $setdir/module.mi ]; then
