@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.298 2009/11/30 01:58:49 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.299 2009/11/30 05:22:55 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5464,14 +5464,12 @@ ENTRY(sp_tlb_flush_pte)
 #endif
 	flush	%o1
 	stxa	%o5, [%o2] ASI_DMMU			! Restore primary context
-	brz,pt	%o3, 1f
+	brnz,pt	%o3, 1f
 	 flush	%o1
-	retl
-	 nop
+	wrpr	%g0, %o3, %tl				! Return to kernel mode.
 1:	
-	wrpr	%o4, %pstate				! restore interrupts
 	retl
-	 wrpr	%g0, %o3, %tl				! Return to kernel mode.
+	 wrpr	%o4, %pstate				! restore interrupts
 #endif
 
 
