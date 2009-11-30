@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.14 2009/10/01 20:07:09 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2009/11/30 11:55:12 uebayasi Exp $
 
-.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
+.if ${MKGCC} != "no"
+.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
+.endif
 .endif
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
@@ -45,9 +47,8 @@ LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 .endif
 
-DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk tconfig.h
-CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h \
-		tconfig.h
+DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk
+CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h
 .if !empty(G_LIB1ASMFUNCS)
 CLEANFILES+=	${LIB1ASMFUNCS}
 .endif
@@ -119,6 +120,8 @@ tconfig.h:
 	TARGET_CPU_DEFAULT="" \
 	HEADERS="$(G_xm_include_list)" DEFINES="USED_FOR_TARGET $(G_xm_defines)" \
 	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
+DPSRCS+=	tconfig.h
+CLEANFILES+=	tconfig.h
 
 BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
 DPSRCS+=	unwind.h
