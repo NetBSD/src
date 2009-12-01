@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.110 2009/11/26 20:58:51 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.111 2009/12/01 09:52:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.110 2009/11/26 20:58:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.111 2009/12/01 09:52:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -491,18 +491,4 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 {
 
 	return 0;
-}
-
-/* crosscalls not done, no other hardware CPUs */
-uint64_t
-xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
-{
-
-	return -1;
-}
-
-void
-xc_wait(uint64_t where)
-{
-
 }
