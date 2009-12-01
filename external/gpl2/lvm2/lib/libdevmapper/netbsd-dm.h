@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.3 2009/06/09 18:24:02 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.4 2009/12/01 23:12:09 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -286,8 +286,6 @@ int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
 int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
 int nbsd_dm_add_uint(const char *, uint64_t, prop_dictionary_t);
 int nbsd_dm_add_str(const char *, char *, prop_dictionary_t );
-
-prop_dictionary_t nbsd_dm_parse_param(const char *, const char *);
 
 struct dm_ioctl* nbsd_dm_dict_to_dmi(prop_dictionary_t, const int);
 
