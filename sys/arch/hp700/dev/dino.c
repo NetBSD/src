@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.16 2009/11/09 13:33:08 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.17 2009/12/01 22:36:31 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.16 2009/11/09 13:33:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.17 2009/12/01 22:36:31 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -511,7 +511,7 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	int i, error;
 
 	/*
-	 * Allow allocation only when PCI MEM is already maped.
+	 * Allow allocation only when PCI MEM is already mapped.
 	 * Needed to avoid allocation of I/O space used by devices that
 	 * have no driver in the current kernel.
 	 * Dino can map PCI MEM in the range 0xf0800000..0xff800000 only.
