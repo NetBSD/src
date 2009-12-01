@@ -1,4 +1,4 @@
-#! /usr/pkg/bin/perl -wT
+#! /usr/pkg/bin/perl -w
 
 # netpgp bindings for perl
 
@@ -8,7 +8,7 @@ use netpgpperl;
 
 # initializations
 $n = netpgpperlc::new_netpgp_t();
-netpgpperlc::netpgp_setvar($n, "homedir", "/home/agc/.gnupg");
+netpgpperlc::netpgp_setvar($n, "homedir", $ENV{'HOME'}."/.gnupg");
 netpgpperlc::netpgp_setvar($n, "hash", "SHA256");
 netpgpperlc::netpgp_init($n);
 
@@ -17,13 +17,12 @@ $userid = netpgpperlc::netpgp_getvar($n, "userid");
 
 foreach $i (0 .. $#ARGV) {
 	# set up file names
-	#my $in = $ARGV[$i];
-	#my $out = $in . ".gpg";
+	my $in = $ARGV[$i];
+	my $out = $in . ".gpg";
 
 	# sign the file, output is in $out
-	#netpgpperlc::netpgp_sign_file($n, $userid, $in, $out, 0, 0, 0);
-	netpgpperlc::netpgp_sign_file($n, $userid, "a", "a.gpg", 0, 0, 0);
+	netpgpperlc::netpgp_sign_file($n, $userid, $in, $out, 0, 0, 0);
 
 	# verify the signed file $out
-	netpgpperlc::netpgp_verify_file($n, "a.gpg", "/dev/null", 0);
+	netpgpperlc::netpgp_verify_file($n, $out, "/dev/null", 0);
 }
