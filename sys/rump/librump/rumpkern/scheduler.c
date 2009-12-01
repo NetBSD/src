@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.7 2009/11/09 19:16:18 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.8 2009/12/01 09:50:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,12 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.7 2009/11/09 19:16:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.8 2009/12/01 09:50:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/select.h>
 
@@ -43,15 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.7 2009/11/09 19:16:18 pooka Exp $");
 #include "rump_private.h"
 
 /* should go for MAXCPUS at some point */
-static struct cpu_info rump_cpus[1];
+static struct cpu_info rump_cpus[MAXCPUS];
 static struct rumpcpu {
 	struct cpu_info *rcpu_ci;
-	SLIST_ENTRY(rumpcpu) rcpu_entries;
-} rcpu_storage[1];
+	int rcpu_flags;
+	struct rumpuser_cv *rcpu_cv;
+	LIST_ENTRY(rumpcpu) rcpu_entries;
+} rcpu_storage[MAXCPUS];
 struct cpu_info *rump_cpu = &rump_cpus[0];
 int ncpu = 1;
 
-static SLIST_HEAD(,rumpcpu) cpu_freelist = SLIST_HEAD_INITIALIZER(cpu_freelist);
+#define RCPU_WANTED	0x01	/* someone wants this specific CPU */
+#define RCPU_BUSY	0x02	/* CPU is busy */
+#define RCPU_FREELIST	0x04	/* CPU is on freelist */
+
+static LIST_HEAD(,rumpcpu) cpu_freelist = LIST_HEAD_INITIALIZER(cpu_freelist);
 static struct rumpuser_mtx *schedmtx;
 static struct rumpuser_cv *schedcv, *lwp0cv;
 
@@ -81,7 +88,9 @@ rump_scheduler_init()
 		ci->ci_schedstate.spc_mutex =
 		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		rcpu->rcpu_ci = ci;
-		SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
+		LIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
+		rcpu->rcpu_flags = RCPU_FREELIST;
+		rumpuser_cv_init(&rcpu->rcpu_cv);
 	}
 }
 
@@ -129,12 +138,36 @@ rump_schedule_cpu(struct lwp *l)
 	struct rumpcpu *rcpu;
 
 	rumpuser_mutex_enter_nowrap(schedmtx);
-	while ((rcpu = SLIST_FIRST(&cpu_freelist)) == NULL)
-		rumpuser_cv_wait_nowrap(schedcv, schedmtx);
-	SLIST_REMOVE_HEAD(&cpu_freelist, rcpu_entries);
+	if (l->l_pflag & LP_BOUND) {
+		KASSERT(l->l_cpu != NULL);
+		rcpu = &rcpu_storage[l->l_cpu-&rump_cpus[0]];
+		if (rcpu->rcpu_flags & RCPU_BUSY) {
+			KASSERT((rcpu->rcpu_flags & RCPU_FREELIST) == 0);
+			while (rcpu->rcpu_flags & RCPU_BUSY) {
+				rcpu->rcpu_flags |= RCPU_WANTED;
+				rumpuser_cv_wait_nowrap(rcpu->rcpu_cv,
+				    schedmtx);
+			}
+			rcpu->rcpu_flags &= ~RCPU_WANTED;
+		} else {
+			KASSERT(rcpu->rcpu_flags & (RCPU_FREELIST|RCPU_WANTED));
+		}
+		if (rcpu->rcpu_flags & RCPU_FREELIST) {
+			LIST_REMOVE(rcpu, rcpu_entries);
+			rcpu->rcpu_flags &= ~RCPU_FREELIST;
+		}
+	} else {
+		while ((rcpu = LIST_FIRST(&cpu_freelist)) == NULL) {
+			rumpuser_cv_wait_nowrap(schedcv, schedmtx);
+		}
+		KASSERT(rcpu->rcpu_flags & RCPU_FREELIST);
+		LIST_REMOVE(rcpu, rcpu_entries);
+		rcpu->rcpu_flags &= ~RCPU_FREELIST;
+		KASSERT(l->l_cpu == NULL);
+		l->l_cpu = rcpu->rcpu_ci;
+	}
+	rcpu->rcpu_flags |= RCPU_BUSY;
 	rumpuser_mutex_exit(schedmtx);
-	KASSERT(l->l_cpu == NULL);
-	l->l_cpu = rcpu->rcpu_ci;
 	l->l_mutex = rcpu->rcpu_ci->ci_schedstate.spc_mutex;
 }
 
@@ -178,20 +211,41 @@ rump_unschedule()
 void
 rump_unschedule_cpu(struct lwp *l)
 {
+
+	if ((l->l_pflag & LP_INTR) == 0)
+		rump_softint_run(l->l_cpu);
+	rump_unschedule_cpu1(l);
+}
+
+void
+rump_unschedule_cpu1(struct lwp *l)
+{
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
 
 	ci = l->l_cpu;
-	if ((l->l_pflag & LP_INTR) == 0)
-		rump_softint_run(ci);
-
-	l->l_cpu = NULL;
+	if ((l->l_pflag & LP_BOUND) == 0) {
+		l->l_cpu = NULL;
+	}
 	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
 	KASSERT(rcpu->rcpu_ci == ci);
+	KASSERT(rcpu->rcpu_flags & RCPU_BUSY);
 
 	rumpuser_mutex_enter_nowrap(schedmtx);
-	SLIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
-	rumpuser_cv_signal(schedcv);
+	if (rcpu->rcpu_flags & RCPU_WANTED) {
+		/*
+		 * The assumption is that there will usually be max 1
+		 * thread waiting on the rcpu_cv, so broadcast is fine.
+		 * (and the current structure requires it because of
+		 * only a bitmask being used for wanting).
+		 */
+		rumpuser_cv_broadcast(rcpu->rcpu_cv);
+	} else {
+		LIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
+		rcpu->rcpu_flags |= RCPU_FREELIST;
+		rumpuser_cv_signal(schedcv);
+	}
+	rcpu->rcpu_flags &= ~RCPU_BUSY;
 	rumpuser_mutex_exit(schedmtx);
 }
 
