@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.3 2009/11/09 19:02:49 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.4 2009/12/01 09:50:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.3 2009/11/09 19:02:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.4 2009/12/01 09:50:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -122,10 +122,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		} else
 			panic("threads not available, setenv RUMP_THREADS 1");
 	}
-
 	KASSERT(fmt != NULL);
-	if (ci != NULL)
-		panic("%s: bounded threads not supported", __func__);
 
 	k = rumpuser_malloc(sizeof(struct kthdesc), 0);
 	k->f = func;
@@ -135,6 +132,10 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		l->l_pflag |= LP_MPSAFE;
 	if (flags & KTHREAD_INTR)
 		l->l_pflag |= LP_INTR;
+	if (ci) {
+		l->l_pflag |= LP_BOUND;
+		l->l_cpu = ci;
+	}
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
 	if (rv)
 		return rv;
