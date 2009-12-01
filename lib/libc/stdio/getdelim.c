@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.8 2009/12/01 00:03:53 roy Exp $ */
+/* $NetBSD: getdelim.c,v 1.9 2009/12/01 00:52:13 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.8 2009/12/01 00:03:53 roy Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.9 2009/12/01 00:52:13 roy Exp $");
 
 #include "namespace.h"
 
@@ -43,6 +43,10 @@ __RCSID("$NetBSD: getdelim.c,v 1.8 2009/12/01 00:03:53 roy Exp $");
 
 #include "reentrant.h"
 #include "local.h"
+
+#ifdef __weak_alias
+__weak_alias(getdelim, _getdelim)
+#endif
 
 /* Minimum buffer size we create.
  * This should allow config files to fit into our power of 2 buffer growth
