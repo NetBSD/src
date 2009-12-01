@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.138 2009/05/26 08:04:12 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.139 2009/12/01 00:52:13 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -275,6 +275,7 @@
 #define getaddrinfo		_getaddrinfo
 #define getbsize		_getbsize
 #define getcwd			_getcwd
+#define getdelim		_getdelim
 #define getdevmajor		_getdevmajor
 #define getdiskbyname		_getdiskbyname
 #define getdomainname		_getdomainname

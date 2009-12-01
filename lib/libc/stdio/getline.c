@@ -1,4 +1,4 @@
-/* $NetBSD: getline.c,v 1.1 2009/07/13 22:19:25 roy Exp $ */
+/* $NetBSD: getline.c,v 1.2 2009/12/01 00:52:13 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getline.c,v 1.1 2009/07/13 22:19:25 roy Exp $");
+__RCSID("$NetBSD: getline.c,v 1.2 2009/12/01 00:52:13 roy Exp $");
+
+#include "namespace.h"
 
 #include <stdio.h>
 
