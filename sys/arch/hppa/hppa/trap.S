@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.30 2009/05/24 09:17:59 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.31 2009/12/01 09:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1994,7 +1994,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	mfctl	CR_UPADDR, %t2
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
-	ldw	U_PCB+PCB_UVA(%t2), %sp
+	ldw	PCB_UVA(%t2), %sp
 #ifdef DIAGNOSTIC
 	b	L$trap_have_stack
 #endif

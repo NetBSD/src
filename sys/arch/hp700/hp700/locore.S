@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.38 2009/12/01 09:06:16 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -248,9 +248,9 @@ L$start_zero_tf:
 	mtctl	%t3, CR_UPADDR
 
 	/* initialize the pcb */
-	stw	%r0, U_PCB+PCB_ONFAULT(%t3)
-	stw	%r0, U_PCB+PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, U_PCB+PCB_UVA(%t3)
+	stw	%r0, PCB_ONFAULT(%t3)
+	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
+	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -806,7 +806,7 @@ switch_diag:
 	 * Check that the stack is above this value for curl.
 	 */
 	ldw	L_ADDR(%arg1), %arg2
-	ldw	U_PCB+PCB_KSP(%arg2), %t1	/* t1 for switch_error */
+	ldw	PCB_KSP(%arg2), %t1		/* t1 for switch_error */
 	ldo	NBPG(%arg2), %arg2
 	comb,>>,n %arg2, %t1, switch_error
 	nop
@@ -831,8 +831,8 @@ kstack_ok:
 	 */
 
 	ldw	L_ADDR(%arg0), %t3	/* curl pcb */
-	stw	%sp, U_PCB+PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc U_PCB+PCB_KSP(%t3) */
+	stw	%sp, PCB_KSP(%t3)
+	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc PCB_KSP(%t3) */
 
 	/*
 	 * Save the callee-save registers. We don't need to do
@@ -863,7 +863,7 @@ kstack_ok:
 switch_exited:
 	ldw	L_MD(%arg1), %t1
 	ldw	L_ADDR(%arg1), %t3
-	ldw	U_PCB+PCB_KSP(%t3), %sp		/* restore stack of newl */
+	ldw	PCB_KSP(%t3), %sp		/* restore stack of newl */
 
 	fdc	%r0(%t3)			/* Flush newl PCB - why? */
 
