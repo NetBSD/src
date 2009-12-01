@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.148 2009/11/28 19:00:03 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.149 2009/12/01 19:51:22 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -14985,4 +14985,38 @@ sys/kern/vfs_subr.c				1.392
 	If the vnode has more than one reference, don't VOP_INACTIVE it.
 	Fix PR kern/42318 and PR kern/42377
 	[bouyer, ticket #1171]
+
+sys/arch/amd64/amd64/machdep.c
+sys/arch/amd64/include/vmparam.h
+
+	On amd64, add a third free list distinct from the default free
+	list, holding RAM between 16Mb and 4Gb. This helps preventing
+	bus_dma(9) memory allocation failures for 32bit DMA on
+	large-memory machines.
+	[bouyer, ticket #1158]
+
+xsrc/external/mit/xf86-video-radeonhd/include/config.h
+
+	Regenerate xf86-video-radeohd's config.h.
+	[rafal, ticket #1160]
+
+sys/arch/i386/pnpbios/fdc_pnpbios.c		1.15
+
+	Fix attaching fdc@pnpbios.  Closes PR#42374.
+	[cube, ticket #1161]
+
+sys/arch/amiga/amiga/machdep.c			1.222
+
+	Correct the IPL_VM interrupt level mask.
+	[mhitch, ticket #1166]
+
+xsrc/external/mit/xf86-video-ati/include/config.h
+
+	Regenerate xf86-video-ati's config.h.
+	[rafal, ticket #1176]
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.31
+
+	Allow comparing v2 and v3 filehandles.
+	[tron, ticket #1174]
 
