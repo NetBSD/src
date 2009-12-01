@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.74 2009/07/01 02:43:34 uwe Exp $
+.\"	$NetBSD: newfs.8,v 1.75 2009/12/01 10:56:33 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd May 10, 2009
+.Dd December 1, 2009
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -347,6 +347,18 @@ The block size and fragment size will be written back to the disklabel
 only if the last character of
 .Ar special
 references the same partition as the minor device number.
+.Pp
+Unless
+.Fl F
+is specified,
+.Ar special
+must be a raw device.
+This means that for example
+.Pa wd0a
+or
+.Pa /dev/rwd0a
+must be specified instead of
+.Pa /dev/wd0a .
 .Sh SEE ALSO
 .Xr fstat 2 ,
 .Xr disktab 5 ,
