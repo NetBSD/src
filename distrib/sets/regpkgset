@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.11 2009/10/17 23:43:22 agc Exp $
+# $NetBSD: regpkgset,v 1.12 2009/12/01 15:49:21 apb Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -142,10 +142,6 @@ all:
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-	# XXX: what's the point of reporting _PKGTOOLS_VER
-	# when we roll everything by hand without using
-	# the pkg tools?
-	echo "_PKGTOOLS_VER=$(${PKG_CREATE} -V)"
 	} > "${BUILD_INFO_CACHE}"
 fi
 
