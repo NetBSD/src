@@ -1,4 +1,4 @@
-#! /usr/pkg/bin/perl -w
+#! /usr/pkg/bin/perl -wT
 
 # netpgp bindings for perl
 
