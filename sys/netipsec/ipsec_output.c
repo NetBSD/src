@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.28 2008/04/28 17:40:11 degroote Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.29 2009/12/01 01:01:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.28 2008/04/28 17:40:11 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.29 2009/12/01 01:01:34 dyoung Exp $");
 
 /*
  * IPsec output processing.
@@ -211,7 +211,7 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		
 		udp->uh_dport = key_portfromsaddr(&saidx->dst);
 		udp->uh_sum = 0;
-       	udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
+		udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
 	}
 #endif /* IPSEC_NAT_T */
 	
@@ -263,21 +263,21 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	 */
 	if (isr->next) {
 		IPSEC_STATINC(IPSEC_STAT_OUT_BUNDLESA);
-        switch ( saidx->dst.sa.sa_family ) {
+		switch ( saidx->dst.sa.sa_family ) {
 #ifdef INET
-        case AF_INET:
+		case AF_INET:
 			return ipsec4_process_packet(m, isr->next, 0,0);
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
-        	return ipsec6_process_packet(m,isr->next);
+			return ipsec6_process_packet(m,isr->next);
 #endif /* INET6 */
 		default :
 			DPRINTF(("ipsec_process_done: unknown protocol family %u\n",
-                               saidx->dst.sa.sa_family));
+			       saidx->dst.sa.sa_family));
 			error = ENXIO;
 			goto bad;
-        }
+		}
 	}
 
 	/*
