@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.17 2009/10/17 23:43:22 agc Exp $
+# $NetBSD: regpkg,v 1.18 2009/12/01 15:49:21 apb Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -603,10 +603,6 @@ all:
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-		# XXX: what's the point of reporting _PKGTOOLS_VER
-		# when we roll everything by hand without using
-		# the pkg tools?
-		echo "_PKGTOOLS_VER=$(${PKG_CREATE} -V)"
 		} > "${SYSPKG_DB_SUBDIR}/+BUILD_INFO"
 	else
 		cp "${BUILD_INFO_CACHE}" "${SYSPKG_DB_SUBDIR}/+BUILD_INFO"
@@ -632,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.17 2009/10/17 23:43:22 agc Exp $'
+		rcsid='$NetBSD: regpkg,v 1.18 2009/12/01 15:49:21 apb Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
