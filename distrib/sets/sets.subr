@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.92 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.93 2009/12/01 15:49:21 apb Exp $
 #
 
 #
@@ -101,7 +101,6 @@ MKVARS="\
 : ${MTREE:=mtree}
 : ${PASTE:=paste}
 : ${PAX:=pax}
-: ${PKG_CREATE:=pkg_create}
 : ${PRINTF:=printf}
 : ${SED:=sed}
 : ${SORT:=sort}
@@ -242,7 +241,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.92 2009/11/30 16:13:23 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.93 2009/12/01 15:49:21 apb Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
