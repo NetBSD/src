@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.23 2009/10/09 06:02:55 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.24 2009/12/01 02:36:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -638,24 +638,24 @@ __ops_hash_size(__ops_hash_alg_t alg)
 __ops_hash_alg_t 
 __ops_str_to_hash_alg(const char *hash)
 {
-	if (strcmp(hash, "SHA1") == 0) {
+	if (strcasecmp(hash, "SHA1") == 0) {
 		return OPS_HASH_SHA1;
 	}
-	if (strcmp(hash, "MD5") == 0) {
+	if (strcasecmp(hash, "MD5") == 0) {
 		return OPS_HASH_MD5;
 	}
-	if (strcmp(hash, "SHA256") == 0) {
+	if (strcasecmp(hash, "SHA256") == 0) {
 		return OPS_HASH_SHA256;
 	}
 	/*
-        if (strcmp(hash,"SHA224") == 0) {
+        if (strcasecmp(hash,"SHA224") == 0) {
 		return OPS_HASH_SHA224;
 	}
         */
-	if (strcmp(hash, "SHA512") == 0) {
+	if (strcasecmp(hash, "SHA512") == 0) {
 		return OPS_HASH_SHA512;
 	}
-	if (strcmp(hash, "SHA384") == 0) {
+	if (strcasecmp(hash, "SHA384") == 0) {
 		return OPS_HASH_SHA384;
 	}
 	return OPS_HASH_UNKNOWN;
