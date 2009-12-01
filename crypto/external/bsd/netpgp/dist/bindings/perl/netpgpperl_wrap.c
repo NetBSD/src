@@ -1445,6 +1445,8 @@ SWIGEXPORT void SWIG_init (CV *cv, CPerlObj *);
 
 
 #include <netpgp.h>
+#undef SvPOK
+#define SvPOK(x) 1
 
 
 #include <limits.h>
