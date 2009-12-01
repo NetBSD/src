@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.42 2009/12/01 03:13:26 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.43 2009/12/01 04:59:24 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -90,17 +90,20 @@ get_libgcc_list_funcs_lib () {
 	local _lib_prefix=${_lib%.*}
 	local _lib_suffix=${_lib#*.}
 
+	cat build/gcc/libgcc.mk | \
+	grep -v '/32/' | \
 	sed -ne '
 		/^\.\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
 			s,^.*/,,
 			s,\.o$,,
 			p
 		}
-	' build/gcc/libgcc.mk | sort
+	' | sort
 }
 
 get_libgcc_list_objs_libs () {
 	cat build/gcc/libgcc.mk | \
+	grep -v '/32/' | \
 	egrep '^\.\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
 	sed -e '
 		s,^\.\/,,
@@ -126,19 +129,21 @@ get_libgcc_list_objs_srcs () {
 
 get_libgcc_list_objs_tmplsrcs () {
 	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
+	grep -v '/32/' | \
 	sed -ne '
 		s,^.* -c \([^ ]*\).* -o .*/\([^ ]*\.o\)$,\2	\1,
 		# basename
 		/\$/ { s,\$.*/,,; }
 		/\// { s,\/.*/,,; }
 		p
-	' | sort
+	' | sort -u
 }
 
 get_libgcc_list_objs_xflags () {
 	local _flags=$1
 
 	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
+	grep -v '/32/' | \
 	sed -n '
 		x
 	:loop
