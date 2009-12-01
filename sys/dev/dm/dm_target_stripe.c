@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.7 2009/09/09 22:38:49 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.8 2009/12/01 23:12:10 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #include <sys/vnode.h>
 
 #include "dm.h"
-#include "netbsd-dm.h"
 
 #ifdef DM_TARGET_MODULE
 /*
@@ -109,44 +108,34 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
  * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0
  */
 int
-dm_target_stripe_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
+dm_target_stripe_init(dm_dev_t *dmv, void **target_config, char *params)
 {
 	dm_target_stripe_config_t *tsc;
-	prop_array_t dev_array;
-	prop_dictionary_t dev_dict1, dev_dict2;
-	
-	uint64_t stripes, chunk_size, offset1, offset2;
-	const char *device1, *device2;
-	
-	if (prop_dictionary_get_uint64(dict, DM_TARGET_STRIPE_STRIPES,
-		&stripes) == false)
+	size_t len;
+	char **ap, *argv[10];
+
+	if(params == NULL)
 		return EINVAL;
+
+	len = strlen(params) + 1;
 	
-	if (prop_dictionary_get_uint64(dict, DM_TARGET_STRIPE_CHUNKSIZE,
-		&chunk_size) == false)
-		return EINVAL;
-		
-	dev_array = prop_dictionary_get(dict, DM_TARGET_STRIPE_DEVARRAY);
+	/*
+	 * Parse a string, containing tokens delimited by white space,
+	 * into an argument vector
+	 */
+	for (ap = argv; ap < &argv[9] &&
+		 (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
 	
-	/* XXX Support for more than 2 devices */
-	dev_dict1 = prop_array_get(dev_array, 0);
-	dev_dict2 = prop_array_get(dev_array, 1);
+	printf("Stripe target init function called!!\n");
 
-	if(dev_dict2 == NULL || dev_dict1 == NULL)
-		return EINVAL;
-	
-        prop_dictionary_get_cstring_nocopy(dev_dict1, DM_TARGET_STRIPE_DEVICE, &device1);
-	prop_dictionary_get_uint64(dev_dict1, DM_TARGET_STRIPE_OFFSET, &offset1);
-	prop_dictionary_get_cstring_nocopy(dev_dict2, DM_TARGET_STRIPE_DEVICE, &device2);
-	prop_dictionary_get_uint64(dev_dict2, DM_TARGET_STRIPE_OFFSET, &offset2);
+	printf("Stripe target chunk size %s number of stripes %s\n", argv[1], argv[0]);
+	printf("Stripe target device name %s -- offset %s\n", argv[2], argv[3]);
+	printf("Stripe target device name %s -- offset %s\n", argv[4], argv[5]);
 
-	aprint_debug("Stripe target init function called!!\n");
-
-	aprint_debug("Stripe target chunk size %"PRIu64" number of stripes %"PRIu64"\n", chunk_size, stripes);
-	aprint_debug("Stripe target device name %s -- offset %"PRIu64"\n", device1, offset1);
-	aprint_debug("Stripe target device name %s -- offset %"PRIu64"\n", device2, offset2);
-
-	if (stripes > MAX_STRIPES)
+	if (atoi(argv[0]) > MAX_STRIPES)
 		return ENOTSUP;
 
 	if ((tsc = kmem_alloc(sizeof(dm_target_stripe_config_t), KM_NOSLEEP))
@@ -154,18 +143,20 @@ dm_target_stripe_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dic
 		return ENOMEM;
 	
 	/* Insert dmp to global pdev list */
-	if ((tsc->stripe_devs[0].pdev = dm_pdev_insert(device1)) == NULL)
+	if ((tsc->stripe_devs[0].pdev = dm_pdev_insert(argv[2])) == NULL)
 		return ENOENT;
 
 	/* Insert dmp to global pdev list */
-	if ((tsc->stripe_devs[1].pdev = dm_pdev_insert(device2)) == NULL)
+	if ((tsc->stripe_devs[1].pdev = dm_pdev_insert(argv[4])) == NULL)
 		return ENOENT;
 
-	tsc->stripe_devs[0].offset = offset1;
-	tsc->stripe_devs[1].offset = offset2;
+	tsc->stripe_devs[0].offset = atoi(argv[3]);
+	tsc->stripe_devs[1].offset = atoi(argv[5]);
 
-	tsc->stripe_chunksize = chunk_size;
-	tsc->stripe_num = (uint8_t)stripes;
+	/* Save length of param string */
+	tsc->params_len = len;
+	tsc->stripe_chunksize = atoi(argv[1]);
+	tsc->stripe_num = (uint8_t)atoi(argv[0]);
 	
 	*target_config = tsc;
 
@@ -209,7 +200,7 @@ dm_target_stripe_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	if (tsc == NULL)
 		return 0;
 
-/*	aprint_debug("Stripe target read function called %" PRIu64 "!!\n",
+/*	printf("Stripe target read function called %" PRIu64 "!!\n",
 	tlc->offset);*/
 
 	/* calculate extent of request */
