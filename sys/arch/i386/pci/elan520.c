@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.43 2009/09/17 20:21:54 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.44 2009/12/01 01:08:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.43 2009/09/17 20:21:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.44 2009/12/01 01:08:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,11 @@ struct elansc_softc {
 	struct gpio_chipset_tag sc_gpio_gc;
 	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
 #endif
+};
+
+struct pareg {
+	paddr_t start;
+	paddr_t end;
 };
 
 static bool elansc_attached = false;
@@ -646,11 +651,6 @@ elansc_disable_par(bus_space_tag_t memt, bus_space_handle_t memh, int idx)
 	par |= MMCR_PAR_TARGET_OFF;
 	bus_space_write_4(memt, memh, MMCR_PAR(idx), par);
 }
-
-struct pareg {
-	paddr_t start;
-	paddr_t end;
-};
 
 static int
 region_paddr_to_par(struct pareg *region0, struct pareg *regions, uint32_t unit)
