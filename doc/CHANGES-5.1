@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.149 2009/12/01 19:51:22 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.150 2009/12/01 23:32:19 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15019,4 +15019,56 @@ usr.sbin/rpc.lockd/lockd_lock.c			1.31
 
 	Allow comparing v2 and v3 filehandles.
 	[tron, ticket #1174]
+
+external/mit/xorg/lib/pixman/Makefile		1.10
+xsrc/external/mit/pixman/config.h.in		patch
+xsrc/external/mit/pixman/configure		patch
+xsrc/external/mit/pixman/configure.ac 		patch
+xsrc/external/mit/pixman/pixman/Makefile.am	patch
+xsrc/external/mit/pixman/pixman/Makefile.in 	patch
+xsrc/external/mit/pixman/pixman/Makefile.win32	patch
+xsrc/external/mit/pixman/pixman/pixman-access.c	patch
+xsrc/external/mit/pixman/pixman/pixman-accessor.h patch
+xsrc/external/mit/pixman/pixman/pixman-arm-neon.c patch
+xsrc/external/mit/pixman/pixman/pixman-arm-simd.c patch
+xsrc/external/mit/pixman/pixman/pixman-bits-image.c patch
+xsrc/external/mit/pixman/pixman/pixman-combine.c.template patch
+xsrc/external/mit/pixman/pixman/pixman-combine.h.template patch
+xsrc/external/mit/pixman/pixman/pixman-combine32.c patch
+xsrc/external/mit/pixman/pixman/pixman-combine32.h patch
+xsrc/external/mit/pixman/pixman/pixman-combine64.c patch
+xsrc/external/mit/pixman/pixman/pixman-combine64.h patch
+xsrc/external/mit/pixman/pixman/pixman-conical-gradient.c patch
+xsrc/external/mit/pixman/pixman/pixman-cpu.c 	patch
+xsrc/external/mit/pixman/pixman/pixman-edge.c	patch
+xsrc/external/mit/pixman/pixman/pixman-fast-path.c patch
+xsrc/external/mit/pixman/pixman/pixman-general.c patch
+xsrc/external/mit/pixman/pixman/pixman-gradient-walker.c patch
+xsrc/external/mit/pixman/pixman/pixman-image.c	patch
+xsrc/external/mit/pixman/pixman/pixman-implementation.c patch
+xsrc/external/mit/pixman/pixman/pixman-linear-gradient.c patch
+xsrc/external/mit/pixman/pixman/pixman-mmx.c 	patch
+xsrc/external/mit/pixman/pixman/pixman-private.h patch
+xsrc/external/mit/pixman/pixman/pixman-radial-gradient.c patch
+xsrc/external/mit/pixman/pixman/pixman-region.c	patch
+xsrc/external/mit/pixman/pixman/pixman-solid-fill.c patch
+xsrc/external/mit/pixman/pixman/pixman-sse2.c	patch
+xsrc/external/mit/pixman/pixman/pixman-trap.c 	patch
+xsrc/external/mit/pixman/pixman/pixman-utils.c	patch
+xsrc/external/mit/pixman/pixman/pixman-version.h patch
+xsrc/external/mit/pixman/pixman/pixman-vmx.c	patch
+xsrc/external/mit/pixman/pixman/pixman-x86-mmx-emulation.h patch
+xsrc/external/mit/pixman/pixman/pixman.c 	patch
+xsrc/external/mit/pixman/pixman/pixman.h	patch
+xsrc/external/mit/pixman/test/Makefile.am 	patch
+xsrc/external/mit/pixman/test/Makefile.in	patch
+xsrc/external/mit/pixman/test/blitters-test.c	patch
+xsrc/external/mit/pixman/test/composite-test.c 	patch
+xsrc/external/mit/pixman/test/fetch-test.c	patch
+xsrc/external/mit/pixman/test/window-test.c	patch
+xsrc/external/mit/include/config.h 		patch
+
+	- Disable using SSE2 for i386.
+	- Update pixman to 0.16.2.
+	[mrg, ticket #1177]
 
