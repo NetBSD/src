@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2009/05/07 15:34:49 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.19 2009/12/01 09:06:16 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -192,9 +192,6 @@ member	PCB_ONFAULT	pcb_onfault
 member	PCB_SPACE	pcb_space
 member	PCB_UVA		pcb_uva
 member	PCB_KSP		pcb_ksp
-
-struct	user
-member	U_PCB		u_pcb
 
 # system calls
 export	SYSCALLGATE
