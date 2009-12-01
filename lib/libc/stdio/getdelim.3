@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.5 2009/11/30 23:23:29 roy Exp $
+.\"     $NetBSD: getdelim.3,v 1.6 2009/12/01 08:15:50 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ to reflect the new size.
 must be representable as an unsigned char, and
 .Fa *lineptr
 must be a
-.Xr free(3) Ns No able
+.Xr free 3 Ns No able
 buffer.
 .Pp
 .Fa getline
@@ -98,14 +98,14 @@ and callers must use
 and
 .Xr ferror 3
 to determine which occurred.
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following code fragment reads lines from a file and writes them to
 standard output.
 .Bd -literal -offset indent
 char *line = NULL;
 size_t linesize = 0;
 ssize_t linelen;
-while ((linelen = getline(&line, &linesize, fp)) != -1)
+while ((linelen = getline(\*[Am]line, \*[Am]linesize, fp)) != -1)
 	fwrite(line, linelen, 1, stdout);
 
 if (ferror(fp))
