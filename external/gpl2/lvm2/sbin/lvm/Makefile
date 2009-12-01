@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/01/13 22:38:00 haad Exp $
+#	$NetBSD: Makefile,v 1.7 2009/12/01 23:12:51 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -22,7 +22,6 @@ SRCS=		dumpconfig.c formats.c lvchange.c lvconvert.c lvcreate.c \
 		vgmknodes.c vgreduce.c vgremove.c vgrename.c vgscan.c \
 		vgsplit.c lvm.c
 
-CFLAGS+= 	-fno-inline
 
 CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I. -I${LIBDM_INCLUDE} -I${LVM2_DISTDIR}/tools \
