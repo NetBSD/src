@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.85 2009/11/29 19:38:45 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.86 2009/12/01 00:06:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2009/11/29 19:38:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2009/12/01 00:06:31 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -190,14 +190,13 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return 0;
 
-#ifndef MULTIPROCESSOR
 	/*
-	 * If we are going to only attach a single cpu, make sure
-	 * to pick the one we are running on right now.
+	 * Make sure cpu0 attaches to the currently running cpu (which
+	 * is the boot cpu always, as we did not fire up others at this point)
 	 */
-	if (upaid_from_node(ma->ma_node) != CPU_UPAID)
+	if (cf->cf_unit == 0 && upaid_from_node(ma->ma_node) != CPU_UPAID)
 		return 0;
-#endif
+
 	return 1;
 }
 
@@ -238,7 +237,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	char buf[100];
 	int 	totalsize = 0;
 	int 	linesize;
-	static bool passed = false;
 
 	/* tell them what we have */
 	node = ma->ma_node;
@@ -255,8 +253,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * For other cpus, we need to call mi_cpu_attach()
 	 * and complete setting up cpcb.
 	 */
-	if (!passed) {
-		passed = true;
+	if (ci->ci_flags & CPUF_PRIMARY) {
 		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
 					BLOCK_SIZE, 0, 0, "fpstate", NULL,
 					IPL_NONE, NULL, NULL, NULL);
