@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.2 2009/06/05 19:57:25 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.3 2009/12/01 23:11:17 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -367,8 +367,6 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 	
 	nbsd_get_dm_major(&dm_major, DM_BLOCK_MAJOR);
 
-	log_error("format_dev %d--%d %d", dev_major, dev_minor, bufsize);
-
 	if (bufsize < 8)
 		return 0;
 	
@@ -595,7 +593,6 @@ static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 {
 	prop_array_t cmd_array;
 	prop_dictionary_t target_spec;
-	prop_dictionary_t target_param;
 	
 	struct target *t;
 	
@@ -620,10 +617,7 @@ static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 		strlcpy(type,t->type,DM_MAX_TYPE_NAME);
 
 		prop_dictionary_set_cstring(target_spec,DM_TABLE_TYPE,type);
-		
-		target_param = nbsd_dm_parse_param(type, t->params);
-		prop_dictionary_set(target_spec, DM_TABLE_PARAMS, target_param);
-		prop_object_release(target_param);
+		prop_dictionary_set_cstring(target_spec,DM_TABLE_PARAMS,t->params);
 
 		prop_array_set(cmd_array,count,target_spec);
 
