@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.598 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.599 2009/12/01 09:09:40 uebayasi Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -268,6 +268,7 @@ TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
+TOOL_PKG_CREATE=	${TOOLDIR}/bin/${_TOOL_PREFIX}pkg_create
 TOOL_POWERPCMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}powerpc-mkbootimage
 TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
 TOOL_REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
@@ -337,6 +338,7 @@ TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
 TOOL_PAX=		pax
 TOOL_PIC=		pic
+TOOL_PKG_CREATE=	pkg_create
 TOOL_POWERPCMKBOOTIMAGE=	powerpc-mkbootimage
 TOOL_PWD_MKDB=		pwd_mkdb
 TOOL_REFER=		refer
