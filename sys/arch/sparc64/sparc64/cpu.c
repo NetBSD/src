@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86 2009/12/01 00:06:31 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.87 2009/12/01 09:26:36 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2009/12/01 00:06:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2009/12/01 09:26:36 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -190,12 +190,14 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return 0;
 
+#ifndef MULTIPROCESSOR
 	/*
-	 * Make sure cpu0 attaches to the currently running cpu (which
-	 * is the boot cpu always, as we did not fire up others at this point)
+	 * If we are going to only attach a single cpu, make sure
+	 * to pick the one we are running on right now.
 	 */
-	if (cf->cf_unit == 0 && upaid_from_node(ma->ma_node) != CPU_UPAID)
+	if (upaid_from_node(ma->ma_node) != CPU_UPAID)
 		return 0;
+#endif
 
 	return 1;
 }
