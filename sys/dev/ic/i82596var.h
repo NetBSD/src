@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.14 2009/05/10 04:26:19 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.15 2009/12/01 23:16:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -51,7 +51,7 @@ struct iee_scp {
 
 /* Intermediate System Configuration Pointer */
 struct iee_iscp {
-	volatile uint16_t iscp_bussy;		/* Even Word, bits 0..15 */
+	volatile uint16_t iscp_busy;		/* Even Word, bits 0..15 */
 	volatile uint16_t iscp_pad;		/* Odd Word, bits 16..32 */
 	volatile uint32_t iscp_scb_addr;	/* address of SCB */
 } __packed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.9 2009/05/10 04:26:19 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.10 2009/12/01 23:16:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.9 2009/05/10 04:26:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.10 2009/12/01 23:16:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,12 +147,12 @@ iee_sbdio_cmd(struct iee_softc *sc, uint32_t cmd)
 int
 iee_sbdio_reset(struct iee_softc *sc)
 {
-#define	IEE_ISCP_BUSSY 0x1
+#define	IEE_ISCP_BUSY 0x1
 	int n, retry = 8;
 	uint32_t cmd, ack;
 
 	/* Make sure the busy byte is set and the cache is flushed. */
-	SC_ISCP(sc)->iscp_bussy = IEE_ISCP_BUSSY;
+	SC_ISCP(sc)->iscp_busy = IEE_ISCP_BUSY;
 	IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Setup the PORT Command with pointer to SCP. */
@@ -168,9 +168,9 @@ iee_sbdio_reset(struct iee_softc *sc)
 	/* Wait for the chip to initialize and read SCP and ISCP. */
 	for (n = 0 ; n < retry; n++) {
 		IEE_ISCPSYNC(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		ack = SC_ISCP(sc)->iscp_bussy;
+		ack = SC_ISCP(sc)->iscp_busy;
 		IEE_ISCPSYNC(sc, BUS_DMASYNC_PREREAD);
-		if (ack != IEE_ISCP_BUSSY) {
+		if (ack != IEE_ISCP_BUSY) {
 			break;
 		}
 		delay(100);
