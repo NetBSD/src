@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.11 2009/10/03 23:49:50 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.12 2009/12/01 19:29:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.11 2009/10/03 23:49:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.12 2009/12/01 19:29:54 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1375,7 +1375,7 @@ init_x86_64(paddr_t first_avail)
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
 #ifndef XEN
-	int first16q, ist;
+	int first16q, first4gq, ist;
 	extern struct extent *iomem_ex;
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
@@ -1585,10 +1585,18 @@ init_x86_64(paddr_t first_avail)
 	 * all of the ISA DMA'able memory won't be eaten up
 	 * first-off).
 	 */
-	if (avail_end <= (16 * 1024 * 1024))
+#define ADDR_16M (16 * 1024 * 1024)
+#define ADDR_4G (4ULL * 1024 * 1024 * 1024)
+
+	if (avail_end <= ADDR_16M)
 		first16q = VM_FREELIST_DEFAULT;
 	else
 		first16q = VM_FREELIST_FIRST16;
+
+	if (avail_end <= ADDR_4G)
+		first4gq = VM_FREELIST_DEFAULT;
+	else
+		first4gq = VM_FREELIST_FIRST4G;
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
@@ -1636,19 +1644,19 @@ init_x86_64(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start < (16 * 1024 * 1024) &&
+			if (seg_start < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end;
 
 				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
 					    seg_start, tmp,
 					    atop(seg_start), atop(tmp));
 #endif
@@ -1658,10 +1666,32 @@ init_x86_64(paddr_t first_avail)
 				}
 				seg_start = tmp;
 			}
+			if (seg_start < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end;
+
+				if (tmp != seg_start) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
+					    seg_start, tmp,
+					    atop(seg_start), atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start),
+					    atop(tmp), atop(seg_start),
+					    atop(tmp), first4gq);
+				}
+				seg_start = tmp;
+			}
 
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%lx-0x%lx)\n",
 				    seg_start, seg_end,
 				    atop(seg_start), atop(seg_end));
@@ -1674,19 +1704,19 @@ init_x86_64(paddr_t first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 < (16 * 1024 * 1024) &&
+			if (seg_start1 < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end1 > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end1;
 
 				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
 					    seg_start1, tmp,
 					    atop(seg_start1), atop(tmp));
 #endif
@@ -1696,10 +1726,32 @@ init_x86_64(paddr_t first_avail)
 				}
 				seg_start1 = tmp;
 			}
+			if (seg_start1 < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end1 > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end1;
+
+				if (tmp != seg_start1) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
+					    seg_start1, tmp,
+					    atop(seg_start1), atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start1),
+					    atop(tmp), atop(seg_start1),
+					    atop(tmp), first4gq);
+				}
+				seg_start1 = tmp;
+			}
 
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%lx-0x%lx)\n",
 				    seg_start1, seg_end1,
 				    atop(seg_start1), atop(seg_end1));
