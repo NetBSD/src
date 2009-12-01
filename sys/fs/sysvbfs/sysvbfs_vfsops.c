@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.30 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.31 2009/12/01 09:28:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.30 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31 2009/12/01 09:28:02 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,37 +165,36 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct sysvbfs_mount *bmp;
 	struct partinfo dpart;
 	int error, oflags;
+	bool devopen = false;
 
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
 	if (error)
-		return error;
+		goto out;
 
 	/* Open block device */
 	oflags = FREAD;
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		oflags |= FWRITE;
 	if ((error = VOP_OPEN(devvp, oflags, NOCRED)) != 0)
-		return error;
+		goto out;
+	devopen = true;
 
 	/* Get partition information */
 	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0) {
-		VOP_CLOSE(devvp, oflags, NOCRED);
-		return error;
+		goto out;
 	}
 
 	bmp = malloc(sizeof(struct sysvbfs_mount), M_SYSVBFS_VFS, M_WAITOK);
 	if (bmp == NULL) {
-		VOP_CLOSE(devvp, oflags, NOCRED);
-		return ENOMEM;
+		error = ENOMEM;
+		goto out;
 	}
 	bmp->devvp = devvp;
 	bmp->mountp = mp;
 	if ((error = sysvbfs_bfs_init(&bmp->bfs, devvp)) != 0) {
-		VOP_CLOSE(devvp, oflags, NOCRED);
 		free(bmp, M_SYSVBFS_VFS);
-		return error;
+		goto out;
 	}
 	LIST_INIT(&bmp->bnode_head);
 
@@ -210,7 +209,11 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	DPRINTF("fstype=%d dtype=%d bsize=%d\n", dpart.part->p_fstype,
 	    dpart.disklab->d_type, dpart.disklab->d_secsize);
 
-	return 0;
+ out:
+	if (devopen && error)
+		VOP_CLOSE(devvp, oflags, NOCRED);
+	VOP_UNLOCK(devvp, 0);
+	return error;
 }
 
 int
