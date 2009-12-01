@@ -44,6 +44,8 @@ case "$lang" in
 	;;
 perl)
 	dir=$(pkg_info -qL perl | awk '/EXTERN.h/ { gsub("/EXTERN.h$", ""); print }')
+	cstrings1='#undef SvPOK'
+	cstrings2='#define SvPOK(x) 1'
 	incpath='CPPFLAGS+=-I'"$dir"
 	;;
 python)
@@ -64,6 +66,8 @@ cat << EOF > ${module}${lang}.i
 %module ${module}${lang}
 %{
 #include <${module}.h>
+${cstrings1}
+${cstrings2}
 %}
 %include ${module}.h
 EOF
@@ -90,7 +94,7 @@ LDADD+=-l${module}
 .include <bsd.lib.mk>
 EOF
 
-cat << EOF >> shlib_version
+cat << EOF > shlib_version
 major=0
 minor=0
 EOF
