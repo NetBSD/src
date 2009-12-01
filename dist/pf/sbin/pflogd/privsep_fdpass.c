@@ -1,3 +1,4 @@
+/*	$NetBSD: privsep_fdpass.c,v 1.1.1.3 2009/12/01 07:03:05 martti Exp $	*/
 /*	$OpenBSD: privsep_fdpass.c,v 1.2 2004/08/13 02:51:48 djm Exp $	*/
 
 /*

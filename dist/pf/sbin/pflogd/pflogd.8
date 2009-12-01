@@ -1,4 +1,5 @@
-.\"	$OpenBSD: pflogd.8,v 1.25 2005/01/02 18:15:02 jmc Exp $
+.\"	$NetBSD: pflogd.8,v 1.1.1.3 2009/12/01 07:03:04 martti Exp $
+.\"	$OpenBSD: pflogd.8,v 1.35 2007/05/31 19:19:47 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -24,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 9, 2001
+.Dd $Mdocdate: May 31 2007 $
 .Dt PFLOGD 8
 .Os
 .Sh NAME
@@ -32,17 +33,23 @@
 .Nd packet filter logging daemon
 .Sh SYNOPSIS
 .Nm pflogd
+.Bk -words
 .Op Fl Dx
 .Op Fl d Ar delay
 .Op Fl f Ar filename
+.Op Fl i Ar interface
+.Op Fl p Ar pidfile
 .Op Fl s Ar snaplen
 .Op Ar expression
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a background daemon which reads packets logged by
 .Xr pf 4
-to the packet logging interface
-.Pa pflog0
+to a
+.Xr pflog 4
+interface, normally
+.Pa pflog0 ,
 and writes the packets to a logfile (normally
 .Pa /var/log/pflog )
 in
@@ -81,7 +88,9 @@ temporarily uses the old snaplen to keep the log file consistent.
 tries to preserve the integrity of the log file against I/O errors.
 Furthermore, integrity of an existing log file is verified before
 appending.
-If there is an invalid log file or an I/O error, logging is suspended until a
+If there is an invalid log file or an I/O error, the log file is moved
+out of the way and a new one is created.
+If a new file cannot be created, logging is suspended until a
 .Dv SIGHUP
 or a
 .Dv SIGALRM
@@ -101,11 +110,27 @@ If not specified, the default is 60 seconds.
 Log output filename.
 Default is
 .Pa /var/log/pflog .
+.It Fl i Ar interface
+Specifies the
+.Xr pflog 4
+interface to use.
+By default,
+.Nm
+will use
+.Ar pflog0 .
+.It Fl p Ar pidfile
+Writes a file containing the process ID of the program.
+The file name has the form
+.Pa /var/run/pidname.pid .
+If the option is not given,
+.Ar pidfile
+defaults to
+.Pa pflogd .
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
-bytes of data from each packet rather than the default of 96.
-The default of 96 is adequate for IP, ICMP, TCP, and UDP headers but may
+bytes of data from each packet rather than the default of 116.
+The default of 116 is adequate for IP, ICMP, TCP, and UDP headers but may
 truncate protocol information for other protocols.
 Other file parsers may desire a higher snaplen.
 .It Fl x
@@ -129,6 +154,13 @@ Log specific tcp packets to a different log file with a large snaplen
 # pflogd -s 1600 -f suspicious.log port 80 and host evilhost
 .Ed
 .Pp
+Log from another
+.Xr pflog 4
+interface, excluding specific packets:
+.Bd -literal -offset indent
+# pflogd -i pflog3 -f network3.log "not (tcp and port 23)"
+.Ed
+.Pp
 Display binary logs:
 .Bd -literal -offset indent
 # tcpdump -n -e -ttt -r /var/log/pflog
@@ -148,7 +180,7 @@ Tcpdump can restrict the output
 to packets logged on a specified interface, a rule number, a reason,
 a direction, an IP family or an action.
 .Pp
-.Bl -tag -width "reason match " -compact
+.Bl -tag -width "ruleset authpf " -compact
 .It ip
 Address family equals IPv4.
 .It ip6
@@ -157,12 +189,16 @@ Address family equals IPv6.
 Interface name equals "kue0".
 .It on kue0
 Interface name equals "kue0".
+.It ruleset authpf
+Ruleset name equals "authpf".
 .It rulenum 10
 Rule number equals 10.
 .It reason match
 Reason equals match.
 Also accepts "bad-offset", "fragment", "bad-timestamp", "short",
-"normalize" and "memory".
+"normalize", "memory", "congestion", "ip-option", "proto-cksum",
+"state-mismatch", "state-insert", "state-limit", "src-limit",
+and "synproxy".
 .It action pass
 Action equals pass.
 Also accepts "block".
@@ -190,4 +226,6 @@ The
 command appeared in
 .Ox 3.0 .
 .Sh AUTHORS
-Can Erkin Acar
+.Nm
+was written by
+.An Can Erkin Acar Aq canacar@openbsd.org .

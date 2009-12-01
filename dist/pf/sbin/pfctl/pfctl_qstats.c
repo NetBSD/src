@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_qstats.c,v 1.1.1.3 2009/12/01 07:03:09 martti Exp $	*/
 /*	$OpenBSD: pfctl_qstats.c,v 1.30 2004/04/27 21:47:32 kjc Exp $ */
 
 /*
