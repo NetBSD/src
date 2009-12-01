@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.270 2009/11/21 21:57:47 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.271 2009/12/01 01:03:54 dyoung Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.270 2009/11/21 21:57:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.271 2009/12/01 01:03:54 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -473,7 +473,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	rootID = 0;
 	num_root = 0;
 	cset = config_sets;
-	while(cset != NULL ) {
+	while (cset != NULL) {
 		next_cset = cset->next;
 		if (rf_have_enough_components(cset) &&
 		    cset->ac->clabel->autoconfigure==1) {
@@ -798,7 +798,7 @@ raidopen(dev_t dev, int flags, int fmt,
 		   here... If so, we needn't do this, but then need some
 		   other way of keeping track of what's happened.. */
 
-		rf_markalldirty( raidPtrs[unit] );
+		rf_markalldirty(raidPtrs[unit]);
 	}
 
 
@@ -3133,16 +3133,16 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 	       clabel->version, clabel->serial_number,
 	       clabel->mod_counter);
 	printf("   Clean: %s Status: %d\n",
-	       clabel->clean ? "Yes" : "No", clabel->status );
+	       clabel->clean ? "Yes" : "No", clabel->status);
 	printf("   sectPerSU: %d SUsPerPU: %d SUsPerRU: %d\n",
 	       clabel->sectPerSU, clabel->SUsPerPU, clabel->SUsPerRU);
 	printf("   RAID Level: %c  blocksize: %d numBlocks: %d\n",
 	       (char) clabel->parityConfig, clabel->blockSize,
 	       clabel->numBlocks);
-	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No" );
+	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No");
 	printf("   Contains root partition: %s\n",
-	       clabel->root_partition ? "Yes" : "No" );
-	printf("   Last configured as: raid%d\n", clabel->last_unit );
+	       clabel->root_partition ? "Yes" : "No");
+	printf("   Last configured as: raid%d\n", clabel->last_unit);
 #if 0
 	   printf("   Config order: %d\n", clabel->config_order);
 #endif
