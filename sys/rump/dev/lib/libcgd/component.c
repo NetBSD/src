@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2009/09/07 11:23:39 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.3 2009/12/01 09:04:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2009/09/07 11:23:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2009/12/01 09:04:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,7 +56,7 @@ rump_dev_cgd_init()
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "cgd0", 'a',
 	    bmaj, 0, 7)) != 0)
 		panic("cannot create cooked cgd dev nodes: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "rcgd0",'a',
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "rcgd0", 'a',
 	    cmaj, 0, 7)) != 0)
 		panic("cannot create raw cgd dev nodes: %d", error);
 
