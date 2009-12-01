@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2009/12/01 16:20:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2009/12/01 16:20:52 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1640,7 +1640,7 @@ hppa_pim64_dump(int check_type)
 			PIM_BUS_BITS);
 		PIM_WORD("\nAssist Check", checks->pim_check_assist,
 			PIM_ASSIST_BITS);
-		printf("Assist State %u", checks->pim_check_assist_state);
+		printf("\nAssist State %u", checks->pim_check_assist_state);
 		printf("\nSystem Responder 0x%016lx",
 		        (unsigned long)checks->pim_check_responder);
 		printf("\nSystem Requestor 0x%016lx",
