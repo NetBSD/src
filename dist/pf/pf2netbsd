@@ -1,0 +1,273 @@
+#!/bin/sh
+#
+#   $NetBSD: pf2netbsd,v 1.1 2009/12/01 06:27:57 martti Exp $
+#
+# Copyright (c) 2009 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+usage()
+{
+    cat << EOF
+
+Usage: `basename $0` [options] srcdir dstdir
+
+where
+
+-h      This help
+-v      Be verbose
+
+Example:
+
+`basename $0` /tmp/openbsd-4.2 /tmp/netbsd-4.2
+
+EOF
+    exit 1
+}
+
+verbose()
+{
+    ${VERBOSE} && echo $*
+    eval $*
+}
+
+mklist()
+{
+    # $1 = filename
+
+    if [ -z "$1" ]; then
+        echo "ERROR: Not enough arguments for mklist!"
+        exit 1
+    fi
+    cat > $1 << EOF
+etc/pf.conf
+etc/pf.os
+libexec/tftp-proxy/filter.c
+libexec/tftp-proxy/filter.h
+libexec/tftp-proxy/Makefile
+libexec/tftp-proxy/tftp-proxy.8
+libexec/tftp-proxy/tftp-proxy.c
+sbin/pfctl/Makefile
+sbin/pfctl/parse.y
+sbin/pfctl/pfctl.8
+sbin/pfctl/pfctl_altq.c
+sbin/pfctl/pfctl.c
+sbin/pfctl/pfctl.h
+sbin/pfctl/pfctl_optimize.c
+sbin/pfctl/pfctl_osfp.c
+sbin/pfctl/pfctl_parser.c
+sbin/pfctl/pfctl_parser.h
+sbin/pfctl/pfctl_qstats.c
+sbin/pfctl/pfctl_radix.c
+sbin/pfctl/pfctl_table.c
+sbin/pfctl/pf_print_state.c
+sbin/pflogd/Makefile
+sbin/pflogd/pflogd.8
+sbin/pflogd/pflogd.c
+sbin/pflogd/pflogd.h
+sbin/pflogd/privsep.c
+sbin/pflogd/privsep_fdpass.c
+share/man/man4/pf.4
+share/man/man4/pflog.4
+share/man/man4/pfsync.4
+share/man/man5/pf.conf.5
+share/man/man5/pf.os.5
+share/pf/ackpri
+share/pf/faq-example1
+share/pf/faq-example2
+share/pf/faq-example3
+share/pf/Makefile
+share/pf/queue1
+share/pf/queue2
+share/pf/queue3
+share/pf/queue4
+share/pf/spamd
+usr.sbin/authpf/authpf.8
+usr.sbin/authpf/authpf.c
+usr.sbin/authpf/Makefile
+usr.sbin/authpf/pathnames.h
+usr.sbin/ftp-proxy/filter.c
+usr.sbin/ftp-proxy/filter.h
+usr.sbin/ftp-proxy/ftp-proxy.8
+usr.sbin/ftp-proxy/ftp-proxy.c
+usr.sbin/ftp-proxy/Makefile
+sys/net/if.c
+sys/net/if.h
+sys/net/if_pflog.c
+sys/net/if_pflog.h
+sys/net/if_pfsync.c
+sys/net/if_pfsync.h
+sys/net/pf.c
+sys/net/pf_if.c
+sys/net/pf_ioctl.c
+sys/net/pf_norm.c
+sys/net/pf_osfp.c
+sys/net/pf_ruleset.c
+sys/net/pf_table.c
+sys/net/pfvar.h
+sys/netinet/tcp_subr.c
+sys/netinet/tcp_var.h
+EOF
+}
+
+openbsd2netbsd()
+{
+    # $1 = srcdir
+    # $2 = dstdir
+
+    if [ -z "$2" ]; then
+        echo "ERROR: Not enough arguments for openbsd2netbsd!"
+        exit 1
+    fi
+    if [ -d $2/dist/pf ]; then
+        echo "ERROR: $2 already exists!"
+        exit 1
+    fi
+    if [ -d "$1/src" ]; then
+        echo "ERROR: Use $1/src as the srcdir!"
+        exit 1
+    fi
+
+    cd $1 || exit 1
+
+    # Copy from OpenBSD
+    verbose "mklist /tmp/pf.$$"
+    verbose "mkdir -p $2"
+    verbose "tar -c -T /tmp/pf.$$ -f- | tar -x -f- -C $2"
+
+    # Some files have different name/location in NetBSD
+    verbose cd $2
+    verbose mkdir -p dist/pf sys/dist/pf
+
+    verbose cd $2/sys/net
+    verbose mv if.c if_compat.c
+    verbose mv if.h if_compat.h
+    verbose cp pf.c pf_mtag.c
+    verbose cp pfvar.h pf_mtag.h
+
+    verbose cd $2/sys/netinet
+    verbose mv tcp_subr.c tcp_rndiss.c
+    verbose mv tcp_var.h tcp_rndiss.h
+
+    verbose cd $2
+    verbose mv etc libexec sbin share usr.sbin dist/pf/
+
+    verbose cd $2/sys
+    verbose mv net netinet dist/pf/
+
+    # Remove references to the OpenBSD CVS
+    find $2 -name CVS | xargs rm -rf
+
+#   # Remove the $'s around various CVS keywords
+#   find $2 -type f | \
+#   while read f
+#   do
+#       sed -e 's/\$\(Id.*\) \$/\1/'        \
+#           -e 's/\$\(Date.*\) \$/\1/'      \
+#           -e 's/\$\(Header.*\) \$/\1/'    \
+#           ${f} > ${f}.fixed
+#       mv ${f}.fixed ${f}
+#       echo "Deactivated CVS keywords from ${f}"
+#   done
+
+    # Add the NetBSD keyword
+    find $2 -type f -name '*.[chly]' | \
+    grep -v -e if_compat -e tcp_rndiss | \
+    while read f
+    do
+        sed 1q < ${f} | grep -q '\$NetBSD' || (
+        cat > /tmp/pf2n.$$ <<  EOF
+/*	\$NetBSD\$	*/
+EOF
+        cat ${f} >> /tmp/pf2n.$$
+        mv /tmp/pf2n.$$ ${f}
+        )
+    done
+    find $2 -type f -name '*.[0-9]' | \
+    while read f
+    do
+        sed 1q < ${f} | grep -q '\$NetBSD' || (
+        cat > /tmp/pf2n.$$ <<  EOF
+.\"	\$NetBSD\$
+EOF
+        cat ${f} >> /tmp/pf2n.$$
+        mv /tmp/pf2n.$$ ${f}
+        )
+    done
+    find $2 -type f -name 'faq*' -o -name 'queue*' \
+      -o -name 'ackpri' -o -name 'spamd' | \
+    while read f
+    do
+        sed 1q < ${f} | grep -q '\$NetBSD' || (
+        cat > /tmp/pf2n.$$ <<  EOF
+# \$NetBSD\$
+EOF
+        cat ${f} >> /tmp/pf2n.$$
+        mv /tmp/pf2n.$$ ${f}
+        )
+    done
+    find $2 -type f -name 'Makefile' | \
+    while read f
+    do
+        sed 1q < ${f} | grep -q '\$NetBSD' || (
+        cat > /tmp/pf2n.$$ <<  EOF
+#	\$NetBSD\$
+EOF
+        cat ${f} >> /tmp/pf2n.$$
+        mv /tmp/pf2n.$$ ${f}
+        )
+    done
+}
+
+##
+## MAIN
+##
+VERBOSE=false
+
+ARGV=`getopt hv ${*}`
+[ ${?} != 0 ] && exit 1
+set -- ${ARGV}
+for i
+do
+    case "${i}" in
+    -h)
+        usage
+        shift
+        ;;
+    -v)
+        VERBOSE=true
+        shift
+        ;;
+    --)
+        shift
+        ;;
+    esac
+done
+[ $# -ne 2 ] && usage
+
+openbsd2netbsd $1 $2
+rm -f /tmp/pf.$$
+echo ""
+echo "The sources-to-be-imported are now in $2"
+echo ""
