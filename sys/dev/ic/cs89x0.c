@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.28 2009/09/22 16:44:08 tsutsui Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.29 2009/12/01 01:05:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.28 2009/09/22 16:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.29 2009/12/01 01:05:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -2198,19 +2198,12 @@ int
 cs_activate(device_t self, enum devact act)
 {
 	struct cs_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return error;
 }
