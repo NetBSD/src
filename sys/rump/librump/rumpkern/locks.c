@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.35 2009/11/26 17:29:34 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.36 2009/12/01 09:50:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.35 2009/11/26 17:29:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.36 2009/12/01 09:50:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -330,7 +330,7 @@ _kernel_lock(int nlocks)
 		if (!rumpuser_mutex_tryenter(rump_giantlock)) {
 			struct lwp *l = curlwp;
 
-			rump_unschedule_cpu(l);
+			rump_unschedule_cpu1(l);
 			rumpuser_mutex_enter_nowrap(rump_giantlock);
 			rump_schedule_cpu(l);
 		}
@@ -369,6 +369,10 @@ rump_user_unschedule(int nlocks, int *countp)
 {
 
 	_kernel_unlock(nlocks, countp);
+	/*
+	 * XXX: technically we should unschedule_cpu1() here, but that
+	 * requires rump_intr_enter/exit to be implemented.
+	 */
 	rump_unschedule_cpu(curlwp);
 }
 

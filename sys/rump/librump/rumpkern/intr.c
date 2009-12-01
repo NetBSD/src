@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2009/11/11 16:46:50 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.22 2009/12/01 09:50:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2009/11/11 16:46:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2009/12/01 09:50:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -58,10 +58,10 @@ struct softint {
 };
 
 static struct rumpuser_mtx *si_mtx;
-static struct softint_lev {
+struct softint_lev {
 	struct rumpuser_cv *si_cv;
 	LIST_HEAD(, softint) si_pending;
-} softints[SOFTINT_COUNT];
+};
 
 /* rumpuser structures since we call rumpuser interfaces directly */
 static struct rumpuser_cv *clockcv;
@@ -117,15 +117,17 @@ doclock(void *noarg)
 	for (;;) {
 		callout_hardclock();
 
-		if (++ticks == hz) {
-			time_uptime++;
-			ticks = 0;
-		}
-
 		/* wait until the next tick. XXX: what if the clock changes? */
 		while (rumpuser_cv_timedwait(clockcv, clockmtx,
 		    curtime.tv_sec, curtime.tv_nsec) == 0)
 			continue;
+		
+		/* if !maincpu: continue */
+
+		if (++ticks == hz) {
+			time_uptime++;
+			ticks = 0;
+		}
 
 		clkgen++;
 		timespecadd(&clockup, &tick, &clockup);
@@ -147,11 +149,18 @@ sithread(void *arg)
 	void *funarg;
 	bool mpsafe;
 	int mylevel = (uintptr_t)arg;
-	struct softint_lev *si_lvl;
+	struct softint_lev *si_lvlp, *si_lvl;
+	struct cpu_data *cd = &curcpu()->ci_data;
 
 	rump_unschedule();
 
-	si_lvl = &softints[mylevel];
+	si_lvlp = cd->cpu_softcpu;
+	si_lvl = &si_lvlp[mylevel];
+
+	/*
+	 * XXX: si_mtx is unnecessary, and should open an interface
+	 * which allows to use schedmtx for the cv wait
+	 */
 	rumpuser_mutex_enter_nowrap(si_mtx);
 	for (;;) {
 		if (!LIST_EMPTY(&si_lvl->si_pending)) {
@@ -191,38 +200,54 @@ sithread(void *arg)
 }
 
 void
-softint_init(struct cpu_info *ci)
+rump_intr_init()
 {
-	int rv, i;
 
 	rumpuser_mutex_init(&si_mtx);
-	for (i = 0; i < SOFTINT_COUNT; i++) {
-		rumpuser_cv_init(&softints[i].si_cv);
-		LIST_INIT(&softints[i].si_pending);
-	}
-
 	rumpuser_cv_init(&clockcv);
 	rumpuser_mutex_init(&clockmtx);
+}
 
-	/* XXX: should have separate "wanttimer" control */
-	if (rump_threads) {
-		for (i = 0; i < SOFTINT_COUNT; i++) {
-			rv = kthread_create(PRI_NONE,
-			    KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
-			    sithread, (void *)(uintptr_t)i,
-			    NULL, "rumpsi%d", i);
-		}
+void
+softint_init(struct cpu_info *ci)
+{
+	struct cpu_data *cd = &ci->ci_data;
+	struct softint_lev *slev;
+	int rv, i;
 
-		rumpuser_mutex_enter(clockmtx);
-		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR,
-		    NULL, doclock, NULL, NULL, "rumpclk");
+	if (!rump_threads)
+		return;
+
+	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		rumpuser_cv_init(&slev[i].si_cv);
+		LIST_INIT(&slev[i].si_pending);
+	}
+	cd->cpu_softcpu = slev;
+
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		rv = kthread_create(PRI_NONE,
+		    KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+		    sithread, (void *)(uintptr_t)i,
+		    NULL, "rumpsi%d", i);
+	}
+
+	rumpuser_mutex_enter(clockmtx);
+	for (i = 0; i < ncpu; i++) {
+		rv = kthread_create(PRI_NONE,
+		    KTHREAD_MPSAFE | KTHREAD_INTR,
+		    cpu_lookup(i), doclock, NULL, NULL,
+		    "rumpclk%d", i);
 		if (rv)
 			panic("clock thread creation failed: %d", rv);
-
-		/* make sure we have a clocktime before returning */
-		rumpuser_cv_wait(clockcv, clockmtx);
-		rumpuser_mutex_exit(clockmtx);
 	}
+
+	/*
+	 * Make sure we have a clocktime before returning.
+	 * XXX: mp
+	 */
+	rumpuser_cv_wait(clockcv, clockmtx);
+	rumpuser_mutex_exit(clockmtx);
 }
 
 /*
@@ -254,17 +279,17 @@ void
 softint_schedule(void *arg)
 {
 	struct softint *si = arg;
+	struct cpu_data *cd = &curcpu()->ci_data;
+	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
 	if (!rump_threads) {
 		si->si_func(si->si_arg);
 	} else {
-		rumpuser_mutex_enter(si_mtx);
 		if (!(si->si_flags & SI_ONLIST)) {
-			LIST_INSERT_HEAD(&softints[si->si_level].si_pending,
+			LIST_INSERT_HEAD(&si_lvl[si->si_level].si_pending,
 			    si, si_entries);
 			si->si_flags |= SI_ONLIST;
 		}
-		rumpuser_mutex_exit(si_mtx);
 	}
 }
 
@@ -286,14 +311,17 @@ softint_disestablish(void *cook)
 void
 rump_softint_run(struct cpu_info *ci)
 {
+	struct cpu_data *cd = &ci->ci_data;
+	struct softint_lev *si_lvl = cd->cpu_softcpu;
 	int i;
 
-	rumpuser_mutex_enter_nowrap(si_mtx);
+	if (!rump_threads)
+		return;
+
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		if (!LIST_EMPTY(&softints[i].si_pending))
-			rumpuser_cv_signal(softints[i].si_cv);
+		if (!LIST_EMPTY(&si_lvl[i].si_pending))
+			rumpuser_cv_signal(si_lvl[i].si_cv);
 	}
-	rumpuser_mutex_exit(si_mtx);
 }
 
 bool

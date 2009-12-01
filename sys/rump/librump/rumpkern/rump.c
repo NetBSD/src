@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.142 2009/11/27 17:55:04 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.143 2009/12/01 09:50:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.142 2009/11/27 17:55:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.143 2009/12/01 09:50:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.142 2009/11/27 17:55:04 pooka Exp $");
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
+#include <sys/xcall.h>
 
 #include <rump/rumpuser.h>
 
@@ -180,6 +181,7 @@ rump__init(int rump_version)
 	char buf[256];
 	struct proc *p;
 	struct lwp *l;
+	int i;
 	int error;
 
 	/* not reentrant */
@@ -209,6 +211,7 @@ rump__init(int rump_version)
 	}
 	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
 	    rump_threads);
+	rump_intr_init();
 
 	/* init minimal lwp/cpu context */
 	l = &lwp0;
@@ -233,6 +236,7 @@ rump__init(int rump_version)
 	uvm_ra_init();
 
 	mutex_obj_init();
+	callout_startup();
 
 	kprintf_init();
 	loginit();
@@ -266,9 +270,16 @@ rump__init(int rump_version)
 	rumpuser_set_curlwp(NULL);
 	rump_schedule();
 
-	callout_startup();
-	callout_init_cpu(rump_cpu);
-	selsysinit(rump_cpu);
+	/* we are mostly go.  do per-cpu subsystem init */
+	for (i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+
+		callout_init_cpu(ci);
+		softint_init(ci);
+		xc_init_cpu(ci);
+		pool_cache_cpu_init(ci);
+		selsysinit(ci);
+	}
 
 	sysctl_init();
 	kqueue_init();
@@ -277,7 +288,6 @@ rump__init(int rump_version)
 	percpu_init();
 	fd_sys_init();
 	module_init();
-	softint_init(rump_cpu);
 	devsw_init();
 	pipe_init();
 
