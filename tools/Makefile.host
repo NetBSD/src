@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.24 2008/10/19 19:38:55 apb Exp $
+#	$NetBSD: Makefile.host,v 1.25 2009/12/01 09:08:25 uebayasi Exp $
 
 NOINFO=		# defined
 NOLINT=		# defined
@@ -7,7 +7,7 @@ NOMAN=		# defined
 .include <bsd.own.mk>
 
 .ifndef NOCOMPATLIB
-COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
+COMPATOBJ!=	cd ${NETBSDSRCDIR}/compat && ${PRINTOBJDIR}
 .-include	"${COMPATOBJ}/defs.mk"
 .endif
 
@@ -18,7 +18,7 @@ ${var}:=	${${var}}
 .endfor
 
 # Switch over to the "real" Makefile.
-.PROGDIR:=	${.CURDIR}/../../${HOST_SRCDIR}
+.PROGDIR:=	${NETBSDSRCDIR}/${HOST_SRCDIR}
 _CURDIR:=	${.CURDIR}
 HOSTPROG?=	${PROG}
 
