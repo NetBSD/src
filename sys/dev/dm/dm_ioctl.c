@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.14 2009/09/09 22:38:49 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.15 2009/12/01 23:12:10 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -682,11 +682,13 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 	prop_object_iterator_t iter;
 	prop_array_t cmd_array;
-	prop_dictionary_t target_dict, param_dict;
+	prop_dictionary_t target_dict;
 	
 	const char *name, *uuid, *type;
 
 	uint32_t flags, ret, minor;
+
+	char *str;
 
 	ret = 0;
 	flags = 0;
@@ -694,8 +696,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	dmv = NULL;
 	last_table = NULL;
+	str = NULL;
 
-/*	char *xml;
+	/* char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
 	printf("%s\n",xml);*/
 		
@@ -768,7 +771,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * null and therefore it should be checked before we try to
 		 * use it.
 		 */
-		param_dict = prop_dictionary_get(target_dict, DM_TABLE_PARAMS);
+		prop_dictionary_get_cstring(target_dict,
+		    DM_TABLE_PARAMS, (char**)&str);
 		
 		if (SLIST_EMPTY(tbl))
 			/* insert this table to head */
@@ -781,16 +785,19 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * therfore I have to pass it to target init
 		 * routine and parse parameters there.
 		 */
+		
 		if ((ret = target->init(dmv, &table_en->target_config,
-			param_dict)) != 0) {
+			    str)) != 0) {
 
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
-			
+			free(str, M_TEMP);
+
 			dm_dev_unbusy(dmv);
 			return ret;
 		}
 		last_table = table_en;
+		free(str, M_TEMP);
 	}
 	prop_object_iterator_release(iter);
 	
