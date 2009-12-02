@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.31 2008/11/01 00:54:47 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.32 2009/12/02 09:34:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.31 2008/11/01 00:54:47 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.32 2009/12/02 09:34:51 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,9 +103,9 @@ setenv(const char *name, const char *value, int rewrite)
 		continue;
 	size = cc - name;
 	/* name + `=' + value */
-	if ((environ[offset] = malloc(size + l_value + 2)) == NULL)
+	if ((c = malloc(size + l_value + 2)) == NULL)
 		goto bad;
-	c = environ[offset];
+	environ[offset] = c;
 	(void)memcpy(c, name, size);
 	c += size;
 	*c++ = '=';
