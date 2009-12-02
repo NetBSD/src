@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-swap.c,v 1.1.1.1 2009/12/02 00:26:34 haad Exp $	*/
+/*	$NetBSD: dev-swap.c,v 1.2 2009/12/02 01:53:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
@@ -86,4 +86,13 @@ int dev_is_swap(struct device *dev, uint64_t *signature)
 	return 0;
 }
 
+#else
+
+#ifdef __NetBSD__
+int dev_is_swap(struct device *dev, uint64_t *signature)
+{
+	return 0;
+}
+#endif
+	
 #endif

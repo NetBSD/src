@@ -1,4 +1,4 @@
-/*      $NetBSD: filter_netbsd.c,v 1.2 2009/01/30 09:59:46 haad Exp $        */
+/*      $NetBSD: filter_netbsd.c,v 1.3 2009/12/02 01:53:25 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -52,6 +52,16 @@ static int _device_mapper_major = -1;
 int md_major(void)
 {
 	return _md_major;
+}
+
+int dev_subsystem_part_major(const struct device *dev)
+{
+	return 0;
+}
+
+const char *dev_subsystem_name(const struct device *dev)
+{
+	return "";
 }
 
 /*

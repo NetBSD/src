@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.3 2009/12/01 23:11:17 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.4 2009/12/02 01:53:25 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -300,6 +300,11 @@ int dm_check_version(void)
 	return 0;
 }
 
+int dm_cookie_supported(void)
+{
+	return (0);
+}
+
 /* Get next target(table description) from list pointed by dmt->head. */
 void *dm_get_next_target(struct dm_task *dmt, void *next,
 			 uint64_t *start, uint64_t *length,
@@ -546,6 +551,13 @@ int dm_task_skip_lockfs(struct dm_task *dmt)
 	return 1;
 }
 
+int dm_task_query_inactive_table(struct dm_task *dmt)
+{
+	dmt->query_inactive_table = 1;
+
+	return 1;
+}
+
 int dm_task_set_event_nr(struct dm_task *dmt, uint32_t event_nr)
 {
 	dmt->event_nr = event_nr;
@@ -703,6 +715,13 @@ static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 	if (dmt->skip_lockfs)
 		flags |= DM_SKIP_LOCKFS_FLAG;
 
+	if (dmt->query_inactive_table) {
+		if (_dm_version_minor < 16)
+			log_warn("WARNING: Inactive table query unsupported "
+				 "by kernel.  It will use live table.");
+		flags |= DM_QUERY_INACTIVE_TABLE_FLAG;
+	}
+	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, flags);
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_EVENT, dmt->event_nr);
@@ -1085,19 +1104,19 @@ int dm_task_run(struct dm_task *dmt)
 	switch (dmt->type) {
 	case DM_DEVICE_CREATE:
 		add_dev_node(dmt->dev_name, MAJOR(dmi->dev), MINOR(dmi->dev),
-			     dmt->uid, dmt->gid, dmt->mode);
+		    dmt->uid, dmt->gid, dmt->mode, 0);
 		break;
 
 	case DM_DEVICE_REMOVE:
 		/* FIXME Kernel needs to fill in dmi->name */
 		if (dmt->dev_name)
-			rm_dev_node(dmt->dev_name);
+			rm_dev_node(dmt->dev_name, 0);
 		break;
 
 	case DM_DEVICE_RENAME:
 		/* FIXME Kernel needs to fill in dmi->name */
 		if (dmt->dev_name)
-			rename_dev_node(dmt->dev_name, dmt->newname);
+			rename_dev_node(dmt->dev_name, dmt->newname, 0);
 		break;
 
 	case DM_DEVICE_RESUME:
@@ -1110,9 +1129,9 @@ int dm_task_run(struct dm_task *dmt)
 		if (dmi->flags & DM_EXISTS_FLAG)
 			add_dev_node(dmi->name, MAJOR(dmi->dev),
 				     MINOR(dmi->dev),
-				     dmt->uid, dmt->gid, dmt->mode);
+			    dmt->uid, dmt->gid, dmt->mode, 0);
 		else if (dmt->dev_name)
-			rm_dev_node(dmt->dev_name);
+			rm_dev_node(dmt->dev_name, 0);
 		break;
 
 	case DM_DEVICE_STATUS:

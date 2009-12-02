@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.5 2009/12/02 00:58:03 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.6 2009/12/02 01:53:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -306,6 +306,7 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 
 static int _dev_read_ahead_dev(struct device *dev, uint32_t *read_ahead)
 {
+#ifdef linux
 	long read_ahead_long;
 
 	if (dev->read_ahead != -1) {
@@ -331,7 +332,7 @@ static int _dev_read_ahead_dev(struct device *dev, uint32_t *read_ahead)
 
 	log_very_verbose("%s: read_ahead is %u sectors",
 			 dev_name(dev), *read_ahead);
-
+#endif
 	return 1;
 }
 
