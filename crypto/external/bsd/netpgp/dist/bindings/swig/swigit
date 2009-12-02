@@ -49,7 +49,7 @@ perl)
 	incpath='CPPFLAGS+=-I'"$dir"
 	;;
 python)
-	swigflags="-classic"
+	swigflags="-shadow"
 	dir=$(pkg_info -qL 'python*' | awk '/Python.h/ { gsub("/Python.h$", ""); print }')
 	incpath='CPPFLAGS+=-I'"$dir"
 	;;
@@ -100,3 +100,9 @@ minor=0
 EOF
 
 env USETOOLS=no make
+
+case "${lang}" in
+python)
+	ln -s lib${module}${lang}.so _${module}${lang}.so
+	;;
+esac
