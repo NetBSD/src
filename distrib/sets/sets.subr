@@ -1,5 +1,7 @@
-#	$NetBSD: sets.subr,v 1.96 2009/12/02 14:32:15 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.97 2009/12/02 15:05:55 uebayasi Exp $
 #
+
+set -vx
 
 #
 # The following variables contain defaults for sets.subr functions and callers:
@@ -124,6 +126,15 @@ esac
 oIFS=$IFS
 IFS="
 "
+for i in _MKVARS.yes _MKVARS.no; do
+	eval $(
+${MAKE} -B -f- all <<EOMAKE
+.include <bsd.own.mk>
+all:
+	@echo "export _MKVARS_${i#*.}=\"\${$i}\""
+EOMAKE
+)
+done
 for x in $(
 ${MAKE} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
@@ -197,7 +208,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.96 2009/12/02 14:32:15 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.97 2009/12/02 15:05:55 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -298,7 +309,7 @@ list_set_files()
 			if (obsolete)
 				wanted["obsolete"] = 1
 		
-			split("'"${MKVARS}"'", needvars)
+			split("'"${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}"'", needvars)
 			for (vi in needvars) {
 				nv = needvars[vi]
 				kw = tolower(nv)
