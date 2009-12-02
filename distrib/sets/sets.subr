@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.99 2009/12/02 15:52:14 apb Exp $
+#	$NetBSD: sets.subr,v 1.100 2009/12/02 17:51:30 uebayasi Exp $
 #
 
 #
@@ -27,6 +27,10 @@
 # XXX don't hardcode
 MKEXTRAVARS="\
 	EXTSRCS		\
+	MKBFD		\
+	MKCOMPAT	\
+	MKDYNAMICROOT	\
+	MKMANPAGES	\
 	USE_INET6	\
 	USE_KERBEROS	\
 	USE_LDAP	\
@@ -125,15 +129,19 @@ esac
 oIFS=$IFS
 IFS="
 "
-for i in _MKVARS.yes _MKVARS.no; do
-	eval $(
-${MAKE} -B -f- all <<EOMAKE
+
+for x in $(
+	${MAKE} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
 all:
-	@echo "export _MKVARS_${i#*.}=\"\${$i}\""
+	@echo "export _MKVARS_yes=\"\${_MKVARS.yes}\""
+	@echo "export _MKVARS_no=\"\${_MKVARS.no}\""
+
 EOMAKE
-)
+); do
+	eval $x
 done
+
 for x in $(
 ${MAKE} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
@@ -153,16 +161,19 @@ MKXORG:=no
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_BINUTILS HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
-		${MKEXTRAVARS} \${_MKVARS.yes} \${_MKVARS.no}
+		${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}
 	@echo "export \$i=\"\${\$i}\""
 .endfor
 
 EOMAKE
 ); do
-#	echo 1>&2 "DEBUG: read $x"
+	echo 1>&2 "DEBUG: read $x"
 	eval $x
 done
+
 IFS=$oIFS
+
+MKVARS="$MKEXTRAVARS $_MKVARS_yes $_MKVARS_no"
 
 setsdir=${0%/*}
 obsolete=0
@@ -207,7 +218,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.99 2009/12/02 15:52:14 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.100 2009/12/02 17:51:30 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -308,7 +319,7 @@ list_set_files()
 			if (obsolete)
 				wanted["obsolete"] = 1
 		
-			split("'"${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}"'", needvars)
+			split("'"${MKVARS}"'", needvars)
 			for (vi in needvars) {
 				nv = needvars[vi]
 				kw = tolower(nv)
