@@ -1,6 +1,6 @@
-.\"    $NetBSD: fsadm.8,v 1.2 2009/02/18 12:16:13 haad Exp $
+.\"    $NetBSD: fsadm.8,v 1.3 2009/12/02 00:58:03 haad Exp $
 .\"
-.TH "FSADM" "8" "LVM TOOLS 2.02.44-cvs (02-17-09)" "Red Hat, Inc" "\""
+.TH "FSADM" "8" "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Red Hat, Inc" "\""
 .SH "NAME"
 fsadm \- utility to resize or check filesystem on a device
 .SH "SYNOPSIS"
@@ -11,42 +11,48 @@ fsadm \- utility to resize or check filesystem on a device
 .RI [options]\ resize\ device\ [new_size[BKMGTEP]]
 
 .SH "DESCRIPTION"
-\fBfsadm\fR utility resizes or checks the filesystem on a device. It tries to use the same API for \fBExt2/3\fR, \fBReiserFS\fR and \fBXFS\fR filesystem and simply resize and filesystem check operation.
+\fBfsadm\fR utility resizes or checks the filesystem on a device.
+It tries to use the same API for \fBext2/ext3/ext4\fR,
+\fBReiserFS\fR and \fBXFS\fR filesystem.
 .SH "OPTIONS"
-.TP 
+.TP
 \fB\-h \-\-help\fR
 \(em print help message
-.TP 
+.TP
 \fB\-v \-\-verbose\fR
 \(em be more verbose
-.TP 
+.TP
 \fB\-e \-\-ext\-offline\fR
-\(em unmount Ext2/3 filesystem before doing resize
-.TP 
+\(em unmount ext2/ext3/ext4 filesystem before doing resize
+.TP
 \fB\-f \-\-force\fR
 \(em bypass some sanity checks
-.TP 
+.TP
 \fB\-n \-\-dry\-run\fR
 \(em print commands without running them
-.TP 
+.TP
 \fB\-y \-\-yes\fR
 \(em answer "yes" at any prompts
-.TP  
+.TP
 \fBnew_size\fR
-\(em Absolute number of filesystem blocks to be in the filesystem, or an absolute size using a suffix (in powers of 1024). If new_size is not supplied, the whole device is used.
-
+\(em Absolute number of filesystem blocks to be in the filesystem,
+or an absolute size using a suffix (in powers of 1024).
+If new_size is not supplied, the whole device is used.
 
 .SH "EXAMPLES"
-"fsadm \-e \-y resize /dev/vg/test 1000M" tries to resize the size of the filesystem on logical volume /dev/vg/test. If /dev/vg/test contains Ext2/3 filesystem it will be unmounted prior the resize. All [y|n] questions will be answered 'y'.
+"fsadm \-e \-y resize /dev/vg/test 1000M" tries to resize the filesystem
+on logical volume /dev/vg/test. If /dev/vg/test contains ext2/ext3/ext4
+filesystem it will be unmounted prior the resize.
+All [y|n] questions will be answered 'y'.
 .SH "ENVIRONMENT VARIABLES"
-.TP 
-\fBTMPDIR\fP 
+.TP
+\fBTMPDIR\fP
 Where the temporary directory should be created.
-.TP 
-.BR 
+.TP
+.BR
 .SH "SEE ALSO"
-.BR lvm (8), 
-.BR lvresize (8), 
+.BR lvm (8),
+.BR lvresize (8),
 .BR lvm.conf (5),
 .BR tune2fs (8),
 .BR resize2fs (8),
@@ -55,4 +61,3 @@ Where the temporary directory should be created.
 .BR xfs_info (8),
 .BR xfs_growfs (8),
 .BR xfs_check (8)
-

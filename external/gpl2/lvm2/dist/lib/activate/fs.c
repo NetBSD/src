@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.3 2009/02/18 12:16:13 haad Exp $	*/
+/*	$NetBSD: fs.c,v 1.4 2009/12/02 00:58:03 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -31,6 +31,7 @@
 static int _mk_dir(const char *dev_dir, const char *vg_name)
 {
 	char vg_path[PATH_MAX];
+	mode_t old_umask;
 
 	if (dm_snprintf(vg_path, sizeof(vg_path), "%s%s",
 			 dev_dir, vg_name) == -1) {
@@ -43,10 +44,14 @@ static int _mk_dir(const char *dev_dir, const char *vg_name)
 		return 1;
 
 	log_very_verbose("Creating directory %s", vg_path);
+
+	old_umask = umask(DM_DEV_DIR_UMASK);
 	if (mkdir(vg_path, 0777)) {
 		log_sys_error("mkdir", vg_path);
+		umask(old_umask);
 		return 0;
 	}
+	umask(old_umask);
 
 	return 1;
 }
@@ -123,7 +128,7 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 {
 	char lv_path[PATH_MAX], link_path[PATH_MAX], lvm1_group_path[PATH_MAX];
 	char vg_path[PATH_MAX];
-	struct stat buf;
+	struct stat buf, buf_lp;
 
 #ifdef __NetBSD__
 	/* Add support for creating links to BSD raw devices */
@@ -218,12 +223,34 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 			return 0;
 		}
 
+		if (dm_udev_get_sync_support()) {
+			/* Check udev created the correct link. */
+			if (!stat(link_path, &buf_lp) &&
+			    !stat(lv_path, &buf)) {
+				if (buf_lp.st_rdev == buf.st_rdev)
+					return 1;
+				else
+					log_warn("Symlink %s that should have been "
+						 "created by udev does not have "
+						 "correct target. Falling back to "
+						 "direct link creation", lv_path);
+			} else
+				log_warn("Symlink %s that should have been "
+					 "created by udev could not be checked "
+					 "for its correctness. Falling back to "
+					 "direct link creation.", lv_path);
+
+		}
+
 		log_very_verbose("Removing %s", lv_path);
 		if (unlink(lv_path) < 0) {
 			log_sys_error("unlink", lv_path);
 			return 0;
 		}
-	}
+	} else if (dm_udev_get_sync_support())
+		log_warn("The link %s should had been created by udev "
+			  "but it was not found. Falling back to "
+			  "direct link creation.", lv_path);
 
 	log_very_verbose("Linking %s -> %s", lv_path, link_path);
 	if (symlink(link_path, lv_path) < 0) {
@@ -231,10 +258,8 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 		return 0;
 	}
 
-#ifdef HAVE_SELINUX
 	if (!dm_set_selinux_context(lv_path, S_IFLNK))
 		return_0;
-#endif
 
 	return 1;
 }
@@ -274,9 +299,14 @@ static int _rm_link(const char *dev_dir, const char *vg_name,
 		return 0;
 	}
 
-	if (lstat(lv_path, &buf) || !S_ISLNK(buf.st_mode)) {
-		if (errno == ENOENT)
-			return 1;
+	if (lstat(lv_path, &buf) && errno == ENOENT)
+		return 1;
+	else if (dm_udev_get_sync_support())
+		log_warn("The link %s should have been removed by udev "
+			 "but it is still present. Falling back to "
+			 "direct link removal.", lv_path);
+
+	if (!S_ISLNK(buf.st_mode)) {
 		log_error("%s not symbolic link - not removing", lv_path);
 		return 0;
 	}

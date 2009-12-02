@@ -1,3 +1,0 @@
-#ifndef _LVM_VERSION_H
-#define LVM_VERSION @LVM_VERSION@
-#endif

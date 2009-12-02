@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.4 2009/02/18 12:16:13 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.5 2009/12/02 00:58:03 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -304,6 +304,37 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 	return 1;
 }
 
+static int _dev_read_ahead_dev(struct device *dev, uint32_t *read_ahead)
+{
+	long read_ahead_long;
+
+	if (dev->read_ahead != -1) {
+		*read_ahead = (uint32_t) dev->read_ahead;
+		return 1;
+	}
+
+	if (!dev_open(dev))
+		return_0;
+
+	if (ioctl(dev->fd, BLKRAGET, &read_ahead_long) < 0) {
+		log_sys_error("ioctl BLKRAGET", dev_name(dev));
+		if (!dev_close(dev))
+			stack;
+		return 0;
+	}
+
+	if (!dev_close(dev))
+		stack;
+
+	*read_ahead = (uint32_t) read_ahead_long;
+	dev->read_ahead = read_ahead_long;
+
+	log_very_verbose("%s: read_ahead is %u sectors",
+			 dev_name(dev), *read_ahead);
+
+	return 1;
+}
+
 /*-----------------------------------------------------------------
  * Public functions
  *---------------------------------------------------------------*/
@@ -317,6 +348,19 @@ int dev_get_size(const struct device *dev, uint64_t *size)
 		return _dev_get_size_file(dev, size);
 	else
 		return _dev_get_size_dev(dev, size);
+}
+
+int dev_get_read_ahead(struct device *dev, uint32_t *read_ahead)
+{
+	if (!dev)
+		return 0;
+
+	if (dev->flags & DEV_REGULAR) {
+		*read_ahead = 0;
+		return 1;
+	}
+
+	return _dev_read_ahead_dev(dev, read_ahead);
 }
 
 /* FIXME Unused

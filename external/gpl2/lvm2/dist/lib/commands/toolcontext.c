@@ -1,8 +1,8 @@
-/*	$NetBSD: toolcontext.c,v 1.4 2009/02/18 12:16:13 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.5 2009/12/02 00:58:03 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -66,7 +66,7 @@ static int _get_env_vars(struct cmd_context *cmd)
 
 	/* Set to "" to avoid using any system directory */
 	if ((e = getenv("LVM_SYSTEM_DIR"))) {
-		if (dm_snprintf(cmd->sys_dir, sizeof(cmd->sys_dir),
+		if (dm_snprintf(cmd->system_dir, sizeof(cmd->system_dir),
 				 "%s", e) < 0) {
 			log_error("LVM_SYSTEM_DIR environment variable "
 				  "is too long.");
@@ -192,7 +192,7 @@ static void _init_logging(struct cmd_context *cmd)
 
 	/* Tell device-mapper about our logging */
 #ifdef DEVMAPPER_SUPPORT
-	dm_log_init(print_log);
+	dm_log_with_errno_init(print_log);
 #endif
 }
 
@@ -267,6 +267,10 @@ static int _process_config(struct cmd_context *cmd)
 		return 0;
 	}
 
+	cmd->default_settings.udev_sync = find_config_tree_int(cmd,
+								"activation/udev_sync",
+								DEFAULT_UDEV_SYNC);
+
 	cmd->stripe_filler = find_config_tree_str(cmd,
 						  "activation/missing_stripe_filler",
 						  DEFAULT_STRIPE_FILLER);
@@ -290,6 +294,10 @@ static int _process_config(struct cmd_context *cmd)
 			cmd->stripe_filler = "error";
 		}
 	}
+
+	cmd->si_unit_consistency = find_config_tree_int(cmd,
+						  "global/si_unit_consistency",
+						  DEFAULT_SI_UNIT_CONSISTENCY);
 
 	return 1;
 }
@@ -395,7 +403,7 @@ static int _load_config_file(struct cmd_context *cmd, const char *tag)
 		filler = "_";
 
 	if (dm_snprintf(config_file, sizeof(config_file), "%s/lvm%s%s.conf",
-			 cmd->sys_dir, filler, tag) < 0) {
+			 cmd->system_dir, filler, tag) < 0) {
 		log_error("LVM_SYSTEM_DIR or tag was too long");
 		return 0;
 	}
@@ -444,7 +452,7 @@ static int _load_config_file(struct cmd_context *cmd, const char *tag)
 static int _init_lvm_conf(struct cmd_context *cmd)
 {
 	/* No config file if LVM_SYSTEM_DIR is empty */
-	if (!*cmd->sys_dir) {
+	if (!*cmd->system_dir) {
 		if (!(cmd->cft = create_config_tree(NULL, 0))) {
 			log_error("Failed to create config tree");
 			return 0;
@@ -518,13 +526,15 @@ static void _destroy_tag_configs(struct cmd_context *cmd)
 {
 	struct config_tree_list *cfl;
 
-	if (cmd->cft && cmd->cft->root) {
-		destroy_config_tree(cmd->cft);
-		cmd->cft = NULL;
+	dm_list_iterate_items(cfl, &cmd->config_files) {
+		if (cfl->cft == cmd->cft)
+			cmd->cft = NULL;
+		destroy_config_tree(cfl->cft);
 	}
 
-	dm_list_iterate_items(cfl, &cmd->config_files) {
-		destroy_config_tree(cfl->cft);
+	if (cmd->cft) {
+		destroy_config_tree(cmd->cft);
+		cmd->cft = NULL;
 	}
 
 	dm_list_init(&cmd->config_files);
@@ -665,7 +675,7 @@ static int _init_filters(struct cmd_context *cmd, unsigned load_persistent_cache
 	if (cache_dir || cache_file_prefix) {
 		if (dm_snprintf(cache_file, sizeof(cache_file),
 		    "%s%s%s/%s.cache",
-		    cache_dir ? "" : cmd->sys_dir,
+		    cache_dir ? "" : cmd->system_dir,
 		    cache_dir ? "" : "/",
 		    cache_dir ? : DEFAULT_CACHE_SUBDIR,
 		    cache_file_prefix ? : DEFAULT_CACHE_FILE_PREFIX) < 0) {
@@ -675,7 +685,7 @@ static int _init_filters(struct cmd_context *cmd, unsigned load_persistent_cache
 	} else if (!(dev_cache = find_config_tree_str(cmd, "devices/cache", NULL)) &&
 		   (dm_snprintf(cache_file, sizeof(cache_file),
 				"%s/%s/%s.cache",
-				cmd->sys_dir, DEFAULT_CACHE_SUBDIR,
+				cmd->system_dir, DEFAULT_CACHE_SUBDIR,
 				DEFAULT_CACHE_FILE_PREFIX) < 0)) {
 		log_error("Persistent cache filename too long.");
 		return 0;
@@ -693,7 +703,7 @@ static int _init_filters(struct cmd_context *cmd, unsigned load_persistent_cache
 	if (find_config_tree_int(cmd, "devices/write_cache_state", 1))
 		cmd->dump_filter = 1;
 
-	if (!*cmd->sys_dir)
+	if (!*cmd->system_dir)
 		cmd->dump_filter = 0;
 
 	/*
@@ -806,9 +816,57 @@ int init_lvmcache_orphans(struct cmd_context *cmd)
 	return 1;
 }
 
+struct segtype_library {
+	struct cmd_context *cmd;
+	void *lib;
+	const char *libname;
+};
+
+int lvm_register_segtype(struct segtype_library *seglib,
+			 struct segment_type *segtype)
+{
+	struct segment_type *segtype2;
+
+	segtype->library = seglib->lib;
+	segtype->cmd = seglib->cmd;
+
+	dm_list_iterate_items(segtype2, &seglib->cmd->segtypes) {
+		if (strcmp(segtype2->name, segtype->name))
+			continue;
+		log_error("Duplicate segment type %s: "
+			  "unloading shared library %s",
+			  segtype->name, seglib->libname);
+		segtype->ops->destroy(segtype);
+		return 0;
+	}
+
+	dm_list_add(&seglib->cmd->segtypes, &segtype->list);
+
+	return 1;
+}
+
+static int _init_single_segtype(struct cmd_context *cmd,
+				struct segtype_library *seglib)
+{
+	struct segment_type *(*init_segtype_fn) (struct cmd_context *);
+	struct segment_type *segtype;
+
+	if (!(init_segtype_fn = dlsym(seglib->lib, "init_segtype"))) {
+		log_error("Shared library %s does not contain segment type "
+			  "functions", seglib->libname);
+		return 0;
+	}
+
+	if (!(segtype = init_segtype_fn(seglib->cmd)))
+		return_0;
+
+	return lvm_register_segtype(seglib, segtype);
+}
+
 static int _init_segtypes(struct cmd_context *cmd)
 {
 	struct segment_type *segtype;
+	struct segtype_library seglib = { .cmd = cmd };
 
 #ifdef HAVE_LIBDL
 	const struct config_node *cn;
@@ -854,9 +912,8 @@ static int _init_segtypes(struct cmd_context *cmd)
 	    (cn = find_config_tree_node(cmd, "global/segment_libraries"))) {
 
 		struct config_value *cv;
-		struct segment_type *(*init_segtype_fn) (struct cmd_context *);
-		void *lib;
-		struct segment_type *segtype2;
+		int (*init_multiple_segtypes_fn) (struct cmd_context *,
+						  struct segtype_library *);
 
 		for (cv = cn->v; cv; cv = cv->next) {
 			if (cv->type != CFG_STRING) {
@@ -864,32 +921,37 @@ static int _init_segtypes(struct cmd_context *cmd)
 					  "global/segment_libraries");
 				return 0;
 			}
-			if (!(lib = load_shared_library(cmd, cv->v.str,
+			seglib.libname = cv->v.str;
+			if (!(seglib.lib = load_shared_library(cmd,
+							seglib.libname,
 							"segment type", 0)))
 				return_0;
 
-			if (!(init_segtype_fn = dlsym(lib, "init_segtype"))) {
-				log_error("Shared library %s does not contain "
-					  "segment type functions", cv->v.str);
-				dlclose(lib);
-				return 0;
-			}
-
-			if (!(segtype = init_segtype_fn(cmd)))
-				return 0;
-			segtype->library = lib;
-			dm_list_add(&cmd->segtypes, &segtype->list);
-
-			dm_list_iterate_items(segtype2, &cmd->segtypes) {
-				if ((segtype == segtype2) ||
-				     strcmp(segtype2->name, segtype->name))
-					continue;
-				log_error("Duplicate segment type %s: "
-					  "unloading shared library %s",
-					  segtype->name, cv->v.str);
-				dm_list_del(&segtype->list);
-				segtype->ops->destroy(segtype);
-				dlclose(lib);
+			if ((init_multiple_segtypes_fn =
+			    dlsym(seglib.lib, "init_multiple_segtypes"))) {
+				if (dlsym(seglib.lib, "init_segtype"))
+					log_warn("WARNING: Shared lib %s has "
+						 "conflicting init fns.  Using"
+						 " init_multiple_segtypes().",
+						 seglib.libname);
+			} else
+				init_multiple_segtypes_fn =
+				    _init_single_segtype;
+ 
+			if (!init_multiple_segtypes_fn(cmd, &seglib)) {
+				struct dm_list *sgtl, *tmp;
+				log_error("init_multiple_segtypes() failed: "
+					  "Unloading shared library %s",
+					  seglib.libname);
+				dm_list_iterate_safe(sgtl, tmp, &cmd->segtypes) {
+					segtype = dm_list_item(sgtl, struct segment_type);
+					if (segtype->library == seglib.lib) {
+						dm_list_del(&segtype->list);
+						segtype->ops->destroy(segtype);
+					}
+				}
+				dlclose(seglib.lib);
+				return_0;
 			}
 		}
 	}
@@ -926,7 +988,7 @@ static int _init_backup(struct cmd_context *cmd)
 	char default_dir[PATH_MAX];
 	const char *dir;
 
-	if (!cmd->sys_dir) {
+	if (!cmd->system_dir) {
 		log_warn("WARNING: Metadata changes will NOT be backed up");
 		backup_init(cmd, "", 0);
 		archive_init(cmd, "", 0, 0, 0);
@@ -945,10 +1007,10 @@ static int _init_backup(struct cmd_context *cmd)
 					 DEFAULT_ARCHIVE_NUMBER);
 
 	if (dm_snprintf
-	    (default_dir, sizeof(default_dir), "%s/%s", cmd->sys_dir,
+	    (default_dir, sizeof(default_dir), "%s/%s", cmd->system_dir,
 	     DEFAULT_ARCHIVE_SUBDIR) == -1) {
-		log_err("Couldn't create default archive path '%s/%s'.",
-			cmd->sys_dir, DEFAULT_ARCHIVE_SUBDIR);
+		log_error("Couldn't create default archive path '%s/%s'.",
+			  cmd->system_dir, DEFAULT_ARCHIVE_SUBDIR);
 		return 0;
 	}
 
@@ -957,7 +1019,7 @@ static int _init_backup(struct cmd_context *cmd)
 
 	if (!archive_init(cmd, dir, days, min,
 			  cmd->default_settings.archive)) {
-		log_debug("backup_init failed.");
+		log_debug("archive_init failed.");
 		return 0;
 	}
 
@@ -967,10 +1029,10 @@ static int _init_backup(struct cmd_context *cmd)
 			     DEFAULT_BACKUP_ENABLED);
 
 	if (dm_snprintf
-	    (default_dir, sizeof(default_dir), "%s/%s", cmd->sys_dir,
+	    (default_dir, sizeof(default_dir), "%s/%s", cmd->system_dir,
 	     DEFAULT_BACKUP_SUBDIR) == -1) {
-		log_err("Couldn't create default backup path '%s/%s'.",
-			cmd->sys_dir, DEFAULT_BACKUP_SUBDIR);
+		log_error("Couldn't create default backup path '%s/%s'.",
+			  cmd->system_dir, DEFAULT_BACKUP_SUBDIR);
 		return 0;
 	}
 	
@@ -1000,7 +1062,8 @@ static void _init_globals(struct cmd_context *cmd)
 }
 
 /* Entry point */
-struct cmd_context *create_toolcontext(unsigned is_long_lived)
+struct cmd_context *create_toolcontext(unsigned is_long_lived,
+				       const char *system_dir)
 {
 	struct cmd_context *cmd;
 
@@ -1024,75 +1087,85 @@ struct cmd_context *create_toolcontext(unsigned is_long_lived)
 	memset(cmd, 0, sizeof(*cmd));
 	cmd->is_long_lived = is_long_lived;
 	cmd->handles_missing_pvs = 0;
+	cmd->handles_unknown_segments = 0;
 	cmd->hosttags = 0;
 	dm_list_init(&cmd->formats);
 	dm_list_init(&cmd->segtypes);
 	dm_list_init(&cmd->tags);
 	dm_list_init(&cmd->config_files);
 
-	strcpy(cmd->sys_dir, DEFAULT_SYS_DIR);
+	/* FIXME Make this configurable? */
+	reset_lvm_errno(1);
+
+	/*
+	 * Environment variable LVM_SYSTEM_DIR overrides this below.
+	 */
+        if (system_dir)
+		strncpy(cmd->system_dir, system_dir, sizeof(cmd->system_dir) - 1);
+	else
+		strcpy(cmd->system_dir, DEFAULT_SYS_DIR);
 
 	if (!_get_env_vars(cmd))
-		goto error;
+		goto_out;
 
 	/* Create system directory if it doesn't already exist */
-	if (*cmd->sys_dir && !dm_create_dir(cmd->sys_dir)) {
+	if (*cmd->system_dir && !dm_create_dir(cmd->system_dir)) {
 		log_error("Failed to create LVM2 system dir for metadata backups, config "
 			  "files and internal cache.");
 		log_error("Set environment variable LVM_SYSTEM_DIR to alternative location "
 			  "or empty string.");
-		goto error;
+		goto out;
 	}
 
 	if (!(cmd->libmem = dm_pool_create("library", 4 * 1024))) {
 		log_error("Library memory pool creation failed");
-		goto error;
+		goto out;
 	}
 
 	if (!_init_lvm_conf(cmd))
-		goto error;
+		goto_out;
 
 	_init_logging(cmd);
 
 	if (!_init_hostname(cmd))
-		goto error;
+		goto_out;
 
 	if (!_init_tags(cmd, cmd->cft))
-		goto error;
+		goto_out;
 
 	if (!_init_tag_configs(cmd))
-		goto error;
+		goto_out;
 
 	if (!_merge_config_files(cmd))
-		goto error;
+		goto_out;
 
 	if (!_process_config(cmd))
-		goto error;
+		goto_out;
 
 	if (!_init_dev_cache(cmd))
-		goto error;
+		goto_out;
 
 	if (!_init_filters(cmd, 1))
-		goto error;
+		goto_out;
 
 	if (!(cmd->mem = dm_pool_create("command", 4 * 1024))) {
 		log_error("Command memory pool creation failed");
-		goto error;
+		goto out;
 	}
 
 	memlock_init(cmd);
 
 	if (!_init_formats(cmd))
-		goto error;
+		goto_out;
 
 	if (!init_lvmcache_orphans(cmd))
-		goto error;
+		goto_out;
 
 	if (!_init_segtypes(cmd))
-		goto error;
+		goto_out;
 
 	if (!_init_backup(cmd))
-		goto error;
+		goto_out;
 
 	_init_rand(cmd);
 
@@ -1102,11 +1175,8 @@ struct cmd_context *create_toolcontext(unsigned is_long_lived)
 	cmd->current_settings = cmd->default_settings;
 
 	cmd->config_valid = 1;
+out:
 	return cmd;
-
-      error:
-	dm_free(cmd);
-	return NULL;
 }
 
 static void _destroy_formats(struct dm_list *formats)
@@ -1139,10 +1209,30 @@ static void _destroy_segtypes(struct dm_list *segtypes)
 		lib = segtype->library;
 		segtype->ops->destroy(segtype);
 #ifdef HAVE_LIBDL
-		if (lib)
+		/*
+		 * If no segtypes remain from this library, close it.
+		 */
+		if (lib) {
+			struct segment_type *segtype2;
+			dm_list_iterate_items(segtype2, segtypes)
+				if (segtype2->library == lib)
+					goto skip_dlclose;
 			dlclose(lib);
+skip_dlclose:
+			;
+		}
 #endif
 	}
+}
+
+int refresh_filters(struct cmd_context *cmd)
+{
+	if (cmd->filter) {
+		cmd->filter->destroy(cmd->filter);
+		cmd->filter = NULL;
+	}
+
+	return _init_filters(cmd, 0);
 }
 
 int refresh_toolcontext(struct cmd_context *cmd)
@@ -1203,14 +1293,9 @@ int refresh_toolcontext(struct cmd_context *cmd)
 	if (!_init_segtypes(cmd))
 		return 0;
 
-	/*
-	 * If we are a long-lived process, write out the updated persistent
-	 * device cache for the benefit of short-lived processes.
-	 */
-	if (cmd->is_long_lived && cmd->dump_filter)
-		persistent_filter_dump(cmd->filter);
-
 	cmd->config_valid = 1;
+
+	reset_lvm_errno(1);
 	return 1;
 }
 
@@ -1225,16 +1310,20 @@ void destroy_toolcontext(struct cmd_context *cmd)
 	label_exit();
 	_destroy_segtypes(&cmd->segtypes);
 	_destroy_formats(&cmd->formats);
-	cmd->filter->destroy(cmd->filter);
-	dm_pool_destroy(cmd->mem);
+	if (cmd->filter)
+		cmd->filter->destroy(cmd->filter);
+	if (cmd->mem)
+		dm_pool_destroy(cmd->mem);
 	dev_cache_exit();
 	_destroy_tags(cmd);
 	_destroy_tag_configs(cmd);
-	dm_pool_destroy(cmd->libmem);
+	if (cmd->libmem)
+		dm_pool_destroy(cmd->libmem);
 	dm_free(cmd);
 
 	release_log_memory();
 	activation_exit();
 	fin_log();
 	fin_syslog();
+	reset_lvm_errno(0);
 }
