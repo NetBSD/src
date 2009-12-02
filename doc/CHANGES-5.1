@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.151 2009/12/02 02:04:36 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.152 2009/12/02 17:41:02 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15071,4 +15071,11 @@ xsrc/external/mit/include/config.h 		patch
 	- Disable using SSE2 for i386.
 	- Update pixman to 0.16.2.
 	[mrg, ticket #1177]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.4
+sys/dev/sdmmc/sdmmc_mem.c			1.3
+sys/dev/sdmmc/sdmmcvar.h			1.2
+
+	Always treat sector size as 512 bytes.
+	[nonaka, ticket #1167]
 
