@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-md.c,v 1.1.1.1 2008/12/22 00:17:57 haad Exp $	*/
+/*	$NetBSD: dev-md.c,v 1.1.1.2 2009/12/02 00:26:33 haad Exp $	*/
 
 /*
  * Copyright (C) 2004 Luca Berra
@@ -127,39 +127,68 @@ out:
 	return ret;
 }
 
-/*
- * Retrieve chunk size from md device using sysfs.
- */
-unsigned long dev_md_chunk_size(const char *sysfs_dir, struct device *dev)
+static int _md_sysfs_attribute_snprintf(char *path, size_t size,
+					const char *sysfs_dir,
+					struct device *blkdev,
+					const char *attribute)
+{
+	struct stat info;
+	dev_t dev = blkdev->dev;
+	int ret = -1;
+
+	if (!sysfs_dir || !*sysfs_dir)
+		return ret;
+
+	if (MAJOR(dev) == blkext_major()) {
+		/* lookup parent MD device from blkext partition */
+		if (!get_primary_dev(sysfs_dir, blkdev, &dev))
+			return ret;
+	}
+
+	if (MAJOR(dev) != md_major())
+		return ret;
+
+	ret = dm_snprintf(path, size, "%s/dev/block/%d:%d/md/%s", sysfs_dir,
+			  (int)MAJOR(dev), (int)MINOR(dev), attribute);
+	if (ret < 0) {
+		log_error("dm_snprintf md %s failed", attribute);
+		return ret;
+	}
+
+	if (stat(path, &info) == -1) {
+		if (errno != ENOENT) {
+			log_sys_error("stat", path);
+			return ret;
+		}
+		/* old sysfs structure */
+		ret = dm_snprintf(path, size, "%s/block/md%d/md/%s",
+				  sysfs_dir, (int)MINOR(dev), attribute);
+		if (ret < 0) {
+			log_error("dm_snprintf old md %s failed", attribute);
+			return ret;
+		}
+	}
+
+	return ret;
+}
+
+static int _md_sysfs_attribute_scanf(const char *sysfs_dir,
+				     struct device *dev,
+				     const char *attribute_name,
+				     const char *attribute_fmt,
+				     void *attribute_value)
 {
 	char path[PATH_MAX+1], buffer[64];
 	FILE *fp;
-	struct stat info;
-	unsigned long chunk_size_bytes = 0UL;
+	int ret = 0;
 
-	if (MAJOR(dev->dev) != md_major())
-		return 0;
-
-	if (!sysfs_dir || !*sysfs_dir)
-		return_0;
-
-	if (dm_snprintf(path, PATH_MAX, "%s/dev/block/%d:%d/md/chunk_size",
-	    sysfs_dir, MAJOR(dev->dev), MINOR(dev->dev)) < 0) {
-		log_error("dm_snprintf md chunk_size failed");
-		return 0;
-	}
-
-	/* old sysfs structure */
-	if (stat(path, &info) &&
-	    dm_snprintf(path, PATH_MAX, "%s/block/md%d/md/chunk_size",
-			sysfs_dir, MINOR(dev->dev)) < 0) {
-		log_error("dm_snprintf old md chunk size failed");
-		return 0;
-	}
+	if (_md_sysfs_attribute_snprintf(path, PATH_MAX, sysfs_dir,
+					 dev, attribute_name) < 0)
+		return ret;
 
 	if (!(fp = fopen(path, "r"))) {
 		log_sys_error("fopen", path);
-		return 0;
+		return ret;
 	}
 
 	if (!fgets(buffer, sizeof(buffer), fp)) {
@@ -167,20 +196,128 @@ unsigned long dev_md_chunk_size(const char *sysfs_dir, struct device *dev)
 		goto out;
 	}
 
-	if (sscanf(buffer, "%lu", &chunk_size_bytes) != 1) {
-		log_error("sysfs file %s not in expected format: %s", path,
-			  buffer);
+	if ((ret = sscanf(buffer, attribute_fmt, attribute_value)) != 1) {
+		log_error("%s sysfs attr %s not in expected format: %s",
+			  dev_name(dev), attribute_name, buffer);
 		goto out;
 	}
-
-	log_very_verbose("Device %s md chunk size is %lu bytes.",
-			 dev_name(dev), chunk_size_bytes);
 
 out:
 	if (fclose(fp))
 		log_sys_error("fclose", path);
 
+	return ret;
+}
+
+/*
+ * Retrieve chunk size from md device using sysfs.
+ */
+static unsigned long dev_md_chunk_size(const char *sysfs_dir,
+				       struct device *dev)
+{
+	const char *attribute = "chunk_size";
+	unsigned long chunk_size_bytes = 0UL;
+
+	if (_md_sysfs_attribute_scanf(sysfs_dir, dev, attribute,
+				      "%lu", &chunk_size_bytes) != 1)
+		return 0;
+
+	log_very_verbose("Device %s %s is %lu bytes.",
+			 dev_name(dev), attribute, chunk_size_bytes);
+
 	return chunk_size_bytes >> SECTOR_SHIFT;
+}
+
+/*
+ * Retrieve level from md device using sysfs.
+ */
+static int dev_md_level(const char *sysfs_dir, struct device *dev)
+{
+	const char *attribute = "level";
+	int level = -1;
+
+	if (_md_sysfs_attribute_scanf(sysfs_dir, dev, attribute,
+				      "raid%d", &level) != 1)
+		return -1;
+
+	log_very_verbose("Device %s %s is raid%d.",
+			 dev_name(dev), attribute, level);
+
+	return level;
+}
+
+/*
+ * Retrieve raid_disks from md device using sysfs.
+ */
+static int dev_md_raid_disks(const char *sysfs_dir, struct device *dev)
+{
+	const char *attribute = "raid_disks";
+	int raid_disks = 0;
+
+	if (_md_sysfs_attribute_scanf(sysfs_dir, dev, attribute,
+				      "%d", &raid_disks) != 1)
+		return 0;
+
+	log_very_verbose("Device %s %s is %d.",
+			 dev_name(dev), attribute, raid_disks);
+
+	return raid_disks;
+}
+
+/*
+ * Calculate stripe width of md device using its sysfs files.
+ */
+unsigned long dev_md_stripe_width(const char *sysfs_dir, struct device *dev)
+{
+	unsigned long chunk_size_sectors = 0UL;
+	unsigned long stripe_width_sectors = 0UL;
+	int level, raid_disks, data_disks;
+
+	chunk_size_sectors = dev_md_chunk_size(sysfs_dir, dev);
+	if (!chunk_size_sectors)
+		return 0;
+
+	level = dev_md_level(sysfs_dir, dev);
+	if (level < 0)
+		return 0;
+
+	raid_disks = dev_md_raid_disks(sysfs_dir, dev);
+	if (!raid_disks)
+		return 0;
+
+	/* The raid level governs the number of data disks. */
+	switch (level) {
+	case 0:
+		/* striped md does not have any parity disks */
+		data_disks = raid_disks;
+		break;
+	case 1:
+	case 10:
+		/* mirrored md effectively has 1 data disk */
+		data_disks = 1;
+		break;
+	case 4:
+	case 5:
+		/* both raid 4 and 5 have a single parity disk */
+		data_disks = raid_disks - 1;
+		break;
+	case 6:
+		/* raid 6 has 2 parity disks */
+		data_disks = raid_disks - 2;
+		break;
+	default:
+		log_error("Device %s has an unknown md raid level: %d",
+			  dev_name(dev), level);
+		return 0;
+	}
+
+	stripe_width_sectors = chunk_size_sectors * data_disks;
+
+	log_very_verbose("Device %s stripe-width is %lu bytes.",
+			 dev_name(dev),
+			 stripe_width_sectors << SECTOR_SHIFT);
+
+	return stripe_width_sectors;
 }
 
 #else
@@ -191,8 +328,8 @@ int dev_is_md(struct device *dev __attribute((unused)),
 	return 0;
 }
 
-unsigned long dev_md_chunk_size(const char *sysfs_dir __attribute((unused)),
-				struct device *dev  __attribute((unused)))
+unsigned long dev_md_stripe_width(const char *sysfs_dir __attribute((unused)),
+				  struct device *dev  __attribute((unused)))
 {
 	return 0UL;
 }

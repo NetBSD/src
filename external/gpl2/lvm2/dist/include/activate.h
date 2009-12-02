@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.h,v 1.1.1.1 2008/12/22 00:18:47 haad Exp $	*/
+/*	$NetBSD: activate.h,v 1.1.1.2 2009/12/02 00:25:45 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -42,8 +42,9 @@ int driver_version(char *version, size_t size);
 int library_version(char *version, size_t size);
 int lvm1_present(struct cmd_context *cmd);
 
-int module_present(const char *target_name);
-int target_present(const char *target_name, int use_modprobe);
+int module_present(struct cmd_context *cmd, const char *target_name);
+int target_present(struct cmd_context *cmd, const char *target_name,
+		   int use_modprobe);
 int target_version(const char *target_name, uint32_t *maj,
                    uint32_t *min, uint32_t *patchlevel);
 int list_segment_modules(struct dm_pool *mem, const struct lv_segment *seg,
@@ -82,9 +83,11 @@ int lv_activation_filter(struct cmd_context *cmd, const char *lvid_s,
 /*
  * Returns 1 if percent has been set, else 0.
  */
-int lv_snapshot_percent(const struct logical_volume *lv, float *percent);
+int lv_snapshot_percent(const struct logical_volume *lv, float *percent,
+			percent_range_t *percent_range);
 int lv_mirror_percent(struct cmd_context *cmd, struct logical_volume *lv,
-		      int wait, float *percent, uint32_t *event_nr);
+		      int wait, float *percent, percent_range_t *percent_range,
+		      uint32_t *event_nr);
 
 /*
  * Return number of LVs in the VG that are active.

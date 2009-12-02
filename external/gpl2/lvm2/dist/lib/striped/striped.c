@@ -1,4 +1,4 @@
-/*	$NetBSD: striped.c,v 1.1.1.1 2008/12/22 00:18:14 haad Exp $	*/
+/*	$NetBSD: striped.c,v 1.1.1.2 2009/12/02 00:26:47 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -42,7 +42,14 @@ static void _striped_display(const struct lv_segment *seg)
 		display_stripe(seg, 0, "  ");
 	else {
 		log_print("  Stripes\t\t%u", seg->area_count);
-		log_print("  Stripe size\t\t%u KB", seg->stripe_size / 2);
+
+		if (seg->lv->vg->cmd->si_unit_consistency)
+			log_print("  Stripe size\t\t%s",
+				  display_size(seg->lv->vg->cmd,
+					       (uint64_t) seg->stripe_size));
+		else
+			log_print("  Stripe size\t\t%u KB",
+				  seg->stripe_size / 2);
 
 		for (s = 0; s < seg->area_count; s++) {
 			log_print("  Stripe %d:", s);
@@ -56,7 +63,7 @@ static int _striped_text_import_area_count(struct config_node *sn, uint32_t *are
 {
 	if (!get_config_uint32(sn, "stripe_count", area_count)) {
 		log_error("Couldn't read 'stripe_count' for "
-			  "segment '%s'.", sn->key);
+			  "segment '%s'.", config_parent_name(sn));
 		return 0;
 	}
 
@@ -70,14 +77,14 @@ static int _striped_text_import(struct lv_segment *seg, const struct config_node
 
 	if ((seg->area_count != 1) &&
 	    !get_config_uint32(sn, "stripe_size", &seg->stripe_size)) {
-		log_error("Couldn't read stripe_size for segment '%s'.",
-			  sn->key);
+		log_error("Couldn't read stripe_size for segment %s "
+			  "of logical volume %s.", config_parent_name(sn), seg->lv->name);
 		return 0;
 	}
 
 	if (!(cn = find_config_node(sn, "stripes"))) {
-		log_error("Couldn't find stripes array for segment "
-			  "'%s'.", sn->key);
+		log_error("Couldn't find stripes array for segment %s "
+			  "of logical volume %s.", config_parent_name(sn), seg->lv->name);
 		return 0;
 	}
 
@@ -177,15 +184,16 @@ static int _striped_add_target_line(struct dev_manager *dm,
 	return add_areas_line(dm, seg, node, 0u, seg->area_count);
 }
 
-static int _striped_target_present(const struct lv_segment *seg __attribute((unused)),
+static int _striped_target_present(struct cmd_context *cmd,
+				   const struct lv_segment *seg __attribute((unused)),
 				   unsigned *attributes __attribute((unused)))
 {
 	static int _striped_checked = 0;
 	static int _striped_present = 0;
 
 	if (!_striped_checked)
-		_striped_present = target_present("linear", 0) &&
-			  target_present("striped", 0);
+		_striped_present = target_present(cmd, "linear", 0) &&
+			  target_present(cmd, "striped", 0);
 
 	_striped_checked = 1;
 

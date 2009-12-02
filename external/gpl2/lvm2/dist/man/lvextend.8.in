@@ -5,11 +5,12 @@ lvextend \- extend the size of a logical volume
 .B lvextend
 [\-\-alloc AllocationPolicy]
 [\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-noudevsync]
 [\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
 {\-l|\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
-\-L|\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
+\-L|\-\-size [+]LogicalVolumeSize[bBsSkKmMgGtTpPeE]}
 [\-t|\-\-test]
-[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
+[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath[:PE[-PE]]...]
 .SH DESCRIPTION
 lvextend allows you to extend the size of a logical volume.
 Extension of snapshot logical volumes (see
@@ -20,6 +21,13 @@ volume use
 .BR lvconvert (8).
 .SH OPTIONS
 See \fBlvm\fP for common options.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .TP
 .I \-l, \-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}]
 Extend or set the logical volume size in units of logical extents.
@@ -32,7 +40,7 @@ free space for the specified PhysicalVolume(s) with the suffix %PVS,
 or as a percentage of the remaining free space in the Volume Group
 with the suffix %FREE.
 .TP
-.I \-L, \-\-size [+]LogicalVolumeSize[kKmMgGtTpPeE]
+.I \-L, \-\-size [+]LogicalVolumeSize[bBsSkKmMgGtTpPeE]
 Extend or set the logical volume size in units of megabytes.
 A size suffix of M for megabytes,
 G for gigabytes, T for terabytes, P for petabytes 
@@ -60,6 +68,13 @@ there are enough free physical extents in it.
 "lvextend /dev/vg01/lvol01 /dev/sdk3" tries to extend the size of that
 logical volume by the amount of free space on physical volume /dev/sdk3.
 This is equivalent to specifying "-l +100%PVS" on the command line.
+
+.br
+"lvextend -L+16M vg01/lvol01 /dev/sda:8-9 /dev/sdb:8-9"
+.br
+tries to extend a logical volume "vg01/lvol01" by 16MB using physical extents
+/dev/sda:8-9 and /dev/sdb:8-9 for allocation of extents.
+
 .SH SEE ALSO
 .BR lvm (8), 
 .BR lvcreate (8), 

@@ -1,4 +1,4 @@
-/*	$NetBSD: errors.h,v 1.1.1.1 2008/12/22 00:17:53 haad Exp $	*/
+/*	$NetBSD: errors.h,v 1.1.1.2 2009/12/02 00:26:26 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -22,5 +22,7 @@
 #define ENO_SUCH_CMD		2
 #define EINVALID_CMD_LINE	3
 #define ECMD_FAILED		5
+
+/* FIXME Also returned by cmdlib. */
 
 #endif

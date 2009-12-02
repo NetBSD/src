@@ -1,4 +1,4 @@
-/*	$NetBSD: memlock.h,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: memlock.h,v 1.1.1.2 2009/12/02 00:26:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -22,6 +22,8 @@ struct cmd_context;
 
 void memlock_inc(void);
 void memlock_dec(void);
+void memlock_inc_daemon(void);
+void memlock_dec_daemon(void);
 int memlock(void);
 void memlock_init(struct cmd_context *cmd);
 

@@ -14,9 +14,14 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 SUBDIRS = doc include man scripts
+
+ifeq ("@UDEV_RULES@", "yes")
+  SUBDIRS += udev
+endif
 
 ifeq ("@INTL@", "yes")
   SUBDIRS += po
@@ -24,17 +29,26 @@ endif
 
 SUBDIRS += lib tools daemons libdm
 
+ifeq ("@APPLIB@", "yes")
+  SUBDIRS += liblvm
+endif
+
 ifeq ($(MAKECMDGOALS),distclean)
   SUBDIRS += daemons/clvmd \
+	     daemons/cmirrord \
 	     daemons/dmeventd/plugins \
+	     daemons/dmeventd \
 	     lib/format1 \
 	     lib/format_pool \
 	     lib/locking \
 	     lib/mirror \
 	     lib/snapshot \
+	     liblvm \
+	     udev \
+	     test/api \
 	     test \
 	     po
-  DISTCLEAN_TARGETS += lib/misc/configure.h
+  DISTCLEAN_TARGETS += lib/misc/configure.h lib/misc/lvm-version.h
   DISTCLEAN_DIRS += lcov_reports*
 endif
 
@@ -42,6 +56,7 @@ include make.tmpl
 
 libdm: include
 lib: libdm
+liblvm: lib
 daemons: lib tools
 tools: lib device-mapper
 po: tools daemons
@@ -91,7 +106,7 @@ lcov-reset:
 lcov: all
 	$(RM) -rf $(LCOV_REPORTS_DIR)
 	$(MKDIR_P) $(LCOV_REPORTS_DIR)
-	$(LCOV) -b ${top_srcdir}/libdm -d $(top_srcdir)/libdm -c -o $(LCOV_REPORTS_DIR)/libdm.info
+	$(LCOV) -b $(top_srcdir)/libdm -d $(top_srcdir)/libdm -c -o $(LCOV_REPORTS_DIR)/libdm.info
 	$(LCOV) -b $(top_srcdir)/lib -d $(top_srcdir)/lib -c -o $(LCOV_REPORTS_DIR)/lib.info
 	$(LCOV) -b $(top_srcdir)/tools -d $(top_srcdir)/tools -c -o $(LCOV_REPORTS_DIR)/tools.info
 	DMEVENTD_INFO="$(LCOV_REPORTS_DIR)/dmeventd.info" ;\

@@ -1,4 +1,4 @@
-/*	$NetBSD: import_vsn1.c,v 1.1.1.1 2008/12/22 00:18:17 haad Exp $	*/
+/*	$NetBSD: import_vsn1.c,v 1.1.1.2 2009/12/02 00:26:30 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -181,7 +181,7 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 	}
 
 	if (!_read_id(&pv->id, pvn, "id")) {
-		log_error("Couldn't read uuid for volume group.");
+		log_error("Couldn't read uuid for physical volume.");
 		return 0;
 	}
 
@@ -215,7 +215,7 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 	_read_int64(pvn, "dev_size", &pv->size);
 
 	if (!_read_int64(pvn, "pe_start", &pv->pe_start)) {
-		log_error("Couldn't read extent size for volume group.");
+		log_error("Couldn't read extent size for physical volume.");
 		return 0;
 	}
 
@@ -295,32 +295,32 @@ static int _read_segment(struct dm_pool *mem, struct volume_group *vg,
 {
 	uint32_t area_count = 0u;
 	struct lv_segment *seg;
-	struct config_node *cn;
+	struct config_node *cn, *sn_child = sn->child;
 	struct config_value *cv;
 	uint32_t start_extent, extent_count;
 	struct segment_type *segtype;
 	const char *segtype_str;
 
-	if (!(sn = sn->child)) {
+	if (!sn_child) {
 		log_error("Empty segment section.");
 		return 0;
 	}
 
-	if (!_read_int32(sn, "start_extent", &start_extent)) {
-		log_error("Couldn't read 'start_extent' for segment '%s'.",
-			  sn->key);
+	if (!_read_int32(sn_child, "start_extent", &start_extent)) {
+		log_error("Couldn't read 'start_extent' for segment '%s' "
+			  "of logical volume %s.", sn->key, lv->name);
 		return 0;
 	}
 
-	if (!_read_int32(sn, "extent_count", &extent_count)) {
-		log_error("Couldn't read 'extent_count' for segment '%s'.",
-			  sn->key);
+	if (!_read_int32(sn_child, "extent_count", &extent_count)) {
+		log_error("Couldn't read 'extent_count' for segment '%s' "
+			  "of logical volume %s.", sn->key, lv->name);
 		return 0;
 	}
 
 	segtype_str = "striped";
 
-	if ((cn = find_config_node(sn, "type"))) {
+	if ((cn = find_config_node(sn_child, "type"))) {
 		cv = cn->v;
 		if (!cv || !cv->v.str) {
 			log_error("Segment type must be a string.");
@@ -333,7 +333,7 @@ static int _read_segment(struct dm_pool *mem, struct volume_group *vg,
 		return_0;
 
 	if (segtype->ops->text_import_area_count &&
-	    !segtype->ops->text_import_area_count(sn, &area_count))
+	    !segtype->ops->text_import_area_count(sn_child, &area_count))
 		return_0;
 
 	if (!(seg = alloc_lv_segment(mem, segtype, lv, start_extent,
@@ -344,11 +344,11 @@ static int _read_segment(struct dm_pool *mem, struct volume_group *vg,
 	}
 
 	if (seg->segtype->ops->text_import &&
-	    !seg->segtype->ops->text_import(seg, sn, pv_hash))
+	    !seg->segtype->ops->text_import(seg, sn_child, pv_hash))
 		return_0;
 
 	/* Optional tags */
-	if ((cn = find_config_node(sn, "tags")) &&
+	if ((cn = find_config_node(sn_child, "tags")) &&
 	    !(read_tags(mem, &seg->tags, cn->v))) {
 		log_error("Couldn't read tags for a segment of %s/%s.",
 			  vg->name, lv->name);
@@ -379,32 +379,29 @@ int text_import_areas(struct lv_segment *seg, const struct config_node *sn,
 	unsigned int s;
 	struct config_value *cv;
 	struct logical_volume *lv1;
-	const char *seg_name = sn->key;
+	struct physical_volume *pv;
+	const char *seg_name = config_parent_name(sn);
 
 	if (!seg->area_count) {
-		log_error("Zero areas not allowed for segment '%s'", sn->key);
+		log_error("Zero areas not allowed for segment %s", seg_name);
 		return 0;
 	}
 
 	for (cv = cn->v, s = 0; cv && s < seg->area_count; s++, cv = cv->next) {
 
 		/* first we read the pv */
-		const char *bad = "Badly formed areas array for "
-		    "segment '%s'.";
-		struct physical_volume *pv;
-
 		if (cv->type != CFG_STRING) {
-			log_error(bad, sn->key);
+			log_error("Bad volume name in areas array for segment %s.", seg_name);
 			return 0;
 		}
 
 		if (!cv->next) {
-			log_error(bad, sn->key);
+			log_error("Missing offset in areas array for segment %s.", seg_name);
 			return 0;
 		}
 
 		if (cv->next->type != CFG_INT) {
-			log_error(bad, sn->key);
+			log_error("Bad offset in areas array for segment %s.", seg_name);
 			return 0;
 		}
 
@@ -465,13 +462,14 @@ static int _read_segments(struct dm_pool *mem, struct volume_group *vg,
 	}
 
 	if (!_read_int32(lvn, "segment_count", &seg_count)) {
-		log_error("Couldn't read segment count for logical volume.");
+		log_error("Couldn't read segment count for logical volume %s.",
+			  lv->name);
 		return 0;
 	}
 
 	if (seg_count != count) {
 		log_error("segment_count and actual number of segments "
-			  "disagree.");
+			  "disagree for logical volume %s.", lv->name);
 		return 0;
 	}
 
@@ -497,14 +495,10 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 			 struct dm_hash_table *pv_hash __attribute((unused)))
 {
 	struct logical_volume *lv;
-	struct lv_list *lvl;
 	struct config_node *cn;
 
-	if (!(lvl = dm_pool_zalloc(mem, sizeof(*lvl))) ||
-	    !(lvl->lv = dm_pool_zalloc(mem, sizeof(*lvl->lv))))
+	if (!(lv = alloc_lv(mem)))
 		return_0;
-
-	lv = lvl->lv;
 
 	if (!(lv->name = dm_pool_strdup(mem, lvn->key)))
 		return_0;
@@ -549,12 +543,6 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 		}
 	}
 
-	lv->snapshot = NULL;
-	dm_list_init(&lv->snapshot_segs);
-	dm_list_init(&lv->segments);
-	dm_list_init(&lv->tags);
-	dm_list_init(&lv->segs_using_this_lv);
-
 	/* Optional tags */
 	if ((cn = find_config_node(lvn, "tags")) &&
 	    !(read_tags(mem, &lv->tags, cn->v))) {
@@ -563,11 +551,7 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 		return 0;
 	}
 
-	lv->vg = vg;
-	vg->lv_count++;
-	dm_list_add(&vg->lvs, &lvl->list);
-
-	return 1;
+	return link_lv_to_vg(vg, lv);
 }
 
 static int _read_lvsegs(struct format_instance *fid __attribute((unused)),
@@ -604,16 +588,6 @@ static int _read_lvsegs(struct format_instance *fid __attribute((unused)),
 		return_0;
 
 	lv->size = (uint64_t) lv->le_count * (uint64_t) vg->extent_size;
-
-	/*
-	 * FIXME We now have 2 LVs for each snapshot. The real one was
-	 * created by vg_add_snapshot from the segment text_import.
-	 */
-	if (lv->status & SNAPSHOT) {
-		vg->lv_count--;
-		dm_list_del(&lvl->list);
-		return 1;
-	}
 
 	lv->minor = -1;
 	if ((lv->status & FIXED_MINOR) &&
@@ -664,18 +638,23 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 	struct config_node *vgn, *cn;
 	struct volume_group *vg;
 	struct dm_hash_table *pv_hash = NULL;
-	struct dm_pool *mem = fid->fmt->cmd->mem;
+	struct dm_pool *mem = dm_pool_create("lvm2 vg_read", VG_MEMPOOL_CHUNK);
+
+	if (!mem)
+		return_NULL;
 
 	/* skip any top-level values */
 	for (vgn = cft->root; (vgn && vgn->v); vgn = vgn->sib) ;
 
 	if (!vgn) {
 		log_error("Couldn't find volume group in file.");
-		return NULL;
+		goto bad;
 	}
 
 	if (!(vg = dm_pool_zalloc(mem, sizeof(*vg))))
-		return_NULL;
+		goto_bad;
+
+	vg->vgmem = mem;
 	vg->cmd = fid->fmt->cmd;
 
 	/* FIXME Determine format type from file contents */
@@ -770,6 +749,7 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 
 	dm_list_init(&vg->lvs);
 	dm_list_init(&vg->tags);
+	dm_list_init(&vg->removed_pvs);
 
 	/* Optional tags */
 	if ((cn = find_config_node(vgn, "tags")) &&
@@ -809,7 +789,7 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 	if (pv_hash)
 		dm_hash_destroy(pv_hash);
 
-	dm_pool_free(mem, vg);
+	dm_pool_destroy(mem);
 	return NULL;
 }
 
@@ -818,10 +798,11 @@ static void _read_desc(struct dm_pool *mem,
 {
 	const char *d;
 	unsigned int u = 0u;
+	int old_suppress;
 
-	log_suppress(1);
+	old_suppress = log_suppress(1);
 	d = find_config_str(cft->root, "description", "");
-	log_suppress(0);
+	log_suppress(old_suppress);
 	*desc = dm_pool_strdup(mem, d);
 
 	get_config_uint32(cft->root, "creation_time", &u);

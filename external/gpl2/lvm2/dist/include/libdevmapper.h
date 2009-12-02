@@ -1,4 +1,4 @@
-/*	$NetBSD: libdevmapper.h,v 1.1.1.1 2008/12/22 00:18:43 haad Exp $	*/
+/*	$NetBSD: libdevmapper.h,v 1.1.1.2 2009/12/02 00:25:41 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -32,30 +32,40 @@
 #include <stdio.h>
 
 /*****************************************************************
- * The first section of this file provides direct access to the 
- * individual device-mapper ioctls.
+ * The first section of this file provides direct access to the
+ * individual device-mapper ioctls.  Since it is quite laborious to
+ * build the ioctl arguments for the device-mapper, people are
+ * encouraged to use this library.
  ****************************************************************/
 
 /*
- * Since it is quite laborious to build the ioctl
- * arguments for the device-mapper people are
- * encouraged to use this library.
- *
- * You will need to build a struct dm_task for
- * each ioctl command you want to execute.
+ * The library user may wish to register their own
+ * logging function.  By default errors go to stderr.
+ * Use dm_log_with_errno_init(NULL) to restore the default log fn.
  */
 
+typedef void (*dm_log_with_errno_fn) (int level, const char *file, int line,
+				      int dm_errno, const char *f, ...)
+    __attribute__ ((format(printf, 5, 6)));
+
+void dm_log_with_errno_init(dm_log_with_errno_fn fn);
+void dm_log_init_verbose(int level);
+
+/*
+ * Original version of this function.
+ * dm_errno is set to 0.
+ *
+ * Deprecated: Use the _with_errno_ versions above instead.
+ */
 typedef void (*dm_log_fn) (int level, const char *file, int line,
 			   const char *f, ...)
     __attribute__ ((format(printf, 4, 5)));
-
-/*
- * The library user may wish to register their own
- * logging function, by default errors go to stderr.
- * Use dm_log_init(NULL) to restore the default log fn.
- */
 void dm_log_init(dm_log_fn fn);
-void dm_log_init_verbose(int level);
+/*
+ * For backward-compatibility, indicate that dm_log_init() was used
+ * to set a non-default value of dm_log().
+ */
+int dm_log_is_non_default(void);
 
 enum {
 	DM_DEVICE_CREATE,
@@ -88,6 +98,11 @@ enum {
 
 	DM_DEVICE_SET_GEOMETRY
 };
+
+/*
+ * You will need to build a struct dm_task for
+ * each ioctl command you want to execute.
+ */
 
 struct dm_task;
 
@@ -147,9 +162,11 @@ int dm_task_set_ro(struct dm_task *dmt);
 int dm_task_set_newname(struct dm_task *dmt, const char *newname);
 int dm_task_set_minor(struct dm_task *dmt, int minor);
 int dm_task_set_major(struct dm_task *dmt, int major);
+int dm_task_set_major_minor(struct dm_task *dmt, int major, int minor, int allow_default_major_fallback);
 int dm_task_set_uid(struct dm_task *dmt, uid_t uid);
 int dm_task_set_gid(struct dm_task *dmt, gid_t gid);
 int dm_task_set_mode(struct dm_task *dmt, mode_t mode);
+int dm_task_set_cookie(struct dm_task *dmt, uint32_t *cookie, uint16_t flags);
 int dm_task_set_event_nr(struct dm_task *dmt, uint32_t event_nr);
 int dm_task_set_geometry(struct dm_task *dmt, const char *cylinders, const char *heads, const char *sectors, const char *start);
 int dm_task_set_message(struct dm_task *dmt, const char *message);
@@ -157,6 +174,7 @@ int dm_task_set_sector(struct dm_task *dmt, uint64_t sector);
 int dm_task_no_flush(struct dm_task *dmt);
 int dm_task_no_open_count(struct dm_task *dmt);
 int dm_task_skip_lockfs(struct dm_task *dmt);
+int dm_task_query_inactive_table(struct dm_task *dmt);
 int dm_task_suppress_identical_reload(struct dm_task *dmt);
 
 /*
@@ -262,6 +280,15 @@ struct dm_tree_node *dm_tree_add_new_dev(struct dm_tree *tree,
 					 int read_only,
 					 int clear_inactive,
 					 void *context);
+struct dm_tree_node *dm_tree_add_new_dev_with_udev_flags(struct dm_tree *tree,
+							 const char *name,
+							 const char *uuid,
+							 uint32_t major,
+							 uint32_t minor,
+							 int read_only,
+							 int clear_inactive,
+							 void *context,
+							 uint16_t udev_flags);
 
 /*
  * Search for a node in the tree.
@@ -290,6 +317,7 @@ const char *dm_tree_node_get_name(struct dm_tree_node *node);
 const char *dm_tree_node_get_uuid(struct dm_tree_node *node);
 const struct dm_info *dm_tree_node_get_info(struct dm_tree_node *node);
 void *dm_tree_node_get_context(struct dm_tree_node *node);
+int dm_tree_node_size_changed(struct dm_tree_node *dnode);
 
 /*
  * Returns the number of children of the given node (excluding the root node).
@@ -375,6 +403,21 @@ int dm_tree_node_add_linear_target(struct dm_tree_node *node,
 int dm_tree_node_add_striped_target(struct dm_tree_node *node,
 				       uint64_t size,
 				       uint32_t stripe_size);
+
+#define DM_CRYPT_IV_DEFAULT	UINT64_C(-1)	/* iv_offset == seg offset */
+/*
+ * Function accepts one string in cipher specification
+ * (chainmode and iv should be NULL because included in cipher string)
+ *   or
+ * separate arguments which will be joined to "cipher-chainmode-iv"
+ */
+int dm_tree_node_add_crypt_target(struct dm_tree_node *node,
+				  uint64_t size,
+				  const char *cipher,
+				  const char *chainmode,
+				  const char *iv,
+				  uint64_t iv_offset,
+				  const char *key);
 int dm_tree_node_add_mirror_target(struct dm_tree_node *node,
 				      uint64_t size);
  
@@ -401,6 +444,9 @@ int dm_tree_node_add_target_area(struct dm_tree_node *node,
 void dm_tree_node_set_read_ahead(struct dm_tree_node *dnode,
 				 uint32_t read_ahead,
 				 uint32_t read_ahead_flags);
+
+void dm_tree_set_cookie(struct dm_tree_node *node, uint32_t cookie);
+uint32_t dm_tree_get_cookie(struct dm_tree_node *node);
 
 /*****************************************************************************
  * Library functions
@@ -820,6 +866,8 @@ int dm_set_selinux_context(const char *path, mode_t mode);
 /*
  * Break up the name of a mapped device into its constituent
  * Volume Group, Logical Volume and Layer (if present).
+ * If mem is supplied, the result is allocated from the mempool.
+ * Otherwise the strings are changed in situ.
  */
 int dm_split_lvm_name(struct dm_pool *mem, const char *dmname,
 		      char **vgname, char **lvname, char **layer);
@@ -977,5 +1025,70 @@ int dm_report_field_uint64(struct dm_report *rh, struct dm_report_field *field,
  */
 void dm_report_field_set_value(struct dm_report_field *field, const void *value,
 			       const void *sortvalue);
+
+/* Cookie prefixes.
+ * The cookie value consists of a prefix (16 bits) and a base (16 bits).
+ * We can use the prefix to store the flags. These flags are sent to
+ * kernel within given dm task. When returned back to userspace in
+ * DM_COOKIE udev environment variable, we can control several aspects
+ * of udev rules we use by decoding the cookie prefix. When doing the
+ * notification, we replace the cookie prefix with DM_COOKIE_MAGIC,
+ * so we notify the right semaphore.
+ * It is still possible to use cookies for passing the flags to udev
+ * rules even when udev_sync is disabled. The base part of the cookie
+ * will be zero (there's no notification semaphore) and prefix will be
+ * set then. However, having udev_sync enabled is highly recommended.
+ */
+#define DM_COOKIE_MAGIC 0x0D4D
+#define DM_UDEV_FLAGS_MASK 0xFFFF0000
+#define DM_UDEV_FLAGS_SHIFT 16
+
+/*
+ * DM_UDEV_DISABLE_DM_RULES_FLAG is set in case we need to disable
+ * basic device-mapper udev rules that create symlinks in /dev/<DM_DIR>
+ * directory. However, we can't reliably prevent creating default
+ * nodes by udev (commonly /dev/dm-X, where X is a number).
+ */
+#define DM_UDEV_DISABLE_DM_RULES_FLAG 0x0001
+/*
+ * DM_UDEV_DISABLE_SUBSYTEM_RULES_FLAG is set in case we need to disable
+ * subsystem udev rules, but still we need the general DM udev rules to
+ * be applied (to create the nodes and symlinks under /dev and /dev/disk).
+ */
+#define DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG 0x0002
+/*
+ * DM_UDEV_DISABLE_DISK_RULES_FLAG is set in case we need to disable
+ * general DM rules that set symlinks in /dev/disk directory.
+ */
+#define DM_UDEV_DISABLE_DISK_RULES_FLAG 0x0004
+/*
+ * DM_UDEV_DISABLE_OTHER_RULES_FLAG is set in case we need to disable
+ * all the other rules that are not general device-mapper nor subsystem
+ * related (the rules belong to other software or packages). All foreign
+ * rules should check this flag directly and they should ignore further
+ * rule processing for such event.
+ */
+#define DM_UDEV_DISABLE_OTHER_RULES_FLAG 0x0008
+/*
+ * DM_UDEV_LOW_PRIORITY_FLAG is set in case we need to instruct the
+ * udev rules to give low priority to the device that is currently
+ * processed. For example, this provides a way to select which symlinks
+ * could be overwritten by high priority ones if their names are equal.
+ * Common situation is a name based on FS UUID while using origin and
+ * snapshot devices.
+ */
+#define DM_UDEV_LOW_PRIORITY_FLAG 0x0010
+
+int dm_cookie_supported(void);
+
+/*
+ * Udev synchronisation functions.
+ */
+void dm_udev_set_sync_support(int sync_with_udev);
+int dm_udev_get_sync_support(void);
+int dm_udev_complete(uint32_t cookie);
+int dm_udev_wait(uint32_t cookie);
+
+#define DM_DEV_DIR_UMASK 0022
 
 #endif				/* LIB_DEVICE_MAPPER_H */

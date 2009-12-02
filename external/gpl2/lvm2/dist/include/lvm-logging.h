@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-logging.h,v 1.1.1.1 2008/12/22 00:18:46 haad Exp $	*/
+/*	$NetBSD: lvm-logging.h,v 1.1.1.2 2009/12/02 00:25:43 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -18,15 +18,20 @@
 #ifndef _LVM_LOGGING_H
 #define _LVM_LOGGING_H
 
-void print_log(int level, const char *file, int line, const char *format, ...)
-    __attribute__ ((format(printf, 4, 5)));
+void print_log(int level, const char *file, int line, int dm_errno,
+	       const char *format, ...)
+    __attribute__ ((format(printf, 5, 6)));
 
-#define plog(l, x...) print_log(l, __FILE__, __LINE__ , ## x)
+#define LOG_LINE(l, x...) \
+    print_log(l, __FILE__, __LINE__ , 0, ## x)
+
+#define LOG_LINE_WITH_ERRNO(l, e, x...) \
+    print_log(l, __FILE__, __LINE__ , e, ## x)
 
 #include "log.h"
 
 typedef void (*lvm2_log_fn_t) (int level, const char *file, int line,
-			       const char *message);
+			       int dm_errno, const char *message);
 
 void init_log_fn(lvm2_log_fn_t log_fn);
 
@@ -44,6 +49,9 @@ void init_syslog(int facility);
 void fin_syslog(void);
 
 int error_message_produced(void);
+void reset_lvm_errno(int store_errmsg);
+int stored_errno(void);
+const char *stored_errmsg(void);
 
 /* Suppress messages to stdout/stderr (1) or everywhere (2) */
 /* Returns previous setting */

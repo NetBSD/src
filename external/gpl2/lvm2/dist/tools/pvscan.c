@@ -1,4 +1,4 @@
-/*	$NetBSD: pvscan.c,v 1.1.1.1 2008/12/22 00:19:07 haad Exp $	*/
+/*	$NetBSD: pvscan.c,v 1.1.1.2 2009/12/02 00:25:54 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -137,6 +137,7 @@ int pvscan(struct cmd_context *cmd, int argc __attribute((unused)),
 	log_verbose("Walking through all physical volumes");
 	if (!(pvslist = get_pvs(cmd))) {
 		unlock_vg(cmd, VG_GLOBAL);
+		stack;
 		return ECMD_FAILED;
 	}
 

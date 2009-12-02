@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-string.c,v 1.1.1.1 2008/12/22 00:18:34 haad Exp $	*/
+/*	$NetBSD: libdm-string.c,v 1.1.1.2 2009/12/02 00:26:08 haad Exp $	*/
 
 /*
  * Copyright (C) 2006-2007 Red Hat, Inc. All rights reserved.
@@ -95,7 +95,7 @@ static char *_unquote(char *component)
 int dm_split_lvm_name(struct dm_pool *mem, const char *dmname,
 		      char **vgname, char **lvname, char **layer)
 {
-	if (!(*vgname = dm_pool_strdup(mem, dmname)))
+	if (mem && !(*vgname = dm_pool_strdup(mem, dmname)))
 		return 0;
 
 	_unquote(*layer = _unquote(*lvname = _unquote(*vgname)));

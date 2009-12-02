@@ -1,0 +1,88 @@
+# Copyright (C) 2009 Red Hat, Inc. All rights reserved.
+#
+# This file is part of LVM2.
+
+# Udev rules for device-mapper devices.
+#
+# These rules create a DM control node in /dev/(DM_DIR) directory.
+# The rules also create nodes named dm-x (x is a number) in /dev
+# directory and symlinks to these nodes with names given by
+# the actual DM names. Some udev environment variables are set
+# for use in later rules:
+#   DM_NAME - actual DM device's name
+#   DM_UUID - UUID set for DM device (blank if not specified)
+#   DM_SUSPENDED - suspended state of DM device (0 or 1)
+#   DM_UDEV_RULES_VSN - DM udev rules version
+
+KERNEL=="device-mapper", NAME="(DM_DIR)/control"
+
+SUBSYSTEM!="block", GOTO="dm_end"
+KERNEL!="dm-[0-9]*", GOTO="dm_end"
+
+# Set proper sbin path, /sbin has higher priority than /usr/sbin.
+ENV{DM_SBIN_PATH}="/sbin"
+TEST!="$env{DM_SBIN_PATH}/dmsetup", ENV{DM_SBIN_PATH}="/usr/sbin"
+TEST!="$env{DM_SBIN_PATH}/dmsetup", GOTO="dm_end"
+
+# Decode udev control flags and set environment variables appropriately.
+# These flags are encoded in DM_COOKIE variable that was introduced in
+# kernel version 2.6.31. Therefore, we can use this feature with
+# kernels >= 2.6.31 only.
+ENV{DM_COOKIE}=="?*", IMPORT{program}="$env{DM_SBIN_PATH}/dmsetup udevflags $env{DM_COOKIE}"
+
+# Normally, we would test for DM_UDEV_DISABLE_DM_RULES_FLAG here and skip
+# the rules if set. However, we need to set DM_* environment variables
+# for now to properly filter out inappropriate events. This dependency
+# might be removed in the future.
+
+ACTION!="add|change", GOTO="dm_end"
+
+# Normally, we operate on "change" events only. But when
+# coldplugging, there's an "add" event present. We have to
+# recognize this and do our actions in this particular
+# situation, too. Also, we don't want the nodes to be
+# created prematurely on "add" events while not coldplugging.
+ACTION=="add", ENV{STARTUP}!="1", NAME="", GOTO="dm_end"
+
+# "dm" sysfs subdirectory is available in newer versions of DM
+# only (kernels >= 2.6.29). We have to check for its existence
+# and use dmsetup tool instead to get the DM name, uuid and 
+# suspended state if the "dm" subdirectory is not present.
+# The "suspended" item was added even later (kernels >= 2.6.31),
+# so we also have to call dmsetup if the kernel version used
+# is in between these releases.
+TEST=="dm", ENV{DM_NAME}="$attr{dm/name}", ENV{DM_UUID}="$attr{dm/uuid}", ENV{DM_SUSPENDED}="$attr{dm/suspended}"
+TEST!="dm", IMPORT{program}="$env{DM_SBIN_PATH}/dmsetup info -j %M -m %m -c --nameprefixes --noheadings --rows -o name,uuid,suspended"
+ENV{DM_SUSPENDED}!="?*", IMPORT{program}="$env{DM_SBIN_PATH}/dmsetup info -j %M -m %m -c --nameprefixes --noheadings --rows -o suspended"
+
+# dmsetup tool provides suspended state information in textual
+# form with values "Suspended"/"Active". We translate it to
+# 0/1 respectively to be consistent with sysfs values.
+ENV{DM_SUSPENDED}=="Active", ENV{DM_SUSPENDED}="0"
+ENV{DM_SUSPENDED}=="Suspended", ENV{DM_SUSPENDED}="1"
+
+# This variable provides a reliable way to check that device-mapper
+# rules were installed. It means that all needed variables are set
+# by these rules directly so there's no need to acquire them again
+# later. Other rules can alternate the functionality based on this
+# fact (e.g. fallback to rules that behave correctly even without
+# these rules installed). It also provides versioning for any
+# possible future changes.
+ENV{DM_UDEV_RULES_VSN}="1"
+
+ENV{DM_UDEV_DISABLE_DM_RULES_FLAG}!="1", ENV{DM_NAME}=="?*", SYMLINK+="(DM_DIR)/$env{DM_NAME}"
+
+# We have to ignore further rule application for inappropriate events
+# and devices. But still send the notification if cookie exists.
+ENV{DM_UUID}=="mpath-?*", ENV{DM_ACTION}=="PATH_FAILED", GOTO="dm_disable"
+ENV{DM_UUID}=="CRYPT-TEMP-?*", GOTO="dm_disable"
+ENV{DM_UUID}!="?*", ENV{DM_NAME}=="temporary-cryptsetup-?*", GOTO="dm_disable"
+
+GOTO="dm_end"
+
+LABEL="dm_disable"
+ENV{DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG}="1"
+ENV{DM_UDEV_DISABLE_DISK_RULES_FLAG}="1"
+ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+
+LABEL="dm_end"

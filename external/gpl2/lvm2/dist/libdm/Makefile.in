@@ -14,6 +14,7 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 SOURCES =\
@@ -32,9 +33,11 @@ SOURCES =\
 	regex/ttree.c \
 	$(interface)/libdm-iface.c
 
-INCLUDES = -I$(interface) -I.
+INCLUDES = -I$(srcdir)/$(interface) -I$(srcdir)
 
+ifeq ("@STATIC_LINK@", "yes")
 LIB_STATIC = $(interface)/libdevmapper.a
+endif
 
 ifeq ("@LIB_SUFFIX@","dylib")
   LIB_SHARED = $(interface)/libdevmapper.dylib
@@ -70,7 +73,7 @@ install: $(INSTALL_TYPE) install_include
 install_device-mapper: install
 
 install_include:
-	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 libdevmapper.h \
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 $(srcdir)/libdevmapper.h \
 		$(includedir)/libdevmapper.h
 
 install_dynamic: install_@interface@
@@ -97,6 +100,8 @@ $(VERSIONED_SHLIB): %.$(LIB_SUFFIX).$(LIB_VERSION_DM): $(interface)/%.$(LIB_SUFF
 	$(LN_S) $< $@
 	rm -f libdevmapper.$(LIB_SUFFIX)
 	$(LN_S) $< libdevmapper.$(LIB_SUFFIX)
+
+CLEAN_TARGETS += libdevmapper.$(LIB_SUFFIX)
 
 .PHONY: distclean_lib distclean
 

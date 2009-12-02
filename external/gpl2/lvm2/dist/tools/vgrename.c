@@ -1,8 +1,8 @@
-/*	$NetBSD: vgrename.c,v 1.1.1.2 2009/02/18 11:17:51 haad Exp $	*/
+/*	$NetBSD: vgrename.c,v 1.1.1.3 2009/12/02 00:25:58 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -17,12 +17,57 @@
 
 #include "tools.h"
 
+static struct volume_group *vg_rename_old(struct cmd_context *cmd,
+					  const char *vg_name_old,
+					  const char *vgid)
+{
+	struct volume_group *vg;
+
+	/* FIXME we used to print an error about EXPORTED, but proceeded
+	   nevertheless. */
+	vg = vg_read_for_update(cmd, vg_name_old, vgid, READ_ALLOW_EXPORTED);
+	if (vg_read_error(vg)) {
+		vg_release(vg);
+		return_NULL;
+	}
+
+	if (lvs_in_vg_activated_by_uuid_only(vg)) {
+		unlock_and_release_vg(cmd, vg, vg_name_old);
+		log_error("Volume group \"%s\" still has active LVs",
+			  vg_name_old);
+		/* FIXME Remove this restriction */
+		return NULL;
+	}
+	return vg;
+}
+
+static int vg_rename_new(struct cmd_context *cmd,
+			 const char *vg_name_new)
+{
+	int rc;
+
+	log_verbose("Checking for new volume group \"%s\"", vg_name_new);
+
+	rc = vg_lock_newname(cmd, vg_name_new);
+
+	if (rc == FAILED_LOCKING) {
+		log_error("Can't get lock for %s", vg_name_new);
+		return 0;
+	}
+
+	if (rc == FAILED_EXIST) {
+		log_error("New volume group \"%s\" already exists",
+			  vg_name_new);
+		return 0;
+	}
+	return 1;
+}
+
 static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 			  const char *new_vg_path)
 {
 	char *dev_dir;
 	struct id id;
-	int consistent = 1;
 	int match = 0;
 	int found_id = 0;
 	struct dm_list *vgids;
@@ -30,7 +75,8 @@ static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 	char *vg_name_new;
 	const char *vgid = NULL, *vg_name, *vg_name_old;
 	char old_path[NAME_LEN], new_path[NAME_LEN];
-	struct volume_group *vg, *vg_new;
+	struct volume_group *vg = NULL;
+	int lock_vg_old_first = 1;
 
 	vg_name_old = skip_dev_dir(cmd, old_vg_path, NULL);
 	vg_name_new = skip_dev_dir(cmd, new_vg_path, NULL);
@@ -72,47 +118,26 @@ static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 	} else
 		vgid = NULL;
 
-	if (!lock_vol(cmd, vg_name_old, LCK_VG_WRITE)) {
-		log_error("Can't get lock for %s", vg_name_old);
-		return 0;
-	}
+	if (strcmp(vg_name_new, vg_name_old) < 0)
+		lock_vg_old_first = 0;
 
-	if (!(vg = vg_read(cmd, vg_name_old, vgid, &consistent)) || !consistent) {
-		log_error("Volume group %s %s%s%snot found.", vg_name_old,
-		vgid ? "(" : "", vgid ? vgid : "", vgid ? ") " : "");
-		unlock_vg(cmd, vg_name_old);
-		return 0;
-	}
+	if (lock_vg_old_first) {
+		vg = vg_rename_old(cmd, vg_name_old, vgid);
+		if (!vg)
+			return 0;
 
-	if (!vg_check_status(vg, CLUSTERED | LVM_WRITE)) {
-		unlock_vg(cmd, vg_name_old);
-		return 0;
-	}
+		if (!vg_rename_new(cmd, vg_name_new)) {
+			unlock_and_release_vg(cmd, vg, vg_name_old);
+			return 0;
+		}
+	} else {
+		if (!vg_rename_new(cmd, vg_name_new)) {
+			return 0;
+		}
 
-	/* Don't return failure for EXPORTED_VG */
-	vg_check_status(vg, EXPORTED_VG);
-
-	if (lvs_in_vg_activated_by_uuid_only(vg)) {
-		unlock_vg(cmd, vg_name_old);
-		log_error("Volume group \"%s\" still has active LVs",
-			  vg_name_old);
-		/* FIXME Remove this restriction */
-		return 0;
-	}
-
-	log_verbose("Checking for new volume group \"%s\"", vg_name_new);
-
-	if (!lock_vol(cmd, vg_name_new, LCK_VG_WRITE | LCK_NONBLOCK)) {
-		unlock_vg(cmd, vg_name_old);
-		log_error("Can't get lock for %s", vg_name_new);
-		return 0;
-	}
-
-	consistent = 0;
-	if ((vg_new = vg_read(cmd, vg_name_new, NULL, &consistent))) {
-		log_error("New volume group \"%s\" already exists",
-			  vg_name_new);
-		goto error;
+		vg = vg_rename_old(cmd, vg_name_old, vgid);
+		if (!vg)
+			return 0;
 	}
 
 	if (!archive(vg))
@@ -151,9 +176,10 @@ static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 /******* FIXME Rename any active LVs! *****/
 
 	backup(vg);
+	backup_remove(cmd, vg_name_old);
 
 	unlock_vg(cmd, vg_name_new);
-	unlock_vg(cmd, vg_name_old);
+	unlock_and_release_vg(cmd, vg, vg_name_old);
 
 	log_print("Volume group \"%s\" successfully renamed to \"%s\"",
 		  vg_name_old, vg_name_new);
@@ -165,8 +191,13 @@ static int vg_rename_path(struct cmd_context *cmd, const char *old_vg_path,
 	return 1;
 
       error:
-	unlock_vg(cmd, vg_name_new);
-	unlock_vg(cmd, vg_name_old);
+	if (lock_vg_old_first) {
+		unlock_vg(cmd, vg_name_new);
+		unlock_and_release_vg(cmd, vg, vg_name_old);
+	} else {
+		unlock_and_release_vg(cmd, vg, vg_name_old);
+		unlock_vg(cmd, vg_name_new);
+	}
 	return 0;
 }
 
@@ -177,9 +208,11 @@ int vgrename(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	if (!vg_rename_path(cmd, argv[0], argv[1]))
+	if (!vg_rename_path(cmd, argv[0], argv[1])) {
+		stack;
 		return ECMD_FAILED;
-	
+	}
+
 	return ECMD_PROCESSED;
 }
 

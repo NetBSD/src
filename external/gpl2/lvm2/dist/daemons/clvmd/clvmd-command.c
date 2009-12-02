@@ -1,4 +1,4 @@
-/*	$NetBSD: clvmd-command.c,v 1.1.1.1 2008/12/22 00:18:53 haad Exp $	*/
+/*	$NetBSD: clvmd-command.c,v 1.1.1.2 2009/12/02 00:27:06 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -92,6 +92,7 @@ int do_command(struct local_client *client, struct clvm_header *msg, int msglen,
 	int arglen = msglen - sizeof(struct clvm_header) - strlen(msg->node);
 	int status = 0;
 	char *lockname;
+	const char *locktype;
 	struct utsname nodeinfo;
 	unsigned char lock_cmd;
 	unsigned char lock_flags;
@@ -146,6 +147,14 @@ int do_command(struct local_client *client, struct clvm_header *msg, int msglen,
 		}
 		break;
 
+	case CLVMD_CMD_LOCK_QUERY:
+		lockname = &args[2];
+		if (buflen < 3)
+			return EIO;
+		if ((locktype = do_lock_query(lockname)))
+			*retlen = 1 + snprintf(*buf, buflen, "%s", locktype);
+		break;
+
 	case CLVMD_CMD_REFRESH:
 		do_refresh_cache();
 		break;
@@ -161,7 +170,11 @@ int do_command(struct local_client *client, struct clvm_header *msg, int msglen,
 		break;
 
 	case CLVMD_CMD_VG_BACKUP:
-		lvm_do_backup(&args[2]);
+		/*
+		 * Do not run backup on local node, caller should do that.
+		 */
+		if (!client)
+			lvm_do_backup(&args[2]);
 		break;
 
 	default:
@@ -276,6 +289,7 @@ int do_pre_command(struct local_client *client)
 	case CLVMD_CMD_GET_CLUSTERNAME:
 	case CLVMD_CMD_SET_DEBUG:
 	case CLVMD_CMD_VG_BACKUP:
+	case CLVMD_CMD_LOCK_QUERY:
 		break;
 
 	default:
@@ -306,6 +320,7 @@ int do_post_command(struct local_client *client)
 
 	case CLVMD_CMD_LOCK_VG:
 	case CLVMD_CMD_VG_BACKUP:
+	case CLVMD_CMD_LOCK_QUERY:
 		/* Nothing to do here */
 		break;
 

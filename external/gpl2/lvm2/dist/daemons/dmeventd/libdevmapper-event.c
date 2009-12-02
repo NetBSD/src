@@ -1,4 +1,4 @@
-/*	$NetBSD: libdevmapper-event.c,v 1.1.1.1 2008/12/22 00:18:56 haad Exp $	*/
+/*	$NetBSD: libdevmapper-event.c,v 1.1.1.2 2009/12/02 00:27:11 haad Exp $	*/
 
 /*
  * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
@@ -427,6 +427,12 @@ static int _start_daemon(struct dm_event_fifos *fifos)
 
       start_server:
 	/* server is not running */
+
+	if (!strncmp(DMEVENTD_PATH, "/", 1) && stat(DMEVENTD_PATH, &statbuf)) {
+		log_error("Unable to find dmeventd.");
+		return_0;
+	}
+
 	pid = fork();
 
 	if (pid < 0)
@@ -434,7 +440,7 @@ static int _start_daemon(struct dm_event_fifos *fifos)
 
 	else if (!pid) {
 		execvp(DMEVENTD_PATH, NULL);
-		exit(EXIT_FAILURE);
+		_exit(EXIT_FAILURE);
 	} else {
 		if (waitpid(pid, &status, 0) < 0)
 			log_error("Unable to start dmeventd: %s",

@@ -1,4 +1,4 @@
-/*	$NetBSD: lvmcache.h,v 1.1.1.1 2008/12/22 00:17:52 haad Exp $	*/
+/*	$NetBSD: lvmcache.h,v 1.1.1.2 2009/12/02 00:26:21 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -86,6 +86,7 @@ int lvmcache_update_vg(struct volume_group *vg, unsigned precommitted);
 
 void lvmcache_lock_vgname(const char *vgname, int read_only);
 void lvmcache_unlock_vgname(const char *vgname);
+int lvmcache_verify_lock_order(const char *vgname);
 
 /* Queries */
 const struct format_type *fmt_from_vgname(const char *vgname, const char *vgid);

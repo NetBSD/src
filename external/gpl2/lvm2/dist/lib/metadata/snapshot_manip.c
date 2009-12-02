@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot_manip.c,v 1.1.1.2 2009/02/18 11:17:11 haad Exp $	*/
+/*	$NetBSD: snapshot_manip.c,v 1.1.1.3 2009/12/02 00:26:37 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -32,19 +32,24 @@ int lv_is_cow(const struct logical_volume *lv)
 
 int lv_is_visible(const struct logical_volume *lv)
 {
-	if (lv_is_cow(lv))
-		return lv_is_visible(find_cow(lv)->lv);
+	if (lv->status & SNAPSHOT)
+		return 0;
+
+	if (lv_is_cow(lv)) {
+		if (lv_is_virtual_origin(origin_from_cow(lv)))
+			return 1;
+
+		return lv_is_visible(origin_from_cow(lv));
+	}
 
 	return lv->status & VISIBLE_LV ? 1 : 0;
 }
 
-int lv_is_displayable(const struct logical_volume *lv)
+int lv_is_virtual_origin(const struct logical_volume *lv)
 {
-	if (lv->status & SNAPSHOT)
-		return 0;
-
-	return (lv->status & VISIBLE_LV) || lv_is_cow(lv) ? 1 : 0;
+	return (lv->status & VIRTUAL_ORIGIN) ? 1 : 0;
 }
+
 
 /* Given a cow LV, return the snapshot lv_segment that uses it */
 struct lv_segment *find_cow(const struct logical_volume *lv)
@@ -58,7 +63,29 @@ struct logical_volume *origin_from_cow(const struct logical_volume *lv)
 	return lv->snapshot->origin;
 }
 
-int vg_add_snapshot(const char *name, struct logical_volume *origin,
+void init_snapshot_seg(struct lv_segment *seg, struct logical_volume *origin,
+		       struct logical_volume *cow, uint32_t chunk_size)
+{
+	seg->chunk_size = chunk_size;
+	seg->origin = origin;
+	seg->cow = cow;
+
+	lv_set_hidden(cow);
+
+	cow->snapshot = seg;
+
+	origin->origin_count++;
+
+	/* FIXME Assumes an invisible origin belongs to a sparse device */
+	if (!lv_is_visible(origin))
+		origin->status |= VIRTUAL_ORIGIN;
+
+	seg->lv->status |= (SNAPSHOT | VIRTUAL);
+
+	dm_list_add(&origin->snapshot_segs, &seg->origin_list);
+}
+
+int vg_add_snapshot(struct logical_volume *origin,
 		    struct logical_volume *cow, union lvid *lvid,
 		    uint32_t extent_count, uint32_t chunk_size)
 {
@@ -69,7 +96,7 @@ int vg_add_snapshot(const char *name, struct logical_volume *origin,
 	 * Is the cow device already being used ?
 	 */
 	if (lv_is_cow(cow)) {
-		log_err("'%s' is already in use as a snapshot.", cow->name);
+		log_error("'%s' is already in use as a snapshot.", cow->name);
 		return 0;
 	}
 
@@ -78,9 +105,9 @@ int vg_add_snapshot(const char *name, struct logical_volume *origin,
 		return 0;
 	}
 
-	if (!(snap = lv_create_empty(name ? name : "snapshot%d",
+	if (!(snap = lv_create_empty("snapshot%d",
 				     lvid, LVM_READ | LVM_WRITE | VISIBLE_LV,
-				     ALLOC_INHERIT, 1, origin->vg)))
+				     ALLOC_INHERIT, origin->vg)))
 		return_0;
 
 	snap->le_count = extent_count;
@@ -88,19 +115,7 @@ int vg_add_snapshot(const char *name, struct logical_volume *origin,
 	if (!(seg = alloc_snapshot_seg(snap, 0, 0)))
 		return_0;
 
-	seg->chunk_size = chunk_size;
-	seg->origin = origin;
-	seg->cow = cow;
-	seg->lv->status |= SNAPSHOT;
-
-	origin->origin_count++;
-	origin->vg->snapshot_count++;
-	origin->vg->lv_count--;
-	cow->snapshot = seg;
-
-	cow->status &= ~VISIBLE_LV;
-
-	dm_list_add(&origin->snapshot_segs, &seg->origin_list);
+	init_snapshot_seg(seg, origin, cow, chunk_size);
 
 	return 1;
 }
@@ -117,10 +132,7 @@ int vg_remove_snapshot(struct logical_volume *cow)
 	}
 
 	cow->snapshot = NULL;
-
-	cow->vg->snapshot_count--;
-	cow->vg->lv_count++;
-	cow->status |= VISIBLE_LV;
+	lv_set_visible(cow);
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmsetup.c,v 1.1.1.1 2008/12/22 00:19:01 haad Exp $	*/
+/*	$NetBSD: dmsetup.c,v 1.1.1.2 2009/12/02 00:25:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -38,9 +38,16 @@
 #include <sys/param.h>
 #include <locale.h>
 #include <langinfo.h>
+#include <time.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#ifdef UDEV_SYNC_SUPPORT
+#  include <sys/types.h>
+#  include <sys/ipc.h>
+#  include <sys/sem.h>
+#endif
 
 /* FIXME Unused so far */
 #undef HAVE_SYS_STATVFS_H
@@ -112,6 +119,7 @@ enum {
 	EXEC_ARG,
 	FORCE_ARG,
 	GID_ARG,
+	INACTIVE_ARG,
 	MAJOR_ARG,
 	MINOR_ARG,
 	MODE_ARG,
@@ -121,6 +129,7 @@ enum {
 	NOLOCKFS_ARG,
 	NOOPENCOUNT_ARG,
 	NOTABLE_ARG,
+	NOUDEVSYNC_ARG,
 	OPTIONS_ARG,
 	READAHEAD_ARG,
 	ROWS_ARG,
@@ -136,6 +145,7 @@ enum {
 	UUID_ARG,
 	VERBOSE_ARG,
 	VERSION_ARG,
+	YES_ARG,
 	NUM_SWITCHES
 };
 
@@ -143,7 +153,8 @@ typedef enum {
 	DR_TASK = 1,
 	DR_INFO = 2,
 	DR_DEPS = 4,
-	DR_TREE = 8	/* Complete dependency tree required */
+	DR_TREE = 8,	/* Complete dependency tree required */
+	DR_NAME = 16
 } report_type_t;
 
 static int _switches[NUM_SWITCHES];
@@ -258,11 +269,19 @@ static int _parse_file(struct dm_task *dmt, const char *file)
 	return r;
 }
 
+struct dm_split_name {
+        char *subsystem;
+        char *vg_name;
+        char *lv_name;
+        char *lv_layer;
+};
+
 struct dmsetup_report_obj {
 	struct dm_task *task;
 	struct dm_info *info;
 	struct dm_task *deps_task;
 	struct dm_tree_node *tree_node;
+	struct dm_split_name *split_name;
 };
 
 static struct dm_task *_get_deps_task(int major, int minor)
@@ -278,6 +297,9 @@ static struct dm_task *_get_deps_task(int major, int minor)
 		goto err;
 
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+		goto err;
+
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
 		goto err;
 
 	if (!dm_task_run(dmt))
@@ -296,6 +318,65 @@ static struct dm_task *_get_deps_task(int major, int minor)
 	return NULL;
 }
 
+static char *_extract_uuid_prefix(const char *uuid, const int separator)
+{
+	char *ptr = NULL;
+	char *uuid_prefix = NULL;
+	size_t len;
+
+	if (uuid)
+		ptr = strchr(uuid, separator);
+
+	len = ptr ? ptr - uuid : 0;
+	if (!(uuid_prefix = dm_malloc(len + 1))) {
+		log_error("Failed to allocate memory to extract uuid prefix.");
+		return NULL;
+	}
+
+	memcpy(uuid_prefix, uuid, len);
+	uuid_prefix[len] = '\0';
+
+	return uuid_prefix;
+}
+
+static struct dm_split_name *_get_split_name(const char *uuid, const char *name,
+					     int separator)
+{
+	struct dm_split_name *split_name;
+
+	if (!(split_name = dm_malloc(sizeof(*split_name)))) {
+		log_error("Failed to allocate memory to split device name "
+			  "into components.");
+		return NULL;
+	}
+
+	split_name->subsystem = _extract_uuid_prefix(uuid, separator);
+	split_name->vg_name = split_name->lv_name =
+	    split_name->lv_layer = (char *) "";
+
+	if (!strcmp(split_name->subsystem, "LVM") &&
+	    (!(split_name->vg_name = dm_strdup(name)) ||
+	     !dm_split_lvm_name(NULL, NULL, &split_name->vg_name,
+			        &split_name->lv_name, &split_name->lv_layer)))
+		log_error("Failed to allocate memory to split LVM name "
+			  "into components.");
+
+	return split_name;
+}
+
+static void _destroy_split_name(struct dm_split_name *split_name)
+{
+	/*
+	 * lv_name and lv_layer are allocated within the same block
+	 * of memory as vg_name so don't need to be freed separately.
+	 */
+	if (!strcmp(split_name->subsystem, "LVM"))
+		dm_free(split_name->vg_name);
+
+	dm_free(split_name->subsystem);
+	dm_free(split_name);
+}
+
 static int _display_info_cols(struct dm_task *dmt, struct dm_info *info)
 {
 	struct dmsetup_report_obj obj;
@@ -309,12 +390,16 @@ static int _display_info_cols(struct dm_task *dmt, struct dm_info *info)
 	obj.task = dmt;
 	obj.info = info;
 	obj.deps_task = NULL;
+	obj.split_name = NULL;
 
 	if (_report_type & DR_TREE)
 		obj.tree_node = dm_tree_find_node(_dtree, info->major, info->minor);
 
 	if (_report_type & DR_DEPS)
 		obj.deps_task = _get_deps_task(info->major, info->minor);
+
+	if (_report_type & DR_NAME)
+		obj.split_name = _get_split_name(dm_task_get_uuid(dmt), dm_task_get_name(dmt), '-');
 
 	if (!dm_report_object(_report, &obj))
 		goto out;
@@ -324,6 +409,8 @@ static int _display_info_cols(struct dm_task *dmt, struct dm_info *info)
       out:
 	if (obj.deps_task)
 		dm_task_destroy(obj.deps_task);
+	if (obj.split_name)
+		_destroy_split_name(obj.split_name);
 	return r;
 }
 
@@ -449,6 +536,9 @@ static int _load(int argc, char **argv, void *data __attribute((unused)))
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (!dm_task_run(dmt))
 		goto out;
 
@@ -468,6 +558,7 @@ static int _create(int argc, char **argv, void *data __attribute((unused)))
 	int r = 0;
 	struct dm_task *dmt;
 	const char *file = NULL;
+	uint32_t cookie = 0;
 
 	if (argc == 3)
 		file = argv[2];
@@ -505,12 +596,19 @@ static int _create(int argc, char **argv, void *data __attribute((unused)))
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (_switches[READAHEAD_ARG] &&
 	    !dm_task_set_read_ahead(dmt, _int_args[READAHEAD_ARG],
 				    _read_ahead_flags))
 		goto out;
 
-	if (!dm_task_run(dmt))
+	if (_switches[NOTABLE_ARG])
+		dm_udev_set_sync_support(0);
+
+	if (!dm_task_set_cookie(dmt, &cookie, 0) ||
+	    !dm_task_run(dmt))
 		goto out;
 
 	r = 1;
@@ -519,6 +617,7 @@ static int _create(int argc, char **argv, void *data __attribute((unused)))
 		r = _display_info(dmt);
 
       out:
+	(void) dm_udev_wait(cookie);
 	dm_task_destroy(dmt);
 
 	return r;
@@ -528,6 +627,7 @@ static int _rename(int argc, char **argv, void *data __attribute((unused)))
 {
 	int r = 0;
 	struct dm_task *dmt;
+	uint32_t cookie = 0;
 
 	if (!(dmt = dm_task_create(DM_DEVICE_RENAME)))
 		return 0;
@@ -542,12 +642,17 @@ static int _rename(int argc, char **argv, void *data __attribute((unused)))
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
-	if (!dm_task_run(dmt))
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
+	if (!dm_task_set_cookie(dmt, &cookie, 0) ||
+	    !dm_task_run(dmt))
 		goto out;
 
 	r = 1;
 
       out:
+	(void) dm_udev_wait(cookie);
 	dm_task_destroy(dmt);
 
 	return r;
@@ -606,6 +711,9 @@ static int _message(int argc, char **argv, void *data __attribute((unused)))
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (!dm_task_run(dmt))
 		goto out;
 
@@ -638,6 +746,12 @@ static int _setgeometry(int argc, char **argv, void *data __attribute((unused)))
 	if (!dm_task_set_geometry(dmt, argv[1], argv[2], argv[3], argv[4]))
 		goto out;
 
+	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+		goto out;
+
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	/* run the task */
 	if (!dm_task_run(dmt))
 		goto out;
@@ -649,6 +763,237 @@ static int _setgeometry(int argc, char **argv, void *data __attribute((unused)))
 
 	return r;
 }
+
+static int _splitname(int argc, char **argv, void *data __attribute((unused)))
+{
+	struct dmsetup_report_obj obj;
+	int r = 1;
+
+	obj.task = NULL;
+	obj.info = NULL;
+	obj.deps_task = NULL;
+	obj.tree_node = NULL;
+	obj.split_name = _get_split_name((argc == 3) ? argv[2] : "LVM",
+					 argv[1], '\0');
+
+	r = dm_report_object(_report, &obj);
+	_destroy_split_name(obj.split_name);
+
+	return r;
+}
+
+static uint32_t _get_cookie_value(char *str_value)
+{
+	unsigned long int value;
+	char *p;
+
+	if (!(value = strtoul(str_value, &p, 0)) ||
+	    *p ||
+	    (value == ULONG_MAX && errno == ERANGE) ||
+	    value > 0xFFFFFFFF) {
+		err("Incorrect cookie value");
+		return 0;
+	}
+	else
+		return (uint32_t) value;
+}
+
+static int _udevflags(int args, char **argv, void *data __attribute((unused)))
+{
+	uint32_t cookie;
+	uint16_t flags;
+	int i;
+	static const char *dm_flag_names[] = {"DISABLE_DM_RULES",
+					      "DISABLE_SUBSYSTEM_RULES",
+					      "DISABLE_DISK_RULES",
+					      "DISABLE_OTHER_RULES",
+					      "LOW_PRIORITY",
+					       0, 0, 0};
+
+	if (!(cookie = _get_cookie_value(argv[1])))
+		return 0;
+
+	flags = cookie >> DM_UDEV_FLAGS_SHIFT;
+
+	for (i = 0; i < DM_UDEV_FLAGS_SHIFT; i++)
+		if (1 << i & flags) {
+			if (i < DM_UDEV_FLAGS_SHIFT / 2 && dm_flag_names[i])
+				printf("DM_UDEV_%s_FLAG='1'\n", dm_flag_names[i]);
+			else if (i < DM_UDEV_FLAGS_SHIFT / 2)
+				/*
+				 * This is just a fallback. Each new DM flag
+				 * should have its symbolic name assigned.
+				 */
+				printf("DM_UDEV_FLAG%d='1'\n", i);
+			else
+				/*
+				 * We can't assign symbolic names to subsystem
+				 * flags. Their semantics vary based on the
+				 * subsystem that is currently used.
+				 */
+				printf("DM_SUBSYSTEM_UDEV_FLAG%d='1'\n",
+					i - DM_UDEV_FLAGS_SHIFT / 2);
+		}
+
+	return 1;
+}
+
+static int _udevcomplete(int argc, char **argv, void *data __attribute((unused)))
+{
+	uint32_t cookie;
+
+	if (!(cookie = _get_cookie_value(argv[1])))
+		return 0;
+
+	/*
+	 * Strip flags from the cookie and use cookie magic instead.
+	 * If the cookie has non-zero prefix and the base is zero then
+	 * this one carries flags to control udev rules only and it is
+	 * not meant to be for notification. Return with success in this
+	 * situation.
+	 */
+	if (!(cookie &= ~DM_UDEV_FLAGS_MASK))
+		return 1;
+
+	cookie |= DM_COOKIE_MAGIC << DM_UDEV_FLAGS_SHIFT;
+
+	return dm_udev_complete(cookie);
+}
+
+#ifndef UDEV_SYNC_SUPPORT
+static const char _cmd_not_supported[] = "Command not supported. Recompile with \"--enable-udev-sync\" to enable.";
+
+static int _udevcomplete_all(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
+{
+	log_error(_cmd_not_supported);
+
+	return 0;
+}
+
+static int _udevcookies(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
+{
+	log_error(_cmd_not_supported);
+
+	return 0;
+}
+
+#else	/* UDEV_SYNC_SUPPORT */
+
+static char _yes_no_prompt(const char *prompt, ...)
+{
+	int c = 0, ret = 0;
+	va_list ap;
+
+	do {
+		if (c == '\n' || !c) {
+			va_start(ap, prompt);
+			vprintf(prompt, ap);
+			va_end(ap);
+		}
+
+		if ((c = getchar()) == EOF) {
+			ret = 'n';
+			break;
+		}
+
+		c = tolower(c);
+		if ((c == 'y') || (c == 'n'))
+			ret = c;
+	} while (!ret || c != '\n');
+
+	if (c != '\n')
+		printf("\n");
+
+	return ret;
+}
+
+static int _udevcomplete_all(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
+{
+	int max_id, id, sid;
+	struct seminfo sinfo;
+	struct semid_ds sdata;
+	int counter = 0;
+
+	if (!_switches[YES_ARG]) {
+		log_warn("This operation will destroy all semaphores with keys "
+			 "that have a prefix %" PRIu16 " (0x%" PRIx16 ").",
+			 DM_COOKIE_MAGIC, DM_COOKIE_MAGIC);
+
+		if (_yes_no_prompt("Do you really want to continue? [y/n]: ") == 'n') {
+			log_print("Semaphores with keys prefixed by %" PRIu16
+				  " (0x%" PRIx16 ") NOT destroyed.",
+				  DM_COOKIE_MAGIC, DM_COOKIE_MAGIC);
+			return 1;
+		}
+	}
+
+	if ((max_id = semctl(0, 0, SEM_INFO, &sinfo)) < 0) {
+		log_sys_error("semctl", "SEM_INFO");
+		return 0;
+	}
+
+	for (id = 0; id <= max_id; id++) {
+		if ((sid = semctl(id, 0, SEM_STAT, &sdata)) < 0)
+			continue;
+
+		if (sdata.sem_perm.__key >> 16 == DM_COOKIE_MAGIC) {
+			if (semctl(sid, 0, IPC_RMID, 0) < 0) {
+				log_error("Could not cleanup notification semaphore "
+					  "with semid %d and cookie value "
+					  "%" PRIu32 " (0x%" PRIx32 ")", sid,
+					  sdata.sem_perm.__key, sdata.sem_perm.__key);
+				continue;
+			}
+
+			counter++;
+		}
+	}
+
+	log_print("%d semaphores with keys prefixed by "
+		  "%" PRIu16 " (0x%" PRIx16 ") destroyed.",
+		  counter, DM_COOKIE_MAGIC, DM_COOKIE_MAGIC);
+
+	return 1;
+}
+
+static int _udevcookies(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
+{
+	int max_id, id, sid;
+	struct seminfo sinfo;
+	struct semid_ds sdata;
+	int val;
+	char *time_str;
+
+	if ((max_id = semctl(0, 0, SEM_INFO, &sinfo)) < 0) {
+		log_sys_error("sem_ctl", "SEM_INFO");
+		return 0;
+	}
+
+	printf("cookie       semid      value      last_semop_time\n");
+
+	for (id = 0; id <= max_id; id++) {
+		if ((sid = semctl(id, 0, SEM_STAT, &sdata)) < 0)
+			continue;
+
+		if (sdata.sem_perm.__key >> 16 == DM_COOKIE_MAGIC) {
+			if ((val = semctl(sid, 0, GETVAL)) < 0) {
+				log_error("semid %d: sem_ctl failed for "
+					  "cookie 0x%" PRIx32 ": %s",
+					  sid, sdata.sem_perm.__key,
+					  strerror(errno));
+				continue;
+			}
+
+			time_str = ctime((const time_t *) &sdata.sem_otime);
+
+			printf("0x%-10x %-10d %-10d %s", sdata.sem_perm.__key,
+				sid, val, time_str ? time_str : "unknown\n");
+		}
+	}
+
+	return 1;
+}
+#endif	/* UDEV_SYNC_SUPPORT */
 
 static int _version(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
 {
@@ -667,6 +1012,9 @@ static int _version(int argc __attribute((unused)), char **argv __attribute((unu
 
 static int _simple(int task, const char *name, uint32_t event_nr, int display)
 {
+	uint32_t cookie = 0;
+	int udev_wait_flag = task == DM_DEVICE_RESUME ||
+			     task == DM_DEVICE_REMOVE;
 	int r = 0;
 
 	struct dm_task *dmt;
@@ -686,6 +1034,9 @@ static int _simple(int task, const char *name, uint32_t event_nr, int display)
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (_switches[NOLOCKFS_ARG] && !dm_task_skip_lockfs(dmt))
 		goto out;
 
@@ -694,12 +1045,18 @@ static int _simple(int task, const char *name, uint32_t event_nr, int display)
 				    _read_ahead_flags))
 		goto out;
 
+	if (udev_wait_flag && !dm_task_set_cookie(dmt, &cookie, 0))
+		goto out;
+
 	r = dm_task_run(dmt);
 
 	if (r && display && _switches[VERBOSE_ARG])
 		r = _display_info(dmt);
 
       out:
+	if (udev_wait_flag)
+		(void) dm_udev_wait(cookie);
+
 	dm_task_destroy(dmt);
 	return r;
 }
@@ -793,6 +1150,9 @@ static uint64_t _get_device_size(const char *name)
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (!dm_task_run(dmt))
 		goto out;
 
@@ -838,6 +1198,9 @@ static int _error_device(int argc __attribute((unused)), char **argv __attribute
 		goto error;
 
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+		goto error;
+
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
 		goto error;
 
 	if (!dm_task_run(dmt))
@@ -965,7 +1328,7 @@ static int _exec_command(const char *name)
 
 	if (!(pid = fork())) {
 		execvp(args[0], args);
-		exit(127);
+		_exit(127);
 	} else if (pid < (pid_t) 0)
 		return 0;
 
@@ -1013,6 +1376,9 @@ static int _status(int argc, char **argv, void *data)
 		goto out;
 
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+		goto out;
+
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
 		goto out;
 
 	if (!dm_task_run(dmt))
@@ -1136,6 +1502,9 @@ static int _info(int argc, char **argv, void *data)
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
 		goto out;
 
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
+		goto out;
+
 	if (!dm_task_run(dmt))
 		goto out;
 
@@ -1172,6 +1541,9 @@ static int _deps(int argc, char **argv, void *data)
 		goto out;
 
 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+		goto out;
+
+	if (_switches[INACTIVE_ARG] && !dm_task_query_inactive_table(dmt))
 		goto out;
 
 	if (!dm_task_run(dmt))
@@ -1901,6 +2273,41 @@ static int _dm_deps_disp(struct dm_report *rh, struct dm_pool *mem,
 	return 0;
 }
 
+static int _dm_subsystem_disp(struct dm_report *rh,
+			       struct dm_pool *mem __attribute((unused)),
+			       struct dm_report_field *field, const void *data,
+			       void *private __attribute((unused)))
+{
+	return dm_report_field_string(rh, field, (const char **) data);
+}
+
+static int _dm_vg_name_disp(struct dm_report *rh,
+			     struct dm_pool *mem __attribute((unused)),
+			     struct dm_report_field *field, const void *data,
+			     void *private __attribute((unused)))
+{
+
+	return dm_report_field_string(rh, field, (const char **) data);
+}
+
+static int _dm_lv_name_disp(struct dm_report *rh,
+			     struct dm_pool *mem __attribute((unused)),
+			     struct dm_report_field *field, const void *data,
+			     void *private __attribute((unused)))
+
+{
+	return dm_report_field_string(rh, field, (const char **) data);
+}
+
+static int _dm_lv_layer_name_disp(struct dm_report *rh,
+				   struct dm_pool *mem __attribute((unused)),
+				   struct dm_report_field *field, const void *data,
+				   void *private __attribute((unused)))
+
+{
+	return dm_report_field_string(rh, field, (const char **) data);
+}
+
 static void *_task_get_obj(void *obj)
 {
 	return ((struct dmsetup_report_obj *)obj)->task;
@@ -1921,11 +2328,17 @@ static void *_tree_get_obj(void *obj)
 	return ((struct dmsetup_report_obj *)obj)->tree_node;
 }
 
+static void *_split_name_get_obj(void *obj)
+{
+	return ((struct dmsetup_report_obj *)obj)->split_name;
+}
+
 static const struct dm_report_object_type _report_types[] = {
 	{ DR_TASK, "Mapped Device Name", "", _task_get_obj },
 	{ DR_INFO, "Mapped Device Information", "", _info_get_obj },
 	{ DR_DEPS, "Mapped Device Relationship Information", "", _deps_get_obj },
 	{ DR_TREE, "Mapped Device Relationship Information", "", _tree_get_obj },
+	{ DR_NAME, "Mapped Device Name Components", "", _split_name_get_obj },
 	{ 0, "", "", NULL },
 };
 
@@ -1962,6 +2375,12 @@ FIELD_F(DEPS, STR, "DevNos", 6, dm_deps, "devnos_used", "List of device numbers 
 FIELD_F(TREE, NUM, "#Refs", 5, dm_tree_parents_count, "device_ref_count", "Number of mapped devices referencing this one.")
 FIELD_F(TREE, STR, "RefNames", 8, dm_tree_parents_names, "names_using_dev", "List of names of mapped devices using this one.")
 FIELD_F(TREE, STR, "RefDevNos", 9, dm_tree_parents_devs, "devnos_using_dev", "List of device numbers of mapped devices using this one.")
+
+FIELD_O(NAME, dm_split_name, STR, "Subsys", subsystem, 6, dm_subsystem, "subsystem", "Userspace subsystem responsible for this device.")
+FIELD_O(NAME, dm_split_name, STR, "VG", vg_name, 4, dm_vg_name, "vg_name", "LVM Volume Group name.")
+FIELD_O(NAME, dm_split_name, STR, "LV", lv_name, 4, dm_lv_name, "lv_name", "LVM Logical Volume name.")
+FIELD_O(NAME, dm_split_name, STR, "LVLayer", lv_layer, 7, dm_lv_layer_name, "lv_layer", "LVM device layer.")
+
 {0, 0, 0, 0, "", "", NULL, NULL},
 /* *INDENT-ON* */
 };
@@ -1972,6 +2391,7 @@ FIELD_F(TREE, STR, "RefDevNos", 9, dm_tree_parents_devs, "devnos_using_dev", "Li
 #undef FIELD_F
 
 static const char *default_report_options = "name,major,minor,attr,open,segments,events,uuid";
+static const char *splitname_report_options = "vg_name,lv_name,lv_layer";
 
 static int _report_init(struct command *c)
 {
@@ -1983,6 +2403,9 @@ static int _report_init(struct command *c)
 	uint32_t flags = 0;
 	size_t len = 0;
 	int r = 0;
+
+	if (!strcmp(c->name, "splitname"))
+		options = (char *) splitname_report_options;
 
 	/* emulate old dmsetup behaviour */
 	if (_switches[NOHEADINGS_ARG]) {
@@ -2120,9 +2543,14 @@ static struct command _commands[] = {
 	{"table", "[<device>] [--target <target_type>] [--showkeys]", 0, 1, _status},
 	{"wait", "<device> [<event_nr>]", 0, 2, _wait},
 	{"mknodes", "[<device>]", 0, 1, _mknodes},
+	{"udevflags", "<cookie>", 1, 1, _udevflags},
+	{"udevcomplete", "<cookie>", 1, 1, _udevcomplete},
+	{"udevcomplete_all", "", 0, 0, _udevcomplete_all},
+	{"udevcookies", "", 0, 0, _udevcookies},
 	{"targets", "", 0, 0, _targets},
 	{"version", "", 0, 0, _version},
 	{"setgeometry", "<device> <cyl> <head> <sect> <start>", 5, 5, _setgeometry},
+	{"splitname", "<device> [<subsystem>]", 1, 2, _splitname},
 	{NULL, NULL, 0, 0, NULL}
 };
 
@@ -2132,8 +2560,8 @@ static void _usage(FILE *out)
 
 	fprintf(out, "Usage:\n\n");
 	fprintf(out, "dmsetup [--version] [-v|--verbose [-v|--verbose ...]]\n"
-		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
-		"        [--readahead [+]<sectors>|auto|none]\n"
+		"        [-r|--readonly] [--noopencount] [--nolockfs] [--inactive]\n"
+		"        [--noudevsync] [-y|--yes] [--readahead [+]<sectors>|auto|none]\n"
 		"        [-c|-C|--columns] [-o <fields>] [-O|--sort <sort_fields>]\n"
 		"        [--nameprefixes] [--noheadings] [--separator <separator>]\n\n");
 	for (i = 0; _commands[i].name; i++)
@@ -2488,6 +2916,7 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 		{"exec", 1, &ind, EXEC_ARG},
 		{"force", 0, &ind, FORCE_ARG},
 		{"gid", 1, &ind, GID_ARG},
+		{"inactive", 0, &ind, INACTIVE_ARG},
 		{"major", 1, &ind, MAJOR_ARG},
 		{"minor", 1, &ind, MINOR_ARG},
 		{"mode", 1, &ind, MODE_ARG},
@@ -2497,6 +2926,7 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 		{"nolockfs", 0, &ind, NOLOCKFS_ARG},
 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
 		{"notable", 0, &ind, NOTABLE_ARG},
+		{"noudevsync", 0, &ind, NOUDEVSYNC_ARG},
 		{"options", 1, &ind, OPTIONS_ARG},
 		{"readahead", 1, &ind, READAHEAD_ARG},
 		{"rows", 0, &ind, ROWS_ARG},
@@ -2512,6 +2942,7 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 		{"unquoted", 0, &ind, UNQUOTED_ARG},
 		{"verbose", 1, &ind, VERBOSE_ARG},
 		{"version", 0, &ind, VERSION_ARG},
+		{"yes", 0, &ind, YES_ARG},
 		{0, 0, 0, 0}
 	};
 #else
@@ -2567,7 +2998,7 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 
 	optarg = 0;
 	optind = OPTIND_INIT;
-	while ((ind = -1, c = GETOPTLONG_FN(*argc, *argv, "cCfGj:m:Mno:O:ru:Uv",
+	while ((ind = -1, c = GETOPTLONG_FN(*argc, *argv, "cCfG:j:m:M:no:O:ru:U:vy",
 					    long_options, NULL)) != -1) {
 		if (c == ':' || c == '?')
 			return 0;
@@ -2605,6 +3036,10 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 			_switches[UUID_ARG]++;
 			_uuid = optarg;
 		}
+		if (c == 'y' || ind == YES_ARG)
+			_switches[YES_ARG]++;
+		if (ind == NOUDEVSYNC_ARG)
+			_switches[NOUDEVSYNC_ARG]++;
 		if (c == 'G' || ind == GID_ARG) {
 			_switches[GID_ARG]++;
 			_int_args[GID_ARG] = atoi(optarg);
@@ -2626,6 +3061,8 @@ static int _process_switches(int *argc, char ***argv, const char *dev_dir)
 			_switches[TARGET_ARG]++;
 			_target = optarg;
 		}
+		if ((ind == INACTIVE_ARG))
+			_switches[INACTIVE_ARG]++;
 		if ((ind == NAMEPREFIXES_ARG))
 			_switches[NAMEPREFIXES_ARG]++;
 		if ((ind == NOFLUSH_ARG))
@@ -2740,8 +3177,14 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
+	if (!_switches[COLS_ARG] && !strcmp(c->name, "splitname"))
+		_switches[COLS_ARG]++;
+
 	if (_switches[COLS_ARG] && !_report_init(c))
 		goto out;
+
+	if (_switches[NOUDEVSYNC_ARG])
+		dm_udev_set_sync_support(0);
 
       doit:
 	if (!c->fn(argc, argv, NULL)) {
