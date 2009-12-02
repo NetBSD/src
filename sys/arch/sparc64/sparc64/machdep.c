@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.249 2009/12/02 10:18:42 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2009/12/02 10:18:42 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -270,9 +270,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		break;
 	}
 #endif
-	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-		((pstate)<<TSTATE_PSTATE_SHIFT) | 
-		(tf->tf_tstate & TSTATE_CWP);
+	tstate = ((int64_t)ASI_PRIMARY_NO_FAULT << TSTATE_ASI_SHIFT) |
+	    (pstate << TSTATE_PSTATE_SHIFT) | (tf->tf_tstate & TSTATE_CWP);
 	if ((fs = l->l_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
