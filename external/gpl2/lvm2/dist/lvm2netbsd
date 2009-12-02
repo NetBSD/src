@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: lvm2netbsd,v 1.1.1.3 2009/12/02 00:25:39 haad Exp $
+#	$NetBSD: lvm2netbsd,v 1.2 2009/12/02 00:59:19 haad Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 #
 # ./configure --with-cluster=none --with-snapshots=internal --with-clvmd=none 
 #   --with-lvm1=none --with-cluster=none --disable-readline --enable-o_direct 
-#   --enable-devmapper
+#   --disable-udev_sync --enable-devmapper
 #
 # based on texinfo2netbsd
 #
