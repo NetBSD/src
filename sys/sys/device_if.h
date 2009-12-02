@@ -1,3 +1,4 @@
+/*	$NetBSD: device_if.h,v 1.3 2009/12/02 12:40:12 stacktic Exp $	*/
 #ifndef	_SYS_DEVICE_IF_H
 #define	_SYS_DEVICE_IF_H
 
