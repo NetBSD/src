@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.37 2009/12/01 09:50:51 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.38 2009/12/02 08:31:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -76,8 +76,8 @@ void		rump_set_vmspace(struct vmspace *);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
 typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
-rump_proc_vfs_init_fn rump_proc_vfs_init;
-rump_proc_vfs_release_fn rump_proc_vfs_release;
+extern rump_proc_vfs_init_fn rump_proc_vfs_init;
+extern rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info *rump_cpu;
 
