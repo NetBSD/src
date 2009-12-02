@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.20 2009/11/27 03:23:06 rmind Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.21 2009/12/02 13:10:09 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -497,6 +497,8 @@ initarm(void *arg)
 
 	/* configure GPIOs. */
 	gxio_config_pin();
+
+	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
 
 	consinit();
 #ifdef KGDB
@@ -1021,10 +1023,6 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-#if defined(FFUARTCONSOLE) || defined(STUARTCONSOLE) || \
-    defined(BTUARTCONSOLE) || defined(HWUARTCONSOLE)
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
-#endif
 
 	if (consinit_called != 0)
 		return;
@@ -1042,9 +1040,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_FFUART);
-
+			pxa2x0_clkman_config(CKEN_FFUART, 1);
 			return;
 		}
 	}
@@ -1059,8 +1055,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_STUART);
+			pxa2x0_clkman_config(CKEN_STUART, 1);
 			return;
 		}
 	}
@@ -1075,8 +1070,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_BTUART);
+			pxa2x0_clkman_config(CKEN_BTUART, 1);
 			return;
 		}
 	}
@@ -1091,8 +1085,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_HWUART);
+			pxa2x0_clkman_config(CKEN_HWUART, 1);
 			return;
 		}
 	}
@@ -1111,28 +1104,27 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+	int cken = 0;
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
-		ckenreg |= CKEN_FFUART;
+		cken = CKEN_FFUART;
 	} else if (0 == strcmp(kgdb_devname, "stuart")) {
 		paddr = PXA2X0_STUART_BASE;
-		ckenreg |= CKEN_STUART;
+		cken = CKEN_STUART;
 	} else if (0 == strcmp(kgdb_devname, "btuart")) {
 		paddr = PXA2X0_BTUART_BASE;
-		ckenreg |= CKEN_BTUART;
+		cken = CKEN_BTUART;
 	} else if (0 == strcmp(kgdb_devname, "hwuart")) {
 		paddr = PXA2X0_HWUART_BASE;
-		ckenreg |= CKEN_HWUART;
+		cken = CKEN_HWUART;
 	}
 
 	if (paddr &&
 	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_devrate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
-		ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN, ckenreg);
-
+		pxa2x0_clkman_config(cken, 1);
 	}
 
 #endif
