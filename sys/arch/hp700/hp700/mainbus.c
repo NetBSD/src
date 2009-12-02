@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.57 2009/12/02 13:45:13 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.58 2009/12/02 13:49:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2009/12/02 13:45:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58 2009/12/02 13:49:32 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -82,6 +82,18 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2009/12/02 13:45:13 skrll Exp $");
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+
+#ifdef MBUSDEBUG
+
+#define	DPRINTF(s)	do {	\
+	if (mbusdebug)		\
+		printf s;	\
+} while(0)
+
+int mbusdebug = 1;
+#else
+#define	DPRINTF(s)	/* */
+#endif
 
 struct mainbus_softc {
 	device_t sc_dv;
@@ -177,6 +189,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	vsize_t btlb_size;
 	int error;
 #endif /* USE_BTLB */
+
+	DPRINTF(("\n%s(%lx,%lx,%scachable,%p)\n", __func__,
+	    bpa, size, flags? "" : "non", bshp));
 
 	/*
 	 * We must be called with a page-aligned address in
@@ -330,9 +345,9 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	error = mbus_add_mapping(bpa, size, flags, bshp);
 	*bshp |= offset;
 	if (error) {
+		DPRINTF(("bus_space_map: pa 0x%lx, size 0x%lx failed\n",
+		    bpa, size));
 		if (extent_free(hp700_io_extent, bpa, size, EX_NOWAIT)) {
-			printf ("bus_space_map: pa 0x%lx, size 0x%lx\n",
-				bpa, size);
 			printf ("bus_space_map: can't free region\n");
 		}
 	}
@@ -367,8 +382,8 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	 */
 	error = extent_free(hp700_io_extent, bpa, size, EX_NOWAIT);
 	if (error) {
-		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
-		    bpa, size);
+		DPRINTF(("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
+		    bpa, size));
 		panic("bus_space_unmap: can't free region (%d)", error);
 	}
 }
@@ -405,9 +420,9 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	 */
 	error = mbus_add_mapping(bpa, size, flags, bshp);
 	if (error) {
+		DPRINTF(("bus_space_alloc: pa 0x%lx, size 0x%lx failed\n",
+		    bpa, size));
 		if (extent_free(hp700_io_extent, bpa, size, EX_NOWAIT)) {
-			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
-				bpa, size);
 			printf("bus_space_alloc: can't free region\n");
 		}
 	}
