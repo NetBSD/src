@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#   $NetBSD: pf2netbsd,v 1.1 2009/12/01 06:27:57 martti Exp $
+#   $NetBSD: pf2netbsd,v 1.2 2009/12/02 15:21:37 martti Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,16 +93,6 @@ share/man/man4/pflog.4
 share/man/man4/pfsync.4
 share/man/man5/pf.conf.5
 share/man/man5/pf.os.5
-share/pf/ackpri
-share/pf/faq-example1
-share/pf/faq-example2
-share/pf/faq-example3
-share/pf/Makefile
-share/pf/queue1
-share/pf/queue2
-share/pf/queue3
-share/pf/queue4
-share/pf/spamd
 usr.sbin/authpf/authpf.8
 usr.sbin/authpf/authpf.c
 usr.sbin/authpf/Makefile
