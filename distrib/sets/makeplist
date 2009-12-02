@@ -94,7 +94,9 @@ SELECTNONDIRS="! -type d -print -o ( -type d -prune )"
 # to consult the metalog instead of the file system.
 #
 
+(
 cd "${prefix}"
+
 #
 # Match the directories.  Use find(1) to avoid repeat calls to
 # 'test -d'.
@@ -123,7 +125,7 @@ while read ignore ignore ignore ignore ignore ignore ignore ignore ignore \
 	${FIND} ${args} ${SELECTNONDIRS}
 done > "${ffilename}"
 
-cd -
+)
 
 echo "@cwd ${realprefix}"
 if [ -s "${ffilename}" ]; then
