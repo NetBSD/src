@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.599 2009/12/01 09:09:40 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.600 2009/12/02 14:11:20 uebayasi Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -665,7 +665,7 @@ MKBINUTILS?=	${MKBFD}
 #
 # MK* options which default to "yes".
 #
-.for var in \
+_MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
 	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
@@ -685,13 +685,14 @@ MKBINUTILS?=	${MKBFD}
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKX11FONTS \
 	MKYP
+.for var in ${_MKVARS.yes}
 ${var}?=	yes
 .endfor
 
 #
 # MK* options which default to "no".
 #
-.for var in \
+_MKVARS.no= \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
 	MKEXTSRC \
 	MKLVM \
@@ -699,6 +700,7 @@ ${var}?=	yes
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
 	MKUNPRIVED MKUPDATE MKX11 
+.for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
 
