@@ -1,7 +1,5 @@
-#	$NetBSD: sets.subr,v 1.97 2009/12/02 15:05:55 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.98 2009/12/02 15:18:06 uebayasi Exp $
 #
-
-set -vx
 
 #
 # The following variables contain defaults for sets.subr functions and callers:
@@ -28,6 +26,7 @@ set -vx
 
 # XXX don't hardcode
 MKEXTRAVARS="\
+	EXTSRCS		\
 	USE_INET6	\
 	USE_KERBEROS	\
 	USE_LDAP	\
@@ -208,7 +207,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.97 2009/12/02 15:05:55 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.98 2009/12/02 15:18:06 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
