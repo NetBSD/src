@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118reg.h,v 1.1 2009/08/09 06:40:10 kiyohara Exp $	*/
+/*	$NetBSD: lan9118reg.h,v 1.2 2009/12/02 12:51:50 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -30,10 +30,16 @@
 
 #define LAN9118_IOSIZE	0x100
 
-#define LAN9118_ID_9115	0x115
-#define LAN9118_ID_9116	0x116
-#define LAN9118_ID_9117	0x117
-#define LAN9118_ID_9118	0x118
+#define LAN9118_ID_9115	0x0115
+#define LAN9118_ID_9116	0x0116
+#define LAN9118_ID_9117	0x0117
+#define LAN9118_ID_9118	0x0118
+#define LAN9218_ID_9215	0x115a
+#define LAN9218_ID_9217	0x117a
+#define LAN9218_ID_9218	0x118a
+
+#define IS_LAN9118(id)	((id) >= LAN9118_ID_9115 && (id) <= LAN9118_ID_9118)
+#define IS_LAN9218(id)	((id) >= LAN9218_ID_9215 && (id) <= LAN9218_ID_9218)
 
 #define LAN9118_IPHY_ADDR	0x01	/* Internal PHY Address */
 
