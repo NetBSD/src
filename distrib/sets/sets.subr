@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.93 2009/12/01 15:49:21 apb Exp $
+#	$NetBSD: sets.subr,v 1.94 2009/12/02 14:13:12 uebayasi Exp $
 #
 
 #
@@ -24,52 +24,6 @@
 # as well as:
 #
 MKVARS="\
-	MKBFD		\
-	MKBINUTILS	\
-	MKCATPAGES	\
-	MKCOMPAT	\
-	MKCRYPTO	\
-	MKCRYPTO_IDEA	\
-	MKCRYPTO_MDC2	\
-	MKCRYPTO_RC5	\
-	MKCVS		\
-	MKDEBUG		\
-	MKDEBUGLIB	\
-	MKDOC		\
-	MKDYNAMICROOT	\
-	MKEXTSRC	\
-	MKGCC		\
-	MKGCCCMDS	\
-	MKGDB		\
-	MKHESIOD	\
-	MKHTML		\
-	MKINET6		\
-	MKINFO		\
-	MKIPFILTER	\
-	MKISCSI		\
-	MKKERBEROS	\
-	MKKMOD		\
-	MKLDAP		\
-	MKLINT		\
-	MKLVM		\
-	MKMAN		\
-	MKMANPAGES	\
-	MKMANZ		\
-	MKMDNS		\
-	MKNLS		\
-	MKNVI		\
-	MKPAM		\
-	MKPF		\
-	MKPIC		\
-	MKPOSTFIX	\
-	MKPROFILE	\
-	MKSHARE		\
-	MKSKEY		\
-	MKX11		\
-	MKX11FONTS	\
-	MKXORG		\
-	MKYP		\
-	MKZFS		\
 	USE_INET6	\
 	USE_KERBEROS	\
 	USE_LDAP	\
@@ -187,7 +141,7 @@ MKXORG:=no
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_BINUTILS HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
-		${MKVARS}
+		\${_MKVARS.yes} \${_MKVARS.no}
 	@echo "export \$i=\${\$i}"
 .endfor
 
@@ -241,7 +195,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.93 2009/12/01 15:49:21 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.94 2009/12/02 14:13:12 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
