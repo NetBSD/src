@@ -1,4 +1,4 @@
-/*	$NetBSD: segtype.h,v 1.1.1.1 2008/12/22 00:18:05 haad Exp $	*/
+/*	$NetBSD: segtype.h,v 1.1.1.2 2009/12/02 00:26:34 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -18,6 +18,8 @@
 #ifndef _SEGTYPES_H
 #define _SEGTYPES_H
 
+#include "metadata-exported.h"
+
 struct segtype_handler;
 struct cmd_context;
 struct config_tree;
@@ -35,6 +37,7 @@ struct dev_manager;
 #define SEG_VIRTUAL		0x00000020U
 #define SEG_CANNOT_BE_ZEROED	0x00000040U
 #define SEG_MONITORED		0x00000080U
+#define SEG_UNKNOWN		0x80000000U
 
 #define seg_is_mirrored(seg)	((seg)->segtype->flags & SEG_AREAS_MIRRORED ? 1 : 0)
 #define seg_is_striped(seg)	((seg)->segtype->flags & SEG_AREAS_STRIPED ? 1 : 0)
@@ -43,19 +46,20 @@ struct dev_manager;
 #define seg_can_split(seg)	((seg)->segtype->flags & SEG_CAN_SPLIT ? 1 : 0)
 #define seg_cannot_be_zeroed(seg) ((seg)->segtype->flags & SEG_CANNOT_BE_ZEROED ? 1 : 0)
 #define seg_monitored(seg)	((seg)->segtype->flags & SEG_MONITORED ? 1 : 0)
+#define seg_unknown(seg)	((seg)->segtype->flags & SEG_UNKNOWN ? 1 : 0)
 
 #define segtype_is_striped(segtype)	((segtype)->flags & SEG_AREAS_STRIPED ? 1 : 0)
 #define segtype_is_mirrored(segtype)	((segtype)->flags & SEG_AREAS_MIRRORED ? 1 : 0)
 #define segtype_is_virtual(segtype)	((segtype)->flags & SEG_VIRTUAL ? 1 : 0)
 
 struct segment_type {
-	struct dm_list list;
-	struct cmd_context *cmd;
+	struct dm_list list;		/* Internal */
+	struct cmd_context *cmd;	/* lvm_register_segtype() sets this. */
 	uint32_t flags;
 	struct segtype_handler *ops;
 	const char *name;
-	void *library;
-	void *private;
+	void *library;			/* lvm_register_segtype() sets this. */
+	void *private;			/* For the segtype handler to use. */
 };
 
 struct segtype_handler {
@@ -75,12 +79,15 @@ struct segtype_handler {
                                 struct lv_segment *seg,
                                 struct dm_tree_node *node, uint64_t len,
                                 uint32_t *pvmove_mirror_count);
-	int (*target_percent) (void **target_state, struct dm_pool * mem,
+	int (*target_percent) (void **target_state,
+			       percent_range_t *percent_range,
+			       struct dm_pool * mem,
 			       struct cmd_context *cmd,
 			       struct lv_segment *seg, char *params,
 			       uint64_t *total_numerator,
 			       uint64_t *total_denominator);
-	int (*target_present) (const struct lv_segment *seg,
+	int (*target_present) (struct cmd_context *cmd,
+			       const struct lv_segment *seg,
 			       unsigned *attributes);
 	int (*modules_needed) (struct dm_pool *mem,
 			       const struct lv_segment *seg,
@@ -94,10 +101,15 @@ struct segtype_handler {
 struct segment_type *get_segtype_from_string(struct cmd_context *cmd,
 					     const char *str);
 
+struct segtype_library;
+int lvm_register_segtype(struct segtype_library *seglib,
+			 struct segment_type *segtype);
+
 struct segment_type *init_striped_segtype(struct cmd_context *cmd);
 struct segment_type *init_zero_segtype(struct cmd_context *cmd);
 struct segment_type *init_error_segtype(struct cmd_context *cmd);
 struct segment_type *init_free_segtype(struct cmd_context *cmd);
+struct segment_type *init_unknown_segtype(struct cmd_context *cmd, const char *name);
 
 #ifdef SNAPSHOT_INTERNAL
 struct segment_type *init_snapshot_segtype(struct cmd_context *cmd);

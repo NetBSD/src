@@ -6,8 +6,8 @@ pvmove \- move physical extents
 [\-\-abort]
 [\-\-alloc AllocationPolicy]
 [\-b|\-\-background]
-[\-d|\-\-debug] [\-h|\-\-help] [\-i|\-\-interval Seconds] [\-v|\-\-verbose]
-[\-n|\-\-name LogicalVolume] 
+[\-d|\-\-debug] [\-h|\-\-help] [\-i|\-\-interval Seconds]
+[\-\-noudevsync] [\-v|\-\-verbose] [\-n|\-\-name LogicalVolume]
 [SourcePhysicalVolume[:PE[-PE]...] [DestinationPhysicalVolume[:PE[-PE]...]...]]
 .SH DESCRIPTION
 .B pvmove
@@ -72,6 +72,13 @@ type of on-disk metadata.  Metadata can be converted using \fBvgconvert\fP(8).
 .TP
 .I \-\-abort
 Abort any moves in progress.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .TP
 .I \-b, \-\-background
 Run the daemon in the background.

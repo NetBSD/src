@@ -1,4 +1,4 @@
-/*	$NetBSD: dmeventd_snapshot.c,v 1.1.1.1 2008/12/22 00:18:56 haad Exp $	*/
+/*	$NetBSD: dmeventd_snapshot.c,v 1.1.1.2 2009/12/02 00:27:12 haad Exp $	*/
 
 /*
  * Copyright (C) 2007-2008 Red Hat, Inc. All rights reserved.
@@ -59,6 +59,7 @@ static pthread_mutex_t _event_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void _temporary_log_fn(int level,
 			      const char *file __attribute((unused)),
 			      int line __attribute((unused)),
+			      int dm_errno __attribute((unused)),
 			      const char *format)
 {
 	if (!strncmp(format, "WARNING: ", 9) && (level < 5))

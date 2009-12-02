@@ -1,6 +1,6 @@
 ###############################################################################
 ## Copyright (C) 2000-2004 Sistina Software, Inc. All rights reserved.
-## Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
+## Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
 ##
 ## This copyrighted material is made available to anyone wishing to use,
 ## modify, copy, or redistribute it subject to the terms and conditions
@@ -28,6 +28,7 @@ AC_CANONICAL_TARGET([])
 
 case "$host_os" in
 	linux*)
+		CFLAGS="$CFLAGS"
 		COPTIMISE_FLAG="-O2"
 		CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
 		CLDWHOLEARCHIVE="-Wl,-whole-archive"
@@ -39,7 +40,6 @@ case "$host_os" in
 		ODIRECT=yes
 		DM_IOCTLS=yes
 		SELINUX=yes
-		REALTIME=yes
 		CLUSTER=internal
 		FSADM=yes
 		;;
@@ -54,7 +54,6 @@ case "$host_os" in
 		ODIRECT=no
 		DM_IOCTLS=no
 		SELINUX=no
-		REALTIME=no
 		CLUSTER=none
 		FSADM=no
 		;;
@@ -117,6 +116,7 @@ dnl -- Check for functions
 AC_CHECK_FUNCS([gethostname getpagesize memset mkdir rmdir munmap setlocale \
   strcasecmp strchr strdup strncasecmp strerror strrchr strstr strtol strtoul \
   uname], , [AC_MSG_ERROR(bailing out)])
+AC_CHECK_FUNCS(siginterrupt)
 AC_FUNC_ALLOCA
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_FORK
@@ -144,10 +144,10 @@ AC_PREFIX_DEFAULT(/usr)
 ################################################################################
 dnl -- Setup the ownership of the files
 AC_MSG_CHECKING(file owner)
-OWNER="root"
+OWNER=""
 
 AC_ARG_WITH(user,
-  [  --with-user=USER        Set the owner of installed files [[USER=root]] ],
+  [  --with-user=USER        Set the owner of installed files [[USER=]] ],
   [ OWNER="$withval" ])
 AC_MSG_RESULT($OWNER)
 
@@ -158,9 +158,9 @@ fi
 ################################################################################
 dnl -- Setup the group ownership of the files
 AC_MSG_CHECKING(group owner)
-GROUP="root"
+GROUP=""
 AC_ARG_WITH(group,
-  [  --with-group=GROUP      Set the group owner of installed files [[GROUP=root]] ],
+  [  --with-group=GROUP      Set the group owner of installed files [[GROUP=]] ],
   [ GROUP="$withval" ])
 AC_MSG_RESULT($GROUP)
 
@@ -316,15 +316,32 @@ AC_MSG_RESULT($READLINE)
 ################################################################################
 dnl -- Disable realtime clock support
 AC_MSG_CHECKING(whether to enable realtime support)
-AC_ARG_ENABLE(realtime, [  --disable-realtime      Disable realtime clock support],
+AC_ARG_ENABLE(realtime, [  --enable-realtime       Enable realtime clock support],
 REALTIME=$enableval)
 AC_MSG_RESULT($REALTIME)
+
+################################################################################
+dnl -- Init pkg-config with dummy invokation:
+dnl -- this is required because PKG_CHECK_MODULES macro is expanded
+dnl -- to initialize the pkg-config environment only at the first invokation,
+dnl -- that would be conditional in this configure.in.
+pkg_config_init() {
+	PKG_CHECK_MODULES(PKGCONFIGINIT, pkgconfiginit, [],
+		[AC_MSG_RESULT([pkg-config initialized])])
+	PKGCONFIG_INIT=1
+}
 
 ################################################################################
 dnl -- Build cluster LVM daemon
 AC_MSG_CHECKING(whether to build cluster LVM daemon)
 AC_ARG_WITH(clvmd,
-  [  --with-clvmd=TYPE       Build cluster LVM Daemon: cman/gulm/none/all
+  [  --with-clvmd=TYPE       Build cluster LVM Daemon.
+                          The following cluster manager combinations are valid:
+                           * cman,gulm             (RHEL4 or equivalent)
+                           * cman                  (RHEL5 or equivalent)
+                           * cman,corosync,openais (or selection of them)
+                           * all                   (autodetect)
+                           * none                  (disable build)
                           [TYPE=none] ],
   [ CLVMD="$withval" ],
   [ CLVMD="none" ])
@@ -336,6 +353,242 @@ AC_MSG_RESULT($CLVMD)
 dnl -- If clvmd enabled without cluster locking, automagically include it
 if  test x$CLVMD != xnone && test x$CLUSTER = xnone; then
 	CLUSTER=internal
+fi
+
+dnl -- init pkgconfig if required
+if  test x$CLVMD != xnone && test x$PKGCONFIG_INIT != x1; then
+	pkg_config_init
+fi
+
+
+dnl -- define build types
+if [[ `expr x"$CLVMD" : '.*gulm.*'` != 0 ]]; then
+	BUILDGULM=yes
+fi
+if [[ `expr x"$CLVMD" : '.*corosync.*'` != 0 ]]; then
+	BUILDCOROSYNC=yes
+fi
+if [[ `expr x"$CLVMD" : '.*openais.*'` != 0 ]]; then
+	BUILDOPENAIS=yes
+fi
+if [[ `expr x"$CLVMD" : '.*cman.*'` != 0 ]]; then
+	BUILDCMAN=yes
+fi
+
+dnl -- sanity check around user selection
+if test x$BUILDGULM = xyes; then
+	if test x$BUILDCOROSYNC = xyes || \
+	   test x$BUILDOPENAIS = xyes; then
+		AC_MSG_ERROR([requested clvmd configuration is not valid])
+	fi
+fi
+
+dnl -- define a soft bailout if we are autodetecting
+soft_bailout() {
+	NOTFOUND=1
+}
+
+hard_bailout() {
+	AC_MSG_ERROR([bailing out])
+}
+
+dnl -- if clvmd=all then set soft_bailout (we don't want to error)
+dnl -- and set all builds to yes. We need to do this here
+dnl -- to skip the gulm + openais|corosync sanity check above.
+if test x$CLVMD = xall; then
+	bailout=soft_bailout
+	BUILDGULM=yes
+	BUILDCMAN=yes
+	BUILDCOROSYNC=yes
+	BUILDOPENAIS=yes
+else
+	bailout=hard_bailout
+fi
+
+dnl -- helper macro to check libs without adding them to LIBS
+check_lib_no_libs() {
+	lib_no_libs_arg1=$1
+	shift
+	lib_no_libs_arg2=$1
+	shift
+	lib_no_libs_args=$@
+	AC_CHECK_LIB([$lib_no_libs_arg1],
+		     [$lib_no_libs_arg2],,
+		     [$bailout],
+		     [$lib_no_libs_args])
+	LIBS=$ac_check_lib_save_LIBS
+}
+
+dnl -- Look for gulm libraries if required.
+if test x$BUILDGULM = xyes; then
+	PKG_CHECK_MODULES(CCS, libccs, [HAVE_CCS=yes],
+		[NOTFOUND=0
+		AC_CHECK_HEADERS(ccs.h,,$bailout)
+		check_lib_no_libs ccs ccs_connect
+		if test $NOTFOUND = 0; then
+			AC_MSG_RESULT([no pkg for libccs, using -lccs])
+			CCS_LIBS="-lccs"
+			HAVE_CCS=yes
+		fi])
+	PKG_CHECK_MODULES(GULM, libgulm, [HAVE_GULM=yes],
+		[NOTFOUND=0
+		AC_CHECK_HEADERS(libgulm.h,,$bailout)
+		check_lib_no_libs gulm lg_core_login
+		if test $NOTFOUND = 0; then
+			AC_MSG_RESULT([no pkg for libgulm, using -lgulm])
+			GULM_LIBS="-lgulm"
+			HAVE_GULM=yes
+		fi])
+fi
+
+dnl -- Look for cman libraries if required.
+if test x$BUILDCMAN = xyes; then
+	PKG_CHECK_MODULES(CMAN, libcman, [HAVE_CMAN=yes],
+		[NOTFOUND=0
+		AC_CHECK_HEADERS(libcman.h,,$bailout)
+		check_lib_no_libs cman cman_init
+		if test $NOTFOUND = 0; then
+			AC_MSG_RESULT([no pkg for libcman, using -lcman])
+			CMAN_LIBS="-lcman"
+			HAVE_CMAN=yes
+		fi])
+	CHECKCONFDB=yes
+	CHECKDLM=yes
+fi
+
+dnl -- Look for corosync that's required also for openais build
+dnl -- only enough recent version of corosync ship pkg-config files.
+dnl -- We can safely rely on that to detect the correct bits.
+if test x$BUILDCOROSYNC = xyes || \
+   test x$BUILDOPENAIS = xyes; then
+	PKG_CHECK_MODULES(COROSYNC, corosync, [HAVE_COROSYNC=yes], $bailout)
+	CHECKCONFDB=yes
+fi
+
+dnl -- Look for corosync libraries if required.
+if test x$BUILDCOROSYNC = xyes; then
+	PKG_CHECK_MODULES(QUORUM, libquorum, [HAVE_QUORUM=yes], $bailout)
+	CHECKCPG=yes
+	CHECKDLM=yes
+fi
+
+dnl -- Look for openais libraries if required.
+if test x$BUILDOPENAIS = xyes; then
+	PKG_CHECK_MODULES(SALCK, libSaLck, [HAVE_SALCK=yes], $bailout)
+	CHECKCPG=yes
+fi
+
+dnl -- Below are checks for libraries common to more than one build.
+
+dnl -- Check confdb library.
+dnl -- mandatory for corosync build.
+dnl -- optional for openais/cman build.
+
+if test x$CHECKCONFDB = xyes; then
+	PKG_CHECK_MODULES(CONFDB, libconfdb,
+			  [HAVE_CONFDB=yes],
+			  [HAVE_CONFDB=no])
+
+	AC_CHECK_HEADERS(corosync/confdb.h,
+		[HAVE_CONFDB_H=yes],
+		[HAVE_CONFDB_H=no])
+
+	if test x$HAVE_CONFDB != xyes && \
+	   test x$HAVE_CONFDB_H = xyes; then
+		check_lib_no_libs confdb confdb_initialize
+		AC_MSG_RESULT([no pkg for confdb, using -lconfdb])
+		CONFDB_LIBS="-lconfdb"
+		HAVE_CONFDB=yes
+	fi
+
+	if test x$BUILDCOROSYNC = xyes && \
+	   test x$HAVE_CONFDB != xyes &&
+	   test x$CLVMD != xall; then
+		AC_MSG_ERROR([bailing out... confdb library is required])
+	fi
+fi
+
+dnl -- Check cpg library.
+if test x$CHECKCPG = xyes; then
+	PKG_CHECK_MODULES(CPG, libcpg, [HAVE_CPG=yes], $bailout)
+fi
+
+dnl -- Check dlm library.
+if test x$CHECKDLM = xyes; then
+	PKG_CHECK_MODULES(DLM, libdlm, [HAVE_DLM=yes],
+		[NOTFOUND=0
+		AC_CHECK_HEADERS(libdlm.h,,$bailout)
+		check_lib_no_libs dlm dlm_lock -lpthread
+		if test $NOTFOUND = 0; then
+			AC_MSG_RESULT([no pkg for libdlm, using -ldlm])
+			DLM_LIBS="-ldlm -lpthread"
+			HAVE_DLM=yes
+		fi])
+fi
+
+dnl -- If we are autodetecting, we need to re-create
+dnl -- the depedencies checks and set a proper CLVMD.
+if test x$CLVMD = xall; then
+	CLVMD=none
+	if test x$HAVE_CCS = xyes && \
+	   test x$HAVE_GULM = xyes; then
+		AC_MSG_RESULT([Enabling clvmd gulm cluster manager])
+		CLVMD="$CLVMD,gulm"
+	fi
+	if test x$HAVE_CMAN = xyes && \
+	   test x$HAVE_DLM = xyes; then
+		AC_MSG_RESULT([Enabling clvmd cman cluster manager])
+		CLVMD="$CLVMD,cman"
+	fi
+	if test x$HAVE_COROSYNC = xyes && \
+	   test x$HAVE_QUORUM = xyes && \
+	   test x$HAVE_CPG = xyes && \
+	   test x$HAVE_DLM = xyes && \
+	   test x$HAVE_CONFDB = xyes; then
+		AC_MSG_RESULT([Enabling clvmd corosync cluster manager])
+		CLVMD="$CLVMD,corosync"
+	fi
+	if test x$HAVE_COROSYNC = xyes && \
+	   test x$HAVE_CPG = xyes && \
+	   test x$HAVE_SALCK = xyes; then
+		AC_MSG_RESULT([Enabling clvmd openais cluster manager])
+		CLVMD="$CLVMD,openais"
+	fi
+	if test x$CLVMD = xnone; then
+		AC_MSG_RESULT([Disabling clvmd build. No cluster manager detected.])
+	fi
+fi
+
+################################################################################
+dnl -- Build cluster mirror log daemon
+AC_MSG_CHECKING(whether to build cluster mirror log daemon)
+AC_ARG_ENABLE(cmirrord, [  --enable-cmirrord       Enable the cluster mirror log daemon],
+CMIRRORD=$enableval, CMIRRORD=no)
+AC_MSG_RESULT($CMIRRORD)
+
+BUILD_CMIRRORD=$CMIRRORD
+
+################################################################################
+dnl -- cmirrord pidfile
+AH_TEMPLATE(CMIRRORD_PIDFILE, [Path to cmirrord pidfile.])
+if test "x$BUILD_CMIRRORD" = xyes; then
+	AC_ARG_WITH(cmirrord-pidfile,
+		    [  --with-cmirrord-pidfile=PATH    cmirrord pidfile [[/var/run/cmirrord.pid]] ],
+		    [ AC_DEFINE_UNQUOTED(CMIRRORD_PIDFILE,"$withval") ],
+		    [ AC_DEFINE_UNQUOTED(CMIRRORD_PIDFILE,"/var/run/cmirrord.pid") ])
+fi
+
+################################################################################
+dnl -- Look for corosync libraries if required.
+if [[ "x$BUILD_CMIRRORD" = xyes ]]; then
+	dnl -- init pkgconfig if required
+	if  test x$PKGCONFIG_INIT != x1; then
+		pkg_config_init
+	fi
+	PKG_CHECK_MODULES(SACKPT, libSaCkpt)
+	if test x$HAVE_CPG != xyes; then
+		PKG_CHECK_MODULES(CPG, libcpg)
+	fi
 fi
 
 ################################################################################
@@ -389,9 +642,51 @@ if test x$DEVMAPPER = xyes; then
 fi
 
 ################################################################################
+dnl -- Enable udev synchronisation
+AC_MSG_CHECKING(whether to enable synchronisation with udev processing)
+AC_ARG_ENABLE(udev_sync, [  --enable-udev_sync      Enable synchronisation with udev processing],
+UDEV_SYNC=$enableval, UDEV_SYNC=no)
+AC_MSG_RESULT($UDEV_SYNC)
+
+if test x$UDEV_SYNC = xyes; then
+	AC_DEFINE([UDEV_SYNC_SUPPORT], 1, [Define to 1 to enable synchronisation with udev processing.])
+fi
+
+dnl -- Enable udev rules
+AC_MSG_CHECKING(whether to enable installation of udev rules required for synchronisation)
+AC_ARG_ENABLE(udev_rules, [  --enable-udev_rules     Install rule files needed for udev synchronisation],
+UDEV_RULES=$enableval, UDEV_RULES=$UDEV_SYNC)
+AC_MSG_RESULT($UDEV_RULES)
+
+################################################################################
+dnl -- Check for libudev's udev_queue_get_udev_is_active function when udev synchronisation is enabled
+
+if test x$UDEV_SYNC = xyes; then
+	AC_CHECK_LIB(udev, udev_queue_get_udev_is_active, HAVE_UDEV_QUEUE_GET_UDEV_IS_ACTIVE=yes,
+		HAVE_UDEV_QUEUE_GET_UDEV_IS_ACTIVE=no)
+
+		if test x$HAVE_UDEV_QUEUE_GET_UDEV_IS_ACTIVE = xyes; then
+			AC_DEFINE([HAVE_UDEV_QUEUE_GET_UDEV_IS_ACTIVE], 1,
+			  [Define to 1 if libudev's udev_queue_get_udev_is_active function is available.])
+			LIBS="-ludev $LIBS"
+		fi
+fi
+
+################################################################################
 dnl -- Compatibility mode
 AC_ARG_ENABLE(compat,   [  --enable-compat         Enable support for old device-mapper versions],
   DM_COMPAT=$enableval, DM_COMPAT=no)
+
+################################################################################
+dnl -- Compatible units suffix mode
+AC_ARG_ENABLE(units-compat,
+  [  --enable-units-compat   Enable output compatibility with old versions that
+                          that don't use KiB-style unit suffixes],
+  UNITS_COMPAT=$enableval, UNITS_COMPAT=no)
+
+if test x$UNITS_COMPAT = xyes; then
+	AC_DEFINE([DEFAULT_SI_UNIT_CONSISTENCY], 0, [Define to 0 to reinstate the pre-2.02.54 handling of unit suffixes.])
+fi
 
 ################################################################################
 dnl -- Disable ioctl
@@ -408,6 +703,18 @@ AC_MSG_RESULT($ODIRECT)
 if test x$ODIRECT = xyes; then
 	AC_DEFINE([O_DIRECT_SUPPORT], 1, [Define to 1 to enable O_DIRECT support.])
 fi
+
+################################################################################
+dnl -- Enable liblvm2app.so
+AC_MSG_CHECKING(whether to build liblvm2app.so application library)
+AC_ARG_ENABLE(applib,
+  [  --enable-applib         Build application library],
+  APPLIB=$enableval, APPLIB=no)
+AC_MSG_RESULT($APPLIB)
+AC_SUBST([LVM2APP_LIB])
+test x$APPLIB = xyes \
+  && LVM2APP_LIB=-llvm2app \
+  || LVM2APP_LIB=
 
 ################################################################################
 dnl -- Enable cmdlib
@@ -532,17 +839,18 @@ if test x$SELINUX = xyes; then
 	if test x$HAVE_SEPOL = xyes; then
 		AC_DEFINE([HAVE_SEPOL], 1,
 		  [Define to 1 if sepol_check_context is available.])
-		LIBS="-lsepol $LIBS"
+		SELINUX_LIBS="-lsepol $SELINUX_LIBS"
 	fi
 
 	AC_CHECK_LIB(selinux, is_selinux_enabled, HAVE_SELINUX=yes, HAVE_SELINUX=no)
 
 	if test x$HAVE_SELINUX = xyes; then
 		AC_DEFINE([HAVE_SELINUX], 1, [Define to 1 to include support for selinux.])
-		LIBS="-lselinux $LIBS"
+		SELINUX_LIBS="-lselinux $SELINUX_LIBS"
 	else
 		AC_MSG_WARN(Disabling selinux)
 	fi
+	LIBS="$SELINUX_LIBS $LIBS"
 
 	# With --enable-static_link and selinux enabled, linking
 	# fails on at least Debian unstable due to unsatisfied references
@@ -620,12 +928,12 @@ fi
 
 ################################################################################
 AC_ARG_WITH(confdir,
-	    [  --with-confdir=DIR      Configuration files in DIR [/etc]],
+	    [  --with-confdir=DIR      Configuration files in DIR [[/etc]]],
 	    [ CONFDIR="$withval" ],
 	    [ CONFDIR='/etc' ])
 
 AC_ARG_WITH(staticdir,
-	    [  --with-staticdir=DIR    Static binary in DIR [EXEC_PREFIX/sbin]],
+	    [  --with-staticdir=DIR    Static binary in DIR [[EPREFIX/sbin]]],
 	    [ STATICDIR="$withval" ],
 	    [ STATICDIR='${exec_prefix}/sbin' ])
 
@@ -638,6 +946,17 @@ AC_ARG_WITH(usrsbindir,
 	    [  --with-usrsbindir=DIR],
 	    [ usrsbindir="$withval"],
 	    [ usrsbindir='${prefix}/sbin' ])
+
+################################################################################
+AC_ARG_WITH(udev_prefix,
+	    [  --with-udev-prefix=UPREFIX      Install udev rule files in UPREFIX [[EPREFIX]]],
+            [ udev_prefix="$withval"],
+            [ udev_prefix='${exec_prefix}' ])
+
+AC_ARG_WITH(udevdir,
+	    [  --with-udevdir=DIR      udev rules in DIR [[UPREFIX/lib/udev/rules.d]]],
+	    [ udevdir="$withval"],
+	    [ udevdir='${udev_prefix}/lib/udev/rules.d' ])
 
 ################################################################################
 dnl -- Ensure additional headers required
@@ -670,6 +989,10 @@ if test x$HAVE_SELINUX = xyes; then
 	AC_CHECK_HEADERS(selinux/selinux.h,,AC_MSG_ERROR(bailing out))
 fi
 
+if test x$UDEV_SYNC = xyes; then
+	AC_CHECK_HEADERS(sys/ipc.h sys/sem.h,,AC_MSG_ERROR(bailing out))
+fi
+
 ################################################################################
 AC_PATH_PROG(MODPROBE_CMD, modprobe)
 
@@ -697,7 +1020,7 @@ if test "$BUILD_DMEVENTD" = yes; then
                 dmeventd_prefix=""
         fi
 	AC_ARG_WITH(dmeventd-path,
-		    [  --with-dmeventd-path=PATH       dmeventd path [[${exec_prefix}/sbin/dmeventd]] ],
+		    [  --with-dmeventd-path=PATH       dmeventd path [[EPREFIX/sbin/dmeventd]] ],
 		    [ AC_DEFINE_UNQUOTED(DMEVENTD_PATH,"$withval") ],
 		    [ AC_DEFINE_UNQUOTED(DMEVENTD_PATH,"$dmeventd_prefix/sbin/dmeventd") ])
 fi
@@ -716,15 +1039,29 @@ fi
 AC_MSG_RESULT($interface)
 
 ################################################################################
-DM_LIB_VERSION="\"`cat VERSION_DM 2>/dev/null || echo Unknown`\""
+DM_LIB_VERSION="\"`cat "$srcdir"/VERSION_DM 2>/dev/null || echo Unknown`\""
 AC_DEFINE_UNQUOTED(DM_LIB_VERSION, $DM_LIB_VERSION, [Library version])
 
-DM_LIB_PATCHLEVEL=`cat VERSION_DM | awk -F '[[-. ]]' '{printf "%s.%s.%s",$1,$2,$3}'`
+DM_LIB_PATCHLEVEL=`cat "$srcdir"/VERSION_DM | $AWK -F '[[-. ]]' '{printf "%s.%s.%s",$1,$2,$3}'`
 
-LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
+LVM_VERSION="\"`cat "$srcdir"/VERSION 2>/dev/null || echo Unknown`\""
+
+VER=`cat "$srcdir"/VERSION`
+LVM_RELEASE_DATE="\"`echo $VER | $SED 's/.* (//;s/).*//'`\""
+VER=`echo "$VER" | $AWK '{print $1}'`
+LVM_RELEASE="\"`echo "$VER" | $AWK -F '-' '{print $2}'`\""
+VER=`echo "$VER" | $AWK -F '-' '{print $1}'`
+LVM_MAJOR=`echo "$VER" | $AWK -F '.' '{print $1}'`
+LVM_MINOR=`echo "$VER" | $AWK -F '.' '{print $2}'`
+LVM_PATCHLEVEL=`echo "$VER" | $AWK -F '[[(.]]' '{print $3}'`
+LVM_LIBAPI=`echo "$VER" | $AWK -F '[[()]]' '{print $2}'`
 
 ################################################################################
+AC_SUBST(APPLIB)
+AC_SUBST(BUILD_CMIRRORD)
 AC_SUBST(BUILD_DMEVENTD)
+AC_SUBST(CCS_CFLAGS)
+AC_SUBST(CCS_LIBS)
 AC_SUBST(CFLAGS)
 AC_SUBST(CFLOW_CMD)
 AC_SUBST(CLDFLAGS)
@@ -732,11 +1069,20 @@ AC_SUBST(CLDNOWHOLEARCHIVE)
 AC_SUBST(CLDWHOLEARCHIVE)
 AC_SUBST(CLUSTER)
 AC_SUBST(CLVMD)
+AC_SUBST(CMAN_CFLAGS)
+AC_SUBST(CMAN_LIBS)
 AC_SUBST(CMDLIB)
+AC_SUBST(CONFDB_CFLAGS)
+AC_SUBST(CONFDB_LIBS)
+AC_SUBST(CONFDIR)
 AC_SUBST(COPTIMISE_FLAG)
+AC_SUBST(CPG_CFLAGS)
+AC_SUBST(CPG_LIBS)
 AC_SUBST(CSCOPE_CMD)
 AC_SUBST(DEBUG)
 AC_SUBST(DEVMAPPER)
+AC_SUBST(DLM_CFLAGS)
+AC_SUBST(DLM_LIBS)
 AC_SUBST(DMEVENTD)
 AC_SUBST(DM_COMPAT)
 AC_SUBST(DM_DEVICE_GID)
@@ -747,6 +1093,8 @@ AC_SUBST(DM_LIB_VERSION)
 AC_SUBST(DM_LIB_PATCHLEVEL)
 AC_SUBST(FSADM)
 AC_SUBST(GROUP)
+AC_SUBST(GULM_CFLAGS)
+AC_SUBST(GULM_LIBS)
 AC_SUBST(HAVE_LIBDL)
 AC_SUBST(HAVE_REALTIME)
 AC_SUBST(HAVE_SELINUX)
@@ -759,22 +1107,37 @@ AC_SUBST(LIB_SUFFIX)
 AC_SUBST(LOCALEDIR)
 AC_SUBST(LVM1)
 AC_SUBST(LVM1_FALLBACK)
-AC_SUBST(CONFDIR)
 AC_SUBST(LVM_VERSION)
+AC_SUBST(LVM_LIBAPI)
+AC_SUBST(LVM_MAJOR)
+AC_SUBST(LVM_MINOR)
+AC_SUBST(LVM_PATCHLEVEL)
+AC_SUBST(LVM_RELEASE)
+AC_SUBST(LVM_RELEASE_DATE)
 AC_SUBST(MIRRORS)
 AC_SUBST(MSGFMT)
 AC_SUBST(OWNER)
 AC_SUBST(PKGCONFIG)
 AC_SUBST(POOL)
+AC_SUBST(QUORUM_CFLAGS)
+AC_SUBST(QUORUM_LIBS)
+AC_SUBST(SACKPT_CFLAGS)
+AC_SUBST(SACKPT_LIBS)
+AC_SUBST(SALCK_CFLAGS)
+AC_SUBST(SALCK_LIBS)
+AC_SUBST(SELINUX_LIBS)
 AC_SUBST(SNAPSHOTS)
 AC_SUBST(STATICDIR)
 AC_SUBST(STATIC_LINK)
+AC_SUBST(UDEV_RULES)
 AC_SUBST([LIB_PTHREAD])
 AC_SUBST(interface)
 AC_SUBST(kerneldir)
 AC_SUBST(missingkernel)
 AC_SUBST(kernelvsn)
 AC_SUBST(tmpdir)
+AC_SUBST(udev_prefix)
+AC_SUBST(udevdir)
 AC_SUBST(usrlibdir)
 AC_SUBST(usrsbindir)
 
@@ -786,29 +1149,35 @@ Makefile
 make.tmpl
 daemons/Makefile
 daemons/clvmd/Makefile
+daemons/cmirrord/Makefile
 daemons/dmeventd/Makefile
 daemons/dmeventd/libdevmapper-event.pc
 daemons/dmeventd/plugins/Makefile
 daemons/dmeventd/plugins/mirror/Makefile
 daemons/dmeventd/plugins/snapshot/Makefile
 doc/Makefile
+include/.symlinks
 include/Makefile
 lib/Makefile
 lib/format1/Makefile
 lib/format_pool/Makefile
 lib/locking/Makefile
 lib/mirror/Makefile
+lib/misc/lvm-version.h
 lib/snapshot/Makefile
 libdm/Makefile
 libdm/libdevmapper.pc
+liblvm/Makefile
+liblvm/liblvm2app.pc
 man/Makefile
 po/Makefile
 scripts/clvmd_init_red_hat
+scripts/lvm2_monitoring_init_red_hat
 scripts/Makefile
 test/Makefile
 test/api/Makefile
 tools/Makefile
-tools/version.h
+udev/Makefile
 ])
 AC_OUTPUT
 

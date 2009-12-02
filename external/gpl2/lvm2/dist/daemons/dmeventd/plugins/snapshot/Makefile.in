@@ -14,10 +14,11 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 INCLUDES += -I${top_srcdir}/tools
-CLDFLAGS += -L${top_srcdir}/tools -ldevmapper @LVM2CMD_LIB@
+CLDFLAGS += -L${top_builddir}/tools
 
 SOURCES = dmeventd_snapshot.c
 
@@ -29,9 +30,13 @@ endif
 
 LIB_VERSION = $(LIB_VERSION_LVM)
 
-include $(top_srcdir)/make.tmpl
+include $(top_builddir)/make.tmpl
 
-install: libdevmapper-event-lvm2snapshot.$(LIB_SUFFIX)
+LIBS += -ldevmapper @LIB_PTHREAD@ @LVM2CMD_LIB@
+
+install_lvm2: libdevmapper-event-lvm2snapshot.$(LIB_SUFFIX)
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
 		$(libdir)/$<.$(LIB_VERSION)
 	$(LN_S) -f $<.$(LIB_VERSION) $(libdir)/$<
+
+install: install_lvm2

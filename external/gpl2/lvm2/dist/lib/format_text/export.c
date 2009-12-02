@@ -1,8 +1,8 @@
-/*	$NetBSD: export.c,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
+/*	$NetBSD: export.c,v 1.1.1.3 2009/12/02 00:26:29 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -22,7 +22,7 @@
 #include "lvm-string.h"
 #include "segtype.h"
 #include "text_export.h"
-#include "version.h"
+#include "lvm-version.h"
 
 #include <stdarg.h>
 #include <time.h>
@@ -237,6 +237,24 @@ static int _sectors_to_units(uint64_t sectors, char *buffer, size_t s)
 	return dm_snprintf(buffer, s, "# %g %s", d, _units[i]) > 0;
 }
 
+/* increment indention level */
+void out_inc_indent(struct formatter *f)
+{
+	_inc_indent(f);
+}
+
+/* decrement indention level */
+void out_dec_indent(struct formatter *f)
+{
+	_dec_indent(f);
+}
+
+/* insert new line */
+int out_newline(struct formatter *f)
+{
+	return f->nl(f);
+}
+
 /*
  * Appends a comment giving a size in more easily
  * readable form (eg, 4M instead of 8096).
@@ -293,6 +311,16 @@ int out_text(struct formatter *f, const char *fmt, ...)
 	_out_with_comment(f, NULL, fmt, ap);
 
 	return r;
+}
+
+static int _out_line(const char *line, void *_f) {
+	struct formatter *f = (struct formatter *) _f;
+	return out_text(f, "%s", line);
+}
+
+int out_config_node(struct formatter *f, const struct config_node *cn)
+{
+	return write_config_node(cn, _out_line, f);
 }
 
 static int _print_header(struct formatter *f,
@@ -380,10 +408,19 @@ static int _print_vg(struct formatter *f, struct volume_group *vg)
  * Get the pv%d name from the formatters hash
  * table.
  */
+static const char *_get_pv_name_from_uuid(struct formatter *f, char *uuid)
+{
+	return dm_hash_lookup(f->pv_names, uuid);
+}
+
 static const char *_get_pv_name(struct formatter *f, struct physical_volume *pv)
 {
-	return (pv) ? (const char *)
-	    dm_hash_lookup(f->pv_names, pv_dev_name(pv)) : "Missing";
+	char uuid[64] __attribute((aligned(8)));
+
+	if (!pv || !id_write_format(&pv->id, uuid, sizeof(uuid)))
+		return_NULL;
+
+	return _get_pv_name_from_uuid(f, uuid);
 }
 
 static int _print_pvs(struct formatter *f, struct volume_group *vg)
@@ -400,15 +437,15 @@ static int _print_pvs(struct formatter *f, struct volume_group *vg)
 	dm_list_iterate_items(pvl, &vg->pvs) {
 		pv = pvl->pv;
 
-		if (!(name = _get_pv_name(f, pv)))
+		if (!id_write_format(&pv->id, buffer, sizeof(buffer)))
+			return_0;
+
+		if (!(name = _get_pv_name_from_uuid(f, buffer)))
 			return_0;
 
 		outnl(f);
 		outf(f, "%s {", name);
 		_inc_indent(f);
-
-		if (!id_write_format(&pv->id, buffer, sizeof(buffer)))
-			return_0;
 
 		outf(f, "id = \"%s\"", buffer);
 
@@ -594,14 +631,14 @@ static int _print_lvs(struct formatter *f, struct volume_group *vg)
 	 * Write visible LVs first
 	 */
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		if (!(lv_is_displayable(lvl->lv)))
+		if (!(lv_is_visible(lvl->lv)))
 			continue;
 		if (!_print_lv(f, lvl->lv))
 			return_0;
 	}
 
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		if ((lv_is_displayable(lvl->lv)))
+		if ((lv_is_visible(lvl->lv)))
 			continue;
 		if (!_print_lv(f, lvl->lv))
 			return_0;
@@ -623,7 +660,7 @@ static int _build_pv_names(struct formatter *f, struct volume_group *vg)
 	int count = 0;
 	struct pv_list *pvl;
 	struct physical_volume *pv;
-	char buffer[32], *name;
+	char buffer[32], *uuid, *name;
 
 	if (!(f->mem = dm_pool_create("text pv_names", 512)))
 		return_0;
@@ -641,7 +678,11 @@ static int _build_pv_names(struct formatter *f, struct volume_group *vg)
 		if (!(name = dm_pool_strdup(f->mem, buffer)))
 			return_0;
 
-		if (!dm_hash_insert(f->pv_names, pv_dev_name(pv), name))
+		if (!(uuid = dm_pool_zalloc(f->mem, 64)) ||
+		   !id_write_format(&pv->id, uuid, 64))
+			return_0;
+
+		if (!dm_hash_insert(f->pv_names, uuid, name))
 			return_0;
 	}
 

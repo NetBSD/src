@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.1 2008/12/22 00:17:53 haad Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.2 2009/12/02 00:26:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -73,6 +73,8 @@ struct cs {
 struct output_line {
 	FILE *fp;
 	struct dm_pool *mem;
+	putline_fn putline;
+	void *putline_baton;
 };
 
 static void _get_token(struct parser *p, int tok_prev);
@@ -82,8 +84,8 @@ static struct config_node *_section(struct parser *p);
 static struct config_value *_value(struct parser *p);
 static struct config_value *_type(struct parser *p);
 static int _match_aux(struct parser *p, int t);
-static struct config_value *_create_value(struct parser *p);
-static struct config_node *_create_node(struct parser *p);
+static struct config_value *_create_value(struct dm_pool *mem);
+static struct config_node *_create_node(struct dm_pool *mem);
 static char *_dup_tok(struct parser *p);
 
 static const int sep = '/';
@@ -186,6 +188,17 @@ struct config_tree *create_config_tree_from_string(struct cmd_context *cmd __att
 	}
 
 	return cft;
+}
+
+int override_config_tree_from_string(struct cmd_context *cmd,
+				     const char *config_settings)
+{
+	if (!(cmd->cft_override = create_config_tree_from_string(cmd,config_settings))) {
+		log_error("Failed to set overridden configuration entries.");
+		return 1;
+	}
+
+	return 0;
 }
 
 int read_config_fd(struct config_tree *cft, struct device *dev,
@@ -394,10 +407,14 @@ static int _line_end(struct output_line *outline)
 	}
 
 	line = dm_pool_end_object(outline->mem);
-	if (!outline->fp)
-		log_print("%s", line);
-	else
-		fprintf(outline->fp, "%s\n", line);
+	if (outline->putline)
+		outline->putline(line, outline->putline_baton);
+	else {
+		if (!outline->fp)
+			log_print("%s", line);
+		else
+			fprintf(outline->fp, "%s\n", line);
+	}
 
 	return 1;
 }
@@ -436,7 +453,7 @@ static int _write_value(struct output_line *outline, struct config_value *v)
 	return 1;
 }
 
-static int _write_config(struct config_node *n, int only_one,
+static int _write_config(const struct config_node *n, int only_one,
 			 struct output_line *outline, int level)
 {
 	char space[MAX_INDENT + 1];
@@ -459,9 +476,9 @@ static int _write_config(struct config_node *n, int only_one,
 			line_append(" {");
 			if (!_line_end(outline))
 				return_0;
+			_write_config(n->child, 0, outline, level + 1);
 			if (!_line_start(outline))
 				return_0;
-			_write_config(n->child, 0, outline, level + 1);
 			line_append("%s}", space);
 		} else {
 			/* it's a value */
@@ -489,6 +506,21 @@ static int _write_config(struct config_node *n, int only_one,
 	return 1;
 }
 
+int write_config_node(const struct config_node *cn, putline_fn putline, void *baton)
+{
+	struct output_line outline;
+	outline.fp = NULL;
+	outline.mem = dm_pool_create("config_line", 1024);
+	outline.putline = putline;
+	outline.putline_baton = baton;
+	if (!_write_config(cn, 0, &outline, 0)) {
+		dm_pool_destroy(outline.mem);
+		return_0;
+	}
+	dm_pool_destroy(outline.mem);
+	return 1;
+}
+
 int write_config_file(struct config_tree *cft, const char *file,
 		      int argc, char **argv)
 {
@@ -496,6 +528,7 @@ int write_config_file(struct config_tree *cft, const char *file,
 	int r = 1;
 	struct output_line outline;
 	outline.fp = NULL;
+	outline.putline = NULL;
 
 	if (!file)
 		file = "stdout";
@@ -548,6 +581,7 @@ static struct config_node *_file(struct parser *p)
 			root = n;
 		else
 			l->sib = n;
+		n->parent = root;
 		l = n;
 	}
 	return root;
@@ -557,7 +591,7 @@ static struct config_node *_section(struct parser *p)
 {
 	/* IDENTIFIER SECTION_B_CHAR VALUE* SECTION_E_CHAR */
 	struct config_node *root, *n, *l = NULL;
-	if (!(root = _create_node(p)))
+	if (!(root = _create_node(p->mem)))
 		return_0;
 
 	if (!(root->key = _dup_tok(p)))
@@ -575,6 +609,7 @@ static struct config_node *_section(struct parser *p)
 				root->child = n;
 			else
 				l->sib = n;
+			n->parent = root;
 			l = n;
 		}
 		match(TOK_SECTION_E);
@@ -611,7 +646,7 @@ static struct config_value *_value(struct parser *p)
 		 * Special case for an empty array.
 		 */
 		if (!h) {
-			if (!(h = _create_value(p)))
+			if (!(h = _create_value(p->mem)))
 				return NULL;
 
 			h->type = CFG_EMPTY_ARRAY;
@@ -626,7 +661,7 @@ static struct config_value *_value(struct parser *p)
 static struct config_value *_type(struct parser *p)
 {
 	/* [+-]{0,1}[0-9]+ | [0-9]*\.[0-9]* | ".*" */
-	struct config_value *v = _create_value(p);
+	struct config_value *v = _create_value(p->mem);
 
 	if (!v)
 		return NULL;
@@ -822,9 +857,9 @@ static void _eat_space(struct parser *p)
 /*
  * memory management
  */
-static struct config_value *_create_value(struct parser *p)
+static struct config_value *_create_value(struct dm_pool *mem)
 {
-	struct config_value *v = dm_pool_alloc(p->mem, sizeof(*v));
+	struct config_value *v = dm_pool_alloc(mem, sizeof(*v));
 
 	if (v)
 		memset(v, 0, sizeof(*v));
@@ -832,9 +867,9 @@ static struct config_value *_create_value(struct parser *p)
 	return v;
 }
 
-static struct config_node *_create_node(struct parser *p)
+static struct config_node *_create_node(struct dm_pool *mem)
 {
-	struct config_node *n = dm_pool_alloc(p->mem, sizeof(*n));
+	struct config_node *n = dm_pool_alloc(mem, sizeof(*n));
 
 	if (n)
 		memset(n, 0, sizeof(*n));
@@ -1253,6 +1288,10 @@ static unsigned _count_tokens(const char *str, unsigned len, int type)
 	return count_chars(str, len, c);
 }
 
+const char *config_parent_name(const struct config_node *n)
+{
+	return (n->parent ? n->parent->key : "(root)");
+}
 /*
  * Heuristic function to make a quick guess as to whether a text
  * region probably contains a valid config "section".  (Useful for
@@ -1281,4 +1320,34 @@ unsigned maybe_config_section(const char *str, unsigned len)
 		return 1;
 	else
 		return 0;
+}
+
+static struct config_value *_clone_config_value(struct dm_pool *mem, const struct config_value *v)
+{
+	if (!v)
+		return NULL;
+	struct config_value *new = _create_value(mem);
+	new->type = v->type;
+	if (v->type == CFG_STRING)
+		new->v.str = dm_pool_strdup(mem, v->v.str);
+	else
+		new->v = v->v;
+	new->next = _clone_config_value(mem, v->next);
+	return new;
+}
+
+struct config_node *clone_config_node(struct dm_pool *mem, const struct config_node *cn,
+				      int siblings)
+{
+	if (!cn)
+		return NULL;
+	struct config_node *new = _create_node(mem);
+	new->key = dm_pool_strdup(mem, cn->key);
+	new->child = clone_config_node(mem, cn->child, 1);
+	new->v = _clone_config_value(mem, cn->v);
+	if (siblings)
+		new->sib = clone_config_node(mem, cn->sib, siblings);
+	else
+		new->sib = NULL;
+	return new;
 }

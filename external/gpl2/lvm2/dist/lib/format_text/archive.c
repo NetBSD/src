@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
+/*	$NetBSD: archive.c,v 1.1.1.3 2009/12/02 00:26:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -59,7 +59,7 @@ struct archive_file {
 /*
  * Extract vg name and version number from a filename.
  */
-static int _split_vg(const char *filename, char *vgname, size_t vg_size,
+static int _split_vg(const char *filename, char *vgname, size_t vgsize,
 		     uint32_t *ix)
 {
 	size_t len, vg_len;
@@ -80,7 +80,7 @@ static int _split_vg(const char *filename, char *vgname, size_t vg_size,
 		return 0;
 
 	vg_len = underscore - filename;
-	if (vg_len + 1 > vg_size)
+	if (vg_len + 1 > vgsize)
 		return 0;
 
 	strncpy(vgname, filename, vg_len);
@@ -141,7 +141,7 @@ static struct dm_list *_scan_archive(struct dm_pool *mem,
 
 	/* Sort fails beyond 5-digit indexes */
 	if ((count = scandir(dir, &dirent, NULL, alphasort)) < 0) {
-		log_err("Couldn't scan the archive directory (%s).", dir);
+		log_error("Couldn't scan the archive directory (%s).", dir);
 		return 0;
 	}
 
@@ -166,7 +166,7 @@ static struct dm_list *_scan_archive(struct dm_pool *mem,
 		 * Create a new archive_file.
 		 */
 		if (!(af = dm_pool_alloc(mem, sizeof(*af)))) {
-			log_err("Couldn't create new archive file.");
+			log_error("Couldn't create new archive file.");
 			results = NULL;
 			goto out;
 		}
@@ -240,12 +240,12 @@ int archive_vg(struct volume_group *vg,
 	 */
 	if (!create_temp_name(dir, temp_file, sizeof(temp_file), &fd,
 			      &vg->cmd->rand_seed)) {
-		log_err("Couldn't create temporary archive name.");
+		log_error("Couldn't create temporary archive name.");
 		return 0;
 	}
 
 	if (!(fp = fdopen(fd, "w"))) {
-		log_err("Couldn't create FILE object for archive.");
+		log_error("Couldn't create FILE object for archive.");
 		if (close(fd))
 			log_sys_error("close", temp_file);
 		return 0;
@@ -328,7 +328,7 @@ static void _display_archive(struct cmd_context *cmd, struct archive_file *af)
 	log_print("Description:\t%s", desc ? : "<No description>");
 	log_print("Backup Time:\t%s", ctime(&when));
 
-	dm_pool_free(cmd->mem, vg);
+	vg_release(vg);
 	tf->fmt->ops->destroy_instance(tf);
 }
 
@@ -358,7 +358,7 @@ int archive_list_file(struct cmd_context *cmd, const char *file)
 	af.path = (char *)file;
 
 	if (!path_exists(af.path)) {
-		log_err("Archive file %s not found.", af.path);
+		log_error("Archive file %s not found.", af.path);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.h,v 1.1.1.1 2008/12/22 00:18:32 haad Exp $	*/
+/*	$NetBSD: libdm-common.h,v 1.1.1.2 2009/12/02 00:26:05 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -25,9 +25,10 @@ struct target *create_target(uint64_t start,
 			     const char *type, const char *params);
 
 int add_dev_node(const char *dev_name, uint32_t minor, uint32_t major,
-		 uid_t uid, gid_t gid, mode_t mode);
-int rm_dev_node(const char *dev_name);
-int rename_dev_node(const char *old_name, const char *new_name);
+		 uid_t uid, gid_t gid, mode_t mode, int check_udev);
+int rm_dev_node(const char *dev_name, int check_udev);
+int rename_dev_node(const char *old_name, const char *new_name,
+		    int check_udev);
 int get_dev_node_read_ahead(const char *dev_name, uint32_t *read_ahead);
 int set_dev_node_read_ahead(const char *dev_name, uint32_t read_ahead,
 			    uint32_t read_ahead_flags);

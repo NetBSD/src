@@ -1,8 +1,8 @@
-/*	$NetBSD: lvmcmdlib.c,v 1.1.1.2 2009/02/18 11:17:44 haad Exp $	*/
+/*	$NetBSD: lvmcmdlib.c,v 1.1.1.3 2009/12/02 00:25:51 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -19,7 +19,7 @@
 #include "lvm2cmdline.h"
 #include "label.h"
 #include "memlock.h"
-#include "version.h"
+#include "lvm-version.h"
 
 #include "lvm2cmd.h"
 
@@ -84,9 +84,9 @@ int lvm2_run(void *handle, const char *cmdline)
 	/* FIXME Temporary - move to libdevmapper */
 	ret = ECMD_PROCESSED;
 	if (!strcmp(cmdline, "_memlock_inc"))
-		memlock_inc();
+		memlock_inc_daemon();
 	else if (!strcmp(cmdline, "_memlock_dec"))
-		memlock_dec();
+		memlock_dec_daemon();
 	else
 		ret = lvm_run_command(cmd, argc, argv);
 

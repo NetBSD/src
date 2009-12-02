@@ -370,3 +370,8 @@ vgcreate $vg $devs
 lvcreate -l4 -n $lv1 $vg $dev1
 pvmove $dev1
 
+#COMM "pvmove fails activating mirror, properly restores state before pvmove"
+dmsetup create "$vg-pvmove0" --notable
+not pvmove -i 1 $dev2
+test $(dmsetup info --noheadings -c -o suspended "$vg-$lv1") = "Active"
+dmsetup remove "$vg-pvmove0"

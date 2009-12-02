@@ -1,4 +1,4 @@
-/*	$NetBSD: lvscan.c,v 1.1.1.2 2009/02/18 11:17:46 haad Exp $	*/
+/*	$NetBSD: lvscan.c,v 1.1.1.3 2009/12/02 00:25:53 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -26,10 +26,11 @@ static int lvscan_single(struct cmd_context *cmd, struct logical_volume *lv,
 	int inkernel, snap_active = 1;
 	struct lv_segment *snap_seg = NULL;
 	float snap_percent;     /* fused, fsize; */
+	percent_range_t percent_range;
 
 	const char *active_str, *snapshot_str;
 
-	if (!arg_count(cmd, all_ARG) && !lv_is_displayable(lv))
+	if (!arg_count(cmd, all_ARG) && !lv_is_visible(lv))
 		return ECMD_PROCESSED;
 
 	inkernel = lv_info(cmd, lv, &info, 1, 0) && info.exists;
@@ -38,15 +39,17 @@ static int lvscan_single(struct cmd_context *cmd, struct logical_volume *lv,
 				       origin_list) {
 			if (inkernel &&
 			    (snap_active = lv_snapshot_percent(snap_seg->cow,
-							       &snap_percent)))
-				if (snap_percent < 0 || snap_percent >= 100)
+							       &snap_percent,
+							       &percent_range)))
+				if (percent_range == PERCENT_INVALID)
 					snap_active = 0;
 		}
 		snap_seg = NULL;
 	} else if (lv_is_cow(lv)) {
 		if (inkernel &&
-		    (snap_active = lv_snapshot_percent(lv, &snap_percent)))
-			if (snap_percent < 0 || snap_percent >= 100)
+		    (snap_active = lv_snapshot_percent(lv, &snap_percent,
+						       &percent_range)))
+			if (percent_range == PERCENT_INVALID)
 				snap_active = 0;
 	}
 
@@ -82,6 +85,6 @@ int lvscan(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	return process_each_lv(cmd, argc, argv, LCK_VG_READ, NULL,
+	return process_each_lv(cmd, argc, argv, 0, NULL,
 			       &lvscan_single);
 }

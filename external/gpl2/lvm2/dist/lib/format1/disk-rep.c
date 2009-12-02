@@ -1,4 +1,4 @@
-/*	$NetBSD: disk-rep.c,v 1.1.1.1 2008/12/22 00:17:59 haad Exp $	*/
+/*	$NetBSD: disk-rep.c,v 1.1.1.2 2009/12/02 00:26:48 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -437,14 +437,15 @@ static void _add_pv_to_list(struct dm_list *head, struct disk_list *data)
 		pvd = &diskl->pvd;
 		if (!strncmp((char *)data->pvd.pv_uuid, (char *)pvd->pv_uuid,
 			     sizeof(pvd->pv_uuid))) {
-			if (MAJOR(data->dev->dev) != md_major()) {
+			if (!dev_subsystem_part_major(data->dev)) {
 				log_very_verbose("Ignoring duplicate PV %s on "
 						 "%s", pvd->pv_uuid,
 						 dev_name(data->dev));
 				return;
 			}
-			log_very_verbose("Duplicate PV %s - using md %s",
-					 pvd->pv_uuid, dev_name(data->dev));
+			log_very_verbose("Duplicate PV %s - using %s %s",
+					 pvd->pv_uuid, dev_subsystem_name(data->dev),
+					 dev_name(data->dev));
 			dm_list_del(&diskl->list);
 			break;
 		}
@@ -627,7 +628,7 @@ static int _write_pvd(struct disk_list *data)
 	   happy (idea from AED) */
 	buf = dm_malloc(size);
 	if (!buf) {
-		log_err("Couldn't allocate temporary PV buffer.");
+		log_error("Couldn't allocate temporary PV buffer.");
 		return 0;
 	}
 

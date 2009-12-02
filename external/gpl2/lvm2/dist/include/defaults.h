@@ -1,8 +1,8 @@
-/*	$NetBSD: defaults.h,v 1.1.1.1 2008/12/22 00:18:47 haad Exp $	*/
+/*	$NetBSD: defaults.h,v 1.1.1.2 2009/12/02 00:25:44 haad Exp $	*/
 
 /*
- * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -36,11 +36,15 @@
 #define DEFAULT_MD_COMPONENT_DETECTION 1
 #define DEFAULT_MD_CHUNK_ALIGNMENT 1
 #define DEFAULT_IGNORE_SUSPENDED_DEVICES 1
+#define DEFAULT_DATA_ALIGNMENT_OFFSET_DETECTION 1
+#define DEFAULT_DATA_ALIGNMENT_DETECTION 1
 
 #define DEFAULT_LOCK_DIR "/var/lock/lvm"
 #define DEFAULT_LOCKING_LIB "liblvm2clusterlock.so"
 #define DEFAULT_FALLBACK_TO_LOCAL_LOCKING 1
 #define DEFAULT_FALLBACK_TO_CLUSTERED_LOCKING 1
+#define DEFAULT_WAIT_FOR_LOCKS 1
+#define DEFAULT_PRIORITISE_WRITE_LOCKS 1
 
 #define DEFAULT_MIRRORLOG "disk"
 #define DEFAULT_MIRROR_LOG_FAULT_POLICY "allocate"
@@ -56,18 +60,19 @@
 #  define DEFAULT_FALLBACK_TO_LVM1 0
 #endif
 
-#ifdef LVM1_SUPPORT
-#  define DEFAULT_FORMAT "lvm1"
-#else
-#  define DEFAULT_FORMAT "lvm2"
-#endif
+#define DEFAULT_FORMAT "lvm2"
 
 #define DEFAULT_STRIPESIZE 64	/* KB */
 #define DEFAULT_PVMETADATASIZE 255
 #define DEFAULT_PVMETADATACOPIES 1
 #define DEFAULT_LABELSECTOR UINT64_C(1)
 #define DEFAULT_READ_AHEAD "auto"
+#define DEFAULT_UDEV_SYNC 0
 #define DEFAULT_EXTENT_SIZE 4096	/* In KB */
+#define DEFAULT_MAX_PV 0
+#define DEFAULT_MAX_LV 0
+#define DEFAULT_ALLOC_POLICY ALLOC_NORMAL
+#define DEFAULT_CLUSTERED 0
 
 #define DEFAULT_MSG_PREFIX "  "
 #define DEFAULT_CMD_NAME 0
@@ -84,6 +89,10 @@
 #define DEFAULT_UNITS "h"
 #define DEFAULT_SUFFIX 1
 #define DEFAULT_HOSTTAGS 0
+
+#ifndef DEFAULT_SI_UNIT_CONSISTENCY
+#  define DEFAULT_SI_UNIT_CONSISTENCY 1
+#endif
 
 #ifdef DEVMAPPER_SUPPORT
 #  define DEFAULT_ACTIVATION 1
@@ -127,5 +136,8 @@
 #define DEFAULT_PVS_SORT "pv_name"
 #define DEFAULT_SEGS_SORT "vg_name,lv_name,seg_start"
 #define DEFAULT_PVSEGS_SORT "pv_name,pvseg_start"
+
+#define DEFAULT_MIRROR_DEVICE_FAULT_POLICY "remove"
+#define DEFAULT_MIRROR_LOG_FAULT_POLICY "allocate"
 
 #endif				/* _LVM_DEFAULTS_H */

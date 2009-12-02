@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-wrappers.h,v 1.1.1.2 2009/02/18 11:16:46 haad Exp $	*/
+/*	$NetBSD: lvm-wrappers.h,v 1.1.1.3 2009/12/02 00:25:41 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -24,5 +24,20 @@ int lvm_getpagesize(void);
  * Read 'len' bytes of entropy from /dev/urandom and store in 'buf'.
  */
 int read_urandom(void *buf, size_t len);
+
+#  ifndef HAVE_SIGINTERRUPT
+#    define siginterrupt(sig, flag) \
+	do { \
+		int ret; \
+		struct sigaction act; \
+		(void) sigaction(sig, NULL, &act); \
+		if (flag) \
+			act.sa_flags &= SA_RESTART; \
+		else \
+			act.sa_flags |= SA_RESTART; \
+		ret = sigaction(sig, &act, NULL); \
+		return ret; \
+	while (0)
+#  endif
 
 #endif

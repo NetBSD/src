@@ -1,4 +1,4 @@
-/*	$NetBSD: no_locking.c,v 1.1.1.1 2008/12/22 00:18:02 haad Exp $	*/
+/*	$NetBSD: no_locking.c,v 1.1.1.2 2009/12/02 00:26:24 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -68,12 +68,37 @@ static int _no_lock_resource(struct cmd_context *cmd, const char *resource,
 	return 1;
 }
 
+static int _readonly_lock_resource(struct cmd_context *cmd,
+				   const char *resource,
+				   uint32_t flags)
+{
+	if ((flags & LCK_TYPE_MASK) == LCK_WRITE &&
+	    (flags & LCK_SCOPE_MASK) == LCK_VG &&
+	    !(flags & LCK_CACHE) &&
+	    strcmp(resource, VG_GLOBAL)) {
+		log_error("Write locks are prohibited with --ignorelockingfailure.");
+		return 0;
+	}
+
+	return _no_lock_resource(cmd, resource, flags);
+}
+
 int init_no_locking(struct locking_type *locking, struct cmd_context *cmd __attribute((unused)))
 {
 	locking->lock_resource = _no_lock_resource;
 	locking->reset_locking = _no_reset_locking;
 	locking->fin_locking = _no_fin_locking;
 	locking->flags = LCK_CLUSTERED;
+
+	return 1;
+}
+
+int init_readonly_locking(struct locking_type *locking, struct cmd_context *cmd __attribute((unused)))
+{
+	locking->lock_resource = _readonly_lock_resource;
+	locking->reset_locking = _no_reset_locking;
+	locking->fin_locking = _no_fin_locking;
+	locking->flags = 0;
 
 	return 1;
 }

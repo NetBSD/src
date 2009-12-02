@@ -1,4 +1,4 @@
-/*	$NetBSD: polldaemon.c,v 1.1.1.1 2008/12/22 00:19:05 haad Exp $	*/
+/*	$NetBSD: polldaemon.c,v 1.1.1.2 2009/12/02 00:25:53 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -59,41 +59,28 @@ static int _become_daemon(struct cmd_context *cmd)
 	strncpy(*cmd->argv, "(lvm2copyd)", strlen(*cmd->argv));
 
 	reset_locking();
+	lvmcache_init();
 	dev_close_all();
 
 	return 1;
 }
 
-static int _check_mirror_status(struct cmd_context *cmd,
-				struct volume_group *vg,
-				struct logical_volume *lv_mirr,
-				const char *name, struct daemon_parms *parms,
-				int *finished)
+progress_t poll_mirror_progress(struct cmd_context *cmd,
+				struct logical_volume *lv, const char *name,
+				struct daemon_parms *parms)
 {
-	struct dm_list *lvs_changed;
 	float segment_percent = 0.0, overall_percent = 0.0;
+	percent_range_t percent_range, overall_percent_range;
 	uint32_t event_nr = 0;
 
-	/* By default, caller should not retry */
-	*finished = 1;
-
-	if (parms->aborting) {
-		if (!(lvs_changed = lvs_using_lv(cmd, vg, lv_mirr))) {
-			log_error("Failed to generate list of copied LVs: "
-				  "can't abort.");
-			return 0;
-		}
-		parms->poll_fns->finish_copy(cmd, vg, lv_mirr, lvs_changed);
-		return 0;
-	}
-
-	if (!lv_mirror_percent(cmd, lv_mirr, !parms->interval, &segment_percent,
-			       &event_nr)) {
+	if (!lv_mirror_percent(cmd, lv, !parms->interval, &segment_percent,
+			       &percent_range, &event_nr) ||
+	    (percent_range == PERCENT_INVALID)) {
 		log_error("ABORTING: Mirror percentage check failed.");
-		return 0;
+		return PROGRESS_CHECK_FAILED;
 	}
 
-	overall_percent = copy_percent(lv_mirr);
+	overall_percent = copy_percent(lv, &overall_percent_range);
 	if (parms->progress_display)
 		log_print("%s: %s: %.1f%%", name, parms->progress_title,
 			  overall_percent);
@@ -101,28 +88,61 @@ static int _check_mirror_status(struct cmd_context *cmd,
 		log_verbose("%s: %s: %.1f%%", name, parms->progress_title,
 			    overall_percent);
 
-	if (segment_percent < 100.0) {
+	if (percent_range != PERCENT_100)
+		return PROGRESS_UNFINISHED;
+
+	if (overall_percent_range == PERCENT_100)
+		return PROGRESS_FINISHED_ALL;
+
+	return PROGRESS_FINISHED_SEGMENT;
+}
+
+static int _check_lv_status(struct cmd_context *cmd,
+			    struct volume_group *vg,
+			    struct logical_volume *lv,
+			    const char *name, struct daemon_parms *parms,
+			    int *finished)
+{
+	struct dm_list *lvs_changed;
+	progress_t progress;
+
+	/* By default, caller should not retry */
+	*finished = 1;
+
+	if (parms->aborting) {
+		if (!(lvs_changed = lvs_using_lv(cmd, vg, lv))) {
+			log_error("Failed to generate list of copied LVs: "
+				  "can't abort.");
+			return 0;
+		}
+		parms->poll_fns->finish_copy(cmd, vg, lv, lvs_changed);
+		return 0;
+	}
+
+	progress = parms->poll_fns->poll_progress(cmd, lv, name, parms);
+	if (progress == PROGRESS_CHECK_FAILED)
+		return_0;
+
+	if (progress == PROGRESS_UNFINISHED) {
 		/* The only case the caller *should* try again later */
 		*finished = 0;
 		return 1;
 	}
 
-	if (!(lvs_changed = lvs_using_lv(cmd, vg, lv_mirr))) {
+	if (!(lvs_changed = lvs_using_lv(cmd, vg, lv))) {
 		log_error("ABORTING: Failed to generate list of copied LVs");
 		return 0;
 	}
 
 	/* Finished? Or progress to next segment? */
-	if (overall_percent >= 100.0) {
-		if (!parms->poll_fns->finish_copy(cmd, vg, lv_mirr,
-						  lvs_changed))
+	if (progress == PROGRESS_FINISHED_ALL) {
+		if (!parms->poll_fns->finish_copy(cmd, vg, lv, lvs_changed))
 			return 0;
 	} else {
-		if (!parms->poll_fns->update_metadata(cmd, vg, lv_mirr,
-						      lvs_changed, 0)) {
+		if (!parms->poll_fns->update_metadata(cmd, vg, lv, lvs_changed,
+						      0)) {
 			log_error("ABORTING: Segment progression failed.");
-			parms->poll_fns->finish_copy(cmd, vg, lv_mirr,
-						     lvs_changed);
+			parms->poll_fns->finish_copy(cmd, vg, lv, lvs_changed);
 			return 0;
 		}
 		*finished = 0;	/* Another segment */
@@ -131,14 +151,14 @@ static int _check_mirror_status(struct cmd_context *cmd,
 	return 1;
 }
 
-static int _wait_for_single_mirror(struct cmd_context *cmd, const char *name,
+static int _wait_for_single_lv(struct cmd_context *cmd, const char *name, const char *uuid,
 				   struct daemon_parms *parms)
 {
 	struct volume_group *vg;
-	struct logical_volume *lv_mirr;
+	struct logical_volume *lv;
 	int finished = 0;
 
-	/* Poll for mirror completion */
+	/* Poll for completion */
 	while (!finished) {
 		/* FIXME Also needed in vg/lvchange -ay? */
 		/* FIXME Use alarm for regular intervals instead */
@@ -149,65 +169,52 @@ static int _wait_for_single_mirror(struct cmd_context *cmd, const char *name,
 		}
 
 		/* Locks the (possibly renamed) VG again */
-		if (!(vg = parms->poll_fns->get_copy_vg(cmd, name))) {
+		vg = parms->poll_fns->get_copy_vg(cmd, name, uuid);
+		if (vg_read_error(vg)) {
+			vg_release(vg);
 			log_error("ABORTING: Can't reread VG for %s", name);
 			/* What more could we do here? */
 			return 0;
 		}
 
-		if (!(lv_mirr = parms->poll_fns->get_copy_lv(cmd, vg, name,
-							     parms->lv_type))) {
+		if (!(lv = parms->poll_fns->get_copy_lv(cmd, vg, name, uuid,
+							parms->lv_type))) {
 			log_error("ABORTING: Can't find mirror LV in %s for %s",
 				  vg->name, name);
-			unlock_vg(cmd, vg->name);
+			unlock_and_release_vg(cmd, vg, vg->name);
 			return 0;
 		}
 
-		if (!_check_mirror_status(cmd, vg, lv_mirr, name, parms,
-					  &finished)) {
-			unlock_vg(cmd, vg->name);
+		if (!_check_lv_status(cmd, vg, lv, name, parms, &finished)) {
+			unlock_and_release_vg(cmd, vg, vg->name);
 			return 0;
 		}
 
-		unlock_vg(cmd, vg->name);
+		unlock_and_release_vg(cmd, vg, vg->name);
 	}
 
 	return 1;
 }
 
 static int _poll_vg(struct cmd_context *cmd, const char *vgname,
-		    struct volume_group *vg, int consistent, void *handle)
+		    struct volume_group *vg, void *handle)
 {
 	struct daemon_parms *parms = (struct daemon_parms *) handle;
 	struct lv_list *lvl;
-	struct logical_volume *lv_mirr;
+	struct logical_volume *lv;
 	const char *name;
 	int finished;
 
-	if (!vg) {
-		log_error("Couldn't read volume group %s", vgname);
-		return ECMD_FAILED;
-	}
-
-	if (!consistent) {
-		log_error("Volume Group %s inconsistent - skipping", vgname);
-		/* FIXME Should we silently recover it here or not? */
-		return ECMD_FAILED;
-	}
-
-	if (!vg_check_status(vg, EXPORTED_VG))
-		return ECMD_FAILED;
-
 	dm_list_iterate_items(lvl, &vg->lvs) {
-		lv_mirr = lvl->lv;
-		if (!(lv_mirr->status & parms->lv_type))
+		lv = lvl->lv;
+		if (!(lv->status & parms->lv_type))
 			continue;
-		if (!(name = parms->poll_fns->get_copy_name_from_lv(lv_mirr)))
+		if (!(name = parms->poll_fns->get_copy_name_from_lv(lv)))
 			continue;
 		/* FIXME Need to do the activation from _set_up_pvmove here
 		 *       if it's not running and we're not aborting */
-		if (_check_mirror_status(cmd, vg, lv_mirr, name,
-					 parms, &finished) && !finished)
+		if (_check_lv_status(cmd, vg, lv, name, parms, &finished) &&
+		    !finished)
 			parms->outstanding_count++;
 	}
 
@@ -220,20 +227,21 @@ static void _poll_for_all_vgs(struct cmd_context *cmd,
 {
 	while (1) {
 		parms->outstanding_count = 0;
-		process_each_vg(cmd, 0, NULL, LCK_VG_WRITE, 1, parms, _poll_vg);
+		process_each_vg(cmd, 0, NULL, READ_FOR_UPDATE, parms, _poll_vg);
 		if (!parms->outstanding_count)
 			break;
 		sleep(parms->interval);
 	}
 }
 
-int poll_daemon(struct cmd_context *cmd, const char *name, unsigned background,
+int poll_daemon(struct cmd_context *cmd, const char *name, const char *uuid,
+		unsigned background,
 		uint32_t lv_type, struct poll_functions *poll_fns,
 		const char *progress_title)
 {
 	struct daemon_parms parms;
 
-	parms.aborting = arg_count(cmd, abort_ARG) ? 1 : 0;
+	parms.aborting = arg_is_set(cmd, abort_ARG);
 	parms.background = background;
 	parms.interval = arg_uint_value(cmd, interval_ARG, DEFAULT_INTERVAL);
 	parms.progress_display = 1;
@@ -261,9 +269,14 @@ int poll_daemon(struct cmd_context *cmd, const char *name, unsigned background,
 		/*       fork one daemon per copy? */
 	}
 
+	/*
+	 * Process one specific task or all incomplete tasks?
+	 */
 	if (name) {
-		if (!_wait_for_single_mirror(cmd, name, &parms))
+		if (!_wait_for_single_lv(cmd, name, uuid, &parms)) {
+			stack;
 			return ECMD_FAILED;
+		}
 	} else
 		_poll_for_all_vgs(cmd, &parms);
 

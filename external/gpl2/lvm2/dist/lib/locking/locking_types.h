@@ -1,8 +1,8 @@
-/*	$NetBSD: locking_types.h,v 1.1.1.1 2008/12/22 00:18:05 haad Exp $	*/
+/*	$NetBSD: locking_types.h,v 1.1.1.2 2009/12/02 00:26:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
- * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -20,6 +20,7 @@
 
 typedef int (*lock_resource_fn) (struct cmd_context * cmd, const char *resource,
 				 uint32_t flags);
+typedef int (*query_resource_fn) (const char *resource, int *mode);
 
 typedef void (*fin_lock_fn) (void);
 typedef void (*reset_lock_fn) (void);
@@ -30,6 +31,7 @@ typedef void (*reset_lock_fn) (void);
 struct locking_type {
 	uint32_t flags;
 	lock_resource_fn lock_resource;
+	query_resource_fn query_resource;
 
 	reset_lock_fn reset_locking;
 	fin_lock_fn fin_locking;
@@ -39,6 +41,8 @@ struct locking_type {
  * Locking types
  */
 int init_no_locking(struct locking_type *locking, struct cmd_context *cmd);
+
+int init_readonly_locking(struct locking_type *locking, struct cmd_context *cmd);
 
 int init_file_locking(struct locking_type *locking, struct cmd_context *cmd);
 
