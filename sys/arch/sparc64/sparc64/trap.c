@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.160 2009/12/02 07:34:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2009/12/02 07:34:57 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -620,7 +620,8 @@ badtrap:
 	case T_INST_EXCEPT:
 	case T_TEXTFAULT:
 		/* This is not an MMU issue!!!! */
-		printf("trap: textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
+		printf("trap: pid=%d.%d comm=%s textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
+		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
 #if defined(DDB) && defined(DEBUG)
 		if (trapdebug & TDB_STOPSIG)
@@ -634,7 +635,8 @@ badtrap:
 		break;
 
 	case T_PRIVINST:
-		printf("trap: privinst!! sending SIGILL due to trap %d: %s\n", 
+		printf("trap: pid=%d.%d comm=%s privinst!! sending SIGILL due to trap %d: %s\n", 
+		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
 		       type, type < N_TRAP_TYPES ? trap_type[type] : T);
 #if defined(DDB) && defined(DEBUG)
 		if (trapdebug & TDB_STOPSIG)
