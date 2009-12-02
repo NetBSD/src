@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.119 2009/12/01 18:51:20 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.120 2009/12/02 07:55:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.119 2009/12/01 18:51:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.120 2009/12/02 07:55:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1141,9 +1141,10 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 
 	for (ci = cpus; ci; ci = ci->ci_next) {
-		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
-			  ci->ci_index, (u_long)ci->ci_self,
-			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
+		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx "
+			  "fplwp 0x%08lx\n", ci->ci_index, (u_long)ci->ci_self,
+			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb,
+			  (u_long)ci->ci_fplwp);
 	}
 }
 
