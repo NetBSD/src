@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.95 2009/12/02 14:28:24 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.96 2009/12/02 14:32:15 uebayasi Exp $
 #
 
 #
@@ -144,12 +144,12 @@ all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_BINUTILS HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
 		${MKEXTRAVARS} \${_MKVARS.yes} \${_MKVARS.no}
-	@echo "export \$i=\${\$i}"
+	@echo "export \$i=\"\${\$i}\""
 .endfor
 
 EOMAKE
 ); do
-	echo 1>&2 "DEBUG: read $x"
+#	echo 1>&2 "DEBUG: read $x"
 	eval $x
 done
 IFS=$oIFS
@@ -197,7 +197,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.95 2009/12/02 14:28:24 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.96 2009/12/02 14:32:15 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
