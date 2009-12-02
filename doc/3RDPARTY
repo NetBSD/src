@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.734 2009/11/21 03:29:14 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.735 2009/12/02 02:07:02 haad Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -545,8 +545,8 @@ might be worthwhile to import at some future date, but for now we should
 leave it alone.  (garbled 1/4/2001)
 
 Package:	libdevmapper
-Version:	1.02.29
-Current Vers:	1.02.30
+Version:	1.02.40
+Current Vers:	1.02.40
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
@@ -567,8 +567,8 @@ License:	BSD (3/4-clause)
 Notes:
 
 Package:	lvm2tools
-Version:	2.02.43
-Current Vers:	2.02.45
+Version:	2.02.56
+Current Vers:	2.02.56
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1324 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1325 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -494,3 +494,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	udl(4): Add a driver for DisplayLink DL-1x0/1x5 based USB LCDs and
 		USB-VGA adaptors. Ported from OpenBSD by FUKAUMI Naoki
 		with many modification. [tsutsui 20091130]
+	lvm: Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
+	                [haad 20091202]
+
