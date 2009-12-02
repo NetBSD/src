@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_manager.c,v 1.1.1.2 2009/02/18 11:16:50 haad Exp $	*/
+/*	$NetBSD: dev_manager.c,v 1.1.1.3 2009/12/02 00:26:23 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -51,6 +51,7 @@ struct dev_manager {
 
 	void *target_state;
 	uint32_t pvmove_mirror_count;
+	int flush_required;
 
 	char *vg_name;
 };
@@ -112,10 +113,8 @@ static struct dm_task *_setup_task(const char *name, const char *uuid,
 	if (event_nr)
 		dm_task_set_event_nr(dmt, *event_nr);
 
-	if (major) {
-		dm_task_set_major(dmt, major);
-		dm_task_set_minor(dmt, minor);
-	}
+	if (major)
+		dm_task_set_major_minor(dmt, major, minor, 1);
 
 	return dmt;
 }
@@ -143,7 +142,7 @@ static int _info_run(const char *name, const char *dlid, struct dm_info *info,
 	if (!dm_task_get_info(dmt, info))
 		goto_out;
 
-	if (with_read_ahead) {
+	if (with_read_ahead && info->exists) {
 		if (!dm_task_get_read_ahead(dmt, read_ahead))
 			goto_out;
 	} else if (read_ahead)
@@ -172,7 +171,7 @@ int device_is_usable(dev_t dev)
 		return 0;
 	}
 
-	if (!dm_task_set_major(dmt, MAJOR(dev)) || !dm_task_set_minor(dmt, MINOR(dev)))
+	if (!dm_task_set_major_minor(dmt, MAJOR(dev), MINOR(dev), 1))
 		goto_out;
 
 	if (!dm_task_run(dmt)) {
@@ -330,10 +329,26 @@ static int _status(const char *name, const char *uuid,
 	return 0;
 }
 
+static percent_range_t _combine_percent_ranges(percent_range_t a,
+					       percent_range_t b)
+{
+	if (a == PERCENT_INVALID || b == PERCENT_INVALID)
+		return PERCENT_INVALID;
+
+	if (a == PERCENT_100 && b == PERCENT_100)
+		return PERCENT_100;
+
+	if (a == PERCENT_0 && b == PERCENT_0)
+		return PERCENT_0;
+
+	return PERCENT_0_TO_100;
+}
+
 static int _percent_run(struct dev_manager *dm, const char *name,
 			const char *dlid,
 			const char *target_type, int wait,
 			struct logical_volume *lv, float *percent,
+			percent_range_t *overall_percent_range,
 			uint32_t *event_nr)
 {
 	int r = 0;
@@ -346,10 +361,13 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 	struct dm_list *segh = &lv->segments;
 	struct lv_segment *seg = NULL;
 	struct segment_type *segtype;
+	percent_range_t percent_range = 0, combined_percent_range = 0;
+	int first_time = 1;
 
 	uint64_t total_numerator = 0, total_denominator = 0;
 
 	*percent = -1;
+	*overall_percent_range = PERCENT_INVALID;
 
 	if (!(dmt = _setup_task(name, dlid, event_nr,
 				wait ? DM_DEVICE_WAITEVENT : DM_DEVICE_STATUS, 0, 0)))
@@ -386,12 +404,20 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 			continue;
 
 		if (segtype->ops->target_percent &&
-		    !segtype->ops->target_percent(&dm->target_state, dm->mem,
+		    !segtype->ops->target_percent(&dm->target_state,
+						  &percent_range, dm->mem,
 						  dm->cmd, seg, params,
 						  &total_numerator,
 						  &total_denominator))
 			goto_out;
 
+		if (first_time) {
+			combined_percent_range = percent_range;
+			first_time = 0;
+		} else
+			combined_percent_range =
+			    _combine_percent_ranges(combined_percent_range,
+						    percent_range);
 	} while (next);
 
 	if (lv && (segh = dm_list_next(&lv->segments, segh))) {
@@ -400,10 +426,16 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 		goto out;
 	}
 
-	if (total_denominator)
+	if (total_denominator) {
 		*percent = (float) total_numerator *100 / total_denominator;
-	else
+		*overall_percent_range = combined_percent_range;
+	} else {
 		*percent = 100;
+		if (first_time)
+			*overall_percent_range = PERCENT_100;
+		else
+			*overall_percent_range = combined_percent_range;
+	}
 
 	log_debug("LV percent: %f", *percent);
 	r = 1;
@@ -416,20 +448,20 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 static int _percent(struct dev_manager *dm, const char *name, const char *dlid,
 		    const char *target_type, int wait,
 		    struct logical_volume *lv, float *percent,
-		    uint32_t *event_nr)
+		    percent_range_t *overall_percent_range, uint32_t *event_nr)
 {
 	if (dlid && *dlid) {
 		if (_percent_run(dm, NULL, dlid, target_type, wait, lv, percent,
-				 event_nr))
+				 overall_percent_range, event_nr))
 			return 1;
 		else if (_percent_run(dm, NULL, dlid + sizeof(UUID_PREFIX) - 1,
 				      target_type, wait, lv, percent,
-				      event_nr))
+				      overall_percent_range, event_nr))
 			return 1;
 	}
 
 	if (name && _percent_run(dm, name, NULL, target_type, wait, lv, percent,
-				 event_nr))
+				 overall_percent_range, event_nr))
 		return 1;
 
 	return 0;
@@ -447,7 +479,7 @@ struct dev_manager *dev_manager_create(struct cmd_context *cmd,
 	if (!(mem = dm_pool_create("dev_manager", 16 * 1024)))
 		return_NULL;
 
-	if (!(dm = dm_pool_alloc(mem, sizeof(*dm))))
+	if (!(dm = dm_pool_zalloc(mem, sizeof(*dm))))
 		goto_bad;
 
 	dm->cmd = cmd;
@@ -457,6 +489,8 @@ struct dev_manager *dev_manager_create(struct cmd_context *cmd,
 		goto_bad;
 
 	dm->target_state = NULL;
+
+	dm_udev_set_sync_support(cmd->current_settings.udev_sync);
 
 	return dm;
 
@@ -482,7 +516,7 @@ void dev_manager_exit(void)
 
 int dev_manager_snapshot_percent(struct dev_manager *dm,
 				 const struct logical_volume *lv,
-				 float *percent)
+				 float *percent, percent_range_t *percent_range)
 {
 	char *name;
 	const char *dlid;
@@ -501,7 +535,7 @@ int dev_manager_snapshot_percent(struct dev_manager *dm,
 	 */
 	log_debug("Getting device status percentage for %s", name);
 	if (!(_percent(dm, name, dlid, "snapshot", 0, NULL, percent,
-		       NULL)))
+		       percent_range, NULL)))
 		return_0;
 
 	/* FIXME dm_pool_free ? */
@@ -514,27 +548,29 @@ int dev_manager_snapshot_percent(struct dev_manager *dm,
 /* FIXME Cope with more than one target */
 int dev_manager_mirror_percent(struct dev_manager *dm,
 			       struct logical_volume *lv, int wait,
-			       float *percent, uint32_t *event_nr)
+			       float *percent, percent_range_t *percent_range,
+			       uint32_t *event_nr)
 {
 	char *name;
 	const char *dlid;
+	const char *suffix = (lv_is_origin(lv)) ? "real" : NULL;
 
 	/*
 	 * Build a name for the top layer.
 	 */
-	if (!(name = build_dm_name(dm->mem, lv->vg->name, lv->name, NULL)))
+	if (!(name = build_dm_name(dm->mem, lv->vg->name, lv->name, suffix)))
 		return_0;
 
 	/* FIXME dm_pool_free ? */
 
-	if (!(dlid = build_dlid(dm, lv->lvid.s, NULL))) {
+	if (!(dlid = build_dlid(dm, lv->lvid.s, suffix))) {
 		log_error("dlid build failed for %s", lv->name);
 		return 0;
 	}
 
 	log_debug("Getting device mirror status percentage for %s", name);
 	if (!(_percent(dm, name, dlid, "mirror", wait, lv, percent,
-		       event_nr)))
+		       percent_range, event_nr)))
 		return_0;
 
 	return 1;
@@ -642,7 +678,10 @@ static int _add_dev_to_dtree(struct dev_manager *dm, struct dm_tree *dtree,
 	 * requested major/minor and that major/minor pair is available for use
 	 */
 	if (!layer && lv->major != -1 && lv->minor != -1) {
-		if (info.exists && (info.major != lv->major || info.minor != lv->minor)) {
+		/*
+		 * FIXME compare info.major with lv->major if multiple major support
+		 */
+		if (info.exists && (info.minor != lv->minor)) {
 			log_error("Volume %s (%" PRIu32 ":%" PRIu32")"
 				  " differs from already active device "
 				  "(%" PRIu32 ":%" PRIu32")",
@@ -907,7 +946,8 @@ static int _add_segment_to_dtree(struct dev_manager *dm,
 		  layer ? "-" : "", layer ? : "");
 
 	if (seg_present->segtype->ops->target_present &&
-	    !seg_present->segtype->ops->target_present(seg_present, NULL)) {
+	    !seg_present->segtype->ops->target_present(seg_present->lv->vg->cmd,
+						       seg_present, NULL)) {
 		log_error("Can't expand LV %s: %s target support missing "
 			  "from kernel?", seg->lv->name, seg_present->segtype->name);
 		return 0;
@@ -966,6 +1006,7 @@ static int _add_new_lv_to_dtree(struct dev_manager *dm, struct dm_tree *dtree,
 	uint32_t max_stripe_size = UINT32_C(0);
 	uint32_t read_ahead = lv->read_ahead;
 	uint32_t read_ahead_flags = UINT32_C(0);
+	uint16_t udev_flags = 0;
 
 	if (!(name = build_dm_name(dm->mem, lv->vg->name, lv->name, layer)))
 		return_0;
@@ -985,18 +1026,27 @@ static int _add_new_lv_to_dtree(struct dev_manager *dm, struct dm_tree *dtree,
 
 	lvlayer->lv = lv;
 
+	if (layer || !lv_is_visible(lv))
+		udev_flags |= DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG |
+			      DM_UDEV_DISABLE_DISK_RULES_FLAG |
+			      DM_UDEV_DISABLE_OTHER_RULES_FLAG;
+
+	if (lv_is_cow(lv))
+		udev_flags |= DM_UDEV_LOW_PRIORITY_FLAG;
+
 	/*
 	 * Add LV to dtree.
 	 * If we're working with precommitted metadata, clear any
 	 * existing inactive table left behind.
 	 * Major/minor settings only apply to the visible layer.
 	 */
-	if (!(dnode = dm_tree_add_new_dev(dtree, name, dlid,
+	if (!(dnode = dm_tree_add_new_dev_with_udev_flags(dtree, name, dlid,
 					     layer ? UINT32_C(0) : (uint32_t) lv->major,
 					     layer ? UINT32_C(0) : (uint32_t) lv->minor,
 					     _read_only_lv(lv),
 					     (lv->vg->status & PRECOMMITTED) ? 1 : 0,
-					     lvlayer)))
+					     lvlayer,
+					     udev_flags)))
 		return_0;
 
 	/* Store existing name so we can do rename later */
@@ -1019,6 +1069,8 @@ static int _add_new_lv_to_dtree(struct dev_manager *dm, struct dm_tree *dtree,
 	if (read_ahead == DM_READ_AHEAD_AUTO) {
 		/* we need RA at least twice a whole stripe - see the comment in md/raid0.c */
 		read_ahead = max_stripe_size * 2;
+		if (!read_ahead)
+			lv_calculate_readahead(lv, &read_ahead);
 		read_ahead_flags = DM_READ_AHEAD_MINIMUM_FLAG;
 	}
 
@@ -1062,7 +1114,14 @@ static int _create_lv_symlinks(struct dev_manager *dm, struct dm_tree_node *root
 			}
 			if (!fs_rename_lv(lvlayer->lv, name, old_vgname, old_lvname))
 				r = 0;
-		} else if (!dev_manager_lv_mknodes(lvlayer->lv))
+			continue;
+		}
+		if (lv_is_visible(lvlayer->lv)) {
+			if (!dev_manager_lv_mknodes(lvlayer->lv))
+				r = 0;
+			continue;
+		}
+		if (!dev_manager_lv_rmnodes(lvlayer->lv))
 			r = 0;
 	}
 
@@ -1104,6 +1163,7 @@ static int _clean_tree(struct dev_manager *dm, struct dm_tree_node *root)
 	struct dm_tree_node *child;
 	char *vgname, *lvname, *layer;
 	const char *name, *uuid;
+	int r;
 
 	while ((child = dm_tree_next_child(&handle, root, 0))) {
 		if (!(name = dm_tree_node_get_name(child)))
@@ -1121,7 +1181,12 @@ static int _clean_tree(struct dev_manager *dm, struct dm_tree_node *root)
 		if (!*layer)
 			continue;
 
-		if (!dm_tree_deactivate_children(root, uuid, strlen(uuid)))
+		dm_tree_set_cookie(root, 0);
+		r = dm_tree_deactivate_children(root, uuid, strlen(uuid));
+		if (!dm_udev_wait(dm_tree_get_cookie(root)))
+			stack;
+
+		if (!r)
 			return_0;
 	}
 
@@ -1155,14 +1220,18 @@ static int _tree_action(struct dev_manager *dm, struct logical_volume *lv, actio
 		break;
 	case DEACTIVATE:
  		/* Deactivate LV and all devices it references that nothing else has open. */
-		if (!dm_tree_deactivate_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1))
+		dm_tree_set_cookie(root, 0);
+		r = dm_tree_deactivate_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1);
+		if (!dm_udev_wait(dm_tree_get_cookie(root)))
+			stack;
+		if (!r)
 			goto_out;
 		if (!_remove_lv_symlinks(dm, root))
 			log_error("Failed to remove all device symlinks associated with %s.", lv->name);
 		break;
 	case SUSPEND:
 		dm_tree_skip_lockfs(root);
-		if ((lv->status & MIRRORED) && !(lv->status & PVMOVE))
+		if (!dm->flush_required && (lv->status & MIRRORED) && !(lv->status & PVMOVE))
 			dm_tree_use_no_flush_suspend(root);
 	case SUSPEND_WITH_LOCKFS:
 		if (!dm_tree_suspend_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1))
@@ -1175,17 +1244,29 @@ static int _tree_action(struct dev_manager *dm, struct logical_volume *lv, actio
 			goto_out;
 
 		/* Preload any devices required before any suspensions */
-		if (!dm_tree_preload_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1))
+		dm_tree_set_cookie(root, 0);
+		r = dm_tree_preload_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1);
+		if (!dm_udev_wait(dm_tree_get_cookie(root)))
+			stack;
+		if (!r)
 			goto_out;
 
-		if ((action == ACTIVATE) &&
-		    !dm_tree_activate_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1))
-			goto_out;
+		if (dm_tree_node_size_changed(root))
+			dm->flush_required = 1;
 
-		if (!_create_lv_symlinks(dm, root)) {
-			log_error("Failed to create symlinks for %s.", lv->name);
-			goto out;
+		if (action == ACTIVATE) {
+			dm_tree_set_cookie(root, 0);
+			r = dm_tree_activate_children(root, dlid, ID_LEN + sizeof(UUID_PREFIX) - 1);
+			if (!dm_udev_wait(dm_tree_get_cookie(root)))
+				stack;
+			if (!r)
+				goto_out;
+			if (!_create_lv_symlinks(dm, root)) {
+				log_error("Failed to create symlinks for %s.", lv->name);
+				goto out;
+			}
 		}
+
 		break;
 	default:
 		log_error("_tree_action: Action %u not supported.", action);
@@ -1208,13 +1289,19 @@ int dev_manager_activate(struct dev_manager *dm, struct logical_volume *lv)
 	return _tree_action(dm, lv, CLEAN);
 }
 
-int dev_manager_preload(struct dev_manager *dm, struct logical_volume *lv)
+int dev_manager_preload(struct dev_manager *dm, struct logical_volume *lv,
+			int *flush_required)
 {
 	/* FIXME Update the pvmove implementation! */
 	if ((lv->status & PVMOVE) || (lv->status & LOCKED))
 		return 1;
 
-	return _tree_action(dm, lv, PRELOAD);
+	if (!_tree_action(dm, lv, PRELOAD))
+		return 0;
+
+	*flush_required = dm->flush_required;
+
+	return 1;
 }
 
 int dev_manager_deactivate(struct dev_manager *dm, struct logical_volume *lv)
@@ -1229,8 +1316,10 @@ int dev_manager_deactivate(struct dev_manager *dm, struct logical_volume *lv)
 }
 
 int dev_manager_suspend(struct dev_manager *dm, struct logical_volume *lv,
-			int lockfs)
+			int lockfs, int flush_required)
 {
+	dm->flush_required = flush_required;
+
 	return _tree_action(dm, lv, lockfs ? SUSPEND_WITH_LOCKFS : SUSPEND);
 }
 

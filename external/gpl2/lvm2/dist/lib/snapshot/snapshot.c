@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.1.1.1 2008/12/22 00:18:14 haad Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.1.1.2 2009/12/02 00:26:27 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -39,29 +39,28 @@ static int _snap_text_import(struct lv_segment *seg, const struct config_node *s
 	uint32_t chunk_size;
 	const char *org_name, *cow_name;
 	struct logical_volume *org, *cow;
-
-	seg->lv->status |= SNAPSHOT;
+	int old_suppress;
 
 	if (!get_config_uint32(sn, "chunk_size", &chunk_size)) {
 		log_error("Couldn't read chunk size for snapshot.");
 		return 0;
 	}
 
-	log_suppress(1);
+	old_suppress = log_suppress(1);
 
 	if (!(cow_name = find_config_str(sn, "cow_store", NULL))) {
-		log_suppress(0);
+		log_suppress(old_suppress);
 		log_error("Snapshot cow storage not specified.");
 		return 0;
 	}
 
 	if (!(org_name = find_config_str(sn, "origin", NULL))) {
-		log_suppress(0);
+		log_suppress(old_suppress);
 		log_error("Snapshot origin not specified.");
 		return 0;
 	}
 
-	log_suppress(0);
+	log_suppress(old_suppress);
 
 	if (!(cow = find_lv(seg->lv->vg, cow_name))) {
 		log_error("Unknown logical volume specified for "
@@ -75,9 +74,7 @@ static int _snap_text_import(struct lv_segment *seg, const struct config_node *s
 		return 0;
 	}
 
-	if (!vg_add_snapshot(seg->lv->name, org, cow,
-			     &seg->lv->lvid, seg->len, chunk_size))
-		return_0;
+	init_snapshot_seg(seg, org, cow, chunk_size);
 
 	return 1;
 }
@@ -93,11 +90,12 @@ static int _snap_text_export(const struct lv_segment *seg, struct formatter *f)
 
 #ifdef DEVMAPPER_SUPPORT
 static int _snap_target_percent(void **target_state __attribute((unused)),
-			   struct dm_pool *mem __attribute((unused)),
-			   struct cmd_context *cmd __attribute((unused)),
-			   struct lv_segment *seg __attribute((unused)),
-			   char *params, uint64_t *total_numerator,
-			   uint64_t *total_denominator)
+				percent_range_t *percent_range,
+				struct dm_pool *mem __attribute((unused)),
+				struct cmd_context *cmd __attribute((unused)),
+				struct lv_segment *seg __attribute((unused)),
+				char *params, uint64_t *total_numerator,
+				uint64_t *total_denominator)
 {
 	uint64_t numerator, denominator;
 
@@ -105,20 +103,30 @@ static int _snap_target_percent(void **target_state __attribute((unused)),
 		   &numerator, &denominator) == 2) {
 		*total_numerator += numerator;
 		*total_denominator += denominator;
-	}
+		if (!numerator)
+			*percent_range = PERCENT_0;
+		else if (numerator == denominator)
+			*percent_range = PERCENT_100;
+		else
+			*percent_range = PERCENT_0_TO_100;
+	} else if (!strcmp(params, "Invalid"))
+		*percent_range = PERCENT_INVALID;
+	else
+		return 0;
 
 	return 1;
 }
 
-static int _snap_target_present(const struct lv_segment *seg __attribute((unused)),
+static int _snap_target_present(struct cmd_context *cmd,
+				const struct lv_segment *seg __attribute((unused)),
 				unsigned *attributes __attribute((unused)))
 {
 	static int _snap_checked = 0;
 	static int _snap_present = 0;
 
 	if (!_snap_checked)
-		_snap_present = target_present("snapshot", 1) &&
-		    target_present("snapshot-origin", 0);
+		_snap_present = target_present(cmd, "snapshot", 1) &&
+		    target_present(cmd, "snapshot-origin", 0);
 
 	_snap_checked = 1;
 

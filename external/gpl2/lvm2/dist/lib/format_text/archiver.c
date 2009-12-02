@@ -1,4 +1,4 @@
-/*	$NetBSD: archiver.c,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
+/*	$NetBSD: archiver.c,v 1.1.1.3 2009/12/02 00:26:29 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -22,6 +22,7 @@
 #include "lvm-string.h"
 #include "lvmcache.h"
 #include "toolcontext.h"
+#include "locking.h"
 
 #include <unistd.h>
 
@@ -66,6 +67,8 @@ int archive_init(struct cmd_context *cmd, const char *dir,
 
 void archive_exit(struct cmd_context *cmd)
 {
+	if (!cmd->archive_params)
+		return;
 	if (cmd->archive_params->dir)
 		dm_free(cmd->archive_params->dir);
 	memset(cmd->archive_params, 0, sizeof(*cmd->archive_params));
@@ -156,8 +159,8 @@ int backup_init(struct cmd_context *cmd, const char *dir,
 		int enabled)
 {
 	if (!(cmd->backup_params = dm_pool_zalloc(cmd->libmem,
-					       sizeof(*cmd->archive_params)))) {
-		log_error("archive_params alloc failed");
+					       sizeof(*cmd->backup_params)))) {
+		log_error("backup_params alloc failed");
 		return 0;
 	}
 
@@ -176,6 +179,8 @@ int backup_init(struct cmd_context *cmd, const char *dir,
 
 void backup_exit(struct cmd_context *cmd)
 {
+	if (!cmd->backup_params)
+		return;
 	if (cmd->backup_params->dir)
 		dm_free(cmd->backup_params->dir);
 	memset(cmd->backup_params, 0, sizeof(*cmd->backup_params));
@@ -204,7 +209,7 @@ static int __backup(struct volume_group *vg)
 	return backup_to_file(name, desc, vg);
 }
 
-int backup(struct volume_group *vg)
+int backup_locally(struct volume_group *vg)
 {
 	if (!vg->cmd->backup_params->enabled || !vg->cmd->backup_params->dir) {
 		log_warn("WARNING: This metadata update is NOT backed up");
@@ -233,13 +238,21 @@ int backup(struct volume_group *vg)
 	return 1;
 }
 
+int backup(struct volume_group *vg)
+{
+	if (vg_is_clustered(vg))
+		remote_backup_metadata(vg);
+
+	return backup_locally(vg);
+}
+
 int backup_remove(struct cmd_context *cmd, const char *vg_name)
 {
 	char path[PATH_MAX];
 
 	if (dm_snprintf(path, sizeof(path), "%s/%s",
 			 cmd->backup_params->dir, vg_name) < 0) {
-		log_err("Failed to generate backup filename (for removal).");
+		log_error("Failed to generate backup filename (for removal).");
 		return 0;
 	}
 
@@ -309,7 +322,7 @@ int backup_restore_vg(struct cmd_context *cmd, struct volume_group *vg)
 			return 0;
 		}
 		if (!vg->fid->fmt->ops->
-		    pv_setup(vg->fid->fmt, UINT64_C(0), 0, 0, 0,
+		    pv_setup(vg->fid->fmt, UINT64_C(0), 0, 0, 0, 0, 0UL,
 			     UINT64_C(0), &vg->fid->metadata_areas, pv, vg)) {
 			log_error("Format-specific setup for %s failed",
 				  pv_dev_name(pv));
@@ -328,6 +341,7 @@ int backup_restore_from_file(struct cmd_context *cmd, const char *vg_name,
 			     const char *file)
 {
 	struct volume_group *vg;
+	int missing_pvs, r = 0;
 
 	/*
 	 * Read in the volume group from the text file.
@@ -335,7 +349,15 @@ int backup_restore_from_file(struct cmd_context *cmd, const char *vg_name,
 	if (!(vg = backup_read_vg(cmd, vg_name, file)))
 		return_0;
 
-	return backup_restore_vg(cmd, vg);
+	missing_pvs = vg_missing_pv_count(vg);
+	if (missing_pvs == 0)
+		r = backup_restore_vg(cmd, vg);
+	else
+		log_error("Cannot restore Volume Group %s with %i PVs "
+			  "marked as missing.", vg->name, missing_pvs);
+
+	vg_release(vg);
+	return r;
 }
 
 int backup_restore(struct cmd_context *cmd, const char *vg_name)
@@ -344,7 +366,7 @@ int backup_restore(struct cmd_context *cmd, const char *vg_name)
 
 	if (dm_snprintf(path, sizeof(path), "%s/%s",
 			 cmd->backup_params->dir, vg_name) < 0) {
-		log_err("Failed to generate backup filename (for restore).");
+		log_error("Failed to generate backup filename (for restore).");
 		return 0;
 	}
 
@@ -393,8 +415,9 @@ void check_current_backup(struct volume_group *vg)
 {
 	char path[PATH_MAX];
 	struct volume_group *vg_backup;
+	int old_suppress;
 
-	if (vg->status & EXPORTED_VG)
+	if (vg_is_exported(vg))
 		return;
 
 	if (dm_snprintf(path, sizeof(path), "%s/%s",
@@ -403,16 +426,21 @@ void check_current_backup(struct volume_group *vg)
 		return;
 	}
 
-	log_suppress(1);
+	old_suppress = log_suppress(1);
 	/* Up-to-date backup exists? */
 	if ((vg_backup = backup_read_vg(vg->cmd, vg->name, path)) &&
 	    (vg->seqno == vg_backup->seqno) &&
-	    (id_equal(&vg->id, &vg_backup->id)))
+	    (id_equal(&vg->id, &vg_backup->id))) {
+		log_suppress(old_suppress);
+		vg_release(vg_backup);
 		return;
-	log_suppress(0);
+	}
+	log_suppress(old_suppress);
 
-	if (vg_backup)
+	if (vg_backup) {
 		archive(vg_backup);
+		vg_release(vg_backup);
+	}
 	archive(vg);
-	backup(vg);
+	backup_locally(vg);
 }

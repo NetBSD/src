@@ -1,4 +1,4 @@
-/*	$NetBSD: tools.h,v 1.1.1.1 2008/12/22 00:19:08 haad Exp $	*/
+/*	$NetBSD: tools.h,v 1.1.1.2 2009/12/02 00:25:56 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -155,7 +155,8 @@ int alloc_arg(struct cmd_context *cmd, struct arg *a);
 int readahead_arg(struct cmd_context *cmd, struct arg *a);
 
 /* we use the enums to access the switches */
-unsigned int arg_count(const struct cmd_context *cmd, int a);
+unsigned arg_count(const struct cmd_context *cmd, int a);
+unsigned arg_is_set(const struct cmd_context *cmd, int a);
 const char *arg_value(struct cmd_context *cmd, int a);
 const char *arg_str_value(struct cmd_context *cmd, int a, const char *def);
 int32_t arg_int_value(struct cmd_context *cmd, int a, const int32_t def); 
@@ -170,6 +171,6 @@ int arg_count_increment(struct cmd_context *cmd, int a);
 const char *command_name(struct cmd_context *cmd);
 
 int pvmove_poll(struct cmd_context *cmd, const char *pv, unsigned background);
-int lvconvert_poll(struct cmd_context *cmd, const char *lv_name, unsigned background);
+int lvconvert_poll(struct cmd_context *cmd, struct logical_volume *lv, unsigned background);
 
 #endif

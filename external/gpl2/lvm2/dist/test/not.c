@@ -1,4 +1,4 @@
-/*	$NetBSD: not.c,v 1.1.1.1 2009/02/18 11:17:34 haad Exp $	*/
+/*	$NetBSD: not.c,v 1.1.1.2 2009/12/02 00:25:58 haad Exp $	*/
 
 #include <unistd.h>
 #include <stdio.h>
@@ -27,6 +27,10 @@ int main(int args, char **argv) {
 	} else {		/* parent */
 		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status)) {
+			if (WIFSIGNALED(status))
+				fprintf(stderr,
+					"Process %d died of signal %d.\n",
+					pid, WTERMSIG(status));
 			/* did not exit correctly */
 			return FAILURE;
 		}

@@ -6,6 +6,9 @@ dm_fclose
 dm_get_library_version
 dm_log
 dm_log_init
+dm_log_is_non_default
+dm_log_with_errno
+dm_log_with_errno_init
 dm_log_init_verbose
 dm_task_create
 dm_task_destroy
@@ -21,9 +24,11 @@ dm_task_get_uuid
 dm_task_get_read_ahead
 dm_task_set_ro
 dm_task_set_newname
+dm_task_set_cookie
 dm_task_set_event_nr
 dm_task_set_major
 dm_task_set_minor
+dm_task_set_major_minor
 dm_task_set_sector
 dm_task_set_message
 dm_task_set_uid
@@ -35,6 +40,7 @@ dm_task_add_target
 dm_task_no_flush
 dm_task_no_open_count
 dm_task_skip_lockfs
+dm_task_query_inactive_table
 dm_task_update_nodes
 dm_task_run
 dm_get_next_target
@@ -45,10 +51,12 @@ dm_tree_create
 dm_tree_free
 dm_tree_add_dev
 dm_tree_add_new_dev
+dm_tree_add_new_dev_with_udev_flags
 dm_tree_node_get_name
 dm_tree_node_get_uuid
 dm_tree_node_get_info
 dm_tree_node_get_context
+dm_tree_node_size_changed
 dm_tree_node_num_children
 dm_tree_node_num_parents
 dm_tree_find_node
@@ -66,12 +74,15 @@ dm_tree_node_add_error_target
 dm_tree_node_add_zero_target
 dm_tree_node_add_linear_target
 dm_tree_node_add_striped_target
+dm_tree_node_add_crypt_target
 dm_tree_node_add_mirror_target
 dm_tree_node_add_mirror_target_log
 dm_tree_node_add_target_area
 dm_tree_node_set_read_ahead
 dm_tree_skip_lockfs
 dm_tree_use_no_flush_suspend
+dm_tree_set_cookie
+dm_tree_get_cookie
 dm_is_dm_major
 dm_mknodes
 dm_malloc_aux
@@ -148,3 +159,8 @@ dm_list_last
 dm_list_prev
 dm_list_next
 dm_list_size
+dm_cookie_supported
+dm_udev_set_sync_support
+dm_udev_get_sync_support
+dm_udev_complete
+dm_udev_wait

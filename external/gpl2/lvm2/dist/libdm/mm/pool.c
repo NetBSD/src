@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.1.1.1 2008/12/22 00:18:35 haad Exp $	*/
+/*	$NetBSD: pool.c,v 1.1.1.2 2009/12/02 00:26:09 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -16,6 +16,10 @@
  */
 
 #include "dmlib.h"
+
+/* FIXME: thread unsafe */
+static DM_LIST_INIT(_dm_pools);
+void dm_pools_check_leaks(void);
 
 #ifdef DEBUG_POOL
 #include "pool-debug.c"
@@ -53,4 +57,23 @@ void *dm_pool_zalloc(struct dm_pool *p, size_t s)
 		memset(ptr, 0, s);
 
 	return ptr;
+}
+
+void dm_pools_check_leaks(void)
+{
+	struct dm_pool *p;
+
+	if (dm_list_empty(&_dm_pools))
+		return;
+
+	log_error("You have a memory leak (not released memory pool):");
+	dm_list_iterate_items(p, &_dm_pools) {
+#ifdef DEBUG_POOL
+		log_error(" [%p] %s (%u bytes)",
+			  p->orig_pool,
+			  p->name, p->stats.bytes);
+#else
+		log_error(" [%p]", p);
+#endif
+	}
 }

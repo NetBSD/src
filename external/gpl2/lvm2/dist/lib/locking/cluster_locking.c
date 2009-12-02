@@ -1,8 +1,8 @@
-/*	$NetBSD: cluster_locking.c,v 1.1.1.2 2009/02/18 11:17:08 haad Exp $	*/
+/*	$NetBSD: cluster_locking.c,v 1.1.1.3 2009/12/02 00:26:24 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -26,6 +26,7 @@
 #include "lvm-string.h"
 #include "locking.h"
 #include "locking_types.h"
+#include "toolcontext.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -35,6 +36,7 @@
 
 #ifndef CLUSTER_LOCKING_INTERNAL
 int lock_resource(struct cmd_context *cmd, const char *resource, uint32_t flags);
+int query_resource(const char *resource, int *mode);
 void locking_end(void);
 int locking_init(int type, struct config_tree *cf, uint32_t *flags);
 #endif
@@ -299,7 +301,8 @@ static int _cluster_free_request(lvm_response_t * response, int num)
 	return 1;
 }
 
-static int _lock_for_cluster(unsigned char clvmd_cmd, uint32_t flags, const char *name)
+static int _lock_for_cluster(struct cmd_context *cmd, unsigned char clvmd_cmd,
+			     uint32_t flags, const char *name)
 {
 	int status;
 	int i;
@@ -324,6 +327,9 @@ static int _lock_for_cluster(unsigned char clvmd_cmd, uint32_t flags, const char
 
 	if (dmeventd_monitor_mode())
 		args[1] |= LCK_DMEVENTD_MONITOR_MODE;
+
+	if (cmd->partial_activation)
+		args[1] |= LCK_PARTIAL_MODE;
 
 	/*
 	 * VG locks are just that: locks, and have no side effects
@@ -387,6 +393,13 @@ int lock_resource(struct cmd_context *cmd, const char *resource, uint32_t flags)
 
 	switch (flags & LCK_SCOPE_MASK) {
 	case LCK_VG:
+		if (flags == LCK_VG_BACKUP) {
+			log_very_verbose("Requesting backup of VG metadata for %s",
+					 resource);
+			return _lock_for_cluster(cmd, CLVMD_CMD_VG_BACKUP,
+						 LCK_CLUSTER_VG, resource);
+		}
+
 		/* If the VG name is empty then lock the unused PVs */
 		if (*resource == '#' || (flags & LCK_CACHE))
 			dm_snprintf(lockname, sizeof(lockname), "P_%s",
@@ -438,14 +451,6 @@ int lock_resource(struct cmd_context *cmd, const char *resource, uint32_t flags)
 		return 0;
 	}
 
-	/* If we are unlocking a clustered VG, then trigger remote metadata backups */
-	if (clvmd_cmd == CLVMD_CMD_LOCK_VG &&
-	    ((flags & LCK_TYPE_MASK) == LCK_UNLOCK) &&
-	    (flags & LCK_CLUSTER_VG)) {
-		log_very_verbose("Requesing backup of VG metadata for %s", resource);
-		_lock_for_cluster(CLVMD_CMD_VG_BACKUP, LCK_CLUSTER_VG, resource);
-	}
-
 	log_very_verbose("Locking %s %s %s %s%s%s%s (0x%x)", lock_scope, lockname,
 			 lock_type,
 			 flags & LCK_NONBLOCK ? "" : "B",
@@ -455,7 +460,70 @@ int lock_resource(struct cmd_context *cmd, const char *resource, uint32_t flags)
 			 flags);
 
 	/* Send a message to the cluster manager */
-	return _lock_for_cluster(clvmd_cmd, flags, lockname);
+	return _lock_for_cluster(cmd, clvmd_cmd, flags, lockname);
+}
+
+static int decode_lock_type(const char *response)
+{
+	if (!response)
+		return LCK_NULL;
+	else if (strcmp(response, "EX"))
+		return LCK_EXCL;
+	else if (strcmp(response, "CR"))
+		return LCK_READ;
+	else if (strcmp(response, "PR"))
+		return LCK_PREAD;
+
+	stack;
+	return 0;
+}
+
+#ifdef CLUSTER_LOCKING_INTERNAL
+static int _query_resource(const char *resource, int *mode)
+#else
+int query_resource(const char *resource, int *mode)
+#endif
+{
+	int i, status, len, num_responses, saved_errno;
+	const char *node = "";
+	char *args;
+	lvm_response_t *response = NULL;
+
+	saved_errno = errno;
+	len = strlen(resource) + 3;
+	args = alloca(len);
+	strcpy(args + 2, resource);
+
+	args[0] = 0;
+	args[1] = LCK_CLUSTER_VG;
+
+	status = _cluster_request(CLVMD_CMD_LOCK_QUERY, node, args, len,
+				  &response, &num_responses);
+	*mode = LCK_NULL;
+	for (i = 0; i < num_responses; i++) {
+		if (response[i].status == EHOSTDOWN)
+			continue;
+
+		if (!response[i].response[0])
+			continue;
+
+		/*
+		 * All nodes should use CR, or exactly one node
+		 * should held EX. (PR is obsolete)
+		 * If two nodes node reports different locks,
+		 * something is broken - just return more important mode.
+		 */
+		if (decode_lock_type(response[i].response) > *mode)
+			*mode = decode_lock_type(response[i].response);
+
+		log_debug("Lock held for %s, node %s : %s", resource,
+			  response[i].node, response[i].response);
+	}
+
+	_cluster_free_request(response, num_responses);
+	errno = saved_errno;
+
+	return status;
 }
 
 #ifdef CLUSTER_LOCKING_INTERNAL
@@ -488,6 +556,7 @@ void reset_locking(void)
 int init_cluster_locking(struct locking_type *locking, struct cmd_context *cmd)
 {
 	locking->lock_resource = _lock_resource;
+	locking->query_resource = _query_resource;
 	locking->fin_locking = _locking_end;
 	locking->reset_locking = _reset_locking;
 	locking->flags = LCK_PRE_MEMLOCK | LCK_CLUSTERED;

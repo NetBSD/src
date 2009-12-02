@@ -1,4 +1,4 @@
-/*	$NetBSD: lvchange.c,v 1.1.1.2 2009/02/18 11:17:43 haad Exp $	*/
+/*	$NetBSD: lvchange.c,v 1.1.1.3 2009/12/02 00:25:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -22,6 +22,7 @@ static int lvchange_permission(struct cmd_context *cmd,
 {
 	uint32_t lv_access;
 	struct lvinfo info;
+	int r = 0;
 
 	lv_access = arg_uint_value(cmd, permission_ARG, 0);
 
@@ -58,26 +59,27 @@ static int lvchange_permission(struct cmd_context *cmd,
 	if (!vg_write(lv->vg))
 		return_0;
 
-	backup(lv->vg);
-
 	if (!suspend_lv(cmd, lv)) {
 		log_error("Failed to lock %s", lv->name);
 		vg_revert(lv->vg);
-		return 0;
+		goto out;
 	}
 
 	if (!vg_commit(lv->vg)) {
 		resume_lv(cmd, lv);
-		return 0;
+		goto_out;
 	}
 
 	log_very_verbose("Updating permissions for \"%s\" in kernel", lv->name);
 	if (!resume_lv(cmd, lv)) {
 		log_error("Problem reactivating %s", lv->name);
-		return 0;
+		goto out;
 	}
 
-	return 1;
+	r = 1;
+out:
+	backup(lv->vg);
+	return r;
 }
 
 static int lvchange_monitoring(struct cmd_context *cmd,
@@ -105,9 +107,6 @@ static int lvchange_availability(struct cmd_context *cmd,
 				 struct logical_volume *lv)
 {
 	int activate;
-	const char *pvname;
-	char *lv_full_name;
-	uint32_t len;
 
 	activate = arg_uint_value(cmd, available_ARG, 0);
 
@@ -121,12 +120,6 @@ static int lvchange_availability(struct cmd_context *cmd,
 		if (!deactivate_lv(cmd, lv))
 			return_0;
 	} else {
-		if (lockingfailed() && (vg_is_clustered(lv->vg))) {
-			log_verbose("Locking failed: ignoring clustered "
-				    "logical volume %s", lv->name);
-			return 0;
-		}
-
 		if (lv_is_origin(lv) || (activate == CHANGE_AE)) {
 			log_verbose("Activating logical volume \"%s\" "
 				    "exclusively", lv->name);
@@ -144,24 +137,7 @@ static int lvchange_availability(struct cmd_context *cmd,
 				return_0;
 		}
 
-		if ((lv->status & LOCKED) &&
-		    (pvname = get_pvmove_pvname_from_lv(lv))) {
-			log_verbose("Spawning background pvmove process for %s",
-				    pvname);
-			pvmove_poll(cmd, pvname, 1);
-		}
-
-		if (lv->status & CONVERTING) {
-			len = strlen(lv->vg->name) + strlen(lv->name) + 2;
-			if (!(lv_full_name = alloca(len)))
-				return_0;
-			if (!dm_snprintf(lv_full_name, len, "%s/%s",
-					 lv->vg->name, lv->name))
-				return_0;
-			log_verbose("Spawning background lvconvert process for %s",
-				    lv->name);
-			lvconvert_poll(cmd, lv_full_name, 1);
-		}
+		lv_spawn_background_polling(cmd, lv);
 	}
 
 	return 1;
@@ -201,7 +177,7 @@ static int lvchange_resync(struct cmd_context *cmd,
 		if (info.open_count) {
 			log_error("Can't resync open logical volume \"%s\"",
 				  lv->name);
-			return ECMD_FAILED;
+			return 0;
 		}
 
 		if (info.exists) {
@@ -211,11 +187,11 @@ static int lvchange_resync(struct cmd_context *cmd,
 					  lv->name) == 'n') {
 				log_print("Logical volume \"%s\" not resynced",
 					  lv->name);
-				return ECMD_FAILED;
+				return 0;
 			}
 
 			if (sigint_caught())
-				return ECMD_FAILED;
+				return 0;
 
 			active = 1;
 		}
@@ -225,14 +201,14 @@ static int lvchange_resync(struct cmd_context *cmd,
 	monitored = dmeventd_monitor_mode();
 	init_dmeventd_monitor(0);
 
-	if (vg_is_clustered(lv->vg) && !activate_lv_excl(cmd, lv)) {
-		log_error("Can't get exclusive access to clustered volume %s",
-			  lv->name);
-		return ECMD_FAILED;
-	}
-
 	if (!deactivate_lv(cmd, lv)) {
 		log_error("Unable to deactivate %s for resync", lv->name);
+		return 0;
+	}
+
+	if (vg_is_clustered(lv->vg) && lv_is_active(lv)) {
+		log_error("Can't get exclusive access to clustered volume %s",
+			  lv->name);
 		return 0;
 	}
 
@@ -276,8 +252,6 @@ static int lvchange_resync(struct cmd_context *cmd,
 			return 0;
 		}
 
-		backup(lv->vg);
-
 		if (!vg_commit(lv->vg)) {
 			log_error("Failed to commit intermediate VG metadata.");
 			if (!attach_mirror_log(first_seg(lv), log_lv))
@@ -286,6 +260,8 @@ static int lvchange_resync(struct cmd_context *cmd,
 				stack;
 			return 0;
 		}
+
+		backup(lv->vg);
 
 		if (!activate_lv(cmd, log_lv)) {
 			log_error("Unable to activate %s for mirror log resync",
@@ -351,14 +327,11 @@ static int lvchange_alloc(struct cmd_context *cmd, struct logical_volume *lv)
 
 	log_very_verbose("Updating logical volume \"%s\" on disk(s)", lv->name);
 
-	if (!vg_write(lv->vg))
+	/* No need to suspend LV for this change */
+	if (!vg_write(lv->vg) || !vg_commit(lv->vg))
 		return_0;
 
 	backup(lv->vg);
-
-	/* No need to suspend LV for this change */
-	if (!vg_commit(lv->vg))
-		return_0;
 
 	return 1;
 }
@@ -368,6 +341,7 @@ static int lvchange_readahead(struct cmd_context *cmd,
 {
 	unsigned read_ahead = 0;
 	unsigned pagesize = (unsigned) lvm_getpagesize() >> SECTOR_SHIFT;
+	int r = 0;
 
 	read_ahead = arg_uint_value(cmd, readahead_ARG, 0);
 
@@ -380,9 +354,12 @@ static int lvchange_readahead(struct cmd_context *cmd,
 
 	if (read_ahead != DM_READ_AHEAD_AUTO &&
 	    read_ahead != DM_READ_AHEAD_NONE && read_ahead % pagesize) {
-		read_ahead = (read_ahead / pagesize) * pagesize;
-		log_verbose("Rounding down readahead to %u sectors, a multiple "
-			    "of page size %u.", read_ahead, pagesize);
+		if (read_ahead < pagesize)
+			read_ahead = pagesize;
+		else
+			read_ahead = (read_ahead / pagesize) * pagesize;
+		log_warn("WARNING: Overriding readahead to %u sectors, a multiple "
+			    "of %uK page size.", read_ahead, pagesize >> 1);
 	}
 
 	if (lv->read_ahead == read_ahead) {
@@ -403,26 +380,27 @@ static int lvchange_readahead(struct cmd_context *cmd,
 	if (!vg_write(lv->vg))
 		return_0;
 
-	backup(lv->vg);
-
 	if (!suspend_lv(cmd, lv)) {
 		log_error("Failed to lock %s", lv->name);
 		vg_revert(lv->vg);
-		return 0;
+		goto out;
 	}
 
 	if (!vg_commit(lv->vg)) {
 		resume_lv(cmd, lv);
-		return 0;
+		goto_out;
 	}
 
 	log_very_verbose("Updating permissions for \"%s\" in kernel", lv->name);
 	if (!resume_lv(cmd, lv)) {
 		log_error("Problem reactivating %s", lv->name);
-		return 0;
+		goto out;
 	}
 
-	return 1;
+	r = 1;
+out:
+	backup(lv->vg);
+	return r;
 }
 
 static int lvchange_persistent(struct cmd_context *cmd,
@@ -479,13 +457,10 @@ static int lvchange_persistent(struct cmd_context *cmd,
 	}
 
 	log_very_verbose("Updating logical volume \"%s\" on disk(s)", lv->name);
-	if (!vg_write(lv->vg))
+	if (!vg_write(lv->vg) || !vg_commit(lv->vg))
 		return_0;
 
 	backup(lv->vg);
-
-	if (!vg_commit(lv->vg))
-		return_0;
 
 	if (active) {
 		log_verbose("Re-activating logical volume \"%s\"", lv->name);
@@ -529,14 +504,12 @@ static int lvchange_tag(struct cmd_context *cmd, struct logical_volume *lv,
 	}
 
 	log_very_verbose("Updating logical volume \"%s\" on disk(s)", lv->name);
-	if (!vg_write(lv->vg))
+
+	/* No need to suspend LV for this change */
+	if (!vg_write(lv->vg) || !vg_commit(lv->vg))
 		return_0;
 
 	backup(lv->vg);
-
-	/* No need to suspend LV for this change */
-	if (!vg_commit(lv->vg))
-		return_0;
 
 	return 1;
 }
@@ -546,6 +519,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 {
 	int doit = 0, docmds = 0;
 	int archived = 0;
+	struct logical_volume *origin;
 
 	if (!(lv->vg->status & LVM_WRITE) &&
 	    (arg_count(cmd, contiguous_ARG) || arg_count(cmd, permission_ARG) ||
@@ -565,7 +539,8 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 		return ECMD_FAILED;
 	}
 
-	if (lv_is_cow(lv)) {
+	if (lv_is_cow(lv) && !lv_is_virtual_origin(origin_from_cow(lv)) &&
+	    arg_count(cmd, available_ARG)) {
 		log_error("Can't change snapshot logical volume \"%s\"",
 			  lv->name);
 		return ECMD_FAILED;
@@ -589,7 +564,12 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 		return ECMD_FAILED;
 	}
 
-	if (!(lv_is_displayable(lv))) {
+	/* If LV is sparse, activate origin instead */
+	if (arg_count(cmd, available_ARG) && lv_is_cow(lv) &&
+	    lv_is_virtual_origin(origin = origin_from_cow(lv)))
+		lv = origin;
+
+	if (!(lv_is_visible(lv)) && !lv_is_virtual_origin(lv)) {
 		log_error("Unable to change internal LV %s directly",
 			  lv->name);
 		return ECMD_FAILED;
@@ -601,8 +581,10 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* access permission change */
 	if (arg_count(cmd, permission_ARG)) {
-		if (!archive(lv->vg))
+		if (!archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_permission(cmd, lv);
 		docmds++;
@@ -610,8 +592,10 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* allocation policy change */
 	if (arg_count(cmd, contiguous_ARG) || arg_count(cmd, alloc_ARG)) {
-		if (!archived && !archive(lv->vg))
+		if (!archived && !archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_alloc(cmd, lv);
 		docmds++;
@@ -619,28 +603,36 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* read ahead sector change */
 	if (arg_count(cmd, readahead_ARG)) {
-		if (!archived && !archive(lv->vg))
+		if (!archived && !archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_readahead(cmd, lv);
 		docmds++;
 	}
 
-	/* read ahead sector change */
+	/* persistent device number change */
 	if (arg_count(cmd, persistent_ARG)) {
-		if (!archived && !archive(lv->vg))
+		if (!archived && !archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_persistent(cmd, lv);
 		docmds++;
-		if (sigint_caught())
+		if (sigint_caught()) {
+			stack;
 			return ECMD_FAILED;
+		}
 	}
 
 	/* add tag */
 	if (arg_count(cmd, addtag_ARG)) {
-		if (!archived && !archive(lv->vg))
+		if (!archived && !archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_tag(cmd, lv, addtag_ARG);
 		docmds++;
@@ -648,8 +640,10 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* del tag */
 	if (arg_count(cmd, deltag_ARG)) {
-		if (!archived && !archive(lv->vg))
+		if (!archived && !archive(lv->vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 		archived = 1;
 		doit += lvchange_tag(cmd, lv, deltag_ARG);
 		docmds++;
@@ -659,28 +653,38 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 		log_print("Logical volume \"%s\" changed", lv->name);
 
 	if (arg_count(cmd, resync_ARG))
-		if (!lvchange_resync(cmd, lv))
+		if (!lvchange_resync(cmd, lv)) {
+			stack;
 			return ECMD_FAILED;
+		}
 
 	/* availability change */
 	if (arg_count(cmd, available_ARG)) {
-		if (!lvchange_availability(cmd, lv))
+		if (!lvchange_availability(cmd, lv)) {
+			stack;
 			return ECMD_FAILED;
+		}
 	}
 
 	if (arg_count(cmd, refresh_ARG))
-		if (!lvchange_refresh(cmd, lv))
+		if (!lvchange_refresh(cmd, lv)) {
+			stack;
 			return ECMD_FAILED;
+		}
 
 	if (!arg_count(cmd, available_ARG) &&
 	    !arg_count(cmd, refresh_ARG) &&
 	    arg_count(cmd, monitor_ARG)) {
-		if (!lvchange_monitoring(cmd, lv))
+		if (!lvchange_monitoring(cmd, lv)) {
+			stack;
 			return ECMD_FAILED;
+		}
 	}
 
-	if (doit != docmds)
+	if (doit != docmds) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	return ECMD_PROCESSED;
 }
@@ -700,14 +704,19 @@ int lvchange(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	if (arg_count(cmd, ignorelockingfailure_ARG) &&
-	    (arg_count(cmd, contiguous_ARG) || arg_count(cmd, permission_ARG) ||
+	int avail_only = /* i.e. only one of -a or --refresh is given */
+	    !(arg_count(cmd, contiguous_ARG) || arg_count(cmd, permission_ARG) ||
 	     arg_count(cmd, readahead_ARG) || arg_count(cmd, persistent_ARG) ||
 	     arg_count(cmd, addtag_ARG) || arg_count(cmd, deltag_ARG) ||
-	     arg_count(cmd, refresh_ARG) || arg_count(cmd, alloc_ARG))) {
+	     arg_count(cmd, resync_ARG) || arg_count(cmd, alloc_ARG));
+
+	if (arg_count(cmd, ignorelockingfailure_ARG) && !avail_only) {
 		log_error("Only -a permitted with --ignorelockingfailure");
 		return EINVALID_CMD_LINE;
 	}
+
+	if (avail_only)
+		cmd->handles_missing_pvs = 1;
 
 	if (!argc) {
 		log_error("Please give logical volume path(s)");
@@ -730,6 +739,7 @@ int lvchange(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	return process_each_lv(cmd, argc, argv, LCK_VG_WRITE, NULL,
+	return process_each_lv(cmd, argc, argv,
+			       avail_only ? 0 : READ_FOR_UPDATE, NULL,
 			       &lvchange_single);
 }

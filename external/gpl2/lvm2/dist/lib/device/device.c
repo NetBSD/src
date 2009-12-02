@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.1.1.1 2008/12/22 00:17:57 haad Exp $	*/
+/*	$NetBSD: device.c,v 1.1.1.2 2009/12/02 00:26:34 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -15,6 +15,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <libgen.h> /* dirname, basename */
 #include "lib.h"
 #include "lvm-types.h"
 #include "device.h"
@@ -44,6 +45,10 @@ struct partition {
 static int _is_partitionable(struct device *dev)
 {
 	int parts = max_partitions(MAJOR(dev->dev));
+
+	/* All MD devices are partitionable via blkext (as of 2.6.28) */
+	if (MAJOR(dev->dev) == md_major())
+		return 1;
 
 	if ((parts <= 1) || (MINOR(dev->dev) % parts))
 		return 0;
@@ -279,4 +284,209 @@ int _get_partition_type(struct dev_mgr *dm, struct device *d)
 
 	return 0;
 }
+#endif
+
+#ifdef linux
+
+int get_primary_dev(const char *sysfs_dir,
+		    struct device *dev, dev_t *result)
+{
+	char path[PATH_MAX+1];
+	char temp_path[PATH_MAX+1];
+	char buffer[64];
+	struct stat info;
+	FILE *fp;
+	uint32_t pri_maj, pri_min;
+	int ret = 0;
+
+	/* check if dev is a partition */
+	if (dm_snprintf(path, PATH_MAX, "%s/dev/block/%d:%d/partition",
+			sysfs_dir, (int)MAJOR(dev->dev), (int)MINOR(dev->dev)) < 0) {
+		log_error("dm_snprintf partition failed");
+		return ret;
+	}
+
+	if (stat(path, &info) == -1) {
+		if (errno != ENOENT)
+			log_sys_error("stat", path);
+		return ret;
+	}
+
+	/*
+	 * extract parent's path from the partition's symlink, e.g.:
+	 * - readlink /sys/dev/block/259:0 = ../../block/md0/md0p1
+	 * - dirname ../../block/md0/md0p1 = ../../block/md0
+	 * - basename ../../block/md0/md0  = md0
+	 * Parent's 'dev' sysfs attribute  = /sys/block/md0/dev
+	 */
+	if (readlink(dirname(path), temp_path, PATH_MAX) < 0) {
+		log_sys_error("readlink", path);
+		return ret;
+	}
+
+	if (dm_snprintf(path, PATH_MAX, "%s/block/%s/dev",
+			sysfs_dir, basename(dirname(temp_path))) < 0) {
+		log_error("dm_snprintf dev failed");
+		return ret;
+	}
+
+	/* finally, parse 'dev' attribute and create corresponding dev_t */
+	if (stat(path, &info) == -1) {
+		if (errno == ENOENT)
+			log_error("sysfs file %s does not exist", path);
+		else
+			log_sys_error("stat", path);
+		return ret;
+	}
+
+	fp = fopen(path, "r");
+	if (!fp) {
+		log_sys_error("fopen", path);
+		return ret;
+	}
+
+	if (!fgets(buffer, sizeof(buffer), fp)) {
+		log_sys_error("fgets", path);
+		goto out;
+	}
+
+	if (sscanf(buffer, "%d:%d", &pri_maj, &pri_min) != 2) {
+		log_error("sysfs file %s not in expected MAJ:MIN format: %s",
+			  path, buffer);
+		goto out;
+	}
+	*result = MKDEV(pri_maj, pri_min);
+	ret = 1;
+
+out:
+	if (fclose(fp))
+		log_sys_error("fclose", path);
+
+	return ret;
+}
+
+static unsigned long _dev_topology_attribute(const char *attribute,
+					     const char *sysfs_dir,
+					     struct device *dev)
+{
+	const char *sysfs_fmt_str = "%s/dev/block/%d:%d/%s";
+	char path[PATH_MAX+1], buffer[64];
+	FILE *fp;
+	struct stat info;
+	dev_t uninitialized_var(primary);
+	unsigned long result = 0UL;
+
+	if (!attribute || !*attribute)
+		return_0;
+
+	if (!sysfs_dir || !*sysfs_dir)
+		return_0;
+
+	if (dm_snprintf(path, PATH_MAX, sysfs_fmt_str, sysfs_dir,
+			(int)MAJOR(dev->dev), (int)MINOR(dev->dev),
+			attribute) < 0) {
+		log_error("dm_snprintf %s failed", attribute);
+		return 0;
+	}
+
+	/*
+	 * check if the desired sysfs attribute exists
+	 * - if not: either the kernel doesn't have topology support
+	 *   or the device could be a partition
+	 */
+	if (stat(path, &info) == -1) {
+		if (errno != ENOENT) {
+			log_sys_error("stat", path);
+			return 0;
+		}
+		if (!get_primary_dev(sysfs_dir, dev, &primary))
+			return 0;
+
+		/* get attribute from partition's primary device */
+		if (dm_snprintf(path, PATH_MAX, sysfs_fmt_str, sysfs_dir,
+				(int)MAJOR(primary), (int)MINOR(primary),
+				attribute) < 0) {
+			log_error("primary dm_snprintf %s failed", attribute);
+			return 0;
+		}
+		if (stat(path, &info) == -1) {
+			if (errno != ENOENT)
+				log_sys_error("stat", path);
+			return 0;
+		}
+	}
+
+	if (!(fp = fopen(path, "r"))) {
+		log_sys_error("fopen", path);
+		return 0;
+	}
+
+	if (!fgets(buffer, sizeof(buffer), fp)) {
+		log_sys_error("fgets", path);
+		goto out;
+	}
+
+	if (sscanf(buffer, "%lu", &result) != 1) {
+		log_error("sysfs file %s not in expected format: %s", path,
+			  buffer);
+		goto out;
+	}
+
+	log_very_verbose("Device %s %s is %lu bytes.",
+			 dev_name(dev), attribute, result);
+
+out:
+	if (fclose(fp))
+		log_sys_error("fclose", path);
+
+	return result >> SECTOR_SHIFT;
+}
+
+unsigned long dev_alignment_offset(const char *sysfs_dir,
+				   struct device *dev)
+{
+	return _dev_topology_attribute("alignment_offset",
+				       sysfs_dir, dev);
+}
+
+unsigned long dev_minimum_io_size(const char *sysfs_dir,
+				  struct device *dev)
+{
+	return _dev_topology_attribute("queue/minimum_io_size",
+				       sysfs_dir, dev);
+}
+
+unsigned long dev_optimal_io_size(const char *sysfs_dir,
+				  struct device *dev)
+{
+	return _dev_topology_attribute("queue/optimal_io_size",
+				       sysfs_dir, dev);
+}
+
+#else
+
+int get_primary_dev(const char *sysfs_dir,
+		    struct device *dev, dev_t *result)
+{
+	return 0;
+}
+
+unsigned long dev_alignment_offset(const char *sysfs_dir,
+				   struct device *dev)
+{
+	return 0UL;
+}
+
+unsigned long dev_minimum_io_size(const char *sysfs_dir,
+				  struct device *dev)
+{
+	return 0UL;
+}
+
+unsigned long dev_optimal_io_size(const char *sysfs_dir,
+				  struct device *dev)
+{
+	return 0UL;
+}
+
 #endif

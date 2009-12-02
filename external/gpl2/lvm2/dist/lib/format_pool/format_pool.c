@@ -1,4 +1,4 @@
-/*	$NetBSD: format_pool.c,v 1.1.1.1 2008/12/22 00:17:50 haad Exp $	*/
+/*	$NetBSD: format_pool.c,v 1.1.1.2 2009/12/02 00:26:50 haad Exp $	*/
 
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
@@ -115,18 +115,18 @@ static struct volume_group *_build_vg_from_pds(struct format_instance
 	}
 
 	vg->cmd = fid->fmt->cmd;
+	vg->vgmem = mem;
 	vg->fid = fid;
 	vg->name = NULL;
 	vg->status = 0;
 	vg->extent_count = 0;
 	vg->pv_count = 0;
-	vg->lv_count = 0;
-	vg->snapshot_count = 0;
 	vg->seqno = 1;
 	vg->system_id = NULL;
 	dm_list_init(&vg->pvs);
 	dm_list_init(&vg->lvs);
 	dm_list_init(&vg->tags);
+	dm_list_init(&vg->removed_pvs);
 
 	if (!import_pool_vg(vg, smem, pds))
 		return_NULL;
@@ -162,7 +162,7 @@ static struct volume_group *_pool_vg_read(struct format_instance *fid,
 				     const char *vg_name,
 				     struct metadata_area *mda __attribute((unused)))
 {
-	struct dm_pool *mem = dm_pool_create("pool vg_read", 1024);
+	struct dm_pool *mem = dm_pool_create("pool vg_read", VG_MEMPOOL_CHUNK);
 	struct dm_list pds;
 	struct volume_group *vg = NULL;
 
@@ -184,15 +184,18 @@ static struct volume_group *_pool_vg_read(struct format_instance *fid,
 	if (!(vg = _build_vg_from_pds(fid, mem, &pds)))
 		goto_out;
 
-      out:
-	dm_pool_destroy(mem);
 	return vg;
+out:
+	dm_pool_destroy(mem);
+	return NULL;
 }
 
 static int _pool_pv_setup(const struct format_type *fmt __attribute((unused)),
 			  uint64_t pe_start __attribute((unused)),
 			  uint32_t extent_count __attribute((unused)),
 			  uint32_t extent_size __attribute((unused)),
+			  unsigned long data_alignment __attribute((unused)),
+			  unsigned long data_alignment_offset __attribute((unused)),
 			  int pvmetadatacopies __attribute((unused)),
 			  uint64_t pvmetadatasize __attribute((unused)),
 			  struct dm_list *mdas __attribute((unused)),
@@ -204,7 +207,8 @@ static int _pool_pv_setup(const struct format_type *fmt __attribute((unused)),
 
 static int _pool_pv_read(const struct format_type *fmt, const char *pv_name,
 			 struct physical_volume *pv,
-			 struct dm_list *mdas __attribute((unused)))
+			 struct dm_list *mdas __attribute((unused)),
+			 int scan_label_only __attribute((unused)))
 {
 	struct dm_pool *mem = dm_pool_create("pool pv_read", 1024);
 	struct pool_list *pl;

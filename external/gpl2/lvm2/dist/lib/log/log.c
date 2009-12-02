@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2008/12/22 00:17:52 haad Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2009/12/02 00:26:22 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -39,6 +39,10 @@ static char _msg_prefix[30] = "  ";
 static int _already_logging = 0;
 
 static lvm2_log_fn_t _lvm2_log_fn = NULL;
+
+static int _lvm_errno = 0;
+static int _store_errmsg = 0;
+static char *_lvm_errmsg = NULL;
 
 void init_log_fn(lvm2_log_fn_t log_fn)
 {
@@ -138,13 +142,37 @@ void init_indent(int indent)
 	_indent = indent;
 }
 
-void print_log(int level, const char *file, int line, const char *format, ...)
+void reset_lvm_errno(int store_errmsg)
+{
+	_lvm_errno = 0;
+
+	if (_lvm_errmsg) {
+		dm_free(_lvm_errmsg);
+		_lvm_errmsg = NULL;
+	}
+
+	_store_errmsg = store_errmsg;
+}
+
+int stored_errno(void)
+{
+	return _lvm_errno;
+}
+
+const char *stored_errmsg(void)
+{
+	return _lvm_errmsg ? : "";
+}
+
+void print_log(int level, const char *file, int line, int dm_errno,
+	       const char *format, ...)
 {
 	va_list ap;
 	char buf[1024], buf2[4096], locn[4096];
 	int bufused, n;
 	const char *message;
 	const char *trformat;		/* Translated format string */
+	char *newbuf;
 	int use_stderr = level & _LOG_STDERR;
 
 	level &= ~_LOG_STDERR;
@@ -157,7 +185,10 @@ void print_log(int level, const char *file, int line, const char *format, ...)
 
 	trformat = _(format);
 
-	if (_lvm2_log_fn) {
+	if (dm_errno && !_lvm_errno)
+		_lvm_errno = dm_errno;
+
+	if (_lvm2_log_fn || (_store_errmsg && (level <= _LOG_ERR))) {
 		va_start(ap, format);
 		n = vsnprintf(buf2, sizeof(buf2) - 1, trformat, ap);
 		va_end(ap);
@@ -170,8 +201,21 @@ void print_log(int level, const char *file, int line, const char *format, ...)
 
 		buf2[sizeof(buf2) - 1] = '\0';
 		message = &buf2[0];
+	}
 
-		_lvm2_log_fn(level, file, line, message);
+	if (_store_errmsg && (level <= _LOG_ERR)) {
+		if (!_lvm_errmsg)
+			_lvm_errmsg = dm_strdup(message);
+		else if ((newbuf = dm_realloc(_lvm_errmsg,
+ 					      strlen(_lvm_errmsg) +
+					      strlen(message) + 2))) {
+			_lvm_errmsg = strcat(newbuf, "\n");
+			_lvm_errmsg = strcat(newbuf, message);
+		}
+	}
+
+	if (_lvm2_log_fn) {
+		_lvm2_log_fn(level, file, line, 0, message);
 
 		return;
 	}

@@ -33,7 +33,7 @@ teardown() {
 	test -n "$PREFIX" && {
 		rm -rf $G_root_/dev/$PREFIX*
 		while dmsetup table | grep -q ^$PREFIX; do
-			for s in `dmsetup table | grep ^$PREFIX| cut -f1 -d:`; do
+			for s in `dmsetup table | grep ^$PREFIX| awk '{ print substr($1,1,length($1)-1) }'`; do
 				dmsetup resume $s 2>/dev/null > /dev/null || true
 				dmsetup remove $s 2>/dev/null > /dev/null || true
 			done
@@ -99,6 +99,8 @@ prepare_devs() {
 	test -z "$n" && n=3
 	local devsize="$2"
 	test -z "$devsize" && devsize=33
+	local pvname="$3"
+	test -z "$pvname" && pvname="pv"
 
 	prepare_loop $(($n*$devsize))
 
@@ -111,7 +113,7 @@ prepare_devs() {
 	local size=$(($loopsz/$n))
 
 	for i in `seq 1 $n`; do
-		local name="${PREFIX}pv$i"
+		local name="${PREFIX}$pvname$i"
 		local dev="$G_dev_/mapper/$name"
 		eval "dev$i=$dev"
 		devs="$devs $dev"
@@ -128,6 +130,7 @@ prepare_devs() {
 	lv1=LV1
 	lv2=LV2
 	lv3=LV3
+	lv4=LV4
 }
 
 disable_dev() {
@@ -175,11 +178,14 @@ prepare_vg() {
 }
 
 prepare_lvmconf() {
+	local filter="$1"
+	test -z "$filter" && \
+		filter='[ "a/dev\/mirror/", "a/dev\/mapper\/.*pv[0-9_]*$/", "r/.*/" ]'
 	cat > $G_root_/etc/lvm.conf <<-EOF
   devices {
     dir = "$G_dev_"
     scan = "$G_dev_"
-    filter = [ "a/dev\/mirror/", "a/dev\/mapper/", "r/.*/" ]
+    filter = $filter
     cache_dir = "$G_root_/etc"
     sysfs_scan = 0
   }

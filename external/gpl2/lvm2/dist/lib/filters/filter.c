@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.1.1 2008/12/22 00:17:58 haad Exp $	*/
+/*	$NetBSD: filter.c,v 1.1.1.2 2009/12/02 00:26:47 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -40,11 +40,43 @@ typedef struct {
 } device_info_t;
 
 static int _md_major = -1;
+static int _blkext_major = -1;
+static int _drbd_major = -1;
 static int _device_mapper_major = -1;
 
 int md_major(void)
 {
 	return _md_major;
+}
+
+int blkext_major(void)
+{
+	return _blkext_major;
+}
+
+int dev_subsystem_part_major(const struct device *dev)
+{
+	if (MAJOR(dev->dev) == -1)
+		return 0;
+
+	if (MAJOR(dev->dev) == _md_major)
+		return 1;
+
+	if (MAJOR(dev->dev) == _drbd_major)
+		return 1;
+
+	return 0;
+}
+
+const char *dev_subsystem_name(const struct device *dev)
+{
+	if (MAJOR(dev->dev) == _md_major)
+		return "MD";
+
+	if (MAJOR(dev->dev) == _drbd_major)
+		return "DRBD";
+
+	return "";
 }
 
 /*
@@ -59,6 +91,7 @@ static const device_info_t device_info[] = {
 	{"ide", 64},		/* IDE disk */
 	{"sd", 16},		/* SCSI disk */
 	{"md", 1},		/* Multiple Disk driver (SoftRAID) */
+	{"mdp", 1},		/* Partitionable MD */
 	{"loop", 1},		/* Loop device */
 	{"dasd", 4},		/* DASD disk (IBM S/390, zSeries) */
 	{"dac960", 8},		/* DAC960 */
@@ -80,6 +113,8 @@ static const device_info_t device_info[] = {
 	{"vdisk", 8},		/* SUN's LDOM virtual block device */
 	{"ps3disk", 16},	/* PlayStation 3 internal disk */
 	{"virtblk", 8},		/* VirtIO disk */
+	{"mmc", 16},		/* MMC block device */
+	{"blkext", 1},		/* Extended device partitions */
 	{NULL, 0}
 };
 
@@ -195,6 +230,14 @@ static int _scan_proc_dev(const char *proc, const struct config_node *cn)
 		/* Look for md device */
 		if (!strncmp("md", line + i, 2) && isspace(*(line + i + 2)))
 			_md_major = line_maj;
+
+		/* Look for blkext device */
+		if (!strncmp("blkext", line + i, 6) && isspace(*(line + i + 6)))
+			_blkext_major = line_maj;
+
+		/* Look for drbd device */
+		if (!strncmp("drbd", line + i, 4) && isspace(*(line + i + 4)))
+			_drbd_major = line_maj;
 
 		/* Look for device-mapper device */
 		/* FIXME Cope with multiple majors */

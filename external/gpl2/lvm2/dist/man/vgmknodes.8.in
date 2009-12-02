@@ -3,13 +3,22 @@
 vgmknodes \- recreate volume group directory and logical volume special files
 .SH SYNOPSIS
 .B vgmknodes
-[\-d|\-\-debug] [\-h|\-?|\-\-help] 
-[\-v|\-\-verbose]
+.RB [ \-d | \-\-debug]
+.RB [ \-h | \-\-help]
+.RB [ \-\-refresh]
+.RB [ \-v | \-\-verbose]
 [[VolumeGroupName | LogicalVolumePath]...]
 .SH DESCRIPTION
 Checks the LVM2 special files in /dev that are needed for active 
 logical volumes and creates any missing ones and removes unused ones.
 .SH OPTIONS
+.TP
+.BR \-\-refresh
+If any logical volume in the volume group is active, reload its metadata.
+This is not necessary in normal operation, but may be useful
+if something has gone wrong or if you're doing clustering
+manually without a clustered lock manager.
+.TP
 See \fBlvm\fP for common options.
 .SH SEE ALSO
 .BR lvm (8),

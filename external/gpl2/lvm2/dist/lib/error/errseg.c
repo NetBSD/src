@@ -1,4 +1,4 @@
-/*	$NetBSD: errseg.c,v 1.1.1.1 2008/12/22 00:17:57 haad Exp $	*/
+/*	$NetBSD: errseg.c,v 1.1.1.2 2009/12/02 00:26:45 haad Exp $	*/
 
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -53,7 +53,8 @@ static int _errseg_add_target_line(struct dev_manager *dm __attribute((unused)),
 	return dm_tree_node_add_error_target(node, len);
 }
 
-static int _errseg_target_present(const struct lv_segment *seg __attribute((unused)),
+static int _errseg_target_present(struct cmd_context *cmd,
+				  const struct lv_segment *seg __attribute((unused)),
 				  unsigned *attributes __attribute((unused)))
 {
 	static int _errseg_checked = 0;
@@ -61,7 +62,8 @@ static int _errseg_target_present(const struct lv_segment *seg __attribute((unus
 
 	/* Reported truncated in older kernels */
 	if (!_errseg_checked &&
-	    (target_present("error", 0) || target_present("erro", 0)))
+	    (target_present(cmd, "error", 0) ||
+	     target_present(cmd, "erro", 0)))
 		_errseg_present = 1;
 
 	_errseg_checked = 1;

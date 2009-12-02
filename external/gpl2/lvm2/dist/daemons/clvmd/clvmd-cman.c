@@ -1,4 +1,4 @@
-/*	$NetBSD: clvmd-cman.c,v 1.1.1.1 2008/12/22 00:18:49 haad Exp $	*/
+/*	$NetBSD: clvmd-cman.c,v 1.1.1.2 2009/12/02 00:27:01 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -112,8 +112,13 @@ static int _init_cluster(void)
 	/* Create a lockspace for LV & VG locks to live in */
 	lockspace = dlm_create_lockspace(LOCKSPACE_NAME, 0600);
 	if (!lockspace) {
-		syslog(LOG_ERR, "Unable to create lockspace for CLVM: %m");
-		return -1;
+		if (errno == EEXIST) {
+			lockspace = dlm_open_lockspace(LOCKSPACE_NAME);
+		}
+		if (!lockspace) {
+			syslog(LOG_ERR, "Unable to create lockspace for CLVM: %m");
+			return -1;
+		}
 	}
 	dlm_ls_pthread_init(lockspace);
 	DEBUGLOG("DLM initialisation complete\n");
@@ -260,7 +265,7 @@ static void _add_up_node(const char *csid)
 
 static void _cluster_closedown()
 {
-	unlock_all();
+	destroy_lvhash();
 	dlm_release_lockspace(LOCKSPACE_NAME, lockspace, 1);
 	cman_finish(c_handle);
 }

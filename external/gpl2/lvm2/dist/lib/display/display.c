@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.1.1.2 2009/02/18 11:16:57 haad Exp $	*/
+/*	$NetBSD: display.c,v 1.1.1.3 2009/12/02 00:26:43 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -64,14 +64,15 @@ uint64_t units_to_bytes(const char *units, char *unit_type)
 		v = UINT64_C(1);
 		*unit_type = *units;
 		break;
-	case 's':
-		v *= SECTOR_SIZE;
-		break;
 	case 'b':
 	case 'B':
 		v *= UINT64_C(1);
 		break;
 #define KILO UINT64_C(1024)
+	case 's':
+	case 'S':
+		v *= (KILO/2);
+		break;
 	case 'k':
 		v *= KILO;
 		break;
@@ -148,27 +149,56 @@ alloc_policy_t get_alloc_from_string(const char *str)
 	return ALLOC_INVALID;
 }
 
+#define BASE_UNKNOWN 0
+#define BASE_SHARED 1
+#define BASE_1024 7
+#define BASE_1000 13
+#define BASE_SPECIAL 19
+#define NUM_UNIT_PREFIXES 6
+#define NUM_SPECIAL 3
+
 /* Size supplied in sectors */
 static const char *_display_size(const struct cmd_context *cmd,
 				 uint64_t size, size_len_t sl)
 {
-	int s;
+	unsigned base = BASE_UNKNOWN;
+	unsigned s;
 	int suffix = 1, precision;
 	uint64_t byte = UINT64_C(0);
 	uint64_t units = UINT64_C(1024);
 	char *size_buf = NULL;
 	const char * const size_str[][3] = {
-		{" Exabyte", " EB", "E"},
-		{" Petabyte", " PB", "P"},
-		{" Terabyte", " TB", "T"},
-		{" Gigabyte", " GB", "G"},
-		{" Megabyte", " MB", "M"},
-		{" Kilobyte", " KB", "K"},
-		{"", "", ""},
-		{" Byte    ", " B ", "B"},
-		{" Units   ", " Un", "U"},
-		{" Sectors ", " Se", "S"},
-		{"         ", "   ", " "},
+		/* BASE_UNKNOWN */
+		{"         ", "   ", " "},	/* [0] */
+
+		/* BASE_SHARED - Used if cmd->si_unit_consistency = 0 */
+		{" Exabyte", " EB", "E"},	/* [1] */
+		{" Petabyte", " PB", "P"},	/* [2] */
+		{" Terabyte", " TB", "T"},	/* [3] */
+		{" Gigabyte", " GB", "G"},	/* [4] */
+		{" Megabyte", " MB", "M"},	/* [5] */
+		{" Kilobyte", " KB", "K"},	/* [6] */
+
+		/* BASE_1024 - Used if cmd->si_unit_consistency = 1 */
+		{" Exbibyte", " EiB", "e"},	/* [7] */
+		{" Pebibyte", " PiB", "p"},	/* [8] */
+		{" Tebibyte", " TiB", "t"},	/* [9] */
+		{" Gibibyte", " GiB", "g"},	/* [10] */
+		{" Mebibyte", " MiB", "m"},	/* [11] */
+		{" Kibibyte", " KiB", "k"},	/* [12] */
+
+		/* BASE_1000 - Used if cmd->si_unit_consistency = 1 */
+		{" Exabyte",  " EB", "E"},	/* [13] */
+		{" Petabyte", " PB", "P"},	/* [14] */
+		{" Terabyte", " TB", "T"},	/* [15] */
+		{" Gigabyte", " GB", "G"},	/* [16] */
+		{" Megabyte", " MB", "M"},	/* [17] */
+		{" Kilobyte", " kB", "K"},	/* [18] */
+
+		/* BASE_SPECIAL */
+		{" Byte    ", " B ", "B"},	/* [19] */
+		{" Units   ", " Un", "U"},	/* [20] */
+		{" Sectors ", " Se", "S"},	/* [21] */
 	};
 
 	if (!(size_buf = dm_pool_alloc(cmd->mem, SIZE_BUF))) {
@@ -178,30 +208,72 @@ static const char *_display_size(const struct cmd_context *cmd,
 
 	suffix = cmd->current_settings.suffix;
 
-	for (s = 0; s < 10; s++)
-		if (toupper((int) cmd->current_settings.unit_type) ==
-		    *size_str[s][2])
-			break;
+	if (!cmd->si_unit_consistency) {
+		/* Case-independent match */
+		for (s = 0; s < NUM_UNIT_PREFIXES; s++)
+			if (toupper((int) cmd->current_settings.unit_type) ==
+			    *size_str[BASE_SHARED + s][2]) {
+				base = BASE_SHARED;
+				break;
+			}
+	} else {
+		/* Case-dependent match for powers of 1000 */
+		for (s = 0; s < NUM_UNIT_PREFIXES; s++)
+			if (cmd->current_settings.unit_type ==
+			    *size_str[BASE_1000 + s][2]) {
+				base = BASE_1000;
+				break;
+			}
+
+		/* Case-dependent match for powers of 1024 */
+		if (base == BASE_UNKNOWN)
+			for (s = 0; s < NUM_UNIT_PREFIXES; s++)
+			if (cmd->current_settings.unit_type ==
+			    *size_str[BASE_1024 + s][2]) {
+				base = BASE_1024;
+				break;
+			}
+	}
+
+	if (base == BASE_UNKNOWN)
+		/* Check for special units - s, b or u */
+		for (s = 0; s < NUM_SPECIAL; s++)
+			if (toupper((int) cmd->current_settings.unit_type) ==
+			    *size_str[BASE_SPECIAL + s][2]) {
+				base = BASE_SPECIAL;
+				break;
+			}
 
 	if (size == UINT64_C(0)) {
-		sprintf(size_buf, "0%s", suffix ? size_str[s][sl] : "");
+		if (base == BASE_UNKNOWN)
+			s = 0;
+		sprintf(size_buf, "0%s", suffix ? size_str[base + s][sl] : "");
 		return size_buf;
 	}
 
 	size *= UINT64_C(512);
 
-	if (s < 10)
+	if (base != BASE_UNKNOWN)
 		byte = cmd->current_settings.unit_factor;
 	else {
-		suffix = 1;
-		if (cmd->current_settings.unit_type == 'H')
+		/* Human-readable style */
+		if (cmd->current_settings.unit_type == 'H') {
 			units = UINT64_C(1000);
-		else
+			base = BASE_1000;
+		} else {
 			units = UINT64_C(1024);
+			base = BASE_1024;
+		}
+
+		if (!cmd->si_unit_consistency)
+			base = BASE_SHARED;
+
 		byte = units * units * units * units * units * units;
-		s = 0;
-		while (size_str[s] && size < byte)
-			s++, byte /= units;
+
+		for (s = 0; s < NUM_UNIT_PREFIXES && size < byte; s++)
+			byte /= units;
+
+		suffix = 1;
 	}
 
 	/* FIXME Make precision configurable */
@@ -215,7 +287,7 @@ static const char *_display_size(const struct cmd_context *cmd,
 	}
 
 	snprintf(size_buf, SIZE_BUF - 1, "%.*f%s", precision,
-		 (double) size / byte, suffix ? size_str[s][sl] : "");
+		 (double) size / byte, suffix ? size_str[base + s][sl] : "");
 
 	return size_buf;
 }
@@ -343,7 +415,12 @@ void pvdisplay_full(const struct cmd_context *cmd,
 	/* LV count is no longer available when displaying PV
 	   log_print("Cur LV                %u", vg->lv_count);
 	 */
-	log_print("PE Size (KByte)       %" PRIu32, pv->pe_size / 2);
+
+	if (cmd->si_unit_consistency)
+		log_print("PE Size               %s", display_size(cmd, (uint64_t) pv->pe_size));
+	else
+		log_print("PE Size (KByte)       %" PRIu32, pv->pe_size / 2);
+
 	log_print("Total PE              %u", pv->pe_count);
 	log_print("Free PE               %" PRIu32, pe_free);
 	log_print("Allocated PE          %u", pv->pe_alloc_count);
@@ -405,8 +482,9 @@ int lvdisplay_full(struct cmd_context *cmd,
 	struct lvinfo info;
 	int inkernel, snap_active = 0;
 	char uuid[64] __attribute((aligned(8)));
-	struct lv_segment *snap_seg = NULL;
+	struct lv_segment *snap_seg = NULL, *mirror_seg = NULL;
 	float snap_percent;	/* fused, fsize; */
+	percent_range_t percent_range;
 
 	if (!id_write_format(&lv->lvid.id[1], uuid, sizeof(uuid)))
 		return_0;
@@ -431,24 +509,26 @@ int lvdisplay_full(struct cmd_context *cmd,
 				       origin_list) {
 			if (inkernel &&
 			    (snap_active = lv_snapshot_percent(snap_seg->cow,
-							       &snap_percent)))
-				if (snap_percent < 0 || snap_percent >= 100)
+							       &snap_percent,
+							       &percent_range)))
+				if (percent_range == PERCENT_INVALID)
 					snap_active = 0;
 			log_print("                       %s%s/%s [%s]",
 				  lv->vg->cmd->dev_dir, lv->vg->name,
 				  snap_seg->cow->name,
-				  (snap_active > 0) ? "active" : "INACTIVE");
+				  snap_active ? "active" : "INACTIVE");
 		}
 		snap_seg = NULL;
 	} else if ((snap_seg = find_cow(lv))) {
 		if (inkernel &&
 		    (snap_active = lv_snapshot_percent(snap_seg->cow,
-						       &snap_percent)))
-			if (snap_percent < 0 || snap_percent >= 100)
+						       &snap_percent,
+						       &percent_range)))
+			if (percent_range == PERCENT_INVALID)
 				snap_active = 0;
 
 		log_print("LV snapshot status     %s destination for %s%s/%s",
-			  (snap_active > 0) ? "active" : "INACTIVE",
+			  snap_active ? "active" : "INACTIVE",
 			  lv->vg->cmd->dev_dir, lv->vg->name,
 			  snap_seg->origin->name);
 	}
@@ -485,10 +565,17 @@ int lvdisplay_full(struct cmd_context *cmd,
 			  display_size(cmd, (uint64_t) snap_seg->chunk_size));
 	}
 
+	if (lv->status & MIRRORED) {
+ 		mirror_seg = first_seg(lv);
+		log_print("Mirrored volumes       %" PRIu32, mirror_seg->area_count);
+		if (lv->status & CONVERTING)
+			log_print("LV type        Mirror undergoing conversion");
+	}
+
 	log_print("Segments               %u", dm_list_size(&lv->segments));
 
 /********* FIXME Stripes & stripesize for each segment
-	log_print("Stripe size (KByte)    %u", lv->stripesize / 2);
+	log_print("Stripe size            %s", display_size(cmd, (uint64_t) lv->stripesize));
 ***********/
 
 	log_print("Allocation             %s", get_alloc_string(lv->alloc));
@@ -596,8 +683,8 @@ void vgdisplay_full(const struct volume_group *vg)
 		  access_str == LVM_WRITE ? "write" : "",
 		  access_str == 0 ? "error" : "");
 	log_print("VG Status             %s%sresizable",
-		  vg->status & EXPORTED_VG ? "exported/" : "",
-		  vg->status & RESIZEABLE_VG ? "" : "NOT ");
+		  vg_is_exported(vg) ? "exported/" : "",
+		  vg_is_resizeable(vg) ? "" : "NOT ");
 	/* vg number not part of LVM2 design
 	   log_print ("VG #                  %u\n", vg->vg_number);
 	 */
@@ -608,7 +695,7 @@ void vgdisplay_full(const struct volume_group *vg)
 	}
 
 	log_print("MAX LV                %u", vg->max_lv);
-	log_print("Cur LV                %u", displayable_lvs_in_vg(vg));
+	log_print("Cur LV                %u", vg_visible_lvs(vg));
 	log_print("Open LV               %u", lvs_in_vg_opened(vg));
 /****** FIXME Max LV Size
       log_print ( "MAX LV Size           %s",
@@ -635,8 +722,7 @@ void vgdisplay_full(const struct volume_group *vg)
 			       vg->extent_size));
 
 	log_print("Free  PE / Size       %u / %s", vg->free_count,
-		  display_size(vg->cmd,
-			       (uint64_t) vg->free_count * vg->extent_size));
+		  display_size(vg->cmd, vg_free(vg)));
 
 	if (!id_write_format(&vg->id, uuid, sizeof(uuid))) {
 		stack;
@@ -683,7 +769,7 @@ void vgdisplay_colons(const struct volume_group *vg)
 		vg->status,
 		/* internal volume group number; obsolete */
 		vg->max_lv,
-		displayable_lvs_in_vg(vg),
+		vg_visible_lvs(vg),
 		lvs_in_vg_opened(vg),
 		/* FIXME: maximum logical volume size */
 		vg->max_pv,
@@ -707,8 +793,7 @@ void vgdisplay_short(const struct volume_group *vg)
 		  display_size(vg->cmd,
 			       ((uint64_t) vg->extent_count -
 				vg->free_count) * vg->extent_size),
-		  display_size(vg->cmd,
-			       (uint64_t) vg->free_count * vg->extent_size));
+		  display_size(vg->cmd, vg_free(vg)));
 	return;
 }
 
@@ -741,6 +826,7 @@ char yes_no_prompt(const char *prompt, ...)
 			va_start(ap, prompt);
 			vprintf(prompt, ap);
 			va_end(ap);
+			fflush(stdout);
 		}
 
 		if ((c = getchar()) == EOF) {

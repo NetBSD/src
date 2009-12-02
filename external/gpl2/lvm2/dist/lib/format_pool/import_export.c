@@ -1,4 +1,4 @@
-/*	$NetBSD: import_export.c,v 1.1.1.1 2008/12/22 00:17:51 haad Exp $	*/
+/*	$NetBSD: import_export.c,v 1.1.1.2 2009/12/02 00:26:50 haad Exp $	*/
 
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
@@ -51,7 +51,6 @@ int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct dm_list 
 		vg->max_lv = 1;
 		vg->max_pv = POOL_MAX_DEVICES;
 		vg->alloc = ALLOC_NORMAL;
-		vg->lv_count = 0;
 	}
 
 	return 1;
@@ -60,32 +59,17 @@ int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct dm_list 
 int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct dm_list *pls)
 {
 	struct pool_list *pl;
-	struct lv_list *lvl = dm_pool_zalloc(mem, sizeof(*lvl));
 	struct logical_volume *lv;
 
-	if (!lvl) {
-		log_error("Unable to allocate lv list structure");
-		return 0;
-	}
+	if (!(lv = alloc_lv(mem)))
+		return_0;
 
-	if (!(lvl->lv = dm_pool_zalloc(mem, sizeof(*lvl->lv)))) {
-		log_error("Unable to allocate logical volume structure");
-		return 0;
-	}
-
-	lv = lvl->lv;
 	lv->status = 0;
-	lv->vg = vg;
 	lv->alloc = ALLOC_NORMAL;
 	lv->size = 0;
 	lv->name = NULL;
 	lv->le_count = 0;
 	lv->read_ahead = vg->cmd->default_settings.read_ahead;
-	lv->snapshot = NULL;
-	dm_list_init(&lv->snapshot_segs);
-	dm_list_init(&lv->segments);
-	dm_list_init(&lv->tags);
-	dm_list_init(&lv->segs_using_this_lv);
 
 	dm_list_iterate_items(pl, pls) {
 		lv->size += pl->pd.pl_blocks;
@@ -110,18 +94,11 @@ int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct dm_list
 		} else {
 			lv->minor = -1;
 		}
-		lv->snapshot = NULL;
-		dm_list_init(&lv->snapshot_segs);
-		dm_list_init(&lv->segments);
-		dm_list_init(&lv->tags);
 	}
 
 	lv->le_count = lv->size / POOL_PE_SIZE;
-	lvl->lv = lv;
-	dm_list_add(&vg->lvs, &lvl->list);
-	vg->lv_count++;
 
-	return 1;
+	return link_lv_to_vg(vg, lv);
 }
 
 int import_pool_pvs(const struct format_type *fmt, struct volume_group *vg,

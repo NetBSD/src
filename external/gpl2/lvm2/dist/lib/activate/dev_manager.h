@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_manager.h,v 1.1.1.1 2008/12/22 00:18:00 haad Exp $	*/
+/*	$NetBSD: dev_manager.h,v 1.1.1.2 2009/12/02 00:26:22 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.  
@@ -17,6 +17,8 @@
 
 #ifndef _LVM_DEV_MANAGER_H
 #define _LVM_DEV_MANAGER_H
+
+#include "metadata-exported.h"
 
 struct logical_volume;
 struct volume_group;
@@ -46,14 +48,17 @@ int dev_manager_info(struct dm_pool *mem, const char *name,
 		     struct dm_info *info, uint32_t *read_ahead);
 int dev_manager_snapshot_percent(struct dev_manager *dm,
 				 const struct logical_volume *lv,
-				 float *percent);
+				 float *percent,
+				 percent_range_t *percent_range);
 int dev_manager_mirror_percent(struct dev_manager *dm,
 			       struct logical_volume *lv, int wait,
-			       float *percent, uint32_t *event_nr);
+			       float *percent, percent_range_t *percent_range,
+			       uint32_t *event_nr);
 int dev_manager_suspend(struct dev_manager *dm, struct logical_volume *lv,
-			int lockfs);
+			int lockfs, int flush_required);
 int dev_manager_activate(struct dev_manager *dm, struct logical_volume *lv);
-int dev_manager_preload(struct dev_manager *dm, struct logical_volume *lv);
+int dev_manager_preload(struct dev_manager *dm, struct logical_volume *lv,
+			int *flush_required);
 int dev_manager_deactivate(struct dev_manager *dm, struct logical_volume *lv);
 
 int dev_manager_lv_mknodes(const struct logical_volume *lv);

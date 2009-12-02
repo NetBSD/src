@@ -8,4 +8,4 @@ Description: device-mapper library
 Version: @DM_LIB_PATCHLEVEL@
 Cflags: -I${includedir} 
 Libs: -L${libdir} -ldevmapper
-Libs.private: -lselinux -lsepol
+Libs.private: @SELINUX_LIBS@

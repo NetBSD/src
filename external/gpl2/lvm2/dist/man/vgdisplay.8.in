@@ -4,15 +4,30 @@ vgdisplay \- display attributes of volume groups
 .SH SYNOPSIS
 .B vgdisplay
 .RB [ \-A | \-\-activevolumegroups ]
-.RB [ \-c | \-\-colon ]
+.RB [ \-c | \-\-colon | \-s | \-\-short | \-v|\-\-verbose ]
 .RB [ \-d | \-\-debug ]
 .RB [ \-h | \-\-help ]
 .RB [ \-\-ignorelockingfailure ]
+.RB [ \-\-nosuffix ]
 .RB [ \-P | \-\-partial ]
-.RB [ \-s | \-\-short ]
-.RB [ \-v [ v ]| \-\-verbose " [" \-\-verbose ]]
+.RB [\-\-units hHbBsSkKmMgGtTpPeE]
 .RB [ \-\-version ]
-.RI [ VolumeGroupName ...]
+.RI [VolumeGroupName [VolumeGroupName...]]
+.br
+
+.br
+.B vgdisplay \-\-columns | \-C
+.RB [ \-\-aligned ] [ \-d|\-\-debug ] [ \-h|\-?|\-\-help ]
+.RB [ \-\-ignorelockingfailure ] [ \-\-noheadings ] [ \-\-nosuffix ]
+.RB [ \-o|\-\-options [+]Field[,Field] ]
+.RB [ \-O|\-\-sort [+|-]Key1[,[+|-]Key2[,...]] ]
+.RB [ \-P|\-\-partial ]
+.RB [ \-\-separator Separator ]
+.RB [ \-\-unbuffered ]
+.RB [ \-\-units hHbBsSkKmMgGtTpPeE ]
+.RB [ \-v|\-\-verbose ]
+.RB [ \-\-version ]
+.RI [VolumeGroupName [VolumeGroupName...]]
 .SH DESCRIPTION
 .B vgdisplay
 allows you to see the attributes of
@@ -23,7 +38,8 @@ volumes and their sizes etc.
 \fBvgs\fP (8) is an alternative that provides the same information 
 in the style of \fBps\fP (1).
 .SH OPTIONS
-See \fBlvm\fP for common options.
+See \fBlvm\fP for common options and \fBvgs\fP for options given with
+\fB\-\-columns\fP.
 .TP
 .BR \-A ", " \-\-activevolumegroups
 Only select the active volume groups.
@@ -65,6 +81,10 @@ information of vgdisplay's activities.
 .TP
 .BR \-\-version
 Display version and exit successfully.
+.TP
+.BR \-\-columns | \-C
+Display output in columns, the equivalent of \fBvgs\fP.  Options listed
+are the same as options given in \fPvgs (8)\fP.
 .SH SEE ALSO
 .BR lvm (8),
 .BR vgs (8),

@@ -1,4 +1,4 @@
-/*	$NetBSD: import-export.c,v 1.1.1.1 2008/12/22 00:18:00 haad Exp $	*/
+/*	$NetBSD: import-export.c,v 1.1.1.2 2009/12/02 00:26:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -162,7 +162,7 @@ int export_pv(struct cmd_context *cmd, struct dm_pool *mem __attribute((unused))
 		strncpy((char *)pvd->system_id, vg->system_id, sizeof(pvd->system_id));
 
 	/* Is VG already exported or being exported? */
-	if (vg && (vg->status & EXPORTED_VG)) {
+	if (vg && vg_is_exported(vg)) {
 		/* Does system_id need setting? */
 		if (!*vg->system_id ||
 		    strncmp(vg->system_id, EXPORTED_TAG,
@@ -180,7 +180,7 @@ int export_pv(struct cmd_context *cmd, struct dm_pool *mem __attribute((unused))
 	}
 
 	/* Is VG being imported? */
-	if (vg && !(vg->status & EXPORTED_VG) && *vg->system_id &&
+	if (vg && !vg_is_exported(vg) && *vg->system_id &&
 	    !strncmp(vg->system_id, EXPORTED_TAG, sizeof(EXPORTED_TAG) - 1)) {
 		if (!_system_id(cmd, (char *)pvd->system_id, IMPORTED_TAG))
 			return_0;
@@ -277,14 +277,14 @@ int export_vg(struct vg_disk *vgd, struct volume_group *vg)
 	if (vg->status & SHARED)
 		vgd->vg_access |= VG_SHARED;
 
-	if (vg->status & EXPORTED_VG)
+	if (vg_is_exported(vg))
 		vgd->vg_status |= VG_EXPORTED;
 
-	if (vg->status & RESIZEABLE_VG)
+	if (vg_is_resizeable(vg))
 		vgd->vg_status |= VG_EXTENDABLE;
 
 	vgd->lv_max = vg->max_lv;
-	vgd->lv_cur = vg->lv_count + vg->snapshot_count;
+	vgd->lv_cur = vg_visible_lvs(vg) + snapshot_count(vg);
 
 	vgd->pv_max = vg->max_pv;
 	vgd->pv_cur = vg->pv_count;
@@ -296,10 +296,9 @@ int export_vg(struct vg_disk *vgd, struct volume_group *vg)
 	return 1;
 }
 
-int import_lv(struct dm_pool *mem, struct logical_volume *lv, struct lv_disk *lvd)
+int import_lv(struct cmd_context *cmd, struct dm_pool *mem,
+	      struct logical_volume *lv, struct lv_disk *lvd)
 {
-	lvid_from_lvnum(&lv->lvid, &lv->vg->id, lvd->lv_number);
-
 	if (!(lv->name = _create_lv_name(mem, (char *)lvd->lv_name)))
 		return_0;
 
@@ -333,18 +332,12 @@ int import_lv(struct dm_pool *mem, struct logical_volume *lv, struct lv_disk *lv
 		lv->alloc = ALLOC_NORMAL;
 
 	if (!lvd->lv_read_ahead)
-		lv->read_ahead = lv->vg->cmd->default_settings.read_ahead;
+		lv->read_ahead = cmd->default_settings.read_ahead;
 	else
 		lv->read_ahead = lvd->lv_read_ahead;
 
 	lv->size = lvd->lv_size;
 	lv->le_count = lvd->lv_allocated_le;
-
-	lv->snapshot = NULL;
-	dm_list_init(&lv->snapshot_segs);
-	dm_list_init(&lv->segments);
-	dm_list_init(&lv->tags);
-	dm_list_init(&lv->segs_using_this_lv);
 
 	return 1;
 }
@@ -458,22 +451,23 @@ static struct logical_volume *_add_lv(struct dm_pool *mem,
 				      struct volume_group *vg,
 				      struct lv_disk *lvd)
 {
-	struct lv_list *ll;
 	struct logical_volume *lv;
 
-	if (!(ll = dm_pool_zalloc(mem, sizeof(*ll))) ||
-	    !(ll->lv = dm_pool_zalloc(mem, sizeof(*ll->lv))))
-		return_NULL;
-	lv = ll->lv;
-	lv->vg = vg;
-
-	if (!import_lv(mem, lv, lvd))
+	if (!(lv = alloc_lv(mem)))
 		return_NULL;
 
-	dm_list_add(&vg->lvs, &ll->list);
-	vg->lv_count++;
+	lvid_from_lvnum(&lv->lvid, &vg->id, lvd->lv_number);
+
+	if (!import_lv(vg->cmd, mem, lv, lvd)) 
+		goto_bad;
+
+	if (!link_lv_to_vg(vg, lv))
+		goto_bad;
 
 	return lv;
+bad:
+	dm_pool_free(mem, lv);
+	return NULL;
 }
 
 int import_lvs(struct dm_pool *mem, struct volume_group *vg, struct dm_list *pvds)
@@ -581,15 +575,15 @@ int import_snapshots(struct dm_pool *mem __attribute((unused)), struct volume_gr
 			lvnum = lvd->lv_number;
 
 			if (lvnum >= MAX_LV) {
-				log_err("Logical volume number "
-					"out of bounds.");
+				log_error("Logical volume number "
+					  "out of bounds.");
 				return 0;
 			}
 
 			if (!lvs[lvnum] &&
 			    !(lvs[lvnum] = find_lv(vg, (char *)lvd->lv_name))) {
-				log_err("Couldn't find logical volume '%s'.",
-					lvd->lv_name);
+				log_error("Couldn't find logical volume '%s'.",
+					  lvd->lv_name);
 				return 0;
 			}
 		}
@@ -608,8 +602,8 @@ int import_snapshots(struct dm_pool *mem __attribute((unused)), struct volume_gr
 			lvnum = lvd->lv_number;
 			cow = lvs[lvnum];
 			if (!(org = lvs[lvd->lv_snapshot_minor])) {
-				log_err("Couldn't find origin logical volume "
-					"for snapshot '%s'.", lvd->lv_name);
+				log_error("Couldn't find origin logical volume "
+					  "for snapshot '%s'.", lvd->lv_name);
 				return 0;
 			}
 
@@ -618,10 +612,10 @@ int import_snapshots(struct dm_pool *mem __attribute((unused)), struct volume_gr
 				continue;
 
 			/* insert the snapshot */
-			if (!vg_add_snapshot(NULL, org, cow, NULL,
+			if (!vg_add_snapshot(org, cow, NULL,
 					     org->le_count,
 					     lvd->lv_chunk_size)) {
-				log_err("Couldn't add snapshot.");
+				log_error("Couldn't add snapshot.");
 				return 0;
 			}
 		}

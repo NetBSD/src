@@ -1,8 +1,8 @@
-/*	$NetBSD: report.c,v 1.1.1.2 2009/02/18 11:17:19 haad Exp $	*/
+/*	$NetBSD: report.c,v 1.1.1.3 2009/12/02 00:26:46 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -277,18 +277,17 @@ static int _lvkmin_disp(struct dm_report *rh, struct dm_pool *mem __attribute((u
 static int _lv_mimage_in_sync(const struct logical_volume *lv)
 {
 	float percent;
+	percent_range_t percent_range;
 	struct lv_segment *mirror_seg = find_mirror_seg(first_seg(lv));
 
 	if (!(lv->status & MIRROR_IMAGE) || !mirror_seg)
 		return_0;
 
-	if (!lv_mirror_percent(lv->vg->cmd, mirror_seg->lv, 0, &percent, NULL))
+	if (!lv_mirror_percent(lv->vg->cmd, mirror_seg->lv, 0, &percent,
+			       &percent_range, NULL))
 		return_0;
 
-	if (percent >= 100.0)
-		return 1;
-
-	return 0;
+	return (percent_range == PERCENT_100) ? 1 : 0;
 }
 
 static int _lvstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_pool *mem,
@@ -299,6 +298,7 @@ static int _lvstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 	struct lvinfo info;
 	char *repstr;
 	float snap_percent;
+	percent_range_t percent_range;
 
 	if (!(repstr = dm_pool_zalloc(mem, 7))) {
 		log_error("dm_pool_alloc failed");
@@ -313,6 +313,11 @@ static int _lvstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 		repstr[0] = 'p';
 	else if (lv->status & CONVERTING)
 		repstr[0] = 'c';
+	else if (lv->status & VIRTUAL)
+		repstr[0] = 'v';
+	/* Origin takes precedence over Mirror */
+	else if (lv_is_origin(lv))
+		repstr[0] = 'o';
 	else if (lv->status & MIRRORED) {
 		if (lv->status & MIRROR_NOTSYNCED)
 			repstr[0] = 'M';
@@ -325,10 +330,6 @@ static int _lvstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 			repstr[0] = 'I';
 	else if (lv->status & MIRROR_LOG)
 		repstr[0] = 'l';
-	else if (lv->status & VIRTUAL)
-		repstr[0] = 'v';
-	else if (lv_is_origin(lv))
-		repstr[0] = 'o';
 	else if (lv_is_cow(lv))
 		repstr[0] = 's';
 	else
@@ -365,8 +366,8 @@ static int _lvstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 
 		/* Snapshot dropped? */
 		if (info.live_table && lv_is_cow(lv) &&
-		    (!lv_snapshot_percent(lv, &snap_percent) ||
-		     snap_percent < 0 || snap_percent >= 100)) {
+		    (!lv_snapshot_percent(lv, &snap_percent, &percent_range) ||
+		     percent_range == PERCENT_INVALID)) {
 			repstr[0] = toupper(repstr[0]);
 			if (info.suspended)
 				repstr[4] = 'S'; /* Susp Inv snapshot */
@@ -431,12 +432,12 @@ static int _vgstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 	else
 		repstr[0] = 'r';
 
-	if (vg->status & RESIZEABLE_VG)
+	if (vg_is_resizeable(vg))
 		repstr[1] = 'z';
 	else
 		repstr[1] = '-';
 
-	if (vg->status & EXPORTED_VG)
+	if (vg_is_exported(vg))
 		repstr[2] = 'x';
 	else
 		repstr[2] = '-';
@@ -473,20 +474,6 @@ static int _segtype_disp(struct dm_report *rh __attribute((unused)),
 	return 1;
 }
 
-static int _origin_disp(struct dm_report *rh, struct dm_pool *mem __attribute((unused)),
-			struct dm_report_field *field,
-			const void *data, void *private __attribute((unused)))
-{
-	const struct logical_volume *lv = (const struct logical_volume *) data;
-
-	if (lv_is_cow(lv))
-		return dm_report_field_string(rh, field,
-					      (const char **) &origin_from_cow(lv)->name);
-
-	dm_report_field_set_value(field, "", NULL);
-	return 1;
-}
-
 static int _loglv_disp(struct dm_report *rh, struct dm_pool *mem __attribute((unused)),
 		       struct dm_report_field *field,
 		       const void *data, void *private __attribute((unused)))
@@ -513,7 +500,7 @@ static int _lvname_disp(struct dm_report *rh, struct dm_pool *mem,
 	char *repstr, *lvname;
 	size_t len;
 
-	if (lv_is_displayable(lv)) {
+	if (lv_is_visible(lv)) {
 		repstr = lv->name;
 		return dm_report_field_string(rh, field, (const char **) &repstr);
 	}
@@ -536,6 +523,19 @@ static int _lvname_disp(struct dm_report *rh, struct dm_pool *mem,
 
 	dm_report_field_set_value(field, repstr, lvname);
 
+	return 1;
+}
+
+static int _origin_disp(struct dm_report *rh, struct dm_pool *mem,
+			struct dm_report_field *field,
+			const void *data, void *private)
+{
+	const struct logical_volume *lv = (const struct logical_volume *) data;
+
+	if (lv_is_cow(lv))
+		return _lvname_disp(rh, mem, field, origin_from_cow(lv), private);
+
+	dm_report_field_set_value(field, "", NULL);
 	return 1;
 }
 
@@ -675,7 +675,7 @@ static int _vgsize_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct volume_group *vg = (const struct volume_group *) data;
 	uint64_t size;
 
-	size = (uint64_t) vg->extent_count * vg->extent_size;
+	size = (uint64_t) vg_size(vg);
 
 	return _size64_disp(rh, mem, field, &size, private);
 }
@@ -725,7 +725,24 @@ static int _chunksize_disp(struct dm_report *rh, struct dm_pool *mem,
 	if (lv_is_cow(seg->lv))
 		size = (uint64_t) find_cow(seg->lv)->chunk_size;
 	else
-		size = 0;
+		size = UINT64_C(0);
+
+	return _size64_disp(rh, mem, field, &size, private);
+}
+
+static int _originsize_disp(struct dm_report *rh, struct dm_pool *mem,
+			    struct dm_report_field *field,
+			    const void *data, void *private)
+{
+	const struct logical_volume *lv = (const struct logical_volume *) data;
+	uint64_t size;
+
+	if (lv_is_cow(lv))
+		size = (uint64_t) find_cow(lv)->len * lv->vg->extent_size;
+	else if (lv_is_origin(lv))
+		size = lv->size;
+	else
+		size = UINT64_C(0);
 
 	return _size64_disp(rh, mem, field, &size, private);
 }
@@ -798,7 +815,7 @@ static int _vgfree_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct volume_group *vg = (const struct volume_group *) data;
 	uint64_t freespace;
 
-	freespace = (uint64_t) vg->free_count * vg->extent_size;
+	freespace = (uint64_t) vg_free(vg);
 
 	return _size64_disp(rh, mem, field, &freespace, private);
 }
@@ -839,12 +856,11 @@ static int _pvmdas_disp(struct dm_report *rh, struct dm_pool *mem,
 			struct dm_report_field *field,
 			const void *data, void *private)
 {
-	struct lvmcache_info *info;
 	uint32_t count;
-	const char *pvid = (const char *)(&((struct id *) data)->uuid);
+	const struct physical_volume *pv =
+	    (const struct physical_volume *) data;
 
-	info = info_from_pvid(pvid, 0);
-	count = info ? dm_list_size(&info->mdas) : 0;
+	count = pv_mda_count(pv);
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -856,7 +872,7 @@ static int _vgmdas_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct volume_group *vg = (const struct volume_group *) data;
 	uint32_t count;
 
-	count = dm_list_size(&vg->fid->metadata_areas);
+	count = vg_mda_count(vg);
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -870,15 +886,14 @@ static int _pvmdafree_disp(struct dm_report *rh, struct dm_pool *mem,
 	const char *pvid = (const char *)(&((struct id *) data)->uuid);
 	struct metadata_area *mda;
 
-	info = info_from_pvid(pvid, 0);
-
-	dm_list_iterate_items(mda, &info->mdas) {
-		if (!mda->ops->mda_free_sectors)
-			continue;
-		mda_free = mda->ops->mda_free_sectors(mda);
-		if (mda_free < freespace)
-			freespace = mda_free;
-	}
+	if ((info = info_from_pvid(pvid, 0)))
+		dm_list_iterate_items(mda, &info->mdas) {
+			if (!mda->ops->mda_free_sectors)
+				continue;
+			mda_free = mda->ops->mda_free_sectors(mda);
+			if (mda_free < freespace)
+				freespace = mda_free;
+		}
 
 	if (freespace == UINT64_MAX)
 		freespace = UINT64_C(0);
@@ -910,13 +925,12 @@ static int _pvmdasize_disp(struct dm_report *rh, struct dm_pool *mem,
 			   const void *data, void *private)
 {
 	struct lvmcache_info *info;
-	uint64_t min_mda_size;
+	uint64_t min_mda_size = 0;
 	const char *pvid = (const char *)(&((struct id *) data)->uuid);
 
-	info = info_from_pvid(pvid, 0);
-
 	/* PVs could have 2 mdas of different sizes (rounding effect) */
-	min_mda_size = _find_min_mda_size(&info->mdas);
+	if ((info = info_from_pvid(pvid, 0)))
+		min_mda_size = _find_min_mda_size(&info->mdas);
 
 	return _size64_disp(rh, mem, field, &min_mda_size, private);
 }
@@ -962,7 +976,7 @@ static int _lvcount_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct volume_group *vg = (const struct volume_group *) data;
 	uint32_t count;
 
-	count = displayable_lvs_in_vg(vg);	
+	count = vg_visible_lvs(vg);
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -979,6 +993,18 @@ static int _lvsegcount_disp(struct dm_report *rh, struct dm_pool *mem,
 	return _uint32_disp(rh, mem, field, &count, private);
 }
 
+static int _snapcount_disp(struct dm_report *rh, struct dm_pool *mem,
+			   struct dm_report_field *field,
+			   const void *data, void *private)
+{
+	const struct volume_group *vg = (const struct volume_group *) data;
+	uint32_t count;
+
+	count = snapshot_count(vg);
+
+	return _uint32_disp(rh, mem, field, &count, private);
+}
+
 static int _snpercent_disp(struct dm_report *rh __attribute((unused)), struct dm_pool *mem,
 			   struct dm_report_field *field,
 			   const void *data, void *private __attribute((unused)))
@@ -986,6 +1012,7 @@ static int _snpercent_disp(struct dm_report *rh __attribute((unused)), struct dm
 	const struct logical_volume *lv = (const struct logical_volume *) data;
 	struct lvinfo info;
 	float snap_percent;
+	percent_range_t percent_range;
 	uint64_t *sortval;
 	char *repstr;
 
@@ -1007,7 +1034,8 @@ static int _snpercent_disp(struct dm_report *rh __attribute((unused)), struct dm
 		return 1;
 	}
 
-	if (!lv_snapshot_percent(lv, &snap_percent) || snap_percent < 0) {
+	if (!lv_snapshot_percent(lv, &snap_percent, &percent_range) ||
+				 (percent_range == PERCENT_INVALID)) {
 		*sortval = UINT64_C(100);
 		dm_report_field_set_value(field, "100.00", sortval);
 		return 1;
@@ -1029,12 +1057,14 @@ static int _snpercent_disp(struct dm_report *rh __attribute((unused)), struct dm
 	return 1;
 }
 
-static int _copypercent_disp(struct dm_report *rh __attribute((unused)), struct dm_pool *mem,
+static int _copypercent_disp(struct dm_report *rh __attribute((unused)),
+			     struct dm_pool *mem,
 			     struct dm_report_field *field,
 			     const void *data, void *private __attribute((unused)))
 {
 	struct logical_volume *lv = (struct logical_volume *) data;
 	float percent;
+	percent_range_t percent_range;
 	uint64_t *sortval;
 	char *repstr;
 
@@ -1044,13 +1074,14 @@ static int _copypercent_disp(struct dm_report *rh __attribute((unused)), struct 
 	}
 
 	if ((!(lv->status & PVMOVE) && !(lv->status & MIRRORED)) ||
-	    !lv_mirror_percent(lv->vg->cmd, lv, 0, &percent, NULL)) {
+	    !lv_mirror_percent(lv->vg->cmd, lv, 0, &percent, &percent_range,
+			       NULL) || (percent_range == PERCENT_INVALID)) {
 		*sortval = UINT64_C(0);
 		dm_report_field_set_value(field, "", sortval);
 		return 1;
 	}
 
-	percent = copy_percent(lv);
+	percent = copy_percent(lv, &percent_range);
 
 	if (!(repstr = dm_pool_zalloc(mem, 8))) {
 		log_error("dm_pool_alloc failed");
@@ -1115,6 +1146,7 @@ static const struct dm_report_object_type _report_types[] = {
 	{ VGS, "Volume Group", "vg_", _obj_get_vg },
 	{ LVS, "Logical Volume", "lv_", _obj_get_lv },
 	{ PVS, "Physical Volume", "pv_", _obj_get_pv },
+	{ LABEL, "Physical Volume Label", "pv_", _obj_get_pv },
 	{ SEGS, "Logical Volume Segment", "seg_", _obj_get_seg },
 	{ PVSEGS, "Physical Volume Segment", "pvseg_", _obj_get_pvseg },
 	{ 0, "", "", NULL },

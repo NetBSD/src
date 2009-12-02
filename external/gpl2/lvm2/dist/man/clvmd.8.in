@@ -74,6 +74,14 @@ Tells all the running clvmds in the cluster to reload their device cache and
 re-read the lvm configuration file. This command should be run whenever the
 devices on a cluster system are changed.
 .TP
+.I \-I
+Selects the cluster manager to use for locking and internal communications,
+the available managers will be listed as part of the 'clvmd -h' output.
+clvmd will use the first cluster manager that succeeds, and it checks them
+in the order cman,gulm,corosync,openais. As it is quite possible to have
+(eg) corosync and cman available on the same system you might have to
+manually specify this option to override the search.
+.TP
 .I \-V
 Display the version of the cluster LVM daemon.
 .SH SEE ALSO

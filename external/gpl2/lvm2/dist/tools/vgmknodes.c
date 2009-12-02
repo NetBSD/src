@@ -1,4 +1,4 @@
-/*	$NetBSD: vgmknodes.c,v 1.1.1.2 2009/02/18 11:17:50 haad Exp $	*/
+/*	$NetBSD: vgmknodes.c,v 1.1.1.3 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -21,19 +21,25 @@ static int _vgmknodes_single(struct cmd_context *cmd, struct logical_volume *lv,
 			     void *handle __attribute((unused)))
 {
 	if (arg_count(cmd, refresh_ARG) && lv_is_visible(lv))
-		if (!lv_refresh(cmd, lv))
+		if (!lv_refresh(cmd, lv)) {
+			stack;
 			return ECMD_FAILED;
+		}
 
-	if (!lv_mknodes(cmd, lv))
+	if (!lv_mknodes(cmd, lv)) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	return ECMD_PROCESSED;
 }
 
 int vgmknodes(struct cmd_context *cmd, int argc, char **argv)
 {
-	if (!lv_mknodes(cmd, NULL))
+	if (!lv_mknodes(cmd, NULL)) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	return process_each_lv(cmd, argc, argv, LCK_VG_READ, NULL,
 			    &_vgmknodes_single);

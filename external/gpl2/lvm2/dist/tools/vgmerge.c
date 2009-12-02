@@ -1,8 +1,8 @@
-/*	$NetBSD: vgmerge.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgmerge.c,v 1.1.1.2 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -17,30 +17,60 @@
 
 #include "tools.h"
 
+static struct volume_group *_vgmerge_vg_read(struct cmd_context *cmd,
+					     const char *vg_name)
+{
+	struct volume_group *vg;
+	log_verbose("Checking for volume group \"%s\"", vg_name);
+	vg = vg_read_for_update(cmd, vg_name, NULL, 0);
+	if (vg_read_error(vg)) {
+		vg_release(vg);
+		return NULL;
+	}
+	return vg;
+}
+
 static int _vgmerge_single(struct cmd_context *cmd, const char *vg_name_to,
 			   const char *vg_name_from)
 {
 	struct volume_group *vg_to, *vg_from;
 	struct lv_list *lvl1, *lvl2;
+	int r = ECMD_FAILED;
+	int lock_vg_from_first = 0;
 
 	if (!strcmp(vg_name_to, vg_name_from)) {
 		log_error("Duplicate volume group name \"%s\"", vg_name_from);
 		return ECMD_FAILED;
 	}
 
-	log_verbose("Checking for volume group \"%s\"", vg_name_to);
-	if (!(vg_to = vg_lock_and_read(cmd, vg_name_to, NULL, LCK_VG_WRITE,
-				       CLUSTERED | EXPORTED_VG | LVM_WRITE,
-				       CORRECT_INCONSISTENT | FAIL_INCONSISTENT)))
-		 return ECMD_FAILED;
+	if (strcmp(vg_name_to, vg_name_from) > 0)
+		lock_vg_from_first = 1;
 
-	log_verbose("Checking for volume group \"%s\"", vg_name_from);
-	if (!(vg_from = vg_lock_and_read(cmd, vg_name_from, NULL,
-					 LCK_VG_WRITE | LCK_NONBLOCK,
-					 CLUSTERED | EXPORTED_VG | LVM_WRITE,
-					 CORRECT_INCONSISTENT | FAIL_INCONSISTENT))) {
-		unlock_vg(cmd, vg_name_to);
-		return ECMD_FAILED;
+	if (lock_vg_from_first) {
+		vg_from = _vgmerge_vg_read(cmd, vg_name_from);
+		if (!vg_from) {
+			stack;
+			return ECMD_FAILED;
+		}
+		vg_to = _vgmerge_vg_read(cmd, vg_name_to);
+		if (!vg_to) {
+			stack;
+			unlock_and_release_vg(cmd, vg_from, vg_name_from);
+			return ECMD_FAILED;
+		}
+	} else {
+		vg_to = _vgmerge_vg_read(cmd, vg_name_to);
+		if (!vg_to) {
+			stack;
+			return ECMD_FAILED;
+		}
+
+		vg_from = _vgmerge_vg_read(cmd, vg_name_from);
+		if (!vg_from) {
+			stack;
+			unlock_and_release_vg(cmd, vg_to, vg_name_to);
+			return ECMD_FAILED;
+		}
 	}
 
 	if (!vgs_are_compatible(cmd, vg_from, vg_to))
@@ -102,9 +132,6 @@ static int _vgmerge_single(struct cmd_context *cmd, const char *vg_name_to,
 		dm_list_move(&vg_to->fid->metadata_areas, mdah);
 	}
 
-	vg_to->lv_count += vg_from->lv_count;
-	vg_to->snapshot_count += vg_from->snapshot_count;
-
 	vg_to->extent_count += vg_from->extent_count;
 	vg_to->free_count += vg_from->free_count;
 
@@ -116,18 +143,18 @@ static int _vgmerge_single(struct cmd_context *cmd, const char *vg_name_to,
 	/* FIXME Remove /dev/vgfrom */
 
 	backup(vg_to);
-
-	unlock_vg(cmd, vg_name_from);
-	unlock_vg(cmd, vg_name_to);
-
 	log_print("Volume group \"%s\" successfully merged into \"%s\"",
 		  vg_from->name, vg_to->name);
-	return ECMD_PROCESSED;
-
-      bad:
-	unlock_vg(cmd, vg_name_from);
-	unlock_vg(cmd, vg_name_to);
-	return ECMD_FAILED;
+	r = ECMD_PROCESSED;
+bad:
+	if (lock_vg_from_first) {
+		unlock_and_release_vg(cmd, vg_to, vg_name_to);
+		unlock_and_release_vg(cmd, vg_from, vg_name_from);
+	} else {
+		unlock_and_release_vg(cmd, vg_from, vg_name_from);
+		unlock_and_release_vg(cmd, vg_to, vg_name_to);
+	}
+	return r;
 }
 
 int vgmerge(struct cmd_context *cmd, int argc, char **argv)

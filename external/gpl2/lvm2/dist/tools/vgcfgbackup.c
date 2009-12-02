@@ -1,4 +1,4 @@
-/*	$NetBSD: vgcfgbackup.c,v 1.1.1.1 2008/12/22 00:19:08 haad Exp $	*/
+/*	$NetBSD: vgcfgbackup.c,v 1.1.1.2 2009/12/02 00:25:56 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -50,19 +50,11 @@ static char *_expand_filename(const char *template, const char *vg_name,
 }
 
 static int vg_backup_single(struct cmd_context *cmd, const char *vg_name,
-			    struct volume_group *vg, int consistent,
+			    struct volume_group *vg,
 			    void *handle)
 {
 	char **last_filename = (char **)handle;
 	char *filename;
-
-	if (!vg) {
-		log_error("Volume group \"%s\" not found", vg_name);
-		return ECMD_FAILED;
-	}
-
-	if (!consistent)
-		log_error("WARNING: Volume group \"%s\" inconsistent", vg_name);
 
 	if (arg_count(cmd, file_ARG)) {
 		if (!(filename = _expand_filename(arg_value(cmd, file_ARG),
@@ -71,10 +63,12 @@ static int vg_backup_single(struct cmd_context *cmd, const char *vg_name,
 			return ECMD_FAILED;
 		}
 
-		if (!backup_to_file(filename, vg->cmd->cmd_line, vg))
+		if (!backup_to_file(filename, vg->cmd->cmd_line, vg)) {
+			stack;
 			return ECMD_FAILED;
+		}
 	} else {
-		if (!consistent) {
+		if (vg_read_error(vg) == FAILED_INCONSISTENT) {
 			log_error("No backup taken: specify filename with -f "
 				  "to backup an inconsistent VG");
 			stack;
@@ -100,8 +94,8 @@ int vgcfgbackup(struct cmd_context *cmd, int argc, char **argv)
 
 	init_pvmove(1);
 
-	ret = process_each_vg(cmd, argc, argv, LCK_VG_READ, 0, &last_filename,
-			      &vg_backup_single);
+	ret = process_each_vg(cmd, argc, argv, READ_ALLOW_INCONSISTENT,
+			      &last_filename, &vg_backup_single);
 
 	dm_free(last_filename);
 

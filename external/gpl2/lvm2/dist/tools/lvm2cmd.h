@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm2cmd.h,v 1.1.1.1 2008/12/22 00:19:04 haad Exp $	*/
+/*	$NetBSD: lvm2cmd.h,v 1.1.1.2 2009/12/02 00:25:51 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
@@ -20,7 +20,8 @@
 
 #ifndef _LVM_LOG_H
 typedef void (*lvm2_log_fn_t) (int level, const char *file, int line,
-			       const char *message);
+                               int dm_errno, const char *message);
+
 #endif
 
 #define LVM2_LOG_SUPPRESS	0

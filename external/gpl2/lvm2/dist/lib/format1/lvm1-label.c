@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm1-label.c,v 1.1.1.1 2008/12/22 00:18:00 haad Exp $	*/
+/*	$NetBSD: lvm1-label.c,v 1.1.1.2 2009/12/02 00:26:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -28,8 +28,8 @@
 
 static void _not_supported(const char *op)
 {
-	log_err("The '%s' operation is not supported for the lvm1 labeller.",
-		op);
+	log_error("The '%s' operation is not supported for the lvm1 labeller.",
+		  op);
 }
 
 static int _lvm1_can_handle(struct labeller *l __attribute((unused)), void *buf, uint64_t sector)
@@ -121,7 +121,7 @@ struct labeller *lvm1_labeller_create(struct format_type *fmt)
 	struct labeller *l;
 
 	if (!(l = dm_malloc(sizeof(*l)))) {
-		log_err("Couldn't allocate labeller object.");
+		log_error("Couldn't allocate labeller object.");
 		return NULL;
 	}
 

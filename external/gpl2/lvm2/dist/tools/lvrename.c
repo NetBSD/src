@@ -1,4 +1,4 @@
-/*	$NetBSD: lvrename.c,v 1.1.1.1 2008/12/22 00:19:05 haad Exp $	*/
+/*	$NetBSD: lvrename.c,v 1.1.1.2 2009/12/02 00:25:52 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -29,8 +29,9 @@ int lvrename(struct cmd_context *cmd, int argc, char **argv)
 	char *lv_name_old, *lv_name_new;
 	const char *vg_name, *vg_name_new, *vg_name_old;
 	char *st;
+	int r = ECMD_FAILED;
 
-	struct volume_group *vg;
+	struct volume_group *vg = NULL;
 	struct lv_list *lvl;
 
 	if (argc == 3) {
@@ -103,10 +104,12 @@ int lvrename(struct cmd_context *cmd, int argc, char **argv)
 	}
 
 	log_verbose("Checking for existing volume group \"%s\"", vg_name);
-	if (!(vg = vg_lock_and_read(cmd, vg_name, NULL, LCK_VG_WRITE,
-				    CLUSTERED | EXPORTED_VG | LVM_WRITE,
-				    CORRECT_INCONSISTENT)))
+	vg = vg_read_for_update(cmd, vg_name, NULL, 0);
+	if (vg_read_error(vg)) {
+		vg_release(vg);
+		stack;
 		return ECMD_FAILED;
+	}
 
 	if (!(lvl = find_lv_in_vg(vg, lv_name_old))) {
 		log_error("Existing logical volume \"%s\" not found in "
@@ -117,14 +120,11 @@ int lvrename(struct cmd_context *cmd, int argc, char **argv)
 	if (!lv_rename(cmd, lvl->lv, lv_name_new))
 		goto error;
 
-	unlock_vg(cmd, vg_name);
-
 	log_print("Renamed \"%s\" to \"%s\" in volume group \"%s\"",
 		  lv_name_old, lv_name_new, vg_name);
 
-	return ECMD_PROCESSED;
-
-      error:
-	unlock_vg(cmd, vg_name);
-	return ECMD_FAILED;
+	r = ECMD_PROCESSED;
+error:
+	unlock_and_release_vg(cmd, vg, vg_name);
+	return r;
 }

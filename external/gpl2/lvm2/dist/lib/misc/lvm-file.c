@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-file.c,v 1.1.1.2 2009/02/18 11:17:17 haad Exp $	*/
+/*	$NetBSD: lvm-file.c,v 1.1.1.3 2009/12/02 00:26:44 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -55,8 +55,8 @@ int create_temp_name(const char *dir, char *buffer, size_t len, int *fd,
 
 		if (dm_snprintf(buffer, len, "%s/.lvm_%s_%d_%d",
 				 dir, hostname, pid, num) == -1) {
-			log_err("Not enough space to build temporary file "
-				"string.");
+			log_error("Not enough space to build temporary file "
+				  "string.");
 			return 0;
 		}
 

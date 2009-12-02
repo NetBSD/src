@@ -50,6 +50,26 @@ loop_setup_()
   return 0;
 }
 
+compare_two_fields_()
+{
+    local cmd1=$1;
+    local obj1=$2;
+    local field1=$3;
+    local cmd2=$4;
+    local obj2=$5;
+    local field2=$6;
+    local val1;
+    local val2;
+
+    val1=$($cmd1 --noheadings -o $field1 $obj1)
+    val2=$($cmd2 --noheadings -o $field2 $obj2)
+if test "$verbose" = "t"
+then
+  echo "compare_two_fields_ $obj1($field1): $val1 $obj2($field2): $val2"
+fi
+  test $val1 = $val2
+}
+
 compare_vg_field_()
 {
     local vg1=$1;

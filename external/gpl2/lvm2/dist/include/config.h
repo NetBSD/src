@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.1.1.1 2008/12/22 00:18:47 haad Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.2 2009/12/02 00:25:44 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -42,7 +42,7 @@ struct config_value {
 
 struct config_node {
 	char *key;
-	struct config_node *sib, *child;
+	struct config_node *parent, *sib, *child;
 	struct config_value *v;
 };
 
@@ -58,6 +58,8 @@ struct config_tree_list {
 struct config_tree *create_config_tree(const char *filename, int keep_open);
 struct config_tree *create_config_tree_from_string(struct cmd_context *cmd,
 						   const char *config_settings);
+int override_config_tree_from_string(struct cmd_context *cmd,
+				     const char *config_settings);
 void destroy_config_tree(struct config_tree *cft);
 
 typedef uint32_t (*checksum_fn_t) (uint32_t initial, const void *buf, uint32_t size);
@@ -69,6 +71,10 @@ int read_config_fd(struct config_tree *cft, struct device *dev,
 int read_config_file(struct config_tree *cft);
 int write_config_file(struct config_tree *cft, const char *file,
 		      int argc, char **argv);
+
+typedef int (*putline_fn)(const char *line, void *baton);
+int write_config_node(const struct config_node *cn, putline_fn putline, void *baton);
+
 time_t config_file_timestamp(struct config_tree *cft);
 int config_file_changed(struct config_tree *cft);
 int merge_config_tree(struct cmd_context *cmd, struct config_tree *cft,
@@ -112,4 +118,8 @@ int get_config_str(const struct config_node *cn, const char *path,
 
 unsigned maybe_config_section(const char *str, unsigned len);
 
+const char *config_parent_name(const struct config_node *n);
+
+struct config_node *clone_config_node(struct dm_pool *mem, const struct config_node *cn,
+				      int siblings);
 #endif

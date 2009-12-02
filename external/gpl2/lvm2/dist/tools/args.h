@@ -1,4 +1,4 @@
-/*	$NetBSD: args.h,v 1.1.1.1 2008/12/22 00:18:58 haad Exp $	*/
+/*	$NetBSD: args.h,v 1.1.1.2 2009/12/02 00:25:46 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -25,6 +25,7 @@ arg(quiet_ARG, '\0', "quiet", NULL, 0)
 arg(physicalvolumesize_ARG, '\0', "setphysicalvolumesize", size_mb_arg, 0)
 arg(ignorelockingfailure_ARG, '\0', "ignorelockingfailure", NULL, 0)
 arg(nolocking_ARG, '\0', "nolocking", NULL, 0)
+arg(pvmetadatacopies_ARG, '\0', "pvmetadatacopies", int_arg, 0)
 arg(metadatacopies_ARG, '\0', "metadatacopies", int_arg, 0)
 arg(metadatasize_ARG, '\0', "metadatasize", size_mb_arg, 0)
 arg(restorefile_ARG, '\0', "restorefile", string_arg, 0)
@@ -51,6 +52,8 @@ arg(nosync_ARG, '\0', "nosync", NULL, 0)
 arg(resync_ARG, '\0', "resync", NULL, 0)
 arg(corelog_ARG, '\0', "corelog", NULL, 0)
 arg(mirrorlog_ARG, '\0', "mirrorlog", string_arg, 0)
+arg(repair_ARG, '\0', "repair", NULL, 0)
+arg(use_policies_ARG, '\0', "use-policies", NULL, 0)
 arg(monitor_ARG, '\0', "monitor", yes_no_arg, 0)
 arg(config_ARG, '\0', "config", string_arg, 0)
 arg(trustcache_ARG, '\0', "trustcache", NULL, 0)
@@ -58,6 +61,11 @@ arg(ignoremonitoring_ARG, '\0', "ignoremonitoring", NULL, 0)
 arg(nameprefixes_ARG, '\0', "nameprefixes", NULL, 0)
 arg(unquoted_ARG, '\0', "unquoted", NULL, 0)
 arg(rows_ARG, '\0', "rows", NULL, 0)
+arg(dataalignment_ARG, '\0', "dataalignment", size_kb_arg, 0)
+arg(dataalignmentoffset_ARG, '\0', "dataalignmentoffset", size_kb_arg, 0)
+arg(virtualoriginsize_ARG, '\0', "virtualoriginsize", size_mb_arg, 0)
+arg(virtualsize_ARG, '\0', "virtualsize", size_mb_arg, 0)
+arg(noudevsync_ARG, '\0', "noudevsync", NULL, 0)
 
 /* Allow some variations */
 arg(resizable_ARG, '\0', "resizable", yes_no_arg, 0)
@@ -78,7 +86,6 @@ arg(colon_ARG, 'c', "colon", NULL, 0)
 arg(columns_ARG, 'C', "columns", NULL, 0)
 arg(contiguous_ARG, 'C', "contiguous", yes_no_arg, 0)
 arg(debug_ARG, 'd', "debug", NULL, ARG_REPEATABLE)
-arg(disk_ARG, 'D', "disk", NULL, 0)
 arg(exported_ARG, 'e', "exported", NULL, 0)
 arg(physicalextent_ARG, 'E', "physicalextent", NULL, 0)
 arg(file_ARG, 'f', "file", string_arg, 0)

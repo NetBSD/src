@@ -1,4 +1,4 @@
-/*	$NetBSD: dm-logging.h,v 1.1.1.1 2008/12/22 00:18:42 haad Exp $	*/
+/*	$NetBSD: dm-logging.h,v 1.1.1.2 2009/12/02 00:25:40 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -21,8 +21,18 @@
 #include "libdevmapper.h"
 
 extern dm_log_fn dm_log;
+extern dm_log_with_errno_fn dm_log_with_errno;
 
-#define plog(l, x...) dm_log(l, __FILE__, __LINE__, ## x)
+#define LOG_MESG(l, f, ln, e, x...) \
+	do { \
+		if (dm_log_is_non_default()) \
+			dm_log(l, f, ln, ## x); \
+		else \
+			dm_log_with_errno(l, f, ln, e, ## x); \
+	} while (0)
+
+#define LOG_LINE(l, x...) LOG_MESG(l, __FILE__, __LINE__, 0, ## x)
+#define LOG_LINE_WITH_ERRNO(l, e, x...) LOG_MESG(l, __FILE__, __LINE__, e, ## x)
 
 #include "log.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.h,v 1.1.1.1 2008/12/22 00:17:57 haad Exp $	*/
+/*	$NetBSD: filter.h,v 1.1.1.2 2009/12/02 00:26:46 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -38,6 +38,10 @@ struct dev_filter *lvm_type_filter_create(const char *proc,
 void lvm_type_filter_destroy(struct dev_filter *f);
 
 int md_major(void);
+int blkext_major(void);
 int max_partitions(int major);
+
+int dev_subsystem_part_major(const struct device *dev);
+const char *dev_subsystem_name(const struct device *dev);
 
 #endif

@@ -9,7 +9,7 @@ vgconvert \- convert volume group metadata format
 .RB [ \-v | \-\-verbose ]
 .RB [ \-\-labelsector ]
 .RB [ \-M | \-\-metadatatype type ]
-.RB [ \-\-metadatacopies #copies ]
+.RB [ \-\-pvmetadatacopies #copies ]
 .RB [ \-\-metadatasize size ]
 .RB [ \-\-version ]
 .IR VolumeGroupName " [" VolumeGroupName ...]

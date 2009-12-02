@@ -1,0 +1,81 @@
+# Copyright (C) 2009 Red Hat, Inc. All rights reserved.
+#
+# This file is part of LVM2.
+
+# Udev rules for device-mapper devices.
+#
+# These rules set permissions for DM devices.
+#
+# This file is considered to be a template where users can put their
+# own entries and then put a copy of it manually to a usual place with
+# user-edited udev rules (usually /etc/udev/rules.d).
+#
+# There are some environment variables set that can be used:
+#   DM_UDEV_RULES_VSN - DM udev rules version
+#   DM_NAME - actual DM device's name
+#   DM_UUID - UUID set for DM device (blank if not specified)
+#   DM_SUSPENDED - suspended state of DM device (0 or 1)
+#   DM_LV_NAME - logical volume name (not set if LVM device not present)
+#   DM_VG_NAME - volume group name (not set if LVM device not present)
+#   DM_LV_LAYER - logical volume layer (not set if LVM device not present)
+
+# "add" event is processed on coldplug only!
+ACTION!="add|change", GOTO="dm_end"
+ENV{DM_UDEV_RULES_VSN}!="?*", GOTO="dm_end"
+
+# A few demonstrational examples...
+
+
+# PLAIN DM DEVICES
+#
+# Set permissions for a DM device named 'my_device' exactly
+# ENV{DM_NAME}=="my_device", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for all DM devices having 'MY_UUID-' UUID prefix
+# ENV{DM_UUID}=="MY_UUID-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+
+# LVM DEVICES
+#
+# Set permissions for all LVM devices
+# ENV{DM_UUID}=="LVM-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for all devices that belong to one LVM VG
+# ENV{DM_VG_NAME}=="VolGroup00", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for an LVM device with VG named VolGroup00 and LV named LogVol00 exactly
+# ENV{DM_VG_NAME}=="VolGroup00", ENV{DM_LV_NAME}=="LogVol00", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for all LVM devices that does not belong to a VG named VolGroup00
+# ENV{DM_VG_NAME}!="VolGroup00", OWNER:="root", GROUP:="root", MODE:="660"
+
+
+# ENCRYPTED DEVICES (using cryptsetup >= 1.1)
+#
+# Set permissions for all encrypted devices created by cryptsetup (plain devices)
+# ENV{DM_UUID}=="CRYPT-PLAIN-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for all encrypted devices created by cryptsetup (LUKS extension)
+# ENV{DM_UUID}=="CRYPT-LUKS1-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for an encrypted device created by cryptsetup and having an exact luks UUID
+# ENV{DM_UUID}=="CRYPT-LUKS1-22fce5c8313c43c68d84b50a3b0fee78-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+
+# MULTIPATH DEVICES
+#
+# Set permissions for all multipath devices
+# ENV{DM_UUID}=="mpath-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+# Set permissions for first two partitions created on a multipath device (and detected by kpartx)
+# ENV{DM_UUID}=="part[1-2]-mpath-?*", OWNER:="root", GROUP:="root", MODE:="660"
+
+
+# ...you can use any combination of the comparisons with the environment variables
+# listed at the beginning of this file (udev provides simple pattern matching by
+# using *, ? and [] that you can use, see 'man udev' for more information).
+
+# Set default permissions for all DM devices if not set before.
+# OWNER:="root", GROUP:="root", MODE:="660"
+
+LABEL="dm_end"

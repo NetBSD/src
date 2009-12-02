@@ -29,7 +29,6 @@ vgreduce --removemissing --force $vg
 enable_dev $dev1
 check
 
-exit 0 # FIXME, bug demonstration code follows
 # try to just change metadata; we expect the new version (with MISSING_PV set
 # on the reappeared volume) to be written out to the previously missing PV
 vgextend $vg $dev1

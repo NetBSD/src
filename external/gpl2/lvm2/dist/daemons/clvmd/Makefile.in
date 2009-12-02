@@ -13,7 +13,25 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
+
+CCS_LIBS = @CCS_LIBS@
+CCS_CFLAGS = @CCS_CFLAGS@
+CMAN_LIBS = @CMAN_LIBS@
+CMAN_CFLAGS = @CMAN_CFLAGS@
+CONFDB_LIBS = @CONFDB_LIBS@
+CONFDB_CFLAGS = @CONFDB_CFLAGS@
+CPG_LIBS = @CPG_LIBS@
+CPG_CFLAGS = @CPG_CFLAGS@
+DLM_LIBS = @DLM_LIBS@
+DLM_CFLAGS = @DLM_CFLAGS@
+GULM_LIBS = @GULM_LIBS@
+GULM_CFLAGS = @GULM_CFLAGS@
+QUORUM_LIBS = @QUORUM_LIBS@
+QUORUM_CFLAGS = @QUORUM_CFLAGS@
+SALCK_LIBS = @SALCK_LIBS@
+SALCK_CFLAGS = @SALCK_CFLAGS@
 
 SOURCES = \
 	clvmd-command.c  \
@@ -21,67 +39,43 @@ SOURCES = \
 	lvm-functions.c  \
 	refresh_clvmd.c
 
-ifeq ("@CLVMD@", "gulm")
-	GULM = yes
-endif
-
-ifeq ("@CLVMD@", "cman")
-	CMAN = yes
-endif
-
-ifeq ("@CLVMD@", "openais")
-	OPENAIS = yes
-	GULM = no
-	CMAN = no
-endif
-
-ifeq ("@CLVMD@", "all")
-	GULM = yes
-	CMAN = yes
-	OPENAIS = no
-	COROSYNC = no
-endif
-
-ifeq ("@CLVMD@", "corosync")
-	GULM = no
-	CMAN = no
-	OPENAIS = no
-	COROSYNC = yes
-endif
-
 ifeq ("@DEBUG@", "yes")
 	DEFS += -DDEBUG
 endif
 
-ifeq ("$(GULM)", "yes")
+ifneq (,$(findstring gulm,, "@CLVMD@,"))
 	SOURCES += clvmd-gulm.c tcp-comms.c
-	LMLIBS += -lccs -lgulm
+	LMLIBS += $(CCS_LIBS) $(GULM_LIBS)
+	CFLAGS += $(CCS_CFLAGS) $(GULM_CFLAGS)
 	DEFS += -DUSE_GULM
 endif
 
-ifeq ("$(CMAN)", "yes")
+ifneq (,$(findstring cman,, "@CLVMD@,"))
 	SOURCES += clvmd-cman.c
-	LMLIBS += -ldlm -lcman
+	LMLIBS += $(CMAN_LIBS) $(CONFDB_LIBS) $(DLM_LIBS)
+	CFLAGS += $(CMAN_CFLAGS) $(CONFDB_CFLAGS) $(DLM_CFLAGS)
 	DEFS += -DUSE_CMAN
 endif
 
-ifeq ("$(OPENAIS)", "yes")
+ifneq (,$(findstring openais,, "@CLVMD@,"))
 	SOURCES += clvmd-openais.c
-	LMLIBS += -lSaLck -lcpg
+	LMLIBS += $(CONFDB_LIBS) $(CPG_LIBS) $(SALCK_LIBS)
+	CFLAGS += $(CONFDB_CFLAGS) $(CPG_CFLAGS) $(SALCK_CFLAGS)
 	DEFS += -DUSE_OPENAIS
 endif
 
-ifeq ("$(COROSYNC)", "yes")
-        SOURCES += clvmd-corosync.c
-        LMLIBS += -lquorum -lcpg -ldlm
-        DEFS += -DUSE_COROSYNC
+ifneq (,$(findstring corosync,, "@CLVMD@,"))
+	SOURCES += clvmd-corosync.c
+	LMLIBS += $(CONFDB_LIBS) $(CPG_LIBS) $(DLM_LIBS) $(QUORUM_LIBS)
+	CFLAGS += $(CONFDB_CFLAGS) $(CPG_CFLAGS) $(DLM_CFLAGS) $(QUORUM_CFLAGS)
+	DEFS += -DUSE_COROSYNC
 endif
 
 
 TARGETS = \
 	clvmd
 
-LVMLIBS = -llvm -lpthread
+LVMLIBS = -llvm-internal -lpthread
 
 ifeq ("@DMEVENTD@", "yes")
 	LVMLIBS += -ldevmapper-event
@@ -92,13 +86,13 @@ LVMLIBS += -ldevmapper
 DEFS += -D_REENTRANT
 CFLAGS += -fno-strict-aliasing
 
-include $(top_srcdir)/make.tmpl
+include ../../make.tmpl
 
 INSTALL_TARGETS = \
 	install_clvmd
 
-clvmd: $(OBJECTS) $(top_srcdir)/lib/liblvm.a
-	$(CC) -o clvmd $(OBJECTS) $(CFLAGS) $(LDFLAGS) \
+clvmd: $(OBJECTS) $(top_builddir)/lib/liblvm-internal.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o clvmd $(OBJECTS) \
 		$(LVMLIBS) $(LMLIBS) $(LIBS)
 
 .PHONY: install_clvmd

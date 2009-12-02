@@ -1,4 +1,4 @@
-/*	$NetBSD: lvmcache.c,v 1.1.1.2 2009/02/18 11:16:52 haad Exp $	*/
+/*	$NetBSD: lvmcache.c,v 1.1.1.3 2009/12/02 00:26:21 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -22,6 +22,7 @@
 #include "locking.h"
 #include "metadata.h"
 #include "filter.h"
+#include "filter-persistent.h"
 #include "memlock.h"
 #include "str_list.h"
 #include "format-text.h"
@@ -54,8 +55,15 @@ int lvmcache_init(void)
 	if (!(_lock_hash = dm_hash_create(128)))
 		return 0;
 
-	if (_vg_global_lock_held)
+	/*
+	 * Reinitialising the cache clears the internal record of
+	 * which locks are held.  The global lock can be held during
+	 * this operation so its state must be restored afterwards.
+	 */
+	if (_vg_global_lock_held) {
 		lvmcache_lock_vgname(VG_GLOBAL, 0);
+		_vg_global_lock_held = 0;
+	}
 
 	return 1;
 }
@@ -73,10 +81,19 @@ static void _free_cached_vgmetadata(struct lvmcache_vginfo *vginfo)
 	log_debug("Metadata cache: VG %s wiped.", vginfo->vgname);
 }
 
-static void _store_metadata(struct lvmcache_vginfo *vginfo,
-			    struct volume_group *vg, unsigned precommitted)
+/*
+ * Cache VG metadata against the vginfo with matching vgid.
+ */
+static void _store_metadata(struct volume_group *vg, unsigned precommitted)
 {
+	char uuid[64] __attribute((aligned(8)));
+	struct lvmcache_vginfo *vginfo;
 	int size;
+
+	if (!(vginfo = vginfo_from_vgid((const char *)&vg->id))) {
+		stack;
+		return;
+	}
 
 	if (vginfo->vgmetadata)
 		_free_cached_vgmetadata(vginfo);
@@ -88,8 +105,14 @@ static void _store_metadata(struct lvmcache_vginfo *vginfo,
 
 	vginfo->precommitted = precommitted;
 
-	log_debug("Metadata cache: VG %s stored (%d bytes%s).", vginfo->vgname,
-		  size, precommitted ? ", precommitted" : "");
+	if (!id_write_format((const struct id *)vginfo->vgid, uuid, sizeof(uuid))) {
+		stack;
+		return;
+	}
+
+	log_debug("Metadata cache: VG %s (%s) stored (%d bytes%s).",
+		  vginfo->vgname, uuid, size,
+		  precommitted ? ", precommitted" : "");
 }
 
 static void _update_cache_info_lock_state(struct lvmcache_info *info,
@@ -173,6 +196,49 @@ void lvmcache_drop_metadata(const char *vgname)
 		_drop_metadata(vgname);
 }
 
+/*
+ * Ensure vgname2 comes after vgname1 alphabetically.
+ * Special VG names beginning with '#' don't count.
+ */
+static int _vgname_order_correct(const char *vgname1, const char *vgname2)
+{
+	if ((*vgname1 == '#') || (*vgname2 == '#'))
+		return 1;
+
+	if (strcmp(vgname1, vgname2) < 0)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * Ensure VG locks are acquired in alphabetical order.
+ */
+int lvmcache_verify_lock_order(const char *vgname)
+{
+	struct dm_hash_node *n;
+	const char *vgname2;
+
+	if (!_lock_hash)
+		return_0;
+
+	dm_hash_iterate(n, _lock_hash) {
+		if (!dm_hash_get_data(_lock_hash, n))
+			return_0;
+
+		vgname2 = dm_hash_get_key(_lock_hash, n);
+
+		if (!_vgname_order_correct(vgname2, vgname)) {
+			log_errno(EDEADLK, "Internal error: VG lock %s must "
+				  "be requested before %s, not after.",
+				  vgname, vgname2);
+			return_0;
+		}
+	}
+
+	return 1;
+}
+
 void lvmcache_lock_vgname(const char *vgname, int read_only __attribute((unused)))
 {
 	if (!_lock_hash && !lvmcache_init()) {
@@ -183,7 +249,7 @@ void lvmcache_lock_vgname(const char *vgname, int read_only __attribute((unused)
 	if (dm_hash_lookup(_lock_hash, vgname))
 		log_error("Internal error: Nested locking attempted on VG %s.",
 			  vgname);
-		
+
 	if (!dm_hash_insert(_lock_hash, vgname, (void *) 1))
 		log_error("Cache locking failure for %s", vgname);
 
@@ -447,6 +513,11 @@ int lvmcache_label_scan(struct cmd_context *cmd, int full_scan)
 		goto out;
 	}
 
+	if (full_scan == 2 && !refresh_filters(cmd)) {
+		log_error("refresh filters failed");
+		goto out;
+	}
+
 	if (!(iter = dev_iter_create(cmd->filter, (full_scan == 2) ? 1 : 0))) {
 		log_error("dev_iter creation failed");
 		goto out;
@@ -464,6 +535,13 @@ int lvmcache_label_scan(struct cmd_context *cmd, int full_scan)
 		if (fmt->ops->scan && !fmt->ops->scan(fmt))
 			goto out;
 	}
+
+	/*
+	 * If we are a long-lived process, write out the updated persistent
+	 * device cache for the benefit of short-lived processes.
+	 */
+	if (full_scan == 2 && cmd->is_long_lived && cmd->dump_filter)
+		persistent_filter_dump(cmd->filter);
 
 	r = 1;
 
@@ -509,6 +587,7 @@ struct volume_group *lvmcache_get_vg(const char *vgid, unsigned precommitted)
 	if (!(vg = import_vg_from_buffer(vginfo->vgmetadata, fid)) ||
 	    !vg_validate(vg)) {
 		_free_cached_vgmetadata(vginfo);
+		vg_release(vg);
 		return_NULL;
 	}
 
@@ -549,14 +628,14 @@ struct dm_list *lvmcache_get_vgnames(struct cmd_context *cmd, int full_scan)
 	lvmcache_label_scan(cmd, full_scan);
 
 	if (!(vgnames = str_list_create(cmd->mem))) {
-		log_error("vgnames list allocation failed");
+		log_errno(ENOMEM, "vgnames list allocation failed");
 		return NULL;
 	}
 
 	dm_list_iterate_items(vginfo, &_vginfos) {
 		if (!str_list_add(cmd->mem, vgnames,
 				  dm_pool_strdup(cmd->mem, vginfo->vgname))) {
-			log_error("strlist allocation failed");
+			log_errno(ENOMEM, "strlist allocation failed");
 			return NULL;
 		}
 	}
@@ -768,7 +847,7 @@ static int _insert_vginfo(struct lvmcache_vginfo *new_vginfo, const char *vgid,
 	char uuid_primary[64] __attribute((aligned(8)));
 	char uuid_new[64] __attribute((aligned(8)));
 	int use_new = 0;
-	
+
 	/* Pre-existing VG takes precedence. Unexported VG takes precedence. */
 	if (primary_vginfo) {
 		if (!id_write_format((const struct id *)vgid, uuid_new, sizeof(uuid_new)))
@@ -1053,7 +1132,6 @@ int lvmcache_update_vg(struct volume_group *vg, unsigned precommitted)
 {
 	struct pv_list *pvl;
 	struct lvmcache_info *info;
-	struct lvmcache_vginfo *vginfo;
 	char pvid_s[ID_LEN + 1] __attribute((aligned(8)));
 
 	pvid_s[sizeof(pvid_s) - 1] = '\0';
@@ -1069,9 +1147,8 @@ int lvmcache_update_vg(struct volume_group *vg, unsigned precommitted)
 	}
 
 	/* store text representation of vg to cache */
-	if (vg->cmd->current_settings.cache_vgmetadata &&
-	    (vginfo = vginfo_from_vgname(vg->name, NULL)))
-		_store_metadata(vginfo, vg, precommitted);
+	if (vg->cmd->current_settings.cache_vgmetadata)
+		_store_metadata(vg, precommitted);
 
 	return 1;
 }
@@ -1111,11 +1188,12 @@ struct lvmcache_info *lvmcache_add(struct labeller *labeller, const char *pvid,
 	} else {
 		if (existing->dev != dev) {
 			/* Is the existing entry a duplicate pvid e.g. md ? */
-			if (MAJOR(existing->dev->dev) == md_major() &&
-			    MAJOR(dev->dev) != md_major()) {
+			if (dev_subsystem_part_major(existing->dev) &&
+			    !dev_subsystem_part_major(dev)) {
 				log_very_verbose("Ignoring duplicate PV %s on "
-						 "%s - using md %s",
+						 "%s - using %s %s",
 						 pvid, dev_name(dev),
+						 dev_subsystem_name(existing->dev),
 						 dev_name(existing->dev));
 				return NULL;
 			} else if (dm_is_dm_major(MAJOR(existing->dev->dev)) &&
@@ -1125,11 +1203,12 @@ struct lvmcache_info *lvmcache_add(struct labeller *labeller, const char *pvid,
 						 pvid, dev_name(dev),
 						 dev_name(existing->dev));
 				return NULL;
-			} else if (MAJOR(existing->dev->dev) != md_major() &&
-				   MAJOR(dev->dev) == md_major())
+			} else if (!dev_subsystem_part_major(existing->dev) &&
+				   dev_subsystem_part_major(dev))
 				log_very_verbose("Duplicate PV %s on %s - "
-						 "using md %s", pvid,
+						 "using %s %s", pvid,
 						 dev_name(existing->dev),
+						 dev_subsystem_name(existing->dev),
 						 dev_name(dev));
 			else if (!dm_is_dm_major(MAJOR(existing->dev->dev)) &&
 				 dm_is_dm_major(MAJOR(dev->dev)))

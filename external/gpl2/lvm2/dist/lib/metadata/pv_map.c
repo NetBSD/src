@@ -1,4 +1,4 @@
-/*	$NetBSD: pv_map.c,v 1.1.1.1 2008/12/22 00:18:09 haad Exp $	*/
+/*	$NetBSD: pv_map.c,v 1.1.1.2 2009/12/02 00:26:41 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -131,6 +131,9 @@ static int _create_maps(struct dm_pool *mem, struct dm_list *pvs, struct dm_list
 	dm_list_iterate_items(pvl, pvs) {
 		if (!(pvl->pv->status & ALLOCATABLE_PV))
 			continue;
+		if (pvl->pv->status & MISSING_PV)
+			continue;
+		assert(pvl->pv->dev);
 
 		pvm = NULL;
 

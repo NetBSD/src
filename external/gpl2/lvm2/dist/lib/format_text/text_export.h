@@ -1,4 +1,4 @@
-/*	$NetBSD: text_export.h,v 1.1.1.1 2008/12/22 00:18:17 haad Exp $	*/
+/*	$NetBSD: text_export.h,v 1.1.1.2 2009/12/02 00:26:30 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
@@ -19,10 +19,11 @@
 #define _LVM_TEXT_EXPORT_H
 
 #define outf(args...) do {if (!out_text(args)) return_0;} while (0)
-#define outnl(f) do {if (!f->nl(f)) return_0;} while (0)
+#define outnl(f) do {if (!out_newline(f)) return_0;} while (0)
 
 struct formatter;
 struct lv_segment;
+struct config_node;
 
 int out_size(struct formatter *f, uint64_t size, const char *fmt, ...)
     __attribute__ ((format(printf, 3, 4)));
@@ -33,7 +34,13 @@ int out_hint(struct formatter *f, const char *fmt, ...)
 int out_text(struct formatter *f, const char *fmt, ...)
     __attribute__ ((format(printf, 2, 3)));
 
+int out_config_node(struct formatter *f, const struct config_node *cn);
+
 int out_areas(struct formatter *f, const struct lv_segment *seg,
 	      const char *type);
+
+void out_inc_indent(struct formatter *f);
+void out_dec_indent(struct formatter *f);
+int out_newline(struct formatter *f);
 
 #endif

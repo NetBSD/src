@@ -1,4 +1,4 @@
-/*	$NetBSD: str_list.c,v 1.1.1.1 2008/12/22 00:17:54 haad Exp $	*/
+/*	$NetBSD: str_list.c,v 1.1.1.2 2009/12/02 00:26:32 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -22,8 +22,10 @@ struct dm_list *str_list_create(struct dm_pool *mem)
 {
 	struct dm_list *sl;
 
-	if (!(sl = dm_pool_alloc(mem, sizeof(struct dm_list))))
-		return_NULL;
+	if (!(sl = dm_pool_alloc(mem, sizeof(struct dm_list)))) {
+		log_errno(ENOMEM, "str_list allocation failed");
+		return NULL;
+	}
 
 	dm_list_init(sl);
 

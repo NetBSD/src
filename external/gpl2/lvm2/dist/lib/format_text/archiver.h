@@ -1,4 +1,4 @@
-/*	$NetBSD: archiver.h,v 1.1.1.2 2009/02/18 11:17:05 haad Exp $	*/
+/*	$NetBSD: archiver.h,v 1.1.1.3 2009/12/02 00:26:29 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -48,6 +48,7 @@ void backup_exit(struct cmd_context *cmd);
 
 void backup_enable(struct cmd_context *cmd, int flag);
 int backup(struct volume_group *vg);
+int backup_locally(struct volume_group *vg);
 int backup_remove(struct cmd_context *cmd, const char *vg_name);
 
 struct volume_group *backup_read_vg(struct cmd_context *cmd,

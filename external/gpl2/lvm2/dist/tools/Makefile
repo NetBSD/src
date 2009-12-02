@@ -1,0 +1,206 @@
+#
+# Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
+# Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+#
+# This file is part of LVM2.
+#
+# This copyrighted material is made available to anyone wishing to use,
+# modify, copy, or redistribute it subject to the terms and conditions
+# of the GNU General Public License v.2.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+srcdir = .
+top_srcdir = ..
+top_builddir = ..
+
+
+LIB_PTHREAD = 
+
+SOURCES =\
+	dumpconfig.c \
+	formats.c \
+	lvchange.c \
+	lvconvert.c \
+	lvcreate.c \
+	lvdisplay.c \
+	lvextend.c \
+	lvmchange.c \
+	lvmcmdline.c \
+	lvmdiskscan.c \
+	lvreduce.c \
+	lvremove.c \
+	lvrename.c \
+	lvresize.c \
+	lvscan.c \
+	polldaemon.c \
+	pvchange.c \
+	pvck.c \
+	pvcreate.c \
+	pvdisplay.c \
+	pvmove.c \
+	pvremove.c \
+	pvresize.c \
+	pvscan.c \
+	reporter.c \
+	segtypes.c \
+	toollib.c \
+	vgcfgbackup.c \
+	vgcfgrestore.c \
+	vgchange.c \
+	vgck.c \
+	vgcreate.c \
+	vgconvert.c \
+	vgdisplay.c \
+	vgexport.c \
+	vgextend.c \
+	vgimport.c \
+	vgmerge.c \
+	vgmknodes.c \
+	vgreduce.c \
+	vgremove.c \
+	vgrename.c \
+	vgscan.c \
+	vgsplit.c
+
+SOURCES2 =\
+	dmsetup.c
+
+TARGETS =\
+	.commands \
+	lvm
+
+TARGETS_DM = dmsetup
+
+INSTALL_LVM_TARGETS = install_tools_dynamic
+INSTALL_DMSETUP_TARGETS = install_dmsetup_dynamic
+INSTALL_CMDLIB_TARGETS = install_cmdlib_dynamic
+
+ifeq ("no", "yes")
+  TARGETS += lvm.static
+  TARGETS_DM += dmsetup.static
+  INSTALL_LVM_TARGETS += install_tools_static
+  INSTALL_DMSETUP_TARGETS += install_dmsetup_static
+  INSTALL_CMDLIB_TARGETS += install_cmdlib_static
+endif
+
+LVMLIBS = -llvm-internal
+LIB_VERSION = $(LIB_VERSION_LVM)
+
+CLEAN_TARGETS = liblvm2cmd.$(LIB_SUFFIX) liblvm2cmd.a liblvm2cmd-static.a lvm lvm.o \
+		lvm2cmd.o lvm2cmd-static.o lvm2cmdlib.o lvm.static \
+		lvm.cflow lvm.xref lvm.tree lvm.rxref lvm.rtree \
+		lvmcmdlib.o lvm-static.o dmsetup.o $(TARGETS_DM)
+
+ifeq ("no", "yes")
+	TARGETS += liblvm2cmd.$(LIB_SUFFIX)
+	INSTALL_LVM_TARGETS += $(INSTALL_CMDLIB_TARGETS)
+endif
+
+ifeq ("", "yes")
+	LVMLIBS += -ldevmapper-event -lpthread
+endif
+
+LVMLIBS += -ldevmapper
+
+DEFS += -DLVM_SHARED_PATH=\"$(exec_prefix)/sbin/lvm\"
+
+include ../make.tmpl
+
+device-mapper: $(TARGETS_DM)
+
+dmsetup: dmsetup.o $(top_builddir)/libdm/libdevmapper.$(LIB_SUFFIX)
+	$(CC) $(CFLAGS) $(LDFLAGS) -L$(top_builddir)/libdm \
+	      -o $@ dmsetup.o -ldevmapper $(LIBS) $(LIB_PTHREAD)
+
+dmsetup.static: dmsetup.o $(interfacedir)/libdevmapper.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -static -L$(interfacedir) \
+	      -o $@ dmsetup.o -ldevmapper $(LIBS) $(LIB_PTHREAD)
+
+all: device-mapper
+
+lvm: $(OBJECTS) lvm.o $(top_builddir)/lib/liblvm-internal.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS) lvm.o \
+		$(LVMLIBS) $(LIBS) $(LIB_PTHREAD) -rdynamic
+
+lvm.static: $(OBJECTS) lvm-static.o $(top_builddir)/lib/liblvm-internal.a  $(interfacedir)/libdevmapper.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -static -L$(interfacedir) -o $@ \
+	      $(OBJECTS) lvm-static.o $(LVMLIBS) $(LIBS) $(LIB_PTHREAD) \
+	      -rdynamic
+
+liblvm2cmd.a: $(top_builddir)/lib/liblvm-internal.a $(OBJECTS) lvmcmdlib.o lvm2cmd.o
+	cat $(top_builddir)/lib/liblvm-internal.a > $@
+	$(AR) rs $@ $(OBJECTS) lvmcmdlib.o lvm2cmd.o
+
+liblvm2cmd-static.a: $(top_builddir)/lib/liblvm-internal.a $(OBJECTS) lvmcmdlib.o lvm2cmd-static.o
+	cat $(top_builddir)/lib/liblvm-internal.a > $@
+	$(AR) rs $@ $(OBJECTS) lvmcmdlib.o lvm2cmd-static.o
+
+liblvm2cmd.$(LIB_SUFFIX): liblvm2cmd.a $(LDDEPS)
+
+.commands: commands.h cmdnames.h Makefile
+	$(CC) -E -P $(srcdir)/cmdnames.h 2> /dev/null | \
+		egrep -v '^ *(|#.*|dumpconfig|formats|help|pvdata|segtypes|version) *$$' > .commands
+
+.PHONY: install_cmdlib_dynamic install_cmdlib_static \
+	install_tools_dynamic install_tools_static
+
+ifneq ("", "")
+CFLOW_FLAGS += --cpp="$(CC) -E"
+.PHONY: lvm.cflow
+-include $(top_srcdir)/lib/liblvm-internal.cflow
+lvm.cflow: $(SOURCES)
+	 -o$@ $(CFLOW_FLAGS) $(INCLUDES) $(DEFS) $(SOURCES)
+lvm.rxref: $(SOURCES)
+	 -o$@ --cpp="$(CC) -E" -r --omit-arguments -x $(INCLUDES) $(DEFS) $(SOURCES)
+lvm.xref: $(SOURCES)
+	 -o$@ --cpp="$(CC) -E" --omit-arguments -x $(INCLUDES) $(DEFS) $(SOURCES)
+lvm.rtree: $(SOURCES)
+	 -o$@ --cpp="$(CC) -E" -r --omit-arguments -T -b $(INCLUDES) $(DEFS) $(SOURCES)
+lvm.tree: $(SOURCES)
+	 -o$@ --cpp="$(CC) -E" --omit-arguments -T -b $(INCLUDES) $(DEFS) $(SOURCES)
+cflow: lvm.cflow lvm.xref lvm.tree lvm.rtree lvm.rxref
+endif
+
+install_cmdlib_dynamic: liblvm2cmd.$(LIB_SUFFIX)
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
+		$(libdir)/liblvm2cmd.$(LIB_SUFFIX).$(LIB_VERSION)
+	$(LN_S) -f liblvm2cmd.$(LIB_SUFFIX).$(LIB_VERSION) $(libdir)/liblvm2cmd.$(LIB_SUFFIX)
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 $(srcdir)/lvm2cmd.h \
+		$(includedir)/lvm2cmd.h
+
+install_cmdlib_static: liblvm2cmd-static.a
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
+		$(libdir)/liblvm2cmd.a.$(LIB_VERSION)
+	$(LN_S) -f liblvm2cmd.a.$(LIB_VERSION) $(libdir)/liblvm2cmd.a
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 $(srcdir)/lvm2cmd.h \
+		$(includedir)/lvm2cmd.h
+
+install_tools_dynamic: lvm .commands
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) lvm \
+		$(sbindir)/lvm
+	@echo Creating symbolic links for individual commands in $(sbindir)
+	@( \
+		for v in `cat $(srcdir)/.commands`; do \
+			cd $(sbindir); \
+			$(LN_S) -f lvm $$v; \
+		done; \
+	)
+
+install_tools_static: lvm.static
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
+		$(staticdir)/lvm.static
+
+install_dmsetup_dynamic: dmsetup
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< $(sbindir)/$<
+
+install_dmsetup_static: dmsetup.static
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< $(sbindir)/$<
+
+install_device-mapper: $(INSTALL_DMSETUP_TARGETS)
+
+install_lvm2: $(INSTALL_LVM_TARGETS)
+
+install: install_lvm2 install_device-mapper

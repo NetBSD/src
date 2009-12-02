@@ -6,7 +6,12 @@
 # For Red-Hat-based distributions such as Fedora, RHEL, CentOS.
 #	       
 ### BEGIN INIT INFO
-# Provides: 
+# Provides: clvmd
+# Required-Start: $local_fs
+# Required-Stop: $local_fs
+# Default-Start:
+# Default-Stop: 0 1 6
+# Short-Description: Clustered LVM Daemon
 ### END INIT INFO
 
 . /etc/init.d/functions
@@ -25,6 +30,8 @@ VGS=${sbindir}/vgs
 CLVMDOPTS="-T20"
 
 [ -f /etc/sysconfig/cluster ] && . /etc/sysconfig/cluster
+
+[ -n "$CLVMD_CLUSTER_IFACE" ] && CLVMDOPTS="$CLVMDOPTS -I $CLVMD_CLUSTER_IFACE" 
 
 LOCK_FILE="/var/lock/subsys/$DAEMON"
 
@@ -107,6 +114,19 @@ wait_for_finish()
 	fi
 }
 
+reload() {
+	$DAEMON -R
+}
+
+rh_status() {
+	status $DAEMON
+}
+
+rh_status_q() {
+	rh_status >/dev/null 2>&1
+}
+
+
 rtrn=1
 
 # See how we were called.
@@ -132,15 +152,20 @@ case "$1" in
 	rtrn=$?
 	;;
 
+  reload)
+	rh_status_q || exit 7
+	reload
+	;;
+
   status)
-	status $DAEMON
+	rh_status
 	rtrn=$?
 	vols=$( $LVDISPLAY -C --nohead 2> /dev/null | awk '($3 ~ /....a./) {print $1}' )
 	echo active volumes: ${vols:-"(none)"}
 	;;
 
   *)
-	echo $"Usage: $0 {start|stop|restart|status}"
+	echo $"Usage: $0 {start|stop|restart|reload|status}"
 	;;
 esac
 

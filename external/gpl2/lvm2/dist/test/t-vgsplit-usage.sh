@@ -15,14 +15,21 @@
 
 aux prepare_devs 5
 
-# FIXME: paramaterize lvm1 vs lvm2 metadata; most of these tests should run
-# fine with lvm1 metadata as well; for now, just add disks 5 and 6 as lvm1
-# metadata
-
 for mdatype in 1 2
 do
 
 pvcreate -M$mdatype $devs
+
+# ensure name order does not matter
+# NOTE: if we're using lvm1, we must use -M on vgsplit
+vgcreate -M$mdatype $vg1 $devs
+vgsplit -M$mdatype $vg1 $vg2 $dev1
+vgremove $vg1
+vgremove $vg2
+vgcreate -M$mdatype $vg2 $devs
+vgsplit -M$mdatype $vg2 $vg1 $dev1
+vgremove $vg1
+vgremove $vg2
 
 # vgsplit accepts new vg as destination of split
 # lvm1 -- bz244792

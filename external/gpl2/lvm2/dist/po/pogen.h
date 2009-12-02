@@ -1,4 +1,4 @@
-/*	$NetBSD: pogen.h,v 1.1.1.1 2008/12/22 00:18:42 haad Exp $	*/
+/*	$NetBSD: pogen.h,v 1.1.1.2 2009/12/02 00:26:20 haad Exp $	*/
 
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -21,5 +21,8 @@
  * different architectures.
  */
 
-#define print_log(level, file, line, format, args...) print_log(format, args)
+#define print_log(level, dm_errno, file, line, format, args...) print_log(format, args)
 #define dm_log(level, file, line, format, args...) dm_log(format, args)
+#define dm_log_with_errno(level, dm_errno, file, line, format, args...) \
+    dm_log(level, file, line, format, args)
+

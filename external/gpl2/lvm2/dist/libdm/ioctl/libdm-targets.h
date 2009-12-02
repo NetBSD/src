@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-targets.h,v 1.1.1.1 2008/12/22 00:18:36 haad Exp $	*/
+/*	$NetBSD: libdm-targets.h,v 1.1.1.2 2009/12/02 00:26:11 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -43,6 +43,7 @@ struct dm_task {
 	uint32_t event_nr;
 	int major;
 	int minor;
+	int allow_default_major_fallback;
 	uid_t uid;
 	gid_t gid;
 	mode_t mode;
@@ -59,8 +60,10 @@ struct dm_task {
 	int no_flush;
 	int no_open_count;
 	int skip_lockfs;
+	int query_inactive_table;
 	int suppress_identical_reload;
 	uint64_t existing_table_size;
+	int cookie_set;
 
 	char *uuid;
 };

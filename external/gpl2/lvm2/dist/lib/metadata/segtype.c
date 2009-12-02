@@ -1,4 +1,4 @@
-/*	$NetBSD: segtype.c,v 1.1.1.1 2008/12/22 00:18:09 haad Exp $	*/
+/*	$NetBSD: segtype.c,v 1.1.1.2 2009/12/02 00:26:42 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -29,6 +29,11 @@ struct segment_type *get_segtype_from_string(struct cmd_context *cmd,
 			return segtype;
 	}
 
-	log_error("Unrecognised segment type %s", str);
-	return NULL;
+	if (!(segtype = init_unknown_segtype(cmd, str)))
+		return_NULL;
+
+	segtype->library = NULL;
+	dm_list_add(&cmd->segtypes, &segtype->list);
+	log_warn("WARNING: Unrecognised segment type %s", str);
+	return segtype;
 }

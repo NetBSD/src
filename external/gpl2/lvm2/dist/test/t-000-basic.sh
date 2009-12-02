@@ -1,4 +1,4 @@
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2009 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -12,17 +12,13 @@
 
 lvm version
 
-v=$abs_top_srcdir/tools/version.h
+v=$abs_top_srcdir/lib/misc/lvm-version.h
 sed -n "/#define LVM_VERSION ./s///p" "$v" | sed "s/ .*//" > expected
 
 lvm pvmove --version|sed -n "1s/.*: *\([0-9][^ ]*\) .*/\1/p" > actual
 
 # ensure they are the same
 diff -u actual expected
-
-# Need mdadm for some pvcreate tests
-# verify mdadm is installed and in path (needed for pvcreate tests) ... is it?
-which mdadm
 
 mknod $G_root_/dev/null c 1 3 ||
   error "Can't create nodes on filesystem"

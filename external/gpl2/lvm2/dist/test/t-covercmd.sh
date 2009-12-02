@@ -14,6 +14,8 @@
 
 . ./test-utils.sh
 
+TEST_UUID="aaaaaa-aaaa-aaaa-aaaa-aaaa-aaaa-aaaaaa"
+
 get_lvs_()
 {
   case $(lvs --units s --nosuffix --noheadings -o $1_read_ahead "$vg"/"$lv") in
@@ -28,7 +30,7 @@ pvcreate $dev1
 pvcreate --metadatacopies 0 $dev2
 pvcreate --metadatacopies 0 $dev3
 pvcreate $dev4
-pvcreate --metadatacopies 0 $dev5
+pvcreate -u $TEST_UUID --metadatacopies 0 $dev5
 vgcreate -c n $vg $devs
 lvcreate -n $lv -l 5 -i5 -I256 $vg
 
@@ -39,7 +41,7 @@ lvscan
 lvmdiskscan
 vgdisplay --units k
 lvdisplay --units g
-for i in b k m g t p e H B K M G T P E ; do
+for i in h b s k m g t p e H B S K M G T P E ; do
     pvdisplay --units "$i" "$dev1"
 done
 
@@ -67,6 +69,9 @@ lvrename "$vg" "$lv" "$lv-rename"
 vgcfgbackup -f "$(pwd)/backup.$$" "$vg"
 vgchange -an "$vg"
 vgcfgrestore  -f "$(pwd)/backup.$$" "$vg"
+pvremove -y -ff $dev5
+not vgcfgrestore  -f "$(pwd)/backup.$$" "$vg"
+pvcreate -u $TEST_UUID --restorefile  "$(pwd)/backup.$$" $dev5
 vgremove -f "$vg"
 pvresize --setphysicalvolumesize 10M "$dev1"
 

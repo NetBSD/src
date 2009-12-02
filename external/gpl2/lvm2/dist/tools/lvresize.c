@@ -1,8 +1,8 @@
-/*	$NetBSD: lvresize.c,v 1.1.1.2 2009/02/18 11:17:46 haad Exp $	*/
+/*	$NetBSD: lvresize.c,v 1.1.1.3 2009/12/02 00:25:53 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -48,9 +48,9 @@ struct lvresize_params {
 	char **argv;
 };
 
-static int validate_stripesize(struct cmd_context *cmd,
-			       const struct volume_group *vg,
-			       struct lvresize_params *lp)
+static int _validate_stripesize(struct cmd_context *cmd,
+				const struct volume_group *vg,
+				struct lvresize_params *lp)
 {
 	if (arg_sign_value(cmd, stripesize_ARG, 0) == SIGN_MINUS) {
 		log_error("Stripesize may not be negative.");
@@ -87,10 +87,10 @@ static int validate_stripesize(struct cmd_context *cmd,
 	return 1;
 }
 
-static int confirm_resizefs_reduce(struct cmd_context *cmd,
-				   const struct volume_group *vg,
-				   const struct logical_volume *lv,
-				   const struct lvresize_params *lp)
+static int _request_confirmation(struct cmd_context *cmd,
+				 const struct volume_group *vg,
+				 const struct logical_volume *lv,
+				 const struct lvresize_params *lp)
 {
 	struct lvinfo info;
 
@@ -101,66 +101,89 @@ static int confirm_resizefs_reduce(struct cmd_context *cmd,
 		return 0;
 	}
 
-	if (lp->resizefs && !info.exists) {
-		log_error("Logical volume %s must be activated "
-			  "before resizing filesystem", lp->lv_name);
-		return 0;
+	if (lp->resizefs) {
+		if (!info.exists) {
+			log_error("Logical volume %s must be activated "
+				  "before resizing filesystem", lp->lv_name);
+			return 0;
+		}
+		return 1;
 	}
 
-	if (info.exists && !lp->resizefs && (lp->resize == LV_REDUCE)) {
-		log_warn("WARNING: Reducing active%s logical volume "
-			 "to %s", info.open_count ? " and open" : "",
-			 display_size(cmd, (uint64_t) lp->extents *
-				      vg->extent_size));
+	if (!info.exists)
+		return 1;
 
-		log_warn("THIS MAY DESTROY YOUR DATA "
-			 "(filesystem etc.)");
+	log_warn("WARNING: Reducing active%s logical volume to %s",
+		 info.open_count ? " and open" : "",
+		 display_size(cmd, (uint64_t) lp->extents * vg->extent_size));
 
-		if (!arg_count(cmd, force_ARG)) {
-			if (yes_no_prompt("Do you really want to "
-					  "reduce %s? [y/n]: ",
-					  lp->lv_name) == 'n') {
-				log_print("Logical volume %s NOT "
-					  "reduced", lp->lv_name);
-				return 0;
-			}
-			if (sigint_caught())
-				return 0;
+	log_warn("THIS MAY DESTROY YOUR DATA (filesystem etc.)");
+
+	if (!arg_count(cmd, force_ARG)) {
+		if (yes_no_prompt("Do you really want to reduce %s? [y/n]: ",
+				  lp->lv_name) == 'n') {
+			log_print("Logical volume %s NOT reduced", lp->lv_name);
+			return 0;
 		}
+		if (sigint_caught())
+			return 0;
 	}
 
 	return 1;
 }
 
-static int do_resizefs_reduce(const struct cmd_context *cmd,
-			      const struct volume_group *vg,
-			      const struct lvresize_params *lp)
+enum fsadm_cmd_e { FSADM_CMD_CHECK, FSADM_CMD_RESIZE };
+#define FSADM_CMD "fsadm"
+#define FSADM_CMD_MAX_ARGS 6
+
+/*
+ * FSADM_CMD --dry-run --verbose --force check lv_path
+ * FSADM_CMD --dry-run --verbose --force resize lv_path size
+ */
+static int _fsadm_cmd(struct cmd_context *cmd,
+		      const struct volume_group *vg,
+		      const struct lvresize_params *lp,
+		      enum fsadm_cmd_e fcmd)
 {
 	char lv_path[PATH_MAX];
 	char size_buf[SIZE_BUF];
+	const char *argv[FSADM_CMD_MAX_ARGS + 2];
+	unsigned i = 0;
 
-	if (dm_snprintf(lv_path, PATH_MAX, "%s%s/%s", cmd->dev_dir,
-			lp->vg_name, lp->lv_name) < 0) {
-		log_error("Couldn't create LV path for %s",
-			  lp->lv_name);
+	argv[i++] = FSADM_CMD;
+
+	if (test_mode())
+		argv[i++] = "--dry-run";
+
+	if (verbose_level() >= _LOG_NOTICE)
+		argv[i++] = "--verbose";
+
+	if (arg_count(cmd, force_ARG))
+		argv[i++] = "--force";
+
+	argv[i++] = (fcmd == FSADM_CMD_RESIZE) ? "resize" : "check";
+
+	if (dm_snprintf(lv_path, PATH_MAX, "%s%s/%s", cmd->dev_dir, lp->vg_name,
+			lp->lv_name) < 0) {
+		log_error("Couldn't create LV path for %s", lp->lv_name);
 		return 0;
 	}
 
-	if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64 "K",
-			(uint64_t) lp->extents * vg->extent_size / 2) < 0) {
-		log_error("Couldn't generate new LV size string");
-		return 0;
+	argv[i++] = lv_path;
+
+	if (fcmd == FSADM_CMD_RESIZE) {
+		if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64 "K",
+				(uint64_t) lp->extents * vg->extent_size / 2) < 0) {
+			log_error("Couldn't generate new LV size string");
+			return 0;
+		}
+
+		argv[i++] = size_buf;
 	}
 
-	if (!lp->nofsck)
-		if (!exec_cmd("fsadm", "check", lv_path, NULL))
-			return_0;
+	argv[i] = NULL;
 
-	if (lp->resize == LV_REDUCE)
-		if (!exec_cmd("fsadm", "resize", lv_path, size_buf))
-			return_0;
-
-	return 1;
+	return exec_cmd(cmd, argv);
 }
 
 static int _lvresize_params(struct cmd_context *cmd, int argc, char **argv,
@@ -219,8 +242,8 @@ static int _lvresize_params(struct cmd_context *cmd, int argc, char **argv,
 		return 0;
 	}
 
-	lp->resizefs = arg_count(cmd, resizefs_ARG) ? 1 : 0;
-	lp->nofsck = arg_count(cmd, nofsck_ARG) ? 1 : 0;
+	lp->resizefs = arg_is_set(cmd, resizefs_ARG);
+	lp->nofsck = arg_is_set(cmd, nofsck_ARG);
 
 	if (!argc) {
 		log_error("Please provide the logical volume name");
@@ -270,8 +293,6 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	uint32_t seg_extents;
 	uint32_t sz, str;
 	struct dm_list *pvh = NULL;
-	char size_buf[SIZE_BUF];
-	char lv_path[PATH_MAX];
 
 	/* does LV exist? */
 	if (!(lvl = find_lv_in_vg(vg, lp->lv_name))) {
@@ -298,10 +319,9 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 		}
 	}
 
-	if (arg_count(cmd, stripesize_ARG)) {
-		if (!validate_stripesize(cmd, vg, lp))
-			return EINVALID_CMD_LINE;
-	}
+	if (arg_count(cmd, stripesize_ARG) &&
+	    !_validate_stripesize(cmd, vg, lp))
+		return EINVALID_CMD_LINE;
 
 	lv = lvl->lv;
 
@@ -349,8 +369,11 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 			lp->extents = lp->extents * lv->le_count / 100;
 			break;
 		case PERCENT_PVS:
-			pv_extent_count = pv_list_extents_free(pvh);
-			lp->extents = lp->extents * pv_extent_count / 100;
+			if (lp->argc) {
+				pv_extent_count = pv_list_extents_free(pvh);
+				lp->extents = lp->extents * pv_extent_count / 100;
+			} else
+				lp->extents = lp->extents * vg->extent_count / 100;
 			break;
 		case PERCENT_NONE:
 			break;
@@ -375,9 +398,12 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	}
 
 	if (lp->extents == lv->le_count) {
-		log_error("New size (%d extents) matches existing size "
-			  "(%d extents)", lp->extents, lv->le_count);
-		return EINVALID_CMD_LINE;
+		if (!lp->resizefs) {
+			log_error("New size (%d extents) matches existing size "
+				  "(%d extents)", lp->extents, lv->le_count);
+			return EINVALID_CMD_LINE;
+		}
+		lp->resize = LV_EXTEND; /* lets pretend zero size extension */
 	}
 
 	seg_size = lp->extents - lv->le_count;
@@ -403,8 +429,8 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 			sz = seg->stripe_size;
 			str = seg->area_count;
 
-			if ((seg_stripesize && seg_stripesize != sz
-			     && !lp->stripe_size) ||
+			if ((seg_stripesize && seg_stripesize != sz &&
+			     !lp->stripe_size) ||
 			    (seg_stripes && seg_stripes != str && !lp->stripes)) {
 				log_error("Please specify number of "
 					  "stripes (-i) and stripesize (-I)");
@@ -511,36 +537,22 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 		}
 	}
 
-	if (lp->extents == lv->le_count) {
-		log_error("New size (%d extents) matches existing size "
-			  "(%d extents)", lp->extents, lv->le_count);
-		return EINVALID_CMD_LINE;
-	}
-
 	if (lp->extents < lv->le_count) {
 		if (lp->resize == LV_EXTEND) {
 			log_error("New size given (%d extents) not larger "
 				  "than existing size (%d extents)",
 				  lp->extents, lv->le_count);
 			return EINVALID_CMD_LINE;
-		} else
-			lp->resize = LV_REDUCE;
-	}
-
-	if (lp->extents > lv->le_count) {
+		}
+		lp->resize = LV_REDUCE;
+	} else if (lp->extents > lv->le_count) {
 		if (lp->resize == LV_REDUCE) {
 			log_error("New size given (%d extents) not less than "
 				  "existing size (%d extents)", lp->extents,
 				  lv->le_count);
 			return EINVALID_CMD_LINE;
-		} else
-			lp->resize = LV_EXTEND;
-	}
-
-	if (lp->mirrors && activation() &&
-	    lv_info(cmd, lv, &info, 0, 0) && info.exists) {
-		log_error("Mirrors cannot be resized while active yet.");
-		return ECMD_FAILED;
+		}
+		lp->resize = LV_EXTEND;
 	}
 
 	if (lv_is_origin(lv)) {
@@ -559,19 +571,28 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 		}
 	}
 
-	if (lp->resize == LV_REDUCE) {
-		if (lp->argc)
-			log_warn("Ignoring PVs on command line when reducing");
-	}
+	if ((lp->resize == LV_REDUCE) && lp->argc)
+		log_warn("Ignoring PVs on command line when reducing");
 
-	if (lp->resize == LV_REDUCE || lp->resizefs) {
-		if (!confirm_resizefs_reduce(cmd, vg, lv, lp))
-			return ECMD_FAILED;
+	/* Request confirmation before operations that are often mistakes. */
+	if ((lp->resizefs || (lp->resize == LV_REDUCE)) &&
+	    !_request_confirmation(cmd, vg, lv, lp)) {
+		stack;
+		return ECMD_FAILED;
 	}
 
 	if (lp->resizefs) {
-		if (!do_resizefs_reduce(cmd, vg, lp))
-		    return ECMD_FAILED;
+		if (!lp->nofsck &&
+		    !_fsadm_cmd(cmd, vg, lp, FSADM_CMD_CHECK)) {
+			stack;
+			return ECMD_FAILED;
+		}
+
+		if ((lp->resize == LV_REDUCE) &&
+		    !_fsadm_cmd(cmd, vg, lp, FSADM_CMD_RESIZE)) {
+			stack;
+			return ECMD_FAILED;
+		}
 	}
 
 	if (!archive(vg)) {
@@ -589,7 +610,8 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 			stack;
 			return ECMD_FAILED;
 		}
-	} else if (!lv_extend(lv, lp->segtype, lp->stripes,
+	} else if ((lp->extents > lv->le_count) && /* Ensure we extend */
+		   !lv_extend(lv, lp->segtype, lp->stripes,
 			      lp->stripe_size, lp->mirrors,
 			      lp->extents - lv->le_count,
 			      NULL, 0u, 0u, pvh, alloc)) {
@@ -603,8 +625,6 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 		return ECMD_FAILED;
 	}
 
-	backup(vg);
-
 	/* If snapshot, must suspend all associated devices */
 	if (lv_is_cow(lv))
 		lock_lv = origin_from_cow(lv);
@@ -614,38 +634,31 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	if (!suspend_lv(cmd, lock_lv)) {
 		log_error("Failed to suspend %s", lp->lv_name);
 		vg_revert(vg);
+		backup(vg);
 		return ECMD_FAILED;
 	}
 
 	if (!vg_commit(vg)) {
 		stack;
 		resume_lv(cmd, lock_lv);
+		backup(vg);
 		return ECMD_FAILED;
 	}
 
 	if (!resume_lv(cmd, lock_lv)) {
 		log_error("Problem reactivating %s", lp->lv_name);
+		backup(vg);
 		return ECMD_FAILED;
 	}
 
+	backup(vg);
+
 	log_print("Logical volume %s successfully resized", lp->lv_name);
 
-	if (lp->resizefs && (lp->resize == LV_EXTEND)) {
-		if (dm_snprintf(lv_path, PATH_MAX, "%s%s/%s", cmd->dev_dir,
-				lp->vg_name, lp->lv_name) < 0) {
-			log_error("Couldn't create LV path for %s",
-				  lp->lv_name);
-			return ECMD_FAILED;
-		}
-		if (dm_snprintf(size_buf, SIZE_BUF, "%" PRIu64 "K",
-				(uint64_t) lp->extents * vg->extent_size / 2) < 0) {
-		    log_error("Couldn't generate new LV size string");
-		    return ECMD_FAILED;
-		}
-		if (!exec_cmd("fsadm", "resize", lv_path, size_buf)) {
-			stack;
-			return ECMD_FAILED;
-		}
+	if (lp->resizefs && (lp->resize == LV_EXTEND) &&
+	    !_fsadm_cmd(cmd, vg, lp, FSADM_CMD_RESIZE)) {
+		stack;
+		return ECMD_FAILED;
 	}
 
 	return ECMD_PROCESSED;
@@ -663,9 +676,9 @@ int lvresize(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 
 	log_verbose("Finding volume group %s", lp.vg_name);
-	if (!(vg = vg_lock_and_read(cmd, lp.vg_name, NULL, LCK_VG_WRITE,
-				    CLUSTERED | EXPORTED_VG | LVM_WRITE,
-				    CORRECT_INCONSISTENT))) {
+	vg = vg_read_for_update(cmd, lp.vg_name, NULL, 0);
+	if (vg_read_error(vg)) {
+		vg_release(vg);
 		stack;
 		return ECMD_FAILED;
 	}
@@ -673,7 +686,7 @@ int lvresize(struct cmd_context *cmd, int argc, char **argv)
 	if (!(r = _lvresize(cmd, vg, &lp)))
 		stack;
 
-	unlock_vg(cmd, lp.vg_name);
+	unlock_and_release_vg(cmd, vg, lp.vg_name);
 
 	return r;
 }

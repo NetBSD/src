@@ -1,8 +1,8 @@
-/*	$NetBSD: vgreduce.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgreduce.c,v 1.1.1.2 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -383,8 +383,8 @@ static int _vgreduce_single(struct cmd_context *cmd, struct volume_group *vg,
 			    void *handle __attribute((unused)))
 {
 	struct pv_list *pvl;
-	struct volume_group *orphan_vg;
-	int consistent = 1;
+	struct volume_group *orphan_vg = NULL;
+	int r = ECMD_FAILED;
 	const char *name = pv_dev_name(pv);
 
 	if (pv_pe_alloc_count(pv)) {
@@ -398,17 +398,15 @@ static int _vgreduce_single(struct cmd_context *cmd, struct volume_group *vg,
 		return ECMD_FAILED;
 	}
 
-	if (!lock_vol(cmd, VG_ORPHANS, LCK_VG_WRITE | LCK_NONBLOCK)) {
+	if (!lock_vol(cmd, VG_ORPHANS, LCK_VG_WRITE)) {
 		log_error("Can't get lock for orphan PVs");
 		return ECMD_FAILED;
 	}
 
 	pvl = find_pv_in_vg(vg, name);
 
-	if (!archive(vg)) {
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
-	}
+	if (!archive(vg))
+		goto_bad;
 
 	log_verbose("Removing \"%s\" from volume group \"%s\"", name, vg->name);
 
@@ -420,59 +418,55 @@ static int _vgreduce_single(struct cmd_context *cmd, struct volume_group *vg,
 
 	if (!dev_get_size(pv_dev(pv), &pv->size)) {
 		log_error("%s: Couldn't get size.", pv_dev_name(pv));
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
 	vg->pv_count--;
 	vg->free_count -= pv_pe_count(pv) - pv_pe_alloc_count(pv);
 	vg->extent_count -= pv_pe_count(pv);
 
-	if(!(orphan_vg = vg_read(cmd, vg->fid->fmt->orphan_vg_name, NULL, &consistent)) ||
-	   !consistent) {
-		log_error("Unable to read existing orphan PVs");
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
-	}
+	orphan_vg = vg_read_for_update(cmd, vg->fid->fmt->orphan_vg_name,
+				       NULL, 0);
+
+	if (vg_read_error(orphan_vg))
+		goto bad;
 
 	if (!vg_split_mdas(cmd, vg, orphan_vg) || !vg->pv_count) {
 		log_error("Cannot remove final metadata area on \"%s\" from \"%s\"",
 			  name, vg->name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
 	if (!vg_write(vg) || !vg_commit(vg)) {
 		log_error("Removal of physical volume \"%s\" from "
 			  "\"%s\" failed", name, vg->name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
 	if (!pv_write(cmd, pv, NULL, INT64_C(-1))) {
 		log_error("Failed to clear metadata from physical "
 			  "volume \"%s\" "
 			  "after removal from \"%s\"", name, vg->name);
-		unlock_vg(cmd, VG_ORPHANS);
-		return ECMD_FAILED;
+		goto bad;
 	}
 
-	unlock_vg(cmd, VG_ORPHANS);
 	backup(vg);
 
 	log_print("Removed \"%s\" from volume group \"%s\"", name, vg->name);
-
-	return ECMD_PROCESSED;
+	r = ECMD_PROCESSED;
+bad:
+	unlock_and_release_vg(cmd, orphan_vg, VG_ORPHANS);
+	return r;
 }
 
 int vgreduce(struct cmd_context *cmd, int argc, char **argv)
 {
 	struct volume_group *vg;
 	char *vg_name;
-	int ret = 1;
-	int consistent = 1;
+	int ret = ECMD_FAILED;
 	int fixed = 1;
 	int repairing = arg_count(cmd, removemissing_ARG);
+	int saved_ignore_suspended_devices = ignore_suspended_devices();
 
 	if (!argc && !repairing) {
 		log_error("Please give volume group name and "
@@ -510,88 +504,78 @@ int vgreduce(struct cmd_context *cmd, int argc, char **argv)
 	argv++;
 	argc--;
 
-	if (!validate_name(vg_name)) {
-		log_error("Volume group name \"%s\" is invalid",
-			  vg_name);
-		return ECMD_FAILED;
-	}
-
 	log_verbose("Finding volume group \"%s\"", vg_name);
-	if (!lock_vol(cmd, vg_name, LCK_VG_WRITE)) {
-		log_error("Can't get lock for %s", vg_name);
-		return ECMD_FAILED;
-	}
-
-	if ((!(vg = vg_read(cmd, vg_name, NULL, &consistent)) || !consistent)
-	    && !repairing) {
-		log_error("Volume group \"%s\" doesn't exist", vg_name);
-		unlock_vg(cmd, vg_name);
-		return ECMD_FAILED;
-	}
-
-	if (vg && !vg_check_status(vg, CLUSTERED)) {
-		unlock_vg(cmd, vg_name);
-		return ECMD_FAILED;
-	}
 
 	if (repairing) {
-		if (vg && consistent && !vg_missing_pv_count(vg)) {
+		init_ignore_suspended_devices(1);
+		cmd->handles_missing_pvs = 1;
+	}
+
+	vg = vg_read_for_update(cmd, vg_name, NULL, READ_ALLOW_EXPORTED);
+	if (vg_read_error(vg) == FAILED_ALLOCATION ||
+	    vg_read_error(vg) == FAILED_NOTFOUND)
+		goto_out;
+
+	/* FIXME We want to allow read-only VGs to be changed here? */
+	if (vg_read_error(vg) && vg_read_error(vg) != FAILED_READ_ONLY
+	    && !arg_count(cmd, removemissing_ARG))
+		goto_out;
+
+	if (repairing) {
+		if (!vg_read_error(vg) && !vg_missing_pv_count(vg)) {
 			log_error("Volume group \"%s\" is already consistent",
 				  vg_name);
-			unlock_vg(cmd, vg_name);
-			return ECMD_PROCESSED;
+			ret = ECMD_PROCESSED;
+			goto out;
 		}
 
-		consistent = !arg_count(cmd, force_ARG);
-		if (!(vg = vg_read(cmd, vg_name, NULL, &consistent))) {
-			log_error("Volume group \"%s\" not found", vg_name);
-			unlock_vg(cmd, vg_name);
-			return ECMD_FAILED;
-		}
-		if (!vg_check_status(vg, CLUSTERED)) {
-			unlock_vg(cmd, vg_name);
-			return ECMD_FAILED;
-		}
-		if (!archive(vg)) {
-			unlock_vg(cmd, vg_name);
-			return ECMD_FAILED;
-		}
+		vg_release(vg);
+		log_verbose("Trying to open VG %s for recovery...", vg_name);
+
+		vg = vg_read_for_update(cmd, vg_name, NULL,
+					READ_ALLOW_INCONSISTENT
+					| READ_ALLOW_EXPORTED);
+
+		if (vg_read_error(vg) && vg_read_error(vg) != FAILED_READ_ONLY
+		    && vg_read_error(vg) != FAILED_INCONSISTENT)
+			goto_out;
+
+		if (!archive(vg))
+			goto_out;
 
 		if (arg_count(cmd, force_ARG)) {
-			if (!_make_vg_consistent(cmd, vg)) {
-				unlock_vg(cmd, vg_name);
-				return ECMD_FAILED;
-			}
+			if (!_make_vg_consistent(cmd, vg))
+				goto_out;
 		} else
 			fixed = _consolidate_vg(cmd, vg);
 
 		if (!vg_write(vg) || !vg_commit(vg)) {
 			log_error("Failed to write out a consistent VG for %s",
 				  vg_name);
-			unlock_vg(cmd, vg_name);
-			return ECMD_FAILED;
+			goto out;
 		}
-
 		backup(vg);
 
-		if (fixed)
+		if (fixed) {
 			log_print("Wrote out consistent volume group %s",
 				  vg_name);
+			ret = ECMD_PROCESSED;
+		} else
+			ret = ECMD_FAILED;
 
 	} else {
-		if (!vg_check_status(vg, EXPORTED_VG | LVM_WRITE | RESIZEABLE_VG)) {
-			unlock_vg(cmd, vg_name);
-			return ECMD_FAILED;
-		}
+		if (!vg_check_status(vg, EXPORTED_VG | LVM_WRITE | RESIZEABLE_VG))
+			goto_out;
 
 		/* FIXME: Pass private struct through to all these functions */
 		/* and update in batch here? */
-		ret = process_each_pv(cmd, argc, argv, vg, LCK_NONE, NULL,
+		ret = process_each_pv(cmd, argc, argv, vg, READ_FOR_UPDATE, 0, NULL,
 				      _vgreduce_single);
 
 	}
-
-	unlock_vg(cmd, vg_name);
+out:
+	init_ignore_suspended_devices(saved_ignore_suspended_devices);
+	unlock_and_release_vg(cmd, vg, vg_name);
 
 	return ret;
 

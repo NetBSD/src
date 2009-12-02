@@ -1,3 +1,78 @@
+Version 1.02.40 - 19th November 2009
+====================================
+  Fix install_device-mapper Makefile target to not build dmeventd plugins.
+  Support udev flags even when udev_sync is disabled or not compiled in.
+  Remove 'last_rule' from udev rules: honour DM_UDEV_DISABLE_OTHER_RULES_FLAG.
+  Add dmsetup --inactive support.
+  Add dm_task_query_inactive_table to libdevmapper for kernel driver >= 4.16.
+  Fix hash lookup segfault when keys compared are different lengths.
+
+Version 1.02.39 - 26th October 2009
+===================================
+  Remove strict default permissions for DM devices from 95-dm-notify.rules.
+  Add dmsetup udevflags command to decode udev flags in given cookie value.
+  Support udev flags in libdevmapper incl. dm_tree_add_new_dev_with_udev_flags.
+  Make libdm ABI consistent when built with/without selinux support.
+
+Version 1.02.38 - 25th September 2009
+=====================================
+  Export DM_DEV_DIR_UMASK, the default umask for /dev directories created.
+  Handle any path supplied to dm_task_set_name by looking up in /dev/mapper.
+  Add several examples to 12-dm-permissions.rules.
+  Add splitname and --yes to dmsetup man page.
+  Fix _mirror_emit_segment_line return code.
+  Fix dmeventd _temporary_log_fn parameters. (2.02.50)
+
+Version 1.02.37 - 15th September 2009
+=====================================
+  Add dmsetup manpage entries for udevcomplete_all and udevcookies.
+  Check udev is running when processing cookies and retain state internally.
+  Add y|--yes option to dmsetup for default 'yes' answer to prompts.
+  Fix tools Makefile to process dmsetup sources separately.
+  Restore umask when device node creation fails.
+  Check kernel vsn to use 'block_on_error' or 'handle_errors' in mirror table.
+  Add dm-log-userspace.h to tree for cmirrord builds.
+
+Version 1.02.36 - 6th August 2009
+=================================
+  Add udevcookies, udevcomplete, udevcomplete_all and --noudevwait to dmsetup.
+  Add libdevmapper functions to support synchronisation with udev.
+
+Version 1.02.35 - 28th July 2009
+================================
+  Add LOG_LINE_WITH_ERRNO macro.
+  Use log_error macro consistently throughout in place of log_err.
+
+Version 1.02.34 - 15th July 2009
+================================
+  Use _exit() not exit() after forking to avoid flushing libc buffers twice.
+  Rename plog macro to LOG_LINE & add LOG_MESG variant for dm_dump_memory_debug.
+  Change plog to use dm_log_with_errno unless deprecated dm_log_init was used.
+  Add dm_log_with_errno and dm_log_with_errno_init, deprecating the old fns.
+  Fix whitespace in linear target line to fix identical table line detection.
+  Add device number to more log messages during activation.
+
+Version 1.02.33 - 30th June 2009
+================================
+  Don't fallback to default major number: use dm_task_set_major_minor. (1.02.31)
+  Do not fork daemon when dmeventd cannot be found.
+  Add crypt target handling to libdevmapper tree nodes.
+  Add splitname command to dmsetup.
+  Add subsystem, vg_name, lv_name, lv_layer fields to dmsetup reports.
+  Make mempool optional in dm_split_lvm_name().
+
+Version 1.02.32 - 21st May 2009
+===============================
+  Only generate libdevmapper.a when configured to link statically.
+  Export dm_tree_node_size_changed() from libdevmapper.
+  Propagate the table size_changed property up the dm device tree.
+  Detect failure to free memory pools when releasing the library.
+  Fix segfault when getopt processes dmsetup -U, -G and -M options.
+
+Version 1.02.31 - 3rd March 2009
+================================
+  If kernel supports only one dm major number, use in place of any supplied.
+
 Version 1.02.30 - 26th January 2009
 ====================================
   Add "all" field to reports expanding to all fields of report type.

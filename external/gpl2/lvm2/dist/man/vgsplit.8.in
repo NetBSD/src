@@ -39,7 +39,9 @@ for the new volume group can be specified with \fB\-\-alloc\fR,
 and \fB\-\-maxphysicalvolumes\fR (see \fBvgcreate(8)\fR for a description
 of these options).  If any of these options are not given, default
 attribute(s) are taken from
-.I SourceVolumeGroupName\fP.
+.I SourceVolumeGroupName\fP.  If a non-LVM2 metadata type (e.g. lvm1) is
+being used, you should use the -M option to specify the metadata type
+directly.
 
 If
 .I DestinationVolumeGroupName

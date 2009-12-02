@@ -14,6 +14,7 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 SOURCES =\
@@ -28,7 +29,7 @@ SOURCES =\
 LIB_SHARED = liblvm2format1.so
 LIB_VERSION = $(LIB_VERSION_LVM)
 
-include $(top_srcdir)/make.tmpl
+include ../../make.tmpl
 
 install: liblvm2format1.so
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvdisplay.c,v 1.1.1.1 2008/12/22 00:19:06 haad Exp $	*/
+/*	$NetBSD: pvdisplay.c,v 1.1.1.2 2009/12/02 00:25:54 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -24,22 +24,24 @@ static int _pvdisplay_single(struct cmd_context *cmd,
 	struct pv_list *pvl;
 	int ret = ECMD_PROCESSED;
 	uint64_t size;
+	struct volume_group *old_vg = vg;
 
 	const char *pv_name = pv_dev_name(pv);
 	const char *vg_name = NULL;
 
 	if (!is_orphan(pv) && !vg) {
 		vg_name = pv_vg_name(pv);
-		if (!(vg = vg_lock_and_read(cmd, vg_name, (char *)&pv->vgid,
-					    LCK_VG_READ, CLUSTERED, 0))) {
-		 	log_error("Skipping volume group %s", vg_name);
+		vg = vg_read(cmd, vg_name, (char *)&pv->vgid, 0);
+		if (vg_read_error(vg)) {
+			log_error("Skipping volume group %s", vg_name);
+			vg_release(vg);
 			/* FIXME If CLUSTERED should return ECMD_PROCESSED here */
-		 	return ECMD_FAILED;
-	 	}
+			return ECMD_FAILED;
+		}
 
 	 	/*
 		 * Replace possibly incomplete PV structure with new one
-		 * allocated in vg_read() path.
+		 * allocated in vg_read_internal() path.
 		 */
 		 if (!(pvl = find_pv_in_vg(vg, pv_name))) {
 			 log_error("Unable to find \"%s\" in volume group \"%s\"",
@@ -84,6 +86,8 @@ static int _pvdisplay_single(struct cmd_context *cmd,
 out:
 	if (vg_name)
 		unlock_vg(cmd, vg_name);
+	if (!old_vg)
+		vg_release(vg);
 
 	return ret;
 }
@@ -112,6 +116,6 @@ int pvdisplay(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	return process_each_pv(cmd, argc, argv, NULL, LCK_VG_READ, NULL,
+	return process_each_pv(cmd, argc, argv, NULL, 0, 0, NULL,
 			       _pvdisplay_single);
 }

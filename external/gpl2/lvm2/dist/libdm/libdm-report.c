@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-report.c,v 1.1.1.2 2009/02/18 11:17:24 haad Exp $	*/
+/*	$NetBSD: libdm-report.c,v 1.1.1.3 2009/12/02 00:26:08 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -367,9 +367,22 @@ static uint32_t _all_match(struct dm_report *rh, const char *field, size_t flen)
 {
 	size_t prefix_len;
 	const struct dm_report_object_type *t;
+	char prefixed_all[32];
 
-	if (!strncasecmp(field, "all", 3) && flen == 3)
-		return rh->report_types;
+	if (!strncasecmp(field, "all", 3) && flen == 3) {
+		if (strlen(rh->field_prefix)) {
+			strcpy(prefixed_all, rh->field_prefix);
+			strcat(prefixed_all, "all");
+			/*
+			 * Add also prefix to receive all attributes
+			 * (e.g.LABEL/PVS use the same prefix)
+			 */
+			return rh->report_types |
+			       _all_match(rh, prefixed_all,
+					  strlen(prefixed_all));
+		} else
+			return rh->report_types;
+	}
 
 	for (t = rh->types; t->data_fn; t++) {
 		prefix_len = strlen(t->prefix);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpconfig.c,v 1.1.1.1 2008/12/22 00:19:01 haad Exp $	*/
+/*	$NetBSD: dumpconfig.c,v 1.1.1.2 2009/12/02 00:25:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -19,13 +19,12 @@
 
 int dumpconfig(struct cmd_context *cmd, int argc, char **argv)
 {
-	const char *file = NULL;
+	const char *file = arg_str_value(cmd, file_ARG, NULL);
 
-	if (arg_count(cmd, file_ARG))
-		file = arg_str_value(cmd, file_ARG, "");
-
-	if (!write_config_file(cmd->cft, file, argc, argv))
+	if (!write_config_file(cmd->cft, file, argc, argv)) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	return ECMD_PROCESSED;
 }

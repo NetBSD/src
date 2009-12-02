@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-iface.c,v 1.1.1.2 2009/02/18 11:17:26 haad Exp $	*/
+/*	$NetBSD: libdm-iface.c,v 1.1.1.3 2009/12/02 00:26:11 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/ioctl.h>
+#include <sys/utsname.h>
 #include <limits.h>
 
 #ifdef linux
@@ -65,11 +66,21 @@ static unsigned _dm_version_minor = 0;
 static unsigned _dm_version_patchlevel = 0;
 static int _log_suppress = 0;
 
+/*
+ * If the kernel dm driver only supports one major number
+ * we store it in _dm_device_major.  Otherwise we indicate
+ * which major numbers have been claimed by device-mapper
+ * in _dm_bitset.
+ */
+static unsigned _dm_multiple_major_support = 1;
 static dm_bitset_t _dm_bitset = NULL;
+static uint32_t _dm_device_major = 0;
+
 static int _control_fd = -1;
 static int _version_checked = 0;
 static int _version_ok = 1;
 static unsigned _ioctl_buffer_double_factor = 0;
+
 
 /*
  * Support both old and new major numbers to ease the transition.
@@ -225,7 +236,7 @@ static int _create_control(const char *control, uint32_t major, uint32_t minor)
 	if (!major)
 		return 0;
 
-	old_umask = umask(0022);
+	old_umask = umask(DM_DEV_DIR_UMASK);
 	ret = dm_create_dir(dm_dir());
 	umask(old_umask);
 
@@ -251,12 +262,35 @@ static int _create_control(const char *control, uint32_t major, uint32_t minor)
 }
 #endif
 
+/*
+ * FIXME Update bitset in long-running process if dm claims new major numbers.
+ */
 static int _create_dm_bitset(void)
 {
 #ifdef DM_IOCTLS
-	if (_dm_bitset)
+	struct utsname uts;
+
+	if (_dm_bitset || _dm_device_major)
 		return 1;
 
+	if (uname(&uts))
+		return 0;
+
+	/*
+	 * 2.6 kernels are limited to one major number.
+	 * Assume 2.4 kernels are patched not to.
+	 * FIXME Check _dm_version and _dm_version_minor if 2.6 changes this.
+	 */
+	if (!strncmp(uts.release, "2.6.", 4))
+		_dm_multiple_major_support = 0;
+
+	if (!_dm_multiple_major_support) {
+		if (!_get_proc_number(PROC_DEVICES, DM_NAME, &_dm_device_major))
+			return 0;
+		return 1;
+	}
+
+	/* Multiple major numbers supported */
 	if (!(_dm_bitset = dm_bitset_create(NULL, NUMBER_OF_MAJORS)))
 		return 0;
 
@@ -277,7 +311,10 @@ int dm_is_dm_major(uint32_t major)
 	if (!_create_dm_bitset())
 		return 0;
 
-	return dm_bit(_dm_bitset, major) ? 1 : 0;
+	if (_dm_multiple_major_support)
+		return dm_bit(_dm_bitset, major) ? 1 : 0;
+	else
+		return (major == _dm_device_major) ? 1 : 0;
 }
 
 static int _open_control(void)
@@ -696,24 +733,24 @@ static int _dm_task_run_v1(struct dm_task *dmt)
 	switch (dmt->type) {
 	case DM_DEVICE_CREATE:
 		add_dev_node(dmt->dev_name, MAJOR(dmi->dev), MINOR(dmi->dev),
-			     dmt->uid, dmt->gid, dmt->mode);
+			     dmt->uid, dmt->gid, dmt->mode, 0);
 		break;
 
 	case DM_DEVICE_REMOVE:
-		rm_dev_node(dmt->dev_name);
+		rm_dev_node(dmt->dev_name, 0);
 		break;
 
 	case DM_DEVICE_RENAME:
-		rename_dev_node(dmt->dev_name, dmt->newname);
+		rename_dev_node(dmt->dev_name, dmt->newname, 0);
 		break;
 
 	case DM_DEVICE_MKNODES:
 		if (dmi->flags & DM_EXISTS_FLAG)
 			add_dev_node(dmt->dev_name, MAJOR(dmi->dev),
-				     MINOR(dmi->dev),
-				     dmt->uid, dmt->gid, dmt->mode);
+				     MINOR(dmi->dev), dmt->uid,
+				     dmt->gid, dmt->mode, 0);
 		else
-			rm_dev_node(dmt->dev_name);
+			rm_dev_node(dmt->dev_name, 0);
 		break;
 
 	case DM_DEVICE_STATUS:
@@ -827,6 +864,13 @@ int dm_check_version(void)
       bad:
 	_version_ok = 0;
 	return 0;
+}
+
+int dm_cookie_supported(void)
+{
+	return (dm_check_version() &&
+	        _dm_version >= 4 &&
+	        _dm_version_minor >= 15);
 }
 
 void *dm_get_next_target(struct dm_task *dmt, void *next,
@@ -1093,6 +1137,13 @@ int dm_task_skip_lockfs(struct dm_task *dmt)
 	return 1;
 }
 
+int dm_task_query_inactive_table(struct dm_task *dmt)
+{
+	dmt->query_inactive_table = 1;
+
+	return 1;
+}
+
 int dm_task_set_event_nr(struct dm_task *dmt, uint32_t event_nr)
 {
 	dmt->event_nr = event_nr;
@@ -1299,6 +1350,15 @@ static struct dm_ioctl *_flatten(struct dm_task *dmt, unsigned repeat_count)
 			log_error("Missing major number for persistent device.");
 			goto bad;
 		}
+
+		if (!_dm_multiple_major_support && dmt->allow_default_major_fallback &&
+		    dmt->major != _dm_device_major) {
+			log_verbose("Overriding major number of %" PRIu32 
+				    " with %" PRIu32 " for persistent device.",
+				    dmt->major, _dm_device_major);
+			dmt->major = _dm_device_major;
+		}
+
 		dmi->flags |= DM_PERSISTENT_DEV_FLAG;
 		dmi->dev = MKDEV(dmt->major, dmt->minor);
 	}
@@ -1331,6 +1391,12 @@ static struct dm_ioctl *_flatten(struct dm_task *dmt, unsigned repeat_count)
 		dmi->flags |= DM_READONLY_FLAG;
 	if (dmt->skip_lockfs)
 		dmi->flags |= DM_SKIP_LOCKFS_FLAG;
+	if (dmt->query_inactive_table) {
+		if (_dm_version_minor < 16)
+			log_warn("WARNING: Inactive table query unsupported "
+				 "by kernel.  It will use live table.");
+		dmi->flags |= DM_QUERY_INACTIVE_TABLE_FLAG;
+	}
 
 	dmi->target_count = count;
 	dmi->event_nr = dmt->event_nr;
@@ -1435,6 +1501,24 @@ static int _mknodes_v4(struct dm_task *dmt)
 	return _process_all_v4(dmt);
 }
 
+/*
+ * If an operation that uses a cookie fails, decrement the
+ * semaphore instead of udev.
+ */
+static int _udev_complete(struct dm_task *dmt)
+{
+	uint32_t cookie;
+
+	if (dmt->cookie_set) {
+		/* strip flags from the cookie and use cookie magic instead */
+		cookie = (dmt->event_nr & ~DM_UDEV_FLAGS_MASK) |
+			  (DM_COOKIE_MAGIC << DM_UDEV_FLAGS_SHIFT);
+		return dm_udev_complete(cookie);
+	}
+
+	return 1;
+}
+
 static int _create_and_load_v4(struct dm_task *dmt)
 {
 	struct dm_task *task;
@@ -1443,17 +1527,20 @@ static int _create_and_load_v4(struct dm_task *dmt)
 	/* Use new task struct to create the device */
 	if (!(task = dm_task_create(DM_DEVICE_CREATE))) {
 		log_error("Failed to create device-mapper task struct");
+		_udev_complete(dmt);
 		return 0;
 	}
 
 	/* Copy across relevant fields */
 	if (dmt->dev_name && !dm_task_set_name(task, dmt->dev_name)) {
 		dm_task_destroy(task);
+		_udev_complete(dmt);
 		return 0;
 	}
 
 	if (dmt->uuid && !dm_task_set_uuid(task, dmt->uuid)) {
 		dm_task_destroy(task);
+		_udev_complete(dmt);
 		return 0;
 	}
 
@@ -1462,21 +1549,28 @@ static int _create_and_load_v4(struct dm_task *dmt)
 	task->uid = dmt->uid;
 	task->gid = dmt->gid;
 	task->mode = dmt->mode;
+	/* FIXME: Just for udev_check in dm_task_run. Can we avoid this? */
+	task->event_nr = dmt->event_nr & DM_UDEV_FLAGS_MASK;
+	task->cookie_set = dmt->cookie_set;
 
 	r = dm_task_run(task);
 	dm_task_destroy(task);
-	if (!r)
-		return r;
+	if (!r) {
+		_udev_complete(dmt);
+		return 0;
+	}
 
 	/* Next load the table */
 	if (!(task = dm_task_create(DM_DEVICE_RELOAD))) {
 		log_error("Failed to create device-mapper task struct");
+		_udev_complete(dmt);
 		return 0;
 	}
 
 	/* Copy across relevant fields */
 	if (dmt->dev_name && !dm_task_set_name(task, dmt->dev_name)) {
 		dm_task_destroy(task);
+		_udev_complete(dmt);
 		return 0;
 	}
 
@@ -1489,8 +1583,10 @@ static int _create_and_load_v4(struct dm_task *dmt)
 	task->head = NULL;
 	task->tail = NULL;
 	dm_task_destroy(task);
-	if (!r)
+	if (!r) {
+		_udev_complete(dmt);
 		goto revert;
+	}
 
 	/* Use the original structure last so the info will be correct */
 	dmt->type = DM_DEVICE_RESUME;
@@ -1506,6 +1602,7 @@ static int _create_and_load_v4(struct dm_task *dmt)
  	dmt->type = DM_DEVICE_REMOVE;
 	dm_free(dmt->uuid);
 	dmt->uuid = NULL;
+	dmt->cookie_set = 0;
 
 	if (!dm_task_run(dmt))
 		log_error("Failed to revert device creation.");
@@ -1611,8 +1708,38 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	if (dmt->no_open_count)
 		dmi->flags |= DM_SKIP_BDGET_FLAG;
 
+	/*
+	 * Prevent udev vs. libdevmapper race when processing nodes and
+	 * symlinks. This can happen when the udev rules are installed and
+	 * udev synchronisation code is enabled in libdevmapper but the
+	 * software using libdevmapper does not make use of it (by not calling
+	 * dm_task_set_cookie before). We need to instruct the udev rules not
+	 * to be applied at all in this situation so we can gracefully fallback
+	 * to libdevmapper's node and symlink creation code.
+	 */
+	if (dm_udev_get_sync_support() && !dmt->cookie_set &&
+	    (dmt->type == DM_DEVICE_RESUME ||
+	     dmt->type == DM_DEVICE_REMOVE ||
+	     dmt->type == DM_DEVICE_RENAME)) {
+		log_debug("Cookie value is not set while trying to call "
+			  "DM_DEVICE_RESUME, DM_DEVICE_REMOVE or DM_DEVICE_RENAME "
+			  "ioctl. Please, consider using libdevmapper's udev "
+			  "synchronisation interface or disable it explicitly "
+			  "by calling dm_udev_set_sync_support(0).");
+		log_debug("Switching off device-mapper and all subsystem related "
+			  "udev rules. Falling back to libdevmapper node creation.");
+		/*
+		 * Disable general dm and subsystem rules but keep dm disk rules
+		 * if not flagged out explicitly before. We need /dev/disk content
+		 * for the software that expects it.
+		*/
+		dmi->event_nr |= (DM_UDEV_DISABLE_DM_RULES_FLAG |
+				  DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG) <<
+				 DM_UDEV_FLAGS_SHIFT;
+	}
+
 	log_debug("dm %s %s %s%s%s %s%.0d%s%.0d%s"
-		  "%s%c%c%s %.0" PRIu64 " %s [%u]",
+		  "%s%c%c%s%s %.0" PRIu64 " %s [%u]",
 		  _cmd_data_v4[dmt->type].name,
 		  dmi->name, dmi->uuid, dmt->newname ? " " : "",
 		  dmt->newname ? dmt->newname : "",
@@ -1625,6 +1752,7 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 		  dmt->no_open_count ? 'N' : 'O',
 		  dmt->no_flush ? 'N' : 'F',
 		  dmt->skip_lockfs ? "S " : "",
+		  dmt->query_inactive_table ? "I " : "",
 		  dmt->sector, dmt->message ? dmt->message : "",
 		  dmi->data_size);
 #ifdef DM_IOCTLS
@@ -1662,6 +1790,7 @@ int dm_task_run(struct dm_task *dmt)
 {
 	struct dm_ioctl *dmi;
 	unsigned command;
+	int check_udev;
 
 #ifdef DM_COMPAT
 	if (_dm_version == 1)
@@ -1688,12 +1817,17 @@ int dm_task_run(struct dm_task *dmt)
 	if ((dmt->type == DM_DEVICE_RELOAD) && dmt->suppress_identical_reload)
 		return _reload_with_suppression_v4(dmt);
 
-	if (!_open_control())
+	if (!_open_control()) {
+		_udev_complete(dmt);
 		return 0;
+	}
 
+	/* FIXME Detect and warn if cookie set but should not be. */
 repeat_ioctl:
-	if (!(dmi = _do_dm_ioctl(dmt, command, _ioctl_buffer_double_factor)))
+	if (!(dmi = _do_dm_ioctl(dmt, command, _ioctl_buffer_double_factor))) {
+		_udev_complete(dmt);
 		return 0;
+	}
 
 	if (dmi->flags & DM_BUFFER_FULL_FLAG) {
 		switch (dmt->type) {
@@ -1711,24 +1845,28 @@ repeat_ioctl:
 		}
 	}
 
+	check_udev = dmt->cookie_set &&
+		     !(dmt->event_nr >> DM_UDEV_FLAGS_SHIFT &
+		       DM_UDEV_DISABLE_DM_RULES_FLAG);
+
 	switch (dmt->type) {
 	case DM_DEVICE_CREATE:
 		if (dmt->dev_name && *dmt->dev_name)
 			add_dev_node(dmt->dev_name, MAJOR(dmi->dev),
 				     MINOR(dmi->dev), dmt->uid, dmt->gid,
-				     dmt->mode);
+				     dmt->mode, check_udev);
 		break;
-
 	case DM_DEVICE_REMOVE:
 		/* FIXME Kernel needs to fill in dmi->name */
 		if (dmt->dev_name)
-			rm_dev_node(dmt->dev_name);
+			rm_dev_node(dmt->dev_name, check_udev);
 		break;
 
 	case DM_DEVICE_RENAME:
 		/* FIXME Kernel needs to fill in dmi->name */
 		if (dmt->dev_name)
-			rename_dev_node(dmt->dev_name, dmt->newname);
+			rename_dev_node(dmt->dev_name, dmt->newname,
+					check_udev);
 		break;
 
 	case DM_DEVICE_RESUME:
@@ -1740,10 +1878,10 @@ repeat_ioctl:
 	case DM_DEVICE_MKNODES:
 		if (dmi->flags & DM_EXISTS_FLAG)
 			add_dev_node(dmi->name, MAJOR(dmi->dev),
-				     MINOR(dmi->dev),
-				     dmt->uid, dmt->gid, dmt->mode);
+				     MINOR(dmi->dev), dmt->uid,
+				     dmt->gid, dmt->mode, 0);
 		else if (dmt->dev_name)
-			rm_dev_node(dmt->dev_name);
+			rm_dev_node(dmt->dev_name, 0);
 		break;
 
 	case DM_DEVICE_STATUS:
@@ -1774,12 +1912,15 @@ void dm_lib_release(void)
 	update_devs();
 }
 
+void dm_pools_check_leaks(void);
+
 void dm_lib_exit(void)
 {
 	dm_lib_release();
 	if (_dm_bitset)
 		dm_bitset_destroy(_dm_bitset);
 	_dm_bitset = NULL;
+	dm_pools_check_leaks();
 	dm_dump_memory();
 	_version_ok = 1;
 	_version_checked = 0;
