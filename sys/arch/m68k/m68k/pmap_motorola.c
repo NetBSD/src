@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.51 2009/11/23 00:11:44 rmind Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.52 2009/12/02 15:47:45 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.51 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.52 2009/12/02 15:47:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,8 @@ struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
 struct vm_map_kernel st_map_store, pt_map_store;
 
+vaddr_t		lwp0uarea;	/* lwp0 u-area VA, initialized in bootstrap */
+
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
 vsize_t		mem_size;	/* memory size in bytes */
@@ -312,6 +314,22 @@ void pmap_check_wiring(const char *, vaddr_t);
 #define	PRM_TFLUSH	0x01
 #define	PRM_CFLUSH	0x02
 #define	PRM_KEEPPTPAGE	0x04
+
+/*
+ * pmap_bootstrap_finalize:	[ INTERFACE ]
+ *
+ *	Initialize lwp0 uarea, curlwp, and curpcb after MMU is turned on,
+ *	using lwp0uarea variable saved during pmap_bootstrap().
+ */
+void
+pmap_bootstrap_finalize(void)
+{
+
+	memset((void *)lwp0uarea, 0, USPACE);
+	uvm_lwp_setuarea(&lwp0, lwp0uarea);
+	curlwp = &lwp0;
+	curpcb = lwp_getpcb(&lwp0);
+}
 
 /*
  * pmap_virtual_space:		[ INTERFACE ]

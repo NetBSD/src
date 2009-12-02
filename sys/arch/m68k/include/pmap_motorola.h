@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.21 2009/08/26 00:30:02 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.22 2009/12/02 15:47:45 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -190,6 +190,10 @@ extern u_int		protection_codes[];
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 extern void		*CADDR1, *CADDR2;
 extern void		*msgbufaddr;
+
+/* for lwp0 uarea initialization after MMU enabled */
+extern vaddr_t		lwp0uarea;
+void	pmap_bootstrap_finalize(void);
 
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
