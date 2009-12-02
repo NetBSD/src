@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.9 2009/12/01 00:52:13 roy Exp $ */
+/* $NetBSD: getdelim.c,v 1.10 2009/12/02 09:03:13 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.9 2009/12/01 00:52:13 roy Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.10 2009/12/02 09:03:13 roy Exp $");
 
 #include "namespace.h"
 
@@ -54,7 +54,7 @@ __weak_alias(getdelim, _getdelim)
 #define MINBUF	128
 
 ssize_t
-getdelim(char **__restrict buf, size_t *__restrict buflen,
+__getdelim(char **__restrict buf, size_t *__restrict buflen,
     int sep, FILE *__restrict fp)
 {
 	unsigned char *p;
@@ -72,7 +72,6 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 	if (*buf == NULL)
 		*buflen = 0;
 
-	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 	off = 0;
 	do {
@@ -127,7 +126,6 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		fp->_p += (int)len;
 		off += len;
 	} while (p == NULL);
-	FUNLOCKFILE(fp);
 
 	/* POSIX demands we return -1 on EOF. */
 	if (off == 0) 
@@ -139,6 +137,17 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 
 error:
 	fp->_flags |= __SERR;
-	FUNLOCKFILE(fp);
 	return -1;
+}
+
+ssize_t
+getdelim(char **__restrict buf, size_t *__restrict buflen,
+    int sep, FILE *__restrict fp)
+{
+	ssize_t n;
+
+	FLOCKFILE(fp);
+	n = __getdelim(buf, buflen, sep, fp);
+	FUNLOCKFILE(fp);
+	return n;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: fgetstr.c,v 1.9 2009/12/01 00:03:53 roy Exp $	*/
+/* $NetBSD: fgetstr.c,v 1.10 2009/12/02 09:03:13 roy Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetstr.c,v 1.9 2009/12/01 00:03:53 roy Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.10 2009/12/02 09:03:13 roy Exp $");
 
 #include "namespace.h"
 
@@ -58,7 +58,7 @@ __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 
 	p = (char *)fp->_lb._base;
 	size = fp->_lb._size;
-	n = getdelim(&p, &size, sep, fp);
+	n = __getdelim(&p, &size, sep, fp);
 	fp->_lb._base = (unsigned char *)p;
 	/* The struct size variable is only an int .....
 	 * This still works when exceeded, but the buffer could be
@@ -69,7 +69,7 @@ __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 		fp->_lb._size = (int)size;
 	if (n == -1) {
 		*lenp = 0;
-		if (errno == EOVERFLOW) /* fixup errno */
+		if (__sferror(fp) && errno == EOVERFLOW) /* fixup errno */
 			errno = EINVAL;
 		return NULL;
 	}
