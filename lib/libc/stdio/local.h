@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.22 2009/12/01 00:03:53 roy Exp $	*/
+/*	$NetBSD: local.h,v 1.23 2009/12/02 09:03:13 roy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -75,6 +75,8 @@ extern int	__gettemp __P((char *, int *, int));
 extern wint_t	__fgetwc_unlock __P((FILE *));
 extern wint_t	__fputwc_unlock __P((wchar_t, FILE *));
 
+extern ssize_t	__getdelim(char **__restrict, size_t *__restrict, int,
+    FILE *__restrict);
 extern char	*__fgetstr __P((FILE * __restrict, size_t * __restrict, int));
 extern int 	 __vfwprintf_unlocked __P((FILE *, const wchar_t *,
     _BSD_VA_LIST_));
