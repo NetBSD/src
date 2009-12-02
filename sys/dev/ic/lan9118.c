@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.9 2009/11/29 10:17:01 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.10 2009/12/02 12:51:50 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,11 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.9 2009/11/29 10:17:01 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.10 2009/12/02 12:51:50 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
- *
  * * The LAN9118 is targeted for 32-bit applications requiring high
  *   performance, and provides the highest level of performance possible for
  *   a non-PCI 10/100 Ethernet controller.
@@ -43,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.9 2009/11/29 10:17:01 kiyohara Exp $")
  *   is for 32-bit host processors, while the LAN9115 is for 16-bit
  *   applications, which may also require an external PHY. Both devices
  *   deliver superior levels of performance.
+ *
+ * The LAN9218 Family
+ *   Also support HP Auto-MDIX.
  */
 
 #include "bpfilter.h"
@@ -178,8 +180,8 @@ lan9118_attach(struct lan9118_softc *sc)
 	sc->sc_id = LAN9118_ID_REV_ID(val);
 	sc->sc_rev = LAN9118_ID_REV_REV(val);
 
-#define LAN9xxx_ID(id)	((id) >= 0x9000 ? (id) & 0xfff : \
-			    ((id) >= 0x1000 ? ((id) >> 4) + 0x100 : (id)))
+#define LAN9xxx_ID(id)	\
+ (IS_LAN9118(id) ? (id) : (IS_LAN9218(id) ? ((id) >> 4) + 0x100 : (id) & 0xfff))
 
 	aprint_normal(": SMSC LAN9%03x Rev %d\n",
 	    LAN9xxx_ID(sc->sc_id), sc->sc_rev);
@@ -236,7 +238,8 @@ lan9118_attach(struct lan9118_softc *sc)
 	 * number that above.
 	 */
 	sc->sc_mii.mii_instance++;
-	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117) {
+	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117 ||
+	    sc->sc_id == LAN9218_ID_9215 || sc->sc_id == LAN9218_ID_9217) {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG) &
 		    LAN9118_HW_CFG_EXT_PHY_DET) {
 			/*
