@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/13 22:33:05 ahoka Exp $
+#	$NetBSD: Makefile,v 1.4 2009/12/02 01:54:20 haad Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,7 +22,7 @@ CPPFLAGS+=	-Wno-stack-protector
 CPPFLAGS.imLcLkup.c=-Wno-error
 
 SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
-		str_list.c dev-cache.c dev-io.c dev-md.c device.c \
+		str_list.c dev-cache.c dev-io.c dev-md.c device.c dev-swap.c \
 		display.c errseg.c filter-composite.c \
 		filter-persistent.c \
 		filter-regex.c filter-sysfs.c filter-md.c archive.c \
@@ -32,7 +32,8 @@ SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
 		merge.c metadata.c mirror.c pv_manip.c pv_map.c segtype.c \
 		snapshot_manip.c crc.c lvm-exec.c lvm-file.c lvm-string.c \
 		lvm-wrappers.c timestamp.c util.c memlock.c report.c \
-		striped.c uuid.c zero.c disk-rep.c format1.c import-export.c \
+		striped.c unknown.c uuid.c zero.c disk-rep.c format1.c \
+		import-export.c \
 		import-extents.c layout.c lvm1-label.c vg_number.c \
 		disk_rep.c format_pool.c import_export.c pool_label.c \
 		filter_netbsd.c snapshot.c mirrored.c dev_manager.c fs.c dev.c \
@@ -64,6 +65,7 @@ LDADD+=		-lprop
 .PATH:	${LVM2_DISTDIR}/lib/report
 .PATH:	${LVM2_DISTDIR}/lib/snapshot
 .PATH:	${LVM2_DISTDIR}/lib/striped
+.PATH:	${LVM2_DISTDIR}/lib/unknown
 .PATH:	${LVM2_DISTDIR}/lib/uuid
 .PATH:	${LVM2_DISTDIR}/lib/zero
 .PATH:	${LVM2_DISTDIR}/lib/netbsd
