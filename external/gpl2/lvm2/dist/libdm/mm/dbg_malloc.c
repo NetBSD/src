@@ -1,4 +1,4 @@
-/*	$NetBSD: dbg_malloc.c,v 1.1.1.1 2008/12/22 00:18:34 haad Exp $	*/
+/*	$NetBSD: dbg_malloc.c,v 1.1.1.2 2009/12/02 00:26:09 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -207,9 +207,9 @@ int dm_dump_memory_debug(void)
 		}
 		str[sizeof(str) - 1] = '\0';
 
-		dm_log(_LOG_INFO, mb->file, mb->line,
-		       "block %d at %p, size %" PRIsize_t "\t [%s]",
-		       mb->id, mb->magic, mb->length, str);
+		LOG_MESG(_LOG_INFO, mb->file, mb->line, 0,
+			 "block %d at %p, size %" PRIsize_t "\t [%s]",
+			 mb->id, mb->magic, mb->length, str);
 		tot += mb->length;
 	}
 

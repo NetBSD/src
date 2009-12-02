@@ -64,12 +64,26 @@ dmsetup \- low level logical volume management
 .B dmsetup mknodes
 .I [device_name]
 .br
+.B dmsetup udevflags
+.I cookie
+.br
+.B dmsetup udevcomplete
+.I cookie
+.br
+.B dmsetup udevcomplete_all
+.br
+.B dmsetup udevcookies
+.br
 .B dmsetup targets
 .br
 .B dmsetup version
 .br
 .B dmsetup setgeometry
 .I device_name cyl head sect start
+.br
+.B dmsetup splitname
+.I device_name
+.I [subsystem]
 .br
 
 .B devmap_name
@@ -93,6 +107,11 @@ Invoking the command as \fBdevmap_name\fP is equivalent to
 .IP \fB-c|-C|--columns
 .br
 Display output in columns rather than as Field: Value lines.
+.IP \fB--inactive
+.br
+When returning any table information from the kernel report on the 
+inactive table instead of the live table.
+Requires kernel driver version 4.16.0 or above.
 .IP \fB-j|--major\ \fImajor
 .br
 Specify the major number.
@@ -108,6 +127,9 @@ Tell the kernel not to supply the open reference count for the device.
 .IP \fB--notable
 .br
 When creating a device, don't load any table.
+.IP \fB--noudevsync
+Do not synchronise with udev when creating, renaming or removing devices.
+.br
 .IP \fB-o|--options
 .br
 Specify which fields to display.
@@ -128,6 +150,9 @@ Specify a one-line table directly on the command line.
 .IP \fB-u|--uuid
 .br
 Specify the uuid.
+.IP \fB-y|--yes
+.br
+Answer yes to all prompts automatically.
 .IP \fB-v|--verbose\ [-v|--verbose]
 .br
 Produce additional output.
@@ -232,7 +257,7 @@ process to be killed.
 .br
 Attempts to remove all device definitions i.e. reset the driver.
 Use with care!  From version 4.8.0 onwards, if devices can't
-be removed because uninterruptible processess are waiting for
+be removed because uninterruptible processes are waiting for
 I/O to return from them, adding --force will replace the table 
 with one that fails all I/O, which might allow the 
 process to be killed.  This also runs \fBmknodes\fP afterwards.
@@ -250,6 +275,12 @@ Postponed I/O then gets re-queued for processing.
 .I device_name cyl head sect start
 .br
 Sets the device geometry to C/H/S.
+.IP \fBsplitname
+.I device_name
+.I [subsystem]
+.br
+Splits given device name into subsystem constituents.
+Default subsystem is LVM.
 .IP \fBstatus
 .I [--target target_type]
 .I [device_name]
@@ -280,6 +311,30 @@ is displayed.
 .IP \fBtargets
 .br
 Displays the names and versions of the currently-loaded targets.
+.br
+.IP \fBudevflags
+.I cookie
+.br
+Parses given cookie value and extracts any udev control flags encoded.
+The output is in environment key format that is suitable for use in udev
+rules. If the flag has its symbolic name assigned then the ouput is
+DM_UDEV_FLAG_<flag_name>='1', DM_UDEV_FLAG<flag_position>='1' otherwise.
+Subsystem udev flags don't have symbolic names assigned and these ones are
+always reported as DM_SUBSYSTEM_UDEV_FLAG<flag_position>='1'. There are
+16 udev flags altogether.
+.br
+.IP \fBudevcomplete
+.I cookie
+.br
+Wake any processes that are waiting for udev to complete processing the specified cookie.
+.br
+.IP \fBudevcomplete_all
+Remove all cookies. Any process waiting on a cookie will be resumed immediately.
+.br
+.IP \fBudevcookies
+List all existing cookies. Cookies are system-wide semaphores with keys
+prefixed by two predefined bytes (0x0D4D).
+.br
 .IP \fBversion
 .br
 Outputs version information.

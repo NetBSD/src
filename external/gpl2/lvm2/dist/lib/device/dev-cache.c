@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-cache.c,v 1.1.1.1 2008/12/22 00:17:54 haad Exp $	*/
+/*	$NetBSD: dev-cache.c,v 1.1.1.2 2009/12/02 00:26:34 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -106,6 +106,7 @@ struct device *dev_create_file(const char *filename, struct device *dev,
 	dev->fd = -1;
 	dev->open_count = 0;
 	dev->block_size = -1;
+	dev->read_ahead = -1;
 	memset(dev->pvid, 0, sizeof(dev->pvid));
 	dm_list_init(&dev->open_list);
 
@@ -126,6 +127,7 @@ static struct device *_dev_create(dev_t d)
 	dev->fd = -1;
 	dev->open_count = 0;
 	dev->block_size = -1;
+	dev->read_ahead = -1;
 	dev->end = UINT64_C(0);
 	memset(dev->pvid, 0, sizeof(dev->pvid));
 	dm_list_init(&dev->open_list);
@@ -298,19 +300,19 @@ static int _insert_dev(const char *path, dev_t d)
 			return_0;
 
 		if (!(btree_insert(_cache.devices, (uint32_t) d, dev))) {
-			log_err("Couldn't insert device into binary tree.");
+			log_error("Couldn't insert device into binary tree.");
 			_free(dev);
 			return 0;
 		}
 	}
 
 	if (!loopfile && !_add_alias(dev, path)) {
-		log_err("Couldn't add alias to dev cache.");
+		log_error("Couldn't add alias to dev cache.");
 		return 0;
 	}
 
 	if (!dm_hash_insert(_cache.names, path, dev)) {
-		log_err("Couldn't add name to hash in dev cache.");
+		log_error("Couldn't add name to hash in dev cache.");
 		return 0;
 	}
 
@@ -541,7 +543,7 @@ int dev_cache_init(struct cmd_context *cmd)
 	}
 
 	if (!(_cache.devices = btree_create(_cache.mem))) {
-		log_err("Couldn't create binary tree for dev-cache.");
+		log_error("Couldn't create binary tree for dev-cache.");
 		goto bad;
 	}
 
@@ -561,7 +563,7 @@ int dev_cache_init(struct cmd_context *cmd)
 static void _check_closed(struct device *dev)
 {
 	if (dev->fd >= 0)
-		log_err("Device '%s' has been left open.", dev_name(dev));
+		log_error("Device '%s' has been left open.", dev_name(dev));
 }
 
 static void _check_for_open_devices(void)

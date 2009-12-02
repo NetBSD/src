@@ -124,14 +124,47 @@ you'll need \fBtypes = ["device-mapper", 16]\fP.  But if you do this,
 be careful to avoid recursion within LVM2.  The figure for number 
 of partitions is not currently used in LVM2 - and might never be.
 .IP
-\fBsysfs_scan\fP (em If set to 1 and your kernel supports sysfs and 
+\fBsysfs_scan\fP \(em If set to 1 and your kernel supports sysfs and 
 it is mounted, sysfs will be used as a quick way of filtering out
 block devices that are not present.
 .IP
-\fBmd_component_detection\fP (em If set to 1, LVM2 will ignore devices
+\fBmd_component_detection\fP \(em If set to 1, LVM2 will ignore devices
 used as components of software RAID (md) devices by looking for md
 superblocks. This doesn't always work satisfactorily e.g. if a device 
 has been reused without wiping the md superblocks first.
+.IP
+\fBmd_chunk_alignment\fP \(em If set to 1, and a Physical Volume is placed
+directly upon an md device, LVM2 will align its data blocks with the
+md device's stripe-width.
+.IP
+\fBdata_alignment_detection\fP \(em If set to 1, and your kernel provides
+topology information in sysfs for the Physical Volume, the start of data
+area will be aligned on a multiple of the ’minimum_io_size’ or
+’optimal_io_size’ exposed in sysfs.  minimum_io_size is the smallest
+request the device can perform without incurring a read-modify-write
+penalty (e.g. MD's chunk size).  optimal_io_size is the device's
+preferred unit of receiving I/O (e.g. MD's stripe width).  minimum_io_size
+is used if optimal_io_size is undefined (0).  If both \fBmd_chunk_alignment\fP
+and \fBdata_alignment_detection\fP are enabled the result of
+\fBdata_alignment_detection\fP is used.
+.IP
+\fBdata_alignment\fP \(em Default alignment (in KB) of start of data area
+when creating a new Physical Volume using the \fBlvm2\fP format.
+If a Physical Volume is placed directly upon an md device and
+\fBmd_chunk_alignment\fP or \fBdata_alignment_detection\fP is enabled
+this parameter is ignored.  Set to 0 to use the default alignment of
+64KB or the page size, if larger.
+.IP
+\fBdata_alignment_offset_detection\fP \(em If set to 1, and your kernel
+provides topology information in sysfs for the Physical Volume, the
+start of the aligned data area of the Physical Volume will be shifted
+by the alignment_offset exposed in sysfs.
+.sp
+To see the location of the first Physical Extent of an existing Physical Volume
+use \fBpvs -o +pe_start\fP .  It will be a multiple of the requested
+\fBdata_alignment\fP plus the alignment_offset from
+\fBdata_alignment_offset_detection\fP (if enabled) or the pvcreate
+commandline.
 .TP
 \fBlog\fP \(em Default log settings
 .IP
@@ -253,8 +286,14 @@ If set to 2, the tools will load the external \fBlocking_library\fP
 (see below).
 If the tools were configured \fB--with-cluster=internal\fP 
 (the default) then 3 means to use built-in cluster-wide locking.
+Type 4 enforces read-only metadata and forbids any operations that
+might want to modify Volume Group metadata.
 All changes to logical volumes and their states are communicated
 using locks.
+.IP
+\fBwait_for_locks\fP \(em When set to 1, the default, the tools
+wait if a lock request cannot be satisfied immediately.
+When set to 0, the operation is aborted instead.
 .IP
 \fBlocking_dir\fP \(em The directory LVM2 places its file locks
 if \fBlocking_type\fP is set to 1.  The default is \fB/var/lock/lvm\fP.

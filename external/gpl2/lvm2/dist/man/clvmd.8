@@ -1,6 +1,6 @@
-.\"	$NetBSD: clvmd.8,v 1.1.1.1 2008/12/22 00:18:22 haad Exp $
+.\"	$NetBSD: clvmd.8,v 1.1.1.2 2009/12/02 00:26:54 haad Exp $
 .\"
-.TH CLVMD 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Red Hat Inc" \" -*- nroff -*-
+.TH CLVMD 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Red Hat Inc" \" -*- nroff -*-
 .SH NAME
 clvmd \- cluster LVM daemon
 .SH SYNOPSIS
@@ -75,6 +75,14 @@ This timeout will be ignored if you start clvmd with the -d switch.
 Tells all the running clvmds in the cluster to reload their device cache and
 re-read the lvm configuration file. This command should be run whenever the
 devices on a cluster system are changed.
+.TP
+.I \-I
+Selects the cluster manager to use for locking and internal communications,
+the available managers will be listed as part of the 'clvmd -h' output.
+clvmd will use the first cluster manager that succeeds, and it checks them
+in the order cman,gulm,corosync,openais. As it is quite possible to have
+(eg) corosync and cman available on the same system you might have to
+manually specify this option to override the search.
 .TP
 .I \-V
 Display the version of the cluster LVM daemon.

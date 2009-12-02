@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-exec.h,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: lvm-exec.h,v 1.1.1.2 2009/12/02 00:26:44 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -20,6 +20,7 @@
 
 #include "lib.h"
 
-int exec_cmd(const char *command, const char *fscmd, const char *lv_path,
-	     const char *size);
+struct cmd_context;
+int exec_cmd(struct cmd_context *cmd, const char *const argv[]);
+
 #endif

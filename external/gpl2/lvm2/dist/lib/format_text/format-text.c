@@ -1,4 +1,4 @@
-/*	$NetBSD: format-text.c,v 1.1.1.2 2009/02/18 11:17:04 haad Exp $	*/
+/*	$NetBSD: format-text.c,v 1.1.1.3 2009/12/02 00:26:32 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -34,6 +34,7 @@
 
 #include <unistd.h>
 #include <sys/file.h>
+#include <sys/param.h>
 #include <limits.h>
 #include <dirent.h>
 #include <ctype.h>
@@ -800,8 +801,8 @@ static struct volume_group *_vg_read_file_name(struct format_instance *fid,
 	 */
 	if (vgname && strcmp(vgname, vg->name)) {
 		dm_pool_free(fid->fmt->cmd->mem, vg);
-		log_err("'%s' does not contain volume group '%s'.",
-			read_path, vgname);
+		log_error("'%s' does not contain volume group '%s'.",
+			  read_path, vgname);
 		return NULL;
 	} else
 		log_debug("Read volume group %s from %s", vg->name, read_path);
@@ -859,7 +860,7 @@ static int _vg_write_file(struct format_instance *fid __attribute((unused)),
 
 	if (!create_temp_name(temp_dir, temp_file, sizeof(temp_file), &fd,
 			      &vg->cmd->rand_seed)) {
-		log_err("Couldn't create temporary text file name.");
+		log_error("Couldn't create temporary text file name.");
 		return 0;
 	}
 
@@ -1062,6 +1063,12 @@ const char *vgname_from_mda(const struct format_type *fmt,
 	/* FIXME Cope with returning a list */
 	rlocn = mdah->raw_locns;
 
+	/*
+	 * If no valid offset, do not try to search for vgname
+	 */
+	if (!rlocn->offset)
+		goto out;
+
 	/* Do quick check for a vgname */
 	if (!dev_read(dev_area->dev, dev_area->start + rlocn->offset,
 		      NAME_LEN, buf))
@@ -1175,7 +1182,7 @@ static int _mda_setup(const struct format_type *fmt,
 		      struct physical_volume *pv,
 		      struct volume_group *vg __attribute((unused)))
 {
-	uint64_t mda_adjustment, disk_size, alignment;
+	uint64_t mda_adjustment, disk_size, alignment, alignment_offset;
 	uint64_t start1, mda_size1;	/* First area - start of disk */
 	uint64_t start2, mda_size2;	/* Second area - end of disk */
 	uint64_t wipe_size = 8 << SECTOR_SHIFT;
@@ -1184,7 +1191,8 @@ static int _mda_setup(const struct format_type *fmt,
 	if (!pvmetadatacopies)
 		return 1;
 
-	alignment = pe_align(pv) << SECTOR_SHIFT;
+	alignment = pv->pe_align << SECTOR_SHIFT;
+	alignment_offset = pv->pe_align_offset << SECTOR_SHIFT;
 	disk_size = pv->size << SECTOR_SHIFT;
 	pe_start <<= SECTOR_SHIFT;
 	pe_end <<= SECTOR_SHIFT;
@@ -1209,6 +1217,24 @@ static int _mda_setup(const struct format_type *fmt,
 			start1 += (pagesize - mda_adjustment);
 	}
 
+	/* Round up to pe_align boundary */
+	mda_adjustment = (mda_size1 + start1) % alignment;
+	if (mda_adjustment) {
+		mda_size1 += (alignment - mda_adjustment);
+		/* Revert if it's now too large */
+		if (start1 + mda_size1 > disk_size)
+			mda_size1 -= (alignment - mda_adjustment);
+	}
+
+	/* Add pe_align_offset if on pe_align boundary */
+	if (alignment_offset &&
+	    (((start1 + mda_size1) % alignment) == 0)) {
+		mda_size1 += alignment_offset;
+		/* Revert if it's now too large */
+		if (start1 + mda_size1 > disk_size)
+			mda_size1 -= alignment_offset;
+	}
+
 	/* Ensure it's not going to be bigger than the disk! */
 	if (start1 + mda_size1 > disk_size) {
 		log_warn("WARNING: metadata area fills disk leaving no "
@@ -1216,14 +1242,18 @@ static int _mda_setup(const struct format_type *fmt,
 		/* Leave some free space for rounding */
 		/* Avoid empty data area as could cause tools problems */
 		mda_size1 = disk_size - start1 - alignment * 2;
+		if (start1 + mda_size1 > disk_size) {
+			log_error("Insufficient space for first mda on %s",
+				  pv_dev_name(pv));
+			return 0;
+		}
+		/* Round up to pe_align boundary */
+		mda_adjustment = (mda_size1 + start1) % alignment;
+		if (mda_adjustment)
+			mda_size1 += (alignment - mda_adjustment);
 		/* Only have 1 mda in this case */
 		pvmetadatacopies = 1;
 	}
-
-	/* Round up to pe_align() boundary */
-	mda_adjustment = (mda_size1 + start1) % alignment;
-	if (mda_adjustment)
-		mda_size1 += (alignment - mda_adjustment);
 
 	/* If we already have PEs, avoid overlap */
 	if (pe_start || pe_end) {
@@ -1298,6 +1328,7 @@ static int _mda_setup(const struct format_type *fmt,
 
 /* Only for orphans */
 /* Set label_sector to -1 if rewriting existing label into same sector */
+/* If mdas is supplied it overwrites existing mdas e.g. used with pvcreate */
 static int _text_pv_write(const struct format_type *fmt, struct physical_volume *pv,
 		     struct dm_list *mdas, int64_t label_sector)
 {
@@ -1308,6 +1339,7 @@ static int _text_pv_write(const struct format_type *fmt, struct physical_volume 
 	char buf[MDA_HEADER_SIZE] __attribute((aligned(8)));
 	struct mda_header *mdah = (struct mda_header *) buf;
 	uint64_t adjustment;
+	struct data_area_list *da;
 
 	/* FIXME Test mode don't update cache? */
 
@@ -1344,27 +1376,78 @@ static int _text_pv_write(const struct format_type *fmt, struct physical_volume 
 		dm_list_init(&info->mdas);
 	}
 
-	if (info->das.n)
+	/*
+	 * If no pe_start supplied but PV already exists,
+	 * get existing value; use-cases include:
+	 * - pvcreate on PV without prior pvremove
+	 * - vgremove on VG with PV(s) that have pe_start=0 (hacked cfg)
+	 */
+	if (info->das.n) {
+		if (!pv->pe_start)
+			dm_list_iterate_items(da, &info->das)
+				pv->pe_start = da->disk_locn.offset >> SECTOR_SHIFT;
 		del_das(&info->das);
-	else
+	} else
 		dm_list_init(&info->das);
 
-	/* Set pe_start to first aligned sector after any metadata
-	 * areas that begin before pe_start */
-	pv->pe_start = pe_align(pv);
+#if 0
+	/*
+	 * FIXME: ideally a pre-existing pe_start seen in .pv_write
+	 * would always be preserved BUT 'pvcreate on PV without prior pvremove'
+	 * could easily cause the pe_start to overlap with the first mda!
+	 */
+	if (pv->pe_start) {
+		log_very_verbose("%s: preserving pe_start=%lu",
+				 pv_dev_name(pv), pv->pe_start);
+		goto preserve_pe_start;
+	}
+#endif
+
+	/*
+	 * If pe_start is still unset, set it to first aligned
+	 * sector after any metadata areas that begin before pe_start.
+	 */
+	if (!pv->pe_start) {
+		pv->pe_start = pv->pe_align;
+		if (pv->pe_align_offset)
+			pv->pe_start += pv->pe_align_offset;
+	}
 	dm_list_iterate_items(mda, &info->mdas) {
 		mdac = (struct mda_context *) mda->metadata_locn;
 		if (pv->dev == mdac->area.dev &&
-		    (mdac->area.start <= (pv->pe_start << SECTOR_SHIFT)) &&
+		    ((mdac->area.start <= (pv->pe_start << SECTOR_SHIFT)) ||
+		    (mdac->area.start <= lvm_getpagesize() &&
+		     pv->pe_start < (lvm_getpagesize() >> SECTOR_SHIFT))) &&
 		    (mdac->area.start + mdac->area.size >
 		     (pv->pe_start << SECTOR_SHIFT))) {
 			pv->pe_start = (mdac->area.start + mdac->area.size)
 			    >> SECTOR_SHIFT;
-			adjustment = pv->pe_start % pe_align(pv);
-			if (adjustment)
-				pv->pe_start += (pe_align(pv) - adjustment);
+			/* Adjust pe_start to: (N * pe_align) + pe_align_offset */
+			if (pv->pe_align) {
+				adjustment =
+				(pv->pe_start - pv->pe_align_offset) % pv->pe_align;
+				if (adjustment)
+					pv->pe_start += pv->pe_align - adjustment;
+
+				log_very_verbose("%s: setting pe_start=%" PRIu64
+					 " (orig_pe_start=%" PRIu64 ", "
+					 "pe_align=%lu, pe_align_offset=%lu, "
+					 "adjustment=%" PRIu64 ")",
+					 pv_dev_name(pv), pv->pe_start,
+					 (adjustment ?
+					  pv->pe_start -= pv->pe_align - adjustment :
+					  pv->pe_start),
+					 pv->pe_align, pv->pe_align_offset, adjustment);
+			}
 		}
 	}
+	if (pv->pe_start >= pv->size) {
+		log_error("Data area is beyond end of device %s!",
+			  pv_dev_name(pv));
+		return 0;
+	}
+
+	/* FIXME: preserve_pe_start: */
 	if (!add_da
 	    (NULL, &info->das, pv->pe_start << SECTOR_SHIFT, UINT64_C(0)))
 		return_0;
@@ -1430,16 +1513,17 @@ static int _get_pv_if_in_vg(struct lvmcache_info *info,
 }
 
 static int _populate_pv_fields(struct lvmcache_info *info,
-			       struct physical_volume *pv)
+			       struct physical_volume *pv,
+			       int scan_label_only)
 {
 	struct data_area_list *da;
 
 	/* Have we already cached vgname? */
-	if (_get_pv_if_in_vg(info, pv))
+	if (!scan_label_only && _get_pv_if_in_vg(info, pv))
 		return 1;
 
 	/* Perform full scan (just the first time) and try again */
-	if (!memlock() && !full_scan_done()) {
+	if (!scan_label_only && !memlock() && !full_scan_done()) {
 		lvmcache_label_scan(info->fmt->cmd, 2);
 
 		if (_get_pv_if_in_vg(info, pv))
@@ -1467,7 +1551,8 @@ static int _populate_pv_fields(struct lvmcache_info *info,
 }
 
 static int _text_pv_read(const struct format_type *fmt, const char *pv_name,
-		    struct physical_volume *pv, struct dm_list *mdas)
+		    struct physical_volume *pv, struct dm_list *mdas,
+		    int scan_label_only)
 {
 	struct label *label;
 	struct device *dev;
@@ -1482,7 +1567,7 @@ static int _text_pv_read(const struct format_type *fmt, const char *pv_name,
 		return_0;
 	info = (struct lvmcache_info *) label->info;
 
-	if (!_populate_pv_fields(info, pv))
+	if (!_populate_pv_fields(info, pv, scan_label_only))
 		return 0;
 
 	if (!mdas)
@@ -1574,9 +1659,17 @@ static struct metadata_area_ops _metadata_text_raw_ops = {
 };
 
 /* pvmetadatasize in sectors */
+/*
+ * pe_start goal: FIXME -- reality of .pv_write complexity undermines this goal
+ * - In cases where a pre-existing pe_start is provided (pvcreate --restorefile
+ *   and vgconvert): pe_start must not be changed (so pv->pe_start = pe_start).
+ * - In cases where pe_start is 0: leave pv->pe_start as 0 and defer the
+ *   setting of pv->pe_start to .pv_write
+ */
 static int _text_pv_setup(const struct format_type *fmt,
 		     uint64_t pe_start, uint32_t extent_count,
-		     uint32_t extent_size,
+		     uint32_t extent_size, unsigned long data_alignment,
+		     unsigned long data_alignment_offset,
 		     int pvmetadatacopies,
 		     uint64_t pvmetadatasize, struct dm_list *mdas,
 		     struct physical_volume *pv, struct volume_group *vg)
@@ -1667,6 +1760,45 @@ static int _text_pv_setup(const struct format_type *fmt,
 		/* FIXME Default from config file? vgextend cmdline flag? */
 		pv->status |= ALLOCATABLE_PV;
 	} else {
+		if (pe_start)
+			pv->pe_start = pe_start;
+
+		if (!data_alignment)
+			data_alignment = find_config_tree_int(pv->fmt->cmd,
+						      "devices/data_alignment",
+						      0) * 2;
+
+		if (set_pe_align(pv, data_alignment) != data_alignment &&
+		    data_alignment)
+			log_warn("WARNING: %s: Overriding data alignment to "
+				 "%lu sectors (requested %lu sectors)",
+				 pv_dev_name(pv), pv->pe_align, data_alignment);
+
+		if (set_pe_align_offset(pv, data_alignment_offset) != data_alignment_offset &&
+		    data_alignment_offset)
+			log_warn("WARNING: %s: Overriding data alignment offset to "
+				 "%lu sectors (requested %lu sectors)",
+				 pv_dev_name(pv), pv->pe_align_offset, data_alignment_offset);
+
+		if (pv->pe_align < pv->pe_align_offset) {
+			log_error("%s: pe_align (%lu sectors) must not be less "
+				  "than pe_align_offset (%lu sectors)",
+				  pv_dev_name(pv), pv->pe_align, pv->pe_align_offset);
+			return 0;
+		}
+
+		/*
+		 * This initialization has a side-effect of allowing
+		 * orphaned PVs to be created with the proper alignment.
+		 * Setting pv->pe_start here circumvents .pv_write's
+		 * "pvcreate on PV without prior pvremove" retreival of
+		 * the PV's previous pe_start.
+		 * - Without this you get actual != expected pe_start
+		 *   failures in the testsuite.
+		 */
+		if (!pe_start && pv->pe_start < pv->pe_align)
+			pv->pe_start = pv->pe_align;
+
 		if (extent_count)
 			pe_end = pe_start + extent_count * extent_size - 1;
 		if (!_mda_setup(fmt, pe_start, pe_end, pvmetadatacopies,
@@ -1822,7 +1954,7 @@ void *create_text_context(struct cmd_context *cmd, const char *path,
       bad:
 	dm_pool_free(cmd->mem, tc);
 
-	log_err("Couldn't allocate text format context object.");
+	log_error("Couldn't allocate text format context object.");
 	return NULL;
 }
 
@@ -1898,9 +2030,10 @@ static int _get_config_disk_area(struct cmd_context *cmd,
 		char buffer[64] __attribute((aligned(8)));
 
 		if (!id_write_format(&id, buffer, sizeof(buffer)))
-			log_err("Couldn't find device.");
+			log_error("Couldn't find device.");
 		else
-			log_err("Couldn't find device with uuid '%s'.", buffer);
+			log_error("Couldn't find device with uuid '%s'.",
+				  buffer);
 
 		return 0;
 	}
@@ -1960,8 +2093,8 @@ struct format_type *create_text_format(struct cmd_context *cmd)
 			}
 
 			if (!_add_dir(cv->v.str, &mda_lists->dirs)) {
-				log_error("Failed to add %s to internal device "
-					  "cache", cv->v.str);
+				log_error("Failed to add %s to text format "
+					  "metadata directory list ", cv->v.str);
 				goto err;
 			}
 		}

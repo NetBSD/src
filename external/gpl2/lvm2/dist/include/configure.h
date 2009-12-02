@@ -1,3 +1,5 @@
+/*	$NetBSD: configure.h,v 1.1.1.2 2009/12/02 00:25:42 haad Exp $	*/
+
 /* lib/misc/configure.h.  Generated from configure.h.in by configure.  */
 /* lib/misc/configure.h.in.  Generated from configure.in by autoheader.  */
 
@@ -7,6 +9,9 @@
 /* Define to 1 to include built-in support for clustered LVM locking. */
 /* #undef CLUSTER_LOCKING_INTERNAL */
 
+/* Path to cmirrord pidfile. */
+/* #undef CMIRRORD_PIDFILE */
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -14,6 +19,9 @@
 
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
+
+/* Define to 0 to reinstate the pre-2.02.54 handling of unit suffixes. */
+/* #undef DEFAULT_SI_UNIT_CONSISTENCY */
 
 /* Define to 1 to enable LVM2 device-mapper interaction. */
 #define DEVMAPPER_SUPPORT 1
@@ -28,7 +36,7 @@
 /* #undef DMEVENTD_PIDFILE */
 
 /* Library version */
-#define DM_LIB_VERSION "1.02.29 (2008-11-10)"
+#define DM_LIB_VERSION "1.02.40 (2009-11-24)"
 
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
@@ -45,6 +53,12 @@
 
 /* Define to 1 if canonicalize_file_name is available. */
 /* #undef HAVE_CANONICALIZE_FILE_NAME */
+
+/* Define to 1 if you have the <ccs.h> header file. */
+/* #undef HAVE_CCS_H */
+
+/* Define to 1 if you have the <corosync/confdb.h> header file. */
+/* #undef HAVE_COROSYNC_CONFDB_H */
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
@@ -91,11 +105,20 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the <libcman.h> header file. */
+/* #undef HAVE_LIBCMAN_H */
+
 /* Define to 1 if dynamic libraries are available. */
 /* #undef HAVE_LIBDL */
 
+/* Define to 1 if you have the <libdlm.h> header file. */
+/* #undef HAVE_LIBDLM_H */
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
+
+/* Define to 1 if you have the <libgulm.h> header file. */
+/* #undef HAVE_LIBGULM_H */
 
 /* Define to 1 if you have the <libintl.h> header file. */
 /* #undef HAVE_LIBINTL_H */
@@ -192,6 +215,9 @@
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
 
+/* Define to 1 if you have the `siginterrupt' function. */
+#define HAVE_SIGINTERRUPT 1
+
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
 
@@ -269,6 +295,9 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
 
+/* Define to 1 if you have the <sys/ipc.h> header file. */
+/* #undef HAVE_SYS_IPC_H */
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 
@@ -287,6 +316,9 @@
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 /* #undef HAVE_SYS_SELECT_H */
+
+/* Define to 1 if you have the <sys/sem.h> header file. */
+/* #undef HAVE_SYS_SEM_H */
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 /* #undef HAVE_SYS_SOCKET_H */
@@ -320,6 +352,10 @@
 
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
+
+/* Define to 1 if libudev's udev_queue_get_udev_is_active function is
+   available. */
+/* #undef HAVE_UDEV_QUEUE_GET_UDEV_IS_ACTIVE */
 
 /* Define to 1 if you have the `uname' function. */
 #define HAVE_UNAME 1
@@ -417,6 +453,9 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */
+
+/* Define to 1 to enable synchronisation with udev processing. */
+/* #undef UDEV_SYNC_SUPPORT */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

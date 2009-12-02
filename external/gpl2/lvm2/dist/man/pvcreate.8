@@ -1,6 +1,6 @@
-.\"	$NetBSD: pvcreate.8,v 1.1.1.1 2008/12/22 00:18:24 haad Exp $
+.\"	$NetBSD: pvcreate.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH PVCREATE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH PVCREATE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 pvcreate \- initialize a disk or partition for use by LVM
 .SH SYNOPSIS
@@ -13,13 +13,15 @@ pvcreate \- initialize a disk or partition for use by LVM
 .RB [ \-v | \-\-verbose ]
 .RB [ \-\-labelsector ]
 .RB [ \-M | \-\-metadatatype type ]
-.RB [ \-\-metadatacopies #copies ]
+.RB [ \-\-[pv]metadatacopies #copies ]
 .RB [ \-\-metadatasize size ]
+.RB [ \-\-dataalignment alignment ]
+.RB [ \-\-dataalignmentoffset alignment_offset ]
 .RB [ \-\-restorefile file ]
 .RB [ \-\-setphysicalvolumesize size ]
 .RB [ \-u | \-\-uuid uuid ]
 .RB [ \-\-version ]
-.RB [ \-Z | \-\-zero y/n ]
+.RB [ \-Z | \-\-zero y|n ]
 .IR PhysicalVolume " [" PhysicalVolume ...]
 .SH DESCRIPTION
 .B pvcreate
@@ -64,7 +66,7 @@ onto a replacement device - see \fBvgcfgrestore\fP(8).
 .BR \-y ", " \-\-yes
 Answer yes to all questions.
 .TP
-.BR \-Z ", " \-\-zero " y/n"
+.BR \-Z ", " \-\-zero " y|n"
 Whether or not the first 4 sectors (2048 bytes) of the device should be 
 wiped.
 If this option is not given, the 
@@ -91,7 +93,21 @@ to see where the metadata areas are placed.
 The approximate amount of space to be set aside for each metadata area.
 (The size you specify may get rounded.)
 .TP
-.BR \-\-metadatacopies " copies"
+.BR \-\-dataalignment " alignment"
+Align the start of the data to a multiple of this number.
+You should also specify an appropriate \fBPhysicalExtentSize\fP when creating
+the Volume Group with \fBvgcreate\fP.
+.sp
+To see the location of the first Physical Extent of an existing Physical Volume
+use \fBpvs -o +pe_start\fP .  It will be a multiple of the requested
+\fBalignment\fP.  In addition it may be shifted by \fBalignment_offset\fP from
+\fBdata_alignment_offset_detection\fP (if enabled in \fBlvm.conf\fP) or
+\fB--dataalignmentoffset\fP.
+.TP
+.BR \-\-dataalignmentoffset " alignment_offset"
+Shift the start of the data area by this additional \fBalignment_offset\fP.
+.TP
+.BR \-\-[pv]metadatacopies " copies"
 The number of metadata areas to set aside on each PV.  Currently
 this can be 0, 1 or 2.  
 If set to 2, two copies of the volume group metadata 
@@ -120,13 +136,21 @@ in the source).  Use with care.
 .TP
 .BR \-\-setphysicalvolumesize " size"
 Overrides the automatically-detected size of the PV.  Use with care.
-.SH Example
+.SH EXAMPLES
 Initialize partition #4 on the third SCSI disk and the entire fifth
 SCSI disk for later use by LVM:
 .sp
 .B pvcreate /dev/sdc4 /dev/sde
 .sp
+If the 2nd SCSI disk is a 4KB sector drive that compensates for windows
+partitioning (sector 7 is the lowest aligned logical block, the 4KB
+sectors start at LBA -1, and consequently sector 63 is aligned on a 4KB
+boundary) manually account for this when initializing for use by LVM:
+.sp
+.B pvcreate --dataalignmentoffset 7s /dev/sdb
+.sp
 .SH SEE ALSO
+.BR lvm.conf (5),
 .BR lvm (8),
 .BR vgcreate (8), 
 .BR vgextend (8), 

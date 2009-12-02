@@ -1,4 +1,4 @@
-/*	$NetBSD: external_locking.c,v 1.1.1.1 2008/12/22 00:18:04 haad Exp $	*/
+/*	$NetBSD: external_locking.c,v 1.1.1.2 2009/12/02 00:26:24 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -28,6 +28,7 @@ static int (*_lock_fn) (struct cmd_context * cmd, const char *resource,
 			uint32_t flags) = NULL;
 static int (*_init_fn) (int type, struct config_tree * cft,
 			uint32_t *flags) = NULL;
+static int (*_lock_query_fn) (const char *resource, int *mode) = NULL;
 
 static int _lock_resource(struct cmd_context *cmd, const char *resource,
 			  uint32_t flags)
@@ -89,6 +90,10 @@ int init_external_locking(struct locking_type *locking, struct cmd_context *cmd)
 		_locking_lib = NULL;
 		return 0;
 	}
+
+	if (!(_lock_query_fn = dlsym(_locking_lib, "query_resource")))
+		log_warn("WARNING: %s: _query_resource() missing: "
+			 "Using inferior activation method.", libname);
 
 	log_verbose("Loaded external locking library %s", libname);
 	return _init_fn(2, cmd->cft, &locking->flags);

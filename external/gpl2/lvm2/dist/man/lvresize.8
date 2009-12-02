@@ -1,17 +1,18 @@
-.\"	$NetBSD: lvresize.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvresize.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH LVRESIZE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVRESIZE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvresize \- resize a logical volume
 .SH SYNOPSIS
 .B lvresize
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
-\-L/\-\-size [+]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [PhysicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-noudevsync]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents [+]LogicalExtentsNumber[%{VG|LV|PVS|FREE}] |
+\-L|\-\-size [+]LogicalVolumeSize[bBsSkKmMgGtTpPeE]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [PhysicalVolumePath[:PE[-PE]]...]
 .SH DESCRIPTION
 lvresize allows you to resize a logical volume.
 Be careful when reducing a logical volume's size, because data in the reduced
@@ -27,7 +28,14 @@ volume use
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
-.I \-l, \-\-extents [+/-]LogicalExtentsNumber[%{VG|LV|PVS|FREE}]
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
+.TP
+.I \-l, \-\-extents [+|-]LogicalExtentsNumber[%{VG|LV|PVS|FREE}]
 Change or set the logical volume size in units of logical extents.
 With the + or - sign the value is added to or subtracted from the actual size
 of the logical volume and without it, the value is taken as an absolute one.
@@ -38,7 +46,7 @@ the remaining free space of the PhysicalVolumes on the command line with the
 suffix %PVS, or as a percentage of the remaining free space in the
 Volume Group with the suffix %FREE.
 .TP
-.I \-L, \-\-size [+/-]LogicalVolumeSize[kKmMgGtTpPeE]
+.I \-L, \-\-size [+|-]LogicalVolumeSize[bBsSkKmMgGtTpPeE]
 Change or set the logical volume size in units of megabytes.
 A size suffix of M for megabytes,
 G for gigabytes, T for terabytes, P for petabytes 
@@ -60,6 +68,13 @@ Not applicable to LVs using the original metadata LVM format, which
 must use a single value throughout.
 .br
 StripeSize must be 2^n (n = 2 to 9)
+.SH Examples
+.br
+"lvresize -L+16M vg1/lv1 /dev/sda:0-1 /dev/sdb:0-1"
+.br
+tries to extend a logical volume "vg1/lv1" by 16MB using physical extents
+/dev/sda:0-1 and /dev/sdb:0-1 for allocation of extents.
+
 .SH SEE ALSO
 .BR lvm (8), 
 .BR lvconvert (8),

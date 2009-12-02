@@ -1,12 +1,12 @@
-.\"	$NetBSD: vgremove.8,v 1.1.1.1 2008/12/22 00:18:25 haad Exp $
+.\"	$NetBSD: vgremove.8,v 1.1.1.2 2009/12/02 00:26:58 haad Exp $
 .\"
-.TH VGREMOVE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGREMOVE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgremove \- remove a volume group
 .SH SYNOPSIS
 .B vgremove
-[\-d/\-\-debug] [\-f/\-\-force] [\-h/\-?/\-\-help]
-[\-t/\-\-test] [\-v/\-\-verbose]
+[\-d|\-\-debug] [\-f|\-\-force] [\-h|\-?|\-\-help]
+[\-\-noudevsync] [\-t|\-\-test] [\-v|\-\-verbose]
 VolumeGroupName [VolumeGroupName...]
 .SH DESCRIPTION
 vgremove allows you to remove one or more volume groups.
@@ -23,6 +23,13 @@ See \fBlvm\fP for common options.
 .BR \-f ", " \-\-force
 Force the removal of any logical volumes on the volume group
 without confirmation.
+.TP
+.BR \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .SH SEE ALSO
 .BR lvm (8),
 .BR lvremove (8),

@@ -1,4 +1,4 @@
-/*	$NetBSD: format1.c,v 1.1.1.1 2008/12/22 00:17:59 haad Exp $	*/
+/*	$NetBSD: format1.c,v 1.1.1.2 2009/12/02 00:26:48 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -113,9 +113,9 @@ static int _check_vgs(struct dm_list *pvs)
 }
 
 static struct volume_group *_build_vg(struct format_instance *fid,
-				      struct dm_list *pvs)
+				      struct dm_list *pvs,
+				      struct dm_pool *mem)
 {
-	struct dm_pool *mem = fid->fmt->cmd->mem;
 	struct volume_group *vg = dm_pool_alloc(mem, sizeof(*vg));
 	struct disk_list *dl;
 
@@ -128,11 +128,13 @@ static struct volume_group *_build_vg(struct format_instance *fid,
 	memset(vg, 0, sizeof(*vg));
 
 	vg->cmd = fid->fmt->cmd;
+	vg->vgmem = mem;
 	vg->fid = fid;
 	vg->seqno = 0;
 	dm_list_init(&vg->pvs);
 	dm_list_init(&vg->lvs);
 	dm_list_init(&vg->tags);
+	dm_list_init(&vg->removed_pvs);
 
 	if (!_check_vgs(pvs))
 		goto_bad;
@@ -165,7 +167,7 @@ static struct volume_group *_format1_vg_read(struct format_instance *fid,
 				     const char *vg_name,
 				     struct metadata_area *mda __attribute((unused)))
 {
-	struct dm_pool *mem = dm_pool_create("lvm1 vg_read", 1024 * 10);
+	struct dm_pool *mem = dm_pool_create("lvm1 vg_read", VG_MEMPOOL_CHUNK);
 	struct dm_list pvs;
 	struct volume_group *vg = NULL;
 	dm_list_init(&pvs);
@@ -180,12 +182,13 @@ static struct volume_group *_format1_vg_read(struct format_instance *fid,
 	    (fid->fmt, vg_name, fid->fmt->cmd->filter, mem, &pvs))
 		goto_bad;
 
-	if (!(vg = _build_vg(fid, &pvs)))
+	if (!(vg = _build_vg(fid, &pvs, mem)))
 		goto_bad;
 
-      bad:
-	dm_pool_destroy(mem);
 	return vg;
+bad:
+	dm_pool_destroy(mem);
+	return NULL;
 }
 
 static struct disk_list *_flatten_pv(struct format_instance *fid,
@@ -242,7 +245,7 @@ static int _flatten_vg(struct format_instance *fid, struct dm_pool *mem,
 static int _format1_vg_write(struct format_instance *fid, struct volume_group *vg,
 		     struct metadata_area *mda __attribute((unused)))
 {
-	struct dm_pool *mem = dm_pool_create("lvm1 vg_write", 1024 * 10);
+	struct dm_pool *mem = dm_pool_create("lvm1 vg_write", VG_MEMPOOL_CHUNK);
 	struct dm_list pvds;
 	int r = 0;
 
@@ -261,7 +264,8 @@ static int _format1_vg_write(struct format_instance *fid, struct volume_group *v
 }
 
 static int _format1_pv_read(const struct format_type *fmt, const char *pv_name,
-		    struct physical_volume *pv, struct dm_list *mdas __attribute((unused)))
+		    struct physical_volume *pv, struct dm_list *mdas __attribute((unused)),
+		    int scan_label_only __attribute((unused)))
 {
 	struct dm_pool *mem = dm_pool_create("lvm1 pv_read", 1024);
 	struct disk_list *dl;
@@ -294,6 +298,8 @@ static int _format1_pv_read(const struct format_type *fmt, const char *pv_name,
 static int _format1_pv_setup(const struct format_type *fmt,
 		     uint64_t pe_start, uint32_t extent_count,
 		     uint32_t extent_size,
+		     unsigned long data_alignment __attribute((unused)),
+		     unsigned long data_alignment_offset __attribute((unused)),
 		     int pvmetadatacopies __attribute((unused)),
 		     uint64_t pvmetadatasize __attribute((unused)), struct dm_list *mdas __attribute((unused)),
 		     struct physical_volume *pv, struct volume_group *vg __attribute((unused)))

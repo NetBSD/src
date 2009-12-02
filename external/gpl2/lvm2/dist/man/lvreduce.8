@@ -1,16 +1,17 @@
-.\"	$NetBSD: lvreduce.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvreduce.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH LVREDUCE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVREDUCE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvreduce \- reduce the size of a logical volume
 .SH SYNOPSIS
 .B lvreduce
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-f/\-\-force]
-[\-h/\-?/\-\-help]
-{\-l/\-\-extents [\-]LogicalExtentsNumber[%{VG|LV|FREE}] |
-\-L/\-\-size [\-]LogicalVolumeSize[kKmMgGtT]}
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolume[Path]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-f|\-\-force]
+[\-h|\-?|\-\-help]
+[\-\-noudevsync]
+{\-l|\-\-extents [\-]LogicalExtentsNumber[%{VG|LV|FREE}] |
+\-L|\-\-size [\-]LogicalVolumeSize[bBsSkKmMgGtTpPeE]}
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolume[Path]
 .SH DESCRIPTION
 lvreduce allows you to reduce the size of a logical volume.
 Be careful when reducing a logical volume's size, because data in the
@@ -38,6 +39,13 @@ See \fBlvm\fP for common options.
 .I \-f, \-\-force
 Force size reduction without any question.
 .TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
+.TP
 .I \-l, \-\-extents [\-]LogicalExtentsNumber[%{VG|LV|FREE}]
 Reduce or set the logical volume size in units of logical extents.
 With the - sign the value will be subtracted from
@@ -48,8 +56,8 @@ in the Volume Group with the suffix %VG or relative to the existing
 size of the Logical Volume with the suffix %LV or as a percentage of the remaining
 free space in the Volume Group with the suffix %FREE.
 .TP
-.I \-L, \-\-size [\-]LogicalVolumeSize[kKmMgGtTpPeE]
-Reduce or set the logical volume size in units of megabyte by default.
+.I \-L, \-\-size [\-]LogicalVolumeSize[bBsSkKmMgGtTpPeE]
+Reduce or set the logical volume size in units of megabytes.
 A size suffix of k for kilobyte, m for megabyte, 
 g for gigabytes, t for terabytes, p for petabytes 
 or e for exabytes is optional.

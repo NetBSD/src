@@ -15,12 +15,12 @@
 
 aux prepare_devs 1
 
-pv_suffix="__\"!@#\$%^&*()'\\\"__"
+pv_ugly="__\"!@#\$%^&*,()|@||'\\\"__pv1"
 
 # 'set up temp files, loopback devices' 
 name=$(basename "$dev1")
-dmsetup rename "$name" "$name$pv_suffix" 
-dev1=$(dirname "$dev1")/$name$pv_suffix
+dmsetup rename "$name" "$PREFIX$pv_ugly"
+dev1=$(dirname "$dev1")/$PREFIX$pv_ugly
 
 # 'pvcreate, vgcreate on filename with backslashed chars' 
 pvcreate "$dev1" 

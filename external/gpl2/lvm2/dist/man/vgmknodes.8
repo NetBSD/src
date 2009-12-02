@@ -1,17 +1,26 @@
-.\"	$NetBSD: vgmknodes.8,v 1.1.1.1 2008/12/22 00:18:25 haad Exp $
+.\"	$NetBSD: vgmknodes.8,v 1.1.1.2 2009/12/02 00:26:58 haad Exp $
 .\"
-.TH VGMKNODES 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGMKNODES 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgmknodes \- recreate volume group directory and logical volume special files
 .SH SYNOPSIS
 .B vgmknodes
-[\-d/\-\-debug] [\-h/\-?/\-\-help] 
-[\-v/\-\-verbose]
+.RB [ \-d | \-\-debug]
+.RB [ \-h | \-\-help]
+.RB [ \-\-refresh]
+.RB [ \-v | \-\-verbose]
 [[VolumeGroupName | LogicalVolumePath]...]
 .SH DESCRIPTION
 Checks the LVM2 special files in /dev that are needed for active 
 logical volumes and creates any missing ones and removes unused ones.
 .SH OPTIONS
+.TP
+.BR \-\-refresh
+If any logical volume in the volume group is active, reload its metadata.
+This is not necessary in normal operation, but may be useful
+if something has gone wrong or if you're doing clustering
+manually without a clustered lock manager.
+.TP
 See \fBlvm\fP for common options.
 .SH SEE ALSO
 .BR lvm (8),

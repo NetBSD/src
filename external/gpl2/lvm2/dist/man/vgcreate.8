@@ -1,6 +1,6 @@
-.\"	$NetBSD: vgcreate.8,v 1.1.1.1 2008/12/22 00:18:24 haad Exp $
+.\"	$NetBSD: vgcreate.8,v 1.1.1.2 2009/12/02 00:26:58 haad Exp $
 .\"
-.TH VGCREATE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGCREATE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgcreate \- create a volume group
 .SH SYNOPSIS
@@ -19,20 +19,28 @@ vgcreate \- create a volume group
 .RB [ -p | \-\-maxphysicalvolumes
 .IR MaxPhysicalVolumes ]
 .RB [ \-s | \-\-physicalextentsize
-.IR PhysicalExtentSize [ \fBkKmMgGtT\fR ]]
+.IR PhysicalExtentSize [ \fBbBsSkKmMgGtTpPeE\fR ]]
 .RB [ \-t | \-\-test ]
 .RB [ \-v | \-\-verbose ]
 .RB [ \-\-version ]
-.I VolumeGroupName PhysicalVolumePath
-.RI [ PhysicalVolumePath ...]
+[ \fIPHYSICAL DEVICE OPTIONS\fP ]
+.I VolumeGroupName PhysicalDevicePath
+.RI [ PhysicalDevicePath ...]
 .SH DESCRIPTION
 .B vgcreate
 creates a new volume group called
 .I VolumeGroupName
-using the block special device
-.IR PhysicalVolumePath
-previously configured for LVM with
-.BR pvcreate (8).
+using the block special device \fIPhysicalDevicePath\fP.
+.sp
+If \fIPhysicalDevicePath\fP was not previously configured for LVM with
+\fBpvcreate (8)\fP, the device will be initialized with the same
+default values used with \fBpvcreate\fP.  If non-default
+\fPpvcreate\fP values are are desired, they may be given on the
+commandline with the same options as \fPpvcreate\fP.  See
+\fBPHYSICAL DEVICE OPTIONS\fP for available options.  Note
+that the restore-related options such as --restorefile, --uuid,
+and --physicalvolumesize are not available.  If a restore operation
+is needed, use \fBpvcreate (8)\fP and \fBvgcfgrestore (8)\fP.
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
@@ -65,10 +73,10 @@ which removes this restriction: there is then no limit.
 If you have a large number of physical volumes in
 a volume group with metadata in lvm2 format, 
 for tool performance reasons, you should consider 
-some use of \fB--metadatacopies 0\fP
+some use of \fB--pvmetadatacopies 0\fP
 as described in \fBpvcreate(8)\fP.
 .TP
-.BR \-s ", " \-\-physicalextentsize " " \fIPhysicalExtentSize\fR[\fBkKmMgGtT\fR]
+.BR \-s ", " \-\-physicalextentsize " " \fIPhysicalExtentSize\fR[\fBbBsSkKmMgGtTpPeE\fR]
 Sets the physical extent size on physical volumes of this volume group.
 A size suffix (k for kilobytes up to t for terabytes) is optional, megabytes
 is the default if no suffix is present.  
@@ -88,11 +96,30 @@ but having a large number of extents will slow down the tools but have no
 impact on I/O performance to the logical volume.  The smallest PE is 1KB.
 
 The 2.4 kernel has a limitation of 2TB per block device.
+.SH PHYSICAL DEVICE OPTIONS
+The following options are available for initializing physical devices in the
+volume group.  These options are further described in the pvcreate man page.
+.TP
+.BR \-f ", " \-\-force
+.TP
+.BR \-y ", " \-\-yes
+.TP
+.BR \-Z ", " \-\-zero " y|n"
+.TP
+.BR \-\-labelsector " sector"
+.TP
+.BR \-\-metadatasize " size"
+.TP
+.BR \-\-pvmetadatacopies " copies"
+.TP
+.BR \-\-dataalignment " alignment"
+.TP
+.BR \-\-dataalignmentoffset " alignment_offset"
 .SH EXAMPLES
 To create a volume group named
 .B test_vg 
 using physical volumes
-.BR /dev/hdk1 ", and " /dev/hdl1
+.BR /dev/sdk1 ", and " /dev/sdl1
 with default physical extent size of 4MB:
 .nf
 

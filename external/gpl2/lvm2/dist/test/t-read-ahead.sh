@@ -32,14 +32,30 @@ check_lvs_() {
 aux prepare_vg 5
 
 #COMM "test various read ahead settings (bz450922)"
-lvcreate -n "$lv" -l 100%FREE -i5 -I256 "$vg"     
+lvcreate -n "$lv" -l 100%FREE -i5 -I256 "$vg"
 ra="$(get_lvs_ lv_kernel_read_ahead)"
 test "$(( ( $ra / 5 ) * 5 ))" -eq $ra
-lvdisplay "$vg"/"$lv"                             
-lvchange -r auto "$vg"/"$lv" 2>&1 | grep auto     
-check_lvs_ lv_read_ahead auto                                  
-check_lvs_ lv_kernel_read_ahead 5120                           
-lvchange -r 400 "$vg/$lv"                         
-check_lvs_ lv_read_ahead 400                                   
+lvdisplay "$vg"/"$lv"
+lvchange -r auto "$vg"/"$lv" 2>&1 | grep auto
+check_lvs_ lv_read_ahead auto
+check_lvs_ lv_kernel_read_ahead 5120
+lvchange -r 640 "$vg/$lv"
+check_lvs_ lv_read_ahead 640
 lvremove -ff "$vg"
 
+#COMM "read ahead is properly inherited from underlying PV"
+blockdev --setra 768 $dev1
+lvcreate -n $lv -L4m $vg $dev1
+test $(blockdev --getra $G_dev_/$vg/$lv) -eq 768
+lvremove -ff $vg
+
+# Check default, active/inactive values for read_ahead / kernel_read_ahead
+lvcreate -n $lv -l 50%FREE $vg
+lvchange -an $vg/$lv
+check_lv_field_ $vg/$lv lv_read_ahead auto
+check_lv_field_ $vg/$lv lv_kernel_read_ahead -1
+lvchange -r 512 $vg/$lv
+lvchange -ay $vg/$lv
+check_lv_field_ $vg/$lv lv_read_ahead 256.00k
+check_lv_field_ $vg/$lv lv_kernel_read_ahead 256.00k
+lvremove -ff $vg

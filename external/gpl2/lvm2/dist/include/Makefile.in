@@ -16,6 +16,7 @@ SHELL = /bin/sh
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 LN_S = @LN_S@
@@ -24,14 +25,14 @@ LN_S = @LN_S@
 
 all: .symlinks_created
 
-.symlinks_created: .symlinks
+.symlinks_created: .symlinks 
 	find . -maxdepth 1 -type l -exec $(RM) \{\} \;
-	for i in `cat .symlinks`; do $(LN_S) $$i ; done
+	for i in `cat $<`; do $(LN_S) $$i ; done
 	touch $@
 
 distclean:
 	find . -maxdepth 1 -type l -exec $(RM) \{\} \;
-	$(RM) Makefile .include_symlinks .symlinks_created
+	$(RM) Makefile .include_symlinks .symlinks_created .symlinks
 
 pofile: all
 
@@ -44,6 +45,8 @@ install:
 install_cluster:
 
 install_device-mapper:
+
+install_lvm2:
 
 cflow:
 

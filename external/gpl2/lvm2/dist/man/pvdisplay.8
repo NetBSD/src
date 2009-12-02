@@ -1,13 +1,38 @@
-.\"	$NetBSD: pvdisplay.8,v 1.1.1.1 2008/12/22 00:18:24 haad Exp $
+.\"	$NetBSD: pvdisplay.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH PVDISPLAY 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH PVDISPLAY 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 pvdisplay \- display attributes of a physical volume
 .SH SYNOPSIS
 .B pvdisplay
-[\-c/\-\-colon] [\-d/\-\-debug] [\-h/\-?/\-\-help] [\-s/\-\-short]
-[\-v[v]/\-\-verbose [\-\-verbose]]
-PhysicalVolumePath [PhysicalVolumePath...]
+[\-c|\-\-colon]
+[\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-ignorelockingfailure]
+[\-\-maps]
+[\-\-nosuffix]
+[\-s|\-\-short]
+[\-\-units hsbkmgtHKMGT]
+[\-v[v]|\-\-verbose [\-\-verbose]]
+[\-\-version]
+[PhysicalVolumePath [PhysicalVolumePath...]]
+.br
+
+.br
+.B pvdisplay \-\-columns | \-C
+[\-\-aligned]
+[\-a|\-\-all]
+[\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-ignorelockingfailure]
+[\-\-noheadings]
+[\-\-nosuffix]
+[\-o|\-\-options [+]Field[,Field]]
+[\-O|\-\-sort [+|-]Key1[,[+|-]Key2[,...]]]
+[\-\-separator Separator]
+[\-\-unbuffered]
+[\-\-units hHbBsSkKmMgGtTpPeE]
+[\-v[v]|\-\-verbose [\-\-verbose]]
+[\-\-version]
+[PhysicalVolumePath [PhysicalVolumePath...]]
 .SH DESCRIPTION
 pvdisplay allows you to see the attributes of one or more physical volumes
 like size, physical extent size, space used for the volume group descriptor
@@ -16,7 +41,8 @@ area and so on.
 \fBpvs\fP (8) is an alternative that provides the same information 
 in the style of \fBps\fP (1).
 .SH OPTIONS
-See \fBlvm\fP for common options.
+See \fBlvm\fP for common options and \fBpvs\fP for options given with
+\fB\-\-columns\fP.
 .TP
 .I \-c, \-\-colon
 Generate colon separated output for easier parsing in scripts or programs.
@@ -45,6 +71,11 @@ Only display the size of the given physical volumes.
 .I \-m, \-\-maps
 Display the mapping of physical extents to logical volumes and
 logical extents.
+.TP
+.I \-\-columns | \-C
+Display output in columns, the equivalent of \fBpvs\fP (8).  See
+\fBpvs (8)\fP for a description of other options with this form of
+\fBpvdisplay\fP.
 .SH SEE ALSO
 .BR lvm (8),
 .BR pvcreate (8),

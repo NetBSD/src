@@ -1,14 +1,38 @@
-.\"	$NetBSD: lvdisplay.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvdisplay.8,v 1.1.1.2 2009/12/02 00:26:55 haad Exp $
 .\"
-.TH LVDISPLAY 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVDISPLAY 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvdisplay \- display attributes of a logical volume
 .SH SYNOPSIS
 .B lvdisplay
-[\-c/\-\-colon] [\-d/\-\-debug] [\-h/\-?/\-\-help]
+[\-a|\-\-all]
+[\-c|\-\-colon] [\-d|\-\-debug] [\-h|\-?|\-\-help]
 [\-\-ignorelockingfailure]
-[\-\-maps] [\-P/\-\-partial]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-\-maps]
+[\-\-nosuffix]
+[\-P|\-\-partial]
+[\-\-units hHbBsSkKmMgGtTpPeE]
+[\-v|\-\-verbose]
+[\-\-version] [LogicalVolumePath [LogicalVolumePath...]]
+.br
+
+.br
+.B lvdisplay \-\-columns | \-C
+[\-\-aligned]
+[\-a|\-\-all]
+[\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-ignorelockingfailure]
+[\-\-noheadings]
+[\-\-nosuffix]
+[\-o|\-\-options [+]Field[,Field]]
+[\-O|\-\-sort [+|-]Key1[,[+|-]Key2[,...]]]
+[\-P|\-\-partial]
+[\-\-segments]
+[\-\-separator Separator]
+[\-\-unbuffered]
+[\-\-units hHbBsSkKmMgGtTpPeE]
+[\-v|\-\-verbose]
+[\-\-version] [LogicalVolumePath [LogicalVolumePath...]]
 .SH DESCRIPTION
 lvdisplay allows you to see the attributes of a logical volume
 like size, read/write status, snapshot information etc.
@@ -18,7 +42,16 @@ in the style of \fBps\fP (1).  \fBlvs\fP is recommended over
 \fBlvdisplay\fP.
 
 .SH OPTIONS
-See \fBlvm\fP for common options.
+See \fBlvm\fP for common options and \fBlvs\fP for options given with
+\fB\-\-columns\fP.
+.TP
+.I \-\-all
+Include information in the output about internal Logical Volumes that
+are components of normally-accessible Logical Volumes, such as mirrors,
+but which are not independently accessible (e.g. not mountable).
+For example, after creating a mirror using 'lvcreate -m1 --mirrorlog disk',
+this option will reveal three internal Logical Volumes, with suffixes
+mimage_0, mimage_1, and mlog.
 .TP
 .I \-c, \-\-colon
 Generate colon separated output for easier parsing in scripts or programs.
@@ -46,6 +79,10 @@ The values are:
 .I \-m, \-\-maps
 Display the mapping of logical extents to physical volumes and
 physical extents.
+.TP
+.I \-\-columns | \-C
+Display output in columns, the equivalent of \fBlvs\fP.  Options listed
+are the same as options given in \fBlvs (8)\fP.
 .SH Examples
 "lvdisplay -v /dev/vg00/lvol2" shows attributes of that logical volume.
 If snapshot

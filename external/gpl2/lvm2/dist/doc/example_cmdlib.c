@@ -1,4 +1,4 @@
-/*	$NetBSD: example_cmdlib.c,v 1.1.1.1 2008/12/22 00:18:48 haad Exp $	*/
+/*	$NetBSD: example_cmdlib.c,v 1.1.1.2 2009/12/02 00:26:03 haad Exp $	*/
 
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -17,7 +17,8 @@
 #include "lvm2cmd.h"
 
 /* All output gets passed to this function line-by-line */
-void test_log_fn(int level, const char *file, int line, const char *format)
+void test_log_fn(int level, int dm_errno, const char *file, int line,
+		 const char *format)
 {
 	/* Extract and process output here rather than printing it */
 

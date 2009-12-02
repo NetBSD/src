@@ -1,6 +1,6 @@
-.\"	$NetBSD: lvm.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvm.8,v 1.1.1.2 2009/12/02 00:26:56 haad Exp $
 .\"
-.TH LVM 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVM 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvm \- LVM2 tools
 .SH SYNOPSIS
@@ -19,6 +19,10 @@ completion.  Refer to \fBreadline\fP(3) for details.
 If \fBlvm\fP is invoked with argv[0] set to the name of a specific
 LVM command (for example by using a hard or soft link) it acts as 
 that command.  
+.LP
+On invocation, \fBlvm\fP requires that only the standard file descriptors
+stdin, stdout and stderr are available.  If others are found, they
+get closed and messages are issued warning about the leak.
 .LP
 Where commands take VG or LV names as arguments, the full path name is
 optional.  An LV called "lvol0" in a VG called "vg0" can be specified
@@ -92,6 +96,8 @@ The following commands implement the core LVM functionality.
 \fBvgextend\fP \(em Add physical volumes to a volume group.
 .TP
 \fBvgimport\fP \(em Make exported volume groups known to the system.
+.TP
+\fBvgimportclone\fP \(em Import and rename duplicated volume group (e.g. a hardware snapshot).
 .TP
 \fBvgmerge\fP \(em Merge two volume groups.
 .TP
@@ -178,8 +184,9 @@ See
 .TP
 \fB-P | --partial\fP
 When set, the tools will do their best to provide access to volume groups
-that are only partially available.  Where part of a logical volume is 
-missing, \fB/dev/ioerror\fP will be substituted, and you could use
+that are only partially available (one or more physical volumes belonging
+to the volume group are missing from the system).  Where part of a logical
+volume is missing, \fB/dev/ioerror\fP will be substituted, and you could use
 \fBdmsetup (8)\fP to set this up to return I/O errors when accessed,
 or create it as a large block device of nulls.  Metadata may not be
 changed with this option. To insert a replacement physical volume
@@ -305,6 +312,7 @@ All tools return a status code of zero on success or non-zero on failure.
 .BR vgdisplay (8),
 .BR vgextend (8),
 .BR vgimport (8),
+.BR vgimportclone (8),
 .BR vgmerge (8),
 .BR vgmknodes (8),
 .BR vgreduce (8),

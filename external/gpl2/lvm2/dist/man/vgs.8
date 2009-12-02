@@ -1,26 +1,36 @@
-.\"	$NetBSD: vgs.8,v 1.1.1.1 2008/12/22 00:18:25 haad Exp $
+.\"	$NetBSD: vgs.8,v 1.1.1.2 2009/12/02 00:26:59 haad Exp $
 .\"
-.TH VGS 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGS 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgs \- report information about volume groups
 .SH SYNOPSIS
 .B vgs
-[\-\-aligned] [\-d/\-\-debug] [\-h/\-?/\-\-help]
-[\-\-ignorelockingfailure] [\-\-noheadings] [\-\-nosuffix]
-[\-o/\-\-options [+]Field[,Field]]
-[\-O/\-\-sort [+/-]Key1[,[+/-]Key2[,...]]]
-[\-P/\-\-partial]
+[\-a|\-\-all]
+[\-\-aligned] [\-d|\-\-debug] [\-h|\-?|\-\-help]
+[\-\-ignorelockingfailure] [\-\-nameprefixes] [\-\-noheadings] [\-\-nosuffix]
+[\-o|\-\-options [+]Field[,Field]]
+[\-O|\-\-sort [+|-]Key1[,[+|-]Key2[,...]]]
+[\-P|\-\-partial] [\-\-rows]
 [\-\-separator Separator] [\-\-unbuffered]
-[\-\-units hsbkmgtHKMGT]
-[\-v/\-\-verbose] 
+[\-\-units hHbBsSkKmMgGtTpPeE]
+[\-\-unquoted]
+[\-v|\-\-verbose] 
 [\-\-version] [VolumeGroupName [VolumeGroupName...]]
 .SH DESCRIPTION
 vgs produces formatted output about volume groups.
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
+.I \-\-all
+List all volume groups.  Equivalent to not specifying any volume groups.
+.TP
 .I \-\-aligned
 Use with \-\-separator to align the output columns.
+.TP
+.I \-\-nameprefixes
+Add an "LVM2_" prefix plus the field name to the output.  Useful
+with --noheadings to produce a list of field=value pairs that can
+be used to set environment variables (for example, in \fBudev (7)\fP rules).
 .TP
 .I \-\-noheadings
 Suppress the headings line that is normally the first line of output.
@@ -32,14 +42,20 @@ if processing the output.
 .TP
 .I \-o, \-\-options
 Comma-separated ordered list of columns.  Precede the list with '+' to append
-to the default selection of columns.  Column names are: vg_fmt, vg_uuid,
-vg_name, vg_attr, vg_size, vg_free, vg_sysid, vg_extent_size, vg_extent_count,
-vg_free_count, max_lv, max_pv, pv_count, lv_count, snap_count, vg_seqno,
-vg_tags.
+to the default selection of columns.
+.IP
+Use \fb-o vg_all\fP to select all volume group columns.
+.IP
+Use \fb-o help\fP to view the full list of columns available.
+.IP
+Column names include: vg_fmt, vg_uuid, vg_name, vg_attr, vg_size, vg_free,
+vg_sysid, vg_extent_size, vg_extent_count, vg_free_count, max_lv, max_pv,
+pv_count, lv_count, snap_count, vg_seqno, vg_tags, vg_mda_count, vg_mda_free,
+and vg_mda_size.
+.IP
 Any "vg_" prefixes are optional.  Columns mentioned in either \fBpvs (8)\fP 
 or \fBlvs (8)\fP can also be chosen, but columns cannot be taken from both
 at the same time.  
-Use \fb-o help\fP to view the full list of fields available.
 .IP
 The vg_attr bits are:
 .RS
@@ -50,7 +66,8 @@ Resi(z)eable
 .IP 3 3
 E(x)ported
 .IP 4 3
-(p)artial
+(p)artial: one or more physical volumes belonging to the volume group
+are missing from the system
 .IP 5 3
 Allocation policy: (c)ontiguous, c(l)ing, (n)ormal, (a)nywhere, (i)nherited
 .IP 6 3
@@ -61,17 +78,23 @@ Allocation policy: (c)ontiguous, c(l)ing, (n)ormal, (a)nywhere, (i)nherited
 Comma-separated ordered list of columns to sort by.  Replaces the default
 selection. Precede any column with - for a reverse sort on that column.
 .TP
+.I \-\-rows
+Output columns as rows.
+.TP
 .I \-\-separator Separator
 String to use to separate each column.  Useful if grepping the output.
 .TP
 .I \-\-unbuffered
 Produce output immediately without sorting or aligning the columns properly.
 .TP
-.I \-\-units hsbkmgtHKMGT
-All sizes are output in these units: (h)uman-readable, (s)ectors, (b)ytes,
-(k)ilobytes, (m)egabytes, (g)igabytes, (t)erabytes.  Capitalise to use multiples
-of 1000 (S.I.) instead of 1024.  Can also specify custom (u)nits e.g.
-\-\-units 3M
+.I \-\-units hHbBsSkKmMgGtTpPeE
+All sizes are output in these units: (h)uman-readable, (b)ytes, (s)ectors,
+(k)ilobytes, (m)egabytes, (g)igabytes, (t)erabytes, (p)etabytes, (e)xabytes.  
+Capitalise to use multiples of 1000 (S.I.) instead of 1024.  Can also specify 
+custom units e.g. \-\-units 3M
+.TP
+.I \-\-unquoted
+When used with --nameprefixes, output values in the field=value pairs are not quoted.
 .SH SEE ALSO
 .BR lvm (8),
 .BR vgdisplay (8),

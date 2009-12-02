@@ -3,6 +3,7 @@
 lvscan \- scan (all disks) for logical volumes
 .SH SYNOPSIS
 .B lvscan
+.RB [ \-a | \-\-all]
 .RB [ \-b | \-\-blockdevice ]
 .RB [ \-d | \-\-debug ]
 .RB [ \-h | \-\-help ]
@@ -15,6 +16,14 @@ scans all known volume groups or all supported LVM block devices
 in the system for defined logical volumes.
 .SH OPTIONS
 See \fBlvm\fP for common options.
+.TP
+.BR \-\-all
+Include information in the output about internal Logical Volumes that
+are components of normally-accessible Logical Volumes, such as mirrors,
+but which are not independently accessible (e.g. not mountable).
+For example, after creating a mirror using 'lvcreate -m1 --mirrorlog disk',
+this option will reveal three internal Logical Volumes, with suffixes
+mimage_0, mimage_1, and mlog.
 .TP
 .BR \-b ", " \-\-blockdevice
 Adds the device major and minor numbers to the display

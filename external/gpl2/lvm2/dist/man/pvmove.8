@@ -1,15 +1,15 @@
-.\"	$NetBSD: pvmove.8,v 1.1.1.1 2008/12/22 00:18:24 haad Exp $
+.\"	$NetBSD: pvmove.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH PVMOVE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH PVMOVE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 pvmove \- move physical extents
 .SH SYNOPSIS
 .B pvmove
 [\-\-abort]
 [\-\-alloc AllocationPolicy]
-[\-b/\-\-background]
-[\-d/\-\-debug] [\-h/\-\-help] [\-i/\-\-interval Seconds] [\-v/\-\-verbose]
-[\-n/\-\-name LogicalVolume] 
+[\-b|\-\-background]
+[\-d|\-\-debug] [\-h|\-\-help] [\-i|\-\-interval Seconds]
+[\-\-noudevsync] [\-v|\-\-verbose] [\-n|\-\-name LogicalVolume]
 [SourcePhysicalVolume[:PE[-PE]...] [DestinationPhysicalVolume[:PE[-PE]...]...]]
 .SH DESCRIPTION
 .B pvmove
@@ -74,6 +74,13 @@ type of on-disk metadata.  Metadata can be converted using \fBvgconvert\fP(8).
 .TP
 .I \-\-abort
 Abort any moves in progress.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .TP
 .I \-b, \-\-background
 Run the daemon in the background.

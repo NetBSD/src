@@ -1,33 +1,38 @@
-.\"	$NetBSD: lvcreate.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvcreate.8,v 1.1.1.2 2009/12/02 00:26:55 haad Exp $
 .\"
-.TH LVCREATE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVCREATE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvcreate \- create a logical volume in an existing volume group
 .SH SYNOPSIS
 .B lvcreate
 [\-\-addtag Tag]
 [\-\-alloc AllocationPolicy]
-[\-A/\-\-autobackup y/n] [\-C/\-\-contiguous y/n] [\-d/\-\-debug]
-[\-h/\-?/\-\-help]
-[\-i/\-\-stripes Stripes [\-I/\-\-stripesize StripeSize]]
-{\-l/\-\-extents LogicalExtentsNumber[%{VG|PVS|FREE}] |
- \-L/\-\-size LogicalVolumeSize[kKmMgGtT]}
-[\-M/\-\-persistent y/n] [\-\-minor minor]
-[\-m/\-\-mirrors Mirrors [\-\-nosync] [\-\-mirrorlog {disk|core}] [\-\-corelog]
-[\-R/\-\-regionsize MirrorLogRegionSize]]
-[\-n/\-\-name LogicalVolumeName]
-[\-p/\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
-[\-t/\-\-test]
-[\-v/\-\-verbose] [\-Z/\-\-zero y/n]
-VolumeGroupName [PhysicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-C|\-\-contiguous y|n] [\-d|\-\-debug]
+[\-h|\-?|\-\-help] [\-\-noudevsync]
+[\-i|\-\-stripes Stripes [\-I|\-\-stripesize StripeSize]]
+{\-l|\-\-extents LogicalExtentsNumber[%{VG|PVS|FREE}] |
+ \-L|\-\-size LogicalVolumeSize[bBsSkKmMgGtTpPeE]}
+[\-M|\-\-persistent y|n] [\-\-minor minor]
+[\-m|\-\-mirrors Mirrors [\-\-nosync] [\-\-mirrorlog {disk|core}] [\-\-corelog]
+[\-R|\-\-regionsize MirrorLogRegionSize]]
+[\-n|\-\-name LogicalVolumeName]
+[\-p|\-\-permission r|rw] [\-r|\-\-readahead ReadAheadSectors|auto|none]
+[\-t|\-\-test]
+[\-v|\-\-verbose] [\-Z|\-\-zero y|n]
+VolumeGroupName [PhysicalVolumePath[:PE[-PE]]...]
 .br
 
 .br
 .B lvcreate
-{\-l/\-\-extents LogicalExtentsNumber[%{VG|FREE}] |
- \-L/\-\-size LogicalVolumeSize[kKmMgGtT]}
-[\-c/\-\-chunksize ChunkSize]
-\-s/\-\-snapshot \-n/\-\-name SnapshotLogicalVolumeName OriginalLogicalVolumePath
+{\-l|\-\-extents LogicalExtentsNumber[%{VG|FREE}] |
+ \-L|\-\-size LogicalVolumeSize[bBsSkKmMgGtTpPeE]}
+[\-c|\-\-chunksize ChunkSize]
+[\-\-noudevsync]
+\-n|\-\-name SnapshotLogicalVolumeName
+{{\-s|\-\-snapshot}
+OriginalLogicalVolumePath | 
+[\-s|\-\-snapshot]
+VolumeGroupName \-\-virtualsize VirtualSize}
 .SH DESCRIPTION
 lvcreate creates a new logical volume in a volume group ( see
 .B vgcreate(8), vgchange(8)
@@ -38,7 +43,9 @@ the volume group can be extended ( see
 ) with other physical volumes or by reducing existing logical volumes
 of this volume group in size ( see
 .B lvreduce(8)
-).
+). If you specify one or more PhysicalVolumes, allocation of physical
+extents will be restricted to these volumes.
+.br
 .br
 The second form supports the creation of snapshot logical volumes which 
 keep the contents of the original logical volume for backup purposes.
@@ -48,7 +55,7 @@ See \fBlvm\fP for common options.
 .I \-c, \-\-chunksize ChunkSize
 Power of 2 chunk size for the snapshot logical volume between 4k and 512k.
 .TP
-.I \-C, \-\-contiguous y/n
+.I \-C, \-\-contiguous y|n
 Sets or resets the contiguous allocation policy for
 logical volumes. Default is no contiguous allocation based
 on a next free principle.
@@ -74,7 +81,7 @@ free space in the Volume Group with the suffix %FREE, or
 of the remaining free space for the specified PhysicalVolume(s)
 with the suffix %PVS,
 .TP
-.I \-L, \-\-size LogicalVolumeSize[kKmMgGtTpPeE]
+.I \-L, \-\-size LogicalVolumeSize[bBsSkKmMgGtTpPeE]
 Gives the size to allocate for the new logical volume.
 A size suffix of K for kilobytes, M for megabytes,
 G for gigabytes, T for terabytes, P for petabytes
@@ -85,7 +92,7 @@ Default unit is megabytes.
 .I \-\-minor minor
 Set the minor number.
 .TP
-.I \-M, \-\-persistent y/n
+.I \-M, \-\-persistent y|n
 Set to y to make the minor number specified persistent.
 .TP
 .I \-m, \-\-mirrors Mirrors
@@ -114,6 +121,13 @@ The name for the new logical volume.
 .br
 Without this option a default names of "lvol#" will be generated where
 # is the LVM internal number of the logical volume.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .TP
 .I \-p, \-\-permission r|rw
 Set access permissions to read only or read and write.
@@ -146,8 +160,21 @@ to grow it. Shrinking a snapshot is supported by
 as well. Run
 .B lvdisplay(8)
 on the snapshot in order to check how much data is allocated to it.
+Note that a small amount of the space you allocate to the snapshot is
+used to track the locations of the chunks of data, so you should
+allocate slightly more space than you actually need and monitor the
+rate at which the snapshot data is growing so you can avoid running out
+of space.
 .TP
-.I \-Z, \-\-zero y/n
+.I \-\-virtualsize VirtualSize
+Create a sparse device of the given size (in MB by default) using a snapshot.  
+Anything written to the device will be returned when reading from it.
+Reading from other areas of the device will return blocks of zeros.
+It is implemented by creating a hidden virtual device of the
+requested size using the zero target.  A suffix of _vorigin is used for
+this device.
+.TP
+.I \-Z, \-\-zero y|n
 Controls zeroing of the first KB of data in the new logical volume.
 .br
 Default is yes.
@@ -181,6 +208,18 @@ at snapshot logical volume creation time. If the original logical volume
 contains a file system, you can mount the snapshot logical volume on an
 arbitrary directory in order to access the contents of the filesystem to run
 a backup while the original filesystem continues to get updated.
+
+"lvcreate --virtualsize 1T --size 100M --snapshot --name sparse vg1"
+.br
+creates a sparse device named /dev/vg1/sparse of size 1TB with space for just
+under 100MB of actual data on it.
+.br
+
+"lvcreate -L 64M -n lvol1 vg00 /dev/sda:0-7 /dev/sdb:0-7"
+.br
+creates a linear logical volume "vg00/lvol1" using physical extents
+/dev/sda:0-7 and /dev/sdb:0-7 for allocation of extents.
+
 
 .SH SEE ALSO
 .BR lvm (8), 

@@ -20,45 +20,58 @@ subdir := $(shell pwd|sed 's,.*/,,')
 srcdir = .
 top_srcdir = ..
 top_builddir = ..
-abs_srcdir = /home/haad/src/LVM2.2.02.44/test
-abs_builddir = /home/haad/src/LVM2.2.02.44/test
-abs_top_builddir = /home/haad/src/LVM2.2.02.44
-abs_top_srcdir = /home/haad/src/LVM2.2.02.44
+abs_srcdir = /home/haad/src/LVM2.2.02.56/test
+abs_builddir = /home/haad/src/LVM2.2.02.56/test
+abs_top_builddir = /home/haad/src/LVM2.2.02.56
+abs_top_srcdir = /home/haad/src/LVM2.2.02.56
 
-all: bin/not init.sh
-	sh harness.sh
+all: init.sh
+	./bin/harness t-*.sh
 
-bin/not: .bin-dir-stamp
-	$(CC) -o bin/not not.c
+bin/not: $(srcdir)/not.c .bin-dir-stamp
+	$(CC) -o bin/not $<
 
-init.sh: Makefile.in .bin-dir-stamp
+bin/harness: $(srcdir)/harness.c .bin-dir-stamp
+	$(CC) -o bin/harness $<
+
+init.sh: $(srcdir)/Makefile.in $(srcdir)/test-utils.sh .bin-dir-stamp bin/not bin/harness $(T)
 	rm -f $@-t $@
 	echo 'top_srcdir=$(top_srcdir)' >> $@-t
 	echo 'abs_top_builddir=$(abs_top_builddir)' >> $@-t
 	echo 'abs_top_srcdir=$(abs_top_builddir)' >> $@-t
 	echo 'PATH=$(abs_top_builddir)/test/bin:$$PATH' >> $@-t
-	echo 'export LD_LIBRARY_PATH="$(abs_top_builddir)/libdm:$(abs_top_builddir)/dmeventd"' >> $@-t
+	echo 'export LD_LIBRARY_PATH="$(abs_top_builddir)/libdm:$(abs_top_builddir)/liblvm:$(abs_top_builddir)/daemons/dmeventd"' >> $@-t
 	echo 'abs_srcdir=$(abs_srcdir)' >> $@-t
 	echo 'abs_builddir=$(abs_builddir)' >> $@-t
 	echo 'export PATH' >> $@-t
 	chmod a-w $@-t
 	mv $@-t $@
+	-cp $(srcdir)/test-utils.sh .
+	-cp $(srcdir)/test-lib.sh .
+	-cp $(T) .
 
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
-T = $(wildcard t-*.sh)
+T = $(wildcard $(srcdir)/t-*.sh)
+
+ifeq ("no", "yes")
+T += lvm2app.sh
+all: api/vgtest
+api/vgtest:
+	$(MAKE) -C api vgtest
+endif
 
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
-$(T): bin/not init.sh
-	sh harness.sh $@
+#$(T): init.sh
+#	./bin/harness $@
 
 .bin-dir-stamp: lvm-wrapper
 	rm -rf bin
 	mkdir bin
-	for i in lvm $$(cat $(top_srcdir)/tools/.commands); do \
+	for i in lvm $$(cat ../tools/.commands); do \
 	  ln -s ../lvm-wrapper bin/$$i; \
 	done
 	ln -s "$(abs_top_builddir)/tools/dmsetup" bin/dmsetup
@@ -78,6 +91,7 @@ clean:
 	rm -rf init.sh lvm-wrapper bin .bin-dir-stamp
 
 distclean: clean
+	rm -f Makefile
 
 .PHONY: $(T) clean distclean
 .NOTPARALLEL:

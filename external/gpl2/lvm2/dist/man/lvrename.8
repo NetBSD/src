@@ -1,6 +1,6 @@
-.\"	$NetBSD: lvrename.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvrename.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH LVRENAME 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVRENAME 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvrename \- rename a logical volume
 .SH SYNOPSIS
@@ -9,6 +9,7 @@ lvrename \- rename a logical volume
 .RB [ \-d | \-\-debug ]
 .RB [ \-f | \-\-force ]
 .RB [ \-h | \-\-help ]
+.RB [ \-\-noudevsync ]
 .RB [ \-t | \-\-test ]
 .RB [ \-v | \-\-verbose ]
 .RB [ \-\-version ]
@@ -24,6 +25,13 @@ to
 .IR NewLogicalVolume { Name | Path }.
 .SH OPTIONS
 See \fBlvm\fP for common options.
+.TP
+.BR \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .SH EXAMPLE
 To rename
 .B lvold

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-deptree.c,v 1.1.1.2 2009/02/18 11:17:23 haad Exp $	*/
+/*	$NetBSD: libdm-deptree.c,v 1.1.1.3 2009/12/02 00:26:07 haad Exp $	*/
 
 /*
  * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
 
 #define MAX_TARGET_PARAMSIZE 500000
 
@@ -30,7 +31,8 @@
 
 /* Supported segment types */
 enum {
-	SEG_ERROR, 
+	SEG_CRYPT,
+	SEG_ERROR,
 	SEG_LINEAR,
 	SEG_MIRRORED,
 	SEG_SNAPSHOT,
@@ -45,6 +47,7 @@ struct {
 	unsigned type;
 	const char *target;
 } dm_segtypes[] = {
+	{ SEG_CRYPT, "crypt" },
 	{ SEG_ERROR, "error" },
 	{ SEG_LINEAR, "linear" },
 	{ SEG_MIRRORED, "mirror" },
@@ -71,8 +74,8 @@ struct load_segment {
 
 	uint64_t size;
 
-	unsigned area_count;		/* Linear + Striped + Mirrored */
-	struct dm_list areas;		/* Linear + Striped + Mirrored */
+	unsigned area_count;		/* Linear + Striped + Mirrored + Crypt */
+	struct dm_list areas;		/* Linear + Striped + Mirrored + Crypt */
 
 	uint32_t stripe_size;		/* Striped */
 
@@ -87,6 +90,12 @@ struct load_segment {
 	unsigned mirror_area_count;	/* Mirror */
 	uint32_t flags;			/* Mirror log */
 	char *uuid;			/* Clustered mirror log */
+
+	const char *cipher;		/* Crypt */
+	const char *chainmode;		/* Crypt */
+	const char *iv;			/* Crypt */
+	uint64_t iv_offset;		/* Crypt */
+	const char *key;		/* Crypt */
 };
 
 /* Per-device properties */
@@ -123,6 +132,8 @@ struct dm_tree_node {
 
 	int activation_priority;	/* 0 gets activated first */
 
+	uint16_t udev_flags;		/* Udev control flags */
+
 	void *context;			/* External supplied context */
 
 	struct load_properties props;	/* For creation/table (re)load */
@@ -135,6 +146,7 @@ struct dm_tree {
 	struct dm_tree_node root;
 	int skip_lockfs;		/* 1 skips lockfs (for non-snapshots) */
 	int no_flush;		/* 1 sets noflush (mirrors/multipath) */
+	uint32_t cookie;
 };
 
 struct dm_tree *dm_tree_create(void)
@@ -293,7 +305,8 @@ static struct dm_tree_node *_create_dm_tree_node(struct dm_tree *dtree,
 						 const char *name,
 						 const char *uuid,
 						 struct dm_info *info,
-						 void *context)
+						 void *context,
+						 uint16_t udev_flags)
 {
 	struct dm_tree_node *node;
 	uint64_t dev;
@@ -309,6 +322,7 @@ static struct dm_tree_node *_create_dm_tree_node(struct dm_tree *dtree,
 	node->uuid = uuid;
 	node->info = *info;
 	node->context = context;
+	node->udev_flags = udev_flags;
 	node->activation_priority = 0;
 
 	dm_list_init(&node->uses);
@@ -458,8 +472,8 @@ static struct dm_tree_node *_add_dev(struct dm_tree *dtree,
 		if (!_deps(&dmt, dtree->mem, major, minor, &name, &uuid, &info, &deps))
 			return_NULL;
 
-		if (!(node = _create_dm_tree_node(dtree, name, uuid,
-						  &info, NULL)))
+		if (!(node = _create_dm_tree_node(dtree, name, uuid, &info,
+						  NULL, 0)))
 			goto_out;
 		new = 1;
 	}
@@ -577,8 +591,8 @@ struct dm_tree_node *dm_tree_add_new_dev(struct dm_tree *dtree,
 		info.inactive_table = 0;
 		info.read_only = 0;
 
-		if (!(dnode = _create_dm_tree_node(dtree, name2, uuid2,
-						   &info, context)))
+		if (!(dnode = _create_dm_tree_node(dtree, name2, uuid2, &info,
+						   context, 0)))
 			return_NULL;
 
 		/* Attach to root node until a table is supplied */
@@ -605,9 +619,30 @@ struct dm_tree_node *dm_tree_add_new_dev(struct dm_tree *dtree,
 		return_NULL;
 
 	dnode->context = context;
+	dnode->udev_flags = 0;
 
 	return dnode;
 }
+
+struct dm_tree_node *dm_tree_add_new_dev_with_udev_flags(struct dm_tree *dtree,
+							 const char *name,
+							 const char *uuid,
+							 uint32_t major,
+							 uint32_t minor,
+							 int read_only,
+							 int clear_inactive,
+							 void *context,
+							 uint16_t udev_flags)
+{
+	struct dm_tree_node *node;
+
+	if ((node = dm_tree_add_new_dev(dtree, name, uuid, major, minor, read_only,
+				       clear_inactive, context)))
+		node->udev_flags = udev_flags;
+
+	return node;
+}
+
 
 void dm_tree_node_set_read_ahead(struct dm_tree_node *dnode,
 				 uint32_t read_ahead,
@@ -640,6 +675,11 @@ const struct dm_info *dm_tree_node_get_info(struct dm_tree_node *node)
 void *dm_tree_node_get_context(struct dm_tree_node *node)
 {
 	return node->context;
+}
+
+int dm_tree_node_size_changed(struct dm_tree_node *dnode)
+{
+	return dnode->props.size_changed;
 }
 
 int dm_tree_node_num_children(struct dm_tree_node *node, uint32_t inverted)
@@ -808,10 +848,11 @@ static int _info_by_dev(uint32_t major, uint32_t minor, int with_open_count,
 	return r;
 }
 
-static int _deactivate_node(const char *name, uint32_t major, uint32_t minor)
+static int _deactivate_node(const char *name, uint32_t major, uint32_t minor,
+			    uint32_t *cookie, uint16_t udev_flags)
 {
 	struct dm_task *dmt;
-	int r;
+	int r = 0;
 
 	log_verbose("Removing %s (%" PRIu32 ":%" PRIu32 ")", name, major, minor);
 
@@ -822,26 +863,30 @@ static int _deactivate_node(const char *name, uint32_t major, uint32_t minor)
 
 	if (!dm_task_set_major(dmt, major) || !dm_task_set_minor(dmt, minor)) {
 		log_error("Failed to set device number for %s deactivation", name);
-		dm_task_destroy(dmt);
-		return 0;
+		goto out;
 	}
 
 	if (!dm_task_no_open_count(dmt))
 		log_error("Failed to disable open_count");
 
+	if (!dm_task_set_cookie(dmt, cookie, udev_flags))
+		goto out;
+
 	r = dm_task_run(dmt);
 
 	/* FIXME Until kernel returns actual name so dm-ioctl.c can handle it */
-	rm_dev_node(name);
+	rm_dev_node(name, dmt->cookie_set);
 
 	/* FIXME Remove node from tree or mark invalid? */
 
+out:
 	dm_task_destroy(dmt);
 
 	return r;
 }
 
-static int _rename_node(const char *old_name, const char *new_name, uint32_t major, uint32_t minor)
+static int _rename_node(const char *old_name, const char *new_name, uint32_t major,
+			uint32_t minor, uint32_t *cookie, uint16_t udev_flags)
 {
 	struct dm_task *dmt;
 	int r = 0;
@@ -864,6 +909,9 @@ static int _rename_node(const char *old_name, const char *new_name, uint32_t maj
 	if (!dm_task_no_open_count(dmt))
 		log_error("Failed to disable open_count");
 
+	if (!dm_task_set_cookie(dmt, cookie, udev_flags))
+		goto out;
+
 	r = dm_task_run(dmt);
 
 out:
@@ -875,10 +923,11 @@ out:
 /* FIXME Merge with _suspend_node? */
 static int _resume_node(const char *name, uint32_t major, uint32_t minor,
 			uint32_t read_ahead, uint32_t read_ahead_flags,
-			struct dm_info *newinfo)
+			struct dm_info *newinfo, uint32_t *cookie,
+			uint16_t udev_flags)
 {
 	struct dm_task *dmt;
-	int r;
+	int r = 0;
 
 	log_verbose("Resuming %s (%" PRIu32 ":%" PRIu32 ")", name, major, minor);
 
@@ -890,14 +939,12 @@ static int _resume_node(const char *name, uint32_t major, uint32_t minor,
 	/* FIXME Kernel should fill in name on return instead */
 	if (!dm_task_set_name(dmt, name)) {
 		log_error("Failed to set readahead device name for %s", name);
-		dm_task_destroy(dmt);
-		return 0;
+		goto out;
 	}
 
 	if (!dm_task_set_major(dmt, major) || !dm_task_set_minor(dmt, minor)) {
 		log_error("Failed to set device number for %s resumption.", name);
-		dm_task_destroy(dmt);
-		return 0;
+		goto out;
 	}
 
 	if (!dm_task_no_open_count(dmt))
@@ -906,9 +953,13 @@ static int _resume_node(const char *name, uint32_t major, uint32_t minor,
 	if (!dm_task_set_read_ahead(dmt, read_ahead, read_ahead_flags))
 		log_error("Failed to set read ahead");
 
+	if (!dm_task_set_cookie(dmt, cookie, udev_flags))
+		goto out;
+
 	if ((r = dm_task_run(dmt)))
 		r = dm_task_get_info(dmt, newinfo);
 
+out:
 	dm_task_destroy(dmt);
 
 	return r;
@@ -989,7 +1040,8 @@ int dm_tree_deactivate_children(struct dm_tree_node *dnode,
 		    !info.exists || info.open_count)
 			continue;
 
-		if (!_deactivate_node(name, info.major, info.minor)) {
+		if (!_deactivate_node(name, info.major, info.minor,
+				      &child->dtree->cookie, child->udev_flags)) {
 			log_error("Unable to deactivate %s (%" PRIu32
 				  ":%" PRIu32 ")", name, info.major,
 				  info.minor);
@@ -1133,7 +1185,9 @@ int dm_tree_activate_children(struct dm_tree_node *dnode,
 
 			/* Rename? */
 			if (child->props.new_name) {
-				if (!_rename_node(name, child->props.new_name, child->info.major, child->info.minor)) {
+				if (!_rename_node(name, child->props.new_name, child->info.major,
+						  child->info.minor, &child->dtree->cookie,
+						  child->udev_flags)) {
 					log_error("Failed to rename %s (%" PRIu32
 						  ":%" PRIu32 ") to %s", name, child->info.major,
 						  child->info.minor, child->props.new_name);
@@ -1147,8 +1201,8 @@ int dm_tree_activate_children(struct dm_tree_node *dnode,
 				continue;
 
 			if (!_resume_node(child->name, child->info.major, child->info.minor,
-					  child->props.read_ahead,
-					  child->props.read_ahead_flags, &newinfo)) {
+					  child->props.read_ahead, child->props.read_ahead_flags,
+					  &newinfo, &child->dtree->cookie, child->udev_flags)) {
 				log_error("Unable to resume %s (%" PRIu32
 					  ":%" PRIu32 ")", child->name, child->info.major,
 					  child->info.minor);
@@ -1235,31 +1289,159 @@ do {\
 	p += w;\
 } while (0)
 
+/*
+ * _emit_areas_line
+ *
+ * Returns: 1 on success, 0 on failure
+ */
 static int _emit_areas_line(struct dm_task *dmt __attribute((unused)),
 			    struct load_segment *seg, char *params,
 			    size_t paramsize, int *pos)
 {
 	struct seg_area *area;
 	char devbuf[DM_FORMAT_DEV_BUFSIZE];
+	unsigned first_time = 1;
 
 	dm_list_iterate_items(area, &seg->areas) {
 		if (!_build_dev_string(devbuf, sizeof(devbuf), area->dev_node))
 			return_0;
 
-		EMIT_PARAMS(*pos, " %s %" PRIu64, devbuf, area->offset);
+		EMIT_PARAMS(*pos, "%s%s %" PRIu64, first_time ? "" : " ",
+			    devbuf, area->offset);
+
+		first_time = 0;
 	}
 
 	return 1;
 }
 
-static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uint64_t *seg_start, char *params, size_t paramsize)
+/*
+ * Returns: 1 on success, 0 on failure
+ */
+static int _mirror_emit_segment_line(struct dm_task *dmt, uint32_t major,
+				     uint32_t minor, struct load_segment *seg,
+				     uint64_t *seg_start, char *params,
+				     size_t paramsize)
 {
+	int r;
+	int block_on_error = 0;
+	int handle_errors = 0;
+	int dm_log_userspace = 0;
+	struct utsname uts;
 	unsigned log_parm_count;
+	int pos = 0;
+	char logbuf[DM_FORMAT_DEV_BUFSIZE];
+	const char *logtype;
+
+	r = uname(&uts);
+	if (r)
+		return_0;
+
+	if ((seg->flags & DM_BLOCK_ON_ERROR)) {
+		/*
+		 * Originally, block_on_error was an argument to the log
+		 * portion of the mirror CTR table.  It was renamed to
+		 * "handle_errors" and now resides in the 'features'
+		 * section of the mirror CTR table (i.e. at the end).
+		 *
+		 * We can identify whether to use "block_on_error" or
+		 * "handle_errors" by the dm-mirror module's version
+		 * number (>= 1.12) or by the kernel version (>= 2.6.22).
+		 */
+		if (strncmp(uts.release, "2.6.22", 6) >= 0)
+			handle_errors = 1;
+		else
+			block_on_error = 1;
+	}
+
+	if (seg->clustered) {
+		/* Cluster mirrors require a UUID */
+		if (!seg->uuid)
+			return_0;
+
+		/*
+		 * Cluster mirrors used to have their own log
+		 * types.  Now they are accessed through the
+		 * userspace log type.
+		 *
+		 * The dm-log-userspace module was added to the
+		 * 2.6.31 kernel.
+		 */
+		if (strncmp(uts.release, "2.6.31", 6) >= 0)
+			dm_log_userspace = 1;
+	}
+
+	/* Region size */
+	log_parm_count = 1;
+
+	/* [no]sync, block_on_error etc. */
+	log_parm_count += hweight32(seg->flags);
+
+	/* "handle_errors" is a feature arg now */
+	if (handle_errors)
+		log_parm_count--;
+
+	/* DM_CORELOG does not count in the param list */
+	if (seg->flags & DM_CORELOG)
+		log_parm_count--;
+
+	if (seg->clustered) {
+		log_parm_count++; /* For UUID */
+
+		if (!dm_log_userspace)
+			EMIT_PARAMS(pos, "clustered-");
+	}
+
+	if (!seg->log)
+		logtype = "core";
+	else {
+		logtype = "disk";
+		log_parm_count++;
+		if (!_build_dev_string(logbuf, sizeof(logbuf), seg->log))
+			return_0;
+	}
+
+	if (dm_log_userspace)
+		EMIT_PARAMS(pos, "userspace %u %s clustered-%s",
+			    log_parm_count, seg->uuid, logtype);
+	else
+		EMIT_PARAMS(pos, "%s %u", logtype, log_parm_count);
+
+	if (seg->log)
+		EMIT_PARAMS(pos, " %s", logbuf);
+
+	EMIT_PARAMS(pos, " %u", seg->region_size);
+
+	if (seg->clustered && !dm_log_userspace)
+		EMIT_PARAMS(pos, " %s", seg->uuid);
+
+	if ((seg->flags & DM_NOSYNC))
+		EMIT_PARAMS(pos, " nosync");
+	else if ((seg->flags & DM_FORCESYNC))
+		EMIT_PARAMS(pos, " sync");
+
+	if (block_on_error)
+		EMIT_PARAMS(pos, " block_on_error");
+
+	EMIT_PARAMS(pos, " %u ", seg->mirror_area_count);
+
+	if ((r = _emit_areas_line(dmt, seg, params, paramsize, &pos)) <= 0)
+		return_0;
+
+	if (handle_errors)
+		EMIT_PARAMS(pos, " 1 handle_errors");
+
+	return 1;
+}
+
+static int _emit_segment_line(struct dm_task *dmt, uint32_t major,
+			      uint32_t minor, struct load_segment *seg,
+			      uint64_t *seg_start, char *params,
+			      size_t paramsize)
+{
 	int pos = 0;
 	int r;
 	char originbuf[DM_FORMAT_DEV_BUFSIZE], cowbuf[DM_FORMAT_DEV_BUFSIZE];
-	char logbuf[DM_FORMAT_DEV_BUFSIZE];
-	const char *logtype;
 
 	switch(seg->type) {
 	case SEG_ERROR:
@@ -1267,47 +1449,11 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 	case SEG_LINEAR:
 		break;
 	case SEG_MIRRORED:
-		log_parm_count = 1;	/* Region size */
-		log_parm_count += hweight32(seg->flags);	/* [no]sync, block_on_error etc. */
-
-		if (seg->flags & DM_CORELOG)
-			log_parm_count--;   /* DM_CORELOG does not count in the param list */
-
-		if (seg->clustered) {
-			if (seg->uuid)
-				log_parm_count++;
-			EMIT_PARAMS(pos, "clustered-");
-		}
-
-		if (!seg->log)
-			logtype = "core";
-		else {
-			logtype = "disk";
-			log_parm_count++;
-			if (!_build_dev_string(logbuf, sizeof(logbuf), seg->log))
-				return_0;
-		}
-
-		EMIT_PARAMS(pos, "%s %u", logtype, log_parm_count);
-
-		if (seg->log)
-			EMIT_PARAMS(pos, " %s", logbuf);
-
-		EMIT_PARAMS(pos, " %u", seg->region_size);
-
-		if (seg->clustered && seg->uuid)
-			EMIT_PARAMS(pos, " %s", seg->uuid);
-
-		if ((seg->flags & DM_NOSYNC))
-			EMIT_PARAMS(pos, " nosync");
-		else if ((seg->flags & DM_FORCESYNC))
-			EMIT_PARAMS(pos, " sync");
-
-		if ((seg->flags & DM_BLOCK_ON_ERROR))
-			EMIT_PARAMS(pos, " block_on_error");
-
-		EMIT_PARAMS(pos, " %u", seg->mirror_area_count);
-
+		/* Mirrors are pretty complicated - now in separate function */
+		r = _mirror_emit_segment_line(dmt, major, minor, seg, seg_start,
+					      params, paramsize);
+		if (!r)
+			return_0;
 		break;
 	case SEG_SNAPSHOT:
 		if (!_build_dev_string(originbuf, sizeof(originbuf), seg->origin))
@@ -1323,7 +1469,14 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 		EMIT_PARAMS(pos, "%s", originbuf);
 		break;
 	case SEG_STRIPED:
-		EMIT_PARAMS(pos, "%u %u", seg->area_count, seg->stripe_size);
+		EMIT_PARAMS(pos, "%u %u ", seg->area_count, seg->stripe_size);
+		break;
+	case SEG_CRYPT:
+		EMIT_PARAMS(pos, "%s%s%s%s%s %s %" PRIu64 " ", seg->cipher,
+			    seg->chainmode ? "-" : "", seg->chainmode ?: "",
+			    seg->iv ? "-" : "", seg->iv ?: "", seg->key,
+			    seg->iv_offset != DM_CRYPT_IV_DEFAULT ?
+			    seg->iv_offset : *seg_start);
 		break;
 	}
 
@@ -1333,8 +1486,8 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 	case SEG_SNAPSHOT_ORIGIN:
 	case SEG_ZERO:
 		break;
+	case SEG_CRYPT:
 	case SEG_LINEAR:
-	case SEG_MIRRORED:
 	case SEG_STRIPED:
 		if ((r = _emit_areas_line(dmt, seg, params, paramsize, &pos)) <= 0) {
 			stack;
@@ -1343,7 +1496,8 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 		break;
 	}
 
-	log_debug("Adding target: %" PRIu64 " %" PRIu64 " %s %s",
+	log_debug("Adding target to (%" PRIu32 ":%" PRIu32 "): %" PRIu64
+		  " %" PRIu64 " %s %s", major, minor,
 		  *seg_start, seg->size, dm_segtypes[seg->type].target, params);
 
 	if (!dm_task_add_target(dmt, *seg_start, seg->size, dm_segtypes[seg->type].target, params))
@@ -1356,8 +1510,8 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 
 #undef EMIT_PARAMS
 
-static int _emit_segment(struct dm_task *dmt, struct load_segment *seg,
-			 uint64_t *seg_start)
+static int _emit_segment(struct dm_task *dmt, uint32_t major, uint32_t minor,
+			 struct load_segment *seg, uint64_t *seg_start)
 {
 	char *params;
 	size_t paramsize = 4096;
@@ -1370,7 +1524,8 @@ static int _emit_segment(struct dm_task *dmt, struct load_segment *seg,
 		}
 
 		params[0] = '\0';
-		ret = _emit_segment_line(dmt, seg, seg_start, params, paramsize);
+		ret = _emit_segment_line(dmt, major, minor, seg, seg_start,
+					 params, paramsize);
 		dm_free(params);
 
 		if (!ret)
@@ -1396,7 +1551,8 @@ static int _load_node(struct dm_tree_node *dnode)
 	struct load_segment *seg;
 	uint64_t seg_start = 0;
 
-	log_verbose("Loading %s table", dnode->name);
+	log_verbose("Loading %s table (%" PRIu32 ":%" PRIu32 ")", dnode->name,
+		    dnode->info.major, dnode->info.minor);
 
 	if (!(dmt = dm_task_create(DM_DEVICE_RELOAD))) {
 		log_error("Reload dm_task creation failed for %s", dnode->name);
@@ -1418,7 +1574,8 @@ static int _load_node(struct dm_tree_node *dnode)
 		log_error("Failed to disable open_count");
 
 	dm_list_iterate_items(seg, &dnode->props.segs)
-		if (!_emit_segment(dmt, seg, &seg_start))
+		if (!_emit_segment(dmt, dnode->info.major, dnode->info.minor,
+				   seg, &seg_start))
 			goto_out;
 
 	if (!dm_task_suppress_identical_reload(dmt))
@@ -1483,6 +1640,10 @@ int dm_tree_preload_children(struct dm_tree_node *dnode,
 			}
 		}
 
+		/* Propagate device size change change */
+		if (child->props.size_changed)
+			dnode->props.size_changed = 1;
+
 		/* Resume device immediately if it has parents and its size changed */
 		if (!dm_tree_node_num_children(child, 1) || !child->props.size_changed)
 			continue;
@@ -1491,8 +1652,8 @@ int dm_tree_preload_children(struct dm_tree_node *dnode,
 			continue;
 
 		if (!_resume_node(child->name, child->info.major, child->info.minor,
-				  child->props.read_ahead,
-				  child->props.read_ahead_flags, &newinfo)) {
+				  child->props.read_ahead, child->props.read_ahead_flags,
+				  &newinfo, &child->dtree->cookie, child->udev_flags)) {
 			log_error("Unable to resume %s (%" PRIu32
 				  ":%" PRIu32 ")", child->name, child->info.major,
 				  child->info.minor);
@@ -1666,6 +1827,28 @@ int dm_tree_node_add_striped_target(struct dm_tree_node *node,
 	return 1;
 }
 
+int dm_tree_node_add_crypt_target(struct dm_tree_node *node,
+				  uint64_t size,
+				  const char *cipher,
+				  const char *chainmode,
+				  const char *iv,
+				  uint64_t iv_offset,
+				  const char *key)
+{
+	struct load_segment *seg;
+
+	if (!(seg = _add_segment(node, SEG_CRYPT, size)))
+		return_0;
+
+	seg->cipher = cipher;
+	seg->chainmode = chainmode;
+	seg->iv = iv;
+	seg->iv_offset = iv_offset;
+	seg->key = key;
+
+	return 1;
+}
+
 int dm_tree_node_add_mirror_target_log(struct dm_tree_node *node,
 					  uint32_t region_size,
 					  unsigned clustered, 
@@ -1785,4 +1968,14 @@ int dm_tree_node_add_target_area(struct dm_tree_node *node,
 		return_0;
 
 	return 1;
+}
+
+void dm_tree_set_cookie(struct dm_tree_node *node, uint32_t cookie)
+{
+	node->dtree->cookie = cookie;
+}
+
+uint32_t dm_tree_get_cookie(struct dm_tree_node *node)
+{
+	return node->dtree->cookie;
 }

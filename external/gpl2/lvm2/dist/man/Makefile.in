@@ -14,6 +14,7 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 ifeq ("@FSADM@", "yes")
@@ -29,8 +30,8 @@ MAN8=lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 lvm.8 \
 	lvscan.8 pvchange.8 pvck.8 pvcreate.8 pvdisplay.8 pvmove.8 pvremove.8 \
 	pvresize.8 pvs.8 pvscan.8 vgcfgbackup.8 vgcfgrestore.8 vgchange.8 \
 	vgck.8 vgcreate.8 vgconvert.8 vgdisplay.8 vgexport.8 vgextend.8 \
-	vgimport.8 vgmerge.8 vgmknodes.8 vgreduce.8 vgremove.8 vgrename.8 \
-	vgs.8 vgscan.8 vgsplit.8 $(FSADMMAN)
+	vgimport.8 vgimportclone.8 vgmerge.8 vgmknodes.8 vgreduce.8 vgremove.8 \
+	vgrename.8 vgs.8 vgscan.8 vgsplit.8 $(FSADMMAN)
 MAN8CLUSTER=clvmd.8
 MAN8DM=dmsetup.8
 MAN5DIR=${mandir}/man5
@@ -38,7 +39,7 @@ MAN8DIR=${mandir}/man8
 
 CLEAN_TARGETS=$(MAN5) $(MAN8) $(MAN8CLUSTER) $(FSADMMAN) $(MAN8DM)
 
-include $(top_srcdir)/make.tmpl
+include ../make.tmpl
 
 ifneq ("@CLVMD@", "none")
   install: install_cluster
@@ -57,7 +58,7 @@ $(MAN5) $(MAN8) $(MAN8CLUSTER):	Makefile
 %: %.in
 	$(SED) -e "s/#VERSION#/$(LVM_VERSION)/" $< > $@
 
-install: install_device-mapper
+install_lvm2:
 	@echo "Installing $(MAN8) in $(MAN8DIR)"
 	@for f in $(MAN8); \
 	do \
@@ -87,3 +88,5 @@ install_device-mapper:
 	   $(RM) $(MAN8DIR)/$$f; \
 	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \
 	done
+
+install: install_lvm2 install_device-mapper

@@ -1,32 +1,33 @@
-.\"	$NetBSD: lvchange.8,v 1.1.1.1 2008/12/22 00:18:25 haad Exp $
+.\"	$NetBSD: lvchange.8,v 1.1.1.2 2009/12/02 00:26:54 haad Exp $
 .\"
-.TH LVCHANGE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVCHANGE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvchange \- change attributes of a logical volume
 .SH SYNOPSIS
 .B lvchange
 [\-\-addtag Tag]
-[\-A/\-\-autobackup y/n] [\-a/\-\-available y/n/ey/en/ly/ln]
+[\-A|\-\-autobackup y|n] [\-a|\-\-available y|n|ey|en|ly|ln]
 [\-\-alloc AllocationPolicy]
-[\-C/\-\-contiguous y/n] [\-d/\-\-debug] [\-\-deltag Tag]
+[\-C|\-\-contiguous y|n] [\-d|\-\-debug] [\-\-deltag Tag]
 [\-\-resync]
-[\-h/\-?/\-\-help]
+[\-h|\-?|\-\-help]
 [\-\-ignorelockingfailure]
 [\-\-ignoremonitoring]
 [\-\-monitor {y|n}]
-[\-M/\-\-persistent y/n] [\-\-minor minor]
-[\-P/\-\-partial]
-[\-p/\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
+[\-\-noudevsync]
+[\-M|\-\-persistent y|n] [\-\-minor minor]
+[\-P|\-\-partial]
+[\-p|\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
 [\-\-refresh]
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
 .SH DESCRIPTION
 lvchange allows you to change the attributes of a logical volume
 including making them known to the kernel ready for use.
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .TP
-.I \-a, \-\-available y/n/ey/en/ly/ln
+.I \-a, \-\-available y|n|ey|en|ly|ln
 Controls the availability of the logical volumes for use.
 Communicates with the kernel device-mapper driver via
 libdevmapper to activate (-ay) or deactivate (-an) the 
@@ -38,7 +39,7 @@ To deactivate only on the local node use -aln.
 Logical volumes with single-host snapshots are always activated 
 exclusively because they can only be used on one node at once.
 .TP
-.I \-C, \-\-contiguous y/n
+.I \-C, \-\-contiguous y|n
 Tries to set or reset the contiguous allocation policy for
 logical volumes. It's only possible to change a non-contiguous
 logical volume's allocation policy to contiguous, if all of the
@@ -55,7 +56,7 @@ of your data.
 .I \-\-minor minor
 Set the minor number.
 .TP
-.I \-\-monitor y/n
+.I \-\-monitor y|n
 Controls whether or not a mirrored logical volume is monitored by
 dmeventd, if it is installed.
 If a device used by a monitored mirror reports an I/O error,
@@ -63,12 +64,19 @@ the failure is handled according to
 \fBmirror_image_fault_policy\fP and \fBmirror_log_fault_policy\fP
 set in \fBlvm.conf\fP.
 .TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
+.TP
 .I \-\-ignoremonitoring
 Make no attempt to interact with dmeventd unless \-\-monitor
 is specified.
 Do not use this if dmeventd is already monitoring a device.
 .TP
-.I \-M, \-\-persistent y/n
+.I \-M, \-\-persistent y|n
 Set to y to make the minor number specified persistent.
 .TP
 .I \-p, \-\-permission r|rw

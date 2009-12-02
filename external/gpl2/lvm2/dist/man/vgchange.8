@@ -1,6 +1,6 @@
-.\"	$NetBSD: vgchange.8,v 1.1.1.1 2008/12/22 00:18:24 haad Exp $
+.\"	$NetBSD: vgchange.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH VGCHANGE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH VGCHANGE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgchange \- change attributes of a volume group
 .SH SYNOPSIS
@@ -20,13 +20,15 @@ vgchange \- change attributes of a volume group
 .RB [ \-h | \-\-help]
 .RB [ \-\-ignorelockingfailure]
 .RB [ \-\-ignoremonitoring]
+.RB [ \-\-noudevsync ]
 .RB [ \-l | \-\-logicalvolume
 .IR MaxLogicalVolumes ]
 .RB [ -p | \-\-maxphysicalvolumes
 .IR MaxPhysicalVolumes ]
 .RB [ \-P | \-\-partial]
 .RB [ \-s | \-\-physicalextentsize
-.IR PhysicalExtentSize [ \fBkKmMgGtT\fR ]]
+.IR PhysicalExtentSize [ \fBbBsSkKmMgGtTpPeE\fR ]]
+.RB [ \-\-refresh]
 .RB [ -t | \-\-test]
 .RB [ \-v | \-\-verbose]
 .RB [ \-\-version ]
@@ -87,6 +89,13 @@ and
 set in 
 .BR lvm.conf (5).
 .TP
+.BR \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
+.TP
 .BR \-\-ignoremonitoring
 Make no attempt to interact with dmeventd unless 
 .BR \-\-monitor
@@ -106,10 +115,10 @@ removes this restriction: there is then no limit.
 If you have a large number of physical volumes in
 a volume group with metadata in lvm2 format,
 for tool performance reasons, you should consider
-some use of \fB--metadatacopies 0\fP
+some use of \fB--pvmetadatacopies 0\fP
 as described in \fBpvcreate(8)\fP.
 .TP
-.BR \-s ", " \-\-physicalextentsize " " \fIPhysicalExtentSize\fR[\fBkKmMgGtT\fR]
+.BR \-s ", " \-\-physicalextentsize " " \fIPhysicalExtentSize\fR[\fBbBsSkKmMgGtTpPeE\fR]
 Changes the physical extent size on physical volumes of this volume group.
 A size suffix (k for kilobytes up to t for terabytes) is optional, megabytes
 is the default if no suffix is present.
@@ -129,6 +138,12 @@ but having a large number of extents will slow down the tools but have no
 impact on I/O performance to the logical volume.  The smallest PE is 1KB.
  
 The 2.4 kernel has a limitation of 2TB per block device.
+.TP
+.BR \-\-refresh
+If any logical volume in the volume group is active, reload its metadata.
+This is not necessary in normal operation, but may be useful
+if something has gone wrong or if you're doing clustering
+manually without a clustered lock manager.
 .TP
 .BR \-x ", " \-\-resizeable " " { y | n }
 Enables or disables the extension/reduction of this volume group

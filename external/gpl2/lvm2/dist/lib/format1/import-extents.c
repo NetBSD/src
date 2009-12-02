@@ -1,4 +1,4 @@
-/*	$NetBSD: import-extents.c,v 1.1.1.1 2008/12/22 00:18:00 haad Exp $	*/
+/*	$NetBSD: import-extents.c,v 1.1.1.2 2009/12/02 00:26:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -52,8 +52,8 @@ static struct dm_hash_table *_create_lv_maps(struct dm_pool *mem,
 	struct lv_map *lvm;
 
 	if (!maps) {
-		log_err("Unable to create hash table for holding "
-			"extent maps.");
+		log_error("Unable to create hash table for holding "
+			  "extent maps.");
 		return NULL;
 	}
 
@@ -91,8 +91,8 @@ static int _fill_lv_array(struct lv_map **lvs,
 	dm_list_iterate_items(ll, &dl->lvds) {
 		if (!(lvm = dm_hash_lookup(maps, strrchr((char *)ll->lvd.lv_name, '/')
 					+ 1))) {
-			log_err("Physical volume (%s) contains an "
-				"unknown logical volume (%s).",
+			log_error("Physical volume (%s) contains an "
+				  "unknown logical volume (%s).",
 				dev_name(dl->dev), ll->lvd.lv_name);
 			return 0;
 		}
@@ -146,14 +146,14 @@ static int _fill_maps(struct dm_hash_table *maps, struct volume_group *vg,
 				le = e[i].le_num;
 
 				if (le >= lvm->lv->le_count) {
-					log_err("logical extent number "
-						"out of bounds");
+					log_error("logical extent number "
+						  "out of bounds");
 					return 0;
 				}
 
 				if (lvm->map[le].pv) {
-					log_err("logical extent (%u) "
-						"already mapped.", le);
+					log_error("logical extent (%u) "
+						  "already mapped.", le);
 					return 0;
 				}
 
@@ -172,8 +172,8 @@ static int _check_single_map(struct lv_map *lvm)
 
 	for (i = 0; i < lvm->lv->le_count; i++) {
 		if (!lvm->map[i].pv) {
-			log_err("Logical volume (%s) contains an incomplete "
-				"mapping table.", lvm->lv->name);
+			log_error("Logical volume (%s) contains an incomplete "
+				  "mapping table.", lvm->lv->name);
 			return 0;
 		}
 	}
@@ -348,12 +348,12 @@ int import_extents(struct cmd_context *cmd, struct volume_group *vg,
 		return_0;
 
 	if (!(maps = _create_lv_maps(scratch, vg))) {
-		log_err("Couldn't allocate logical volume maps.");
+		log_error("Couldn't allocate logical volume maps.");
 		goto out;
 	}
 
 	if (!_fill_maps(maps, vg, pvds)) {
-		log_err("Couldn't fill logical volume maps.");
+		log_error("Couldn't fill logical volume maps.");
 		goto out;
 	}
 
@@ -361,7 +361,7 @@ int import_extents(struct cmd_context *cmd, struct volume_group *vg,
 		goto_out;
 
 	if (!_build_all_segments(cmd, maps)) {
-		log_err("Couldn't build extent segments.");
+		log_error("Couldn't build extent segments.");
 		goto out;
 	}
 	r = 1;

@@ -1,17 +1,17 @@
-.\"	$NetBSD: pvchange.8,v 1.1.1.1 2008/12/22 00:18:22 haad Exp $
+.\"	$NetBSD: pvchange.8,v 1.1.1.2 2009/12/02 00:26:55 haad Exp $
 .\"
-.TH PVCHANGE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH PVCHANGE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 pvchange \- change attributes of a physical volume
 .SH SYNOPSIS
 .B pvchange
 [\-\-addtag Tag]
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] 
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] 
 [\-\-deltag Tag]
-[\-h/\-?/\-\-help]
-[\-t/\-\-test]
-[\-v/\-\-verbose] [\-a/\-\-all] [\-x/\-\-allocatable y/n]
-[\-u/\-\-uuid] [PhysicalVolumePath...]
+[\-h|\-?|\-\-help]
+[\-t|\-\-test]
+[\-v|\-\-verbose] [\-a|\-\-all] [\-x|\-\-allocatable y|n]
+[\-u|\-\-uuid] [PhysicalVolumePath...]
 .SH DESCRIPTION
 pvchange allows you to change the allocation permissions of one or
 more physical volumes.
@@ -25,7 +25,7 @@ physical volumes are searched for and used.
 .I \-u, \-\-uuid
 Generate new random UUID for specified physical volumes.
 .TP
-.I \-x, \-\-allocatable y/n
+.I \-x, \-\-allocatable y|n
 Enable or disable allocation of physical extents on this physical volume.
 .SH Example
 "pvchange -x n /dev/sdk1" disallows the allocation of physical extents

@@ -1,19 +1,21 @@
-.\"	$NetBSD: lvremove.8,v 1.1.1.1 2008/12/22 00:18:23 haad Exp $
+.\"	$NetBSD: lvremove.8,v 1.1.1.2 2009/12/02 00:26:57 haad Exp $
 .\"
-.TH LVREMOVE 8 "LVM TOOLS 2.2.02.43-cvs (12-13-08)" "Sistina Software UK" \" -*- nroff -*-
+.TH LVREMOVE 8 "LVM TOOLS 2.02.56(1)-cvs (12-01-09)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvremove \- remove a logical volume
 .SH SYNOPSIS
 .B lvremove
-[\-A/\-\-autobackup y/n] [\-d/\-\-debug] [\-f/\-\-force]
-[\-h/\-?/\-\-help] 
-[\-t/\-\-test]
-[\-v/\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
+[\-A|\-\-autobackup y|n] [\-d|\-\-debug] [\-f|\-\-force]
+[\-h|\-?|\-\-help] 
+[\-\-noudevsync]
+[\-t|\-\-test]
+[\-v|\-\-verbose] LogicalVolumePath [LogicalVolumePath...]
 .SH DESCRIPTION
 \fBlvremove\fP removes one or more logical volumes.
 Confirmation will be requested before deactivating any active logical
 volume prior to removal.  Logical volumes cannot be deactivated
 or removed while they are open (e.g. if they contain a mounted filesystem).
+Removing an origin logical volume will also remove all dependent snapshots.
 .sp
 If the logical volume is clustered then it must be deactivated on all
 nodes in the cluster before it can be removed. A single lvchange command
@@ -23,6 +25,13 @@ See \fBlvm\fP(8) for common options.
 .TP
 .I \-f, \-\-force
 Remove active logical volumes without confirmation.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .SH EXAMPLES
 Remove the active logical volume lvol1 in volume group vg00 
 without asking for confirmation:
