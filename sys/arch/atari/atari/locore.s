@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 2009/11/26 00:19:13 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 2009/12/02 15:53:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1024,15 +1024,13 @@ Lend_cpuset:
 	jsr	_C_LABEL(start_c)
 
 	/*
-	 * set kernel stack, user SP, and initial pcb
+	 * set kernel stack, user SP
 	 */
-	lea	_C_LABEL(lwp0),%a0	| grab lwp0.p_addr
-	movl	%a0@(L_ADDR),%a1
+	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a2,%a1@(PCB_USP)	| and save it
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 	clrw	%a1@(PCB_FLAGS)		| clear flags
 
 	/* flush TLB and turn on caches */
@@ -1077,7 +1075,7 @@ Lcacheon:
   	movw	#PSL_USER,%sp@-		|  in user mode
 	clrl	%sp@-			|  stack adjust count
 	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
-	#lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
+	lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
 	movl	%sp,%a0@(L_MD_REGS)     | save frame for lwp0
 	movl	%usp,%a1
 	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
