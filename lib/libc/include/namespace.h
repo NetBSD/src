@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.139 2009/12/01 00:52:13 roy Exp $	*/
+/*	$NetBSD: namespace.h,v 1.140 2009/12/02 08:46:33 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -295,6 +295,7 @@
 #define gethostent		_gethostent
 #define gethostname		_gethostname
 #define getifaddrs		_getifaddrs
+#define getline			_getline
 #define getloadavg		_getloadavg
 #define getlogin		_getlogin
 #define getlogin_r		_getlogin_r
