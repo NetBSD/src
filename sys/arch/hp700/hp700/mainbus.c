@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.56 2009/11/11 16:08:31 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.57 2009/12/02 13:45:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.56 2009/11/11 16:08:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.57 2009/12/02 13:45:13 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -396,7 +396,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	 * Allocate the region of I/O space.
 	 */
 	error = extent_alloc_subregion1(hp700_io_extent, rstart, rend, size,
-					align, 0, boundary, EX_NOWAIT, &bpa);
+	    align, 0, boundary, EX_NOWAIT, &bpa);
 	if (error)
 		return (error);
 
