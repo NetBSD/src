@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.12 2009/11/22 12:00:56 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.13 2009/12/02 13:05:09 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.12 2009/11/22 12:00:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.13 2009/12/02 13:05:09 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -123,6 +123,7 @@ static struct pxa2x0_gpioconf pxa255dep_gpioconf[] = {
 static struct pxa2x0_gpioconf verdexdep_gpioconf[] = {
 	/* Bluetooth module configuration */
 	{   9, GPIO_ALT_FN_3_OUT },	/* CHOUT<0> */
+	{  12, GPIO_OUT | GPIO_SET },
 
 	/* LCD configuration */
 	{  17, GPIO_IN },		/* backlight on */
@@ -278,7 +279,11 @@ gxio_config_pin(void)
 #endif
 
 	/* XXX: turn off for power of bluetooth module */
+#if defined(CPU_XSCALE_PXA250)
 	pxa2x0_gpio_set_function(7, GPIO_OUT | GPIO_CLR);
+#elif defined(CPU_XSCALE_PXA270)
+	pxa2x0_gpio_set_function(12, GPIO_OUT | GPIO_CLR);
+#endif
 	delay(100);
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
