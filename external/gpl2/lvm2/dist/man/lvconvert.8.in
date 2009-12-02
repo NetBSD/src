@@ -5,31 +5,49 @@ lvconvert \- convert a logical volume from linear to mirror or snapshot
 .B lvconvert
 \-m|\-\-mirrors Mirrors [\-\-mirrorlog {disk|core}] [\-\-corelog] [\-R|\-\-regionsize MirrorLogRegionSize]
 [\-A|\-\-alloc AllocationPolicy]
-[\-b|\-\-background] [\-i|\-\-interval Seconds]
+[\-b|\-\-background] [\-f|\-\-force] [\-i|\-\-interval Seconds]
 [\-h|\-?|\-\-help]
-[\-v|\-\-verbose]
+[\-\-noudevsync]
+[\-v|\-\-verbose] [\-y|\-\-yes]
 [\-\-version]
 .br
-LogicalVolume[Path] [PhysicalVolume[Path]...]
+LogicalVolume[Path] [PhysicalVolume[Path][:PE[-PE]]...]
 .br
 
 .br
 .B lvconvert
 \-s|\-\-snapshot [\-c|\-\-chunksize ChunkSize]
 [\-h|\-?|\-\-help]
+[\-\-noudevsync]
 [\-v|\-\-verbose]
 [\-Z|\-\-zero y|n]
 [\-\-version]
 .br
 OriginalLogicalVolume[Path] SnapshotLogicalVolume[Path]
+
+.B lvconvert
+\-\-repair
+[\-h|\-?|\-\-help]
+[\-v|\-\-verbose]
+[\-\-version]
+LogicalVolume[Path] [PhysicalVolume[Path]...]
 .SH DESCRIPTION
 lvconvert will change a linear logical volume to a mirror
 logical volume or to a snapshot of linear volume and vice versa.
 It is also used to add and remove disk logs from mirror devices.
+.br
+If the conversion requires allocation of physical extents (for
+example, when converting from linear to mirror) and you specify
+one or more PhysicalVolumes (optionally with ranges of physical
+extents), allocation of physical extents will be restricted to
+these physical extents.  If the conversion frees physical extents
+(for example, when converting from a mirror to a linear, or reducing
+mirror legs) and you specify one or more PhysicalVolumes,
+the freed extents come first from the specified PhysicalVolumes.
 .SH OPTIONS
 See \fBlvm\fP for common options.
 .br
-Exactly one of \-\-mirrors or \-\-snapshot arguments required.
+Exactly one of \-\-mirrors, \-\-repair or \-\-snapshot arguments required.
 .br
 .TP
 .I \-m, \-\-mirrors Mirrors
@@ -59,6 +77,23 @@ Run the daemon in the background.
 .TP
 .I \-i, \-\-interval Seconds
 Report progress as a percentage at regular intervals.
+.br
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
+.TP
+.I \-\-repair
+Repair a mirror after suffering a disk failure. The mirror will be brought back
+into a consistent state.  By default, the original number of mirrors will be
+restored if possible.  Specify \-y on the command line to skip the prompts.
+Use \-f if you do not want any replacement.  Additionally, you may use
+\-\-use-policies to use the device replacement policy specified in lvm.conf,
+viz. activation/mirror_log_fault_policy or
+activation/mirror_device_fault_policy.
 .br
 .TP
 .I \-s, \-\-snapshot
@@ -98,6 +133,18 @@ volume.
 "lvconvert -s vg00/lvol1 vg00/lvol2"
 .br
 converts logical volume "vg00/lvol2" to snapshot of original volume "vg00/lvol1"
+
+.br
+"lvconvert -m1 vg00/lvol1 /dev/sda:0-15 /dev/sdb:0-15"
+.br
+converts linear logical volume "vg00/lvol1" to a two-way mirror, using physical
+extents /dev/sda:0-15 and /dev/sdb:0-15 for allocation of new extents.
+
+.br
+"lvconvert -m0 vg00/lvmirror1 /dev/sda
+.br
+converts mirror logical volume "vg00/lvmirror1" to linear, freeing physical
+extents from /dev/sda.
 
 .SH SEE ALSO
 .BR lvm (8),

@@ -1,4 +1,4 @@
-/*	$NetBSD: vgdisplay.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgdisplay.c,v 1.1.1.2 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -18,18 +18,10 @@
 #include "tools.h"
 
 static int vgdisplay_single(struct cmd_context *cmd, const char *vg_name,
-			    struct volume_group *vg, int consistent,
+			    struct volume_group *vg,
 			    void *handle __attribute((unused)))
 {
 	/* FIXME Do the active check here if activevolumegroups_ARG ? */
-	if (!vg) {
-		log_error("Volume group \"%s\" doesn't exist", vg_name);
-		return ECMD_FAILED;
-	}
-
-	if (!consistent)
-		log_error("WARNING: Volume group \"%s\" inconsistent", vg_name);
-
 	vg_check_status(vg, EXPORTED_VG);
 
 	if (arg_count(cmd, colon_ARG)) {
@@ -89,8 +81,6 @@ int vgdisplay(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
-	/* FIXME -D disk_ARG is now redundant */
-
 /********* FIXME: Do without this - or else 2(+) passes!
 	   Figure out longest volume group name
 	for (c = opt; opt < argc; opt++) {
@@ -100,7 +90,7 @@ int vgdisplay(struct cmd_context *cmd, int argc, char **argv)
 	}
 **********/
 
-	return process_each_vg(cmd, argc, argv, LCK_VG_READ, 0, NULL,
+	return process_each_vg(cmd, argc, argv, 0, NULL,
 			       vgdisplay_single);
 
 /******** FIXME Need to count number processed

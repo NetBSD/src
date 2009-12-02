@@ -1,8 +1,8 @@
-/*	$NetBSD: vgimport.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgimport.c,v 1.1.1.2 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -19,30 +19,24 @@
 
 static int vgimport_single(struct cmd_context *cmd __attribute((unused)),
 			   const char *vg_name,
-			   struct volume_group *vg, int consistent,
+			   struct volume_group *vg,
 			   void *handle __attribute((unused)))
 {
 	struct pv_list *pvl;
 	struct physical_volume *pv;
 
-	if (!vg || !consistent) {
-		log_error("Unable to find exported volume group \"%s\"",
-			  vg_name);
-		goto error;
-	}
-
-	if (!(vg_status(vg) & EXPORTED_VG)) {
+	if (!vg_is_exported(vg)) {
 		log_error("Volume group \"%s\" is not exported", vg_name);
-		goto error;
+		goto bad;
 	}
 
 	if (vg_status(vg) & PARTIAL_VG) {
 		log_error("Volume group \"%s\" is partially missing", vg_name);
-		goto error;
+		goto bad;
 	}
 
 	if (!archive(vg))
-		goto error;
+		goto_bad;
 
 	vg->status &= ~EXPORTED_VG;
 
@@ -52,7 +46,7 @@ static int vgimport_single(struct cmd_context *cmd __attribute((unused)),
 	}
 
 	if (!vg_write(vg) || !vg_commit(vg))
-		goto error;
+		goto_bad;
 
 	backup(vg);
 
@@ -60,7 +54,7 @@ static int vgimport_single(struct cmd_context *cmd __attribute((unused)),
 
 	return ECMD_PROCESSED;
 
-      error:
+bad:
 	return ECMD_FAILED;
 }
 
@@ -76,6 +70,8 @@ int vgimport(struct cmd_context *cmd, int argc, char **argv)
 		return ECMD_FAILED;
 	}
 
-	return process_each_vg(cmd, argc, argv, LCK_VG_WRITE, 1, NULL,
+	return process_each_vg(cmd, argc, argv,
+			       READ_FOR_UPDATE | READ_ALLOW_EXPORTED,
+			       NULL,
 			       &vgimport_single);
 }

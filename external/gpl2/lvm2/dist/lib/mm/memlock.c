@@ -1,4 +1,4 @@
-/*	$NetBSD: memlock.c,v 1.1.1.1 2008/12/22 00:18:13 haad Exp $	*/
+/*	$NetBSD: memlock.c,v 1.1.1.2 2009/12/02 00:26:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -55,6 +55,7 @@ static size_t _size_malloc = 2000000;
 
 static void *_malloc_mem = NULL;
 static int _memlock_count = 0;
+static int _memlock_count_daemon = 0;
 static int _priority;
 static int _default_priority;
 
@@ -125,20 +126,61 @@ static void _unlock_mem(void)
 			  strerror(errno));
 }
 
+static void _lock_mem_if_needed(void) {
+	if ((_memlock_count + _memlock_count_daemon) == 1)
+		_lock_mem();
+}
+
+static void _unlock_mem_if_possible(void) {
+	if ((_memlock_count + _memlock_count_daemon) == 0)
+		_unlock_mem();
+}
+
 void memlock_inc(void)
 {
-	if (!_memlock_count++)
-		_lock_mem();
+	++_memlock_count;
+	_lock_mem_if_needed();
 	log_debug("memlock_count inc to %d", _memlock_count);
 }
 
 void memlock_dec(void)
 {
-	if (_memlock_count && (!--_memlock_count))
-		_unlock_mem();
+	if (!_memlock_count)
+		log_error("Internal error: _memlock_count has dropped below 0.");
+	--_memlock_count;
+	_unlock_mem_if_possible();
 	log_debug("memlock_count dec to %d", _memlock_count);
 }
 
+/*
+ * The memlock_*_daemon functions will force the mlockall() call that we need
+ * to stay in memory, but they will have no effect on device scans (unlike
+ * normal memlock_inc and memlock_dec). Memory is kept locked as long as either
+ * of memlock or memlock_daemon is in effect.
+ */
+
+void memlock_inc_daemon(void)
+{
+	++_memlock_count_daemon;
+	_lock_mem_if_needed();
+	log_debug("memlock_count_daemon inc to %d", _memlock_count_daemon);
+}
+
+void memlock_dec_daemon(void)
+{
+	if (!_memlock_count_daemon)
+		log_error("Internal error: _memlock_count_daemon has dropped below 0.");
+	--_memlock_count_daemon;
+	_unlock_mem_if_possible();
+	log_debug("memlock_count_daemon dec to %d", _memlock_count_daemon);
+}
+
+/*
+ * This disregards the daemon (dmeventd) locks, since we use memlock() to check
+ * whether it is safe to run a device scan, which would normally coincide with
+ * !memlock() -- but the daemon global memory lock breaks this assumption, so
+ * we do not take those into account here.
+ */
 int memlock(void)
 {
 	return _memlock_count;

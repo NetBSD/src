@@ -34,6 +34,10 @@ pvcreate --metadatacopies 0 $dev5
 pvs --noheadings|tee out
 test $(wc -l <out) -eq 5
 
+#COMM pvs with segment attributes works even for orphans
+pvs --noheadings -o  seg_all,pv_all,lv_all,vg_all | tee out
+test $(wc -l <out) -eq 5
+
 vgcreate -c n $vg $devs
 
 #COMM pvs and vgs report mda_count, mda_free (bz202886, bz247444)

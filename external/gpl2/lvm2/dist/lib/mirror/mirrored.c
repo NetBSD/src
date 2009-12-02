@@ -1,4 +1,4 @@
-/*	$NetBSD: mirrored.c,v 1.1.1.1 2008/12/22 00:18:12 haad Exp $	*/
+/*	$NetBSD: mirrored.c,v 1.1.1.2 2009/12/02 00:26:26 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
@@ -80,7 +80,7 @@ static int _mirrored_text_import_area_count(struct config_node *sn, uint32_t *ar
 {
 	if (!get_config_uint32(sn, "mirror_count", area_count)) {
 		log_error("Couldn't read 'mirror_count' for "
-			  "segment '%s'.", sn->key);
+			  "segment '%s'.", config_parent_name(sn));
 		return 0;
 	}
 
@@ -99,7 +99,8 @@ static int _mirrored_text_import(struct lv_segment *seg, const struct config_nod
 			seg->status |= PVMOVE;
 		else {
 			log_error("Couldn't read 'extents_moved' for "
-				  "segment '%s'.", sn->key);
+				  "segment %s of logical volume %s.",
+				  config_parent_name(sn), seg->lv->name);
 			return 0;
 		}
 	}
@@ -108,7 +109,8 @@ static int _mirrored_text_import(struct lv_segment *seg, const struct config_nod
 		if (!get_config_uint32(sn, "region_size",
 				      &seg->region_size)) {
 			log_error("Couldn't read 'region_size' for "
-				  "segment '%s'.", sn->key);
+				  "segment %s of logical volume %s.",
+				  config_parent_name(sn), seg->lv->name);
 			return 0;
 		}
 	}
@@ -120,22 +122,25 @@ static int _mirrored_text_import(struct lv_segment *seg, const struct config_nod
 		}
 		logname = cn->v->v.str;
 		if (!(seg->log_lv = find_lv(seg->lv->vg, logname))) {
-			log_error("Unrecognised mirror log in segment %s.",
-				  sn->key);
+			log_error("Unrecognised mirror log in "
+				  "segment %s of logical volume %s.",
+				  config_parent_name(sn), seg->lv->name);
 			return 0;
 		}
 		seg->log_lv->status |= MIRROR_LOG;
 	}
 
 	if (logname && !seg->region_size) {
-		log_error("Missing region size for mirror log for segment "
-			  "'%s'.", sn->key);
+		log_error("Missing region size for mirror log for "
+			  "segment %s of logical volume %s.",
+			  config_parent_name(sn), seg->lv->name);
 		return 0;
 	}
 
 	if (!(cn = find_config_node(sn, "mirrors"))) {
-		log_error("Couldn't find mirrors array for segment "
-			  "'%s'.", sn->key);
+		log_error("Couldn't find mirrors array for "
+			  "segment %s of logical volume %s.",
+			  config_parent_name(sn), seg->lv->name);
 		return 0;
 	}
 
@@ -175,10 +180,13 @@ static struct mirror_state *_mirrored_init_target(struct dm_pool *mem,
 	return mirr_state;
 }
 
-static int _mirrored_target_percent(void **target_state, struct dm_pool *mem,
-			   struct cmd_context *cmd, struct lv_segment *seg,
-			   char *params, uint64_t *total_numerator,
-			   uint64_t *total_denominator)
+static int _mirrored_target_percent(void **target_state,
+				    percent_range_t *percent_range,
+				    struct dm_pool *mem,
+				    struct cmd_context *cmd,
+				    struct lv_segment *seg, char *params,
+				    uint64_t *total_numerator,
+				    uint64_t *total_denominator)
 {
 	struct mirror_state *mirr_state;
 	uint64_t numerator, denominator;
@@ -222,6 +230,13 @@ static int _mirrored_target_percent(void **target_state, struct dm_pool *mem,
 
 	if (seg)
 		seg->extents_copied = seg->area_len * numerator / denominator;
+
+	if (numerator == denominator)
+		*percent_range = PERCENT_100;
+	else if (numerator == 0)
+		*percent_range = PERCENT_0;
+	else
+		*percent_range = PERCENT_0_TO_100;
 
 	return 1;
 }
@@ -277,7 +292,7 @@ static int _mirrored_add_target_line(struct dev_manager *dm, struct dm_pool *mem
 	uint32_t area_count = seg->area_count;
 	unsigned start_area = 0u;
 	int mirror_status = MIRR_RUNNING;
-	uint32_t region_size, region_max;
+	uint32_t region_size;
 	int r;
 
 	if (!*target_state)
@@ -320,18 +335,11 @@ static int _mirrored_add_target_line(struct dev_manager *dm, struct dm_pool *mem
 			return 0;
 		}
 		region_size = seg->region_size;
-	} else {
-		/* Find largest power of 2 region size unit we can use */
-		region_max = (1 << (ffs((int)seg->area_len) - 1)) *
-		      seg->lv->vg->extent_size;
 
-		region_size = mirr_state->default_region_size;
-		if (region_max < region_size) {
-			region_size = region_max;
-			log_verbose("Using reduced mirror region size of %u sectors",
-				    region_size);
-		}
-	}
+	} else
+		region_size = adjusted_mirror_region_size(seg->lv->vg->extent_size,
+							  seg->area_len,
+							  mirr_state->default_region_size);
 
 	if (!dm_tree_node_add_mirror_target(node, len))
 		return_0;
@@ -345,7 +353,8 @@ static int _mirrored_add_target_line(struct dev_manager *dm, struct dm_pool *mem
 	return add_areas_line(dm, seg, node, start_area, area_count);
 }
 
-static int _mirrored_target_present(const struct lv_segment *seg __attribute((unused)),
+static int _mirrored_target_present(struct cmd_context *cmd,
+				    const struct lv_segment *seg,
 				    unsigned *attributes)
 {
 	static int _mirrored_checked = 0;
@@ -355,17 +364,25 @@ static int _mirrored_target_present(const struct lv_segment *seg __attribute((un
 	char vsn[80];
 
 	if (!_mirrored_checked) {
-		_mirrored_present = target_present("mirror", 1);
+		_mirrored_present = target_present(cmd, "mirror", 1);
 
 		/*
-		 * block_on_error available with mirror target >= 1.1 and <= 1.11
+		 * block_on_error available as "block_on_error" log
+		 * argument with mirror target >= 1.1 and <= 1.11
 		 * or with 1.0 in RHEL4U3 driver >= 4.5
+		 *
+		 * block_on_error available as "handle_errors" mirror
+		 * argument with mirror target >= 1.12.
+		 *
+		 * libdm-deptree.c is smart enough to handle the differences
+		 * between block_on_error and handle_errors for all
+		 * mirror target versions >= 1.1
 		 */
 		/* FIXME Move this into libdevmapper */
 
 		if (target_version("mirror", &maj, &min, &patchlevel) &&
 		    maj == 1 &&
-		    ((min >= 1 && min <= 11) ||
+		    ((min >= 1) ||
 		     (min == 0 && driver_version(vsn, sizeof(vsn)) &&
 		      sscanf(vsn, "%u.%u.%u", &maj2, &min2, &patchlevel2) == 3 &&
 		      maj2 == 4 && min2 == 5 && patchlevel2 == 0)))	/* RHEL4U3 */
@@ -377,7 +394,7 @@ static int _mirrored_target_present(const struct lv_segment *seg __attribute((un
 	 * FIXME: Fails incorrectly if cmirror was built into kernel.
 	 */
 	if (attributes) {
-		if (!_mirror_attributes && module_present("log-clustered"))
+		if (!_mirror_attributes && module_present(cmd, "log-clustered"))
 			_mirror_attributes |= MIRROR_LOG_CLUSTERED;
 		*attributes = _mirror_attributes;
 	}

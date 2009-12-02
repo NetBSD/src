@@ -13,20 +13,25 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
-.PHONY: dmeventd clvmd
+.PHONY: dmeventd clvmd cmirrord
 
 ifneq ("@CLVMD@", "none")
   SUBDIRS = clvmd
 endif
 
-ifeq ("@DMEVENTD@", "yes")
+ifeq ("@BUILD_CMIRRORD@", "yes")
+  SUBDIRS += cmirrord
+endif
+
+ifeq ("@BUILD_DMEVENTD@", "yes")
   SUBDIRS += dmeventd
 endif
 
-include $(top_srcdir)/make.tmpl
+include ../make.tmpl
 
-ifeq ("@DMEVENTD@", "yes")
+ifeq ("@BUILD_DMEVENTD@", "yes")
 device-mapper: dmeventd.device-mapper
 endif

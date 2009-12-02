@@ -1,4 +1,4 @@
-/*	$NetBSD: disk_rep.c,v 1.1.1.1 2008/12/22 00:17:50 haad Exp $	*/
+/*	$NetBSD: disk_rep.c,v 1.1.1.2 2009/12/02 00:26:50 haad Exp $	*/
 
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
@@ -64,14 +64,15 @@ static void _add_pl_to_list(struct dm_list *head, struct pool_list *data)
 
 			id_write_format(&pl->pv_uuid, uuid, ID_LEN + 7);
 
-			if (MAJOR(data->dev->dev) != md_major()) {
+			if (!dev_subsystem_part_major(data->dev)) {
 				log_very_verbose("Ignoring duplicate PV %s on "
 						 "%s", uuid,
 						 dev_name(data->dev));
 				return;
 			}
-			log_very_verbose("Duplicate PV %s - using md %s",
-					 uuid, dev_name(data->dev));
+			log_very_verbose("Duplicate PV %s - using %s %s",
+					 uuid, dev_subsystem_name(data->dev),
+					 dev_name(data->dev));
 			dm_list_del(&pl->list);
 			break;
 		}

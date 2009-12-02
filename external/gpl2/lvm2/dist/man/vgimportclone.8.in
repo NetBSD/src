@@ -1,0 +1,58 @@
+.TH VGIMPORTCLONE 8 "LVM TOOLS #VERSION#" "Red Hat, Inc." \" -*- nroff -*-
+.SH NAME
+vgimportclone \- import and rename duplicated volume group (e.g. a hardware snapshot)
+.SH SYNOPSIS
+.B vgimportclone
+[\-n|\-\-basevgname VolumeGroupName]
+[\-i|\-\-import]
+PhysicalVolume [PhysicalVolume...]
+.SH DESCRIPTION
+.B vgimportclone
+is used to import a duplicated VG (e.g. hardware snapshot).  Duplicate VG(s)
+and PV(s) are not able to be used until they are made to coexist with
+the origin VG(s) and PV(s).   
+.B vgimportclone 
+renames the VG associated with the specified PV(s) and changes the
+associated VG and PV UUIDs.
+.SH OPTIONS
+See \fBlvm\fP for common options.
+.TP
+.I \-n|\-\-basevgname VolumeGroupName
+By default the snapshot VG will be renamed to the original name plus a
+numeric suffix to avoid duplicate naming (e.g. 'test_vg' would be renamed
+to 'test_vg1').  This option will override the base VG name that is
+used for all VG renames.  If a VG already exists with the specified name
+a numeric suffix will be added (like the previous example) to make it unique.
+.TP
+.I \-i|\-\-import
+Import exported Volume Groups.  Otherwise VGs that have been exported
+will not be changed (nor will their associated PVs).
+.SH ENVIRONMENT VARIABLES
+.TP
+\fBLVM_BINARY\fP
+The LVM2 binary to use.
+Defaults to "lvm".
+.SH EXAMPLES
+If origin VG
+.B test_vg 
+has PVs 
+.BR /dev/loop0 " and " /dev/loop1
+and 
+.BR /dev/loop2 " and " /dev/loop3
+are respective snapshot PVs of the origin PVs.
+To rename the VG
+associated with
+.BR /dev/loop2 " and " /dev/loop3
+from
+.B test_vg
+to
+.B test_vg_snap
+(and change associated VG and PV UUIDs):
+.nf
+
+\	vgimportclone --basevgname test_vg_snap /dev/loop2 /dev/loop3
+
+.fi
+.SH SEE ALSO
+.BR lvm (8)
+

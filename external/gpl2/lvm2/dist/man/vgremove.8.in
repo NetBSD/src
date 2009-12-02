@@ -4,7 +4,7 @@ vgremove \- remove a volume group
 .SH SYNOPSIS
 .B vgremove
 [\-d|\-\-debug] [\-f|\-\-force] [\-h|\-?|\-\-help]
-[\-t|\-\-test] [\-v|\-\-verbose]
+[\-\-noudevsync] [\-t|\-\-test] [\-v|\-\-verbose]
 VolumeGroupName [VolumeGroupName...]
 .SH DESCRIPTION
 vgremove allows you to remove one or more volume groups.
@@ -21,6 +21,13 @@ See \fBlvm\fP for common options.
 .BR \-f ", " \-\-force
 Force the removal of any logical volumes on the volume group
 without confirmation.
+.TP
+.BR \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .SH SEE ALSO
 .BR lvm (8),
 .BR lvremove (8),

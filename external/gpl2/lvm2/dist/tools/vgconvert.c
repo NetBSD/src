@@ -1,4 +1,4 @@
-/*	$NetBSD: vgconvert.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgconvert.c,v 1.1.1.2 2009/12/02 00:25:56 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -18,7 +18,7 @@
 #include "tools.h"
 
 static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
-			    struct volume_group *vg, int consistent,
+			    struct volume_group *vg,
 			    void *handle __attribute((unused)))
 {
 	struct physical_volume *pv, *existing_pv;
@@ -34,21 +34,10 @@ static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
 	struct lvinfo info;
 	int active = 0;
 
-	if (!vg) {
-		log_error("Unable to find volume group \"%s\"", vg_name);
+	if (!vg_check_status(vg, LVM_WRITE | EXPORTED_VG)) {
+		stack;
 		return ECMD_FAILED;
 	}
-
-	if (!consistent) {
-		unlock_vg(cmd, vg_name);
-		dev_close_all();
-		log_error("Volume group \"%s\" inconsistent", vg_name);
-		if (!(vg = recover_vg(cmd, vg_name, LCK_VG_WRITE)))
-			return ECMD_FAILED;
-	}
-
-	if (!vg_check_status(vg, LVM_WRITE | EXPORTED_VG))
-		return ECMD_FAILED;
 
 	if (vg->fid->fmt == cmd->fmt) {
 		log_error("Volume group \"%s\" already uses format %s",
@@ -70,7 +59,7 @@ static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
 					    "metadata/pvmetadatasize",
 					    DEFAULT_PVMETADATASIZE);
 
-		pvmetadatacopies = arg_int_value(cmd, metadatacopies_ARG, -1);
+		pvmetadatacopies = arg_int_value(cmd, pvmetadatacopies_ARG, -1);
 		if (pvmetadatacopies < 0)
 			pvmetadatacopies =
 			    find_config_tree_int(cmd,
@@ -123,8 +112,10 @@ static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
 		}
 	}
 
-	if (active)
+	if (active) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	dm_list_iterate_items(pvl, &vg->pvs) {
 		existing_pv = pvl->pv;
@@ -135,7 +126,7 @@ static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
 
 		dm_list_init(&mdas);
 		if (!(pv = pv_create(cmd, pv_dev(existing_pv),
-				     &existing_pv->id, size,
+				     &existing_pv->id, size, 0, 0,
 				     pe_start, pv_pe_count(existing_pv),
 				     pv_pe_size(existing_pv), pvmetadatacopies,
 				     pvmetadatasize, &mdas))) {
@@ -179,7 +170,7 @@ static int vgconvert_single(struct cmd_context *cmd, const char *vg_name,
 	}
 
 	log_verbose("Deleting existing metadata for VG %s", vg_name);
-	if (!vg_remove(vg)) {
+	if (!vg_remove_mdas(vg)) {
 		log_error("Removal of existing metadata for %s failed.",
 			  vg_name);
 		log_error("Use pvcreate and vgcfgrestore to repair "
@@ -222,19 +213,24 @@ int vgconvert(struct cmd_context *cmd, int argc, char **argv)
 		return EINVALID_CMD_LINE;
 	}
 
+	if (arg_count(cmd, metadatacopies_ARG)) {
+		log_error("Invalid option --metadatacopies, "
+			  "use --pvmetadatacopies instead.");
+		return EINVALID_CMD_LINE;
+	}
 	if (!(cmd->fmt->features & FMT_MDAS) &&
-	    (arg_count(cmd, metadatacopies_ARG) ||
+	    (arg_count(cmd, pvmetadatacopies_ARG) ||
 	     arg_count(cmd, metadatasize_ARG))) {
 		log_error("Metadata parameters only apply to text format");
 		return EINVALID_CMD_LINE;
 	}
 
-	if (arg_count(cmd, metadatacopies_ARG) &&
-	    arg_int_value(cmd, metadatacopies_ARG, -1) > 2) {
+	if (arg_count(cmd, pvmetadatacopies_ARG) &&
+	    arg_int_value(cmd, pvmetadatacopies_ARG, -1) > 2) {
 		log_error("Metadatacopies may only be 0, 1 or 2");
 		return EINVALID_CMD_LINE;
 	}
 
-	return process_each_vg(cmd, argc, argv, LCK_VG_WRITE, 0, NULL,
+	return process_each_vg(cmd, argc, argv, READ_FOR_UPDATE, NULL,
 			       &vgconvert_single);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_locking.c,v 1.1.1.2 2009/02/18 11:17:08 haad Exp $	*/
+/*	$NetBSD: file_locking.c,v 1.1.1.3 2009/12/02 00:26:24 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -40,17 +40,32 @@ struct lock_list {
 
 static struct dm_list _lock_list;
 static char _lock_dir[NAME_LEN];
+static int _prioritise_write_locks;
 
 static sig_t _oldhandler;
 static sigset_t _fullsigset, _intsigset;
 static volatile sig_atomic_t _handler_installed;
 
+static void _undo_flock(const char *file, int fd)
+{
+	struct stat buf1, buf2;
+
+	log_debug("_undo_flock %s", file);
+	if (!flock(fd, LOCK_NB | LOCK_EX) &&
+	    !stat(file, &buf1) &&
+	    !fstat(fd, &buf2) &&
+	    is_same_inode(buf1, buf2))
+		if (unlink(file))
+			log_sys_error("unlink", file);
+
+	if (close(fd) < 0)
+		log_sys_error("close", file);
+}
+
 static int _release_lock(const char *file, int unlock)
 {
 	struct lock_list *ll;
 	struct dm_list *llh, *llt;
-
-	struct stat buf1, buf2;
 
 	dm_list_iterate_safe(llh, llt, &_lock_list) {
 		ll = dm_list_item(llh, struct lock_list);
@@ -63,15 +78,7 @@ static int _release_lock(const char *file, int unlock)
 					log_sys_error("flock", ll->res);
 			}
 
-			if (!flock(ll->lf, LOCK_NB | LOCK_EX) &&
-			    !stat(ll->res, &buf1) &&
-			    !fstat(ll->lf, &buf2) &&
-			    is_same_inode(buf1, buf2))
-				if (unlink(ll->res))
-					log_sys_error("unlink", ll->res);
-
-			if (close(ll->lf) < 0)
-				log_sys_error("close", ll->res);
+			_undo_flock(ll->res, ll->lf);
 
 			dm_free(ll->res);
 			dm_free(llh);
@@ -126,14 +133,78 @@ static void _install_ctrl_c_handler()
 	siginterrupt(SIGINT, 1);
 }
 
+static int _do_flock(const char *file, int *fd, int operation, uint32_t nonblock)
+{
+	int r = 1;
+	int old_errno;
+	struct stat buf1, buf2;
+
+	log_debug("_do_flock %s %c%c",
+		  file, operation == LOCK_EX ? 'W' : 'R', nonblock ? ' ' : 'B');
+	do {
+		if ((*fd > -1) && close(*fd))
+			log_sys_error("close", file);
+
+		if ((*fd = open(file, O_CREAT | O_APPEND | O_RDWR, 0777)) < 0) {
+			log_sys_error("open", file);
+			return 0;
+		}
+
+		if (nonblock)
+			operation |= LOCK_NB;
+		else
+			_install_ctrl_c_handler();
+
+		r = flock(*fd, operation);
+		old_errno = errno;
+		if (!nonblock)
+			_remove_ctrl_c_handler();
+
+		if (r) {
+			errno = old_errno;
+			log_sys_error("flock", file);
+			close(*fd);
+			return 0;
+		}
+
+		if (!stat(file, &buf1) && !fstat(*fd, &buf2) &&
+		    is_same_inode(buf1, buf2))
+			return 1;
+	} while (!nonblock);
+
+	return_0;
+}
+
+#define AUX_LOCK_SUFFIX ":aux"
+
+static int _do_write_priority_flock(const char *file, int *fd, int operation, uint32_t nonblock)
+{
+	int r, fd_aux = -1;
+	char *file_aux = alloca(strlen(file) + sizeof(AUX_LOCK_SUFFIX));
+
+	strcpy(file_aux, file);
+	strcat(file_aux, AUX_LOCK_SUFFIX);
+
+	if ((r = _do_flock(file_aux, &fd_aux, LOCK_EX, 0))) {
+		if (operation == LOCK_EX) {
+			r = _do_flock(file, fd, operation, nonblock);
+			_undo_flock(file_aux, fd_aux);
+		} else {
+			_undo_flock(file_aux, fd_aux);
+			r = _do_flock(file, fd, operation, nonblock);
+		}
+	}
+
+	return r;
+}
+
 static int _lock_file(const char *file, uint32_t flags)
 {
 	int operation;
-	int r = 1;
-	int old_errno;
+	uint32_t nonblock = flags & LCK_NONBLOCK;
+	int r;
 
 	struct lock_list *ll;
-	struct stat buf1, buf2;
 	char state;
 
 	switch (flags & LCK_TYPE_MASK) {
@@ -153,56 +224,32 @@ static int _lock_file(const char *file, uint32_t flags)
 	}
 
 	if (!(ll = dm_malloc(sizeof(struct lock_list))))
-		return 0;
+		return_0;
 
 	if (!(ll->res = dm_strdup(file))) {
 		dm_free(ll);
-		return 0;
+		return_0;
 	}
 
 	ll->lf = -1;
 
 	log_very_verbose("Locking %s %c%c", ll->res, state,
-			 flags & LCK_NONBLOCK ? ' ' : 'B');
-	do {
-		if ((ll->lf > -1) && close(ll->lf))
-			log_sys_error("close", file);
+			 nonblock ? ' ' : 'B');
 
-		if ((ll->lf = open(file, O_CREAT | O_APPEND | O_RDWR, 0777))
-		    < 0) {
-			log_sys_error("open", file);
-			goto err;
-		}
+	if (_prioritise_write_locks)
+		r = _do_write_priority_flock(file, &ll->lf, operation, nonblock);
+	else 
+		r = _do_flock(file, &ll->lf, operation, nonblock);
 
-		if ((flags & LCK_NONBLOCK))
-			operation |= LOCK_NB;
-		else
-			_install_ctrl_c_handler();
+	if (r)
+		dm_list_add(&_lock_list, &ll->list);
+	else {
+		dm_free(ll->res);
+		dm_free(ll);
+		stack;
+	}
 
-		r = flock(ll->lf, operation);
-		old_errno = errno;
-		if (!(flags & LCK_NONBLOCK))
-			_remove_ctrl_c_handler();
-
-		if (r) {
-			errno = old_errno;
-			log_sys_error("flock", ll->res);
-			close(ll->lf);
-			goto err;
-		}
-
-		if (!stat(ll->res, &buf1) && !fstat(ll->lf, &buf2) &&
-		    is_same_inode(buf1, buf2))
-			break;
-	} while (!(flags & LCK_NONBLOCK));
-
-	dm_list_add(&_lock_list, &ll->list);
-	return 1;
-
-      err:
-	dm_free(ll->res);
-	dm_free(ll);
-	return 0;
+	return r;
 }
 
 static int _file_lock_resource(struct cmd_context *cmd, const char *resource,
@@ -284,6 +331,10 @@ int init_file_locking(struct locking_type *locking, struct cmd_context *cmd)
 	strncpy(_lock_dir, find_config_tree_str(cmd, "global/locking_dir",
 						DEFAULT_LOCK_DIR),
 		sizeof(_lock_dir));
+
+	_prioritise_write_locks =
+	    find_config_tree_bool(cmd, "global/prioritise_write_locks",
+				  DEFAULT_PRIORITISE_WRITE_LOCKS);
 
 	if (!dm_create_dir(_lock_dir))
 		return 0;

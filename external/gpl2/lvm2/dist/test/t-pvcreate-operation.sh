@@ -108,3 +108,10 @@ not pvcreate --uuid $uuid1 --restorefile $backupfile $dev1
 pvcreate --uuid $uuid1 $dev1
 vgcfgbackup -f $backupfile
 not pvcreate --uuid $uuid2 --restorefile $backupfile $dev2
+
+# pvcreate wipes swap signature when forced
+dd if=/dev/zero of=$dev1 bs=1024 count=64
+mkswap $dev1
+blkid -c /dev/null $dev1 | grep "swap"
+pvcreate -f $dev1
+blkid -c /dev/null $dev1 | not grep "swap"

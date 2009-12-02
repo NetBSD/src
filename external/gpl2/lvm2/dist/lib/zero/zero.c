@@ -1,4 +1,4 @@
-/*	$NetBSD: zero.c,v 1.1.1.1 2008/12/22 00:17:52 haad Exp $	*/
+/*	$NetBSD: zero.c,v 1.1.1.2 2009/12/02 00:26:25 haad Exp $	*/
 
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -52,14 +52,15 @@ static int _zero_add_target_line(struct dev_manager *dm __attribute((unused)),
 	return dm_tree_node_add_zero_target(node, len);
 }
 
-static int _zero_target_present(const struct lv_segment *seg __attribute((unused)),
+static int _zero_target_present(struct cmd_context *cmd,
+				const struct lv_segment *seg __attribute((unused)),
 				unsigned *attributes __attribute((unused)))
 {
 	static int _zero_checked = 0;
 	static int _zero_present = 0;
 
 	if (!_zero_checked)
-		_zero_present = target_present("zero", 0);
+		_zero_present = target_present(cmd, "zero", 1);
 
 	_zero_checked = 1;
 

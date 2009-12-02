@@ -1,4 +1,4 @@
-/*	$NetBSD: disk-rep.h,v 1.1.1.1 2008/12/22 00:17:59 haad Exp $	*/
+/*	$NetBSD: disk-rep.h,v 1.1.1.2 2009/12/02 00:26:48 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -217,7 +217,8 @@ int import_vg(struct dm_pool *mem,
 	      struct volume_group *vg, struct disk_list *dl);
 int export_vg(struct vg_disk *vgd, struct volume_group *vg);
 
-int import_lv(struct dm_pool *mem, struct logical_volume *lv, struct lv_disk *lvd);
+int import_lv(struct cmd_context *cmd, struct dm_pool *mem,
+	      struct logical_volume *lv, struct lv_disk *lvd);
 
 int import_extents(struct cmd_context *cmd, struct volume_group *vg,
 		   struct dm_list *pvds);

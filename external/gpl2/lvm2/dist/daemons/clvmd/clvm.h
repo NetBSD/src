@@ -1,4 +1,4 @@
-/*	$NetBSD: clvm.h,v 1.1.1.1 2008/12/22 00:18:49 haad Exp $	*/
+/*	$NetBSD: clvm.h,v 1.1.1.2 2009/12/02 00:27:01 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -64,6 +64,7 @@ static const char CLVMD_SOCKNAME[] = "\0clvmd";
 /* Lock/Unlock commands */
 #define CLVMD_CMD_LOCK_LV           50
 #define CLVMD_CMD_LOCK_VG           51
+#define CLVMD_CMD_LOCK_QUERY	    52
 
 /* Misc functions */
 #define CLVMD_CMD_REFRESH	    40

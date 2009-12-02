@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.1.1.1 2008/12/22 00:18:36 haad Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.2 2009/12/02 00:26:11 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -145,9 +145,13 @@ static struct dm_hash_node **_find(struct dm_hash_table *t, const char *key,
 	unsigned h = _hash(key, len) & (t->num_slots - 1);
 	struct dm_hash_node **c;
 
-	for (c = &t->slots[h]; *c; c = &((*c)->next))
+	for (c = &t->slots[h]; *c; c = &((*c)->next)) {
+		if ((*c)->keylen != len)
+			continue;
+
 		if (!memcmp(key, (*c)->key, len))
 			break;
+	}
 
 	return c;
 }

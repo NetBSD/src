@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh_clvmd.c,v 1.1.1.1 2008/12/22 00:18:52 haad Exp $	*/
+/*	$NetBSD: refresh_clvmd.c,v 1.1.1.2 2009/12/02 00:27:06 haad Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -17,7 +17,6 @@
 
 /*
  * Tell all clvmds in a cluster to refresh their toolcontext
- *
  */
 
 #define _GNU_SOURCE

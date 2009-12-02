@@ -1,4 +1,4 @@
-/*	$NetBSD: vgexport.c,v 1.1.1.1 2008/12/22 00:19:09 haad Exp $	*/
+/*	$NetBSD: vgexport.c,v 1.1.1.2 2009/12/02 00:25:57 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -19,34 +19,20 @@
 
 static int vgexport_single(struct cmd_context *cmd __attribute((unused)),
 			   const char *vg_name,
-			   struct volume_group *vg, int consistent,
+			   struct volume_group *vg,
 			   void *handle __attribute((unused)))
 {
 	struct pv_list *pvl;
 	struct physical_volume *pv;
 
-	if (!vg) {
-		log_error("Unable to find volume group \"%s\"", vg_name);
-		goto error;
-	}
-
-	if (!consistent) {
-		log_error("Volume group %s inconsistent", vg_name);
-		goto error;
-	}
-
-	if (!vg_check_status(vg, EXPORTED_VG | LVM_WRITE)) {
-		goto error;
-	}
-
 	if (lvs_in_vg_activated(vg)) {
 		log_error("Volume group \"%s\" has active logical volumes",
 			  vg_name);
-		goto error;
+		goto bad;
 	}
 
 	if (!archive(vg))
-		goto error;
+		goto_bad;
 
 	vg->status |= EXPORTED_VG;
 
@@ -56,7 +42,7 @@ static int vgexport_single(struct cmd_context *cmd __attribute((unused)),
 	}
 
 	if (!vg_write(vg) || !vg_commit(vg))
-		goto error;
+		goto_bad;
 
 	backup(vg);
 
@@ -64,7 +50,7 @@ static int vgexport_single(struct cmd_context *cmd __attribute((unused)),
 
 	return ECMD_PROCESSED;
 
-      error:
+bad:
 	return ECMD_FAILED;
 }
 
@@ -80,6 +66,6 @@ int vgexport(struct cmd_context *cmd, int argc, char **argv)
 		return ECMD_FAILED;
 	}
 
-	return process_each_vg(cmd, argc, argv, LCK_VG_WRITE, 1, NULL,
+	return process_each_vg(cmd, argc, argv, READ_FOR_UPDATE, NULL,
 			       &vgexport_single);
 }

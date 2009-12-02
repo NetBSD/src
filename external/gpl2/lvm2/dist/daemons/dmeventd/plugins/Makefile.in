@@ -14,9 +14,10 @@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 SUBDIRS += mirror snapshot
 
-include $(top_srcdir)/make.tmpl
+include ../../../make.tmpl
 

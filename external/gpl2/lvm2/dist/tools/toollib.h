@@ -1,8 +1,8 @@
-/*	$NetBSD: toollib.h,v 1.1.1.2 2009/02/18 11:17:49 haad Exp $	*/
+/*	$NetBSD: toollib.h,v 1.1.1.3 2009/12/02 00:25:56 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved. 
- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
  *
  * This file is part of LVM2.
  *
@@ -29,18 +29,20 @@ struct volume_group *recover_vg(struct cmd_context *cmd, const char *vgname,
 				uint32_t lock_type);
 
 int process_each_vg(struct cmd_context *cmd, int argc, char **argv,
-		    uint32_t lock_type, int consistent, void *handle,
+		    uint32_t flags, void *handle,
 		    int (*process_single) (struct cmd_context * cmd,
 					   const char *vg_name,
 					   struct volume_group * vg,
-					   int consistent, void *handle));
+					   void *handle));
 
 int process_each_pv(struct cmd_context *cmd, int argc, char **argv,
-		    struct volume_group *vg, uint32_t lock_type, void *handle,
+		    struct volume_group *vg, uint32_t lock_type,
+		    int scan_label_only, void *handle,
 		    int (*process_single) (struct cmd_context * cmd,
 					   struct volume_group * vg,
 					   struct physical_volume * pv,
 					   void *handle));
+
 int process_each_segment_in_pv(struct cmd_context *cmd,
 			       struct volume_group *vg,
 			       struct physical_volume *pv,
@@ -51,7 +53,7 @@ int process_each_segment_in_pv(struct cmd_context *cmd,
 						      void *handle));
 
 int process_each_lv(struct cmd_context *cmd, int argc, char **argv,
-		    uint32_t lock_type, void *handle,
+		    uint32_t flags, void *handle,
 		    int (*process_single) (struct cmd_context * cmd,
 					   struct logical_volume * lv,
 					   void *handle));
@@ -99,10 +101,17 @@ struct dm_list *clone_pv_list(struct dm_pool *mem, struct dm_list *pvs);
 int apply_lvname_restrictions(const char *name);
 int is_reserved_lvname(const char *name);
 
-int fill_vg_create_params(struct cmd_context *cmd,
-			  char *vg_name, struct vgcreate_params *vp_new,
-			  struct vgcreate_params *vp_def);
-
+void vgcreate_params_set_defaults(struct vgcreate_params *vp_def,
+				 struct volume_group *vg);
+int vgcreate_params_set_from_args(struct cmd_context *cmd,
+				  struct vgcreate_params *vp_new,
+				  struct vgcreate_params *vp_def);
 int lv_refresh(struct cmd_context *cmd, struct logical_volume *lv);
 int vg_refresh_visible(struct cmd_context *cmd, struct volume_group *vg);
+void lv_spawn_background_polling(struct cmd_context *cmd,
+				 struct logical_volume *lv);
+int pvcreate_params_validate(struct cmd_context *cmd,
+			     int argc, char **argv,
+			     struct pvcreate_params *pp);
+
 #endif

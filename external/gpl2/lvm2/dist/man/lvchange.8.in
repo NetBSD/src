@@ -12,6 +12,7 @@ lvchange \- change attributes of a logical volume
 [\-\-ignorelockingfailure]
 [\-\-ignoremonitoring]
 [\-\-monitor {y|n}]
+[\-\-noudevsync]
 [\-M|\-\-persistent y|n] [\-\-minor minor]
 [\-P|\-\-partial]
 [\-p|\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
@@ -60,6 +61,13 @@ If a device used by a monitored mirror reports an I/O error,
 the failure is handled according to 
 \fBmirror_image_fault_policy\fP and \fBmirror_log_fault_policy\fP
 set in \fBlvm.conf\fP.
+.TP
+.I \-\-noudevsync
+Disable udev synchronisation. The
+process will not wait for notification from udev.
+It will continue irrespective of any possible udev processing
+in the background.  You should only use this if udev is not running
+or has rules that ignore the devices LVM2 creates.
 .TP
 .I \-\-ignoremonitoring
 Make no attempt to interact with dmeventd unless \-\-monitor

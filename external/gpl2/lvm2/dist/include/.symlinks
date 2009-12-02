@@ -1,6 +1,6 @@
 ../daemons/clvmd/clvm.h
 ../daemons/dmeventd/libdevmapper-event.h
-../lib/lvm2.h
+../liblvm/lvm2app.h
 ../lib/activate/activate.h
 ../lib/activate/targets.h
 ../lib/cache/lvmcache.h
@@ -47,6 +47,7 @@
 ../lib/misc/lvm-file.h
 ../lib/misc/lvm-globals.h
 ../lib/misc/lvm-string.h
+../lib/misc/lvm-version.h
 ../lib/misc/lvm-wrappers.h
 ../lib/misc/sharedlib.h
 ../lib/report/report.h
@@ -54,7 +55,7 @@
 ../libdm/libdevmapper.h
 ../libdm/misc/dm-ioctl.h
 ../libdm/misc/dm-logging.h
+../libdm/misc/dm-log-userspace.h
 ../libdm/misc/dmlib.h
 ../libdm/misc/kdev_t.h
 ../po/pogen.h
-../tools/version.h

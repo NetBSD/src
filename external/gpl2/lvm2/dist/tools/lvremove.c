@@ -1,4 +1,4 @@
-/*	$NetBSD: lvremove.c,v 1.1.1.2 2009/02/18 11:17:45 haad Exp $	*/
+/*	$NetBSD: lvremove.c,v 1.1.1.3 2009/12/02 00:25:52 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -20,8 +20,18 @@
 static int lvremove_single(struct cmd_context *cmd, struct logical_volume *lv,
 			   void *handle __attribute((unused)))
 {
-	if (!lv_remove_with_dependencies(cmd, lv, arg_count(cmd, force_ARG)))
+	struct logical_volume *origin;
+
+	/*
+	 * If this is a sparse device, remove its origin too.
+	 */
+        if (lv_is_cow(lv) && lv_is_virtual_origin(origin = origin_from_cow(lv)))
+                lv = origin;
+
+	if (!lv_remove_with_dependencies(cmd, lv, arg_count(cmd, force_ARG))) {
+		stack;
 		return ECMD_FAILED;
+	}
 
 	return ECMD_PROCESSED;
 }
@@ -35,6 +45,6 @@ int lvremove(struct cmd_context *cmd, int argc, char **argv)
 
 	cmd->handles_missing_pvs = 1;
 
-	return process_each_lv(cmd, argc, argv, LCK_VG_WRITE, NULL,
+	return process_each_lv(cmd, argc, argv, READ_FOR_UPDATE, NULL,
 			       &lvremove_single);
 }
