@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.32 2009/11/25 15:01:28 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.33 2009/12/02 17:18:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.32 2009/11/25 15:01:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.33 2009/12/02 17:18:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -413,7 +413,7 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	strcpy(rblk->rblk_path, path);
 	rblk->rblk_fd = -1;
 	rblk->rblk_hostoffset = offset;
-	if (size == RUMPBLK_SIZENOTSET) {
+	if (size != RUMPBLK_SIZENOTSET) {
 		KASSERT(size + offset <= flen);
 		rblk->rblk_size = size;
 	} else {
