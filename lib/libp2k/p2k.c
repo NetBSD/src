@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.29 2009/11/20 14:24:58 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.30 2009/12/03 14:27:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -364,10 +364,11 @@ p2k_cancel(struct p2k_mount *p2m, int error)
 
 static int
 setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
-	int partition, const char *mountpath, int mntflags,
+	struct ukfs_part *part, const char *mountpath, int mntflags,
 	void *arg, size_t alen)
 {
-	char partpath[UKFS_PARTITION_MAXPATHLEN];
+	char partpath[UKFS_DEVICE_MAXPATHLEN];
+	char partbuf[UKFS_DEVICE_MAXSTR];
 	char typebuf[PUFFS_TYPELEN];
 	struct puffs_usermount *pu = p2m->p2m_pu;
 	struct p2k_node *p2n_root;
@@ -383,22 +384,16 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 		strlcat(typebuf, vfsname, sizeof(typebuf));
 	}
 
-	if (UKFS_USEPARTITION(partition)) {
-		char partbuf[UKFS_PARTITION_MAGICLEN+1];
-
-		strlcpy(partpath, devpath, sizeof(partpath));
-		snprintf(partbuf, sizeof(partbuf), "%s%c%%",
-		    UKFS_PARTITION_SCANMAGIC, partition + 'a');
+	strlcpy(partpath, devpath, sizeof(partpath));
+	if (ukfs_part_tostring(part, partbuf, sizeof(partbuf))) {
 		strlcat(partpath, partbuf, sizeof(partpath));
-	} else {
-		strlcpy(partpath, devpath, sizeof(partpath));
 	}
 	puffs_setmntinfo(pu, partpath, typebuf);
 
 	if (ukfs_init() == -1)
 		goto out;
-	if (partition != UKFS_PARTITION_NA)
-		ukfs = ukfs_mount_disk(vfsname, devpath, partition,
+	if (part != ukfs_part_na)
+		ukfs = ukfs_mount_disk(vfsname, devpath, part,
 		    mountpath, mntflags, arg, alen);
 	else
 		ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags,
@@ -460,7 +455,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	p2m = p2k_init(puffs_flags);
 	if (p2m == NULL)
 		return -1;
-	rv = setupfs(p2m, vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	rv = setupfs(p2m, vfsname, devpath, ukfs_part_na, mountpath,
 	    mntflags, arg, alen);
 	if (rv == -1)
 		return rv;
@@ -468,7 +463,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 }
 
 int
-p2k_run_diskfs(const char *vfsname, const char *devpath, int partition,
+p2k_run_diskfs(const char *vfsname, const char *devpath, struct ukfs_part *part,
 	const char *mountpath, int mntflags, void *arg, size_t alen,
 	uint32_t puffs_flags)
 {
@@ -478,7 +473,7 @@ p2k_run_diskfs(const char *vfsname, const char *devpath, int partition,
 	p2m = p2k_init(puffs_flags);
 	if (p2m == NULL)
 		return -1;
-	rv = setupfs(p2m, vfsname, devpath, partition, mountpath, mntflags,
+	rv = setupfs(p2m, vfsname, devpath, part, mountpath, mntflags,
 	    arg, alen);
 	if (rv == -1)
 		return rv;
@@ -490,17 +485,17 @@ p2k_setup_fs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	const char *mountpath, int mntflags, void *arg, size_t alen)
 {
 
-	return setupfs(p2m, vfsname, devpath, UKFS_PARTITION_NA, mountpath,
+	return setupfs(p2m, vfsname, devpath, ukfs_part_na, mountpath,
 	    mntflags, arg, alen);
 }
 
 int
 p2k_setup_diskfs(struct p2k_mount *p2m, const char *vfsname,
-	const char *devpath, int partition, const char *mountpath,
+	const char *devpath, struct ukfs_part *part, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
 
-	return setupfs(p2m, vfsname, devpath, partition, mountpath, mntflags,
+	return setupfs(p2m, vfsname, devpath, part, mountpath, mntflags,
 	    arg, alen);
 }
 
