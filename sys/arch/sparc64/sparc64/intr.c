@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.61 2008/12/16 22:35:27 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.62 2009/12/03 05:06:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.61 2008/12/16 22:35:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.62 2009/12/03 05:06:16 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -203,7 +203,7 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 			 * Interrupt is already there.  We need to create a
 			 * new interrupt handler and interpose it.
 			 */
-#ifdef DEBUG
+#ifdef NOT_DEBUG
 			printf("intr_establish: intr reused %x\n", 
 				ih->ih_number);
 #endif
