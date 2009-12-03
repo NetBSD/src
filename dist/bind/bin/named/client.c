@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.8 2008/07/10 14:17:19 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.8.8.1 2009/12/03 17:31:15 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.250.16.6 2008/05/27 22:36:09 each Exp */
+/* Id: client.c,v 1.250.16.10 2009/01/29 22:41:43 jinmei Exp */
 
 #include <config.h>
 
@@ -26,6 +26,7 @@
 #include <isc/once.h>
 #include <isc/platform.h>
 #include <isc/print.h>
+#include <isc/stats.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/task.h>
@@ -1009,23 +1010,22 @@ ns_client_send(ns_client_t *client) {
 		result = client_sendpkg(client, &buffer);
 
 	/* update statistics (XXXJT: is it okay to access message->xxxkey?) */
-	dns_generalstats_increment(ns_g_server->nsstats,
-				   dns_nsstatscounter_response);
+	isc_stats_increment(ns_g_server->nsstats, dns_nsstatscounter_response);
 	if (opt_included) {
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_edns0out);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_edns0out);
 	}
 	if (client->message->tsigkey != NULL) {
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_tsigout);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_tsigout);
 	}
 	if (client->message->sig0key != NULL) {
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_sig0out);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_sig0out);
 	}
 	if ((client->message->flags & DNS_MESSAGEFLAG_TC) != 0)
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_truncatedresp);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_truncatedresp);
 
 	if (result == ISC_R_SUCCESS)
 		return;
@@ -1213,7 +1213,7 @@ client_addopt(ns_client_t *client) {
 		 * + 2 bytes for NSID length
 		 * + NSID itself
 		 */
-		char nsid[BUFSIZ];
+		char nsid[BUFSIZ], *nsidp;
 		isc_buffer_t *buffer = NULL;
 
 		if (ns_g_server->server_usehostname) {
@@ -1222,19 +1222,19 @@ client_addopt(ns_client_t *client) {
 			if (result != ISC_R_SUCCESS) {
 				goto no_nsid;
 			}
-		} else {
-			strncpy(nsid, ns_g_server->server_id, sizeof(nsid));
-		}
+			nsidp = nsid;
+		} else
+			nsidp = ns_g_server->server_id;
 
-		rdata->length = strlen(nsid) + 4;
+		rdata->length = strlen(nsidp) + 4;
 		result = isc_buffer_allocate(client->mctx, &buffer,
 					     rdata->length);
 		if (result != ISC_R_SUCCESS)
 			goto no_nsid;
 
 		isc_buffer_putuint16(buffer, DNS_OPT_NSID);
-		isc_buffer_putuint16(buffer, strlen(nsid));
-		isc_buffer_putstr(buffer, nsid);
+		isc_buffer_putuint16(buffer, strlen(nsidp));
+		isc_buffer_putstr(buffer, nsidp);
 		rdata->data = buffer->base;
 		dns_message_takebuffer(client->message, &buffer);
 	} else {
@@ -1277,7 +1277,7 @@ allowed(isc_netaddr_t *addr, dns_name_t *signer, dns_acl_t *acl) {
  * delivered to 'myview'.
  *
  * We run this unlocked as both the view list and the interface list
- * are updated when the approprite task has exclusivity.
+ * are updated when the appropriate task has exclusivity.
  */
 isc_boolean_t
 ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
@@ -1505,15 +1505,15 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	 * Update some statistics counters.  Don't count responses.
 	 */
 	if (isc_sockaddr_pf(&client->peeraddr) == PF_INET) {
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_requestv4);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_requestv4);
 	} else {
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_requestv6);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_requestv6);
 	}
 	if (TCP_CLIENT(client))
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_tcp);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_tcp);
 
 	/*
 	 * It's a request.  Parse it.
@@ -1577,8 +1577,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		 */
 		client->ednsversion = (opt->ttl & 0x00FF0000) >> 16;
 		if (client->ednsversion > 0) {
-			dns_generalstats_increment(ns_g_server->nsstats,
-						dns_nsstatscounter_badednsver);
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_badednsver);
 			result = client_addopt(client);
 			if (result == ISC_R_SUCCESS)
 				result = DNS_R_BADVERS;
@@ -1603,8 +1603,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 			}
 		}
 
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_edns0in);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_edns0in);
 
 		/*
 		 * Create an OPT for our reply.
@@ -1753,11 +1753,11 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	if (result != ISC_R_NOTFOUND) {
 		signame = NULL;
 		if (dns_message_gettsig(client->message, &signame) != NULL) {
-			dns_generalstats_increment(ns_g_server->nsstats,
-						   dns_nsstatscounter_tsigin);
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_tsigin);
 		} else {
-			dns_generalstats_increment(ns_g_server->nsstats,
-						   dns_nsstatscounter_sig0in);
+			isc_stats_increment(ns_g_server->nsstats,
+					    dns_nsstatscounter_sig0in);
 		}
 
 	}
@@ -1781,8 +1781,8 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		isc_result_t tresult;
 
 		/* There is a signature, but it is bad. */
-		dns_generalstats_increment(ns_g_server->nsstats,
-					   dns_nsstatscounter_invalidsig);
+		isc_stats_increment(ns_g_server->nsstats,
+				    dns_nsstatscounter_invalidsig);
 		signame = NULL;
 		if (dns_message_gettsig(client->message, &signame) != NULL) {
 			char namebuf[DNS_NAME_FORMATSIZE];
@@ -2256,7 +2256,7 @@ client_newconn(isc_task_t *task, isc_event_t *event) {
 		 * Let a new client take our place immediately, before
 		 * we wait for a request packet.  If we don't,
 		 * telnetting to port 53 (once per CPU) will
-		 * deny service to legititmate TCP clients.
+		 * deny service to legitimate TCP clients.
 		 */
 		result = isc_quota_attach(&ns_g_server->tcpquota,
 					  &client->tcpquota);

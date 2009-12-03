@@ -1,7 +1,7 @@
-/*	$NetBSD: context_p.h,v 1.1.1.5 2008/06/21 18:30:47 christos Exp $	*/
+/*	$NetBSD: context_p.h,v 1.1.1.5.8.1 2009/12/03 17:31:42 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context_p.h,v 1.17 2007/06/19 23:47:22 tbox Exp */
+/* Id: context_p.h,v 1.17.128.2 2008/12/17 23:46:34 tbox Exp */
 
 #ifndef LWRES_CONTEXT_P_H
 #define LWRES_CONTEXT_P_H 1
@@ -48,6 +48,8 @@ struct lwres_context {
 	 */
 	int			sock;		/*%< socket to send on */
 	lwres_addr_t		address;	/*%< address to send to */
+	int			use_ipv4;	/*%< use IPv4 transaction */
+	int			use_ipv6;	/*%< use IPv6 transaction */
 
 	/*@{*/
 	/*

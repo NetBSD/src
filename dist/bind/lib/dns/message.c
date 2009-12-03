@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.5 2008/08/15 14:51:26 he Exp $	*/
+/*	$NetBSD: message.c,v 1.5.8.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.237.110.5.4.1 2008/07/28 08:36:27 marka Exp */
+/* Id: message.c,v 1.237.110.8 2009/01/19 23:47:02 tbox Exp */
 
 /*! \file */
 
@@ -170,7 +170,7 @@ static const char *rcodetext[] = {
 /*%
  * "helper" type, which consists of a block of some type, and is linkable.
  * For it to work, sizeof(dns_msgblock_t) must be a multiple of the pointer
- * size, or the allocated elements will not be alligned correctly.
+ * size, or the allocated elements will not be aligned correctly.
  */
 struct dns_msgblock {
 	unsigned int			count;
@@ -1170,7 +1170,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	dns_name_t *name;
 	dns_name_t *name2;
 	dns_offsets_t *offsets;
-	dns_rdataset_t *rdataset = NULL;
+	dns_rdataset_t *rdataset;
 	dns_rdatalist_t *rdatalist;
 	isc_result_t result;
 	dns_rdatatype_t rdtype, covers;
@@ -1960,7 +1960,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 				 *
 				 * XXXMLG Need to change this when
 				 * dns_rdataset_towire() can render partial
-				 * sets starting at some arbitary point in the
+				 * sets starting at some arbitrary point in the
 				 * set.  This will include setting a bit in the
 				 * rdataset to indicate that a partial
 				 * rendering was done, and some state saved

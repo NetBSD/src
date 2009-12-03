@@ -1,7 +1,7 @@
-/*	$NetBSD: soa_6.c,v 1.1.1.5 2008/06/21 18:32:42 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.1.1.5.8.1 2009/12/03 17:31:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa_6.c,v 1.61 2007/06/19 23:47:17 tbox Exp */
+/* Id: soa_6.c,v 1.61.128.2 2009/02/16 23:46:44 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -103,7 +103,11 @@ totext_soa(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	multiline = ISC_TF((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
-	comment = ISC_TF((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0);
+	if (multiline)
+		comment = ISC_TF((tctx->flags & DNS_STYLEFLAG_COMMENT) != 0);
+	else
+		comment = ISC_FALSE;
+
 
 	dns_name_init(&mname, NULL);
 	dns_name_init(&rname, NULL);
@@ -130,16 +134,13 @@ totext_soa(ARGS_TOTEXT) {
 	RETERR(str_totext(tctx->linebreak, target));
 
 	for (i = 0; i < 5; i++) {
-		char buf[sizeof("2147483647")];
+		char buf[sizeof("0123456789 ; ")];
 		unsigned long num;
-		unsigned int numlen;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		numlen = sprintf(buf, "%lu", num);
-		INSIST(numlen > 0 && numlen < sizeof("2147483647"));
+		sprintf(buf, comment ? "%-10lu ; " : "%lu", num);
 		RETERR(str_totext(buf, target));
-		if (multiline && comment) {
-			RETERR(str_totext("           ; " + numlen, target));
+		if (comment) {
 			RETERR(str_totext(soa_fieldnames[i], target));
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {
@@ -149,7 +150,7 @@ totext_soa(ARGS_TOTEXT) {
 			}
 			RETERR(str_totext(tctx->linebreak, target));
 		} else if (i < 4) {
-			RETERR(str_totext(tctx->linebreak, target));			
+			RETERR(str_totext(tctx->linebreak, target));
 		}
 	}
 
@@ -161,8 +162,8 @@ totext_soa(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_soa(ARGS_FROMWIRE) {
-        dns_name_t mname;
-        dns_name_t rname;
+	dns_name_t mname;
+	dns_name_t rname;
 	isc_region_t sregion;
 	isc_region_t tregion;
 
@@ -173,11 +174,11 @@ fromwire_soa(ARGS_FROMWIRE) {
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
 
-        dns_name_init(&mname, NULL);
-        dns_name_init(&rname, NULL);
+	dns_name_init(&mname, NULL);
+	dns_name_init(&rname, NULL);
 
-        RETERR(dns_name_fromwire(&mname, source, dctx, options, target));
-        RETERR(dns_name_fromwire(&rname, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&mname, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&rname, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);

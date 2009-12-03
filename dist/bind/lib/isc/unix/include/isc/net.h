@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.1.1.5 2008/06/21 18:31:34 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.1.1.5.8.1 2009/12/03 17:31:39 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.h,v 1.46 2007/06/19 23:47:19 tbox Exp */
+/* Id: net.h,v 1.46.128.5 2009/02/16 23:46:44 tbox Exp */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -106,7 +106,7 @@
 /*%
  * Required for some pre RFC2133 implementations.
  * IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT were added in
- * draft-ietf-ipngwg-bsd-api-04.txt or draft-ietf-ipngwg-bsd-api-05.txt.  
+ * draft-ietf-ipngwg-bsd-api-04.txt or draft-ietf-ipngwg-bsd-api-05.txt.
  * If 's6_addr' is defined then assume that there is a union and three
  * levels otherwise assume two levels required.
  */
@@ -204,7 +204,7 @@ extern const struct in6_addr isc_net_in6addrloop;
 
 #ifdef ISC_PLATFORM_FIXIN6ISADDR
 #undef  IN6_IS_ADDR_GEOGRAPHIC
-/*! 
+/*!
  * \brief
  * Fix UnixWare 7.1.1's broken IN6_IS_ADDR_* definitions.
  */
@@ -326,6 +326,23 @@ isc_net_probeunix(void);
  * Returns whether UNIX domain sockets are supported.
  */
 
+isc_result_t
+isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
+/*%<
+ * Returns system's default range of ephemeral UDP ports, if defined.
+ * If the range is not available or unknown, ISC_NET_PORTRANGELOW and
+ * ISC_NET_PORTRANGEHIGH will be returned.
+ *
+ * Requires:
+ *
+ *\li	'low' and 'high' must be non NULL.
+ *
+ * Returns:
+ *
+ *\li	*low and *high will be the ports specifying the low and high ends of
+ *	the range.
+ */
+
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
@@ -339,11 +356,10 @@ isc_net_pton(int af, const char *src, void *dst);
 #define inet_pton isc_net_pton
 #endif
 
-#ifdef ISC_PLATFORM_NEEDATON
 int
 isc_net_aton(const char *cp, struct in_addr *addr);
+#undef inet_aton
 #define inet_aton isc_net_aton
-#endif
 
 ISC_LANG_ENDDECLS
 

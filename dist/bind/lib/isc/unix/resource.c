@@ -1,7 +1,7 @@
-/*	$NetBSD: resource.c,v 1.1.1.6 2008/08/15 14:42:13 he Exp $	*/
+/*	$NetBSD: resource.c,v 1.1.1.6.8.1 2009/12/03 17:31:39 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.c,v 1.14.128.3.12.5 2008/07/29 07:04:16 jinmei Exp */
+/* Id: resource.c,v 1.14.128.9 2009/02/13 23:46:42 tbox Exp */
 
 #include <config.h>
 
@@ -34,7 +34,7 @@
 #include <linux/fs.h>	/* To get the large NR_OPEN. */
 #endif
 
-#ifdef __hpux
+#if defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
 #include <sys/dyntune.h>
 #endif
 
@@ -161,7 +161,11 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		if (unixresult == 0)
 			return (ISC_R_SUCCESS);
 	}
-#elif defined(NR_OPEN) && defined(__linux__)
+#elif defined(__linux__)
+#ifndef NR_OPEN
+#define NR_OPEN (1024*1024)
+#endif
+
 	/*
 	 * Some Linux kernels don't accept RLIM_INFINIT; the maximum
 	 * possible value is the NR_OPEN defined in linux/fs.h.
@@ -172,7 +176,7 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		if (unixresult == 0)
 			return (ISC_R_SUCCESS);
 	}
-#elif defined(__hpux)
+#elif defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		uint64_t maxfiles;
 		if (gettune("maxfiles_lim", &maxfiles) == 0) {
@@ -212,7 +216,7 @@ isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
 }
 
 isc_result_t
-isc_resource_curlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
+isc_resource_getcurlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
 	int unixresult;
 	int unixresource;
 	struct rlimit rl;
