@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.5 2008/06/21 18:32:09 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.5.8.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.79 2007/06/19 23:47:16 tbox Exp */
+/* Id: rdataset.c,v 1.79.128.2 2009/01/19 23:47:02 tbox Exp */
 
 /*! \file */
 
@@ -139,7 +139,7 @@ question_disassociate(dns_rdataset_t *rdataset) {
 static isc_result_t
 question_cursor(dns_rdataset_t *rdataset) {
 	UNUSED(rdataset);
-	
+
 	return (ISC_R_NOMORE);
 }
 
@@ -150,7 +150,7 @@ question_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	 */
 	UNUSED(rdataset);
 	UNUSED(rdata);
-	
+
 	REQUIRE(0);
 }
 
@@ -341,7 +341,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	}
 
 	/*
-	 * Do we want to shuffle this anwer?
+	 * Do we want to shuffle this answer?
 	 */
 	if (!question && count > 1 &&
 	    (!WANT_FIXED(rdataset) || order != NULL) &&
@@ -447,7 +447,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		/*
 		 * Copy out the name, type, class, ttl.
 		 */
-		
+
 		rrbuffer = *target;
 		dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
 		result = dns_name_towire(owner_name, cctx, target);
@@ -622,7 +622,7 @@ dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
 
 isc_result_t
 dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-		        dns_rdataset_t *nsec, dns_rdataset_t *nsecsig)
+			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig)
 {
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);

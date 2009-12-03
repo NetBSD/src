@@ -1,6 +1,6 @@
-/*	$NetBSD: selectiveencode.h,v 1.1.1.1 2004/05/17 23:43:49 christos Exp $	*/
+/*	$NetBSD: selectiveencode.h,v 1.1.1.1.36.1 2009/12/03 17:31:19 snj Exp $	*/
 
-/* Id: selectiveencode.h,v 1.1.1.1 2003/06/04 00:27:08 marka Exp */
+/* Id: selectiveencode.h,v 1.1.1.1.1282.1 2009/09/01 03:32:33 jinmei Exp */
 /*
  * Copyright (c) 2000,2002 Japan Network Information Center.
  * All rights reserved.
@@ -44,8 +44,8 @@
  *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-#ifndef IDN_SELECTIVENCODE_H
-#define IDN_SELECTIVENCODE_H 1
+#ifndef IDN_SELECTIVEENCODE_H
+#define IDN_SELECTIVEENCODE_H 1
 
 /*
  * Find where to convert.
@@ -69,4 +69,4 @@
 extern idn_result_t
 idn_selectiveencode_findregion(const char *s, char **startp, char **endp);
 
-#endif /* IDN_SELECTIVENCODE_H */
+#endif /* IDN_SELECTIVEENCODE_H */

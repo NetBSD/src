@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.c,v 1.1.1.6 2008/08/15 14:42:09 he Exp $	*/
+/*	$NetBSD: timer.c,v 1.1.1.6.8.1 2009/12/03 17:31:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.c,v 1.81.132.3 2008/07/29 18:37:25 jinmei Exp */
+/* Id: timer.c,v 1.81.32.7 2009/01/23 23:46:44 tbox Exp */
 
 /*! \file */
 
@@ -664,7 +664,7 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 					isc_task_send(timer->task,
 						      ISC_EVENT_PTR(&event));
 				} else
-					UNEXPECTED_ERROR(__FILE__, __LINE__,
+					UNEXPECTED_ERROR(__FILE__, __LINE__, "%s",
 						 isc_msgcat_get(isc_msgcat,
 							 ISC_MSGSET_TIMER,
 							 ISC_MSG_EVENTNOTALLOC,
@@ -680,11 +680,12 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 				result = schedule(timer, now, ISC_FALSE);
 				if (result != ISC_R_SUCCESS)
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "%s: %u",
 						isc_msgcat_get(isc_msgcat,
 							ISC_MSGSET_TIMER,
 							ISC_MSG_SCHEDFAIL,
-							"couldn't "
-							"schedule timer: %u"),
+							"couldn't schedule "
+							"timer"),
 							 result);
 			}
 		} else {

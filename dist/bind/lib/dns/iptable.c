@@ -1,7 +1,7 @@
-/*	$NetBSD: iptable.c,v 1.1.1.1 2008/06/21 18:32:10 christos Exp $	*/
+/*	$NetBSD: iptable.c,v 1.1.1.1.10.1 2009/12/03 17:31:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: iptable.c,v 1.5.46.3 2008/01/21 21:02:24 each Exp */
+/* Id: iptable.c,v 1.5.46.9 2009/02/18 23:46:34 tbox Exp */
+
+#include <config.h>
 
 #include <isc/mem.h>
 #include <isc/radix.h>
@@ -38,6 +40,7 @@ dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target) {
 		return (ISC_R_NOMEMORY);
 	tab->mctx = mctx;
 	isc_refcount_init(&tab->refcount, 1);
+	tab->radix = NULL;
 	tab->magic = DNS_IPTABLE_MAGIC;
 
 	result = isc_radix_create(mctx, &tab->radix, RADIX_MAXBITS);
@@ -64,7 +67,7 @@ dns_iptable_addprefix(dns_iptable_t *tab, isc_netaddr_t *addr,
 {
 	isc_result_t result;
 	isc_prefix_t pfx;
-	isc_radix_node_t *node;
+	isc_radix_node_t *node = NULL;
 	int family;
 
 	INSIST(DNS_IPTABLE_VALID(tab));
@@ -72,22 +75,39 @@ dns_iptable_addprefix(dns_iptable_t *tab, isc_netaddr_t *addr,
 
 	NETADDR_TO_PREFIX_T(addr, pfx, bitlen);
 
-	/* Bitlen 0 means "any" or "none", which is always treated as IPv4 */
-	family = bitlen ? pfx.family : AF_INET;
-
 	result = isc_radix_insert(tab->radix, &node, NULL, &pfx);
-
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
+		isc_refcount_destroy(&pfx.refcount);
 		return(result);
-
-	/* If the node already contains data, don't overwrite it */
-	if (node->data[ISC_IS6(family)] == NULL) {
-		if (pos)
-			node->data[ISC_IS6(family)] = &dns_iptable_pos;
-		else
-			node->data[ISC_IS6(family)] = &dns_iptable_neg;
 	}
 
+	/* If a node already contains data, don't overwrite it */
+	family = pfx.family;
+	if (family == AF_UNSPEC) {
+		/* "any" or "none" */
+		INSIST(pfx.bitlen == 0);
+		if (pos) {
+			if (node->data[0] == NULL)
+				node->data[0] = &dns_iptable_pos;
+			if (node->data[1] == NULL)
+				node->data[1] = &dns_iptable_pos;
+		} else {
+			if (node->data[0] == NULL)
+				node->data[0] = &dns_iptable_neg;
+			if (node->data[1] == NULL)
+				node->data[1] = &dns_iptable_neg;
+		}
+	} else {
+		/* any other prefix */
+		if (node->data[ISC_IS6(family)] == NULL) {
+			if (pos)
+				node->data[ISC_IS6(family)] = &dns_iptable_pos;
+			else
+				node->data[ISC_IS6(family)] = &dns_iptable_neg;
+		}
+	}
+
+	isc_refcount_destroy(&pfx.refcount);
 	return (ISC_R_SUCCESS);
 }
 
@@ -102,6 +122,7 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
 	int max_node = 0;
 
 	RADIX_WALK (source->radix->head, node) {
+		new_node = NULL;
 		result = isc_radix_insert (tab->radix, &new_node, node, NULL);
 
 		if (result != ISC_R_SUCCESS)
@@ -119,14 +140,10 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
 			if (node->data[0] &&
 			    *(isc_boolean_t *) node->data[0] == ISC_TRUE)
 				new_node->data[0] = &dns_iptable_neg;
-			else
-				new_node->data[0] = node->data[0];
 
 			if (node->data[1] &&
 			    *(isc_boolean_t *) node->data[1] == ISC_TRUE)
 				new_node->data[1] = &dns_iptable_neg;
-			else
-				new_node->data[1] = node->data[0];
 		}
 
 		if (node->node_num[0] > max_node)

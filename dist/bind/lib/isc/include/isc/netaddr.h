@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.h,v 1.1.1.5 2008/06/21 18:31:17 christos Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.1.1.5.8.1 2009/12/03 17:31:38 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.h,v 1.35 2007/06/18 23:47:44 tbox Exp */
+/* Id: netaddr.h,v 1.35.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -38,7 +38,7 @@ ISC_LANG_BEGINDECLS
 struct isc_netaddr {
 	unsigned int family;
 	union {
-    		struct in_addr in;
+		struct in_addr in;
 		struct in6_addr in6;
 #ifdef ISC_PLATFORM_HAVESYSUNH
 		char un[sizeof(((struct sockaddr_un *)0)->sun_path)];
@@ -173,7 +173,7 @@ isc_netaddr_prefixok(const isc_netaddr_t *na, unsigned int prefixlen);
  * Returns:
  *	ISC_R_SUCCESS
  *	ISC_R_RANGE		prefixlen out of range
- *	ISC_R_NOTIMPLENTED	unsupported family
+ *	ISC_R_NOTIMPLEMENTED	unsupported family
  *	ISC_R_FAILURE		extra bits.
  */
 

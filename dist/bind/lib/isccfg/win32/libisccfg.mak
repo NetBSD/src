@@ -241,7 +241,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\parser.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\namedconf.obj" \
-	"..\..\dns\win32\Debug\libdns.lib"
+	"..\..\dns\win32\Debug\libdns.lib" \
 	"..\..\isc\win32\Debug\libisc.lib"
 
 "..\..\..\Build\Debug\libisccfg.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)

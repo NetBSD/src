@@ -1,7 +1,7 @@
-/*	$NetBSD: t_db.c,v 1.1.1.5 2008/06/21 18:34:03 christos Exp $	*/
+/*	$NetBSD: t_db.c,v 1.1.1.5.8.1 2009/12/03 17:31:17 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_db.c,v 1.36 2007/06/19 23:46:59 tbox Exp */
+/* Id: t_db.c,v 1.36.128.2 2009/01/22 23:46:35 tbox Exp */
 
 #include <config.h>
 
@@ -267,7 +267,7 @@ static void
 t1(void) {
 	int	result;
 
-	t_assert("dns_db_load", 1, T_REQUIRED, a1);
+	t_assert("dns_db_load", 1, T_REQUIRED, "%s", a1);
 	result = t_eval("dns_db_load_data", t_dns_db_load, 9);
 	t_result(result);
 }
@@ -453,7 +453,7 @@ static void
 t2(void) {
 	int	result;
 
-	t_assert("dns_db_iscache", 2, T_REQUIRED, a2);
+	t_assert("dns_db_iscache", 2, T_REQUIRED, "%s", a2);
 	result = test_dns_db_zc_x("dns_db_iscache_1_data",
 				  dns_dbtype_cache, dns_db_iscache, ISC_TRUE);
 	t_result(result);
@@ -469,7 +469,7 @@ static void
 t3(void) {
 	int	result;
 
-	t_assert("dns_db_iscache", 3, T_REQUIRED, a3);
+	t_assert("dns_db_iscache", 3, T_REQUIRED, "%s", a3);
 	result = test_dns_db_zc_x("dns_db_iscache_2_data",
 				  dns_dbtype_zone, dns_db_iscache, ISC_FALSE);
 	t_result(result);
@@ -485,7 +485,7 @@ static void
 t4(void) {
 	int	result;
 
-	t_assert("dns_db_iszone", 4, T_REQUIRED, a4);
+	t_assert("dns_db_iszone", 4, T_REQUIRED, "%s", a4);
 	result = test_dns_db_zc_x("dns_db_iszone_1_data",
 				  dns_dbtype_zone, dns_db_iszone, ISC_TRUE);
 	t_result(result);
@@ -500,7 +500,7 @@ static void
 t5(void) {
 	int	result;
 
-	t_assert("dns_db_iszone", 5, T_REQUIRED, a5);
+	t_assert("dns_db_iszone", 5, T_REQUIRED, "%s", a5);
 	result = test_dns_db_zc_x("dns_db_iszone_2_data",
 				  dns_dbtype_cache, dns_db_iszone, ISC_FALSE);
 	t_result(result);
@@ -620,7 +620,7 @@ static void
 t6(void) {
 	int	result;
 
-	t_assert("dns_db_origin", 6, T_REQUIRED, a6);
+	t_assert("dns_db_origin", 6, T_REQUIRED, "%s", a6);
 	result = t_eval("dns_db_origin_data", t_dns_db_origin, 2);
 	t_result(result);
 }
@@ -734,7 +734,7 @@ static void
 t7(void) {
 	int	result;
 
-	t_assert("dns_db_class", 7, T_REQUIRED, a7);
+	t_assert("dns_db_class", 7, T_REQUIRED, "%s", a7);
 	result = t_eval("dns_db_class_data", t_dns_db_class, 2);
 	t_result(result);
 }
@@ -1007,7 +1007,7 @@ static void
 t8(void) {
 	int	result;
 
-	t_assert("dns_db_currentversion", 8, T_REQUIRED, a8);
+	t_assert("dns_db_currentversion", 8, T_REQUIRED, "%s", a8);
 	result = t_eval("dns_db_currentversion_data",
 			t_dns_db_currentversion, 7);
 	t_result(result);
@@ -1325,7 +1325,7 @@ static void
 t9(void) {
 	int	result;
 
-	t_assert("dns_db_newversion", 9, T_REQUIRED, a9);
+	t_assert("dns_db_newversion", 9, T_REQUIRED, "%s", a9);
 	result = t_eval("dns_db_newversion_data", t_dns_db_newversion, 7);
 	t_result(result);
 }
@@ -1736,7 +1736,7 @@ static void
 t10(void) {
 	int	result;
 
-	t_assert("dns_db_closeversion", 10, T_REQUIRED, a10);
+	t_assert("dns_db_closeversion", 10, T_REQUIRED, "%s", a10);
 	result = t_eval("dns_db_closeversion_1_data",
 			t_dns_db_closeversion_1, 9);
 	t_result(result);
@@ -2211,7 +2211,7 @@ static void
 t11(void) {
 	int	result;
 
-	t_assert("dns_db_closeversion", 11, T_REQUIRED, a11);
+	t_assert("dns_db_closeversion", 11, T_REQUIRED, "%s", a11);
 	result = t_eval("dns_db_closeversion_2_data",
 			t_dns_db_closeversion_2, 9);
 	t_result(result);
@@ -2416,7 +2416,7 @@ static void
 t12(void) {
 	int	result;
 
-	t_assert("dns_db_expirenode", 12, T_REQUIRED, a12);
+	t_assert("dns_db_expirenode", 12, T_REQUIRED, "%s", a12);
 	result = t_eval("dns_db_expirenode_data", t_dns_db_expirenode, 8);
 	t_result(result);
 }
@@ -2582,7 +2582,7 @@ static void
 t13(void) {
 	int	result;
 
-	t_assert("dns_db_findnode", 13, T_REQUIRED, a13);
+	t_assert("dns_db_findnode", 13, T_REQUIRED, "%s", a13);
 	result = t_eval("dns_db_findnode_1_data", t_dns_db_findnode_1, 8);
 	t_result(result);
 }
@@ -2780,7 +2780,7 @@ static void
 t14(void) {
 	int	result;
 
-	t_assert("dns_db_findnode", 14, T_REQUIRED, a14);
+	t_assert("dns_db_findnode", 14, T_REQUIRED, "%s", a14);
 	result = t_eval("dns_db_findnode_2_data", t_dns_db_findnode_2, 6);
 	t_result(result);
 }
@@ -2979,7 +2979,7 @@ static void
 t15(void) {
 	int	result;
 
-	t_assert("dns_db_find", 15, T_REQUIRED, a15);
+	t_assert("dns_db_find", 15, T_REQUIRED, "%s", a15);
 	result = t_eval("dns_db_find_1_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -2995,7 +2995,7 @@ static void
 t16(void) {
 	int	result;
 
-	t_assert("dns_db_find", 16, T_REQUIRED, a16);
+	t_assert("dns_db_find", 16, T_REQUIRED, "%s", a16);
 	result = t_eval("dns_db_find_2_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3008,7 +3008,7 @@ static void
 t17(void) {
 	int	result;
 
-	t_assert("dns_db_find", 17, T_REQUIRED, a17);
+	t_assert("dns_db_find", 17, T_REQUIRED, "%s", a17);
 	result = t_eval("dns_db_find_3_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3021,7 +3021,7 @@ static void
 t18(void) {
 	int	result;
 
-	t_assert("dns_db_find", 18, T_REQUIRED, a18);
+	t_assert("dns_db_find", 18, T_REQUIRED, "%s", a18);
 	result = t_eval("dns_db_find_4_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3034,7 +3034,7 @@ static void
 t19(void) {
 	int	result;
 
-	t_assert("dns_db_find", 19, T_REQUIRED, a19);
+	t_assert("dns_db_find", 19, T_REQUIRED, "%s", a19);
 	result = t_eval("dns_db_find_5_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3047,7 +3047,7 @@ static void
 t20(void) {
 	int	result;
 
-	t_assert("dns_db_find", 20, T_REQUIRED, a20);
+	t_assert("dns_db_find", 20, T_REQUIRED, "%s", a20);
 	result = t_eval("dns_db_find_6_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3060,7 +3060,7 @@ static void
 t21(void) {
 	int	result;
 
-	t_assert("dns_db_find", 21, T_REQUIRED, a21);
+	t_assert("dns_db_find", 21, T_REQUIRED, "%s", a21);
 	result = t_eval("dns_db_find_7_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3073,7 +3073,7 @@ static void
 t22(void) {
 	int	result;
 
-	t_assert("dns_db_find", 22, T_REQUIRED, a22);
+	t_assert("dns_db_find", 22, T_REQUIRED, "%s", a22);
 	result = t_eval("dns_db_find_8_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3087,7 +3087,7 @@ static void
 t23(void) {
 	int	result;
 
-	t_assert("dns_db_find", 23, T_REQUIRED, a23);
+	t_assert("dns_db_find", 23, T_REQUIRED, "%s", a23);
 	result = t_eval("dns_db_find_9_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3100,7 +3100,7 @@ static void
 t24(void) {
 	int	result;
 
-	t_assert("dns_db_find", 24, T_REQUIRED, a24);
+	t_assert("dns_db_find", 24, T_REQUIRED, "%s", a24);
 	result = t_eval("dns_db_find_10_data", t_dns_db_find_x, 10);
 	t_result(result);
 }
@@ -3113,7 +3113,7 @@ static void
 t25(void) {
 	int	result;
 
-	t_assert("dns_db_load", 25, T_REQUIRED, a25);
+	t_assert("dns_db_load", 25, T_REQUIRED, "%s", a25);
 	result = t_eval("dns_db_load_soa_not_top", t_dns_db_load, 9);
 	t_result(result);
 }

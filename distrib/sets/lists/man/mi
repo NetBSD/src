@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.3.2.1 2009/05/30 16:21:35 snj Exp $
+# $NetBSD: mi,v 1.1109.2.3.2.2 2009/12/03 17:31:44 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -308,6 +308,7 @@
 ./usr/share/man/cat1/nice.0			man-util-catman		.cat
 ./usr/share/man/cat1/nl.0			man-util-catman		.cat
 ./usr/share/man/cat1/nohup.0			man-util-catman		.cat
+./usr/share/man/cat1/nsupdate.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/nvi.0			man-obsolete		obsolete
 ./usr/share/man/cat1/nview.0			man-obsolete		obsolete
 ./usr/share/man/cat1/od.0			man-util-catman		.cat
@@ -2307,7 +2308,7 @@
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/nqmgr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
-./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
+./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		crypto,.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
@@ -2904,6 +2905,7 @@
 ./usr/share/man/html1/nice.html			man-util-htmlman	html
 ./usr/share/man/html1/nl.html			man-util-htmlman	html
 ./usr/share/man/html1/nohup.html		man-util-htmlman	html
+./usr/share/man/html1/nsupdate.html		man-netutil-htmlman	html
 ./usr/share/man/html1/nvi.html			man-obsolete		obsolete
 ./usr/share/man/html1/nview.html		man-obsolete		obsolete
 ./usr/share/man/html1/od.html			man-util-htmlman	html
@@ -4615,7 +4617,7 @@
 ./usr/share/man/html8/nis.html			man-nis-htmlman		html
 ./usr/share/man/html8/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
-./usr/share/man/html8/nsupdate.html		man-netutil-htmlman	html
+./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/ntp-keygen.html		man-ntp-htmlman		crypto,html
 ./usr/share/man/html8/ntpd.html			man-ntp-htmlman		html
@@ -5148,6 +5150,7 @@
 ./usr/share/man/man1/nice.1			man-util-man		.man
 ./usr/share/man/man1/nl.1			man-util-man		.man
 ./usr/share/man/man1/nohup.1			man-util-man		.man
+./usr/share/man/man1/nsupdate.1			man-netutil-man		.man
 ./usr/share/man/man1/nvi.1			man-obsolete		obsolete
 ./usr/share/man/man1/nview.1			man-obsolete		obsolete
 ./usr/share/man/man1/od.1			man-util-man		.man
@@ -7147,7 +7150,7 @@
 ./usr/share/man/man8/nologin.8			man-sysutil-man		.man
 ./usr/share/man/man8/nqmgr.8			man-obsolete		obsolete
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
-./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
+./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
 ./usr/share/man/man8/ntp-keygen.8		man-ntp-man		crypto,.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		.man

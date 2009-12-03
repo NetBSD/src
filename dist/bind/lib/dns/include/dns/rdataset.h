@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.5 2008/06/21 18:32:27 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.62 2007/06/19 23:47:17 tbox Exp */
+/* Id: rdataset.h,v 1.62.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -350,8 +350,8 @@ dns_rdataset_totext(dns_rdataset_t *rdataset,
  * Notes:
  *\li	The rdata cursor position will be changed.
  *
- *\li	The 'question' flag should normally be #ISC_FALSE.  If it is 
- *	#ISC_TRUE, the TTL and rdata fields are not printed.  This is 
+ *\li	The 'question' flag should normally be #ISC_FALSE.  If it is
+ *	#ISC_TRUE, the TTL and rdata fields are not printed.  This is
  *	for use when printing an rdata representing a question section.
  *
  *\li	This interface is deprecated; use dns_master_rdatasettottext()
@@ -413,7 +413,7 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  unsigned int *countp);
 /*%<
  * Like dns_rdataset_towire(), but sorting the rdatasets according to
- * the integer value returned by 'order' when called witih the rdataset
+ * the integer value returned by 'order' when called with the rdataset
  * and 'order_arg' as arguments.
  *
  * Requires:

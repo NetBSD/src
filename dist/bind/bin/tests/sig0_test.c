@@ -1,4 +1,4 @@
-/*	$NetBSD: sig0_test.c,v 1.1.1.6 2008/08/15 14:39:56 he Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.1.1.6.8.1 2009/12/03 17:31:17 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sig0_test.c,v 1.15.232.2 2008/07/23 07:32:56 tbox Exp */
+/* Id: sig0_test.c,v 1.15.128.2 2008/07/22 23:46:34 tbox Exp */
 
 #include <config.h>
 

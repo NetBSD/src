@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.h,v 1.1.1.1 2008/06/21 18:31:19 christos Exp $	*/
+/*	$NetBSD: httpd.h,v 1.1.1.1.10.1 2009/12/03 17:31:38 snj Exp $	*/
 
 /*
  * Copyright (C) 2006-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: httpd.h,v 1.6.128.2 2008/01/17 23:46:37 tbox Exp */
+/* Id: httpd.h,v 1.6.128.3 2008/08/08 05:10:34 marka Exp */
 
 #ifndef ISC_HTTPD_H
 #define ISC_HTTPD_H 1
@@ -49,7 +49,7 @@ isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdp);
 
 isc_result_t
 isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
-		    isc_httpdaction_t func, void *arg);
+		    isc_httpdaction_t *func, void *arg);
 
 isc_result_t
 isc_httpd_response(isc_httpd_t *httpd);

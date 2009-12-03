@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.5 2008/06/21 18:33:47 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.5.8.1 2009/12/03 17:31:17 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.9 2007/06/19 23:46:59 tbox Exp */
+/* Id: os.h,v 1.9.128.2 2009/01/19 23:47:01 tbox Exp */
 
 /*! \file */
 
@@ -37,7 +37,7 @@ FILE *safe_create(const char *filename);
 
 int set_user(FILE *fd, const char *user);
 /*%<
- * Set the owner of the file refernced by 'fd' to 'user'.
+ * Set the owner of the file referenced by 'fd' to 'user'.
  * Returns:
  *   0 		success
  *   -1 	insufficient permissions, or 'user' does not exist.

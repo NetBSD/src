@@ -1,7 +1,7 @@
-/*	$NetBSD: t_timers.c,v 1.1.1.6 2008/06/21 18:34:14 christos Exp $	*/
+/*	$NetBSD: t_timers.c,v 1.1.1.6.8.1 2009/12/03 17:31:18 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_timers.c,v 1.26.128.2 2008/01/12 23:46:43 tbox Exp */
+/* Id: t_timers.c,v 1.26.128.4 2009/01/22 23:46:35 tbox Exp */
 
 #include <config.h>
 
@@ -369,7 +369,7 @@ t1(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 1, T_REQUIRED, a1);
+	t_assert("isc_timer_create", 1, T_REQUIRED, "%s", a1);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -410,7 +410,7 @@ t2(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 2, T_REQUIRED, a2);
+	t_assert("isc_timer_create", 2, T_REQUIRED, "%s", a2);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -536,7 +536,7 @@ t3(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 3, T_REQUIRED, a3);
+	t_assert("isc_timer_create", 3, T_REQUIRED, "%s", a3);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -699,7 +699,7 @@ t4(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_reset", 4, T_REQUIRED, a4);
+	t_assert("isc_timer_reset", 4, T_REQUIRED, "%s", a4);
 
 	if (threaded) {
 		Tx_nfails = 0;
@@ -1112,7 +1112,7 @@ static const char *a5 =
 
 static void
 t5(void) {
-	t_assert("isc_timer_reset", 5, T_REQUIRED, a5);
+	t_assert("isc_timer_reset", 5, T_REQUIRED, "%s", a5);
 
 	if (threaded)
 		t_result(t_timers5());

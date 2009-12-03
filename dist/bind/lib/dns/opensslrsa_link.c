@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.3.4.1 2009/01/16 03:13:00 snj Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.3.4.1.2.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: opensslrsa_link.c,v 1.16 2007/06/19 23:47:16 tbox Exp
+ * Id: opensslrsa_link.c,v 1.16.128.3 2009/01/19 00:01:10 marka Exp
  */
 #ifdef OPENSSL
 
@@ -52,15 +52,15 @@
 #ifdef WIN32
 #if !((OPENSSL_VERSION_NUMBER >= 0x009070cfL && \
        OPENSSL_VERSION_NUMBER < 0x00908000L) || \
-      OPENSSL_VERSION_NUMBER >= 0x0090804fL) 
+      OPENSSL_VERSION_NUMBER >= 0x0090804fL)
 #error Please upgrade OpenSSL to 0.9.8d/0.9.7l or greater.
 #endif
 #endif
 
 
 	/*
-	 * XXXMPA  Temporarially disable RSA_BLINDING as it requires
-	 * good quality random data that cannot currently be guarenteed.
+	 * XXXMPA  Temporarily disable RSA_BLINDING as it requires
+	 * good quality random data that cannot currently be guaranteed.
 	 * XXXMPA  Find which versions of openssl use pseudo random data
 	 * and set RSA_FLAG_BLINDING for those.
 	 */

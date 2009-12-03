@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.3 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3.8.1 2009/12/03 17:31:24 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.11.92.2 2008/03/31 23:46:42 tbox Exp
+ * Id: dst_api.c,v 1.11.92.7 2009/07/29 23:55:00 each Exp
  */
 
 /*! \file */
@@ -951,6 +951,13 @@ dst_key_read_public(const char *filename, int type,
 	NEXTTOKEN(lex, opt, &token);
 	if (token.type != isc_tokentype_string)
 		BADTOKEN();
+
+	/*
+	 * We don't support "@" in .key files.
+	 */
+	if (!strcmp(DST_AS_STR(token), "@"))
+		BADTOKEN();
+
 	dns_fixedname_init(&name);
 	isc_buffer_init(&b, DST_AS_STR(token), strlen(DST_AS_STR(token)));
 	isc_buffer_add(&b, strlen(DST_AS_STR(token)));
@@ -961,6 +968,9 @@ dst_key_read_public(const char *filename, int type,
 
 	/* Read the next word: either TTL, class, or 'KEY' */
 	NEXTTOKEN(lex, opt, &token);
+
+	if (token.type != isc_tokentype_string)
+		BADTOKEN();
 
 	/* If it's a TTL, read the next one */
 	result = dns_ttl_fromtext(&token.value.as_textregion, &ttl);
@@ -1106,9 +1116,12 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 	fwrite(r.base, 1, r.length, fp);
 
 	fputc('\n', fp);
+	fflush(fp);
+	if (ferror(fp))
+		ret = DST_R_WRITEERROR;
 	fclose(fp);
 
-	return (ISC_R_SUCCESS);
+	return (ret);
 }
 
 static isc_result_t

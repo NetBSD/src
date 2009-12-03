@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.1.1.5 2008/06/21 18:31:41 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.5.8.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tsig.c,v 1.131.2.2 2008/01/17 23:46:37 tbox Exp
+ * Id: tsig.c,v 1.131.2.3 2008/11/04 22:28:45 marka Exp
  */
 /*! \file */
 #include <config.h>
@@ -447,7 +447,6 @@ cleanup_ring(dns_tsig_keyring_t *ring)
 		dns_rbtnodechain_current(&chain, &foundname, origin, &node);
 		tkey = node->data;
 		if (tkey != NULL) {
-			tsig_log(tkey, 2, "tsig expire: generated=%d, refs=%d, expire=%d)", tkey->generated, isc_refcount_current(&tkey->refs), now - tkey->expire);
 			if (tkey->generated
 			    && isc_refcount_current(&tkey->refs) == 1
 			    && tkey->inception != tkey->expire

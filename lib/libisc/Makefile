@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/06/21 23:32:19 christos Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2009/12/03 17:31:47 snj Exp $
 
 LIB=isc
 
@@ -23,12 +23,12 @@ PTHREAD_SRCS=	condition.c mutex.c thread.c
 
 SRCS=		assertions.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
-		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c lex.c lfsr.c \
-		lib.c log.c md5.c mem.c mutexblock.c netaddr.c \
-		netscope.c ondestroy.c parseint.c quota.c radix.c random.c \
-		ratelimiter.c refcount.c region.c result.c rwlock.c \
-		serial.c sha1.c sha2.c sockaddr.c string.c strtoul.c symtab.c \
-		task.c taskpool.c timer.c version.c ${UNIX_SRCS} \
+		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c inet_aton.c \
+		lex.c lfsr.c lib.c log.c md5.c mem.c mutexblock.c netaddr.c \
+		netscope.c ondestroy.c parseint.c portset.c quota.c radix.c \
+		random.c ratelimiter.c refcount.c region.c result.c rwlock.c \
+		serial.c sha1.c sha2.c sockaddr.c stats.c string.c strtoul.c \
+		symtab.c task.c taskpool.c timer.c version.c ${UNIX_SRCS} \
 		${NLS_SRCS} ${PTHREAD_SRCS}
 
 .if (${USE_INET6} == "no")

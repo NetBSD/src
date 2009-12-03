@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.6 2008/06/21 18:31:50 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.6.8.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.89.128.2 2008/04/09 22:53:06 tbox Exp */
+/* Id: masterdump.c,v 1.89.128.5.2.1 2009/11/18 23:41:18 marka Exp */
 
 /*! \file */
 
@@ -285,7 +285,7 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 		/*
 		 * Do not return ISC_R_NOSPACE if the line break string
 		 * buffer is too small, because that would just make
-		 * dump_rdataset() retry indenfinitely with ever
+		 * dump_rdataset() retry indefinitely with ever
 		 * bigger target buffers.  That's a different buffer,
 		 * so it won't help.  Use DNS_R_TEXTTOOLONG as a substitute.
 		 */
@@ -776,7 +776,8 @@ dump_order_compare(const void *a, const void *b) {
 
 static const char *trustnames[] = {
 	"none",
-	"pending",
+	"pending-additional",
+	"pending-answer",
 	"additional",
 	"glue",
 	"answer",
@@ -1414,12 +1415,11 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 				      "dumptostreaminc(%p) new nodes -> %d\n",
 				      dctx, dctx->nodes);
 		}
-		result = dns_dbiterator_pause(dctx->dbiter);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		result = DNS_R_CONTINUE;
 	} else if (result == ISC_R_NOMORE)
 		result = ISC_R_SUCCESS;
  fail:
+	RUNTIME_CHECK(dns_dbiterator_pause(dctx->dbiter) == ISC_R_SUCCESS);
 	isc_mem_put(dctx->mctx, buffer.base, buffer.length);
 	return (result);
 }

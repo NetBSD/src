@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.3 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3.8.1 2009/12/03 17:31:38 snj Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.4 2007/06/19 23:47:17 tbox Exp */
+/* Id: atomic.h,v 1.4.122.3 2009/06/24 02:23:27 marka Exp */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -32,8 +32,12 @@
  * Open issue: can 'fetchadd' make the code faster for some particular values
  * (e.g., 1 and -1)?
  */
-static __inline isc_int32_t
-isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
+static inline isc_int32_t
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_xadd(isc_int32_t *p, isc_int32_t val)
+{
 	isc_int32_t prev, swapped;
 
 	for (prev = *(volatile isc_int32_t *)p; ; prev = swapped) {
@@ -54,8 +58,12 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 /*
  * This routine atomically stores the value 'val' in 'p'.
  */
-static __inline void
-isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
+static inline void
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_store(isc_int32_t *p, isc_int32_t val)
+{
 	__asm__ volatile(
 		"st4.rel %0=%1"
 		: "=m" (*p)
@@ -69,8 +77,12 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
  * original value is equal to 'cmpval'.  The original value is returned in any
  * case.
  */
-static __inline isc_int32_t
-isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
+static inline isc_int32_t
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val)
+{
 	isc_int32_t ret;
 
 	__asm__ volatile(

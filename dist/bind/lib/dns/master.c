@@ -1,7 +1,7 @@
-/*	$NetBSD: master.c,v 1.2 2008/07/25 22:09:52 dsl Exp $	*/
+/*	$NetBSD: master.c,v 1.2.8.1 2009/12/03 17:31:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.166.94.3 2008/01/17 23:46:37 tbox Exp */
+/* Id: master.c,v 1.166.94.5 2009/01/19 23:47:02 tbox Exp */
 
 /*! \file */
 
@@ -270,7 +270,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 				SETRESULT(lctx, result); \
 				LOGIT(result); \
 				read_till_eol = ISC_TRUE; \
-				/* continue; */ \
+				break; \
 			} else if (result != ISC_R_SUCCESS) \
 				goto log_and_cleanup; \
 		} \
@@ -1836,7 +1836,7 @@ load_text(dns_loadctx_t *lctx) {
 		/*
 		 * Find type in rdatalist.
 		 * If it does not exist create new one and prepend to list
-		 * as this will mimimise list traversal.
+		 * as this will minimise list traversal.
 		 */
 		if (ictx->glue != NULL)
 			this = ISC_LIST_HEAD(glue_list);

@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.6 2008/06/21 18:35:21 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.6.8.1 2009/12/03 17:31:16 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.79.128.5 2008/05/06 01:32:51 each Exp */
+/* Id: os.c,v 1.79.128.13 2009/03/02 03:07:05 marka Exp */
 
 /*! \file */
 
@@ -44,6 +44,7 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/print.h>
+#include <isc/resource.h>
 #include <isc/result.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
@@ -196,16 +197,20 @@ linux_setcaps(cap_t caps) {
 #define SET_CAP(flag) \
 	do { \
 		capval = (flag); \
-		err = cap_set_flag(caps, CAP_EFFECTIVE, 1, &capval, CAP_SET); \
-		if (err == -1) { \
-			isc__strerror(errno, strbuf, sizeof(strbuf)); \
-			ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
-		} \
-		\
-		err = cap_set_flag(caps, CAP_PERMITTED, 1, &capval, CAP_SET); \
-		if (err == -1) { \
-			isc__strerror(errno, strbuf, sizeof(strbuf)); \
-			ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
+		cap_flag_value_t curval; \
+		err = cap_get_flag(curcaps, capval, CAP_PERMITTED, &curval); \
+		if (err != -1 && curval) { \
+			err = cap_set_flag(caps, CAP_EFFECTIVE, 1, &capval, CAP_SET); \
+			if (err == -1) { \
+				isc__strerror(errno, strbuf, sizeof(strbuf)); \
+				ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
+			} \
+			\
+			err = cap_set_flag(caps, CAP_PERMITTED, 1, &capval, CAP_SET); \
+			if (err == -1) { \
+				isc__strerror(errno, strbuf, sizeof(strbuf)); \
+				ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
+			} \
 		} \
 	} while (0)
 #define INIT_CAP \
@@ -215,16 +220,27 @@ linux_setcaps(cap_t caps) {
 			isc__strerror(errno, strbuf, sizeof(strbuf)); \
 			ns_main_earlyfatal("cap_init failed: %s", strbuf); \
 		} \
+		curcaps = cap_get_proc(); \
+		if (curcaps == NULL) { \
+			isc__strerror(errno, strbuf, sizeof(strbuf)); \
+			ns_main_earlyfatal("cap_get_proc failed: %s", strbuf); \
+		} \
+	} while (0)
+#define FREE_CAP \
+	{ \
+		cap_free(caps); \
+		cap_free(curcaps); \
 	} while (0)
 #else
-#define SET_CAP(flag) { caps |= (1 << (flag)); }
-#define INIT_CAP { caps = 0; }
+#define SET_CAP(flag) do { caps |= (1 << (flag)); } while (0)
+#define INIT_CAP do { caps = 0; } while (0)
 #endif /* HAVE_LIBCAP */
 
 static void
 linux_initialprivs(void) {
 	cap_t caps;
 #ifdef HAVE_LIBCAP
+	cap_t curcaps;
 	cap_value_t capval;
 	char strbuf[ISC_STRERRORSIZE];
 	int err;
@@ -278,12 +294,17 @@ linux_initialprivs(void) {
 	SET_CAP(CAP_SYS_RESOURCE);
 
 	linux_setcaps(caps);
+
+#ifdef HAVE_LIBCAP
+	FREE_CAP;
+#endif
 }
 
 static void
 linux_minprivs(void) {
 	cap_t caps;
 #ifdef HAVE_LIBCAP
+	cap_t curcaps;
 	cap_value_t capval;
 	char strbuf[ISC_STRERRORSIZE];
 	int err;
@@ -310,6 +331,10 @@ linux_minprivs(void) {
 	SET_CAP(CAP_SYS_RESOURCE);
 
 	linux_setcaps(caps);
+
+#ifdef HAVE_LIBCAP
+	FREE_CAP;
+#endif
 }
 
 #ifdef HAVE_SYS_PRCTL_H
@@ -439,10 +464,12 @@ ns_os_started(void) {
 	char buf = 0;
 
 	/*
-	 * Signal to the parent that we stated successfully.
+	 * Signal to the parent that we started successfully.
 	 */
 	if (dfd[0] != -1 && dfd[1] != -1) {
-		write(dfd[1], &buf, 1);
+		if (write(dfd[1], &buf, 1) != 1)
+			ns_main_earlyfatal("unable to signal parent that we "
+					   "otherwise started successfully.");
 		close(dfd[1]);
 		dfd[0] = dfd[1] = -1;
 	}
@@ -482,10 +509,14 @@ ns_os_chroot(const char *root) {
 	ns_smf_chroot = 0;
 #endif
 	if (root != NULL) {
+#ifdef HAVE_CHROOT
 		if (chroot(root) < 0) {
 			isc__strerror(errno, strbuf, sizeof(strbuf));
 			ns_main_earlyfatal("chroot(): %s", strbuf);
 		}
+#else
+		ns_main_earlyfatal("chroot(): disabled");
+#endif
 		if (chdir("/") < 0) {
 			isc__strerror(errno, strbuf, sizeof(strbuf));
 			ns_main_earlyfatal("chdir(/): %s", strbuf);
@@ -569,6 +600,24 @@ ns_os_changeuser(void) {
 }
 
 void
+ns_os_adjustnofile() {
+#ifdef HAVE_LINUXTHREADS
+	isc_result_t result;
+	isc_resourcevalue_t newvalue;
+
+	/*
+	 * Linux: max number of open files specified by one thread doesn't seem
+	 * to apply to other threads on Linux.
+	 */
+	newvalue = ISC_RESOURCE_UNLIMITED;
+
+	result = isc_resource_setlimit(isc_resource_openfiles, newvalue);
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlywarning("couldn't adjust limit on open files");
+#endif
+}
+
+void
 ns_os_minprivs(void) {
 #ifdef HAVE_SYS_PRCTL_H
 	linux_keepcaps();
@@ -600,7 +649,8 @@ safe_open(const char *filename, isc_boolean_t append) {
 		fd = open(filename, O_WRONLY|O_CREAT|O_APPEND,
 			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	else {
-		(void)unlink(filename);
+		if (unlink(filename) < 0 && errno != ENOENT)
+			return (-1);
 		fd = open(filename, O_WRONLY|O_CREAT|O_EXCL,
 			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	}
@@ -609,8 +659,11 @@ safe_open(const char *filename, isc_boolean_t append) {
 
 static void
 cleanup_pidfile(void) {
+	int n;
 	if (pidfile != NULL) {
-		(void)unlink(pidfile);
+		n = unlink(pidfile);
+		if (n == -1 && errno != ENOENT)
+			ns_main_earlywarning("unlink '%s': failed", pidfile);
 		free(pidfile);
 	}
 	pidfile = NULL;
