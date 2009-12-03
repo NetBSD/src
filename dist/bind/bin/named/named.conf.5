@@ -1,8 +1,8 @@
-.\"	$NetBSD: named.conf.5,v 1.5 2008/06/21 18:59:24 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.5.4.1 2009/12/03 17:38:05 snj Exp $
 .\"
-.\" Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named.conf.5,v 1.31 2007/10/21 22:15:32 marka Exp
+.\" Id: named.conf.5,v 1.31.38.2 2009/07/11 01:43:28 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -176,6 +176,7 @@ options {
 	port \fIinteger\fR;
 	querylog \fIboolean\fR;
 	recursing\-file \fIquoted_string\fR;
+	reserved\-sockets \fIinteger\fR;
 	random\-device \fIquoted_string\fR;
 	recursive\-clients \fIinteger\fR;
 	serial\-query\-rate \fIinteger\fR;
@@ -537,5 +538,5 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBrndc\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2007 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2008 Internet Systems Consortium, Inc. ("ISC")
 .br

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.5 2008/06/21 18:31:25 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.14.128.2 2008/04/02 23:46:28 tbox Exp */
+/* Id: net.c,v 1.14.128.4 2008/08/08 05:10:34 marka Exp */
 
 #include <config.h>
 
@@ -31,6 +31,23 @@
 #include <isc/strerror.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+/*%
+ * Definitions about UDP port range specification.  This is a total mess of
+ * portability variants: some use sysctl (but the sysctl names vary), some use
+ * system-specific interfaces, some have the same interface for IPv4 and IPv6,
+ * some separate them, etc...
+ */
+
+/*%
+ * The last resort defaults: use all non well known port space
+ */
+#ifndef ISC_NET_PORTRANGELOW
+#define ISC_NET_PORTRANGELOW 1024
+#endif	/* ISC_NET_PORTRANGELOW */
+#ifndef ISC_NET_PORTRANGEHIGH
+#define ISC_NET_PORTRANGEHIGH 65535
+#endif	/* ISC_NET_PORTRANGEHIGH */
 
 #if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRANY)
 const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
@@ -227,7 +244,8 @@ try_ipv6pktinfo(void) {
 	optname = IPV6_PKTINFO;
 #endif
 	on = 1;
-	if (setsockopt(s, IPPROTO_IPV6, optname, &on, sizeof(on)) < 0) {
+	if (setsockopt(s, IPPROTO_IPV6, optname, (const char *) &on,
+		       sizeof(on)) < 0) {
 		ipv6pktinfo_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -269,6 +287,22 @@ isc_net_probe_ipv6pktinfo(void) {
 #endif
 #endif
 	return (ipv6pktinfo_result);
+}
+
+isc_result_t
+isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high) {
+	int result = ISC_R_FAILURE;
+
+	REQUIRE(low != NULL && high != NULL);
+
+	UNUSED(af);
+
+	if (result != ISC_R_SUCCESS) {
+		*low = ISC_NET_PORTRANGELOW;
+		*high = ISC_NET_PORTRANGEHIGH;
+	}
+
+	return (ISC_R_SUCCESS);	/* we currently never fail in this function */
 }
 
 void

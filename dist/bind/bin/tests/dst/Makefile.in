@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.44 2007/06/19 23:47:00 tbox Exp
+# Id: Makefile.in,v 1.44.128.2 2008/08/22 23:46:32 tbox Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -54,7 +54,7 @@ t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB}
 		t_dst.@O@ ${TLIB} ${LIBS}
 
 gsstest@EXEEXT@: gsstest.@O@ ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ \
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		gsstest.@O@ ${LIBS}
 
 test: t_dst@EXEEXT@

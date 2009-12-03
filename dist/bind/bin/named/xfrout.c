@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.5 2008/06/21 18:35:09 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.5.4.1 2009/12/03 17:38:05 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.126.128.2 2008/04/03 06:20:33 tbox Exp */
+/* Id: xfrout.c,v 1.126.128.8 2009/01/29 22:41:44 jinmei Exp */
 
 #include <config.h>
 
@@ -25,6 +25,7 @@
 #include <isc/mem.h>
 #include <isc/timer.h>
 #include <isc/print.h>
+#include <isc/stats.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -152,12 +153,12 @@ static void
 db_rr_iterator_destroy(db_rr_iterator_t *it);
 
 static inline void
-inc_stats(dns_zone_t *zone, dns_statscounter_t counter) {
-	dns_generalstats_increment(ns_g_server->nsstats, counter);
+inc_stats(dns_zone_t *zone, isc_statscounter_t counter) {
+	isc_stats_increment(ns_g_server->nsstats, counter);
 	if (zone != NULL) {
-		dns_stats_t *zonestats = dns_zone_getrequeststats(zone);
+		isc_stats_t *zonestats = dns_zone_getrequeststats(zone);
 		if (zonestats != NULL)
-			dns_generalstats_increment(zonestats, counter);
+			isc_stats_increment(zonestats, counter);
 	}
 }
 
@@ -316,6 +317,11 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 	rdl.type = rdata->type;
 	rdl.rdclass = rdata->rdclass;
 	rdl.ttl = ttl;
+	if (rdata->type == dns_rdatatype_sig ||
+	    rdata->type == dns_rdatatype_rrsig)
+		rdl.covers = dns_rdata_covers(rdata);
+	else
+		rdl.covers = dns_rdatatype_none;
 	ISC_LIST_INIT(rdl.rdata);
 	ISC_LINK_INIT(&rdl, link);
 	dns_rdataset_init(&rds);
@@ -1205,7 +1211,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	}
 
 	/*
-	 * Bracket the the data stream with SOAs.
+	 * Bracket the data stream with SOAs.
 	 */
 	CHECK(soa_rrstream_create(mctx, db, ver, &soa_stream));
 	CHECK(compound_rrstream_create(mctx, &soa_stream, &data_stream,
@@ -1335,7 +1341,8 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->zone = NULL;
 	xfr->db = NULL;
 	xfr->ver = NULL;
-	dns_zone_attach(zone, &xfr->zone);
+	if (zone != NULL)	/* zone will be NULL if it's DLZ */
+		dns_zone_attach(zone, &xfr->zone);
 	dns_db_attach(db, &xfr->db);
 	dns_db_attachversion(db, ver, &xfr->ver);
 	xfr->end_of_stream = ISC_FALSE;
@@ -1419,7 +1426,7 @@ failure:
  *
  * Requires:
  *	The stream iterator is initialized and points at an RR,
- *      or possiby at the end of the stream (that is, the
+ *      or possibly at the end of the stream (that is, the
  *      _first method of the iterator has been called).
  */
 static void
@@ -1593,6 +1600,11 @@ sendstream(xfrout_ctx_t *xfr) {
 		msgrdl->type = rdata->type;
 		msgrdl->rdclass = rdata->rdclass;
 		msgrdl->ttl = ttl;
+		if (rdata->type == dns_rdatatype_sig ||
+		    rdata->type == dns_rdatatype_rrsig)
+			msgrdl->covers = dns_rdata_covers(rdata);
+		else
+			msgrdl->covers = dns_rdatatype_none;
 		ISC_LINK_INIT(msgrdl, link);
 		ISC_LIST_INIT(msgrdl->rdata);
 		ISC_LIST_APPEND(msgrdl->rdata, msgrdata, link);

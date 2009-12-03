@@ -1,7 +1,7 @@
-/*	$NetBSD: t_tasks.c,v 1.1.1.6 2008/06/21 18:34:06 christos Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.1.1.6.4.1 2009/12/03 17:38:07 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_tasks.c,v 1.40 2007/06/19 23:47:07 tbox Exp */
+/* Id: t_tasks.c,v 1.40.128.2 2009/01/22 23:46:35 tbox Exp */
 
 #include <config.h>
 
@@ -380,7 +380,7 @@ static void
 t1(void) {
 	int	result;
 
-	t_assert("tasks", 1, T_REQUIRED, a1);
+	t_assert("tasks", 1, T_REQUIRED, "%s", a1);
 	result = t_tasks1();
 	t_result(result);
 }
@@ -576,7 +576,7 @@ static const char *a2 = "The task subsystem can create ISC_TASKS_MIN tasks";
 
 static void
 t2(void) {
-	t_assert("tasks", 2, T_REQUIRED, a2);
+	t_assert("tasks", 2, T_REQUIRED, "%s", a2);
 
 	if (threaded)
 		t_result(t_tasks2());
@@ -833,7 +833,7 @@ static const char *a3 =	"When isc_task_shutdown() is called, any shutdown "
 			"LIFO order.";
 static void
 t3(void) {
-	t_assert("tasks", 3, T_REQUIRED, a3);
+	t_assert("tasks", 3, T_REQUIRED, "%s", a3);
 
 	if (threaded)
 		t_result(t_tasks3());
@@ -1023,7 +1023,7 @@ static const char *a4 =
 
 static void
 t4(void) {
-	t_assert("tasks", 4, T_REQUIRED, a4);
+	t_assert("tasks", 4, T_REQUIRED, "%s", a4);
 
 	if (threaded)
 		t_result(t_tasks4());
@@ -1244,7 +1244,7 @@ static const char *a7 =	"A call to isc_task_create() creates a task that can "
 
 static void
 t7(void) {
-	t_assert("tasks", 7, T_REQUIRED, a7);
+	t_assert("tasks", 7, T_REQUIRED, "%s", a7);
 
 	if (threaded)
 		t_result(t_tasks7());
@@ -1714,7 +1714,7 @@ static const char *a10 =
 
 static void
 t10(void) {
-	t_assert("tasks", 10, T_REQUIRED, a10);
+	t_assert("tasks", 10, T_REQUIRED, "%s", a10);
 
 	if (threaded)
 		t_result(t_tasks10());
@@ -1991,8 +1991,8 @@ static const char *a11 =
 
 static void
 t11(void) {
-	t_assert("tasks", 11, T_REQUIRED, a11);
-	
+	t_assert("tasks", 11, T_REQUIRED, "%s", a11);
+
 	if (threaded)
 		t_result(t_tasks11(1));
 	else
@@ -2012,7 +2012,7 @@ t_tasks12(void) {
 
 static void
 t12(void) {
-	t_assert("tasks", 12, T_REQUIRED, a12);
+	t_assert("tasks", 12, T_REQUIRED, "%s", a12);
 
 	if (threaded)
 		t_result(t_tasks12());
@@ -2122,7 +2122,7 @@ t_tasks13(void) {
 
 static void
 t13(void) {
-	t_assert("tasks", 13, T_REQUIRED, a13);
+	t_assert("tasks", 13, T_REQUIRED, "%s", a13);
 
 	if (threaded)
 		t_result(t_tasks13());
@@ -2146,7 +2146,7 @@ t14_callback(isc_task_t *task, isc_event_t *event) {
 	int taskno = *(int *)(event->ev_arg);
 
 
-	t_info("task enter %d\n", taskno);	
+	t_info("task enter %d\n", taskno);
 	if (taskno == T14_EXCLTASK) {
 		int	i;
 		t14_exclusiveerror = isc_task_beginexclusive(task);
@@ -2156,7 +2156,7 @@ t14_callback(isc_task_t *task, isc_event_t *event) {
 			t_info("task %d failed to got exclusive access: %d\n",
 				taskno, t14_exclusiveerror);
 		for (i = 0; i < T14_NTASKS; i++) {
-   		        t_info("task %d state %d\n", i , t14_active[i]);
+			t_info("task %d state %d\n", i , t14_active[i]);
 			if (t14_active[i])
 				t14_error++;
 		}
@@ -2274,8 +2274,8 @@ static void
 t14(void) {
 	int	result;
 
-	t_assert("tasks", 14, T_REQUIRED, 
-                 "isc_task_beginexclusive() gets exclusive access");
+	t_assert("tasks", 14, T_REQUIRED, "%s",
+		 "isc_task_beginexclusive() gets exclusive access");
 	result = t_tasks14();
 	t_result(result);
 }

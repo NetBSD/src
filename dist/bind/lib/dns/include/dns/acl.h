@@ -1,7 +1,7 @@
-/*	$NetBSD: acl.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.1.1.5.4.1 2009/12/03 17:38:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acl.h,v 1.31 2007/12/21 06:46:47 marka Exp */
+/* Id: acl.h,v 1.31.2.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -142,7 +142,7 @@ dns_acl_merge(dns_acl_t *dest, dns_acl_t *source, isc_boolean_t pos);
  * If pos is set to false, then the nested ACL is to be negated.  This
  * means reverse the sense of each *positive* element or IP table node,
  * but leave negatives alone, so as to prevent a double-negative causing
- * an unexpected postive match in the parent ACL.
+ * an unexpected positive match in the parent ACL.
  */
 
 void
@@ -156,7 +156,7 @@ dns_acl_isinsecure(const dns_acl_t *a);
 /*%<
  * Return #ISC_TRUE iff the acl 'a' is considered insecure, that is,
  * if it contains IP addresses other than those of the local host.
- * This is intended for applications such as printing warning 
+ * This is intended for applications such as printing warning
  * messages for suspect ACLs; it is not intended for making access
  * control decisions.  We make no guarantee that an ACL for which
  * this function returns #ISC_FALSE is safe.
@@ -213,7 +213,7 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr,
  * Like dns_acl_match, but matches against the single ACL element 'e'
  * rather than a complete ACL, and returns ISC_TRUE iff it matched.
  *
- * To determine whether the match was prositive or negative, the 
+ * To determine whether the match was positive or negative, the
  * caller should examine e->negative.  Since the element 'e' may be
  * a reference to a named ACL or a nested ACL, a matching element
  * returned through 'matchelt' is not necessarily 'e' itself.
