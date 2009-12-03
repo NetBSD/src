@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.136 2009/11/29 21:32:50 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.137 2009/12/03 21:04:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.136 2009/11/29 21:32:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.137 2009/12/03 21:04:29 cegger Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.136 2009/11/29 21:32:50 cegger Exp $");
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
+#include <dev/acpi/acpi_pci.h>
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif
@@ -168,7 +169,7 @@ static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
 	"PNP0000",	/* AT interrupt controller is handled internally */
 	"PNP0200",	/* AT DMA controller is handled internally */
-	"PNP0A??",	/* Busses aren't enumerated with ACPI yet */
+	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
 	"PNP0C01",	/* No "System Board" driver */
 	"PNP0C02",	/* No "PnP motherboard register resources" driver */
@@ -712,6 +713,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	acpi_rescan1(sc, NULL, NULL);
 
 	acpi_wakedev_scan(sc);
+
+	acpi_pcidev_scan(sc);
 }
 
 static int
