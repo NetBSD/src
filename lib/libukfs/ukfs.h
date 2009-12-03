@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.12 2009/11/05 14:22:54 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.13 2009/12/03 14:23:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,7 @@ struct timeval;
 
 struct ukfs;
 struct ukfs_dircookie;
+struct ukfs_part;
 
 #define UKFS_DEFAULTMP "/ukfs"
 
@@ -56,7 +57,7 @@ __BEGIN_DECLS
 int		_ukfs_init(int);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			    int, void *, size_t);
-struct ukfs	*ukfs_mount_disk(const char *, const char *, int,
+struct ukfs	*ukfs_mount_disk(const char *, const char *, struct ukfs_part *,
 				 const char *, int, void *, size_t);
 int		ukfs_release(struct ukfs *, int);
 
@@ -114,21 +115,29 @@ void		ukfs_setspecific(struct ukfs *, void *);
 void *		ukfs_getspecific(struct ukfs *);
 
 /* partition magic in device names */
-#define UKFS_PARTITION_SCANMAGIC "%PART:"
-#define UKFS_PARTITION_MAGICLEN (sizeof(UKFS_PARTITION_SCANMAGIC "a%")-1)
-#define UKFS_PARTITION_MAXPATHLEN (MAXPATHLEN+UKFS_PARTITION_MAGICLEN)
-#define UKFS_PARTITION_NONE (-1)
-#define UKFS_PARTITION_NA (-2)
-#define UKFS_USEPARTITION(a)						\
-	((a) != UKFS_PARTITION_NONE && (a) != UKFS_PARTITION_NA)
-#define UKFS_PARTITION_ARGVPROBE(part)					\
+extern struct ukfs_part *ukfs_part_none;
+extern struct ukfs_part *ukfs_part_na;
+#define UKFS_PARTITION_SCANMAGIC "%PART:" /* deprecated */
+
+#define UKFS_DISKLABEL_SCANMAGIC "%DISKLABEL:"
+#define UKFS_DISKLABEL_MAGICLEN (sizeof(UKFS_DISKLABEL_SCANMAGIC "a%")-1)
+
+#define UKFS_OFFSET_SCANMAGIC "%OFFSET:"
+#define UKFS_OFFSET_MINLEN (sizeof(UKFS_OFFSET_SCANMAGIC "512,512%")-1)
+
+#define UKFS_DEVICE_MAXSTR 128 /* unexact science ... */
+#define UKFS_DEVICE_MAXPATHLEN (MAXPATHLEN+UKFS_DEVICE_MAXSTR)
+
+#define UKFS_DEVICE_ARGVPROBE(part)					\
 do {									\
-	part = UKFS_PARTITION_NONE;					\
 	if (argc >= 3)							\
-		ukfs_partition_probe(argv[argc-2], &part);		\
+		if (ukfs_part_probe(argv[argc-2], part) == -1)	\
+			err(1, "ukfs_part_probe");			\
 } while (/*CONSTCOND*/0)
 
-int		ukfs_partition_probe(char *, int *);
+int		ukfs_part_probe(char *, struct ukfs_part **);
+void		ukfs_part_release(struct ukfs_part *);
+int		ukfs_part_tostring(struct ukfs_part *, char *, size_t);
 
 /* dynamic loading of library modules */
 int		ukfs_modload(const char *);
