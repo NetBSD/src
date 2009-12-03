@@ -1,16 +1,15 @@
-# $NetBSD: SCHIZO,v 1.1 2009/11/28 21:39:42 mrg Exp $
+# $NetBSD: SCHIZO,v 1.2 2009/12/03 03:30:02 mrg Exp $
 #
 # GENERIC with schizo support enabled, with the annoying schizo interupt
 # option
 #
 
-#include 	"arch/sparc64/conf/GENERIC.MP"
-include 	"arch/sparc64/conf/GENERIC"
+include 	"arch/sparc64/conf/GENERIC.MP"
+#include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"SCHIZO.$Revision: 1.1 $"
+#ident		"SCHIZO.$Revision: 1.2 $"
 
 options 	SCHIZO_BUS_SPACE_BROKEN
-#options 	SYSCALL_DEBUG
 
 makeoptions	DEBUG="-g"
 options 	DEBUG
@@ -21,8 +20,11 @@ options 	DDB_ONPANIC=2   # print stack trace
 schizo*	at mainbus?
 pci* at schizo?
 
+# this crashes when attaching.
 no machfb
-no esiop
-no siop
 
+# this doesn't work yet
 bge* at pci? dev ? function ?
+
+# this matches when it isn't present. ugh.
+no admtemp
