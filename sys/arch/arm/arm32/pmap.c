@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2008/09/28 21:27:11 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.4.1 2009/12/03 09:26:59 sborrill Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2008/09/28 21:27:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.4.1 2009/12/03 09:26:59 sborrill Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3645,7 +3645,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	    pg, VM_PAGE_TO_PHYS(pg), prot));
 
 	switch(prot) {
-		return;
 	case VM_PROT_READ|VM_PROT_WRITE:
 #if defined(PMAP_CHECK_VIPT) && defined(PMAP_APX)
 		pmap_clearbit(pg, PVF_EXEC);
@@ -4076,6 +4075,15 @@ pmap_activate(struct lwp *l)
 	 * entire cache.
 	 */
 	rpm = pmap_recent_user;
+
+/*
+ * XXXSCW: There's a corner case here which can leave turds in the cache as
+ * reported in kern/41058. They're probably left over during tear-down and
+ * switching away from an exiting process. Until the root cause is identified
+ * and fixed, zap the cache when switching pmaps. This will result in a few
+ * unnecessary cache flushes, but that's better than silently corrupting data.
+ */
+#if 0
 	if (npm != pmap_kernel() && rpm && npm != rpm &&
 	    rpm->pm_cstate.cs_cache) {
 		rpm->pm_cstate.cs_cache = 0;
@@ -4083,6 +4091,16 @@ pmap_activate(struct lwp *l)
 		cpu_idcache_wbinv_all();
 #endif
 	}
+#else
+	if (rpm) {
+		rpm->pm_cstate.cs_cache = 0;
+		if (npm == pmap_kernel())
+			pmap_recent_user = NULL;
+#ifdef PMAP_CACHE_VIVT
+		cpu_idcache_wbinv_all();
+#endif
+	}
+#endif
 
 	/* No interrupts while we frob the TTB/DACR */
 	oldirqstate = disable_interrupts(IF32_bits);
