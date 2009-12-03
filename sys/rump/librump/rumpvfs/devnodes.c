@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.1 2009/09/06 20:42:25 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.2 2009/12/03 15:06:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1 2009/09/06 20:42:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.2 2009/12/03 15:06:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,14 +48,9 @@ rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
 	size_t devlen;
 	register_t retval;
 
-	error = do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
-	if (error != 0 && error != EEXIST)
-		return error;
-
-	devlen = strlen("/dev/") + strlen(basename) + 1 + 1; /* +letter +0 */
+	devlen = strlen(basename) + 1 + 1; /* +letter +0 */
 	devname = kmem_zalloc(devlen, KM_SLEEP);
-	strlcpy(devname, "/dev/", devlen);
-	strlcat(devname, basename, devlen);
+	strlcpy(devname, basename, devlen);
 	p = devname + devlen-2;
 
 	for (; nnodes > 0; nnodes--, minchar++, minnum++) {

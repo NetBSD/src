@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2009/09/06 20:42:26 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.3 2009/12/03 15:06:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2009/09/06 20:42:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2009/12/03 15:06:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,7 +50,7 @@ rump_dev_netsmb_init()
 	bmaj = cmaj = NODEVMAJOR;
 	if ((error = devsw_attach("nsmb", NULL, &bmaj, &nsmb_cdevsw, &cmaj))!=0)
 		panic("nsmb devsw attach failed: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "nsmb", '0',
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/nsmb", '0',
 	    cmaj, 0, 4)) != 0)
 		panic("cannot create nsmb device nodes: %d", error);
 
