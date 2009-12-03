@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs_int_disklabel.h,v 1.1 2009/10/07 20:51:00 pooka Exp $	*/
+/*	$NetBSD: ukfs_int_disklabel.h,v 1.2 2009/12/03 14:23:49 pooka Exp $	*/
 
 /*
  * Modified copy of disklabel.h so that ukfs doesn't have to depend
@@ -48,7 +48,7 @@
 #define	UKFS_MAXPARTITIONS	22
 #define	UKFS_DISKMAGIC	((uint32_t)0x82564557)	/* The disk magic number */
 
-struct ukfs_disklabel {
+struct ukfs__disklabel {
 	uint32_t d_magic;		/* the magic number */
 	uint16_t d_type;		/* drive type */
 	uint16_t d_subtype;		/* controller/d_type specific */
@@ -130,7 +130,7 @@ struct ukfs_disklabel {
 	uint16_t d_npartitions;	/* number of partitions in following */
 	uint32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	uint32_t d_sbsize;		/* max size of fs superblock, bytes */
-	struct	ukfs_partition {	/* the partition table */
+	struct	ukfs__partition {	/* the partition table */
 		uint32_t p_size;	/* number of sectors in partition */
 		uint32_t p_offset;	/* starting sector */
 		union {
@@ -151,7 +151,7 @@ struct ukfs_disklabel {
 	} d_partitions[UKFS_MAXPARTITIONS];	/* actually may be more */
 };
 
-uint16_t        ukfs_disklabel_dkcksum(struct ukfs_disklabel *);
-int             ukfs_disklabel_scan(struct ukfs_disklabel *, char *, size_t);
+uint16_t        ukfs__disklabel_dkcksum(struct ukfs__disklabel *);
+int             ukfs__disklabel_scan(struct ukfs__disklabel *, char *, size_t);
 
 #endif /* !LIB_UKFS_DISKLABEL_H_ */
