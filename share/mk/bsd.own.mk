@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.600 2009/12/02 14:11:20 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.601 2009/12/03 15:57:18 tron Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -725,8 +725,10 @@ X11FLAVOUR?=	Xorg
 #
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 MKZFS?=		yes
+_MKVARS.yes+=	MKZFS
 .else
 MKZFS?=		no
+_MKVARS.no+=	MKZFS
 .endif
 
 #
