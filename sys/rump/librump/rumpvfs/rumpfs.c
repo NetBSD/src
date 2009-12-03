@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.35 2009/12/03 12:35:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.36 2009/12/03 12:54:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.35 2009/12/03 12:35:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.36 2009/12/03 12:54:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -458,8 +458,9 @@ rump_vop_lookup(void *v)
 
 	if (!rd) {
 		LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
-			if (strncmp(rd->rd_name, cnp->cn_nameptr,
-			    cnp->cn_namelen) == 0)
+			if (strlen(rd->rd_name) == cnp->cn_namelen &&
+			    strncmp(rd->rd_name, cnp->cn_nameptr,
+			      cnp->cn_namelen) == 0)
 				break;
 		}
 	}
