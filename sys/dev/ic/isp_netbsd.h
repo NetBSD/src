@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.69 2009/11/23 02:13:46 rmind Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.70 2009/12/03 14:51:48 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -268,11 +268,13 @@ default:							\
 #define	DEFAULT_NODEWWN(isp, chan)	(isp)->isp_osinfo.wwn
 #define	DEFAULT_PORTWWN(isp, chan)	(isp)->isp_osinfo.wwn
 #define	ACTIVE_NODEWWN(isp, chan)				\
-	(isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
-	FCPARAM(isp, chan)->isp_wwnn_nvram
+	((isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
+	(FCPARAM(isp, chan)->isp_wwnn_nvram?		\
+	 FCPARAM(isp, chan)->isp_wwnn_nvram : 0x400000007F000008ull))
 #define	ACTIVE_PORTWWN(isp, chan)				\
-	(isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
-	FCPARAM(isp, chan)->isp_wwpn_nvram
+	((isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
+	(FCPARAM(isp, chan)->isp_wwpn_nvram?		\
+	 FCPARAM(isp, chan)->isp_wwpn_nvram : 0x400000007F000008ull))
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
 #ifdef	ISP_SBUS_SUPPORTED
