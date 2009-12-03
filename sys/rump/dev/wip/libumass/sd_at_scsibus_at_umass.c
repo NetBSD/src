@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.2 2009/10/05 08:34:53 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.3 2009/12/03 15:07:09 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -159,5 +159,6 @@ rump_device_configuration(void)
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("sd", &sd_bdevsw, &bmaj, &sd_cdevsw, &cmaj));
 
-	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "sd0", 'a', bmaj, 0, 8));
+	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "/dev/sd0", 'a',
+	    bmaj, 0, 8));
 }
