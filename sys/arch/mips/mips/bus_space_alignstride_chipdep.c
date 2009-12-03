@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.9 2009/11/22 00:30:07 cliff Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.10 2009/12/03 22:36:56 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.9 2009/11/22 00:30:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.10 2009/12/03 22:36:56 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -793,8 +793,9 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 void
 __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 {
+#if !defined(_LP64) || defined(CHIP_EXTENT)
 	bus_addr_t addr = 0;	/* initialize to appease gcc */
-
+#endif
 #ifndef _LP64
 	bool handle_is_kseg2;
 
