@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.62 2009/11/25 13:21:49 cegger Exp $
+#	$NetBSD: files.acpi,v 1.63 2009/12/03 21:04:29 cegger Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -16,6 +16,7 @@ file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_powerres.c	acpi
 file	dev/acpi/acpi_madt.c		acpi
+file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_quirks.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
