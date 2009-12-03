@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.152 2009/12/02 17:41:02 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.153 2009/12/03 09:27:22 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15078,4 +15078,11 @@ sys/dev/sdmmc/sdmmcvar.h			1.2
 
 	Always treat sector size as 512 bytes.
 	[nonaka, ticket #1167]
+
+sys/arch/arm/arm32/pmap.c			1.203
+
+	Work-around a possible process exit corner case which can
+	leave stale data in the cache after a context-switch.
+	Addresses kern/41058.
+	[scw, ticket #1168]
 
