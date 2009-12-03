@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.154 2009/12/03 09:34:02 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.155 2009/12/03 09:40:20 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15090,4 +15090,10 @@ libexec/ld.elf_so/rtld.c			1.127
 
 	If the environment is corrupt, die. From FreeBSD.
 	[tron, ticket #1179]
+
+sys/net/if_tap.c				1.60
+
+	Fix a potential leak on tap device close; purging the send
+	queue did not actually release the dequeued mbufs.
+	[plunky, ticket #1173]
 
