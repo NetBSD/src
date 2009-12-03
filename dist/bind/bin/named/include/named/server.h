@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.5 2008/06/21 18:35:22 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.5.8.1 2009/12/03 17:31:16 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.88.10.4 2008/04/03 06:10:19 marka Exp */
+/* Id: server.h,v 1.88.10.7 2009/07/11 04:28:14 marka Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -93,12 +93,13 @@ struct ns_server {
 	isc_boolean_t		flushonshutdown;
 	isc_boolean_t		log_queries;	/*%< For BIND 8 compatibility */
 
-	dns_stats_t *		nsstats;	/*%< Server statistics */
+	isc_stats_t *		nsstats;	/*%< Server statistics */
 	dns_stats_t *		rcvquerystats;	/*% Incoming query statistics */
 	dns_stats_t *		opcodestats;	/*%< Incoming message statistics */
-	dns_stats_t *		zonestats;	/*% Zone management statistics */
-	dns_stats_t *		resolverstats;	/*% Resolver statistics */
+	isc_stats_t *		zonestats;	/*% Zone management statistics */
+	isc_stats_t *		resolverstats;	/*% Resolver statistics */
 
+	isc_stats_t *		sockstats;	/*%< Socket statistics */
 	ns_controls_t *		controls;	/*%< Control channels */
 	unsigned int		dispatchgen;
 	ns_dispatchlist_t	dispatches;
@@ -112,7 +113,7 @@ struct ns_server {
 #define NS_SERVER_VALID(s)		ISC_MAGIC_VALID(s, NS_SERVER_MAGIC)
 
 /*%
- * Server statistics counters.  Used as dns_statscounter_t values.
+ * Server statistics counters.  Used as isc_statscounter_t values.
  */
 enum {
 	dns_nsstatscounter_requestv4 = 0,
@@ -277,7 +278,8 @@ ns_server_tsigdelete(ns_server_t *server, char *command, isc_buffer_t *text);
  * Enable or disable updates for a zone.
  */
 isc_result_t
-ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args);
+ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
+		 isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.

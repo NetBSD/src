@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.5 2008/06/21 18:31:34 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.5.8.1 2009/12/03 17:31:39 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.25 2007/06/19 23:47:18 tbox Exp */
+/* Id: dir.c,v 1.25.128.3 2009/02/16 23:46:44 tbox Exp */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -95,7 +95,7 @@ isc_dir_open(isc_dir_t *dir, const char *dirname) {
 }
 
 /*!
- * \brief Return previously retrieved file or get next one.  
+ * \brief Return previously retrieved file or get next one.
 
  * Unix's dirent has
  * separate open and read functions, but the Win32 and DOS interfaces open
@@ -173,10 +173,14 @@ isc_dir_chroot(const char *dirname) {
 
 	REQUIRE(dirname != NULL);
 
-	if (chroot(dirname) < 0)
+#ifdef HAVE_CHROOT
+	if (chroot(dirname) < 0 || chdir("/") < 0)
 		return (isc__errno2result(errno));
 
 	return (ISC_R_SUCCESS);
+#else
+	return (ISC_R_NOTIMPLEMENTED);
+#endif
 }
 
 isc_result_t

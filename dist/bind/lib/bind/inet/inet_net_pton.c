@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.1.1.5 2008/06/21 18:33:24 christos Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.1.1.5.8.1 2009/12/03 17:31:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_net_pton.c,v 1.8 2005/04/27 04:56:20 sra Exp";
+static const char rcsid[] = "Id: inet_net_pton.c,v 1.8.672.1 2008/08/26 04:42:38 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -135,11 +135,11 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size) {
 			INSIST(n >= 0 && n <= 9);
 			bits *= 10;
 			bits += n;
+			if (bits > 32)
+				goto enoent;
 		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
 		if (ch != '\0')
 			goto enoent;
-		if (bits > 32)
-			goto emsgsize;
 	}
 
 	/* Firey death and destruction unless we prefetched EOS. */

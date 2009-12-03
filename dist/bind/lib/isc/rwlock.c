@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.c,v 1.1.1.5 2008/06/21 18:31:05 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.1.1.5.8.1 2009/12/03 17:31:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock.c,v 1.44 2007/06/19 23:47:17 tbox Exp */
+/* Id: rwlock.c,v 1.44.128.2 2009/01/19 23:47:03 tbox Exp */
 
 /*! \file */
 
@@ -47,7 +47,7 @@
 
 #ifdef ISC_RWLOCK_TRACE
 #include <stdio.h>		/* Required for fprintf/stderr. */
-#include <isc/thread.h>		/* Requried for isc_thread_self(). */
+#include <isc/thread.h>		/* Required for isc_thread_self(). */
 
 static void
 print_lock(const char *operation, isc_rwlock_t *rwl, isc_rwlocktype_t type) {
@@ -57,17 +57,17 @@ print_lock(const char *operation, isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 			       "rwlock %p thread %lu %s(%s): %s, %u active, "
 			       "%u granted, %u rwaiting, %u wwaiting\n"),
 		rwl, isc_thread_self(), operation,
-		(type == isc_rwlocktype_read ? 
+		(type == isc_rwlocktype_read ?
 		 isc_msgcat_get(isc_msgcat, ISC_MSGSET_RWLOCK,
 				ISC_MSG_READ, "read") :
 		 isc_msgcat_get(isc_msgcat, ISC_MSGSET_RWLOCK,
 				ISC_MSG_WRITE, "write")),
-	        (rwl->type == isc_rwlocktype_read ?
+		(rwl->type == isc_rwlocktype_read ?
 		 isc_msgcat_get(isc_msgcat, ISC_MSGSET_RWLOCK,
-				ISC_MSG_READING, "reading") : 
+				ISC_MSG_READING, "reading") :
 		 isc_msgcat_get(isc_msgcat, ISC_MSGSET_RWLOCK,
 				ISC_MSG_WRITING, "writing")),
-	        rwl->active, rwl->granted, rwl->readers_waiting,
+		rwl->active, rwl->granted, rwl->readers_waiting,
 		rwl->writers_waiting);
 }
 #endif
@@ -383,7 +383,7 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 				BROADCAST(&rwl->writeable);
 				UNLOCK(&rwl->lock);
 			}
-			
+
 			return (ISC_R_LOCKBUSY);
 		}
 	} else {
@@ -436,7 +436,7 @@ isc_rwlock_tryupgrade(isc_rwlock_t *rwl) {
 		return (ISC_R_LOCKBUSY);
 
 	return (ISC_R_SUCCESS);
-	
+
 }
 
 void
@@ -557,7 +557,7 @@ doit(isc_rwlock_t *rwl, isc_rwlocktype_t type, isc_boolean_t nonblock) {
 			    ((rwl->active == 0 ||
 			      (rwl->type == isc_rwlocktype_read &&
 			       (rwl->writers_waiting == 0 ||
-			        rwl->granted < rwl->read_quota)))))
+				rwl->granted < rwl->read_quota)))))
 			{
 				rwl->type = isc_rwlocktype_read;
 				rwl->active++;
@@ -753,7 +753,7 @@ isc_rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 		rwl->type = isc_rwlocktype_write;
 		rwl->active = 1;
 	}
-        return (ISC_R_SUCCESS);
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -768,7 +768,7 @@ isc_rwlock_tryupgrade(isc_rwlock_t *rwl) {
 	REQUIRE(VALID_RWLOCK(rwl));
 	REQUIRE(rwl->type == isc_rwlocktype_read);
 	REQUIRE(rwl->active != 0);
-	
+
 	/* If we are the only reader then succeed. */
 	if (rwl->active == 1)
 		rwl->type = isc_rwlocktype_write;

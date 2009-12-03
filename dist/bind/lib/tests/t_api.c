@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.1.1.6 2008/06/21 18:30:38 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.6.8.1 2009/12/03 17:31:43 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.60.128.3 2008/01/17 23:46:37 tbox Exp */
+/* Id: t_api.c,v 1.60.128.5 2009/03/02 23:46:31 tbox Exp */
 
 /*! \file */
 
@@ -226,8 +226,10 @@ main(int argc, char **argv) {
 	 * Set cwd.
 	 */
 
-	if (T_dir != NULL)
-		(void) chdir(T_dir);
+	if (T_dir != NULL && chdir(T_dir) != 0) {
+		fprintf(stderr, "chdir %s failed\n", T_dir);
+		exit(1);
+	}
 
 	/*
 	 * We don't want buffered output.

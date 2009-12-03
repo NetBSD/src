@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.5 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.5.8.1 2009/12/03 17:31:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 1.3 2005/04/27 04:56:17 sra Exp
+ * Id: assertions.h,v 1.3.672.1 2008/10/15 03:56:26 marka Exp
  */
 
 #ifndef ASSERTIONS_H
@@ -33,7 +33,6 @@ typedef void (*assertion_failure_callback)(const char *, int, assertion_type,
 
 /* coverity[+kill] */
 extern assertion_failure_callback __assertion_failed;
-
 void set_assertion_failure_callback(assertion_failure_callback f);
 const char *assertion_type_to_text(assertion_type type);
 

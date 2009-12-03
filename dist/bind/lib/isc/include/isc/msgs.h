@@ -1,7 +1,7 @@
-/*	$NetBSD: msgs.h,v 1.1.1.5 2008/06/21 18:31:20 christos Exp $	*/
+/*	$NetBSD: msgs.h,v 1.1.1.5.8.1 2009/12/03 17:31:38 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: msgs.h,v 1.15 2007/06/19 23:47:18 tbox Exp */
+/* Id: msgs.h,v 1.15.128.2 2008/08/08 06:28:28 tbox Exp */
 
 #ifndef ISC_MSGS_H
 #define ISC_MSGS_H 1
@@ -59,7 +59,7 @@
 
 /*@{*/
 /*!
- * Message numbers  
+ * Message numbers
  * are only required to be unique per message set,
  * but are unique throughout the entire catalog to not be as confusing when
  * debugging.
@@ -155,7 +155,10 @@
 #define ISC_MSG_ACCEPTRETURNED 1418 /*%< accept() returned %d/%s */
 #define ISC_MSG_TOOMANYFDS     1419 /*%< %s: too many open file descriptors */
 #define ISC_MSG_ZEROPORT       1420 /*%< dropping source port zero packet */
-#define ISC_MSG_FILTER	       1420 /*%< setsockopt(SO_ACCEPTFILTER): %s */
+#define ISC_MSG_FILTER	       1421 /*%< setsockopt(SO_ACCEPTFILTER): %s */
+
+#define ISC_MSG_TOOMANYHANDLES 1422 /*%< %s: too many open WSA event handles: %s */
+
 
 #define ISC_MSG_AWAKE	       1502 /*%< "awake" */
 #define ISC_MSG_WORKING	       1503 /*%< "working" */

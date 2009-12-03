@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdb_driver.c,v 1.1.1.1 2007/01/27 21:05:11 christos Exp $	*/
+/*	$NetBSD: dlz_bdb_driver.c,v 1.1.1.1.26.1 2009/12/03 17:31:19 snj Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -560,8 +560,6 @@ bdb_lookup(const char *zone, const char *name, void *driverarg,
 		host_cursor->c_close(host_cursor);
 
 	return result;
-
-	return ISC_R_NOTFOUND;
 }
 
 

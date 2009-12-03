@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.93 2007/09/14 03:39:29 marka Exp
+# Id: Makefile.in,v 1.93.58.5 2009/02/16 00:53:58 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -54,13 +54,13 @@ OBJS =		@ISC_EXTRA_OBJS@ \
 		assertions.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
 		bufferlist.@O@ commandline.@O@ error.@O@ event.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
-		httpd.@O@ \
+		httpd.@O@ inet_aton.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ \
 		netaddr.@O@ netscope.@O@ ondestroy.@O@ \
-		parseint.@O@ quota.@O@ radix.@O@ random.@O@ \
+		parseint.@O@ portset.@O@ quota.@O@ radix.@O@ random.@O@ \
 		ratelimiter.@O@ refcount.@O@ region.@O@ result.@O@ rwlock.@O@ \
-		serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ \
+		serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
 		string.@O@ strtoul.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 		timer.@O@ version.@O@ ${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
 
@@ -69,13 +69,13 @@ SRCS =		@ISC_EXTRA_SRCS@ \
 		assertions.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
 		heap.c hex.c hmacmd5.c hmacsha.c \
-		httpd.c \
+		httpd.c inet_aton.c \
 		lex.c lfsr.c lib.c log.c \
 		md5.c mem.c mutexblock.c \
 		netaddr.c netscope.c ondestroy.c \
-		parseint.c quota.c radix.c random.c \
+		parseint.c portset.c quota.c radix.c random.c \
 		ratelimiter.c refcount.c region.c result.c rwlock.c \
-		serial.c sha1.c sha2.c sockaddr.c string.c strtoul.c \
+		serial.c sha1.c sha2.c sockaddr.c stats.c string.c strtoul.c \
 		symtab.c task.c taskpool.c timer.c version.c
 
 LIBS =		@LIBS@

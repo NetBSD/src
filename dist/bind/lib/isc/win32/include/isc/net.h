@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.1.1.5 2008/06/21 18:31:29 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.1.1.5.8.1 2009/12/03 17:31:42 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.h,v 1.28 2007/06/19 23:47:20 tbox Exp */
+/* Id: net.h,v 1.28.128.4 2009/02/16 23:46:45 tbox Exp */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -106,7 +106,7 @@
  * This is here because named client, interfacemgr.c, etc. use the name as
  * a variable
  */
-#undef interface 
+#undef interface
 
 #ifndef INADDR_LOOPBACK
 #define INADDR_LOOPBACK 0x7f000001UL
@@ -157,15 +157,15 @@ typedef isc_uint16_t in_port_t;
 #define FD_CLR(fd, set) do { \
     u_int __i; \
     for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
-        if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET) fd) { \
-            while (__i < ((fd_set FAR *)(set))->fd_count-1) { \
-                ((fd_set FAR *)(set))->fd_array[__i] = \
-                    ((fd_set FAR *)(set))->fd_array[__i+1]; \
-                __i++; \
-            } \
-            ((fd_set FAR *)(set))->fd_count--; \
-            break; \
-        } \
+	if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET) fd) { \
+	    while (__i < ((fd_set FAR *)(set))->fd_count-1) { \
+		((fd_set FAR *)(set))->fd_array[__i] = \
+		    ((fd_set FAR *)(set))->fd_array[__i+1]; \
+		__i++; \
+	    } \
+	    ((fd_set FAR *)(set))->fd_count--; \
+	    break; \
+	} \
     } \
 } while (0)
 
@@ -173,15 +173,15 @@ typedef isc_uint16_t in_port_t;
 #define FD_SET(fd, set) do { \
     u_int __i; \
     for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
-        if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET)(fd)) { \
-            break; \
-        } \
+	if (((fd_set FAR *)(set))->fd_array[__i] == (SOCKET)(fd)) { \
+	    break; \
+	} \
     } \
     if (__i == ((fd_set FAR *)(set))->fd_count) { \
-        if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) { \
-            ((fd_set FAR *)(set))->fd_array[__i] = (SOCKET)(fd); \
-            ((fd_set FAR *)(set))->fd_count++; \
-        } \
+	if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) { \
+	    ((fd_set FAR *)(set))->fd_array[__i] = (SOCKET)(fd); \
+	    ((fd_set FAR *)(set))->fd_count++; \
+	} \
     } \
 } while (0)
 
@@ -308,6 +308,23 @@ isc_net_enableipv4(void);
 void
 isc_net_enableipv6(void);
 
+isc_result_t
+isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
+/*%<
+ * Returns system's default range of ephemeral UDP ports, if defined.
+ * If the range is not available or unknown, ISC_NET_PORTRANGELOW and
+ * ISC_NET_PORTRANGEHIGH will be returned.
+ *
+ * Requires:
+ *
+ *\li	'low' and 'high' must be non NULL.
+ *
+ * Returns:
+ *
+ *\li	*low and *high will be the ports specifying the low and high ends of
+ *	the range.
+ */
+
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
@@ -320,11 +337,9 @@ isc_net_pton(int af, const char *src, void *dst);
 #define inet_pton isc_net_pton
 #endif
 
-#ifdef ISC_PLATFORM_NEEDATON
 int
 isc_net_aton(const char *cp, struct in_addr *addr);
 #define inet_aton isc_net_aton
-#endif
 
 ISC_LANG_ENDDECLS
 

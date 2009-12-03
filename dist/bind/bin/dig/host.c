@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.1.1.5 2008/06/21 18:35:29 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.5.8.1 2009/12/03 17:31:14 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.116 2007/12/03 00:21:48 marka Exp */
+/* Id: host.c,v 1.116.12.3 2009/09/08 23:28:40 marka Exp */
 
 /*! \file */
 
@@ -125,6 +125,23 @@ struct rtype rtypes[] = {
 	{ 29,	"location" },
 	{ 0, NULL }
 };
+
+static char *
+rcode_totext(dns_rcode_t rcode)
+{
+	static char buf[sizeof("?65535")];
+	union {
+		const char *consttext;
+		char *deconsttext;
+	} totext;
+
+	if (rcode >= (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+		snprintf(buf, sizeof(buf), "?%u", rcode);
+		totext.deconsttext = buf;
+	} else
+		totext.consttext = rcodetext[rcode];
+	return totext.deconsttext;
+}
 
 static void
 show_usage(void) {
@@ -272,10 +289,10 @@ printsection(dns_message_t *msg, dns_section_t sectionid,
 			if (query->lookup->rdtype == dns_rdatatype_axfr &&
 			    !((!list_addresses &&
 			       (list_type == dns_rdatatype_any ||
-			        rdataset->type == list_type)) ||
+				rdataset->type == list_type)) ||
 			      (list_addresses &&
 			       (rdataset->type == dns_rdatatype_a ||
-			        rdataset->type == dns_rdatatype_aaaa ||
+				rdataset->type == dns_rdatatype_aaaa ||
 				rdataset->type == dns_rdatatype_ns ||
 				rdataset->type == dns_rdatatype_ptr))))
 				continue;
@@ -379,7 +396,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	unsigned int i = msg->counts[DNS_SECTION_ANSWER];
 
- 	while (i-- > 0) {
+	while (i-- > 0) {
 		rdataset = NULL;
 		result = dns_message_findname(msg, DNS_SECTION_ANSWER, qname,
 					      dns_rdatatype_cname, 0, NULL,
@@ -431,7 +448,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		printf("Host %s not found: %d(%s)\n",
 		       (msg->rcode != dns_rcode_nxdomain) ? namestr :
 		       query->lookup->textname, msg->rcode,
-		       rcodetext[msg->rcode]);
+		       rcode_totext(msg->rcode));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -453,7 +470,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 				sizeof(lookup->textname));
 			lookup->textname[sizeof(lookup->textname)-1] = 0;
 			lookup->rdtype = dns_rdatatype_aaaa;
-                        lookup->rdtypeset = ISC_TRUE;
+			lookup->rdtypeset = ISC_TRUE;
 			lookup->origin = NULL;
 			lookup->retries = tries;
 			ISC_LIST_APPEND(lookup_list, lookup, link);
@@ -464,7 +481,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 				sizeof(lookup->textname));
 			lookup->textname[sizeof(lookup->textname)-1] = 0;
 			lookup->rdtype = dns_rdatatype_mx;
-                        lookup->rdtypeset = ISC_TRUE;
+			lookup->rdtypeset = ISC_TRUE;
 			lookup->origin = NULL;
 			lookup->retries = tries;
 			ISC_LIST_APPEND(lookup_list, lookup, link);
@@ -473,7 +490,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 
 	if (!short_form) {
 		printf(";; ->>HEADER<<- opcode: %s, status: %s, id: %u\n",
-		       opcodetext[msg->opcode], rcodetext[msg->rcode],
+		       opcodetext[msg->opcode], rcode_totext(msg->rcode),
 		       msg->id);
 		printf(";; flags: ");
 		if ((msg->flags & DNS_MESSAGEFLAG_QR) != 0) {
@@ -824,11 +841,10 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	} else {
 		strncpy(lookup->textname, hostname, sizeof(lookup->textname));
 		lookup->textname[sizeof(lookup->textname)-1]=0;
+		usesearch = ISC_TRUE;
 	}
 	lookup->new_search = ISC_TRUE;
 	ISC_LIST_APPEND(lookup_list, lookup, link);
-
-	usesearch = ISC_TRUE;
 }
 
 int
@@ -840,7 +856,7 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);
-	
+
 	fatalexit = 1;
 #ifdef WITH_IDN
 	idnoptions = IDN_ASCCHECK;

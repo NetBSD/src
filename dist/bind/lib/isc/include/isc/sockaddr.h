@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.5 2008/06/21 18:31:17 christos Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.1.1.5.8.1 2009/12/03 17:31:38 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.h,v 1.55 2007/06/18 23:47:44 tbox Exp */
+/* Id: sockaddr.h,v 1.55.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -212,7 +212,7 @@ isc_sockaddr_isexperimental(const isc_sockaddr_t *sa);
 isc_boolean_t
 isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
 /*%<
- * Returns ISC_TRUE if the address is a link local addresss.
+ * Returns ISC_TRUE if the address is a link local address.
  */
 
 isc_boolean_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: peer.h,v 1.1.1.5 2008/06/21 18:32:30 christos Exp $	*/
+/*	$NetBSD: peer.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.h,v 1.31.128.2 2008/04/03 06:08:27 tbox Exp */
+/* Id: peer.h,v 1.31.128.4 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef DNS_PEER_H
 #define DNS_PEER_H 1
@@ -80,7 +80,7 @@ struct dns_peer {
 	isc_sockaddr_t	       *transfer_source;
 	isc_sockaddr_t	       *notify_source;
 	isc_sockaddr_t	       *query_source;
-	isc_uint16_t		udpsize;		/* recieve size */
+	isc_uint16_t		udpsize;		/* receive size */
 	isc_uint16_t		maxudp;			/* transmit size */
 
 	isc_uint32_t		bitflags;

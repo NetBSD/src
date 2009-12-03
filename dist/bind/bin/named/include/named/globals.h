@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.1.1.5 2008/06/21 18:35:23 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.5.8.1 2009/12/03 17:31:16 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.73 2007/09/26 03:22:43 marka Exp */
+/* Id: globals.h,v 1.73.46.2 2008/10/24 01:44:15 tbox Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -50,6 +50,7 @@ EXTERN isc_taskmgr_t *		ns_g_taskmgr		INIT(NULL);
 EXTERN dns_dispatchmgr_t *	ns_g_dispatchmgr	INIT(NULL);
 EXTERN isc_entropy_t *		ns_g_entropy		INIT(NULL);
 EXTERN isc_entropy_t *		ns_g_fallbackentropy	INIT(NULL);
+EXTERN unsigned int		ns_g_cpus_detected	INIT(1);
 
 /*
  * XXXRTH  We're going to want multiple timer managers eventually.  One

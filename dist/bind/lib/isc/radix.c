@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.c,v 1.1.1.2 2008/08/15 14:42:08 he Exp $	*/
+/*	$NetBSD: radix.c,v 1.1.1.2.8.1 2009/12/03 17:31:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: radix.c,v 1.9.6.5.2.1 2008/07/24 02:03:22 marka Exp */
+/* Id: radix.c,v 1.9.6.14 2009/01/19 23:47:03 tbox Exp */
 
 /*
  * This source was adapted from MRT's RCS Ids:
@@ -55,7 +55,7 @@ _new_prefix(isc_mem_t *mctx, isc_prefix_t **target, int family, void *dest,
 
 	REQUIRE(target != NULL);
 
-	if (family != AF_INET6 && family != AF_INET)
+	if (family != AF_INET6 && family != AF_INET && family != AF_UNSPEC)
 		return (ISC_R_NOTIMPLEMENTED);
 
 	prefix = isc_mem_get(mctx, sizeof(isc_prefix_t));
@@ -66,6 +66,7 @@ _new_prefix(isc_mem_t *mctx, isc_prefix_t **target, int family, void *dest,
 		prefix->bitlen = (bitlen >= 0) ? bitlen : 128;
 		memcpy(&prefix->add.sin6, dest, 16);
 	} else {
+		/* AF_UNSPEC is "any" or "none"--treat it as AF_INET */
 		prefix->bitlen = (bitlen >= 0) ? bitlen : 32;
 		memcpy(&prefix->add.sin, dest, 4);
 	}
@@ -97,16 +98,19 @@ static isc_result_t
 _ref_prefix(isc_mem_t *mctx, isc_prefix_t **target, isc_prefix_t *prefix) {
 	INSIST(prefix != NULL);
 	INSIST((prefix->family == AF_INET && prefix->bitlen <= 32) ||
-	       (prefix->family == AF_INET6 && prefix->bitlen <= 128));
-	REQUIRE(target != NULL);
+	       (prefix->family == AF_INET6 && prefix->bitlen <= 128) ||
+	       (prefix->family == AF_UNSPEC && prefix->bitlen == 0));
+	REQUIRE(target != NULL && *target == NULL);
 
-	/* If this prefix is a static allocation, copy it into new memory */
+	/*
+	 * If this prefix is a static allocation, copy it into new memory.
+	 * (Note, the refcount still has to be destroyed by the calling
+	 * routine.)
+	 */
 	if (isc_refcount_current(&prefix->refcount) == 0) {
 		isc_result_t ret;
 		ret = _new_prefix(mctx, target, prefix->family,
 				  &prefix->add, prefix->bitlen);
-		if (ret == ISC_R_SUCCESS)
-			isc_refcount_destroy(&prefix->refcount);
 		return ret;
 	}
 
@@ -138,7 +142,7 @@ isc_result_t
 isc_radix_create(isc_mem_t *mctx, isc_radix_tree_t **target, int maxbits) {
 	isc_radix_tree_t *radix;
 
-	REQUIRE(target != NULL);
+	REQUIRE(target != NULL && *target == NULL);
 
 	radix = isc_mem_get(mctx, sizeof(isc_radix_tree_t));
 	if (radix == NULL)
@@ -230,19 +234,20 @@ isc_radix_process(isc_radix_tree_t *radix, isc_radix_processfunc_t func)
 	} RADIX_WALK_END;
 }
 
-
 isc_result_t
 isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
-		 isc_prefix_t *prefix) {
+		 isc_prefix_t *prefix)
+{
 	isc_radix_node_t *node;
 	isc_radix_node_t *stack[RADIX_MAXBITS + 1];
 	u_char *addr;
 	isc_uint32_t bitlen;
-	int family, tfamily = -1;
+	int tfamily = -1;
 	int cnt = 0;
 
 	REQUIRE(radix != NULL);
 	REQUIRE(prefix != NULL);
+	REQUIRE(target != NULL && *target == NULL);
 	RUNTIME_CHECK(prefix->bitlen <= radix->maxbits);
 
 	*target = NULL;
@@ -254,7 +259,6 @@ isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
 	node = radix->head;
 	addr = isc_prefix_touchar(prefix);
 	bitlen = prefix->bitlen;
-
 
 	while (node->bit < bitlen) {
 		if (node->prefix)
@@ -278,16 +282,12 @@ isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		if (_comp_with_mask(isc_prefix_tochar(node->prefix),
 				    isc_prefix_tochar(prefix),
 				    node->prefix->bitlen)) {
-			/* Bitlen 0 means "any" or "none",
-			   which is always treated as IPv4 */
-			family = node->prefix->bitlen ?
-				 prefix->family : AF_INET;
-			if (node->node_num[ISC_IS6(family)] != -1 &&
+			if (node->node_num[ISC_IS6(prefix->family)] != -1 &&
 				 ((*target == NULL) ||
 				  (*target)->node_num[ISC_IS6(tfamily)] >
-				   node->node_num[ISC_IS6(family)])) {
+				   node->node_num[ISC_IS6(prefix->family)])) {
 				*target = node;
-				tfamily = family;
+				tfamily = prefix->family;
 			}
 		}
 	}
@@ -305,11 +305,12 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 {
 	isc_radix_node_t *node, *new_node, *parent, *glue = NULL;
 	u_char *addr, *test_addr;
-	isc_uint32_t bitlen, family, check_bit, differ_bit;
+	isc_uint32_t bitlen, fam, check_bit, differ_bit;
 	isc_uint32_t i, j, r;
 	isc_result_t result;
 
 	REQUIRE(radix != NULL);
+	REQUIRE(target != NULL && *target == NULL);
 	REQUIRE(prefix != NULL || (source != NULL && source->prefix != NULL));
 	RUNTIME_CHECK(prefix == NULL || prefix->bitlen <= radix->maxbits);
 
@@ -319,9 +320,7 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 	INSIST(prefix != NULL);
 
 	bitlen = prefix->bitlen;
-
-	/* Bitlen 0 means "any" or "none", which is always treated as IPv4 */
-	family = bitlen ? prefix->family : AF_INET;
+	fam = prefix->family;
 
 	if (radix->head == NULL) {
 		node = isc_mem_get(radix->mctx, sizeof(isc_radix_node_t));
@@ -329,6 +328,7 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 			return (ISC_R_NOMEMORY);
 		node->bit = bitlen;
 		node->node_num[0] = node->node_num[1] = -1;
+		node->prefix = NULL;
 		result = _ref_prefix(radix->mctx, &node->prefix, prefix);
 		if (result != ISC_R_SUCCESS) {
 			isc_mem_put(radix->mctx, node,
@@ -355,8 +355,14 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 			node->data[0] = source->data[0];
 			node->data[1] = source->data[1];
 		} else {
-			node->node_num[ISC_IS6(family)] =
-				++radix->num_added_node;
+			if (fam == AF_UNSPEC) {
+				/* "any" or "none" */
+				node->node_num[0] = node->node_num[1] =
+					++radix->num_added_node;
+			} else {
+				node->node_num[ISC_IS6(fam)] =
+					++radix->num_added_node;
+			}
 			node->data[0] = NULL;
 			node->data[1] = NULL;
 		}
@@ -419,25 +425,71 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 	if (differ_bit == bitlen && node->bit == bitlen) {
 		if (node->prefix != NULL) {
 			/* Set node_num only if it hasn't been set before */
-			if (node->node_num[ISC_IS6(family)] == -1)
-				node->node_num[ISC_IS6(family)] =
-					 ++radix->num_added_node;
+			if (source != NULL) {
+				/* Merging node */
+				if (node->node_num[0] == -1 &&
+				    source->node_num[0] != -1) {
+					node->node_num[0] =
+						radix->num_added_node +
+						source->node_num[0];
+					node->data[0] = source->data[0];
+				}
+				if (node->node_num[1] == -1 &&
+				    source->node_num[0] != -1) {
+					node->node_num[1] =
+						radix->num_added_node +
+						source->node_num[1];
+					node->data[1] = source->data[1];
+				}
+			} else {
+				if (fam == AF_UNSPEC) {
+					/* "any" or "none" */
+					int next = radix->num_added_node + 1;
+					if (node->node_num[0] == -1) {
+						node->node_num[0] = next;
+						radix->num_added_node = next;
+					}
+					if (node->node_num[1] == -1) {
+						node->node_num[1] = next;
+						radix->num_added_node = next;
+					}
+				} else {
+					if (node->node_num[ISC_IS6(fam)] == -1)
+						node->node_num[ISC_IS6(fam)]
+						   = ++radix->num_added_node;
+				}
+			}
 			*target = node;
 			return (ISC_R_SUCCESS);
+		} else {
+			result =
+				_ref_prefix(radix->mctx, &node->prefix, prefix);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
-		result = _ref_prefix(radix->mctx, &node->prefix, prefix);
-		if (result != ISC_R_SUCCESS)
-			return (result);
 		INSIST(node->data[0] == NULL && node->node_num[0] == -1 &&
 		       node->data[1] == NULL && node->node_num[1] == -1);
 		if (source != NULL) {
 			/* Merging node */
-			node->node_num[ISC_IS6(family)] =
-				radix->num_added_node +
-				source->node_num[ISC_IS6(family)];
+			if (source->node_num[0] != -1) {
+				node->node_num[0] = radix->num_added_node +
+						    source->node_num[0];
+				node->data[0] = source->data[0];
+			}
+			if (source->node_num[1] != -1) {
+				node->node_num[1] = radix->num_added_node +
+						    source->node_num[1];
+				node->data[1] = source->data[1];
+			}
 		} else {
-			node->node_num[ISC_IS6(family)] =
-				++radix->num_added_node;
+			if (fam == AF_UNSPEC) {
+				/* "any" or "none" */
+				node->node_num[0] = node->node_num[1] =
+					++radix->num_added_node;
+			} else {
+				node->node_num[ISC_IS6(fam)] =
+					++radix->num_added_node;
+			}
 		}
 		*target = node;
 		return (ISC_R_SUCCESS);
@@ -455,6 +507,7 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		}
 	}
 	new_node->bit = bitlen;
+	new_node->prefix = NULL;
 	result = _ref_prefix(radix->mctx, &new_node->prefix, prefix);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_put(radix->mctx, new_node, sizeof(isc_radix_node_t));
@@ -479,7 +532,14 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		new_node->data[0] = source->data[0];
 		new_node->data[1] = source->data[1];
 	} else {
-		new_node->node_num[ISC_IS6(family)] = ++radix->num_added_node;
+		if (fam == AF_UNSPEC) {
+			/* "any" or "none" */
+			new_node->node_num[0] = new_node->node_num[1] =
+				++radix->num_added_node;
+		} else {
+			new_node->node_num[ISC_IS6(fam)] =
+				++radix->num_added_node;
+		}
 		new_node->data[0] = NULL;
 		new_node->data[1] = NULL;
 	}
@@ -527,7 +587,7 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		glue->node_num[0] = glue->node_num[1] = -1;
 		radix->num_active_node++;
 		if (differ_bit < radix->maxbits &&
-		    BIT_TEST(addr[differ_bit >> 3], 0x80 >> (differ_bit & 0x07))) {
+		    BIT_TEST(addr[differ_bit>>3], 0x80 >> (differ_bit & 07))) {
 			glue->r = new_node;
 			glue->l = node;
 		} else {
@@ -561,7 +621,7 @@ isc_radix_remove(isc_radix_tree_t *radix, isc_radix_node_t *node) {
 	if (node->r && node->l) {
 		/*
 		 * This might be a placeholder node -- have to check and
-		 * make sure there is a prefix aossciated with it!
+		 * make sure there is a prefix associated with it!
 		 */
 		if (node->prefix != NULL)
 			_deref_prefix(radix->mctx, node->prefix);

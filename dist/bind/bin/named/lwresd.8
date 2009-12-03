@@ -1,9 +1,9 @@
-.\"	$NetBSD: lwresd.8,v 1.2 2008/09/24 21:14:07 reed Exp $
+.\"	$NetBSD: lwresd.8,v 1.2.8.1 2009/12/03 17:31:15 snj Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007-2009 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
 .\" 
-.\" Permission to use, copy, modify, and distribute this software for any
+.\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\" 
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: lwresd.8,v 1.27 2007/05/16 06:12:01 marka Exp
+.\" Id: lwresd.8,v 1.27.150.3 2009/07/11 01:43:27 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -44,7 +44,7 @@ is the daemon providing name lookup services to clients that use the BIND 9 ligh
 \fBlwresd\fR
 listens for resolver queries on a UDP port on the IPv4 loopback interface, 127.0.0.1. This means that
 \fBlwresd\fR
-can only be used by processes running on the local machine. By default UDP port number 921 is used for lightweight resolver requests and responses.
+can only be used by processes running on the local machine. By default, UDP port number 921 is used for lightweight resolver requests and responses.
 .PP
 Incoming lightweight resolver requests are decoded by the server which then resolves them using the DNS protocol. When the DNS lookup completes,
 \fBlwresd\fR
@@ -89,7 +89,7 @@ as the configuration file instead of the default,
 \fI/etc/lwresd.conf\fR.
 \fB\-c\fR
 can not be used with
-\fB\-C\fR\.
+\fB\-C\fR.
 .RE
 .PP
 \-C \fIconfig\-file\fR
@@ -100,7 +100,7 @@ as the configuration file instead of the default,
 \fI/etc/resolv.conf\fR.
 \fB\-C\fR
 can not be used with
-\fB\-c\fR\.
+\fB\-c\fR.
 .RE
 .PP
 \-d \fIdebug\-level\fR
@@ -219,7 +219,7 @@ The default process\-id file.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007\-2009 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001 Internet Software Consortium.
 .br
