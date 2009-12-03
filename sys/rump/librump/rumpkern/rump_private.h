@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.38 2009/12/02 08:31:56 uebayasi Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.39 2009/12/03 12:35:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -54,9 +55,9 @@ extern struct rumpuser_mtx *rump_giantlock;
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
 #define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
-#define RUMP_VFSROOTDEV ((struct device *)-11)
 
 extern int rump_threads;
+extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
 
