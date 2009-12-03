@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.1.1.5 2008/06/21 18:32:16 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.5.4.1 2009/12/03 17:38:14 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.c,v 1.76.36.3 2008/05/01 18:32:31 jinmei Exp */
+/* Id: cache.c,v 1.76.36.6 2009/05/06 23:34:47 jinmei Exp */
 
 /*! \file */
 
@@ -63,7 +63,7 @@
  ***/
 
 /*
- * A cache_cleaner_t encapsulsates the state of the periodic
+ * A cache_cleaner_t encapsulates the state of the periodic
  * cache cleaning.
  */
 
@@ -176,6 +176,7 @@ dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	isc_result_t result;
 	dns_cache_t *cache;
 	int i;
+	isc_task_t *dbtask;
 
 	REQUIRE(cachep != NULL);
 	REQUIRE(*cachep == NULL);
@@ -231,6 +232,14 @@ dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	result = cache_create_db(cache, &cache->db);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_dbargv;
+	if (taskmgr != NULL) {
+		dbtask = NULL;
+		result = isc_task_create(taskmgr, 1, &dbtask);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup_db;
+		dns_db_settask(cache->db, dbtask);
+		isc_task_detach(&dbtask);
+	}
 
 	cache->filename = NULL;
 
@@ -936,7 +945,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	REQUIRE(VALID_CACHE(cache));
 
 	/*
-	 * Impose a minumum cache size; pathological things happen if there
+	 * Impose a minimum cache size; pathological things happen if there
 	 * is too little room.
 	 */
 	if (size != 0 && size < DNS_CACHE_MINSIZE)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- - Copyright (C) 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2006-2009  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: bind9.xsl,v 1.13.130.4 2008/04/09 22:49:37 jinmei Exp -->
+<!-- Id: bind9.xsl,v 1.13.130.8 2009/01/29 23:47:13 tbox Exp -->
 
 <xsl:stylesheet version="1.0"
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -60,7 +60,7 @@ td, th {
 	padding-left: 5px;
 }
 
-.header {
+.header h1 {
 	background-color: teal;
 	color: #ffffff;
 	padding: 4px;
@@ -81,11 +81,52 @@ td, th {
 	padding: 4px;
 	font-weight: bold;
 }
+
+div.statcounter h2 {
+	text-align: center;
+	font-size: large;
+	border: 1px solid #000000;
+	background-color: #8080ff;
+	color: #ffffff;
+}
+
+div.statcounter dl {
+	float: left;
+	margin-top: 0;
+	margin-bottom: 0;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+div.statcounter dt {
+	width: 200px;
+	text-align: center;
+	font-weight: bold;
+	border: 0.5px solid #000000;
+	background-color: #8080ff;
+	color: #ffffff;
+}
+
+div.statcounter dd {
+	width: 200px;
+	text-align: right;
+	border: 0.5px solid #000000;
+	background-color: teal;
+	color: #ffffff;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+div.statcounter br {
+	clear: left;
+}
         </style>
         <title>BIND 9 Statistics</title>
       </head>
       <body>
-        <div class="header">Bind 9 Configuration and Statistics</div>
+	<div class="header">
+	  <h1>Bind 9 Configuration and Statistics</h1>
+	</div>
 
 	<br/>
 
@@ -144,231 +185,53 @@ td, th {
 
 	<br/>
 
-	<table>
-	  <tr class="rowh"><th colspan="10">Server Statistics</th></tr>
-          <tr class="rowh">
-	    <!-- The ordering of the following items must be consistent
-	    with dns_nsstatscounter_xxx -->
-	    <th>Requestv4</th>
-	    <th>Requestv6</th>
-	    <th>ReqEdns0</th>
-	    <th>ReqBadEDNSVer</th>
-	    <th>ReqTSIG</th>
-	    <th>ReqSIG0</th>
-	    <th>ReqBadSIG</th>
-	    <th>ReqTCP</th>
-	    <th>AuthQryRej</th>
-	    <th>RecQryRej</th>
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/nsstats/Requestv4"/></td>
-	    <td><xsl:value-of select="server/nsstats/Requestv6"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqEdns0"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqBadEDNSVer"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqTSIG"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqSIG0"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqBadSIG"/></td>
-	    <td><xsl:value-of select="server/nsstats/ReqTCP"/></td>
-	    <td><xsl:value-of select="server/nsstats/AuthQryRej"/></td>
-	    <td><xsl:value-of select="server/nsstats/RecQryRej"/></td>
-	  </tr>
-          <tr class="rowh">
-	    <th>XfrRej</th>
-	    <th>UpdateRej</th>
-	    <th>Response</th>
-	    <th>RespTruncated</th>
-	    <th>RespEDNS0</th>
-	    <th>RespTSIG</th>
-	    <th>RespSIG0</th>
-	    <th>QrySuccess</th>
-	    <th>QryAuthAns</th>
-	    <th>QryNoauthAns</th>
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/nsstats/XfrRej"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateRej"/></td>
-	    <td><xsl:value-of select="server/nsstats/Response"/></td>
-	    <td><xsl:value-of select="server/nsstats/TruncatedResp"/></td>
-	    <td><xsl:value-of select="server/nsstats/RespEDNS0"/></td>
-	    <td><xsl:value-of select="server/nsstats/RespTSIG"/></td>
-	    <td><xsl:value-of select="server/nsstats/RespSIG0"/></td>
-	    <td><xsl:value-of select="server/nsstats/QrySuccess"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryAuthAns"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryNoauthAns"/></td>
-	  </tr>
-          <tr class="rowh">
-	    <th>QryReferral</th>
-	    <th>QryNxrrset</th>
-	    <th>QrySERVFAIL</th>
-	    <th>QryFORMERR</th>
-	    <th>QryNXDOMAIN</th>
-	    <th>QryRecursion</th>
-	    <th>QryDuplicate</th>
-	    <th>QryDropped</th>
-	    <th>QryFailure</th>
-	    <th>XfrReqDone</th>
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/nsstats/QryReferral"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryNxrrset"/></td>
-	    <td><xsl:value-of select="server/nsstats/QrySERVFAIL"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryFORMERR"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryNXDOMAIN"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryRecursion"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryDuplicate"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryDropped"/></td>
-	    <td><xsl:value-of select="server/nsstats/QryFailure"/></td>
-	    <td><xsl:value-of select="server/nsstats/XfrReqDone"/></td>
-	  </tr>
-          <tr class="rowh">
-	    <th>UpdateReqFwd</th>
-	    <th>UpdateRespFwd</th>
-	    <th>UpdateFwdFail</th>
-	    <th>UpdateDone</th>
-	    <th>UpdateFail</th>
-	    <th>UpdateBadPrereq</th>
-	    <th>RespMismatch</th>
-	    <th />
-	    <th />
-	    <th />
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/nsstats/UpdateReqFwd"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateRespFwd"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateFwdFail"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateDone"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateFail"/></td>
-	    <td><xsl:value-of select="server/nsstats/UpdateBadPrereq"/></td>
-	    <td><xsl:value-of select="server/resstats/Mismatch"/></td>
-	    <td />
-	    <td />
-	    <td />
-	  </tr>
-	</table>
+	<div class="statcounter">
+	  <h2>Server Statistics</h2>
+	  <xsl:for-each select="server/nsstat">
+	    <dl>
+	      <dt><xsl:value-of select="name"/></dt>
+	      <dd><xsl:value-of select="counter"/></dd>
+	    </dl>
+	  </xsl:for-each>
+	  <br/>
+	</div>
 
-	<br/>
+	<div class="statcounter">
+	  <h2>Zone Maintenance Statistics</h2>
+	  <xsl:for-each select="server/zonestat">
+	    <dl>
+	      <dt><xsl:value-of select="name"/></dt>
+	      <dd><xsl:value-of select="counter"/></dd>
+	    </dl>
+	  </xsl:for-each>
+	  <br />
+	</div>
 
-	<table>
-	  <tr class="rowh"><th colspan="10">Zone Maintenance Statistics</th></tr>
-          <tr class="rowh">
-	    <!-- The ordering of the following items must be consistent
-	    with dns_zonestatscounter_xxx -->
-	    <th>NotifyOutv4</th>
-	    <th>NotifyOutv6</th>
-	    <th>NotifyInv4</th>
-	    <th>NotifyInv6</th>
-	    <th>NotifyRej</th>
-	    <th>SOAOutv4</th>
-	    <th>SOAOutv6</th>
-	    <th>AXFRReqv4</th>
-	    <th>AXFRReqv6</th>
-	    <th>IXFRReqv4</th>
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/zonestats/NotifyOutv4"/></td>
-	    <td><xsl:value-of select="server/zonestats/NotifyOutv6"/></td>
-	    <td><xsl:value-of select="server/zonestats/NotifyInv4"/></td>
-	    <td><xsl:value-of select="server/zonestats/NotifyInv6"/></td>
-	    <td><xsl:value-of select="server/zonestats/NotifyRej"/></td>
-	    <td><xsl:value-of select="server/zonestats/SOAOutv4"/></td>
-	    <td><xsl:value-of select="server/zonestats/SOAOutv6"/></td>
-	    <td><xsl:value-of select="server/zonestats/AXFRReqv4"/></td>
-	    <td><xsl:value-of select="server/zonestats/AXFRReqv6"/></td>
-	    <td><xsl:value-of select="server/zonestats/IXFRReqv4"/></td>
-	  </tr>
-	  <tr class="rowh">
-	    <th>IXFRReqv6</th>
-	    <th>XfrSuccess</th>
-	    <th>XfrFail</th>
-	    <th/>
-	    <th/>
-	    <th/>
-	    <th/>
-	    <th/>
-	    <th/>
-	    <th/>
-	  </tr>
-	  <tr class="lrow">
-	    <td><xsl:value-of select="server/zonestats/IXFRReqv6"/></td>
-	    <td><xsl:value-of select="server/zonestats/XfrSuccess"/></td>
-	    <td><xsl:value-of select="server/zonestats/XfrFail"/></td>
-	    <td/>
-	    <td/>
-	    <td/>
-	    <td/>
-	    <td/>
-	    <td/>
-	    <td/>
-	  </tr>
-	</table>
-
-	<br/>
+	<div class="statcounter">
+	  <h2>Resolver Statistics (Common)</h2>
+	  <xsl:for-each select="server/resstat">
+	    <dl>
+	      <dt><xsl:value-of select="name"/></dt>
+	      <dd><xsl:value-of select="counter"/></dd>
+	    </dl>
+	  </xsl:for-each>
+	  <br />
+	</div>
 
 	<xsl:for-each select="views/view">
-	  <table>
-	    <tr class="rowh">
-	      <th colspan="10">Resolver Statistics for View <xsl:value-of select="name"/></th>
-	    </tr>
-	    <tr class="rowh">
-	    <!-- The ordering of the following items must be consistent
-	    with dns_resstatscounter_xxx -->
-	      <th>Queryv4</th>
-	      <th>Queryv6</th>
-	      <th>Responsev4</th>
-	      <th>Responsev6</th>
-	      <th>NXDOMAIN</th>
-	      <th>SERVFAIL</th>
-	      <th>FORMERR</th>
-	      <th>OtherError</th>
-	      <th>EDNS0Fail</th>
-	      <!-- this counter is not applicable to per-view stat,
-	      but keep it for generating the description table used in
-	      the statschannel.c.
-		  <th>Mismatch</th>  -->
-	      <th>Truncated</th>
-	    </tr>
-	    <tr class="lrow">
-	      <td><xsl:value-of select="resstats/Queryv4"/></td>
-	      <td><xsl:value-of select="resstats/Queryv6"/></td>
-	      <td><xsl:value-of select="resstats/Responsev4"/></td>
-	      <td><xsl:value-of select="resstats/Responsev6"/></td>
-	      <td><xsl:value-of select="resstats/NXDOMAIN"/></td>
-	      <td><xsl:value-of select="resstats/SERVFAIL"/></td>
-	      <td><xsl:value-of select="resstats/FORMERR"/></td>
-	      <td><xsl:value-of select="resstats/OtherError"/></td>
-	      <td><xsl:value-of select="resstats/EDNS0Fail"/></td>
-	      <!--  <td><xsl:value-of select="resstats/Mismatch"/></td>  -->
-	      <td><xsl:value-of select="resstats/Truncated"/></td>
-	    </tr>
-	    <tr class="rowh">
-	      <th>Lame</th>
-	      <th>Retry</th>
-	      <th>GlueFetchv4</th>
-	      <th>GlueFetchv6</th>
-	      <th>GlueFetchv4Fail</th>
-	      <th>GlueFetchv6Fail</th>
-	      <th>ValAttempt</th>
-	      <th>ValOk</th>
-	      <th>ValNegOk</th>
-	      <th>ValFail</th>
-	    </tr>
-	    <tr class="lrow">
-	      <td><xsl:value-of select="resstats/Lame"/></td>
-	      <td><xsl:value-of select="resstats/Retry"/></td>
-	      <td><xsl:value-of select="resstats/GlueFetchv4"/></td>
-	      <td><xsl:value-of select="resstats/GlueFetchv6"/></td>
-	      <td><xsl:value-of select="resstats/GlueFetchv4Fail"/></td>
-	      <td><xsl:value-of select="resstats/GlueFetchv6Fail"/></td>
-	      <td><xsl:value-of select="resstats/ValAttempt"/></td>
-	      <td><xsl:value-of select="resstats/ValOk"/></td>
-	      <td><xsl:value-of select="resstats/ValNegOk"/></td>
-	      <td><xsl:value-of select="resstats/ValFail"/></td>
-	    </tr>
-          </table>
-	  <br/>
-        </xsl:for-each>
+	  <div class="statcounter">
+	    <h2>Resolver Statistics for View <xsl:value-of select="name"/></h2>
+	    <xsl:for-each select="resstat">
+	      <dl>
+		<dt><xsl:value-of select="name"/></dt>
+		<dd><xsl:value-of select="counter"/></dd>
+	      </dl>
+	    </xsl:for-each>
+	    <br />
+	  </div>
+	</xsl:for-each>
 
-	<br/>
+	<br />
 
 	<xsl:for-each select="views/view">
 	  <table>
@@ -384,6 +247,17 @@ td, th {
 	  </table>
 	  <br/>
 	</xsl:for-each>
+
+	<div class="statcounter">
+	  <h2>Socket I/O Statistics</h2>
+	  <xsl:for-each select="server/sockstat">
+	    <dl>
+	      <dt><xsl:value-of select="name"/></dt>
+	      <dd><xsl:value-of select="counter"/></dd>
+	    </dl>
+	  </xsl:for-each>
+	  <br/>
+	</div>
 
 	<br/>
 

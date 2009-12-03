@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc-confgen.c,v 1.3 2008/06/21 18:59:24 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.3.4.1 2009/12/03 17:38:06 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.24 2007/06/18 23:47:25 tbox Exp */
+/* Id: rndc-confgen.c,v 1.24.128.2 2008/10/15 23:46:53 tbox Exp */
 
 /*! \file */
 
@@ -150,7 +150,7 @@ main(int argc, char **argv) {
 	isc_boolean_t keyonly = ISC_FALSE;
 	int len;
 
- 	keydef = keyfile = RNDC_KEYFILE;
+	keydef = keyfile = RNDC_KEYFILE;
 
 	result = isc_file_progname(*argv, program, sizeof(program));
 	if (result != ISC_R_SUCCESS)
@@ -295,7 +295,7 @@ main(int argc, char **argv) {
 				fatal("isc_mem_get(%d) failed\n", len);
 			snprintf(buf, len, "%s%s%s", chrootdir,
 				 (*keyfile != '/') ? "/" : "", keyfile);
-			
+
 			write_key_file(buf, user, keyname, &key_txtbuffer);
 			isc_mem_put(mctx, buf, len);
 		}

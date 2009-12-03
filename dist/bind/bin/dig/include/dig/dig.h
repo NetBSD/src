@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.h,v 1.3 2008/06/21 18:59:24 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.3.4.1 2009/12/03 17:38:04 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.105.130.2 2008/04/03 06:08:26 tbox Exp */
+/* Id: dig.h,v 1.105.130.3 2008/12/16 02:59:46 jinmei Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -277,7 +277,7 @@ extern isc_task_t *global_task;
 extern isc_boolean_t free_now;
 extern isc_boolean_t debugging, memdebugging;
 
-extern const char *progname;
+extern char *progname;
 extern int tries;
 extern int fatalexit;
 #ifdef WITH_IDN
@@ -287,7 +287,7 @@ extern int idnoptions;
 /*
  * Routines in dighost.c.
  */
-void
+isc_result_t
 get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr);
 
 isc_result_t

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named.conf.in,v 1.6 2007/06/19 23:47:06 tbox Exp */
+/* Id: named.conf.in,v 1.6.128.2 2009/01/30 23:46:48 tbox Exp */
 
 controls { /* empty */ };
 
@@ -31,6 +31,7 @@ options {
 	notify no;
 	tkey-domain "server";
 	tkey-dhkey "server" KEYID;
+	allow-query-cache { any; };
 };
 
 key "tkeytest." {

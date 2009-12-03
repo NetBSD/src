@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4 2008/08/15 14:51:26 he Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.4.1 2009/12/03 17:38:06 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.118.232.3 2008/07/23 22:51:53 marka Exp */
+/* Id: rndc.c,v 1.118.128.6 2009/01/19 23:47:01 tbox Exp */
 
 /*! \file */
 
@@ -202,7 +202,7 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 		      "* the remote server is using an older version of"
 		      " the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
-		      "* the clocks are not syncronized, or\n"
+		      "* the clocks are not synchronized, or\n"
 		      "* the key is invalid.");
 
 	if (ccmsg.result != ISC_R_SUCCESS)
@@ -265,7 +265,7 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 		      "* the remote server is using an older version of"
 		      " the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
-		      "* the clocks are not syncronized, or\n"
+		      "* the clocks are not synchronized, or\n"
 		      "* the key is invalid.");
 
 	if (ccmsg.result != ISC_R_SUCCESS)

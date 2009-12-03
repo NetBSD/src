@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.8 2008/08/15 14:51:27 he Exp $	*/
+/*	$NetBSD: app.c,v 1.8.4.1 2009/12/03 17:38:29 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.54.128.3.12.1 2008/07/29 04:47:09 each Exp */
+/* Id: app.c,v 1.54.128.6 2008/10/15 03:41:17 marka Exp */
 
 /*! \file */
 
@@ -32,6 +32,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
+#ifdef HAVE_EPOLL
+#include <sys/epoll.h>
+#endif
 
 #include <isc/app.h>
 #include <isc/boolean.h>
@@ -305,8 +308,7 @@ evloop(void) {
 		int n;
 		isc_time_t when, now;
 		struct timeval tv, *tvp;
-		fd_set *readfds, *writefds;
-		int maxfd;
+		isc_socketwait_t *swait;
 		isc_boolean_t readytasks;
 		isc_boolean_t call_timer_dispatch = ISC_FALSE;
 
@@ -333,8 +335,8 @@ evloop(void) {
 			}
 		}
 
-		isc__socketmgr_getfdsets(&readfds, &writefds, &maxfd);
-		n = select(maxfd, readfds, writefds, NULL, tvp);
+		swait = NULL;
+		n = isc__socketmgr_waitevents(tvp, &swait);
 
 		if (n == 0 || call_timer_dispatch) {
 			/*
@@ -354,8 +356,7 @@ evloop(void) {
 			isc__timermgr_dispatch();
 		}
 		if (n > 0)
-			(void)isc__socketmgr_dispatch(readfds, writefds,
-						      maxfd);
+			(void)isc__socketmgr_dispatch(swait);
 		(void)isc__taskmgr_dispatch();
 
 		if (want_reload) {

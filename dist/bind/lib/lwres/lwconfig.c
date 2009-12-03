@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.5 2008/06/21 18:30:45 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.5.4.1 2009/12/03 17:38:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.46 2007/06/19 23:47:22 tbox Exp */
+/* Id: lwconfig.c,v 1.46.128.2 2008/12/17 23:46:34 tbox Exp */
 
 /*! \file */
 
@@ -26,32 +26,32 @@
  *
  *    lwres_conf_init() creates an empty lwres_conf_t structure for
  *    lightweight resolver context ctx.
- * 
+ *
  *    lwres_conf_clear() frees up all the internal memory used by that
  *    lwres_conf_t structure in resolver context ctx.
- * 
+ *
  *    lwres_conf_parse() opens the file filename and parses it to initialise
  *    the resolver context ctx's lwres_conf_t structure.
- * 
+ *
  *    lwres_conf_print() prints the lwres_conf_t structure for resolver
  *    context ctx to the FILE fp.
- * 
+ *
  * \section lwconfig_return Return Values
- * 
+ *
  *    lwres_conf_parse() returns #LWRES_R_SUCCESS if it successfully read and
  *    parsed filename. It returns #LWRES_R_FAILURE if filename could not be
  *    opened or contained incorrect resolver statements.
- * 
+ *
  *    lwres_conf_print() returns #LWRES_R_SUCCESS unless an error occurred
  *    when converting the network addresses to a numeric host address
  *    string. If this happens, the function returns #LWRES_R_FAILURE.
- * 
+ *
  * \section lwconfig_see See Also
- * 
+ *
  *    stdio(3), \link resolver resolver \endlink
- * 
+ *
  * \section files Files
- * 
+ *
  *    /etc/resolv.conf
  */
 
@@ -315,8 +315,11 @@ lwres_conf_parsenameserver(lwres_context_t *ctx,  FILE *fp) {
 		return (LWRES_R_FAILURE); /* Extra junk on line. */
 
 	res = lwres_create_addr(word, &address, 1);
-	if (res == LWRES_R_SUCCESS)
+	if (res == LWRES_R_SUCCESS &&
+	    ((address.family == LWRES_ADDRTYPE_V4 && ctx->use_ipv4 == 1) ||
+	     (address.family == LWRES_ADDRTYPE_V6 && ctx->use_ipv6 == 1))) {
 		confdata->nameservers[confdata->nsnext++] = address;
+	}
 
 	return (LWRES_R_SUCCESS);
 }

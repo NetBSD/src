@@ -1,7 +1,7 @@
-/*	$NetBSD: assertions.h,v 1.5 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 1.24 2007/06/19 23:47:18 tbox Exp
+ * Id: assertions.h,v 1.24.128.2 2008/10/15 23:46:53 tbox Exp
  */
 /*! \file isc/assertions.h
  */

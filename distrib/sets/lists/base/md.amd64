@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.5 2009/10/27 20:37:38 bouyer Exp $
+# $NetBSD: md.amd64,v 1.25.2.6 2009/12/03 17:38:35 snj Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -167,7 +167,7 @@
 ./usr/lib/i386/libipsec.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.2.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libisc.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libisc.so.1.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.1			base-compat-shlib	compat,pic

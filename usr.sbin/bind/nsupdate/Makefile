@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2004/05/18 00:10:39 christos Exp $
+#	$NetBSD: Makefile,v 1.5.32.1 2009/12/03 17:38:36 snj Exp $
 
 .include <bsd.own.mk>
 
 PROG=	nsupdate
-MAN=	nsupdate.8
+MAN=	nsupdate.1
 BINDIR=	/usr/bin
 
 .include "${.CURDIR}/../Makefile.inc"

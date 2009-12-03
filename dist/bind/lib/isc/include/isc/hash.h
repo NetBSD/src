@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.h,v 1.1.1.5 2008/06/21 18:31:17 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.h,v 1.10 2007/06/19 23:47:18 tbox Exp */
+/* Id: hash.h,v 1.10.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -38,7 +38,7 @@
  *	in the random vector are unpredictable, the probability of hash
  *	collision between arbitrary two different values is at most 1/2^16.
  *
- *	Altough the API is generic about the hash keys, it mainly expects
+ *	Although the API is generic about the hash keys, it mainly expects
  *	DNS names (and sometimes IPv4/v6 addresses) as inputs.  It has an
  *	upper limit of the input length, and may run slow to calculate the
  *	hash values for large inputs.
@@ -137,7 +137,7 @@ isc_hash_ctxinit(isc_hash_t *hctx);
 void
 isc_hash_init(void);
 /*!<
- * \brief Initialize a hash object.  
+ * \brief Initialize a hash object.
  *
  * It fills in the random vector with a proper
  * source of entropy, which is typically from the entropy object specified

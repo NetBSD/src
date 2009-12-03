@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.1.1.6 2008/08/15 14:42:11 he Exp $	*/
+/*	$NetBSD: socket.h,v 1.1.1.6.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.h,v 1.72.226.6 2008/07/23 23:48:45 tbox Exp */
+/* Id: socket.h,v 1.72.128.15 2009/01/29 22:41:45 jinmei Exp */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -85,6 +85,75 @@ ISC_LANG_BEGINDECLS
  * bind() if a non zero port is specified (AF_INET and AF_INET6).
  */
 #define ISC_SOCKET_REUSEADDRESS		0x01U
+
+/*%
+ * Statistics counters.  Used as isc_statscounter_t values.
+ */
+enum {
+	isc_sockstatscounter_udp4open = 0,
+	isc_sockstatscounter_udp6open = 1,
+	isc_sockstatscounter_tcp4open = 2,
+	isc_sockstatscounter_tcp6open = 3,
+	isc_sockstatscounter_unixopen = 4,
+
+	isc_sockstatscounter_udp4openfail = 5,
+	isc_sockstatscounter_udp6openfail = 6,
+	isc_sockstatscounter_tcp4openfail = 7,
+	isc_sockstatscounter_tcp6openfail = 8,
+	isc_sockstatscounter_unixopenfail = 9,
+
+	isc_sockstatscounter_udp4close = 10,
+	isc_sockstatscounter_udp6close = 11,
+	isc_sockstatscounter_tcp4close = 12,
+	isc_sockstatscounter_tcp6close = 13,
+	isc_sockstatscounter_unixclose = 14,
+	isc_sockstatscounter_fdwatchclose = 15,
+
+	isc_sockstatscounter_udp4bindfail = 16,
+	isc_sockstatscounter_udp6bindfail = 17,
+	isc_sockstatscounter_tcp4bindfail = 18,
+	isc_sockstatscounter_tcp6bindfail = 19,
+	isc_sockstatscounter_unixbindfail = 20,
+	isc_sockstatscounter_fdwatchbindfail = 21,
+
+	isc_sockstatscounter_udp4connect = 22,
+	isc_sockstatscounter_udp6connect = 23,
+	isc_sockstatscounter_tcp4connect = 24,
+	isc_sockstatscounter_tcp6connect = 25,
+	isc_sockstatscounter_unixconnect = 26,
+	isc_sockstatscounter_fdwatchconnect = 27,
+
+	isc_sockstatscounter_udp4connectfail = 28,
+	isc_sockstatscounter_udp6connectfail = 29,
+	isc_sockstatscounter_tcp4connectfail = 30,
+	isc_sockstatscounter_tcp6connectfail = 31,
+	isc_sockstatscounter_unixconnectfail = 32,
+	isc_sockstatscounter_fdwatchconnectfail = 33,
+
+	isc_sockstatscounter_tcp4accept = 34,
+	isc_sockstatscounter_tcp6accept = 35,
+	isc_sockstatscounter_unixaccept = 36,
+
+	isc_sockstatscounter_tcp4acceptfail = 37,
+	isc_sockstatscounter_tcp6acceptfail = 38,
+	isc_sockstatscounter_unixacceptfail = 39,
+
+	isc_sockstatscounter_udp4sendfail = 40,
+	isc_sockstatscounter_udp6sendfail = 41,
+	isc_sockstatscounter_tcp4sendfail = 42,
+	isc_sockstatscounter_tcp6sendfail = 43,
+	isc_sockstatscounter_unixsendfail = 44,
+	isc_sockstatscounter_fdwatchsendfail = 45,
+
+	isc_sockstatscounter_udp4recvfail = 46,
+	isc_sockstatscounter_udp6recvfail = 47,
+	isc_sockstatscounter_tcp4recvfail = 48,
+	isc_sockstatscounter_tcp6recvfail = 49,
+	isc_sockstatscounter_unixrecvfail = 50,
+	isc_sockstatscounter_fdwatchrecvfail = 51,
+
+	isc_sockstatscounter_max = 52
+};
 
 /***
  *** Types
@@ -154,7 +223,7 @@ typedef enum {
 	isc_sockettype_udp = 1,
 	isc_sockettype_tcp = 2,
 	isc_sockettype_unix = 3,
-	isc_sockettype_fdwatch = 4,
+	isc_sockettype_fdwatch = 4
 } isc_sockettype_t;
 
 /*@{*/
@@ -247,6 +316,9 @@ isc_socket_create(isc_socketmgr_t *manager,
 /*%<
  * Create a new 'type' socket managed by 'manager'.
  *
+ * For isc_sockettype_fdwatch sockets you should use isc_socket_fdwatchcreate()
+ * rather than isc_socket_create().
+ *
  * Note:
  *
  *\li	'pf' is the desired protocol family, e.g. PF_INET or PF_INET6.
@@ -256,6 +328,8 @@ isc_socket_create(isc_socketmgr_t *manager,
  *\li	'manager' is a valid manager
  *
  *\li	'socketp' is a valid pointer, and *socketp == NULL
+ *
+ *\li	'type' is not isc_sockettype_fdwatch
  *
  * Ensures:
  *
@@ -366,6 +440,61 @@ isc_socket_detach(isc_socket_t **socketp);
  *		for all tasks.
  *
  *		All resources used by the socket have been freed
+ */
+
+isc_result_t
+isc_socket_open(isc_socket_t *sock);
+/*%<
+ * Open a new socket file descriptor of the given socket structure.  It simply
+ * opens a new descriptor; all of the other parameters including the socket
+ * type are inherited from the existing socket.  This function is provided to
+ * avoid overhead of destroying and creating sockets when many short-lived
+ * sockets are frequently opened and closed.  When the efficiency is not an
+ * issue, it should be safer to detach the unused socket and re-create a new
+ * one.  This optimization may not be available for some systems, in which
+ * case this function will return ISC_R_NOTIMPLEMENTED and must not be used.
+ *
+ * isc_socket_open() should not be called on sockets created by
+ * isc_socket_fdwatchcreate().
+ *
+ * Requires:
+ *
+ * \li	there must be no other reference to this socket.
+ *
+ * \li	'socket' is a valid and previously closed by isc_socket_close()
+ *
+ * \li  'sock->type' is not isc_sockettype_fdwatch
+ *
+ * Returns:
+ *	Same as isc_socket_create().
+ * \li	ISC_R_NOTIMPLEMENTED
+ */
+
+isc_result_t
+isc_socket_close(isc_socket_t *sock);
+/*%<
+ * Close a socket file descriptor of the given socket structure.  This function
+ * is provided as an alternative to destroying an unused socket when overhead
+ * destroying/re-creating sockets can be significant, and is expected to be
+ * used with isc_socket_open().  This optimization may not be available for some
+ * systems, in which case this function will return ISC_R_NOTIMPLEMENTED and
+ * must not be used.
+ *
+ * isc_socket_close() should not be called on sockets created by
+ * isc_socket_fdwatchcreate().
+ *
+ * Requires:
+ *
+ * \li	The socket must have a valid descriptor.
+ *
+ * \li	There must be no other reference to this socket.
+ *
+ * \li	There must be no pending I/O requests.
+ *
+ * \li  'sock->type' is not isc_sockettype_fdwatch
+ *
+ * Returns:
+ * \li	#ISC_R_NOTIMPLEMENTED
  */
 
 isc_result_t
@@ -695,8 +824,15 @@ isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 
 isc_result_t
 isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
+
+isc_result_t
+isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+		      unsigned int maxsocks);
 /*%<
- * Create a socket manager.
+ * Create a socket manager.  If "maxsocks" is non-zero, it specifies the
+ * maximum number of sockets that the created manager should handle.
+ * isc_socketmgr_create() is equivalent of isc_socketmgr_create2() with
+ * "maxsocks" being zero.
  *
  * Notes:
  *
@@ -717,6 +853,36 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_UNEXPECTED
+ *\li	#ISC_R_NOTIMPLEMENTED
+ */
+
+isc_result_t
+isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager, unsigned int *nsockp);
+/*%<
+ * Returns in "*nsockp" the maximum number of sockets this manager may open.
+ *
+ * Requires:
+ *
+ *\li	'*manager' is a valid isc_socketmgr_t.
+ *\li	'nsockp' is not NULL.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOTIMPLEMENTED
+ */
+
+void
+isc_socketmgr_setstats(isc_socketmgr_t *manager, isc_stats_t *stats);
+/*%<
+ * Set a general socket statistics counter set 'stats' for 'manager'.
+ *
+ * Requires:
+ * \li	'manager' is valid, hasn't opened any socket, and doesn't have
+ *	stats already set.
+ *
+ *\li	stats is a valid statistics supporting socket statistics counters
+ *	(see above).
  */
 
 void
@@ -794,7 +960,7 @@ isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
  * Set ownership and file permissions on the UNIX domain socket.
  *
  * Note: On Solaris and SunOS this secures the directory containing
- *       the socket as Solaris and SunOS do not honour the filesytem
+ *       the socket as Solaris and SunOS do not honour the filesystem
  *	 permissions on the socket.
  *
  * Requires:

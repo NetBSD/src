@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.5 2008/06/21 18:31:28 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.c,v 1.14 2007/06/19 23:47:19 tbox Exp */
+/* Id: errno2result.c,v 1.14.128.5 2008/09/11 23:46:38 tbox Exp */
 
 #include <config.h>
 
@@ -63,22 +63,41 @@ isc__errno2resultx(int posixerrno, const char *file, int line) {
 	case EMFILE:
 	case WSAEMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
-	case ERROR_OPERATION_ABORTED:
-		return (ISC_R_CONNECTIONRESET);
-	case ERROR_PORT_UNREACHABLE:
-		return (ISC_R_HOSTUNREACH);
+	case ERROR_CANCELLED:
+		return (ISC_R_CANCELED);
+	case ERROR_CONNECTION_REFUSED:
+	case WSAECONNREFUSED:
+		return (ISC_R_CONNREFUSED);
+	case WSAENOTCONN:
+	case ERROR_CONNECTION_INVALID:
+		return (ISC_R_NOTCONNECTED);
 	case ERROR_HOST_UNREACHABLE:
-		return (ISC_R_HOSTUNREACH);
-	case ERROR_NETWORK_UNREACHABLE:
-		return (ISC_R_NETUNREACH);
-	case WSAEADDRNOTAVAIL:
-		return (ISC_R_ADDRNOTAVAIL);
 	case WSAEHOSTUNREACH:
 		return (ISC_R_HOSTUNREACH);
-	case WSAEHOSTDOWN:
-		return (ISC_R_HOSTUNREACH);
+	case ERROR_NETWORK_UNREACHABLE:
 	case WSAENETUNREACH:
 		return (ISC_R_NETUNREACH);
+	case ERROR_NO_NETWORK:
+		return (ISC_R_NETUNREACH);
+	case ERROR_PORT_UNREACHABLE:
+		return (ISC_R_HOSTUNREACH);
+	case ERROR_SEM_TIMEOUT:
+		return (ISC_R_TIMEDOUT);
+	case WSAECONNRESET:
+	case WSAENETRESET:
+	case WSAECONNABORTED:
+	case WSAEDISCON:
+	case ERROR_OPERATION_ABORTED:
+	case ERROR_CONNECTION_ABORTED:
+	case ERROR_REQUEST_ABORTED:
+		return (ISC_R_CONNECTIONRESET);
+	case WSAEADDRNOTAVAIL:
+		return (ISC_R_ADDRNOTAVAIL);
+	case ERROR_NETNAME_DELETED:
+	case WSAENETDOWN:
+		return (ISC_R_NETUNREACH);
+	case WSAEHOSTDOWN:
+		return (ISC_R_HOSTUNREACH);
 	case WSAENOBUFS:
 		return (ISC_R_NORESOURCES);
 	default:

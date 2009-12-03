@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.6 2008/06/21 18:30:17 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.6.4.1 2009/12/03 17:38:08 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.18 2007/06/18 23:47:33 tbox Exp */
+/* Id: zonetodb.c,v 1.18.128.2 2008/11/27 23:46:44 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>
@@ -104,7 +104,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	check_result(result, "dns_name_totext");
 	namearray[isc_buffer_usedlength(&b)] = 0;
 	quotestring(namearray, canonnamearray);
-	
+
 	isc_buffer_init(&b, typearray, sizeof(typearray) - 1);
 	result = dns_rdatatype_totext(rdata->type, &b);
 	check_result(result, "dns_rdatatype_totext");
@@ -116,7 +116,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	check_result(result, "dns_rdata_totext");
 	dataarray[isc_buffer_usedlength(&b)] = 0;
 	quotestring(dataarray, canondataarray);
-	
+
 	snprintf(str, sizeof(str),
 		 "INSERT INTO %s (NAME, TTL, RDTYPE, RDATA)"
 		 " VALUES ('%s', %d, '%s', '%s')",
@@ -167,10 +167,10 @@ main(int argc, char **argv) {
 	check_result(result, "isc_mem_create");
 
 	result = isc_entropy_create(mctx, &ectx);
-	result_check (result, "isc_entropy_create");
+	check_result(result, "isc_entropy_create");
 
 	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	check_result (result, "isc_hash_create");
+	check_result(result, "isc_hash_create");
 
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));

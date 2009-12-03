@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.6 2008/08/15 14:41:57 he Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.6.4.1 2009/12/03 17:38:15 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.157.116.5 2008/07/28 23:48:57 tbox Exp */
+/* Id: xfrin.c,v 1.157.12.7 2008/09/25 04:15:41 marka Exp */
 
 /*! \file */
 
@@ -434,6 +434,10 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	isc_result_t result;
 
 	xfr->nrecs++;
+
+	if (rdata->type == dns_rdatatype_none ||
+	    dns_rdatatype_ismeta(rdata->type))
+		FAIL(DNS_R_FORMERR);
 
  redo:
 	switch (xfr->state) {

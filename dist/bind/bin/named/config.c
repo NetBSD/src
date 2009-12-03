@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.8 2008/08/15 14:39:47 he Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.8.4.1 2009/12/03 17:38:04 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.82.38.5.2.2 2008/07/23 11:46:01 marka Exp */
+/* Id: config.c,v 1.82.38.8 2008/09/27 23:39:42 jinmei Exp */
 
 /*! \file */
 
@@ -133,7 +133,7 @@ options {\n\
 	max-ncache-ttl 10800; /* 3 hours */\n\
 	max-cache-ttl 604800; /* 1 week */\n\
 	transfer-format many-answers;\n\
-#	max-cache-size default; /* set default in server.c */\n\
+	max-cache-size 0;\n\
 	check-names master fail;\n\
 	check-names slave warn;\n\
 	check-names response ignore;\n\
