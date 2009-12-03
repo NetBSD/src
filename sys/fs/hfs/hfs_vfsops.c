@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.23 2009/11/27 16:11:35 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.24 2009/12/03 14:29:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.23 2009/11/27 16:11:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.24 2009/12/03 14:29:04 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -438,7 +438,7 @@ hfs_unmount(struct mount *mp, int mntflags)
 	cbargs.closevol = (void*)&argsclose;
 	hfslib_close_volume(&hmp->hm_vol, &cbargs);
 	
-	vput(hmp->hm_devvp);
+	vrele(hmp->hm_devvp);
 
 	free(hmp, M_HFSMNT);
 	mp->mnt_data = NULL;
