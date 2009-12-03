@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.153 2009/12/03 09:27:22 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.154 2009/12/03 09:34:02 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15085,4 +15085,9 @@ sys/arch/arm/arm32/pmap.c			1.203
 	leave stale data in the cache after a context-switch.
 	Addresses kern/41058.
 	[scw, ticket #1168]
+
+libexec/ld.elf_so/rtld.c			1.127
+
+	If the environment is corrupt, die. From FreeBSD.
+	[tron, ticket #1179]
 
