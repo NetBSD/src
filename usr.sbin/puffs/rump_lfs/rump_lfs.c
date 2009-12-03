@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.12 2009/11/05 14:17:07 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.13 2009/12/03 14:27:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -60,17 +60,18 @@ int
 main(int argc, char *argv[])
 {
 	struct ufs_args args;
-	char canon_dev[UKFS_PARTITION_MAXPATHLEN], canon_dir[MAXPATHLEN];
+	char canon_dev[UKFS_DEVICE_MAXPATHLEN], canon_dir[MAXPATHLEN];
 	char rawdev[MAXPATHLEN];
 	struct p2k_mount *p2m;
 	pthread_t cleanerthread;
-	int mntflags, part;
+	struct ukfs_part *part;
+	int mntflags;
 	int rv;
 
 	setprogname(argv[0]);
 
-	UKFS_PARTITION_ARGVPROBE(part);
-	if (part != UKFS_PARTITION_NONE) {
+	UKFS_DEVICE_ARGVPROBE(&part);
+	if (part != ukfs_part_none) {
 		errx(1, "lfs does not currently support embedded partitions");
 	}
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
