@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sysvbfs.c,v 1.2 2009/10/07 20:59:09 pooka Exp $	*/
+/*	$NetBSD: rump_sysvbfs.c,v 1.3 2009/12/03 14:27:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -41,13 +41,14 @@ int
 main(int argc, char *argv[])
 {
 	struct sysvbfs_args args;
-	char canon_dev[UKFS_PARTITION_MAXPATHLEN], canon_dir[MAXPATHLEN];
-	int mntflags, part;
+	char canon_dev[UKFS_DEVICE_MAXPATHLEN], canon_dir[MAXPATHLEN];
+	struct ukfs_part *part;
+	int mntflags;
 	int rv;
 
 	setprogname(argv[0]);
 
-	UKFS_PARTITION_ARGVPROBE(part);
+	UKFS_DEVICE_ARGVPROBE(&part);
 	mount_sysvbfs_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
 	rv = p2k_run_diskfs(MOUNT_SYSVBFS, canon_dev, part, canon_dir, mntflags,
