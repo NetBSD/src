@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.111 2009/12/01 09:52:29 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.112 2009/12/03 12:35:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.111 2009/12/01 09:52:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.112 2009/12/03 12:35:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -123,10 +123,7 @@ devclass_t
 device_class(device_t dev)
 {
 
-	if (dev != RUMP_VFSROOTDEV)
-		panic("%s: dev != root_device not supported", __func__);
-
-	return DV_VIRTUAL;
+	return dev->dv_class;
 }
 
 void
