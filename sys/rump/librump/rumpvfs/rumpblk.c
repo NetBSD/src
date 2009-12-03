@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.33 2009/12/02 17:18:59 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.34 2009/12/03 14:05:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.33 2009/12/02 17:18:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.34 2009/12/03 14:05:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -593,7 +593,6 @@ dostrategy(struct buf *bp)
 	}
 
 	off = bp->b_blkno << DEV_BSHIFT;
-	off += rblk->rblk_hostoffset;
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This
@@ -618,6 +617,7 @@ dostrategy(struct buf *bp)
 		bp->b_bcount = sz;
 	}
 
+	off += rblk->rblk_hostoffset;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64 "), %ssync\n",
 	    bp->b_bcount, BUF_ISREAD(bp) ? "READ" : "WRITE",
