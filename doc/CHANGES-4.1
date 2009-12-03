@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.184 2009/11/28 21:38:26 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.185 2009/12/03 09:44:57 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3906,4 +3906,10 @@ usr.bin/comm/comm.c				1.18
 	Don't include newlines when comparing to prevent errors when
 	lines have characters that sort lower such as tabs.
 	[darcy, ticket #1367]
+
+sys/net/if_tap.c				1.60
+
+	Fix a potential leak on tap device close; purging the send
+	queue did not actually release the dequeued mbufs.
+	[plunky, ticket #1368]
 
