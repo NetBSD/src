@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.42 2009/11/16 17:21:26 njoly Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.43 2009/12/03 14:23:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -62,6 +62,7 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+#include <rump/rumpuser.h>
 
 #include "ukfs_int_disklabel.h"
 
@@ -161,6 +162,32 @@ postcall(struct ukfs *ukfs)
 	rump_pub_lwp_release(rump_pub_lwp_curlwp());
 }
 
+struct ukfs_part {
+	int part_type;
+	char part_labelchar;
+	off_t part_devoff;
+	off_t part_devsize;
+};
+
+enum ukfs_parttype { UKFS_PART_NONE, UKFS_PART_DISKLABEL, UKFS_PART_OFFSET };
+
+static struct ukfs_part ukfs__part_none = {
+	.part_type = UKFS_PART_NONE,
+	.part_devoff = 0,
+	.part_devsize = RUMP_ETFS_SIZE_ENDOFF,
+};
+static struct ukfs_part ukfs__part_na;
+struct ukfs_part *ukfs_part_none;
+struct ukfs_part *ukfs_part_na;
+
+static void
+ukfs_initparts(void)
+{
+
+	ukfs_part_none = &ukfs__part_none;
+	ukfs_part_na = &ukfs__part_na;
+}
+
 int
 _ukfs_init(int version)
 {
@@ -173,6 +200,7 @@ _ukfs_init(int version)
 		return -1;
 	}
 
+	ukfs_initparts();
 	if ((rv = rump_init()) != 0) {
 		errno = rv;
 		return -1;
@@ -190,28 +218,180 @@ rumpmkdir(struct ukfs *dummy, const char *path, mode_t mode)
 }
 
 int
-ukfs_partition_probe(char *devpath, int *partition)
+ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 {
+	struct ukfs_part *part;
 	char *p;
-	int rv = 0;
+	int error = 0;
+	int devfd = -1;
+
+	ukfs_initparts();
+	if ((p = strstr(devpath, UKFS_PARTITION_SCANMAGIC)) != NULL) {
+		fprintf(stderr, "ukfs: %%PART is deprecated.  use "
+		    "%%DISKLABEL instead\n");
+		errno = ENODEV;
+		return -1;
+	}
+
+	part = malloc(sizeof(*part));
+	if (part == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+	part->part_type = UKFS_PART_NONE;
 
 	/*
-	 * Check for disklabel magic in pathname:
-	 * /regularpath%PART:<char>%\0
+	 * Check for magic in pathname:
+	 *   disklabel: /regularpath%DISKLABEL:labelchar%\0
+	 *     offsets: /regularpath%OFFSET:start,end%\0
 	 */
-#define MAGICADJ(p, n) (p+sizeof(UKFS_PARTITION_SCANMAGIC)-1+n)
-	if ((p = strstr(devpath, UKFS_PARTITION_SCANMAGIC)) != NULL
-	    && strlen(p) == UKFS_PARTITION_MAGICLEN
-	    && *(MAGICADJ(p,1)) == '%') {
-		if (*(MAGICADJ(p,0)) >= 'a' &&
-		    *(MAGICADJ(p,0)) < 'a' + UKFS_MAXPARTITIONS) {
-			*partition = *(MAGICADJ(p,0)) - 'a';
+#define MAGICADJ_DISKLABEL(p, n) (p+sizeof(UKFS_DISKLABEL_SCANMAGIC)-1+n)
+	if ((p = strstr(devpath, UKFS_DISKLABEL_SCANMAGIC)) != NULL
+	    && strlen(p) == UKFS_DISKLABEL_MAGICLEN
+	    && *(MAGICADJ_DISKLABEL(p,1)) == '%') {
+		if (*(MAGICADJ_DISKLABEL(p,0)) >= 'a' &&
+		    *(MAGICADJ_DISKLABEL(p,0)) < 'a' + UKFS_MAXPARTITIONS) {
+			struct ukfs__disklabel dl;
+			struct ukfs__partition *pp;
+			char buf[65536];
+			char labelchar = *(MAGICADJ_DISKLABEL(p,0));
+			int partition = labelchar - 'a';
+
 			*p = '\0';
+			devfd = open(devpath, O_RDONLY);
+			if (devfd == -1) {
+				error = errno;
+				goto out;
+			}
+
+			/* Locate the disklabel and find the partition. */
+			if (pread(devfd, buf, sizeof(buf), 0) == -1) {
+				error = errno;
+				goto out;
+			}
+
+			if (ukfs__disklabel_scan(&dl, buf, sizeof(buf)) != 0) {
+				error = ENOENT;
+				goto out;
+			}
+
+			if (dl.d_npartitions < partition) {
+				error = ENOENT;
+				goto out;
+			}
+
+			pp = &dl.d_partitions[partition];
+			part->part_type = UKFS_PART_DISKLABEL;
+			part->part_labelchar = labelchar;
+			part->part_devoff = pp->p_offset << DEV_BSHIFT;
+			part->part_devsize = pp->p_size << DEV_BSHIFT;
 		} else {
-			rv = EINVAL;
+			error = EINVAL;
 		}
+#define MAGICADJ_OFFSET(p, n) (p+sizeof(UKFS_OFFSET_SCANMAGIC)-1+n)
+	} else if (((p = strstr(devpath, UKFS_OFFSET_SCANMAGIC)) != NULL)
+	    && (strlen(p) >= UKFS_OFFSET_MINLEN)) {
+		char *comma, *pers, *ep, *nptr;
+		u_quad_t val;
+
+		comma = strchr(p, ',');
+		if (comma == NULL) {
+			error = EINVAL;
+			goto out;
+		}
+		pers = strchr(comma, '%');
+		if (pers == NULL) {
+			error = EINVAL;
+			goto out;
+		}
+		*comma = '\0';
+		*pers = '\0';
+		*p = '\0';
+
+		nptr = MAGICADJ_OFFSET(p,0);
+		/* check if string is negative */
+		if (*nptr == '-') {
+			error = ERANGE;
+			goto out;
+		}
+		val = strtouq(nptr, &ep, 10);
+		if (val == UQUAD_MAX) {
+			error = ERANGE;
+			goto out;
+		}
+		if (*ep != '\0') {
+			error = EADDRNOTAVAIL; /* creative ;) */
+			goto out;
+		}
+		part->part_devoff = val;
+
+		/* omstart */
+
+		nptr = comma+1;
+		/* check if string is negative */
+		if (*nptr == '-') {
+			error = ERANGE;
+			goto out;
+		}
+		val = strtouq(nptr, &ep, 10);
+		if (val == UQUAD_MAX) {
+			error = ERANGE;
+			goto out;
+		}
+		if (*ep != '\0') {
+			error = EADDRNOTAVAIL; /* creative ;) */
+			goto out;
+		}
+		part->part_devsize = val;
+		part->part_type = UKFS_PART_OFFSET;
 	} else {
-		*partition = UKFS_PARTITION_NONE;
+		free(part);
+		part = ukfs_part_none;
+	}
+
+ out:
+	if (devfd != -1)
+		close(devfd);
+	if (error) {
+		free(part);
+		errno = error;
+	} else {
+		*partp = part;
+	}
+
+	return error ? -1 : 0;
+}
+
+int
+ukfs_part_tostring(struct ukfs_part *part, char *str, size_t strsize)
+{
+	int rv;
+
+	*str = '\0';
+	/* "pseudo" values */
+	if (part == ukfs_part_na) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (part == ukfs_part_none)
+		return 0;
+
+	rv = 0;
+	switch (part->part_type) {
+	case UKFS_PART_NONE:
+		break;
+
+	case UKFS_PART_DISKLABEL:
+		snprintf(str, strsize, "%%DISKLABEL:%c%%",part->part_labelchar);
+		rv = 1;
+		break;
+
+	case UKFS_PART_OFFSET:
+		snprintf(str, strsize, "[%llu,%llu]",
+		    (unsigned long long)part->part_devoff,
+		    (unsigned long long)(part->part_devoff+part->part_devsize));
+		rv = 1;
+		break;
 	}
 
 	return rv;
@@ -239,49 +419,19 @@ ukfs_partition_probe(char *devpath, int *partition)
  *        n  device is open
  */
 static int
-process_diskdevice(const char *devpath, int partition, int rdonly,
-	int *dfdp, uint64_t *devoff, uint64_t *devsize)
+process_diskdevice(const char *devpath, struct ukfs_part *part, int rdonly,
+	int *dfdp)
 {
-	char buf[65536];
 	struct stat sb;
-	struct ukfs_disklabel dl;
-	struct ukfs_partition *pp;
 	int rv = 0, devfd;
 
 	/* defaults */
-	*devoff = 0;
-	*devsize = RUMP_ETFS_SIZE_ENDOFF;
 	*dfdp = -1;
 
 	devfd = open(devpath, rdonly ? O_RDONLY : O_RDWR);
 	if (devfd == -1) {
-		if (UKFS_USEPARTITION(partition))
-			rv = errno;
+		rv = errno;
 		goto out;
-	}
-
-	/*
-	 * Locate the disklabel and find the partition in question.
-	 */
-	if (UKFS_USEPARTITION(partition)) {
-		if (pread(devfd, buf, sizeof(buf), 0) == -1) {
-			rv = errno;
-			goto out;
-		}
-
-		if (ukfs_disklabel_scan(&dl, buf, sizeof(buf)) != 0) {
-			rv = ENOENT;
-			goto out;
-		}
-
-		if (dl.d_npartitions < partition) {
-			rv = ENOENT;
-			goto out;
-		}
-
-		pp = &dl.d_partitions[partition];
-		*devoff = pp->p_offset << DEV_BSHIFT;
-		*devsize = pp->p_size << DEV_BSHIFT;
 	}
 
 	if (fstat(devfd, &sb) == -1) {
@@ -311,30 +461,25 @@ process_diskdevice(const char *devpath, int partition, int rdonly,
 	if (rv) {
 		if (devfd != -1)
 			close(devfd);
-		errno = rv;
-		rv = -1;
 	}
 
 	return rv;
 }
 
 static struct ukfs *
-doukfsmount(const char *vfsname, const char *devpath, int partition,
+doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 	const char *mountpath, int mntflags, void *arg, size_t alen)
 {
 	struct ukfs *fs = NULL;
 	int rv = 0, devfd = -1;
-	uint64_t devoff, devsize;
 	int mounted = 0;
 	int regged = 0;
 
-	/* XXX: gcc whine */
-	devoff = 0;
-	devsize = 0;
-
-	if (partition != UKFS_PARTITION_NA)
-		process_diskdevice(devpath, partition, mntflags & MNT_RDONLY,
-		    &devfd, &devoff, &devsize);
+	if (part != ukfs_part_na) {
+		if ((rv = process_diskdevice(devpath, part,
+		    mntflags & MNT_RDONLY, &devfd)) != 0)
+			goto out;
+	}
 
 	fs = malloc(sizeof(struct ukfs));
 	if (fs == NULL) {
@@ -351,9 +496,10 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 		}
 	}
 
-	if (partition != UKFS_PARTITION_NA) {
+	if (part != ukfs_part_na) {
+		/* LINTED */
 		rv = rump_pub_etfs_register_withsize(devpath, devpath,
-		    RUMP_ETFS_BLK, devoff, devsize);
+		    RUMP_ETFS_BLK, part->part_devoff, part->part_devsize);
 		if (rv) {
 			goto out;
 		}
@@ -385,6 +531,7 @@ doukfsmount(const char *vfsname, const char *devpath, int partition,
 	assert(rv == 0);
 
  out:
+	ukfs_part_release(part);
 	if (rv) {
 		if (fs) {
 			if (fs->ukfs_rvp)
@@ -411,16 +558,17 @@ ukfs_mount(const char *vfsname, const char *devpath,
 	const char *mountpath, int mntflags, void *arg, size_t alen)
 {
 
-	return doukfsmount(vfsname, devpath, UKFS_PARTITION_NA,
+	return doukfsmount(vfsname, devpath, ukfs_part_na,
 	    mountpath, mntflags, arg, alen);
 }
 
 struct ukfs *
-ukfs_mount_disk(const char *vfsname, const char *devpath, int partition,
-	const char *mountpath, int mntflags, void *arg, size_t alen)
+ukfs_mount_disk(const char *vfsname, const char *devpath,
+	struct ukfs_part *part, const char *mountpath, int mntflags,
+	void *arg, size_t alen)
 {
 
-	return doukfsmount(vfsname, devpath, partition,
+	return doukfsmount(vfsname, devpath, part,
 	    mountpath, mntflags, arg, alen);
 }
 
@@ -464,6 +612,14 @@ ukfs_release(struct ukfs *fs, int flags)
 	free(fs);
 
 	return 0;
+}
+
+void
+ukfs_part_release(struct ukfs_part *part)
+{
+
+	if (part != ukfs_part_none && part != ukfs_part_na)
+		free(part);
 }
 
 #define STDCALL(ukfs, thecall)						\
