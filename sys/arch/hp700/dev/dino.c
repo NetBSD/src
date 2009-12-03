@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.17 2009/12/01 22:36:31 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.18 2009/12/03 22:18:04 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.17 2009/12/01 22:36:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.18 2009/12/03 22:18:04 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -331,9 +331,18 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data;
+	uint32_t pamr;
+
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	data = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
+
 	return le32toh(data);
 }
 
@@ -343,16 +352,21 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data1;
+	uint32_t pamr;
 
-	/* fix coalescing config writes errata by interleaving w/ a read */
-	r->pci_addr = tag | PCI_ID_REG;
-	data1 = r->pci_conf_data;
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	r->pci_conf_data = htole32(data);
 
+	/* fix coalescing config and io writes by interleaving w/ a read */
 	r->pci_addr = tag | PCI_ID_REG;
 	data1 = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
 }
 
 int
