@@ -1,7 +1,7 @@
-/*	$NetBSD: strerror.c,v 1.1.1.5 2008/06/21 18:31:33 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.1.1.5.4.1 2009/12/03 17:38:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.c,v 1.8 2007/06/19 23:47:18 tbox Exp */
+/* Id: strerror.c,v 1.8.128.2 2009/02/16 23:46:44 tbox Exp */
 
 /*! \file */
 
@@ -49,7 +49,7 @@ void
 isc__strerror(int num, char *buf, size_t size) {
 #ifdef HAVE_STRERROR
 	char *msg;
-	unsigned int unum = num;
+	unsigned int unum = (unsigned int)num;
 	static isc_once_t once = ISC_ONCE_INIT;
 
 	REQUIRE(buf != NULL);
@@ -64,7 +64,7 @@ isc__strerror(int num, char *buf, size_t size) {
 		snprintf(buf, size, "Unknown error: %u", unum);
 	UNLOCK(&isc_strerror_lock);
 #else
-	unsigned int unum = num;
+	unsigned int unum = (unsigned int)num;
 
 	REQUIRE(buf != NULL);
 

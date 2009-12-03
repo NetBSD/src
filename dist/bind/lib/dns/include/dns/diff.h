@@ -1,7 +1,7 @@
-/*	$NetBSD: diff.h,v 1.1.1.5 2008/06/21 18:32:27 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.1.1.5.4.1 2009/12/03 17:38:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: diff.h,v 1.12 2007/06/19 23:47:16 tbox Exp */
+/* Id: diff.h,v 1.12.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef DNS_DIFF_H
 #define DNS_DIFF_H 1
@@ -75,7 +75,7 @@ typedef struct dns_difftuple dns_difftuple_t;
 #define DNS_DIFFTUPLE_VALID(t)	ISC_MAGIC_VALID(t, DNS_DIFFTUPLE_MAGIC)
 
 struct dns_difftuple {
-        unsigned int			magic;
+	unsigned int			magic;
 	isc_mem_t			*mctx;
 	dns_diffop_t			op;
 	dns_name_t			name;
@@ -101,7 +101,7 @@ struct dns_diff {
 	ISC_LIST(dns_difftuple_t)	tuples;
 };
 
-/* Type of comparision function for sorting diffs. */
+/* Type of comparison function for sorting diffs. */
 typedef int dns_diff_compare_func(const void *, const void *);
 
 /***
@@ -112,7 +112,7 @@ ISC_LANG_BEGINDECLS
 
 /**************************************************************************/
 /*
- * Maniuplation of diffs and tuples.
+ * Manipulation of diffs and tuples.
  */
 
 isc_result_t

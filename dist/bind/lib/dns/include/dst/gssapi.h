@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.3 2008/06/21 18:32:25 christos Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.3.4.1 2009/12/03 17:38:23 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gssapi.h,v 1.9 2007/06/19 23:47:17 tbox Exp */
+/* Id: gssapi.h,v 1.9.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef DST_GSSAPI_H
 #define DST_GSSAPI_H 1
@@ -162,8 +162,8 @@ void
 gss_log(int level, const char *fmt, ...)
 ISC_FORMAT_PRINTF(2, 3);
 /*
- * Loging function for GSS.
- *  
+ * Logging function for GSS.
+ *
  *  Requires
  *      'level' is the log level to be used, as an integer
  *      'fmt'   is a printf format specifier
@@ -189,7 +189,7 @@ dst_gssapi_identitymatchesrealmkrb5(dns_name_t *signer, dns_name_t *name,
 			      dns_name_t *realm);
 /*
  *	Compare a "signer" (in the format of a Kerberos-format Kerberos5
- *	printipal: host/example.com@EXAMPLE.COM) to the realm name stored
+ *	principal: host/example.com@EXAMPLE.COM) to the realm name stored
  *	in "name" (which represents the realm name).
  *
  */
@@ -199,7 +199,7 @@ dst_gssapi_identitymatchesrealmms(dns_name_t *signer, dns_name_t *name,
 			    dns_name_t *realm);
 /*
  *	Compare a "signer" (in the format of a Kerberos-format Kerberos5
- *	printipal: host/example.com@EXAMPLE.COM) to the realm name stored
+ *	principal: host/example.com@EXAMPLE.COM) to the realm name stored
  *	in "name" (which represents the realm name).
  *
  */

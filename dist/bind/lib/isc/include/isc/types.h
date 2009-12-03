@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.1.1.5 2008/06/21 18:31:21 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.43.128.2 2008/01/17 23:46:37 tbox Exp */
+/* Id: types.h,v 1.43.128.5 2009/01/29 23:47:14 tbox Exp */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -72,6 +72,7 @@ typedef struct isc_mempool		isc_mempool_t;		/*%< Memory Pool */
 typedef struct isc_msgcat		isc_msgcat_t;		/*%< Message Catalog */
 typedef struct isc_ondestroy		isc_ondestroy_t;	/*%< On Destroy */
 typedef struct isc_netaddr		isc_netaddr_t;		/*%< Net Address */
+typedef struct isc_portset		isc_portset_t;		/*%< Port Set */
 typedef struct isc_quota		isc_quota_t;		/*%< Quota */
 typedef struct isc_random		isc_random_t;		/*%< Random */
 typedef struct isc_ratelimiter		isc_ratelimiter_t;	/*%< Rate Limiter */
@@ -83,6 +84,8 @@ typedef struct isc_sockaddr		isc_sockaddr_t;		/*%< Socket Address */
 typedef struct isc_socket		isc_socket_t;		/*%< Socket */
 typedef struct isc_socketevent		isc_socketevent_t;	/*%< Socket Event */
 typedef struct isc_socketmgr		isc_socketmgr_t;	/*%< Socket Manager */
+typedef struct isc_stats		isc_stats_t;		/*%< Statistics */
+typedef int				isc_statscounter_t;	/*%< Statistics Counter */
 typedef struct isc_symtab		isc_symtab_t;		/*%< Symbol Table */
 typedef struct isc_task			isc_task_t;		/*%< Task */
 typedef ISC_LIST(isc_task_t)		isc_tasklist_t;		/*%< Task List */

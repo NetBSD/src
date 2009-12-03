@@ -1,7 +1,7 @@
-/*	$NetBSD: context.c,v 1.1.1.5 2008/06/21 18:30:44 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.5.4.1 2009/12/03 17:38:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.50 2007/06/18 23:47:51 tbox Exp */
+/* Id: context.c,v 1.50.128.5 2009/09/01 23:46:36 tbox Exp */
 
-/*! \file context.c 
+/*! \file context.c
    lwres_context_create() creates a #lwres_context_t structure for use in
    lightweight resolver operations. It holds a socket and other data
    needed for communicating with a resolver daemon. The new
@@ -158,7 +158,6 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	lwres_context_t *ctx;
 
 	REQUIRE(contextp != NULL && *contextp == NULL);
-	UNUSED(flags);
 
 	/*
 	 * If we were not given anything special to use, use our own
@@ -186,6 +185,17 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	ctx->timeout = LWRES_DEFAULT_TIMEOUT;
 	ctx->serial = time(NULL); /* XXXMLG or BEW */
 
+	ctx->use_ipv4 = 1;
+	ctx->use_ipv6 = 1;
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV6) {
+		ctx->use_ipv4 = 0;
+	}
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV4) {
+		ctx->use_ipv6 = 0;
+	}
+
 	/*
 	 * Init resolv.conf bits.
 	 */
@@ -196,9 +206,9 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 }
 
 /*%
-Destroys a #lwres_context_t, closing its socket. 
-contextp is a pointer to a pointer to the context that is 
-to be destroyed. The pointer will be set to NULL 
+Destroys a #lwres_context_t, closing its socket.
+contextp is a pointer to a pointer to the context that is
+to be destroyed. The pointer will be set to NULL
 when the context has been destroyed.
  */
 void
@@ -451,7 +461,7 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	struct timeval timeout;
 
 	/*
-	 * Type of tv_sec is 32 bits long. 
+	 * Type of tv_sec is 32 bits long.
 	 */
 	if (ctx->timeout <= 0x7FFFFFFFU)
 		timeout.tv_sec = (int)ctx->timeout;
@@ -467,7 +477,7 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	FD_ZERO(&readfds);
 	FD_SET(ctx->sock, &readfds);
 	ret2 = select(ctx->sock + 1, &readfds, NULL, NULL, &timeout);
-	
+
 	/*
 	 * What happened with select?
 	 */
@@ -479,6 +489,6 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_recv(ctx, recvbase, recvlen, recvd_len);
 	if (result == LWRES_R_RETRY)
 		goto again;
-	
+
 	return (result);
 }

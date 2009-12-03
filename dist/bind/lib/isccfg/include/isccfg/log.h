@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.1.1.5 2008/06/21 18:30:41 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.12 2007/06/19 23:47:22 tbox Exp */
+/* Id: log.h,v 1.12.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISCCFG_LOG_H
 #define ISCCFG_LOG_H 1
@@ -48,7 +48,7 @@ cfg_log_init(isc_log_t *lctx);
  *\li	cfg_log_init() is called only once.
  *
  * Ensures:
- * \li	The catgories and modules defined above are available for
+ * \li	The categories and modules defined above are available for
  * 	use by isc_log_usechannnel() and isc_log_write().
  */
 

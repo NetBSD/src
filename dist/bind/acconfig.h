@@ -1,7 +1,7 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.6 2008/06/21 18:25:59 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.6.4.1 2009/12/03 17:38:01 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.51 2007/06/19 23:46:59 tbox Exp */
+/* Id: acconfig.h,v 1.51.130.2 2009/02/16 23:46:44 tbox Exp */
 
 /*! \file */
 
@@ -26,9 +26,6 @@
  *** it does not get installed.
  ***/
 @TOP@
-
-/** define to `int' if <sys/types.h> doesn't define.  */
-#undef ssize_t
 
 /** define on DEC OSF to enable 4.4BSD style sa_len support */
 #undef _SOCKADDR_LEN
@@ -62,9 +59,6 @@
 
 /** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #undef HAVE_IFLIST_SYSCTL
-
-/** define if chroot() is available */
-#undef HAVE_CHROOT
 
 /** define if tzset() is available */
 #undef HAVE_TZSET
@@ -117,7 +111,7 @@ int sigwait(const unsigned int *set, int *sig);
  * The silly continuation line is to keep configure from
  * commenting out the #undef.
  */
- 
+
 #undef \
 	va_start
 #define	va_start(ap, last) \

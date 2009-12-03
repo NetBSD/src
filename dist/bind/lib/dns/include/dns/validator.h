@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.h,v 1.1.1.6 2008/06/21 18:32:33 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.6.4.1 2009/12/03 17:38:23 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.h,v 1.39 2007/09/19 03:38:56 marka Exp */
+/* Id: validator.h,v 1.39.52.3 2009/01/19 00:01:11 marka Exp */
 
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1
@@ -76,7 +76,7 @@
  * caller so that they may be freed.
  *
  * If the RESULT is ISC_R_SUCCESS and the answer is secure then
- * proofs[] will contain the the names of the NSEC records that hold the
+ * proofs[] will contain the names of the NSEC records that hold the
  * various proofs.  Note the same name may appear multiple times.
  */
 typedef struct dns_validatorevent {
@@ -204,7 +204,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  * options:
  * If DNS_VALIDATOR_DLV is set the caller knows there is not a
  * trusted key and the validator should immediately attempt to validate
- * the answer by looking for a appopriate DLV RRset.
+ * the answer by looking for an appropriate DLV RRset.
  */
 
 void

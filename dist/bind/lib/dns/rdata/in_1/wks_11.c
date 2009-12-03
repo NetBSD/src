@@ -1,7 +1,7 @@
-/*	$NetBSD: wks_11.c,v 1.6 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.6.4.1 2009/12/03 17:38:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wks_11.c,v 1.54 2007/06/19 23:47:17 tbox Exp */
+/* Id: wks_11.c,v 1.54.128.2 2009/02/16 23:46:44 tbox Exp */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -160,6 +160,7 @@ totext_in_wks(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
 
+	INSIST(sr.length <= 8*1024);
 	for (i = 0; i < sr.length; i++) {
 		if (sr.base[i] != 0)
 			for (j = 0; j < 8; j++)
@@ -244,7 +245,8 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(wks->common.rdtype == type);
 	REQUIRE(wks->common.rdclass == rdclass);
-	REQUIRE(wks->map != NULL || wks->map_len == 0);
+	REQUIRE((wks->map != NULL && wks->map_len <= 8*1024) ||
+		 wks->map_len == 0);
 
 	UNUSED(type);
 	UNUSED(rdclass);

@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.5 2008/06/21 18:33:48 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.1.1.5.4.1 2009/12/03 17:38:03 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkzone.c,v 1.49 2007/06/18 23:47:17 tbox Exp */
+/* Id: named-checkzone.c,v 1.49.130.5 2009/05/29 02:18:32 marka Exp */
 
 /*! \file */
 
@@ -79,8 +79,9 @@ usage(void) {
 		"[-f inputformat] [-F outputformat] "
 		"[-t directory] [-w directory] [-k (ignore|warn|fail)] "
 		"[-n (ignore|warn|fail)] [-m (ignore|warn|fail)] "
-		"[-i (full|local|none)] [-M (ignore|warn|fail)] "
-		"[-S (ignore|warn|fail)] [-W (ignore|warn)] "
+		"[-i (full|full-sibling|local|local-sibling|none)] "
+		"[-M (ignore|warn|fail)] [-S (ignore|warn|fail)] "
+		"[-W (ignore|warn)] "
 		"zonename filename\n", prog_name);
 	exit(1);
 }
@@ -124,9 +125,13 @@ main(int argc, char **argv) {
 	 */
 	if (strncmp(prog_name, "lt-", 3) == 0)
 		prog_name += 3;
-	if (strcmp(prog_name, "named-checkzone") == 0)
+
+#define PROGCMP(X) \
+	(strcasecmp(prog_name, X) == 0 || strcasecmp(prog_name, X ".exe") == 0)
+
+	if (PROGCMP("named-checkzone"))
 		progmode = progmode_check;
-	else if (strcmp(prog_name, "named-compilezone") == 0)
+	else if (PROGCMP("named-compilezone"))
 		progmode = progmode_compile;
 	else
 		INSIST(0);
@@ -232,7 +237,7 @@ main(int argc, char **argv) {
 				zone_options &= ~DNS_ZONEOPT_FATALNS;
 			} else if (ARGCMP("fail")) {
 				zone_options |= DNS_ZONEOPT_CHECKNS|
-					        DNS_ZONEOPT_FATALNS;
+						DNS_ZONEOPT_FATALNS;
 			} else {
 				fprintf(stderr, "invalid argument to -n: %s\n",
 					isc_commandline_argument);
@@ -266,12 +271,6 @@ main(int argc, char **argv) {
 			if (result != ISC_R_SUCCESS) {
 				fprintf(stderr, "isc_dir_chroot: %s: %s\n",
 					isc_commandline_argument,
-					isc_result_totext(result));
-				exit(1);
-			}
-			result = isc_dir_chdir("/");
-			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr, "isc_dir_chdir: %s\n",
 					isc_result_totext(result));
 				exit(1);
 			}
@@ -356,7 +355,7 @@ main(int argc, char **argv) {
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",
-                                prog_name, isc_commandline_option);
+				prog_name, isc_commandline_option);
 			exit(1);
 		}
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: ratelimiter.h,v 1.1.1.5 2008/06/21 18:31:15 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ratelimiter.h,v 1.21 2007/06/19 23:47:18 tbox Exp */
+/* Id: ratelimiter.h,v 1.21.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_RATELIMITER_H
 #define ISC_RATELIMITER_H 1
@@ -55,7 +55,7 @@ isc_ratelimiter_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
 isc_result_t
 isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, isc_interval_t *interval);
 /*!<
- * Set the mininum interval between event executions.
+ * Set the minimum interval between event executions.
  * The interval value is copied, so the caller need not preserve it.
  *
  * Requires:
@@ -73,7 +73,7 @@ isc_result_t
 isc_ratelimiter_enqueue(isc_ratelimiter_t *rl, isc_task_t *task,
 			isc_event_t **eventp);
 /*%<
- * Queue an event for rate-limited execution.  
+ * Queue an event for rate-limited execution.
  *
  * This is similar
  * to doing an isc_task_send() to the 'task', except that the
@@ -104,7 +104,7 @@ isc_ratelimiter_shutdown(isc_ratelimiter_t *ratelimiter);
  *\li	Further attempts to enqueue events will fail with
  * 	#ISC_R_SHUTTINGDOWN.
  *
- *\li	The reatelimiter is no longer attached to its task.
+ *\li	The rate limiter is no longer attached to its task.
  */
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.4 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.4.4.1 2009/12/03 17:38:14 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: assertions.c,v 1.3 2005/04/27 04:56:34 sra Exp";
+static const char rcsid[] = "Id: assertions.c,v 1.3.672.1 2008/10/15 03:56:25 marka Exp";
 #endif
 
 #include "port_before.h"

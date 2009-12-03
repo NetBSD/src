@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.1.1.5 2008/06/21 18:31:16 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task.h,v 1.61 2007/06/18 23:47:44 tbox Exp */
+/* Id: task.h,v 1.61.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -28,7 +28,7 @@
 
 /*! \file isc/task.h
  * \brief The task system provides a lightweight execution context, which is
- * basically an event queue.  
+ * basically an event queue.
 
  * When a task's event queue is non-empty, the
  * task is runnable.  A small work crew of threads, typically one per CPU,
@@ -69,7 +69,7 @@
  * Consumers of events should purge, not unsend.
  *
  * Producers of events often want to remove events when the caller indicates
- * it is no longer interested in the object, e.g. by cancelling a timer.
+ * it is no longer interested in the object, e.g. by canceling a timer.
  * Sometimes this can be done by purging, but for some event types, the
  * calls to isc_event_free() cause deadlock because the event free routine
  * wants to acquire a lock the caller is already holding.  Unsending instead
@@ -500,7 +500,7 @@ isc_task_beginexclusive(isc_task_t *task);
  * current event, and prevents any new events from executing in any of the
  * tasks sharing a task manager with 'task'.
  *
- * The exclusive access must be relinquished by calling 
+ * The exclusive access must be relinquished by calling
  * isc_task_endexclusive() before returning from the current event handler.
  *
  * Requires:
@@ -515,7 +515,7 @@ isc_task_beginexclusive(isc_task_t *task);
 void
 isc_task_endexclusive(isc_task_t *task);
 /*%<
- * Relinquish the exclusive access obtained by isc_task_beginexclusive(), 
+ * Relinquish the exclusive access obtained by isc_task_beginexclusive(),
  * allowing other tasks to execute.
  *
  * Requires:
@@ -595,7 +595,7 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp);
  *	because it would block forever waiting for the event action to
  *	complete.  An event action that wants to cause task manager shutdown
  *	should request some non-event action thread of execution to do the
- *	shutdown, e.g. by signalling a condition variable or using
+ *	shutdown, e.g. by signaling a condition variable or using
  *	isc_app_shutdown().
  *
  *\li	Task manager references are not reference counted, so the caller

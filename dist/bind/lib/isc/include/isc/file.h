@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.1.1.5 2008/06/21 18:31:21 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.h,v 1.33 2007/06/19 23:47:18 tbox Exp */
+/* Id: file.h,v 1.33.128.2 2009/01/19 23:47:03 tbox Exp */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -37,7 +37,7 @@ isc_file_settime(const char *file, isc_time_t *time);
 isc_result_t
 isc_file_getmodtime(const char *file, isc_time_t *time);
 /*!<
- * \brief Get the time of last modication of a file.
+ * \brief Get the time of last modification of a file.
  *
  * Notes:
  *\li	The time that is set is relative to the (OS-specific) epoch, as are
@@ -206,7 +206,7 @@ isc_result_t
 isc_file_progname(const char *filename, char *buf, size_t buflen);
 /*!<
  * \brief Given an operating system specific file name "filename"
- * referring to a program, return the canonical program name. 
+ * referring to a program, return the canonical program name.
  *
  *
  * Any directory prefix or executable file name extension (if

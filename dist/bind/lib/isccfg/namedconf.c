@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.7 2008/08/15 14:42:17 he Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.7.4.1 2009/12/03 17:38:30 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.78.46.7.2.1 2008/07/23 11:46:02 marka Exp */
+/* Id: namedconf.c,v 1.78.46.11 2008/09/27 23:39:42 jinmei Exp */
 
 /*! \file */
 
@@ -548,11 +548,19 @@ static cfg_type_t cfg_type_serverid = {
 /*%
  * Port list.
  */
-static isc_result_t
-parse_port(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
+static cfg_tuplefielddef_t porttuple_fields[] = {
+	{ "loport", &cfg_type_uint32, 0 },
+	{ "hiport", &cfg_type_uint32, 0 },
+	{ NULL, NULL, 0 }
+};
+static cfg_type_t cfg_type_porttuple = {
+	"porttuple", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	&cfg_rep_tuple, porttuple_fields
+};
 
-	UNUSED(type);
+static isc_result_t
+parse_port(cfg_parser_t *pctx, cfg_obj_t **ret) {
+	isc_result_t result;
 
 	CHECK(cfg_parse_uint32(pctx, NULL, ret));
 	if ((*ret)->value.uint32 > 0xffff) {
@@ -560,18 +568,60 @@ parse_port(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 		cfg_obj_destroy(pctx, ret);
 		result = ISC_R_RANGE;
 	}
+
  cleanup:
 	return (result);
 }
 
-static cfg_type_t cfg_type_port = {
-	"port", parse_port, NULL, cfg_doc_terminal,
+static isc_result_t
+parse_portrange(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+	isc_result_t result;
+	cfg_obj_t *obj = NULL;
+
+	UNUSED(type);
+
+	CHECK(cfg_peektoken(pctx, ISC_LEXOPT_NUMBER | ISC_LEXOPT_CNUMBER));
+	if (pctx->token.type == isc_tokentype_number)
+		CHECK(parse_port(pctx, ret));
+	else {
+		CHECK(cfg_gettoken(pctx, 0));
+		if (pctx->token.type != isc_tokentype_string ||
+		    strcasecmp(TOKEN_STRING(pctx), "range") != 0) {
+			cfg_parser_error(pctx, CFG_LOG_NEAR,
+					 "expected integer or 'range'");
+			return (ISC_R_UNEXPECTEDTOKEN);
+		}
+		CHECK(cfg_create_tuple(pctx, &cfg_type_porttuple, &obj));
+		CHECK(parse_port(pctx, &obj->value.tuple[0]));
+		CHECK(parse_port(pctx, &obj->value.tuple[1]));
+		if (obj->value.tuple[0]->value.uint32 >
+		    obj->value.tuple[1]->value.uint32) {
+			cfg_parser_error(pctx, CFG_LOG_NOPREP,
+					 "low port '%u' must not be larger "
+					 "than high port",
+					 obj->value.tuple[0]->value.uint32);
+			result = ISC_R_RANGE;
+			goto cleanup;
+		}
+		*ret = obj;
+		obj = NULL;
+	}
+
+ cleanup:
+	if (obj != NULL)
+		cfg_obj_destroy(pctx, &obj);
+	return (result);
+}
+
+static cfg_type_t cfg_type_portrange = {
+	"portrange", parse_portrange, NULL, cfg_doc_terminal,
 	NULL, NULL
 };
 
 static cfg_type_t cfg_type_bracketed_portlist = {
-	"bracketed_sockaddrlist", cfg_parse_bracketed_list, cfg_print_bracketed_list, cfg_doc_bracketed_list,
-	&cfg_rep_list, &cfg_type_port
+	"bracketed_sockaddrlist", cfg_parse_bracketed_list,
+	cfg_print_bracketed_list, cfg_doc_bracketed_list,
+	&cfg_rep_list, &cfg_type_portrange
 };
 
 /*%
@@ -612,6 +662,8 @@ namedconf_or_view_clauses[] = {
  */
 static cfg_clausedef_t
 options_clauses[] = {
+	{ "use-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
+	{ "use-v6-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "avoid-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "avoid-v6-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "blackhole", &cfg_type_bracketed_aml, 0 },
@@ -769,7 +821,7 @@ view_clauses[] = {
 	{ "ixfr-from-differences", &cfg_type_ixfrdifftype, 0 },
 	{ "lame-ttl", &cfg_type_uint32, 0 },
 	{ "max-acache-size", &cfg_type_sizenodefault, 0 },
-	{ "max-cache-size", &cfg_type_size, 0 },
+	{ "max-cache-size", &cfg_type_sizenodefault, 0 },
 	{ "max-cache-ttl", &cfg_type_uint32, 0 },
 	{ "max-clients-per-query", &cfg_type_uint32, 0 },
 	{ "max-ncache-ttl", &cfg_type_uint32, 0 },

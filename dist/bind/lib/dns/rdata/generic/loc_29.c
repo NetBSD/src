@@ -1,7 +1,7 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.5 2008/06/21 18:32:39 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.5.4.1 2009/12/03 17:38:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: loc_29.c,v 1.45 2007/06/19 23:47:17 tbox Exp */
+/* Id: loc_29.c,v 1.45.128.4 2009/02/17 05:54:41 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -484,16 +484,19 @@ totext_loc(ARGS_TOTEXT) {
 
 	/* version = sr.base[0]; */
 	size = sr.base[1];
+	INSIST((size&0x0f) < 10 && (size>>4) < 10);
 	if ((size&0x0f)> 1)
 		sprintf(sbuf, "%lum", (size>>4) * poweroften[(size&0x0f)-2]);
 	else
 		sprintf(sbuf, "0.%02lum", (size>>4) * poweroften[(size&0x0f)]);
 	hp = sr.base[2];
+	INSIST((hp&0x0f) < 10 && (hp>>4) < 10);
 	if ((hp&0x0f)> 1)
 		sprintf(hbuf, "%lum", (hp>>4) * poweroften[(hp&0x0f)-2]);
 	else
 		sprintf(hbuf, "0.%02lum", (hp>>4) * poweroften[(hp&0x0f)]);
 	vp = sr.base[3];
+	INSIST((vp&0x0f) < 10 && (vp>>4) < 10);
 	if ((vp&0x0f)> 1)
 		sprintf(vbuf, "%lum", (vp>>4) * poweroften[(vp&0x0f)-2]);
 	else
@@ -516,6 +519,7 @@ totext_loc(ARGS_TOTEXT) {
 	m1 = (int)(latitude % 60);
 	latitude /= 60;
 	d1 = (int)latitude;
+	INSIST(latitude <= 90U);
 
 	longitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
@@ -533,6 +537,7 @@ totext_loc(ARGS_TOTEXT) {
 	m2 = (int)(longitude % 60);
 	longitude /= 60;
 	d2 = (int)longitude;
+	INSIST(longitude <= 180U);
 
 	altitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
@@ -618,7 +623,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 		return (ISC_R_RANGE);
 
 	/*
-	 * Altitiude.
+	 * Altitude.
 	 * All values possible.
 	 */
 

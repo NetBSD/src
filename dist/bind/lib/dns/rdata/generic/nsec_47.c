@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec_47.c,v 1.5 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.5.4.1 2009/12/03 17:38:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec_47.c,v 1.9 2007/06/19 23:47:17 tbox Exp */
+/* Id: nsec_47.c,v 1.9.128.2 2008/07/15 23:46:46 tbox Exp */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
-/* draft-ietf-dnsext-nsec-rdata-01.txt */
+/* RFC 3845 */
 
 #ifndef RDATA_GENERIC_NSEC_47_C
 #define RDATA_GENERIC_NSEC_47_C
@@ -257,7 +257,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 		window = nsec->typebits[i];
 		len = nsec->typebits[i+1];
 		i += 2;
-		INSIST(first || window > lastwindow); 
+		INSIST(first || window > lastwindow);
 		INSIST(len > 0 && len <= 32);
 		INSIST(i + len <= nsec->len);
 		INSIST(nsec->typebits[i + len - 1] != 0);
