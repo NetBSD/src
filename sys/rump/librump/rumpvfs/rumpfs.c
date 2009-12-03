@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.34 2009/11/30 12:32:13 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.35 2009/12/03 12:35:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.34 2009/11/30 12:32:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.35 2009/12/03 12:35:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -899,20 +899,4 @@ rumpfs_mountroot()
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;
-}
-
-MODULE(MODULE_CLASS_VFS, rumpfs, NULL);
-
-static int
-rumpfs_modcmd(modcmd_t cmd, void *arg)
-{
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return vfs_attach(&rumpfs_vfsops);
-	case MODULE_CMD_FINI:
-		return vfs_detach(&rumpfs_vfsops);
-	default:
-		return ENOTTY;
-	}
 }

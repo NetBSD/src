@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.38 2009/12/01 09:56:59 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.39 2009/12/03 12:35:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.38 2009/12/01 09:56:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.39 2009/12/03 12:35:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -75,6 +75,7 @@ pvfs_rele(struct proc *p)
 void
 rump_vfs_init(void)
 {
+	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
 	int error;
 	int rv, i;
@@ -105,30 +106,16 @@ rump_vfs_init(void)
 		    rumpuser_biothread, rump_biodone, NULL, "rmpabio")) != 0)
 			panic("syncer thread create failed: %d", rv);
 	}
-}
-
-void
-rump_vfs_init2()
-{
-	extern struct vfsops rumpfs_vfsops;
-	int rv;
 
 	rootfstype = ROOT_FSTYPE_ANY;
-	root_device = RUMP_VFSROOTDEV;
+	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
 	rw_init(&cwdi0.cwdi_lock);
 	proc0.p_cwdi = &cwdi0;
 	proc0.p_cwdi = cwdinit();
 
-	/*
-	 * XXX: make sure rumpfs is attached.  The opposite can
-	 * happen e.g. on Linux where the dynlinker doesn't work
-	 * like we would want it to.
-	 */
-	if (!vfs_getopsbyname(MOUNT_RUMPFS))
-		vfs_attach(&rumpfs_vfsops);
-
+	vfs_attach(&rumpfs_vfsops);
 	vfs_mountroot();
 
 	rump_proc_vfs_init = pvfs_init;
