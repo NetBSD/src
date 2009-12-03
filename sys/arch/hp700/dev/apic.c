@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.4 2009/11/29 10:30:07 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.5 2009/12/03 11:54:09 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -258,14 +258,9 @@ apic_intr(void *v)
 void
 apic_get_int_tbl(struct elroy_softc *sc)
 {
-	struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
+	static struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
+	static struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
 	size_t size;
-
-	/*
-	 * XXX int_tbl should not be allocated on the stack, but we need a
-	 * 1:1 mapping, and malloc doesn't provide that.
-	 */
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
 	    &int_tbl_sz, 0, 0, 0, 0, 0))
