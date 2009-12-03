@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs_disklabel.c,v 1.1 2009/10/07 20:51:00 pooka Exp $	*/
+/*	$NetBSD: ukfs_disklabel.c,v 1.2 2009/12/03 14:23:49 pooka Exp $	*/
 
 /*
  * Local copies of libutil disklabel routines.  This uncouples libukfs
@@ -50,7 +50,7 @@
 #define SCAN_INCR	4
 
 int
-ukfs_disklabel_scan(struct ukfs_disklabel *lp, char *buf, size_t buflen)
+ukfs__disklabel_scan(struct ukfs__disklabel *lp, char *buf, size_t buflen)
 {
 	size_t	i;
 
@@ -68,7 +68,7 @@ ukfs_disklabel_scan(struct ukfs_disklabel *lp, char *buf, size_t buflen)
 sanity:
 	/* we've found something, let's sanity check it */
 	if (lp->d_npartitions > UKFS_MAXPARTITIONS
-	    || ukfs_disklabel_dkcksum(lp))
+	    || ukfs__disklabel_dkcksum(lp))
 		return 1;
 
 	return 0;
@@ -110,7 +110,7 @@ sanity:
  */
 
 uint16_t
-ukfs_disklabel_dkcksum(struct ukfs_disklabel *lp)
+ukfs__disklabel_dkcksum(struct ukfs__disklabel *lp)
 {
 	uint16_t *start, *end;
 	uint16_t sum;
