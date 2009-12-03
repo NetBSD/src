@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.101 2009/12/02 17:56:14 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.102 2009/12/03 13:45:11 uebayasi Exp $
 #
 
 #
@@ -31,6 +31,7 @@ MKEXTRAVARS="\
 	MKCOMPAT	\
 	MKDYNAMICROOT	\
 	MKMANPAGES	\
+	MKXORG		\
 	USE_INET6	\
 	USE_KERBEROS	\
 	USE_LDAP	\
@@ -218,7 +219,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.101 2009/12/02 17:56:14 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.102 2009/12/03 13:45:11 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
