@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.36 2009/12/01 09:50:51 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.37 2009/12/03 13:12:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.36 2009/12/01 09:50:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.37 2009/12/03 13:12:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -81,8 +81,7 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
-		mutex_enter(mtx);
+	mutex_enter(mtx);
 }
 
 int
@@ -103,8 +102,7 @@ void
 mutex_spin_exit(kmutex_t *mtx)
 {
 
-	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
-		mutex_exit(mtx);
+	mutex_exit(mtx);
 }
 
 int
