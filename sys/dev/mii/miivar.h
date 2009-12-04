@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.55 2009/05/12 14:31:27 cegger Exp $	*/
+/*	$NetBSD: miivar.h,v 1.56 2009/12/04 22:37:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -224,7 +224,6 @@ struct mii_media {
 	(*(p)->mii_funcs->pf_reset)((p))
 
 void	mii_attach(device_t, struct mii_data *, int, int, int, int);
-void	mii_activate(struct mii_data *, enum devact, int, int);
 void	mii_detach(struct mii_data *, int, int);
 bool	mii_phy_resume(device_t PMF_FN_PROTO);
 
