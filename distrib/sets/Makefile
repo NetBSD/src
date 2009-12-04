@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2009/12/01 09:11:45 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.73 2009/12/04 12:43:56 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -7,7 +7,6 @@ all:
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
-GREP?= grep
 
 SETSCMD=	cd ${.CURDIR} && \
 		DESTDIR=${DESTDIR:Q} \
