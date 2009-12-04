@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.42 2009/11/25 14:28:50 rmind Exp $ */
+/*	$NetBSD: psl.h,v 1.43 2009/12/04 17:31:06 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,92 +251,58 @@
 /*
  * Inlines for manipulating privileged registers
  */
-static __inline uint64_t
-gettick(void)
-{
+#define SPARC64_GETPR_DEF(pr, type)	\
+static __inline type get##pr(void)					\
+{									\
+	type pr;							\
+	__asm volatile("rdpr %%" #pr ",%0" : "=r" (pr));		\
+	return pr;							\
+}
+#define SPARC64_SETPR_DEF(pr, type)	\
+static __inline void set##pr(type pr)					\
+{									\
+	__asm volatile("wrpr %0,0,%%" #pr : : "r" (pr) : "memory");	\
+}
+
 #ifdef __arch64__
-	uint64_t tick;
-
-	__asm volatile("rdpr %%tick, %0" : "=r" (tick));
-	return tick;
+#define SPARC64_GETPR64_DEF(pr)	SPARC64_GETPR_DEF(pr, uint64_t)
+#define SPARC64_SETPR64_DEF(pr)	SPARC64_SETPR_DEF(pr, uint64_t)
 #else
-	uint32_t tick_hi, tick_lo;
-
-	__asm volatile("rdpr %%tick, %0; srl %0,0,%1; srlx %0,32,%0"
-		: "=r" (tick_hi), "=r" (tick_lo));
-	return ((uint64_t)tick_hi << 32) | tick_lo;
+#define SPARC64_GETPR64_DEF(pr)	\
+static __inline uint64_t get##pr(void)					\
+{									\
+	uint32_t _hi, _lo;						\
+	__asm volatile("rdpr %%" #pr ",%0; srl %0,0,%1; srlx %0,32,%0"	\
+		: "=r" (_hi), "=r" (_lo));				\
+	return ((uint64_t)_hi << 32) | _lo;				\
+}
+#define SPARC64_SETPR64_DEF(pr)	\
+static __inline void set##pr(uint64_t pr)				\
+{									\
+	uint32_t _hi = pr >> 32, _lo = pr;				\
+	__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0,0,%%" #pr	\
+		       : "=&r" (_hi) /* scratch register */		\
+		       : "r" (_hi), "r" (_lo) : "memory");		\
+}
 #endif
-}
 
-static __inline void
-settick(uint64_t newtick)
-{
-#ifdef __arch64__
-	__asm volatile("wrpr %0, 0, %%tick" : : "r" (newtick) : "memory");
-#else
-	uint32_t tick_hi = newtick >> 32, tick_lo = newtick;
+/* Tick Register (PR 4) */
+SPARC64_GETPR64_DEF(tick)
+SPARC64_SETPR64_DEF(tick)
 
-	__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick"
-		       : "=&r" (tick_hi) /* scratch register */
-		       : "r" (tick_hi), "r" (tick_lo) : "memory");
-#endif
-}
+/* Processor State Register (PR 6) */
+SPARC64_GETPR_DEF(pstate, int)
+SPARC64_SETPR_DEF(pstate, int)
 
-static __inline int
-getpstate(void)
-{
-	int pstate;
+/* Trap Level Register (PR 7) */
+SPARC64_GETPR_DEF(tl, int)
 
-	__asm volatile("rdpr %%pstate,%0" : "=r" (pstate));
-	return pstate;
-}
+/* Current Window Pointer Register (PR 9) */
+SPARC64_GETPR_DEF(cwp, int)
+SPARC64_SETPR_DEF(cwp, int)
 
-static __inline void
-setpstate(int newpstate)
-{
-	__asm volatile("wrpr %0,0,%%pstate" : : "r" (newpstate) : "memory");
-}
-
-static __inline int
-gettl(void)
-{
-	int tl;
-
-	__asm volatile("rdpr %%tl, %0" : "=r" (tl));
-	return tl;
-}
-
-static __inline int
-getcwp(void)
-{
-	int cwp;
-
-	__asm volatile("rdpr %%cwp,%0" : "=r" (cwp));
-	return cwp;
-}
-
-static __inline void
-setcwp(int newcwp)
-{
-	__asm volatile("wrpr %0,0,%%cwp" : : "r" (newcwp) : "memory");
-}
-
-static __inline uint64_t
-getver(void)
-{
-#ifdef __arch64__
-	uint64_t ver;
-
-	__asm volatile("rdpr %%ver,%0" : "=r" (ver));
-	return ver;
-#else
-	uint32_t ver_hi, ver_lo;
-
-	__asm volatile("rdpr %%ver,%0; srl %0,0,%1; srlx %0,32,%0"
-		       : "=r" (ver_hi), "=r" (ver_lo));
-	return (uint64_t)ver_hi << 32 | ver_lo;
-#endif
-}
+/* Version Register (PR 31) */
+SPARC64_GETPR64_DEF(ver)
 
 static __inline int
 intr_disable(void)
@@ -419,7 +385,7 @@ typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
