@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.147 2009/12/04 17:11:11 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.148 2009/12/04 17:28:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1023,7 +1023,7 @@ LMMUenable_end:
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_finish)
 
-/* set kernel stack, user SP, and initial pcb */
+/* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea 
 	lea	%a1@(USPACE),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
