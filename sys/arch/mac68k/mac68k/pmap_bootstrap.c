@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.81 2009/12/04 16:57:18 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.82 2009/12/04 18:32:31 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.81 2009/12/04 16:57:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.82 2009/12/04 18:32:31 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -397,18 +397,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Allocated at the end of KVA space.
 	 */
 	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
-
-	/*
-	 * Setup u-area for lwp 0.
-	 */
-	/*
-	 * Zero the u-area.
-	 * NOTE: `pte' and `epte' aren't PTEs here.
-	 */
-	pte = PA2VA(lwp0upa, u_int *);
-	epte = (u_int *)(PA2VA(lwp0upa, u_int) + USPACE);
-	while (pte < epte)
-		*pte++ = 0;
 
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0
