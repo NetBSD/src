@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev_private.h,v 1.7 2009/12/04 22:13:59 haad Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2009/12/04 22:13:59 haad Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -25,25 +25,44 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_DEV_PRIVATE_H_
-#define _SYS_RUMP_DEV_PRIVATE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/12/04 22:13:59 haad Exp $");
 
-void	rump_dev_init(void);
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/stat.h>
+#include <sys/filedesc.h>
 
-void	rump_pdev_add(void (*fn)(int), int);
-void	rump_pdev_finalize(void);
+#include <sys/vfs_syscalls.h>
 
-void 	rump_dev_cgd_init(void);
-void 	rump_dev_dm_init(void);
-void 	rump_dev_raidframe_init(void);
-void 	rump_dev_netsmb_init(void);
-void 	rump_dev_rnd_init(void);
-void	rump_dev_rumpusbhc_init(void);
 
-void	rump_device_configuration(void);
+#include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
-struct mainbus_attach_args {
-	int maa_unit;
-};
+void dmattach(int);
 
-#endif /* _SYS_RUMP_DEV_PRIVATE_H_ */
+void
+rump_dev_dm_init()
+{
+	extern const struct bdevsw dm_bdevsw;
+	extern const struct cdevsw dm_cdevsw;
+	devmajor_t bmaj, cmaj;
+	int error;
+	
+	/* go, mydevfs */
+	bmaj = cmaj = -1;
+
+	if ((error = devsw_attach("dm", &dm_bdevsw, &bmaj,
+	    &dm_cdevsw, &cmaj)) != 0)
+		panic("cannot attach dm: %d", error);
+
+	do_sys_mkdir("/dev/mapper", 0770, UIO_SYSSPACE);
+	
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/mapper/control", 0,
+		    cmaj, 0, 1)) != 0) { 
+		panic("cannot create device-mapper control device: %d", error);
+		 
+	}
+	rump_pdev_add(dmattach, 1);
+}
