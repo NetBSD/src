@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.23 2007/11/30 19:02:37 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.24 2009/12/04 13:43:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -287,15 +287,6 @@ dtfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
 	dfid->dfid_gen = pn->pn_va.va_gen;
 
 	return 0;
-}
-
-void
-dtfs_fs_suspend(struct puffs_usermount *pu, int status)
-{
-
-	printf("suspend status %d\n", status);
-	if (status == 1)
-		sleep(3);
 }
 
 int

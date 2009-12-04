@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.39 2007/12/19 14:01:30 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.40 2009/12/04 13:43:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -67,18 +67,6 @@ usage()
 	    "[-n typename]\n       [-o mntopt] [-o puffsopt] [-p prot] "
 	    "[-r rootnodetype]\n       detrempe /mountpoint\n", getprogname());
 	exit(1);
-}
-
-/*
- * This is not perhaps entirely kosher, but this is test file system,
- * so I'm really not concerned.
- */
-static void
-dosuspend(int v)
-{
-
-	puffs_fs_suspend(gpu);
-	puffs_fs_suspend(gpu);
 }
 
 static void
@@ -198,7 +186,6 @@ main(int argc, char *argv[])
 	PUFFSOP_SETFSNOP(pops, sync);
 	PUFFSOP_SET(pops, dtfs, fs, fhtonode);
 	PUFFSOP_SET(pops, dtfs, fs, nodetofh);
-	PUFFSOP_SET(pops, dtfs, fs, suspend);
 
 	PUFFSOP_SET(pops, dtfs, node, lookup);
 	PUFFSOP_SET(pops, dtfs, node, access);
@@ -232,8 +219,6 @@ main(int argc, char *argv[])
 	    | (dynamicfh ? PUFFS_FHFLAG_DYNAMIC : 0));
 	puffs_setncookiehash(pu, khashbuckets);
 
-	if (signal(SIGUSR1, dosuspend) == SIG_ERR)
-		warn("cannot set suspend sighandler");
 	if (signal(SIGALRM, wipe_the_sleep_out_of_my_eyes) == SIG_ERR)
 		warn("cannot set alarm sighandler");
 
