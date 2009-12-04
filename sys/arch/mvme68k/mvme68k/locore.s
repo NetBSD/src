@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 2009/11/26 00:19:19 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 2009/12/04 18:06:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -667,14 +667,13 @@ Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-/* set kernel stack, user SP, and initial pcb */
-	lea	_C_LABEL(lwp0),%a2	| get lwp0.l_addr
-	movl	%a2@(L_ADDR),%a1	|   set kernel stack to end of area 
-	lea	%a1@(USPACE-4),%sp	|   and curlwp so that we don't
-	movl	%a2,_C_LABEL(curlwp)	|   deref NULL in trap()
+/* call final pmap setup which initialize lwp0, curlwp, and curpcb */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context

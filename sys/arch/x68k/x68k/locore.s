@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2009/12/04 18:06:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -941,14 +941,13 @@ Lenab1:
 /* detect FPU type */
 	jbsr	_C_LABEL(fpu_probe)
 	movl	%d0,_C_LABEL(fputype)
-/* set kernel stack, user SP, and initial pcb */
-	lea	_C_LABEL(lwp0),%a2	| grab lwp0.l_addr, and
-	movl	%a2@(L_ADDR),%a1	|   set kernel stack to end of area  
-	lea	%a1@(USPACE-4),%sp	|   and curlwp so that we don't
-	movl	%a2,_C_LABEL(curlwp)	|   deref NULL in trap()
+/* call final pmap setup which initialize lwp0, curlwp, and curpcb */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area  
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
