@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.85 2009/07/27 18:10:53 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.86 2009/12/04 11:55:01 martin Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.85 2009/07/27 18:10:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.86 2009/12/04 11:55:01 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -150,12 +150,8 @@ static void gem_txsoft_print(const struct gem_softc *, int, int);
 int
 gem_detach(struct gem_softc *sc, int flags)
 {
-	char *nullbuf;
-	int i, rc;
+	int i, rc = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-	nullbuf =
-	    (char *)sc->sc_control_data + sizeof(struct gem_control_data);
 
 	/*
 	 * Free any resources we've allocated during the attach.
@@ -177,18 +173,19 @@ gem_detach(struct gem_softc *sc, int flags)
 #endif
 		evcnt_detach(&sc->sc_ev_intr);
 
-		callout_destroy(&sc->sc_tick_ch);
 #if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
 #endif
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+		callout_destroy(&sc->sc_tick_ch);
+
 		/*FALLTHROUGH*/
 	case GEM_ATT_MII:
 		sc->sc_att_stage = GEM_ATT_MII;
-		if ((rc = config_detach_children(sc->sc_dev, flags)) != 0)
-			return rc;
+		rc = config_detach_children(sc->sc_dev, flags);
 		/*FALLTHROUGH*/
 	case GEM_ATT_7:
 		for (i = 0; i < GEM_NRXDESC; i++) {
@@ -206,10 +203,10 @@ gem_detach(struct gem_softc *sc, int flags)
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_cddmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_5:
-		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
+		bus_dmamap_unload(sc->sc_dmatag, sc->sc_nulldmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_4:
-		bus_dmamem_unmap(sc->sc_dmatag, nullbuf, ETHER_MIN_TX);
+		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_3:
 		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cddmamap);
@@ -227,7 +224,7 @@ gem_detach(struct gem_softc *sc, int flags)
 	case GEM_ATT_BACKEND_0:
 		break;
 	}
-	return 0;
+	return rc;
 }
 
 static void
