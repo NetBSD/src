@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.172 2009/09/05 14:19:30 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.173 2009/12/04 22:45:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.172 2009/09/05 14:19:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.173 2009/12/04 22:45:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -579,24 +579,14 @@ int
 tlp_activate(device_t self, enum devact act)
 {
 	struct tulip_softc *sc = device_private(self);
-	int s, error = 0;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_flags & TULIPF_HAS_MII)
-			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
-			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
 /*
