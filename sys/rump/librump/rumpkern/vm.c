@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.69 2009/12/04 17:15:47 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.69 2009/12/04 17:15:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -107,10 +107,6 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 
 	return pg;
 }
-
-/* these are going away very soon */
-void rumpvm_enterva(vaddr_t addr, struct vm_page *pg) {}
-void rumpvm_flushva(struct uvm_object *uobj) {}
 
 struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,

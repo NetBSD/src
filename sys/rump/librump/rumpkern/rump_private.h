@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.40 2009/12/03 13:12:16 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.41 2009/12/04 17:57:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -62,9 +62,6 @@ extern struct sysent rump_sysent[];
 void		rumpvm_init(void);
 void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
-
-void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
-void		rumpvm_flushva(struct uvm_object *);
 
 void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
