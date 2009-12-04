@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.80 2009/11/27 03:23:10 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.81 2009/12/04 16:57:18 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.80 2009/11/27 03:23:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.81 2009/12/04 16:57:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,7 +110,7 @@ void	bootstrap_mac68k(int);
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, l0upa;
+	paddr_t kstpa, kptpa, kptmpa, lwp0upa;
 	u_int nptpages, kstsize;
 	paddr_t avail_next;
 	int avail_remaining;
@@ -138,7 +138,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	l0upa		lwp 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp 0 u-area		UPAGES pages
 	 *
 	 */
 	if (mmutype == MMU_68040)
@@ -149,7 +149,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
-	l0upa = nextpa;
+	lwp0upa = nextpa;
 	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = Sysptsize +
@@ -335,7 +335,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for proc0
+	 * by us so far (nextpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = &(PA2VA(kptpa, u_int *))[m68k_btop(nextpa - firstpa)];
@@ -399,21 +399,22 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
 
 	/*
-	 * Setup u-area for process 0.
+	 * Setup u-area for lwp 0.
 	 */
 	/*
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = PA2VA(l0upa, u_int *);
-	epte = (u_int *)(PA2VA(l0upa, u_int) + USPACE);
+	pte = PA2VA(lwp0upa, u_int *);
+	epte = (u_int *)(PA2VA(lwp0upa, u_int) + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
 
 	/*
-	 * Store the u-area address
+	 * Remember the u-area address so it can be loaded in the lwp0
+	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
 	 */
-	uvm_lwp_setuarea(&lwp0, PA2VA(l0upa, vaddr_t));
+	lwp0uarea = PA2VA(lwp0upa, vaddr_t);
 
 	/*
 	 * VM data structures are now initialized, set up data for
