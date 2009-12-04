@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.49 2009/11/12 19:38:35 dyoung Exp $	*/
+/*	$NetBSD: mii.c,v 1.50 2009/12/04 22:37:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.49 2009/11/12 19:38:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.50 2009/12/04 22:37:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,37 +147,6 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 			mii->mii_instance++;
 		}
 		offset++;
-	}
-}
-
-void
-mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
-{
-	struct mii_softc *child;
-
-	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
-		panic("mii_activate: phyloc and offloc specified");
-
-	if ((mii->mii_flags & MIIF_INITDONE) == 0)
-		return;
-
-	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
-		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
-			if (phyloc != MII_PHY_ANY &&
-			    phyloc != child->mii_phy)
-				continue;
-			if (offloc != MII_OFFSET_ANY &&
-			    offloc != child->mii_offset)
-				continue;
-		}
-		switch (act) {
-		case DVACT_ACTIVATE:
-			panic("mii_activate: DVACT_ACTIVATE");
-			break;
-
-		case DVACT_DEACTIVATE:
-			break;
-		}
 	}
 }
 
