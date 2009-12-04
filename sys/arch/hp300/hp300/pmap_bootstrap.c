@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.41 2009/12/04 18:32:31 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.42 2009/12/04 18:55:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.41 2009/12/04 18:32:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2009/12/04 18:55:14 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -101,8 +101,14 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
+	 *	lwp0upa		lwp 0 u-area		UPAGES pages
+	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
+	 *
+	 *	kptmpa		kernel PT map		1 page
+	 *
+	 *	lkptpa		last kernel PT page	1 page
 	 *
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
@@ -111,15 +117,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
-	 *	kptmpa		kernel PT map		1 page
-	 *
-	 *	lkptpa		last kernel PT page	1 page
-	 *
-	 *	lwp0upa		lwp 0 u-area		UPAGES pages
-	 *
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	lwp0upa = nextpa;
+	nextpa += USPACE;
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
@@ -130,8 +132,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += PAGE_SIZE;
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
-	lwp0upa = nextpa;
-	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
 		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
