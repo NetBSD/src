@@ -154,8 +154,12 @@ eval $libc_restart
 retval=0
 # Notify users of the resolver
 for script in "$LIBEXECDIR"/libc.d/*; do
-	if [ -f "$script" -a -x "$script" ]; then
-		"$script" "$@"
+	if [ -f "$script" ]; then
+		if [ -x "$script" ]; then
+			"$script" "$@"
+		else
+			(. "$script" "$@")
+		fi
 		retval=$(($retval + $?))
 	fi
 done

@@ -101,7 +101,7 @@ echo_resolv()
 parse_resolv()
 {
 	local line= ns= ds= search= d= n= newns=
-	local new=true iface= private=false
+	local new=true iface= private=false p=
 
 	echo "DOMAINS="
 	echo "SEARCH="
@@ -113,18 +113,19 @@ parse_resolv()
 			if ${new}; then
 				iface="${line#\# resolv.conf from *}"
 				new=false
-				case " $private_interfaces " in
-				*" $iface "*)
+				if [ -e "$PRIVATEDIR/$iface" ]; then
 					private=true
-					;;
-				*)
-					if [ -e "$PRIVATEDIR/$iface" ]; then
-						private=true
-					else
-						private=false
-					fi
-					;;
-				esac
+				else
+					# Allow expansion
+					cd "$IFACEDIR"
+					private=false
+					for p in $private_interfaces; do
+						if [ "$p" = "$iface" ]; then
+							private=true
+							break
+						fi
+					done
+				fi
 			fi
 			;;
 		"nameserver "*)
@@ -391,11 +392,17 @@ if [ "$cmd" = a ]; then
 fi
 
 eval "$(make_vars)"
+export RESOLVCONF DOMAINS SEARCH NAMESERVERS
 : ${list_resolv:=list_resolv -l}
 retval=0
 for script in "$LIBEXECDIR"/*; do
-	[ -f "$script" ] || continue
-	( . "$script" "$cmd" "$iface" )
-	retval=$(($retval + $?))
+	if [ -f "$script" ]; then
+		if [ -x "$script" ]; then
+			"$script" "$cmd" "$iface"
+		else
+			(. "$script" "$cmd" "$fiace")
+		fi
+		retval=$(($retval + $?))
+	fi
 done
 exit $retval
