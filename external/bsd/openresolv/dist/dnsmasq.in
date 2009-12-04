@@ -28,7 +28,7 @@
 
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
-[ -z "$dnsmasq_conf" -o -z "$dnsmasq_resolv" ] && exit 0
+[ -z "$dnsmasq_conf" -a -z "$dnsmasq_resolv" ] && exit 0
 [ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
 
 : ${dnsmasq_pid:=/var/run/dnsmasq.pid}
@@ -90,27 +90,32 @@ for d in $DOMAINS; do
 done
 
 changed=false
-if [ ! -f "$dnsmasq_conf" ] || \
-	[ "$(cat "$dnsmasq_conf")" != "$(printf "$newconf")" ]
-then
-	changed=true
-	printf "$newconf" >"$dnsmasq_conf"
-fi
-if [ -f "$dnsmasq_resolv" ]; then
-	if [ "$(cat "$dnsmasq_resolv")" != "$(printf "$newresolv")" ]; then
+if [ -n "$dnsmasq_conf" ]; then
+	if [ ! -f "$dnsmasq_conf" ] || \
+		[ "$(cat "$dnsmasq_conf")" != "$(printf "$newconf")" ]
+	then
 		changed=true
+		printf "$newconf" >"$dnsmasq_conf"
+	fi
+fi
+if [ -n "$dnsmasq_resolv" ]; then
+	if [ -f "$dnsmasq_resolv" ]; then
+		if [ "$(cat "$dnsmasq_resolv")" != "$(printf "$newresolv")" ]
+		then
+			changed=true
+			printf "$newresolv" >"$dnsmasq_resolv"
+		fi
+	else
+		# dnsmasq polls this file so no need to set changed=true
 		printf "$newresolv" >"$dnsmasq_resolv"
 	fi
-else
-	# dnsmasq polls this file so no need to set changed=true
-	printf "$newresolv" >"$dnsmasq_resolv"
 fi
 
 if $changed; then
 	eval $dnsmasq_restart
 fi
 if $dbus; then
-	$restart || kill -HUP $(cat "$dnsmasq_pid")
+	$changed || kill -HUP $(cat "$dnsmasq_pid")
 	# Send even if empty so old servers are cleared
 	dbus-send --system --dest=uk.org.thekelleys.dnsmasq \
  		/uk/org/thekelleys/dnsmasq uk.org.thekelleys.SetServers \

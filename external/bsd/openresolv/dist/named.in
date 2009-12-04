@@ -28,7 +28,7 @@
 
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
-[ -z "$named_zones" -o -z "$named_options" ] && exit 0
+[ -z "$named_zones" -a -z "$named_options" ] && exit 0
 [ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
 
 : ${named_restart:=@RESTARTCMD named@}
@@ -62,17 +62,21 @@ done
 # No point in changing files or reloading bind if the end result has not
 # changed
 changed=false
-if [ ! -f "$named_options" ] || \
-	[ "$(cat "$named_options")" != "$(printf "$newoptions")" ]
-then
-	printf "$newoptions" >"$named_options"
-	changed=true
+if [ -n "$named_options" ]; then
+	if [ ! -f "$named_options" ] || \
+		[ "$(cat "$named_options")" != "$(printf "$newoptions")" ]
+	then
+		printf "$newoptions" >"$named_options"
+		changed=true
+	fi
 fi
-if [ ! -f "$named_zones" ] || \
-	[ "$(cat "$named_zones")" != "$(printf "$newzones")" ]
-then
-	printf "$newzones" >"$named_zones"
-	changed=true
+if [ -n "$named_zones" ]; then
+	if [ ! -f "$named_zones" ] || \
+		[ "$(cat "$named_zones")" != "$(printf "$newzones")" ]
+	then
+		printf "$newzones" >"$named_zones"
+		changed=true
+	fi
 fi
 
 if $changed; then
