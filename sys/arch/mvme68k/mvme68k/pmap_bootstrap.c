@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.32 2009/11/26 00:19:19 matt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.33 2009/12/04 18:06:28 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.32 2009/11/26 00:19:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.33 2009/12/04 18:06:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -88,7 +88,7 @@ void	pmap_bootstrap(paddr_t, paddr_t);
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lkptpa, l0upa;
+	paddr_t kstpa, kptpa, kptmpa, lkptpa, lwp0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -113,7 +113,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	lkptpa		last kernel PT page	1 page
 	 *
-	 *	l0upa		lwp0 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 0 u-area		UPAGES pages
 	 *
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
@@ -133,7 +133,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += PAGE_SIZE;
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
-	l0upa = nextpa;
+	lwp0upa = nextpa;
 	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) + (iiomappages + NPTEPG - 1) / NPTEPG;
@@ -159,10 +159,14 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
+	 * Portions of the last two segment of KVA space (0xFF800000 -
+	 * 0xFFFFFFFF) are mapped for a couple of purposes.
+	 * The first segment (0xFF800000 - 0xFFBFFFFF) is mapped
+	 * for the kernel page tables.
+	 *
+	 * XXX: It looks this was copied from hp300 and not sure if
+	 * XXX: last physical page mapping is really needed on this port.
+	 * The very last page (0xFFFFF000) in the second segment is mapped
 	 * to the last physical page of RAM to give us a region in which
 	 * PA == VA.  We use the first part of this page for enabling
 	 * and disabling mapping.  The last part of this page also contains
@@ -324,7 +328,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (kstpa - firstpa bytes), and pages for proc0
+	 * by us so far (kstpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
@@ -391,20 +395,20 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	    (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
 
 	/*
-	 * Setup u-area for process 0.
+	 * Setup u-area for lwp 0.
 	 */
 	/*
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = (u_int *)l0upa;
-	epte = (u_int *)(l0upa + USPACE);
+	pte = (u_int *)lwp0upa;
+	epte = (u_int *)(lwp0upa + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
 	/*
 	 * Store the u-area into lwp0.
 	 */
-	RELOC(lwp0.l_addr, struct user *) = (struct user *)(l0upa - firstpa);
+	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 
 	/*
 	 * Initialize the mem_clusters[] array for the crash dump
