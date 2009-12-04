@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.20 2009/12/04 18:06:28 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21 2009/12/04 18:32:31 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.20 2009/12/04 18:06:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21 2009/12/04 18:32:31 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -336,17 +336,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(Sysmap, pt_entry_t *) = (pt_entry_t *)SYSMAP_VA;
 
-	/*
-	 * Setup u-area for lwp 0.
-	 */
-	/*
-	 * Zero the u-area.
-	 * NOTE: `pte' and `epte' aren't PTEs here.
-	 */
-	pte = (u_int *)lwp0upa;
-	epte = (u_int *)(lwp0upa + USPACE);
-	while (pte < epte)
-		*pte++ = 0;
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0
 	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
