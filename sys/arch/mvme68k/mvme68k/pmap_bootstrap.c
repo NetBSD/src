@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.33 2009/12/04 18:06:28 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.34 2009/12/04 18:11:14 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.33 2009/12/04 18:06:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34 2009/12/04 18:11:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -406,7 +406,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	while (pte < epte)
 		*pte++ = 0;
 	/*
-	 * Store the u-area into lwp0.
+	 * Remember the u-area address so it can be loaded in the lwp0
+	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 
