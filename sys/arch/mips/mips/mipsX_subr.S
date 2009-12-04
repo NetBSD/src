@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.13 2009/11/22 05:37:39 cyber Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.14 2009/12/04 04:37:08 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -354,19 +354,19 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	PTR_ADDU k1, k1, k0			#0c: k1=pte address
 	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
 	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	PTR_SLL	k0, 2				#0f: chop top 2 bits (part 1a)
-	PTR_SRL	k0, 2				#10: chop top 2 bits (part 1b)
+	PTR_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
+	PTR_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sync.p					#12: R5900 cop0 hazard
-	PTR_SLL	k1, 2				#13: chop top 2 bits (part 2a)
-	PTR_SRL	k1, 2				#14: chop top 2 bits (part 2b)
+	PTR_SLL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2a)
+	PTR_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
 	mtc0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
 	sync.p					#16: R5900 cop0 hazard
 #else /* MIPS3_5900 */
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	PTR_SLL	k1, 2				#12: chop top 2 bits (part 2a)
-	PTR_SRL	k1, 2				#13: chop top 2 bits (part 2b)
+	PTR_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	PTR_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
 	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
