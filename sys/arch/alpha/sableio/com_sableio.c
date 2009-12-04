@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.9 2009/11/21 05:35:41 rmind Exp $ */
+/* $NetBSD: com_sableio.c,v 1.10 2009/12/04 11:13:04 njoly Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.9 2009/11/21 05:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.10 2009/12/04 11:13:04 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ com_sableio_attach(device_t parent, device_t self, void *aux)
 	if (ssc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

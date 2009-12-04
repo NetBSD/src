@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.57 2009/11/23 02:13:45 rmind Exp $	*/
+/*	$NetBSD: ahb.c,v 1.58 2009/12/04 11:13:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.57 2009/11/23 02:13:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.58 2009/12/04 11:13:04 njoly Exp $");
 
 #include "opt_ddb.h"
 
@@ -257,12 +257,12 @@ ahbattach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
+		aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n",
 		    intrstr);
 
 	/*
