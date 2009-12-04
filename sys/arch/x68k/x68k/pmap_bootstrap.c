@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.42 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.43 2009/12/04 18:06:28 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2009/12/04 18:06:28 tsutsui Exp $");
 
 #include "opt_m680x0.h"
 
@@ -84,7 +84,7 @@ void *msgbufaddr;
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, p0upa;
+	paddr_t kstpa, kptpa, kptmpa, lwp0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -104,7 +104,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	p0upa		proc 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp 0 u-area		UPAGES pages
 	 *
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
@@ -117,7 +117,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
-	p0upa = nextpa;
+	lwp0upa = nextpa;
 	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
@@ -282,7 +282,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (kstpa - firstpa bytes), and pages for proc0
+	 * by us so far (kstpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
@@ -300,7 +300,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * map the kernel segment table cache invalidated for
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
-	 * XXX this includes p0upa.  why?
+	 * XXX this includes lwp0upa.  why?
 	 */
 	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
@@ -351,21 +351,21 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	    (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
 
 	/*
-	 * Setup u-area for process 0.
+	 * Setup u-area for lwp 0.
 	 */
 	/*
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = (u_int *)p0upa;
-	epte = (u_int *)(p0upa + USPACE);
+	pte = (u_int *)lwp0upa;
+	epte = (u_int *)(lwp0upa + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
 	/*
-	 * Remember the u-area address so it can be loaded in the
-	 * proc struct p_addr field later.
+	 * Remember the u-area address so it can be loaded in the lwp0
+	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
 	 */
-	RELOC(lwp0.l_addr, struct user *) = (struct user *)(p0upa - firstpa);
+	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 
 	/*
 	 * VM data structures are now initialized, set up data for
