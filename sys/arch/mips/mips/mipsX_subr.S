@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.14 2009/12/04 04:37:08 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.15 2009/12/04 04:42:09 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -354,20 +354,20 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	PTR_ADDU k1, k1, k0			#0c: k1=pte address
 	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
 	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	PTR_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
-	PTR_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
+	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sync.p					#12: R5900 cop0 hazard
-	PTR_SLL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2a)
-	PTR_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
+	_SLL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
 	sync.p					#16: R5900 cop0 hazard
 #else /* MIPS3_5900 */
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	PTR_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
-	PTR_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 #endif /* MIPS3_5900 */
@@ -416,12 +416,12 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	PTR_ADDU k1, k1, k0			#0c: k1=pte address
 	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
 	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	PTR_SLL	k0, 2				#0f: chop top 2 bits (part 1a)
-	PTR_SRL	k0, 2				#10: chop top 2 bits (part 1b)
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	PTR_SLL	k1, 2				#12: chop top 2 bits (part 2a)
-	PTR_SRL	k1, 2				#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
+	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 	tlbwr					#17: write to tlb
@@ -1521,7 +1521,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
-	mtc0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	nop					# required for QED5230
