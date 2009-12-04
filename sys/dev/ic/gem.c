@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.86 2009/12/04 11:55:01 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.87 2009/12/04 13:35:56 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.86 2009/12/04 11:55:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.87 2009/12/04 13:35:56 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1161,8 +1161,9 @@ gem_init(struct ifnet *ifp)
 	/* Enable TX DMA */
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
 	bus_space_write_4(t, h, GEM_TX_CONFIG,
-		v|GEM_TX_CONFIG_TXDMA_EN|
-		((0x4FF<<10)&GEM_TX_CONFIG_TXFIFO_TH));
+	    v | GEM_TX_CONFIG_TXDMA_EN |
+	    (((sc->sc_flags & GEM_GIGABIT ? 0x4FF : 0x100) << 10) &
+	    GEM_TX_CONFIG_TXFIFO_TH));
 	bus_space_write_4(t, h, GEM_TX_KICK, sc->sc_txnext);
 
 	/* step 10. ERX Configuration */
