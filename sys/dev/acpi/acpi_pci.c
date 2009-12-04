@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: acpi_pci.c,v 1.2 2009/12/04 10:42:39 njoly Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.1 2009/12/03 21:04:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.2 2009/12/04 10:42:39 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
