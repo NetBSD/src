@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: acpi_srat.h,v 1.2 2009/12/04 10:42:39 njoly Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
