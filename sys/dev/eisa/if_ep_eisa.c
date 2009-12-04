@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.40 2009/01/31 13:54:10 martin Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.41 2009/12/04 11:13:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.40 2009/01/31 13:54:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.41 2009/12/04 11:13:04 njoly Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -266,13 +266,12 @@ ep_eisa_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(sc->sc_dev),
-		    intrstr);
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	epconfig(sc, eep->eep_chipset, NULL);
 }
