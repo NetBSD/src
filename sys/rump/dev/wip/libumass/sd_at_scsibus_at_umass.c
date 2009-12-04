@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.3 2009/12/03 15:07:09 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.4 2009/12/04 17:37:05 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,8 +79,15 @@ struct cfparent usb_pspec = {
 	DVUNIT_ANY
 };
 
+struct cfparent usbdevif_pspec = {
+	"usbdevif",
+	"uhub",
+	DVUNIT_ANY
+};
+
 struct cfdata uhub_cfdata[] = {
 	{ "uhub", "uroothub", 0, FSTATE_STAR, NULL, 0, &usb_pspec },
+	{ "uhub", "uhub", 0, FSTATE_STAR, NULL, 0, &usbdevif_pspec },
 };
 
 struct cfparent usbifif_pspec = {
