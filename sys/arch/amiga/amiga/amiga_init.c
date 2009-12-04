@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.113 2009/11/26 18:23:48 phx Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.114 2009/12/04 17:11:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,11 +36,10 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.113 2009/11/26 18:23:48 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.114 2009/12/04 17:11:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -353,7 +352,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	/*
 	 * save KVA of lwp0 u-area and allocate it.
 	 */
-	RELOC(lwp0.l_addr, struct user *) = (struct user *)vstart;
+	RELOC(lwp0uarea, vaddr_t) = vstart;
 	pstart += USPACE;
 	vstart += USPACE;
 	avail -= USPACE;
@@ -788,8 +787,8 @@ start_c_finish(void)
 ((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
 #endif
 
-	memset(lwp0.l_addr, 0, USPACE);
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
+	pmap_bootstrap_finalize();
 
 	/*
 	 * to make life easier in locore.s, set these addresses explicitly
