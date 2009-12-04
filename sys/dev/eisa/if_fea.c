@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.41 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.42 2009/12/04 11:13:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.41 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.42 2009/12/04 11:13:04 njoly Exp $");
 
 #include "opt_inet.h"
 
@@ -517,8 +517,8 @@ pdq_eisa_attach(
     if (sc->sc_ih == NULL) {
 	aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 	if (intrstr != NULL)
-	    printf(" at %s", intrstr);
-	printf("\n");
+	    aprint_error(" at %s", intrstr);
+	aprint_error("\n");
 	return;
     }
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);

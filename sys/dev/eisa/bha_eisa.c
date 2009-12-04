@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.33 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.34 2009/12/04 11:13:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.33 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.34 2009/12/04 11:13:04 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,11 +184,11 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	bha_attach(sc);
 }
