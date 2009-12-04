@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.68 2009/12/04 16:47:33 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.69 2009/12/04 17:15:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.68 2009/12/04 16:47:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.69 2009/12/04 17:15:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
+#include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
@@ -265,12 +266,33 @@ uvm_pageunwire(struct vm_page *pg)
 	/* nada */
 }
 
+/*
+ * This satisfies the "disgusting mmap hack" used by proplib.
+ * We probably should grow some more assertables to make sure we're
+ * not satisfying anything we shouldn't be satisfying.  At least we
+ * should make sure it's the local machine we're mmapping ...
+ */
 int
 uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
 {
+	void *uaddr;
+	int error;
 
-	panic("%s: unimplemented", __func__);
+	if (prot != (VM_PROT_READ | VM_PROT_WRITE))
+		panic("uvm_mmap() variant unsupported");
+	if (flags != (MAP_PRIVATE | MAP_ANON))
+		panic("uvm_mmap() variant unsupported");
+	/* no reason in particular, but cf. uvm_default_mapaddr() */
+	if (*addr != 0)
+		panic("uvm_mmap() variant unsupported");
+
+	uaddr = rumpuser_anonmmap(size, 0, 0, &error);
+	if (uaddr == NULL)
+		return error;
+
+	*addr = (vaddr_t)uaddr;
+	return 0;
 }
 
 struct pagerinfo {
