@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.87 2009/12/04 13:35:56 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.88 2009/12/04 22:13:26 martin Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.87 2009/12/04 13:35:56 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.88 2009/12/04 22:13:26 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -150,7 +150,7 @@ static void gem_txsoft_print(const struct gem_softc *, int, int);
 int
 gem_detach(struct gem_softc *sc, int flags)
 {
-	int i, rc = 0;
+	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/*
@@ -185,7 +185,7 @@ gem_detach(struct gem_softc *sc, int flags)
 		/*FALLTHROUGH*/
 	case GEM_ATT_MII:
 		sc->sc_att_stage = GEM_ATT_MII;
-		rc = config_detach_children(sc->sc_dev, flags);
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		/*FALLTHROUGH*/
 	case GEM_ATT_7:
 		for (i = 0; i < GEM_NRXDESC; i++) {
@@ -224,7 +224,7 @@ gem_detach(struct gem_softc *sc, int flags)
 	case GEM_ATT_BACKEND_0:
 		break;
 	}
-	return rc;
+	return 0;
 }
 
 static void
