@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1325 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1326 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -496,4 +496,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		with many modification. [tsutsui 20091130]
 	lvm: Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
 	                [haad 20091202]
+	resolvconf(8): Import openreslv-3.3.4. [roy 20091204]
 
