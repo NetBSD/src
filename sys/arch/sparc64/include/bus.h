@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.59 2009/06/01 01:14:06 macallan Exp $	*/
+/*	$NetBSD: bus.h,v 1.60 2009/12/04 12:22:16 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -101,9 +101,8 @@ enum bus_type {
  */
 typedef	struct _bus_space_handle {
 	uint64_t _ptr;
-	int8_t	 _asi;
-	int8_t	 _sasi;
-	char	 _virtual;
+	uint8_t	 _asi;
+	uint8_t	 _sasi;
 } bus_space_handle_t;
 typedef enum bus_type	bus_type_t;
 typedef u_int64_t	bus_addr_t;
