@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.35 2009/12/05 09:17:25 snj Exp $
+# $NetBSD: md.cats,v 1.36 2009/12/05 16:39:50 sborrill Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -338,7 +338,6 @@
 ./usr/X11R6/man/man4/vga.4				-unknown-	.man,x11
 ./usr/X11R6/man/man4/void.4				-unknown-	.man,x11
 ./usr/X11R6/man/man4/wacom.4				-unknown-	.man,x11
-./usr/X11R6/man/man4/ws.4				-unknown-	.man,x11
 ./usr/X11R6/man/man4/wsfb.4				-unknown-	.man,x11
 ./usr/X11R6/man/man5/XF86Config.5			-unknown-	.man,x11
 ./usr/X11R7/bin/X					-unknown-	xorg
