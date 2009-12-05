@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.299 2009/11/30 05:22:55 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.300 2009/12/05 22:25:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3817,7 +3817,6 @@ ENTRY(sparc64_ipi_flush_pte)
 	membar	#Sync
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
 #else
-
 	andn	%g2, 0xfff, %g2			! drop unused va bits
 	mov	CTX_PRIMARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
@@ -4974,7 +4973,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	sllx	%l2, 32, %l2			! Shift it into place
 
 	mov	-1, %l3				! Create a nice mask
-	sllx	%l3, 41, %l4			! Mask off high bits
+	sllx	%l3, 43, %l4			! Mask off high bits
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 
 	andn	%l1, %l4, %l1			! Mask the phys page number
@@ -5131,7 +5130,7 @@ ENTRY(cpu_mp_startup)
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
 	sllx	%l2, 32, %l2			! Shift it into place
 	mov	-1, %l3				! Create a nice mask
-	sllx	%l3, 41, %l4			! Mask off high bits
+	sllx	%l3, 43, %l4			! Mask off high bits
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number
 	or	%l2, %l1, %l1			! Now take care of the high bits
@@ -5823,23 +5822,17 @@ ENTRY(cache_flush_phys)
 #endif
 	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
 	and	%o3, %o2, %o3	! Mask out trash
+#ifdef SPITFIRE
 	cmp	%o0, %o3
 	blt,pt	%xcc, 2f	! Too low
-#ifdef SPITFIRE
 	 sllx	%g1, 40-35, %g1	! Shift I$ tag into place
-#endif
 	cmp	%o1, %o3
 	bgt,pt	%xcc, 2f	! Too high
 	 nop
 
 	membar	#LoadStore
-#ifdef SPITFIRE
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
-#else
-	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
-#endif
 2:
-#ifdef SPITFIRE
 	and	%g1, %o2, %g1	! Mask out trash
 	cmp	%o0, %g1
 	blt,pt	%xcc, 3f
@@ -5848,6 +5841,8 @@ ENTRY(cache_flush_phys)
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
 3:
+#else
+	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
 #endif
 	membar	#StoreLoad
 	dec	32, %o5
@@ -9582,6 +9577,7 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	wrpr	%g1, 0, %pstate
 	set	FPLWP, %g1
 	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
+	membar	#Sync			! Should not be needed due to retry
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
 	ba,a	ret_from_intr_vector
 	 nop
