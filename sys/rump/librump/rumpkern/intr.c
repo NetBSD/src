@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2009/12/01 09:50:51 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.23 2009/12/05 22:44:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2009/12/01 09:50:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2009/12/05 22:44:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -68,6 +68,8 @@ static struct rumpuser_cv *clockcv;
 static struct rumpuser_mtx *clockmtx;
 static struct timespec clockbase, clockup;
 static unsigned clkgen;
+
+kcondvar_t lbolt; /* Oh Kath Ra */
 
 void
 rump_getuptime(struct timespec *ts)
@@ -127,6 +129,7 @@ doclock(void *noarg)
 		if (++ticks == hz) {
 			time_uptime++;
 			ticks = 0;
+			cv_broadcast(&lbolt);
 		}
 
 		clkgen++;
@@ -206,6 +209,7 @@ rump_intr_init()
 	rumpuser_mutex_init(&si_mtx);
 	rumpuser_cv_init(&clockcv);
 	rumpuser_mutex_init(&clockmtx);
+	cv_init(&lbolt, "oh kath ra");
 }
 
 void
