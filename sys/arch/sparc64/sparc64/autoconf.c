@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.161 2009/02/13 22:41:03 apb Exp $ */
+/*	$NetBSD: autoconf.c,v 1.162 2009/12/05 01:11:18 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.161 2009/02/13 22:41:03 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.162 2009/12/05 01:11:18 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -832,7 +832,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct device *busdev = device_parent(dev);
-	int ofnode;
+	int ofnode = 0;
 
 	/*
 	 * We don't know the type of 'aux' - it depends on the
@@ -848,21 +848,16 @@ device_register(struct device *dev, void *aux)
 	} else if (device_is_a(busdev, "mainbus")) {
 		struct mainbus_attach_args *ma = aux;
 
-		device_setofnode(dev, ma->ma_node);
-		dev_path_exact_match(dev, ma->ma_node);
+		ofnode = ma->ma_node;
 	} else if (device_is_a(busdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		ofnode = PCITAG_NODE(pa->pa_tag);
-		device_setofnode(dev, ofnode);
-		dev_path_exact_match(dev, ofnode);
 	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
 	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;
-		device_setofnode(dev, ofnode);
-		dev_path_exact_match(dev, sa->sa_node);
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -889,34 +884,39 @@ device_register(struct device *dev, void *aux)
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
 		    periph->periph_lun);
+		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0);
+		return;
 	}
 
-	/* set properties for PCI framebuffers */
 	if (busdev == NULL)
 		return;
 
+	if (ofnode != 0) {
+		device_setofnode(dev, ofnode);
+		dev_path_exact_match(dev, ofnode);
+	}
+
+	/* set properties for PCI framebuffers */
 	if (device_is_a(busdev, "pci")) {
 		/* see if this is going to be console */
 		struct pci_attach_args *pa = aux;
 		prop_dictionary_t dict;
-		int node, sub;
+		int sub;
 		int console = 0;
 
 		dict = device_properties(dev);
-		node = PCITAG_NODE(pa->pa_tag);
-		device_setofnode(dev, node);
 
 		/* we only care about display devices from here on */
 		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
 			return;
 
-		console = (node == console_node);
+		console = (ofnode == console_node);
 
 		if (!console) {
 			/*
@@ -925,7 +925,7 @@ device_register(struct device *dev, void *aux)
 			 * points to the head rather than the device
 			 * itself in this case
 			 */
-			sub = OF_child(node);
+			sub = OF_child(ofnode);
 			while ((sub != 0) && (sub != console_node)) {
 				sub = OF_peer(sub);
 			}
