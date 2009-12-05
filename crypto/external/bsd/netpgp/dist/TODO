@@ -73,3 +73,4 @@ modify sets lists for netpgpverify
 don't require passphrase for keys without one
 failure to run if no userid in gpg.conf (even if --userid specified)
 don't complain if no .gnupg dir (even when using --homedir)
+make it work with ssh host keys
