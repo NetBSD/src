@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 2009/11/28 08:16:00 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.27 2009/12/05 14:55:13 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -144,7 +144,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
-#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # Development and Debugging options
 
