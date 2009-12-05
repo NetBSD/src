@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.15 2009/12/01 23:12:10 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.16 2009/12/05 01:21:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -544,7 +544,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	dmgetproperties(dmv->diskp, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, flags);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
 	dm_dev_unbusy(dmv);
