@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.2 2009/06/10 14:38:14 wiz Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.3 2009/12/05 07:35:30 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 9, 2009
+.Dd December 4, 2009
 .Dt NETPGPKEYS 1
 .Os
 .Sh NAME
@@ -64,6 +64,8 @@ where the options for all commands are:
 .Op Fl Fl homedir Ns = Ns Ar home-directory
 .br
 .Op Fl Fl keyring Ns = Ns Ar keyring
+.br
+.Op Fl Fl ssh-keys
 .br
 .Op Fl Fl userid Ns = Ns Ar userid
 .br
@@ -220,6 +222,15 @@ This option can be used to view information during
 the process of the
 .Nm
 requests.
+.It Fl Fl ssh-keys
+specifies that the public and private keys should be taken
+from the
+.Xr ssh 1
+host key files, usually found in
+.Pa /etc/ssh/ssh_host_rsa_key
+and
+.Pa /etc/ssh/ssh_host_rsa_key.pub
+for the private and public host keys.
 .It Fl Fl coredumps
 in normal processing,
 if an error occurs, the contents of memory are saved to disk, and can
@@ -267,6 +278,7 @@ utility will return 0 for success,
 or 2 if any other error occurs.
 .Sh SEE ALSO
 .Xr netpgp 1 ,
+.Xr ssh 1 ,
 .Xr getpass 3 ,
 .\" .Xr libbz2 3 ,
 .Xr libnetpgp 3 ,
