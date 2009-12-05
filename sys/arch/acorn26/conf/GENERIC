@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2009/04/19 03:06:22 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.60 2009/12/05 20:11:02 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -54,7 +54,7 @@ file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay filesystem
-file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PROCFS		# /proc
@@ -264,6 +264,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	putter		# for puffs and pud
 
 # Veriexec
 #

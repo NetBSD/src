@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 2009/01/17 01:19:18 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.98 2009/12/05 20:11:16 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	8
 
@@ -90,7 +90,7 @@ file-system	PROCFS		# /proc
 file-system	FDESC		# /dev/fd/*
 file-system	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
@@ -263,6 +263,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	putter			# for puffs and pud
 
 # Veriexec
 #

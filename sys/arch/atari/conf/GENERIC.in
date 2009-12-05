@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.82 2009/12/05 20:11:03 pooka Exp $
 #
 # Generic atari
 #
@@ -125,7 +125,7 @@ file-system 	NULLFS		# Loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
 file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
-file-system 	PORTAL		# portal file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
@@ -261,6 +261,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
+pseudo-device	putter			# for puffs and pud
 
 #if !defined(SMALL030_KERNEL)
 pseudo-device	vnd			# 3 pseudo disks (see vnconfig)

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.46 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: INSTALL,v 1.47 2009/12/05 20:11:10 pooka Exp $
 #
 # First try for BEBOX config file
 #
@@ -60,7 +60,6 @@ file-system 	MSDOSFS
 #file-system 	FDESC
 file-system 	KERNFS
 #file-system 	NULLFS
-#file-system 	PORTAL
 #file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION

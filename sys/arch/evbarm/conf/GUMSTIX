@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.38 2009/10/11 16:20:22 bsh Exp $
+#	$NetBSD: GUMSTIX,v 1.39 2009/12/05 20:11:11 pooka Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -41,7 +41,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -353,6 +353,7 @@ pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
+pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.846 2009/12/05 19:14:39 pooka Exp $
+# $NetBSD: mi,v 1.847 2009/12/05 20:11:01 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -246,7 +246,7 @@
 ./sbin/mount_ntfs				base-ntfs-root
 ./sbin/mount_null				base-miscfs-root
 ./sbin/mount_overlay				base-miscfs-root
-./sbin/mount_portal				base-miscfs-root
+./sbin/mount_portal				base-puffs-bin
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_smbfs				base-smbfs-root
@@ -759,7 +759,7 @@
 ./usr/include/miscfs/kernfs			base-c-usr
 ./usr/include/miscfs/nullfs			base-c-usr
 ./usr/include/miscfs/overlay			base-c-usr
-./usr/include/miscfs/portal			base-c-usr
+./usr/include/miscfs/portal			base-obsolete		obsolete
 ./usr/include/miscfs/procfs			base-c-usr
 ./usr/include/miscfs/ptyfs			base-obsolete		obsolete
 ./usr/include/miscfs/specfs			base-c-usr
@@ -1150,7 +1150,7 @@
 ./usr/sbin/moptrace				base-bootserver-bin
 ./usr/sbin/mount_9p				base-puffs-bin
 ./usr/sbin/mount_psshfs				base-puffs-bin
-./usr/sbin/mount_puffsportal			base-puffs-bin
+./usr/sbin/mount_puffsportal			base-obsolete		obsolete
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
