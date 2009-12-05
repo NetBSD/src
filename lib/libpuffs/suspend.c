@@ -1,4 +1,4 @@
-/*	$NetBSD: suspend.c,v 1.9 2007/11/17 17:12:11 pooka Exp $	*/
+/*	$NetBSD: suspend.c,v 1.10 2009/12/05 12:13:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: suspend.c,v 1.9 2007/11/17 17:12:11 pooka Exp $");
+__RCSID("$NetBSD: suspend.c,v 1.10 2009/12/05 12:13:08 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -36,27 +36,14 @@ __RCSID("$NetBSD: suspend.c,v 1.9 2007/11/17 17:12:11 pooka Exp $");
 
 #include <sys/types.h>
 
-#include <assert.h>
 #include <errno.h>
 #include <puffs.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "puffs_priv.h"
 
 /*ARGSUSED*/
 int
 puffs_fs_suspend(struct puffs_usermount *pu)
 {
-	struct puffs_req preq;
-	size_t n;
 
-	preq.preq_pth.pth_framelen = sizeof(struct puffs_req);
-	preq.preq_opclass = PUFFSOP_SUSPEND;
-
-	n = write(pu->pu_fd, &preq, sizeof(preq));
-
-	/* XXX */
-	assert(n == sizeof(preq));
-	return 0;
+	/* used to be, no longer is.  just return error to avoid ABI bump */
+	return EOPNOTSUPP;
 }
