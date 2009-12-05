@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.12 2009/10/11 05:17:20 mrg Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.13 2009/12/05 03:23:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 static off_t
 unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
-	int		ret, end_of_file;
+	int		ret, end_of_file, cold = 0;
 	off_t		bytes_out = 0;
 	bz_stream	bzs;
 	static char	*inbuf, *outbuf;
@@ -84,8 +84,18 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	        switch (ret) {
 	        case BZ_STREAM_END:
 	        case BZ_OK:
-	                if (ret == BZ_OK && end_of_file)
-	                        maybe_err("read");
+	                if (ret == BZ_OK && end_of_file) {
+				/*
+				 * If we hit this after a stream end, consider
+				 * it as the end of the whole file and don't
+				 * bail out.
+				 */
+				if (cold == 1)
+					ret = BZ_STREAM_END;
+				else
+					maybe_errx("truncated file");
+			}
+			cold = 0;
 	                if (!tflag && bzs.avail_out != BUFLEN) {
 				ssize_t	n;
 
@@ -98,6 +108,7 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 				if (BZ2_bzDecompressEnd(&bzs) != BZ_OK ||
 				    BZ2_bzDecompressInit(&bzs, 0, 0) != BZ_OK)
 					maybe_errx("bzip2 re-init");
+				cold = 1;
 				ret = BZ_OK;
 			}
 			break;
