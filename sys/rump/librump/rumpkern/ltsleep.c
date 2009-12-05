@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.22 2009/12/05 13:01:31 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.23 2009/12/05 22:44:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.22 2009/12/05 13:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.23 2009/12/05 22:44:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,8 +54,6 @@ struct ltsleeper {
 };
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
-
-kcondvar_t lbolt; /* Oh Kath Ra */
 
 static int
 sleeper(struct ltsleeper *ltsp, int timo)
