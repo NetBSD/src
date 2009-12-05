@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.49 2009/05/26 06:38:26 he Exp $	*/
+/*	$NetBSD: mt.c,v 1.50 2009/12/05 22:34:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.49 2009/05/26 06:38:26 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.50 2009/12/05 22:34:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,8 +333,8 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
-		if (tsleep((void *) &lbolt, PCATCH | (PZERO + 1),
-		    "mt", 0) != 0) {
+		error = kpause("mt", true, hz, NULL);
+		if (error != 0 && error != EWOULDBLOCK) {
 			error = EINTR;
 			goto errout;
 		}

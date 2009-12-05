@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.214 2009/11/23 02:13:47 rmind Exp $ */
+/*	$NetBSD: st.c,v 1.215 2009/12/05 22:34:43 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.214 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.215 2009/12/05 22:34:43 pooka Exp $");
 
 #include "opt_scsi.h"
 
@@ -646,10 +646,10 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		oflags = periph->periph_flags;
 		periph->periph_flags |= PERIPH_OPEN;
 
-		slpintr = tsleep(&lbolt, PUSER|PCATCH, "stload", 0);
+		slpintr = kpause("stload", true, hz, NULL);
 
 		periph->periph_flags = oflags;	/* restore flags */
-		if (slpintr) {
+		if (slpintr != 0 && slpintr != EWOULDBLOCK) {
 			goto bad;
 		}
 	}

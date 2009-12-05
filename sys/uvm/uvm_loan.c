@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.73 2008/12/03 14:46:24 pooka Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.74 2009/12/05 22:34:43 pooka Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.73 2008/12/03 14:46:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.74 2009/12/05 22:34:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 
 		/* "try again"?   sleep a bit and retry ... */
 		if (error == EAGAIN) {
-			tsleep(&lbolt, PVM, "loanagain", 0);
+			kpause("loanagain", false, hz/2, NULL);
 			return (0);
 		}
 
@@ -535,7 +535,7 @@ reget:
 		    pgoff + (ndone << PAGE_SHIFT), pgpp, &npages, 0,
 		    VM_PROT_READ, 0, PGO_SYNCIO);
 		if (error == EAGAIN) {
-			tsleep(&lbolt, PVM, "loanuopg", 0);
+			kpause("loanuopg", false, hz/2, NULL);
 			continue;
 		}
 		if (error)
@@ -675,7 +675,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 
 		if (error) {
 			if (error == EAGAIN) {
-				tsleep(&lbolt, PVM, "fltagain2", 0);
+				kpause("fltagain2", false, hz/2, NULL);
 				return (0);
 			}
 			return (-1);
