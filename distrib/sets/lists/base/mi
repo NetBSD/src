@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.843 2009/11/21 03:24:30 roy Exp $
+# $NetBSD: mi,v 1.844 2009/12/05 12:38:05 haad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -690,6 +690,7 @@
 ./usr/include/dev/apm				base-c-usr
 ./usr/include/dev/ata				base-c-usr
 ./usr/include/dev/dec				base-c-usr
+./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
 ./usr/include/dev/hpc				base-c-usr
