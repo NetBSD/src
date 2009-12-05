@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.845 2009/12/05 16:29:10 pooka Exp $
+# $NetBSD: mi,v 1.846 2009/12/05 19:14:39 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4701,6 +4701,7 @@
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root
 ./var/db/obsolete/misc				base-sys-root
+./var/db/obsolete/modules			base-sys-root
 ./var/db/obsolete/tests				base-sys-root
 ./var/db/obsolete/text				base-sys-root
 ./var/db/postfix				base-postfix-root
