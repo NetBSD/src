@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.32 2009/08/30 21:27:35 mrg Exp $
+# $NetBSD: md.cats,v 1.33 2009/12/05 06:45:06 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -423,6 +423,8 @@
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so.10	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so.0		-unknown-	xorg
@@ -588,6 +590,7 @@
 ./usr/X11R7/man/cat4/via.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
@@ -625,6 +628,7 @@
 ./usr/X11R7/man/html4/via.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/vmware.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
@@ -662,4 +666,5 @@
 ./usr/X11R7/man/man4/via.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
