@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.21 2009/11/11 16:50:17 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.22 2009/12/05 13:01:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,14 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Emulate the prehistoric tsleep-style kernel interfaces.  We assume
+ * only code under the biglock will be using this type of synchronization
+ * and use the biglock as the cv interlock.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.21 2009/11/11 16:50:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.22 2009/12/05 13:01:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -144,10 +150,4 @@ wakeup_one(wchan_t ident)
 {
 
 	do_wakeup(ident, rumpuser_cv_signal);
-}
-
-void
-rump_sleepers_init(void)
-{
-
 }
