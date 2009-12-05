@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.112 2009/10/18 19:09:20 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.113 2009/12/05 20:54:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -591,6 +591,10 @@ void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
 void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
 
 void	puffs_set_errnotify(struct puffs_usermount *, pu_errnotify_fn);
+void	puffs_kernerr_log(struct puffs_usermount *, uint8_t, int,
+			  const char *, puffs_cookie_t);
+void	puffs_kernerr_abort(struct puffs_usermount *, uint8_t, int,
+			    const char *, puffs_cookie_t);
 void	puffs_set_prepost(struct puffs_usermount *,
 			  pu_prepost_fn, pu_prepost_fn);
 void	puffs_set_cmap(struct puffs_usermount *, pu_cmap_fn);
