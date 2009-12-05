@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.30 2009/11/30 16:13:23 uebayasi Exp $
+# $NetBSD: makeobsolete,v 1.31 2009/12/05 15:56:25 cegger Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -9,7 +9,7 @@
 
 rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
-lists="${nlists}"
+lists=
 target=./dist
 obsolete=1
 
@@ -33,15 +33,16 @@ USAGE
 while getopts L:bxya:m:s:t: ch; do
 	case ${ch} in
 	L)
-		lists=$(
-			for _list in $( echo ${OPTARG} | tr , ' ' ); do
-				case $_list in
-				base)	echo "${nlists}" ;;
-				x)	echo "${xlists}" ;;
-				ext)	echo "${extlists}" ;;
-				esac
-			done
-		)
+		save_IFS="${IFS}"
+		IFS=,
+		for _list in ${OPTARG}; do
+			case $_list in
+			base)	lists="${lists} ${nlists}" ;;
+			x)	lists="${lists} ${xlists}" ;;
+			ext)	lists="${lists} ${extlists}" ;;
+			esac
+		done
+		IFS="${save_IFS}"
 		;;
 	# backward compat
 	b)
@@ -81,7 +82,7 @@ if [ ! -d "${target}" ]; then
 	exit 1
 fi
 
-for setname in ${lists}; do
+for setname in ${lists:-${nlists}}; do
 	file="${target}/${setname}"
 	list_set_files "${setname}" | ${AWK} '{print $1}' | \
 		${SORT} -ru > "${file}"
