@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.2 2009/05/11 08:27:03 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.2 2009/05/11 08:27:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -242,6 +242,8 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	SET(sc->sc_caps, PMC_CAPS_NO_DMA);	/* disable DMA */
 #endif
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
+		aprint_normal_dev(sc->sc_dev, "using DMA transfer\n");
+
 		sc->sc_rxdr.ds_addr = PXA2X0_MMC_BASE + MMC_RXFIFO;
 		sc->sc_rxdr.ds_len = 1;
 		sc->sc_rxdx = pxa2x0_dmac_allocate_xfer(M_NOWAIT);
@@ -297,9 +299,9 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	saa.saa_clkmin = sc->sc_clkmin;
 	saa.saa_clkmax = sc->sc_clkmax;
 	saa.saa_caps = 0;
-#if notyet
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA))
 		SET(saa.saa_caps, SMC_CAPS_DMA);
+#if notyet
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
 #endif
@@ -503,6 +505,9 @@ pxamci_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	sc->sc_clkbase = actfreq;
 	sc->sc_clkrt = div;
 
+	CSR_WRITE_4(sc, MMC_CLKRT, sc->sc_clkrt);
+	CSR_WRITE_4(sc, MMC_STRPCL, STRPCL_START);
+
  out:
 	splx(s);
 
@@ -549,10 +554,9 @@ pxamci_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	int timo;
 	int s;
 
-	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x "
-	    "proc=%p \"%s\"\n", device_xname(sc->sc_dev),
-	    cmd->c_opcode, cmd->c_arg, cmd->c_data, cmd->c_datalen,
-	    cmd->c_flags, curproc, curproc ? curproc->p_comm : ""));
+	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x\n"
+	    "proc=%p \"%s\"\n", device_xname(sc->sc_dev), cmd->c_opcode,
+	    cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags));
 
 	s = splsdmmc();
 
@@ -785,16 +789,11 @@ pxamci_intr(void *arg)
 			goto end;
 	}
 
-	if (ISSET(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ)) {
-		DPRINTF(9,("%s: handling MMC_I_xxFIFO_xx_REQ\n",
-		    device_xname(sc->sc_dev)));
-		CLR(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ);
-		pxamci_intr_data(sc);
-	}
-
 	if (ISSET(status, MMC_I_DAT_ERR)) {
 		DPRINTF(9, ("%s: handling MMC_I_DAT_ERR\n",
 		    device_xname(sc->sc_dev)));
+		sc->sc_cmd->c_error = EIO;
+		pxamci_intr_done(sc);
 		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
 		CLR(status, MMC_I_DAT_ERR);
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
@@ -804,8 +803,6 @@ pxamci_intr(void *arg)
 				pxa2x0_dmac_abort_xfer(sc->sc_txdx);
 			}
 		}
-		sc->sc_cmd->c_error = EIO;
-		pxamci_intr_done(sc);
 		/* ignore transmission done condition */
 		if (ISSET(status, MMC_I_DATA_TRAN_DONE)) {
 			pxamci_disable_intr(sc, MMC_I_DATA_TRAN_DONE);
@@ -820,6 +817,13 @@ pxamci_intr(void *arg)
 		pxamci_intr_done(sc);
 		pxamci_disable_intr(sc, MMC_I_DATA_TRAN_DONE);
 		CLR(status, MMC_I_DATA_TRAN_DONE);
+	}
+
+	if (ISSET(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ)) {
+		DPRINTF(9,("%s: handling MMC_I_xxFIFO_xx_REQ\n",
+		    device_xname(sc->sc_dev)));
+		pxamci_intr_data(sc);
+		CLR(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ);
 	}
 
 	if (ISSET(status, STAT_SDIO_INT)) {
@@ -915,7 +919,6 @@ pxamci_intr_cmd(struct pxamci_softc *sc)
 	} else if (ISSET(status, STAT_ERR))
 		cmd->c_error = EIO;
 
-	pxamci_disable_intr(sc, MMC_I_END_CMD_RES|MMC_I_RES_ERR);
 	if (cmd->c_error == 0 && cmd->c_datalen > 0) {
 		/* workaround for erratum #91 */
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
@@ -930,8 +933,9 @@ pxamci_intr_cmd(struct pxamci_softc *sc)
 				pxamci_intr_done(sc);
 				return;
 			}
+			pxamci_enable_intr(sc,
+			    MMC_I_DATA_TRAN_DONE|MMC_I_DAT_ERR);
 		}
-		pxamci_enable_intr(sc, MMC_I_DATA_TRAN_DONE|MMC_I_DAT_ERR);
 	} else {
 		pxamci_intr_done(sc);
 	}
@@ -968,6 +972,7 @@ pxamci_intr_data(struct pxamci_softc *sc)
 		pxamci_enable_intr(sc, intr);
 	} else {
 		pxamci_disable_intr(sc, intr);
+		pxamci_enable_intr(sc, MMC_I_DATA_TRAN_DONE);
 	}
 }
 
@@ -977,15 +982,12 @@ pxamci_intr_data(struct pxamci_softc *sc)
 static void
 pxamci_intr_done(struct pxamci_softc *sc)
 {
-#ifdef PXAMCI_DEBUG
-	uint32_t status;
 
-	status = CSR_READ_4(sc, MMC_STAT);
 	DPRINTF(1,("%s: pxamci_intr_done: mmc status = %#x\n",
-	    device_xname(sc->sc_dev), status));
-#endif
+	    device_xname(sc->sc_dev), CSR_READ_4(sc, MMC_STAT)));
 
-	pxamci_disable_intr(sc, MMC_I_DATA_TRAN_DONE|MMC_I_DAT_ERR);
+	pxamci_disable_intr(sc, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ|
+	    MMC_I_DATA_TRAN_DONE|MMC_I_END_CMD_RES|MMC_I_RES_ERR|MMC_I_DAT_ERR);
 	SET(sc->sc_cmd->c_flags, SCF_ITSDONE);
 	sc->sc_cmd = NULL;
 	wakeup(sc);
