@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1340 2009/12/05 04:48:20 snj Exp $
+#	$NetBSD: mi,v 1.1341 2009/12/05 11:34:37 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -250,6 +250,7 @@
 ./usr/include/dev/dec/lk201.h			comp-c-include
 ./usr/include/dev/dec/mcclock_pad32.h		comp-obsolete		obsolete
 ./usr/include/dev/dec/mcclockvar.h		comp-obsolete		obsolete
+./usr/include/dev/dm/netbsd-dm.h		comp-c-include		
 ./usr/include/dev/dmover/dmover_io.h		comp-c-include
 ./usr/include/dev/eisa/ahbreg.h			comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisadevs.h		comp-obsolete		obsolete
