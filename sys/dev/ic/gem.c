@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.88 2009/12/04 22:13:26 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.89 2009/12/05 16:43:25 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.88 2009/12/04 22:13:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.89 2009/12/05 16:43:25 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -249,7 +249,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
 	struct ifmedia_entry *ifm;
-	int i, error;
+	int i, error, phyaddr;
 	u_int32_t v;
 	char *nullbuf;
 
@@ -382,16 +382,60 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	 * GEM_MIF_CONFIG_MDI0 nor GEM_MIF_CONFIG_MDI1 are set
 	 * being set, as both are set on Sun X1141A (with SERDES).  So,
 	 * we rely on our bus attachment setting GEM_SERDES or GEM_SERIAL.
-	 * Also, for Apple variants with 2 PHY's, we prefer the external
-	 * PHY over the internal PHY.
+	 * Also, for variants that report 2 PHY's, we prefer the external
+	 * PHY over the internal PHY, so we look for that first.
 	 */
 	gem_mifinit(sc);
 
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0) {
 		ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 		    ether_mediastatus);
-		mii_attach(sc->sc_dev, mii, 0xffffffff,
-		    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+		/* Look for external PHY */
+		if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
+			sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
+			switch (sc->sc_variant) {
+			case GEM_SUN_ERI:
+				phyaddr = GEM_PHYAD_EXTERNAL;
+				break;
+			default:
+				phyaddr = MII_PHY_ANY;
+				break;
+			}
+			mii_attach(sc->sc_dev, mii, 0xffffffff, phyaddr,
+			    MII_OFFSET_ANY, MIIF_FORCEANEG);
+		}
+#ifdef GEM_DEBUG
+		  else
+			aprint_debug_dev(sc->sc_dev, "using external PHY\n");
+#endif
+		/* Look for internal PHY if no external PHY was found */
+		if (LIST_EMPTY(&mii->mii_phys) && 
+		    sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
+			switch (sc->sc_variant) {
+			case GEM_SUN_ERI:
+			case GEM_APPLE_K2_GMAC:
+				phyaddr = GEM_PHYAD_INTERNAL;
+				break;
+			case GEM_APPLE_GMAC:
+				phyaddr = GEM_PHYAD_EXTERNAL;
+				break;
+			default:
+				phyaddr = MII_PHY_ANY;
+				break;
+			}
+			mii_attach(sc->sc_dev, mii, 0xffffffff, phyaddr,
+			    MII_OFFSET_ANY, MIIF_FORCEANEG);
+#ifdef GEM_DEBUG
+			if (!LIST_EMPTY(&mii->mii_phys))
+				aprint_debug_dev(sc->sc_dev,
+				    "using internal PHY\n");
+#endif
+		}
 		if (LIST_EMPTY(&mii->mii_phys)) {
 				/* No PHY attached */
 				aprint_error_dev(sc->sc_dev,
@@ -423,27 +467,6 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 				sc->sc_phys[child->mii_inst] = child->mii_phy;
 			}
 
-			/*
-			 * Now select and activate the PHY we will use.
-			 *
-			 * The order of preference is External (MDI1),
-			 * then Internal (MDI0),
-			 */
-			if (sc->sc_phys[1]) {
-#ifdef GEM_DEBUG
-				aprint_debug_dev(sc->sc_dev,
-				    "using external PHY\n");
-#endif
-				sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
-			} else {
-#ifdef GEM_DEBUG
-				aprint_debug_dev(sc->sc_dev,
-				    "using internal PHY\n");
-				sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
-#endif
-			}
-			bus_space_write_4(t, h, GEM_MIF_CONFIG,
-			    sc->sc_mif_config);
 			if (sc->sc_variant != GEM_SUN_ERI)
 				bus_space_write_4(t, h, GEM_MII_DATAPATH_MODE,
 				    GEM_MII_DATAPATH_MII);
