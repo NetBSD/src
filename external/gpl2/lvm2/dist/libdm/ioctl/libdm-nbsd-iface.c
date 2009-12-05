@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.4 2009/12/02 01:53:25 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.5 2009/12/05 11:42:24 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -19,6 +19,7 @@
 #include "dmlib.h"
 #include "libdm-targets.h"
 #include "libdm-common.h"
+#include "libdm-netbsd.h"
 
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
@@ -27,7 +28,7 @@
 #include <dirent.h>
 #include <limits.h>
 
-#include <netbsd-dm.h>
+#include <dev/dm/netbsd-dm.h>
 
 #include <dm-ioctl.h>
 

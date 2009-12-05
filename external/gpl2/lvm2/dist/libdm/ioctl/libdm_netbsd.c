@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.4 2009/12/01 23:11:17 haad Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.5 2009/12/05 11:42:24 haad Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <netbsd-dm.h>
+#include <dev/dm/netbsd-dm.h>
 
 #include <dm-ioctl.h>
 
 #include "lib.h"
+#include "libdm-netbsd.h"
 
 #define DMI_SIZE 16 * 1024
 
