@@ -227,13 +227,13 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 		return 0;
 	}
 	(void)stat(f, &st);
-	if ((buf = calloc(1, st.st_size)) == NULL) {
-		(void) fprintf(stderr, "can't calloc %lld bytes for '%s'\n", st.st_size, f);
+	if ((buf = calloc(1, (size_t)st.st_size)) == NULL) {
+		(void) fprintf(stderr, "can't calloc %zu bytes for '%s'\n", (size_t)st.st_size, f);
 		bufgap_close(&bg);
 		return 0;
 	}
-	if ((bin = calloc(1, st.st_size)) == NULL) {
-		(void) fprintf(stderr, "can't calloc %lld bytes for '%s'\n", st.st_size, f);
+	if ((bin = calloc(1, (size_t)st.st_size)) == NULL) {
+		(void) fprintf(stderr, "can't calloc %zu bytes for '%s'\n", (size_t)st.st_size, f);
 		(void) free(buf);
 		bufgap_close(&bg);
 		return 0;
@@ -301,7 +301,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 
 	/* check for stragglers */
 	if (ok && bufgap_tell(&bg, BGFromEOF, BGByte) > 0) {
-		printf("%lld bytes left\n", bufgap_tell(&bg, BGFromEOF, BGByte));
+		printf("%"PRIi64" bytes left\n", bufgap_tell(&bg, BGFromEOF, BGByte));
 		printf("[%s]\n", bufgap_getstr(&bg));
 		ok = 0;
 	}
