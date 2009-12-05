@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.272 2009/12/05 22:34:43 pooka Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.273 2009/12/05 22:38:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.272 2009/12/05 22:34:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.273 2009/12/05 22:38:19 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1211,6 +1211,6 @@ sched_pstats(void *arg)
 	}
 	mutex_exit(proc_lock);
 	uvm_meter();
-	cv_wakeup(&lbolt);
+	cv_broadcast(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
 }
