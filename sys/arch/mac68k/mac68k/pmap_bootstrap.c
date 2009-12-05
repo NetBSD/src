@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.83 2009/12/04 18:55:14 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.84 2009/12/05 23:16:57 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.83 2009/12/04 18:55:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.84 2009/12/05 23:16:57 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	int avail_remaining;
 	int avail_range;
 	int i;
-	st_entry_t protoste, *ste;
+	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	extern char start[];
 
@@ -202,10 +202,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * First invalidate the entire "segment table" pages
 		 * (levels 1 and 2 have the same "invalid" value).
 		 */
-		pte = PA2VA(kstpa, u_int *);
-		epte = &pte[kstsize * NPTEPG];
-		while (pte < epte)
-			*pte++ = SG_NV;
+		ste = PA2VA(kstpa, st_entry_t *);
+		este = &ste[kstsize * NPTEPG];
+		while (ste < este)
+			*ste++ = SG_NV;
 		/*
 		 * Initialize level 2 descriptors (which immediately
 		 * follow the level 1 table).  We need:
@@ -215,48 +215,51 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * now to save the HW the expense of doing it.
 		 */
 		num = nptpages * (NPTEPG / SG4_LEV3SIZE);
-		pte = &(PA2VA(kstpa, u_int *))[SG4_LEV1SIZE];
-		epte = &pte[num];
+		ste = PA2VA(kstpa, st_entry_t *);
+		ste = &ste[SG4_LEV1SIZE];
+		este = &ste[num];
 		protoste = kptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
+		while (ste < este) {
+			*ste++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize level 1 descriptors.  We need:
-		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE
+		 *	howmany(num, SG4_LEV2SIZE)
 		 * level 1 descriptors to map the `num' level 2's.
 		 */
-		pte = PA2VA(kstpa, u_int *);
-		epte = &pte[roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE];
-		protoste = (u_int)&pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
+		ste = PA2VA(kstpa, u_int *);
+		este = &ste[howmany(num, SG4_LEV2SIZE)];
+		protoste = (paddr_t)&ste[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
+		while (ste < este) {
+			*ste++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize the final level 1 descriptor to map the last
 		 * block of level 2 descriptors.
 		 */
-		ste = &(PA2VA(kstpa, u_int*))[SG4_LEV1SIZE-1];
-		pte = &(PA2VA(kstpa, u_int*))[kstsize*NPTEPG - SG4_LEV2SIZE];
-		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
+		ste = PA2VA(kstpa, st_entry_t *);
+		ste = &ste[SG4_LEV1SIZE - 1];
+		este = PA2VA(kstpa, st_entry_t *);
+		este = &este[kstsize * NPTEPG - SG4_LEV2SIZE];
+		*ste = (paddr_t)este | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
 		 * descriptors to map Sysmap.
 		 */
-		pte = &(PA2VA(kstpa, u_int*))
-				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
+		ste = PA2VA(kstpa, st_entry_t *);
+		ste = &ste[kstsize * NPTEPG - NPTEPG / SG4_LEV3SIZE];
+		este = &ste[NPTEPG / SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
+		while (ste < este) {
+			*ste++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = PA2VA(kptmpa, u_int *);
+		pte = PA2VA(kptmpa, pt_entry_t *);
 		epte = &pte[nptpages];
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
 		while (pte < epte) {
@@ -266,7 +269,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Invalidate all but the last remaining entry.
 		 */
-		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG - 1];
+		epte = PA2VA(kptmpa, pt_entry_t *);
+		epte = &epte[NPTEPG - 1];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
@@ -279,8 +283,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Map the page table pages in both the HW segment table
 		 * and the software Sysptmap.
 		 */
-		ste = PA2VA(kstpa, u_int*);
-		pte = PA2VA(kptmpa, u_int*);
+		ste = PA2VA(kstpa, st_entry_t *);
+		pte = PA2VA(kptmpa, pt_entry_t *);
 		epte = &pte[nptpages];
 		protoste = kptpa | SG_RW | SG_V;
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
@@ -293,7 +297,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Invalidate all but the last remaining entries in both.
 		 */
-		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG - 1];
+		epte = PA2VA(kptmpa, pt_entry_t *);
+		epte = &epte[NPTEPG - 1];
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
@@ -309,7 +314,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.
 	 */
-	pte = PA2VA(kptpa, u_int *);
+	pte = PA2VA(kptpa, pt_entry_t *);
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
@@ -318,7 +323,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Validate PTEs for kernel text (RO).
 	 * Pages up to "start" must be writable for the ROM.
 	 */
-	pte = &(PA2VA(kptpa, u_int *))[m68k_btop(KERNBASE)];
+	pte = PA2VA(kptpa, pt_entry_t *);
+	pte = &pte[m68k_btop(KERNBASE)];
 	/* XXX why KERNBASE relative? */
 	epte = &pte[m68k_btop(m68k_round_page(start))];
 	protopte = firstpa | PG_RW | PG_V;
@@ -338,7 +344,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &(PA2VA(kptpa, u_int *))[m68k_btop(nextpa - firstpa)];
+	epte = PA2VA(kptpa, pt_entry_t *);
+	epte = &epte[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -478,8 +485,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			int num;
 			
 			kpm->pm_stfree = ~l2tobm(0);
-			num = roundup(nptpages * (NPTEPG / SG4_LEV3SIZE),
-				      SG4_LEV2SIZE) / SG4_LEV2SIZE;
+			num = howmany(nptpages * (NPTEPG / SG4_LEV3SIZE),
+				      SG4_LEV2SIZE);
 			while (num)
 				kpm->pm_stfree &= ~l2tobm(num--);
 			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
