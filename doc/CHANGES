@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1327 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1328 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -498,3 +498,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	                [haad 20091202]
 	resolvconf(8): Import openreslv-3.3.4. [roy 20091204]
 	playstation2: Port deleted.  [pooka 20091205]
+	mount_portal(8): Remove the kernel portalfs driver and replace
+		mount_portal with a version implemented using puffs.
+		[pooka 20091205]
