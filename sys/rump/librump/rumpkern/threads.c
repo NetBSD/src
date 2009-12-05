@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.5 2009/12/03 12:16:36 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.6 2009/12/05 12:54:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.5 2009/12/03 12:16:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.6 2009/12/05 12:54:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -154,7 +154,7 @@ kthread_exit(int ecode)
 {
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
-		KERNEL_UNLOCK_ONE(NULL);
+		KERNEL_UNLOCK_LAST(NULL);
 	rump_lwp_release(curlwp);
 	rump_unschedule();
 	rumpuser_thread_exit();
