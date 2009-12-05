@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2009/11/28 16:48:25 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.36 2009/12/05 09:11:54 snj Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -20,7 +20,36 @@ SUBDIR+= \
 	xf86-video-wsfb
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "cats"
+SUBDIR+= \
+	xf86-video-apm \
+	xf86-video-ark \
+	xf86-video-ast \
+	xf86-video-ati \
+	xf86-video-chips \
+	xf86-video-cirrus \
+	xf86-video-cirrus_alpine \
+	xf86-video-cirrus_laguna \
+	xf86-video-cirrus \
+	xf86-video-glint \
+	xf86-video-i128 \
+	xf86-video-i740 \
+	xf86-video-mga \
+	xf86-video-neomagic \
+	xf86-video-nv \
+	xf86-video-radeon \
+	xf86-video-radeonhd \
+	xf86-video-s3 \
+	xf86-video-s3virge \
+	xf86-video-savage \
+	xf86-video-siliconmotion \
+	xf86-video-tdfx \
+	xf86-video-tga \
+	xf86-video-trident \
+	xf86-video-tseng \
+	xf86-video-vesa \
+	xf86-video-wsfb
+.elif ${MACHINE} == "macppc"
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
