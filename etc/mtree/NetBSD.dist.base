@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.6 2009/11/21 03:24:30 roy Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.7 2009/12/05 16:29:11 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -784,7 +784,6 @@
 ./usr/share/man/cat8/newsmips
 ./usr/share/man/cat8/next68k
 ./usr/share/man/cat8/ofppc
-./usr/share/man/cat8/playstation2
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/prep
 ./usr/share/man/cat8/sandpoint
@@ -887,7 +886,6 @@
 ./usr/share/man/man8/newsmips
 ./usr/share/man/man8/next68k
 ./usr/share/man/man8/ofppc
-./usr/share/man/man8/playstation2
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/prep
 ./usr/share/man/man8/sandpoint
@@ -990,7 +988,6 @@
 ./usr/share/man/html8/newsmips
 ./usr/share/man/html8/next68k
 ./usr/share/man/html8/ofppc
-./usr/share/man/html8/playstation2
 ./usr/share/man/html8/pmax
 ./usr/share/man/html8/prep
 ./usr/share/man/html8/sandpoint

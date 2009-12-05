@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.252 2009/10/02 15:15:21 nakayama Exp $
+#	$NetBSD: DEVNAMES,v 1.253 2009/12/05 16:29:14 pooka Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -529,7 +529,6 @@ grfrt			amiga
 grfrt			amigappc
 grful			amiga
 grful			amigappc
-gsfb			playstation2
 gsip			MI
 gt			cobalt
 gt			evbmips
@@ -1147,7 +1146,6 @@ sbscd			sbmips
 sbscn			sbmips
 sbtimer			sbmips
 sbus			MI
-sbus			playstation2
 sc			MI
 sc			newsmips
 sc			vax
@@ -1205,7 +1203,6 @@ skbdif			hpcmips
 slhci			MI
 slide			MI
 sm			MI
-smap			playstation2
 smc93cx6		MI		Attribute
 smg			vax
 smsh			MI
@@ -1215,7 +1212,6 @@ sn			newsmips
 sparcvme		sparc
 spc			MI
 spckbd			shark		Attribute
-spd			playstation2
 spi			MI
 spic			MI
 spif			sparc

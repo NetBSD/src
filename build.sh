@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.222 2009/11/30 16:13:22 uebayasi Exp $
+#	$NetBSD: build.sh,v 1.223 2009/12/05 16:29:10 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -345,7 +345,7 @@ getarch()
 		MACHINE_ARCH=mipseb
 		;;
 
-	algor|arc|cobalt|hpcmips|playstation2|pmax)
+	algor|arc|cobalt|hpcmips|pmax)
 		MACHINE_ARCH=mipsel
 		;;
 
@@ -1336,7 +1336,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.222 2009/11/30 16:13:22 uebayasi Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.223 2009/12/05 16:29:10 pooka Exp $
 # with these arguments: ${_args}
 #
 
