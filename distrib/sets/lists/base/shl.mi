@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.505 2009/11/08 15:30:21 skrll Exp $
+# $NetBSD: shl.mi,v 1.506 2009/12/05 04:48:20 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -125,6 +125,7 @@
 ./usr/lib/librumpdev.so.0.0			base-rump-shlib
 ./usr/lib/librumpdev_cgd.so.0.0			base-rump-shlib
 ./usr/lib/librumpdev_disk.so.0.0		base-rump-shlib
+./usr/lib/librumpdev_dm.so.0.0			base-rump-shlib
 ./usr/lib/librumpdev_netsmb.so.0.0		base-rump-shlib
 ./usr/lib/librumpdev_raidframe.so.0.0		base-rump-shlib
 ./usr/lib/librumpdev_rnd.so.0.0			base-rump-shlib

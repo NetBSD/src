@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.92 2009/11/08 15:30:21 skrll Exp $
+# $NetBSD: shl.mi,v 1.93 2009/12/05 04:48:21 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -88,6 +88,7 @@
 ./usr/lib/librumpdev_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_disk_pic.a			comp-c-piclib
+./usr/lib/librumpdev_dm_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib
