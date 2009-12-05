@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.22 2009/10/07 04:56:51 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.23 2009/12/05 07:08:18 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -595,7 +595,7 @@ cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		break;
 
 	default:
-		;
+		break;
 	}
 
 	return OPS_RELEASE_MEMORY;
@@ -667,17 +667,14 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	if (armour) {
 		__ops_reader_push_dearmour(stream);
 	}
-	if (__ops_parse_and_accumulate(keyring, stream) == 0) {
-		res = 0;
-	} else {
-		res = 1;
-	}
+	res = __ops_parse_and_accumulate(keyring, stream);
 	__ops_print_errors(__ops_stream_get_errors(stream));
 
-	if (armour)
+	if (armour) {
 		__ops_reader_pop_dearmour(stream);
+	}
 
-	close(fd);
+	(void)close(fd);
 
 	__ops_stream_delete(stream);
 
@@ -959,12 +956,14 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 	__ops_key_t		*key;
 	unsigned		 n;
 
-	(void) fprintf(io->res, "%u keys\n", keyring->keyc);
+	(void) fprintf(io->res, "%u key%s\n", keyring->keyc,
+		(keyring->keyc == 1) ? "" : "s");
 	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
-			__ops_print_seckeydata(io, key);
+			__ops_print_keydata(io, key, "sec",
+				&key->key.seckey.pubkey);
 		} else {
-			__ops_print_pubkeydata(io, key);
+			__ops_print_keydata(io, key, "pub", &key->key.pubkey);
 		}
 		(void) fputc('\n', io->res);
 	}
@@ -993,5 +992,39 @@ __ops_export_key(const __ops_key_t *keydata, unsigned char *passphrase)
 	}
 	printf("%s", (char *) __ops_mem_data(mem));
 	__ops_teardown_memory_write(output, mem);
+	return 1;
+}
+
+/* add a key to a public keyring */
+int
+__ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey)
+{
+	__ops_key_t	*key;
+
+	EXPAND_ARRAY(keyring, key);
+	key = &keyring->keys[keyring->keyc++];
+	(void) memset(key, 0x0, sizeof(*key));
+	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
+	__ops_fingerprint(&key->fingerprint, pubkey);
+	key->type = OPS_PTAG_CT_PUBLIC_KEY;
+	key->key.pubkey = *pubkey;
+	return 1;
+}
+
+/* add a key to a secret keyring */
+int
+__ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
+{
+	const __ops_pubkey_t	*pubkey;
+	__ops_key_t		*key;
+
+	EXPAND_ARRAY(keyring, key);
+	key = &keyring->keys[keyring->keyc++];
+	(void) memset(key, 0x0, sizeof(*key));
+	pubkey = &seckey->pubkey;
+	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
+	__ops_fingerprint(&key->fingerprint, pubkey);
+	key->type = OPS_PTAG_CT_SECRET_KEY;
+	key->key.seckey = *seckey;
 	return 1;
 }

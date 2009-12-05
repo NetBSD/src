@@ -74,6 +74,7 @@ enum optdefs {
 	GET_KEY,
 
 	/* options */
+	SSHKEYS,
 	KEYRING,
 	USERID,
 	HOMEDIR,
@@ -109,6 +110,7 @@ static struct option options[] = {
 	{"home",	required_argument, 	NULL,	HOMEDIR},
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
+	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
 	{"results",	required_argument, 	NULL,	RESULTS},
@@ -233,6 +235,7 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", *argv);
+	netpgp_setvar(&netpgp, "sshetcdir", "/etc/ssh");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -261,6 +264,9 @@ main(int argc, char **argv)
 				netpgp_get_info("maintainer"));
 			exit(EXIT_SUCCESS);
 			/* options */
+		case SSHKEYS:
+			netpgp_setvar(&netpgp, "ssh keys", "1");
+			break;
 		case KEYRING:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,

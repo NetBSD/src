@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.30 2009/11/19 21:56:00 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.31 2009/12/05 07:08:19 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: netpgp.c,v 1.30 2009/11/19 21:56:00 agc Exp $");
 #include <fcntl.h>
 #endif
 
+#include <errno.h>
 #include <regex.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -80,6 +81,7 @@ __RCSID("$NetBSD: netpgp.c,v 1.30 2009/11/19 21:56:00 agc Exp $");
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "crypto.h"
+#include "ops-ssh.h"
 
 /* read any gpg config file */
 static int
@@ -148,7 +150,7 @@ resultp(__ops_io_t *io,
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		pubkey = __ops_getkeybyid(io, ring,
 			(const unsigned char *) res->valid_sigs[i].signer_id);
-		__ops_print_pubkeydata(io, pubkey);
+		__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
 	}
 }
 
@@ -228,6 +230,50 @@ readkeyring(netpgp_t *netpgp, const char *name)
 	return keyring;
 }
 
+/* read keys from ssh host key files */
+static int
+readsshkeys(netpgp_t *netpgp, const char *pubname, const char *secname)
+{
+	__ops_keyring_t	*pubring;
+	__ops_keyring_t	*secring;
+	char		 f[MAXPATHLEN];
+	char		*filename;
+	char		*etcdir;
+
+	__OPS_USED(secname);
+	etcdir = netpgp_getvar(netpgp, "sshetcdir");
+	if ((filename = netpgp_getvar(netpgp, pubname)) == NULL) {
+		(void) snprintf(f, sizeof(f), "%s/ssh_host_rsa_key.pub", etcdir);
+		filename = f;
+	}
+	if ((pubring = calloc(1, sizeof(*pubring))) == NULL) {
+		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
+		return 0;
+	}
+	if (!__ops_ssh2_readkeys(netpgp->io, pubring, NULL, filename, NULL)) {
+		free(pubring);
+		(void) fprintf(stderr, "readsshkeys: can't read %s\n", filename);
+		return 0;
+	}
+	netpgp->pubring = pubring;
+	netpgp_setvar(netpgp, pubname, filename);
+	if ((filename = netpgp_getvar(netpgp, secname)) == NULL) {
+		(void) snprintf(f, sizeof(f), "%s/ssh_host_rsa_key", etcdir);
+		filename = f;
+	}
+	if ((secring = calloc(1, sizeof(*secring))) == NULL) {
+		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
+		return 0;
+	}
+	if (__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename)) {
+		netpgp->secring = secring;
+		netpgp_setvar(netpgp, secname, filename);
+	} else {
+		(void) fprintf(stderr, "readsshkeys: can't read sec %s (%d)\n", filename, errno);
+	}
+	return 1;
+}
+
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
@@ -274,7 +320,13 @@ netpgp_init(netpgp_t *netpgp)
 	    strcmp(stream, "stdout") == 0) {
 		io->errs = stdout;
 	}
-	io->errs = stderr;
+	if ((results = netpgp_getvar(netpgp, "results")) == NULL) {
+		io->res = io->errs;
+	} else if ((io->res = fopen(results, "w")) == NULL) {
+		(void) fprintf(io->errs, "Can't open results %s for writing\n",
+			results);
+		return 0;
+	}
 	netpgp->io = io;
 	if (coredumps) {
 		(void) fprintf(io->errs,
@@ -299,25 +351,26 @@ netpgp_init(netpgp_t *netpgp)
 	} else {
 		(void) netpgp_setvar(netpgp, "userid", userid);
 	}
-	if ((netpgp->pubring = readkeyring(netpgp, "pubring")) == NULL) {
-		(void) fprintf(io->errs, "Can't read pub keyring\n");
-		return 0;
-	}
-	if ((netpgp->secring = readkeyring(netpgp, "secring")) == NULL) {
-		(void) fprintf(io->errs, "Can't read sec keyring\n");
-		return 0;
+	/* read from either gpg files or ssh host keys */
+	if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
+		if ((netpgp->pubring = readkeyring(netpgp, "pubring")) == NULL) {
+			(void) fprintf(io->errs, "Can't read pub keyring\n");
+			return 0;
+		}
+		if ((netpgp->secring = readkeyring(netpgp, "secring")) == NULL) {
+			(void) fprintf(io->errs, "Can't read sec keyring\n");
+			return 0;
+		}
+	} else {
+		if (!readsshkeys(netpgp, "ssh pub key", "ssh sec file")) {
+			(void) fprintf(io->errs, "Can't read ssh host pub key\n");
+			return 0;
+		}
 	}
 	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
 	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
 		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
 			passfd);
-		return 0;
-	}
-	if ((results = netpgp_getvar(netpgp, "results")) == NULL) {
-		io->res = io->errs;
-	} else if ((io->res = fopen(results, "w")) == NULL) {
-		(void) fprintf(io->errs, "Can't open results %s for writing\n",
-			results);
 		return 0;
 	}
 	return 1;
@@ -391,7 +444,7 @@ netpgp_get_key(netpgp_t *netpgp, const char *id)
 		(void) fprintf(io->errs, "Can't find key '%s'\n", id);
 		return NULL;
 	}
-	return (__ops_sprint_pubkeydata(key, &newkey) > 0) ? newkey : NULL;
+	return (__ops_sprint_keydata(key, &newkey, "pub", &key->key.pubkey) > 0) ? newkey : NULL;
 }
 
 /* export a given key */
@@ -578,11 +631,18 @@ netpgp_sign_file(netpgp_t *netpgp,
 	ret = 1;
 	do {
 		/* print out the user id */
-		__ops_print_pubkeydata(io, keypair);
-		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair);
-		if (seckey == NULL) {
-			(void) fprintf(io->errs, "Bad passphrase\n");
+		__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
+			/* now decrypt key */
+			seckey = __ops_decrypt_seckey(keypair);
+			if (seckey == NULL) {
+				(void) fprintf(io->errs, "Bad passphrase\n");
+			}
+		} else {
+			__ops_keyring_t	*secring;
+
+			secring = netpgp->secring;
+			seckey = &secring->keys[0].key.seckey;
 		}
 	} while (seckey == NULL);
 	/* sign file */
@@ -665,7 +725,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	ret = 1;
 	do {
 		/* print out the user id */
-		__ops_print_pubkeydata(io, keypair);
+		__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
 		/* now decrypt key */
 		seckey = __ops_decrypt_seckey(keypair);
 		if (seckey == NULL) {

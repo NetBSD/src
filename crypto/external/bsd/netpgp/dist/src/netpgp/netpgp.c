@@ -78,6 +78,7 @@ enum optdefs {
 	HELP_CMD,
 
 	/* options */
+	SSHKEYS,
 	KEYRING,
 	USERID,
 	ARMOUR,
@@ -116,6 +117,7 @@ static struct option options[] = {
 	{"version",	no_argument,		NULL,	VERSION_CMD},
 	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
 	/* options */
+	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
 	{"coredumps",	no_argument, 		NULL,	COREDUMPS},
 	{"keyring",	required_argument, 	NULL,	KEYRING},
 	{"userid",	required_argument, 	NULL,	USERID},
@@ -284,6 +286,7 @@ main(int argc, char **argv)
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
+	netpgp_setvar(&netpgp, "sshetcdir", "/etc/ssh");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -312,6 +315,9 @@ main(int argc, char **argv)
 				netpgp_get_info("maintainer"));
 			exit(EXIT_SUCCESS);
 			/* options */
+		case SSHKEYS:
+			netpgp_setvar(&netpgp, "ssh keys", "1");
+			break;
 		case KEYRING:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
