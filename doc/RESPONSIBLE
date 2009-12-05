@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.92 2009/08/31 06:21:54 dholland Exp $
+#	$NetBSD: RESPONSIBLE,v 1.93 2009/12/05 16:29:11 pooka Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -249,7 +249,6 @@ newsmips	tsubai
 next68k		core
 ofppc		ws
 pc532		phil
-playstation2	uch
 pmax		simonb, jonathan
 pmppc		augustss
 prep		nonaka

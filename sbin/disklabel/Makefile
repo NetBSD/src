@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2009/11/28 12:14:53 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.65 2009/12/05 16:29:11 pooka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -34,7 +34,6 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "macppc" \
 	|| ${MACHINE} == "mmeye" \
 	|| ${MACHINE} == "netwinder" \
-	|| ${MACHINE} == "playstation2" \
 	|| ${MACHINE} == "prep" \
 	|| ${MACHINE} == "shark" \
 	|| ${MACHINE} == "zaurus" \

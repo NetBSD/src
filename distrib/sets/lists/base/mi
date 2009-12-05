@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.844 2009/12/05 12:38:05 haad Exp $
+# $NetBSD: mi,v 1.845 2009/12/05 16:29:10 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3265,7 +3265,7 @@
 ./usr/share/man/cat8/next68k			base-man-share
 ./usr/share/man/cat8/ofppc			base-man-share
 ./usr/share/man/cat8/pc532			base-obsolete		obsolete
-./usr/share/man/cat8/playstation2		base-man-share
+./usr/share/man/cat8/playstation2		base-obsolete		obsolete
 ./usr/share/man/cat8/pmax			base-man-share
 ./usr/share/man/cat8/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat8/prep			base-man-share
@@ -3384,7 +3384,7 @@
 ./usr/share/man/html8/ofppc			base-man-share
 ./usr/share/man/html8/pc532			base-obsolete		obsolete
 ./usr/share/man/html8/playstation		base-obsolete		obsolete
-./usr/share/man/html8/playstation2		base-man-share
+./usr/share/man/html8/playstation2		base-obsolete		obsolete
 ./usr/share/man/html8/pmax			base-man-share
 ./usr/share/man/html8/pmppc			base-obsolete		obsolete
 ./usr/share/man/html8/prep			base-man-share
@@ -3504,7 +3504,7 @@
 ./usr/share/man/man8/next68k			base-man-share
 ./usr/share/man/man8/ofppc			base-man-share
 ./usr/share/man/man8/pc532			base-obsolete		obsolete
-./usr/share/man/man8/playstation2		base-man-share
+./usr/share/man/man8/playstation2		base-obsolete		obsolete
 ./usr/share/man/man8/pmax			base-man-share
 ./usr/share/man/man8/pmppc			base-obsolete		obsolete
 ./usr/share/man/man8/prep			base-man-share
