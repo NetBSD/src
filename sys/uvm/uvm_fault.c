@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.127 2009/11/01 11:16:32 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.128 2009/12/05 22:34:43 pooka Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.127 2009/11/01 11:16:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.128 2009/12/05 22:34:43 pooka Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1215,7 +1215,7 @@ ReFault:
 		goto ReFault;
 
 	case EAGAIN:
-		tsleep(&lbolt, PVM, "fltagain1", 0);
+		kpause("fltagain1", false, hz/2, NULL);
 		goto ReFault;
 
 	default:
@@ -1515,7 +1515,7 @@ Case2:
 			if (error == EAGAIN) {
 				UVMHIST_LOG(maphist,
 				    "  pgo_get says TRY AGAIN!",0,0,0,0);
-				tsleep(&lbolt, PVM, "fltagain2", 0);
+				kpause("fltagain2", false, hz/2, NULL);
 				goto ReFault;
 			}
 
