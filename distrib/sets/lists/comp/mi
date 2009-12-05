@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1343 2009/12/05 20:11:01 pooka Exp $
+#	$NetBSD: mi,v 1.1344 2009/12/05 22:43:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8569,7 +8569,7 @@
 ./usr/share/man/cat9/cv_timedwait_sig.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wait_sig.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cv_wakeup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cv_wakeup.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/disk.0			comp-sys-catman		.cat
@@ -14003,7 +14003,7 @@
 ./usr/share/man/html9/cv_timedwait_sig.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wait.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wait_sig.html		comp-sys-htmlman	html
-./usr/share/man/html9/cv_wakeup.html		comp-sys-htmlman	html
+./usr/share/man/html9/cv_wakeup.html		comp-obsolete		obsolete
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk.html			comp-sys-htmlman	html
@@ -19584,7 +19584,7 @@
 ./usr/share/man/man9/cv_timedwait_sig.9		comp-sys-man		.man
 ./usr/share/man/man9/cv_wait.9			comp-sys-man		.man
 ./usr/share/man/man9/cv_wait_sig.9		comp-sys-man		.man
-./usr/share/man/man9/cv_wakeup.9		comp-sys-man		.man
+./usr/share/man/man9/cv_wakeup.9		comp-obsolete		obsolete
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
 ./usr/share/man/man9/disk.9			comp-sys-man		.man
