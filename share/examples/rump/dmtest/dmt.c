@@ -1,4 +1,4 @@
-/*	$NetBSD: dmt.c,v 1.1 2009/12/04 22:18:30 haad Exp $
+/*	$NetBSD: dmt.c,v 1.2 2009/12/05 10:38:27 haad Exp $
 
 /*
  * Copyright (c) 2009 Adam Hamsik.  All Rights Reserved.
@@ -43,14 +43,20 @@
 #include <unistd.h>
 #include <util.h>
 
-#include <netbsd-dm.h>
-
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/rumpuser.h>
+
+/* NetBSD-dm.h part */
+#include <prop/proplib.h>
+
+#define DM_CMD_LEN 16
+#define DM_IOCTL 0xfd
+#define DM_IOCTL_CMD 0
+#define NETBSD_DM_IOCTL       _IOWR(DM_IOCTL, DM_IOCTL_CMD, struct plistref)
+
 
 int
-main(int argc,char *argv[])
+main(int argc, char *argv[])
 {
 	int fd;
 	int err;
@@ -60,7 +66,6 @@ main(int argc,char *argv[])
 	char *xml;
 	
 	err = rump_init();
-
 	if (err != 0)
 		printf("rump_init failed with %s\n", strerror(err));
 	
@@ -74,7 +79,7 @@ main(int argc,char *argv[])
 	prop_dictionary_externalize_to_pref(dict_in, &prefp);
 	
 	err = rump_sys_ioctl(fd, NETBSD_DM_IOCTL, &prefp);
-	if ( err != 0)
+	if ( err < 0)
 		printf("ioctl failed %d\n", err);
 
 	dict_out = prop_dictionary_internalize(prefp.pref_plist);
@@ -82,5 +87,5 @@ main(int argc,char *argv[])
 	xml = prop_dictionary_externalize(dict_out);
 	printf("%s\n",xml);
 	
-	close(fd);
+	rump_sys_close(fd);
 }
