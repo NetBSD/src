@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.17 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.18 2009/12/05 07:08:19 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -72,7 +72,11 @@ __RCSID("$NetBSD: openssl_crypto.c,v 1.17 2009/10/07 16:19:51 agc Exp $");
 #include <openssl/err.h>
 #endif
 
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+
 #include <stdlib.h>
+#include <string.h>
 /* Hash size for secret key check */
 
 #include "crypto.h"
@@ -941,4 +945,39 @@ __ops_dsa_sign(unsigned char *hashbuf,
 	DSA_free(odsa);
 
 	return dsasig;
+}
+
+int
+openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type)
+{
+	FILE	*fp;
+	DSA	*dsa;
+	RSA	*rsa;
+	int	 ok;
+
+	if ((fp = fopen(f, "r")) == NULL) {
+		(void) fprintf(stderr, "can't open '%s'\n", f);
+		return 0;
+	}
+	ok = 1;
+	if (strcmp(type, "ssh-rsa") == 0) {
+		if ((rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) {
+			ok = 0;
+		} else {
+			key->key.seckey.key.rsa.d = rsa->d;
+			key->key.seckey.key.rsa.p = rsa->p;
+			key->key.seckey.key.rsa.q = rsa->q;
+			key->key.seckey.key.rsa.d = rsa->d;
+		}
+	} else if (strcmp(type, "ssh-dss") == 0) {
+		if ((dsa = PEM_read_DSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) {
+			ok = 0;
+		} else {
+			key->key.seckey.key.dsa.x = dsa->priv_key;
+		}
+	} else {
+		ok = 0;
+	}
+	(void) fclose(fp);
+	return ok;
 }

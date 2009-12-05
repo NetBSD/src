@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.20 2009/11/19 21:56:00 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.21 2009/12/05 07:08:19 agc Exp $");
 #endif
 
 #include <string.h>
@@ -143,18 +143,6 @@ print_time(const char *name, time_t t)
 }
 
 static void 
-ptime(FILE *fp, time_t t)
-{
-	struct tm      *tm;
-
-	tm = gmtime(&t);
-	(void) fprintf(fp, "%04d-%02d-%02d",
-		tm->tm_year + 1900,
-		tm->tm_mon + 1,
-		tm->tm_mday);
-}
-
-static void 
 print_string_and_value(const char *name, const char *str, unsigned char value)
 {
 	print_name(name);
@@ -186,7 +174,6 @@ print_bn(const char *name, const BIGNUM *bn)
 		puts("(unset)");
 	}
 }
-
 
 static void 
 print_packet_hex(const __ops_subpacket_t *pkt)
@@ -368,34 +355,6 @@ numkeybits(const __ops_pubkey_t *pubkey)
 	}
 }
 
-/**
-   \ingroup Core_Print
-
-   Prints a public key in succinct detail
-
-   \param key Ptr to public key
-*/
-void
-__ops_print_pubkeydata(__ops_io_t *io, const __ops_key_t *key)
-{
-	unsigned int    i;
-
-	(void) fprintf(io->res, "pub %d/%s ",
-			numkeybits(&key->key.pubkey),
-			__ops_show_pka(key->key.pubkey.alg));
-	hexdump(io->res, key->key_id, OPS_KEY_ID_SIZE, "");
-	(void) fprintf(io->res, " ");
-	ptime(io->res, key->key.pubkey.birthtime);
-	(void) fprintf(io->res, "\nKey fingerprint: ");
-	hexdump(io->res, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE,
-		" ");
-	(void) fprintf(io->res, "\n");
-	for (i = 0; i < key->uidc; i++) {
-		(void) fprintf(io->res, "uid              %s\n",
-			key->uids[i].userid);
-	}
-}
-
 /* return the hexdump as a string */
 static char *
 strhexdump(char *dest, const unsigned char *src, size_t length, const char *sep)
@@ -430,7 +389,8 @@ ptimestr(char *dest, size_t size, time_t t)
 
 /* print into a string (malloc'ed) the pubkeydata */
 int
-__ops_sprint_pubkeydata(const __ops_key_t *key, char **buf)
+__ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
+		const __ops_pubkey_t *pubkey)
 {
 	unsigned	 i;
 	char		 uidbuf[KB(128)];
@@ -443,13 +403,27 @@ __ops_sprint_pubkeydata(const __ops_key_t *key, char **buf)
 		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
 			"uid              %s\n", key->uids[i].userid);
 	}
-	return asprintf(buf, "pub %d/%s %s %s\nKey fingerprint: %s\n%s",
-			numkeybits(&key->key.pubkey),
-			__ops_show_pka(key->key.pubkey.alg),
-			strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
-			ptimestr(t, sizeof(t), key->key.pubkey.birthtime),
-			strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " "),
-			uidbuf);
+	return asprintf(buf, "%s %d/%s %s %s\nKey fingerprint: %s\n%s",
+		header,
+		numkeybits(pubkey),
+		__ops_show_pka(pubkey->alg),
+		strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
+		ptimestr(t, sizeof(t), pubkey->birthtime),
+		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " "),
+		uidbuf);
+}
+
+/* print the key data for a pub or sec key */
+void
+__ops_print_keydata(__ops_io_t *io, const __ops_key_t *key, const char *header,
+		const __ops_pubkey_t *pubkey)
+{
+	char	*cp;
+
+	if (__ops_sprint_keydata(key, &cp, header, pubkey)) {
+		(void) fprintf(io->res, "%s", cp);
+		free(cp);
+	}
 }
 
 /**
@@ -495,39 +469,6 @@ __ops_print_pubkey(const __ops_pubkey_t *pubkey)
 	}
 
 	printf("------- end of PUBLIC KEY ------\n");
-}
-
-/**
-   \ingroup Core_Print
-
-   Prints a secret key
-
-   \param key Ptr to public key
-*/
-
-void
-__ops_print_seckeydata(__ops_io_t *io, const __ops_key_t *key)
-{
-	(void) fprintf(io->res, "sec ");
-	__ops_show_pka(key->key.pubkey.alg); /* XXX - redirect to io */
-	(void) fprintf(io->res, " ");
-	hexdump(io->res, key->key_id, OPS_KEY_ID_SIZE, "");
-	(void) fprintf(io->res, " ");
-	ptime(io->res, key->key.pubkey.birthtime);
-	(void) fprintf(io->res, " ");
-	if (key->uidc == 1) {
-		/* print on same line as other info */
-		(void) fprintf(io->res, "%s\n", key->uids[0].userid);
-	} else {
-		/* print all uids on separate line  */
-		unsigned int    i;
-
-		(void) fprintf(io->res, "\n");
-		for (i = 0; i < key->uidc; i++) {
-			(void) fprintf(io->res, "uid              %s\n",
-					key->uids[i].userid);
-		}
-	}
 }
 
 /**
