@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2009/08/23 14:38:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.92 2009/12/05 20:11:10 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -82,7 +82,6 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 #file-system 	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
-#file-system	PORTAL		# portal file system (still experimental)
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	PTYFS		# /dev/pts/N support

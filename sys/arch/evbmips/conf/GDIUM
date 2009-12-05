@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.6 2009/08/12 19:39:51 macallan Exp $
+# $NetBSD: GDIUM,v 1.7 2009/12/05 20:11:11 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.6 $"
+#ident 		"GDIUM-$Revision: 1.7 $"
 
 maxusers	16
 
@@ -75,7 +75,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	KERNFS		# /kern (kernel informational filesystem)
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION

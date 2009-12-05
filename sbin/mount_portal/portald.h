@@ -1,4 +1,4 @@
-/*	$NetBSD: portald.h,v 1.9 2007/07/02 18:07:44 pooka Exp $	*/
+/*	$NetBSD: portald.h,v 1.10 2009/12/05 20:11:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,6 @@
  */
 
 #include <sys/cdefs.h>
-#include <miscfs/portal/portal.h>
 
 /*
  * Meta-chars in an RE.  Paths in the config file containing
@@ -50,6 +49,14 @@ typedef struct qelem qelem;
 struct qelem {
 	qelem *q_forw;
 	qelem *q_back;
+};
+
+struct portal_cred {
+	int		pcr_flag;		/* File open mode */
+	uid_t		pcr_uid;		/* From cred */
+	gid_t		pcr_gid;		/* From cred */
+	uint16_t	pcr_ngroups;		/* From cred */
+	gid_t		pcr_groups[NGROUPS];	/* From cred */
 };
 
 typedef struct provider provider;

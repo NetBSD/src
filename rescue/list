@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.35 2009/01/07 00:39:24 mrg Exp $
+#	$NetBSD: list,v 1.36 2009/12/05 20:11:02 pooka Exp $
 
 SRCDIRS	bin
 
@@ -82,7 +82,6 @@ PROG	mount_nfs
 PROG	mount_ntfs
 PROG	mount_null
 PROG	mount_overlay
-PROG	mount_portal
 PROG	mount_procfs
 PROG	mount_smbfs
 PROG	mount_tmpfs

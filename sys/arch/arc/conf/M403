@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.48 2009/03/06 20:31:47 joerg Exp $
+#	$NetBSD: M403,v 1.49 2009/12/05 20:11:03 pooka Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -70,7 +70,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

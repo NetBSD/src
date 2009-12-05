@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.381 2009/11/17 17:54:14 dyoung Exp $
+.\"	$NetBSD: options.4,v 1.382 2009/12/05 20:11:02 pooka Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -817,18 +817,6 @@ system which has a need to interpose itself between an underlying file
 system and all other access.
 See
 .Xr mount_overlay 8
-for details.
-.It Cd file-system PORTAL
-.Bq Em EXPERIMENTAL
-Includes the portal file system.
-This permits interesting tricks like opening
-.Tn TCP
-sockets by opening files in the file system.
-The portal file system is conventionally mounted on
-.Pa /p
-and is partially implemented by a special daemon.
-See
-.Xr mount_portal 8
 for details.
 .It Cd file-system PROCFS
 Includes code for a special file system (conventionally mounted on

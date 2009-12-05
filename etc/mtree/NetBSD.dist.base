@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.7 2009/12/05 16:29:11 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.8 2009/12/05 20:11:02 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -131,7 +131,6 @@
 ./usr/include/miscfs/kernfs
 ./usr/include/miscfs/nullfs
 ./usr/include/miscfs/overlay
-./usr/include/miscfs/portal
 ./usr/include/miscfs/procfs
 ./usr/include/miscfs/specfs
 ./usr/include/miscfs/syncfs

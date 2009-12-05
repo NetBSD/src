@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.46 2009/10/11 16:20:22 bsh Exp $
+#	$NetBSD: IQ31244,v 1.47 2009/12/05 20:11:11 pooka Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -39,7 +39,6 @@ file-system	NFS		# Network file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

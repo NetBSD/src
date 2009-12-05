@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.25 2009/10/11 16:20:22 bsh Exp $
+#	$NetBSD: ARMADILLO9,v 1.26 2009/12/05 20:11:11 pooka Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -32,7 +32,6 @@ file-system	FDESC		# /dev/fd
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system

@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.28 2008/11/12 12:35:50 ad Exp $
+# $NetBSD: rescue.mi,v 1.29 2009/12/05 20:11:01 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,7 +92,7 @@
 ./rescue/mount_ntfs				base-rescue-root
 ./rescue/mount_null				base-rescue-root
 ./rescue/mount_overlay				base-rescue-root
-./rescue/mount_portal				base-rescue-root
+./rescue/mount_portal				base-obsolete		obsolete
 ./rescue/mount_procfs				base-rescue-root
 ./rescue/mount_smbfs				base-rescue-root
 ./rescue/mount_tmpfs				base-rescue-root

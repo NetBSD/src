@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.6 2009/08/19 06:28:06 nisimura Exp $
+# $NetBSD: ENCPP1,v 1.7 2009/12/05 20:11:16 pooka Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.6 $"
+#ident 		"ENCPP1-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -73,7 +73,6 @@ file-system 	FDESC
 file-system 	KERNFS
 file-system 	NULLFS
 #file-system 	OVERLAY
-#file-system 	PORTAL
 file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION

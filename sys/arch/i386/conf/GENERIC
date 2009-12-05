@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.953 2009/11/30 16:19:55 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.954 2009/12/05 20:11:15 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.953 $"
+#ident 		"GENERIC-$Revision: 1.954 $"
 
 maxusers	64		# estimated number of users
 
@@ -184,7 +184,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.31 2008/05/30 20:10:01 tsutsui Exp $
+# $NetBSD: RAWHIDE,v 1.32 2009/12/05 20:11:03 pooka Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -24,7 +24,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	NULLFS		# Null file system layer
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	FDESC		# File descriptor file system (/dev/fd)
-file-system	PORTAL		# Portal file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
@@ -111,3 +111,4 @@ pseudo-device	sl
 pseudo-device	vnd		
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss		4	# file system snapshot device
+pseudo-device	putter			# for puffs and pud

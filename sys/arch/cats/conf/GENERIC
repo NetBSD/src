@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2009/01/24 05:06:05 mrg Exp $
+# $NetBSD: GENERIC,v 1.128 2009/12/05 20:11:10 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -66,7 +66,7 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay filesystem
-file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
@@ -552,6 +552,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
+pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

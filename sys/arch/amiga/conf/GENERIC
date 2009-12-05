@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.259 2009/01/12 19:16:26 mhitch Exp $
+# $NetBSD: GENERIC,v 1.260 2009/12/05 20:11:03 pooka Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.259 $"
+#ident 		"GENERIC-$Revision: 1.260 $"
 
 
 maxusers	8
@@ -113,7 +113,6 @@ file-system 	KERNFS		# kernel data-structure filesystem
 file-system 	FDESC		# user file descriptor filesystem
 file-system 	NULLFS		# loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
-#file-system 	PORTAL		# Portal filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem

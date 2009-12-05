@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.52 2009/02/06 18:50:27 jym Exp $
+# 	$NetBSD: MPC303,v 1.53 2009/12/05 20:11:14 pooka Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	16
 
@@ -66,7 +66,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	KERNFS		# /kern (kernel informational filesystem)
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION

@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.36 2009/10/11 16:20:23 bsh Exp $
+#	$NetBSD: ZAO425,v 1.37 2009/12/05 20:11:11 pooka Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -43,7 +43,6 @@ file-system	NFS		# Network file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

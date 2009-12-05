@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.966 2009/11/27 17:54:11 pooka Exp $
+#	$NetBSD: files,v 1.967 2009/12/05 20:11:17 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1343,7 +1343,6 @@ include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"
 include "miscfs/overlay/files.overlay"
-include "miscfs/portal/files.portal"
 include "miscfs/procfs/files.procfs"
 include "miscfs/umapfs/files.umapfs"
 include "nfs/files.nfs"

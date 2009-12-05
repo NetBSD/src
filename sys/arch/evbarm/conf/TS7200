@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.39 2009/10/11 16:20:23 bsh Exp $
+#	$NetBSD: TS7200,v 1.40 2009/12/05 20:11:11 pooka Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -45,7 +45,6 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system    FILECORE        # Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

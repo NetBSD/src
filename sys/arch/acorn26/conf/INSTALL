@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.28 2009/04/19 03:06:22 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.29 2009/12/05 20:11:02 pooka Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -38,7 +38,6 @@ file-system	FILECORE	# Acorn filecore file system
 file-system	NFS		# Sun NFS-compatible file system client
 #file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	PROCFS		# /proc

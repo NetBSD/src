@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2009/01/24 05:06:06 mrg Exp $
+# $NetBSD: GENERIC,v 1.195 2009/12/05 20:11:15 pooka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194 $"
+#ident 		"GENERIC-$Revision: 1.195 $"
 
 maxusers	16		# estimated number of users
 
@@ -110,7 +110,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -347,6 +347,7 @@ pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	putter			# for puffs and pud
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator
