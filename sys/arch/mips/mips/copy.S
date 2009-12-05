@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.4 2009/11/14 21:50:51 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.5 2009/12/05 07:40:02 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,26 +100,27 @@ LEAF(copyinstr)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
 	blt	a0, zero, _C_LABEL(copystrerr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
+	 nop
 1:
 	lbu	v0, 0(a0)
 	PTR_SUBU a2, a2, 1
 	beq	v0, zero, 2f
-	sb	v0, 0(a1)
+	 sb	v0, 0(a1)
 	PTR_ADDU a0, a0, 1
 	bne	a2, zero, 1b
-	PTR_ADDU a1, a1, 1
+	 PTR_ADDU a1, a1, 1
 4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
-	PTR_SUBU a2, t0, a2
+	 PTR_SUBU a2, t0, a2
 	PTR_S	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, U_PCB_ONFAULT(v1)
 END(copyinstr)
 
 /*
