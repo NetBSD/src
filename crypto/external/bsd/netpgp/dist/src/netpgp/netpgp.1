@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.3 2009/06/11 01:12:42 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.4 2009/12/05 07:33:18 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 10, 2009
+.Dd December 4, 2009
 .Dt NETPGP 1
 .Os
 .Sh NAME
@@ -86,6 +86,8 @@ where the options for all commands are:
 .Op Fl Fl keyring Ns = Ns Ar keyring
 .br
 .Op Fl Fl results Ns = Ns Ar filename
+.br
+.Op Fl Fl ssh-keys
 .br
 .Op Fl Fl userid Ns = Ns Ar userid
 .br
@@ -229,6 +231,15 @@ value.
 specifies a filename to which the results of the operation
 should be sent.
 The default is to send the results to stderr.
+.It Fl Fl ssh-keys
+specifies that the public and private keys should be taken
+from the
+.Xr ssh 1
+host key files, usually found in
+.Pa /etc/ssh/ssh_host_rsa_key
+and
+.Pa /etc/ssh/ssh_host_rsa_key.pub
+for the private and public host keys.
 .It Fl Fl userid Ar userid
 This option specifies the user identity to be used for all operations.
 This identity can either be in the form of the full name, or as an
@@ -369,6 +380,7 @@ utility will return 0 for success,
 or 2 if any other error occurs.
 .Sh SEE ALSO
 .Xr netpgpkeys 1 ,
+.Xr ssh 1 ,
 .Xr getpass 3 ,
 .\" .Xr libbz2 3 ,
 .Xr libnetpgp 3 ,
