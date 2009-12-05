@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.24 2009/12/01 02:36:32 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.25 2009/12/05 07:08:18 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -107,9 +107,7 @@ static __ops_cb_ret_t
 accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
-	const __ops_pubkey_t	*pubkey;
 	__ops_keyring_t		*keyring;
-	__ops_key_t		*key;
 	accumulate_t		*accumulate;
 
 	accumulate = __ops_callback_arg(cbinfo);
@@ -122,19 +120,10 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			(void) fprintf(stderr, "Creating key %u - tag %u\n",
 				keyring->keyc, pkt->tag);
 		}
-		EXPAND_ARRAY(keyring, key);
-		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
-					&content->pubkey :
-					&content->seckey.pubkey;
-		key = &keyring->keys[keyring->keyc++];
-		(void) memset(key, 0x0, sizeof(*key));
-		__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
-		__ops_fingerprint(&key->fingerprint, pubkey);
-		key->type = pkt->tag;
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) {
-			key->key.pubkey = *pubkey;
+			__ops_add_to_pubring(keyring, &content->pubkey);
 		} else {
-			key->key.seckey = content->seckey;
+			__ops_add_to_secring(keyring, &content->seckey);
 		}
 		return OPS_KEEP_MEMORY;
 	case OPS_PTAG_CT_USER_ID:
@@ -510,6 +499,8 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 void 
 __ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
 {
+	__ops_fingerprint_t finger;
+
 	if (key->version == 2 || key->version == 3) {
 		unsigned char   bn[NETPGP_BUFSIZ];
 		unsigned        n;
@@ -528,8 +519,6 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
 		BN_bn2bin(key->key.rsa.n, bn);
 		(void) memcpy(keyid, bn + n - idlen, idlen);
 	} else {
-		__ops_fingerprint_t finger;
-
 		__ops_fingerprint(&finger, key);
 		(void) memcpy(keyid,
 				finger.fingerprint + finger.length - idlen,
