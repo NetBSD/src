@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.100 2009/10/18 19:09:20 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.101 2009/12/05 20:54:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.100 2009/10/18 19:09:20 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.101 2009/12/05 20:54:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -121,14 +121,24 @@ finalpush(struct puffs_usermount *pu)
 }
 
 /*ARGSUSED*/
-static void
-puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
+void
+puffs_kernerr_abort(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
 	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
 	    type, error, cookie, str);
 	abort();
+}
+
+/*ARGSUSED*/
+void
+puffs_kernerr_log(struct puffs_usermount *pu, uint8_t type,
+	int error, const char *str, puffs_cookie_t cookie)
+{
+
+	syslog(LOG_WARNING, "kernel: type %d, error %d, cookie %p (%s)\n",
+	    type, error, cookie, str);
 }
 
 int
@@ -664,7 +674,7 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
 
-	pu->pu_errnotify = puffs_defaulterror;
+	pu->pu_errnotify = puffs_kernerr_log;
 
 	PU_SETSTATE(pu, PUFFS_STATE_BEFOREMOUNT);
 
