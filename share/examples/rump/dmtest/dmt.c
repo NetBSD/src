@@ -1,4 +1,4 @@
-/*	$NetBSD: dmt.c,v 1.2 2009/12/05 10:38:27 haad Exp $
+/*	$NetBSD: dmt.c,v 1.3 2009/12/05 11:44:56 haad Exp $
 
 /*
  * Copyright (c) 2009 Adam Hamsik.  All Rights Reserved.
@@ -46,14 +46,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-/* NetBSD-dm.h part */
-#include <prop/proplib.h>
-
-#define DM_CMD_LEN 16
-#define DM_IOCTL 0xfd
-#define DM_IOCTL_CMD 0
-#define NETBSD_DM_IOCTL       _IOWR(DM_IOCTL, DM_IOCTL_CMD, struct plistref)
-
+#include <dev/dm/netbsd-dm.h>
 
 int
 main(int argc, char *argv[])
