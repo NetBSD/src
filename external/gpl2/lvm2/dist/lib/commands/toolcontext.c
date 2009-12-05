@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.6 2009/12/02 01:53:25 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.7 2009/12/05 01:52:44 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -845,13 +845,17 @@ int lvm_register_segtype(struct segtype_library *seglib,
 	return 1;
 }
 
+#ifdef __NetBSD__
+#include <dlfcn.h>
+#endif
+
 static int _init_single_segtype(struct cmd_context *cmd,
 				struct segtype_library *seglib)
 {
 	struct segment_type *(*init_segtype_fn) (struct cmd_context *);
 	struct segment_type *segtype;
 
-	if (!(init_segtype_fn = (void *) dlsym(seglib->lib, "init_segtype"))) {
+	if (!(init_segtype_fn = dlsym(seglib->lib, "init_segtype"))) {
 		log_error("Shared library %s does not contain segment type "
 			  "functions", seglib->libname);
 		return 0;
