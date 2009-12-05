@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.298 2009/11/17 18:36:07 dyoung Exp $
+#       $NetBSD: Makefile,v 1.299 2009/12/05 22:43:34 pooka Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -209,7 +209,7 @@ MLINKS+=condvar.9 cv.9 condvar.9 cv_init.9 condvar.9 cv_destroy.9 \
 	condvar.9 cv_wait.9 condvar.9 cv_wait_sig.9 \
 	condvar.9 cv_timedwait.9 condvar.9 cv_timedwait_sig.9 \
 	condvar.9 cv_signal.9 condvar.9 cv_broadcast.9 \
-	condvar.9 cv_wakeup.9 condvar.9 cv_has_waiters.9
+	condvar.9 cv_has_waiters.9
 MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
