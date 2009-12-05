@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1341 2009/12/05 11:34:37 haad Exp $
+#	$NetBSD: mi,v 1.1342 2009/12/05 12:14:32 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7319,7 +7319,7 @@
 ./usr/share/man/cat3/puffs_ops.0		comp-puffs-catman	.cat
 ./usr/share/man/cat3/puffs_path.0		comp-puffs-catman	.cat
 ./usr/share/man/cat3/puffs_req.0		comp-obsolete		obsolete
-./usr/share/man/cat3/puffs_suspend.0		comp-puffs-catman	.cat
+./usr/share/man/cat3/puffs_suspend.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/putc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putc_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/putchar.0			comp-c-catman		.cat
@@ -12829,7 +12829,7 @@
 ./usr/share/man/html3/puffs_node.html		comp-puffs-htmlman	html
 ./usr/share/man/html3/puffs_ops.html		comp-puffs-htmlman	html
 ./usr/share/man/html3/puffs_path.html		comp-puffs-htmlman	html
-./usr/share/man/html3/puffs_suspend.html	comp-puffs-htmlman	html
+./usr/share/man/html3/puffs_suspend.html	comp-obsolete		obsolete
 ./usr/share/man/html3/putc.html			comp-c-htmlman		html
 ./usr/share/man/html3/putc_unlocked.html	comp-c-htmlman		html
 ./usr/share/man/html3/putchar.html		comp-c-htmlman		html
@@ -18339,7 +18339,7 @@
 ./usr/share/man/man3/puffs_ops.3		comp-puffs-man		.man
 ./usr/share/man/man3/puffs_path.3		comp-puffs-man		.man
 ./usr/share/man/man3/puffs_req.3		comp-obsolete		obsolete
-./usr/share/man/man3/puffs_suspend.3		comp-puffs-man		.man
+./usr/share/man/man3/puffs_suspend.3		comp-obsolete		obsolete
 ./usr/share/man/man3/putc.3			comp-c-man		.man
 ./usr/share/man/man3/putc_unlocked.3		comp-c-man		.man
 ./usr/share/man/man3/putchar.3			comp-c-man		.man
