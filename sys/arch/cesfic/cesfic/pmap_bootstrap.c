@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.21 2009/12/04 18:55:13 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.22 2009/12/05 15:31:07 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21 2009/12/04 18:55:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.22 2009/12/05 15:31:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21 2009/12/04 18:55:13 tsutsui 
 extern char *etext;
 extern paddr_t avail_start, avail_end;
 
-void	pmap_bootstrap(vm_offset_t, vm_offset_t);
+void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -81,9 +81,9 @@ void *msgbufaddr;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(vm_offset_t nextpa, vm_offset_t firstpa)
+pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	vm_offset_t kstpa, kptpa, kptmpa, lkptpa, lwp0upa;
+	paddr_t kstpa, kptpa, kptmpa, lkptpa, lwp0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -371,14 +371,14 @@ pmap_bootstrap(vm_offset_t nextpa, vm_offset_t firstpa)
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) = firstpa
+	RELOC(avail_start, paddr_t) = nextpa;
+	RELOC(avail_end, paddr_t) = firstpa
 	  + m68k_ptob(RELOC(physmem, int))
 	  - m68k_round_page(MSGBUFSIZE)
 	  - PAGE_SIZE; /* if that start of last page??? */
-	RELOC(virtual_avail, vm_offset_t) =
+	RELOC(virtual_avail, vaddr_t) =
 		KERNBASE + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Initialize protection array.
@@ -440,7 +440,7 @@ pmap_bootstrap(vm_offset_t nextpa, vm_offset_t firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
+		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
@@ -450,6 +450,6 @@ pmap_bootstrap(vm_offset_t nextpa, vm_offset_t firstpa)
 		va += PAGE_SIZE;
 		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
-		RELOC(virtual_avail, vm_offset_t) = va;
+		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }
