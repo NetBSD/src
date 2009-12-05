@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.27 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.28 2009/12/05 22:38:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.27 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.28 2009/12/05 22:38:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -362,21 +362,6 @@ cv_wakeup_all(kcondvar_t *cv)
 	mutex_spin_exit(mp);
 
 	KASSERT(cv_is_valid(cv));
-}
-
-/*
- * cv_wakeup:
- *
- *	Wake all LWPs waiting on a condition variable.  For cases
- *	where the address may be waited on by mtsleep()/tsleep().
- *	Not a documented call.
- */
-void
-cv_wakeup(kcondvar_t *cv)
-{
-
-	cv_wakeup_all(cv);
-	wakeup(cv);
 }
 
 /*
