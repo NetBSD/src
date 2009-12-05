@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.329 2009/09/14 02:28:22 mhitch Exp $
+# $NetBSD: GENERIC,v 1.330 2009/12/05 20:11:03 pooka Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.329 $"
+ident		"GENERIC-$Revision: 1.330 $"
 
 maxusers 32
 
@@ -80,7 +80,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	NULLFS		# Null file system layer
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	FDESC		# File descriptor file system (/dev/fd)
-file-system	PORTAL		# Portal file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
@@ -741,6 +741,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
 

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.19 2009/03/25 06:26:44 cegger Exp $
+# $NetBSD: XEN3_DOMU,v 1.20 2009/12/05 20:11:03 pooka Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -81,7 +81,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -189,6 +189,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.80 2009/05/14 01:13:21 macallan Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.81 2009/12/05 20:11:17 pooka Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.80 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.81 $"
 
 maxusers	32
 
@@ -104,7 +104,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -323,6 +323,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux                   # mouse & keyboard multiplexor
 pseudo-device	wsfont
+pseudo-device	putter			# for puffs and pud
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.55 2009/08/02 11:36:39 gavan Exp $
+#	$NetBSD: GENERIC,v 1.56 2009/12/05 20:11:15 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	32		# estimated number of users
 
@@ -126,7 +126,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

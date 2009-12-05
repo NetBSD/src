@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.91 2009/03/06 23:38:41 abs Exp $
+# $NetBSD: FALCON,v 1.92 2009/12/05 20:11:03 pooka Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
+#		NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -37,7 +37,7 @@ file-system NULLFS # Loopback filesystem
 file-system OVERLAY # overlay filesystem
 file-system UNION # union file system
 file-system UMAPFS # null file system (with uid & gid remapping)
-file-system PORTAL # portal file system
+file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
@@ -83,6 +83,7 @@ pseudo-device ppp # ppp
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md 3 # Boot memory disk
+pseudo-device putter # for puffs and pud
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel

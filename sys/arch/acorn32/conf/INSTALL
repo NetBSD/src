@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 2009/04/19 03:07:04 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.55 2009/12/05 20:11:03 pooka Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.54 $"
+#ident		"INSTALL-$Revision: 1.55 $"
 
 # estimated number of users
 maxusers	32
@@ -60,7 +60,6 @@ file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

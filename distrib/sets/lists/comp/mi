@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1342 2009/12/05 12:14:32 pooka Exp $
+#	$NetBSD: mi,v 1.1343 2009/12/05 20:11:01 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1401,7 +1401,7 @@
 ./usr/include/miscfs/kernfs/kernfs.h		comp-c-include
 ./usr/include/miscfs/nullfs/null.h		comp-c-include
 ./usr/include/miscfs/overlay/overlay.h		comp-c-include
-./usr/include/miscfs/portal/portal.h		comp-c-include
+./usr/include/miscfs/portal/portal.h		comp-obsolete		obsolete
 ./usr/include/miscfs/procfs/procfs.h		comp-c-include
 ./usr/include/miscfs/specfs/specdev.h		comp-c-include
 ./usr/include/miscfs/syncfs/syncfs.h		comp-c-include
@@ -3463,7 +3463,7 @@
 ./usr/libdata/debug/usr/sbin/moptrace.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug

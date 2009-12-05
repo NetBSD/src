@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.194 2009/11/27 16:46:06 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.195 2009/12/05 20:11:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -67,7 +67,6 @@
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
 #define	MOUNT_LFS	"lfs"		/* Log-based Filesystem */
 #define	MOUNT_FDESC	"fdesc"		/* File Descriptor Filesystem */
-#define	MOUNT_PORTAL	"portal"	/* Portal Filesystem */
 #define	MOUNT_NULL	"null"		/* Minimal Filesystem Layer */
 #define	MOUNT_OVERLAY	"overlay"	/* Minimal Overlay Filesystem Layer */
 #define	MOUNT_UMAP	"umap"	/* User/Group Identifier Remapping Filesystem */
@@ -163,7 +162,6 @@ struct mount {
 	{ MOUNT_LFS, CTLTYPE_NODE }, \
 	{ 0, 0 }, 			/* MOUNT_LOFS */ \
 	{ MOUNT_FDESC, CTLTYPE_NODE }, \
-	{ MOUNT_PORTAL, CTLTYPE_NODE }, \
 	{ MOUNT_NULL, CTLTYPE_NODE }, \
 	{ MOUNT_UMAP, CTLTYPE_NODE }, \
 	{ MOUNT_KERNFS, CTLTYPE_NODE }, \

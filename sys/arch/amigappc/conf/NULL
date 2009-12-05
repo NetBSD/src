@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.26 2009/07/21 09:49:15 phx Exp $
+# $NetBSD: NULL,v 1.27 2009/12/05 20:11:03 pooka Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.26 $"
+#ident          "GENERIC-$Revision: 1.27 $"
 
 maxusers	8
 
@@ -95,7 +95,6 @@ file-system 	ADOSFS		# AmigaDOS file system
 #file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal file system (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

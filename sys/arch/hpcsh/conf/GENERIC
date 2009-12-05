@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.86 2009/01/24 05:06:06 mrg Exp $
+# $NetBSD: GENERIC,v 1.87 2009/12/05 20:11:14 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -120,7 +120,6 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc

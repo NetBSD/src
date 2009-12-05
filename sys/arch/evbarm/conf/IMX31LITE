@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.8 2009/10/11 16:20:22 bsh Exp $
+#	$NetBSD: IMX31LITE,v 1.9 2009/12/05 20:11:11 pooka Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -36,7 +36,6 @@ file-system	NFS		# Network file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	TMPFS		# memory file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping

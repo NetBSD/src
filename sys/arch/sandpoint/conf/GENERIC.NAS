@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.10 2009/07/20 11:46:17 nisimura Exp $
+# $NetBSD: GENERIC.NAS,v 1.11 2009/12/05 20:11:16 pooka Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.10 $"
+#ident 		"GENERIC.NAS-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -85,7 +85,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

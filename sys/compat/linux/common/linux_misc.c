@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.212 2009/11/24 10:42:44 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.213 2009/12/05 20:11:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.212 2009/11/24 10:42:44 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.213 2009/12/05 20:11:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_MSDOS,		LINUX_MSDOS_SUPER_MAGIC		},
 	{ MOUNT_LFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_FDESC,		LINUX_DEFAULT_SUPER_MAGIC	},
-	{ MOUNT_PORTAL,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NULL,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_UMAP,		LINUX_DEFAULT_SUPER_MAGIC	},
