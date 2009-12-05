@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.452 2009/09/19 08:05:24 tron Exp $
+.\"	$NetBSD: main,v 1.453 2009/12/05 16:29:10 pooka Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh i386
 .as MACHINE_LIST " ibmnws iyonix landisk luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " playstation2 pmax prep rs6000 sandpoint sbmips
+.as MACHINE_LIST " pmax prep rs6000 sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
@@ -994,7 +994,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .Pp
 .
 .
-.Bl -column xxx "Jun-ichiro itojun Hagino" ".Mt sommerfeld@NetBSD.org" ".Sy playstation2"
+.Bl -column xxx "Jun-ichiro itojun Hagino" ".Mt sommerfeld@NetBSD.org" ".Sy ews4800mips"
 .
 .br_ne 1i
 .It Em "The NetBSD core group:"
