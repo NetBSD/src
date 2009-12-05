@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.71 2009/12/03 12:44:57 apb Exp $
+# $NetBSD: maketars,v 1.72 2009/12/05 15:56:25 cegger Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -20,7 +20,7 @@ rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 . "${rundir}/sets.subr"
 
 # set defaults
-lists="${nlists}"
+lists=
 tars="${RELEASEDIR}"
 dest="${DESTDIR}"
 metalog=
@@ -64,15 +64,16 @@ msg()
 while getopts L:bxyi:a:m:qs:SM:N:d:t: ch; do
 	case ${ch} in
 	L)
-		lists=$(
-			for _list in $( echo ${OPTARG} | tr , ' ' ); do
-				case $_list in
-				base)	echo "${nlists}" ;;
-				x)	echo "${xlists}" ;;
-				ext)	echo "${extlists}" ;;
-				esac
-			done
-		)
+		save_IFS="${IFS}"
+		IFS=,
+		for _list in ${OPTARG}; do
+			case $_list in
+			base)	lists="${lists} ${nlists}" ;;
+			x)	lists="${lists} ${xlists}" ;;
+			ext)	lists="${lists} ${extlists}" ;;
+			esac
+		done
+		IFS="${save_IFS}"
 		;;
 	# backward compat
 	b)
@@ -198,7 +199,7 @@ fi
 GZIP=-9n		# for pax -z
 export GZIP
 es=0
-for setname in ${lists}; do
+for setname in ${lists:-${nlists}}; do
 	out="${setname}.tgz"
 	if [ -n "${installdir}" ]; then
 		msg "Copying set ${setname}"
