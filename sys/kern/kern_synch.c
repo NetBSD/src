@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.271 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.272 2009/12/05 22:34:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.271 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.272 2009/12/05 22:34:43 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -188,6 +188,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
+	KASSERT(ident != &lbolt);
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
@@ -224,6 +225,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
+	KASSERT(ident != &lbolt);
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(mtx, (priority & PNORELOCK) != 0);
