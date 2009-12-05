@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.14 2009/10/10 18:06:54 bad Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.15 2009/12/05 10:17:17 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 10, 2009
+.Dd December 5, 2009
 .Dt PROP_DICTIONARY 3
 .Os
 .Sh NAME
@@ -165,7 +165,8 @@ Like
 except the resulting dictionary is always mutable.
 .It Fn prop_dictionary_count "prop_dictionary_t dict"
 Returns the number of objects stored in the dictionary.
-.It Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict"
+.It Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict" \
+    "unsigned int capacity"
 Ensure that the dictionary has a total capacity of
 .Fa capacity ,
 including objects already stored in the dictionary.
