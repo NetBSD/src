@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.258 2009/12/03 11:37:55 sborrill Exp $
+# $NetBSD: GENERIC,v 1.259 2009/12/05 20:11:03 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.258 $"
+#ident 		"GENERIC-$Revision: 1.259 $"
 
 maxusers	64		# estimated number of users
 
@@ -144,7 +144,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -1077,6 +1077,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options		MEMORY_DISK_HOOKS	# enable root ramdisk

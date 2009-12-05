@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.68 2009/03/27 21:04:35 ad Exp $
+# $NetBSD: NET4501,v 1.69 2009/12/05 20:11:15 pooka Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.68 $"
+#ident 		"NET4501-$Revision: 1.69 $"
 
 maxusers	32		# estimated number of users
 
@@ -115,7 +115,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

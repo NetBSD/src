@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2009/10/05 22:32:58 haad Exp $
+# $NetBSD: mi,v 1.5 2009/12/05 20:11:02 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -74,8 +74,8 @@
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/overlay				base-kernel-modules	kmod
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/portal				base-kernel-modules	kmod
-./@MODULEDIR@/portal/portal.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/portal				base-obsolete		obsolete
+./@MODULEDIR@/portal/portal.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/ppp_bsdcomp			base-kernel-modules	kmod
 ./@MODULEDIR@/ppp_bsdcomp/ppp_bsdcomp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ppp_deflate			base-kernel-modules	kmod

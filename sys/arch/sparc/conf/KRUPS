@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.50 2009/06/22 14:57:52 tsutsui Exp $
+# $NetBSD: KRUPS,v 1.51 2009/12/05 20:11:17 pooka Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.50 $"
+#ident 		"KRUPS-$Revision: 1.51 $"
 
 maxusers	32
 
@@ -195,7 +195,7 @@ file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
 #file-system	LFS		# Log-based filesystem (still experimental)
-file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	PROCFS		# /proc
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
@@ -363,6 +363,7 @@ pseudo-device	wsfont
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	putter			# for puffs and pud
 
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

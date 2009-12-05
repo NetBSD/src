@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.96 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: socket.h,v 1.97 2009/12/05 20:11:18 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -166,7 +166,7 @@ struct	accept_filter_arg {
  * Address families.
  */
 #define	AF_UNSPEC	0		/* unspecified */
-#define	AF_LOCAL	1		/* local to host (pipes, portals) */
+#define	AF_LOCAL	1		/* local to host */
 #define	AF_UNIX		AF_LOCAL	/* backward compatibility */
 #define	AF_INET		2		/* internetwork: UDP, TCP, etc. */
 #define	AF_IMPLINK	3		/* arpanet imp addresses */

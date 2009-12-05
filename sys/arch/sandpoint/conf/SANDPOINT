@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.5 2009/08/19 06:28:06 nisimura Exp $
+# $NetBSD: SANDPOINT,v 1.6 2009/12/05 20:11:16 pooka Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.5 $"
+#ident 		"SANDPOINT-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -75,7 +75,6 @@ file-system 	FDESC
 file-system 	KERNFS
 file-system 	NULLFS
 #file-system 	OVERLAY
-#file-system 	PORTAL
 file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION

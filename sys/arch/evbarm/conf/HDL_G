@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.15 2009/10/11 16:20:22 bsh Exp $
+# $NetBSD: HDL_G,v 1.16 2009/12/05 20:11:11 pooka Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -39,7 +39,6 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system 	NTFS		# Windows/NT file system (experimental)
 file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)

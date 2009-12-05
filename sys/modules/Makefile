@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2009/11/10 14:47:52 skrll Exp $
+#	$NetBSD: Makefile,v 1.36 2009/12/05 20:11:18 pooka Exp $
 
 # For all platforms
 
@@ -34,7 +34,6 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
-SUBDIR+=	portal
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
