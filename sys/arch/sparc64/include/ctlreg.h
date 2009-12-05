@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.46 2009/11/28 21:07:02 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.47 2009/12/05 07:58:57 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -477,490 +477,372 @@
  */
 
 #ifdef __arch64__
-static __inline u_char 
-lduba(paddr_t loc, int asi) 
-{
-	register unsigned int _lduba_v;
 
-	__asm volatile(
-		"wr %2, %%g0, %%asi;	"
-		"lduba [%1]%%asi, %0	"
-		: "=r" (_lduba_v) 
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lduba_v);
+/* 64-bit kernel, non-constant */
+#define SPARC64_LD_NONCONST(ld)	\
+	__asm volatile(							\
+		"wr %2,%%g0,%%asi;	"				\
+		#ld " [%1]%%asi,%0	"				\
+		: "=r" (_v)						\
+		: "r" ((__uintptr_t)(loc)), "r" (asi))
+
+#if defined(__GNUC__) && defined(__OPTIMIZE__)
+#define SPARC64_LD_DEF(ld, type, vtype)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	vtype _v;							\
+	if (__builtin_constant_p(asi))					\
+		__asm volatile(						\
+			#ld " [%1]%2,%0		"			\
+			: "=r" (_v)					\
+			: "r" ((__uintptr_t)(loc)), "n" (asi));		\
+	else								\
+		SPARC64_LD_NONCONST(ld);				\
+	return _v;							\
 }
 #else
-static __inline u_char 
-lduba(paddr_t loc, int asi) 
-{
-	register unsigned int _lduba_v, _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"rdpr %%pstate,%1;	"
-			"or %0,%2,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"membar #Sync;		"
-			"lduba [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lduba_v),  "=&r" (_pstate)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %3,%%g0,%%asi;	"
-			"sllx %2,32,%0;		"
-			"or %0,%1,%0;		"
-			"lduba [%0]%%asi,%0;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lduba_v)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return (_lduba_v);
+#define SPARC64_LD_DEF(ld, type, vtype)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	vtype _v;							\
+	SPARC64_LD_NONCONST(ld);					\
+	return _v;							\
 }
 #endif
+#define SPARC64_LD_DEF64(ld, type)	SPARC64_LD_DEF(ld, type, uint64_t)
 
-#ifdef __arch64__
-/* load half-word from alternate address space */
-static __inline u_short 
-lduha(paddr_t loc, int asi) 
-{
-	register unsigned int _lduha_v;
-
-	__asm volatile(
-		"wr %2, %%g0, %%asi;	"
-		"lduha [%1]%%asi, %0	"
-		: "=r" (_lduha_v)
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lduha_v);
-}
-#else
-/* load half-word from alternate address space */
-static __inline u_short 
-lduha(paddr_t loc, int asi) {
-	register unsigned int _lduha_v, _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0; 	"
-			"rdpr %%pstate,%1; 	"
-			"wrpr %1,8,%%pstate; 	"
-			"or %0,%2,%0;		"
-			"membar #Sync;		"
-			"lduha [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lduha_v), "=&r" (_pstate)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %3,%%g0,%%asi;	"
-			"sllx %2,32,%0;		"
-			"or %0,%1,%0;		"
-			"lduha [%0]%%asi,%0;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lduha_v)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return (_lduha_v);
-}
-#endif
-
-
-#ifdef __arch64__
-/* load unsigned int from alternate address space */
-static __inline u_int 
-lda(paddr_t loc, int asi)
-{
-	register unsigned int _lda_v;
-
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"lda [%1]%%asi,%0	"
-		: "=r" (_lda_v)
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lda_v);
-}
-
-/* load signed int from alternate address space */
-static __inline int 
-ldswa(paddr_t loc, int asi)
-{
-	register int _lda_v;
-
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"ldswa [%1]%%asi,%0;	"
-		: "=r" (_lda_v)
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lda_v);
-}
 #else	/* __arch64__ */
-/* load unsigned int from alternate address space */
-static __inline u_int 
-lda(paddr_t loc, int asi)
-{
-	register unsigned int _lda_v, _loc_hi, _pstate;
 
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"rdpr %%pstate,%1;	"
-			"sllx %3,32,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"or %0,%2,%0; 		"
-			"membar #Sync;		"
-			"lda [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v), "=&r" (_pstate)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %3,%%g0,%%asi;	"
-			"sllx %2,32,%0;		"
-			"or %0,%1,%0;		"
-			"lda [%0]%%asi,%0;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return (_lda_v);
+/* 32-bit kernel, MMU bypass, non-constant */
+#define SPARC64_LD_PHYS_NONCONST(ld)	\
+	__asm volatile(							\
+		"rdpr %%pstate,%1;	"				\
+		"sllx %3,32,%0;		"				\
+		"wrpr %1,8,%%pstate;	"				\
+		"or %0,%2,%0;		"				\
+		"wr %4,%%g0,%%asi;	"				\
+		#ld " [%0]%%asi,%0;	"				\
+		"wrpr %1,0,%%pstate	"				\
+		: "=&r" (_v),  "=&r" (_pstate)				\
+		: "r" ((uint32_t)(loc)), "r" (_hi), "r" (asi))
+/* 32-bit kernel, non-constant */
+#define SPARC64_LD_NONCONST(ld)	\
+	__asm volatile(							\
+		"wr %2,%%g0,%%asi;	"				\
+		#ld " [%1]%%asi,%0	"				\
+		: "=&r" (_v)						\
+		: "r" ((uint32_t)(loc)), "r" (asi))
+/* 32-bit kernel, MMU bypass, non-constant, 64-bit value */
+#define SPARC64_LD_PHYS_NONCONST64(ld)	\
+	__asm volatile(							\
+		"rdpr %%pstate,%1;	"				\
+		"sllx %3,32,%0;		"				\
+		"wrpr %1,8,%%pstate;	"				\
+		"or %0,%2,%0;		"				\
+		"wr %4,%%g0,%%asi;	"				\
+		#ld " [%0]%%asi,%0;	"				\
+		"wrpr %1,0,%%pstate;	"				\
+		"srlx %0,32,%1;		"				\
+		"srl %0,0,%0		"				\
+		: "=&r" (_vlo), "=&r" (_vhi)				\
+		: "r" ((uint32_t)(loc)), "r" (_hi), "r" (asi))
+/* 32-bit kernel, non-constant, 64-bit value  */
+#define SPARC64_LD_NONCONST64(ld)	\
+	__asm volatile(							\
+		"wr %3,%%g0,%%asi;	"				\
+		#ld " [%2]%%asi,%0;	"				\
+		"srlx %0,32,%1;		"				\
+		"srl %0,0,%0		"				\
+		: "=&r" (_vlo), "=&r" (_vhi)				\
+		: "r" ((uint32_t)(loc)), "r" (asi))
+
+#if defined(__GNUC__) && defined(__OPTIMIZE__)
+#define SPARC64_LD_DEF(ld, type, vtype)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	vtype _v;							\
+	uint32_t _hi, _pstate;						\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				"rdpr %%pstate,%1;	"		\
+				"sllx %3,32,%0;		"		\
+				"wrpr %1,8,%%pstate;	"		\
+				"or %0,%2,%0;		"		\
+				#ld " [%0]%4,%0;	"		\
+				"wrpr %1,0,%%pstate;	"		\
+				: "=&r" (_v),  "=&r" (_pstate)		\
+				: "r" ((uint32_t)(loc)), "r" (_hi),	\
+				  "n" (asi));				\
+		else							\
+			SPARC64_LD_PHYS_NONCONST(ld);			\
+	} else {							\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				#ld " [%1]%2,%0		"		\
+				: "=&r" (_v)				\
+				: "r" ((uint32_t)(loc)), "n" (asi));	\
+		else							\
+			SPARC64_LD_NONCONST(ld);			\
+	}								\
+	return _v;							\
 }
-
-/* load signed int from alternate address space */
-static __inline int
-ldswa(paddr_t loc, int asi)
-{
-	register int _lda_v, _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"rdpr %%pstate,%1;	"
-			"wrpr %1,8,%%pstate;	"
-			"sllx %3,32,%0;		"
-			" or %0,%2,%0;		"
-			"membar #Sync;		"
-			"ldswa [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v), "=&r" (_pstate)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %3,%%g0,%%asi;	"
-			"sllx %2,32,%0;		"
-			"or %0,%1,%0;		"
-			"ldswa [%0]%%asi,%0;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return (_lda_v);
-}
-#endif /* __arch64__ */
-
-#ifdef	__arch64__
-/* load 64-bit int from alternate address space -- these should never be used */
-static __inline uint64_t
-ldda(paddr_t loc, int asi)
-{
-	register long long _lda_v;
-
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"ldda [%1]%%asi,%0	"
-		: "=r" (_lda_v)
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lda_v);
+#define SPARC64_LD_DEF64(ld, type)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	uint32_t _vlo, _vhi, _hi;					\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				"rdpr %%pstate,%1;	"		\
+				"sllx %3,32,%0;		"		\
+				"wrpr %1,8,%%pstate;	"		\
+				"or %0,%2,%0;		"		\
+				#ld " [%0]%4,%0;	"		\
+				"wrpr %1,0,%%pstate;	"		\
+				"srlx %0,32,%1;		"		\
+				"srl %0,0,%0		"		\
+				: "=&r" (_vlo),  "=&r" (_vhi)		\
+				: "r" ((uint32_t)(loc)), "r" (_hi),	\
+				  "n" (asi));				\
+		else							\
+			SPARC64_LD_PHYS_NONCONST64(ld);			\
+	} else {							\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				#ld " [%2]%3,%0;	"		\
+				"srlx %0,32,%1;		"		\
+				"srl %0,0,%0		"		\
+				: "=&r" (_vlo),  "=&r" (_vhi)		\
+				: "r" ((uint32_t)(loc)), "n" (asi));	\
+		else							\
+			SPARC64_LD_NONCONST64(ld);			\
+	}								\
+	return ((uint64_t)_vhi << 32) | _vlo;				\
 }
 #else
-/* load 64-bit int from alternate address space */
-static __inline uint64_t
-ldda(paddr_t loc, int asi)
-{
-	register long long _lda_v, _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"rdpr %%pstate,%1;	"
-			"wrpr %1,8,%%pstate;	"
-			"sllx %3,32,%0;		"
-			"or %0,%2,%0;		"
-			"membar #Sync;		"
-			"ldda [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v), "=&r" (_pstate)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %3,%%g0,%%asi;	"
-			"sllx %2,32,%0;		"
-			" or %0,%1,%0;		"
-			"ldda [%0]%%asi,%0;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_lda_v)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return (_lda_v);
+#define SPARC64_LD_DEF(ld, type, vtype)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	vtype _v;							\
+	uint32_t _hi, _pstate;						\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		SPARC64_LD_PHYS_NONCONST(ld);				\
+	} else								\
+		SPARC64_LD_NONCONST(ld);				\
+	return _v;							\
+}
+#define SPARC64_LD_DEF64(ld, type)	\
+static __inline type ld(paddr_t loc, int asi)				\
+{									\
+	uint32_t _vlo, _vhi, _hi;					\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		SPARC64_LD_PHYS_NONCONST64(ld);				\
+	} else								\
+		SPARC64_LD_NONCONST64(ld);				\
+	return ((uint64_t)_vhi << 32) | _vlo;				\
 }
 #endif
+
+#endif	/* __arch64__ */
+
+/* load byte from alternate address space */
+SPARC64_LD_DEF(lduba, uint8_t, uint32_t)
+/* load half-word from alternate address space */
+SPARC64_LD_DEF(lduha, uint16_t, uint32_t)
+/* load unsigned int from alternate address space */
+SPARC64_LD_DEF(lda, uint32_t, uint32_t)
+/* load signed int from alternate address space */
+SPARC64_LD_DEF(ldswa, int, int)
+/* load 64-bit unsigned int from alternate address space */
+SPARC64_LD_DEF64(ldxa, uint64_t)
 
 
 #ifdef __arch64__
-/* native load 64-bit int from alternate address space w/64-bit compiler*/
-static __inline uint64_t
-ldxa(paddr_t loc, int asi)
-{
-	register unsigned long _lda_v;
 
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"ldxa [%1]%%asi,%0	"
-		: "=r" (_lda_v)
-		: "r" ((unsigned long)(loc)), "r" (asi));
-	return (_lda_v);
+/* 64-bit kernel, non-constant */
+#define SPARC64_ST_NONCONST(st)	\
+	__asm volatile(							\
+		"wr %2,%%g0,%%asi;	"				\
+		#st " %0,[%1]%%asi	"				\
+		: : "r" (value), "r" ((__uintptr_t)(loc)),		\
+		    "r" (asi))
+
+#if defined(__GNUC__) && defined(__OPTIMIZE__)
+#define SPARC64_ST_DEF(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	if (__builtin_constant_p(asi))					\
+		__asm volatile(						\
+			#st " %0,[%1]%2		"			\
+			: : "r" (value), "r" ((__uintptr_t)(loc)),	\
+			    "n" (asi));					\
+	else								\
+		SPARC64_ST_NONCONST(st);				\
 }
 #else
-/* native load 64-bit int from alternate address space w/32-bit compiler*/
-static __inline uint64_t
-ldxa(paddr_t loc, int asi)
-{
-	register unsigned long _ldxa_lo, _ldxa_hi, _loc_hi;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"rdpr %%pstate,%1;	"
-			"sllx %3,32,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"or %0, %2, %0;		"
-			"membar #Sync;		"
-			"ldxa [%0]%%asi,%0;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"srlx %0, 32, %1;	"
-			"srl %0, 0, %0;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_ldxa_lo), "=&r" (_ldxa_hi)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"or %0,%2,%0;		"
-			"ldxa [%0]%%asi,%0;	"
-			"srlx %0,32,%1;		"
-			"srl %0, 0, %0;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_ldxa_lo), "=&r" (_ldxa_hi)
-			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-	return ((((int64_t)_ldxa_hi)<<32)|_ldxa_lo);
+#define SPARC64_ST_DEF(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	SPARC64_ST_NONCONST(st);					\
 }
 #endif
+#define SPARC64_ST_DEF64(st, type)	SPARC64_ST_DEF(st, type)
+
+#else	/* __arch64__ */
+
+/* 32-bit kernel, MMU bypass, non-constant */
+#define SPARC64_ST_PHYS_NONCONST(st)	\
+	__asm volatile(							\
+		"rdpr %%pstate,%1;	"				\
+		"sllx %4,32,%0;		"				\
+		"wrpr %1,8,%%pstate;	"				\
+		"or %0,%3,%0;		"				\
+		"wr %5,%%g0,%%asi;	"				\
+		#st " %2,[%0]%%asi;	"				\
+		"wrpr %1,0,%%pstate	"				\
+		: "=&r" (_hi), "=&r" (_pstate)				\
+		: "r" (value), "r" ((uint32_t)(loc)),			\
+		  "r" (_hi), "r" (asi))
+/* 32-bit kernel, non-constant */
+#define SPARC64_ST_NONCONST(st)	\
+	__asm volatile(							\
+		"wr %2,%%g0,%%asi;	"				\
+		#st " %0,[%1]%%asi	"				\
+		: : "r" (value), "r" ((uint32_t)(loc)), "r" (asi))
+/* 32-bit kernel, MMU bypass, non-constant, 64-bit value */
+#define SPARC64_ST_PHYS_NONCONST64(st)	\
+	__asm volatile(							\
+		"sllx %4,32,%1;		"				\
+		"sllx %6,32,%0; 	"				\
+		"rdpr %%pstate,%2;	"				\
+		"or %1,%3,%1;		"				\
+		"wrpr %2,8,%%pstate;	"				\
+		"or %0,%5,%0;		"				\
+		"wr %7,%%g0,%%asi;	"				\
+		#st " %1,[%0]%%asi;	"				\
+		"wrpr %2,0,%%pstate	"				\
+		: "=&r" (_hi), "=&r" (_vhi), "=&r" (_vlo)		\
+		: "r" (_vlo), "r" (_vhi),				\
+		  "r" ((uint32_t)(loc)), "r" (_hi), "r" (asi))
+/* 32-bit kernel, non-constant, 64-bit value */
+#define SPARC64_ST_NONCONST64(st)	\
+	__asm volatile(							\
+		"sllx %2,32,%0;		"				\
+		"or %0,%1,%0;		"				\
+		"wr %4,%%g0,%%asi;	"				\
+		#st " %0,[%3]%%asi	"				\
+		: "=&r" (_vhi)						\
+		: "r" (_vlo), "r" (_vhi),				\
+		  "r" ((uint32_t)(loc)), "r" (asi))
+
+#if defined(__GNUC__) && defined(__OPTIMIZE__)
+#define SPARC64_ST_DEF(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	uint32_t _hi, _pstate;						\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				"sllx %4,32,%0;		"		\
+				"rdpr %%pstate,%1;	"		\
+				"or %0,%3,%0;		"		\
+				"wrpr %1,8,%%pstate;	"		\
+				#st " %2,[%0]%5;	"		\
+				"wrpr %1,0,%%pstate	"		\
+				: "=&r" (_hi), "=&r" (_pstate)		\
+				: "r" (value), "r" ((uint32_t)(loc)),	\
+				  "r" (_hi), "n" (asi));		\
+		else							\
+			SPARC64_ST_PHYS_NONCONST(st);			\
+	} else {							\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				#st " %0,[%1]%2		"		\
+				: : "r" (value), "r" ((uint32_t)(loc)),	\
+				  "n" (asi));				\
+		else							\
+			SPARC64_ST_NONCONST(st);			\
+	}								\
+}
+#define SPARC64_ST_DEF64(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	uint32_t _vlo, _vhi, _hi;					\
+	_vlo = value;							\
+	_vhi = (uint64_t)(value) >> 32;					\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				"sllx %4,32,%1;		"		\
+				"sllx %6,32,%0; 	"		\
+				"rdpr %%pstate,%2;	"		\
+				"or %1,%3,%1;		"		\
+				"or %0,%5,%0;		"		\
+				"wrpr %2,8,%%pstate;	"		\
+				#st " %1,[%0]%7;	"		\
+				"wrpr %2,0,%%pstate	"		\
+				: "=&r" (_hi), "=&r" (_vhi), "=&r" (_vlo) \
+				: "r" (_vlo), "r" (_vhi),		\
+				  "r" ((uint32_t)(loc)), "r" (_hi),	\
+				  "n" (asi));				\
+		else							\
+			SPARC64_ST_PHYS_NONCONST64(st);			\
+	} else {							\
+		if (__builtin_constant_p(asi))				\
+			__asm volatile(					\
+				"sllx %2,32,%0;		"		\
+				"or %0,%1,%0;		"		\
+				#st " %0,[%3]%4		"		\
+				: "=&r" (_vhi)				\
+				: "r" (_vlo), "r" (_vhi),		\
+				  "r" ((uint32_t)(loc)), "n" (asi));	\
+		else							\
+			SPARC64_ST_NONCONST64(st);			\
+	}								\
+}
+#else
+#define SPARC64_ST_DEF(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	uint32_t _hi, _pstate;						\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		SPARC64_ST_PHYS_NONCONST(st);				\
+	} else								\
+		SPARC64_ST_NONCONST(st);				\
+}
+#define SPARC64_ST_DEF64(st, type)	\
+static __inline void st(paddr_t loc, int asi, type value)		\
+{									\
+	uint32_t _vlo, _vhi, _hi;					\
+	_vlo = value;							\
+	_vhi = (uint64_t)(value) >> 32;					\
+	if (PHYS_ASI(asi)) {						\
+		_hi = (uint64_t)(loc) >> 32;				\
+		SPARC64_ST_PHYS_NONCONST64(st);				\
+	} else								\
+		SPARC64_ST_NONCONST64(st);				\
+}
+#endif
+
+#endif	/* __arch64__ */
 
 /* store byte to alternate address space */
-#ifdef __arch64__
-static __inline void 
-stba(paddr_t loc, int asi, u_char value)
-{
-	__asm volatile(
-		"wr %2, %%g0, %%asi;	"
-		"stba %0, [%1]%%asi	"
-		: : "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi));
-}
-#else
-static __inline void 
-stba(paddr_t loc, int asi, u_char value)
-{
-	register int _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %5,%%g0,%%asi;	"
-			"sllx %4,32,%0;		"
-			"rdpr %%pstate,%1;	"
-			"or %3,%0,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"stba %2,[%0]%%asi;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_pstate)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	} else {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"or %2,%0,%0;		"
-			"stba %1,[%0]%%asi;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
-	}
-}
-#endif
-
+SPARC64_ST_DEF(stba, uint8_t)
 /* store half-word to alternate address space */
-#ifdef __arch64__
-static __inline void
-stha(paddr_t loc, int asi, u_short value)
-{
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"stha %0,[%1]%%asi	"
-		: : "r" ((int)(value)), "r" ((unsigned long)(loc)),
-		"r" (asi) : "memory");
-}
-#else
-static __inline void
-stha(paddr_t loc, int asi, u_short value)
-{
-	register int _loc_hi, _pstate;
+SPARC64_ST_DEF(stha, uint16_t)
+/* store unsigned int to alternate address space */
+SPARC64_ST_DEF(sta, uint32_t)
+/* store 64-bit unsigned int to alternate address space */
+SPARC64_ST_DEF64(stxa, uint64_t)
 
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %5,%%g0,%%asi;	"
-			"sllx %4,32,%0;		"
-			"rdpr %%pstate,%1;	"
-			"or %3,%0,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"stha %2,[%0]%%asi; 	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_pstate)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	} else {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"or %2,%0,%0;		"
-			"stha %1,[%0]%%asi;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	}
-}
-#endif
-
-
-/* store int to alternate address space */
-#ifdef __arch64__
-static __inline void
-sta(paddr_t loc, int asi, u_int value)
-{
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"sta %0,[%1]%%asi	"
-		: : "r" ((int)(value)), "r" ((unsigned long)(loc)),
-		"r" (asi) : "memory");
-}
-#else
-static __inline void
-sta(paddr_t loc, int asi, u_int value)
-{
-	register int _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %5,%%g0,%%asi;	"
-			"sllx %4,32,%0;		"
-			"rdpr %%pstate,%1;	"
-			"or %3,%0,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"sta %2,[%0]%%asi;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_pstate)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	} else {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"or %2,%0,%0;		"
-			"sta %1,[%0]%%asi;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi)
-			: "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	}
-}
-#endif
-
-/* store 64-bit int to alternate address space */
-#ifdef __arch64__
-static __inline void
-stda(paddr_t loc, int asi, uint64_t value)
-{
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"stda %0,[%1]%%asi	"
-		: : "r" ((long long)(value)), "r" ((unsigned long)(loc)), "r" (asi)
-		: "memory");
-}
-#else
-static __inline void
-stda(paddr_t loc, int asi, uint64_t value)
-{
-	register int _loc_hi, _pstate;
-
-	_loc_hi = (((uint64_t)loc)>>32);
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %5,%%g0,%%asi;	"
-			"sllx %4,32,%0;		"
-			"rdpr %%pstate,%1;	"
-			"or %3,%0,%0;		"
-			"wrpr %1,8,%%pstate;	"
-			"stda %2,[%0]%%asi;	"
-			"wrpr %1,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_pstate)
-			: "r" ((long long)(value)), "r" ((unsigned long)(loc)),
-			"r" (_loc_hi), "r" (asi)
-			: "memory");
-	} else {
-		__asm volatile(
-			"wr %4,%%g0,%%asi;	"
-			"sllx %3,32,%0;		"
-			"or %2,%0,%0;		"
-			"stda %1,[%0]%%asi;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi)
-			: "r" ((long long)(value)), "r" ((unsigned long)(loc)),
-			"r" (_loc_hi), "r" (asi)
-			: "memory");
-	}
-}
-#endif
 
 /* set dmmu secondary context */
 static __inline void
@@ -969,67 +851,9 @@ dmmu_set_secondary_context(uint ctx)
 	__asm volatile(
 		"stxa %0,[%1]%2;	"
 		"membar #Sync		"
-		: : "r" (ctx),
-		"r" (CTX_SECONDARY), "n" (ASI_DMMU)
+		: : "r" (ctx), "r" (CTX_SECONDARY), "n" (ASI_DMMU)
 		: "memory");
 }
-
-#ifdef __arch64__
-/* native store 64-bit int to alternate address space w/64-bit compiler*/
-static __inline void
-stxa(paddr_t loc, int asi, uint64_t value)
-{
-	__asm volatile(
-		"wr %2,%%g0,%%asi;	"
-		"stxa %0,[%1]%%asi	"
-		: : "r" ((unsigned long)(value)),
-		"r" ((unsigned long)(loc)), "r" (asi)
-		: "memory");
-}
-#else
-/* native store 64-bit int to alternate address space w/32-bit compiler*/
-static __inline void
-stxa(paddr_t loc, int asi, uint64_t value)
-{
-	int _stxa_lo, _stxa_hi, _loc_hi;
-
-	_stxa_lo = value; 
-	_stxa_hi = ((uint64_t)value)>>32;
-	_loc_hi = (((uint64_t)loc)>>32);
-
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %7,%%g0,%%asi;	"
-			"sllx %4,32,%1;		"
-			"sllx %6,32,%0; 	"
-			"or %1,%3,%1;		"
-			"rdpr %%pstate,%2;	"
-			"or %0,%5,%0;		"
-			"wrpr %2,8,%%pstate;	"
-			"stxa %1,[%0]%%asi;	"
-			"wrpr %2,0,%%pstate;	"
-			"membar #Sync;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_stxa_hi), "=&r" ((int)(_stxa_lo))
-			: "r" ((int)(_stxa_lo)), "r" ((int)(_stxa_hi)), 
-			"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	} else {
-		__asm volatile(
-			"wr %6,%%g0,%%asi;	"
-			"sllx %3,32,%1;		"
-			"sllx %5,32,%0;		"
-			"or %1,%2,%1;		"
-			"or %0,%4,%0;		"
-			"stxa %1,[%0]%%asi;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "=&r" (_stxa_hi)
-			: "r" ((int)(_stxa_lo)), "r" ((int)(_stxa_hi)),
-			"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)
-			: "memory");
-	}
-}
-#endif
 
 #ifdef __arch64__
 /* native store 32-bit int to alternate address space w/64-bit compiler*/
