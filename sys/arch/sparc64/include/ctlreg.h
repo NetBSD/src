@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.47 2009/12/05 07:58:57 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.48 2009/12/05 08:00:18 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -855,120 +855,8 @@ dmmu_set_secondary_context(uint ctx)
 		: "memory");
 }
 
-#ifdef __arch64__
-/* native store 32-bit int to alternate address space w/64-bit compiler*/
-static __inline uint32_t
-casa(paddr_t loc, int asi, uint32_t value, uint32_t oldvalue)
-{
-	__asm volatile(
-		"wr %3,%%g0,%%asi;	"
-		"casa [%1]%%asi,%2,%0	"
-		: "+r" (value)
-		: "r" ((unsigned long)(loc)), "r" (oldvalue), "r" (asi)
-		: "memory");
-	return (value);
-}
-/* native store 64-bit int to alternate address space w/64-bit compiler*/
-static __inline uint64_t
-casxa(paddr_t loc, int asi, uint64_t value, uint64_t oldvalue)
-{
-	__asm volatile(
-		"wr %3,%%g0,%%asi;	"
-		"casxa [%1]%%asi,%2,%0	"
-		: "+r" (value)
-		: "r" ((unsigned long)(loc)), "r" (oldvalue), "r" (asi)
-		: "memory");
-	return (value);
-}
-#else
-#if 0
-/* native store 64-bit int to alternate address space w/32-bit compiler*/
-static __inline uint64_t
-casxa(paddr_t loc, int asi, uint64_t value, uint64_t oldvalue)
-{
-	int _casxa_lo, _casxa_hi, _loc_hi, _oval_hi;
-
-	_casxa_lo = value; 
-	_casxa_hi = ((uint64_t)value)>>32;
-	_oval_hi = ((uint64_t)oldvalue)>>32;
-	_loc_hi = (((uint64_t)loc)>>32);
-
-#ifdef __notyet
-/*
- * gcc cannot handle this since it thinks it has >10 asm operands.
- */
-	if (PHYS_ASI(asi)) {
-		__asm volatile(
-			"wr %6,%%g0,%%asi;	"
-			"sllx %1,32,%1;		"
-			"rdpr %%pstate,%2;	"
-			"sllx %0,32,%0;		"
-			"or %1,%2,%1;		"
-			"sllx %3,32,%3;		"
-			"or %0,%4,%0;		"
-			"or %3,%5,%3;		"
-			"wrpr %2,8,%%pstate;	"
-			"casxa [%0]%%asi,%3,%1; "
-			"wrpr %2,0,%%pstate;	" 
-			"andn %0,0x1f,%3;      	"
-			"membar #Sync;		"
-			"sll %1,0,%2;		"
-			"srax %1,32,%1;		"
-			"wr %%g0, 0x82, %%asi	"
-			: "+r" (_loc_hi), "+r" (_casxa_hi), "+r" (_casxa_lo), "+r" (_oval_hi)
-			: "r" ((unsigned long)(loc)), "r" ((unsigned int)(oldvalue)),
-			"r" (asi)
-			: "memory");
-	} else {
-		__asm volatile(
-			"wr %7,%%g0,%%asi;	"
-			"sllx %1,32,%1;		"
-			"sllx %5,32,%0;		"
-			"or %1,%2,%1;		"
-			"sllx %3,32,%2;		"
-			"or %0,%4,%0;		"
-			"or %2,%4,%2;		"
-			"casxa [%0]%%asi,%2,%1; "
-			"sll %1,0,%2;		"
-			"srax %o1,32,%o1;	"
-			"wr %%g0, 0x82, %%asi	"
-			: "=&r" (_loc_hi), "+r" (_casxa_hi), "+r" (_casxa_lo)
-			: "r" ((int)(_oval_hi)), "r" ((int)(oldvalue)),
-			"r" ((unsigned long)(loc)), "r" (_loc_hi),
-			"r" (asi)
-			: "memory");
-	}
-#endif
-	return (((uint64_t)_casxa_hi<<32)|(uint64_t)_casxa_lo);
-}
-#endif
-#endif
-
 /* flush address from data cache */
-#define	flush(loc) ({ \
-	__asm volatile("flush %0" : : \
-	     "r" ((unsigned long)(loc))); \
-})
-
-/* Flush a D$ line */
-#if 0
-#define	flushline(loc) ({ \
-	stxa(((paddr_t)loc)&(~0x1f), (ASI_DCACHE_TAG), 0); \
-        membar_sync(); \
-})
-#endif
-
-/* The following two enable or disable the dcache in the LSU control register */
-#define	dcenable() ({ \
-	int res; \
-	__asm volatile("ldxa [%%g0] %1,%0; or %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
-		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
-})
-#define	dcdisable() ({ \
-	int res; \
-	__asm volatile("ldxa [%%g0] %1,%0; andn %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
-		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
-})
+#define	flush(loc) __asm volatile("flush %0" : : "r" ((__uintptr_t)(loc)))
 
 /*
  * SPARC V9 memory barrier instructions.
