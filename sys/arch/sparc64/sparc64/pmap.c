@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.244 2009/11/27 03:23:14 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245 2009/12/05 22:02:53 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.244 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2009/12/05 22:02:53 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -220,7 +220,6 @@ extern struct tlb_entry *kernel_tlbs;
 extern int kernel_tlb_slots;
 
 static int npgs;
-static u_int nextavail;
 
 vaddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 
@@ -1153,8 +1152,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
 	 */
-	nextavail = avail->start;
-	avail_start = nextavail;
+	avail_start = avail->start;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
 
