@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.88 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: iommu.c,v 1.89 2009/12/05 16:48:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.88 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89 2009/12/05 16:48:26 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -999,6 +999,10 @@ void
 iommu_dvmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	bus_size_t len, int ops)
 {
+
+	/* If len is 0, then there is nothing to do */
+	if (len == 0)
+		return;
 
 	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
 		/* Flush the CPU then the IOMMU */
