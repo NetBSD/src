@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.37 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.38 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.37 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.38 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -578,24 +578,16 @@ int
 ubt_activate(device_ptr_t self, enum devact act)
 {
 	struct ubt_softc *sc = USBGETSOFTC(self);
-	int error = 0;
 
 	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
-
+		return 0;
 	default:
-		error = EOPNOTSUPP;
-		break;
+		return EOPNOTSUPP;
 	}
-
-	return error;
 }
 
 /* set ISOC configuration */

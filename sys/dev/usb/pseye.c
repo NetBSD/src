@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.14 2009/09/23 19:07:19 plunky Exp $ */
+/* $NetBSD: pseye.c,v 1.15 2009/12/06 21:40:31 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.14 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.15 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,19 +309,14 @@ int
 pseye_activate(device_ptr_t self, enum devact act)
 {
 	struct pseye_softc *sc = device_private(self);
-	int rv;
-
-	rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.82 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: uhid.c,v 1.83 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.82 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.83 2009/12/06 21:40:31 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -175,14 +175,12 @@ uhid_activate(device_ptr_t self, enum devact act)
 	struct uhid_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 int
