@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2006/07/03 13:06:12 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2009/12/06 07:12:17 uebayasi Exp $
 
 SRCS+=	fabs.S modf.S
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
@@ -23,7 +23,7 @@ SRCS+=	makecontext.c resumecontext.c _lwp.c swapcontext.S
 SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
 
-SRCS.sparc.gen=	Lint_swapcontext.c
-LSRCS+=		${SRCS.sparc.gen}
-DPSRCS+=	${SRCS.sparc.gen}
-CLEANFILES+=	${SRCS.sparc.gen}
+LSRCS.sparc.gen=	Lint_swapcontext.c
+LSRCS+=		${LSRCS.sparc.gen}
+DPSRCS+=	${LSRCS.sparc.gen}
+CLEANFILES+=	${LSRCS.sparc.gen}
