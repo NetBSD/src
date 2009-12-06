@@ -1,4 +1,5 @@
-/*        $NetBSD: dm_ioctl.c,v 1.16 2009/12/05 01:21:41 haad Exp $      */
+
+/*        $NetBSD: dm_ioctl.c,v 1.17 2009/12/06 14:33:46 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -619,7 +620,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	const char *name, *uuid;
 	uint32_t flags, minor;
-	
+
+	int table_type;
 	size_t i;
 
 	name = NULL;
@@ -648,12 +650,18 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	
 	aprint_debug("Getting table deps for device: %s\n", dmv->name);
 
-	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
+	/* if DM_QUERY_INACTIVE_TABLE_FLAG is passed we need to query INACTIVE TABLE */
+	if (flags & DM_QUERY_INACTIVE_TABLE_FLAG)
+		table_type = DM_TABLE_INACTIVE;
+	else
+		table_type = DM_TABLE_ACTIVE;
+	
+	tbl = dm_table_get_entry(&dmv->table_head, table_type);
 
 	SLIST_FOREACH(table_en, tbl, next)
        		table_en->target->deps(table_en, cmd_array);
 
-	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+	dm_table_release(&dmv->table_head, table_type);
 	dm_dev_unbusy(dmv);
 		
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
@@ -848,6 +856,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	const char *name, *uuid;
 	char *params;
 	int flags;
+	int table_type;
 	
 	dmv = NULL;
 	uuid = NULL;
@@ -868,6 +877,12 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 
+	/* if DM_QUERY_INACTIVE_TABLE_FLAG is passed we need to query INACTIVE TABLE */
+	if (flags & DM_QUERY_INACTIVE_TABLE_FLAG)
+		table_type = DM_TABLE_INACTIVE;
+	else
+		table_type = DM_TABLE_ACTIVE;
+		
 	if (dm_table_get_target_count(&dmv->table_head, DM_TABLE_ACTIVE))
 		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
 	else {
@@ -885,13 +900,10 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
-	/* I should use mutex here and not rwlock there can be IO operation
-	   during this ioctl on device. */
-
 	aprint_debug("Status of device tables: %s--%d\n",
 	    name, dmv->table_head.cur_active_table);
 	
-	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
+	tbl = dm_table_get_entry(&dmv->table_head, table_type);
 	
 	SLIST_FOREACH(table_en, tbl, next)
 	{
@@ -928,9 +940,10 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_object_release(target_dict);
 	}
 
-	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+	dm_table_release(&dmv->table_head, table_type);
 	dm_dev_unbusy(dmv);
-	
+
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, flags);
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
 	prop_object_release(cmd_array);
 	
@@ -969,5 +982,7 @@ dm_check_version(prop_dictionary_t dm_dict)
 	prop_array_set_uint32(ver, 1, DM_VERSION_MINOR);
 	prop_array_set_uint32(ver, 2, DM_VERSION_PATCHLEVEL);
 
+	prop_dictionary_set(dm_dict, DM_IOCTL_VERSION, ver);
+	
 	return 0;
 }

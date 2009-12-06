@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.9 2009/10/16 21:23:08 joerg Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.10 2009/12/06 14:33:46 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -228,14 +228,17 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in)) != 0)
 			return r;
 
-		dm_check_version(dm_dict_in);
+		if ((r = dm_check_version(dm_dict_in)) != 0) {
+			    prop_object_release(dm_dict_in);
+			    return r;
+		}
 
 		/* call cmd selected function */
 		if ((r = dm_ioctl_switch(cmd)) != 0) {
 			prop_object_release(dm_dict_in);
 			return r;
 		}
-		
+		    
 		/* run ioctl routine */
 		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0) {
 			prop_object_release(dm_dict_in);
