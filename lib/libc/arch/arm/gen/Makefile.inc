@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15 2006/06/28 14:46:32 drochner Exp $
+# $NetBSD: Makefile.inc,v 1.16 2009/12/06 07:12:17 uebayasi Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 	fabs.c flt_rounds.c
@@ -21,7 +21,7 @@ SRCS+=	makecontext.c resumecontext.c swapcontext.S
 
 SRCS+=	_lwp.c
 
-SRCS.arm.gen=	Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
-LSRCS+=		${SRCS.arm.gen}
-DPSRCS+=	${SRCS.arm.gen}
-CLEANFILES+=	${SRCS.arm.gen}
+LSRCS.arm.gen=	Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
+LSRCS+=		${LSRCS.arm.gen}
+DPSRCS+=	${LSRCS.arm.gen}
+CLEANFILES+=	${LSRCS.arm.gen}

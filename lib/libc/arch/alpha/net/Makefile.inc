@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.4 2003/08/01 17:03:46 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2009/12/06 07:12:17 uebayasi Exp $
 
 # objects built from assembler sources (need lint stubs)
 # hton* and nto* functions provided by ../gen/byte_swap_*.S
 SRCS+=  
 
-SRCS.alpha.net=	Lint_htonl.c Lint_htons.c Lint_ntohl.c Lint_ntohs.c
-LSRCS+=		${SRCS.alpha.net}
-DPSRCS+=	${SRCS.alpha.net}
-CLEANFILES+=	${SRCS.alpha.net}
+LSRCS.alpha.net=	Lint_htonl.c Lint_htons.c Lint_ntohl.c Lint_ntohs.c
+LSRCS+=		${LSRCS.alpha.net}
+DPSRCS+=	${LSRCS.alpha.net}
+CLEANFILES+=	${LSRCS.alpha.net}

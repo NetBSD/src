@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2006/06/28 14:46:32 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2009/12/06 07:12:17 uebayasi Exp $
 
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
@@ -18,9 +18,9 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	nanf.c
 
-SRCS.sh3.gen=	Lint__setjmp.c Lint___setjmp14.c Lint___sigsetjmp14.c \
+LSRCS.sh3.gen=	Lint__setjmp.c Lint___setjmp14.c Lint___sigsetjmp14.c \
 		Lint_swapcontext.c
 
-LSRCS+=		${SRCS.sh3.gen}
-DPSRCS+=	${SRCS.sh3.gen}
-CLEANFILES+=	${SRCS.sh3.gen}
+LSRCS+=		${LSRCS.sh3.gen}
+DPSRCS+=	${LSRCS.sh3.gen}
+CLEANFILES+=	${LSRCS.sh3.gen}

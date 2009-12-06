@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2009/06/03 01:02:28 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2009/12/06 07:12:18 uebayasi Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.S \
 	fabs.S frexp.c \
@@ -20,7 +20,7 @@ SRCS+=	isinf.c isnan.c
 SRCS+=	setjmp.S sigsetjmp.S
 .endif
 
-SRCS.vax.gen=	Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
-LSRCS+=		${SRCS.vax.gen}
-DPSRCS+=	${SRCS.vax.gen}
-CLEANFILES+=	${SRCS.vax.gen}
+LSRCS.vax.gen=	Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
+LSRCS+=		${LSRCS.vax.gen}
+DPSRCS+=	${LSRCS.vax.gen}
+CLEANFILES+=	${LSRCS.vax.gen}
