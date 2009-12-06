@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.89 2009/12/02 15:53:34 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.90 2009/12/06 00:33:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.89 2009/12/02 15:53:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.90 2009/12/06 00:33:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -118,7 +118,7 @@ static cpu_kcore_hdr_t cpu_kcore_hdr;
 extern u_int 	lowram;
 int		machineid, mmutype, cputype, astpending;
 #if defined(M68040) || defined(M68060)
-extern int	protostfree;
+extern u_int	protostfree;
 #endif
 
 extern char		*esym;
