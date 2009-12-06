@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.39 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: tropic.c,v 1.40 2009/12/06 23:14:39 dyoung Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.39 2009/05/12 14:25:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.40 2009/12/06 23:14:39 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1721,22 +1721,15 @@ tr_disable(struct tr_softc *sc)
 int
 tr_activate(device_t self, enum devact act)
 {
-	struct tr_softc *sc = (struct tr_softc *)self;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int rv = 0, s;
+	struct tr_softc *sc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if_deactivate(ifp);
-		break;
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 int
