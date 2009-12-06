@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.12 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.13 2009/12/06 22:44:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.12 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.13 2009/12/06 22:44:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -348,28 +348,5 @@ iavc_pci_detach(device_t self, int flags)
 	/* XXX: capi detach?!? */
 
 	return 0;
-}
-
-static int
-iavc_pci_activate(device_t self, enum devact act)
-{
-	struct iavc_softc *psc = device_private(self);
-	int error, s;
-
-	error = 0;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-	case DVACT_DEACTIVATE:
-		/* XXX */
-		break;
-	}
-
-	splx(s);
-
-	return error;
 }
 #endif
