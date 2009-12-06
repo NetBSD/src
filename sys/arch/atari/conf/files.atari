@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.114 2009/10/19 13:40:28 tsutsui Exp $
+#	$NetBSD: files.atari,v 1.115 2009/12/06 06:46:26 tsutsui Exp $
 
 maxpartitions 16
 
@@ -202,7 +202,6 @@ file	arch/atari/atari/le_bus.c		pci | isa
 file	arch/atari/atari/machdep.c
 file	arch/atari/atari/mainbus.c
 file	arch/atari/atari/mem.c
-#file	arch/atari/atari/pmap.c
 file	arch/atari/atari/pmap_bootstrap.c
 file	arch/atari/atari/trap.c
 file	arch/atari/atari/stalloc.c
