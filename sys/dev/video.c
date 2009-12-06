@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.22 2009/08/18 02:17:09 christos Exp $ */
+/* $NetBSD: video.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.22 2009/08/18 02:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -322,19 +322,16 @@ video_attach(device_t parent, device_t self, void *aux)
 static int
 video_activate(device_t self, enum devact act)
 {
-	struct video_softc *sc;
+	struct video_softc *sc = device_private(self);
 
-	sc = device_private(self);
 	DPRINTF(("video_activate: sc=%p\n", sc));
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-		
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = true;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return 0;
 }
 
 
