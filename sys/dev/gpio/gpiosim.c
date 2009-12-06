@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.6 2009/08/07 08:08:18 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.7 2009/12/06 22:33:44 dyoung Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -45,7 +45,6 @@ int	gpiosim_match(device_t, cfdata_t, void *);
 void	gpiosimattach(int);
 void	gpiosim_attach(device_t, device_t, void *);
 int	gpiosim_detach(device_t, int);
-int	gpiosim_activate(device_t, enum devact);
 int	gpiosim_sysctl(SYSCTLFN_PROTO);
 
 int	gpiosim_pin_read(void *, int);
@@ -53,7 +52,7 @@ void	gpiosim_pin_write(void *, int, int);
 void	gpiosim_pin_ctl(void *, int, int);
 
 CFATTACH_DECL_NEW(gpiosim, sizeof(struct gpiosim_softc), gpiosim_match,
-    gpiosim_attach, gpiosim_detach, gpiosim_activate);
+    gpiosim_attach, gpiosim_detach, NULL);
 
 extern struct cfdriver gpiosim_cd;
 
@@ -162,18 +161,6 @@ gpiosim_detach(device_t self, int flags)
 	if (sc->sc_log != NULL) {
 		sysctl_teardown(&sc->sc_log);
 		sc->sc_log = NULL;
-	}
-	return 0;
-}
-
-int
-gpiosim_activate(device_t self, enum devact act)
-{
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		break;
 	}
 	return 0;
 }

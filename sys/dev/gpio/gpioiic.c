@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.1 2009/08/09 08:18:00 mbalmer Exp $ */
+/* $NetBSD: gpioiic.c,v 1.2 2009/12/06 22:33:44 dyoung Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.1 2009/08/09 08:18:00 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.2 2009/12/06 22:33:44 dyoung Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -58,7 +58,6 @@ struct gpioiic_softc {
 int		gpioiic_match(device_t, cfdata_t, void *);
 void		gpioiic_attach(device_t, device_t, void *);
 int		gpioiic_detach(device_t, int);
-int		gpioiic_activate(device_t, enum devact);
 
 int		gpioiic_i2c_acquire_bus(void *, int);
 void		gpioiic_i2c_release_bus(void *, int);
@@ -73,7 +72,7 @@ void		gpioiic_bb_set_dir(void *, u_int32_t);
 u_int32_t	gpioiic_bb_read_bits(void *);
 
 CFATTACH_DECL_NEW(gpioiic, sizeof(struct gpioiic_softc),
-	gpioiic_match, gpioiic_attach, gpioiic_detach, gpioiic_activate);
+	gpioiic_match, gpioiic_attach, gpioiic_detach, NULL);
 
 extern struct cfdriver gpioiic_cd;
 
@@ -207,20 +206,6 @@ gpioiic_detach(struct device *self, int flags)
 	if (!rv) {
 		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 		pmf_device_deregister(self);
-	}
-	return rv;
-}
-
-int
-gpioiic_activate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		break;
 	}
 	return rv;
 }
