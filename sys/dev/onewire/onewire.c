@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.12 2009/05/12 14:39:51 cegger Exp $ */
+/* $NetBSD: onewire.c,v 1.13 2009/12/06 22:49:48 dyoung Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.12 2009/05/12 14:39:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.13 2009/12/06 22:49:48 dyoung Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -135,19 +135,14 @@ static int
 onewire_activate(device_t self, enum devact act)
 {
 	struct onewire_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	//return (config_activate_children(self, act));
-	return rv;
 }
 
 int

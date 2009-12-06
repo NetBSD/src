@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.14 2008/05/05 13:58:58 xtraeme Exp $ */
+/*	$NetBSD: owtemp.c,v 1.15 2009/12/06 22:49:48 dyoung Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.14 2008/05/05 13:58:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.15 2009/12/06 22:49:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,14 +143,12 @@ owtemp_activate(device_t self, enum devact act)
 	struct owtemp_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return (0);
 }
 
 static void
