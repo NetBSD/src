@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.30 2009/11/13 01:14:35 dyoung Exp $	*/
+/*	$NetBSD: xirc.c,v 1.31 2009/12/06 23:05:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.30 2009/11/13 01:14:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.31 2009/12/06 23:05:39 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.30 2009/11/13 01:14:35 dyoung Exp $");
 #include <dev/pcmcia/if_xireg.h>
 
 struct xirc_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 
 	struct pcmcia_function *sc_pf;	/* our PCMCIA function */
 	void *sc_ih;			/* interrupt handle */
@@ -126,8 +126,8 @@ void	xirc_attach(device_t, device_t, void *);
 int	xirc_detach(device_t, int);
 void	xirc_childdet(device_t, device_t);
 
-CFATTACH_DECL(xirc, sizeof(struct xirc_softc),
-    xirc_match, xirc_attach, xirc_detach, NULL);
+CFATTACH_DECL2_NEW(xirc, sizeof(struct xirc_softc),
+    xirc_match, xirc_attach, xirc_detach, NULL, NULL, xirc_childdet);
 
 int	xirc_print(void *, const char *);
 
@@ -175,6 +175,8 @@ xirc_attach(device_t parent, device_t self, void *aux)
 	struct pcmcia_config_entry *cfe;
 	int rv;
 	int error;
+
+	sc->sc_dev = self;
 
 	sc->sc_pf = pa->pf;
 
@@ -454,7 +456,7 @@ xirc_enable(struct xirc_softc *sc, int flag, int media)
 	int error;
 
 	if ((sc->sc_flags & flag) == flag) {
-		printf("%s: already enabled\n", device_xname(&sc->sc_dev));
+		printf("%s: already enabled\n", device_xname(sc->sc_dev));
 		return (0);
 	}
 
@@ -501,7 +503,7 @@ xirc_disable(struct xirc_softc *sc, int flag, int media)
 {
 
 	if ((sc->sc_flags & flag) == 0) {
-		printf("%s: already disabled\n", device_xname(&sc->sc_dev));
+		printf("%s: already disabled\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -629,6 +631,8 @@ xi_xirc_attach(device_t parent, device_t self, void *aux)
 	struct xirc_softc *msc = device_private(parent);
 	u_int8_t myla[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
+
 	aprint_normal("\n");
 
 	sc->sc_bst = msc->sc_ethernet_pcioh.iot;
@@ -639,7 +643,7 @@ xi_xirc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enable = xi_xirc_enable;
 	sc->sc_disable = xi_xirc_disable;
 
-	if (!pcmcia_scan_cis(device_parent(&msc->sc_dev),
+	if (!pcmcia_scan_cis(device_parent(msc->sc_dev),
 	    xi_xirc_lan_nid_ciscallback, myla)) {
 		aprint_error_dev(self, "can't find MAC address\n");
 		return;
@@ -652,8 +656,7 @@ xi_xirc_attach(device_t parent, device_t self, void *aux)
 int
 xi_xirc_enable(struct xi_softc *sc)
 {
-	struct xirc_softc *msc =
-	    (struct xirc_softc *)device_parent(&sc->sc_dev);
+	struct xirc_softc *msc = device_private(device_parent(sc->sc_dev));
 
 	return (xirc_enable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER));
 }
@@ -661,8 +664,7 @@ xi_xirc_enable(struct xi_softc *sc)
 void
 xi_xirc_disable(struct xi_softc *sc)
 {
-	struct xirc_softc *msc =
-	    (struct xirc_softc *)device_parent(&sc->sc_dev);
+	struct xirc_softc *msc = device_private(device_parent(sc->sc_dev));
 
 	xirc_disable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER);
 }
