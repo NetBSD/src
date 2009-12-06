@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.3 2009/04/15 00:32:23 lukem Exp $	*/
+/*	$NetBSD: btattach.c,v 1.4 2009/12/06 12:47:37 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.3 2009/04/15 00:32:23 lukem Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.4 2009/12/06 12:47:37 kiyohara Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 		init_speed = (type->speed ? type->speed : speed);
 
 	/* open tty */
-	if ((fd = open(argv[0], O_RDWR | O_NDELAY | O_EXLOCK, 0)) < 0)
+	if ((fd = open(argv[0], O_RDWR | O_EXLOCK, 0)) < 0)
 		err(EXIT_FAILURE, "%s", argv[0]);
 
 	/* setup tty */
@@ -388,27 +388,24 @@ uart_recv_pkt(int fd, struct iovec *iov, int ioc)
 	switch(type) {
 	case HCI_EVENT_PKT:
 		(void)uart_getc(fd, iov, ioc, &count);	/* event */
-		want = sizeof(hci_event_hdr_t);
-		want += uart_getc(fd, iov, ioc, &count);
+		want = uart_getc(fd, iov, ioc, &count);
 		break;
 
 	case HCI_ACL_DATA_PKT:
 		(void)uart_getc(fd, iov, ioc, &count);	/* handle LSB */
 		(void)uart_getc(fd, iov, ioc, &count);	/* handle MSB */
-		want = sizeof(hci_acldata_hdr_t);
-		want += uart_getc(fd, iov, ioc, &count);	/* LSB */
-		want += uart_getc(fd, iov, ioc, &count) << 8;	/* MSB */
+		want = uart_getc(fd, iov, ioc, &count) |	/* LSB */
+		  uart_getc(fd, iov, ioc, &count) << 8;		/* MSB */
 		break;
 
 	case HCI_SCO_DATA_PKT:
 		(void)uart_getc(fd, iov, ioc, &count);	/* handle LSB */
 		(void)uart_getc(fd, iov, ioc, &count);	/* handle MSB */
-		want = sizeof(hci_scodata_hdr_t);
-		want += uart_getc(fd, iov, ioc, &count);
+		want = uart_getc(fd, iov, ioc, &count);
 		break;
 
 	default: /* out of sync? */
-		err(EXIT_FAILURE, "unknown packet type 0x%2.2x", type);
+		errx(EXIT_FAILURE, "unknown packet type 0x%2.2x\n", type);
 	}
 
 	while (want-- > 0)
