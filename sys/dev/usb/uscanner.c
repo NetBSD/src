@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.66 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.67 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.66 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.67 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,14 +626,12 @@ uscanner_activate(device_ptr_t self, enum devact act)
 	struct uscanner_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 

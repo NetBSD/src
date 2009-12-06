@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.105 2009/09/24 22:33:04 pooka Exp $	*/
+/*	$NetBSD: ugen.c,v 1.106 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.105 2009/09/24 22:33:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.106 2009/12/06 21:40:31 dyoung Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -1000,14 +1000,12 @@ ugen_activate(device_ptr_t self, enum devact act)
 	struct ugen_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 
