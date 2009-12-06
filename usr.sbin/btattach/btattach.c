@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.4 2009/12/06 12:47:37 kiyohara Exp $	*/
+/*	$NetBSD: btattach.c,v 1.5 2009/12/06 12:55:46 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.4 2009/12/06 12:47:37 kiyohara Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.5 2009/12/06 12:55:46 kiyohara Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -131,6 +131,14 @@ const struct devtype types[] = {
 	.name = "texas",
 	.line = "btuart",
 	.descr = "Texas Instruments",
+	.cflag = CRTSCTS,
+	.speed = B115200,
+    },
+    {
+	.name = "unistone",
+	.line = "btuart",
+	.descr = "Infineon UniStone",
+	.init = &init_unistone,
 	.cflag = CRTSCTS,
 	.speed = B115200,
     },
