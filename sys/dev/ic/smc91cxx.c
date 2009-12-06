@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.75 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.76 2009/12/06 23:18:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.75 2009/05/12 14:25:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.76 2009/12/06 23:18:37 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1509,21 +1509,15 @@ smc91cxx_disable(struct smc91cxx_softc *sc)
 int
 smc91cxx_activate(device_t self, enum devact act)
 {
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
-	int rv = 0, s;
+	struct smc91cxx_softc *sc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 int
