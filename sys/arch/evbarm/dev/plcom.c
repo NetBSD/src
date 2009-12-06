@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $	*/
+/*	$NetBSD: plcom.c,v 1.31 2009/12/06 21:38:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.31 2009/12/06 21:38:42 dyoung Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -471,6 +471,14 @@ plcom_detach(struct device *self, int flags)
 	struct plcom_softc *sc = (struct plcom_softc *)self;
 	int maj, mn;
 
+	if (sc->sc_hwflags & (PLCOM_HW_CONSOLE|PLCOM_HW_KGDB))
+		return EBUSY;
+
+	if (sc->disable != NULL && sc->enabled != 0) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&plcom_cdevsw);
 
@@ -500,34 +508,17 @@ plcom_detach(struct device *self, int flags)
 }
 
 int
-plcom_activate(struct device *self, enum devact act)
+plcom_activate(device_t self, enum devact act)
 {
-	struct plcom_softc *sc = (struct plcom_softc *)self;
-	int s, rv = 0;
+	struct plcom_softc *sc = device_private(self);
 
-	s = splserial();
-	PLCOM_LOCK(sc);
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (PLCOM_HW_CONSOLE|PLCOM_HW_KGDB)) {
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
+		sc->enabled = 0;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	PLCOM_UNLOCK(sc);	
-	splx(s);
-	return rv;
 }
 
 void
