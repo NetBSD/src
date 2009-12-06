@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.4 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: uberry.c,v 1.5 2009/12/06 21:39:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.4 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.5 2009/12/06 21:39:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,13 @@ static const struct usb_devno uberry_devs[] = {
 #define uberry_lookup(v, p) usb_lookup(uberry_devs, v, p)
 #define UBERRY_CONFIG_NO 1
 
-USB_DECLARE_DRIVER(uberry);
+int	uberry_match(device_t, cfdata_t, void *);
+void	uberry_attach(device_t, device_t, void *);
+int	uberry_detach(device_t, int);
+int	uberry_activate(device_t, enum devact);
+extern struct cfdriver uberry_cd;
+CFATTACH_DECL_NEW(uberry, sizeof(struct uberry_softc), uberry_match,
+    uberry_attach, uberry_detach, NULL);
 
 static void
 uberry_cmd(struct uberry_softc *sc, uint8_t requestType, uint8_t reqno,
@@ -145,19 +151,21 @@ uberry_dual_mode(struct uberry_softc *sc)
 }
 
 
-USB_MATCH(uberry)
+int 
+uberry_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uberry, uaa);
+	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(50,("uberry_match\n"));
-
+	DPRINTFN(50, ("uberry_match\n"));
 	return (uberry_lookup(uaa->vendor, uaa->product) != NULL ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uberry)
+void 
+uberry_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uberry, sc, uaa);
+	struct uberry_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle	dev = uaa->device;
 	char			*devinfop;
 
@@ -182,34 +190,19 @@ USB_ATTACH(uberry)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	   USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+	return;
 }
 
-USB_DETACH(uberry)
+int 
+uberry_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uberry, sc);
+	struct uberry_softc *sc = device_private(self);
 	DPRINTF(("uberry_detach: sc=%p flags=%d\n", sc, flags));
 
 	pmf_device_deregister(self);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (0);
-}
-
-int
-uberry_activate(device_ptr_t self, enum devact act)
-{
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-		break;
-	}
 	return (0);
 }
