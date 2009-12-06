@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.31 2009/10/21 21:12:06 rmind Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.32 2009/12/06 22:48:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.31 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32 2009/12/06 22:48:17 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -75,7 +75,7 @@ static int	st_scsibus_mode_sense(struct st_softc *, int);
 static int	st_scsibus_cmprss(struct st_softc *, int, int);
 
 CFATTACH_DECL(st_scsibus, sizeof(struct st_softc),
-    st_scsibus_match, st_scsibus_attach, stdetach, stactivate);
+    st_scsibus_match, st_scsibus_attach, stdetach, NULL);
 
 static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
