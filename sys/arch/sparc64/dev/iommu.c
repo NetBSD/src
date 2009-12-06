@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.89 2009/12/05 16:48:26 jdc Exp $	*/
+/*	$NetBSD: iommu.c,v 1.90 2009/12/06 13:15:25 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89 2009/12/05 16:48:26 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.90 2009/12/06 13:15:25 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -86,8 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89 2009/12/05 16:48:26 jdc Exp $");
 #define	IDB_SYNC	0x8
 int iommudebug = 0x0;
 #define DPRINTF(l, s)   do { if (iommudebug & l) printf s; } while (0)
+#define IOTTE_DEBUG(n)	(n)
 #else
 #define DPRINTF(l, s)
+#define IOTTE_DEBUG(n)	0
 #endif
 
 #define iommu_strbuf_flush(i, v) do {					\
@@ -136,10 +138,10 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	is->is_tsbsize = tsbsize;
 	if (iovabase == -1) {
 		is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
-		is->is_dvmaend = IOTSB_VEND;
+		is->is_dvmaend = IOTSB_VEND - 1;
 	} else {
 		is->is_dvmabase = iovabase;
-		is->is_dvmaend = iovabase + IOTSB_VSIZE(tsbsize);
+		is->is_dvmaend = iovabase + IOTSB_VSIZE(tsbsize) - 1;
 	}
 
 	/*
@@ -207,9 +209,9 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 		(unsigned int)is->is_dvmaend);
 	printf("IOTSB: %llx to %llx\n",
 		(unsigned long long)is->is_ptsb,
-		(unsigned long long)(is->is_ptsb + size));
+		(unsigned long long)(is->is_ptsb + size - 1));
 	is->is_dvmamap = extent_create(name,
-	    is->is_dvmabase, is->is_dvmaend - PAGE_SIZE,
+	    is->is_dvmabase, is->is_dvmaend,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 }
 
@@ -305,7 +307,7 @@ iommu_extract(struct iommu_state *is, vaddr_t dva)
 {
 	int64_t tte = 0;
 
-	if (dva >= is->is_dvmabase && dva < is->is_dvmaend)
+	if (dva >= is->is_dvmabase && dva <= is->is_dvmaend)
 		tte = is->is_tsb[IOTSBSLOT(dva, is->is_tsbsize)];
 
 	if ((tte & IOTTE_V) == 0)
@@ -435,7 +437,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int err;
 	bus_size_t sgsize;
 	paddr_t curaddr;
-	u_long dvmaddr, sgstart, sgend;
+	u_long dvmaddr, sgstart, sgend, bmask;
 	bus_size_t align, boundary, len;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
@@ -510,7 +512,8 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: boundary %lx boundary - 1 %lx "
 	    "~(boundary - 1) %lx\n", (long)boundary, (long)(boundary - 1),
 	    (long)~(boundary - 1)));
-	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
+	bmask = ~(boundary - 1);
+	while ((sgstart & bmask) != (sgend & bmask)) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
 		len = boundary - (sgstart & (boundary - 1));
 		map->dm_segs[seg].ds_len = len;
@@ -572,7 +575,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    map, (void *)vaddr, (long)dvmaddr,
 		    (long)trunc_page(curaddr)));
 		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
-		    flags|0x4000);
+		    flags | IOTTE_DEBUG(0x4000));
 
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
@@ -647,10 +650,12 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_size_t sgsize;
 	paddr_t pa;
 	bus_size_t boundary, align;
-	u_long dvmaddr, sgstart, sgend;
+	u_long dvmaddr, sgstart, sgend, bmask;
 	struct pglist *pglist;
-	int pagesz = PAGE_SIZE;
-	int npg = 0; /* DEBUG */
+	const int pagesz = PAGE_SIZE;
+#ifdef DEBUG
+	int npg = 0;
+#endif
 
 	if (map->dm_nsegs) {
 		/* Already in use?? */
@@ -717,6 +722,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	map->_dm_dvmastart = dvmaddr;
 	map->_dm_dvmasize = sgsize;
 
+	bmask = ~(boundary - 1);
 	if ((pglist = segs[0]._ds_mlist) == NULL) {
 		u_long prev_va = 0UL;
 		paddr_t prev_pa = 0;
@@ -776,8 +782,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			end = (offset + left) & PGOFSET;
 
 			/* Check for boundary issues */
-			while ((sgstart & ~(boundary - 1)) !=
-				(sgend & ~(boundary - 1))) {
+			while ((sgstart & bmask) != (sgend & bmask)) {
 				/* Need a new segment. */
 				map->dm_segs[j].ds_len =
 					boundary - (sgstart & (boundary - 1));
@@ -807,8 +812,8 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 				/* Enter it if we haven't before. */
 				if (prev_va != dvmaddr)
 					iommu_enter(sb, prev_va = dvmaddr,
-						prev_pa = pa,
-						flags | (++npg << 12));
+					    prev_pa = pa,
+					    flags | IOTTE_DEBUG(++npg << 12));
 				dvmaddr += pagesz;
 				pa += pagesz;
 			}
@@ -845,7 +850,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	sgstart = dvmaddr;
 	sgend = sgstart + size - 1;
 	map->dm_segs[i].ds_addr = sgstart;
-	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
+	while ((sgstart & bmask) != (sgend & bmask)) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
 		map->dm_segs[i].ds_len = boundary - (sgstart & (boundary - 1));
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
@@ -879,7 +884,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_load_raw: map %p loading va %lx at pa %lx\n",
 		    map, (long)dvmaddr, (long)(pa)));
-		iommu_enter(sb, dvmaddr, pa, flags|0x8000);
+		iommu_enter(sb, dvmaddr, pa, flags | IOTTE_DEBUG(0x8000));
 
 		dvmaddr += pagesz;
 		sgsize -= pagesz;
@@ -927,7 +932,7 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 		return (0);
 	}
 
-	vaend = round_page(va + len);
+	vaend = round_page(va + len) - 1;
 	va = trunc_page(va);
 
 #ifdef DIAGNOSTIC
