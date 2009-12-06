@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.11 2009/08/04 12:11:33 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.12 2009/12/06 12:27:33 kiyohara Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.11 2009/08/04 12:11:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.12 2009/12/06 12:27:33 kiyohara Exp $");
 
 #include "opt_com.h"
 
@@ -143,6 +143,7 @@ pxauart_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
+	int cken = 0;
 
 	sc->sc_dev = self;
 	iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
@@ -156,6 +157,14 @@ pxauart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+
+	switch (pxa->pxa_addr) {
+	case PXA2X0_FFUART_BASE: cken = CKEN_FFUART; break;
+	case PXA2X0_STUART_BASE: cken = CKEN_STUART; break;
+	case PXA2X0_BTUART_BASE: cken = CKEN_BTUART; break;
+	case PXA2X0_HWUART_BASE: cken = CKEN_HWUART; break;
+	}
+	pxa2x0_clkman_config(cken, 1);
 
 	com_attach_subr(sc);
 
