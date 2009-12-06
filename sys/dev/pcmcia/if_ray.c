@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.76 2009/09/05 14:44:59 tsutsui Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.77 2009/12/06 23:05:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.76 2009/09/05 14:44:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.77 2009/12/06 23:05:06 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -619,27 +619,20 @@ fail:
 }
 
 static int
-ray_activate(device_t dev, enum devact act)
+ray_activate(device_t self, enum devact act)
 {
-	struct ray_softc *sc = (struct ray_softc *)dev;
+	struct ray_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
-	int s;
-	int rv = 0;
 
-	RAY_DPRINTF(("%s: activate\n", device_xname(&sc->sc_dev)));
+	RAY_DPRINTF(("%s: activate\n", device_xname(self)));
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(ifp);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 static int
