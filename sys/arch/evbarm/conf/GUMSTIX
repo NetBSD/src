@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.39 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: GUMSTIX,v 1.40 2009/12/06 09:40:51 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -182,7 +182,7 @@ pxartc0	at pxaip? addr 0x40900000		# RTC
 options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (console-st)
-com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older bt)
+com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (old bt or vx)
 com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART(console-hw, bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
@@ -283,11 +283,11 @@ uhub*	at uhub? port ?
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?
 
-# USB Mice      
+# USB Mice
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
-# USB Keyboards 
+# USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
@@ -388,6 +388,8 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 					# connect with Ericsson Bluetooth Module
+					#  or Infineon SingleStone (PBA31307)
+					#  or Infineon UniStone (PBA31308)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -402,6 +404,10 @@ pseudo-device	nsmb			# experimental - SMB requester
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
