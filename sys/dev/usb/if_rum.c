@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.29 2009/09/28 10:22:07 pooka Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.29 2009/09/28 10:22:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2287,13 +2287,10 @@ int
 rum_activate(device_ptr_t self, enum devact act)
 {
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
 		/*if_deactivate(&sc->sc_ic.ic_if);*/
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return 0;
 }

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.22 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.23 2009/12/06 20:20:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.22 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.23 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2693,12 +2693,10 @@ zyd_activate(device_ptr_t self, enum devact act)
 	struct zyd_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return 0;
 }

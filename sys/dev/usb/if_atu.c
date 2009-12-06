@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.33 2009/09/23 19:07:19 plunky Exp $ */
+/*	$NetBSD: if_atu.c,v 1.34 2009/12/06 20:20:12 dyoung Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.33 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.34 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1429,17 +1429,15 @@ atu_activate(device_t self, enum devact act)
 	struct atu_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_state != ATU_S_UNCONFIG) {
 			if_deactivate(&sc->atu_ec.ec_if);
 			sc->sc_state = ATU_S_DEAD;
 		}
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
