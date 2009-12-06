@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.43 2009/12/05 23:16:57 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.44 2009/12/06 02:42:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2009/12/05 23:16:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.44 2009/12/06 02:42:34 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -97,6 +97,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
+	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 
 	/*
 	 * Calculate important physical addresses:
@@ -167,7 +168,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
-		int num;
+		int nl1desc, nl2desc, i;
 
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -185,10 +186,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * pages of PTEs.  Note that we set the "used" bit
 		 * now to save the HW the expense of doing it.
 		 */
-		num = nptpages * (NPTEPG / SG4_LEV3SIZE);
+		nl2desc = nptpages * (NPTEPG / SG4_LEV3SIZE);
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[SG4_LEV1SIZE];
-		este = &ste[num];
+		este = &ste[nl2desc];
 		protoste = kptpa | SG_U | SG_RW | SG_V;
 		while (ste < este) {
 			*ste++ = protoste;
@@ -196,31 +197,31 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		}
 		/*
 		 * Initialize level 1 descriptors.  We need:
-		 *	howmany(num, SG4_LEV2SIZE)
-		 * level 1 descriptors to map the `num' level 2's.
+		 *	howmany(nl2desc, SG4_LEV2SIZE)
+		 * level 1 descriptors to map the `nl2desc' level 2's.
 		 */
+		nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
-		este = &ste[howmany(num, SG4_LEV2SIZE)];
+		este = &ste[nl1desc];
 		protoste = (paddr_t)&ste[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (ste < este) {
 			*ste++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 		/*
-		 * Initialize the final level 1 descriptor to map the last
-		 * block of level 2 descriptors.
+		 * Initialize the final level 1 descriptor to map the next
+		 * block of level 2 descriptors for Sysptmap.
 		 */
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[SG4_LEV1SIZE - 1];
-		este = (st_entry_t *)kstpa;
-		este = &este[kstsize * NPTEPG - SG4_LEV2SIZE];
-		*ste = (paddr_t)este | SG_U | SG_RW | SG_V;
+		*ste = protoste;
 		/*
 		 * Now initialize the final portion of that block of
 		 * descriptors to map kptmpa and the "last PT page".
 		 */
+		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
-		ste = &ste[kstsize * NPTEPG - NPTEPG / SG4_LEV3SIZE * 2];
+		ste = &ste[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE) * 2];
 		este = &ste[NPTEPG / SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (ste < este) {
@@ -234,6 +235,24 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
 		/*
+		 * Calculate the free level 2 descriptor mask
+		 * noting that we have used:
+		 *	0:		level 1 table
+		 *	1 to nl1desc:	map page tables
+		 *	nl1desc + 1:	maps kptmpa and last-page page table
+		 */
+		/* mark an entry for level 1 table */
+		stfree = ~l2tobm(0);
+		/* mark entries for map page tables */
+		for (i = 1; i <= nl1desc; i++)
+			stfree &= ~l2tobm(i);
+		/* mark an entry for kptmpa and lkptpa */
+		stfree &= ~l2tobm(i);
+		/* mark entries not available */
+		for (i = MAXKL2SIZE; i < sizeof(stfree) * NBBY; i++)
+			stfree &= ~l2tobm(i);
+
+		/*
 		 * Initialize Sysptmap
 		 */
 		pte = (pt_entry_t *)kptmpa;
@@ -244,10 +263,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last remaining entry.
+		 * Invalidate all remaining entries.
 		 */
 		epte = (pt_entry_t *)kptmpa;
-		epte = &epte[NPTEPG - 2];
+		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
@@ -255,6 +274,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Initialize the last ones to point to kptmpa and the page
 		 * table page allocated earlier.
 		 */
+		pte = (pt_entry_t *)kptmpa;
+		pte = &pte[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 		pte++;
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
@@ -275,18 +296,24 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last remaining entries in both.
+		 * Invalidate all remaining entries in both.
 		 */
-		epte = (pt_entry_t *)kptmpa;
-		epte = &epte[NPTEPG - 2];
-		while (pte < epte) {
+		este = (st_entry_t *)kstpa;
+		este = &epte[NPTEPG];		/* XXX: should be TIA_SIZE */
+		while (ste < este)
 			*ste++ = SG_NV;
+		epte = (pt_entry_t *)kptmpa;
+		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		while (pte < epte)
 			*pte++ = PG_NV;
-		}
 		/*
 		 * Initialize the last ones to point to kptmpa and the page
 		 * table page allocated earlier.
 		 */
+		ste = (st_entry_t *)kstpa;
+		ste = &ste[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
+		pte = (pt_entry_t *)kptmpa;
+		pte = &pte[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 		ste++;
@@ -469,27 +496,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
 		kpm->pm_stpa = (st_entry_t *)kstpa;
-		/*
-		 * For the 040 we also initialize the free level 2
-		 * descriptor mask noting that we have used:
-		 *	0:		level 1 table
-		 *	1 to `num':	map page tables
-		 *	MAXKL2SIZE-1:	maps kptmpa and last-page page table
-		 */
-		if (RELOC(mmutype, int) == MMU_68040) {
-			int num;
-
-			kpm->pm_stfree = ~l2tobm(0);
-			num = howmany(nptpages * (NPTEPG / SG4_LEV3SIZE),
-				      SG4_LEV2SIZE);
-			while (num)
-				kpm->pm_stfree &= ~l2tobm(num--);
-			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
-			for (num = MAXKL2SIZE;
-			     num < sizeof(kpm->pm_stfree)*NBBY;
-			     num++)
-				kpm->pm_stfree &= ~l2tobm(num);
-		}
+		if (RELOC(mmutype, int) == MMU_68040)
+			kpm->pm_stfree = stfree;
 	}
 
 	/*
