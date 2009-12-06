@@ -220,7 +220,7 @@ m4preproc_include(`flexint.h')
 /* begin standard C++ headers. */
 #ifdef _LIBC
 #include "namespace.h"
-#endiif
+#endif
 #include <iostream> 
 #include <errno.h>
 #include <cstdlib>
