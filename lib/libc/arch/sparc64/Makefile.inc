@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2009/12/06 07:05:50 uebayasi Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
@@ -43,7 +43,8 @@ CPPFLAGS+=	-DSOFTFLOATSPARC64_FOR_GCC
 #
 # Can't directly use softfloat.c due to .PATH issues with the other source
 # in softfloat. Just provide a wrapper which pulls it in via a #include
-SRCS+= softfloat-wrapper.c
+SRCS.softfloat= softfloat-wrapper.c
+SRCS+= ${SRCS.softfloat}
 CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat \
 		-I${.CURDIR}/softfloat/bits64
 .endif
