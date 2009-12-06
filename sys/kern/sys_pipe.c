@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.119 2009/08/31 20:48:14 rmind Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.120 2009/12/06 20:26:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.119 2009/08/31 20:48:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.120 2009/12/06 20:26:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,6 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 /*
  * Lock a pipe for I/O, blocking other access
  * Called with pipe spin lock held.
- * Return with pipe spin lock released on success.
  */
 static int
 pipelock(struct pipe *pipe, int catch)
