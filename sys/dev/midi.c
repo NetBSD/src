@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.70 2009/08/23 15:56:07 jmcneill Exp $	*/
+/*	$NetBSD: midi.c,v 1.71 2009/12/06 22:42:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.70 2009/08/23 15:56:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.71 2009/12/06 22:42:48 dyoung Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -175,14 +175,12 @@ midiactivate(device_t self, enum devact act)
 	struct midi_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 int
