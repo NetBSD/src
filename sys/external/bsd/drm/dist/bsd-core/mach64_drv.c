@@ -161,7 +161,7 @@ mach64drm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(mach64drm, sizeof(struct drm_device),
-    mach64drm_probe, mach64drm_attach, drm_detach, drm_activate);
+    mach64drm_probe, mach64drm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 
