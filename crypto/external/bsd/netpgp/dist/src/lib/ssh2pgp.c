@@ -123,9 +123,11 @@ frombase64(char *dst, const char *src, size_t size, int flag)
 			}
 		}
 		if (gotc) {
-			out[0] = (uint8_t) (in[0] << 2 | in[1] >> 4);
-			out[1] = (uint8_t) (in[1] << 4 | in[2] >> 2);
-			out[2] = (uint8_t) (((in[2] << 6) & 0xc0) | in[3]);
+			out[0] = (uint8_t)((unsigned)in[0] << 2 |
+						(unsigned)in[1] >> 4);
+			out[1] = (uint8_t)((unsigned)in[1] << 4 |
+						(unsigned)in[2] >> 2);
+			out[2] = (uint8_t)(((in[2] << 6) & 0xc0) | in[3]);
 			for (i = 0; i < gotc - 1; i++) {
 				*dst++ = out[i];
 			}
@@ -176,9 +178,9 @@ getbignum(bufgap_t *bg, char *buf, const char *header)
 	len = ntohl(len);
 	(void) bufgap_seek(bg, sizeof(len), BGFromHere, BGByte);
 	(void) bufgap_getbin(bg, buf, len);
-	bignum = BN_bin2bn((const unsigned char *)buf, len, NULL);
+	bignum = BN_bin2bn((const unsigned char *)buf, (int)len, NULL);
 	if (__ops_get_debug_level(__FILE__)) {
-		show(header, buf, len);
+		show(header, buf, (int)len);
 	}
 	(void) bufgap_seek(bg, len, BGFromHere, BGByte);
 	return bignum;
@@ -247,7 +249,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 	off = bufgap_tell(&bg, BGFromBOF, BGByte);
 
 	/* convert from base64 to binary */
-	cc = bufgap_getbin(&bg, buf, st.st_size);
+	cc = bufgap_getbin(&bg, buf, (size_t)st.st_size);
 	if ((space = strchr(buf, ' ')) != NULL) {
 		cc = (int)(space - buf);
 	}
@@ -258,7 +260,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 	if (__ops_get_debug_level(__FILE__)) {
 		show("decoded base64:", bin, cc);
 	}
-	bufgap_delete(&bg, bufgap_tell(&bg, BGFromEOF, BGByte));
+	bufgap_delete(&bg, (uint64_t)bufgap_tell(&bg, BGFromEOF, BGByte));
 	bufgap_insert(&bg, bin, cc);
 	bufgap_seek(&bg, off, BGFromBOF, BGByte);
 
