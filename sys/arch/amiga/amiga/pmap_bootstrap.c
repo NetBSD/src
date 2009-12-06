@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 2009/11/23 00:11:42 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.8 2009/12/06 00:33:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7 2009/11/23 00:11:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.8 2009/12/06 00:33:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ u_int		Sysseg_pa;
 extern paddr_t		avail_start;
 extern paddr_t		avail_end;
 #if defined(M68040) || defined(M68060)
-extern int		protostfree;
+extern u_int		protostfree;
 #endif
 
 extern paddr_t	msgbufpa;
