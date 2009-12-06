@@ -1,4 +1,4 @@
-/*	$NetBSD: init_csr.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: init_csr.c,v 1.2 2009/12/06 12:29:48 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_csr.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__RCSID("$NetBSD: init_csr.c,v 1.2 2009/12/06 12:29:48 kiyohara Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -84,7 +84,7 @@ init_csr(int fd, unsigned int speed)
 {
 	struct bccmd cmd;
 
-	/* setup BCSP command packet */
+	/* setup BlueCore command packet */
 	memset(&cmd, 0, sizeof(cmd));
 
 	cmd.chanid = CSR_BCCMD_LAST | CSR_BCCMD_FIRST | BCSP_CHANNEL_BCCMD;
