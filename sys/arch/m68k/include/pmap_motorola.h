@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.22 2009/12/02 15:47:45 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.23 2009/12/06 00:33:58 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -88,7 +88,7 @@
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	st_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stfree;	/* 040: free lev2 blocks */
+	u_int			pm_stfree;	/* 040: free lev2 blocks */
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	uint16_t		pm_sref;	/* segment table ref count */
 	uint16_t		pm_count;	/* pmap reference count */

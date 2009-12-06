@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.52 2009/12/02 15:47:45 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.53 2009/12/06 00:33:58 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.52 2009/12/02 15:47:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.53 2009/12/06 00:33:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ int		pv_nfree;
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
-int		protostfree;	/* prototype (default) free ST map */
+u_int		protostfree;	/* prototype (default) free ST map */
 #endif
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
