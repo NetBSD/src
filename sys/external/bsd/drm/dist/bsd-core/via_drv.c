@@ -156,7 +156,7 @@ viadrm_detach(device_t self, int flags)
 }
 
 CFATTACH_DECL_NEW(viadrm, sizeof(struct drm_device),
-    viadrm_probe, viadrm_attach, viadrm_detach, drm_activate);
+    viadrm_probe, viadrm_attach, viadrm_detach, NULL);
 
 #ifdef _MODULE
 

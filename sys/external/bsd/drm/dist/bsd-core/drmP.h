@@ -946,7 +946,6 @@ d_mmap_t drm_mmap;
 int	drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
 void	drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
 int     drm_detach(device_t self, int flags);
-int     drm_activate(device_t self, devact_t act);
 dev_type_ioctl(drm_ioctl);
 dev_type_open(drm_open);
 dev_type_close(drm_close);
