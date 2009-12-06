@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.53 2009/12/06 00:33:58 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.54 2009/12/06 06:41:30 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.53 2009/12/06 00:33:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.54 2009/12/06 06:41:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,7 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
+paddr_t		Sysseg_pa;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
@@ -325,6 +326,35 @@ void
 pmap_bootstrap_finalize(void)
 {
 
+	/*
+	 * Initialize protection array.
+	 * XXX: Could this have port specific values? Can't this be static?
+	 */
+	protection_codes[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE]     = 0;
+	protection_codes[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE]     = PG_RO;
+	protection_codes[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE]  = PG_RO;
+	protection_codes[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE]  = PG_RO;
+	protection_codes[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE]    = PG_RW;
+	protection_codes[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
+	protection_codes[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE]    = PG_RW;
+	protection_codes[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
+
+	/*
+	 * Initialize pmap_kernel().
+	 */
+	pmap_kernel()->pm_stpa = (st_entry_t *)Sysseg_pa;
+	pmap_kernel()->pm_stab = Sysseg;
+	pmap_kernel()->pm_ptab = Sysmap;
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040)
+		pmap_kernel()->pm_stfree = protostfree;
+#endif
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
+
+	/*
+	 * Initialize lwp0 uarea, curlwp, and curpcb.
+	 */
 	memset((void *)lwp0uarea, 0, USPACE);
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;

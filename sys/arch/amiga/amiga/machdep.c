@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2009/11/24 18:19:52 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223 2009/12/06 06:41:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2009/11/24 18:19:52 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2009/12/06 06:41:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,6 @@ cpu_dumpconf(void)
 	const struct bdevsw *bdev;
 	int nblks;
 	int i;
-	extern u_int Sysseg_pa;
 	extern int end[];
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
@@ -569,7 +568,7 @@ cpu_dumpconf(void)
 	/*
 	 * Initialize the pointer to the kernel segment table.
 	 */
-	m->sysseg_pa = Sysseg_pa;
+	m->sysseg_pa = (paddr_t)pmap_kernel()->pm_stpa;
 
 	/*
 	 * Initialize relocation value such that:
