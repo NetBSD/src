@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.19 2009/07/28 18:15:26 minskim Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.20 2009/12/06 16:46:11 dsl Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.19 2009/07/28 18:15:26 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.20 2009/12/06 16:46:11 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -583,7 +583,7 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 			    "(%d/%d)\n", pfi_buffer_cnt, PFI_BUFFER_MAX);
 			return;
 		}
-		memcpy(pfi_buffer, p, pfi_buffer_cnt * sizeof(*pfi_buffer));
+		memcpy(p, pfi_buffer, pfi_buffer_cnt * sizeof(*pfi_buffer));
 		/* no need to zero buffer */
 		free(pfi_buffer, PFI_MTYPE);
 		pfi_buffer = p;
