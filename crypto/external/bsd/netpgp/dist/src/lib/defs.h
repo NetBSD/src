@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1 2009/12/05 07:08:18 agc Exp $ */
+/* $NetBSD: defs.h,v 1.2 2009/12/06 17:43:05 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include <string.h>
 
 #define NEWARRAY(type,ptr,size,where,action) do {			\
-	if ((ptr = (type *) calloc(sizeof(type), (unsigned)(size))) == NULL) { \
+	if ((ptr = calloc(sizeof(type), (unsigned)(size))) == NULL) {	\
 		(void) fprintf(stderr, "%s: can't allocate %lu bytes\n", \
 			where, (unsigned long)(size * sizeof(type)));	\
 		action;							\
@@ -56,7 +56,8 @@
 
 #define RENEW(type,ptr,size,where,action) do {				\
 	type *_newptr;							\
-	if ((_newptr = (type *) realloc(ptr, sizeof(type) * (size))) == NULL) { \
+	_newptr = realloc(ptr, (size_t)(sizeof(type) * (size)));	\
+	if (_newptr == NULL) {						\
 		(void) fprintf(stderr, "%s: can't realloc %lu bytes\n",	\
 			where, (unsigned long)(size * sizeof(type)));	\
 		action;							\

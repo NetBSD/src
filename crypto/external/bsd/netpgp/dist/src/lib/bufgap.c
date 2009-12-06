@@ -1,7 +1,11 @@
-/* $NetBSD: bufgap.c,v 1.1 2009/12/05 07:08:18 agc Exp $ */
+/* $NetBSD: bufgap.c,v 1.2 2009/12/06 17:43:05 agc Exp $ */
 
-/*
- * Copyright © 1996-2009 Alistair Crooks.  All rights reserved.
+/*-
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@NetBSD.org)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,24 +15,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair G. Crooks.
- * 4. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
 
@@ -57,8 +55,8 @@
 #include "defs.h"
 
 /* macros to get subscripts in buffer */
-#define AFTSUB(bp, n)	((bp)->buf[n])
-#define BEFSUB(bp, n)	((bp)->buf[(bp)->size - (n) - 1])
+#define AFTSUB(bp, n)	((bp)->buf[(int)n])
+#define BEFSUB(bp, n)	((bp)->buf[(int)((bp)->size - (n) - 1)])
 
 /* initial allocation size */
 #ifndef CHUNKSIZE
@@ -108,8 +106,11 @@ strnsave(char *s, int n)
 {
 	char	*cp;
 
+	if (n < 0) {
+		n = strlen(s);
+	}
 	NEWARRAY(char, cp, n + 1, "strnsave", return NULL);
-	(void) memcpy(cp, s, n);
+	(void) memcpy(cp, s, (size_t)n);
 	cp[n] = 0x0;
 	return cp;
 }
@@ -136,14 +137,14 @@ bufgap_open(bufgap_t *bp, const char *f)
 		bp->size = (int) ((s.st_size / BGCHUNKSIZE) + 1) * BGCHUNKSIZE;
 		NEWARRAY(char, bp->buf, bp->size, "f_open", return 0);
 		cc = fread(&BEFSUB(bp, s.st_size), sizeof(char),
-							s.st_size, filep);
+						(size_t)s.st_size, filep);
 		(void) fclose(filep);
 		if (cc != s.st_size) {
 			FREE(bp->buf);
 			FREE(bp);
 			return 0;
 		}
-		bp->name = strnsave(__UNCONST(f), utfbytes(__UNCONST(f)));
+		bp->name = strnsave(__UNCONST(f), (int)utfbytes(__UNCONST(f)));
 		bp->bbc = s.st_size;
 		cp = &BEFSUB(bp, cc);
 		for (;;) {
@@ -153,7 +154,7 @@ bufgap_open(bufgap_t *bp, const char *f)
 			bp->blc++;
 			cp++;
 		}
-		bp->bcc = utfnlen(&BEFSUB(bp, cc), cc);
+		bp->bcc = utfnlen(&BEFSUB(bp, cc), (size_t)cc);
 	}
 	return 1;
 }
@@ -180,7 +181,9 @@ bufgap_forwards(bufgap_t *bp, uint64_t n, int type)
 				if (rlen == 1) {
 					AFTSUB(bp, bp->abc) = BEFSUB(bp, bp->bbc);
 				} else {
-					(void) memmove(&AFTSUB(bp, bp->abc), &BEFSUB(bp, bp->bbc), rlen);
+					(void) memmove(&AFTSUB(bp, bp->abc),
+							&BEFSUB(bp, bp->bbc),
+							(size_t)rlen);
 				}
 				bp->acc++;
 				bp->bcc--;
@@ -201,7 +204,9 @@ bufgap_forwards(bufgap_t *bp, uint64_t n, int type)
 				if (rlen == 1) {
 					AFTSUB(bp, bp->abc) = BEFSUB(bp, bp->bbc);
 				} else {
-					(void) memmove(&AFTSUB(bp, bp->abc), &BEFSUB(bp, bp->bbc), rlen);
+					(void) memmove(&AFTSUB(bp, bp->abc),
+							&BEFSUB(bp, bp->bbc),
+							(size_t)rlen);
 				}
 				bp->acc++;
 				bp->bcc--;
@@ -237,7 +242,9 @@ bufgap_backwards(bufgap_t *bp, uint64_t n, int type)
 				if (rlen == 1) {
 					BEFSUB(bp, bp->bbc) = AFTSUB(bp, bp->abc);
 				} else {
-					(void) memmove(&BEFSUB(bp, bp->bbc), &AFTSUB(bp, bp->abc), rlen);
+					(void) memmove(&BEFSUB(bp, bp->bbc),
+							&AFTSUB(bp, bp->abc),
+							(size_t)rlen);
 				}
 				if (r == '\n') {
 					bp->blc++;
@@ -258,7 +265,9 @@ bufgap_backwards(bufgap_t *bp, uint64_t n, int type)
 				if (rlen == 1) {
 					BEFSUB(bp, bp->bbc) = AFTSUB(bp, bp->abc);
 				} else {
-					(void) memmove(&BEFSUB(bp, bp->bbc), &AFTSUB(bp, bp->abc), rlen);
+					(void) memmove(&BEFSUB(bp, bp->bbc),
+							&AFTSUB(bp, bp->abc),
+							(size_t)rlen);
 				}
 				if (r == '\n') {
 					bp->blc++;
@@ -294,9 +303,9 @@ bufgap_seek(bufgap_t *bp, int64_t off, int whence, int type)
 			}
 			return 1;
 		case BGFromHere:
-			return bufgap_seek(bp, bp->alc + off, BGFromBOF, BGLine);
+			return bufgap_seek(bp, (int64_t)(bp->alc + off), BGFromBOF, BGLine);
 		case BGFromEOF:
-			return bufgap_seek(bp, bp->alc + bp->blc + off, BGFromBOF, BGLine);
+			return bufgap_seek(bp, (int64_t)(bp->alc + bp->blc + off), BGFromBOF, BGLine);
 		}
 		break;
 	case BGChar:
@@ -312,9 +321,9 @@ bufgap_seek(bufgap_t *bp, int64_t off, int whence, int type)
 			}
 			return 1;
 		case BGFromHere:
-			return bufgap_seek(bp, bp->acc + off, BGFromBOF, BGChar);
+			return bufgap_seek(bp, (int64_t)(bp->acc + off), BGFromBOF, BGChar);
 		case BGFromEOF:
-			return bufgap_seek(bp, bp->acc + bp->bcc + off, BGFromBOF, BGChar);
+			return bufgap_seek(bp, (int64_t)(bp->acc + bp->bcc + off), BGFromBOF, BGChar);
 		}
 		break;
 	case BGByte:
@@ -330,9 +339,9 @@ bufgap_seek(bufgap_t *bp, int64_t off, int whence, int type)
 			}
 			return 1;
 		case BGFromHere:
-			return bufgap_seek(bp, bp->abc + off, BGFromBOF, BGByte);
+			return bufgap_seek(bp, (int64_t)(bp->abc + off), BGFromBOF, BGByte);
 		case BGFromEOF:
-			return bufgap_seek(bp, bp->abc + bp->bbc + off, BGFromBOF, BGByte);
+			return bufgap_seek(bp, (int64_t)(bp->abc + bp->bbc + off), BGFromBOF, BGByte);
 		}
 		break;
 	}
@@ -352,7 +361,7 @@ bufgap_getbin(bufgap_t *bp, void *dst, size_t len)
 {
 	int	cc;
 
-	cc = (bp->bcc < len) ? bp->bcc : len;
+	cc = (bp->bcc < len) ? (int)bp->bcc : (int)len;
 	(void) memcpy(dst, &BEFSUB(bp, bp->bbc), len);
 	return cc;
 }
@@ -407,7 +416,7 @@ bufgap_insert(bufgap_t *bp, const char *s, int n)
 		if ((rlen = chartorune(&r, __UNCONST(s))) == 1) {
 			AFTSUB(bp, bp->abc) = *s;
 		} else {
-			(void) memmove(&AFTSUB(bp, bp->abc), s, rlen);
+			(void) memmove(&AFTSUB(bp, bp->abc), s, (size_t)rlen);
 		}
 		if (r == '\n') {
 			bp->alc++;
@@ -473,9 +482,9 @@ bufgap_gettext(bufgap_t *bp, int64_t from, int64_t to)
 	NEWARRAY(char, text, (to - from + 1), "bufgap_gettext", return NULL);
 	(void) bufgap_seek(bp, from, BGFromBOF, BGChar);
 	for (n = 0 ; n < to - from ; n++) {
-		text[n] = BEFSUB(bp, bp->bbc - n);
+		text[(int)n] = BEFSUB(bp, bp->bbc - n);
 	}
-	text[n] = 0x0;
+	text[(int)n] = 0x0;
 	(void) bufgap_seek(bp, off, BGFromBOF, BGChar);
 	return text;
 }
@@ -484,10 +493,10 @@ bufgap_gettext(bufgap_t *bp, int64_t from, int64_t to)
 int
 bufgap_write(bufgap_t *bp, FILE *filep)
 {
-	if (fwrite(bp->buf, sizeof(char), bp->abc, filep) != bp->abc) {
+	if (fwrite(bp->buf, sizeof(char), (size_t)bp->abc, filep) != (size_t)bp->abc) {
 		return 0;
 	}
-	if (fwrite(&BEFSUB(bp, bp->bbc), sizeof(char), bp->bbc, filep) != bp->bbc) {
+	if (fwrite(&BEFSUB(bp, bp->bbc), sizeof(char), (size_t)bp->bbc, filep) != (size_t)bp->bbc) {
 		return 0;
 	}
 	return 1;
