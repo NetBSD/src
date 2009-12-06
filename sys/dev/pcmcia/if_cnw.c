@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.52 2009/11/22 21:18:42 dsl Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.53 2009/12/06 23:05:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.52 2009/11/22 21:18:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.53 2009/12/06 23:05:06 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1176,20 +1176,14 @@ int
 cnw_activate(device_t self, enum devact act)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
-	int rv = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 int

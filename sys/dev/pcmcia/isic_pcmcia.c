@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.39 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.40 2009/12/06 23:05:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -248,23 +248,17 @@ isic_pcmcia_detach(device_t self, int flags)
 int
 isic_pcmcia_activate(device_t self, enum devact act)
 {
-	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
-	int error = 0, s;
+	struct pcmcia_isic_softc *psc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		if (psc->sc_isic.sc_l3token != NULL)
 			isic_detach_bri(&psc->sc_isic);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }
 
 /*---------------------------------------------------------------------------*
