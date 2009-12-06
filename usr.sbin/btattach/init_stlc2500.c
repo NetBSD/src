@@ -1,4 +1,4 @@
-/*	$NetBSD: init_stlc2500.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: init_stlc2500.c,v 1.2 2009/12/06 12:31:07 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_stlc2500.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__RCSID("$NetBSD: init_stlc2500.c,v 1.2 2009/12/06 12:31:07 kiyohara Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -113,9 +113,10 @@ init_stlc2500(int fd, unsigned int speed)
 	/* STLC2500 has an ericsson core */
 	init_ericsson(fd, speed);
 
-	tcgetattr(fd, &tio);
-	cfsetspeed(&tio, speed);
-	tcsetattr(fd, TCSANOW, &tio);
+	if (tcgetattr(fd, &tio) != 0 ||
+	    cfsetspeed(&tio, speed) != 0 ||
+	    tcsetattr(fd, TCSANOW, &tio) != 0)
+		err(EXIT_FAILURE, "can't change baud rate");
 
 	uart_send_cmd(fd, HCI_CMD_READ_LOCAL_VER, NULL, 0);
 	n = uart_recv_cc(fd, HCI_CMD_READ_LOCAL_VER, &rp, sizeof(rp));
