@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.15 2009/12/01 23:12:09 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.16 2009/12/06 14:31:16 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -51,8 +51,9 @@
 #define DM_NAME_LEN 128
 #define DM_UUID_LEN 129
 
-#define DM_VERSION_MAJOR	6
-#define DM_VERSION_MINOR	15
+#define DM_VERSION_MAJOR	4
+#define DM_VERSION_MINOR	16
+
 #define DM_VERSION_PATCHLEVEL	0
 
 /*** Internal device-mapper structures ***/
