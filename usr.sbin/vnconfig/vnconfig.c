@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.37 2009/04/19 00:56:32 lukem Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.38 2009/12/06 16:35:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -326,6 +327,10 @@ config(dev, file, geom, action)
 		if (force)
 			vndio.vnd_flags |= VNDIOF_FORCE;
 		rv = ioctl(fd, VNDIOCCLR, &vndio);
+#ifdef VNDIOOCCLR
+		if (rv && errno == ENOTTY)
+			rv = ioctl(fd, VNDIOOCCLR, &vndio);
+#endif
 		if (rv)
 			warn("%s: VNDIOCCLR", rdev);
 		else if (verbose)
@@ -344,10 +349,16 @@ config(dev, file, geom, action)
 			(void) close(ffd);
 
 			rv = ioctl(fd, VNDIOCSET, &vndio);
+#ifdef VNDIOOCSET
+			if (rv && errno == ENOTTY) {
+				rv = ioctl(fd, VNDIOOCSET, &vndio);
+				vndio.vnd_size = vndio.vnd_osize;
+			}
+#endif
 			if (rv)
 				warn("%s: VNDIOCSET", rdev);
 			else if (verbose) {
-				printf("%s: %d bytes on %s", rdev,
+				printf("%s: %" PRIu64 " bytes on %s", rdev,
 				    vndio.vnd_size, file);
 				if (vndio.vnd_flags & VNDIOF_HASGEOM)
 					printf(" using geometry %d/%d/%d/%d",
