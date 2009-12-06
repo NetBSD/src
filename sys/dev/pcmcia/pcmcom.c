@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.38 2009/11/12 22:46:47 dyoung Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.39 2009/12/06 23:05:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.38 2009/11/12 22:46:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.39 2009/12/06 23:05:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.38 2009/11/12 22:46:47 dyoung Exp $");
 #include "locators.h"
 
 struct pcmcom_softc {
-	struct device sc_dev;			/* generic device glue */
+	device_t sc_dev;			/* generic device glue */
 
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
@@ -144,6 +144,8 @@ pcmcom_attach(device_t parent, device_t self, void *aux)
 	int error;
 	int locs[PCMCOMCF_NLOCS];
 
+	sc->sc_dev = self;
+
 	sc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, pcmcom_validate_config);
@@ -171,7 +173,7 @@ pcmcom_attach(device_t parent, device_t self, void *aux)
 
 		locs[PCMCOMCF_SLAVE] = slave;
 
-		sc->sc_slaves[slave] = config_found_sm_loc(&sc->sc_dev,
+		sc->sc_slaves[slave] = config_found_sm_loc(sc->sc_dev,
 			"pcmcom", locs,
 			&pca, pcmcom_print, config_stdsubmatch);
 	}
