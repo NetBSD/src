@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.15 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.15 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -965,22 +965,15 @@ mb86950_disable(struct mb86950_softc *sc)
 int
 mb86950_activate(device_t self, enum devact act)
 {
-	struct mb86950_softc *sc = (struct mb86950_softc *)self;
-	int rv, s;
+	struct mb86950_softc *sc = device_private(self);
 
-	rv = 0;
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 /*
