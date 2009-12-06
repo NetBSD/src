@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.h,v 1.2 2009/04/15 00:32:23 lukem Exp $	*/
+/*	$NetBSD: btattach.h,v 1.3 2009/12/06 12:55:46 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -47,6 +47,7 @@ devinit_t init_ericsson;
 devinit_t init_st;
 devinit_t init_stlc2500;
 devinit_t init_swave;
+devinit_t init_unistone;
 
 void uart_send_cmd(int, uint16_t, void *, size_t);
 size_t uart_recv_ev(int, uint8_t, void *, size_t);
