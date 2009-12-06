@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.33 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: urio.c,v 1.34 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.33 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.34 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,15 +290,12 @@ urio_activate(device_ptr_t self, enum devact act)
 	struct urio_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 
