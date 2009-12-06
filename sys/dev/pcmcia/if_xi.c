@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.68 2009/11/13 01:14:35 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.69 2009/12/06 23:05:39 dyoung Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.68 2009/11/13 01:14:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.69 2009/12/06 23:05:39 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -211,11 +211,11 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 	/* Reset and initialize the card. */
 	xi_full_reset(sc);
 
-	printf("%s: MAC address %s\n", device_xname(&sc->sc_dev), ether_sprintf(myea));
+	printf("%s: MAC address %s\n", device_xname(sc->sc_dev), ether_sprintf(myea));
 
 	ifp = &sc->sc_ethercom.ec_if;
 	/* Initialize the ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = xi_start;
 	ifp->if_ioctl = xi_ioctl;
@@ -242,9 +242,9 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, xi_mediachange,
 	    ether_mediastatus);
 	DPRINTF(XID_MII | XID_CONFIG,
-	    ("xi: bmsr %x\n", xi_mdi_read(&sc->sc_dev, 0, 1)));
+	    ("xi: bmsr %x\n", xi_mdi_read(sc->sc_dev, 0, 1)));
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0,
@@ -252,7 +252,7 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dev), RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev), RND_TYPE_NET, 0);
 #endif
 }
 
@@ -288,8 +288,7 @@ xi_intr(void *arg)
 
 	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
 
-	if (sc->sc_enabled == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	if (sc->sc_enabled == 0 || !device_is_active(sc->sc_dev))
 		return (0);
 
 	ifp->if_timer = 0;	/* turn watchdog timer off */
@@ -307,7 +306,8 @@ xi_intr(void *arg)
 	/* Check to see if card has been ejected. */
 	if (isr == 0xff) {
 #ifdef DIAGNOSTIC
-		printf("%s: interrupt for dead card\n", device_xname(&sc->sc_dev));
+		printf("%s: interrupt for dead card\n",
+		    device_xname(sc->sc_dev));
 #endif
 		goto end;
 	}
@@ -664,7 +664,7 @@ xi_watchdog(struct ifnet *ifp)
 {
 	struct xi_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	++ifp->if_oerrors;
 
 	xi_reset(sc);
