@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.248 2009/09/29 15:58:54 sborrill Exp $	*/
+/*	$NetBSD: audio.c,v 1.249 2009/12/06 22:42:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.248 2009/09/29 15:58:54 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.249 2009/12/06 22:42:48 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -538,18 +538,15 @@ audioattach(device_t parent, device_t self, void *aux)
 int
 audioactivate(device_t self, enum devact act)
 {
-	struct audio_softc *sc;
+	struct audio_softc *sc = device_private(self);
 
-	sc = device_private(self);
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = true;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.22 2008/07/09 13:12:54 joerg Exp $ */
+/* $NetBSD: radio.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.22 2008/07/09 13:12:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,12 +202,10 @@ radioactivate(device_t self, enum devact act)
 	struct radio_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
