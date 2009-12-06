@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.34 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.35 2009/12/06 20:20:12 dyoung Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.34 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.35 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -377,17 +377,14 @@ upl_activate(device_ptr_t self, enum devact act)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		/* Deactivate the interface. */
 		if_deactivate(&sc->sc_if);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
