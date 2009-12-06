@@ -1,4 +1,4 @@
-/* $NetBSD: gpiolock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $ */
+/* $NetBSD: gpiolock.c,v 1.3 2009/12/06 22:33:44 dyoung Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -152,14 +152,13 @@ gpiolock_activate(device_t self, enum devact act)
 	struct gpiolock_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
 
-	return 0;
 }
 
 int
