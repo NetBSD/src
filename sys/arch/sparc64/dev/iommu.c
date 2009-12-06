@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.90 2009/12/06 13:15:25 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.91 2009/12/06 13:39:22 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.90 2009/12/06 13:15:25 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.91 2009/12/06 13:39:22 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -275,10 +275,9 @@ iommu_enter(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
 #endif
 
 	/* Is the streamcache flush really needed? */
-	if (sb->sb_flush) {
+	if (sb->sb_flush)
 		iommu_strbuf_flush(sb, va);
-		iommu_strbuf_flush_done(sb);
-	} else
+	else
 		/* If we can't flush the strbuf don't enable it. */
 		strbuf = 0;
 
@@ -434,7 +433,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 	int s;
-	int err;
+	int err, needsflush;
 	bus_size_t sgsize;
 	paddr_t curaddr;
 	u_long dvmaddr, sgstart, sgend, bmask;
@@ -549,6 +548,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	else
 		pmap = pmap_kernel();
 
+	needsflush = 0;
 	for (; buflen > 0; ) {
 
 		/*
@@ -576,11 +576,14 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    (long)trunc_page(curaddr)));
 		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags | IOTTE_DEBUG(0x4000));
+		needsflush = 1;
 
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
+	if (needsflush)
+		iommu_strbuf_flush_done(sb);
 #ifdef DIAGNOSTIC
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		if (map->dm_segs[seg].ds_addr < is->is_dvmabase ||
@@ -646,7 +649,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	struct vm_page *pg;
 	int i, j, s;
 	int left;
-	int err;
+	int err, needsflush;
 	bus_size_t sgsize;
 	paddr_t pa;
 	bus_size_t boundary, align;
@@ -737,6 +740,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		map->dm_mapsize = size;
 
 		j = 0;
+		needsflush = 0;
 		for (i = 0; i < nsegs ; i++) {
 
 			pa = segs[i].ds_addr;
@@ -810,10 +814,12 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 						map, (long)dvmaddr,
 						(long)(pa)));
 				/* Enter it if we haven't before. */
-				if (prev_va != dvmaddr)
+				if (prev_va != dvmaddr) {
 					iommu_enter(sb, prev_va = dvmaddr,
 					    prev_pa = pa,
 					    flags | IOTTE_DEBUG(++npg << 12));
+					needsflush = 1;
+				}
 				dvmaddr += pagesz;
 				pa += pagesz;
 			}
@@ -821,6 +827,8 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			size -= left;
 			++j;
 		}
+		if (needsflush)
+			iommu_strbuf_flush_done(sb);
 
 		map->dm_nsegs = j;
 #ifdef DIAGNOSTIC
@@ -876,6 +884,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			(long)map->dm_segs[i].ds_addr, (long)map->dm_segs[i].ds_len));
 	map->dm_segs[i].ds_len = sgend - sgstart + 1;
 
+	needsflush = 0;
 	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
@@ -885,10 +894,13 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		    ("iommu_dvmamap_load_raw: map %p loading va %lx at pa %lx\n",
 		    map, (long)dvmaddr, (long)(pa)));
 		iommu_enter(sb, dvmaddr, pa, flags | IOTTE_DEBUG(0x8000));
+		needsflush = 1;
 
 		dvmaddr += pagesz;
 		sgsize -= pagesz;
 	}
+	if (needsflush)
+		iommu_strbuf_flush_done(sb);
 	map->dm_mapsize = size;
 	map->dm_nsegs = i+1;
 #ifdef DIAGNOSTIC
