@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.215 2009/12/05 22:34:43 pooka Exp $ */
+/*	$NetBSD: st.c,v 1.216 2009/12/06 22:48:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.215 2009/12/05 22:34:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.216 2009/12/06 22:48:17 dyoung Exp $");
 
 #include "opt_scsi.h"
 
@@ -414,25 +414,6 @@ stattach(device_t parent, struct st_softc *st, void *aux)
 	rnd_attach_source(&st->rnd_source, device_xname(&st->sc_dev),
 			  RND_TYPE_TAPE, 0);
 #endif
-}
-
-int
-stactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 int
