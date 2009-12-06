@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.295 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: cd.c,v 1.296 2009/12/06 22:48:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.295 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.296 2009/12/06 22:48:17 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -171,7 +171,6 @@ static int	cd_setblksize(struct cd_softc *);
 
 static int	cdmatch(device_t, cfdata_t, void *);
 static void	cdattach(device_t, device_t, void *);
-static int	cdactivate(device_t, enum devact);
 static int	cddetach(device_t, int);
 
 static int	mmc_getdiscinfo(struct scsipi_periph *, struct mmc_discinfo *);
@@ -182,7 +181,7 @@ static int	mmc_setup_writeparams(struct scsipi_periph *, struct mmc_writeparams 
 static void	cd_set_properties(struct cd_softc *);
 
 CFATTACH_DECL3_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
-    cdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver cd_cd;
 
@@ -296,25 +295,6 @@ cdattach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-static int
-cdactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.20 2009/08/15 12:44:55 pgoyette Exp $ */
+/*	$NetBSD: stvar.h,v 1.21 2009/12/06 22:48:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,7 +179,6 @@ struct st_softc {
 			 ST_2FM_AT_EOD | ST_PER_ACTION | ST_POSUPDATED)
 
 void	stattach(device_t, struct st_softc *, void *);
-int	stactivate(device_t, enum devact);
 int	stdetach(device_t, int);
 int	st_mode_select(struct st_softc *, int);
 
