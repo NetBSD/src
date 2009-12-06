@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $ */
+/*	$NetBSD: sscom.c,v 1.31 2009/12/06 21:35:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.30 2009/11/21 20:32:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.31 2009/12/06 21:35:05 dyoung Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -509,41 +509,28 @@ sscom_attach_subr(struct sscom_softc *sc)
 }
 
 int
-sscom_detach(struct device *self, int flags)
+sscom_detach(device_t self, int flags)
 {
+	if (sc->sc_hwflags & (SSCOM_HW_CONSOLE|SSCOM_HW_KGDB))
+		return EBUSY;
+
 	return 0;
 }
 
 int
-sscom_activate(struct device *self, enum devact act)
+sscom_activate(device_t self, enum devact act)
 {
-#ifdef notyet
-	struct sscom_softc *sc = (struct sscom_softc *)self;
-	int s, rv = 0;
+	struct sscom_softc *sc = device_private(self);
 
-	s = splserial();
-	SSCOM_LOCK(sc);
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (SSCOM_HW_CONSOLE|SSCOM_HW_KGDB)) {
-			rv = EBUSY;
-			break;
-		}
-
+#ifdef notyet
 		sc->enabled = 0;
-		break;
-	}
-
-	SSCOM_UNLOCK(sc);	
-	splx(s);
-	return rv;
-#else
-	return 0;
 #endif
+		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 void
