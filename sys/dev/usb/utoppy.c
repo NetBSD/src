@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.13 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.14 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.13 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.14 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,14 +307,12 @@ utoppy_activate(device_ptr_t self, enum devact act)
 	struct utoppy_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 USB_DETACH(utoppy)

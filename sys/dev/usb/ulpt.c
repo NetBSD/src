@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.83 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.84 2009/12/06 21:40:31 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.83 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.84 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,14 +364,12 @@ ulpt_activate(device_ptr_t self, enum devact act)
 	struct ulpt_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 

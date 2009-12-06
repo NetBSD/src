@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.80 2009/07/30 19:57:07 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.81 2009/12/06 21:40:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.80 2009/07/30 19:57:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.81 2009/12/06 21:40:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,14 +273,12 @@ ucom_activate(device_ptr_t self, enum devact act)
 	DPRINTFN(5,("ucom_activate: %d\n", act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 void
