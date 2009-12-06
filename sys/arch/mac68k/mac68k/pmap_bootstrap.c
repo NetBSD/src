@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.85 2009/12/06 02:42:34 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.86 2009/12/06 06:41:30 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.85 2009/12/06 02:42:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.86 2009/12/06 06:41:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -416,12 +416,15 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	virtual_avail = PTE2VA(pte);
 
 	/*
-	 * Calculate important exported kernel virtual addresses
+	 * Calculate important exported kernel addresses and related values.
 	 */
 	/*
 	 * Sysseg: base of kernel segment table
 	 */
 	Sysseg = PA2VA(kstpa, st_entry_t *);
+	Sysseg_pa = PA2VA(kstpa, paddr_t);
+	if (mmutype == MMU_68040)
+		protostfree = stfree;
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */
@@ -469,41 +472,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	avail_end = high[numranges - 1];
 	mem_size = m68k_ptob(physmem);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		u_int *kp;
-
-		kp = (u_int *)&protection_codes;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
-	 * Kernel page/segment table allocated above,
-	 * just initialize pointers.
-	 */
-	{
-		struct pmap *kpm = kernel_pmap_ptr;
-
-		kpm->pm_stab = Sysseg;
-		kpm->pm_ptab = Sysmap;
-		simple_lock_init(&kpm->pm_lock);
-		kpm->pm_count = 1;
-		kpm->pm_stpa = (st_entry_t *)kstpa;
-		if (mmutype == MMU_68040)
-			kpm->pm_stfree = stfree;
-	}
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses

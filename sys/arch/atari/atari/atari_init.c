@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.90 2009/12/06 00:33:59 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.91 2009/12/06 06:41:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.90 2009/12/06 00:33:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.91 2009/12/06 06:41:29 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -117,9 +117,6 @@ static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int 	lowram;
 int		machineid, mmutype, cputype, astpending;
-#if defined(M68040) || defined(M68060)
-extern u_int	protostfree;
-#endif
 
 extern char		*esym;
 extern struct pcb	*curpcb;
@@ -198,7 +195,6 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	vaddr_t		end_loaded;
 	paddr_t		kbase;
 	u_int		kstsize;
-	paddr_t		Sysseg_pa;
 	paddr_t		Sysptmap_pa;
 
 #if defined(_MILANHW_)
@@ -507,7 +503,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	/*
 	 * get the pmap module in sync with reality.
 	 */
-	pmap_bootstrap(vstart, Sysseg_pa);
+	pmap_bootstrap(vstart);
 
 	/*
 	 * Prepare to enable the MMU.

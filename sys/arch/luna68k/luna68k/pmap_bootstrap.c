@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.24 2009/12/06 02:42:34 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.25 2009/12/06 06:41:30 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.24 2009/12/06 02:42:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25 2009/12/06 06:41:30 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.24 2009/12/06 02:42:34 tsutsui 
 #include <uvm/uvm_extern.h>
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
-#define RELOCPTR(v, t)	((t)((uintptr_t)RELOC((v), t) + firstpa))
 
 extern char *etext;
 
@@ -357,13 +356,16 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Sysseg: base of kernel segment table
 	 */
-	RELOC(Sysseg, st_entry_t *) =
-		(st_entry_t *)(kstpa - firstpa);
+	RELOC(Sysseg, st_entry_t *) = (st_entry_t *)(kstpa - firstpa);
+	RELOC(Sysseg_pa, paddr_t) = kstpa;
+#if defined(M68040)
+	if (RELOC(mmutype, int) == MMU_68040)
+		RELOC(protostfree, u_int) = stfree;
+#endif
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */
-	RELOC(Sysptmap, pt_entry_t *) =
-		(pt_entry_t *)(kptmpa - firstpa);
+	RELOC(Sysptmap, pt_entry_t *) = (pt_entry_t *)(kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Allocated at the end of KVA space.
@@ -382,45 +384,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		u_int *kp;
-
-		kp = &RELOC(protection_codes, u_int);
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
-	 * Kernel page/segment table allocated above,
-	 * just initialize pointers.
-	 */
-	{
-		struct pmap *kpm;
-
-		kpm = RELOCPTR(kernel_pmap_ptr, struct pmap *);
-
-		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
-		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);
-		simple_lock_init(&kpm->pm_lock);
-		kpm->pm_count = 1;
-		kpm->pm_stpa = (st_entry_t *)kstpa;
-#if defined(M68040)
-		if (RELOC(mmutype, int) == MMU_68040)
-			kpm->pm_stfree = stfree;
-#endif
-	}
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses

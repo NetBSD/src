@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 2009/12/06 00:33:59 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 2009/12/06 06:41:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.8 2009/12/06 00:33:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.9 2009/12/06 06:41:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,13 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.8 2009/12/06 00:33:59 tsutsui E
 
 #include <amiga/amiga/memlist.h>
 
-u_int		Sysseg_pa;
-
 extern paddr_t		avail_start;
 extern paddr_t		avail_end;
-#if defined(M68040) || defined(M68060)
-extern u_int		protostfree;
-#endif
 
 extern paddr_t	msgbufpa;
 
@@ -191,40 +186,6 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 	avail_end   = toads;
 
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		u_int *kp;
-
-		kp = (u_int *)&protection_codes;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
-	 * Kernel page/segment table allocated in locore,
-	 * just initialize pointers.
-	 */
-	pmap_kernel()->pm_stpa = (st_entry_t *)Sysseg_pa;
-	pmap_kernel()->pm_stab = Sysseg;
-	pmap_kernel()->pm_ptab = Sysmap;
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040)
-		pmap_kernel()->pm_stfree = protostfree;
-#endif
-
-	simple_lock_init(&pmap_kernel()->pm_lock);
-	pmap_kernel()->pm_count = 1;
 
 	/*
 	 * Allocate all the submaps we need
