@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.58 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: uk.c,v 1.59 2009/12/06 22:48:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.58 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.59 2009/12/06 22:48:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,10 @@ struct uk_softc {
 
 static int	ukmatch(device_t, cfdata_t, void *);
 static void	ukattach(device_t, device_t, void *);
-static int	ukactivate(device_t, enum devact);
 static int	ukdetach(device_t, int);
 
 
-CFATTACH_DECL(uk, sizeof(struct uk_softc), ukmatch, ukattach, ukdetach,
-    ukactivate);
+CFATTACH_DECL(uk, sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, NULL);
 
 extern struct cfdriver uk_cd;
 
@@ -106,25 +104,6 @@ ukattach(device_t parent, device_t self, void *aux)
 	periph->periph_dev = &uk->sc_dev;
 
 	printf("\n");
-}
-
-static int
-ukactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 static int

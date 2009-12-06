@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.79 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: ss.c,v 1.80 2009/12/06 22:48:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.79 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.80 2009/12/06 22:48:17 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.79 2009/11/23 02:13:47 rmind Exp $");
 static int	ssmatch(device_t, cfdata_t, void *);
 static void	ssattach(device_t, device_t, void *);
 static int	ssdetach(device_t self, int flags);
-static int	ssactivate(device_t self, enum devact act);
 
 CFATTACH_DECL(ss, sizeof(struct ss_softc),
-    ssmatch, ssattach, ssdetach, ssactivate);
+    ssmatch, ssattach, ssdetach, NULL);
 
 extern struct cfdriver ss_cd;
 
@@ -213,25 +212,6 @@ ssdetach(device_t self, int flags)
 	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);
-}
-
-static int
-ssactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 /*

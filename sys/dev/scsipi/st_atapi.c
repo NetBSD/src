@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.25 2009/10/21 21:12:06 rmind Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.26 2009/12/06 22:48:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.25 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.26 2009/12/06 22:48:17 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -48,7 +48,7 @@ static int	st_atapibus_ops(struct st_softc *, int, int);
 static int	st_atapibus_mode_sense(struct st_softc *, int);
 
 CFATTACH_DECL(st_atapibus, sizeof(struct st_softc),
-    st_atapibus_match, st_atapibus_attach, stdetach, stactivate);
+    st_atapibus_match, st_atapibus_attach, stdetach, NULL);
 
 static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
