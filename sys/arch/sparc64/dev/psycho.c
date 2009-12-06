@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.97 2009/11/30 05:00:58 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.98 2009/12/06 01:35:40 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.97 2009/11/30 05:00:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.98 2009/12/06 01:35:40 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -871,25 +871,25 @@ psycho_ue(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
-	long long afsr = regs->psy_ue_afsr;
-	long long afar = regs->psy_ue_afar;
-	long size = PAGE_SIZE<<(sc->sc_is->is_tsbsize);
 	struct iommu_state *is = sc->sc_is;
+	uint64_t afsr = regs->psy_ue_afsr;
+	uint64_t afar = regs->psy_ue_afar;
+	psize_t size = PAGE_SIZE << is->is_tsbsize;
 	char bits[128];
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 	snprintb(bits, sizeof(bits), PSYCHO_UE_AFSR_BITS, afsr);
-	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
-		device_xname(&sc->sc_dev), afar, 
-		(long long)iommu_extract(is, (vaddr_t)afar), afsr, bits);
-	
+	aprint_error_dev(&sc->sc_dev,
+	    "uncorrectable DMA error AFAR %" PRIx64 " AFSR %s\n", afar, bits);
+
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
-		printf("IOVA %llx IOTTE %llx\n",
-			(long long)((afar - is->is_ptsb) * PAGE_SIZE + is->is_dvmabase),
-			(long long)ldxa(afar, ASI_PHYS_CACHED));
+		aprint_error_dev(&sc->sc_dev,
+		    "IOVA %" PRIx64 " IOTTE %" PRIx64 "\n",
+		    (afar - is->is_ptsb) / sizeof(is->is_tsb[0]) * PAGE_SIZE
+		    + is->is_dvmabase, ldxa(afar, ASI_PHYS_CACHED));
 	}
 #ifdef DDB
 	Debugger();
@@ -908,10 +908,9 @@ psycho_ce(void *arg)
 	/*
 	 * It's correctable.  Dump the regs and continue.
 	 */
-
-	printf("%s: correctable DMA error AFAR %llx AFSR %llx\n",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_ce_afar, (long long)regs->psy_ce_afsr);
+	aprint_error_dev(&sc->sc_dev,
+	    "correctable DMA error AFAR %" PRIx64 " AFSR %" PRIx64 "\n",
+	    regs->psy_ce_afar, regs->psy_ce_afsr);
 	return (1);
 }
 
@@ -925,10 +924,9 @@ psycho_bus_a(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus A error AFAR %llx AFSR %llx",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_pcictl[0].pci_afar, 
-		(long long)regs->psy_pcictl[0].pci_afsr);
+	panic("%s: PCI bus A error AFAR %" PRIx64 " AFSR %" PRIx64,
+	    device_xname(&sc->sc_dev),
+	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 
@@ -942,10 +940,9 @@ psycho_bus_b(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus B error AFAR %llx AFSR %llx",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_pcictl[0].pci_afar, 
-		(long long)regs->psy_pcictl[0].pci_afsr);
+	panic("%s: PCI bus B error AFAR %" PRIx64 " AFSR %" PRIx64,
+	    device_xname(&sc->sc_dev),
+	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 
@@ -974,7 +971,7 @@ int psycho_wakeup(void *arg)
 	 * Gee, we don't really have a framework to deal with this
 	 * properly.
 	 */
-	printf("%s: power management wakeup\n",	device_xname(&sc->sc_dev));
+	aprint_error_dev(&sc->sc_dev, "power management wakeup\n");
 	return (1);
 }
 
