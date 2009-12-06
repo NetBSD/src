@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.182 2009/11/05 08:11:24 bouyer Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.183 2009/12/06 18:00:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.182 2009/11/05 08:11:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.183 2009/12/06 18:00:15 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -206,7 +206,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 	struct mbuf *m;
 	int val;
 
-	nmp->nm_so = (struct socket *)0;
+	nmp->nm_so = NULL;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so,
 		nmp->nm_sotype, nmp->nm_soproto, l, NULL);
@@ -410,7 +410,7 @@ nfs_disconnect(struct nfsmount *nmp)
 
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
-		nmp->nm_so = (struct socket *)0;
+		nmp->nm_so = NULL;
 		solock(so);
 		soshutdown(so, SHUT_RDWR);
 		sounlock(so);
@@ -489,7 +489,7 @@ nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top, struct nfsreq *r
 	} else
 		soflags = so->so_proto->pr_flags;
 	if ((soflags & PR_CONNREQUIRED) || (so->so_state & SS_ISCONNECTED))
-		sendnam = (struct mbuf *)0;
+		sendnam = NULL;
 	else
 		sendnam = nam;
 	if (so->so_type == SOCK_SEQPACKET)
@@ -573,8 +573,8 @@ nfs_receive(struct nfsreq *rep, struct mbuf **aname, struct mbuf **mp,
 	/*
 	 * Set up arguments for soreceive()
 	 */
-	*mp = (struct mbuf *)0;
-	*aname = (struct mbuf *)0;
+	*mp = NULL;
+	*aname = NULL;
 	sotype = rep->r_nmp->nm_sotype;
 
 	/*
@@ -639,8 +639,8 @@ tryagain:
 			UIO_SETUP_SYSSPACE(&auio);
 			do {
 			   rcvflg = MSG_WAITALL;
-			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
-				(struct mbuf **)0, (struct mbuf **)0, &rcvflg);
+			   error = (*so->so_receive)(so, NULL, &auio,
+				NULL, NULL, &rcvflg);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -688,8 +688,8 @@ tryagain:
 			auio.uio_resid = len;
 			do {
 			    rcvflg = MSG_WAITALL;
-			    error =  (*so->so_receive)(so, (struct mbuf **)0,
-				&auio, mp, (struct mbuf **)0, &rcvflg);
+			    error =  (*so->so_receive)(so, NULL,
+				&auio, mp, NULL, &rcvflg);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
@@ -713,7 +713,7 @@ tryagain:
 			/* not need to setup uio_vmspace */
 			do {
 			    rcvflg = 0;
-			    error =  (*so->so_receive)(so, (struct mbuf **)0,
+			    error =  (*so->so_receive)(so, NULL,
 				&auio, mp, &control, &rcvflg);
 			    if (control)
 				m_freem(control);
@@ -732,7 +732,7 @@ tryagain:
 errout:
 		if (error && error != EINTR && error != ERESTART) {
 			m_freem(*mp);
-			*mp = (struct mbuf *)0;
+			*mp = NULL;
 			if (error != EPIPE)
 				log(LOG_INFO,
 				    "receive error %d from nfs server %s\n",
@@ -750,7 +750,7 @@ errout:
 		if ((so = rep->r_nmp->nm_so) == NULL)
 			return (EACCES);
 		if (so->so_state & SS_ISCONNECTED)
-			getnam = (struct mbuf **)0;
+			getnam = NULL;
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
@@ -758,7 +758,7 @@ errout:
 		do {
 			rcvflg = 0;
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
-				(struct mbuf **)0, &rcvflg);
+				NULL, &rcvflg);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
 				return (EINTR);
@@ -769,7 +769,7 @@ errout:
 	}
 	if (error) {
 		m_freem(*mp);
-		*mp = (struct mbuf *)0;
+		*mp = NULL;
 	}
 	return (error);
 }
@@ -1004,7 +1004,7 @@ tryagain_cred:
 	 * Get the RPC header with authorization.
 	 */
 kerbauth:
-	verf_str = auth_str = (char *)0;
+	verf_str = auth_str = NULL;
 	if (nmp->nm_flag & NFSMNT_KERB) {
 		verf_str = nickv;
 		verf_len = sizeof (nickv);
@@ -1196,7 +1196,7 @@ tryagain:
 		else if ((nmp->nm_flag & NFSMNT_KERB) && *tl++ == rpc_autherr) {
 			if (!failed_auth) {
 				failed_auth++;
-				mheadend->m_next = (struct mbuf *)0;
+				mheadend->m_next = NULL;
 				m_freem(mrep);
 				m_freem(rep->r_mreq);
 				goto kerbauth;
@@ -1691,10 +1691,10 @@ nfs_timer(void *arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 		        if (so->so_state & SS_ISCONNECTED)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
+			    NULL, NULL, NULL);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0, (struct lwp *)0);
+			    nmp->nm_nam, NULL, NULL);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG
