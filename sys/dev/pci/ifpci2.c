@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.18 2009/11/26 15:17:10 njoly Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.19 2009/12/06 23:14:05 dyoung Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.18 2009/11/26 15:17:10 njoly Exp $
+ *	$Id: ifpci2.c,v 1.19 2009/12/06 23:14:05 dyoung Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.18 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.19 2009/12/06 23:14:05 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -371,23 +371,17 @@ int
 ifpci2_activate(device_t self, enum devact act)
 {
 	struct ifpci_softc *psc = device_private(self);
-	int error = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, psc->sc_isic.sc_l3token, STI_ATTACH, 0);
 		isdn_detach_isdnif(psc->sc_isic.sc_l3token);
 		psc->sc_isic.sc_l3token = NULL;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }
 
 /*---------------------------------------------------------------------------*

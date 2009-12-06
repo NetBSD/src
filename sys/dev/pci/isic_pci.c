@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.36 2009/11/26 15:17:10 njoly Exp $ */
+/* $NetBSD: isic_pci.c,v 1.37 2009/12/06 23:14:05 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.36 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.37 2009/12/06 23:14:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -313,19 +313,13 @@ static int
 isic_pci_activate(device_t self, enum devact act)
 {
 	struct pci_isic_softc *psc = device_private(self);
-	int error = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isic_detach_bri(&psc->sc_isic);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }
