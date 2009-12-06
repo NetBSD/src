@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.26 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.27 2009/12/06 20:20:12 dyoung Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.26 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.27 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -736,16 +736,13 @@ udav_activate(device_ptr_t self, enum devact act)
 	DPRINTF(("%s: %s: enter, act=%d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, act));
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 #define UDAV_BITS	6

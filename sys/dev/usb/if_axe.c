@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.29 2009/09/23 19:07:19 plunky Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.29 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -635,16 +635,13 @@ axe_activate(device_t self, enum devact act)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->axe_ec.ec_if);
 		sc->axe_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*

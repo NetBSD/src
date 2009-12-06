@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.25 2009/09/23 19:07:19 plunky Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.26 2009/12/06 20:20:12 dyoung Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.25 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.26 2009/12/06 20:20:12 dyoung Exp $");
 #include "bpfilter.h"
 #ifdef	__NetBSD__
 #include "opt_inet.h"
@@ -790,16 +790,13 @@ cdce_activate(device_t self, enum devact act)
 	struct cdce_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(GET_IFP(sc));
 		sc->cdce_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 

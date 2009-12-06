@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.32 2009/09/23 19:07:19 plunky Exp $ */
+/*	$NetBSD: if_ural.c,v 1.33 2009/12/06 20:20:12 dyoung Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.32 2009/09/23 19:07:19 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.33 2009/12/06 20:20:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2306,16 +2306,12 @@ ural_activate(device_ptr_t self, enum devact act)
 	struct ural_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return 0;
 }
 
 Static void
