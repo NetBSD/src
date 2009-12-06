@@ -144,7 +144,7 @@ savagedrm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(savagedrm, sizeof(struct drm_device),
-    savagedrm_probe, savagedrm_attach, drm_detach, drm_activate);
+    savagedrm_probe, savagedrm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 

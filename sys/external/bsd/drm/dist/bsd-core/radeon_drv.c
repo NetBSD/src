@@ -156,7 +156,7 @@ radeondrm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(radeondrm, sizeof(struct drm_device),
-    radeondrm_probe, radeondrm_attach, drm_detach, drm_activate);
+    radeondrm_probe, radeondrm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 
