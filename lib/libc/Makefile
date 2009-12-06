@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.138 2009/08/11 17:29:04 dsl Exp $
+#	$NetBSD: Makefile,v 1.139 2009/12/06 06:30:52 uebayasi Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -114,15 +114,15 @@ LSRCS := ${LSRCS} ${unwanted_file}
 NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 	no.msg pl.msg sk.msg sv.msg
 
-realall: tags
-tags: ${SRCS}
+realall: ${.OBJDIR}/tags
+${.OBJDIR}/tags: ${SRCS}
 	${_MKTARGET_CREATE}
 	-${TOOL_CTAGS} -w ${.ALLSRC:M*.c}
 	-egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
 
-FILES=		tags
+FILES=		${.OBJDIR}/tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
 
