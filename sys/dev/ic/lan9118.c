@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.10 2009/12/02 12:51:50 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.11 2009/12/06 12:22:17 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.10 2009/12/02 12:51:50 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.11 2009/12/06 12:22:17 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -233,11 +233,17 @@ lan9118_attach(struct lan9118_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    lan9118_ifm_change, lan9118_ifm_status);
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = lan9118_miibus_readreg;
+	sc->sc_mii.mii_writereg = lan9118_miibus_writereg;
+	sc->sc_mii.mii_statchg = lan9118_miibus_statchg;
+
 	/*
 	 * Number of instance of Internal PHY is always 0.  External PHY
 	 * number that above.
 	 */
-	sc->sc_mii.mii_instance++;
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
+
 	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117 ||
 	    sc->sc_id == LAN9218_ID_9215 || sc->sc_id == LAN9218_ID_9217) {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG) &
@@ -247,10 +253,6 @@ lan9118_attach(struct lan9118_softc *sc)
 			 * In addition, external PHY is attached.
 			 */
 			DPRINTFN(1, ("%s: detect External PHY\n", __func__));
-
-			sc->sc_mii.mii_readreg = lan9118_miibus_readreg;
-			sc->sc_mii.mii_writereg = lan9118_miibus_writereg;
-			sc->sc_mii.mii_statchg = lan9118_miibus_statchg;
 
 			/* Switch MII and SMI */
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
@@ -274,17 +276,7 @@ lan9118_attach(struct lan9118_softc *sc)
 				    i, MII_OFFSET_ANY, 0);
 		}
 	}
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0,
-	    NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0,
-	    NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 
-	aprint_normal_dev(sc->sc_dev,
-	    "10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n");
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the interface. */
@@ -703,8 +695,7 @@ lan9118_ifm_change(struct ifnet *ifp)
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia *ifm = &mii->mii_media;
 	struct ifmedia_entry *ife = ifm->ifm_cur;
-	uint32_t pmt_ctrl, bmc, bms, ana, anlpa;
-	int i;
+	uint32_t pmt_ctrl;
 
 	DPRINTFN(3, ("%s: ifm inst %d\n", __func__, IFM_INST(ife->ifm_media)));
 
@@ -741,80 +732,7 @@ lan9118_ifm_change(struct ifnet *ifp)
 	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_PMT_CTRL) &
 	    LAN9118_PMT_CTRL_PHY_RST);
 
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		bmc = BMCR_AUTOEN | BMCR_STARTNEG;
-		bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-		ana = ANAR_FC | BMSR_MEDIA_TO_ANAR(bms) | ANAR_CSMA;
-
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
-
-		/* Wait 5sec for it to complete. */
-		for (i = 0; i < 5000; i++) {
-			if (lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR)
-								& BMSR_ACOMP)
-				break;
-			delay(1000);
-		}
-		if (i == 5000) {
-			aprint_error_ifnet(ifp, "Auto-Negotiate failed\n");
-			return EIO;
-		}
-	} else {
-		switch (IFM_SUBTYPE(ifm->ifm_media)) {
-		case IFM_10_T:
-			bmc = BMCR_S10;
-			ana = ANAR_CSMA | ANAR_10;
-			break;
-
-		case IFM_100_TX:
-			bmc = BMCR_S100;
-			if (ifm->ifm_media & IFM_FDX)
-				bmc |= BMCR_FDX;
-			ana = ANAR_CSMA | ANAR_TX;
-			break;
-
-		case IFM_NONE:
-			bmc = BMCR_PDOWN;
-			break;
-
-		default:
-			return EINVAL;
-		}
-		if (ifm->ifm_media & IFM_FDX)
-			bmc |= BMCR_FDX;
-		if (ifm->ifm_media & IFM_FLOW)
-			ana |= ANAR_FC;
-
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
-	}
-
-	bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-	if (bms & BMSR_LINK) {
-		mii->mii_media_status |= IFM_ACTIVE;
-
-		bmc = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMCR);
-		if (bmc & BMCR_AUTOEN) {
-			anlpa = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR,
-			    MII_ANLPAR);
-			if (anlpa & ANLPAR_TX_FD)
-				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
-			else if (anlpa & ANLPAR_T4)
-				mii->mii_media_active |= IFM_100_T4;
-			else if (anlpa & ANLPAR_TX)
-				mii->mii_media_active |= IFM_100_TX;
-			else if (anlpa & ANLPAR_10_FD)
-				mii->mii_media_active |= IFM_10_T|IFM_FDX;
-			else if (anlpa & ANLPAR_10)
-				mii->mii_media_active |= IFM_10_T;
-			else
-				mii->mii_media_active |= IFM_NONE;
-		} else
-			mii->mii_media_active = ife->ifm_media;
-
-		lan9118_miibus_statchg(sc->sc_dev);
-	}
+	mii_mediachg(&sc->sc_mii);
 	return 0;
 }
 
@@ -823,43 +741,12 @@ lan9118_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia *ifm = &mii->mii_media;
-	struct ifmedia_entry *ife = ifm->ifm_cur;
-	uint32_t bms, physcs;
 
 	DPRINTFN(3, ("%s\n", __func__));
 
-	if (IFM_INST(ife->ifm_media) != 0) {
-		mii_pollstat(mii);
-		ifmr->ifm_active = mii->mii_media_active;
-		ifmr->ifm_status = mii->mii_media_status;
-		return;
-	}
-
-	ifmr->ifm_active = IFM_ETHER;
-	ifmr->ifm_status = IFM_AVALID;
-
-	bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-	if (!(bms & BMSR_LINK)) {
-		/* link is down */
-		ifmr->ifm_active |= IFM_NONE;
-		return;
-	}
-	ifmr->ifm_status |= IFM_ACTIVE;
-	physcs = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, LAN9118_PHYSCSR);
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		if (!(physcs & LAN9118_PHYSCSR_AUTODONE)) {
-			/* negotiation in progress */
-			ifmr->ifm_active |= IFM_NONE;
-			return;
-		}
-	}
-	if (physcs & LAN9118_PHYSCSR_SI_10)
-		ifmr->ifm_active |= IFM_10_T;
-	if (physcs & LAN9118_PHYSCSR_SI_100)
-		ifmr->ifm_active |= IFM_100_TX;
-	if (physcs & LAN9118_PHYSCSR_SI_FDX)
-		ifmr->ifm_active |= IFM_FDX;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 
