@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.204 2009/08/07 00:08:07 dyoung Exp $	*/
+/*	$NetBSD: vnd.c,v 1.205 2009/12/06 16:33:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.204 2009/08/07 00:08:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.205 2009/12/06 16:33:18 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1037,6 +1037,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
+#ifdef VNDIOOCSET
+	case VNDIOOCSET:
+	case VNDIOOCCLR:
+#endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1052,6 +1056,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
+#ifdef VNDIOOCCLR
+	case VNDIOOCCLR:
+#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1071,6 +1078,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
+#ifdef VNDIOOCSET
+	case VNDIOOCSET:
+#endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return EBUSY;
@@ -1088,6 +1098,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
+		if (!error && vattr.va_bytes < vattr.va_size)
+			/* File is definitely sparse, reject here */
+			error = EINVAL;
 		if (error) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto close_and_exit;
@@ -1272,7 +1285,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto close_and_exit;
 
 		vndthrottle(vnd, vnd->sc_vp);
-		vio->vnd_size = dbtob(vnd->sc_size);
+		vio->vnd_osize = dbtob(vnd->sc_size);
+#ifdef VNDIOOCSET
+		if (cmd != VNDIOOCSET)
+#endif
+			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
@@ -1328,6 +1345,9 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
+#ifdef VNDIOOCCLR
+	case VNDIOOCCLR:
+#endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
 		pmask = (1 << part);
