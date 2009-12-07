@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.126 2009/11/26 20:52:19 pooka Exp $ */
+/* $NetBSD: device.h,v 1.127 2009/12/07 19:45:13 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -110,7 +110,6 @@ typedef enum devclass {
  * Actions for ca_activate.
  */
 typedef enum devact {
-	DVACT_ACTIVATE,		/* activate the device */
 	DVACT_DEACTIVATE	/* deactivate the device */
 } devact_t;
 
