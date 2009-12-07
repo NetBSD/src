@@ -57,13 +57,14 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.23 2009/12/05 07:08:18 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.24 2009/12/07 16:17:17 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
+#include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -764,11 +765,9 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 */
 const __ops_key_t *
 __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
-			   const unsigned char keyid[OPS_KEY_ID_SIZE])
+			   const unsigned char *keyid, unsigned *from)
 {
-	unsigned	 n;
-
-	for (n = 0; keyring && n < keyring->keyc; n++) {
+	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
 			int	i;
 
@@ -776,7 +775,7 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 				"__ops_getkeybyid: keyring keyid ");
 			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
 				(void) fprintf(io->errs, "%02x",
-					keyring->keys[n].key_id[i]);
+					keyring->keys[*from].key_id[i]);
 			}
 			(void) fprintf(io->errs, ", keyid ");
 			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
@@ -784,13 +783,13 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			}
 			(void) fprintf(io->errs, "\n");
 		}
-		if (memcmp(keyring->keys[n].key_id, keyid,
+		if (memcmp(keyring->keys[*from].key_id, keyid,
 				OPS_KEY_ID_SIZE) == 0) {
-			return &keyring->keys[n];
+			return &keyring->keys[*from];
 		}
-		if (memcmp(&keyring->keys[n].key_id[OPS_KEY_ID_SIZE / 2],
+		if (memcmp(&keyring->keys[*from].key_id[OPS_KEY_ID_SIZE / 2],
 				keyid, OPS_KEY_ID_SIZE / 2) == 0) {
-			return &keyring->keys[n];
+			return &keyring->keys[*from];
 		}
 	}
 	return NULL;
@@ -831,6 +830,70 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 	keyid[j] = 0x0;
 }
 
+/* return the next key which matches, starting searching at *from */
+static const __ops_key_t *
+getkeybyname(__ops_io_t *io,
+			const __ops_keyring_t *keyring,
+			const char *name,
+			unsigned *from)
+{
+	const __ops_key_t	*kp;
+	__ops_key_t		*keyp;
+	__ops_userid_t		*uidp;
+	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
+	unsigned int    	 i = 0;
+	unsigned		 savedstart;
+	regex_t			 r;
+	size_t          	 len;
+
+	if (!keyring) {
+		return NULL;
+	}
+	len = strlen(name);
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(io->outs, "[%u] name '%s', len %u\n",
+			*from, name, len);
+	}
+	/* first try name as a keyid */
+	(void) memset(keyid, 0x0, sizeof(keyid));
+	str2keyid(name, keyid, sizeof(keyid));
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(io->outs,
+			"name \"%s\", keyid %02x%02x%02x%02x\n",
+			name,
+			keyid[0], keyid[1], keyid[2], keyid[3]);
+	}
+	savedstart = *from;
+	if ((kp = __ops_getkeybyid(io, keyring, keyid, from)) != NULL) {
+		return kp;
+	}
+	*from = savedstart;
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(io->outs, "regex match '%s' from %u\n",
+			name, *from);
+	}
+	/* match on full name or email address as a NOSUB, ICASE regexp */
+	(void) regcomp(&r, name, REG_EXTENDED | REG_ICASE);
+	for (keyp = &keyring->keys[*from]; *from < keyring->keyc; *from += 1, keyp++) {
+		uidp = keyp->uids;
+		for (i = 0 ; i < keyp->uidc; i++, uidp++) {
+			if (__ops_get_debug_level(__FILE__)) {
+				(void) fprintf(io->outs,
+					"keyid \"%s\" len %"
+					PRIsize "u, keyid[len] '%c'\n",
+				       (char *) uidp->userid,
+				       len, uidp->userid[len]);
+			}
+			if (regexec(&r, (char *)uidp->userid, 0, NULL, 0) == 0) {
+				regfree(&r);
+				return keyp;
+			}
+		}
+	}
+	regfree(&r);
+	return NULL;
+}
+
 /**
    \ingroup HighLevel_KeyringFind
 
@@ -850,95 +913,19 @@ __ops_getkeybyname(__ops_io_t *io,
 			const __ops_keyring_t *keyring,
 			const char *name)
 {
-	const __ops_key_t	*kp;
-	__ops_key_t		*keyp;
-	__ops_userid_t		*uidp;
-	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
-	unsigned int    	 i = 0;
-	size_t          	 len;
-	char	                *cp;
-	unsigned             	 n;
+	unsigned	from;
 
-	if (!keyring) {
-		return NULL;
-	}
-	len = strlen(name);
-	n = 0;
-	for (keyp = &keyring->keys[n]; n < keyring->keyc; ++n, keyp++) {
-		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
-			if (__ops_get_debug_level(__FILE__)) {
-				(void) fprintf(io->outs,
-					"[%u][%u] name %s, last '%d'\n",
-					n, i, uidp->userid,
-					uidp->userid[len]);
-			}
-			if (strncmp((char *) uidp->userid, name, len) == 0 &&
-			    uidp->userid[len] == ' ') {
-				return keyp;
-			}
-		}
-	}
+	from = 0;
+	return getkeybyname(io, keyring, name, &from);
+}
 
-	if (strchr(name, '@') == NULL) {
-		/* no '@' sign */
-		/* first try name as a keyid */
-		(void) memset(keyid, 0x0, sizeof(keyid));
-		str2keyid(name, keyid, sizeof(keyid));
-		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(io->outs,
-				"name \"%s\", keyid %02x%02x%02x%02x\n",
-				name,
-				keyid[0], keyid[1], keyid[2], keyid[3]);
-		}
-		if ((kp = __ops_getkeybyid(io, keyring, keyid)) != NULL) {
-			return kp;
-		}
-		/* match on full name */
-		keyp = keyring->keys;
-		for (n = 0; n < keyring->keyc; ++n, keyp++) {
-			uidp = keyp->uids;
-			for (i = 0 ; i < keyp->uidc; i++, uidp++) {
-				if (__ops_get_debug_level(__FILE__)) {
-					(void) fprintf(io->outs,
-						"keyid \"%s\" len %"
-						PRIsize "u, keyid[len] '%c'\n",
-					       (char *) uidp->userid,
-					       len, uidp->userid[len]);
-				}
-				if (strncasecmp((char *) uidp->userid, name,
-					len) == 0 && uidp->userid[len] == ' ') {
-					return keyp;
-				}
-			}
-		}
-	}
-	/* match on <email@address> */
-	keyp = keyring->keys;
-	for (n = 0; n < keyring->keyc; ++n, keyp++) {
-		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
-			/*
-			 * look for the rightmost '<', in case there is one
-			 * in the comment field
-			 */
-			cp = strrchr((char *) uidp->userid, '<');
-			if (cp != NULL) {
-				if (__ops_get_debug_level(__FILE__)) {
-					(void) fprintf(io->errs,
-						"cp ,%s, name ,%s, len %"
-						PRIsize "u ,%c,\n",
-						cp + 1,
-						name,
-						len,
-						*(cp + len + 1));
-				}
-				if (strncasecmp(cp + 1, name, len) == 0 &&
-				    *(cp + len + 1) == '>') {
-					return keyp;
-				}
-			}
-		}
-	}
-	return NULL;
+const __ops_key_t *
+__ops_getnextkeybyname(__ops_io_t *io,
+			const __ops_keyring_t *keyring,
+			const char *name,
+			unsigned *n)
+{
+	return getkeybyname(io, keyring, name, n);
 }
 
 /**
