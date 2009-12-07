@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.26 2009/12/05 07:08:19 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.27 2009/12/07 16:17:17 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2162,6 +2162,7 @@ __ops_cb_ret_t
 pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
+	unsigned		 from;
 	__ops_io_t		*io;
 
 	io = cbinfo->io;
@@ -2179,9 +2180,10 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				"pk_sesskey_cb: bad keyring\n");
 			return (__ops_cb_ret_t)0;
 		}
+		from = 0;
 		cbinfo->cryptinfo.keydata =
 			__ops_getkeybyid(io, cbinfo->cryptinfo.keyring,
-				content->pk_sesskey.key_id);
+				content->pk_sesskey.key_id, &from);
 		if (!cbinfo->cryptinfo.keydata) {
 			break;
 		}
@@ -2214,6 +2216,7 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_seckey_t	*secret;
 	const __ops_key_t	*keypair;
+	unsigned		 from;
 	__ops_io_t		*io;
 
 	io = cbinfo->io;
@@ -2222,9 +2225,11 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	}
 	switch (pkt->tag) {
 	case OPS_GET_SECKEY:
+		from = 0;
 		cbinfo->cryptinfo.keydata =
 			__ops_getkeybyid(io, cbinfo->cryptinfo.keyring,
-				content->get_seckey.pk_sesskey->key_id);
+				content->get_seckey.pk_sesskey->key_id,
+				&from);
 		if (!cbinfo->cryptinfo.keydata ||
 		    !__ops_is_key_secret(cbinfo->cryptinfo.keydata)) {
 			return (__ops_cb_ret_t)0;

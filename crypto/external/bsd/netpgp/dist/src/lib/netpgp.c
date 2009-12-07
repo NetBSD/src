@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.31 2009/12/05 07:08:19 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.32 2009/12/07 16:17:17 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -138,6 +138,7 @@ resultp(__ops_io_t *io,
 	__ops_keyring_t *ring)
 {
 	const __ops_key_t	*pubkey;
+	unsigned		 from;
 	unsigned		 i;
 	char			 id[MAX_ID_LENGTH + 1];
 
@@ -148,8 +149,10 @@ resultp(__ops_io_t *io,
 			ctime(&res->valid_sigs[i].birthtime),
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
+		from = 0;
 		pubkey = __ops_getkeybyid(io, ring,
-			(const unsigned char *) res->valid_sigs[i].signer_id);
+			(const unsigned char *) res->valid_sigs[i].signer_id,
+			&from);
 		__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
 	}
 }
@@ -230,7 +233,7 @@ readkeyring(netpgp_t *netpgp, const char *name)
 	return keyring;
 }
 
-/* read keys from ssh host key files */
+/* read keys from ssh key files */
 static int
 readsshkeys(netpgp_t *netpgp, const char *pubname, const char *secname)
 {
@@ -241,7 +244,7 @@ readsshkeys(netpgp_t *netpgp, const char *pubname, const char *secname)
 	char		*etcdir;
 
 	__OPS_USED(secname);
-	etcdir = netpgp_getvar(netpgp, "sshetcdir");
+	etcdir = netpgp_getvar(netpgp, "sshkeydir");
 	if ((filename = netpgp_getvar(netpgp, pubname)) == NULL) {
 		(void) snprintf(f, sizeof(f), "%s/ssh_host_rsa_key.pub", etcdir);
 		filename = f;
@@ -336,23 +339,23 @@ netpgp_init(netpgp_t *netpgp)
 		(void) fprintf(io->errs, "netpgp: bad homedir\n");
 		return 0;
 	}
-	if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
-		(void) memset(id, 0x0, sizeof(id));
-		(void) conffile(netpgp, homedir, id, sizeof(id));
-		if (id[0] != 0x0) {
-			netpgp_setvar(netpgp, "userid", userid = id);
-		}
-	}
-	if (userid == NULL) {
-		if (netpgp_getvar(netpgp, "need userid") != NULL) {
-			(void) fprintf(io->errs, "Cannot find user id\n");
-			return 0;
-		}
-	} else {
-		(void) netpgp_setvar(netpgp, "userid", userid);
-	}
-	/* read from either gpg files or ssh host keys */
+	/* read from either gpg files or ssh keys */
 	if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
+		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
+			(void) memset(id, 0x0, sizeof(id));
+			(void) conffile(netpgp, homedir, id, sizeof(id));
+			if (id[0] != 0x0) {
+				netpgp_setvar(netpgp, "userid", userid = id);
+			}
+		}
+		if (userid == NULL) {
+			if (netpgp_getvar(netpgp, "need userid") != NULL) {
+				(void) fprintf(io->errs, "Cannot find user id\n");
+				return 0;
+			}
+		} else {
+			(void) netpgp_setvar(netpgp, "userid", userid);
+		}
 		if ((netpgp->pubring = readkeyring(netpgp, "pubring")) == NULL) {
 			(void) fprintf(io->errs, "Can't read pub keyring\n");
 			return 0;
@@ -363,8 +366,32 @@ netpgp_init(netpgp_t *netpgp)
 		}
 	} else {
 		if (!readsshkeys(netpgp, "ssh pub key", "ssh sec file")) {
-			(void) fprintf(io->errs, "Can't read ssh host pub key\n");
+			(void) fprintf(io->errs, "Can't read ssh pub key\n");
 			return 0;
+		}
+		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
+			/* set ssh uid to first one in ring */
+			__ops_keyring_t	*pubring;
+			unsigned char	*src;
+			int		 i;
+			int		 n;
+
+			pubring = netpgp->pubring;
+			(void) memset(id, 0x0, sizeof(id));
+			src = pubring->keys[0].key_id;
+			for (i = 0, n = 0 ; i < OPS_KEY_ID_SIZE ; i += 2) {
+				n += snprintf(&id[n], sizeof(id) - n, "%02x%02x", src[i], src[i + 1]);
+			}
+			id[n] = 0x0;
+			netpgp_setvar(netpgp, "userid", userid = id);
+		}
+		if (userid == NULL) {
+			if (netpgp_getvar(netpgp, "need userid") != NULL) {
+				(void) fprintf(io->errs, "Cannot find user id\n");
+				return 0;
+			}
+		} else {
+			(void) netpgp_setvar(netpgp, "userid", userid);
 		}
 	}
 	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
@@ -411,6 +438,29 @@ int
 netpgp_list_keys(netpgp_t *netpgp)
 {
 	return __ops_keyring_list(netpgp->io, netpgp->pubring);
+}
+
+/* find and list some keys in a keyring */
+int
+netpgp_match_list_keys(netpgp_t *netpgp, char *name)
+{
+	const __ops_key_t	*key;
+	unsigned		 found;
+	unsigned		 k;
+	char			*data;
+
+	found = k = 0;
+	do {
+		if ((key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring, name, &k)) != NULL) {
+			__ops_sprint_keydata(key, &data, "pub", &key->key.pubkey);
+			printf("%s\n", data);
+			free(data);
+			found += 1;
+			k += 1;
+		}
+	} while (key != NULL);
+	printf("Found %u key%s\n", found, (found == 1) ? "" : "s");
+	return (found > 0);
 }
 
 /* find a key in a keyring */
