@@ -69,6 +69,7 @@ char *netpgp_getvar(netpgp_t *, const char *);
 
 /* key management */
 int netpgp_list_keys(netpgp_t *);
+int netpgp_match_list_keys(netpgp_t *, char *);
 int netpgp_find_key(netpgp_t *, char *);
 char *netpgp_get_key(netpgp_t *, const char *);
 int netpgp_export_key(netpgp_t *, char *);
