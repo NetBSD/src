@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.74 2009/11/05 19:42:44 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.75 2009/12/07 15:51:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.74 2009/11/05 19:42:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.75 2009/12/07 15:51:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -863,13 +863,9 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		DPRINTF(("dispatch: flush 0x%x\n", preq->preq_optype));
 		puffsop_flush(pmp, (struct puffs_flush *)preq);
 		break;
-	case PUFFSOP_SUSPEND:
-		DPRINTF(("dispatch: suspend\n"));
-		rv = EOPNOTSUPP;
-		break;
 	default:
 		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
-		puffs_msg_sendresp(pmp, preq, EINVAL);
+		puffs_msg_sendresp(pmp, preq, EOPNOTSUPP);
 		break;
 	}
 
