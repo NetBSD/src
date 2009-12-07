@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.6 2009/01/17 01:38:10 tsutsui Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.7 2009/12/07 14:23:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -89,11 +89,7 @@ typedef u_int	pt_entry_t;	/* page table entry */
 #define	PT_ENTRY_NULL	NULL
 #define	ST_ENTRY_NULL	NULL
 
-#if defined(amiga) || defined(atari)
-#define PG_SHIFT	13
-#else
-#define PG_SHIFT	12
-#endif
+#define PG_SHIFT	PGSHIFT
 
 #define	SG_V		0x00000002	/* segment is valid */
 #define	SG_NV		0x00000000
