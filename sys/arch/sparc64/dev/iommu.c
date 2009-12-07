@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.91 2009/12/06 13:39:22 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.92 2009/12/07 11:14:27 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.91 2009/12/06 13:39:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.92 2009/12/07 11:14:27 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -727,9 +727,10 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 	bmask = ~(boundary - 1);
 	if ((pglist = segs[0]._ds_mlist) == NULL) {
-		u_long prev_va = 0UL;
+		u_long prev_va = 0UL, last_va = dvmaddr;
 		paddr_t prev_pa = 0;
 		int end = 0, offset;
+		bus_size_t len = size;
 
 		/*
 		 * This segs is made up of individual physical
@@ -737,8 +738,6 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		 * _bus_dmamap_load_mbuf().  Ignore the mlist and
 		 * load each one individually.
 		 */
-		map->dm_mapsize = size;
-
 		j = 0;
 		needsflush = 0;
 		for (i = 0; i < nsegs ; i++) {
@@ -747,7 +746,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			offset = (pa & PGOFSET);
 			pa = trunc_page(pa);
 			dvmaddr = trunc_page(dvmaddr);
-			left = min(size, segs[i].ds_len);
+			left = min(len, segs[i].ds_len);
 
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: converting "
 				"physseg %d start %lx size %lx\n", i,
@@ -773,8 +772,9 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 					(long)map->dm_segs[j].ds_len));
 			} else {
 				if (j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, map);
-					return (EFBIG);
+					iommu_remove(is, map->_dm_dvmastart,
+					    last_va - map->_dm_dvmastart);
+					goto fail;
 				}
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = left;
@@ -795,8 +795,9 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 					(long)map->dm_segs[j].ds_addr,
 					(long)map->dm_segs[j].ds_len));
 				if (++j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, map);
-					return (EFBIG);
+					iommu_remove(is, map->_dm_dvmastart,
+					    last_va - map->_dm_dvmastart);
+					goto fail;
 				}
 				sgstart = roundup(sgstart, boundary);
 				map->dm_segs[j].ds_addr = sgstart;
@@ -822,14 +823,16 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 				}
 				dvmaddr += pagesz;
 				pa += pagesz;
+				last_va = dvmaddr;
 			}
 
-			size -= left;
+			len -= left;
 			++j;
 		}
 		if (needsflush)
 			iommu_strbuf_flush_done(sb);
 
+		map->dm_mapsize = size;
 		map->dm_nsegs = j;
 #ifdef DIAGNOSTIC
 		{ int seg;
@@ -853,7 +856,6 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	 * This was allocated with bus_dmamem_alloc.
 	 * The pages are on a `pglist'.
 	 */
-	map->dm_mapsize = size;
 	i = 0;
 	sgstart = dvmaddr;
 	sgend = sgstart + size - 1;
@@ -867,14 +869,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			(long)map->dm_segs[i].ds_len));
 		if (++i >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
-			s = splhigh();
-			/* How can this fail?  And if it does what can we do? */
-			err = extent_free(is->is_dvmamap,
-				dvmaddr, sgsize, EX_NOWAIT);
-			map->_dm_dvmastart = 0;
-			map->_dm_dvmasize = 0;
-			splx(s);
-			return (EFBIG);
+			goto fail;
 		}
 		sgstart = roundup(sgstart, boundary);
 		map->dm_segs[i].ds_addr = sgstart;
@@ -919,6 +914,16 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	}
 #endif
 	return (0);
+
+fail:
+	s = splhigh();
+	/* How can this fail?  And if it does what can we do? */
+	err = extent_free(is->is_dvmamap, map->_dm_dvmastart, sgsize,
+	    EX_NOWAIT);
+	map->_dm_dvmastart = 0;
+	map->_dm_dvmasize = 0;
+	splx(s);
+	return (EFBIG);
 }
 
 
