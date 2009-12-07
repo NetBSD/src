@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.27 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.28 2009/12/07 18:47:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,7 +57,10 @@
 		/* space for ICMP_MAXTYPE + 1 (19) counters */
 #define	ICMP_STAT_PMTUCHG	46	/* path MTU changes */
 
-#define	ICMP_NSTATS		47
+#define	ICMP_STAT_BMCASTECHO	47	/* b/mcast echo requests dropped */
+#define	ICMP_STAT_BMCASTTSTAMP	48	/* b/mcast tstamp requests dropped */
+
+#define	ICMP_NSTATS		49
 
 #if ICMP_MAXTYPE != 18
 #error ICMP_MAXTYPE too large for ICMP statistics
@@ -75,7 +78,8 @@
 #define ICMPCTL_REDIRACCEPT	5	/* Accept redirects from routers */
 #define ICMPCTL_REDIRTIMEOUT	6	/* Remove routes added via redirects */
 #define	ICMPCTL_STATS		7	/* ICMP statistics */
-#define ICMPCTL_MAXID		8
+#define ICMPCTL_BMCASTECHO	8	/* allow broad/mult-cast echo */
+#define ICMPCTL_MAXID		9
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -86,6 +90,7 @@
 	{ "rediraccept", CTLTYPE_INT }, \
 	{ "redirtimeout", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "bmcastecho", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL

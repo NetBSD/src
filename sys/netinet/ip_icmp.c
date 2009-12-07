@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.121 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.122 2009/12/07 18:47:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.121 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.122 2009/12/07 18:47:24 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.121 2009/09/16 15:23:05 pooka Exp $");
  */
 
 int	icmpmaskrepl = 0;
+int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
@@ -542,12 +543,22 @@ icmp_input(struct mbuf *m, ...)
 		break;
 
 	case ICMP_ECHO:
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0)  {
+			ICMP_STATINC(ICMP_STAT_BMCASTECHO);
+			break;
+		}
 		icp->icmp_type = ICMP_ECHOREPLY;
 		goto reflect;
 
 	case ICMP_TSTAMP:
 		if (icmplen < ICMP_TSLEN) {
 			ICMP_STATINC(ICMP_STAT_BADLEN);
+			break;
+		}
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0)  {
+			ICMP_STATINC(ICMP_STAT_BMCASTTSTAMP);
 			break;
 		}
 		icp->icmp_type = ICMP_TSTAMPREPLY;
@@ -1054,6 +1065,14 @@ sysctl_netinet_icmp_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("ICMP statistics"), 
 		       sysctl_net_inet_icmp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "bmcastecho",
+		       SYSCTL_DESCR("Respond to ICMP_ECHO or ICMP_TIMESTAMP "
+				    "message to the broadcast or multicast"),
+		       NULL, 0, &icmpbmcastecho, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_BMCASTECHO,
 		       CTL_EOL);
 }
 
