@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.27 2009/10/05 10:47:52 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.28 2009/12/07 18:47:24 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -983,6 +983,7 @@ The currently defined protocols and names are:
 .It icmp	maskrepl	integer	yes
 .It icmp	rediraccept	integer	yes
 .It icmp	redirtimeout	integer	yes
+.It icmp	bmcastecho	integer	yes
 .It ip	allowsrcrt	integer	yes
 .It ip	anonportmax	integer	yes
 .It ip	anonportmin	integer	yes
@@ -1192,6 +1193,9 @@ ICMP redirect.
 This defaults to 600 seconds.
 .It Li icmp.returndatabytes
 Number of bytes to return in an ICMP error message.
+.It Li icmp.bmcastecho
+If set to 1, enables responding to ICMP echo or timestamp request to the
+broadcast address.
 .It Li tcp.ack_on_push
 If set to 1, TCP is to immediately transmit an ACK upon reception of
 a packet with PUSH set.
