@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2009/10/29 14:21:40 christos Exp $
+#	$NetBSD: Makefile,v 1.87 2009/12/07 16:22:41 uebayasi Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -75,6 +75,9 @@ nodes.c: mknodes.sh nodetypes nodes.c.pat
 	${_MKTARGET_CREATE}
 	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f nodes.h ]
+
+arith.h: arith.c
+arith.c: arith.y
 
 .if ${USETOOLS} == "yes"
 COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
