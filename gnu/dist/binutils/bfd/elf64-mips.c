@@ -122,6 +122,8 @@ static bfd_reloc_status_type mips_elf64_final_gp
   (bfd *, asymbol *, bfd_boolean, char **, bfd_vma *);
 static bfd_boolean mips_elf64_object_p
   (bfd *);
+static bfd_boolean mips_elf64_is_local_label_name
+  (bfd *, const char *);
 static irix_compat_t elf64_mips_irix_compat
   (bfd *);
 static bfd_boolean elf64_mips_grok_prstatus
@@ -2884,7 +2886,18 @@ mips_elf64_object_p (bfd *abfd)
   bfd_default_set_arch_mach (abfd, bfd_arch_mips, mach);
   return TRUE;
 }
+
+/* MIPS ELF local labels start with "$L".  */
+static bfd_boolean
+mips_elf64_is_local_label_name (bfd *abfd, const char *name)
+{
+  if (name[0] == '$' && name[1] == 'L')
+    return TRUE;
 
+  /* We accept the generic ELF local label syntax as well.  */
+  return _bfd_elf_is_local_label_name (abfd, name);
+}
+
 /* Depending on the target vector we generate some version of Irix
    executables or "normal" MIPS ELF ABI executables.  */
 static irix_compat_t
@@ -3098,9 +3111,8 @@ const struct elf_size_info mips_elf64_size_info =
 
 #define elf_backend_write_section	_bfd_mips_elf_write_section
 
-/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit
-   MIPS-specific function only applies to IRIX5, which had no 64-bit
-   ABI.  */
+#define bfd_elf64_bfd_is_local_label_name \
+				mips_elf64_is_local_label_name
 #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line
 #define bfd_elf64_new_section_hook	_bfd_mips_elf_new_section_hook
 #define bfd_elf64_set_section_contents	_bfd_mips_elf_set_section_contents
