@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.75 2009/12/07 15:51:52 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.76 2009/12/07 20:57:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.75 2009/12/07 15:51:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.76 2009/12/07 20:57:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -759,10 +759,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	voff_t offlo, offhi;
 	int rv, flags = 0;
 
-	if (pf->pf_req.preq_pth.pth_framelen != sizeof(struct puffs_flush)) {
-		rv = EINVAL;
-		goto out;
-	}
+	KASSERT(pf->pf_req.preq_pth.pth_framelen == sizeof(struct puffs_flush));
 
 	/* XXX: slurry */
 	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
@@ -845,9 +842,8 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 {
 	struct puffs_mount *pmp = this;
 	struct puffs_req *preq = (struct puffs_req *)pth;
-	int rv = 0;
+	struct puffs_sopreq *psopr;
 
-	/* XXX: need to send error to userspace */
 	if (pth->pth_framelen < sizeof(struct puffs_req)) {
 		puffs_msg_sendresp(pmp, preq, EINVAL); /* E2SMALL */
 		return 0;
@@ -859,17 +855,87 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		DPRINTF(("dispatch: vn/vfs message 0x%x\n", preq->preq_optype));
 		puffsop_msg(pmp, preq);
 		break;
-	case PUFFSOP_FLUSH:
+	case PUFFSOP_FLUSH: /* process in sop thread */
+	{
+		struct puffs_flush *pf;
+
 		DPRINTF(("dispatch: flush 0x%x\n", preq->preq_optype));
-		puffsop_flush(pmp, (struct puffs_flush *)preq);
+
+		if (preq->preq_pth.pth_framelen != sizeof(struct puffs_flush)) {
+			puffs_msg_sendresp(pmp, preq, EINVAL); /* E2SMALL */
+			break;
+		}
+		pf = (struct puffs_flush *)preq;
+
+		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
+		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
+
+		mutex_enter(&pmp->pmp_sopmtx);
+		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		cv_signal(&pmp->pmp_sopcv);
+		mutex_exit(&pmp->pmp_sopmtx);
 		break;
+	}
 	default:
 		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
 		puffs_msg_sendresp(pmp, preq, EOPNOTSUPP);
 		break;
 	}
 
-	return rv;
+	return 0;
+}
+
+/*
+ * Work loop for thread processing all ops from server which
+ * cannot safely be handled in caller context.  This includes
+ * everything which might need a lock currently "held" by the file
+ * server, i.e. a long-term kernel lock which will be released only
+ * once the file server acknowledges a request
+ */
+void
+puffs_sop_thread(void *arg)
+{
+	struct puffs_mount *pmp = arg;
+	struct puffs_sopreq *psopr;
+	bool keeprunning;
+
+	mutex_enter(&pmp->pmp_sopmtx);
+	for (keeprunning = true; keeprunning; ) {
+		while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) == NULL)
+			cv_wait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx);
+		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		mutex_exit(&pmp->pmp_sopmtx);
+
+		switch (psopr->psopr_sopreq) {
+		case PUFFS_SOPREQ_EXIT:
+			keeprunning = false;
+			break;
+		case PUFFS_SOPREQ_FLUSH:
+			puffsop_flush(pmp, &psopr->psopr_pf);
+			break;
+		}
+
+		kmem_free(psopr, sizeof(*psopr));
+		mutex_enter(&pmp->pmp_sopmtx);
+	}
+
+	/*
+	 * Purge remaining ops.  could send error, but that is highly
+	 * unlikely to reach the caller.
+	 */
+	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) != NULL) {
+		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		mutex_exit(&pmp->pmp_sopmtx);
+		kmem_free(psopr, sizeof(*psopr));
+		mutex_enter(&pmp->pmp_sopmtx);
+	}
+
+	pmp->pmp_sopthrcount--;
+	cv_signal(&pmp->pmp_sopcv);
+	mutex_exit(&pmp->pmp_sopmtx); /* not allowed to access fs after this */
+
+	kthread_exit(0);
 }
 
 int
