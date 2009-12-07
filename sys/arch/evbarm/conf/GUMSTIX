@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.41 2009/12/06 12:23:24 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.42 2009/12/07 08:58:48 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -405,7 +405,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 # data mover pseudo-devices
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
-
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
