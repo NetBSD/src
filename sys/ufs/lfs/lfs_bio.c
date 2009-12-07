@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.114 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.115 2009/12/07 04:12:10 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.114 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.115 2009/12/07 04:12:10 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,11 +318,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	 * vref vnodes here so that cleaner doesn't try to reuse them.
 	 * (see XXX comment in lfs_reserveavail)
 	 */
-	mutex_enter(&vp->v_interlock);
-	lfs_vref(vp);
+	VHOLD(vp);
 	if (vp2 != NULL) {
-		mutex_enter(&vp2->v_interlock);
-		lfs_vref(vp2);
+		VHOLD(vp2);
 	}
 
 	error = lfs_reserveavail(fs, vp, vp2, fsb);
@@ -338,9 +336,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
 done:
-	lfs_vunref(vp);
+	HOLDRELE(vp);
 	if (vp2 != NULL) {
-		lfs_vunref(vp2);
+		HOLDRELE(vp2);
 	}
 
 	return error;
