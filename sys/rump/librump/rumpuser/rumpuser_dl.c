@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.9 2009/11/26 15:44:26 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.10 2009/12/07 17:38:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.9 2009/11/26 15:44:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.10 2009/12/07 17:38:16 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -391,6 +391,9 @@ rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit,
 	free(symtab);
 	free(strtab);
 
+	/*
+	 * Next, load modules from dynlibs.
+	 */
 	do {
 		couldload = 0;
 		map = origmap;
