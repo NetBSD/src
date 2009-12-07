@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.24 2009/12/07 16:17:17 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.25 2009/12/07 16:55:37 martin Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -851,7 +851,7 @@ getkeybyname(__ops_io_t *io,
 	}
 	len = strlen(name);
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(io->outs, "[%u] name '%s', len %u\n",
+		(void) fprintf(io->outs, "[%u] name '%s', len %zu\n",
 			*from, name, len);
 	}
 	/* first try name as a keyid */
