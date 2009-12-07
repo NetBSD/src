@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.93 2009/12/07 11:18:38 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.94 2009/12/07 11:24:30 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.93 2009/12/07 11:18:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.94 2009/12/07 11:24:30 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -349,8 +349,17 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 		else
 			len -= PAGE_SIZE;
 
-		/* XXX Zero-ing the entry would not require RMW */
+		/*
+		 * XXX Zero-ing the entry would not require RMW
+		 *
+		 * Disabling valid bit while a page is used by a device
+		 * causes an uncorrectable DMA error.
+		 * Workaround to avoid an uncorrectable DMA error is
+		 * eliminating the next line, but the page is mapped
+		 * until the next iommu_enter call.
+		 */
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] &= ~IOTTE_V;
+		membar_storestore();
 		bus_space_write_8(is->is_bustag, is->is_iommu,
 			IOMMUREG(iommu_flush), va);
 		va += PAGE_SIZE;
