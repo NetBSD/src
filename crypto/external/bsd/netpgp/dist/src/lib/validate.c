@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.23 2009/11/20 07:17:07 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.24 2009/12/07 16:17:17 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -228,6 +228,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	validate_key_cb_t	 *key;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
+	unsigned		  from;
 	unsigned		  valid = 0;
 
 	io = cbinfo->io;
@@ -284,9 +285,10 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
-
+		from = 0;
 		signer = __ops_getkeybyid(io, key->keyring,
-					 content->sig.info.signer_id);
+					 content->sig.info.signer_id,
+					 &from);
 		if (!signer) {
 			if (!add_sig_to_list(&content->sig.info,
 				&key->result->unknown_sigs,
@@ -401,6 +403,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	validate_data_cb_t	 *data;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
+	unsigned		  from;
 	unsigned		  valid = 0;
 
 	io = cbinfo->io;
@@ -453,8 +456,9 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				sizeof(content->sig.info.signer_id), "");
 			(void) fprintf(io->outs, "\n");
 		}
+		from = 0;
 		signer = __ops_getkeybyid(io, data->keyring,
-					 content->sig.info.signer_id);
+					 content->sig.info.signer_id, &from);
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
 					"Unknown Signer");
