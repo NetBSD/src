@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2009/12/02 10:18:42 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.250 2009/12/07 11:28:37 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2009/12/02 10:18:42 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2009/12/07 11:28:37 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1037,7 +1037,6 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 	/*
 	 * We always use just one segment.
 	 */
-	map->dm_mapsize = buflen;
 	i = 0;
 	map->dm_segs[i].ds_addr = 0UL;
 	map->dm_segs[i].ds_len = 0;
@@ -1049,23 +1048,24 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 		incr = min(sgsize, incr);
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		sgsize -= incr;
-		vaddr += incr;
 		if (map->dm_segs[i].ds_len == 0)
 			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
 		    && ((map->dm_segs[i].ds_len + incr) <= map->dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
 			map->dm_segs[i].ds_len += incr;
-			incr = PAGE_SIZE;
-			continue;
+		} else {
+			if (++i >= map->_dm_segcnt)
+				return (EFBIG);
+			map->dm_segs[i].ds_addr = pa;
+			map->dm_segs[i].ds_len = incr;
 		}
-		if (++i >= map->_dm_segcnt)
-			return (EFBIG);
-		map->dm_segs[i].ds_addr = pa;
-		map->dm_segs[i].ds_len = incr = PAGE_SIZE;
+		sgsize -= incr;
+		vaddr += incr;
+		incr = PAGE_SIZE;
 	}
 	map->dm_nsegs = i + 1;
+	map->dm_mapsize = buflen;
 	/* Mapping is bus dependent */
 	return (0);
 }
@@ -1081,7 +1081,14 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
 	int i;
 	size_t len;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+
+	if (m->m_pkthdr.len > map->_dm_size)
+		return EINVAL;
 
 	/* Record mbuf for *_unload */
 	map->_dm_type = _DM_TYPE_MBUF;
@@ -1194,6 +1201,10 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	struct proc *p = uio->uio_lwp->l_proc;
 	struct pmap *pm;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
@@ -1346,16 +1357,21 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 				if (offset < PAGE_SIZE) {
 					start = VM_PAGE_TO_PHYS(pg) + offset;
+					size -= offset;
 					if (size > len)
 						size = len;
 					cache_flush_phys(start, size, 0);
 					len -= size;
+					if (len == 0)
+						goto done;
+					offset = 0;
 					continue;
 				}
 				offset -= size;
 			}
 		}
 	}
+ done:
 	if (ops & BUS_DMASYNC_POSTWRITE) {
 		/* Nothing to do.  Handled by the bus controller. */
 	}
