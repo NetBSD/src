@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.83 2009/11/05 19:42:44 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.84 2009/12/07 20:57:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.83 2009/11/05 19:42:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.84 2009/12/07 20:57:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.83 2009/11/05 19:42:44 pooka Exp 
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/module.h>
+#include <sys/kthread.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -250,11 +251,19 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_root_rdev = args->pa_root_rdev;
 
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pmp->pmp_sopmtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pmp->pmp_msg_waiter_cv, "puffsget");
 	cv_init(&pmp->pmp_refcount_cv, "puffsref");
 	cv_init(&pmp->pmp_unmounting_cv, "puffsum");
+	cv_init(&pmp->pmp_sopcv, "puffsop");
 	TAILQ_INIT(&pmp->pmp_msg_touser);
 	TAILQ_INIT(&pmp->pmp_msg_replywait);
+	TAILQ_INIT(&pmp->pmp_sopreqs);
+
+	if ((error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    puffs_sop_thread, pmp, NULL, "puffsop")) != 0)
+		goto out;
+	pmp->pmp_sopthrcount = 1;
 
 	DPRINTF(("puffs_mount: mount point at %p, puffs specific at %p\n",
 	    mp, MPTOPUFFSMP(mp)));
@@ -262,6 +271,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
  out:
+	if (error && pmp && pmp->pmp_pi)
+		putter_detach(pmp->pmp_pi);
 	if (error && pmp && pmp->pmp_pnodehash)
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 	if (error && pmp)
@@ -336,6 +347,8 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 	 * screw what userland thinks and just die.
 	 */
 	if (error == 0 || force) {
+		struct puffs_sopreq *psopr;
+
 		/* tell waiters & other resources to go unwait themselves */
 		puffs_userdead(pmp);
 		putter_detach(pmp->pmp_pi);
@@ -352,11 +365,26 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 			cv_wait(&pmp->pmp_refcount_cv, &pmp->pmp_lock);
 		mutex_exit(&pmp->pmp_lock);
 
+		/*
+		 * Release kernel thread now that there is nothing
+		 * it would be wanting to lock.
+		 */
+		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+		psopr->psopr_sopreq = PUFFS_SOPREQ_EXIT;
+		mutex_enter(&pmp->pmp_sopmtx);
+		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		cv_signal(&pmp->pmp_sopcv);
+		while (pmp->pmp_sopthrcount > 0)
+			cv_wait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx);
+		mutex_exit(&pmp->pmp_sopmtx);
+
 		/* free resources now that we hopefully have no waiters left */
 		cv_destroy(&pmp->pmp_unmounting_cv);
 		cv_destroy(&pmp->pmp_refcount_cv);
 		cv_destroy(&pmp->pmp_msg_waiter_cv);
+		cv_destroy(&pmp->pmp_sopcv);
 		mutex_destroy(&pmp->pmp_lock);
+		mutex_destroy(&pmp->pmp_sopmtx);
 
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 		kmem_free(pmp, sizeof(struct puffs_mount));
