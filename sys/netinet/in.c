@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.135 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: in.c,v 1.136 2009/12/07 18:38:55 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.135 2009/09/11 22:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.136 2009/12/07 18:38:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -310,7 +310,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
     struct lwp *l)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct in_ifaddr *ia = 0;
+	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
@@ -382,9 +382,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    NULL) != 0)
 			return (EPERM);
 
-		if (ia == 0) {
+		if (ia == NULL) {
 			ia = malloc(sizeof(*ia), M_IFADDR, M_WAITOK|M_ZERO);
-			if (ia == 0)
+			if (ia == NULL)
 				return (ENOBUFS);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
@@ -422,7 +422,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGIFNETMASK:
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
-		if (ia == 0)
+		if (ia == NULL)
 			return (EADDRNOTAVAIL);
 		break;
 	}
