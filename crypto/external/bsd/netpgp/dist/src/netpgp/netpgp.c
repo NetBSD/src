@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
-	netpgp_setvar(&netpgp, "sshetcdir", "/etc/ssh");
+	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
