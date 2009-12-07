@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.5 2009/04/19 15:27:32 snj Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.6.6 2009/12/07 04:30:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.5 2009/04/19 15:27:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.6.6 2009/12/07 04:30:13 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -719,9 +719,7 @@ tmpfs_link(void *v)
 
 	/* Lock vp because we will need to run tmpfs_update over it, which
 	 * needs the vnode to be locked. */
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
-		goto out1;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/* XXX: Why aren't the following two tests done by the caller? */
 
@@ -768,16 +766,24 @@ tmpfs_link(void *v)
 
 out:
 	VOP_UNLOCK(vp, 0);
-out1:
 	PNBUF_PUT(cnp->cn_pnbuf);
-
 	vput(dvp);
 
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
-
+/*
+ * tmpfs_rename: rename routine.
+ *
+ * Arguments: fdvp (from-parent vnode), fvp (from-leaf), tdvp (to-parent)
+ * and tvp (to-leaf), if exists (NULL if not).
+ *
+ * => Caller holds a reference on fdvp and fvp, they are unlocked.
+ *    Note: fdvp and fvp can refer to the same object (i.e. when it is root).
+ *
+ * => Both tdvp and tvp are referenced and locked.  It is our responsibility
+ *    to release the references and unlock them (or destroy).
+ */
 int
 tmpfs_rename(void *v)
 {
@@ -830,9 +836,7 @@ tmpfs_rename(void *v)
 
 	/* XXX: this is a potential locking order violation! */
 	if (fdnode != tdnode) {
-		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error != 0)
-			goto out_unlocked;
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	/*
@@ -844,10 +848,16 @@ tmpfs_rename(void *v)
 		goto out;
 	}
 
-	/* If source and target are the same file, there is nothing to do. */
+	/* If source and target is the same vnode, remove the source link. */
 	if (fvp == tvp) {
-		error = 0;
-		goto out;
+		/*
+		 * Detach and free the directory entry.  Drops the link
+		 * count on the node.
+		 */
+		tmpfs_dir_detach(fdvp, de);
+		tmpfs_free_dirent(VFS_TO_TMPFS(fvp->v_mount), de, true);
+		VN_KNOTE(fdvp, NOTE_WRITE);
+		goto out_ok;
 	}
 
 	/* If replacing an existing entry, ensure we can do the operation. */
@@ -959,7 +969,7 @@ tmpfs_rename(void *v)
 		fnode->tn_status |= TMPFS_NODE_CHANGED;
 		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
 	}
-
+ out_ok:
 	/* Notify listeners of tdvp about the change in the directory (either
 	 * because a new entry was added or because one was removed) and
 	 * listeners of fvp about the rename. */
