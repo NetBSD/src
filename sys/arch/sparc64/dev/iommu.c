@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.92 2009/12/07 11:14:27 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.93 2009/12/07 11:18:38 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.92 2009/12/07 11:14:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.93 2009/12/07 11:18:38 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -682,17 +682,18 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	 */
 	map->dm_nsegs = 0;
 	/* Count up the total number of pages we need */
-	pa = segs[0].ds_addr;
+	pa = trunc_page(segs[0].ds_addr);
 	sgsize = 0;
 	left = size;
-	for (i = 0; left && i < nsegs; i++) {
+	for (i = 0; left > 0 && i < nsegs; i++) {
 		if (round_page(pa) != round_page(segs[i].ds_addr))
-			sgsize = round_page(sgsize);
+			sgsize = round_page(sgsize) +
+			    (segs[i].ds_addr & PGOFSET);
 		sgsize += min(left, segs[i].ds_len);
 		left -= segs[i].ds_len;
 		pa = segs[i].ds_addr + segs[i].ds_len;
 	}
-	sgsize = round_page(sgsize) + PAGE_SIZE; /* XXX reserve extra dvma page */
+	sgsize = round_page(sgsize);
 
 	s = splhigh();
 	/*
@@ -766,6 +767,8 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 				((offset == 0) || (pa == prev_pa))) {
 				/* Just append to the previous segment. */
 				map->dm_segs[--j].ds_len += left;
+				/* Restore sgstart for boundary check */
+				sgstart = map->dm_segs[j].ds_addr;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"appending seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr,
@@ -799,7 +802,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 					    last_va - map->_dm_dvmastart);
 					goto fail;
 				}
-				sgstart = roundup(sgstart, boundary);
+				sgstart += map->dm_segs[j-1].ds_len;
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = sgend - sgstart + 1;
 			}
@@ -871,7 +874,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			/* Too many segments.  Fail the operation. */
 			goto fail;
 		}
-		sgstart = roundup(sgstart, boundary);
+		sgstart += map->dm_segs[i-1].ds_len;
 		map->dm_segs[i].ds_addr = sgstart;
 	}
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
