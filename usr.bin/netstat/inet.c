@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.91 2009/09/14 10:36:50 degroote Exp $	*/
+/*	$NetBSD: inet.c,v 1.92 2009/12/07 18:48:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.91 2009/09/14 10:36:50 degroote Exp $");
+__RCSID("$NetBSD: inet.c,v 1.92 2009/12/07 18:48:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -582,6 +582,8 @@ icmp_stats(u_long off, const char *name)
 	p(ICMP_STAT_TOOSHORT, "\t%llu message%s < minimum length\n");
 	p(ICMP_STAT_CHECKSUM, "\t%llu bad checksum%s\n");
 	p(ICMP_STAT_BADLEN, "\t%llu message%s with bad length\n");
+	p(ICMP_STAT_BMCASTECHO, "\t%llu multicast echo request%s ignored\n");
+	p(ICMP_STAT_BMCASTTSTAMP, "\t%llu multicast timestamp request%s ignored\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat[ICMP_STAT_INHIST + i] != 0) {
 			if (first) {
