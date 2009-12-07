@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.736 2009/12/04 14:30:01 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.737 2009/12/07 00:47:49 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -226,7 +226,7 @@ Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
 Mailing List:	bug-cvs@gnu.org
-Responsible:	christos, wiz
+Responsible:	christos
 License:	GPLv1, LGPLv2
 Notes:
 Use src/gnu/dist/xcvs/cvs2netbsd for preparing the source tree
@@ -286,7 +286,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	wiz
+Responsible:	
 License:	GPLv2
 Notes:
 Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
@@ -395,7 +395,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	simonb, wiz
+Responsible:	simonb
 License:	GPLv2 (2.5.1), GPLv3 (2.5.3)
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
@@ -411,7 +411,7 @@ Maintainer:	Werner Lemberg/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Home Page:	http://www.gnu.org/software/groff/
 Mailing List:	bug-groff@gnu.org
-Responsible:	wiz
+Responsible:	
 License:	GPLv2
 Notes:
 Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
@@ -1023,7 +1023,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
 Mailing List:	bug-texinfo@gnu.org
-Responsible:	wiz
+Responsible:	
 License:	GPLv2 (4.9 is GPLv3)
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
