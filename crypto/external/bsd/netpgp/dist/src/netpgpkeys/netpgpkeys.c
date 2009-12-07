@@ -146,7 +146,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 
 	switch (p->cmd) {
 	case LIST_KEYS:
-		return netpgp_list_keys(netpgp);
+		return (f == NULL) ? netpgp_list_keys(netpgp) : netpgp_match_list_keys(netpgp, f);
 	case FIND_KEY:
 		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
 	case EXPORT_KEY:
@@ -235,7 +235,7 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", *argv);
-	netpgp_setvar(&netpgp, "sshetcdir", "/etc/ssh");
+	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
