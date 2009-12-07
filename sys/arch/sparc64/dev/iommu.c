@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.94 2009/12/07 11:24:30 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.95 2009/12/07 19:57:34 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.94 2009/12/07 11:24:30 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.95 2009/12/07 19:57:34 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -534,12 +534,14 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 			    "too many segments %d\n", seg));
 			s = splhigh();
-			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
 			    dvmaddr, sgsize, EX_NOWAIT);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
 			splx(s);
+			if (err != 0)
+				printf("warning: %s: %" PRId64
+				    " of DVMA space lost\n", __func__, sgsize);
 			return (EFBIG);
 		}
 		sgstart += len;
@@ -643,7 +645,8 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_dvmasize = 0;
 	splx(s);
 	if (error != 0)
-		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
+		printf("warning: %s: %" PRId64 " of DVMA space lost\n",
+		    __func__, sgsize);
 
 	/* Clear the map */
 }
@@ -929,12 +932,14 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 fail:
 	s = splhigh();
-	/* How can this fail?  And if it does what can we do? */
 	err = extent_free(is->is_dvmamap, map->_dm_dvmastart, sgsize,
 	    EX_NOWAIT);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
 	splx(s);
+	if (err != 0)
+		printf("warning: %s: %" PRId64 " of DVMA space lost\n",
+		    __func__, sgsize);
 	return (EFBIG);
 }
 
