@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.225 2009/11/17 22:49:24 eeh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.226 2009/12/07 04:12:10 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.225 2009/11/17 22:49:24 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226 2009/12/07 04:12:10 eeh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1768,7 +1768,8 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 	if (pg == NULL)
 		return;
 
-	while (pg->flags & PG_BUSY) {
+	while (pg->flags & PG_BUSY &&
+	    pg->uobject == &vp->v_uobj) {
 		mutex_exit(&vp->v_interlock);
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
@@ -2157,7 +2158,7 @@ lfs_putpages(void *v)
 		 */
 		ip->i_lfs_iflags |= LFSI_NO_GOP_WRITE;
 		r = genfs_do_putpages(vp, startoffset, endoffset,
-				       ap->a_flags, &busypg);
+				       ap->a_flags & ~PGO_SYNCIO, &busypg);
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
 		if (r != EDEADLK)
 			return r;

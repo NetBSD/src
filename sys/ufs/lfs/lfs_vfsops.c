@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.280 2009/11/17 17:08:57 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.281 2009/12/07 04:12:10 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.280 2009/11/17 17:08:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.281 2009/12/07 04:12:10 eeh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1549,6 +1549,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	vaddr_t kva;
 	off_t eof, offset, startoffset = 0;
 	size_t bytes, iobytes, skipbytes;
+	bool async = (flags & PGO_SYNCIO) == 0;
 	daddr_t lbn, blkno;
 	struct vm_page *pg;
 	struct buf *mbp, *bp;
@@ -1778,6 +1779,14 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
+
+	if (!async) {
+		/* Start a segment write. */
+		UVMHIST_LOG(ubchist, "flushing", 0,0,0,0);
+		mutex_enter(&lfs_lock);
+		lfs_flush(fs, 0, 1);
+		mutex_exit(&lfs_lock);
+	}
 	return (0);
 
     tryagain:
