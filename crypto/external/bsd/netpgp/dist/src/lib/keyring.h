@@ -72,10 +72,15 @@ typedef struct __ops_keyring_t {
 
 const __ops_key_t *__ops_getkeybyid(__ops_io_t *,
 					const __ops_keyring_t *,
-					const unsigned char *);
+					const unsigned char *,
+					unsigned *);
 const __ops_key_t *__ops_getkeybyname(__ops_io_t *,
 					const __ops_keyring_t *,
 					const char *);
+const __ops_key_t *__ops_getnextkeybyname(__ops_io_t *,
+					const __ops_keyring_t *,
+					const char *,
+					unsigned *);
 void __ops_keydata_free(__ops_key_t *);
 void __ops_keyring_free(__ops_keyring_t *);
 void __ops_dump_keyring(const __ops_keyring_t *);
