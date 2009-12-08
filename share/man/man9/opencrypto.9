@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.7 2009/05/04 19:40:02 wiz Exp $
+.\"	$NetBSD: opencrypto.9,v 1.8 2009/12/08 09:23:06 mbalmer Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -511,7 +511,7 @@ The
 .Fa hint
 argument can be set to
 .Dv CRYPTO_HINT_MORE
-the there will be more request right after this request.
+when there will be more request right after this request.
 When the request is completed, or an error is detected, the
 .Fn process
 routine should invoke
