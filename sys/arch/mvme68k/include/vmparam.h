@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2009/08/26 00:30:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2009/12/08 13:47:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -87,7 +87,7 @@
  * We use 4K pages on the mvme68k.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 

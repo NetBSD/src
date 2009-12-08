@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2009/08/26 00:30:02 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2009/12/08 13:47:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,10 +80,10 @@
 #define _MACHINE_VMPARAM_H_
 
 /*
- * We use 4K pages on the hp300.  Override the PAGE_* definitions
+ * We use 4K pages on the luna68k.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
