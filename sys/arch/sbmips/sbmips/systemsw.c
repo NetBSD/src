@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.14.28.1 2009/11/23 18:46:51 matt Exp $ */
+/* $NetBSD: systemsw.c,v 1.14.28.2 2009/12/08 01:55:07 cyber Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14.28.1 2009/11/23 18:46:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14.28.2 2009/12/08 01:55:07 cyber Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ cpu_intr_triv(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 
 	(*systemsw.s_cpu_intr)(status, cause, pc, ipending);
