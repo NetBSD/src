@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1328 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1329 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -501,3 +501,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mount_portal(8): Remove the kernel portalfs driver and replace
 		mount_portal with a version implemented using puffs.
 		[pooka 20091205]
+	ntp:	Import ntp-4-2-4p8. [kardel 20091208]
