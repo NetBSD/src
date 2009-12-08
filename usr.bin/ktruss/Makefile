@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/12/06 14:37:36 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.26 2009/12/08 02:56:37 uebayasi Exp $
 
 NOMAN=		# defined
 
@@ -14,7 +14,13 @@ CLEANFILES+=	misc.c misc.h
 LDSTATIC?=-static
 .endif
 
+# Hint for mkdep(1).
+dump.c: misc.h
+
+# Avoid race.
 misc.c: misc.h
+
+# Build-time generation.
 misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 	       ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
