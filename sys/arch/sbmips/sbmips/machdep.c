@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.2 2009/11/23 18:23:02 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.3 2009/12/08 01:58:43 cyber Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.2 2009/11/23 18:23:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.3 2009/12/08 01:58:43 cyber Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -134,7 +134,7 @@ char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
 int	cfe_present;
 
-struct bootinfo_v1 bootinfo;
+struct bootinfo_v1_int bootinfo;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -162,6 +162,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	extern char edata[], end[];
 	int i;
 	uint32_t config;
+	struct bootinfo_v1 *tmp_bi;
 
 	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
@@ -170,7 +171,11 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	mips3_cp0_config_write(config);
 
 	/* Zero BSS.  XXXCGD: uh, is this really necessary still?  */
+#ifdef _LP64
+	memset((char *)((vaddr_t)edata | 0xffffffff00000000), 0, end - edata);
+#else
 	memset(edata, 0, end - edata);
+#endif
 
 	/*
 	 * Copy the bootinfo structure from the boot loader.
@@ -178,9 +183,16 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * called because we may need CFE's TLB handler
 	 */
 
-	if (magic == BOOTINFO_MAGIC)
-		memcpy(&bootinfo, (struct bootinfo_v1 *)bootdata,
-		    sizeof bootinfo);
+	if (magic == BOOTINFO_MAGIC) {
+		tmp_bi = (struct bootinfo_v1 *)bootdata;
+		bootinfo.version = tmp_bi->version;
+		bootinfo.ssym =		BI_FIXUP(tmp_bi->ssym);
+		bootinfo.esym =		BI_FIXUP(tmp_bi->esym);
+		memcpy(&(bootinfo.boot_flags), tmp_bi->boot_flags, 64);
+		memcpy(&(bootinfo.booted_kernel), tmp_bi->booted_kernel, 64);
+		bootinfo.fwhandle =	BI_FIXUP(tmp_bi->fwhandle);
+		bootinfo.fwentry =	BI_FIXUP(tmp_bi->fwentry);
+	}
 	else if (reserved == CFE_EPTSEAL) {
 		magic = BOOTINFO_MAGIC;
 		bzero(&bootinfo, sizeof bootinfo);
@@ -240,7 +252,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 				 * XXX Ignore memory above 256MB for now, it
 				 * XXX needs special handling.
 				 */
+#ifndef _LP64
 				if (start < (256*1024*1024)) {
+#endif
 				    physmem += btoc(((int) len));
 				    mem_clusters[mem_cluster_cnt].start =
 					(long) start;
@@ -248,7 +262,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 					(long) len;
 				    mem_cluster_cnt++;
 				    added = 1;
+#ifndef _LP64
 				}
+#endif
 			}
 			if (added)
 				printf("added to map\n");
