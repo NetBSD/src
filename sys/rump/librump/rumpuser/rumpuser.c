@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.46 2009/11/19 13:42:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.47 2009/12/08 08:18:24 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.46 2009/11/19 13:42:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.47 2009/12/08 08:18:24 stacktic Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -346,7 +346,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
-		
+
 	/* LINTED: see above */
 	biodone(biodonecookie, rv, error);
 }
@@ -391,7 +391,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	biodone(biodonecookie, rv, error);
 }
 
-ssize_t 
+ssize_t
 rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 	int *error)
 {
@@ -418,7 +418,7 @@ rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 	return rv;
 }
 
-ssize_t 
+ssize_t
 rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 	int *error)
 {

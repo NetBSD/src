@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.7 2009/11/19 14:44:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.8 2009/12/08 08:18:24 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.7 2009/11/19 14:44:58 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.8 2009/12/08 08:18:24 stacktic Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -230,7 +230,7 @@ rumpuser_cv_destroy(struct rumpuser_cv *cv)
 {
 
 }
- 
+
 /*ARGSUSED*/
 void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
