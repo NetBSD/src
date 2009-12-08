@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.116 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.117 2009/12/08 20:38:16 jakllsch Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.116 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.117 2009/12/08 20:38:16 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -829,7 +829,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	 * A Pegasus chip was detected. Inform the world.
 	 */
 	ifp = GET_IFP(sc);
-	aprint_error_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Initialize interface info.*/
 	ifp->if_softc = sc;
