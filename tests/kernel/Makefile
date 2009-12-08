@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/09/08 20:37:45 pooka Exp $
+# $NetBSD: Makefile,v 1.3 2009/12/08 15:20:20 uebayasi Exp $
 
 NOMAN=		# defined
 
@@ -26,7 +26,8 @@ LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
 SRCS.t_extent=		t_extent.c subr_extent.c
-CPPFLAGS.t_extent+=	-D_EXTENT_TESTING -D__POOL_EXPOSE
+CPPFLAGS.t_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
+CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 
 .include <bsd.test.mk>
 .include <bsd.subdir.mk>
