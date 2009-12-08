@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.c,v 1.1.1.5 2009/06/13 09:18:34 kardel Exp $	*/
+/*	$NetBSD: sntp-opts.c,v 1.1.1.6 2009/12/08 20:45:11 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.c)
  *  
- *  It has been AutoGen-ed  Monday May 18, 2009 at 05:03:26 AM EDT
+ *  It has been AutoGen-ed  Tuesday December  8, 2009 at 08:14:49 AM EST
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
@@ -515,7 +515,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "SNTP";
 tSCC   zUsageTitle[] =
-"sntp - standard SNTP program - Ver. 4.2.4p7\n\
+"sntp - standard SNTP program - Ver. 4.2.4p8\n\
 USAGE:  %s [ -<flag> | --<name> ]...\n";
 tSCC   zRcName[]     = ".ntprc";
 tSCC*  apzHomeList[] = {
@@ -535,7 +535,7 @@ job.\n\
 NTP is the Network Time Protocol (RFC 1305) and SNTP is the\n\
 Simple Network Time Protocol (RFC 2030, which supersedes RFC 1769).\n";
 tSCC    zFullVersion[] = SNTP_FULL_VERSION;
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 408 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optcode.tpl near line 408 */
 
 #if defined(ENABLE_NLS)
 # define OPTPROC_BASE OPTPROC_TRANSLATE
@@ -586,7 +586,7 @@ doUsageOpt(
 {
     USAGE( EXIT_SUCCESS );
 }
-/* extracted from /usr/local/gnu/share/autogen/optmain.tpl near line 92 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optmain.tpl near line 92 */
 
 #if defined(TEST_SNTP_OPTS) /* TEST MAIN PROCEDURE: */
 
@@ -602,7 +602,7 @@ main( int argc, char** argv )
     return res;
 }
 #endif  /* defined TEST_SNTP_OPTS */
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 514 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optcode.tpl near line 514 */
 
 #if ENABLE_NLS
 #include <stdio.h>

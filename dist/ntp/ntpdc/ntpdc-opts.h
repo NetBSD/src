@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdc-opts.h,v 1.1.1.5 2009/06/13 09:18:06 kardel Exp $	*/
+/*	$NetBSD: ntpdc-opts.h,v 1.1.1.6 2009/12/08 20:43:04 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.h)
  *  
- *  It has been AutoGen-ed  Monday May 18, 2009 at 05:02:28 AM EDT
+ *  It has been AutoGen-ed  Tuesday December  8, 2009 at 08:14:00 AM EST
  *  From the definitions    ntpdc-opts.def
  *  and the template file   options
  *
@@ -72,8 +72,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    15
-#define NTPDC_VERSION       "4.2.4p7"
-#define NTPDC_FULL_VERSION  "ntpdc - vendor-specific NTP query program - Ver. 4.2.4p7"
+#define NTPDC_VERSION       "4.2.4p8"
+#define NTPDC_FULL_VERSION  "ntpdc - vendor-specific NTP query program - Ver. 4.2.4p8"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
@@ -192,7 +192,7 @@ typedef enum {
                 ntpdcOptions.pzCurOpt  = NULL )
 #define START_OPT       RESTART_OPT(1)
 #define USAGE(c)        (*ntpdcOptions.pUsageProc)( &ntpdcOptions, c )
-/* extracted from /usr/local/gnu/share/autogen/opthead.tpl near line 360 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/opthead.tpl near line 360 */
 
 /* * * * * *
  *

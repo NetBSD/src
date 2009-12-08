@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdsim-opts.c,v 1.1.1.5 2009/06/13 09:18:23 kardel Exp $	*/
+/*	$NetBSD: ntpdsim-opts.c,v 1.1.1.6 2009/12/08 20:44:22 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdsim-opts.c)
  *  
- *  It has been AutoGen-ed  Monday May 18, 2009 at 04:56:08 AM EDT
+ *  It has been AutoGen-ed  Tuesday December  8, 2009 at 08:13:13 AM EST
  *  From the definitions    ntpdsim-opts.def
  *  and the template file   options
  *
@@ -1074,7 +1074,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "NTPDSIM";
 tSCC   zUsageTitle[] =
-"ntpdsim - NTP daemon simulation program - Ver. 4.2.4p7\n\
+"ntpdsim - NTP daemon simulation program - Ver. 4.2.4p8\n\
 USAGE:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]...\n";
 tSCC   zRcName[]     = ".ntprc";
 tSCC*  apzHomeList[] = {
@@ -1086,7 +1086,7 @@ tSCC   zBugsAddr[]    = "http://bugs.ntp.org, bugs@ntp.org";
 #define zExplain NULL
 tSCC    zDetail[]     = "\n\n";
 tSCC    zFullVersion[] = NTPDSIM_FULL_VERSION;
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 408 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optcode.tpl near line 408 */
 
 #if defined(ENABLE_NLS)
 # define OPTPROC_BASE OPTPROC_TRANSLATE
@@ -1157,7 +1157,7 @@ DESC(DEBUG_LEVEL).optOccCt = atoi( pOptDesc->pzLastArg );
 
 #endif /* defined(TEST_NTPDSIM_OPTS) */
 
-/* extracted from /usr/local/gnu/share/autogen/optmain.tpl near line 92 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optmain.tpl near line 92 */
 
 #if defined(TEST_NTPDSIM_OPTS) /* TEST MAIN PROCEDURE: */
 
@@ -1173,7 +1173,7 @@ main( int argc, char** argv )
     return res;
 }
 #endif  /* defined TEST_NTPDSIM_OPTS */
-/* extracted from /usr/local/gnu/share/autogen/optcode.tpl near line 514 */
+/* extracted from /usr/local/gnu/autogen-5.9.1/share/autogen/optcode.tpl near line 514 */
 
 #if ENABLE_NLS
 #include <stdio.h>
