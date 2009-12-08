@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.299 2009/11/27 11:44:36 tsutsui Exp $
+#	$NetBSD: bsd.lib.mk,v 1.300 2009/12/08 15:18:42 uebayasi Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -47,13 +47,6 @@ clean:		cleanlib
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
 .endif
-COPTS+=     ${COPTS.lib${LIB}}
-CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}
-CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
-OBJCOPTS+=  ${OBJCOPTS.lib${LIB}}
-LDADD+=     ${LDADD.lib${LIB}}
-LDFLAGS+=   ${LDFLAGS.lib${LIB}}
-LDSTATIC+=  ${LDSTATIC.lib${LIB}}
 
 ##### Libraries that this may depend upon.
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
@@ -522,6 +515,9 @@ LIBCC:=	${CXX}
 LIBCC:=	${CC}
 .endif
 
+_LDADD.lib${LIB}=	${LDADD} ${LDADD.lib${LIB}}
+_LDFLAGS.lib${LIB}=	${LDFLAGS} ${LDFLAGS.lib${LIB}}
+
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
@@ -530,13 +526,13 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	${LIBCC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
-	    -Wl,--no-whole-archive ${LDADD} \
-	    ${_LIBLDOPTS} ${LDFLAGS} \
+	    -Wl,--no-whole-archive ${_LDADD.lib${LIB}} \
+	    ${_LIBLDOPTS} ${_LDFLAGS.lib${LIB}} \
 	    -L${_GCC_LIBGCCDIR}
 .else
-	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
+	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${_LDFLAGS.lib${LIB}} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
-	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
+	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${_LDADD.lib${LIB}}
 .endif
 .if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
