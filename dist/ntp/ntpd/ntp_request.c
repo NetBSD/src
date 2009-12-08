@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.1.1.7 2009/06/13 09:18:15 kardel Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.1.1.8 2009/12/08 20:43:48 kardel Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -411,6 +411,7 @@ process_private(
 	int mod_okay
 	)
 {
+	static u_long quiet_until;
 	struct req_pkt *inpkt;
 	struct req_pkt_tail *tailinpkt;
 	struct sockaddr_storage *srcadr;
@@ -446,8 +447,14 @@ process_private(
 	    || (++ec, INFO_MBZ(inpkt->mbz_itemsize) != 0)
 	    || (++ec, rbufp->recv_length < REQ_LEN_HDR)
 		) {
-		msyslog(LOG_ERR, "process_private: INFO_ERR_FMT: test %d failed, pkt from %s", ec, stoa(srcadr));
-		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
+		NLOG(NLOG_SYSEVENT)
+			if (current_time >= quiet_until) {
+				msyslog(LOG_ERR,
+					"process_private: drop test %d"
+					" failed, pkt from %s",
+					ec, stoa(srcadr));
+				quiet_until = current_time + 60;
+			}
 		return;
 	}
 
