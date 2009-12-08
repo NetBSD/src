@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.39 2009/11/19 14:44:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.40 2009/12/08 08:18:24 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.39 2009/11/19 14:44:58 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.40 2009/12/08 08:18:24 stacktic Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -175,7 +175,7 @@ rumpuser_biothread(void *arg)
 		rumpuser__klock(0);
 		biodone(rua->rua_bp, (size_t)rv, error);
 		rumpuser__kunlock(0, &dummy);
-			
+
 		rua->rua_bp = NULL;
 
 		NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
