@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2009/08/26 00:30:01 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39 2009/12/08 13:47:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -81,14 +81,14 @@
 #include <machine/pte.h>
 
 /*
- * Machine dependent constants for HP300
+ * Machine dependent constants for amiga
  */
 
 /*
  * We use 8K pages on the Amiga.  Override the PAGE_* definitions
  * to be compie-time constants.
  */
-#define	PAGE_SHIFT	13
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
