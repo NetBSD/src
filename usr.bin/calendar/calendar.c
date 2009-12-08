@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.47 2008/09/30 05:51:41 dholland Exp $	*/
+/*	$NetBSD: calendar.c,v 1.48 2009/12/08 13:49:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.47 2008/09/30 05:51:41 dholland Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.48 2009/12/08 13:49:08 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,13 @@ __RCSID("$NetBSD: calendar.c,v 1.47 2008/09/30 05:51:41 dholland Exp $");
 #include <unistd.h>
 
 #include "pathnames.h"
+
+	/* flags used by calendar file parser */
+#define	F_ISMONTH	0x01
+#define	F_ISDAY		0x02
+#define	F_ISDOW		0x04
+#define	F_WILDMONTH	0x10
+#define	F_WILDDAY	0x20
 
 static unsigned short lookahead = 1;
 static unsigned short weekend = 2;
@@ -247,18 +254,13 @@ isnow(char *endp)
 	int v1;
 	int v2;
 
-#define	F_ISMONTH	0x01
-#define	F_ISDAY		0x02
-#define F_WILDMONTH	0x04
-#define F_WILDDAY	0x08
-
 	flags = 0;
 
 	/* didn't recognize anything, skip it */
 	if (!(v1 = getfield(endp, &endp, &flags)))
 		return false;
 
-	if (flags & F_ISDAY || v1 > 12) {
+	if ((flags & (F_ISDAY|F_ISDOW)) || v1 > 12) {
 		/* found a day */
 		day = v1;
 		/* if no recognizable month, assume wildcard ('*') month */
@@ -295,10 +297,17 @@ isnow(char *endp)
 	if (flags & F_WILDMONTH && flags & F_ISDAY && day == tp->tm_mday)
 		return true;
 
+	if (flags & F_WILDMONTH && flags & F_ISDOW && day == tp->tm_wday + 1)
+		return true;
+
 	if (flags & F_ISMONTH && flags & F_WILDDAY && month == tp->tm_mon + 1)
 		return true;
 
-	if (flags & F_ISDAY)
+	if (flags & F_ISMONTH && flags & F_ISDOW && month == tp->tm_mon + 1 &&
+	    day == tp->tm_wday + 1)
+		return true;
+
+	if (flags & F_ISDOW)
 		day = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
 	day = cumdays[month] + day;
 
@@ -320,9 +329,15 @@ getfield(char *p, char **endp, int *flags)
 	char *start;
 	char savech;
 
+/*
+ * note this macro has an arg that isn't used ... it is retained
+ * (it is believed) to make the macro call look more "natural"
+ * and suggest at the call site what is happening.
+ */
 #define FLDCHAR(a) (*p != '\0' && !isdigit((unsigned char)*p) && \
     !isalpha((unsigned char)*p) && *p != '*')
 
+	val = 0;
 	for (/*EMPTY*/; FLDCHAR(*p); ++p)
 		continue;
 	if (*p == '*') {			/* `*' is current month */
@@ -343,17 +358,21 @@ getfield(char *p, char **endp, int *flags)
 		*endp = p;
 		return val;
 	}
-	for (start = p; *p != '\0' && isalpha((unsigned char)*++p); /*EMPTY*/)
+	for (start = p; *p != '\0' && isalpha((unsigned char)*p); p++)
 		continue;
+
 	savech = *p;
-	*p = '\0';
-	if ((val = getmonth(start)) != 0)
-		*flags |= F_ISMONTH;
-	else if ((val = getday(start)) != 0)
-		*flags |= F_ISDAY;
-	else {
-		*p = savech;
-		return 0;
+	if (p != start) {
+		*p = '\0';
+		if ((val = getmonth(start)) != 0)
+			*flags |= F_ISMONTH;
+		else if ((val = getday(start)) != 0)
+			*flags |= F_ISDOW;
+		else {
+			*p = savech;
+			*endp = start;
+			return 0;
+		}
 	}
 	for (*p = savech; FLDCHAR(*p); ++p)
 		continue;
