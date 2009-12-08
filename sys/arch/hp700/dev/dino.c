@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.20 2009/12/08 07:32:45 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.21 2009/12/08 09:56:42 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.20 2009/12/08 07:32:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.21 2009/12/08 09:56:42 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -654,7 +654,7 @@ dino_r8(void *v, bus_space_handle_t h, bus_size_t o)
 	uint64_t data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & 0xf0000000)
 		data = *(volatile uint64_t *)h;
 	else
 		panic("dino_r8: not implemented");
