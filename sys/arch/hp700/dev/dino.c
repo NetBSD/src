@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.18 2009/12/03 22:18:04 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.19 2009/12/08 06:56:54 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.18 2009/12/03 22:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.19 2009/12/08 06:56:54 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -372,13 +372,14 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 int
 dino_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	pcireg_t reg;
+	int line = pa->pa_intrline;
 
-	reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	*ihp = PCI_INTERRUPT_LINE(reg);
-	return *ihp < 0;
+	if (line == 0xff)
+		return 1;
+
+	*ihp = line;
+
+	return 0;
 }
 
 const char *
