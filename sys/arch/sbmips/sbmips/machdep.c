@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.3 2009/12/08 01:58:43 cyber Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.4 2009/12/08 07:44:44 cyber Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,9 +58,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.3 2009/12/08 01:58:43 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.4 2009/12/08 07:44:44 cyber Exp $");
 
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
 #include "opt_execfmt.h"
 
 #include <sys/param.h>
@@ -292,6 +293,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		case ' ':
 			continue;
 		case '-':
+		case 'a':
+		case 'd':
+		case 's':
 			while (bootinfo.boot_flags[i] != ' ' &&
 			    bootinfo.boot_flags[i] != '\0') {
 				switch (bootinfo.boot_flags[i]) {
@@ -350,8 +354,12 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+#ifdef SYMTAB_SPACE
+	ksyms_init(0,0,0);
+#else
+	ksyms_init(((vaddr_t)ksym_end - (vaddr_t)ksym_start),
 	    ksym_start, ksym_end);
+#endif
 #endif
 
 	if (boothowto & RB_KDB) {
