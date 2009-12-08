@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.24 2009/12/06 06:41:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.25 2009/12/08 15:32:01 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -79,8 +79,6 @@
 #include <sys/simplelock.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
-
-#define M68K_SEG_SIZE	NBSEG
 
 /*
  * Pmap stuff
