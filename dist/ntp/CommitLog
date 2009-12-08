@@ -1,3 +1,192 @@
+ChangeSet@1.1612, 2009-12-08 08:30:54-05:00, stenn@whimsy.udel.edu +1 -0
+  ChangeLog:
+    typo
+
+  ChangeLog@1.95, 2009-12-08 08:30:44-05:00, stenn@whimsy.udel.edu +0 -1
+    typo
+
+ChangeSet@1.1611, 2009-12-08 08:23:12-05:00, stenn@whimsy.udel.edu +26 -0
+  NTP_4_2_4P8
+  TAG: NTP_4_2_4P8
+
+  ChangeLog@1.94, 2009-12-08 08:23:01-05:00, stenn@whimsy.udel.edu +1 -0
+    NTP_4_2_4P8
+
+  ntpd/ntpd-opts.c@1.86, 2009-12-08 08:23:02-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpd/ntpd-opts.h@1.86, 2009-12-08 08:23:02-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  ntpd/ntpd-opts.texi@1.85, 2009-12-08 08:23:03-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  ntpd/ntpd.1@1.84, 2009-12-08 08:23:03-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpd/ntpdsim-opts.c@1.86, 2009-12-08 08:23:03-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpd/ntpdsim-opts.h@1.86, 2009-12-08 08:23:04-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  ntpd/ntpdsim-opts.texi@1.84, 2009-12-08 08:23:05-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  ntpd/ntpdsim.1@1.84, 2009-12-08 08:23:05-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpdc/ntpdc-opts.c@1.86, 2009-12-08 08:23:05-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpdc/ntpdc-opts.h@1.86, 2009-12-08 08:23:05-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  ntpdc/ntpdc-opts.texi@1.84, 2009-12-08 08:23:06-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  ntpdc/ntpdc.1@1.84, 2009-12-08 08:23:06-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpq/ntpq-opts.c@1.88, 2009-12-08 08:23:06-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  ntpq/ntpq-opts.h@1.88, 2009-12-08 08:23:06-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  ntpq/ntpq-opts.texi@1.85, 2009-12-08 08:23:07-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  ntpq/ntpq.1@1.84, 2009-12-08 08:23:07-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  packageinfo.sh@1.118, 2009-12-08 08:23:07-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P8
+
+  sntp/sntp-opts.c@1.84, 2009-12-08 08:23:07-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  sntp/sntp-opts.h@1.84, 2009-12-08 08:23:07-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  sntp/sntp-opts.texi@1.81, 2009-12-08 08:23:08-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  sntp/sntp.1@1.84, 2009-12-08 08:23:08-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  util/ntp-keygen-opts.c@1.85, 2009-12-08 08:23:08-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+  util/ntp-keygen-opts.h@1.85, 2009-12-08 08:23:08-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P8
+
+  util/ntp-keygen-opts.texi@1.83, 2009-12-08 08:23:09-05:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P8
+
+  util/ntp-keygen.1@1.83, 2009-12-08 08:23:09-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P8
+
+ChangeSet@1.1610, 2009-12-08 07:45:28-05:00, stenn@whimsy.udel.edu +26 -0
+  NTP_4_2_4P9_RC1
+  TAG: NTP_4_2_4P9_RC1
+
+  ChangeLog@1.93, 2009-12-08 07:45:19-05:00, stenn@whimsy.udel.edu +1 -0
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpd-opts.c@1.85, 2009-12-08 07:45:19-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpd-opts.h@1.85, 2009-12-08 07:45:19-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpd-opts.texi@1.84, 2009-12-08 07:45:20-05:00, stenn@whimsy.udel.edu +13 -6
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpd.1@1.83, 2009-12-08 07:45:20-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpdsim-opts.c@1.85, 2009-12-08 07:45:20-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpdsim-opts.h@1.85, 2009-12-08 07:45:20-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpdsim-opts.texi@1.83, 2009-12-08 07:45:21-05:00, stenn@whimsy.udel.edu +61 -2
+    NTP_4_2_4P9_RC1
+
+  ntpd/ntpdsim.1@1.83, 2009-12-08 07:45:21-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+  ntpdc/ntpdc-opts.c@1.85, 2009-12-08 07:45:21-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  ntpdc/ntpdc-opts.h@1.85, 2009-12-08 07:45:21-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  ntpdc/ntpdc-opts.texi@1.83, 2009-12-08 07:45:21-05:00, stenn@whimsy.udel.edu +7 -4
+    NTP_4_2_4P9_RC1
+
+  ntpdc/ntpdc.1@1.83, 2009-12-08 07:45:22-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+  ntpq/ntpq-opts.c@1.87, 2009-12-08 07:45:22-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  ntpq/ntpq-opts.h@1.87, 2009-12-08 07:45:22-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  ntpq/ntpq-opts.texi@1.84, 2009-12-08 07:45:22-05:00, stenn@whimsy.udel.edu +8 -4
+    NTP_4_2_4P9_RC1
+
+  ntpq/ntpq.1@1.83, 2009-12-08 07:45:23-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+  packageinfo.sh@1.117, 2009-12-08 07:45:23-05:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P9_RC1
+
+  sntp/sntp-opts.c@1.83, 2009-12-08 07:45:23-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  sntp/sntp-opts.h@1.83, 2009-12-08 07:45:23-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  sntp/sntp-opts.texi@1.80, 2009-12-08 07:45:24-05:00, stenn@whimsy.udel.edu +54 -2
+    NTP_4_2_4P9_RC1
+
+  sntp/sntp.1@1.83, 2009-12-08 07:45:24-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+  util/ntp-keygen-opts.c@1.84, 2009-12-08 07:45:24-05:00, stenn@whimsy.udel.edu +5 -5
+    NTP_4_2_4P9_RC1
+
+  util/ntp-keygen-opts.h@1.84, 2009-12-08 07:45:24-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  util/ntp-keygen-opts.texi@1.82, 2009-12-08 07:45:24-05:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P9_RC1
+
+  util/ntp-keygen.1@1.82, 2009-12-08 07:45:25-05:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P9_RC1
+
+ChangeSet@1.1609, 2009-12-08 05:36:47-05:00, stenn@whimsy.udel.edu +2 -0
+  [Sec 1331] DoS with mode 7 packets - CVE-2009-3563
+
+  NEWS@1.102, 2009-12-08 05:36:36-05:00, stenn@whimsy.udel.edu +34 -0
+    [Sec 1331] DoS with mode 7 packets - CVE-2009-3563
+
+  packageinfo.sh@1.116, 2009-12-08 05:36:36-05:00, stenn@whimsy.udel.edu +2 -2
+    [Sec 1331] DoS with mode 7 packets - CVE-2009-3563
+
+ChangeSet@1.1608, 2009-10-07 01:33:22+00:00, davehart@shiny.ad.hartbrothers.com +2 -0
+  [Sec 1331] DoS with mode 7 packets - CVE-2009-3563.
+
+  ChangeLog@1.92, 2009-10-07 01:33:21+00:00, davehart@shiny.ad.hartbrothers.com +4 -0
+    [Sec 1331] DoS with mode 7 packets - CVE-2009-3563.
+
+  ntpd/ntp_request.c@1.68, 2009-10-07 01:33:21+00:00, davehart@shiny.ad.hartbrothers.com +9 -2
+    [Sec 1331] DoS with mode 7 packets - CVE-2009-3563.
+
 ChangeSet@1.1607, 2009-05-18 05:04:41-04:00, stenn@whimsy.udel.edu +26 -0
   NTP_4_2_4P7
   TAG: NTP_4_2_4P7

@@ -1,4 +1,9 @@
 ---
+(4.2.4p8) 2009/12/08 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Sec 1331] DoS with mode 7 packets - CVE-2009-3563.
+
+---
 (4.2.4p7) 2009/05/18 Released by Harlan Stenn <stenn@ntp.org>
 
 * [Sec 1151] Remote exploit if autokey is enabled - CVE-2009-1252.
