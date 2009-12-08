@@ -4,3 +4,7 @@ include "arch/sbmips/conf/GENERIC"
 makeoptions	LP64="yes"
 options 	EXEC_ELF64
 options 	COMPAT_NETBSD32
+
+no options	SYMTAB_SPACE
+options		SYMTAB_SPACE=640000
+
