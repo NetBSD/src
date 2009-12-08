@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.9 2009/09/13 23:06:22 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.10 2009/12/08 02:21:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.9 2009/09/13 23:06:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.10 2009/12/08 02:21:16 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -314,7 +314,6 @@ static int
 elf_check_itp(struct exec_package *epp, const char *itp,
 	const char *itp_suffix)
 {
-	int error = 0;
 	if (itp) {
 		/*
 		 * If the path is exactly "/usr/libexec/ld.elf_so", first
@@ -326,6 +325,7 @@ elf_check_itp(struct exec_package *epp, const char *itp,
 		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
 			struct nameidata nd;
 			char *path;
+			int error;
 
 			path = PNBUF_GET();
 			snprintf(path, MAXPATHLEN, "%s-%s", itp, itp_suffix);
@@ -341,10 +341,9 @@ elf_check_itp(struct exec_package *epp, const char *itp,
 				epp->ep_interp = nd.ni_vp;
 			}
 			PNBUF_PUT(path);
-			error = 0;
 		}
 	}
-	return error;
+	return 0;
 }
 
 #if EXEC_ELF32
