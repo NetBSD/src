@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.6 2009/12/01 08:15:50 wiz Exp $
+.\"     $NetBSD: getdelim.3,v 1.7 2009/12/09 18:06:08 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,6 +110,7 @@ while ((linelen = getline(\*[Am]line, \*[Am]linesize, fp)) != -1)
 
 if (ferror(fp))
 	perror("getline");
+.Ed
 .Sh ERRORS
 .Bl -tag -width [EOVERFLOW]
 .It Bq Er EINVAL
