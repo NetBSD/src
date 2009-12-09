@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.146 2009/12/05 13:01:31 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.147 2009/12/09 00:11:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.146 2009/12/05 13:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.147 2009/12/09 00:11:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -142,22 +142,8 @@ void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
 __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 
-static void
-pvfsinit_nop(struct proc *p)
-{
-
-	return;
-}
-
-static void
-pvfsrele_nop(struct proc *p)
-{
-
-	return;
-}
-
-rump_proc_vfs_init_fn rump_proc_vfs_init = pvfsinit_nop;
-rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
+rump_proc_vfs_init_fn rump_proc_vfs_init;
+rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 /*
  * Stir up the stack a bit.  These are exported functions to help
@@ -450,7 +436,8 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	if (pid != 0) {
 		p = kmem_zalloc(sizeof(*p), KM_SLEEP);
-		rump_proc_vfs_init(p);
+		if (rump_proc_vfs_init)
+			rump_proc_vfs_init(p);
 		p->p_stats = &rump_stats;
 		p->p_limit = &rump_limits;
 		p->p_pid = pid;
@@ -497,7 +484,8 @@ rump_lwp_release(struct lwp *l)
 	if (p->p_pid != 0) {
 		mutex_obj_free(p->p_lock);
 		fd_free();
-		rump_proc_vfs_release(p);
+		if (rump_proc_vfs_release)
+			rump_proc_vfs_release(p);
 		rump_cred_put(l->l_cred);
 		kmem_free(p, sizeof(*p));
 	}
