@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.110 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.111 2009/12/09 00:45:25 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.110 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.111 2009/12/09 00:45:25 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -534,8 +534,7 @@ rip_usrreq(struct socket *so, int req,
 #endif
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (void *)nam,
-		    (struct ifnet *)control, l));
+		return in_control(so, (long)m, nam, (struct ifnet *)control, l);
 
 	s = splsoftnet();
 
@@ -554,7 +553,7 @@ rip_usrreq(struct socket *so, int req,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("rip_usrreq: unexpected control mbuf");
 #endif
-	if (inp == 0 && req != PRU_ATTACH) {
+	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
