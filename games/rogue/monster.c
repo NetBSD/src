@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.14.10.1 2009/12/09 04:56:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.14.10.1 2009/12/09 04:56:00 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -671,7 +671,7 @@ create_monster(void)
 
 	for (i = 0; i < 9; i++) {
 		rand_around(i, &row, &col);
-		if (((row == rogue.row) && (col = rogue.col)) ||
+		if (((row == rogue.row) && (col == rogue.col)) ||
 				(row < MIN_ROW) || (row > (DROWS-2)) ||
 				(col < 0) || (col > (DCOLS-1))) {
 			continue;
