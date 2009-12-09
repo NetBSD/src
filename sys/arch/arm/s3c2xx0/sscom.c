@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.31 2009/12/06 21:35:05 dyoung Exp $ */
+/*	$NetBSD: sscom.c,v 1.32 2009/12/09 12:42:59 he Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.31 2009/12/06 21:35:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.32 2009/12/09 12:42:59 he Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -511,6 +511,8 @@ sscom_attach_subr(struct sscom_softc *sc)
 int
 sscom_detach(device_t self, int flags)
 {
+	struct sscom_softc *sc = device_private(self);
+
 	if (sc->sc_hwflags & (SSCOM_HW_CONSOLE|SSCOM_HW_KGDB))
 		return EBUSY;
 
@@ -520,7 +522,9 @@ sscom_detach(device_t self, int flags)
 int
 sscom_activate(device_t self, enum devact act)
 {
+#ifdef notyet
 	struct sscom_softc *sc = device_private(self);
+#endif
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
