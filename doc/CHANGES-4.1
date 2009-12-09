@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.185 2009/12/03 09:44:57 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.186 2009/12/09 04:54:25 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3912,4 +3912,9 @@ sys/net/if_tap.c				1.60
 	Fix a potential leak on tap device close; purging the send
 	queue did not actually release the dequeued mbufs.
 	[plunky, ticket #1368]
+
+dist/ntp/ntpd/ntp_request.c			patch
+
+	Fix CVE-2009-3563.
+	[kardel, ticket #1369]
 
