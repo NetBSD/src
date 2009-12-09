@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.30 2009/12/03 17:34:35 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.31 2009/12/09 04:47:29 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -865,4 +865,9 @@ usr.sbin/bind/nsupdate/Makefile			patch
 
 	Update BIND server and tools to version 9.5.2-P1.
 	[tron, ticket #1178]
+
+dist/ntp/ntpd/ntp_request.c			patch
+
+	Fix CVE-2009-3563.
+	[kardel, ticket #1185]
 
