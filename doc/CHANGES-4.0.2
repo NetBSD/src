@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.61 2009/11/14 10:43:56 sborrill Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.62 2009/12/09 04:52:40 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -947,4 +947,9 @@ sys/netinet6/ip6_forward.c			1.67
 	for v6 traffic and if the packet is encapsulated with gif,
 	the IPv6 header would get corrupted by ip_output.
 	[joerg, ticket #1366]
+
+dist/ntp/ntpd/ntp_request.c			patch
+
+	Fix CVE-2009-3563.
+	[kardel, ticket #1369]
 
