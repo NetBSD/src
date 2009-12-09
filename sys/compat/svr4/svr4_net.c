@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.56 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.57 2009/12/09 21:32:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.56 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.57 2009/12/09 21:32:58 dsl Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -108,7 +108,7 @@ static const struct fileops svr4_netops = {
 	.fo_stat = soo_stat,
 	.fo_close = svr4_soo_close,
 	.fo_kqfilter = soo_kqfilter,
-	.fo_drain = soo_drain,
+	.fo_abort = soo_abort,
 };
 
 

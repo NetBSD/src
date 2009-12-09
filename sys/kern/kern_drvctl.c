@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.30 2009/12/09 21:32:59 dsl Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.29 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.30 2009/12/09 21:32:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ static const struct fileops drvctl_fileops = {
 	.fo_stat = drvctl_stat,
 	.fo_close = drvctl_close,
 	.fo_kqfilter = fnullop_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_abort = fnullop_abort,
 };
 
 #define MAXLOCATORS 100
