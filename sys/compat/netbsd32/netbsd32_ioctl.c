@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.42 2009/05/24 21:41:25 ad Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.43 2009/12/09 04:50:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.42 2009/05/24 21:41:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.43 2009/12/09 04:50:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ static inline void netbsd32_to_partinfo(struct netbsd32_partinfo *,
 static inline void netbsd32_to_format_op(struct netbsd32_format_op *,
 					   struct format_op *, u_long);
 #endif
+static inline void netbsd32_to_oifreq(struct netbsd32_oifreq *, struct oifreq *,
+				       u_long cmd);
 static inline void netbsd32_to_ifreq(struct netbsd32_ifreq *, struct ifreq *,
 				       u_long cmd);
 static inline void netbsd32_to_ifconf(struct netbsd32_ifconf *,
@@ -100,6 +102,8 @@ static inline void netbsd32_from_format_op(struct format_op *,
 #endif
 static inline void netbsd32_from_ifreq(struct ifreq *,
                                          struct netbsd32_ifreq *, u_long);
+static inline void netbsd32_from_oifreq(struct oifreq *,
+                                         struct netbsd32_oifreq *, u_long);
 static inline void netbsd32_from_ifconf(struct ifconf *,
 					  struct netbsd32_ifconf *, u_long);
 static inline void netbsd32_from_ifmediareq(struct ifmediareq *,
@@ -138,6 +142,21 @@ netbsd32_to_format_op(struct netbsd32_format_op *s32p, struct format_op *p, u_lo
 
 static inline void
 netbsd32_to_ifreq(struct netbsd32_ifreq *s32p, struct ifreq *p, u_long cmd)
+{
+
+	memcpy(p, s32p, sizeof *s32p);
+	/*
+	 * XXX
+	 * struct ifreq says the same, but sometimes the ifr_data
+	 * union member needs to be converted to 64 bits... this
+	 * is very driver specific and so we ignore it for now..
+	 */
+	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
+		p->ifr_data = (void *)NETBSD32PTR64(s32p->ifr_data);
+}
+
+static inline void
+netbsd32_to_oifreq(struct netbsd32_oifreq *s32p, struct oifreq *p, u_long cmd)
 {
 
 	memcpy(p, s32p, sizeof *s32p);
@@ -235,7 +254,24 @@ netbsd32_from_ifreq(struct ifreq *p, struct netbsd32_ifreq *s32p, u_long cmd)
 	 * union member needs to be converted to 64 bits... this
 	 * is very driver specific and so we ignore it for now..
 	 */
-	*s32p->ifr_name = *p->ifr_name;
+	(void)memcpy(s32p->ifr_name, p->ifr_name,
+	    MIN(sizeof(s32p->ifr_name), sizeof(p->ifr_name)));
+	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
+		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
+}
+
+static inline void
+netbsd32_from_oifreq(struct oifreq *p, struct netbsd32_oifreq *s32p, u_long cmd)
+{
+
+	/*
+	 * XXX
+	 * struct ifreq says the same, but sometimes the ifr_data
+	 * union member needs to be converted to 64 bits... this
+	 * is very driver specific and so we ignore it for now..
+	 */
+	(void)memcpy(s32p->ifr_name, p->ifr_name,
+	    MIN(sizeof(s32p->ifr_name), sizeof(p->ifr_name)));
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
 }
@@ -501,6 +537,12 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCGIFFLAGS, ifreq);
 	case SIOCSIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(SIOCSIFFLAGS, ifreq);
+
+	case OSIOCGIFFLAGS32:
+		printf("OSIO %lx %zu\n", (long)OSIOCGIFFLAGS, sizeof(struct netbsd32_oifreq));
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFFLAGS, oifreq);
+	case OSIOCSIFFLAGS32:
+		IOCTL_STRUCT_CONV_TO(OSIOCSIFFLAGS, oifreq);
 
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
