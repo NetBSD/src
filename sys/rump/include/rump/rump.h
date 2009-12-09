@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.33 2009/11/03 18:22:16 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.34 2009/12/09 00:23:28 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,6 +127,10 @@ _END_DECLS
 #ifdef RUMP_SYS_CLOSE
 #define close(a) rump_sys_close(a)
 #endif /* RUMP_SYS_CLOSE */
+
+#ifdef RUMP_SYS_OPEN
+#define open(...) rump_sys_open(__VA_ARGS__)
+#endif /* RUMP_SYS_OPEN */
 
 #ifdef RUMP_SYS_READWRITE
 #define read(a,b,c) rump_sys_read(a,b,c)
