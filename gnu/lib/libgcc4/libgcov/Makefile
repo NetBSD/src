@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/12/09 06:20:14 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.7 2009/12/09 17:30:14 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -9,7 +9,7 @@ LIB=		gcov
 
 .include <bsd.own.mk>
 
-.if defined(MKNATIVE_LIBGCC_NEW) && ${MKGCC} != "no"
+.if !defined(MKNATIVE_LIBGCC_NEW) && ${MKGCC} != "no"
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
