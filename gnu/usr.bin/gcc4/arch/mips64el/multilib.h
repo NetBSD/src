@@ -3,11 +3,17 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 static const char *const multilib_raw[] = {
-". ;",
+". !mabi=n32 !mabi=64 !mabi=32;",
+".:. mabi=n32 !mabi=64 !mabi=32;",
+".:../lib/64 !mabi=n32 mabi=64 !mabi=32;",
+".:../lib/o32 !mabi=n32 !mabi=64 mabi=32;",
 NULL
 };
 
 static const char *const multilib_matches_raw[] = {
+"mabi=n32 mabi=n32;",
+"mabi=64 mabi=64;",
+"mabi=32 mabi=32;",
 NULL
 };
 
@@ -17,4 +23,6 @@ static const char *const multilib_exclusions_raw[] = {
 NULL
 };
 
-static const char *multilib_options = "";
+static const char *multilib_options = "mabi=n32/mabi=64/mabi=32";
+
+#define DISABLE_MULTILIB  1
