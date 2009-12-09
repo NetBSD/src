@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.66 2009/10/03 00:14:07 elad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.67 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.66 2009/10/03 00:14:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.67 2009/12/09 21:32:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ static const struct fileops kqueueops = {
 	.fo_stat = kqueue_stat,
 	.fo_close = kqueue_close,
 	.fo_kqfilter = kqueue_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_abort = fnullop_abort,
 };
 
 static const struct filterops kqread_filtops =
