@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.64 2008/02/27 22:18:41 hubertf Exp $	*/
+/*	$NetBSD: signal.h,v 1.65 2009/12/09 20:26:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -215,14 +215,16 @@ struct	sigevent {
 	int	sigev_notify;
 	int	sigev_signo;
 	union sigval	sigev_value;
-	void	(*sigev_notify_function)(union sigval *);
+	void	(*sigev_notify_function)(union sigval);
 	void /* pthread_attr_t */	*sigev_notify_attributes;
 };
 
 #define SIGEV_NONE	0
 #define SIGEV_SIGNAL	1
 #define SIGEV_THREAD	2
+#if defined(_NETBSD_SOURCE)
 #define SIGEV_SA	3
+#endif
 #endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
