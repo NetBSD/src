@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.5 2009/12/05 11:42:24 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.6 2009/12/09 00:15:51 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -31,6 +31,11 @@
 #include <dev/dm/netbsd-dm.h>
 
 #include <dm-ioctl.h>
+
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#endif
 
 /*
  * Ensure build compatibility.  
@@ -189,6 +194,9 @@ static int _open_control(void)
 	if (_control_fd != -1)
 		return 1;
 
+#ifdef RUMP_ACTION	
+	rump_init();
+#endif
 	snprintf(control, sizeof(control), "%s/control", dm_dir());
 
 	if (!_control_device_number(&major, &minor))
@@ -1018,9 +1026,18 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 	//printf("name %s, major %d minor %d\n uuid %s\n", 
         //dm_task_get_name(dmt), dmt->minor, dmt->major, dm_task_get_uuid(dmt));
 	/* Send dictionary to kernel and wait for reply. */
+#ifdef RUMP_ACTION
+	struct plistref prefp;
+	int err;
+	prop_dictionary_externalize_to_pref(dm_dict_in, &prefp);
+
+	if (rump_sys_ioctl(_control_fd, NETBSD_DM_IOCTL, &prefp) != 0) {
+
+		dm_dict_out = prop_dictionary_internalize(prefp.pref_plist);
+#else	
 	if (prop_dictionary_sendrecv_ioctl(dm_dict_in,_control_fd,
 		NETBSD_DM_IOCTL,&dm_dict_out) != 0) {
-
+#endif
 		if (errno == ENOENT &&
 		    ((dmt->type == DM_DEVICE_INFO) ||
 			(dmt->type == DM_DEVICE_MKNODES) ||
@@ -1051,6 +1068,9 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 		}
 	}
 
+#ifdef RUMP_ACTION
+	dm_dict_out = prop_dictionary_internalize(prefp.pref_plist);
+#endif	
 	prop_dictionary_externalize_to_file(dm_dict_out,"/tmp/test_out");
 
 	/* Parse kernel dictionary to dmi structure and return it to libdevmapper. */
