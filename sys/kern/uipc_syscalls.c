@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.136 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.137 2009/12/09 21:33:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.136 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.137 2009/12/09 21:33:00 dsl Exp $");
 
 #include "opt_pipe.h"
 
@@ -317,7 +317,7 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	}
 	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
 		error = sowait(so, true, 0);
-		if (__predict_false((so->so_state & SS_ISDRAINING) != 0)) {
+		if (__predict_false((so->so_state & SS_ISABORTING) != 0)) {
 			error = EPIPE;
 			interrupted = 1;
 			break;

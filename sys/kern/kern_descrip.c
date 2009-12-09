@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.200 2009/10/27 02:58:28 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.201 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.200 2009/10/27 02:58:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.201 2009/12/09 21:32:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ fd_close(unsigned fd)
 		}
 
 		/* Try to drain out descriptor references. */
-		(*fp->f_ops->fo_drain)(fp);
+		(*fp->f_ops->fo_abort)(fp);
 		mutex_enter(&fdp->fd_lock);
 
 		/*
@@ -1787,7 +1787,7 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 }
 
 void
-fnullop_drain(file_t *fp)
+fnullop_abort(file_t *fp)
 {
 
 }

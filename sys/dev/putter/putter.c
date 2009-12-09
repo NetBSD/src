@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.24 2009/12/07 13:41:44 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.25 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.24 2009/12/07 13:41:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.25 2009/12/09 21:32:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ static const struct fileops putter_fileops = {
 	.fo_stat = putter_fop_stat,
 	.fo_close = putter_fop_close,
 	.fo_kqfilter = putter_fop_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_abort = fnullop_abort,
 };
 
 static int

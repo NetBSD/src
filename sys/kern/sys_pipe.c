@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.120 2009/12/06 20:26:55 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.121 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.120 2009/12/06 20:26:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.121 2009/12/09 21:32:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static const struct fileops pipeops = {
 	.fo_stat = pipe_stat,
 	.fo_close = pipe_close,
 	.fo_kqfilter = pipe_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_abort = fnullop_abort,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.194 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.195 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.194 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.195 2009/12/09 21:32:59 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1624,18 +1624,16 @@ soshutdown(struct socket *so, int how)
 	return error;
 }
 
-int
-sodrain(struct socket *so)
+void
+soabortop(struct socket *so)
 {
-	int error;
-
+#if 0   /* ad@ wrote this, then disabled it as 'not working' */
 	solock(so);
-	so->so_state |= SS_ISDRAINING;
+	so->so_state |= SS_ISABORTING;
 	cv_broadcast(&so->so_cv);
-	error = soshutdown(so, SHUT_RDWR);
+	soshutdown(so, SHUT_RDWR);
 	sounlock(so);
-
-	return error;
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.166 2009/05/17 05:54:42 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.167 2009/12/09 21:32:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.166 2009/05/17 05:54:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.167 2009/12/09 21:32:59 dsl Exp $");
 
 #include "veriexec.h"
 
@@ -122,7 +122,7 @@ const struct fileops vnops = {
 	.fo_stat = vn_statfile,
 	.fo_close = vn_closefile,
 	.fo_kqfilter = vn_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_abort = fnullop_abort,
 };
 
 /*
