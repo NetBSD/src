@@ -37,7 +37,11 @@
 #include <sys/param.h>
 
 #include <inttypes.h>
+
+/* this brings in the prototype for asprintf on Linux */
+#define _GNU_SOURCE
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 

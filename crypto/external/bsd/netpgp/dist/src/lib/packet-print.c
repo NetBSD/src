@@ -58,10 +58,13 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.21 2009/12/05 07:08:19 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.22 2009/12/09 22:10:51 agc Exp $");
 #endif
 
 #include <string.h>
+
+/* this brings in the prototype for asprintf on Linux */
+#define _GNU_SOURCE
 #include <stdio.h>
 
 #ifdef HAVE_UNISTD_H
