@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.158 2009/12/07 04:37:09 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.159 2009/12/09 05:20:06 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15505,4 +15505,20 @@ sys/fs/tmpfs/tmpfs_vnops.c			1.63
 	% ln a b
 	% mv a b
 	[rmind, ticket #1072]
+
+dist/ntp/ntpd/ntp_request.c			patch
+
+	Fix CVE-2009-3563.            
+	[kardel, ticket #1185]        
+
+games/rogue/monster.c				1.16
+
+	Fix '=' for '==' in a test. PR 42177.
+	[jdarrow, ticket #1186]
+
+usr.bin/gzip/unbzip2.c				1.13
+
+	Avoid problems when reading from pipes.  Fixes a regression
+	introduced with the multi-part bz2 fixes.
+	[mrg, ticket #1182]
 
