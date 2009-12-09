@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/11/30 13:07:38 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.9 2009/12/09 06:20:13 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -11,7 +11,7 @@ LIB=		gcc
 
 .cc: # disable .cc->NULL transform
 
-.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.if !defined(MKNATIVE_LIBGCC_NEW)
 
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
@@ -19,7 +19,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 SRCS+=		${LIB2_EH}
 .endif
 
-.else	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.else	# defined(MKNATIVE_LIBGCC_NEW)
 
 # New style.
 TMPLSRCS=	${TMPLSRCS.libgcc.a}
@@ -27,11 +27,11 @@ TMPLFPSRCS=	${TMPLFPSRCS.libgcc.a}
 TMPLASMSRCS=	${TMPLASMSRCS.libgcc.a}
 SRCS=		${SRCS.libgcc.a}
 
-.endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.endif	# defined(MKNATIVE_LIBGCC_NEW)
 
 .include <bsd.lib.mk>
 
-.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.if !defined(MKNATIVE_LIBGCC_NEW)
 
 CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
@@ -63,7 +63,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .endif
 	rm -f ${.TARGET}.tmp1
 
-.endif	# !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.endif	# !defined(MKNATIVE_LIBGCC_NEW)
 
 .else
 .include <bsd.prog.mk> # do nothing

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2009/11/30 13:07:38 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2009/12/09 06:20:13 uebayasi Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -26,7 +26,7 @@ _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
 
-.if !exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.if !defined(MKNATIVE_LIBGCC_NEW)
 
 #
 # Old style libgcc build procedure.
@@ -117,7 +117,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
 
-.else	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.else	# defined(MKNATIVE_LIBGCC_NEW)
 
 #
 # New style libgcc build procedure.
@@ -133,7 +133,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 
 .include "${.CURDIR}/../Makefile.wrapper"
 
-.endif	# exists(${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk)
+.endif	# defined(MKNATIVE_LIBGCC_NEW)
 
 #
 # Common rules.
