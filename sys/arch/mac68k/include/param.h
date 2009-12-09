@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.42 2009/12/09 12:21:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -127,10 +127,10 @@
 #if defined(M68030) && !defined(M68040) && !defined(M68060)
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #elif (defined(M68040) || defined(M68060)) && !defined(M68030)
-#define	NBSEG		(32 * (1 << PGSHIFT))
+#define	NBSEG		(1 << 18 /* SG4_SHIFT2 */)
 #else
 #define	NBSEG		((mmutype == MMU_68040) ? \
-				(32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
+			    (1 << 18 /* SG4_SHIFT2 */) : (1 << SEGSHIFT))
 #endif
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
