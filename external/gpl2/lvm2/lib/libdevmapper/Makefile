@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/12/01 23:12:51 haad Exp $
+#	$NetBSD: Makefile,v 1.4 2009/12/09 00:17:23 haad Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -22,6 +22,13 @@ SRCS+=		bitset.c hash.c list.c libdm-common.c libdm-file.c \
 		libdm-deptree.c	libdm-string.c libdm-report.c \
 		dbg_malloc.c pool.c matcher.c parse_rx.c ttree.c \
 		libdm-nbsd-iface.c libdm_netbsd.c
+
+.ifdef RUMP_ACTION
+CPPFLAGS+=      -DRUMP_ACTION -DRUMP_SYS_IOCTL -DRUMP_SYS_CLOSE -DRUMP_SYS_OPEN
+LDADD+=         -lrumpdev_disk -lrumpdev_dm -lrumpdev
+LDADD+=         -lrumpvfs -lrump -lrumpuser -lpthread
+DBG=            -g
+.endif
 
 .PATH: ${LIBDM_DISTDIR}/
 .PATH: ${LIBDM_DISTDIR}/datastruct
