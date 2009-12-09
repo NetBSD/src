@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 2008/01/03 01:02:04 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.32 2009/12/09 12:21:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -89,10 +89,10 @@
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
-/* bytes/segment */
-/* (256 * (1 << PGSHIFT)) == (1 << SEGSHIFT) */
+
 #define	NBSEG		((mmutype == MMU_68040) \
-			    ? (32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
+			    ? (1 << 18 /* SG4_SHIFT2 */) : (1 << SEGSHIFT))
+					/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	UPAGES		2		/* pages of u-area */
