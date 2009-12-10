@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.38 2009/12/10 16:12:00 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.39 2009/12/10 16:22:06 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -136,20 +136,24 @@ generate_extra()
 	${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
 }
 
+exist_case_insensitive()
+{
+	while read f; do
+		[ -f "${DESTDIR}/${f}" ] || \
+		[ -d "${DESTDIR}/${f}" ] || \
+		[ -L "${DESTDIR}/${f}" ] || \
+		echo "$f"
+	done
+}
+
 #
 # compare DESTDIR with METALOG, and report on differences.
-#
-# XXX: Temporarily disabled due to problems with obsolete files in metalog
 #
 compare_metalog()
 {
     # Handle case insensitive filesystems
     mv -f "${SDIR}/extra" "${SDIR}/extra.all"
-    while read f; do
-	[ -f "${DESTDIR}/${f}" ] || \
-	    [ -d "${DESTDIR}/${f}" ] || \
-	    [ -L "${DESTDIR}/${f}" ] || echo "$f"
-    done < "${SDIR}/extra.all" > "${SDIR}/extra"
+    exist_case_insensitive < "${SDIR}/extra.all" > "${SDIR}/extra"
 
     check_metalog_extra
     check_metalog_missing
@@ -187,10 +191,6 @@ check_metalog_missing()
     fi
 }
 
-if false && [ -n "${metalog}" ]; then
-	compare_metalog
-fi
-
 #
 # compare flist with DESTDIR, and report on differences.
 #
@@ -198,11 +198,7 @@ compare_destdir()
 {
 # Handle case insensitive filesystems
 mv -f "${SDIR}/missing" "${SDIR}/missing.all"
-while read f; do
-    [ -f "${DESTDIR}/${f}" ] || \
-	[ -d "${DESTDIR}/${f}" ] || \
-	[ -L "${DESTDIR}/${f}" ] || echo "$f"
-done < "${SDIR}/missing.all" > "${SDIR}/missing"
+exist_case_insensitive < "${SDIR}/missing.all" > "${SDIR}/missing"
 
 check_destdir_extra
 check_destdir_missing
@@ -254,6 +250,10 @@ generate_mlist
 generate_missing
 generate_extra
 
+# XXX: Temporarily disabled due to problems with obsolete files in metalog
+if false && [ -n "${metalog}" ]; then
+	compare_metalog
+fi
 compare_destdir
 
 exit 0		# cleanup will exit with ${es}
