@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.72 2009/11/23 00:11:44 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.73 2009/12/10 14:13:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2009/12/10 14:13:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -284,7 +284,7 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);

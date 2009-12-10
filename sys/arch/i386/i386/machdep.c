@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.680 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.680 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -995,7 +995,7 @@ haltsys:
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct pcb *pcb = lwp_getpcb(l);

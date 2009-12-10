@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.56 2009/08/12 23:29:19 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.57 2009/12/10 14:13:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.56 2009/08/12 23:29:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.57 2009/12/10 14:13:51 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -62,7 +62,7 @@ int	mips_elf_makecmds(struct lwp *, struct exec_package *);
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = (struct frame *)l->l_md.md_regs;

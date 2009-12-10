@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.291 2009/10/25 01:14:03 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.292 2009/12/10 14:13:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.291 2009/10/25 01:14:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.292 2009/12/10 14:13:54 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -1044,9 +1044,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	doexechooks(p);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
+	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (vaddr_t)stack);
 	if (pack.ep_esch->es_setregs)
-		(*pack.ep_esch->es_setregs)(l, &pack, (u_long) stack);
+		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
 
 	/* map the process's signal trampoline code */
 	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {

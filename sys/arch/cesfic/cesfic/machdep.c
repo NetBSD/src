@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2009/11/23 00:11:43 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2009/12/10 14:13:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2009/11/23 00:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2009/12/10 14:13:49 matt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -327,7 +327,7 @@ cpu_startup(void)
  * but would break init; should be fixed soon.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.54 2009/03/14 21:04:18 dsl Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.55 2009/12/10 14:13:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.54 2009/03/14 21:04:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.55 2009/12/10 14:13:53 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -122,7 +122,7 @@ struct emul emul_irix = {
  * set registers on exec for N32 applications
  */
 void
-irix_n32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+irix_n32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 

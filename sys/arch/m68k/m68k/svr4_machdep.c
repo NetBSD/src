@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.31 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.32 2009/12/10 14:13:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.31 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.32 2009/12/10 14:13:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static void	svr4_getsiginfo(union svr4_siginfo *, int, unsigned long,
 		    void *);
 
 void
-svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+svr4_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
