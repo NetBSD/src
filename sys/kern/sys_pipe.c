@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.121 2009/12/09 21:32:59 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.122 2009/12/10 20:55:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.121 2009/12/09 21:32:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.122 2009/12/10 20:55:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,9 +157,9 @@ static u_int	nbigpipe = 0;
  */
 static u_int	amountpipekva = 0;
 
-static void	pipeclose(file_t *, struct pipe *);
+static void	pipeclose(struct pipe *);
 static void	pipe_free_kmem(struct pipe *);
-static int	pipe_create(struct pipe **, pool_cache_t, kmutex_t *);
+static int	pipe_create(struct pipe **, pool_cache_t);
 static int	pipelock(struct pipe *, int);
 static inline void pipeunlock(struct pipe *);
 static void	pipeselwakeup(struct pipe *, struct pipe *, int);
@@ -247,22 +247,19 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	struct pipe *rpipe, *wpipe;
 	file_t *rf, *wf;
-	kmutex_t *mutex;
 	int fd, error;
 	proc_t *p;
 
 	p = curproc;
 	rpipe = wpipe = NULL;
-	mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	if (mutex == NULL)
-		return (ENOMEM);
-	mutex_obj_hold(mutex);
-	if (pipe_create(&rpipe, pipe_rd_cache, mutex) ||
-	    pipe_create(&wpipe, pipe_wr_cache, mutex)) {
-		pipeclose(NULL, rpipe);
-		pipeclose(NULL, wpipe);
-		return (ENFILE);
+	if (pipe_create(&rpipe, pipe_rd_cache) ||
+	    pipe_create(&wpipe, pipe_wr_cache)) {
+		error = ENOMEM;
+		goto free2;
 	}
+	rpipe->pipe_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	wpipe->pipe_lock = rpipe->pipe_lock;
+	mutex_obj_hold(wpipe->pipe_lock);
 
 	error = fd_allocfile(&rf, &fd);
 	if (error)
@@ -291,8 +288,8 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 free3:
 	fd_abort(p, rf, (int)retval[0]);
 free2:
-	pipeclose(NULL, wpipe);
-	pipeclose(NULL, rpipe);
+	pipeclose(wpipe);
+	pipeclose(rpipe);
 
 	return (error);
 }
@@ -336,7 +333,7 @@ pipespace(struct pipe *pipe, int size)
  * Initialize and allocate VM and memory for pipe.
  */
 static int
-pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
+pipe_create(struct pipe **pipep, pool_cache_t cache)
 {
 	struct pipe *pipe;
 	int error;
@@ -347,7 +344,7 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, kmutex_t *mutex)
 	error = 0;
 	getnanotime(&pipe->pipe_btime);
 	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime;
-	pipe->pipe_lock = mutex;
+	pipe->pipe_lock = NULL;
 	if (cache == pipe_rd_cache) {
 		error = pipespace(pipe, PIPE_SIZE);
 	} else {
@@ -1202,7 +1199,7 @@ pipe_close(file_t *fp)
 	struct pipe *pipe = fp->f_data;
 
 	fp->f_data = NULL;
-	pipeclose(fp, pipe);
+	pipeclose(pipe);
 	return (0);
 }
 
@@ -1238,7 +1235,7 @@ pipe_free_kmem(struct pipe *pipe)
  * Shutdown the pipe.
  */
 static void
-pipeclose(file_t *fp, struct pipe *pipe)
+pipeclose(struct pipe *pipe)
 {
 	kmutex_t *lock;
 	struct pipe *ppipe;
@@ -1252,6 +1249,10 @@ pipeclose(file_t *fp, struct pipe *pipe)
 	KASSERT(cv_is_valid(&pipe->pipe_lkcv));
 
 	lock = pipe->pipe_lock;
+	if (lock == NULL)
+		/* Must have failed during create */
+		goto free_resources;
+
 	mutex_enter(lock);
 	pipeselwakeup(pipe, pipe, POLL_HUP);
 
@@ -1286,10 +1287,12 @@ pipeclose(file_t *fp, struct pipe *pipe)
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);
+	mutex_obj_free(lock);
 
 	/*
 	 * Free resources.
 	 */
+    free_resources:
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
 	pipe_free_kmem(pipe);
@@ -1298,7 +1301,6 @@ pipeclose(file_t *fp, struct pipe *pipe)
 	} else {
 		pool_cache_put(pipe_wr_cache, pipe);
 	}
-	mutex_obj_free(lock);
 }
 
 static void
