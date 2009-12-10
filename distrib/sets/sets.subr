@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.107 2009/12/10 13:25:19 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.108 2009/12/10 15:51:24 uebayasi Exp $
 #
 
 #
@@ -24,30 +24,6 @@
 # as well as:
 #
 
-# XXX don't hardcode
-MKEXTRAVARS="\
-	MACHINE		\
-	MACHINE_ARCH	\
-	MACHINE_CPU	\
-	HAVE_BINUTILS	\
-	HAVE_GCC	\
-	HAVE_GDB	\
-	OBJECT_FMT	\
-	TOOLCHAIN_MISSING \
-	EXTSRCS		\
-	MKMANZ		\
-	MKBFD		\
-	MKCOMPAT	\
-	MKDYNAMICROOT	\
-	MKMANPAGES	\
-	MKXORG		\
-	USE_INET6	\
-	USE_KERBEROS	\
-	USE_LDAP	\
-	USE_YP		\
-	NETBSDSRCDIR	\
-	MAKEVERBOSE	\
-"
 #
 # The following variables refer to tools that are used when building sets:
 #
@@ -136,51 +112,19 @@ case "$(type printf)" in
 	;;
 esac
 
+#####
+
 oIFS=$IFS
 IFS="
 "
 
-for x in $(
-	${MAKE} -B -f- all <<EOMAKE
-.include <bsd.own.mk>
-all:
-	@echo "export _MKVARS_yes=\"\${_MKVARS.yes}\""
-	@echo "export _MKVARS_no=\"\${_MKVARS.no}\""
-
-EOMAKE
-); do
-	eval $x
-done
-
-for x in $(
-${MAKE} -B -f- all <<EOMAKE
-.include <bsd.own.mk>
-.if (\${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
-MKMANPAGES=no
-.else
-MKMANPAGES=yes
-.endif
-.if \${MKX11} != "no"
-. if \${X11FLAVOUR} == "Xorg"
-MKXORG:=yes
-MKX11:=no
-. else
-MKXORG:=no
-. endif
-.endif
-all:
-.for i in ${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}
-	@echo "export \$i=\"\${\$i}\""
-.endfor
-
-EOMAKE
-); do
-	eval $x
+for x in $( ${MAKE} -B -f mkvars.mk mkvars ); do
+	eval export $x
 done
 
 IFS=$oIFS
 
-MKVARS="$MKEXTRAVARS $_MKVARS_yes $_MKVARS_no"
+MKVARS="$( ${MAKE} -B -f mkvars.mk mkvars | sed -e 's,=.*,,' | xargs )"
 
 if [ "$SETS_SUBR_DEBUG" = "dumpmkvars" ]; then
 	for v in $MKVARS; do
@@ -234,7 +178,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.107 2009/12/10 13:25:19 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.108 2009/12/10 15:51:24 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
