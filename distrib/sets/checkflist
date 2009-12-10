@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.39 2009/12/10 16:22:06 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.40 2009/12/10 16:40:21 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -86,10 +86,14 @@ shift $((${OPTIND} - 1))
 #
 ignore_exceptions()
 {
-IGNORE_REGEXP="^\./var/db/syspkg(\$|/)"
-IGNORE_REGEXP="${IGNORE_REGEXP}|^\./METALOG(\..*)?\$"
-IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
-	${EGREP} -v -e "${IGNORE_REGEXP}"
+IGNORE_REGEXP_SYSPKG="^\./var/db/syspkg(\$|/)"
+IGNORE_REGEXP_METALOG="^\./METALOG(\..*)?\$"
+IGNORE_REGEXP_MTREE="^\./etc/mtree/set\.[a-z]*\$"
+
+	${EGREP} -v \
+		-e "${IGNORE_REGEXP_SYSPKG}" \
+		-e "${IGNORE_REGEXP_METALOG}" \
+		-e "${IGNORE_REGEXP_MTREE}"
 }
 
 #
