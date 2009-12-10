@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.c,v 1.10 2009/01/21 10:01:42 tron Exp $	*/
+/*	$NetBSD: netbsd32_sa.c,v 1.11 2009/12/10 14:10:35 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.10 2009/01/21 10:01:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.11 2009/12/10 14:10:35 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,21 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.10 2009/01/21 10:01:42 tron Exp $"
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_sa.h>
+
+const struct sa_emul saemul_netbsd32 = {
+	sizeof(ucontext32_t),
+	sizeof(struct netbsd32_sa_t),
+	sizeof(netbsd32_sa_tp),
+	netbsd32_sacopyout,  
+	netbsd32_upcallconv,
+	netbsd32_cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext32_sa,
+#ifdef KERN_SA
+	netbsd32_sa_ucsp
+#else
+	NULL
+#endif
+}; 
 
 /* SA emulation helpers */
 int

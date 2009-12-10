@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.160 2009/11/21 11:54:54 njoly Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.161 2009/12/10 14:10:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.160 2009/11/21 11:54:54 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.161 2009/12/10 14:10:35 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -117,21 +117,6 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
-const struct sa_emul saemul_netbsd32 = {
-	sizeof(ucontext32_t),
-	sizeof(struct netbsd32_sa_t),
-	sizeof(netbsd32_sa_tp),
-	netbsd32_sacopyout,  
-	netbsd32_upcallconv,
-	netbsd32_cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext32_sa,
-#ifdef KERN_SA
-	netbsd32_sa_ucsp
-#else
-	NULL
-#endif
-}; 
-
 struct emul emul_netbsd32 = {
 	.e_name =		"netbsd32",
 	.e_path =		"/emul/netbsd32",
@@ -174,7 +159,7 @@ struct emul emul_netbsd32 = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	netbsd32_vm_default_addr,
 	.e_usertrap =		NULL,
-#ifdef COMPAT_40
+#if defined(COMPAT_40) && defined(KERN_SA)
 	.e_sa =			&saemul_netbsd32,
 #else
 	.e_sa =			NULL,
