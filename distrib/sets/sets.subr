@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.104 2009/12/10 05:02:48 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.105 2009/12/10 05:15:28 uebayasi Exp $
 #
 
 #
@@ -168,13 +168,21 @@ all:
 
 EOMAKE
 ); do
-#	echo 1>&2 "DEBUG: read $x"
 	eval $x
 done
 
 IFS=$oIFS
 
 MKVARS="$MKEXTRAVARS $_MKVARS_yes $_MKVARS_no"
+
+if [ "$SETS_SUBR_DEBUG" = "dumpmkvars" ]; then
+	for v in $MKVARS; do
+		eval echo $v=\$$v
+	done
+	exit 0
+fi
+
+#####
 
 setsdir=${0%/*}
 obsolete=0
@@ -219,7 +227,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.104 2009/12/10 05:02:48 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.105 2009/12/10 05:15:28 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
