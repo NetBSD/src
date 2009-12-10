@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.4 2008/04/28 20:23:56 martin Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.4.10.1 2009/12/10 22:59:16 snj Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -124,5 +124,10 @@
 #define RAIDFRAME_CHECK_RECON_STATUS_EXT _IOWR('r',  32, RF_ProgressInfo_t *)
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT _IOWR ('r', 33, RF_ProgressInfo_t *)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t *)
+
+#define RAIDFRAME_PARITYMAP_STATUS  _IOR('r', 37, struct rf_pmstat)
+#define RAIDFRAME_PARITYMAP_GET_DISABLE _IOR('r', 38, int)
+#define RAIDFRAME_PARITYMAP_SET_DISABLE _IOW('r', 39, int)
+#define RAIDFRAME_PARITYMAP_SET_PARAMS _IOW('r', 40, struct rf_pmparams)
 
 #endif				/* !_RF_RAIDFRAMEIO_H_ */
