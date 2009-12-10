@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_parityscan.h,v 1.7.86.1 2009/12/10 22:59:17 snj Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include "rf_alloclist.h"
 
 int     rf_RewriteParity(RF_Raid_t *);
+int	rf_RewriteParityRange(RF_Raid_t *, RF_SectorNum_t, RF_SectorNum_t);
 int 	rf_VerifyParityBasic(RF_Raid_t *, RF_RaidAddr_t, RF_PhysDiskAddr_t *,
     int, RF_RaidAccessFlags_t);
 int	rf_VerifyParity(RF_Raid_t *, RF_AccessStripeMap_t *, int,
