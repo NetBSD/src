@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2009/11/29 04:09:35 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2009/12/10 14:13:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -764,7 +764,7 @@ ia64_get_hcdp(void)
  * Set registers on exec.
  */
 void
-setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf;
 	uint64_t *ksttop, *kst, regstkp;

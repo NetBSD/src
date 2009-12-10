@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.70 2009/11/21 04:16:52 rmind Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.71 2009/12/10 14:13:52 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.70 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.71 2009/12/10 14:13:52 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.70 2009/11/21 04:16:52 rmind Exp 
 static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
 
 void
-svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+svr4_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 
 	setregs(l, epp, stack);

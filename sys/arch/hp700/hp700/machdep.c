@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2009/12/01 16:20:52 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2009/12/01 16:20:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1847,7 +1847,7 @@ kcopy(const void *from, void *to, size_t size)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
