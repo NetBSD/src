@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.22 2009/05/30 17:52:05 martin Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.23 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -136,7 +136,7 @@ ENTRY(cpu_switchto)
 	/*
 	 * Save state of previous process in its pcb.
 	 */
-	movl	%a1@(L_ADDR),%a1
+	movl	%a1@(L_PCB),%a1
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,%a1@(PCB_USP)	| and save it
@@ -180,7 +180,7 @@ Lcpu_switch_nofpsave:
 Lcpu_switch_noctxsave:
 	movl	%sp@(8),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)
-	movl	%a0@(L_ADDR),%a1	| get l_addr
+	movl	%a0@(L_PCB),%a1		| get its pcb
 	movl	%a1,_C_LABEL(curpcb)
 
 #if defined(sun2) || defined(sun3)
@@ -239,7 +239,7 @@ Lsame_mmuctx:
 	movel	%a0,%a1@(TF_PC)
 1:
 	movl	%sp@+,%d0		| restore newlwp
-	movl	_C_LABEL(curpcb),%a1	| restore l_addr
+	movl	_C_LABEL(curpcb),%a1	| restore pcb
 #endif
 
 	movl	%sp@(4),%d1		| restore oldlwp for a return value

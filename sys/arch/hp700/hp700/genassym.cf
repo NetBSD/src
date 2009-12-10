@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2009/12/01 09:06:16 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.20 2009/12/10 05:10:01 rmind Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -43,7 +43,6 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
-include <sys/user.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/device.h>
@@ -178,7 +177,7 @@ member	P_MD		p_md
 struct	lwp
 member	L_PROC		l_proc
 member	L_CPU		l_cpu
-member	L_ADDR		l_addr
+member	L_PCB		l_addr
 member	L_PRIORITY	l_priority
 member	L_STAT		l_stat
 member	L_WCHAN		l_wchan

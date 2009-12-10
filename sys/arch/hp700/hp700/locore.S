@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2009/12/01 09:06:16 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 2009/12/10 05:10:01 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ L$start_zero_tf:
 	add	%t3, %r4, %r4
 
 	ldil	L%lwp0, %t2
-	stw	%t3, R%lwp0+L_ADDR(%t2)
+	stw	%t3, R%lwp0+L_PCB(%t2)		/* XXXuvm_lwp_getuarea */
 	ldo	NBPG(%t3), %t1
 	stw	%t1, R%lwp0+L_MD_REGS(%t2)
 
@@ -805,7 +805,7 @@ switch_diag:
 	 * cpu_lwp_fork sets the initial stack to a page above uarea address.
 	 * Check that the stack is above this value for curl.
 	 */
-	ldw	L_ADDR(%arg1), %arg2
+	ldw	L_PCB(%arg1), %arg2
 	ldw	PCB_KSP(%arg2), %t1		/* t1 for switch_error */
 	ldo	NBPG(%arg2), %arg2
 	comb,>>,n %arg2, %t1, switch_error
@@ -830,7 +830,7 @@ kstack_ok:
 	 * arg1: new LWP (newl)
 	 */
 
-	ldw	L_ADDR(%arg0), %t3	/* curl pcb */
+	ldw	L_PCB(%arg0), %t3	/* curl pcb */
 	stw	%sp, PCB_KSP(%t3)
 	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc PCB_KSP(%t3) */
 
@@ -862,7 +862,7 @@ kstack_ok:
 	 */
 switch_exited:
 	ldw	L_MD(%arg1), %t1
-	ldw	L_ADDR(%arg1), %t3
+	ldw	L_PCB(%arg1), %t3
 	ldw	PCB_KSP(%t3), %sp		/* restore stack of newl */
 
 	fdc	%r0(%t3)			/* Flush newl PCB - why? */

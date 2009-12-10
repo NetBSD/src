@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2008/06/01 01:43:20 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.18 2009/12/10 05:10:03 rmind Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
-include <sys/user.h>
 include <sys/errno.h>
 include <uvm/uvm_extern.h>
 include <sh3/vmparam.h>

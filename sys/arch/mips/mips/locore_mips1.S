@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.65 2009/05/30 18:26:06 martin Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.66 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,7 +311,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	lw	k1, CPUVAR(CURLWP)
 	nop
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
@@ -404,7 +404,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  */
 	lw	k1, CPUVAR(CURLWP)
 	nop
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	#sw	AT, FRAME_AST(k1)
@@ -586,11 +586,11 @@ END(mips1_KernIntr)
  * mips1_UserIntr --
  *
  *	Handle an interrupt from user mode.
- *	Note: we save minimal state in the u.u_pcb struct and use the standard
+ *	Note: we save minimal state in the PCB struct and use the standard
  *	kernel stack since there has to be a u page if we came from user mode.
  *	If there is a pending software interrupt, then save the remaining state
  *	and call softintr(). This is all because if we call switch() inside
- *	cpu_intr(), not all the user registers have been saved in u.u_pcb.
+ *	cpu_intr(), not all the user registers have been saved in PCB.
  *
  * Results:
  * 	None.
@@ -609,7 +609,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
  */
 	lw	k1, CPUVAR(CURLWP)
 	nop
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
@@ -1114,7 +1114,7 @@ END(mips1_setfunc_trampoline)
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	s0, L_ADDR(a0)			# va = l->l_addr
+	lw	s0, L_PCB(a0)			# XXXuvm_lwp_getuarea
 	li	s2, MIPS_KSEG2_START
 	blt	s0, s2, resume
 	nop

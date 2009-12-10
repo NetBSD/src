@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.33 2009/10/24 13:28:16 he Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.34 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -679,10 +679,10 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
- * Save all of the registers except for the kernel temporaries in u_pcb.
+ * Save all of the registers except for the kernel temporaries in pcb.
  */
 	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -836,14 +836,14 @@ END(MIPSX(UserGenException))
 /*
  * mipsN_SystemCall
  *
- * Save user context in u_pcb, then call syscall() to process a system call.
+ * Save user context in PCB, then call syscall() to process a system call.
  * The context can be manipulated alternatively via curlwp->p_md.md_regs;
  */
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	#nop					# -slip-
 	addu	k1, k1, USPACE - FRAME_SIZ
 	#REG_S	AT, FRAME_AST(k1)
@@ -1173,11 +1173,11 @@ END(MIPSX(KernIntr))
  * mipsN_UserIntr --
  *
  *	Handle an interrupt from user mode.
- *	Note: we save minimal state in the u.u_pcb struct and use the standard
- *	kernel stack since there has to be a u page if we came from user mode.
+ *	Note: we save minimal state in the PCB and use the standard kernel
+ *	stack since there has to be a u page if we came from user mode.
  *	If there is a pending software interrupt, then save the remaining state
  *	and call softintr(). This is all because if we call switch() inside
- *	cpu_intr(), not all the user registers have been saved in u.u_pcb.
+ *	cpu_intr(), not all the user registers have been saved in PCB.
  *
  * Results:
  * 	None.
@@ -1191,11 +1191,11 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
- * Save the relevant user registers into the u_pcb.
+ * Save the relevant user registers into the PCB.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
 	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -1281,7 +1281,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	beq	v0, zero, 1f			# if no, skip ast processing
 	lw	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
 /*
- * We have pending asynchronous traps; save remaining user state in u_pcb.
+ * We have pending asynchronous traps; save remaining user state in PCB.
  */
 	REG_S	s0, FRAME_S0(a1)
 	REG_S	s1, FRAME_S1(a1)
@@ -2049,7 +2049,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #if !defined(ENABLE_MIPS_16KB_PAGE)
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	v0, L_ADDR(a0)			# va = l->l_addr
+	lw	v0, L_PCB(a0)			# XXXuvm_lwp_getuarea
 	li	s0, MIPS_KSEG2_START
 	blt	v0, s0, resume
 	nop

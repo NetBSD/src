@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.248 2009/11/26 00:19:22 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.249 2009/12/10 05:10:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4951,7 +4951,7 @@ Lnosaveoldlwp:
 	 * we need afterwards.
 	 */
 
-	ld	[%g3 + L_ADDR], %g5	! newpcb = l->l_addr;
+	ld	[%g3 + L_PCB], %g5	! newpcb
 	ld	[%g5 + PCB_PSR], %g2    ! cwpbits = newpcb->pcb_psr;
 
 	/* traps off while we switch to the new stack */

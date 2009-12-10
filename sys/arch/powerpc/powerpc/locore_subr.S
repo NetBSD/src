@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.38 2009/06/07 23:21:26 martin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.39 2009/12/10 05:10:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -178,7 +178,7 @@ ENTRY(cpu_switchto)
 	CFRAME_LRSAVE(%r1)
 	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
 	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
-	ldptr	%r4,L_ADDR(%r30)	/* put PCB addr in r4 */
+	ldptr	%r4,L_PCB(%r30)		/* put PCB addr in r4 */
 	streg	%r1,PCB_SP(%r4)		/* store old lwp's SP */
 
 switchto_restore:
@@ -207,7 +207,7 @@ switchto_restore:
 #ifdef MULTIPROCESSOR
 	stptr	%r7,L_CPU(%r31)		/* update cpu pointer */
 #endif
-	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
+	ldptr	%r4,L_PCB(%r31)		/* put PCB addr in r4 */
 	stptr	%r4,CI_CURPCB(%r7)	/* using a new pcb */
 	ldptr	%r3,PCB_PM(%r4)
 	stptr	%r3,CI_CURPM(%r7)	/* and maybe a new pmap */

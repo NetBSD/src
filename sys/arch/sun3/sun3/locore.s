@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2009/11/26 00:19:22 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2009/12/10 05:10:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -153,7 +153,7 @@ L_high_code:
 
 | Setup process zero user/kernel stacks.
 	lea	_C_LABEL(lwp0),%a0	| lwp0
-	movl	%a0@(L_ADDR),%a1	| get lwp0 pcb addr
+	movl	%a0@(L_PCB),%a1		| XXXuvm_lwp_getuarea
 	lea	%a1@(USPACE-4),%sp	| set SSP to last word
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
