@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.40 2009/12/10 16:40:21 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.41 2009/12/10 17:18:33 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -130,14 +130,24 @@ if [ -n "${metalog}" ]; then
 fi
 }
 
-generate_missing()
+generate_mlist_missing()
 {
 	${COMM} -23 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/missing"
 }
 
-generate_extra()
+generate_mlist_extra()
 {
 	${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
+}
+
+generate_files_missing()
+{
+	${COMM} -23 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/missing"
+}
+
+generate_files_extra()
+{
+	${COMM} -13 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/extra"
 }
 
 exist_case_insensitive()
@@ -251,13 +261,16 @@ fi
 generate_files
 generate_flist
 generate_mlist
-generate_missing
-generate_extra
 
-# XXX: Temporarily disabled due to problems with obsolete files in metalog
 if false && [ -n "${metalog}" ]; then
+	# XXX: Temporarily disabled due to problems with obsolete files in metalog
+	generate_mlist_missing
+	generate_mlist_extra
 	compare_metalog
+else
+	generate_files_missing
+	generate_files_extra
+	compare_destdir
 fi
-compare_destdir
 
 exit 0		# cleanup will exit with ${es}
