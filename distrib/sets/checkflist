@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.35 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.36 2009/12/10 16:01:06 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -84,9 +84,13 @@ shift $((${OPTIND} - 1))
 # * ignore METALOG and METALOG.*
 # * ignore etc/mtree/set.*
 #
+ignore_exceptions()
+{
 IGNORE_REGEXP="^\./var/db/syspkg(\$|/)"
 IGNORE_REGEXP="${IGNORE_REGEXP}|^\./METALOG(\..*)?\$"
 IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
+	${EGREP} -v -e "${IGNORE_REGEXP}"
+}
 
 #
 # Here would be a good place to add custom exceptions to flist checking.
@@ -100,15 +104,41 @@ IGNORE_REGEXP="${IGNORE_REGEXP}|^\./etc/mtree/set\.[a-z]*\$"
 #
 # All three lists are filtered against ${IGNORE_REGEXP}.
 #
+
+generate_files()
+{
 ( cd "${DESTDIR}" && ${FIND} ${origin} \
 	\( -type d -o -type f -o -type l \) -print ) \
-	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/files"
+	| ${SORT} -u | ignore_exceptions >"${SDIR}/files"
+}
+
+generate_flist()
+{
 ${HOST_SH} "${rundir}/makeflist" ${xargs} ${dargs} \
-	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/flist"
+	| ${SORT} -u | ignore_exceptions >"${SDIR}/flist"
+}
+
+generate_mlist()
+{
 if [ -n "${metalog}" ]; then
 	${AWK} '{print $1}' <"${metalog}" \
-	| ${SORT} -u | ${EGREP} -v -e "${IGNORE_REGEXP}" >"${SDIR}/mlist"
+	| ${SORT} -u | ignore_exceptions >"${SDIR}/mlist"
 fi
+}
+
+generate_missing()
+{
+	${COMM} -23 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/missing"
+}
+
+generate_extra()
+{
+	${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
+}
+
+generate_files
+generate_flist
+generate_mlist
 
 #
 # compare DESTDIR with METALOG, and report on differences.
@@ -116,8 +146,8 @@ fi
 # XXX: Temporarily disabled due to problems with obsolete files in metalog
 #
 if false && [ -n "${metalog}" ]; then
-    ${COMM} -23 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/missing"
-    ${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
+    generate_missing
+    generate_extra
 
     # Handle case insensitive filesystems
     mv -f "${SDIR}/extra" "${SDIR}/extra.all"
@@ -157,8 +187,8 @@ fi
 #
 # compare flist with DESTDIR, and report on differences.
 #
-${COMM} -23 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/missing"
-${COMM} -13 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/extra"
+generate_missing
+generate_extra
 
 # Handle case insensitive filesystems
 mv -f "${SDIR}/missing" "${SDIR}/missing.all"
