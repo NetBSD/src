@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.43 2008/05/20 00:29:54 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.43.8.1 2009/12/10 22:59:17 snj Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.43 2008/05/20 00:29:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.43.8.1 2009/12/10 22:59:17 snj Exp $");
 
 #include <sys/errno.h>
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.43 2008/05/20 00:29:54 oster Exp $")
 #include "rf_map.h"
 #include "rf_etimer.h"
 #include "rf_kintf.h"
+#include "rf_paritymap.h"
 
 #ifndef RF_DEBUG_STATES
 #define RF_DEBUG_STATES 0
@@ -236,6 +237,15 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 
 	wakeup(&(desc->raidPtr->iodone));
+
+	/*
+	 * The parity_map hook has to go here, because the iodone
+	 * callback goes straight into the kintf layer.
+	 */
+	if (desc->raidPtr->parity_map != NULL &&
+	    desc->type == RF_IO_TYPE_WRITE)
+		rf_paritymap_end(desc->raidPtr->parity_map, 
+		    desc->raidAddress, desc->numBlocks);
 
 	/* printf("Calling biodone on 0x%x\n",desc->bp); */
 	biodone(desc->bp);	/* access came through ioctl */

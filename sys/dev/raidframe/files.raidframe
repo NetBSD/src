@@ -1,4 +1,4 @@
-#	$NetBSD: files.raidframe,v 1.6 2008/06/10 12:49:16 drochner Exp $
+#	$NetBSD: files.raidframe,v 1.6.6.1 2009/12/10 22:59:16 snj Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC
@@ -42,6 +42,7 @@ file	dev/raidframe/rf_paritylog.c		raid
 file	dev/raidframe/rf_paritylogDiskMgr.c	raid
 file	dev/raidframe/rf_paritylogging.c	raid
 file	dev/raidframe/rf_parityloggingdags.c	raid
+file	dev/raidframe/rf_paritymap.c		raid
 file	dev/raidframe/rf_parityscan.c		raid
 file	dev/raidframe/rf_pq.c			raid
 file	dev/raidframe/rf_pqdeg.c		raid

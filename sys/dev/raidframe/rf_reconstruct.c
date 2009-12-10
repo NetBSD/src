@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.105.4.2 2009/02/19 20:27:08 snj Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.105.4.3 2009/12/10 22:59:17 snj Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.105.4.2 2009/02/19 20:27:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.105.4.3 2009/12/10 22:59:17 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -234,7 +234,7 @@ rf_ReconstructFailedDisk(RF_Raid_t *raidPtr, RF_RowCol_t col)
 int
 rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
-	RF_ComponentLabel_t c_label;
+	RF_ComponentLabel_t *c_label;
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	RF_RowCol_t scol;
@@ -289,17 +289,14 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	if (!rc) {
 		/* fix up the component label */
 		/* Don't actually need the read here.. */
-		raidread_component_label(
-                        raidPtr->raid_cinfo[scol].ci_dev,
-			raidPtr->raid_cinfo[scol].ci_vp,
-			&c_label);
+		c_label = raidget_component_label(raidPtr, scol);
 
-		raid_init_component_label( raidPtr, &c_label);
-		c_label.row = 0;
-		c_label.column = col;
-		c_label.clean = RF_RAID_DIRTY;
-		c_label.status = rf_ds_optimal;
-		c_label.partitionSize = raidPtr->Disks[scol].partitionSize;
+		raid_init_component_label(raidPtr, c_label);
+		c_label->row = 0;
+		c_label->column = col;
+		c_label->clean = RF_RAID_DIRTY;
+		c_label->status = rf_ds_optimal;
+		c_label->partitionSize = raidPtr->Disks[scol].partitionSize;
 
 		/* We've just done a rebuild based on all the other
 		   disks, so at this point the parity is known to be
@@ -313,11 +310,7 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 
 		/* XXXX MORE NEEDED HERE */
 
-		raidwrite_component_label(
-                        raidPtr->raid_cinfo[scol].ci_dev,
-			raidPtr->raid_cinfo[scol].ci_vp,
-			&c_label);
-
+		raidflush_component_label(raidPtr, scol);
 	} else {
 		/* Reconstruct failed. */
 
@@ -350,7 +343,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	const RF_LayoutSW_t *lp;
-	RF_ComponentLabel_t c_label;
+	RF_ComponentLabel_t *c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
 	struct vnode *vp;
@@ -515,15 +508,13 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 
 		/* fix up the component label */
 		/* Don't actually need the read here.. */
-		raidread_component_label(raidPtr->raid_cinfo[col].ci_dev,
-					 raidPtr->raid_cinfo[col].ci_vp,
-					 &c_label);
+		c_label = raidget_component_label(raidPtr, col);
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
-		raid_init_component_label(raidPtr, &c_label);
+		raid_init_component_label(raidPtr, c_label);
 
-		c_label.row = 0;
-		c_label.column = col;
+		c_label->row = 0;
+		c_label->column = col;
 
 		/* We've just done a rebuild based on all the other
 		   disks, so at this point the parity is known to be
@@ -534,10 +525,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		raidPtr->parity_good = RF_RAID_CLEAN;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
-		raidwrite_component_label(raidPtr->raid_cinfo[col].ci_dev,
-					  raidPtr->raid_cinfo[col].ci_vp,
-					  &c_label);
-
+		raidflush_component_label(raidPtr, col);
 	} else {
 		/* Reconstruct-in-place failed.  Disk goes back to
 		   "failed" status, regardless of what it was before.  */
