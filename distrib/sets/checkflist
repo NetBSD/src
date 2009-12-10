@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.36 2009/12/10 16:01:06 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.37 2009/12/10 16:09:13 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -145,7 +145,8 @@ generate_mlist
 #
 # XXX: Temporarily disabled due to problems with obsolete files in metalog
 #
-if false && [ -n "${metalog}" ]; then
+compare_metalog()
+{
     generate_missing
     generate_extra
 
@@ -157,6 +158,12 @@ if false && [ -n "${metalog}" ]; then
 	    [ -L "${DESTDIR}/${f}" ] || echo "$f"
     done < "${SDIR}/extra.all" > "${SDIR}/extra"
 
+    check_metalog_extra
+    check_metalog_missing
+}
+
+check_metalog_extra()
+{
     if [ -s "${SDIR}/extra" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
 	echo ""
@@ -169,7 +176,10 @@ if false && [ -n "${metalog}" ]; then
 	echo ""
 	es=1 # this is fatal even if ${allowextra} is true
     fi
+}
 
+check_metalog_missing()
+{
     if [ -s "${SDIR}/missing" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/missing")"
 	echo ""
@@ -182,11 +192,17 @@ if false && [ -n "${metalog}" ]; then
 	echo ""
 	es=1 # this is fatal even if ${allowmissing} is true
     fi
+}
+
+if false && [ -n "${metalog}" ]; then
+	compare_metalog
 fi
 
 #
 # compare flist with DESTDIR, and report on differences.
 #
+compare_destdir()
+{
 generate_missing
 generate_extra
 
@@ -198,6 +214,12 @@ while read f; do
 	[ -L "${DESTDIR}/${f}" ] || echo "$f"
 done < "${SDIR}/missing.all" > "${SDIR}/missing"
 
+check_destdir_extra
+check_destdir_missing
+}
+
+check_destdir_extra()
+{
 if [ -s "${SDIR}/extra" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
 	echo ""
@@ -214,7 +236,10 @@ if [ -s "${SDIR}/extra" ]; then
 	echo "=========  end of ${count} extra files  ==========="
 	echo ""
 fi
+}
 
+check_destdir_missing()
+{
 if [ -s "${SDIR}/missing" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/missing")"
 	echo ""
@@ -231,5 +256,8 @@ if [ -s "${SDIR}/missing" ]; then
 	echo "========  end of ${count} missing files  =========="
 	echo ""
 fi
+}
+
+compare_destdir
 
 exit 0		# cleanup will exit with ${es}
