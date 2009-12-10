@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.93 2008/04/14 20:40:54 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.93.8.1 2009/12/10 23:18:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -665,7 +665,7 @@ bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *, int);
 bool	 is_wintouched(WINDOW *);
 int      keyok(int, bool);
-void	 keypad(WINDOW *, bool);
+int	 keypad(WINDOW *, bool);
 char	*keyname(int);
 char     killchar(void);
 int	 leaveok(WINDOW *, bool);
