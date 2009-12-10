@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.95 2009/12/07 19:57:34 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.96 2009/12/10 12:29:44 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.95 2009/12/07 19:57:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.96 2009/12/10 12:29:44 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -463,6 +463,8 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+
 	if (buflen > map->_dm_size) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_load(): error %d > %d -- "
@@ -521,9 +523,12 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    "~(boundary - 1) %lx\n", (long)boundary, (long)(boundary - 1),
 	    (long)~(boundary - 1)));
 	bmask = ~(boundary - 1);
-	while ((sgstart & bmask) != (sgend & bmask)) {
-		/* Oops.  We crossed a boundary.  Split the xfer. */
-		len = boundary - (sgstart & (boundary - 1));
+	while ((sgstart & bmask) != (sgend & bmask) ||
+	       sgend - sgstart + 1 > map->dm_maxsegsz) {
+		/* Oops. We crossed a boundary or large seg. Split the xfer. */
+		len = map->dm_maxsegsz;
+		if ((sgstart & bmask) != (sgend & bmask))
+			len = min(len, boundary - (sgstart & (boundary - 1)));
 		map->dm_segs[seg].ds_len = len;
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 		    "seg %d start %lx size %lx\n", seg,
@@ -776,7 +781,9 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 			/* Are the segments virtually adjacent? */
 			if ((j > 0) && (end == offset) &&
-				((offset == 0) || (pa == prev_pa))) {
+			    ((offset == 0) || (pa == prev_pa)) &&
+			    (map->dm_segs[j-1].ds_len + left <=
+			     map->dm_maxsegsz)) {
 				/* Just append to the previous segment. */
 				map->dm_segs[--j].ds_len += left;
 				/* Restore sgstart for boundary check */
