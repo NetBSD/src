@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.40 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.41 2009/12/10 14:13:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.40 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.41 2009/12/10 14:13:51 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -62,7 +62,7 @@ char *booted_kernel;
  * Set set up registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);

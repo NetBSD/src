@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2009/11/26 00:19:23 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2009/12/10 14:13:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2009/12/10 14:13:52 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ consinit(void)
 }
 
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 }
 

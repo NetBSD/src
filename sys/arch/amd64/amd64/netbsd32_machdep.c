@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.60 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.61 2009/12/10 14:13:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.60 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61 2009/12/10 14:13:49 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,7 +126,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 #endif
 
 void
-netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;

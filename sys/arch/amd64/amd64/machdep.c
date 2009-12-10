@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2009/12/10 14:13:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2009/12/10 14:13:48 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -996,7 +996,7 @@ dodumpsys(void)
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.298 2009/11/26 00:19:22 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.299 2009/12/10 14:13:52 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2009/11/26 00:19:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2009/12/10 14:13:52 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -347,7 +347,7 @@ cpu_startup(void)
  */
 /* ARGSUSED */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf = l->l_md.md_tf;
 	struct fpstate *fs;

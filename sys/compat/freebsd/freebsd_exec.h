@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.16 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.17 2009/12/10 14:13:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@ int freebsd_elf32_probe(struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *);
 #endif /* EXEC_ELF32 */
 
-void freebsd_setregs(struct lwp *, struct exec_package *, u_long);
+void freebsd_setregs(struct lwp *, struct exec_package *, vaddr_t);
 
 extern char freebsd_sigcode[], freebsd_esigcode[];
 extern struct emul emul_freebsd;

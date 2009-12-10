@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.62 2009/03/29 01:02:50 mrg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.63 2009/12/10 14:13:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.62 2009/03/29 01:02:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.63 2009/12/10 14:13:54 matt Exp $");
 
 #include "opt_pax.h"
 
@@ -74,7 +74,7 @@ VMCMD_EVCNT_DECL(kills);
 void
 new_vmcmd(struct exec_vmcmd_set *evsp,
     int (*proc)(struct lwp * l, struct exec_vmcmd *),
-    u_long len, u_long addr, struct vnode *vp, u_long offset,
+    vsize_t len, vaddr_t addr, struct vnode *vp, u_long offset,
     u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
@@ -371,9 +371,11 @@ exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *bf,
 int
 exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
-	u_long max_stack_size;
-	u_long access_linear_min, access_size;
-	u_long noaccess_linear_min, noaccess_size;
+	vsize_t max_stack_size;
+	vaddr_t access_linear_min;
+	vsize_t access_size;
+	vaddr_t noaccess_linear_min;
+	vsize_t noaccess_size;
 
 #ifndef	USRSTACK32
 #define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
@@ -393,7 +395,7 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 
 	l->l_proc->p_stackbase = epp->ep_minsaddr;
 	
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
+	epp->ep_maxsaddr = (vaddr_t)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
 	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
@@ -406,9 +408,9 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	 * addition of another mapping proc, which is unnecessary
 	 */
 	access_size = epp->ep_ssize;
-	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	access_linear_min = (vaddr_t)STACK_ALLOC(epp->ep_minsaddr, access_size);
 	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
+	noaccess_linear_min = (vaddr_t)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,

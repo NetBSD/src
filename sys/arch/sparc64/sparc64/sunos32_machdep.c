@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.30 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.31 2009/12/10 14:13:52 matt Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.30 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.31 2009/12/10 14:13:52 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -101,7 +101,7 @@ static int ev_out32(struct firm_event *, int, struct uio *);
  */
 /* ARGSUSED */
 void
-sunos32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+sunos32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	/* stack:  XXX */
 {
 	struct trapframe64 *tf = l->l_md.md_tf;

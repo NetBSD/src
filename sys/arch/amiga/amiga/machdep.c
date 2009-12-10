@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2009/12/06 06:41:28 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224 2009/12/10 14:13:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2009/12/06 06:41:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2009/12/10 14:13:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);

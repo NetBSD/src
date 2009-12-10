@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.19 2003/01/17 23:36:08 thorpej Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.20 2009/12/10 14:13:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 #ifdef _KERNEL
 struct proc;
 struct exec_package;
-void	cpu_exec_ecoff_setregs(struct lwp *, struct exec_package *, u_long);
+void	cpu_exec_ecoff_setregs(struct lwp *, struct exec_package *, vaddr_t);
 #endif	/* _KERNEL */
 
 

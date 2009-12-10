@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.333 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.334 2009/12/10 14:13:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.333 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.334 2009/12/10 14:13:50 matt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -480,7 +480,7 @@ void doboot(void) __attribute__((__noreturn__));
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);

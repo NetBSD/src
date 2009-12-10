@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.293 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.294 2009/12/10 14:13:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ struct emul {
 					/* Set registers before execution */
 	struct uvm_object **e_sigobject;/* shared sigcode object */
 	void		(*e_setregs)(struct lwp *, struct exec_package *,
-					  u_long);
+					  vaddr_t);
 
 					/* Per-process hooks */
 	void		(*e_proc_exec)(struct proc *, struct exec_package *);

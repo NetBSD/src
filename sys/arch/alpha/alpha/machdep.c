@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.324 2009/11/27 03:23:04 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.325 2009/12/10 14:13:48 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.324 2009/11/27 03:23:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2009/12/10 14:13:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1589,7 +1589,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
  * Set registers on exec.
  */
 void
-setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tfp = l->l_md.md_tf;
 	struct pcb *pcb;
@@ -1779,7 +1779,7 @@ delay(unsigned long n)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 

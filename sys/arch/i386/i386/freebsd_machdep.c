@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.54 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.54 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.54 2009/11/21 03:11:00 rmind E
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
-freebsd_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+freebsd_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 

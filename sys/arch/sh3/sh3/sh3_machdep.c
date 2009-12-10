@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.84 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.85 2009/12/10 14:13:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.84 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85 2009/12/10 14:13:51 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -507,7 +507,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf;
 
