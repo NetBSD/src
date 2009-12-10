@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.9 2009/12/01 09:06:17 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.10 2009/12/10 07:57:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.9 2009/12/01 09:06:17 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.10 2009/12/10 07:57:02 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -515,7 +515,7 @@ Lspcopy_curlwp_bad:
 Lspcopy_curlwp_ok:
 #endif /* DIAGNOSTIC */
 	ldil    L%spcopy_fault, %r1
-	ldw     L_ADDR(%r31), %r31
+	ldw     L_PCB(%r31), %r31
 	ldo     R%spcopy_fault(%r1), %r1
 	ldi	EFAULT, %ret0
 	stw     %r1, PCB_ONFAULT(%r31)
