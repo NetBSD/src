@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.155.4.2 2009/02/08 20:38:49 snj Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.155.4.2.2.1 2009/12/10 23:12:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155.4.2 2009/02/08 20:38:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155.4.2.2.1 2009/12/10 23:12:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -536,7 +536,10 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 		if (((error =
 		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
 		    ((pt->pt_ev.sigev_notify < SIGEV_NONE) ||
-			(pt->pt_ev.sigev_notify > SIGEV_SA))) {
+			(pt->pt_ev.sigev_notify > SIGEV_SA)) ||
+			(pt->pt_ev.sigev_notify == SIGEV_SIGNAL &&
+			 (pt->pt_ev.sigev_signo <= 0 ||
+			  pt->pt_ev.sigev_signo >= NSIG))) {
 			pool_put(&ptimer_pool, pt);
 			return (error ? error : EINVAL);
 		}
