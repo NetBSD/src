@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.44 2009/12/10 14:58:28 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.45 2009/12/10 15:47:23 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.44 2009/12/10 14:58:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.45 2009/12/10 15:47:23 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,6 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCSIFFLAGS, ifreq);
 
 	case OSIOCGIFFLAGS32:
-		printf("OSIO %lx %zu\n", (long)OSIOCGIFFLAGS, sizeof(struct netbsd32_oifreq));
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFFLAGS, oifreq);
 	case OSIOCSIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(OSIOCSIFFLAGS, oifreq);
