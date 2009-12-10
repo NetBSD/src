@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 2009/11/29 04:15:43 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66 2009/12/10 13:35:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2009/11/29 04:15:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2009/12/10 13:35:32 uch Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -189,6 +189,8 @@ sh3_setup_uarea(struct lwp *l)
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
 	pcb = lwp_getpcb(l);
+	pcb->pcb_onfault = NULL;
+	pcb->pcb_faultbail = 0;
 #ifdef SH3
 	/*
 	 * Accessing context store space must not cause exceptions.
