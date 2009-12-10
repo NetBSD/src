@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.37 2009/12/10 16:09:13 uebayasi Exp $
+#	$NetBSD: checkflist,v 1.38 2009/12/10 16:12:00 uebayasi Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -136,10 +136,6 @@ generate_extra()
 	${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
 }
 
-generate_files
-generate_flist
-generate_mlist
-
 #
 # compare DESTDIR with METALOG, and report on differences.
 #
@@ -147,9 +143,6 @@ generate_mlist
 #
 compare_metalog()
 {
-    generate_missing
-    generate_extra
-
     # Handle case insensitive filesystems
     mv -f "${SDIR}/extra" "${SDIR}/extra.all"
     while read f; do
@@ -203,9 +196,6 @@ fi
 #
 compare_destdir()
 {
-generate_missing
-generate_extra
-
 # Handle case insensitive filesystems
 mv -f "${SDIR}/missing" "${SDIR}/missing.all"
 while read f; do
@@ -257,6 +247,12 @@ if [ -s "${SDIR}/missing" ]; then
 	echo ""
 fi
 }
+
+generate_files
+generate_flist
+generate_mlist
+generate_missing
+generate_extra
 
 compare_destdir
 
