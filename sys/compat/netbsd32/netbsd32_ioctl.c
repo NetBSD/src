@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.43 2009/12/09 04:50:47 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.44 2009/12/10 14:58:28 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.43 2009/12/09 04:50:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.44 2009/12/10 14:58:28 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,7 @@ netbsd32_from_ifreq(struct ifreq *p, struct netbsd32_ifreq *s32p, u_long cmd)
 	 * union member needs to be converted to 64 bits... this
 	 * is very driver specific and so we ignore it for now..
 	 */
-	(void)memcpy(s32p->ifr_name, p->ifr_name,
-	    MIN(sizeof(s32p->ifr_name), sizeof(p->ifr_name)));
+	memcpy(s32p, p, sizeof *p);
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
 }
@@ -270,8 +269,7 @@ netbsd32_from_oifreq(struct oifreq *p, struct netbsd32_oifreq *s32p, u_long cmd)
 	 * union member needs to be converted to 64 bits... this
 	 * is very driver specific and so we ignore it for now..
 	 */
-	(void)memcpy(s32p->ifr_name, p->ifr_name,
-	    MIN(sizeof(s32p->ifr_name), sizeof(p->ifr_name)));
+	memcpy(s32p, p, sizeof *p);
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
 }
