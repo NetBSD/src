@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.12 2009/11/13 22:39:35 joerg Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.13 2009/12/10 16:55:17 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.12 2009/11/13 22:39:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.13 2009/12/10 16:55:17 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -639,28 +639,28 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 		dosys = 0;
 		break;
 	case LINUX_SIOCGIFFLAGS:
-		SCARG(&ia, com) = OSIOCGIFFLAGS;
+		SCARG(&ia, com) = OSIOCGIFFLAGS32;
 		break;
 	case LINUX_SIOCSIFFLAGS:
-		SCARG(&ia, com) = OSIOCSIFFLAGS;
+		SCARG(&ia, com) = OSIOCSIFFLAGS32;
 		break;
 	case LINUX_SIOCGIFADDR:
-		SCARG(&ia, com) = OOSIOCGIFADDR;
+		SCARG(&ia, com) = OOSIOCGIFADDR32;
 		break;
 	case LINUX_SIOCGIFDSTADDR:
-		SCARG(&ia, com) = OOSIOCGIFDSTADDR;
+		SCARG(&ia, com) = OOSIOCGIFDSTADDR32;
 		break;
 	case LINUX_SIOCGIFBRDADDR:
-		SCARG(&ia, com) = OOSIOCGIFBRDADDR;
+		SCARG(&ia, com) = OOSIOCGIFBRDADDR32;
 		break;
 	case LINUX_SIOCGIFNETMASK:
-		SCARG(&ia, com) = OOSIOCGIFNETMASK;
+		SCARG(&ia, com) = OOSIOCGIFNETMASK32;
 		break;
 	case LINUX_SIOCADDMULTI:
-		SCARG(&ia, com) = OSIOCADDMULTI;
+		SCARG(&ia, com) = OSIOCADDMULTI32;
 		break;
 	case LINUX_SIOCDELMULTI:
-		SCARG(&ia, com) = OSIOCDELMULTI;
+		SCARG(&ia, com) = OSIOCDELMULTI32;
 		break;
 	case LINUX_SIOCGIFHWADDR:
 		error = linux32_getifhwaddr(l, retval, SCARG(uap, fd),
