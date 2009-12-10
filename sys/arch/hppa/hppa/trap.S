@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.31 2009/12/01 09:06:17 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.32 2009/12/10 05:10:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ syscall_entry:
 
 	/* t2 = curlwp PCB */
 	mfctl	CR_CURLWP, %t3 
-	ldw	L_ADDR(%sr1, %t3), %t2			/* XXX can use ,sl */
+	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
 	 * NB: Even though t4 is a caller-saved register, we

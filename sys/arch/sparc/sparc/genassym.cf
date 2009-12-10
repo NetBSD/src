@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.58 2009/11/21 04:16:51 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.59 2009/12/10 05:10:03 rmind Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ define	BSD		BSD
 define	USRSTACK	USRSTACK
 
 # proc fields and values
-define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_PROC		offsetof(struct lwp, l_proc)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_WCHAN		offsetof(struct lwp, l_wchan)

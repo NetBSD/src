@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.94 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.95 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -427,7 +427,7 @@ END(mips3_sd)
  */
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
 LEAF(badaddr64)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(baderr64)
 
 	/* Enable KX */

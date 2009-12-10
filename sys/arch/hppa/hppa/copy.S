@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.14 2009/12/01 09:06:17 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.15 2009/12/10 05:10:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ LEAF_ENTRY_NOPROFILE(name)			! \
 	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
 	comb,>>= %arg0, %t1, fusubadaddr	! \
 	mfctl	CR_CURLWP, %t1			! \
-	ldw	L_ADDR(%t1), %t1		! \
+	ldw	L_PCB(%t1), %t1			! \
 	ldil	L%fusufault, %t2		! \
 	ldo	R%fusufault(%t2), %t2		! \
 	ldw	PCB_ONFAULT(%t1), %t3		! \
@@ -158,7 +158,7 @@ EXIT(_copy_on_fault)
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
 	mfctl	CR_CURLWP, %r31
-	ldw	L_ADDR(%r31), %r31
+	ldw	L_PCB(%r31), %r31
 	ldil	L%_copy_on_fault, %t2
 	ldo	R%_copy_on_fault(%t2), %t2
 	stw	%t2, PCB_ONFAULT(%r31)
@@ -229,7 +229,7 @@ EXIT(name)
 /* This loads curlwp's space into the given register. */
 #define SPACE_CURLWP(reg)			  \
 	mfctl	CR_CURLWP, reg			! \
-	ldw	L_ADDR(reg), reg		! \
+	ldw	L_PCB(reg), reg			! \
 	ldw	PCB_SPACE(reg), reg
 
 /* This loads the kernel's space into the given register. */
@@ -358,7 +358,7 @@ LEAF_ENTRY(ucas_32)
 
 	/* setup fault handler */
 	mfctl	CR_CURLWP, %r31
-	ldw	L_ADDR(%r31), %r31
+	ldw	L_PCB(%r31), %r31
 	ldil	L%_copy_on_fault, %t2
 	ldo	R%_copy_on_fault(%t2), %t2
 	stw	%t2, PCB_ONFAULT(%r31)

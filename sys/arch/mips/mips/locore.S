@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.169 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.170 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,8 @@ _C_LABEL(kernel_text):
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 
-	lw	sp, L_ADDR(MIPS_CURLWP)		# switch to lwp0 stack
+	# XXXuvm_lwp_getuarea
+	lw	sp, L_PCB(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
 	addu	sp, sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)
@@ -163,7 +164,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  */
 	beq	a0, zero, 1f
 	nop
-	lw	a2, L_ADDR(a0)			# a2 = l->l_addr
+	lw	a2, L_PCB(a0)
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
 	REG_S	s0, PCB_CONTEXT+SF_REG_S0(a2)
@@ -200,7 +201,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 
 	/* Check for restartable atomic sequences (RAS) */
 	lw	t1, L_PROC(MIPS_CURLWP)
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	lw	a0, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
 	lw	v1, P_RASLIST(t1)
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f
@@ -208,7 +209,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	a0, t1
 	jal	_C_LABEL(ras_lookup)
 	lw	a1, FRAME_EPC(t0)
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	lw	a0, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
 	li	v1, -1
 	beq	v1, v0, 1f
 	addu	t0, a0, USPACE - FRAME_SIZ
@@ -217,13 +218,13 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	/* New context is now active */
 #ifdef IPL_ICU_MASK
 	# restore ICU state
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	lw	a0, L_PCB(MIPS_CURLWP)
 	lw	t0, PCB_PPL(a0)
 	sw	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 #endif /* IPL_ICU_MASK */
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	lw	a0, L_PCB(MIPS_CURLWP)
 	move	v0, s6				# Save return value
 	REG_PROLOGUE
 	REG_L	t0, PCB_CONTEXT+SF_REG_SR(a0)
