@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.26 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.27 2009/12/10 14:13:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.26 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.27 2009/12/10 14:13:49 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -146,7 +146,7 @@ EVCNT_ATTACH_STATIC(_lock_cas_fail);
  */
 
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pcb *pcb;
 	struct trapframe *tf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.5 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.6 2009/12/10 14:13:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -71,7 +71,7 @@ int linux_elf32_atexit_signature(struct lwp *l,
 
 #endif /* EXEC_ELF32 */
 
-void linux32_setregs (struct lwp *, struct exec_package *, u_long stack);
+void linux32_setregs (struct lwp *, struct exec_package *, vaddr_t stack);
 int linux32_sigreturn (struct proc *, void *, register_t *);
 void linux32_sendsig (const ksiginfo_t *, const sigset_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.90 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.91 2009/12/10 14:13:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.90 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.91 2009/12/10 14:13:52 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,7 @@ static int ev_out32(struct firm_event *, int, struct uio *);
  */
 /* ARGSUSED */
 void
-netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe64 *tf = l->l_md.md_tf;

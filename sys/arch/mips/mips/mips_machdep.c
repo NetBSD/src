@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.221 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.222 2009/12/10 14:13:51 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.221 2009/11/27 03:23:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.222 2009/12/10 14:13:51 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -1140,7 +1140,7 @@ cpu_identify(void)
  * code by the MIPS elf abi).
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);
