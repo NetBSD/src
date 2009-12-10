@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.7 2009/12/10 05:10:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ END(copystr)
  * else return 0 or EFAULT.
  */
 LEAF(copyinstr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(copystrerr)
 	blt	a0, zero, _C_LABEL(copystrerr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -130,7 +130,7 @@ END(copyinstr)
  * else return 0 or EFAULT.
  */
 LEAF(copyoutstr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(copystrerr)
 	blt	a1, zero, _C_LABEL(copystrerr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -180,13 +180,13 @@ NESTED(kcopy, 48, ra)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	lw	v1, L_ADDR(MIPS_CURLWP)		# set up fault handler
+	lw	v1, L_PCB(MIPS_CURLWP)		# set up fault handler
 	la	v0, _C_LABEL(kcopyerr)
 	lw	s0, PCB_ONFAULT(v1)		# save old handler
 	jal	memcpy
 	sw	v0, PCB_ONFAULT(v1)
 
-	lw	v1, L_ADDR(MIPS_CURLWP)		# restore the old handler
+	lw	v1, L_PCB(MIPS_CURLWP)		# restore the old handler
 	lw	ra, 44(sp)			# restore ra
 	sw	s0, PCB_ONFAULT(v1)
 	lw	s0, 32(sp)			# restore s0
@@ -196,7 +196,7 @@ NESTED(kcopy, 48, ra)
 END(kcopy)
 
 LEAF(kcopyerr)
-	lw	v1, L_ADDR(MIPS_CURLWP)		# restore the old handler
+	lw	v1, L_PCB(MIPS_CURLWP)		# restore the old handler
 	lw	ra, 44(sp)			# restore ra
 	sw	s0, PCB_ONFAULT(v1)
 	lw	s0, 32(sp)			# restore s0
@@ -219,12 +219,12 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(copyerr)
 	jal	memcpy
 	sw	v0, PCB_ONFAULT(v1)
 
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, PCB_ONFAULT(v1)
@@ -246,12 +246,12 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(copyerr)
 	jal	memcpy
 	sw	v0, PCB_ONFAULT(v1)
 
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, PCB_ONFAULT(v1)
@@ -260,7 +260,7 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 END(copyout)
 
 LEAF(copyerr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, PCB_ONFAULT(v1)
@@ -274,7 +274,7 @@ END(copyerr)
  * This function is safe to call during an interrupt context.
  */
 LEAF(fuswintr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswintrberr)
 	lw	a2, PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
@@ -290,7 +290,7 @@ END(fuswintr)
  * This function is safe to call during an interrupt context.
  */
 LEAF(suswintr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswintrberr)
 	lw	a2, PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
@@ -307,7 +307,7 @@ END(suswintr)
  */
 LEAF(fuword)
 XLEAF(fuiword)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -322,7 +322,7 @@ END(fuword)
  */
 LEAF(fusword)
 XLEAF(fuisword)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -337,7 +337,7 @@ END(fusword)
  */
 LEAF(fubyte)
 XLEAF(fuibyte)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -351,7 +351,7 @@ END(fubyte)
  * Stores a word of data to the user-space address.
  */
 LEAF(suword)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -366,7 +366,7 @@ END(suword)
  * Have to flush instruction cache afterwards.
  */
 LEAF(suiword)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -384,7 +384,7 @@ END(suiword)
  */
 LEAF(susword)
 XLEAF(suisword)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -400,7 +400,7 @@ END(susword)
  */
 LEAF(subyte)
 XLEAF(suibyte)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
 	sw	v0, PCB_ONFAULT(v1)
@@ -416,7 +416,7 @@ END(subyte)
  * len is length of access (1=byte, 2=short, 4=long)
  */
 LEAF(badaddr)
-	lw	v1, L_ADDR(MIPS_CURLWP)
+	lw	v1, L_PCB(MIPS_CURLWP)
 	la	v0, _C_LABEL(baderr)
 	bne	a1, 1, 2f
 	sw	v0, PCB_ONFAULT(v1)

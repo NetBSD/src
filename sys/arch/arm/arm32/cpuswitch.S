@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.59 2008/11/19 06:34:21 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.60 2009/12/10 05:10:01 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.59 2008/11/19 06:34:21 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.60 2009/12/10 05:10:01 rmind Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -175,7 +175,7 @@ ENTRY(cpu_switchto)
 #endif
 
 	/* Hook in a new pcb */
-	ldr	r0, [r6, #(L_ADDR)]
+	ldr	r0, [r6, #(L_PCB)]
 	str	r0, [r7, #(CI_CURPCB)]
 	mov	r7, r0
 
@@ -206,7 +206,7 @@ ENTRY(cpu_switchto)
 	/* Save old context */
 
 	/* Get the user structure for the old lwp. */
-	ldr	r5, [r4, #(L_ADDR)]
+	ldr	r5, [r4, #(L_PCB)]
 
 	/* Save all the registers in the old lwp's pcb */
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
@@ -386,7 +386,7 @@ ENTRY_NP(softint_switch)
 
 	mov	r5, r0				/* save new lwp */
 
-	ldr	r2, [r4, #(L_ADDR)]		/* get old lwp's pcb */
+	ldr	r2, [r4, #(L_PCB)]		/* get old lwp's pcb */
 
 	/* Save all the registers into the old lwp's pcb */
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
@@ -399,7 +399,7 @@ ENTRY_NP(softint_switch)
 #endif
 
 	/* this is an invariant so load before disabling intrs */
-	ldr	r2, [r5, #(L_ADDR)]	/* get new lwp's pcb */
+	ldr	r2, [r5, #(L_PCB)]	/* get new lwp's pcb */
 
 #ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable
@@ -435,7 +435,7 @@ ENTRY_NP(softint_switch)
 	/*
 	 * If we've returned, we need to change everything back and return.
 	 */
-	ldr	r2, [r4, #(L_ADDR)]	/* get pinned lwp's pcb */
+	ldr	r2, [r4, #(L_PCB)]	/* get pinned lwp's pcb */
 
 #ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable

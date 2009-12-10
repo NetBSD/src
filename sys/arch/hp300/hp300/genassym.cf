@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.40 2009/12/10 05:10:01 rmind Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -41,7 +41,6 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
-include <sys/user.h>
 
 include <uvm/uvm.h>
 
@@ -149,7 +148,7 @@ define	USRSTACK		USRSTACK
 define	MAXADDR			MAXADDR
 
 # lwp & proc fields and values
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)

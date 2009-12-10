@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2009/11/23 00:11:44 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.17 2009/12/10 05:10:02 rmind Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -94,7 +94,7 @@ define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
 
 # lwp & proc fields and values
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)

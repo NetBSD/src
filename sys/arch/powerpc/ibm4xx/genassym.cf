@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2008/02/23 19:34:53 matt Exp $
+#	$NetBSD: genassym.cf,v 1.16 2009/12/10 05:10:03 rmind Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -148,7 +148,7 @@ define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
 
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
 
-define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
