@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.31 2009/12/09 04:47:29 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.32 2009/12/10 23:13:45 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -870,4 +870,12 @@ dist/ntp/ntpd/ntp_request.c			patch
 
 	Fix CVE-2009-3563.
 	[kardel, ticket #1185]
+
+sys/kern/kern_time.c				1.163
+
+	If a struct sigevent with SIGEV_SIGNAL is passed to timer_create(2),
+	check the signal number to be in the allowed range. An invalid
+	signal number could crash the kernel by overflowing the sigset_t
+	array.
+	[drochner, ticket #1189]
 
