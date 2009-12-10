@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.159 2009/12/09 05:20:06 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.160 2009/12/10 23:22:07 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15521,4 +15521,60 @@ usr.bin/gzip/unbzip2.c				1.13
 	Avoid problems when reading from pipes.  Fixes a regression
 	introduced with the multi-part bz2 fixes.
 	[mrg, ticket #1182]
+
+sbin/raidctl/raidctl.8				1.57-1.59 via patch
+sbin/raidctl/raidctl.c				1.42 via patch
+sys/dev/raidframe/files.raidframe		1.8 via patch
+sys/dev/raidframe/raidframeio.h			1.6 via patch
+sys/dev/raidframe/raidframevar.h		1.13 via patch
+sys/dev/raidframe/rf_copyback.c			1.42 via patch
+sys/dev/raidframe/rf_disks.c			1.72 via patch
+sys/dev/raidframe/rf_driver.c			1.122 via patch
+sys/dev/raidframe/rf_engine.c			1.40 via patch
+sys/dev/raidframe/rf_kintf.h			1.21 via patch
+sys/dev/raidframe/rf_netbsdkintf.c		1.269 via patch
+sys/dev/raidframe/rf_paritymap.c		1.1-1.3 via patch
+sys/dev/raidframe/rf_paritymap.h		1.1 via patch
+sys/dev/raidframe/rf_parityscan.c		1.33 via patch
+sys/dev/raidframe/rf_parityscan.h		1.8 via patch
+sys/dev/raidframe/rf_raid.h			1.38 via patch
+sys/dev/raidframe/rf_reconstruct.c		1.108 via patch
+sys/dev/raidframe/rf_states.c			1.44 via patch
+
+	Pull up the RAIDframe parity map Summer Of Code project.
+	Drastically reduces the amount of time spent rewriting parity
+	after an unclean shutdown by keeping better track of which
+	regions might have had outstanding writes.  Enabled by default;
+	can be disabled on a per-set basis, or tuned, with the new
+	raidctl(8) commands.
+	[tron, ticket #1187]
+
+sys/kern/sys_mqueue.c				1.28 via patch
+
+	Fix some security critical bugs:
+	- an invalid signal number passed to mq_notify(2) could crash the
+	kernel on delivery -- add a boundary check
+	- mq_receive(2) from an empty queue crashed the kernel by NULL
+	dereference in timeout calculation -- handle the NULL case
+	- likewise for mq_send(2) to a full queue
+	- a user could set mq_maxmsg (the maximal number of messages in a
+	queue) to a huge value on mq_open(O_CREAT) and later use up all
+	kernel memory by mq_send(2) -- add a sysctl'able limit which defaults
+	to 16*mq_def_maxmsg
+	[tron, ticket #1188]
+
+sys/kern/kern_time.c				1.163
+
+	If a struct sigevent with SIGEV_SIGNAL is passed to timer_create(2),
+	check the signal number to be in the allowed range. An invalid
+	signal number could crash the kernel by overflowing the sigset_t
+	array.
+	[drochner, ticket #1189]
+
+lib/libcurses/curses.h				1.94
+lib/libcurses/keypad.c				1.11
+
+	Make keypad return an int instead of nothing, as the SUS and even
+	curses_input(3) [!] say it should.
+	[drochner, ticket #1190]
 
