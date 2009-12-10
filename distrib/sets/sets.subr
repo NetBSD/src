@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.106 2009/12/10 13:19:21 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.107 2009/12/10 13:25:19 uebayasi Exp $
 #
 
 #
@@ -26,6 +26,14 @@
 
 # XXX don't hardcode
 MKEXTRAVARS="\
+	MACHINE		\
+	MACHINE_ARCH	\
+	MACHINE_CPU	\
+	HAVE_BINUTILS	\
+	HAVE_GCC	\
+	HAVE_GDB	\
+	OBJECT_FMT	\
+	TOOLCHAIN_MISSING \
 	EXTSRCS		\
 	MKMANZ		\
 	MKBFD		\
@@ -161,9 +169,7 @@ MKXORG:=no
 . endif
 .endif
 all:
-.for i in MACHINE MACHINE_ARCH MACHINE_CPU \
-		HAVE_BINUTILS HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
-		${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}
+.for i in ${MKEXTRAVARS} ${_MKVARS_yes} ${_MKVARS_no}
 	@echo "export \$i=\"\${\$i}\""
 .endfor
 
@@ -228,7 +234,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.106 2009/12/10 13:19:21 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.107 2009/12/10 13:25:19 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
