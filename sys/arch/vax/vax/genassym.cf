@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2008/06/04 11:30:26 ad Exp $
+#	$NetBSD: genassym.cf,v 1.44 2009/12/10 05:10:04 rmind Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -52,7 +52,7 @@ include	<machine/trap.h>
 include	<machine/uvax.h>
 
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
-define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)

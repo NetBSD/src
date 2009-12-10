@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.300 2009/12/05 22:25:51 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.301 2009/12/10 05:10:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1313,7 +1313,7 @@ pmap_screwup:
  * keeping a `red zone' pointer; if %sp becomes less than this, we panic.
  * This is expensive and is only enabled when debugging.
  */
-#define	REDSIZE	(USIZ)		/* Mark used portion of user structure out of bounds */
+#define	REDSIZE	(PCB_SIZE)	/* Mark used portion of pcb structure out of bounds */
 #define	REDSTACK 2048		/* size of `panic: stack overflow' region */
 	.data
 	_ALIGN

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.21 2009/11/27 03:23:03 rmind Exp $ */
+/* $NetBSD: locore.S,v 1.22 2009/12/10 05:10:00 rmind Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -391,7 +391,7 @@ ENTRY(cpu_loswitch)
 	teq	r0, #0x00000000
 	beq	Lswitch_exited
 
-	ldr	r3, [r0, #(L_ADDR)]
+	ldr	r3, [r0, #(L_PCB)]
 	add	r3, r3, #PCB_SF		/* r3 =  oldpcb->pcb_sf */
 
 	mov	r2, sp			/* Temporary stack pointer */
@@ -400,7 +400,7 @@ ENTRY(cpu_loswitch)
 
 Lswitch_exited:
 
-	ldr	r2, [r1, #(L_ADDR)]
+	ldr	r2, [r1, #(L_PCB)]
 	ldr	r3, [r2, #(PCB_SF)]	/* r3 = newpcb->pcb_sf */
 
 	ldmfd	r3, {r4-r11, r13-r14}	/* Restore from old switchframe */
@@ -452,4 +452,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.21 2009/11/27 03:23:03 rmind Exp $")
+RCSID("$NetBSD: locore.S,v 1.22 2009/12/10 05:10:00 rmind Exp $")

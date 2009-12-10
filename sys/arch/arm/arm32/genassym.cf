@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.42 2009/12/10 05:10:01 rmind Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,7 +36,6 @@ include <sys/mbuf.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
-include <sys/user.h>
 include <sys/signal.h>
 include <netinet/in.h>
 include <netinet/in_systm.h>
@@ -84,7 +83,7 @@ define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)

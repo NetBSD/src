@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.47 2009/11/27 03:23:11 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.48 2009/12/10 05:10:02 rmind Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,6 @@ include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
-include <sys/user.h>
 include <sys/mutex.h>
 
 include <uvm/uvm.h>
@@ -92,7 +91,7 @@ include <mips/locore.h>
 define	PAGE_SIZE		PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
