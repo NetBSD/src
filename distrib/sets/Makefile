@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2009/12/10 05:15:28 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.75 2009/12/10 05:57:23 uebayasi Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -68,7 +68,7 @@ print_toolchain_missing: .PHONY
 	@echo "${TOOLCHAIN_MISSING}"
 
 print_mkvars: .PHONY
-	@env SETS_SUBR_DEBUG=dumpmkvars sh sets.subr
+	@env SETS_SUBR_DEBUG=dumpmkvars ${HOST_SH} sets.subr
 
 #
 # METALOG MANIPULATION TARGETS
