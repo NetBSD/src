@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.13 2009/12/10 16:55:17 njoly Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.14 2009/12/10 17:07:26 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.13 2009/12/10 16:55:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.14 2009/12/10 17:07:26 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -655,6 +655,9 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 		break;
 	case LINUX_SIOCGIFNETMASK:
 		SCARG(&ia, com) = OOSIOCGIFNETMASK32;
+		break;
+	case LINUX_SIOCGIFMTU:
+		SCARG(&ia, com) = OSIOCGIFMTU32;
 		break;
 	case LINUX_SIOCADDMULTI:
 		SCARG(&ia, com) = OSIOCADDMULTI32;
