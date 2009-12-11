@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.21 2009/11/28 12:10:25 mbalmer Exp $
+# $NetBSD: md.netwinder,v 1.22 2009/12/11 22:34:30 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -354,11 +354,11 @@
 ./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libint10.a			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so.0			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10_g.a			-unknown-	obsolete,xorg
+./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
