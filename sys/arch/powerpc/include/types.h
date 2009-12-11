@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.33 2008/01/31 05:30:00 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.34 2009/12/11 05:52:03 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -42,6 +42,12 @@
 #if defined(_NETBSD_SOURCE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
+#define	PRIxPADDR	"lx"
+#define	PRIxPSIZE	"lx"
+#define	PRIuPSIZE	"lu"
+#define	PRIxVADDR	"lx"
+#define	PRIxVSIZE	"lx"
+#define	PRIuVSIZE	"lu"
 #endif
 
 /*
@@ -50,6 +56,9 @@ typedef	unsigned long	psize_t, vsize_t;
 typedef unsigned long register_t;
 typedef __uint64_t register64_t;
 typedef __uint32_t register32_t;
+#define	PRIxREGISTER	"lx"
+#define	PRIxREGISTER64	PRIx64
+#define	PRIxREGISTER32	PRIx32
 
 #if defined(_KERNEL)
 typedef struct label_t {

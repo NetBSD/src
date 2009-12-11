@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: types.h,v 1.6 2009/12/11 05:52:04 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,6 +44,13 @@ typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 typedef long int	register_t;
+#define	PRIxPADDR	"lx"
+#define	PRIxPSIZE	"lx"
+#define	PRIuPSIZE	"lu"
+#define	PRIxVADDR	"lx"
+#define	PRIxVSIZE	"lx"
+#define	PRIuVSIZE	"lu"
+#define	PRIxREGISTER	"lx"
 
 typedef volatile unsigned char	__cpu_simple_lock_t;
 #define __CPU_SIMPLE_LOCK_PAD

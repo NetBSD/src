@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.66 2009/06/28 09:24:09 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.67 2009/12/11 05:52:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,17 +52,27 @@ typedef struct label_t {
 #ifdef PAE
 typedef unsigned long long paddr_t;
 typedef unsigned long long psize_t;
+#define	PRIxPADDR	"llx"
+#define	PRIxPSIZE	"llx"
+#define	PRIuPSIZE	"llu"
 #else
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
+#define	PRIxPADDR	"lx"
+#define	PRIxPSIZE	"lx"
+#define	PRIuPSIZE	"lu"
 #endif /* PAE */
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
+#define	PRIxVADDR	"lx"
+#define	PRIxVSIZE	"lx"
+#define	PRIuVSIZE	"lu"
 #endif
 
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
+#define	PRIxREGISTER	"x"
 
 typedef	volatile unsigned char		__cpu_simple_lock_t;
 
