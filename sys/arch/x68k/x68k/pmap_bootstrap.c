@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48 2009/12/06 06:41:31 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.49 2009/12/11 19:36:05 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2009/12/06 06:41:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.49 2009/12/11 19:36:05 tsutsui Exp $");
 
 #include "opt_m680x0.h"
 
@@ -406,26 +406,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			- m68k_round_page(MSGBUFSIZE);
 	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		u_int *kp;
-
-		kp = &RELOC(protection_codes, u_int);
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses
