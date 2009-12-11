@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.112 2009/12/11 13:10:47 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.113 2009/12/11 13:30:11 uebayasi Exp $
 #
 
 #
@@ -178,7 +178,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.112 2009/12/11 13:10:47 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.113 2009/12/11 13:30:11 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -386,40 +386,26 @@ list_set_lists()
 	setname=$1
 
 	list_set_lists_mi $setname
-	if [ "${MACHINE}" != "${MACHINE_ARCH}" ]; then
-		list_set_lists_ad $setname
-	fi
+	list_set_lists_ad $setname
 	list_set_lists_md $setname
 	list_set_lists_stl $setname
-	if [ "$shlib" != "no" ]; then
-		list_set_lists_shl $setname
-	fi
-	if [ "$module" != "no" ]; then
-		list_set_lists_module $setname
-	fi
+	list_set_lists_shl $setname
+	list_set_lists_module $setname
 	list_set_lists_rescue $setname
-	if [ "${MACHINE}" != "${MACHINE_ARCH}" ]; then
-		list_set_lists_rescue_ad $setname
-	fi
 }
 
 list_set_lists_mi()
 {
 	setdir=$setsdir/lists/$1
+	# always exist!
 	echo $setdir/mi
 }
 
 list_set_lists_ad()
 {
 	setdir=$setsdir/lists/$1
-	# Prefer an ad.${MACHINE_ARCH} over an ad.${MACHINE_CPU},
-	# since the arch-specific one will be more specific than
-	# the cpu-specific one.
-	echo_if_exist $setdir/ad.${MACHINE_ARCH} || \
-	echo_if_exist $setdir/ad.${MACHINE_CPU}
-	if [ "$shlib" != "no" ]; then
-		echo_if_exist $setdir/ad.${MACHINE_CPU}.shl
-	fi
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1
 }
 
 list_set_lists_md()
@@ -439,6 +425,7 @@ list_set_lists_stl()
 list_set_lists_shl()
 {
 	setdir=$setsdir/lists/$1
+	[ "$shlib" != "no" ] || return
 	echo_if_exist $setdir/shl.mi
 	echo_if_exist $setdir/shl.${shlib}
 }
@@ -446,16 +433,12 @@ list_set_lists_shl()
 list_set_lists_module()
 {
 	setdir=$setsdir/lists/$1
+	[ "$module" != "no" ] || return
 	echo_if_exist $setdir/module.mi
 	echo_if_exist $setdir/module.${MACHINE}
-	if [ "${MACHINE}" != "${MACHINE_ARCH}" ]; then
-		# Prefer a module.ad.${MACHINE_ARCH} over a
-		# module.ad.${MACHINE_CPU}, since the arch-
-		# specific one will be more specific than the
-		# cpu-specific one.
-		echo_if_exist $setdir/module.ad.${MACHINE_ARCH} || \
-		echo_if_exist $setdir/module.ad.${MACHINE_CPU}
-	fi
+	# XXX module never has .shl
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1 module
 }
 
 list_set_lists_rescue()
@@ -463,20 +446,24 @@ list_set_lists_rescue()
 	setdir=$setsdir/lists/$1
 	echo_if_exist $setdir/rescue.mi
 	echo_if_exist $setdir/rescue.${MACHINE}
+	[ "${MACHINE}" != "${MACHINE_ARCH}" ] && \
+	list_set_lists_common_ad $1 rescue
 }
 
-list_set_lists_rescue_ad()
+list_set_lists_common_ad()
 {
-	setdir=$setsdir/lists/$1
-	# Prefer a rescue.ad.${MACHINE_ARCH} over a
-	# rescue.ad.${MACHINE_CPU}, since the arch-
+	setdir=$setsdir/lists/$1; _prefix=$2
+
+	[ -n "$_prefix" ] && prefix="$_prefix".
+
+	# Prefer a <prefix>.ad.${MACHINE_ARCH} over a
+	# <prefix>.ad.${MACHINE_CPU}, since the arch-
 	# specific one will be more specific than the
 	# cpu-specific one.
-	echo_if_exist $setdir/rescue.ad.${MACHINE_ARCH} || \
-	echo_if_exist $setdir/rescue.ad.${MACHINE_CPU}
-	if [ "$shlib" != "no" ]; then
-		echo_if_exist $setdir/rescue.ad.${MACHINE_CPU}.shl
-	fi
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_ARCH} || \
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_CPU}
+	[ "$shlib" != "no" ] && \
+	echo_if_exist $setdir/${prefix}ad.${MACHINE_CPU}.shl
 }
 
 echo_if_exist()
