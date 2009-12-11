@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.8 2009/01/12 07:00:59 tsutsui Exp $	*/
+/*	$NetBSD: sun3.c,v 1.9 2009/12/11 18:42:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * We need to get the sun3 NBSG definition, even if we're
  * building this with a different sun68k target.
  */
-#include <arch/sun3/include/param.h>
+#include <arch/sun3/include/pmap3.h>
 
 #include <sys/param.h>
 #include <machine/idprom.h>
