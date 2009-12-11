@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.142.1 2009/09/13 03:33:08 cliff Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.142.2 2009/12/11 20:22:15 matt Exp $	*/
 
 #ifndef _EVBMIPS_VMPARAM_H_
 #define _EVBMIPS_VMPARAM_H_
@@ -7,7 +7,4 @@
 
 #define	VM_PHYSSEG_MAX		32
  
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
-
 #endif	/* !_EVBMIPS_VMPARAM_H_ */
