@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.5 2009/12/05 07:40:02 cliff Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.6 2009/12/11 17:17:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,9 +91,9 @@ END(copystr)
 
 /*
  * int copyinstr(void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)
- * Copy a NIL-terminated string, at most maxlen characters long, from the
+ * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including
- * the NIL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
+ * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
  * else return 0 or EFAULT.
  */
 LEAF(copyinstr)
@@ -108,7 +108,7 @@ LEAF(copyinstr)
 	lbu	v0, 0(a0)
 	PTR_SUBU a2, a2, 1
 	beq	v0, zero, 2f
-	 sb	v0, 0(a1)
+	 sb	v0, 0(a1)			# write trailing NUL
 	PTR_ADDU a0, a0, 1
 	bne	a2, zero, 1b
 	 PTR_ADDU a1, a1, 1
