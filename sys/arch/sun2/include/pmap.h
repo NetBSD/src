@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2009/12/11 13:56:15 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2009/12/11 18:31:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,9 +100,9 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x00	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x0C	/* mask to get all above. */
 
-#endif	/* _KERNEL */
-
 void pmap_procwr(struct proc *, vaddr_t, size_t);
+
+#endif	/* _KERNEL */
 
 /* MMU specific segment value */
 #define	SEGSHIFT	15	        /* LOG2(NBSG) */

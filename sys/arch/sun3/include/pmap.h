@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2009/12/11 18:31:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <machine/pmap3x.h>
 #endif	/* SUN3X */
 
+#ifdef _KERNEL
 void pmap_procwr(struct proc *, vaddr_t, size_t);
+#endif
 
 #endif	/* _MACHINE_PMAP_H */
