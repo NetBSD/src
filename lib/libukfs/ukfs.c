@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.43 2009/12/03 14:23:49 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.44 2009/12/11 16:47:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -177,16 +177,8 @@ static struct ukfs_part ukfs__part_none = {
 	.part_devsize = RUMP_ETFS_SIZE_ENDOFF,
 };
 static struct ukfs_part ukfs__part_na;
-struct ukfs_part *ukfs_part_none;
-struct ukfs_part *ukfs_part_na;
-
-static void
-ukfs_initparts(void)
-{
-
-	ukfs_part_none = &ukfs__part_none;
-	ukfs_part_na = &ukfs__part_na;
-}
+struct ukfs_part *ukfs_part_none = &ukfs__part_none;
+struct ukfs_part *ukfs_part_na = &ukfs__part_na;
 
 int
 _ukfs_init(int version)
@@ -200,7 +192,6 @@ _ukfs_init(int version)
 		return -1;
 	}
 
-	ukfs_initparts();
 	if ((rv = rump_init()) != 0) {
 		errno = rv;
 		return -1;
@@ -225,7 +216,6 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 	int error = 0;
 	int devfd = -1;
 
-	ukfs_initparts();
 	if ((p = strstr(devpath, UKFS_PARTITION_SCANMAGIC)) != NULL) {
 		fprintf(stderr, "ukfs: %%PART is deprecated.  use "
 		    "%%DISKLABEL instead\n");
