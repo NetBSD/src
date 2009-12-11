@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.44 2009/12/11 16:47:33 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.45 2009/12/11 21:20:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,7 @@ struct ukfs {
 	int ukfs_devfd;
 	char *ukfs_devpath;
 	char *ukfs_mountpath;
+	struct ukfs_part *ukfs_part;
 };
 
 static int builddirs(const char *, mode_t,
@@ -179,6 +180,8 @@ static struct ukfs_part ukfs__part_none = {
 static struct ukfs_part ukfs__part_na;
 struct ukfs_part *ukfs_part_none = &ukfs__part_none;
 struct ukfs_part *ukfs_part_na = &ukfs__part_na;
+
+#define PART2LOCKSIZE(len) ((len) == RUMP_ETFS_SIZE_ENDOFF ? 0 : (len))
 
 int
 _ukfs_init(int version)
@@ -387,6 +390,20 @@ ukfs_part_tostring(struct ukfs_part *part, char *str, size_t strsize)
 	return rv;
 }
 
+static void
+unlockdev(int fd, struct ukfs_part *part)
+{
+	struct flock flarg;
+
+	memset(&flarg, 0, sizeof(flarg));
+	flarg.l_type = F_UNLCK;
+	flarg.l_whence = SEEK_SET;
+	flarg.l_start = part->part_devoff;
+	flarg.l_len = PART2LOCKSIZE(part->part_devsize);
+	if (fcntl(fd, F_SETLK, &flarg) == -1)
+		warn("ukfs: cannot unlock device file");
+}
+
 /*
  * Open the disk file and flock it.  Also, if we are operation on
  * an embedded partition, find the partition offset and size from
@@ -395,12 +412,12 @@ ukfs_part_tostring(struct ukfs_part *part, char *str, size_t strsize)
  * We hard-fail only in two cases:
  *  1) we failed to get the partition info out (don't know what offset
  *     to mount from)
- *  2) we failed to flock the source device (i.e. flock() fails,
+ *  2) we failed to flock the source device (i.e. fcntl() fails,
  *     not e.g. open() before it)
  *
  * Otherwise we let the code proceed to mount and let the file system
  * throw the proper error.  The only questionable bit is that if we
- * soft-fail before flock() and mount does succeed...
+ * soft-fail before flock and mount does succeed...
  *
  * Returns: -1 error (errno reports error code)
  *           0 success
@@ -435,10 +452,25 @@ process_diskdevice(const char *devpath, struct ukfs_part *part, int rdonly,
 	 * We also need to close the device for fairly obvious reasons.
 	 */
 	if (!S_ISBLK(sb.st_mode)) {
-		if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX)) == -1) {
-			warnx("ukfs_mount: cannot get %s lock on "
-			    "device", rdonly ? "shared" : "exclusive");
-			rv = errno;
+		struct flock flarg;
+
+		memset(&flarg, 0, sizeof(flarg));
+		flarg.l_type = rdonly ? F_RDLCK : F_WRLCK;
+		flarg.l_whence = SEEK_SET;
+		flarg.l_start = part->part_devoff;
+		flarg.l_len = PART2LOCKSIZE(part->part_devsize);
+		if (fcntl(devfd, F_SETLK, &flarg) == -1) {
+			pid_t holder;
+			int sverrno;
+
+			sverrno = errno;
+			if (fcntl(devfd, F_GETLK, &flarg) != 1)
+				holder = flarg.l_pid;
+			else
+				holder = -1;
+			warnx("ukfs_mount: cannot lock device.  held by pid %d",
+			    holder);
+			rv = sverrno;
 			goto out;
 		}
 	} else {
@@ -518,10 +550,10 @@ doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 	fs->ukfs_cdir = ukfs_getrvp(fs);
 	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
 	fs->ukfs_devfd = devfd;
+	fs->ukfs_part = part;
 	assert(rv == 0);
 
  out:
-	ukfs_part_release(part);
 	if (rv) {
 		if (fs) {
 			if (fs->ukfs_rvp)
@@ -534,9 +566,10 @@ doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 		if (regged)
 			rump_pub_etfs_remove(devpath);
 		if (devfd != -1) {
-			flock(devfd, LOCK_UN);
+			unlockdev(fs->ukfs_devfd, fs->ukfs_part);
 			close(devfd);
 		}
+		ukfs_part_release(part);
 		errno = rv;
 	}
 
@@ -588,6 +621,7 @@ ukfs_release(struct ukfs *fs, int flags)
 		rump_pub_lwp_release(rump_pub_lwp_curlwp());
 	}
 
+	ukfs_part_release(fs->ukfs_part);
 	if (fs->ukfs_devpath) {
 		rump_pub_etfs_remove(fs->ukfs_devpath);
 		free(fs->ukfs_devpath);
@@ -596,7 +630,7 @@ ukfs_release(struct ukfs *fs, int flags)
 
 	pthread_spin_destroy(&fs->ukfs_spin);
 	if (fs->ukfs_devfd != -1) {
-		flock(fs->ukfs_devfd, LOCK_UN);
+		unlockdev(fs->ukfs_devfd, fs->ukfs_part);
 		close(fs->ukfs_devfd);
 	}
 	free(fs);
