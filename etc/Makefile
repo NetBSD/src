@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.375 2009/12/05 19:14:39 pooka Exp $
+#	$NetBSD: Makefile,v 1.376 2009/12/11 15:22:33 he Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -364,7 +364,10 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #	Install var/db/obsolete set lists; this is performed by "make build"
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
-OBSOLETE.files=		base comp etc games man misc modules tests text
+OBSOLETE.files=		base comp etc games man misc tests text
+.if ${MKKMOD} != "no"
+OBSOLETE.files+=	modules
+.endif
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif

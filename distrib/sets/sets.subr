@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.113 2009/12/11 13:30:11 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.114 2009/12/11 15:22:33 he Exp $
 #
 
 #
@@ -140,8 +140,6 @@ obsolete=0
 module=yes
 if [ "${MKKMOD}" = "no" ]; then
 	module=no			# MODULEs are off.
-elif [ "${MACHINE}" = "evbppc" ]; then
-	module=no			# Turn off MODULEs for some ports.
 fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
@@ -178,7 +176,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.113 2009/12/11 13:30:11 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.114 2009/12/11 15:22:33 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
