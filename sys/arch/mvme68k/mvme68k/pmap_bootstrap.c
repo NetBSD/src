@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.39 2009/12/06 06:41:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.40 2009/12/11 22:23:09 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2009/12/06 06:41:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.40 2009/12/11 22:23:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -279,7 +279,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries.
 		 */
 		epte = (pt_entry_t *)kptmpa;
-		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		epte = &epte[TIB_SIZE];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
@@ -288,9 +288,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * table page allocated earlier.
 		 */
 		pte = (pt_entry_t *)kptmpa;
-		pte = &pte[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
-		pte++;
+		pte++;		/* XXX should use [MAXADDR >> SEGSHIFT] */
 		*pte = lkptpa | PG_RW | PG_CI | PG_U | PG_V;
 	} else
 #endif /* M68040 || M68060 */
@@ -314,11 +314,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries in both.
 		 */
 		este = (st_entry_t *)kstpa;
-		este = &epte[NPTEPG];		/* XXX: should be TIA_SIZE */
+		este = &epte[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
 		epte = (st_entry_t *)kptmpa;
-		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		epte = &epte[TIB_SIZE];
 		while (pte < epte)
 			*pte++ = PG_NV;
 		/*
@@ -326,13 +326,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * table page allocated earlier.
 		 */
 		ste = (st_entry_t *)kstpa;
-		ste = &ste[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
+		ste = &ste[SYSMAP_VA >> SEGSHIFT];
 		pte = (pt_entry_t *)kptmpa;
-		pte = &pte[NPTEPG - 2];		/* XXX: should be TIA_SIZE */
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
-		ste++;
-		pte++;
+		ste++;		/* XXX should use [MAXADDR >> SEGSHIFT] */
+		pte++;		/* XXX should use [MAXADDR >> SEGSHIFT] */
 		*ste = lkptpa | SG_RW | SG_V;
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
@@ -438,8 +438,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Allocated at the end of KVA space.
 	 */
-	RELOC(Sysmap, pt_entry_t *) =
-	    (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
+	RELOC(Sysmap, pt_entry_t *) = (pt_entry_t *)SYSMAP_VA;
 
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0

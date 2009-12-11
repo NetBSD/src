@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.91 2009/12/06 06:41:29 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.92 2009/12/11 22:23:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.91 2009/12/06 06:41:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.92 2009/12/11 22:23:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -336,7 +336,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	/*
 	 * Sysmap is now placed at the end of Supervisor virtual address space.
 	 */
-	Sysmap = (pt_entry_t *)-(NPTEPG * PAGE_SIZE);
+	Sysmap = (pt_entry_t *)SYSMAP_VA;
 
 	/*
 	 * Initialize segment tables
@@ -942,11 +942,11 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 	 * Invalidate the remainder of the tables.
 	 */
 	esg = (st_entry_t *)sysseg_pa;
-	esg = &esg[256];			/* XXX should be TIA_SIZE */
+	esg = &esg[TIA_SIZE];
 	while (sg < esg)
 		*sg++ = SG_NV;
 	epg = (pt_entry_t *)sysptmap_pa;
-	epg = &epg[NPTEPG];			/* XXX should be TIB_SIZE */
+	epg = &epg[TIB_SIZE];
 	while (pg < epg)
 		*pg++ = PG_NV;
 
@@ -954,9 +954,9 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 	 * Initialize the PTE for the last one to point Sysptmap.
 	 */
 	sg = (st_entry_t *)sysseg_pa;
-	sg = &sg[256 - 1];			/* XXX should be TIA_SIZE */
+	sg = &sg[SYSMAP_VA >> SEGSHIFT];
 	pg = (pt_entry_t *)sysptmap_pa;
-	pg = &pg[256 - 1];			/* XXX should be TIA_SIZE */
+	pg = &pg[SYSMAP_VA >> SEGSHIFT];
 	*sg = RELOC_PA(kbase, sysptmap_pa) | SG_RW | SG_V;
 	*pg = RELOC_PA(kbase, sysptmap_pa) | PG_RW | PG_CI | PG_V;
 }
@@ -1054,7 +1054,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 	 * Invalidate rest of Sysptmap page.
 	 */
 	epg = (pt_entry_t *)sysptmap_pa;
-	epg = &epg[NPTEPG];		/* XXX: should be TIB_SIZE */
+	epg = &epg[TIB_SIZE];
 	while (pg < epg)
 		*pg++ = PG_NV;
 
@@ -1062,7 +1062,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 	 * Initialize the PTE for the last one to point Sysptmap.
 	 */
 	pg = (pt_entry_t *)sysptmap_pa;
-	pg = &pg[256 - 1];		/* XXX: should be TIA_SIZE */
+	pg = &pg[SYSMAP_VA >> SEGSHIFT];
 	*pg = RELOC_PA(kbase, sysptmap_pa) | PG_RW | PG_CI | PG_V;
 }
 #endif /* M68040 */
