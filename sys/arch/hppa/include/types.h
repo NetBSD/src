@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.16 2007/10/17 19:54:41 garbled Exp $	*/
+/*	$NetBSD: types.h,v 1.17 2009/12/11 05:52:03 matt Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -55,6 +55,12 @@ typedef	unsigned long		vaddr_t;
 typedef	unsigned long		vsize_t;
 typedef	unsigned long		paddr_t;
 typedef	unsigned long		psize_t;
+#define	PRIxVADDR		"lx"
+#define	PRIxVSIZE		"lx"
+#define	PRIuVSIZE		"lu"
+#define	PRIxPADDR		"lx"
+#define	PRIxPSIZE		"lx"
+#define	PRIuPSIZE		"lu"
 /* XXX DIE DIE DIE */
 typedef	unsigned long vm_offset_t;
 typedef unsigned long vm_size_t;
@@ -73,6 +79,7 @@ typedef volatile struct {
 #define __SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
 
 typedef int			register_t;
+#define	PRIxREGISTER		"x"
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
