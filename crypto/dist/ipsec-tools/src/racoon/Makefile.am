@@ -3,7 +3,7 @@
 sbin_PROGRAMS = racoon racoonctl plainrsa-gen
 noinst_PROGRAMS = eaytest
 include_racoon_HEADERS = racoonctl.h var.h vmbuf.h misc.h gcmalloc.h admin.h \
-	schedule.h sockmisc.h vmbuf.h isakmp_var.h isakmp.h isakmp_xauth.h \
+	schedule.h sockmisc.h isakmp_var.h isakmp.h isakmp_xauth.h \
 	isakmp_cfg.h isakmp_unity.h ipsec_doi.h evt.h
 lib_LTLIBRARIES = libracoon.la
 
