@@ -246,6 +246,14 @@ Boston, MA 02110-1301, USA.  */
 
 /* Make gcc agree with <machine/ansi.h> */
 
+#undef SIZE_TYPE
+#define SIZE_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
+		   ? "long unsigned int" : "unsigned int")
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
+		      ? "long int" : "int")
+
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 
