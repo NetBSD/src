@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2009/10/21 21:11:59 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62 2009/12/11 19:43:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -215,7 +215,7 @@ int	badbaddr(void *);
 #define	INTIOTOP	(0x00600000)
 #define	EXTIOBASE	(0x00600000)
 #define	EXTIOTOP	(0x20000000)
-#define	MAXADDR		(0xFFFFF000)
+#define	MAXADDR		(0 - NBPG)
 
 /*
  * Internal IO space:
