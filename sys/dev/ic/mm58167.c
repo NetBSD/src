@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.11 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.12 2009/12/11 11:07:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.11 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.12 2009/12/11 11:07:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,6 +84,7 @@ mm58167_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	struct mm58167_softc *sc = handle->cookie;
 	struct clock_ymdhms dt_hardware;
 	struct clock_ymdhms dt_reasonable;
+	struct timeval now;
 	int s;
 	uint8_t byte_value;
 	int leap_year, had_leap_day;
@@ -117,7 +118,16 @@ mm58167_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	splx(s);
 
 	/* Convert the reasonable time into a date: */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt_reasonable);
+	getmicrotime(&now);
+	clock_secs_to_ymdhms(now.tv_sec, &dt_reasonable);
+	if (dt_reasonable.dt_year == POSIX_BASE_YEAR) {
+		/*
+		 * Not a reasonable year.
+		 * Assume called from inittodr(9) on boot and
+		 * use file system time set in inittodr(9).
+		 */
+		clock_secs_to_ymdhms(handle->base_time, &dt_reasonable);
+	}
 
 	/*
 	 * We need to fake a hardware year.  if the hardware MM/DD
