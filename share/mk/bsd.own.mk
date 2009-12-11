@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.604 2009/12/11 08:37:34 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.605 2009/12/11 08:52:37 uebayasi Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -987,7 +987,7 @@ MAKEDIRTARGET=\
 GENCMD=\
 	@_gencmd() { \
 		local _dst="$$1"; shift; local _src="$$1"; shift; local _gen="$$1"; shift; \
-		local _tmp=$$( ${TOOL_MKTEMP} -d /tmp/XXXXXX ); \
+		local _tmp=$$( ${TOOL_MKTEMP} -d /tmp/_gencmd.XXXXXX ); \
 		local _opwd=$$PWD; \
 		local _exit; \
 		cp $$_src $$_tmp; \
