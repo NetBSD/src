@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.46 2009/12/11 13:52:57 tsutsui Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.47 2009/12/11 18:40:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,6 +95,8 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x10	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
+#endif	/* _KERNEL */
+
 /* MMU specific segment size */
 #define	SEGSHIFT	17	        /* LOG2(NBSG) */
 #define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -103,5 +105,3 @@ pmap_remove_all(struct pmap *pmap)
 #define	sun3_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	sun3_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	sun3_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
-
-#endif	/* _KERNEL */
