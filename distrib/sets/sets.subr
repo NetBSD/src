@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.108 2009/12/10 15:51:24 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.109 2009/12/11 12:07:58 he Exp $
 #
 
 #
@@ -118,13 +118,13 @@ oIFS=$IFS
 IFS="
 "
 
-for x in $( ${MAKE} -B -f mkvars.mk mkvars ); do
+for x in $( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars ); do
 	eval export $x
 done
 
 IFS=$oIFS
 
-MKVARS="$( ${MAKE} -B -f mkvars.mk mkvars | sed -e 's,=.*,,' | xargs )"
+MKVARS="$( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars | sed -e 's,=.*,,' | xargs )"
 
 if [ "$SETS_SUBR_DEBUG" = "dumpmkvars" ]; then
 	for v in $MKVARS; do
@@ -178,7 +178,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.108 2009/12/10 15:51:24 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.109 2009/12/11 12:07:58 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
