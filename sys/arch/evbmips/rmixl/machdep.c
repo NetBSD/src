@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.8 2009/11/16 23:57:26 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.9 2009/12/11 23:57:38 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.8 2009/11/16 23:57:26 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.9 2009/12/11 23:57:38 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -199,6 +199,7 @@ struct rmixl_config rmixl_configuration;
 static uint64_t rmiclfw_psb_versions[] = {
 	0x4958d4fb00000056ULL,
 	0x49a5a8fa00000056ULL,
+	0x4aacdb6a00000056ULL,
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
 	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
@@ -282,7 +283,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
 					/* set single MMU Thread Mode */
-					/* TLB is partitioned (but 1 partition) */
+					/* TLB is partitioned (1 partition) */
 
 	/*
 	 * Clear the BSS segment.
@@ -309,7 +310,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp); /* need for console */
 
 #if NCOM > 0
-	rmixl_com_cnattach(comcnaddr, comcnspeed, -1,
+	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
 		COM_TYPE_NORMAL, comcnmode);
 #endif
 
@@ -374,9 +375,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		0, round_page(MIPS_KSEG0_TO_PHYS(kernend)));
 
 	/* reserve reset exception vector page */
+	/* should never be in our clusters anyway... */
 	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
-		MIPS_KSEG1_TO_PHYS(MIPS_RESET_EXC_VEC),
-		MIPS_KSEG1_TO_PHYS(MIPS_RESET_EXC_VEC+NBPG));
+		MIPS_RESET_EXC_VEC, MIPS_RESET_EXC_VEC+NBPG);
 
 	/*
 	 * Load vm_clusters[] into the VM system.
@@ -388,6 +389,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		last = round_page(vm_clusters[i].start + vm_clusters[i].size);
 		DPRINTF(("%s: %d: %#"PRIx64", %#"PRIx64"\n",
 			__func__, i, first, last));
+
 		uvm_page_physload(atop(first), atop(last), atop(first),
 			atop(last), VM_FREELIST_DEFAULT);
 	}
@@ -427,7 +429,6 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		Debugger();
 #endif
 }
-
 
 /*
  * ram_seg_resv - cut reserved regions out of segs, fragmenting as needed
@@ -625,6 +626,11 @@ rmixlfw_init(int64_t infop)
 	rmixl_puthex64(rmixlfw_info.psb_version);
 	rmixl_puts("\r\n");
 #endif
+
+	/* XXX trust and use MEMSIZE */
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size = MEMSIZE;
+	mem_cluster_cnt = 1;
 	return MEMSIZE;
 
  found:
