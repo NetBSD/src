@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/02/04 08:37:37 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9.48.1 2009/12/11 20:33:08 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@
 # on the m68000), so we special case the directory name here.
 .if ${MACHINE_ARCH} == "m68000"
 ARCHSUBDIR=	m68000
+.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+ARCHSUBDIR=	mips64
 .else
 ARCHSUBDIR=	${MACHINE_CPU}
 .endif
