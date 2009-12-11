@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.160 2009/12/10 23:22:07 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.161 2009/12/11 09:37:30 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15577,4 +15577,12 @@ lib/libcurses/keypad.c				1.11
 	Make keypad return an int instead of nothing, as the SUS and even
 	curses_input(3) [!] say it should.
 	[drochner, ticket #1190]
+
+sbin/raidctl/raidctl.c				1.43
+
+	Slight change to the wording of the parity map info: the parity
+	is "marked clean" after however much inactivity; it is *actually*
+	clean as soon as the component disks all do their thing (on the
+	order of ms, usually), just the same as before.
+	[tron, ticket #1191]
 
