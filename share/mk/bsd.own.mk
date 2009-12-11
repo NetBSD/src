@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.605 2009/12/11 08:52:37 uebayasi Exp $
+#	$NetBSD: bsd.own.mk,v 1.606 2009/12/11 15:22:33 he Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -695,6 +695,13 @@ _MKVARS.yes= \
 .for var in ${_MKVARS.yes}
 ${var}?=	yes
 .endfor
+
+#
+# Exceptions to the above:
+#
+.if ${MACHINE} == "evbppc"
+MKKMOD=		no
+.endif
 
 #
 # MK* options which default to "no".
