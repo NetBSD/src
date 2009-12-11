@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.606 2009/12/11 15:22:33 he Exp $
+#	$NetBSD: bsd.own.mk,v 1.607 2009/12/11 16:09:03 uebayasi Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -998,7 +998,7 @@ GENCMD=\
 		local _opwd=$$PWD; \
 		local _exit; \
 		cp $$_src $$_tmp; \
-		{ cd $$_tmp && eval $$@; _exit=$$?; cd $$_opwd; }; \
+		{ cd $$_tmp && eval "$$@"; _exit=$$?; cd $$_opwd; }; \
 		[ $$_exit = 0 ] && cp $${_tmp}/$${_gen} $$_dst; \
 		rm -fr $$_tmp; \
 		return $$_exit; \
