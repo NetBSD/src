@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.26 2009/12/11 20:00:49 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27 2009/12/11 22:23:09 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26 2009/12/11 20:00:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27 2009/12/11 22:23:09 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -242,7 +242,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries.
 		 */
 		epte = (pt_entry_t *)kptmpa;
-		epte = &epte[NPTEPG];
+		epte = &epte[TIB_SIZE];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
@@ -251,9 +251,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * to point to Sysptmap.
 		 */
 		pte = (pt_entry_t *)kptmpa;
-		/* XXX should be (TIA_SIZE * PAGE_SIZE) */
-		pte[SYSMAP_VA / (NPTEPG * PAGE_SIZE)] =
-		    kptmpa | PG_RW | PG_CI | PG_V;
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
+		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif
 	{
@@ -276,11 +275,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries in both.
 		 */
 		este = (st_entry_t *)kstpa;
-		este = &este[NPTEPG];		/* XXX: should be TIA_SIZE */
+		este = &este[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
 		epte = (pt_entry_t *)kptmpa;
-		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		epte = &epte[TIB_SIZE];
 		while (pte < epte)
 			*pte++ = PG_NV;
 		/*
@@ -288,13 +287,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * to point to Sysptmap.
  		 */
 		ste = (st_entry_t *)kstpa;
+		ste = &ste[SYSMAP_VA >> SEGSHIFT];
+		*ste = kptmpa | SG_RW | SG_V;
 		pte = (pt_entry_t *)kptmpa;
-		/* XXX should be (TIA_SIZE * PAGE_SIZE) */
-		ste[SYSMAP_VA / (NPTEPG * PAGE_SIZE)] =
-		    kptmpa | SG_RW | SG_V;
-		/* XXX should be (TIA_SIZE * PAGE_SIZE) */
-		pte[SYSMAP_VA / (NPTEPG * PAGE_SIZE)] =
-		    kptmpa | PG_RW | PG_CI | PG_V;
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
+		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
 	/*

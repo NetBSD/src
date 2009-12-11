@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.86 2009/12/06 06:41:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.87 2009/12/11 22:23:09 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.86 2009/12/06 06:41:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.87 2009/12/11 22:23:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -289,7 +289,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries.
 		 */
 		epte = PA2VA(kptmpa, pt_entry_t *);
-		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		epte = &epte[TIB_SIZE];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
@@ -297,7 +297,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Initialize the last one to point to Sysptmap.
 		 */
 		pte = PA2VA(kptmpa, pt_entry_t *);
-		pte = &pte[NPTEPG - 1];		/* XXX: should be TIA_SIZE */
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	} else {
 		/*
@@ -319,21 +319,21 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries in both.
 		 */
 		este = PA2VA(kstpa, st_entry_t *);
-		este = &este[NPTEPG];		/* XXX: should be TIA_SIZE */
+		este = &este[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
 		epte = PA2VA(kptmpa, pt_entry_t *);
-		epte = &epte[NPTEPG];		/* XXX: should be TIB_SIZE */
+		epte = &epte[TIB_SIZE];
 		while (pte < epte)
 			*pte++ = PG_NV;
 		/*
 		 * Initialize the last one to point to Sysptmap.
 		 */
 		ste = PA2VA(kstpa, st_entry_t *);
-		ste = &ste[NPTEPG - 1];		/* XXX: should be TIA_SIZE */
+		ste = &ste[SYSMAP_VA >> SEGSHIFT];
 		*ste = kptmpa | SG_RW | SG_V;
 		pte = PA2VA(kptmpa, pt_entry_t *);
-		pte = &pte[NPTEPG - 1];		/* XXX: should be TIA_SIZE */
+		pte = &pte[SYSMAP_VA >> SEGSHIFT];
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
@@ -433,7 +433,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Allocated at the end of KVA space.
 	 */
-	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
+	Sysmap = (pt_entry_t *)SYSMAP_VA;
 
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0

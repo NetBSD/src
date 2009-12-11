@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.116 2009/12/06 06:41:28 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.117 2009/12/11 22:23:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.116 2009/12/06 06:41:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.117 2009/12/11 22:23:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	/*
 	 * Sysmap is now placed at the end of Supervisor virtual address space.
 	 */
-	RELOC(Sysmap, u_int *) = (u_int *)-(NPTEPG * PAGE_SIZE);
+	RELOC(Sysmap, u_int *) = (u_int *)SYSMAP_VA;
 
 	/*
 	 * initialize segment table and page table map
@@ -488,7 +488,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		while (pg < epg)
 			*pg++ = SG_NV;
 		pg = (pt_entry_t *)Sysptmap_pa;
-		pg = &pg[256 - 1];		/* XXX */
+		pg = &pg[SYSMAP_VA >> SEGSHIFT];
 		*pg = Sysptmap_pa | PG_RW | PG_CI | PG_V;
 	} else
 #endif /* M68040 */
@@ -511,12 +511,16 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		/*
 		 * invalidate the remainder of each table
 		 */
-		/* XXX PAGE_SIZE dependent constant: 256 or 1024 */
-		epg = (pt_entry_t *)(Sysptmap_pa + (256 - 1) * sizeof(st_entry_t));
+		epg = (pt_entry_t *)Sysptmap_pa;
+		epg = &epg[TIA_SIZE];
 		while (pg < epg) {
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
 		}
+		sg = (st_entry_t *)RELOC(Sysseg_pa, u_int);
+		sg = &sg[SYSMAP_VA >> SEGSHIFT];
+		pg = (pt_entry_t *)Sysptmap_pa;
+		pg = &pg[SYSMAP_VA >> SEGSHIFT];
 		*sg = Sysptmap_pa | SG_RW | SG_V;
 		*pg = Sysptmap_pa | PG_RW | PG_CI | PG_V;
 		/* XXX zero out rest of page? */
