@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2009/12/04 18:06:28 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 2009/12/11 18:28:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -452,13 +452,11 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize) | select software page size
 	bsr     Lpushpc			| Push the PC on the stack.
 Lpushpc:
 
-/* call final pmap setup which initialize lwp0, curlwp, and curpcb */
+/* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
