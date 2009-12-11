@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.39.4.2 2009/12/10 22:59:16 snj Exp $   */
+/*      $NetBSD: raidctl.c,v 1.39.4.3 2009/12/11 09:37:09 sborrill Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.39.4.2 2009/12/10 22:59:16 snj Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.39.4.3 2009/12/11 09:37:09 sborrill Exp $");
 #endif
 
 
@@ -498,7 +498,7 @@ rf_output_pmstat(int fd, int raidID)
 
 		printf("raid%d: parity map enabled with %u regions of %s\n",
 		    raidID, st.params.regions, srs);
-		printf("raid%d: parity cleaned after %d intervals of"
+		printf("raid%d: regions marked clean after %d intervals of"
 		    " %d.%03ds\n", raidID, st.params.cooldown,
 		    st.params.tickms / 1000, st.params.tickms % 1000);
 		printf("raid%d: write/sync/clean counters "
