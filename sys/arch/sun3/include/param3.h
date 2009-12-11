@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.51 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: param3.h,v 1.52 2009/12/11 13:52:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -81,10 +81,6 @@
 #define	KERNBASE	0x0E000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 #define	KERN_END	0x0FE00000	/* end of kernel virtual */
-
-#define SEGSHIFT	17	        /* LOG2(NBSG) */
-#define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
-#define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 
 #define	MAXBSIZE	0x8000		/* max FS block size */
 #define	MAXPHYS		0xe000
