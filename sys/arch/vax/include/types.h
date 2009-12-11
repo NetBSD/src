@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39 2008/02/20 16:37:52 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.40 2009/12/11 05:52:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,9 +50,16 @@ typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
+#define	PRIxPADDR	"lx"
+#define	PRIxPSIZE	"lx"
+#define	PRIuPSIZE	"lu"
+#define	PRIxVADDR	"lx"
+#define	PRIxVSIZE	"lx"
+#define	PRIuVSIZE	"lu"
 #endif
 
 typedef int		register_t;
+#define	PRIxREGISTER	"x"
 
 /*
  * BBCCI/BBSSI can operate on bytes so let's save some space.
