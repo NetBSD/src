@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/09/13 22:51:42 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2009/12/12 17:10:19 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
@@ -11,8 +11,6 @@ SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c raw_cb.c		\
 SRCS+=	component.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnetinet/opt
-
-RUMP_ISDOMAIN=
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"
 
