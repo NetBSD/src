@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.5 2009/11/13 05:27:09 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.6 2009/12/12 00:18:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.5 2009/11/13 05:27:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.6 2009/12/12 00:18:34 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,16 +101,21 @@ int iointr_debug = IOINTR_DEBUG;
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
+ * _SR_BITS_DFLT bits are to be always clear (disabled)
  */
+#define _SR_BITS_DFLT	(MIPS_INT_MASK_2|MIPS_INT_MASK_3|MIPS_INT_MASK_4)
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
+	[IPL_NONE] = _SR_BITS_DFLT,
 	[IPL_SOFTCLOCK] =
-		MIPS_SOFT_INT_MASK_0,
+		_SR_BITS_DFLT
+	      | MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
-		MIPS_SOFT_INT_MASK_0
+		_SR_BITS_DFLT
+	      | MIPS_SOFT_INT_MASK_0
 	      | MIPS_SOFT_INT_MASK_1,
 	[IPL_VM] =
-		MIPS_SOFT_INT_MASK_0
+		_SR_BITS_DFLT
+	      | MIPS_SOFT_INT_MASK_0
 	      | MIPS_SOFT_INT_MASK_1
 	      | MIPS_INT_MASK_0,
 	[IPL_SCHED] =
@@ -298,6 +303,13 @@ static struct rmixl_intrvec rmixl_intrvec[NINTRVECS];
 static int evbmips_intr_init_done;
 #endif
 
+
+static void rmixl_intr_irt_init(int);
+static void rmixl_intr_irt_disestablish(int);
+static void rmixl_intr_irt_establish(int, int, rmixl_intr_trigger_t,
+		rmixl_intr_polarity_t, int);
+
+
 static inline void
 pic_irt_print(const char *s, const int n, u_int irq)
 {
@@ -348,14 +360,16 @@ evbmips_intr_init(void)
 	RMIXL_PICREG_WRITE(RMIXL_PIC_CONTROL, r);
 
 	/*
-	 * invalidate all IRT Entries
-	 * permanently unmask Thread#0 in low word
-	 * (assume we only have 1 thread)
+	 * initialize all IRT Entries
 	 */
-	for (i=0; i < NIRQS; i++) {
-		RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(i), 0);	/* high word */
-		RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(i), 1);	/* low  word */
-	} 
+	for (i=0; i < NIRQS; i++)
+		rmixl_intr_irt_init(i);
+
+	/*
+	 * establish IRT entry for mips3 clock interrupt
+	 */
+	rmixl_intr_irt_establish(7, IPL_CLOCK, RMIXL_INTR_LEVEL,
+		RMIXL_INTR_HIGH, rmixl_iplvec[IPL_CLOCK]);
 
 #ifdef DIAGNOSTIC
 	evbmips_intr_init_done = 1;
@@ -395,13 +409,65 @@ rmixl_intr_string(int irq)
 	return name;
 }
 
+/*
+ * rmixl_intr_irt_init
+ * - invalidate IRT Entry for irq
+ * - unmask Thread#0 in low word (assume we only have 1 thread)
+ */
+static void
+rmixl_intr_irt_init(int irq)
+{
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), 0);	/* high word */
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irq), 1);	/* low  word */
+}
+
+/*
+ * rmixl_intr_irt_disestablish
+ * - invalidate IRT Entry for irq
+ * - writes to IRTENTRYC1 only; leave IRTENTRYC0 as-is
+ */
+static void
+rmixl_intr_irt_disestablish(int irq)
+{
+	DPRINTF(("%s: irq %d, irtc1 %#x\n", __func__, irq, 0));
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), 0);	/* high word */
+}
+
+/*
+ * rmixl_intr_irt_establish
+ * - construct and IRT Entry for irq and write to PIC
+ * - writes to IRTENTRYC1 only; assumes IRTENTRYC0 has been initialized
+ */
+static void
+rmixl_intr_irt_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
+	rmixl_intr_polarity_t polarity, int vec)
+{
+	uint32_t irtc1;
+
+	irtc1  = RMIXL_PIC_IRTENTRYC1_VALID;
+	irtc1 |= RMIXL_PIC_IRTENTRYC1_GL;	/* local */
+
+	if (trigger == RMIXL_INTR_LEVEL)
+		irtc1 |= RMIXL_PIC_IRTENTRYC1_TRG;
+
+	if ((polarity == RMIXL_INTR_FALLING) || (polarity == RMIXL_INTR_LOW))
+		irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
+
+	irtc1 |= vec;
+
+	/*
+	 * write IRT Entry to PIC (high word only)
+	 */
+	DPRINTF(("%s: irq %d, irtc1 %#x\n", __func__, irq, irtc1));
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), irtc1);
+}
+
 void *
 rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	rmixl_intr_polarity_t polarity, int (*func)(void *), void *arg)
 {
 	struct evbmips_intrhand *ih;
 	struct rmixl_intrvec *ivp;
-	uint32_t irtc1;
 	int vec;
 	int s;
 
@@ -422,14 +488,9 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	if (rmixl_irqtab[irq].irq_ih != NULL)
 		panic("%s: irq %d busy", __func__, irq);
 
-	irtc1  = RMIXL_PIC_IRTENTRYC1_VALID;
-	irtc1 |= RMIXL_PIC_IRTENTRYC1_GL;	/* local */
-
 	switch (trigger) {
 	case RMIXL_INTR_EDGE:
-		break;
 	case RMIXL_INTR_LEVEL:
-		irtc1 |= RMIXL_PIC_IRTENTRYC1_TRG;
 		break;
 	default:
 		panic("%s: bad trigger %d\n", __func__, trigger);
@@ -438,10 +499,8 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	switch (polarity) {
 	case RMIXL_INTR_RISING:
 	case RMIXL_INTR_HIGH:
-		break;
 	case RMIXL_INTR_FALLING:
 	case RMIXL_INTR_LOW:
-		irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
 		break;
 	default:
 		panic("%s: bad polarity %d\n", __func__, polarity);
@@ -453,7 +512,6 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	vec = rmixl_iplvec[ipl];
 	DPRINTF(("%s: irq %d, ipl %d, vec %d\n", __func__, irq, ipl, vec));
 	KASSERT((vec & ~RMIXL_PIC_IRTENTRYC1_INTVEC) == 0);
-	irtc1 |= vec;
 
 	s = splhigh();
 
@@ -513,10 +571,9 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	ivp->iv_refcnt++;
 
 	/*
-	 * establish IRT Entry (high word only)
+	 * establish IRT Entry
 	 */
-	DPRINTF(("%s: irq %d, irtc1 %#x\n", __func__, irq, irtc1));
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), irtc1);
+	rmixl_intr_irt_establish(irq, ipl, trigger, polarity, vec);
 
 	splx(s);
 
@@ -541,7 +598,7 @@ rmixl_intr_disestablish(void *cookie)
 	/*
 	 * disable the IRT Entry (high word only)
 	 */
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), 0);
+	rmixl_intr_irt_disestablish(irq);
 
 	/*
 	 * remove from the table and adjust the reference count
