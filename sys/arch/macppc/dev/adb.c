@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.28 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: adb.c,v 1.29 2009/12/12 14:44:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.28 2009/11/01 01:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.29 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -267,7 +267,7 @@ adbprint(void *args, const char *name)
 #define DIFF19041970 2082844800
 
 static int
-adb_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+adb_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	unsigned long sec;
 
@@ -279,7 +279,7 @@ adb_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 static int
-adb_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+adb_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	unsigned long sec;
 

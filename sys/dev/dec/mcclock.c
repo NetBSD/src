@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.23 2009/05/12 14:18:16 cegger Exp $ */
+/* $NetBSD: mcclock.c,v 1.24 2009/12/12 14:44:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.23 2009/05/12 14:18:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.24 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.23 2009/05/12 14:18:16 cegger Exp $");
 
 
 void	mcclock_init(device_t);
-int	mcclock_get(todr_chip_handle_t, volatile struct timeval *);
-int	mcclock_set(todr_chip_handle_t, volatile struct timeval *);
+int	mcclock_get(todr_chip_handle_t, struct timeval *);
+int	mcclock_set(todr_chip_handle_t, struct timeval *);
 
 const struct clockfns mcclock_clockfns = {
 	mcclock_init, 
@@ -149,7 +149,7 @@ again:
  * Get the time of day, based on the clock's value and/or the base value.
  */
 int
-mcclock_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)tch->cookie;
 	uint32_t yearsecs;
@@ -195,7 +195,7 @@ mcclock_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
  * Reset the TODR based on the time value.
  */
 int
-mcclock_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)tch->cookie;
 	struct clock_ymdhms dt;

@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.3 2008/04/28 20:23:16 martin Exp $ */
+/* $NetBSD: g2rtc.c,v 1.4 2009/12/12 14:44:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.3 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.4 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ CFATTACH_DECL(g2rtc, sizeof(struct g2rtc_softc),
 
 
 /* todr(9) methods */
-static int g2rtc_todr_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int g2rtc_todr_settime(todr_chip_handle_t, volatile struct timeval *);
+static int g2rtc_todr_gettime(todr_chip_handle_t, struct timeval *);
+static int g2rtc_todr_settime(todr_chip_handle_t, struct timeval *);
 
 static struct todr_chip_handle g2rtc_todr_handle = {
 	.cookie       = NULL,	/* set on attach */
@@ -121,7 +121,7 @@ g2rtc_read(bus_space_tag_t bt, bus_space_handle_t bh)
  * Return 0 on success; an error number otherwise.
  */
 static int
-g2rtc_todr_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+g2rtc_todr_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct g2rtc_softc *sc = handle->cookie;
 	uint32_t new, old;
@@ -151,7 +151,7 @@ g2rtc_todr_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
  * Return 0 on success; an error number otherwise.
  */
 static int
-g2rtc_todr_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+g2rtc_todr_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct g2rtc_softc *sc = handle->cookie;
 	uint32_t secs;

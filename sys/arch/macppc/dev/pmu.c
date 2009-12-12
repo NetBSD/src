@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.16 2009/03/18 10:22:32 cegger Exp $ */
+/*	$NetBSD: pmu.c,v 1.17 2009/12/12 14:44:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.16 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.17 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,8 @@ static void pmu_register_callback(void *, void (*)(void *), void *);
  */
 static int pmu_send(void *, int, int, uint8_t *, int, uint8_t *);
 static void pmu_adb_poll(void *);
-static int pmu_todr_set(todr_chip_handle_t, volatile struct timeval *);
-static int pmu_todr_get(todr_chip_handle_t, volatile struct timeval *);
+static int pmu_todr_set(todr_chip_handle_t, struct timeval *);
+static int pmu_todr_get(todr_chip_handle_t, struct timeval *);
 
 static int pmu_adb_handler(void *, int, uint8_t *);
 
@@ -683,7 +683,7 @@ pmu_error_handler(void *cookie, int len, uint8_t *data)
 #define DIFF19041970 2082844800
 
 static int
-pmu_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+pmu_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct pmu_softc *sc = tch->cookie;
 	uint32_t sec;
@@ -700,7 +700,7 @@ pmu_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 static int
-pmu_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+pmu_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct pmu_softc *sc = tch->cookie;
 	uint32_t sec;

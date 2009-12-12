@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.12 2009/12/11 11:07:04 tsutsui Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.13 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.12 2009/12/11 11:07:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.13 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.12 2009/12/11 11:07:04 tsutsui Exp $")
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 
-int mm58167_gettime(todr_chip_handle_t, volatile struct timeval *);
-int mm58167_settime(todr_chip_handle_t, volatile struct timeval *);
+int mm58167_gettime(todr_chip_handle_t, struct timeval *);
+int mm58167_settime(todr_chip_handle_t, struct timeval *);
 
 /*
  * To quote SunOS's todreg.h:
@@ -79,7 +79,7 @@ mm58167_attach(struct mm58167_softc *sc)
  * Set up the system's time, given a `reasonable' time value.
  */
 int
-mm58167_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+mm58167_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mm58167_softc *sc = handle->cookie;
 	struct clock_ymdhms dt_hardware;
@@ -235,7 +235,7 @@ mm58167_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 }
 
 int
-mm58167_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+mm58167_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mm58167_softc *sc = handle->cookie;
 	struct clock_ymdhms dt_hardware;

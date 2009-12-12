@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.14 2009/01/09 16:09:43 briggs Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.15 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.14 2009/01/09 16:09:43 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.15 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ const struct cdevsw strtc_cdevsw = {
 
 static int strtc_clock_read(struct strtc_softc *, struct clock_ymdhms *);
 static int strtc_clock_write(struct strtc_softc *, struct clock_ymdhms *);
-static int strtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
-static int strtc_settime(struct todr_chip_handle *, volatile struct timeval *);
+static int strtc_gettime(struct todr_chip_handle *, struct timeval *);
+static int strtc_settime(struct todr_chip_handle *, struct timeval *);
 
 static int
 strtc_match(device_t parent, cfdata_t cf, void *arg)
@@ -223,7 +223,7 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-strtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+strtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct strtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt, check;
@@ -249,7 +249,7 @@ strtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 }
 
 static int
-strtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+strtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct strtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
