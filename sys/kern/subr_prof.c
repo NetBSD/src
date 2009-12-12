@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.43 2007/12/20 23:03:10 dsl Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.44 2009/12/12 17:48:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.43 2007/12/20 23:03:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.44 2009/12/12 17:48:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,8 @@ sys_profil(struct lwp *l, const struct sys_profil_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(char *) samples;
-		syscallarg(u_int) size;
-		syscallarg(u_int) offset;
+		syscallarg(size_t) size;
+		syscallarg(u_long) offset;
 		syscallarg(u_int) scale;
 	} */
 	struct proc *p = l->l_proc;
