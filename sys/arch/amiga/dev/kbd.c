@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.52 2009/03/14 15:36:01 dsl Exp $ */
+/*	$NetBSD: kbd.c,v 1.53 2009/12/12 13:10:36 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.52 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53 2009/12/12 13:10:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ kbdintr(int mask)
 	}
 #endif
 	/* wait 200 microseconds (for bloody Cherry keyboards..) */
-	DELAY(2000);			/* fudge delay a bit for some keyboards */
+	DELAY(200);			/* fudge delay a bit for some keyboards */
 	ciaa.cra &= ~(1 << 6);
 
 	/* process the character */
@@ -652,7 +652,7 @@ kbdgetcn(void)
 	ciaa.cra |= (1 << 6);	/* serial line output */
 	ciaa.sdr = 0xff;	/* ack */
 	/* wait 200 microseconds */
-	DELAY(2000);	/* XXXX only works as long as DELAY doesn't
+	DELAY(200);	/* XXXX only works as long as DELAY doesn't
 			 * use a timer and waits.. */
 	ciaa.cra &= ~(1 << 6);
 	ciaa.sdr = in;
