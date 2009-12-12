@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.168 2009/10/21 21:12:06 rmind Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.169 2009/12/12 17:03:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.168 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.169 2009/12/12 17:03:19 dsl Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2875,7 +2875,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
-	ki->p_flag = sysctl_map_flags(sysctl_flagmap, p->p_flag);
+	ki->p_flag = L_INMEM;   /* Process never swapped out */
+	ki->p_flag |= sysctl_map_flags(sysctl_flagmap, p->p_flag);
 	ki->p_flag |= sysctl_map_flags(sysctl_sflagmap, p->p_sflag);
 	ki->p_flag |= sysctl_map_flags(sysctl_slflagmap, p->p_slflag);
 	ki->p_flag |= sysctl_map_flags(sysctl_lflagmap, p->p_lflag);
