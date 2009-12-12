@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.30 2009/12/12 11:28:40 tsutsui Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.31 2009/12/12 11:35:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.30 2009/12/12 11:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.31 2009/12/12 11:35:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ todr_attach(todr_chip_handle_t todr)
 	todr_handle = todr;
 }
 
-static int timeset = 0;
+static bool timeset = false;
 
 /*
  * Set up the system's time, given a `reasonable' time value.
@@ -111,7 +111,10 @@ static int timeset = 0;
 void
 inittodr(time_t base)
 {
-	int badbase = 0, waszero = (base == 0), goodtime = 0, badrtc = 0;
+	bool badbase = false;
+	bool waszero = (base == 0);
+	bool goodtime = false;
+	bool badrtc = false;
 	int s;
 	struct timespec ts;
 	struct timeval tv;
@@ -133,7 +136,7 @@ inittodr(time_t base)
 		basedate.dt_min = 0;
 		basedate.dt_sec = 0;
 		base = clock_ymdhms_to_secs(&basedate);
-		badbase = 1;
+		badbase = true;
 	}
 
 	/*
@@ -150,14 +153,14 @@ inittodr(time_t base)
 			printf("WARNING: preposterous TOD clock time\n");
 		else
 			printf("WARNING: no TOD clock present\n");
-		badrtc = 1;
+		badrtc = true;
 	} else {
 		time_t deltat = tv.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
 
-		if ((badbase == 0) && deltat >= 2 * SECDAY) {
+		if (!badbase && deltat >= 2 * SECDAY) {
 			
 			if (tv.tv_sec < base) {
 				/*
@@ -168,14 +171,14 @@ inittodr(time_t base)
 				 */
 				printf("WARNING: clock lost %" PRId64 " days\n",
 				    deltat / SECDAY);
-				badrtc = 1;
+				badrtc = true;
 			} else {
 				aprint_verbose("WARNING: clock gained %" PRId64
 				    " days\n", deltat / SECDAY);
-				goodtime = 1;
+				goodtime = true;
 			}
 		} else {
-			goodtime = 1;
+			goodtime = true;
 		}
 	}
 
@@ -190,7 +193,7 @@ inittodr(time_t base)
 		tv.tv_usec = 0;
 	}
 
-	timeset = 1;
+	timeset = true;
 
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
