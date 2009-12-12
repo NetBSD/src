@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.20.34.2 2009/08/18 06:49:17 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.20.34.3 2009/12/12 19:08:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.20.34.2 2009/08/18 06:49:17 matt Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.20.34.3 2009/12/12 19:08:57 cliff Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,7 @@ LEAF(_setjmp)
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
+#ifndef SOFTFLOAT_FOR_GCC
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -108,6 +109,7 @@ LEAF(_setjmp)
 	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
 	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
+#endif	/* SOFTFLOAT_FOR_GCC */
 	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_EPILOGUE
 
@@ -147,6 +149,7 @@ LEAF(_longjmp)
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
+#ifndef SOFTFLOAT_FOR_GCC
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_L	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_L	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -167,6 +170,7 @@ LEAF(_longjmp)
 	FP_L	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
 	FP_L	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
+#endif	/* SOFTFLOAT_FOR_GCC */
 
 	REG_EPILOGUE
 	REG_L	v0, _OFFSETOF_SC_REGS_V0(a0)
