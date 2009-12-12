@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.7 2009/03/03 18:42:19 nonaka Exp $	*/
+/*	$NetBSD: ztp.c,v 1.8 2009/12/12 07:49:31 nonaka Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.7 2009/03/03 18:42:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.8 2009/12/12 07:49:31 nonaka Exp $");
 
 #include "lcd.h"
 
@@ -535,7 +535,7 @@ ztp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
-		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
+		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 	}
 
 	return EPASSTHROUGH;
