@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.9 2009/09/12 17:41:10 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.10 2009/12/12 00:10:44 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.9 2009/09/12 17:41:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.10 2009/12/12 00:10:44 cliff Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -350,7 +350,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	} while (/*CONSTCOND*/ 0);	/* avoid a goto */
 #endif
 
-#if 0
+#ifdef MIPS_SYSCALL_DEBUG
 	if (p->p_emul->e_syscallnames)
 		printf("syscall %s:", p->p_emul->e_syscallnames[code]);
 	else
@@ -386,7 +386,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			frame->f_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32; 
 		}
 #endif
-#if 0
+#ifdef MIPS_SYSCALL_DEBUG
 		if (p->p_emul->e_syscallnames)
 			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
 		else
@@ -408,7 +408,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[_R_V0] = error;
 		frame->f_regs[_R_A3] = 1;
-#if 0
+#ifdef MIPS_SYSCALL_DEBUG
 		if (p->p_emul->e_syscallnames)
 			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
 		else
