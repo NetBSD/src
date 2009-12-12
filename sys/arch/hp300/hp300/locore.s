@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2009/12/11 18:28:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 2009/12/12 16:37:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -523,7 +523,11 @@ Lhighcode:
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
@@ -532,7 +536,11 @@ Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%a2@	| value to load TC with
+#else
 	movl	#0x82c0aa00,%a2@	| value to load TC with
+#endif
 	pmove	%a2@,%tc		| load it
 	jmp	Lenab1:l		| forced not be pc-relative
 Lhpmmu3:
