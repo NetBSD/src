@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.187 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.188 2009/12/12 00:24:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -552,7 +552,7 @@ struct kinfo_proc2 {
 	int32_t	p_vm_dsize;		/* SEGSZ_T: data size (pages) */
 	int32_t	p_vm_ssize;		/* SEGSZ_T: stack size (pages) */
 
-	int64_t	p_uvalid;		/* CHAR: following p_u* members from struct user are valid */
+	int64_t	p_uvalid;		/* CHAR: following p_u* parameters are valid */
 					/* XXX 64 bits for alignment */
 	uint32_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
 	uint32_t p_ustart_usec;		/* STRUCT TIMEVAL: starting time. */
