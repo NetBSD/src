@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.31 2009/12/12 11:35:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.32 2009/12/12 15:17:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.31 2009/12/12 11:35:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.32 2009/12/12 15:17:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,7 +240,7 @@ resettodr(void)
 #ifdef	TODR_DEBUG
 static void
 todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
-    volatile struct timeval *tvp)
+    struct timeval *tvp)
 {
 	struct timeval tv_val;
 	struct clock_ymdhms dt_val;
@@ -268,7 +268,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 
 
 int
-todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
@@ -317,7 +317,7 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 int
-todr_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
