@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.82 2009/03/16 20:48:13 njoly Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.83 2009/12/12 10:32:26 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -832,10 +832,10 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 	    SCARG(uap, name) = (type)(long)SCARG(s32uap, name)
 
 /* and some standard versions */
-#define	NETBSD32TO64_UAP(name)		NETBSD32TO64(uap, &ua, name);
-#define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type);
-#define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
-#define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
+#define	NETBSD32TO64_UAP(name)		NETBSD32TO64(uap, &ua, name)
+#define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type)
+#define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type)
+#define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type)
 
 #define	SCARG_P32(uap, name) NETBSD32PTR64(SCARG(uap, name))
 
