@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.14 2009/12/12 11:16:33 tsutsui Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.15 2009/12/12 11:22:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.14 2009/12/12 11:16:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.15 2009/12/12 11:22:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,9 @@ void
 clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 {
 	int mthdays[12];
-	int i, days;
-	int rsec;	/* remainder seconds */
+	int i;
+	time_t days;
+	time_t rsec;	/* remainder seconds */
 
 	/*
 	 * This function uses a local copy of month_days[]
