@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.110 2009/11/29 04:15:43 rmind Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.111 2009/12/12 12:23:29 martin Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110 2009/11/29 04:15:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111 2009/12/12 12:23:29 martin Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -111,6 +111,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1 != curlwp && l1 != &lwp0)
 		panic("cpu_lwp_fork: curlwp");
 #endif
+
+	/*
+	 * Clear new pcb
+	 */
+	memset(pcb2, 0, sizeof(*pcb2));
 
 	/*
 	 * Copy the trap frame.
