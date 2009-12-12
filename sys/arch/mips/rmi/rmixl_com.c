@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.7 2009/11/15 23:10:04 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.8 2009/12/12 01:45:01 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.7 2009/11/15 23:10:04 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.8 2009/12/12 01:45:01 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 
 	sc->sc_dev = self;
-	sc->sc_frequency = -1;	/* XXX */
+	sc->sc_frequency = CONSFREQ;
 
 	bst = obio->obio_bst;
 	addr = obio->obio_addr;
