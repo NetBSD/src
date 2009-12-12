@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.28 2009/12/10 05:10:04 rmind Exp $	   */
+/*	$NetBSD: subr.S,v 1.29 2009/12/12 12:19:21 martin Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -124,7 +124,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 3:	addl3	_C_LABEL(esym),$0x3ff,%r0	# Round symbol table end
 	bicl3	$0x3ff,%r0,%r1			# 
 	movl	%r1,_C_LABEL(lwp0)+L_PCB	# lwp0 pcb, XXXuvm_lwp_getuarea
-	bicl2	$0x80000000,%r1			# get phys lwp0 uarea addr
+	bicl3	$0x80000000,%r1,%r0		# get phys lwp0 uarea addr
 	mtpr	%r0,$PR_PCBB			# Save in IPR PCBB
 	addl3	$USPACE,%r1,%r0			# Get kernel stack top
 	mtpr	%r0,$PR_KSP			# put in IPR KSP
