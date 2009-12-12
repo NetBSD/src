@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.13 2009/02/14 20:32:29 perry Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.14 2009/12/12 11:16:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.13 2009/02/14 20:32:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.14 2009/12/12 11:16:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ leapyear(int year)
 				rv = 1;
 		}
 	}
-	return (rv);
+	return rv;
 }
 
 time_t
@@ -136,7 +136,8 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	 * Compute days since start of time
 	 * First from years, then from months.
 	 */
-	if (year < POSIX_BASE_YEAR) return -1;
+	if (year < POSIX_BASE_YEAR)
+		return -1;
 	days = 0;
 	for (i = POSIX_BASE_YEAR; i < year; i++)
 		days += days_in_year(i);
@@ -154,8 +155,9 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	    * 60 + dt->dt_min)
 	    * 60 + dt->dt_sec;
 
-	if ((time_t)secs != secs) return -1;
-	return (secs);
+	if ((time_t)secs != secs)
+		return -1;
+	return secs;
 }
 
 void
