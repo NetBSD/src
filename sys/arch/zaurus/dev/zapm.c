@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.8 2009/12/12 13:12:49 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.9 2009/12/12 14:29:34 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.8 2009/12/12 13:12:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.9 2009/12/12 14:29:34 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,16 +402,32 @@ zapm_get_powstat(void *v, u_int batteryid, struct apm_power_info *pinfo)
 		pinfo->ac_state = val;
 	else
 		pinfo->ac_state = sc->ac_state;
+	DPRINTF(("zapm: pinfo->ac_state: %d\n", pinfo->ac_state));
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_CHARGE, &val) != -1)
 		pinfo->battery_state = val;
-	else
-		pinfo->battery_state = sc->battery_state;
+	else {
+		DPRINTF(("zapm: sc->battery_state: %#x\n", sc->battery_state));
+		if (sc->battery_state & APM_BATT_FLAG_CHARGING)
+			pinfo->battery_flags = APM_BATT_FLAG_CHARGING;
+		else if (sc->battery_state & APM_BATT_FLAG_CRITICAL)
+			pinfo->battery_flags = APM_BATT_FLAG_CRITICAL;
+		else if (sc->battery_state & APM_BATT_FLAG_LOW)
+			pinfo->battery_flags = APM_BATT_FLAG_LOW;
+		else if (sc->battery_state & APM_BATT_FLAG_HIGH)
+			pinfo->battery_flags = APM_BATT_FLAG_HIGH;
+		else
+			pinfo->battery_flags = APM_BATT_FLAG_UNKNOWN;
+	}
+	DPRINTF(("zapm: pinfo->battery_flags: %#x\n", pinfo->battery_flags));
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_BATTERYVAL, &val) != -1)
 		pinfo->battery_life = val;
 	else
 		pinfo->battery_life = sc->battery_life;
+	DPRINTF(("zapm: pinfo->battery_life: %d\n", pinfo->battery_life));
 
 	return 0;
 }
