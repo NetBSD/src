@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.51 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: ka820.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.51 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,8 +82,8 @@ static void ka820_attach(device_t, device_t, void*);
 static void ka820_memerr(void);
 static void ka820_conf(void);
 static int ka820_mchk(void *);
-static int ka820_gettime(volatile struct timeval *);
-static void ka820_settime(volatile struct timeval *);
+static int ka820_gettime(struct timeval *);
+static void ka820_settime(struct timeval *);
 static void rxcdintr(void *);
 static void vaxbierr(void *);
 
@@ -480,7 +480,7 @@ rxchar(void)
 #endif
 
 int
-ka820_gettime(volatile struct timeval *tvp)
+ka820_gettime(struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 	int s;
@@ -512,7 +512,7 @@ ka820_gettime(volatile struct timeval *tvp)
 }
 
 void
-ka820_settime(volatile struct timeval *tvp)
+ka820_settime(struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 

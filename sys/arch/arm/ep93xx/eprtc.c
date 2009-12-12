@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.2 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.2 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,8 @@ static void eprtc_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(eprtc, sizeof(struct eprtc_softc),
 	      eprtc_match, eprtc_attach, NULL, NULL);
 
-static int eprtc_gettime(struct todr_chip_handle *,
-			    volatile struct timeval *);
-static int eprtc_settime(struct todr_chip_handle *,
-			    volatile struct timeval *);
+static int eprtc_gettime(struct todr_chip_handle *, struct timeval *);
+static int eprtc_settime(struct todr_chip_handle *, struct timeval *);
 
 static int
 eprtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -85,7 +83,7 @@ eprtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-eprtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+eprtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct eprtc_softc *sc = ch->cookie;;
 
@@ -95,7 +93,7 @@ eprtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 }
 
 static int
-eprtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+eprtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct eprtc_softc *sc = ch->cookie;;
 

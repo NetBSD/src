@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.1 2009/02/12 06:33:57 rumble Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.2 2009/12/12 14:44:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -61,10 +61,8 @@ struct dpclock_softc {
 
 static int	dpclock_match(struct device *, struct cfdata *, void *);
 static void	dpclock_attach(struct device *, struct device *, void *);
-static int	dpclock_gettime(struct todr_chip_handle *,
-    volatile struct timeval *);
-static int	dpclock_settime(struct todr_chip_handle *,
-    volatile struct timeval *);
+static int	dpclock_gettime(struct todr_chip_handle *, struct timeval *);
+static int	dpclock_settime(struct todr_chip_handle *, struct timeval *);
 
 CFATTACH_DECL(dpclock, sizeof(struct dpclock_softc),
     dpclock_match, dpclock_attach, NULL, NULL);
@@ -126,7 +124,7 @@ dpclock_attach(struct device *parent, struct device *self, void *aux)
  * Get the time of day, based on the clock's value and/or the base value.
  */
 static int 
-dpclock_gettime(struct todr_chip_handle *todrch, volatile struct timeval *tv)
+dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 {
 	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
 	struct clock_ymdhms dt;
@@ -187,7 +185,7 @@ dpclock_gettime(struct todr_chip_handle *todrch, volatile struct timeval *tv)
  * Reset the TODR based on the time value.
  */
 static int
-dpclock_settime(struct todr_chip_handle *todrch, volatile struct timeval *tv)
+dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 {
 	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
 	struct clock_ymdhms dt;
