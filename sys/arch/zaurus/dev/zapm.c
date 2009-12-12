@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.6 2009/04/03 04:13:17 uwe Exp $	*/
+/*	$NetBSD: zapm.c,v 1.7 2009/12/12 11:38:45 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.6 2009/04/03 04:13:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.7 2009/12/12 11:38:45 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -809,7 +809,7 @@ zapm_poll1(void *v, int do_suspend)
 				zapm_set_charging(sc, 0);
 			}
 		} else if (!charge_completed) {
-			charging = 1;
+			charging = APM_BATT_FLAG_CHARGING;
 			volt = zapm_get_battery_volt();
 			zapm_set_charging(sc, 1);
 			DPRINTF(("zapm_poll: start charging volt %d\n", volt));
