@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 2009/10/23 02:32:34 snj Exp $	*/
+/*	$NetBSD: clock.c,v 1.53 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ xen_wall_time(struct timespec *wt)
 }
 
 static int
-xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_get(todr_chip_handle_t todr, struct timeval *tvp)
 {
 	struct timespec wt;
 
@@ -245,7 +245,7 @@ xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
 }
 
 static int
-xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 {
 #ifdef DOM0OPS
 #if __XEN_INTERFACE_VERSION__ < 0x00030204

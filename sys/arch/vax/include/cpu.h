@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.86 2009/10/24 20:03:56 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.87 2009/12/12 14:44:09 tsutsui Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -70,10 +70,8 @@ struct cpu_dep {
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
-	int	(*cpu_gettime)(volatile struct timeval *);
-					/* Read cpu clock time */
-	void	(*cpu_settime)(volatile struct timeval *);
-					/* Write system time to cpu */
+	int	(*cpu_gettime)(struct timeval *); /* Read cpu clock time */
+	void	(*cpu_settime)(struct timeval *); /* Write system time to cpu */
 	short	cpu_vups;		/* speed of cpu */
 	short	cpu_scbsz;		/* (estimated) size of SCB */
 	void	(*cpu_halt)(void);	/* Cpu dependent halt call */
