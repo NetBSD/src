@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.7 2009/12/12 11:38:45 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.8 2009/12/12 13:12:49 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.7 2009/12/12 11:38:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.8 2009/12/12 13:12:49 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.7 2009/12/12 11:38:45 nonaka Exp $");
 struct zapm_softc {
 	device_t sc_dev;
 	void *sc_apmdev;
+	kmutex_t sc_mtx;
 
 	struct callout sc_cyclic_poll;
 	struct callout sc_discharge_poll;
@@ -143,6 +144,7 @@ zapm_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_cyclic_poll, zapm_cyclic, sc);
 	callout_init(&sc->sc_discharge_poll, 0);
 	callout_setfunc(&sc->sc_discharge_poll, zapm_poll, sc);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	if (ZAURUS_ISC3000) {
 		sc->sc_ac_detect_pin = GPIO_AC_IN_C3000;
@@ -781,9 +783,9 @@ zapm_poll1(void *v, int do_suspend)
 	int bc_lock;
 	int charging;
 	int volt;
-	int s;
 
-	s = splhigh();
+	if (!mutex_tryenter(&sc->sc_mtx))
+		return;
 
 	ac_state = zapm_get_ac_state(sc);
 	bc_lock = zapm_get_battery_compartment_state(sc);
@@ -875,5 +877,5 @@ zapm_poll1(void *v, int do_suspend)
 		    (void *)zapm_battery_state(volt));
 	}
 
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 }
