@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.45 2009/12/11 21:20:52 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.46 2009/12/12 00:46:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -566,7 +566,7 @@ doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 		if (regged)
 			rump_pub_etfs_remove(devpath);
 		if (devfd != -1) {
-			unlockdev(fs->ukfs_devfd, fs->ukfs_part);
+			unlockdev(devfd, part);
 			close(devfd);
 		}
 		ukfs_part_release(part);
