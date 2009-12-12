@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.29 2009/03/21 15:01:57 ad Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.30 2009/12/12 11:28:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.29 2009/03/21 15:01:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.30 2009/12/12 11:28:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ inittodr(time_t base)
 			printf("WARNING: no TOD clock present\n");
 		badrtc = 1;
 	} else {
-		int deltat = tv.tv_sec - base;
+		time_t deltat = tv.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
@@ -166,12 +166,12 @@ inittodr(time_t base)
 				 * does by more than the threshold,
 				 * believe the filesystem.
 				 */
-				printf("WARNING: clock lost %d days\n",
+				printf("WARNING: clock lost %" PRId64 " days\n",
 				    deltat / SECDAY);
 				badrtc = 1;
 			} else {
-				aprint_verbose("WARNING: clock gained %d "
-				    "days\n", deltat / SECDAY);
+				aprint_verbose("WARNING: clock gained %" PRId64
+				    " days\n", deltat / SECDAY);
 				goodtime = 1;
 			}
 		} else {
