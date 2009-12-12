@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2009/12/11 18:28:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 2009/12/12 09:55:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -303,7 +303,11 @@ Lstart3:
 	movl	%a1,%d1
 	.word	0xf518			| pflusha
 	.long	0x4e7b1807		| movc %d1,%srp
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc %d0,%tc   ;Enable MMU
 	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
@@ -325,7 +329,11 @@ LnokillTT:
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
 	lea	_ASM_LABEL(longscratch),%a2
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%a2@	| value to load %TC with
+#else
 	movl	#0x82c0aa00,%a2@	| value to load %TC with
+#endif
 	pmove	%a2@,%tc		| load it
 
 Lloaddone:
