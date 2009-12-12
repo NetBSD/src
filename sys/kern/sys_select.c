@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.19 2009/11/11 09:48:51 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.20 2009/12/12 17:47:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.19 2009/11/11 09:48:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.20 2009/12/12 17:47:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,12 @@ sel_do_scan(void *fds, u_int nfds, struct timespec *ts, sigset_t *mask,
 		l->l_sigmask = oldmask;
 		mutex_exit(p->p_lock);
 	}
+
+	/* select and poll are not restarted after signals... */
+	if (error == ERESTART)
+		return EINTR;
+	if (error == EWOULDBLOCK)
+		return 0;
 	return error;
 }
 
@@ -293,7 +299,7 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 	if (u_ ## name) {						\
 		error = copyin(u_ ## name, bits + ni * x, ni);		\
 		if (error)						\
-			goto done;					\
+			goto fail;					\
 	} else								\
 		memset(bits + ni * x, 0, ni);
 	getbits(in, 0);
@@ -302,18 +308,13 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 #undef	getbits
 
 	error = sel_do_scan(bits, nd, ts, mask, retval, 1);
- done:
-	/* select is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
 	if (error == 0 && u_in != NULL)
 		error = copyout(bits + ni * 3, u_in, ni);
 	if (error == 0 && u_ou != NULL)
 		error = copyout(bits + ni * 4, u_ou, ni);
 	if (error == 0 && u_ex != NULL)
 		error = copyout(bits + ni * 5, u_ex, ni);
+ fail:
 	if (bits != smallbits)
 		kmem_free(bits, ni * 6);
 	return (error);
@@ -418,12 +419,19 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 	struct pollfd	smallfds[32];
 	struct pollfd	*fds;
 	int		error;
-	size_t		ni, nf;
+	size_t		ni;
 
-	nf = curlwp->l_fd->fd_dt->dt_nfiles;
-	if (nfds > nf) {
-		/* forgiving; slightly wrong */
-		nfds = nf;
+	if (nfds > 1000 + curlwp->l_fd->fd_dt->dt_nfiles) {
+		/*
+		 * Either the user passed in a very sparse 'fds' or junk!
+		 * The kmem_alloc() call below would be bad news.
+		 * We could process the 'fds' array in chunks, but that
+		 * is a lot of code that isn't normally useful.
+		 * (Or just move the copyin/out into pollscan().)
+		 * Historically the code silently truncated 'fds' to
+		 * dt_nfiles entries - but that does cause issues.
+		 */
+		return EINVAL;
 	}
 	ni = nfds * sizeof(struct pollfd);
 	if (ni > sizeof(smallfds)) {
@@ -435,17 +443,12 @@ pollcommon(register_t *retval, struct pollfd *u_fds, u_int nfds,
 
 	error = copyin(u_fds, fds, ni);
 	if (error)
-		goto done;
+		goto fail;
 
 	error = sel_do_scan(fds, nfds, ts, mask, retval, 0);
- done:
-	/* poll is not restarted after signals... */
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
 	if (error == 0)
 		error = copyout(fds, u_fds, ni);
+ fail:
 	if (fds != smallfds)
 		kmem_free(fds, ni);
 	return (error);
