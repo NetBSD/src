@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.14 2009/12/10 17:07:26 njoly Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.15 2009/12/12 10:30:09 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.14 2009/12/10 17:07:26 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.15 2009/12/12 10:30:09 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,7 +109,7 @@ linux32_sys_socketpair(struct lwp *l, const struct linux32_sys_socketpair_args *
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	NETBSD32TOP_UAP(rsv, int)
+	NETBSD32TOP_UAP(rsv, int);
 
 	return linux_sys_socketpair(l, &ua, retval);
 }
@@ -232,7 +232,7 @@ linux32_sys_bind(struct lwp *l, const struct linux32_sys_bind_args *uap, registe
 	struct linux_sys_bind_args ua;
 
 	NETBSD32TO64_UAP(s);
-	NETBSD32TOP_UAP(name, struct osockaddr)
+	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TO64_UAP(namelen);
 
 	return linux_sys_bind(l, &ua, retval);
@@ -249,7 +249,7 @@ linux32_sys_connect(struct lwp *l, const struct linux32_sys_connect_args *uap, r
 	struct linux_sys_connect_args ua;
 
 	NETBSD32TO64_UAP(s);
-	NETBSD32TOP_UAP(name, struct osockaddr)
+	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TO64_UAP(namelen);
 
 #ifdef DEBUG_LINUX
@@ -271,7 +271,7 @@ linux32_sys_accept(struct lwp *l, const struct linux32_sys_accept_args *uap, reg
 	struct linux_sys_accept_args ua;
 
 	NETBSD32TO64_UAP(s);
-	NETBSD32TOP_UAP(name, struct osockaddr)
+	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TOP_UAP(anamelen, int);
 
 	return linux_sys_accept(l, &ua, retval);
@@ -288,7 +288,7 @@ linux32_sys_getpeername(struct lwp *l, const struct linux32_sys_getpeername_args
 	struct linux_sys_getpeername_args ua;
 
 	NETBSD32TO64_UAP(fdes);
-	NETBSD32TOP_UAP(asa, struct sockaddr)
+	NETBSD32TOP_UAP(asa, struct sockaddr);
 	NETBSD32TOP_UAP(alen, int);
 
 	return linux_sys_getpeername(l, &ua, retval);
@@ -305,7 +305,7 @@ linux32_sys_getsockname(struct lwp *l, const struct linux32_sys_getsockname_args
 	struct linux_sys_getsockname_args ua;
 
 	NETBSD32TO64_UAP(fdec);
-	NETBSD32TOP_UAP(asa, char)
+	NETBSD32TOP_UAP(asa, char);
 	NETBSD32TOP_UAP(alen, int);
 
 	return linux_sys_getsockname(l, &ua, retval);

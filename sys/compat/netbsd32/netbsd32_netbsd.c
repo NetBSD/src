@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.161 2009/12/10 14:10:35 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.162 2009/12/12 10:30:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.161 2009/12/10 14:10:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.162 2009/12/12 10:30:09 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1096,7 +1096,7 @@ netbsd32_rename(struct lwp *l, const struct netbsd32_rename_args *uap, register_
 	struct sys_rename_args ua;
 
 	NETBSD32TOP_UAP(from, const char);
-	NETBSD32TOP_UAP(to, const char)
+	NETBSD32TOP_UAP(to, const char);
 
 	return (sys_rename(l, &ua, retval));
 }
@@ -1111,7 +1111,7 @@ netbsd32_flock(struct lwp *l, const struct netbsd32_flock_args *uap, register_t 
 	struct sys_flock_args ua;
 
 	NETBSD32TO64_UAP(fd);
-	NETBSD32TO64_UAP(how)
+	NETBSD32TO64_UAP(how);
 
 	return (sys_flock(l, &ua, retval));
 }
@@ -1125,7 +1125,7 @@ netbsd32_mkfifo(struct lwp *l, const struct netbsd32_mkfifo_args *uap, register_
 	} */
 	struct sys_mkfifo_args ua;
 
-	NETBSD32TOP_UAP(path, const char)
+	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	return (sys_mkfifo(l, &ua, retval));
 }
@@ -1139,7 +1139,7 @@ netbsd32_shutdown(struct lwp *l, const struct netbsd32_shutdown_args *uap, regis
 	} */
 	struct sys_shutdown_args ua;
 
-	NETBSD32TO64_UAP(s)
+	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(how);
 	return (sys_shutdown(l, &ua, retval));
 }
@@ -1172,7 +1172,7 @@ netbsd32_mkdir(struct lwp *l, const struct netbsd32_mkdir_args *uap, register_t 
 	} */
 	struct sys_mkdir_args ua;
 
-	NETBSD32TOP_UAP(path, const char)
+	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	return (sys_mkdir(l, &ua, retval));
 }
