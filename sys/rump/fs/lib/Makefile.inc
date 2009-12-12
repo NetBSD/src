@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.13 2009/09/13 22:51:41 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2009/12/12 17:10:19 pooka Exp $
 #
 
 RUMPTOP=	${.CURDIR}/../../..
-RUMP_ISMODULE=	# defined
 
 .include "${RUMPTOP}/Makefile.rump"
