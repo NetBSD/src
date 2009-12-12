@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.122 2009/12/10 20:55:17 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.123 2009/12/12 21:28:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.122 2009/12/10 20:55:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.123 2009/12/12 21:28:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ static int	pipe_poll(file_t *, int);
 static int	pipe_kqfilter(file_t *, struct knote *);
 static int	pipe_stat(file_t *, struct stat *);
 static int	pipe_ioctl(file_t *, u_long, void *);
+static void	pipe_abort(file_t *);
 
 static const struct fileops pipeops = {
 	.fo_read = pipe_read,
@@ -119,7 +120,7 @@ static const struct fileops pipeops = {
 	.fo_stat = pipe_stat,
 	.fo_close = pipe_close,
 	.fo_kqfilter = pipe_kqfilter,
-	.fo_abort = fnullop_abort,
+	.fo_abort = pipe_abort,
 };
 
 /*
@@ -541,8 +542,12 @@ again:
 		 * Detect EOF condition.
 		 * Read returns 0 on EOF, no need to set error.
 		 */
-		if (rpipe->pipe_state & PIPE_EOF)
+		if (rpipe->pipe_state & (PIPE_EOF | PIPE_ABORTED)) {
+			if (rpipe->pipe_state & PIPE_ABORTED)
+				/* Another thread has called close() */
+				error = EBADF;
 			break;
+		}
 
 		/*
 		 * Don't block on non-blocking I/O.
@@ -979,6 +984,13 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				break;
 			}
 
+			if (wpipe->pipe_state & PIPE_ABORTED) {
+				/* Another thread has called close() */
+				if (uio->uio_resid == 0)
+					error = EBADF;
+				break;
+			}
+
 			/*
 			 * We have no more space and have something to offer,
 			 * wake up select/poll.
@@ -1201,6 +1213,19 @@ pipe_close(file_t *fp)
 	fp->f_data = NULL;
 	pipeclose(pipe);
 	return (0);
+}
+
+static void
+pipe_abort(file_t *fp)
+{
+	struct pipe *pipe = fp->f_data;
+
+	/* Unblock blocked reads/writes - they will return EBADF. */
+	mutex_enter(pipe->pipe_lock);
+	pipe->pipe_state |= PIPE_ABORTED;
+	cv_broadcast(&pipe->pipe_rcv);
+	cv_broadcast(&pipe->pipe_wcv);
+	mutex_exit(pipe->pipe_lock);
 }
 
 static void
