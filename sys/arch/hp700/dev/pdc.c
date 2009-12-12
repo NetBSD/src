@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.33 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: pdc.c,v 1.34 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.33 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.34 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ int pdccnlookc(dev_t, int *);
 
 static struct cnm_state pdc_cnm_state;
 
-static int pdcgettod(todr_chip_handle_t, volatile struct timeval *);
-static int pdcsettod(todr_chip_handle_t, volatile struct timeval *);
+static int pdcgettod(todr_chip_handle_t, struct timeval *);
+static int pdcsettod(todr_chip_handle_t, struct timeval *);
 
 static struct pdc_tod tod PDC_ALIGNMENT;
 
@@ -450,7 +450,7 @@ pdccnpollc(dev_t dev, int on)
 }
 
 static int
-pdcgettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
+pdcgettod(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	int error;
 
@@ -465,7 +465,7 @@ pdcgettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 static int
-pdcsettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
+pdcsettod(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	int error;
 

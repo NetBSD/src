@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.9 2008/05/04 15:26:29 xtraeme Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.10 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.9 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.10 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ CFATTACH_DECL_NEW(rs5c372rtc, sizeof(struct rs5c372rtc_softc),
 static void rs5c372rtc_reg_write(struct rs5c372rtc_softc *, int, uint8_t);
 static int rs5c372rtc_clock_read(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms *);
-static int rs5c372rtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
-static int rs5c372rtc_settime(struct todr_chip_handle *, volatile struct timeval *);
+static int rs5c372rtc_gettime(struct todr_chip_handle *, struct timeval *);
+static int rs5c372rtc_settime(struct todr_chip_handle *, struct timeval *);
 
 static int
 rs5c372rtc_match(device_t parent, cfdata_t cf, void *arg)
@@ -97,7 +97,7 @@ rs5c372rtc_attach(device_t parent, device_t self, void *arg)
 }
 
 static int
-rs5c372rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+rs5c372rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -114,7 +114,7 @@ rs5c372rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 }
 
 static int
-rs5c372rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+rs5c372rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.11 2006/09/04 23:45:30 gdamore Exp $ */
+/* $NetBSD: aurtc.c,v 1.12 2009/12/12 14:44:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.11 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.12 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ struct aurtc_softc {
 
 static int	aurtc_match(struct device *, struct cfdata *, void *);
 static void	aurtc_attach(struct device *, struct device *, void *);
-static int	aurtc_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int	aurtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int	aurtc_gettime(todr_chip_handle_t, struct timeval *);
+static int	aurtc_settime(todr_chip_handle_t, struct timeval *);
 static void	aurtc_shutdown(void *);
 
 CFATTACH_DECL(aurtc, sizeof (struct aurtc_softc),
@@ -137,7 +137,7 @@ aurtc_attach(struct device *parent, struct device *self, void *aux)
  */
 
 int
-aurtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
+aurtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 {
 	int			s;
 
@@ -148,7 +148,7 @@ aurtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
 }
 
 int
-aurtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+aurtc_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	int			s;
 	struct timeval		tv;

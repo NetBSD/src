@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.10 2009/04/03 15:41:14 uebayasi Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.11 2009/12/12 14:44:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.10 2009/04/03 15:41:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.11 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,9 @@ static int	mcclock_mace_match(struct device *, struct cfdata *, void *);
 static void	mcclock_mace_attach(struct device*, struct device *, void *);
 
 static int	mcclock_mace_gettime(struct todr_chip_handle *,
-    volatile struct timeval *);
+    struct timeval *);
 static int	mcclock_mace_settime(struct todr_chip_handle *,
-    volatile struct timeval *);
+    struct timeval *);
 
 unsigned int	ds1687_read(void *arg, unsigned int addr);
 void		ds1687_write(void *arg, unsigned int addr, unsigned int data);
@@ -175,8 +175,7 @@ ds1687_write(void *arg, unsigned int addr, unsigned int data)
 }
 
 static int
-mcclock_mace_gettime(struct todr_chip_handle *todrch,
-    volatile struct timeval *tv)
+mcclock_mace_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 {
 	struct mcclock_mace_softc *sc =
 	    (struct mcclock_mace_softc *)todrch->cookie;
@@ -211,8 +210,7 @@ mcclock_mace_gettime(struct todr_chip_handle *todrch,
 }
 
 static int
-mcclock_mace_settime(struct todr_chip_handle *todrch,
-    volatile struct timeval *tv)
+mcclock_mace_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 {
 	struct mcclock_mace_softc *sc =
 	    (struct mcclock_mace_softc *)todrch->cookie;

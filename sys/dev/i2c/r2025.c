@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.5 2008/05/04 15:26:29 xtraeme Exp $ */
+/* $NetBSD: r2025.c,v 1.6 2009/12/12 14:44:10 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.5 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.6 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,8 @@ static int	r2025rtc_match(device_t, cfdata_t, void *);
 CFATTACH_DECL_NEW(r2025rtc, sizeof(struct r2025rtc_softc),
 	r2025rtc_match, r2025rtc_attach, NULL, NULL);
 
-static int	r2025rtc_gettime(struct todr_chip_handle *,
-				volatile struct timeval *);
-static int	r2025rtc_settime(struct todr_chip_handle *,
-				volatile struct timeval *);
+static int	r2025rtc_gettime(struct todr_chip_handle *, struct timeval *);
+static int	r2025rtc_settime(struct todr_chip_handle *, struct timeval *);
 static int	r2025rtc_reg_write(struct r2025rtc_softc *, int, uint8_t*, int);
 static int	r2025rtc_reg_read(struct r2025rtc_softc *, int, uint8_t*, int);
 
@@ -104,7 +102,7 @@ r2025rtc_attach(device_t parent, device_t self, void *arg)
 }
 
 static int
-r2025rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct r2025rtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -156,7 +154,7 @@ r2025rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 }
 
 static int
-r2025rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct r2025rtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

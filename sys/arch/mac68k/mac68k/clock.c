@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2008/07/22 14:43:45 hauke Exp $	*/
+/*	$NetBSD: clock.c,v 1.48 2009/12/12 14:44:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2008/07/22 14:43:45 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.48 2009/12/12 14:44:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,8 +137,8 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr(void);
-static int mac68k_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int mac68k_settime(todr_chip_handle_t, volatile struct timeval *);
+static int mac68k_gettime(todr_chip_handle_t, struct timeval *);
+static int mac68k_settime(todr_chip_handle_t, struct timeval *);
 static u_int via1_t2_get_timecount(struct timecounter *);
 
 #define	DIFF19041970	2082844800
@@ -408,7 +408,7 @@ int	mac68k_trust_pram = 1;
  * and sanity checking.
  */
 int
-mac68k_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+mac68k_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	u_long timbuf;
 
@@ -429,7 +429,7 @@ mac68k_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 int
-mac68k_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+mac68k_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	if (mac68k_trust_pram)
 		/*

@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.14 2006/09/11 15:07:50 gdamore Exp $        */
+/*      $NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.14 2006/09/11 15:07:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -61,8 +61,8 @@ volatile u_int *scr2 = (u_int *)NEXT_P_SCR2; /* will get memory mapped in rtc_in
 
 static int gettime_old(todr_chip_handle_t, struct clock_ymdhms *);
 static int settime_old(todr_chip_handle_t, struct clock_ymdhms *);
-static int gettime_new(todr_chip_handle_t, volatile struct timeval *);
-static int settime_new(todr_chip_handle_t, volatile struct timeval *);
+static int gettime_new(todr_chip_handle_t, struct timeval *);
+static int settime_new(todr_chip_handle_t, struct timeval *);
 
 /*
  * NB: This code should probably be converted to a _true_ device, then this
@@ -346,7 +346,7 @@ settime_old(todr_chip_handle_t tcr, struct clock_ymdhms *dt)
 }
 
 int
-gettime_new(todr_chip_handle_t tch, volatile struct timeval *tvp)
+gettime_new(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	tvp->tv_sec = rtc_read(RTC_CNTR0) << 24 |
 			rtc_read(RTC_CNTR1) << 16 |
@@ -356,7 +356,7 @@ gettime_new(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 int
-settime_new(todr_chip_handle_t tch, volatile struct timeval *tvp)
+settime_new(todr_chip_handle_t tch, struct timeval *tvp)
 {
 
 	/* Stop the clock */

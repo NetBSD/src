@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.13 2008/06/08 03:49:26 tsutsui Exp $	*/
+/*	$NetBSD: x1226.c,v 1.14 2009/12/12 14:44:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.13 2008/06/08 03:49:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.14 2009/12/12 14:44:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ const struct cdevsw xrtc_cdevsw = {
 
 static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_clock_write(struct xrtc_softc *, struct clock_ymdhms *);
-static int xrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
-static int xrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
+static int xrtc_gettime(struct todr_chip_handle *, struct timeval *);
+static int xrtc_settime(struct todr_chip_handle *, struct timeval *);
 
 /*
  * xrtc_match()
@@ -236,7 +236,7 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 
 
 static int
-xrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+xrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct xrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt, check;
@@ -258,7 +258,7 @@ xrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 }
 
 static int
-xrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+xrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct xrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
