@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.169 2009/12/12 17:03:19 dsl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.170 2009/12/12 17:29:34 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.169 2009/12/12 17:03:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.170 2009/12/12 17:29:34 dsl Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -3051,7 +3051,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
-	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
+	kl->l_flag = L_INMEM;
+	kl->l_flag |= sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
 	kl->l_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 
 	kl->l_swtime = l->l_swtime;
