@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.44 2009/11/27 13:36:30 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.45 2009/12/12 17:10:19 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -24,6 +24,7 @@ CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
+LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
 #CPPFLAGS+=	-DDEBUG
 
 # kernel libs should not get linked against libc
@@ -44,15 +45,6 @@ CPPFLAGS+=	-DPPC_OEA
 
 # If this file changes, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
-
-.ifdef RUMP_ISMODULE
-.PATH:		${RUMPTOP}/librump
-SRCS+=		rump_module.c
-.endif
-.ifdef RUMP_ISDOMAIN
-.PATH:		${RUMPTOP}/librump
-SRCS+=		rump_domain.c
-.endif
 
 #
 # Rename library symbols before use.  If a symbol does not already belong
