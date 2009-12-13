@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.123 2009/12/12 21:28:04 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.124 2009/12/13 18:27:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.123 2009/12/12 21:28:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.124 2009/12/13 18:27:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,12 +542,8 @@ again:
 		 * Detect EOF condition.
 		 * Read returns 0 on EOF, no need to set error.
 		 */
-		if (rpipe->pipe_state & (PIPE_EOF | PIPE_ABORTED)) {
-			if (rpipe->pipe_state & PIPE_ABORTED)
-				/* Another thread has called close() */
-				error = EBADF;
+		if (rpipe->pipe_state & PIPE_EOF)
 			break;
-		}
 
 		/*
 		 * Don't block on non-blocking I/O.
@@ -984,13 +980,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				break;
 			}
 
-			if (wpipe->pipe_state & PIPE_ABORTED) {
-				/* Another thread has called close() */
-				if (uio->uio_resid == 0)
-					error = EBADF;
-				break;
-			}
-
 			/*
 			 * We have no more space and have something to offer,
 			 * wake up select/poll.
@@ -1220,9 +1209,14 @@ pipe_abort(file_t *fp)
 {
 	struct pipe *pipe = fp->f_data;
 
-	/* Unblock blocked reads/writes - they will return EBADF. */
+	/*
+	 * Unblock blocked reads/writes in order to allow close() to complete.
+	 * This isn't going to work yet!
+	 * The underlying problem is that only the 'fd' in question needs
+	 * its operations terminating, the pipe itself my be open via
+	 * other fd.
+	 */
 	mutex_enter(pipe->pipe_lock);
-	pipe->pipe_state |= PIPE_ABORTED;
 	cv_broadcast(&pipe->pipe_rcv);
 	cv_broadcast(&pipe->pipe_wcv);
 	mutex_exit(pipe->pipe_lock);
