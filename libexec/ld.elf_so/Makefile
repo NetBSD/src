@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2009/05/20 19:38:38 ad Exp $
+#	$NetBSD: Makefile,v 1.91 2009/12/13 08:25:20 mrg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -45,7 +45,7 @@ LDFLAGS+=	-Wl,-static
 .endif
 
 # Support src/compat/libexec/ld.elf_so.
-.if defined(LD32DIR)
+.if defined(MLIBDIR)
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/compat/lib/libc && ${PRINTOBJDIR}
 .else
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
