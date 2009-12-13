@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/25 00:17:06 tsarna Exp $
+#	$NetBSD: Makefile,v 1.3 2009/12/13 08:02:36 mrg Exp $
 
 LIB=		nss_mdnsd
 SHLIB_MAJOR=	0
@@ -30,9 +30,3 @@ ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${.ALLSRC} ${.TARGET}
-
-#.if defined(LD32DIR)
-#LIBDIR=/usr/lib/${LD32DIR}
-#.else
-#LIBDIR=/usr/lib
-#.endif
