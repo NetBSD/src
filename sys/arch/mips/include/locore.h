@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.5 2009/11/23 18:28:46 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.6 2009/12/13 00:25:30 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -50,7 +50,7 @@ void	mips1_SetPID(int);
 void	mips1_TBIA(int);
 void	mips1_TBIAP(int);
 void	mips1_TBIS(vaddr_t);
-int	mips1_TLBUpdate(u_int, u_int);
+int	mips1_TLBUpdate(vaddr_t, uint32_t);
 void	mips1_wbflush(void);
 void	mips1_lwp_trampoline(void);
 void	mips1_setfunc_trampoline(void);
@@ -64,7 +64,7 @@ void	mips3_SetPID(int);
 void	mips3_TBIA(int);
 void	mips3_TBIAP(int);
 void	mips3_TBIS(vaddr_t);
-int	mips3_TLBUpdate(u_int, u_int);
+int	mips3_TLBUpdate(vaddr_t, uint32_t);
 void	mips3_TLBRead(int, struct tlb *);
 void	mips3_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips3_wbflush(void);
@@ -78,7 +78,7 @@ void	mips5900_SetPID(int);
 void	mips5900_TBIA(int);
 void	mips5900_TBIAP(int);
 void	mips5900_TBIS(vaddr_t);
-int	mips5900_TLBUpdate(u_int, u_int);
+int	mips5900_TLBUpdate(vaddr_t, uint32_t);
 void	mips5900_TLBRead(int, struct tlb *);
 void	mips5900_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips5900_wbflush(void);
@@ -94,7 +94,7 @@ void	mips32_SetPID(int);
 void	mips32_TBIA(int);
 void	mips32_TBIAP(int);
 void	mips32_TBIS(vaddr_t);
-int	mips32_TLBUpdate(u_int, u_int);
+int	mips32_TLBUpdate(vaddr_t, uint32_t);
 void	mips32_TLBRead(int, struct tlb *);
 void	mips32_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips32_wbflush(void);
@@ -108,7 +108,7 @@ void	mips64_SetPID(int);
 void	mips64_TBIA(int);
 void	mips64_TBIAP(int);
 void	mips64_TBIS(vaddr_t);
-int	mips64_TLBUpdate(u_int, u_int);
+int	mips64_TLBUpdate(vaddr_t, uint32_t);
 void	mips64_TLBRead(int, struct tlb *);
 void	mips64_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips64_wbflush(void);
@@ -290,7 +290,7 @@ typedef struct  {
 	void (*setTLBpid)(int pid);
 	void (*TBIAP)(int);
 	void (*TBIS)(vaddr_t);
-	int  (*tlbUpdate)(u_int highreg, u_int lowreg);
+	int  (*tlbUpdate)(vaddr_t, uint32_t);
 	void (*wbflush)(void);
 } mips_locore_jumpvec_t;
 
