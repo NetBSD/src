@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.8 2009/04/03 10:38:13 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.9 2009/12/13 08:32:57 tsutsui Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -38,22 +38,16 @@ vers.c: version
 CLEANFILES+= machine powerpc
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine powerpc
-.BEGIN: machine powerpc
-
-machine :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mvmeppc/include machine
-
-powerpc :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/powerpc/include powerpc
+.BEGIN:
+	@rm -f machine && \
+	    ln -s $S/arch/${MACHINE}/include machine
+	@rm -f ${MACHINE_CPU} && \
+	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
 .endif
 
 .if defined(LIB)
 
-lib${LIB}.a:: machine powerpc ${OBJS}
-beforedepend:	machine powerpc
+lib${LIB}.a:: ${OBJS}
 
 .else
 
