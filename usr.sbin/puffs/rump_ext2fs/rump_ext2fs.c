@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_ext2fs.c,v 1.7 2009/12/03 14:27:16 pooka Exp $	*/
+/*	$NetBSD: rump_ext2fs.c,v 1.8 2009/12/13 21:16:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,7 @@ main(int argc, char *argv[])
 	    canon_dev, canon_dir);
 	rv = p2k_run_diskfs(MOUNT_EXT2FS, canon_dev, part, canon_dir, mntflags, 
 		&args, sizeof(args), 0);
+	ukfs_part_release(part);
 	if (rv)
 		err(1, "mount");
 

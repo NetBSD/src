@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.13 2009/12/03 14:27:16 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.14 2009/12/13 21:16:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 	if (p2k_setup_diskfs(p2m, MOUNT_LFS, canon_dev, part, canon_dir,
 	    mntflags, &args, sizeof(args)) == -1)
 		err(1, "mount");
+	ukfs_part_release(part);
 
 #ifndef CLEANER_TESTING
 	if ((mntflags & MNT_RDONLY) == 0) {
