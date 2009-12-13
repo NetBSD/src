@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/14 13:56:42 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2009/12/13 05:01:33 nakayama Exp $
 
-.if ${MACHINE_ARCH} == "sparc"
+.if ${MACHINE} == "sparc"
 PROG=	tadpolectl
 SRCS=	tadpolectl.c
 .endif
