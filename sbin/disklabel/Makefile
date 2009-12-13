@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2009/12/05 16:29:11 pooka Exp $
+#	$NetBSD: Makefile,v 1.66 2009/12/13 05:01:32 nakayama Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -10,7 +10,7 @@ LDADD+= -lutil
 .endif
 
 # these have additional requirements on the alignment of a partition
-.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64") \
+.if (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") \
 	|| (${MACHINE} == "sun3")
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 .endif

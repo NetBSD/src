@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/02/14 13:56:41 abs Exp $
+#	$NetBSD: Makefile,v 1.17 2009/12/13 05:01:33 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
      ${MACHINE} == "hpcmips" || \
      ${MACHINE} == "hpcsh" || \
      ${MACHINE} == "macppc" || \
-     ${MACHINE_ARCH} == "sparc" || \
+     ${MACHINE} == "sparc" || \
      ${MACHINE} == "zaurus")
 PROG=	apm
 SRCS=	apm.c apmsubr.c
