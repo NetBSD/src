@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2009/12/11 22:37:39 snj Exp $
+#	$NetBSD: Makefile,v 1.38 2009/12/13 05:04:36 nonaka Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -166,6 +166,9 @@ SUBDIR+= \
 
 # replace with xf86-video-openchrome
 #	xf86-video-via
+.elif ${MACHINE} == "zaurus"
+SUBDIR+= \
+	xf86-video-wsfb
 .endif
 
 # broken with xorg-server 1.6

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2009/08/27 04:34:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2009/12/13 05:04:36 nonaka Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -63,7 +63,8 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "cats" || \
     ${MACHINE} == "shark" || \
-    ${MACHINE} == "netwinder"
+    ${MACHINE} == "netwinder" || \
+    ${MACHINE} == "zaurus"
 SRCS.bsd+=      ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
