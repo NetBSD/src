@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.609 2009/12/12 23:45:36 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.610 2009/12/13 03:06:22 nakayama Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -648,7 +648,7 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
-.if ${MACHINE} == "amd64" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
