@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.275 2009/11/30 16:13:22 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.276 2009/12/13 09:29:27 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -414,18 +414,22 @@ BUILD_CC_LIB+= external/bsd/pcc/crtstuff
 BUILD_CC_LIB+= external/bsd/pcc/libpcc
 .endif
 
-.if ${MKCOMPAT} != "no"
-BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
-.else
-BUILD_COMPAT_LIBS=
-.endif
-
-.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/dev/lib sys/rump/fs/lib sys/rump/net/lib sys/modules ${BUILD_COMPAT_LIBS}
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/dev/lib sys/rump/fs/lib sys/rump/net/lib sys/modules
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
 .endfor
 .endfor
+
+.if ${MKCOMPAT} != "no"
+COMPAT_SUBDIR_LIST=lib/csu ${BUILD_CC_LIB} lib/libc
+.for dir in ${COMPAT_SUBDIR_LIST}
+do-compat-${dir:S/\//-/g}: .PHONY .MAKE
+.for targ in obj dependall install
+	${MAKEDIRTARGET} compat ${targ} BOOTSTRAP_SUBDIRS="../../../${dir}"
+.endfor
+.endfor
+.endif
 
 do-top-obj: .PHONY .MAKE
 	${MAKEDIRTARGET} . obj NOSUBDIR=
