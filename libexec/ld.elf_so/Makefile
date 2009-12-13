@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2009/12/13 09:01:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.93 2009/12/13 09:31:47 mrg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -38,8 +38,6 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
 
-PROG?=		ld.elf_so
-
 LDFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-Wl,-static
 
@@ -49,12 +47,15 @@ LDFLAGS+=	-Wl,-static
 .include "$M/Makefile.inc"
 .endif
 
-# Support src/compat/libexec/ld.elf_so.
+# Support compat ld.elf_so.
 .if defined(MLIBDIR)
-CLIBOBJ!=	cd ${NETBSDSRCDIR}/compat/lib/libc && ${PRINTOBJDIR}
+PROG=		ld.elf_so-${MLIBDIR}
+CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
 .else
-CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
+PROG=		ld.elf_so
 .endif
+
+CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
 SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c
