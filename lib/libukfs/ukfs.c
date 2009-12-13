@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.46 2009/12/12 00:46:04 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.47 2009/12/13 20:52:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -164,6 +164,9 @@ postcall(struct ukfs *ukfs)
 }
 
 struct ukfs_part {
+	pthread_spinlock_t part_lck;
+	int part_refcount;
+
 	int part_type;
 	char part_labelchar;
 	off_t part_devoff;
@@ -231,7 +234,14 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 		errno = ENOMEM;
 		return -1;
 	}
+	if (pthread_spin_init(&part->part_lck, PTHREAD_PROCESS_PRIVATE) == -1) {
+		error = errno;
+		free(part);
+		errno = error;
+		return -1;
+	}
 	part->part_type = UKFS_PART_NONE;
+	part->part_refcount = 1;
 
 	/*
 	 * Check for magic in pathname:
@@ -338,7 +348,7 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 		part->part_devsize = val;
 		part->part_type = UKFS_PART_OFFSET;
 	} else {
-		free(part);
+		ukfs_part_release(part);
 		part = ukfs_part_none;
 	}
 
@@ -394,6 +404,9 @@ static void
 unlockdev(int fd, struct ukfs_part *part)
 {
 	struct flock flarg;
+
+	if (part == ukfs_part_na)
+		return;
 
 	memset(&flarg, 0, sizeof(flarg));
 	flarg.l_type = F_UNLCK;
@@ -497,6 +510,9 @@ doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 	int mounted = 0;
 	int regged = 0;
 
+	pthread_spin_lock(&part->part_lck);
+	part->part_refcount++;
+	pthread_spin_unlock(&part->part_lck);
 	if (part != ukfs_part_na) {
 		if ((rv = process_diskdevice(devpath, part,
 		    mntflags & MNT_RDONLY, &devfd)) != 0)
@@ -621,7 +637,6 @@ ukfs_release(struct ukfs *fs, int flags)
 		rump_pub_lwp_release(rump_pub_lwp_curlwp());
 	}
 
-	ukfs_part_release(fs->ukfs_part);
 	if (fs->ukfs_devpath) {
 		rump_pub_etfs_remove(fs->ukfs_devpath);
 		free(fs->ukfs_devpath);
@@ -633,6 +648,7 @@ ukfs_release(struct ukfs *fs, int flags)
 		unlockdev(fs->ukfs_devfd, fs->ukfs_part);
 		close(fs->ukfs_devfd);
 	}
+	ukfs_part_release(fs->ukfs_part);
 	free(fs);
 
 	return 0;
@@ -641,9 +657,17 @@ ukfs_release(struct ukfs *fs, int flags)
 void
 ukfs_part_release(struct ukfs_part *part)
 {
+	int release;
 
-	if (part != ukfs_part_none && part != ukfs_part_na)
-		free(part);
+	if (part != ukfs_part_none && part != ukfs_part_na) {
+		pthread_spin_lock(&part->part_lck);
+		release = --part->part_refcount == 0;
+		pthread_spin_unlock(&part->part_lck);
+		if (release) {
+			pthread_spin_destroy(&part->part_lck);
+			free(part);
+		}
+	}
 }
 
 #define STDCALL(ukfs, thecall)						\
