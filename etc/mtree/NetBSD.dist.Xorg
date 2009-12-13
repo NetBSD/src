@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.3 2009/10/08 19:06:50 snj Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.4 2009/12/13 04:57:16 nonaka Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -135,6 +135,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/nec_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr
+./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sony_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr
