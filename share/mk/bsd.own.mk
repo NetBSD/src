@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.611 2009/12/13 09:01:46 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.612 2009/12/13 09:10:16 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -966,8 +966,9 @@ EXTSRCUSRLIBDIR?=	${EXTSRCROOTDIR}/lib
 
 #
 # MAKEDIRTARGET dir target [extra make(1) params]
-#	run "cd $${dir} && ${MAKE} [params] $${target}", with a pretty message
+#	run "cd $${dir} && ${MAKEDIRTARGETENV} ${MAKE} [params] $${target}", with a pretty message
 #
+MAKEDIRTARGETENV?=
 MAKEDIRTARGET=\
 	@_makedirtarget() { \
 		dir="$$1"; shift; \
@@ -983,7 +984,7 @@ MAKEDIRTARGET=\
 		show=$${this:-.}; \
 		echo "$${target} ===> $${show%/}$${1:+	(with: $$@)}"; \
 		cd "$${real}" \
-		&& ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
+		&& ${MAKEDIRTARGETENV} ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
 	}; \
 	_makedirtarget
 
