@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.12 2009/12/13 11:03:33 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.13 2009/12/13 11:10:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.12 2009/12/13 11:03:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.13 2009/12/13 11:10:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.12 2009/12/13 11:03:33 tsutsui Ex
 #include <sgimips/sgimips/clockvar.h>
 
 struct mcclock_mace_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	struct todr_chip_handle sc_todrch;
 
@@ -94,12 +94,12 @@ struct mcclock_mace_softc {
 
 static struct mcclock_mace_softc *mace0 = NULL;
 
-static int	mcclock_mace_match(struct device *, struct cfdata *, void *);
-static void	mcclock_mace_attach(struct device*, struct device *, void *);
+static int	mcclock_mace_match(device_t, cfdata_t, void *);
+static void	mcclock_mace_attach(device_t, device_t, void *);
 
-static int	mcclock_mace_gettime_ymdhms(struct todr_chip_handle *,
+static int	mcclock_mace_gettime_ymdhms(todr_chip_handle_t,
     struct clock_ymdhms *);
-static int	mcclock_mace_settime_ymdhms(struct todr_chip_handle *,
+static int	mcclock_mace_settime_ymdhms(todr_chip_handle_t,
     struct clock_ymdhms *);
 
 unsigned int	ds1687_read(void *arg, unsigned int addr);
@@ -108,21 +108,23 @@ void		ds1687_write(void *arg, unsigned int addr, unsigned int data);
 void		mcclock_poweroff(void);
 
 
-CFATTACH_DECL(mcclock_mace, sizeof(struct mcclock_mace_softc),
+CFATTACH_DECL_NEW(mcclock_mace, sizeof(struct mcclock_mace_softc),
     mcclock_mace_match, mcclock_mace_attach, NULL, NULL);
 
 static int
-mcclock_mace_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_mace_match(device_t parent, cfdata_t cf, void *aux)
 {
+
 	return 1;
 }
 
 void
-mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
+mcclock_mace_attach(device_t parent, device_t self, void *aux)
 {
-	struct mcclock_mace_softc *sc = (void *)self;
+	struct mcclock_mace_softc *sc = device_private(self);
 	struct mace_attach_args *maa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_st = maa->maa_st;
 	/* XXX should be bus_space_map() */
 	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
@@ -161,25 +163,23 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 unsigned int
 ds1687_read(void *arg, unsigned int addr)
 {
-	struct mcclock_mace_softc *sc = (struct mcclock_mace_softc *)arg;
+	struct mcclock_mace_softc *sc = arg;
 
-	return (bus_space_read_1(sc->sc_st, sc->sc_sh, addr));
+	return bus_space_read_1(sc->sc_st, sc->sc_sh, addr);
 }
 
 void
 ds1687_write(void *arg, unsigned int addr, unsigned int data)
 {
-	struct mcclock_mace_softc *sc = (struct mcclock_mace_softc *)arg;
+	struct mcclock_mace_softc *sc = arg;
 
 	bus_space_write_1(sc->sc_st, sc->sc_sh, addr, data);
 }
 
 static int
-mcclock_mace_gettime_ymdhms(struct todr_chip_handle *todrch,
-    struct clock_ymdhms *dt)
+mcclock_mace_gettime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 {
-	struct mcclock_mace_softc *sc =
-	    (struct mcclock_mace_softc *)todrch->cookie;
+	struct mcclock_mace_softc *sc = todrch->cookie;
 	ds1687_todregs regs;
 	int s;
 
@@ -196,15 +196,13 @@ mcclock_mace_gettime_ymdhms(struct todr_chip_handle *todrch,
 	dt->dt_year = FROMBCD(regs[DS1687_SOFT_YEAR]) +
 	    (100 * FROMBCD(regs[DS1687_SOFT_CENTURY]));
 
-	return (0);
+	return 0;
 }
 
 static int
-mcclock_mace_settime_ymdhms(struct todr_chip_handle *todrch,
-    struct clock_ymdhms *dt)
+mcclock_mace_settime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 {
-	struct mcclock_mace_softc *sc =
-	    (struct mcclock_mace_softc *)todrch->cookie;
+	struct mcclock_mace_softc *sc = todrch->cookie;
 	ds1687_todregs regs;
 	int s;
 
@@ -222,7 +220,7 @@ mcclock_mace_settime_ymdhms(struct todr_chip_handle *todrch,
 	DS1687_PUTTOD(sc, &regs);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -254,5 +252,6 @@ mcclock_poweroff(void)
 	ds1687_write(mace0, DS1687_BANK1_XCTRL4A, xctl_a | DS1687_X4A_PAB);
 	ds1687_write(mace0, DS1687_CONTROLA, a);
 	wbflush();
-	while(1);
+	for (;;)
+		;
 }
