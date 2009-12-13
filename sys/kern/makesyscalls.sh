@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.91 2009/11/26 17:23:48 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.92 2009/12/13 04:47:45 matt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -440,6 +440,12 @@ function parseline() {
 		funcname=funcstdname
 		wantrename=0
 	}
+	if (returntype == "quad_t" || returntype == "off_t") {
+		if (sycall_flags == "0")
+			sycall_flags = "SYCALL_RET_64";
+		else
+			sycall_flags = "SYCALL_RET_64 | " sycall_flags;
+	}
 
 	if (funcalias == "") {
 		funcalias=funcname
@@ -473,6 +479,7 @@ function parseline() {
 	# and do not need argument structures built.
 
 	isvarargs = 0;
+	args64 = 0;
 	while (f <= end) {
 		if ($f == "...") {
 			f++;
@@ -501,9 +508,18 @@ function parseline() {
 		} else {
 			argalign++;
 		}
+		if (argtype[argc] == "quad_t" || argtype[argc] == "off_t") {
+			if (sycall_flags == "0")
+				sycall_flags = "SYCALL_ARG"argc-1"_64";
+			else
+				sycall_flags = "SYCALL_ARG"argc-1"_64 | " sycall_flags;
+			args64++;
+		}
 		argname[argc]=$f;
 		f += 2;			# skip name, and any comma
 	}
+	if (args64 > 0)
+		sycall_flags = "SYCALL_NARGS64_VAL("args64") | " sycall_flags;
 	# must see another argument after varargs notice.
 	if (isvarargs) {
 		if (argc == varargc)
