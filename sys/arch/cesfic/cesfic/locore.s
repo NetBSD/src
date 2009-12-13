@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 2009/12/11 18:28:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 2009/12/13 11:24:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -245,7 +245,7 @@ Lmemok:
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
 /* configure kernel and lwp0 VA space so we can get going */
-	.globl	_Sysseg, _pmap_bootstrap, _avail_start
+	.globl	_Sysseg_pa, _pmap_bootstrap, _avail_start
 #if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
@@ -267,9 +267,8 @@ Lstart2:
 /*
  * Prepare to enable MMU.
  */
-	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 	subl	#KERNBASE, %d1
 
 	RELOC(mmutype, %a0)
