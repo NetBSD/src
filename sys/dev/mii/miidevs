@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.90 2009/11/18 23:00:46 bouyer Exp $
+$NetBSD: miidevs,v 1.91 2009/12/13 19:20:17 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -223,6 +223,7 @@ model xxMARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
 model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E6060		0x0008 Marvell 88E6060 10/100 5-port PHY switch
+model xxMARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
