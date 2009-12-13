@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.186 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: bsd.sys.mk,v 1.187 2009/12/13 18:40:50 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -200,7 +200,9 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
 
 .ifdef YHEADER
+.if empty(.MAKEFLAGS:M-n)
 .y.h: ${.TARGET:.h=.c}
+.endif
 .endif
 
 .endif	# !defined(_BSD_SYS_MK_)
