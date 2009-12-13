@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sysvbfs.c,v 1.3 2009/12/03 14:27:17 pooka Exp $	*/
+/*	$NetBSD: rump_sysvbfs.c,v 1.4 2009/12/13 21:16:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,7 @@ main(int argc, char *argv[])
 	    canon_dev, canon_dir);
 	rv = p2k_run_diskfs(MOUNT_SYSVBFS, canon_dev, part, canon_dir, mntflags,
 	    &args, sizeof(args), 0);
+	ukfs_part_release(part);
 	if (rv)
 		err(1, "mount");
 
