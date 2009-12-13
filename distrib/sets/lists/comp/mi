@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1344 2009/12/05 22:43:34 pooka Exp $
+#	$NetBSD: mi,v 1.1345 2009/12/13 20:46:10 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2369,6 +2369,7 @@
 ./usr/lib/libfetch_g.a				-unknown-		debuglib
 ./usr/lib/libfetch_p.a				comp-c-proflib		profile
 ./usr/lib/libfl.a				comp-c-lib
+./usr/lib/libfl_g.a				-unknown-		debuglib
 ./usr/lib/libfl_p.a				comp-c-proflib		profile
 ./usr/lib/libform.a				comp-c-lib
 ./usr/lib/libform_g.a				-unknown-		debuglib
@@ -2496,7 +2497,7 @@
 ./usr/lib/libp2k_g.a				-unknown-		debuglib
 ./usr/lib/libp2k_p.a				comp-puffs-proflib	profile
 ./usr/lib/libpam.a				comp-c-lib		pam
-./usr/lib/libpam_g.a				-unknown-		debuglib
+./usr/lib/libpam_g.a				-unknown-		pam,debuglib
 ./usr/lib/libpcap.a				comp-c-lib
 ./usr/lib/libpcap_g.a				-unknown-		debuglib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
@@ -2651,11 +2652,11 @@
 ./usr/lib/libskey_g.a				-unknown-		debuglib,skey
 ./usr/lib/libskey_p.a				comp-c-proflib		profile,skey
 ./usr/lib/libsl.a				comp-krb5-lib		kerberos
-./usr/lib/libsl_g.a				-unknown-		debuglib
+./usr/lib/libsl_g.a				-unknown-		kerberos,debuglib
 ./usr/lib/libsl_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-krb5-lib		kerberos
-./usr/lib/libss_g.a				-unknown-		debuglib
+./usr/lib/libss_g.a				-unknown-		kerberos,debuglib
 ./usr/lib/libss_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libssh.a				comp-c-lib		crypto
 ./usr/lib/libssh_g.a				-unknown-		debuglib
@@ -2695,7 +2696,7 @@
 ./usr/lib/libutil_p.a				comp-c-proflib		profile
 ./usr/lib/libuutil.a				comp-zfs-lib		zfs
 ./usr/lib/libuutil_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libvers_g.a				-unknown-		debuglib
+./usr/lib/libvers_g.a				-unknown-		kerberos,debuglib
 ./usr/lib/libwrap.a				comp-c-lib
 ./usr/lib/libwrap_g.a				-unknown-		debuglib
 ./usr/lib/libwrap_p.a				comp-c-proflib		profile
