@@ -1,0 +1,105 @@
+<html lang="en">
+<head>
+<title>Sntp User's Manual</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Sntp User's Manual">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="top" href="#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<h1 class="settitle">Sntp User's Manual</h1>
+<div class="node">
+<a name="Top"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Description">sntp Description</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
+
+</div>
+
+<h2 class="unnumbered">Simple Network Time Protocol User Manual</h2>
+
+<p>This document describes the use of the NTP Project's <code>sntp</code> program,
+that can be used to query a Network Time Protocol (NTP) server and
+display the time offset of the system clock relative to the server
+clock.  Run as root, it can correct the system clock to this offset as
+well.  It can be run as an interactive command or from a cron job.
+
+  <p>This document applies to version 4.2.6 of <code>sntp</code>.
+
+  <p>The program implements the SNTP protocol as defined by the draft NTPv4
+IETF specification.
+
+  <div class="shortcontents">
+<h2>Short Contents</h2>
+<ul>
+<a href="#Top">Simple Network Time Protocol User Manual</a>
+</ul>
+</div>
+
+<ul class="menu">
+<li><a accesskey="1" href="#sntp-Description">sntp Description</a>:             Description
+* sntp Invocation::                Invoking sntp
+<li><a accesskey="2" href="#Usage">Usage</a>:                        Usage
+</ul>
+
+<div class="node">
+<a name="sntp-Description"></a>
+<p><hr>
+Next:&nbsp;<a rel="next" accesskey="n" href="#Usage">Usage</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<!-- node-name,  next,  previous,  up -->
+<h3 class="section">Description</h3>
+
+<p>By default, <code>sntp</code> writes the local data and time (i.e., not UTC) to the
+standard output in the format:
+
+<pre class="example">     1996 Oct 15 20:17:25.123 +4.567 +/- 0.089 secs
+</pre>
+  <p>where the +4.567 +/- 0.089 secs indicates the time offset and
+error bound of the system clock relative to the server clock.
+
+<!-- @include sntp-opts.texi -->
+<div class="node">
+<a name="Usage"></a>
+<p><hr>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Description">sntp Description</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+
+</div>
+
+<!-- node-name,  next,  previous,  up -->
+<h3 class="section">Usage</h3>
+
+<p>The simplest use of this program is as an unprivileged command to
+check the current time, offset, and error in the local clock. 
+For example:
+
+<pre class="example">     sntp ntpserver.somewhere
+</pre>
+  <p>With suitable privilege, it can be run as a command or in a
+<code>crom</code> job to reset the local clock from a reliable server, like
+the <code>ntpdate</code> and <code>rdate</code> commands. 
+For example:
+
+<pre class="example">     sntp -a ntpserver.somewhere
+</pre>
+  </body></html>
+

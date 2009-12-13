@@ -1,0 +1,140 @@
+#! /bin/sh
+
+LOGF=make.log
+IAM=`hostname || uname -n`
+MYNAME=`IFS=. ; set $IAM ; echo $1`
+SIG=
+
+case "$1" in
+ 0.*)
+    SIG=$1
+    shift
+    CONFIG_ARGS="$@"
+    KEY=`sed -e q < .buildkey-$MYNAME`
+    case "$SIG" in
+     $KEY) ;;
+     *)
+	echo "Wrong directory for build on host $IAM"
+	echo "This is <`pwd`>"
+	echo "SIG is <$SIG>"
+	echo "KEY is <$KEY>"
+        exit 1
+        ;;
+    esac
+    ;;
+ *)
+    CONFIG_ARGS="$@"
+    ;;
+esac
+
+#set -e
+#set -x
+
+# scripts/cvo.sh invokes config.guess, and we want it to use the copy
+# in the top directory (alongside build) if there's not another
+# config.guess earlier on the path, so we invoke it using env to append
+# . to the PATH.
+
+CVO=`env PATH="$PATH:." scripts/cvo.sh @cvo@`
+case "$CVO" in
+ *-*-*-*) "echo scripts/cvo.sh returned <$CVO>, which makes no sense to me."
+    exit 1
+    ;;
+ *-*-*) ;;
+ *) echo "scripts/cvo.sh returned <$CVO>, which makes no sense to me."
+    exit 1
+    ;;
+esac
+
+case "$IAM" in
+ *.udel.edu)
+    BASEDIR=A.$MYNAME
+    CONFIG_ARGS="$CONFIG_ARGS --enable-local-libopts"
+    case "$CVO" in
+     *-*-ultrix*)
+	CONFIG_ARGS="$CONFIG_ARGS --with-libregex=/usr/local"
+	;;
+    esac
+    ;;
+ *)
+    BASEDIR=A.$CVO
+    ;;
+esac
+
+KEYSUF=""
+
+case "$CONFIG_ARGS" in
+ *--with-crypto=autokey*)
+    KEYSUF="-autokey"
+    ;;
+ *--without-crypto*)
+    KEYSUF="-noopenssl"
+    ;;
+esac
+
+case "$CONFIG_ARGS" in
+ *--disable-all-clocks*)
+    KEYSUF="$KEYSUF-no-refclocks"
+    ;;
+esac
+
+case "$CONFIG_ARGS" in
+ *--disable-debugging*)
+    KEYSUF="$KEYSUF-nodebug"
+    ;;
+esac
+
+CCSUF=""
+
+case "$CC" in
+ '') ;;
+ *) CCSUF="-$CC"
+    ;;
+esac
+
+BDIR="$BASEDIR$KEYSUF$CCSUF"
+
+[ -d "$BDIR" ] || mkdir $BDIR
+[ -f "$BDIR/.buildcvo" ] || echo $CVO > $BDIR/.buildcvo
+[ -f "$BDIR/.buildhost" ] || echo $IAM > $BDIR/.buildhost
+
+
+cd $BDIR
+
+#
+# Make sure we have a nice that works.
+# To disable use of nice make a dummy nice script such
+# as the heredoc a few lines below and set BNICE to its
+# path.
+# 
+#
+nice true && NICEB=nice
+nice true || {
+	NICEB=./.nicebuild-$MYNAME-$SIG
+    	cat > .nicebuild-$MYNAME-$SIG <<-HEREDOC
+		#! /bin/sh
+		shift
+		\$*
+HEREDOC
+    	chmod +x .nicebuild-$MYNAME-$SIG
+}
+
+
+(
+[ -f config.status ] || $NICEB -7 ../configure \
+			--cache-file=../config.cache-$IAM \
+			$CONFIG_ARGS
+
+$NICEB -5 ./config.status
+
+case "$MAKE" in
+ '') $NICEB -14 make && $NICEB -10 make check
+     ;;
+ *)  $NICEB -14 $MAKE && $NICEB -10 $MAKE check
+     ;;
+esac
+) > $LOGF 2>&1
+
+
+# clean up if we made a dummy nice script
+[ -f .nicebuild-$MYNAME-$SIG ] && rm .nicebuild-$MYNAME-$SIG

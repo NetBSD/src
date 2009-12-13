@@ -1,0 +1,412 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Directory separator character, usually / or \\ */
+#undef DIR_SEP
+
+/* fopen(3) accepts a 'b' in the mode flag */
+#undef FOPEN_BINARY_FLAG
+
+/* fopen(3) accepts a 't' in the mode flag */
+#undef FOPEN_TEXT_FLAG
+
+/* What is getsockname()'s socklen type? */
+#undef GETSOCKNAME_SOCKLEN_TYPE
+
+/* Define to 1 if you have the `atexit' function. */
+#undef HAVE_ATEXIT
+
+/* Define to 1 if you have the `canonicalize_file_name' function. */
+#undef HAVE_CANONICALIZE_FILE_NAME
+
+/* Define this if /dev/zero is readable device */
+#undef HAVE_DEV_ZERO
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
+
+/* inline keyword or macro available */
+#undef HAVE_INLINE
+
+/* Define to 1 if the system has the type `int16_t'. */
+#undef HAVE_INT16_T
+
+/* Define to 1 if the system has the type `int32_t'. */
+#undef HAVE_INT32_T
+
+/* Define to 1 if the system has the type `int8_t'. */
+#undef HAVE_INT8_T
+
+/* Define to 1 if the system has the type `intptr_t'. */
+#undef HAVE_INTPTR_T
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `gen' library (-lgen). */
+#undef HAVE_LIBGEN
+
+/* Define to 1 if you have the <libgen.h> header file. */
+#undef HAVE_LIBGEN_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* sntp does not care about 'nice' */
+#undef HAVE_NO_NICE
+
+/* Define this if pathfind(3) works */
+#undef HAVE_PATHFIND
+
+/* Define to 1 if the system has the type `pid_t'. */
+#undef HAVE_PID_T
+
+/* Define this if we have a functional realpath(3C) */
+#undef HAVE_REALPATH
+
+/* Define to 1 if you have the <runetype.h> header file. */
+#undef HAVE_RUNETYPE_H
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#undef HAVE_SETJMP_H
+
+/* Define to 1 if the system has the type `size_t'. */
+#undef HAVE_SIZE_T
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `socket' function. */
+#undef HAVE_SOCKET
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if stdbool.h conforms to C99. */
+#undef HAVE_STDBOOL_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strchr' function. */
+#undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define this if strftime() works */
+#undef HAVE_STRFTIME
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strrchr' function. */
+#undef HAVE_STRRCHR
+
+/* Define to 1 if you have the `strsignal' function. */
+#undef HAVE_STRSIGNAL
+
+/* Does a system header define struct sockaddr_storage? */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
+
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/limits.h> header file. */
+#undef HAVE_SYS_LIMITS_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
+
+/* Define to 1 if you have the <sys/procset.h> header file. */
+#undef HAVE_SYS_PROCSET_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/stropts.h> header file. */
+#undef HAVE_SYS_STROPTS_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if the system has the type `s_char'. */
+#undef HAVE_S_CHAR
+
+/* sntp does not care about TTY stuff */
+#undef HAVE_TERMIOS
+
+/* Define to 1 if the system has the type `uint16_t'. */
+#undef HAVE_UINT16_T
+
+/* Define to 1 if the system has the type `uint32_t'. */
+#undef HAVE_UINT32_T
+
+/* Define to 1 if the system has the type `uint8_t'. */
+#undef HAVE_UINT8_T
+
+/* Define to 1 if the system has the type `uintptr_t'. */
+#undef HAVE_UINTPTR_T
+
+/* Define to 1 if the system has the type `uint_t'. */
+#undef HAVE_UINT_T
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
+/* Define to 1 if you have the <values.h> header file. */
+#undef HAVE_VALUES_H
+
+/* Define to 1 if you have the <varargs.h> header file. */
+#undef HAVE_VARARGS_H
+
+/* Define to 1 if you have the `vfork' function. */
+#undef HAVE_VFORK
+
+/* Define to 1 if you have the <vfork.h> header file. */
+#undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if the system has the type `wchar_t'. */
+#undef HAVE_WCHAR_T
+
+/* Define to 1 if the system has the type `wint_t'. */
+#undef HAVE_WINT_T
+
+/* Define to 1 if `fork' works. */
+#undef HAVE_WORKING_FORK
+
+/* Define to 1 if `vfork' works. */
+#undef HAVE_WORKING_VFORK
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
+
+/* Does struct sockaddr_storage have __ss_family? */
+#undef HAVE___SS_FAMILY_IN_SS
+
+
+	/* Handle sockaddr_storage.__ss_family */
+	#ifdef HAVE___SS_FAMILY_IN_SS
+	# define ss_family __ss_family
+	#endif /* HAVE___SS_FAMILY_IN_SS */
+    
+
+
+/* Does struct sockaddr_storage have __ss_len? */
+#undef HAVE___SS_LEN_IN_SS
+
+
+	/* Handle sockaddr_storage.__ss_len */
+	#ifdef HAVE___SS_LEN_IN_SS
+	# define ss_len __ss_len
+	#endif /* HAVE___SS_LEN_IN_SS */
+    
+
+
+/* Do we need to fix in6isaddr? */
+#undef ISC_PLATFORM_FIXIN6ISADDR
+
+/* have struct if_laddrconf? */
+#undef ISC_PLATFORM_HAVEIF_LADDRCONF
+
+/* have struct if_laddrreq? */
+#undef ISC_PLATFORM_HAVEIF_LADDRREQ
+
+/* have struct in6_pktinfo? */
+#undef ISC_PLATFORM_HAVEIN6PKTINFO
+
+/* have IPv6? */
+#undef ISC_PLATFORM_HAVEIPV6
+
+/* have sin6_scope_id? */
+#undef ISC_PLATFORM_HAVESCOPEID
+
+/* missing in6addr_any? */
+#undef ISC_PLATFORM_NEEDIN6ADDRANY
+
+/* Do we need netinet6/in6.h? */
+#undef ISC_PLATFORM_NEEDNETINET6IN6H
+
+/* ISC: provide inet_ntop() */
+#undef ISC_PLATFORM_NEEDNTOP
+
+/* Declare in_port_t? */
+#undef ISC_PLATFORM_NEEDPORTT
+
+/* ISC: provide inet_pton() */
+#undef ISC_PLATFORM_NEEDPTON
+
+/* Do we need netinet6/in6.h? */
+#undef LWRES_PLATFORM_NEEDNETINET6IN6H
+
+/* Do we need an s_char typedef? */
+#undef NEED_S_CHAR_TYPEDEF
+
+/* Define this if optional arguments are disallowed */
+#undef NO_OPTIONAL_OPT_ARGS
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* name of regex header file */
+#undef REGEX_HEADER
+
+/* The size of `char*', as computed by sizeof. */
+#undef SIZEOF_CHARP
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of `signed char', as computed by sizeof. */
+#undef SIZEOF_SIGNED_CHAR
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* canonical system (cpu-vendor-os) of where we should run */
+#undef STR_SYSTEM
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#undef VERSION
+
+/* ISC: Want IPv6? */
+#undef WANT_IPV6
+
+/* Define this if a working libregex can be found */
+#undef WITH_LIBREGEX
+
+/* Define to 1 if type `char' is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+# undef __CHAR_UNSIGNED__
+#endif
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork
