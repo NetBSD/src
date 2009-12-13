@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.91 2009/12/13 08:25:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.92 2009/12/13 09:01:45 mrg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
 
 WARNS?=4
+
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
 # We are not building this with PIE
 PIE_CFLAGS=
