@@ -1,58 +1,33 @@
-#	$NetBSD: Makefile.compat,v 1.6 2009/12/13 08:25:20 mrg Exp $
+#	$NetBSD: Makefile.compat,v 1.7 2009/12/13 09:27:34 mrg Exp $
 
-COPTS+=			-m32
-CPUFLAGS+=		-m32
-LDADD+=			-m32
-MKDEPFLAGS+=		-m32
+#
+# Makefile fragment to help implement a multilib set of libraries
+#
+# expects MLIBDIR to be set to the extra path component
+#
 
-# XXX ugly
-.if ${MACHINE_ARCH} == "sparc64"
-LD+=			-m elf32_sparc
-MLIBDIR=		sparc
-.elif ${MACHINE_ARCH} == "x86_64"
-LD+=			-m elf_i386
-MLIBDIR=		i386
-.endif
+.ifndef _COMPAT_OPTIONS_MK_ # {
+_COMPAT_OPTIONS_MK_=1
 
 LIBDIR=			/usr/lib/${MLIBDIR}
 SHLIBDIR=		/usr/lib/${MLIBDIR}
 SHLIBINSTALLDIR=	/usr/lib/${MLIBDIR}
 
-COMMON_MACHINE_ARCH=	${MLIBDIR}
-LIBC_MACHINE_ARCH=	${MLIBDIR}
-BFD_MACHINE_ARCH=	${MLIBDIR}
-CRYPTO_MACHINE_CPU=	${MLIBDIR}
-KVM_MACHINE_ARCH=	${MLIBDIR}
-PTHREAD_MACHINE_ARCH=	${MLIBDIR}
-LDELFSO_MACHINE_CPU=	${MLIBDIR}
-
-_GCC_CRTBEGIN?=		${DESTDIR}/usr/lib/${MLIBDIR}/crtbegin.o
-_GCC_CRTBEGINS?=	${DESTDIR}/usr/lib/${MLIBDIR}/crtbeginS.o
-_GCC_CRTEND?=		${DESTDIR}/usr/lib/${MLIBDIR}/crtend.o
-_GCC_CRTENDS?=		${DESTDIR}/usr/lib/${MLIBDIR}/crtendS.o
-_GCC_CRTDIR?=		${DESTDIR}/usr/lib/${MLIBDIR}
-_GCC_LIBGCCDIR?=	${DESTDIR}/usr/lib/${MLIBDIR}
+_GCC_CRTBEGIN=		${DESTDIR}/usr/lib/${MLIBDIR}/crtbegin.o
+_GCC_CRTBEGINS=		${DESTDIR}/usr/lib/${MLIBDIR}/crtbeginS.o
+_GCC_CRTEND=		${DESTDIR}/usr/lib/${MLIBDIR}/crtend.o
+_GCC_CRTENDS=		${DESTDIR}/usr/lib/${MLIBDIR}/crtendS.o
+_GCC_CRTDIR=		${DESTDIR}/usr/lib/${MLIBDIR}
+_GCC_LIBGCCDIR=		${DESTDIR}/usr/lib/${MLIBDIR}
 
 NOSHARE=	# defined
-NONLS=	# defined
+NOLINT=		# defined
+NONLS=		# defined
+NOMAN=		# defined
+NOINFO=		# defined
 NOCHECKVER=	# defined
-
-LIBC_DIR=	${NETBSDSRCDIR}/compat/lib/libc
 
 # ld.elf_so
 SHLINKINSTALLDIR=	/libexec
 
-# XXX
-EXTRALIBDIRS=	${DESTDIR}${LIBDIR} ${DESTDIR}${LIBDIR}/i18n ${DESTDIR}${LIBDIR}/security
-.PRECIOUS:      ${EXTRALIBDIRS}
-install:	${EXTRALIBDIRS} .WAIT
-${EXTRALIBDIRS}: .EXEC
-	@if [ ! -d ${.TARGET} ] ; then \
-		${_MKSHMSG_CREATE} ${.TARGET}; \
-		${_MKSHECHO} ${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
-		${.TARGET}; \
-		${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
-		${.TARGET}; \
-	fi
-# Make sure the base dir is created first.
-${DESTDIR}${LIBDIR}/i18n ${DESTDIR}${LIBDIR}/security: ${DESTDIR}${LIBDIR}
+.endif # _COMPAT_OPTIONS_MK_ }
