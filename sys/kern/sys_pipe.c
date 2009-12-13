@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.124 2009/12/13 18:27:02 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.125 2009/12/13 20:02:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.124 2009/12/13 18:27:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.125 2009/12/13 20:02:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,7 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	size_t nread = 0;
 	size_t size;
 	size_t ocnt;
+	int slept = 0;
 
 	mutex_enter(lock);
 	++rpipe->pipe_busy;
@@ -566,6 +567,7 @@ again:
 		if ((rpipe->pipe_state & PIPE_DIRECTR) != 0)
 			goto again;
 
+#if 1   /* XXX (dsl) I'm sure these aren't needed here ... */
 		/*
 		 * We want to read more, wake up select/poll.
 		 */
@@ -575,11 +577,18 @@ again:
 		 * If the "write-side" is blocked, wake it up now.
 		 */
 		cv_broadcast(&rpipe->pipe_wcv);
+#endif
+
+		if (slept) {
+			error = ERESTART;
+			goto unlocked_error;
+		}
 
 		/* Now wait until the pipe is filled */
 		error = cv_wait_sig(&rpipe->pipe_rcv, lock);
 		if (error != 0)
 			goto unlocked_error;
+		slept = 1;
 		goto again;
 	}
 
@@ -814,6 +823,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct pipebuf *bp;
 	kmutex_t *lock;
 	int error;
+	int slept = 0;
 
 	/* We want to write to our peer */
 	rpipe = (struct pipe *) fp->f_data;
@@ -987,6 +997,11 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			if (bp->cnt)
 				pipeselwakeup(wpipe, wpipe, POLL_IN);
 
+			if (slept) {
+				error = ERESTART;
+				break;
+			}
+
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 			(void)pipelock(wpipe, 0);
@@ -1000,6 +1015,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				error = EPIPE;
 				break;
 			}
+			slept = 1;
 		}
 	}
 
