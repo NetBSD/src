@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2009/07/20 17:30:54 christos Exp $
+# $NetBSD: Makefile.inc,v 1.11 2009/12/13 08:25:20 mrg Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -27,7 +27,13 @@
 
 USE_FORT?= yes	# network client software *and* authentication software
 
-CPPFLAGS+= -DOPENPAM_MODULES_DIR=\"/usr/lib/security\"
+.if defined(MLIBDIR)
+MODLIBDIR=/usr/lib/${MLIBDIR}/security
+.else
+MODLIBDIR=/usr/lib/security
+.endif
+
+CPPFLAGS+= -DOPENPAM_MODULES_DIR=\"${MODLIBDIR}\"
 # No debugging
 #CPPFLAGS+= -DDEBUG
 

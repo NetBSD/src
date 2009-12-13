@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.13 2008/10/26 07:05:33 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2009/12/13 08:25:20 mrg Exp $
 
-LD32DIR?=	none
+MLIBDIR?=	none
 
-.if (${MACHINE_ARCH} == "i386" || ${LD32DIR} == "i386")
+.if (${MACHINE_ARCH} == "i386" || ${MLIBDIR} == "i386")
 SRCS+=	i386_get_ldt.c i386_set_ldt.c \
 	i386_iopl.c i386_get_ioperm.c i386_set_ioperm.c \
 	i386_vm86.c i386_pmc.c i386_mtrr.c
