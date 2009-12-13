@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/09/14 11:56:27 jmcneill Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2009/12/13 23:01:42 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -85,10 +85,17 @@ clearit(void)
 		clear_pc_screen();
 }
 
+static void
+alldone(void)
+{
+	pxe_fini();
+	clearit();
+}
+
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto, 0, clearit) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, alldone) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
