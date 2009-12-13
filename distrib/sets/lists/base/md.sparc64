@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.68 2009/11/08 15:30:21 skrll Exp $
+# $NetBSD: md.sparc64,v 1.69 2009/12/13 09:28:41 mrg Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -190,8 +190,8 @@
 ./usr/lib/sparc/libssl.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	compat,pic
-./usr/lib/sparc/libsupc++.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libsupc++.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libsupc++.so.1			base-compat-shlib	obsolete
+./usr/lib/sparc/libsupc++.so.1.0		base-compat-shlib	obsolete
 ./usr/lib/sparc/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libtermcap.so.0.6		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libtermlib.so.0			base-compat-shlib	compat,pic
