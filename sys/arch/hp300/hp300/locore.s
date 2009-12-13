@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.151 2009/12/13 11:24:02 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.152 2009/12/13 12:21:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -205,7 +205,7 @@ Lhaveihpib:
 
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
 	movl	#INTIOBASE+MMUBASE,%a1
-	movl	#0x200,%d0		| data freeze bit
+	movl	#DC_FREEZE,%d0		| data freeze bit
 	movc	%d0,%cacr		|   only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
@@ -528,7 +528,7 @@ Lhighcode:
 	movl	#0x8000,%d0
 #endif
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1:l		| forced not be pc-relative
 Lmotommu2:

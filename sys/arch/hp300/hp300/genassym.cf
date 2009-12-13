@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2009/12/10 05:10:01 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.41 2009/12/13 12:21:26 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -203,6 +203,8 @@ define	MMU_FAULT		MMU_FAULT
 define	MMU_CEN			MMU_CEN
 define	MMU_IEN			MMU_IEN
 define	MMU_FPE			MMU_FPE
+define	DC_FREEZE		DC_FREEZE
+define	CACHE40_ON		CACHE40_ON
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
