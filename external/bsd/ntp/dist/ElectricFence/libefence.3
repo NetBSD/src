@@ -1,0 +1,382 @@
+.TH efence 3 27-April-1993
+.SH NAME
+efence \- Electric Fence Malloc Debugger
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdlib.h>
+.ft
+.fi
+.LP
+.nf
+.ft B
+void * malloc (size_t size);
+.ft
+.fi
+.LP
+.nf
+.ft B
+void free (void *ptr);
+.ft
+.fi
+.LP
+.nf
+.ft B
+void * realloc (void *ptr, size_t size);
+.ft
+.fi
+.LP
+.nf
+.ft B
+void * calloc (size_t nelem, size_t elsize);
+.ft
+.fi
+.LP
+.nf
+.ft B
+void * memalign (size_t alignment, size_t size);
+.ft
+.fi
+.LP
+.nf
+.ft B
+void * valloc (size_t size);
+.ft
+.fi
+.LP
+.nf
+.ft B
+extern int EF_ALIGNMENT;
+.ft
+.fi
+.LP
+.nf
+.ft B
+extern int EF_PROTECT_BELOW;
+.ft
+.fi
+.LP
+.nf
+.ft B
+extern int EF_PROTECT_FREE;
+.ft
+.fi
+.SH DESCRIPTION
+.I Electric Fence
+helps you detect two common programming bugs:
+software that overruns the boundaries of a malloc() memory
+allocation, and software that touches a memory allocation that has been
+released by free(). Unlike other malloc() debuggers, Electric Fence will
+detect
+.I read
+accesses as well as writes, and it will pinpoint the exact instruction that
+causes an error. It has been in use at Pixar since 1987, and at many other
+sites for years.
+.LP
+Electric Fence uses the virtual memory hardware of your computer to place an
+inaccessible memory page immediately after (or before, at the user's option)
+each memory allocation. When software reads or writes this inaccessible page,
+the
+hardware issues a segmentation fault, stopping the program at the offending
+instruction. It is then trivial to find the erroneous statement using your
+favorite debugger. In a similar manner, memory that has been released by
+free() is made inaccessible, and any code that touches it will get a
+segmentation fault.
+.LP
+Simply linking your application with libefence.a will allow you to detect
+most, but not all, malloc buffer overruns and accesses of free memory.
+If you want to be reasonably sure that you've found
+.I all
+bugs of this type, you'll have to read and understand the rest of this
+man page.
+.SH USAGE
+Link your program with the library
+.B libefence.a .
+Make sure you are
+.I not
+linking with
+.B -lmalloc,
+.B -lmallocdebug,
+or with other malloc-debugger or malloc-enhancer libraries.
+You can only use one at a time.
+If your system administrator
+has installed Electric Fence for public use, you'll be able to use the
+.B -lefence
+argument to the linker, otherwise you'll have to put the path-name for
+.B libefence.a
+in the linker's command line.
+Some systems will require special arguments to the linker to assure that
+you are using the Electric Fence malloc() and not the one from your C library.
+On AIX systems, you may have to use the flags
+.br
+.B -bnso
+.B -bnodelcsect
+.B -bI:/lib/syscalls.exp
+.br
+On Sun systems running SunOS 4.X, you'll probably have to use
+.B -Bstatic.
+.LP
+Run your program
+.I using a debugger. 
+It's easier to work this way than to create a
+.B core
+file and post-mortem debug it. Electric Fence can create
+.I huge
+core files, and some operating systems will thus take minutes simply to dump
+core! Some operating systems will not create usable core files from programs
+that are linked with Electric Fence.
+If your program has one of the errors detected by Electric Fence, it will
+get a segmentation fault (SIGSEGV) at the offending instruction. Use the
+debugger to locate the erroneous statement, and repair it.
+.SH GLOBAL AND ENVIRONMENT VARIABLES
+Electric Fence has four configuration switches that can be enabled via
+the shell environment, or by setting the value of global integer variables
+using a debugger. These switches change what bugs Electric Fence will detect,
+so it's important that you know how to use them.
+.TP
+EF_ALIGNMENT
+This is an integer that specifies the alignment for any memory allocations
+that will be returned by malloc(), calloc(), and realloc().
+The value is specified in
+bytes, thus a value of 4 will cause memory to be aligned to 32-bit boundaries
+unless your system doesn't have a 8-bit characters. EF_ALIGNMENT is set to
+sizeof(int) by default, since that is generally the word-size of your CPU.
+If your program requires that allocations be aligned to 64-bit
+boundaries and you have a 32-bit
+.B int
+you'll have to set this value to 8. This is the case when compiling with the
+.B -mips2
+flag on MIPS-based systems such as those from SGI.
+The memory allocation that is returned by Electric Fence malloc() is aligned
+using the value in EF_ALIGNMENT, and
+.I its size the multiple of
+.I that value
+that is greater than or equal to the requested size.
+For this reason, you will sometimes want to set EF_ALIGNMENT to 0 (no
+alignment), so that
+you can detect overruns of less than your CPU's word size. Be sure to read
+the section
+.I WORD-ALIGNMENT AND OVERRUN DETECTION
+in this manual page before you try this.
+To change this value, set EF_ALIGNMENT in the shell environment to an
+integer value, or assign
+to the global integer variable EF_ALIGNMENT using a debugger.
+.TP
+EF_PROTECT_BELOW
+Electric Fence usually places an inaccessible page immediately after each
+memory allocation, so that software that runs past the end of the allocation
+will be detected. Setting EF_PROTECT_BELOW to 1 causes Electric Fence
+to place the inaccessible page
+.I before
+the allocation in the address space, so that under-runs will be detected
+instead of over-runs.
+When EF_PROTECT_BELOW is set, the EF_ALIGNMENT parameter is ignored.
+All allocations will be aligned to virtual-memory-page boundaries, and
+their size will be the exact size that was requested.
+To change this value, set EF_PROTECT_BELOW in the shell environment to an
+integer value, or assign to the global integer variable EF_PROTECT_BELOW using
+a debugger.
+.TP
+EF_PROTECT_FREE
+Electric Fence usually returns free memory to a pool from which it may be
+re-allocated. If you suspect that a program may be touching free memory,
+set EF_PROTECT_FREE to 1. This will cause Electric Fence to never re-allocate
+memory once it has been freed, so that any access to free memory will be
+detected. Some programs will use tremendous amounts of memory when this
+parameter is set.
+To change this value, set EF_PROTECT_FREE in the shell environment to an
+integer value, or assign to the global integer variable EF_PROTECT_FREE using
+a debugger.
+.TP
+EF_ALLOW_MALLOC_0
+By default, Electric Fence traps calls to malloc() with a size of zero, because
+they are often the result of a software bug. If EF_ALLOW_MALLOC_0 is non-zero,
+the software will not trap calls to malloc() with a size of zero.
+To change this value, set EF_ALLOC_MALLOC_0 in the shell environment to an
+integer value, or assign to the global integer variable EF_ALLOC_MALLOC_0 using
+a debugger.
+.SH WORD-ALIGNMENT AND OVERRUN DETECTION
+There is a conflict between the alignment restrictions that malloc() operates
+under and the debugging strategy used by Electric Fence. When detecting
+overruns, Electric Fence malloc() allocates two or more virtual memory
+pages for each allocation. The last page is made inaccessible in such a way
+that any read, write, or execute access will cause a segmentation fault.
+Then, Electric Fence malloc() will return an address such that the first
+byte after
+the end of the allocation is on the inaccessible page.
+Thus, any overrun
+of the allocation will cause a segmentation fault.
+.LP
+It follows that the
+address returned by malloc() is the address of the inaccessible page minus
+the size of the memory allocation.
+Unfortunately, malloc() is required to return
+.I word-aligned
+allocations, since many CPUs can only access a word when its address is aligned.
+The conflict happens when software makes a memory allocation using a size that
+is not a multiple of the word size, and expects to do word accesses to that
+allocation. The location of the inaccessible page is fixed by hardware at
+a word-aligned address. If Electric Fence malloc() is to return an aligned
+address, it must increase the size of the allocation to a multiple of the
+word size.
+In addition, the functions memalign() and valloc() must honor explicit
+specifications on the alignment of the memory allocation, and this, as well
+can only be implemented by increasing the size of the allocation.
+Thus, there will be situations in which the end of a memory allocation
+contains some padding space, and accesses of that padding space will not
+be detected, even if they are overruns.
+.LP
+Electric Fence provides the variable EF_ALIGNMENT so that the user can
+control the default alignment used by malloc(), calloc(), and realloc().
+To debug overruns as small as a single byte, you can set EF_ALIGNMENT to
+zero. This will result in Electric Fence malloc() returning unaligned
+addresses for allocations with sizes that are not a multiple of the word
+size. This is not a problem in most cases, because compilers must pad the
+size of objects so that alignment restrictions are honored when storing
+those objects in arrays. The problem surfaces when software allocates
+odd-sized buffers for objects that must be word-aligned. One case of this
+is software that allocates a buffer to contain a structure and a
+string, and the string has an odd size (this example was in a popular TIFF
+library). If word references are made to un-aligned buffers, you will see
+a bus error (SIGBUS) instead of a segmentation fault. The only way to fix
+this is to re-write the offending code to make byte references or not make
+odd-sized allocations, or to set EF_ALIGNMENT to the word size.
+.LP
+Another example of software incompatible with
+EF_ALIGNMENT < word-size
+is the strcmp() function and other string functions on SunOS (and probably
+Solaris), which make word-sized accesses to character strings, and may
+attempt to access up to three bytes beyond the end of a string. These
+result in a segmentation fault (SIGSEGV). The only way around this is to
+use versions of the string functions that perform byte references instead
+of word references.
+.SH INSTRUCTIONS FOR DEBUGGING YOUR PROGRAM
+.TP
+1.
+Link with libefence.a as explained above.
+.TP
+2.
+Run your program in a debugger and fix any overruns or accesses to free memory.
+.TP
+3.
+Quit the debugger.
+.TP
+4.
+Set EF_PROTECT_BELOW = 1 in the shell environment.
+.TP
+5.
+Repeat step 2, this time repairing underruns if they occur.
+.TP
+6.
+Quit the debugger.
+.TP
+7.
+Read the restrictions in the section on
+.I WORD-ALIGNMENT AND OVERRUN DETECTION.
+See if you can
+set EF_ALIGNMENT to 0 and repeat step 2. Sometimes this will be too much work,
+or there will be problems with library routines for which you don't have the
+source, that will prevent you from doing this.
+.SH MEMORY USAGE AND EXECUTION SPEED
+Since Electric Fence uses at least two virtual memory pages for each of its
+allocations, it's a terrible memory hog. I've sometimes found it necessary to
+add a swap file using swapon(8) so that the system would have enough virtual
+memory to debug my program. Also, the way we manipulate memory results in
+various cache and translation buffer entries being flushed with each call
+to malloc or free. The end result is that your program will be much slower
+and use more resources while you are debugging it with Electric Fence.
+.LP
+Don't leave libefence.a linked into production software! Use it only
+for debugging.
+.SH PORTING
+Electric Fence is written for ANSI C. You should be able to port it with
+simple changes to the Makefile and to page.c,
+which contains the memory management primitives .
+Many POSIX platforms will require only a re-compile.
+The operating system facilities required to port Electric Fence are:
+.IP
+A way to allocate memory pages
+.br
+A way to make selected pages inaccessible.
+.br
+A way to make the pages accessible again.
+.br
+A way to detect when a program touches an inaccessible page.
+.br
+A way to print messages.
+.LP
+Please e-mail me a copy of any changes you have to make, so that I can
+merge them into the distribution.
+.SH AUTHOR
+Bruce Perens
+.SH WARNINGS
+I have tried to do as good a job as I can on this software, but I doubt
+that it is even theoretically possible to make it bug-free.
+This software has no warranty. It will not detect some bugs that you might
+expect it to detect, and will indicate that some non-bugs are bugs.
+Bruce Perens and/or Pixar will not be liable to any claims resulting
+from the use of this software or the ideas within it.
+The entire responsibility for its use must
+be assumed by the user. If you use it and it results in loss of life
+and/or property, tough. If it leads you on a wild goose chase and you waste
+two weeks debugging something, too bad.
+If you can't deal with the above, please don't use the software! I've written
+this in an attempt to help other people, not to get myself sued or prosecuted.
+.SH LICENSE
+Copyright 1987-1995 Bruce Perens. All rights reserved.
+.br
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License, Version 2,
+as published by the Free Software Foundation. A copy of this license is
+distributed with this software in the file "COPYING".
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Read the
+file "COPYING" for more details.
+.SH CONTACTING THE AUTHOR
+.nf
+Bruce Perens
+c/o Pixar
+1001 West Cutting Blvd., Suite 200
+Richmond, CA 94804
+
+Telephone: 510-215-3502
+Fax: 510-236-0388
+Internet: Bruce@Pixar.com
+.fi
+.ft
+.SH FILES
+/dev/zero: Source of memory pages (via mmap(2)).
+.SH SEE ALSO
+malloc(3), mmap(2), mprotect(2), swapon(8)
+.SH DIAGNOSTICS
+Segmentation Fault: Examine the offending statement for violation of the
+boundaries of a memory allocation.
+.br
+Bus Error: See the section on
+.I WORD-ALIGNMENT AND OVERRUN DETECTION.
+in this manual page.
+.SH BUGS
+My explanation of the alignment issue could be improved.
+.LP
+Some Sun systems running SunOS 4.1 are reported to signal an access to a
+protected page with
+.B  SIGBUS
+rather than
+.B SIGSEGV,
+I suspect this is an undocumented feature of a particular Sun hardware
+version, not just the operating system.
+On these systems, eftest will fail with a bus error until you modify the
+Makefile to define
+.B PAGE_PROTECTION_VIOLATED_SIGNAL
+as
+.B SIGBUS.
+.LP
+There are, without doubt, other bugs and porting issues. Please contact me via
+e-mail if you have any bug reports, ideas, etc.
+.SH WHAT'S BETTER
+PURIFY, from Purify Systems, does a much better job than Electric Fence, and
+does much more. It's available at this writing on SPARC and HP.
+I'm not affiliated with Purify, I just think it's a wonderful product
+and you should check it out.
