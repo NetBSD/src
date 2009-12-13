@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2009/12/13 09:27:57 mrg Exp $
+$NetBSD: README,v 1.5 2009/12/13 17:58:27 snj Exp $
 
 
 Building multi- ABI libraries for NetBSD platforms.
@@ -6,7 +6,7 @@ Building multi- ABI libraries for NetBSD platforms.
 
 src/compat has a framework to (re)build the libraries shipped with
 NetBSD for a different ABI than the default for that platform.  This
-allow 32-bit libraries for the amd64 and sparc64 ports, and enables
+allows 32-bit libraries for the amd64 and sparc64 ports, and enables
 the mips64 port to support all three of old-style 32-bit ("o32"), the
 new 32-bit (default, "n32", 64-bit CPU required) or the 64-bit ABI.
 
@@ -16,7 +16,7 @@ underneath src/compat and rebuild the libraries with a different set
 of options.  Each platform wanting support should create their port
 subdirectory directly in src/compat, and then one subdirectory in here
 for each ABI required.  e.g., src/compat/amd64/i386 is where we build
-the 32-bit compat libraries for the amd64port.  In each of these
+the 32-bit compat libraries for the amd64 port.  In each of these
 subdirs, a small Makefile and makefile fragment should exist.  The
 Makefile should set BSD_MK_COMPAT_FILE to equal the fragment, and then
 include "../../Makefile.common".  Eg, amd64/i386/Makefile has:
@@ -28,7 +28,7 @@ include "../../Makefile.common".  Eg, amd64/i386/Makefile has:
 In the makefile fragment any changes to ABI flags are passed here
 and the MLIBDIR variable must be set to the subdirectory in /usr/lib
 where libraries for the ABI will be installed.  There are a couple of
-helper Makefile's around.  amd64/i386/bsd.i386.mk looks like:
+helper Makefiles around.  amd64/i386/bsd.i386.mk looks like:
 
 	LD+=			-m elf_i386
 	MLIBDIR=		i386
