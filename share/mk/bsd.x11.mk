@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.80 2009/11/11 16:35:45 tron Exp $
+#	$NetBSD: bsd.x11.mk,v 1.81 2009/12/13 05:04:37 nonaka Exp $
 
 .include <bsd.init.mk>
 
@@ -116,7 +116,8 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "sparc"	|| \
-    ${MACHINE} == "shark"
+    ${MACHINE} == "shark"	|| \
+    ${MACHINE} == "zaurus"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 			-fno-merge-constants
