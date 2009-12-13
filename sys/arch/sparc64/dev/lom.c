@@ -1,5 +1,5 @@
-/*	$NetBSD: lom.c,v 1.3 2009/11/28 04:14:27 nakayama Exp $	*/
-/*	$OpenBSD: lom.c,v 1.19 2009/11/10 22:26:48 kettenis Exp $	*/
+/*	$NetBSD: lom.c,v 1.4 2009/12/13 05:21:06 nakayama Exp $	*/
+/*	$OpenBSD: lom.c,v 1.20 2009/12/12 13:01:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.3 2009/11/28 04:14:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.4 2009/12/13 05:21:06 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -643,7 +643,7 @@ lom2_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 
 	error = tsleep(&lc, PZERO, "lom2rd", hz);
 	if (error)
-		aprint_error_dev(sc->sc_dev, "lom2_read failed\n");
+		lom_dequeue_cmd(sc, &lc);
 
 	*val = lc.lc_data;
 
