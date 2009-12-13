@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.24 2002/05/02 16:42:53 wiz Exp $
+#	$NetBSD: Makefile,v 1.25 2009/12/13 08:03:44 mrg Exp $
 
 .include <bsd.own.mk>
 
-.if ${OBJECT_FMT} == "ELF" && exists(${MACHINE_ARCH}_elf)
+.if ${OBJECT_FMT} == "ELF" && exists(${CSU_MACHINE_ARCH}_elf)
+SUBDIR=	${CSU_MACHINE_ARCH}_elf
+.elif ${OBJECT_FMT} == "ELF" && exists(${MACHINE_ARCH}_elf)
 SUBDIR=	${MACHINE_ARCH}_elf
 .elif ${OBJECT_FMT} == "ELF" && exists(${MACHINE_CPU}_elf)
 SUBDIR=	${MACHINE_CPU}_elf
