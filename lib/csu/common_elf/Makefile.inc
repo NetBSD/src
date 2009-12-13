@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2009/02/18 15:21:52 christos Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile.inc,v 1.32 2009/12/13 08:52:38 mrg Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -19,6 +17,8 @@ CPPFLAGS+=	-DDSO_HANDLE
 .if defined(HAVE_GCC) && ${HAVE_GCC} > 3
 CFLAGS+=	-fno-unit-at-a-time
 .endif
+
+.include <bsd.own.mk>
 
 .PATH:		${.CURDIR}/../common_elf
 
