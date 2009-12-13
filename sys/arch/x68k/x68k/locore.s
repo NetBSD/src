@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2009/12/11 18:28:35 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 2009/12/13 11:24:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -863,9 +863,8 @@ Lstart2:
  *
  * Is this all really necessary, or am I paranoid??
  */
-	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu1		| no, skip
