@@ -1,4 +1,9 @@
-#	$NetBSD: bsd.own.mk,v 1.610 2009/12/13 03:06:22 nakayama Exp $
+#	$NetBSD: bsd.own.mk,v 1.611 2009/12/13 09:01:46 mrg Exp $
+
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
