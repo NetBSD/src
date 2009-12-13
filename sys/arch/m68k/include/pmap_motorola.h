@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.27 2009/12/11 18:57:44 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.28 2009/12/13 12:32:46 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -101,8 +101,8 @@ struct pmap {
  * We are using following segment layout in m68k pmap_motorola.c:
  * 68020/030 4KB/page: l1,l2,page    == 10,10,12	(%tc = 0x82c0aa00)
  * 68020/030 8KB/page: l1,l2,page    ==  8,11,13	(%tc = 0x82d08b00)
- * 68040/060 4KB/page: l1,l2,l3,page == 7,7,6,12
- * 68040/060 8KB/page: l1,l2,l3,page == 7,7,5,13
+ * 68040/060 4KB/page: l1,l2,l3,page == 7,7,6,12	(%tc = 0x8000)
+ * 68040/060 8KB/page: l1,l2,l3,page == 7,7,5,13	(%tc = 0xc000)
  *
  * 68020/030 l2 size is chosen per NPTEPG, a number of page table entries
  * per page, to use one whole page for PTEs per one segment table entry,
@@ -152,18 +152,20 @@ struct pmap {
  * (block 31).  For convenience, the level 1 table is considered to be
  * block 0.
  *
- * MAX[KU]L2SIZE control how many pages of level 2 descriptors are allowed.
- * for the kernel and users.  8 implies only the initial "segment table"
- * page is used.  WARNING: don't change MAXUL2SIZE unless you can allocate
- * physically contiguous pages for the ST in pmap.c!
+ * MAX[KU]L2SIZE control how many pages of level 2 descriptors are allowed
+ * for the kernel and users.
+ * 16 or 8 implies only the initial "segment table" page is used,
+ * i.e. it means PAGE_SIZE / (SG4_LEV1SIZE * sizeof(st_entry_t)).
+ * WARNING: don't change MAXUL2SIZE unless you can allocate
+ * physically contiguous pages for the ST in pmap_motorola.c!
  */
 #define MAXKL2SIZE	32
-#if PAGE_SIZE == 8192
+#if PAGE_SIZE == 8192	/* NBPG / (SG4_LEV1SIZE * sizeof(st_entry_t)) */
 #define MAXUL2SIZE	16
 #else
 #define MAXUL2SIZE	8
 #endif
-#define l2tobm(n)	(1 << (n))
+#define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
 
 /*
