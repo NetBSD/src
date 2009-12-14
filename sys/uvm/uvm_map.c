@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.284 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.285 2009/12/14 21:19:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.284 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.285 2009/12/14 21:19:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -572,7 +572,7 @@ _uvm_tree_sanity(struct vm_map *map)
 			goto error;
 		}
 		if (trtmp != NULL && trtmp->start >= tmp->start) {
-			printf("corrupt: 0x%lx >= 0x%lx\n",
+			printf("corrupt: 0x%"PRIxVADDR"x >= 0x%"PRIxVADDR"x\n",
 			    trtmp->start, tmp->start);
 			goto error;
 		}
