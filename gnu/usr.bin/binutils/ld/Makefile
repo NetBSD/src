@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.2.3 2009/01/18 20:55:29 snj Exp $
+#	$NetBSD: Makefile,v 1.27.2.3.4.1 2009/12/14 06:28:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -84,6 +84,12 @@ EMUL_LIB_PATH.${f}:=/usr/lib/i386
 .  if "${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"
 EMUL_LIB_PATH.${f}:=/usr/lib/sparc
 .  endif
+. elif ${MACHINE_ARCH} == "mips64el"
+.  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
+EMUL_LIB_PATH.${f}:=/usr/lib/o32
+.  elif "${f}" == "elf64btsmip" || "${f}" == "elf64btsmip"
+EMUL_LIB_PATH.${f}:=/usr/lib/64
+.  endif
 . endif
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
@@ -94,13 +100,19 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} yes ${f} "${G_target_alias}"
 
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
-# XXX hack to find out if .xs exists - slow!
+# XXX hack to find out if .xs/.xc exists - slow!
 HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
+# XXX
+#HAS_XC!=	grep '^GENERATE_COMBRELOC_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 .if !empty(HAS_XS)
 FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
+# only do this if we don't have GENERATE_SHLIB_SCRIPT
+.elif ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .endif
 .endif	# x64_64 || sparc64
 
