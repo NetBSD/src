@@ -83,6 +83,7 @@ enum optdefs {
 	COREDUMPS,
 	PASSWDFD,
 	RESULTS,
+	SSHKEYFILE,
 
 	/* debug */
 	OPS_DEBUG
@@ -111,6 +112,7 @@ static struct option options[] = {
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
 	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
+	{"sshkeyfile",	required_argument, 	NULL,	SSHKEYFILE},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
 	{"results",	required_argument, 	NULL,	RESULTS},
@@ -172,49 +174,6 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	}
 }
 
-/* get even more lippy */
-static void
-give_it_large(netpgp_t *netpgp)
-{
-	char	*cp;
-	char	 num[16];
-	int	 val;
-
-	val = 0;
-	if ((cp = netpgp_getvar(netpgp, "verbose")) != NULL) {
-		val = atoi(cp);
-	}
-	(void) snprintf(num, sizeof(num), "%d", val + 1);
-	netpgp_setvar(netpgp, "verbose", num);
-}
-
-/* set the home directory value to "home/subdir" */
-static int
-set_homedir(netpgp_t *netpgp, char *home, const char *subdir, char *progname)
-{
-	struct stat	st;
-	char		d[MAXPATHLEN];
-
-	if (home == NULL) {
-		(void) fprintf(stderr, "%s: NULL HOME directory\n",
-					progname);
-		return 0;
-	}
-	(void) snprintf(d, sizeof(d), "%s%s", home, (subdir) ? subdir : "");
-	if (stat(d, &st) == 0) {
-		if ((st.st_mode & S_IFMT) == S_IFDIR) {
-			netpgp_setvar(netpgp, "homedir", d);
-			return 1;
-		}
-		(void) fprintf(stderr, "%s: homedir \"%s\" is not a dir\n",
-					progname, d);
-		return 0;
-	}
-	(void) fprintf(stderr, "%s: warning homedir \"%s\" not found\n",
-					progname, d);
-	return 1;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -234,7 +193,7 @@ main(int argc, char **argv)
 		exit(EXIT_ERROR);
 	}
 	/* set some defaults */
-	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", *argv);
+	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
@@ -286,7 +245,7 @@ main(int argc, char **argv)
 			netpgp_setvar(&netpgp, "userid", optarg);
 			break;
 		case VERBOSE:
-			give_it_large(&netpgp);
+			netpgp_incvar(&netpgp, "verbose", 1);
 			break;
 		case HOMEDIR:
 			if (optarg == NULL) {
@@ -295,7 +254,7 @@ main(int argc, char **argv)
 				*argv);
 				exit(EXIT_ERROR);
 			}
-			set_homedir(&netpgp, optarg, NULL, *argv);
+			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
 			break;
 		case NUMBITS:
 			if (optarg == NULL) {
@@ -321,6 +280,9 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "results", optarg);
+			break;
+		case SSHKEYFILE:
+			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);

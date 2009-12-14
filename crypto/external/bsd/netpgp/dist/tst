@@ -105,11 +105,11 @@ cp Makefile.in g
 echo "======> ascii armoured sig detection and verification of large file"
 /usr/bin/netpgp --verify g.asc && passed=$(expr $passed + 1)
 echo "======> list ssh host RSA public key"
-/usr/bin/netpgpkeys --ssh-keys --list-keys && passed=$(expr $passed + 1)
+/usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys && passed=$(expr $passed + 1)
 echo "======> sign/verify file with ssh host keys"
 cp configure a
-sudo /usr/bin/netpgp --ssh-keys --sign --userid 1e00404a a
+sudo /usr/bin/netpgp --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --sign a
 sudo chmod 644 a.gpg
-/usr/bin/netpgp --verify --ssh-keys a.gpg && passed=$(expr $passed + 1)
+/usr/bin/netpgp --verify --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub a.gpg && passed=$(expr $passed + 1)
 rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig g g.asc a2 a3
 echo "Passed ${passed}/${total} tests"

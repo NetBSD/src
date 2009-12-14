@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.9 2009/11/19 21:56:00 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.10 2009/12/14 23:29:56 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,6 +121,10 @@
 .Fo netpgp_getvar
 .Fa "netpgp_t *netpgp" "const char *name"
 .Fc
+.Ft int
+.Fo netpgp_incvar
+.Fa "netpgp_t *netpgp" "const char *name" "const int delta"
+.Fc
 .Sh DESCRIPTION
 .Nm
 is a library interface to enable digital signatures to be created and
@@ -155,6 +159,23 @@ returns 1 on sucess, 0 on failure.
 To list all the keys in a keyring, the
 .Fn netpgp_list_keys
 function is used.
+The
+.Fn netpgp_match_list_keys
+function is used to match (via regular expression)
+a subset of the keys in the keyring.
+If the expression to match is NULL,
+the search will degenerate into a
+listing of all keys in the keyring.
+.Pp
+The home directory is specified as an internal variable,
+and its existence is checked using the
+.Fn netpgp_set_homedir
+function.
+This function can operate in a verbose or quiet
+manner, depending on the value of the argument provided.
+If the subdirectory argument is provided, this subdirectory
+is appended to the home directory in order to search for
+the keyrings.
 .Pp
 To export a key, the
 .Fn netpgp_export_key
@@ -216,9 +237,20 @@ and
 .Fn netpgp_getvar
 functions are used to manage the hash algorithm that
 is used with RSA signatures.
-These functions can also be used to set and to retrieve the
+These functions are general purpose functions, and
+are used to set and retrieve values for internal variables.
+For example, they
+can be used to set and to retrieve the
 value of the user id
-which has been set.
+which has been set,
+the home directory from which to find the keyrings,
+the verbosity settings, and many more.
+The
+.Fn netpgp_incvar
+function is used to add a numeric increment to the
+internal variable.
+This incremental value can be negative.
+It is primarily used to increase the verbosity settings.
 .Pp
 In
 .Nm
