@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.6 2009/01/30 14:29:44 skrll Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.7 2009/12/14 00:39:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.6 2009/01/30 14:29:44 skrll Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.7 2009/12/14 00:39:00 matt Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -91,7 +91,7 @@ _atomic_cas_mp(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	__cpu_simple_lock_t *lock;
 	uint32_t ret;
 
-	lock = &atomic_locks[((uint32_t)ptr >> 3) & 127];
+	lock = &atomic_locks[((uintptr_t)ptr >> 3) & 127];
 	__cpu_simple_lock(lock);
 	ret = *ptr;
 	if (__predict_true(ret == old)) {

@@ -1,11 +1,9 @@
-/*	$NetBSD: membar_ops.S,v 1.4 2009/12/14 00:39:00 matt Exp $	*/
-
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe, and by Andrew Doran.
+ * by Matt Thomas <matt@3am-software.com>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -29,49 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "atomic_op_asm.h"
+#define	BZERO
 
-#if defined(_KERNEL)
+#include "memset2.c"
 
-#ifdef _KERNEL_OPT
-#include "opt_cputype.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
-
-#include <machine/cpu.h>
-
-#if (MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)) || !defined(__mips_o32)
-#define	SYNC		sync
-#endif
-#elif !defined(__mips_o32)
-#define	SYNC		sync
-#endif
-
-	.text
-
-LEAF(_membar_sync)
-	j	ra
-#ifdef SYNC
-	SYNC
-#else
-	  nop
-#endif
-END(_membar_sync)
-
-#ifdef _KERNEL
-STRONG_ALIAS(mb_read, _membar_sync)
-STRONG_ALIAS(mb_write, _membar_sync)
-STRONG_ALIAS(mb_memory, _membar_sync)
-#endif
-
-ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
-ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
-STRONG_ALIAS(_membar_enter,_membar_sync)
-ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
-STRONG_ALIAS(_membar_exit,_membar_sync)
-ATOMIC_OP_ALIAS(membar_producer,_membar_sync)
-STRONG_ALIAS(_membar_producer,_membar_sync)
-ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
-STRONG_ALIAS(_membar_consumer,_membar_sync)
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: bzero2.c,v 1.2 2009/12/14 00:39:01 matt Exp $");
+#endif /* LIBC_SCCS and not lint */
