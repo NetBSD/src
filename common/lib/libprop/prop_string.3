@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_string.3,v 1.6 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: prop_string.3,v 1.7 2009/12/14 06:06:22 dholland Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,6 +62,11 @@
 .Fn prop_string_copy "prop_string_t string"
 .Ft prop_string_t
 .Fn prop_string_copy_mutable "prop_string_t string"
+.\"
+.Ft size_t
+.Fn prop_string_size "prop_string_t string"
+.Ft bool
+.Fn prop_string_mutable "prop_string_t string"
 .\"
 .Ft char *
 .Fn prop_string_cstring "prop_string_t string"
