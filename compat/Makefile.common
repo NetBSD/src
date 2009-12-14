@@ -1,0 +1,31 @@
+#	$NetBSD: Makefile.common,v 1.1.2.1 2009/12/14 06:20:58 mrg Exp $
+
+# Build netbsd libraries.
+
+.include <bsd.own.mk>
+
+.if ${MKCOMPAT} != "no"
+.if !make(includes)
+
+# make sure we get an objdir built early enough
+.include <bsd.prog.mk>
+
+# XXX make this use MAKEOBJDIR
+MAKEDIRTARGETENV=	MAKEOBJDIRPREFIX=${.OBJDIR} MKOBJDIRS=yes MKSHARE=no BSD_MK_COMPAT_FILE=${BSD_MK_COMPAT_FILE}
+
+.if defined(BOOTSTRAP_SUBDIRS)
+SUBDIR=	${BOOTSTRAP_SUBDIRS}
+.else
+SUBDIR= ../../../gnu/lib/crtstuff4 .WAIT \
+	../../../lib/csu .WAIT \
+	../../../gnu/lib/libgcc4 .WAIT \
+	../../../lib/libc .WAIT \
+	../../../lib/libutil .WAIT \
+	../../../lib ../../../gnu/lib \
+	../../../libexec/ld.elf_so
+.endif
+
+.include <bsd.subdir.mk>
+
+.endif
+.endif
