@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2009/12/14 14:29:09 uebayasi Exp $ */
+/*	$NetBSD: pmap.c,v 1.45 2009/12/14 17:16:12 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.44 2009/12/14 14:29:09 uebayasi Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.45 2009/12/14 17:16:12 uebayasi Exp $");
 #endif
 
 #include <string.h>
@@ -165,7 +165,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
 		       vm_map_min(D(vm_map, vm_map)),
 		       vm_map_max(D(vm_map, vm_map)));
-		printf("\t%*s#ent=%d, sz=%"PRIdVSIZE", ref=%d, version=%d, flags=0x%x\n",
+		printf("\t%*s#ent=%d, sz=%"PRIxVSIZE", ref=%d, version=%d, flags=0x%x\n",
 		       indent(2), "", D(vm_map, vm_map)->nentries,
 		       D(vm_map, vm_map)->size, D(vm_map, vm_map)->ref_count,
 		       D(vm_map, vm_map)->timestamp, D(vm_map, vm_map)->flags);
