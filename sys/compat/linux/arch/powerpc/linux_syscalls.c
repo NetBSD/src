@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.48 2009/11/24 10:44:43 njoly Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.49 2009/12/14 00:58:37 matt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.48 2009/11/24 10:44:43 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.49 2009/12/14 00:58:37 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>

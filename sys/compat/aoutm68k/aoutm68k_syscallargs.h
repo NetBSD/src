@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.36 2009/01/13 22:33:08 pooka Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.37 2009/12/14 00:58:35 matt Exp $ */
 
 /*
  * System call argument lists.

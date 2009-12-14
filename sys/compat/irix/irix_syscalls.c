@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.60 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.61 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.60 2009/01/13 22:33:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.61 2009/12/14 00:58:36 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)

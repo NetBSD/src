@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.75 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.76 2009/12/14 00:58:35 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.75 2009/01/13 22:33:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.76 2009/12/14 00:58:35 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -409,9 +409,9 @@ struct sysent freebsd_sysent[] = {
 #endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 172 = unimplemented */
-	{ ns(struct sys_pread_args), 0,
+	{ ns(struct sys_pread_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_pread },		/* 173 = pread */
-	{ ns(struct sys_pwrite_args), 0,
+	{ ns(struct sys_pwrite_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_pwrite },		/* 174 = pwrite */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 175 = unimplemented */
@@ -473,15 +473,15 @@ struct sysent freebsd_sysent[] = {
 	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
 	{ ns(struct compat_12_sys_getdirentries_args), 0,
 	    (sy_call_t *)compat_12_sys_getdirentries },/* 196 = getdirentries */
-	{ ns(struct freebsd_sys_mmap_args), 0,
+	{ ns(struct freebsd_sys_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG6_64,
 	    (sy_call_t *)freebsd_sys_mmap },	/* 197 = mmap */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nosys },		/* 198 = __syscall */
-	{ ns(struct sys_lseek_args), 0,
+	{ ns(struct sys_lseek_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64 | SYCALL_RET_64,
 	    (sy_call_t *)sys_lseek },		/* 199 = lseek */
-	{ ns(struct sys_truncate_args), 0,
+	{ ns(struct sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_truncate },	/* 200 = truncate */
-	{ ns(struct sys_ftruncate_args), 0,
+	{ ns(struct sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
 	{ ns(struct freebsd_sys_sysctl_args), 0,
 	    (sy_call_t *)freebsd_sys_sysctl },	/* 202 = sysctl */
@@ -1168,4 +1168,3 @@ struct sysent freebsd_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 511 = filler */
 };
-

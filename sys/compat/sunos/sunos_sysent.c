@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_sysent.c,v 1.79 2009/01/13 22:33:17 pooka Exp $ */
+/* $NetBSD: sunos_sysent.c,v 1.80 2009/12/14 00:58:37 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.79 2009/01/13 22:33:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.80 2009/12/14 00:58:37 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -556,4 +556,3 @@ struct sysent sunos_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 255 = filler */
 };
-

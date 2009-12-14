@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.36 2009/11/24 10:44:41 njoly Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.37 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.36 2009/11/24 10:44:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.37 2009/12/14 00:58:36 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -225,9 +225,9 @@ struct sysent linux_sysent[] = {
 	    (sy_call_t *)sys_fsync },		/* 74 = fsync */
 	{ ns(struct linux_sys_fdatasync_args), 0,
 	    (sy_call_t *)linux_sys_fdatasync },	/* 75 = fdatasync */
-	{ ns(struct linux_sys_truncate64_args), 0,
+	{ ns(struct linux_sys_truncate64_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)linux_sys_truncate64 },/* 76 = truncate64 */
-	{ ns(struct linux_sys_ftruncate64_args), 0,
+	{ ns(struct linux_sys_ftruncate64_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)linux_sys_ftruncate64 },/* 77 = ftruncate64 */
 	{ ns(struct linux_sys_getdents_args), 0,
 	    (sy_call_t *)linux_sys_getdents },	/* 78 = getdents */

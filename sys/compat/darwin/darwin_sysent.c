@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.57 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.58 2009/12/14 00:58:35 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.57 2009/01/13 22:33:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.58 2009/12/14 00:58:35 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -456,15 +456,15 @@ struct sysent darwin_sysent[] = {
 	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
 	{ ns(struct compat_12_sys_getdirentries_args), 0,
 	    (sy_call_t *)compat_12_sys_getdirentries },/* 196 = getdirentries */
-	{ ns(struct sys_mmap_args), 0,
+	{ ns(struct sys_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG6_64,
 	    (sy_call_t *)sys_mmap },		/* 197 = mmap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 198 = unimplemented */
-	{ ns(struct darwin_sys_lseek_args), 0,
+	{ ns(struct darwin_sys_lseek_args), SYCALL_RET_64,
 	    (sy_call_t *)darwin_sys_lseek },	/* 199 = lseek */
-	{ ns(struct sys_truncate_args), 0,
+	{ ns(struct sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_truncate },	/* 200 = truncate */
-	{ ns(struct sys_ftruncate_args), 0,
+	{ ns(struct sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
 	{ ns(struct darwin_sys___sysctl_args), 0,
 	    (sy_call_t *)darwin_sys___sysctl },	/* 202 = __sysctl */
@@ -1087,4 +1087,3 @@ struct sysent darwin_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 511 = filler */
 };
-
