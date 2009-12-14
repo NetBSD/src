@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.2 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.2 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -308,8 +308,10 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
+
+	struct pcb * const pcb = lwp_getpcb(l);
 	cpustate.frame = *l->l_md.md_regs;
-	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
+	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
