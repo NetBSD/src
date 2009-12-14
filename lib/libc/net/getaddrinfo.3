@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.50 2009/10/02 07:41:08 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.51 2009/12/14 01:53:31 dholland Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -77,7 +77,7 @@ as defined by
 .Bd -literal
 struct addrinfo {
 	int ai_flags;		/* input flags */
-	int ai_family;		/* protocol family for socket */
+	int ai_family;		/* address family for socket */
 	int ai_socktype;	/* socket type */
 	int ai_protocol;	/* protocol for socket */
 	socklen_t ai_addrlen;	/* length of socket-address */
@@ -93,13 +93,30 @@ The caller can supply the following structure elements in
 .Fa hints :
 .Bl -tag -width "ai_socktypeXX"
 .It Fa ai_family
-The protocol family that should be used.
+The address
+.Pq and protocol
+family that should be used.
 When
 .Fa ai_family
 is set to
-.Dv PF_UNSPEC ,
-it means the caller will accept any protocol family supported by the
+.Dv AF_UNSPEC ,
+it means the caller will accept any address family supported by the
 operating system.
+Note that while address families
+.Pq Dv AF_*
+and protocol families
+.Pq Dv PF_*
+are theoretically distinct, in practice the distinction has been lost.
+.\" (.Dv !? Consistent with usage below though...)
+.Dv "RFC 3493"
+defines
+.Fn getaddrinfo
+in terms of the address family constants
+.Dv AF_*
+even though
+.Fa ai_family
+is to be passed as a protocol family to
+.Xr socket 2 .
 .It Fa ai_socktype
 Denotes the type of socket that is wanted:
 .Dv SOCK_STREAM ,
@@ -200,7 +217,7 @@ behaves as if the caller provided a
 with
 .Fa ai_family
 set to
-.Dv PF_UNSPEC
+.Dv AF_UNSPEC
 and all other elements set to zero or
 .Dv NULL .
 .Pp
@@ -341,7 +358,7 @@ int s;
 const char *cause = NULL;
 
 memset(\*[Am]hints, 0, sizeof(hints));
-hints.ai_family = PF_UNSPEC;
+hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
@@ -384,7 +401,7 @@ int nsock;
 const char *cause = NULL;
 
 memset(\*[Am]hints, 0, sizeof(hints));
-hints.ai_family = PF_UNSPEC;
+hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
 error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
