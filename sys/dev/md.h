@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2009/10/21 23:12:10 snj Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2009/12/14 03:11:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -24,6 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_MD_H_
+#define _SYS_DEV_MD_H_
 
 /*
  * Memory-disk ioctl functions:
@@ -86,3 +89,5 @@ extern void md_root_setconf(char *, size_t);
 
 extern int md_is_root;
 #endif /* _KERNEL */
+
+#endif /* _SYS_DEV_MD_H_ */
