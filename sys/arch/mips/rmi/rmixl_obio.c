@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.7 2009/11/18 01:14:49 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.8 2009/12/14 07:18:26 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.7 2009/11/18 01:14:49 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.8 2009/12/14 07:18:26 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -141,7 +141,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args obio;
 
-	obio.obio_bst = sc->sc_bst;
+	obio.obio_eb_bst = sc->sc_eb_bst;
+	obio.obio_el_bst = sc->sc_el_bst;
 	obio.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
@@ -166,9 +167,13 @@ obio_bus_init(struct obio_softc *sc)
 		return;
 	done = 1;
 
-	/* obio (devio) space */
-	if (rcp->rc_obio_memt.bs_cookie == 0)
-		rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp);
+	/* obio (devio) space, Big Endian */
+	if (rcp->rc_obio_eb_memt.bs_cookie == 0)
+		rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
+
+	/* obio (devio) space, Little Endian */
+	if (rcp->rc_obio_el_memt.bs_cookie == 0)
+		rmixl_obio_el_bus_mem_init(&rcp->rc_obio_el_memt, rcp);
 
 	/* dma space for addr < 512MB */
 	if (rcp->rc_29bit_dmat._cookie == 0)
@@ -184,7 +189,8 @@ obio_bus_init(struct obio_softc *sc)
 
 	sc->sc_base = (bus_addr_t)rcp->rc_io_pbase;
 	sc->sc_size = (bus_size_t)RMIXL_IO_DEV_SIZE;
-	sc->sc_bst = (bus_space_tag_t)&rcp->rc_obio_memt;
+	sc->sc_eb_bst = (bus_space_tag_t)&rcp->rc_obio_eb_memt;
+	sc->sc_el_bst = (bus_space_tag_t)&rcp->rc_obio_el_memt;
 	sc->sc_29bit_dmat = &rcp->rc_29bit_dmat;
 #ifdef NOTYET
 	sc->sc_32bit_dmat = &rcp->rc_32bit_dmat;
