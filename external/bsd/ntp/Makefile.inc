@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/12/14 02:09:39 christos Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -6,6 +6,7 @@ NTP_MAKEFILE_INC=yes
 USE_FORT?= yes	# network client/server
 
 WARNS?=	0
+COPTS+=-Werror
 
 .include <bsd.own.mk>
 
