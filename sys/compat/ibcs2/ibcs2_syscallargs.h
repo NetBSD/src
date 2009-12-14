@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscallargs.h,v 1.48 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: ibcs2_syscallargs.h,v 1.49 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call argument lists.

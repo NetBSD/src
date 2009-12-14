@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_sysent.c,v 1.49 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: ibcs2_sysent.c,v 1.50 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.49 2009/01/13 22:33:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.50 2009/12/14 00:58:36 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1070,4 +1070,3 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 511 = filler */
 };
-

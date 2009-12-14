@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_sysent.c,v 1.62 2009/01/17 15:50:12 he Exp $ */
+/* $NetBSD: ultrix_sysent.c,v 1.63 2009/12/14 00:58:38 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.62 2009/01/17 15:50:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.63 2009/12/14 00:58:38 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1065,4 +1065,3 @@ struct sysent ultrix_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 511 = filler */
 };
-

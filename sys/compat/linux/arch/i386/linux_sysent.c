@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.85 2009/11/24 10:44:42 njoly Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.86 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.85 2009/11/24 10:44:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.86 2009/12/14 00:58:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -431,9 +431,9 @@ struct sysent linux_sysent[] = {
 #define linux_sys_mmap2_args linux_sys_mmap_args
 	{ ns(struct linux_sys_mmap2_args), 0,
 	    (sy_call_t *)linux_sys_mmap2 },	/* 192 = mmap2 */
-	{ ns(struct linux_sys_truncate64_args), 0,
+	{ ns(struct linux_sys_truncate64_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)linux_sys_truncate64 },/* 193 = truncate64 */
-	{ ns(struct linux_sys_ftruncate64_args), 0,
+	{ ns(struct linux_sys_ftruncate64_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)linux_sys_ftruncate64 },/* 194 = ftruncate64 */
 	{ ns(struct linux_sys_stat64_args), 0,
 	    (sy_call_t *)linux_sys_stat64 },	/* 195 = stat64 */
