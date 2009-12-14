@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile,v 1.87 2008/10/26 07:11:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.87.8.1 2009/12/14 06:57:16 mrg Exp $
+
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
 # We are not building this with PIE
 PIE_CFLAGS=
@@ -28,8 +33,6 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
 
-PROG?=		ld.elf_so
-
 LDFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-Wl,-static
 
@@ -39,12 +42,15 @@ LDFLAGS+=	-Wl,-static
 .include "$M/Makefile.inc"
 .endif
 
-# Support src/compat/libexec/ld.elf_so.
-.if defined(LD32DIR)
-CLIBOBJ!=	cd ${NETBSDSRCDIR}/compat/lib/libc && ${PRINTOBJDIR}
+# Support compat ld.elf_so.
+.if defined(MLIBDIR)
+PROG=		ld.elf_so-${MLIBDIR}
+CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
 .else
-CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
+PROG=		ld.elf_so
 .endif
+
+CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
 SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c
