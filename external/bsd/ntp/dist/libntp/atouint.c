@@ -1,4 +1,4 @@
-/*	$NetBSD: atouint.c,v 1.1.1.1 2009/12/13 16:55:01 kardel Exp $	*/
+/*	$NetBSD: atouint.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
 
 /*
  * atouint - convert an ascii string to an unsigned long, with error checking
@@ -24,7 +24,7 @@ atouint(
 
 	u = 0;
 	while (*cp != '\0') {
-		if (!isdigit((int)*cp))
+		if (!isdigit((unsigned char)*cp))
 		    return 0;
 		if (u > 429496729 || (u == 429496729 && *cp >= '6'))
 		    return 0;	/* overflow */
