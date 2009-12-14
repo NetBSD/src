@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.36 2009/05/13 22:41:43 wiz Exp $
+.\"	$NetBSD: stty.1,v 1.37 2009/12/14 02:34:52 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -436,7 +436,9 @@ characters back to system defaults.
 .It Cm sane
 Resets all modes to reasonable values for interactive terminal use.
 .It Cm insane
-Resets all modes to unreasonable values for interactive terminal use.
+Sets all modes to random values, which are very likely
+.Pq but not guaranteed
+to be unreasonable for interactive terminal use.
 .It Cm tty
 Set the line discipline to the standard terminal line discipline
 .Dv TTYDISC .
