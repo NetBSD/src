@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.1.1.1 2009/12/13 16:55:55 kardel Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include "ntpd.h"
 #include "ntp_io.h"
@@ -643,12 +644,12 @@ nmea_receive(
 	/*
 	 * Check time code format of NMEA
 	 */
-	if (!isdigit((int)dp[0]) ||
-	    !isdigit((int)dp[1]) ||
-	    !isdigit((int)dp[2]) ||
-	    !isdigit((int)dp[3]) ||
-	    !isdigit((int)dp[4]) ||
-	    !isdigit((int)dp[5])) {
+	if (!isdigit((unsigned char)dp[0]) ||
+	    !isdigit((unsigned char)dp[1]) ||
+	    !isdigit((unsigned char)dp[2]) ||
+	    !isdigit((unsigned char)dp[3]) ||
+	    !isdigit((unsigned char)dp[4]) ||
+	    !isdigit((unsigned char)dp[5])) {
 
 		DPRINTF(1, ("NMEA time code %c%c%c%c%c%c non-numeric",
 			    dp[0], dp[1], dp[2], dp[3], dp[4], dp[5]));
@@ -668,11 +669,11 @@ nmea_receive(
 	 */
 	pp->nsec = 0; 
 	if (dp[6] == '.') {
-		if (isdigit((int)dp[7])) {
+		if (isdigit((unsigned char)dp[7])) {
 			pp->nsec = (dp[7] - '0') * 100000000;
-			if (isdigit((int)dp[8])) {
+			if (isdigit((unsigned char)dp[8])) {
 				pp->nsec += (dp[8] - '0') * 10000000;
-				if (isdigit((int)dp[9])) {
+				if (isdigit((unsigned char)dp[9])) {
 					pp->nsec += (dp[9] - '0') * 1000000;
 				}
 			}
