@@ -1,0 +1,13 @@
+#	$NetBSD: Makefile.m32,v 1.1.2.1 2009/12/14 06:20:58 mrg Exp $
+
+#
+# Makefile fragment to help implement a set of 'cc -m32' libraries.
+#
+
+COPTS+=			-m32
+CPUFLAGS+=		-m32
+LDADD+=			-m32
+LDFLAGS+=		-m32
+MKDEPFLAGS+=		-m32
+
+.include "Makefile.compat"
