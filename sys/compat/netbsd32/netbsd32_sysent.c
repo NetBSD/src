@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.87 2009/05/17 05:55:42 pooka Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.88 2009/12/14 00:47:11 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.87 2009/05/17 05:55:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.88 2009/12/14 00:47:11 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -471,9 +471,9 @@ struct sysent netbsd32_sysent[] = {
 #endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 172 = unimplemented */
-	{ ns(struct netbsd32_pread_args), 0,
+	{ ns(struct netbsd32_pread_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)netbsd32_pread },	/* 173 = netbsd32_pread */
-	{ ns(struct netbsd32_pwrite_args), 0,
+	{ ns(struct netbsd32_pwrite_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)netbsd32_pwrite },	/* 174 = netbsd32_pwrite */
 #if defined(NTP) || !defined(_KERNEL_OPT)
 	{ ns(struct compat_30_netbsd32_ntp_gettime_args), 0,
@@ -537,15 +537,15 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)netbsd32_setrlimit },	/* 195 = netbsd32_setrlimit */
 	{ ns(struct compat_12_netbsd32_getdirentries_args), 0,
 	    (sy_call_t *)compat_12(netbsd32_getdirentries) },/* 196 = compat_12_netbsd32_getdirentries */
-	{ ns(struct netbsd32_mmap_args), 0,
+	{ ns(struct netbsd32_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG6_64,
 	    (sy_call_t *)netbsd32_mmap },	/* 197 = netbsd32_mmap */
-	{ ns(struct netbsd32____syscall_args), SYCALL_INDIRECT,
+	{ ns(struct netbsd32____syscall_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG0_64 | SYCALL_RET_64 | SYCALL_INDIRECT,
 	    (sy_call_t *)netbsd32____syscall },	/* 198 = netbsd32____syscall */
-	{ ns(struct netbsd32_lseek_args), 0,
+	{ ns(struct netbsd32_lseek_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64 | SYCALL_RET_64,
 	    (sy_call_t *)netbsd32_lseek },	/* 199 = netbsd32_lseek */
-	{ ns(struct netbsd32_truncate_args), 0,
+	{ ns(struct netbsd32_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)netbsd32_truncate },	/* 200 = netbsd32_truncate */
-	{ ns(struct netbsd32_ftruncate_args), 0,
+	{ ns(struct netbsd32_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)netbsd32_ftruncate },	/* 201 = netbsd32_ftruncate */
 	{ ns(struct netbsd32___sysctl_args), 0,
 	    (sy_call_t *)netbsd32___sysctl },	/* 202 = netbsd32___sysctl */
@@ -777,9 +777,9 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)netbsd32___clone },	/* 287 = netbsd32___clone */
 	{ ns(struct netbsd32_fktrace_args), 0,
 	    (sy_call_t *)netbsd32_fktrace },	/* 288 = netbsd32_fktrace */
-	{ ns(struct netbsd32_preadv_args), 0,
+	{ ns(struct netbsd32_preadv_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)netbsd32_preadv },	/* 289 = netbsd32_preadv */
-	{ ns(struct netbsd32_pwritev_args), 0,
+	{ ns(struct netbsd32_pwritev_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)netbsd32_pwritev },	/* 290 = netbsd32_pwritev */
 	{ ns(struct netbsd32___sigaction14_args), 0,
 	    (sy_call_t *)netbsd32___sigaction14 },/* 291 = netbsd32___sigaction14 */
@@ -922,7 +922,7 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 352 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 353 = unimplemented */
-	{ ns(struct netbsd32_fsync_range_args), 0,
+	{ ns(struct netbsd32_fsync_range_args), SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 	    (sy_call_t *)netbsd32_fsync_range },/* 354 = netbsd32_fsync_range */
 	{ ns(struct netbsd32_uuidgen_args), 0,
 	    (sy_call_t *)netbsd32_uuidgen },	/* 355 = netbsd32_uuidgen */
@@ -1039,8 +1039,8 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 408 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 409 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 410 = unimplemented sys___mount50 */
+	{ ns(struct netbsd32___mount50_args), 0,
+	    (sy_call_t *)netbsd32___mount50 },	/* 410 = netbsd32___mount50 */
 	{ ns(struct netbsd32_mremap_args), 0,
 	    (sy_call_t *)netbsd32_mremap },	/* 411 = netbsd32_mremap */
 	{ 0, 0, 0,
@@ -1051,7 +1051,7 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 414 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 415 = unimplemented */
-	{ ns(struct netbsd32___posix_fadvise50_args), 0,
+	{ ns(struct netbsd32___posix_fadvise50_args), SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 	    (sy_call_t *)netbsd32___posix_fadvise50 },/* 416 = netbsd32___posix_fadvise50 */
 	{ ns(struct netbsd32___select50_args), 0,
 	    (sy_call_t *)netbsd32___select50 },	/* 417 = netbsd32___select50 */

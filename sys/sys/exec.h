@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.128 2009/12/10 14:13:54 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.129 2009/12/14 00:48:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -215,7 +215,7 @@ struct exec_vmcmd {
 	vsize_t	ev_len;		/* length of the segment to map */
 	vaddr_t	ev_addr;	/* address in the vmspace to place it at */
 	struct	vnode *ev_vp;	/* vnode pointer for the file w/the data */
-	u_long	ev_offset;	/* offset in the file for the data */
+	vsize_t	ev_offset;	/* offset in the file for the data */
 	u_int	ev_prot;	/* protections for segment */
 	int	ev_flags;
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
