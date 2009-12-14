@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2008/09/26 18:56:43 apb Exp $
+# $NetBSD: mi,v 1.46 2009/12/14 02:01:54 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -18,7 +18,7 @@
 ./usr/games/ching				games-games-bin
 ./usr/games/countmail				games-utils-bin
 ./usr/games/cribbage				games-games-bin
-./usr/games/dab					games-games-bin
+./usr/games/dab					games-games-bin		cxx
 ./usr/games/dm					games-games-bin
 ./usr/games/factor				games-utils-bin
 ./usr/games/fish				games-games-bin
@@ -204,7 +204,7 @@
 ./usr/share/man/cat6/ching.0			games-games-catman	.cat
 ./usr/share/man/cat6/countmail.0		games-utils-catman	.cat
 ./usr/share/man/cat6/cribbage.0			games-games-catman	.cat
-./usr/share/man/cat6/dab.0			games-games-catman	.cat
+./usr/share/man/cat6/dab.0			games-games-catman	.cat,cxx
 ./usr/share/man/cat6/factor.0			games-utils-catman	.cat
 ./usr/share/man/cat6/fish.0			games-games-catman	.cat
 ./usr/share/man/cat6/fortune.0			games-utils-catman	.cat
@@ -256,7 +256,7 @@
 ./usr/share/man/html6/ching.html		games-games-htmlman	html
 ./usr/share/man/html6/countmail.html		games-utils-htmlman	html
 ./usr/share/man/html6/cribbage.html		games-games-htmlman	html
-./usr/share/man/html6/dab.html			games-games-htmlman	html
+./usr/share/man/html6/dab.html			games-games-htmlman	html,cxx
 ./usr/share/man/html6/factor.html		games-utils-htmlman	html
 ./usr/share/man/html6/fish.html			games-games-htmlman	html
 ./usr/share/man/html6/fortune.html		games-utils-htmlman	html
@@ -309,7 +309,7 @@
 ./usr/share/man/man6/ching.6			games-games-man		.man
 ./usr/share/man/man6/countmail.6		games-utils-man		.man
 ./usr/share/man/man6/cribbage.6			games-games-man		.man
-./usr/share/man/man6/dab.6			games-games-man		.man
+./usr/share/man/man6/dab.6			games-games-man		.man,cxx
 ./usr/share/man/man6/factor.6			games-utils-man		.man
 ./usr/share/man/man6/fish.6			games-games-man		.man
 ./usr/share/man/man6/fortune.6			games-utils-man		.man
