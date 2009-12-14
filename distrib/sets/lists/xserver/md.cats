@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.36 2009/12/05 16:39:50 sborrill Exp $
+# $NetBSD: md.cats,v 1.37 2009/12/14 15:27:14 skrll Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -493,6 +493,7 @@
 ./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libexa_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg
