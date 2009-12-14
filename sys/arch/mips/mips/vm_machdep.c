@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.129 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.130 2009/12/14 04:37:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.129 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.130 2009/12/14 04:37:02 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -195,7 +195,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct frame *f = l->l_md.md_regs;
 
-	KASSERT(f == (struct frame *)((char *)l->l_addr + USPACE) - 1);
+	KASSERT(f == (struct frame *)((uintptr_t)uvm_lwp_getuarea(l) + USPACE) - 1);
 
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
