@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.12 2006/05/18 17:54:19 christos Exp $ */
+/* $NetBSD: common.h,v 1.13 2009/12/14 01:04:02 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -53,7 +53,7 @@
 typedef void Obj_Entry;
 #endif
 
-extern int	__syscall(quad_t, ...);
+extern quad_t	__syscall(quad_t, ...);
 #define	_exit(v)	__syscall(SYS_exit, (v))
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
