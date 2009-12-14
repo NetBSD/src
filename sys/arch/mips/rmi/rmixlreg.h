@@ -1,11 +1,11 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.4 2009/11/09 10:07:44 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.5 2009/12/14 07:19:16 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by CCCCCCCC NNNNNNNNNN
+ * by Cliff Neighbors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -416,6 +416,49 @@
 #define RMIXL_GPIO_INT_TYP		_RMIXL_OFFSET(0x7)	/* Interrupt Type register */
 #define RMIXL_GPIO_RESET		_RMIXL_OFFSET(0x8)	/* XLS Soft Reset register */
 
+/*
+ * RMIXL_GPIO_RESET bits
+ */
+#define RMIXL_GPIO_RESET_RESa		__BITS(31,28)
+#define RMIXL_GPIO_RESET_PCIE_SRIO_SEL	__BITS(27,26)		/* PCIe or SRIO Select:
+								 * 00 = PCIe selected, SRIO not available
+								 * 01 = SRIO selected, 1.25 Gbaud (1.0 Gbps)
+								 * 10 = SRIO selected, 2.25 Gbaud (2.0 Gbps)
+								 * 11 = SRIO selected, 3.125 Gbaud (2.5 Gbps)
+								 */
+#define RMIXL_GPIO_RESET_XAUI_PORT1_SEL	__BIT(25)		/* XAUI Port 1 Select:
+								 *  0 = Disabled - Port is SGMII ports 4-7
+								 *  1 = Enabled -  Port is 4-lane XAUI Port 1
+								 */
+#define RMIXL_GPIO_RESET_XAUI_PORT0_SEL	__BIT(24)		/* XAUI Port 0 Select:
+								 *  0 = Disabled - Port is SGMII ports 0-3
+								 *  1 = Enabled -  Port is 4-lane XAUI Port 0
+								 */
+#define RMIXL_GPIO_RESET_RESb		__BIT(23)
+#define RMIXL_GPIO_RESET_USB_DEV	__BIT(22)		/* USB Device:
+								 *  0 = Device Mode
+								 *  1 = Host Mode
+								 */
+#define RMIXL_GPIO_RESET_PCIE_CFG	__BITS(21,20)		/* PCIe or SRIO configuration */
+#define RMIXL_GPIO_RESET_FLASH33_EN	__BIT(19)		/* Flash 33 MHZ Enable:
+								 *  0 = 66.67 MHz
+								 *  1 = 33.33 MHz
+								 */
+#define RMIXL_GPIO_RESET_BIST_DIAG_EN	__BIT(18)		/* BIST Diagnostics enable */
+#define RMIXL_GPIO_RESET_BIST_RUN_EN	__BIT(18)		/* BIST Run enable */
+#define RMIXL_GPIO_RESET_NOOT_NAND	__BIT(16)		/* Enable boot from NAND Flash */
+#define RMIXL_GPIO_RESET_BOOT_PCMCIA	__BIT(15)		/* Enable boot from PCMCIA */
+#define RMIXL_GPIO_RESET_FLASH_CFG	__BIT(14)		/* Flash 32-bit Data Configuration:
+								 *  0 = 32-bit address / 16-bit data
+								 *  1 = 32-bit address / 32-bit data
+								 */
+#define RMIXL_GPIO_RESET_PCMCIA_EN	__BIT(13)		/* PCMCIA Enable Status */
+#define RMIXL_GPIO_RESET_PARITY_EN	__BIT(12)		/* Parity Enable Status */
+#define RMIXL_GPIO_RESET_BIGEND		__BIT(11)		/* Big Endian Mode Enable Status */
+#define RMIXL_GPIO_RESET_PLL1_OUT_DIV	__BITS(10,8)		/* PLL1 (Core PLL) Output Divider */
+#define RMIXL_GPIO_RESET_PLL1_FB_DIV	__BITS(7,0)		/* PLL1 Feedback Divider */
+
+
 /* GPIO System Control Registers */
 #define RMIXL_GPIO_RESET_CFG		_RMIXL_OFFSET(0x15)	/* Reset Configuration register */
 #define RMIXL_GPIO_THERMAL_CSR		_RMIXL_OFFSET(0x16)	/* Thermal Control/Status register */
@@ -515,6 +558,175 @@
 #define RMIXL_PCIE_MSG_BUCKET_SIZE_7	_RMIXL_OFFSET(0x327)	/* not on XLS408Lite, XLS404Lite */
 #define RMIXL_PCIE_MSG_CREDIT_FIRST	_RMIXL_OFFSET(0x380)
 #define RMIXL_PCIE_MSG_CREDIT_LAST	_RMIXL_OFFSET(0x3ff)
+
+/*
+ * USB General Interface registers
+ * these are opffset from REGSPACE selected by __BIT(12) == 1
+ *	RMIXL_IOREG_VADDR(RMIXL_IO_DEV_USB_B + reg)
+ * see Tables 18-7 and 18-14 in the XLS PRM
+ */
+#define RMIXL_USB_GEN_CTRL1		0x00
+#define RMIXL_USB_GEN_CTRL2		0x04
+#define RMIXL_USB_GEN_CTRL3		0x08
+#define RMIXL_USB_IOBM_TIMER		0x0C
+#define RMIXL_USB_VBUS_TIMER		0x10
+#define RMIXL_USB_BYTESWAP_EN		0x14
+#define RMIXL_USB_COHERENT_MEM_BASE	0x40
+#define RMIXL_USB_COHERENT_MEM_LIMIT	0x44
+#define RMIXL_USB_L2ALLOC_MEM_BASE	0x48
+#define RMIXL_USB_L2ALLOC_MEM_LIMIT	0x4C
+#define RMIXL_USB_READEX_MEM_BASE	0x50
+#define RMIXL_USB_READEX_MEM_LIMIT	0x54
+#define RMIXL_USB_PHY_STATUS		0xC0
+#define RMIXL_USB_INTERRUPT_STATUS	0xC4
+#define RMIXL_USB_INTERRUPT_ENABLE	0xC8
+
+/*
+ * RMIXL_USB_GEN_CTRL1 bits
+ */
+#define RMIXL_UG_CTRL1_RESV		__BITS(31,2)
+#define RMIXL_UG_CTRL1_HOST_RST		__BIT(1)	/* Resets the Host Controller
+							 *  0: reset
+							 *  1: normal operation
+							 */
+#define RMIXL_UG_CTRL1_DEV_RST		__BIT(0)	/* Resets the Device Controller
+							 *  0: reset
+							 *  1: normal operation
+							 */
+
+/*
+ * RMIXL_USB_GEN_CTRL2 bits
+ */
+#define RMIXL_UG_CTRL2_RESa		__BITS(31,20)
+#define RMIXL_UG_CTRL2_TX_TUNE_1	__BITS(19,18)	/* Port_1 Transmitter Tuning for High-Speed Operation.
+							 *  00: ~-4.5%
+							 *  01: Design default
+							 *  10: ~+4.5%
+							 *  11: ~+9% = Recommended Operating setting
+							 */
+#define RMIXL_UG_CTRL2_TX_TUNE_0	__BITS(17,16)	/* Port_0 Transmitter Tuning for High-Speed Operation
+							 *  11:  Recommended Operating condition
+							 */
+#define RMIXL_UG_CTRL2_RESb		__BIT(15)
+#define RMIXL_UG_CTRL2_WEAK_PDEN	__BIT(14)	/* 500kOhm Pull-Down Resistor on D+ and D- Enable */
+#define RMIXL_UG_CTRL2_DP_PULLUP_ESD	__BIT(13)	/* D+ Pull-Up Resistor Enable */
+#define RMIXL_UG_CTRL2_ESD_TEST_MODE	__BIT(12)	/* D+ Pull-Up Resistor Control Select */
+#define RMIXL_UG_CTRL2_TX_BIT_STUFF_EN_H_1	\
+					__BIT(11)	/* Port_1 High-Byte Transmit Bit-Stuffing Enable */
+#define RMIXL_UG_CTRL2_TX_BIT_STUFF_EN_H_0	\
+					__BIT(10)	/* Port_0 High-Byte Transmit Bit-Stuffing Enable */
+#define RMIXL_UG_CTRL2_TX_BIT_STUFF_EN_L_1	\
+					__BIT(9)	/* Port_1 Low-Byte Transmit Bit-Stuffing Enable */
+#define RMIXL_UG_CTRL2_TX_BIT_STUFF_EN_L_0	\
+					__BIT(8)	/* Port_0 Low-Byte Transmit Bit-Stuffing Enable */
+#define RMIXL_UG_CTRL2_RESc		__BITS(7,6)
+#define RMIXL_UG_CTRL2_LOOPBACK_ENB_1	__BIT(5)	/* Port_1 Loopback Test Enable */
+#define RMIXL_UG_CTRL2_LOOPBACK_ENB_0	__BIT(4)	/* Port_0 Loopback Test Enable */
+#define RMIXL_UG_CTRL2_DEVICE_VBUS	__BIT(3)	/* VBUS detected (Device mode only) */
+#define RMIXL_UG_CTRL2_PHY_PORT_RST_1	__BIT(2)	/* Resets Port_1 of the PHY
+							 *  1: normal operation
+							 *  0: reset
+							 */
+#define RMIXL_UG_CTRL2_PHY_PORT_RST_0	__BIT(1)	/* Resets Port_0 of the PHY
+							 *  1: normal operation
+							 *  0: reset
+							 */
+#define RMIXL_UG_CTRL2_PHY_RST		__BIT(0)	/* Resets the PHY
+							 *  1: normal operation
+							 *  0: reset
+							 */
+#define RMIXL_UG_CTRL2_RESV	\
+	(RMIXL_UG_CTRL2_RESa | RMIXL_UG_CTRL2_RESb | RMIXL_UG_CTRL2_RESc)
+
+
+/*
+ * RMIXL_USB_GEN_CTRL3 bits
+ */
+#define RMIXL_UG_CTRL3_RESa		__BITS(31,11)
+#define RMIXL_UG_CTRL3_PREFETCH_SIZE	__BITS(10,8)	/* The pre-fetch size for a memory read transfer
+							 * between USB Interface and DI station.
+							 * Valid value ranges is from 1 to 4.
+							 */
+#define RMIXL_UG_CTRL3_RESb		__BIT(7)
+#define RMIXL_UG_CTRL3_DEV_UPPERADDR	__BITS(6,1)	/* Device controller address space selector */
+#define RMIXL_UG_CTRL3_USB_FLUSH	__BIT(0)	/* Flush the USB interface */
+
+/*
+ * RMIXL_USB_PHY_STATUS bits
+ */
+#define RMIXL_UB_PHY_STATUS_RESV	__BITS(31,1)
+#define RMIXL_UB_PHY_STATUS_VBUS	__BIT(0)	/* USB VBUS status */
+
+/*
+ * RMIXL_USB_INTERRUPT_STATUS and RMIXL_USB_INTERRUPT_ENABLE bits
+ */
+#define RMIXL_UB_INTERRUPT_RESV		__BITS(31,6)
+#define RMIXL_UB_INTERRUPT_FORCE	__BIT(5)	/* USB force interrupt */
+#define RMIXL_UB_INTERRUPT_PHY		__BIT(4)	/* USB PHY interrupt */
+#define RMIXL_UB_INTERRUPT_DEV		__BIT(3)	/* USB Device Controller interrupt */
+#define RMIXL_UB_INTERRUPT_EHCI		__BIT(2)	/* USB EHCI interrupt */
+#define RMIXL_UB_INTERRUPT_OHCI_1	__BIT(1)	/* USB OHCI #1 interrupt */
+#define RMIXL_UB_INTERRUPT_OHCI_0	__BIT(0)	/* USB OHCI #0 interrupt */
+#define RMIXL_UB_INTERRUPT_MAX		5
+
+
+/*
+ * USB Device Controller registers
+ * these are opffset from REGSPACE selected by __BIT(12) == 0
+ *	RMIXL_IOREG_VADDR(RMIXL_IO_DEV_USB_A + reg)
+ * see Table 18-7 in the XLS PRM
+ */
+#define RMIXL_USB_UDC_GAHBCFG		0x008	/* UDC Configuration A (UDC_GAHBCFG) */
+#define RMIXL_USB_UDC_GUSBCFG		0x00C	/* UDC Configuration B (UDC_GUSBCFG) */
+#define RMIXL_USB_UDC_GRSTCTL		0x010	/* UDC Reset */
+#define RMIXL_USB_UDC_GINTSTS		0x014	/* UDC Interrupt Register */
+#define RMIXL_USB_UDC_GINTMSK		0x018	/* UDC Interrupt Mask Register */
+#define RMIXL_USB_UDC_GRXSTSP		0x020	/* UDC Receive Status Read /Pop Register (Read Only) */
+#define RMIXL_USB_UDC_GRXFSIZ		0x024	/* UDC Receive FIFO Size Register */
+#define RMIXL_USB_UDC_GNPTXFSIZ		0x028	/* UDC Non-periodic Transmit FIFO Size Register */
+#define RMIXL_USB_UDC_GUID		0x03C	/* UDC User ID Register (UDC_GUID) */
+#define RMIXL_USB_UDC_GSNPSID		0x040	/* UDC ID Register (Read Only) */
+#define RMIXL_USB_UDC_GHWCFG1		0x044	/* UDC User HW Config1 Register (Read Only) */
+#define RMIXL_USB_UDC_GHWCFG2		0x048	/* UDC User HW Config2 Register (Read Only) */
+#define RMIXL_USB_UDC_GHWCFG3		0x04C	/* UDC User HW Config3 Register (Read Only) */
+#define RMIXL_USB_UDC_GHWCFG4		0x050	/* UDC User HW Config4 Register (Read Only) */
+#define RMIXL_USB_UDC_DPTXFSIZ0		0x104
+#define RMIXL_USB_UDC_DPTXFSIZ1		0x108
+#define RMIXL_USB_UDC_DPTXFSIZ2		0x10c
+#define RMIXL_USB_UDC_DPTXFSIZn(n)	(0x104 + (4 * (n)))
+						/* UDC Device IN Endpoint Transmit FIFO-n
+						   Size Registers (UDC_DPTXFSIZn) */
+#define RMIXL_USB_UDC_DCFG		0x800	/* UDC Configuration C */
+#define RMIXL_USB_UDC_DCTL		0x804	/* UDC Control Register */
+#define RMIXL_USB_UDC_DSTS		0x808	/* UDC Status Register (Read Only) */
+#define RMIXL_USB_UDC_DIEPMSK		0x810	/* UDC Device IN Endpoint Common
+						   Interrupt Mask Register (UDC_DIEPMSK) */
+#define RMIXL_USB_UDC_DOEPMSK		0x814	/* UDC Device OUT Endpoint Common Interrupt Mask register */
+#define RMIXL_USB_UDC_DAINT		0x818	/* UDC Device All Endpoints Interrupt Register */
+#define RMIXL_USB_UDC_DAINTMSK		0x81C	/* UDC Device All Endpoints Interrupt Mask Register */
+#define RMIXL_USB_UDC_DTKNQR3		0x830	/* Device Threshold Control Register */
+#define RMIXL_USB_UDC_DTKNQR4		0x834	/* Device IN Endpoint FIFO Empty Interrupt Mask Register */
+#define RMIXL_USB_UDC_DIEPCTL		0x900	/* Device Control IN Endpoint 0 Control Register */
+#define RMIXL_USB_UDC_DIEPINT		0x908	/* Device IN Endpoint 0 Interrupt Register */
+#define RMIXL_USB_UDC_DIEPTSIZ		0x910	/* Device IN Endpoint 0 Transfer Size Register */
+#define RMIXL_USB_UDC_DIEPDMA		0x914	/* Device IN Endpoint 0 DMA Address Register */
+#define RMIXL_USB_UDC_DTXFSTS		0x918	/* Device IN Endpoint Transmit FIFO Status Register */
+#define RMIXL_USB_DEV_IN_ENDPT(d,n)	(0x920 + ((d) * 0x20) + ((n) * 4))
+						/* Device IN Endpoint #d Register #n */
+
+/*
+ * USB Host Controller register base addrs
+ * these are offset from REGSPACE selected by __BIT(12) == 0
+ *	RMIXL_IOREG_VADDR(RMIXL_IO_DEV_USB_A + reg)
+ * see Table 18-14 in the XLS PRM
+ * specific Host Controller is selected by __BITS(11,10)
+ */
+#define RMIXL_USB_HOST_EHCI_BASE	0x000
+#define RMIXL_USB_HOST_0HCI0_BASE	0x400
+#define RMIXL_USB_HOST_0HCI1_BASE	0x800
+#define RMIXL_USB_HOST_RESV		0xc00
+#define RMIXL_USB_HOST_MASK		0xc00
+
 
 #endif	/* _MIPS_RMI_RMIRMIXLEGS_H_ */
 
