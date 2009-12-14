@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.52 2009/11/23 00:46:06 rmind Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.53 2009/12/14 00:47:10 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.52 2009/11/23 00:46:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.53 2009/12/14 00:47:10 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -140,7 +140,7 @@ irix_signal_siginfo(struct irix_irix5_siginfo *isi, int sig, u_long code, void *
 	}
 	isi->isi_signo = native_to_svr4_signo[sig];
 	isi->isi_errno = 0;
-	isi->isi_addr = (irix_app32_ptr_t)addr;
+	isi->isi_addr = (intptr_t)addr;
 
 	switch (code) {
 	case T_TLB_MOD:
@@ -244,20 +244,19 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	void *sp;
-	struct frame *f;
+	struct frame *f = l->l_md.md_regs;
 	int onstack;
 	int error;
 	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 	struct irix_sigframe sf;
 
-	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_IRIX
 	printf("irix_sendsig()\n");
 	printf("catcher = %p, sig = %d, code = 0x%x\n",
 	    (void *)catcher, ksi->ksi_signo, ksi->ksi_trap);
-	printf("irix_sendsig(): starting [PC=%p SP=%p SR=0x%08lx]\n",
-	    (void *)f->f_regs[_R_PC], (void *)f->f_regs[_R_SP],
-	    f->f_regs[_R_SR]);
+	printf("irix_sendsig(): starting [PC=0x%#"PRIxREGISTER
+	    " SP=%#"PRIxREGISTER" SR=0x%08lx]\n",
+	    f->f_regs[_R_PC], f->f_regs[_R_SP], f->f_regs[_R_SR]);
 #endif /* DEBUG_IRIX */
 
 	/*
@@ -277,8 +276,8 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sp = (void *)((char *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
-		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
-		sp = (void *)(u_int32_t)f->f_regs[_R_SP];
+		/* cast for O64 case */
+		sp = (void *)(intptr_t)f->f_regs[_R_SP];
 
 	/*
 	 * Build the signal frame
@@ -295,8 +294,8 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Compute the new stack address after copying sigframe
 	 */
-	sp = (void *)((unsigned long)sp - sizeof(sf.isf_ctx));
-	sp = (void *)((unsigned long)sp & ~0xfUL); /* 16 bytes alignement */
+	sp = (void *)((intptr_t)sp - sizeof(sf.isf_ctx));
+	sp = (void *)((intptr_t)sp & ~0xfUL); /* 16 bytes alignement */
 
 	/*
 	 * Install the sigframe onto the stack
@@ -324,8 +323,8 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	f->f_regs[_R_A0] = native_to_svr4_signo[ksi->ksi_signo];/* signo */
 	f->f_regs[_R_A1] = 0;			/* NULL */
-	f->f_regs[_R_A2] = (unsigned long)sp;	/* ucontext/sigcontext */
-	f->f_regs[_R_A3] = (unsigned long)catcher;/* signal handler address */
+	f->f_regs[_R_A2] = (intptr_t)sp;	/* ucontext/sigcontext */
+	f->f_regs[_R_A3] = (intptr_t)catcher;	/* signal handler address */
 
 	/*
 	 * When siginfo is selected, the higher bit of A0 is set
@@ -335,14 +334,14 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
 		f->f_regs[_R_A0] |= 0x80000000;
-		f->f_regs[_R_A1] = (u_long)sp +
-		    ((u_long)&sf.isf_ctx.iss.iis - (u_long)&sf);
+		f->f_regs[_R_A1] = (intptr_t)sp +
+		    ((intptr_t)&sf.isf_ctx.iss.iis - (intptr_t)&sf);
 	}
 
 	/*
 	 * Set up the new stack pointer
 	 */
-	f->f_regs[_R_SP] = (unsigned long)sp;
+	f->f_regs[_R_SP] = (intptr_t)sp;
 #ifdef DEBUG_IRIX
 	printf("stack pointer at %p, A1 = %p\n", sp, (void *)f->f_regs[_R_A1]);
 #endif /* DEBUG_IRIX */
@@ -353,7 +352,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * see irix_sys_sigaction for details about how we get
 	 * the signal trampoline address.
 	 */
-	f->f_regs[_R_PC] = (unsigned long)
+	f->f_regs[_R_PC] = (intptr_t)
 	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp[ksi->ksi_signo]);
 
 	/*
@@ -365,7 +364,6 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG_IRIX
 	printf("returning from irix_sendsig()\n");
 #endif
-	return;
 }
 
 static void
@@ -391,7 +389,7 @@ irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask,
 	}
 	scp->isc_regs[0] = 0;
 	scp->isc_fp_rounded_result = 0;
-	scp->isc_regmask = ~0x1UL;
+	scp->isc_regmask = -2;
 	scp->isc_mdhi = f->f_regs[_R_MULHI];
 	scp->isc_mdlo = f->f_regs[_R_MULLO];
 	scp->isc_pc = f->f_regs[_R_PC];

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.87 2009/05/17 05:55:42 pooka Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.88 2009/12/14 00:47:11 matt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.87 2009/05/17 05:55:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.88 2009/12/14 00:47:11 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -514,7 +514,7 @@ const char *const netbsd32_syscallnames[] = {
 	/* 407 */	"#407 (unimplemented)",
 	/* 408 */	"#408 (unimplemented)",
 	/* 409 */	"#409 (unimplemented)",
-	/* 410 */	"#410 (unimplemented sys___mount50)",
+	/* 410 */	"netbsd32___mount50",
 	/* 411 */	"netbsd32_mremap",
 	/* 412 */	"#412 (unimplemented)",
 	/* 413 */	"#413 (unimplemented)",

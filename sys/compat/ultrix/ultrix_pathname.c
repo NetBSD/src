@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.37 2009/06/29 05:08:16 dholland Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.38 2009/12/14 00:47:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.37 2009/06/29 05:08:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.38 2009/12/14 00:47:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,15 +191,15 @@ ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_
 
 
 struct ultrix_statfs {
-	long	f_type;		/* type of info, zero for now */
-	long	f_bsize;	/* fundamental file system block size */
-	long	f_blocks;	/* total blocks in file system */
-	long	f_bfree;	/* free blocks */
-	long	f_bavail;	/* free blocks available to non-super-user */
-	long	f_files;	/* total file nodes in file system */
-	long	f_ffree;	/* free file nodes in fs */
+	int32_t	f_type;		/* type of info, zero for now */
+	int32_t	f_bsize;	/* fundamental file system block size */
+	int32_t	f_blocks;	/* total blocks in file system */
+	int32_t	f_bfree;	/* free blocks */
+	int32_t	f_bavail;	/* free blocks available to non-super-user */
+	int32_t	f_files;	/* total file nodes in file system */
+	int32_t	f_ffree;	/* free file nodes in fs */
 	fsid_t	f_fsid;		/* file system id */
-	long	f_spare[7];	/* spare for later */
+	int32_t	f_spare[7];	/* spare for later */
 };
 
 /*

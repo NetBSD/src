@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_tty.h,v 1.2 1996/01/04 19:03:36 jonathan Exp $	*/
+/*	$NetBSD: ultrix_tty.h,v 1.3 2009/12/14 00:47:12 matt Exp $	*/
 
 /* From:  NetBSD sunos.h,v 1.4 1995/03/04 09:50:00 pk Exp 	*/
 
@@ -31,10 +31,10 @@ struct ultrix_termio {
  * Very similar to SunOS but with more c_cc entries (gag)
  */
 struct ultrix_termios {
-	u_long	c_iflag;
-	u_long	c_oflag;
-	u_long	c_cflag;
-	u_long	c_lflag;
+	__uint32_t	c_iflag;
+	__uint32_t	c_oflag;
+	__uint32_t	c_cflag;
+	__uint32_t	c_lflag;
 	u_char	c_cc[19]; /* 17 for Sun */
 	u_char	c_line;
 };

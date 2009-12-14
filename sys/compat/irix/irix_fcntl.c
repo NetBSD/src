@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.27 2009/08/31 05:34:16 dholland Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.28 2009/12/14 00:47:10 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.27 2009/08/31 05:34:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.28 2009/12/14 00:47:10 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

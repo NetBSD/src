@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.83 2009/12/12 10:32:26 njoly Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.84 2009/12/14 00:47:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -44,6 +44,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/ucontext.h>
+#include <sys/ucred.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 
@@ -250,6 +251,17 @@ struct netbsd32_statfs {
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
+};
+
+struct netbsd32_export_args30 {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
+	netbsd32_pointer_t ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	netbsd32_pointer_t ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */ 
 };
 
 /* from <sys/poll.h> */
@@ -812,6 +824,25 @@ struct netbsd32_kevent {
 /* from <sys/sched.h> */
 typedef netbsd32_pointer_t netbsd32_sched_paramp_t;
 typedef netbsd32_pointer_t netbsd32_cpusetp_t;
+
+/* from <fs/cd9660/cd9660_mount.h> */
+struct netbsd32_iso_args {
+	netbsd32_charp fspec;
+	struct export_args30 _pad1;
+	int	flags;
+};
+
+/* from <ufs/ufs/ufs_mount.h> */
+struct netbsd32_ufs_args {
+	netbsd32_charp		fspec;
+};
+
+struct netbsd32_mfs_args {
+	netbsd32_charp		fspec;
+	struct netbsd32_export_args30	_pad1;
+	netbsd32_voidp		base;
+	netbsd32_u_long		size;
+};
 
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);

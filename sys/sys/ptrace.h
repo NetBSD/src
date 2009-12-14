@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.41 2009/10/02 22:18:56 elad Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.42 2009/12/14 00:48:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -113,12 +113,22 @@ void	process_stoptrace(void);
 
 void	proc_reparent(struct proc *, struct proc *);
 #ifdef PT_GETFPREGS
+#ifdef __HAVE_PROCESS_XFPREGS
+int	process_read_xfpregs(struct lwp *, struct fpreg *, size_t *);
+#ifndef process_read_xfpregs32
+#define process_read_xfpregs32	process_read_xfpregs
+#endif
+#ifndef process_read_xfpregs64
+#define process_read_xfpregs64	process_read_xfpregs
+#endif
+#else
 int	process_read_fpregs(struct lwp *, struct fpreg *);
 #ifndef process_read_fpregs32
 #define process_read_fpregs32	process_read_fpregs
 #endif
 #ifndef process_read_fpregs64
 #define process_read_fpregs64	process_read_fpregs
+#endif
 #endif
 #endif
 #ifdef PT_GETREGS
@@ -133,7 +143,11 @@ int	process_read_regs(struct lwp *, struct reg *);
 int	process_set_pc(struct lwp *, void *);
 int	process_sstep(struct lwp *, int);
 #ifdef PT_SETFPREGS
+#ifdef __HAVE_PROCESS_XFPREGS
+int	process_write_xfpregs(struct lwp *, const struct fpreg *, size_t);
+#else
 int	process_write_fpregs(struct lwp *, const struct fpreg *);
+#endif
 #endif
 #ifdef PT_SETREGS
 int	process_write_regs(struct lwp *, const struct reg *);

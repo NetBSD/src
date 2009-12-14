@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.22 2009/11/28 20:09:56 dsl Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.23 2009/12/14 00:47:10 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.22 2009/11/28 20:09:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.23 2009/12/14 00:47:10 matt Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -89,16 +89,16 @@ irix_sys_sysmp(struct lwp *l, const struct irix_sys_sysmp_args *uap, register_t 
 		break;
 
 	case IRIX_MP_KERNADDR: 	/* Kernel structure addresses */
-		return irix_sysmp_kernaddr((int)SCARG(uap, arg1), retval);
+		return irix_sysmp_kernaddr((intptr_t)SCARG(uap, arg1), retval);
 		break;
 
 	case IRIX_MP_SASZ: 	/* System accounting structure size */
-		return irix_sysmp_sasz((int)SCARG(uap, arg1), retval);
+		return irix_sysmp_sasz((intptr_t)SCARG(uap, arg1), retval);
 		break;
 
 	case IRIX_MP_SAGET1: /* Get system accounting structure for one CPU */
 	case IRIX_MP_SAGET:  /* Get system accounting structure for all CPU */
-		return irix_sysmp_saget((int)SCARG(uap, arg1),
+		return irix_sysmp_saget((intptr_t)SCARG(uap, arg1),
 		    (char *)SCARG(uap, arg2), (size_t)SCARG(uap, arg3));
 		break;
 

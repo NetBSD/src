@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.18 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_types.h,v 1.19 2009/12/14 00:47:10 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ typedef __int32_t irix_off_t;
 typedef __uint32_t irix_app32_ptr_t;
 typedef __uint64_t irix_k_sigset_t;
 
-#if 1 /* _MIPS_SZLONG == 32 */
+#if _MIPS_SZLONG == 32
 typedef unsigned long irix_mode_t;
 typedef unsigned long irix_dev_t;
 typedef long irix_uid_t;
@@ -65,17 +65,17 @@ typedef long irix_gid_t;
 typedef unsigned long irix_nlink_t;
 typedef long irix_pid_t;
 typedef long irix_time_t;
-typedef unsigned int irix_size_t;
+typedef unsigned long irix_size_t;
 #endif
-#if 0 /* _MIPS_SZLONG == 64 */
+#if _MIPS_SZLONG == 64
 typedef __uint32_t irix_dev_t;
 typedef __uint32_t irix_mode_t;
 typedef __int32_t irix_uid_t;
 typedef __int32_t irix_gid_t;
 typedef __uint32_t irix_nlink_t;
 typedef __int32_t irix_pid_t;
-typedef int irix_time_t;
-typedef unsigned long irix_size_t;
+typedef __int32_t irix_time_t;
+typedef __uint32_t irix_size_t;
 #endif
 typedef __int32_t irix_blkcnt_t;
 typedef __uint64_t irix_ino64_t;
@@ -107,46 +107,46 @@ typedef struct irix___timespec {
 #define IRIX__STAT64_VER 3
 struct irix_stat {
 	irix_dev_t	ist_dev;
-	long		ist_pad1[3];
+	__uint32_t	ist_pad1[3];
 	irix_ino_t	ist_ino;
 	irix_mode_t	ist_mode;
 	irix_nlink_t	ist_nlink;
 	irix_uid_t	ist_uid;
 	irix_gid_t	ist_gid;
 	irix_dev_t	ist_rdev;
-	long		ist_pad2[2];
+	__uint32_t	ist_pad2[2];
 	irix_off_t	ist_size;
-	long		ist_pad3;
+	__uint32_t	ist_pad3;
 	irix_timespec_t	ist_atim;
 	irix_timespec_t	ist_mtim;
 	irix_timespec_t	ist_ctim;
-	long		ist_blksize;
+	__int32_t	ist_blksize;
 	irix_blkcnt_t	ist_blocks;
 	char		ist_fstype[16];
-	long		ist_projid;
-	long		ist_pad4[7];
+	__int32_t	ist_projid;
+	__uint32_t	ist_pad4[7];
 };
 
 struct irix_stat64 {
 	irix_dev_t	ist_dev;
-	long		ist_pad1[3];
+	__uint32_t	ist_pad1[3];
 	irix_ino64_t	ist_ino;
 	irix_mode_t	ist_mode;
 	irix_nlink_t	ist_nlink;
 	irix_uid_t	ist_uid;
 	irix_gid_t	ist_gid;
 	irix_dev_t	ist_rdev;
-	long		ist_pad2[2];
+	__uint32_t	ist_pad2[2];
 	irix_off64_t	ist_size;
-	long		ist_pad3;
+	__uint32_t	ist_pad3;
 	irix_timespec_t	ist_atim;
 	irix_timespec_t	ist_mtim;
 	irix_timespec_t	ist_ctim;
-	long		ist_blksize;
+	__int32_t	ist_blksize;
 	irix_blkcnt64_t	ist_blocks;
 	char		ist_fstype[16];
-	long		ist_projid;
-	long		ist_pad4[7];
+	__int32_t	ist_projid;
+	__uint32_t	ist_pad4[7];
 };
 
 /* From IRIX's <sys/mount.h> */
