@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.1.1.1 2009/12/13 16:55:33 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.2 2009/12/14 00:40:26 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -403,7 +403,7 @@ crypto_recv(
 	keyid_t	cookie;		/* crumbles */
 	int	hismode;	/* packet mode */
 	int	rval = XEVNT_OK;
-	u_char	*ptr;
+	const u_char	*ptr;
 	u_int32 temp32;
 
 	/*
@@ -1553,7 +1553,8 @@ crypto_encrypt(
 	tstamp_t tstamp;	/* NTP timestamp */
 	u_int32	temp32;
 	u_int	len;
-	u_char	*ptr;
+	const u_char	*ptr;
+	u_char *sptr;
 
 	/*
 	 * Extract the public key from the request.
@@ -1577,9 +1578,9 @@ crypto_encrypt(
 	len = EVP_PKEY_size(pkey);
 	vp->vallen = htonl(len);
 	vp->ptr = emalloc(len);
-	ptr = vp->ptr;
+	sptr = vp->ptr;
 	temp32 = htonl(*cookie);
-	if (RSA_public_encrypt(4, (u_char *)&temp32, ptr,
+	if (RSA_public_encrypt(4, (const u_char *)&temp32, sptr,
 	    pkey->pkey.rsa, RSA_PKCS1_OAEP_PADDING) <= 0) {
 		msyslog(LOG_ERR, "crypto_encrypt: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -2946,7 +2947,7 @@ cert_sign(
 	EVP_MD_CTX ctx;		/* message digest context */
 	tstamp_t tstamp;	/* NTP timestamp */
 	u_int	len;
-	u_char	*ptr;
+	const u_char	*ptr;
 	int	i, temp;
 
 	/*
@@ -3029,7 +3030,7 @@ cert_sign(
 	vp->vallen = htonl(len);
 	vp->ptr = emalloc(len);
 	ptr = vp->ptr;
-	i2d_X509(cert, &ptr);
+	i2d_X509(cert, (unsigned char **)&ptr);
 	vp->siglen = 0;
 	if (tstamp != 0) {
 		vp->sig = emalloc(sign_siglen);
@@ -3132,7 +3133,7 @@ cert_hike(
 {
 	struct cert_info *xp;	/* subject certificate */
 	X509	*cert;		/* X509 certificate */
-	u_char	*ptr;
+	const u_char	*ptr;
 
 	/*
 	 * Save the issuer on the new certificate, but remember the old
@@ -3231,7 +3232,7 @@ cert_parse(
 	struct cert_info *ret;	/* certificate info/value */
 	BIO	*bp;
 	char	pathbuf[MAXFILENAME];
-	u_char	*ptr;
+	const u_char	*ptr;
 	int	temp, cnt, i;
 
 	/*
