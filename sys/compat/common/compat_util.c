@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.41 2008/04/28 20:23:41 martin Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.41.18.1 2009/12/14 07:13:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -29,8 +29,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2008, 2009 Matthew R. Green
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.41 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.41.18.1 2009/12/14 07:13:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,4 +175,50 @@ compat_offseterr(struct vnode *vp, const char *msg)
 	log(LOG_ERR, "%s: dir offset too large on fs %s (mounted from %s)\n",
 	    msg, mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 	uprintf("%s: dir offset too large for emulated program\n", msg);
+}
+
+/*
+ * Look for native NetBSD compatibility libraries, usually interp-ABI.
+ * It returns 0 if it changed the interpreter, otherwise it returns
+ * the error from namei().  Callers should not try any more processing
+ * if this returns 0.
+ */
+int
+compat_elf_check_interp(struct exec_package *epp,
+			char *interp,
+			const char *interp_suffix)
+{
+	int error = 0;
+
+	/*
+	 * Don't look for something else, if someone has already found and
+	 * setup the ep_interp already.
+	 */
+	if (interp && epp->ep_interp == NULL) {
+		/*
+		 * If the path is exactly "/usr/libexec/ld.elf_so", first
+		 * try to see if "/usr/libexec/ld.elf_so-<abi>" exists
+		 * and if so, use that instead.
+		 */
+		if (strcmp(interp, "/usr/libexec/ld.elf_so") == 0 ||
+		    strcmp(interp, "/libexec/ld.elf_so") == 0) {
+			struct nameidata nd;
+			char *path;
+
+			path = PNBUF_GET();
+			snprintf(path, MAXPATHLEN, "%s-%s", interp, interp_suffix);
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+			error = namei(&nd);
+			/*
+			 * If that worked, replace interpreter in case we
+			 * actually need to load it
+			 */
+			if (error == 0) {
+				epp->ep_interp = nd.ni_vp;
+				snprintf(interp, MAXPATHLEN, "%s", path);
+			}
+			PNBUF_PUT(path);
+		}
+	}
+	return error;
 }
