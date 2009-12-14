@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.1 2009/12/13 16:55:34 kardel Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.2 2009/12/14 00:41:03 christos Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -20,6 +20,9 @@
 
 #include <signal.h>
 #include <setjmp.h>
+#ifdef __NetBSD__
+#include <util.h>
+#endif
 
 #if defined(VMS) && defined(VMS_LOCALUNIT)	/*wjm*/
 #include "ntp_refclock.h"
@@ -177,6 +180,19 @@ static struct sigaction newsigsys; /* new sigaction status */
 static sigjmp_buf env;		/* environment var. for pll_trap() */
 #endif /* SIGSYS */
 #endif /* KERNEL_PLL */
+
+static void
+sync_status(const char *what, int status)
+{
+	char buf[256], tbuf[1024];
+#ifdef STA_FMT
+	snprintb(buf, sizeof(buf), STA_FMT, status);
+#else
+	snprintf(buf, sizeof(buf), "%04x", status);
+#endif
+	snprintf(tbuf, sizeof(tbuf), "%s status=%s", what, buf);
+	report_event(EVNT_KERN, NULL, tbuf);
+}
 
 /*
  * init_loopfilter - initialize loop filter data
@@ -545,16 +561,13 @@ local_clock(
 			 * Enable/disable the PPS if requested.
 			 */
 			if (pps_enable) {
-				if (!(pll_status & STA_PPSTIME))
-					report_event(EVNT_KERN,
-					    NULL, "PPS enabled");
 				ntv.status |= STA_PPSTIME | STA_PPSFREQ;
+				if (!(pll_status & STA_PPSTIME))
+					sync_status("PPS enbled", ntv.status);
 			} else {
+				ntv.status &= ~(STA_PPSTIME | STA_PPSFREQ);
 				if (pll_status & STA_PPSTIME)
-					report_event(EVNT_KERN,
-					    NULL, "PPS disabled");
-				ntv.status &= ~(STA_PPSTIME |
-				    STA_PPSFREQ);
+					sync_status("PPS disabled", ntv.status);
 			}
 			if (sys_leap == LEAP_ADDSECOND)
 				ntv.status |= STA_INS;
@@ -569,8 +582,12 @@ local_clock(
 		 */
 		if (ntp_adjtime(&ntv) == TIME_ERROR) {
 			if (!(ntv.status & STA_PPSSIGNAL))
-				report_event(EVNT_KERN, NULL,
-				    "PPS no signal");
+				sync_status("PPS no signal", ntv.status);
+			else
+				sync_status("adjtime error", ntv.status);
+		} else {
+ 			if ((ntv.status ^ pll_status) & ~STA_FLL)
+				sync_status("status change", ntv.status);
 		}
 		pll_status = ntv.status;
 #ifdef STA_NANO
@@ -914,8 +931,7 @@ loop_config(
 			if (pll_status & STA_CLK)
 				ext_enable = 1;
 #endif /* STA_NANO */
-			report_event(EVNT_KERN, NULL,
- 		  	    "kernel time sync enabled");
+			sync_status("kernel time sync enabled", ntv.status);
 		}
 #endif /* KERNEL_PLL */
 #endif /* LOCKCLOCK */
@@ -953,8 +969,7 @@ loop_config(
 			ntv.modes = MOD_STATUS;
 			ntv.status = STA_UNSYNC;
 			ntp_adjtime(&ntv);
-			report_event(EVNT_KERN, NULL,
- 		  	    "kernel time sync disabledx");
+			sync_status("kernel time sync disabled", ntv.status);
 		   }
 #endif /* KERNEL_PLL */
 #endif /* LOCKCLOCK */
