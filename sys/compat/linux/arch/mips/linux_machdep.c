@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.39 2009/11/23 00:46:07 rmind Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.40 2009/12/14 00:47:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2009/11/23 00:46:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2009/12/14 00:47:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,11 +144,11 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack)
 		fp = (struct linux_sigframe *)
-		    ((uint8_t *)l->l_sigstk.ss_sp
+		    ((uintptr_t)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
-		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
-		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[_R_SP];
+		/* cast for O64 ABI case */
+		fp = (struct linux_sigframe *)(uintptr_t)f->f_regs[_R_SP];
 
 	/*
 	 * Build stack frame for signal trampoline.

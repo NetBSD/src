@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.88 2009/05/17 05:55:42 pooka Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.89 2009/12/14 00:47:11 matt Exp $ */
 
 /*
  * System call numbers.
@@ -1094,6 +1094,9 @@
 
 /* syscall: "compat_50_netbsd32___fhstat40" ret: "int" args: "netbsd32_pointer_t" "netbsd32_size_t" "netbsd32_stat50p_t" */
 #define	NETBSD32_SYS_compat_50_netbsd32___fhstat40	398
+
+/* syscall: "netbsd32___mount50" ret: "int" args: "netbsd32_charp" "netbsd32_charp" "int" "netbsd32_voidp" "netbsd32_size_t" */
+#define	NETBSD32_SYS_netbsd32___mount50	410
 
 /* syscall: "netbsd32_mremap" ret: "netbsd32_voidp" args: "netbsd32_voidp" "netbsd32_size_t" "netbsd32_voidp" "netbsd32_size_t" "int" */
 #define	NETBSD32_SYS_netbsd32_mremap	411

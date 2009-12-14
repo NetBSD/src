@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.151 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.152 2009/12/14 00:48:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.151 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.152 2009/12/14 00:48:35 matt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -896,7 +896,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	int error;
 	struct fpreg r;
 	char *kv;
-	int kl;
+	size_t kl;
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
@@ -909,14 +909,22 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
+#ifdef __HAVE_PROCESS_XFPREGS
+	error = process_read_xfpregs(l, &r, &kl);
+#else
 	error = process_read_fpregs(l, &r);
+#endif
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
+#ifdef __HAVE_PROCESS_XFPREGS
+			error = process_write_xfpregs(l, &r, kl);
+#else
 			error = process_write_fpregs(l, &r);
+#endif
 	}
 	uio->uio_offset = 0;
 	return (error);
