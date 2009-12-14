@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
+/*	$NetBSD: compat___sigreturn14.S,v 1.2 2009/12/14 03:04:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: compat___sigreturn14.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
+#if 0
+	RCSID("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: compat___sigreturn14.S,v 1.2 2009/12/14 03:04:33 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

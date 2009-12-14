@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___semctl.S,v 1.3 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: compat___semctl.S,v 1.4 2009/12/14 03:04:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat___semctl.S,v 1.3 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: compat___semctl.S,v 1.4 2009/12/14 03:04:33 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 PSEUDO(__semctl,compat_14___semctl)
