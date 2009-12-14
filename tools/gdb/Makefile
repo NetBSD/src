@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/12/05 05:12:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2009/12/14 08:51:31 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
+.MAKEFLAGS: -B	# XXX otherwise fails with itable.c / interp.c build
 ALL_TARGET=	all-gdb
 INSTALL_TARGET=	install-gdb
 
