@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2009/12/11 16:10:56 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.28 2009/12/14 05:23:39 christos Exp $
 
 NOMAN=		# defined
 
@@ -14,13 +14,17 @@ CLEANFILES+=	misc.c misc.h
 LDSTATIC?=-static
 .endif
 
+# Hint for mkdep(1).
 dump.c: misc.h
 
+# Avoid race.
+.ORDER: misc.c misc.h
+
+# Build-time generation.
 misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 	       ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
-	${GENCMD} ${.TARGET} \
-	AWK="${TOOL_AWK:Q}" CPP="${CPP:Q}" CPPFLAGS="${CPPFLAGS:Q}" \
+	AWK=${TOOL_AWK:Q} CPP=${CPP:Q} CPPFLAGS=${CPPFLAGS:Q} \
 	    ${HOST_SH} ${.CURDIR}/makeerrnos.sh \
 	    ${DESTDIR}/usr/include/sys/errno.h \
 	    ${DESTDIR}/usr/include/sys/signal.h misc
