@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1176 2009/12/14 02:01:54 matt Exp $
+# $NetBSD: mi,v 1.1177 2009/12/14 09:57:37 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -49,6 +49,7 @@
 ./usr/share/man/cat1/at.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atari/edahdi.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/atari/msconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat1/atf-check.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
