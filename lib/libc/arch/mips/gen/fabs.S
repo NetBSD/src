@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.7 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: fabs.S,v 1.8 2009/12/14 01:07:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,14 +35,14 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	ASMSTR("$NetBSD: fabs.S,v 1.7 2003/08/07 16:42:15 agc Exp $")
+#if 0
+	RCSID("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
+#else
+	RCSID("$NetBSD: fabs.S,v 1.8 2009/12/14 01:07:42 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 
-#ifdef __ABICALLS__
-	.abicalls
-#endif
 	.set	noreorder
 
 /*

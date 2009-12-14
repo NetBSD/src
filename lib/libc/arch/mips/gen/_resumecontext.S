@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.5 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.6 2009/12/14 01:07:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,19 +29,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 #include "SYS.h"
-#include <machine/mcontext.h>
+#include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: _resumecontext.S,v 1.5 2008/04/28 20:22:56 martin Exp $")
+	RCSID("$NetBSD: _resumecontext.S,v 1.6 2009/12/14 01:07:42 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
+	.hidden	_C_LABEL(__resumecontext)
 	
 LEAF_NOPROFILE(__resumecontext)
-	PIC_PROLOGUE(_resumecontext, ra)
-	
-	la	t9, _C_LABEL(_resumecontext)
-	jr	t9
-	 nop
+	/*
+	 * We get here not by a call through $t9 but thru $ra after the
+	 * function passed to makecontext returns.
+	 */
+	PTR_SUBU	sp, sp, UCONTEXT_SIZE		# get space for ucontext
+	move		a0, sp				# arg0 for getcontext
+	PTR_S		zero, _OFFSETOF_UC_LINK(a0)	# make sure uc_link is 0
+	SYSTRAP(getcontext)				# get context
+	PTR_L		a0, _OFFSETOF_UC_LINK(a0)	# linked context?
+	beq		a0, zero, 1f			#   nope, exit process
+	nop
+	SYSTRAP(setcontext)				#   yes, become it.
+	/* NOTREACHED (in theory) */
+	li		a0, -1				# failure, 
+1:
+	SYSTRAP(exit)					# all hope is lost.
+	/* NOTREACHED */
 END(__resumecontext)

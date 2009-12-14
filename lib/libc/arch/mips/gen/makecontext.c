@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.5 2009/12/14 01:07:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4 2008/04/28 20:22:56 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.5 2009/12/14 01:07:42 matt Exp $");
 #endif
 
 #include <inttypes.h>
@@ -45,34 +45,51 @@ void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
 	__greg_t *gr = ucp->uc_mcontext.__gregs;
-	uintptr_t *sp;
+	__greg_t *sp;
 	int i;
 	va_list ap;
 
 	void __resumecontext(void);
 
 	/* LINTED uintptr_t is safe */
-	sp  = (uintptr_t *)
+	sp  = (__greg_t *)
 	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* LINTED uintptr_t is safe */
+#if defined(__mips_o32) || defined(__mips_o64)
 	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
-	sp  = (uintptr_t *)
+	sp  = (__greg_t *)
 	      ((uintptr_t)sp & ~0x7);	/* Align on double-word boundary. */
+#elif defined(__mips_n32) || defined(__mips_n64)
+	sp -= (argc > 8 ? argc - 8 : 0); /* Make room for > 8 arguments. */
+	sp  = (__greg_t *)
+	      ((uintptr_t)sp & ~0xf);	/* Align on quad-word boundary. */
+#endif
 
-	gr[_REG_SP]  = (__greg_t)sp;
-	gr[_REG_RA]  = (__greg_t)__resumecontext;
-	gr[_REG_T9]  = (__greg_t)func;	/* required for .abicalls */
-	gr[_REG_EPC] = (__greg_t)func;
+	gr[_REG_SP]  = (intptr_t)sp;
+	gr[_REG_RA]  = (intptr_t)__resumecontext;
+	gr[_REG_T9]  = (intptr_t)func;		/* required for .abicalls */
+	gr[_REG_EPC] = (intptr_t)func;
 
 	/* Construct argument list. */
 	va_start(ap, argc);
+#if defined(__mips_o32) || defined(__mips_o64)
 	/* Up to the first four arguments are passed in $a0-3. */
 	for (i = 0; i < argc && i < 4; i++)
-		/* LINTED uintptr_t is safe */
-		gr[_REG_A0 + i] = va_arg(ap, uintptr_t);
+		/* LINTED __greg_t is safe */
+		gr[_REG_A0 + i] = va_arg(ap, __greg_t);
 	/* Pass remaining arguments on the stack above the $a0-3 gap. */
-	for (sp += 4; i < argc; i++)
+	sp += i;
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	/* Up to the first 8 arguments are passed in $a0-7. */
+	for (i = 0; i < argc && i < 8; i++)
+		/* LINTED __greg_t is safe */
+		gr[_REG_A0 + i] = va_arg(ap, __greg_t);
+	/* Pass remaining arguments on the stack above the $a0-3 gap. */
+#endif
+	/* Pass remaining arguments on the stack above the $a0-3 gap. */
+	for (; i < argc; i++)
 		/* LINTED uintptr_t is safe */
-		*sp++ = va_arg(ap, uintptr_t);
+		*sp++ = va_arg(ap, __greg_t);
 	va_end(ap);
 }
