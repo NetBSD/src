@@ -36,10 +36,9 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#include <inttypes.h>
+#include <arpa/inet.h>
 
-/* this brings in the prototype for asprintf on Linux */
-#define _GNU_SOURCE
+#include <inttypes.h>
 #include <stdio.h>
 
 #include <stdlib.h>
@@ -64,6 +63,7 @@
 
 #include "packet-parse.h"
 #include "netpgpdefs.h"
+#include "netpgpsdk.h"
 #include "crypto.h"
 #include "netpgpdigest.h"
 #include "ops-ssh.h"
@@ -314,7 +314,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 	if (ok) {
 		(void) memset(&userid, 0x0, sizeof(userid));
 		(void) gethostname(hostname, sizeof(hostname));
-		(void) asprintf((char **)(void *)&userid.userid,
+		(void) __ops_asprintf((char **)(void *)&userid.userid,
 				"%s (%s) <%.*s>",
 				hostname,
 				f,

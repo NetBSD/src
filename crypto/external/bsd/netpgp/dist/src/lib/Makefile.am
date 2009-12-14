@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.3 2009/05/26 05:42:25 lukem Exp $
+## $NetBSD: Makefile.am,v 1.4 2009/12/14 23:29:56 agc Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
@@ -7,9 +7,11 @@ lib_LTLIBRARIES		= libnetpgp.la
 libnetpgp_la_CPPFLAGS	= -I$(top_srcdir)/include
 
 libnetpgp_la_SOURCES	= \
+	bufgap.c \
 	compress.c \
 	create.c \
 	crypto.c \
+	fastctype.c \
 	keyring.c \
 	misc.c \
 	netpgp.c \
@@ -19,6 +21,7 @@ libnetpgp_la_SOURCES	= \
 	packet-show.c \
 	reader.c \
 	signature.c \
+	ssh2pgp.c \
 	symmetric.c \
 	validate.c \
 	writer.c

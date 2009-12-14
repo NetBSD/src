@@ -61,6 +61,8 @@ unsigned   __ops_check_sig(const unsigned char *,
 
 const char     *__ops_get_info(const char *type);
 
+int __ops_asprintf(char **, const char *, ...);
+
 void netpgp_log(const char *, ...);
 
 

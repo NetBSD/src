@@ -90,6 +90,7 @@ enum optdefs {
 	VERBOSE,
 	COREDUMPS,
 	PASSWDFD,
+	SSHKEYFILE,
 
 	/* debug */
 	OPS_DEBUG
@@ -118,6 +119,7 @@ static struct option options[] = {
 	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
 	/* options */
 	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
+	{"sshkeyfile",	required_argument, 	NULL,	SSHKEYFILE},
 	{"coredumps",	no_argument, 		NULL,	COREDUMPS},
 	{"keyring",	required_argument, 	NULL,	KEYRING},
 	{"userid",	required_argument, 	NULL,	USERID},
@@ -218,51 +220,6 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	}
 }
 
-/* get even more lippy */
-static void
-give_it_large(netpgp_t *netpgp)
-{
-	char	*cp;
-	char	 num[16];
-	int	 val;
-
-	val = 0;
-	if ((cp = netpgp_getvar(netpgp, "verbose")) != NULL) {
-		val = atoi(cp);
-	}
-	(void) snprintf(num, sizeof(num), "%d", val + 1);
-	netpgp_setvar(netpgp, "verbose", num);
-}
-
-/* set the home directory value to "home/subdir" */
-static int
-set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int quiet)
-{
-	struct stat	st;
-	char		d[MAXPATHLEN];
-
-	if (home == NULL) {
-		if (!quiet) {
-			(void) fprintf(stderr, "NULL HOME directory\n");
-		}
-		return 0;
-	}
-	(void) snprintf(d, sizeof(d), "%s%s", home, (subdir) ? subdir : "");
-	if (stat(d, &st) == 0) {
-		if ((st.st_mode & S_IFMT) == S_IFDIR) {
-			netpgp_setvar(netpgp, "homedir", d);
-			return 1;
-		}
-		(void) fprintf(stderr, "netpgp: homedir \"%s\" is not a dir\n",
-					d);
-		return 0;
-	}
-	if (!quiet) {
-		(void) fprintf(stderr,
-			"netpgp: warning homedir \"%s\" not found\n", d);
-	}
-	return 1;
-}
 
 int
 main(int argc, char **argv)
@@ -285,8 +242,7 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
-	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
-	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
+	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -341,7 +297,7 @@ main(int argc, char **argv)
 			p.detached = 1;
 			break;
 		case VERBOSE:
-			give_it_large(&netpgp);
+			netpgp_incvar(&netpgp, "verbose", 1);
 			break;
 		case HOMEDIR:
 			if (optarg == NULL) {
@@ -349,7 +305,7 @@ main(int argc, char **argv)
 				"No home directory argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			set_homedir(&netpgp, optarg, NULL, 0);
+			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
 			break;
 		case HASH_ALG:
 			if (optarg == NULL) {
@@ -385,6 +341,9 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "results", optarg);
+			break;
+		case SSHKEYFILE:
+			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
