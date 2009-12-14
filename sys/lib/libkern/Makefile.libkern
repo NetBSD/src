@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.7 2009/11/21 13:37:18 uebayasi Exp $
+#	$NetBSD: Makefile.libkern,v 1.8 2009/12/14 12:18:14 uebayasi Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -57,7 +57,9 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 # Other stuff
 SRCS+=	__assert.c __main.c
 SRCS+=	__cmsg_alignbytes.c cpuset.c inet_addr.c intoa.c
+.if empty(SRCS:Mbyte_swap_8.*)
 SRCS+=	bswap64.c
+.endif
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
 SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
 
@@ -67,7 +69,10 @@ SRCS+=	strlcpy.c strlcat.c
 SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
 SRCS+=	memcpy.c memmove.c
 SRCS+=	strchr.c strrchr.c
-SRCS+=	memcmp.c memset.c 
+SRCS+=	memcmp.c
+.if empty(SRCS:Mmemset2.*)
+SRCS+=	memset.c 
+.endif
 SRCS+=	popcount32.c popcount64.c
 SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
 
@@ -96,4 +101,3 @@ unwanted_file := ${SRCS:M${check_file:.S=.c}}
 SRCS := ${SRCS:N${unwanted_file}}
 .endif
 .endfor
-
