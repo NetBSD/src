@@ -1,11 +1,8 @@
-/*	$NetBSD: membar_ops.S,v 1.4 2009/12/14 00:39:00 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.2 2009/12/14 00:39:00 matt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,49 +26,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-#if defined(_KERNEL)
-
-#ifdef _KERNEL_OPT
-#include "opt_cputype.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
-
-#include <machine/cpu.h>
-
-#if (MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)) || !defined(__mips_o32)
-#define	SYNC		sync
-#endif
-#elif !defined(__mips_o32)
-#define	SYNC		sync
-#endif
+RCSID("$NetBSD: atomic_swap.S,v 1.2 2009/12/14 00:39:00 matt Exp $")
 
 	.text
+	.set	noat
+	.set	noreorder
+	.set	nomacro
 
-LEAF(_membar_sync)
-	j	ra
-#ifdef SYNC
-	SYNC
+LEAF(_atomic_swap_32)
+1:	INT_LL		v0, 0(a0)
+	 nop
+	move		t0, a1
+	INT_SC		t0, 0(a0)
+	beq		t0, zero, 1b
+ 	 nop
+2:
+	j		ra
+	 nop
+END(_atomic_swap_32)
+ATOMIC_OP_ALIAS(atomic_swap_32, _atomic_swap_32)
+
+#if !defined(__mips_o32)
+LEAF(_atomic_swap_64)
+1:	REG_LL		v0, 0(a0)
+	 nop
+	move		t0, a1
+	REG_SC		t0, 0(a0)
+	beq		t0, zero, 1b
+ 	 nop
+2:
+	j		ra
+	 nop
+END(_atomic_swap_64)
+ATOMIC_OP_ALIAS(atomic_swap_64, _atomic_swap_64)
+#endif
+
+#ifdef _LP64
+STRONG_ALIAS(_atomic_swap_ptr,		_atomic_swap_64)
+STRONG_ALIAS(_atomic_swap_ulong,	_atomic_swap_64)
 #else
-	  nop
+STRONG_ALIAS(_atomic_swap_ptr,		_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_ulong,	_atomic_swap_32)
 #endif
-END(_membar_sync)
+STRONG_ALIAS(_atomic_swap_uint,		_atomic_swap_32)
 
-#ifdef _KERNEL
-STRONG_ALIAS(mb_read, _membar_sync)
-STRONG_ALIAS(mb_write, _membar_sync)
-STRONG_ALIAS(mb_memory, _membar_sync)
-#endif
-
-ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
-ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
-STRONG_ALIAS(_membar_enter,_membar_sync)
-ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
-STRONG_ALIAS(_membar_exit,_membar_sync)
-ATOMIC_OP_ALIAS(membar_producer,_membar_sync)
-STRONG_ALIAS(_membar_producer,_membar_sync)
-ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
-STRONG_ALIAS(_membar_consumer,_membar_sync)
+ATOMIC_OP_ALIAS(atomic_swap_ptr,	_atomic_swap_ptr)
+ATOMIC_OP_ALIAS(atomic_swap_uint,	_atomic_swap_uint)
+ATOMIC_OP_ALIAS(atomic_swap_ulong,	_atomic_swap_ulong)
