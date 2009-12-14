@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.24 2009/12/14 00:43:05 matt Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.25 2009/12/14 14:11:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -255,7 +255,7 @@ usage:
 		    ph[i].p_type == PT_MIPS_REGINFO) {
 
 			if (debug) {
-				fprintf(stderr, "  skipping PH %d type %d flags 0x%x\n",
+				fprintf(stderr, "  skipping PH %zd type %d flags 0x%x\n",
 				    i, ph[i].p_type, ph[i].p_flags);
 			}
 			continue;
@@ -263,7 +263,7 @@ usage:
 		/* Section types we can't handle... */
 		else
 			if (ph[i].p_type != PT_LOAD) {
-				fprintf(stderr, "Program header %d type %d can't be converted.\n",
+				fprintf(stderr, "Program header %zd type %d can't be converted.\n",
 				    i, ph[i].p_type);
 				exit(1);
 			}
@@ -278,7 +278,7 @@ usage:
 
 			if (debug) {
 				fprintf(stderr,
-				    "  combinining PH %d type %d flags 0x%x with data, ndata = %ld, nbss =%ld\n", i, ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
+				    "  combinining PH %zd type %d flags 0x%x with data, ndata = %ld, nbss =%ld\n", i, ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
 			}
 			combine(&data, &ndata, 0);
 			combine(&bss, &nbss, 1);
@@ -290,7 +290,7 @@ usage:
 			if (debug) {
 
 				fprintf(stderr,
-				    "  combinining PH %d type %d flags 0x%x with text, len = %ld\n",
+				    "  combinining PH %zd type %d flags 0x%x with text, len = %ld\n",
 				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 			}
 			combine(&text, &ntxt, 0);
