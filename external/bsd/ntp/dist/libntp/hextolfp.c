@@ -1,4 +1,4 @@
-/*	$NetBSD: hextolfp.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: hextolfp.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
 
 /*
  * hextolfp - convert an ascii hex string to an l_fp number
@@ -31,7 +31,7 @@ hextolfp(
 	 *
 	 * [spaces]8_hex_digits[.]8_hex_digits[spaces|\n|\0]
 	 */
-	while (isspace((int)*cp))
+	while (isspace((unsigned char)*cp))
 	    cp++;
 	
 	cpstart = cp;
@@ -60,7 +60,7 @@ hextolfp(
 	if ((cp - cpstart) < 8 || ind == NULL)
 	    return 0;
 	
-	if (*cp != '\0' && !isspace((int)*cp))
+	if (*cp != '\0' && !isspace((unsigned char)*cp))
 	    return 0;
 
 	lfp->l_ui = dec_i;
