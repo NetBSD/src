@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.8 2009/12/12 01:45:01 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.9 2009/12/14 07:18:55 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.8 2009/12/12 01:45:01 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.9 2009/12/14 07:18:55 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,9 @@ CFATTACH_DECL_NEW(rmixl_com, sizeof(struct rmixl_com_softc),
 volatile uint32_t *com0addr = (uint32_t *)
 	MIPS_PHYS_TO_KSEG1(RMIXL_IO_DEV_PBASE + RMIXL_IO_DEV_UART_1);
 
+extern int comcnfreq;
+extern int comcnspeed;
+
 void
 rmixl_putchar_init(uint64_t io_pbase)
 {
@@ -152,8 +155,8 @@ rmixl_putchar_init(uint64_t io_pbase)
 	com0addr = (uint32_t *)
 		MIPS_PHYS_TO_KSEG1(io_pbase + RMIXL_IO_DEV_UART_1);
 
-	if (CONSFREQ != -1) {
-		rate = comspeed(CONSPEED, CONSFREQ, COM_TYPE_NORMAL);
+	if (comcnfreq != -1) {
+		rate = comspeed(comcnspeed, comcnfreq, COM_TYPE_NORMAL);
 		if (rate < 0)
 			return;					/* XXX */
 
@@ -227,7 +230,7 @@ rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
 	struct com_regs	regs;
 	int rv;
 
-	bst = obio->obio_bst;
+	bst = obio->obio_eb_bst;
 	addr = obio->obio_addr;
 	size = obio->obio_size;
 
@@ -262,9 +265,9 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 
 	sc->sc_dev = self;
-	sc->sc_frequency = CONSFREQ;
+	sc->sc_frequency = comcnfreq;
 
-	bst = obio->obio_bst;
+	bst = obio->obio_eb_bst;
 	addr = obio->obio_addr;
 	size = obio->obio_size;
 
@@ -308,7 +311,7 @@ rmixl_com_cnattach(bus_addr_t addr, int speed, int freq,
 	bus_size_t sz;
 	struct com_regs	regs;
 
-	bst = (bus_space_tag_t)&rmixl_configuration.rc_obio_memt;
+	bst = (bus_space_tag_t)&rmixl_configuration.rc_obio_eb_memt;
 	sz = COM_NPORTS * sizeof(uint32_t);	/* span of UART regs in bytes */
 
 	memset(&regs, 0, sizeof(regs));
