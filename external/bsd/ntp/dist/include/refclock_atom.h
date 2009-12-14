@@ -1,9 +1,11 @@
-/*	$NetBSD: refclock_atom.h,v 1.1.1.1 2009/12/13 16:54:54 kardel Exp $	*/
+/*	$NetBSD: refclock_atom.h,v 1.2 2009/12/14 00:38:20 christos Exp $	*/
 
 /*
  * Definitions for the atom driver and its friends
  */
+#ifndef NANOSECOND
 #define NANOSECOND	1000000000 /* one second (ns) */
+#endif
 #define RANGEGATE	500000  /* range gate (ns) */
 
 struct refclock_atom {
