@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1346 2009/12/14 02:01:53 matt Exp $
+#	$NetBSD: mi,v 1.1347 2009/12/14 09:57:37 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2295,8 +2295,8 @@
 ./usr/lib/libasn1_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libatf-c++.a				comp-atf-lib		atf
-./usr/lib/libatf-c++_g.a			-unknown-		atf.debuglib
-./usr/lib/libatf-c++_p.a			comp-atf-lib		atf.profile
+./usr/lib/libatf-c++_g.a			-unknown-		atf,debuglib
+./usr/lib/libatf-c++_p.a			comp-atf-lib		atf,profile
 ./usr/lib/libatf-c.a				comp-atf-lib		atf
 ./usr/lib/libatf-c_g.a				-unknown-		atf,debuglib
 ./usr/lib/libatf-c_p.a				comp-atf-lib		atf,profile
