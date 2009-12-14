@@ -85,6 +85,7 @@ Boston, MA 02110-1301, USA.  */
       }								\
     else							\
       {								\
+	builtin_define ("__mips_o32");				\
 	builtin_define ("_ABIO32=1");				\
 	builtin_define ("_MIPS_SIM=_ABIO32");			\
         builtin_define ("_MIPS_SZLONG=32");			\
@@ -152,6 +153,11 @@ Boston, MA 02110-1301, USA.  */
 	  builtin_define ("__mips=64");				\
 	  builtin_define ("__mips_isa_rev=1");			\
 	}							\
+      else if (ISA_MIPS64R2)					\
+	{							\
+	  builtin_define ("__mips=64");				\
+	  builtin_define ("__mips_isa_rev=2");			\
+	}							\
 								\
       if (TARGET_HARD_FLOAT)					\
 	builtin_define ("__mips_hard_float");			\
@@ -195,10 +201,11 @@ Boston, MA 02110-1301, USA.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{EL:-m elf32lmip} \
-   %{EB:-m elf32bmip} \
+  "%{EL:-m elf32ltsmip} \
+   %{EB:-m elf32btsmip} \
    %(endian_spec) \
-   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} %{mips64} \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} \
+   %{mips32} %{mips32r2} %{mips64} %{mips64r2} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
    %(netbsd_link_spec)"
 
@@ -238,6 +245,14 @@ Boston, MA 02110-1301, USA.  */
 
 
 /* Make gcc agree with <machine/ansi.h> */
+
+#undef SIZE_TYPE
+#define SIZE_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
+		   ? "long unsigned int" : "unsigned int")
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
+		      ? "long int" : "int")
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"

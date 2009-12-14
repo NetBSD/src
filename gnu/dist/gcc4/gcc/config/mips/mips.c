@@ -713,6 +713,7 @@ const struct mips_cpu_info mips_cpu_info_table[] = {
   { "mips32", PROCESSOR_4KC, 32 },
   { "mips32r2", PROCESSOR_M4K, 33 },
   { "mips64", PROCESSOR_5KC, 64 },
+  { "mips64r2", PROCESSOR_5KC, 65 },
 
   /* MIPS I */
   { "r3000", PROCESSOR_R3000, 1 },
