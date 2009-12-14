@@ -1,0 +1,15 @@
+#	$NetBSD: Makefile.md_subdir,v 1.1.2.1 2009/12/14 06:20:58 mrg Exp $
+
+# list of subdirs
+
+.if ${MACHINE} == "sparc64"
+MD_SUBDIR=	sparc64/sparc
+.endif
+
+.if ${MACHINE} == "amd64"
+MD_SUBDIR=	amd64/i386
+.endif
+
+.if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
+MD_SUBDIR=	mips64/64 mips64/o32
+.endif

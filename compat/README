@@ -1,43 +1,85 @@
-$NetBSD: README,v 1.2 2008/10/27 07:22:22 mrg Exp $
-
-This directory contains Makefile fragments that will build all of the
-NetBSD libraries in 32-bit mode and install them into /usr/lib/<arch>
-and also install a /usr/libexec/ld.elf_so-<arch>.
-
-This is current only supported for the amd64 and sparc64 platforms,
-where <arch> is "i386" or "sparc" respectively.  (It could be used to
-build MIPS o32 libraries on n32 system, but not both n32 and o32 on
-a n64 system.  It only supports one extra target.)
+$NetBSD: README,v 1.2.6.1 2009/12/14 06:20:58 mrg Exp $
 
 
-Most of the makefiles here were built with the "build-makefiles" script.
-The expections are lib/csu/Makefile and ld.elf_so/Makefile.
+Building multi- ABI libraries for NetBSD platforms.
 
 
-The method used is the:
-	- evaluate some local variables
-	- switch .CURDIR
-	- include original Makefile,
-	- evaluate some variables
-	- switch .CURDIR back
-that is used by crunchgen to build eg, installer media or /rescue.
+src/compat has a framework to (re)build the libraries shipped with
+NetBSD for a different ABI than the default for that platform.  This
+allow 32-bit libraries for the amd64 and sparc64 ports, and enables
+the mips64 port to support all three of old-style 32-bit ("o32"), the
+new 32-bit (default, "n32", 64-bit CPU required) or the 64-bit ABI.
 
+
+The basic premise is to re-set $MAKEOBJDIRPREFIX to fresh subdirectory
+underneath src/compat and rebuild the libraries with a different set
+of options.  Each platform wanting support should create their port
+subdirectory directly in src/compat, and then one subdirectory in here
+for each ABI required.  e.g., src/compat/amd64/i386 is where we build
+the 32-bit compat libraries for the amd64port.  In each of these
+subdirs, a small Makefile and makefile fragment should exist.  The
+Makefile should set BSD_MK_COMPAT_FILE to equal the fragment, and then
+include "../../Makefile.common".  Eg, amd64/i386/Makefile has:
+
+	#	$NetBSD: README,v 1.2.6.1 2009/12/14 06:20:58 mrg Exp $
+
+	BSD_MK_COMPAT_FILE=${.CURDIR}/bsd.i386.mk
+
+	.include "../../Makefile.common"
+
+In the makefile fragment any changes to ABI flags are passed here
+and the MLIBDIR variable must be set to the subdirectory in /usr/lib
+where libraries for the ABI will be installed.  There are a couple of
+helper Makefile's around.  amd64/i386/bsd.i386.mk looks like:
+
+
+	#	$NetBSD: README,v 1.2.6.1 2009/12/14 06:20:58 mrg Exp $
+
+	LD+=		-m elf_i386
+	MLIBDIR=	i386
+
+	.include "${NETBSDSRCDIR}/compat/Makefile.m32"
+
+and the referenced Makefile.m32 looks like:
+
+	#	$NetBSD: README,v 1.2.6.1 2009/12/14 06:20:58 mrg Exp $
+
+	#
+	# Makefile fragment to help implement a set of 'cc -m32' libraries.
+	#
+
+	COPTS+=			-m32
+	CPUFLAGS+=		-m32
+	LDADD+=			-m32
+	LDFLAGS+=		-m32
+	MKDEPFLAGS+=		-m32
+
+	.include "Makefile.compat"
+
+
+Makefile.common holds the list of subdirectories (the libraries and
+ld.elf_so) to build with this ABI.
+
+Makefile.md_subdir holds the list of subdirectories for each port.
+
+Makefile.compat has the basic framework to force the right paths for
+library and ld.elf_so linkage.  It contains a hack to create subdirs
+in the build that should be fixed.
+
+dirshack/Makefile is a hack to get objdirs created timely, and should
+be fixed in a better way.
 
 
 TODO:
-	- some yacc issue -- libc, libipsec and libpcap need "make" run
-	  to generate headers properly, otherwise it complains about
-	  no way to get to foo.h.  this is currently hacked by putting
-	  a rule "foo.h: foo.c" in the (generated) makefiles
-	- there's an ugly hack to make libpam build correctly again the
-	  right libc.  ld.elf_so has a similar (but less ugly hack)
-	- not sure that /usr/lib/{i386,sparc}{,/i18n} are created 
-	  properly yet
 
-Future work
+- fix MLIBDIR in ld.elf_so arch-subdirs to be generic since it now is:
+  .if defined(MLIBDIR)
+  CPPFLAGS+=    -DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
+  .endif
+- check this part in ld.elf_so Makefile.  it may be right now:
+  # XXXX this needs to find the right one some how yet.
+  CLIBOBJ!=     cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
-Ideally this should be able to handle any number of compat targets.
-Perhaps using a "force MAKEOBJDIR, and run-run make" solution will
-work, but my initial attempts got me no where.  If not, perhaps
-build-makefiles could be expanded to be used at run-time in such
-a per-compat target obj-dir.
+
+mrg@eterna.com.au
+december 2009
