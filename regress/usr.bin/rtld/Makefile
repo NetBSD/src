@@ -1,5 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2002/11/14 21:10:45 nathanw Exp $
+# $NetBSD: Makefile,v 1.3 2009/12/14 12:43:48 uebayasi Exp $
 
-SUBDIR+= dlopen testlib dlerror-false dlerror-cleared
+.include <bsd.own.mk>
+
+SUBDIR+= dlopen
+.if ${MKCXX} != "no"
+SUBDIR+= testlib
+.endif
+SUBDIR+= dlerror-false dlerror-cleared
 
 .include <bsd.subdir.mk>

@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2009/02/13 05:21:24 jmmv Exp $
+#	$NetBSD: Makefile,v 1.17 2009/12/14 12:43:48 uebayasi Exp $
 
-SUBDIR+= c++ rtld
-SUBDIR+= sort xlint
+.include <bsd.own.mk>
+
+.if ${MKCXX} != "no"
+SUBDIR+= c++
+.endif
+
+SUBDIR+= rtld sort xlint
 
 .include <bsd.subdir.mk>
