@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 2009/09/23 09:18:32 njoly Exp $
+# $NetBSD: mi,v 1.162 2009/12/14 02:01:54 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,7 +6,7 @@
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
 ./usr/share/dict/british			misc-reference-share	share
-./usr/share/dict/eign				misc-reference-share	share
+./usr/share/dict/eign				misc-reference-share	share,groff
 ./usr/share/dict/propernames			misc-reference-share	share
 ./usr/share/dict/special/math			misc-reference-share	share
 ./usr/share/dict/special/netbsd			misc-reference-share	share

@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.192 2009/12/05 04:48:20 snj Exp $
+# $NetBSD: shl.elf,v 1.193 2009/12/14 02:01:53 matt Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -307,9 +307,9 @@
 ./usr/lib/libssh.so.14				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.8				base-crypto-shlib	crypto
-./usr/lib/libstdc++.so				base-sys-shlib		gcc
+./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
-./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so				base-sys-shlib
