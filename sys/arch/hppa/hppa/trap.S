@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.33 2009/12/12 15:25:32 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.34 2009/12/14 23:36:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2302,7 +2302,6 @@ T$trap$all$end:
 EXIT(TLABEL(all))
 
 	.align	32
-	.export	TLABEL(ibrk), entry
 ENTRY_NOPROFILE(TLABEL(ibrk),0)
 	/* If called by a user process then always pass it to trap() */
 	mfctl	%pcoq, %r8
