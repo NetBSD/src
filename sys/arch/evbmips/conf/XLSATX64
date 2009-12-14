@@ -1,0 +1,10 @@
+# $NetBSD: XLSATX64,v 1.1.2.1 2009/12/14 07:24:33 cliff Exp $
+#
+
+include "arch/evbmips/conf/XLSATX"
+
+#ident		"XLSATX64-$Revision: 1.1.2.1 $"
+
+makeoptions	LP64="yes"
+options 	EXEC_ELF64
+options		COMPAT_NETBSD32
