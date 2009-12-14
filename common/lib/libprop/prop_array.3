@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.10 2009/10/10 18:06:54 bad Exp $
+.\"	$NetBSD: prop_array.3,v 1.11 2009/12/14 06:03:23 dholland Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -225,14 +225,6 @@ Remove the reference to the object stored at array index
 .Fa index .
 The object will be released and the array compacted following
 the removal.
-.It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
-Returns
-.Dv true
-if the two arrays are equivalent.
-If at least one of the supplied objects isn't an array,
-.Dv false
-is returned.
-Note: Objects contained in the array are compared by value, not by reference.
 .It Fn prop_array_externalize "prop_array_t array"
 Externalizes an array, returning a NUL-terminated buffer containing
 the XML representation of the array.
@@ -280,6 +272,14 @@ Externalizes an array and packs it into the plistref specified by
 Returns
 .Dv false
 if externalizing the array fails for any reason.
+.It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
+Returns
+.Dv true
+if the two arrays are equivalent.
+If at least one of the supplied objects isn't an array,
+.Dv false
+is returned.
+Note: Objects contained in the array are compared by value, not by reference.
 .El
 .Sh SEE ALSO
 .Xr prop_bool 3 ,
