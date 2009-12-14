@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.23 2009/04/23 14:49:32 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.24 2009/12/14 00:43:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -400,16 +400,16 @@ usage:
 	/* Write the headers... */
 	safewrite(outfile, &ep.f, sizeof(ep.f), "ep.f: write: %s\n");
 	if (debug)
-		fprintf(stderr, "wrote %d byte file header.\n", sizeof(ep.f));
+		fprintf(stderr, "wrote %zu byte file header.\n", sizeof(ep.f));
 
 	safewrite(outfile, &ep.a, sizeof(ep.a), "ep.a: write: %s\n");
 	if (debug)
-		fprintf(stderr, "wrote %d byte a.out header.\n", sizeof(ep.a));
+		fprintf(stderr, "wrote %zu byte a.out header.\n", sizeof(ep.a));
 
 	safewrite(outfile, &esecs, sizeof(esecs[0]) * nsecs,
 	    "esecs: write: %s\n");
 	if (debug)
-		fprintf(stderr, "wrote %d bytes of section headers.\n",
+		fprintf(stderr, "wrote %zu bytes of section headers.\n",
 		    sizeof(esecs[0]) * nsecs);
 
 
@@ -661,7 +661,7 @@ write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
 	symhdrp->issExtMax = strsize;
 	if (debug)
 		fprintf(stderr,
-		    "ECOFF symhdr: symhdr %x, strsize %lx, symsize %lx\n",
+		    "ECOFF symhdr: symhdr %zx, strsize %lx, symsize %lx\n",
 		    sizeof(*symhdrp), strsize,
 		    (nesyms * sizeof(struct ecoff_extsym)));
 
