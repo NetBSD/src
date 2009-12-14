@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.57 2009/12/10 14:13:51 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.58 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.57 2009/12/10 14:13:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.58 2009/12/14 00:46:05 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.57 2009/12/10 14:13:51 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/namei.h>
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm_extern.h>
@@ -65,7 +66,7 @@ void
 cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 
 	f->f_regs[_R_GP] = (register_t)execp->a.gp_value;
 }
@@ -239,3 +240,231 @@ mips_elf_makecmds (struct lwp *l, struct exec_package *epp)
 
 	return 0;
 }
+
+static int
+elf_check_itp(struct exec_package *epp, const char *itp,
+	const char *itp_suffix)
+{
+	if (itp) {
+		/*
+		 * If the path is exactly "/usr/libexec/ld.elf_so", first
+		 * try to see if "/usr/libexec/ld.elf_so-<abi>" exists
+		 * and if so, use that instead.
+		 * XXX maybe move this into compat/common
+		 */
+		if (strcmp(itp, "/usr/libexec/ld.elf_so") == 0 ||
+		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
+			struct nameidata nd;
+			char *path;
+			int error;
+
+			path = PNBUF_GET();
+			snprintf(path, MAXPATHLEN, "%s-%s", itp, itp_suffix);
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+			error = namei(&nd);
+			/*
+			 * If that worked, replace interpreter in case we
+			 * actually need to load it
+			 */
+			if (error == 0) {
+				if (epp->ep_interp != NULL)
+					vrele(epp->ep_interp);
+				epp->ep_interp = nd.ni_vp;
+			}
+			PNBUF_PUT(path);
+		}
+	}
+	return 0;
+}
+
+#if EXEC_ELF32
+int
+mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
+	char *itp, vaddr_t *start_p)
+{
+	struct proc * const p = l->l_proc;
+	const Elf32_Ehdr * const eh = eh0;
+	int old_abi = p->p_md.md_abi;
+	const char *itp_suffix = NULL;
+
+	/*
+	 * Verify we can support the architecture.
+	 */
+	switch (eh->e_flags & EF_MIPS_ARCH) {
+	case EF_MIPS_ARCH_1:
+		break;
+	case EF_MIPS_ARCH_2:
+		if (cpu_arch < CPU_ARCH_MIPS2)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_3:
+		if (cpu_arch < CPU_ARCH_MIPS3)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_4:
+		if (cpu_arch < CPU_ARCH_MIPS4)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_5:
+		if (cpu_arch < CPU_ARCH_MIPS5)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_32:
+	case EF_MIPS_ARCH_64:
+		if (!CPUISMIPSNN)
+			return ENOEXEC;
+		break;
+	}
+
+	switch (eh->e_flags & (EF_MIPS_ABI|EF_MIPS_ABI2)) {
+#if !defined(__mips_o32)
+	case EF_MIPS_ABI2:
+		itp_suffix = "n32";
+		p->p_md.md_abi = _MIPS_BSD_API_N32;
+		if (old_abi != p->p_md.md_abi)
+			printf("pid %d(%s): ABI set to N32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+		break;
+#endif
+	case EF_MIPS_ABI_O32:
+		itp_suffix = "o32";
+		p->p_md.md_abi = _MIPS_BSD_API_O32;
+#ifdef COMPAT_16
+		*start_p = ELF32_LINK_ADDR;
+#endif
+		if (old_abi != p->p_md.md_abi)
+			printf("pid %d(%s): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+		break;
+	default:
+		return ENOEXEC;
+	}
+
+	return elf_check_itp(epp, itp, itp_suffix);
+}
+
+void
+coredump_elf32_setup(struct lwp *l, void *eh0)
+{
+	struct proc * const p = l->l_proc;
+	Elf32_Ehdr * const eh = eh0;
+
+	/*
+	 * Mark the type of CPU that the dump happened on.
+	 */
+	if (cpu_arch & CPU_ARCH_MIPS64) {
+		eh->e_flags |= EF_MIPS_ARCH_64;
+	} else if (cpu_arch & CPU_ARCH_MIPS32) {
+		eh->e_flags |= EF_MIPS_ARCH_32;
+	} else if (cpu_arch & CPU_ARCH_MIPS5) {
+		eh->e_flags |= EF_MIPS_ARCH_5;
+	} else if (cpu_arch & CPU_ARCH_MIPS4) {
+		eh->e_flags |= EF_MIPS_ARCH_4;
+	} else if (cpu_arch & CPU_ARCH_MIPS3) {
+		eh->e_flags |= EF_MIPS_ARCH_3;
+	} else if (cpu_arch & CPU_ARCH_MIPS2) {
+		eh->e_flags |= EF_MIPS_ARCH_2;
+	} else {
+		eh->e_flags |= EF_MIPS_ARCH_1;
+	}
+
+	switch (p->p_md.md_abi) {
+	case _MIPS_BSD_API_N32:
+		eh->e_flags |= EF_MIPS_ABI2;
+		break;
+	case _MIPS_BSD_API_O32:
+		eh->e_flags |=EF_MIPS_ABI_O32; 
+		break;
+	}
+}
+#endif
+
+#if EXEC_ELF64
+int
+mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
+	char *itp, vaddr_t *start_p)
+{
+	struct proc * const p = l->l_proc;
+	const Elf64_Ehdr * const eh = eh0;
+	int old_abi = p->p_md.md_abi;
+	const char *itp_suffix = NULL;
+
+	switch (eh->e_flags & EF_MIPS_ARCH) {
+	case EF_MIPS_ARCH_1:
+		return ENOEXEC;
+	case EF_MIPS_ARCH_2:
+		if (cpu_arch < CPU_ARCH_MIPS2)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_3:
+		if (cpu_arch < CPU_ARCH_MIPS3)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_4:
+		if (cpu_arch < CPU_ARCH_MIPS4)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_5:
+		if (cpu_arch < CPU_ARCH_MIPS5)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_32:
+		return ENOEXEC;
+	case EF_MIPS_ARCH_64:
+		if (!CPUISMIPS64)
+			return ENOEXEC;
+		break;
+	}
+
+	switch (eh->e_flags & (EF_MIPS_ABI|EF_MIPS_ABI2)) {
+	case 0:
+		itp_suffix = "64";
+		p->p_md.md_abi = _MIPS_BSD_API_N64;
+		if (old_abi != p->p_md.md_abi)
+			printf("pid %d(%s): ABI set to N64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+		break;
+	case EF_MIPS_ABI_O64:
+		itp_suffix = "o64";
+		p->p_md.md_abi = _MIPS_BSD_API_O64;
+		if (old_abi != p->p_md.md_abi)
+			printf("pid %d(%s): ABI set to O64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+		break;
+	default:
+		return ENOEXEC;
+	}
+
+	return elf_check_itp(epp, itp, itp_suffix);
+}
+
+void
+coredump_elf64_setup(struct lwp *l, void *eh0)
+{
+	struct proc * const p = l->l_proc;
+	Elf64_Ehdr * const eh = eh0;
+
+	/*
+	 * Mark the type of CPU that the dump happened on.
+	 */
+	if (cpu_arch & CPU_ARCH_MIPS64) {
+		eh->e_flags |= EF_MIPS_ARCH_64;
+	} else if (cpu_arch & CPU_ARCH_MIPS32) {
+		eh->e_flags |= EF_MIPS_ARCH_32;
+	} else if (cpu_arch & CPU_ARCH_MIPS5) {
+		eh->e_flags |= EF_MIPS_ARCH_5;
+	} else if (cpu_arch & CPU_ARCH_MIPS4) {
+		eh->e_flags |= EF_MIPS_ARCH_4;
+	} else if (cpu_arch & CPU_ARCH_MIPS3) {
+		eh->e_flags |= EF_MIPS_ARCH_3;
+	} else if (cpu_arch & CPU_ARCH_MIPS2) {
+		eh->e_flags |= EF_MIPS_ARCH_2;
+	} else {
+		eh->e_flags |= EF_MIPS_ARCH_1;
+	}
+	switch (p->p_md.md_abi) {
+	case _MIPS_BSD_API_N64:
+		eh->e_flags |= EF_MIPS_ABI2;
+		break;
+	case _MIPS_BSD_API_O64:
+		eh->e_flags |= EF_MIPS_ABI_O64;
+		break;
+	}
+}
+#endif

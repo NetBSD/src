@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:04 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -452,18 +452,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	if (esym)
 		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
-	/*
-	 * Alloc uarea for lwp0 stealing KSEG0 memory.
-	 */
-	uvm_lwp_setuarea(&lwp0, (vaddr_t)kernend);
-	memset(kernend, 0, USPACE);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)((char *)kernend + USPACE) - 1;
-
-	kernend = (char *)kernend + USPACE;
 
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
@@ -504,20 +492,21 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	physmem = 0;
 	for (i = 0; i < mem_cluster_cnt; i++) {
-		printf("mem_clusters[%d] = {0x%lx,0x%lx}\n", i,
+		printf("mem_clusters[%d] = {%#"PRIxPADDR",%#"PRIxPSIZE"}\n", i,
 		    (paddr_t)mem_clusters[i].start,
-		    (paddr_t)mem_clusters[i].size);
+		    (psize_t)mem_clusters[i].size);
 		physmem += atop(mem_clusters[i].size);
 	}
 
 	/* Cluster 0 is always the kernel, which doesn't get loaded. */
 	for (i = 1; i < mem_cluster_cnt; i++) {
-		paddr_t start, size;
+		paddr_t start;
+		psize_t size;
 
 		start = (paddr_t)mem_clusters[i].start;
-		size = (paddr_t)mem_clusters[i].size;
+		size = (psize_t)mem_clusters[i].size;
 
-		printf("loading 0x%lx,0x%lx\n", start, size);
+		printf("loading %#"PRIxPADDR",%#"PRIxPSIZE"\n", start, size);
 
 		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
 
@@ -535,6 +524,11 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
+
+	/*
+	 * Initialize lwp0's uarea.
+	 */
+	mips_init_lwp0_uarea();
 }
 
 /*
@@ -546,7 +540,7 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
+	size_t i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -566,10 +560,11 @@ cpu_startup(void)
 		/* show again when verbose mode */
 		printf("total memory banks = %d\n", mem_cluster_cnt);
 		for (i = 0; i < mem_cluster_cnt; i++) {
-			printf("memory bank %d = 0x%08lx %ldKB(0x%08lx)\n", i,
+			printf("memory bank %zu = "
+			    "0x%08"PRIxPADDR" %"PRIdPSIZE"KB(0x%08"PRIxPSIZE")\n", i,
 			    (paddr_t)mem_clusters[i].start,
-			    (paddr_t)mem_clusters[i].size/1024,
-			    (paddr_t)mem_clusters[i].size);
+			    (psize_t)mem_clusters[i].size/1024,
+			    (psize_t)mem_clusters[i].size);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 2009/12/14 00:46:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2009/12/14 00:46:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -389,7 +389,7 @@ cpu_intr_disestablish(void *cookie)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cobalt_intrhand *ih;

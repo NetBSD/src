@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.62 2009/05/14 01:10:19 macallan Exp $	*/
+/*	$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.62 2009/05/14 01:10:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +656,7 @@ hpc_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", ha->ha_name, pnp);
 
-	printf(" offset 0x%lx", (vaddr_t)ha->ha_devoff);
+	printf(" offset %#" PRIxVADDR, (vaddr_t)ha->ha_devoff);
 
 	return (UNCONF);
 }

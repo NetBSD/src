@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2009/12/10 05:10:02 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.49 2009/12/14 00:46:06 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,14 @@ include <mips/pte.h>
 include <mips/locore.h>
 
 define	PAGE_SIZE		PAGE_SIZE
+define	MIPS_KSEG0_START	MIPS_KSEG0_START
+define	MIPS_KSEG1_START	MIPS_KSEG1_START
+define	MIPS_KSEG2_START	MIPS_KSEG2_START
+define	MIPS_XKPHYS_START	MIPS_XKPHYS_START
+define	MIPS_XKPHYS_UNCACHED	MIPS_PHYS_TO_XKPHYS_UNCACHED(0)
+define	MIPS_XKPHYS_CCA3	MIPS_PHYS_TO_XKPHYS(3, 0)
+define	MIPS_XKPHYS_CCA4	MIPS_PHYS_TO_XKPHYS(4, 0)
+define	MIPS_XKSEG_START	MIPS_XKSEG_START
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
@@ -116,6 +124,7 @@ define	PCB_PPL			offsetof(struct pcb, pcb_ppl)
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
+define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 
 define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 
@@ -131,8 +140,8 @@ define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0
-define	MIPSX_CPU_SWITCH_RESUME	sizeof(long *) * 0
-define	MIPSX_CPU_IDLE		sizeof(long *) * 2
+define	MIPSX_CPU_SWITCH_RESUME	offsetof(struct locoresw, lsw_cpu_switch_resume)
+define	MIPSX_CPU_IDLE		offsetof(struct locoresw, lsw_cpu_idle)
 
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V
@@ -143,7 +152,7 @@ define	MIPS3_PG_ASID		MIPS3_PG_ASID
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
 
 define	FRAME_SIZ		sizeof(struct frame)
-define	FRAME_ZERO		offsetof(struct frame, f_regs[_R_ZERO])
+define	FRAME_RZERO		offsetof(struct frame, f_regs[_R_ZERO])
 define	FRAME_AST		offsetof(struct frame, f_regs[_R_AST])
 define	FRAME_V0		offsetof(struct frame, f_regs[_R_V0])
 define	FRAME_V1		offsetof(struct frame, f_regs[_R_V1])
@@ -170,6 +179,11 @@ define	FRAME_T4		offsetof(struct frame, f_regs[_R_T4])
 define	FRAME_T5		offsetof(struct frame, f_regs[_R_T5])
 define	FRAME_T6		offsetof(struct frame, f_regs[_R_T6])
 define	FRAME_T7		offsetof(struct frame, f_regs[_R_T7])
+else
+define	FRAME_A4		offsetof(struct frame, f_regs[_R_A4])
+define	FRAME_A5		offsetof(struct frame, f_regs[_R_A5])
+define	FRAME_A6		offsetof(struct frame, f_regs[_R_A6])
+define	FRAME_A7		offsetof(struct frame, f_regs[_R_A7])
 endif
 
 define	FRAME_S0		offsetof(struct frame, f_regs[_R_S0])
@@ -233,8 +247,10 @@ define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
 #define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
 define	KERNFRAME_SIZ	sizeof(struct kernframe)
+if defined(__mips_o32) || defined(__mips_o64)
 define	KERNFRAME_ARG5	offsetof(struct kernframe, cf_args[4])
 define	KERNFRAME_ARG6	offsetof(struct kernframe, cf_args[5])
+endif
 define	KERNFRAME_SP	offsetof(struct kernframe, cf_sp)
 define	KERNFRAME_RA	offsetof(struct kernframe, cf_ra)
 
@@ -279,18 +295,19 @@ define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
 define	TF_PPL		offsetof(struct trapframe, tf_ppl)
 
 define	CTXSWFRAME_SIZ	sizeof(label_t)
-define	SF_REG_SR	offsetof(label_t, val[11])
-define	SF_REG_RA	offsetof(label_t, val[10])
-define	SF_REG_S0	offsetof(label_t, val[0])
-define	SF_REG_S1	offsetof(label_t, val[1])
-define	SF_REG_S2	offsetof(label_t, val[2])
-define	SF_REG_S3	offsetof(label_t, val[3])
-define	SF_REG_S4	offsetof(label_t, val[4])
-define	SF_REG_S5	offsetof(label_t, val[5])
-define	SF_REG_S6	offsetof(label_t, val[6])
-define	SF_REG_S7	offsetof(label_t, val[7])
-define	SF_REG_SP	offsetof(label_t, val[8])
-define	SF_REG_S8	offsetof(label_t, val[9])
+define	SF_REG_S0	offsetof(label_t, val[_L_S0])
+define	SF_REG_S1	offsetof(label_t, val[_L_S1])
+define	SF_REG_S2	offsetof(label_t, val[_L_S2])
+define	SF_REG_S3	offsetof(label_t, val[_L_S3])
+define	SF_REG_S4	offsetof(label_t, val[_L_S4])
+define	SF_REG_S5	offsetof(label_t, val[_L_S5])
+define	SF_REG_S6	offsetof(label_t, val[_L_S6])
+define	SF_REG_S7	offsetof(label_t, val[_L_S7])
+define	SF_REG_GP	offsetof(label_t, val[_L_GP])
+define	SF_REG_SP	offsetof(label_t, val[_L_SP])
+define	SF_REG_S8	offsetof(label_t, val[_L_S8])
+define	SF_REG_RA	offsetof(label_t, val[_L_RA])
+define	SF_REG_SR	offsetof(label_t, val[_L_SR])
 
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
@@ -298,3 +315,4 @@ define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
 
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
+

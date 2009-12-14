@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.33 2007/03/04 06:00:39 christos Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.34 2009/12/14 00:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.34 2009/12/14 00:46:13 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -118,7 +118,7 @@ static void	sq_txring_hpc1(struct sq_softc *);
 static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
 static int 	sq_add_rxbuf(struct sq_softc *, int);
-static void 	sq_dump_buffer(u_int32_t addr, u_int32_t len);
+static void 	sq_dump_buffer(paddr_t addr, psize_t len);
 static void	sq_trace_dump(struct sq_softc *);
 
 static void	enaddr_aton(const char*, u_int8_t*);
@@ -151,7 +151,7 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct hpc_attach_args *ha = aux;
 
 	if (strcmp(ha->ha_name, cf->cf_name) == 0) {
-		uint32_t reset, txstat;
+		vaddr_t reset, txstat;
 
 		reset = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
 		    ha->ha_dmaoff + ha->hpc_regs->enetr_reset);
@@ -1323,10 +1323,10 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 }
 
 void
-sq_dump_buffer(u_int32_t addr, u_int32_t len)
+sq_dump_buffer(paddr_t addr, psize_t len)
 {
 	u_int i;
-	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((void *)addr);
+	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1(addr);
 
 	if (len == 0)
 		return;

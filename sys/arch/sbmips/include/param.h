@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2009/08/13 05:15:10 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2009/12/14 00:46:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,16 +81,6 @@
  * Machine dependent constants for Broadcom/Sibyte boards.
  */
 
-#if defined(__MIPSEB__)
-#define	_MACHINE_ARCH	mipseb
-#define	MACHINE_ARCH	"mipseb"
-#elif defined(__MIPSEL__)
-#define	_MACHINE_ARCH	mipsel
-#define	MACHINE_ARCH	"mipsel"
-#else
-#error neither __MIPSEL__ nor __MIPSEB__ are defined.
-#endif
-
 #define	_MACHINE	sbmips
 #define	MACHINE		"sbmips"
 
@@ -98,33 +88,6 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifndef MCLSHIFT
-# define MCLSHIFT	11		/* convert bytes to m_buf clusters */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
 
 #ifdef _KERNEL
 #ifndef _LOCORE

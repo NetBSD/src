@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.4 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: startprog.S,v 1.5 2009/12/14 00:46:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,26 +39,33 @@
 #include <mips/asm.h>
 
 LEAF(startprog)
-        subu    sp,sp,32
-	addu	t0,a1,-CALLFRAME_SIZ	# new stack value
-	move	t1,a0
+        subu    sp,sp,CALLFRAME_SIZ
+	addu	t2,a1,-CALLFRAME_SIZ	# new stack value
+	move	t9,a0
 	move	a0,a2
 	move	a1,a3
 
+#ifdef __mips_o32
 	lw	a2,48(sp)		# load everything from old stack we need
 	lw	a3,52(sp)
-	lw	v0,56(sp)
-	lw	v1,60(sp)
+	lw	$8,56(sp)		# use a4/t0 in case N32/N64 kernel
+	lw	$9,60(sp)		# use a5/t1 in case N32/N64 kernel
+#else
+	move	a2,a4
+	move	a3,a5
+	move	a4,a6
+	move	a5,a7
+#endif
 
-	move	sp,t0			# new stack pointer
-	sw	ra,24(sp)
+	move	sp,t2			# new stack pointer
+	sw	ra,CALLFRAME_RA(sp)
 
-	sw	v0,16(sp)
-	sw	v1,20(sp)
-	jal	ra,t1
+	sw	$8,16(sp)		# save on stack for O32
+	sw	$9,20(sp)		# save on stack for O32
+	jal	ra,t9
 	nop				# BDslot
 
-	lw	ra,24(sp)		# should not get back here!
+	lw	ra,CALLFRAME_RA(sp)	# should not get back here!
 	j	ra
-	addu	sp,sp,32
+	addu	sp,sp,CALLFRAME_SIZ
 END(startprog)

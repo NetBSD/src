@@ -1,0 +1,9 @@
+# $NetBSD: XLS6ATX_7A64,v 1.2 2009/12/14 00:46:01 matt Exp $
+#
+include "arch/evbmips/conf/XLS6ATX_7A"
+
+makeoptions	LP64="yes"
+
+options 	EXEC_ELF64
+options		COMPAT_NETBSD32
+
