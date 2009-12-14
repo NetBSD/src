@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.8 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: regnum.h,v 1.9 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,53 +81,51 @@
  * registers relative to ZERO.
  * Usage is p->p_regs[XX].
  */
-#define _R_ZERO		0
-#define _R_AST		1
-#define _R_V0		2
-#define _R_V1		3
-#define _R_A0		4
-#define _R_A1		5
-#define _R_A2		6
-#define _R_A3		7
+#define _R_ZERO		0		/* hardware zero */
+#define _R_AST		1		/* caller-saved */
+#define _R_V0		2		/* caller-saved */
+#define _R_V1		3		/* caller-saved */
+#define _R_A0		4		/* caller-saved */
+#define _R_A1		5		/* caller-saved */
+#define _R_A2		6		/* caller-saved */
+#define _R_A3		7		/* caller-saved */
 #if defined(__mips_n32) || defined(__mips_n64)
-#define _R_A4		8
-#define _R_A5		9
-#define _R_A6		10
-#define _R_A7		11
-#define _R_T0		12
-#define _R_T1		13
-#define _R_T2		14
-#define _R_T3		15
+#define _R_A4		8		/* caller-saved */
+#define _R_A5		9		/* caller-saved */
+#define _R_A6		10		/* caller-saved */
+#define _R_A7		11		/* caller-saved */
+#define _R_T0		12		/* caller-saved */
+#define _R_T1		13		/* caller-saved */
+#define _R_T2		14		/* caller-saved */
+#define _R_T3		15		/* caller-saved */
 #else
-#define _R_T0		8
-#define _R_T1		9
-#define _R_T2		10
-#define _R_T3		11
-#define _R_T4		12
-#define _R_T5		13
-#define _R_T6		14
-#define _R_T7		15
+#define _R_T0		8		/* caller-saved */
+#define _R_T1		9		/* caller-saved */
+#define _R_T2		10		/* caller-saved */
+#define _R_T3		11		/* caller-saved */
+#define _R_T4		12		/* caller-saved */
+#define _R_T5		13		/* caller-saved */
+#define _R_T6		14		/* caller-saved */
+#define _R_T7		15		/* caller-saved */
 #endif /* __mips_n32 || __mips_n64 */
-#define _R_S0		16
-#define _R_S1		17
-#define _R_S2		18
-#define _R_S3		19
-#define _R_S4		20
-#define _R_S5		21
-#define _R_S6		22
-#define _R_S7		23
-#define _R_T8		24
-#define _R_T9		25
-#define _R_K0		26
-#define _R_K1		27
-#define _R_GP		28
-#define _R_SP		29
-#define _R_S8		30
-#define _R_RA		31
+#define _R_S0		16		/* CALLEE-saved */
+#define _R_S1		17		/* CALLEE-saved */
+#define _R_S2		18		/* CALLEE-saved */
+#define _R_S3		19		/* CALLEE-saved */
+#define _R_S4		20		/* CALLEE-saved */
+#define _R_S5		21		/* CALLEE-saved */
+#define _R_S6		22		/* CALLEE-saved */
+#define _R_S7		23		/* CALLEE-saved */
+#define _R_T8		24		/* caller-saved */
+#define _R_T9		25		/* caller-saved */
+#define _R_K0		26		/* kernel reserved */
+#define _R_K1		27		/* kernel reserved */
+#define _R_GP		28		/* CALLEE-saved */
+#define _R_SP		29		/* CALLEE-saved */
+#define _R_S8		30		/* CALLEE-saved */
+#define _R_RA		31		/* caller-saved */
 #define	_R_SR		32
-#ifndef _KERNEL		/* clashes with netccitt/pk.h */
 #define	_R_PS		_R_SR	/* alias for SR */
-#endif
 
 /* See <mips/regdef.h> for an explanation. */
 #if defined(__mips_n32) || defined(__mips_n64)

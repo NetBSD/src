@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.58 2009/07/20 17:05:13 tsutsui Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.59 2009/12/14 00:46:10 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.58 2009/07/20 17:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.59 2009/12/14 00:46:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ dec_maxine_intr_establish(struct device *dev, void *cookie, int level,
 {
 	uint32_t mask;
 
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 	case SYS_DEV_OPT0:
 		mask = XINE_INTR_TC_0;
 		break;
@@ -292,14 +292,14 @@ dec_maxine_intr_establish(struct device *dev, void *cookie, int level,
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", (int)cookie);
+		printf("warning: enabling unknown intr %p\n", cookie);
 #endif
 		return;
 	}
 
 	xine_tc3_imask |= mask;
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(uintptr_t)cookie].ih_func = handler;
+	intrtab[(uintptr_t)cookie].ih_arg = arg;
 
 	*(volatile uint32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();

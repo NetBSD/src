@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.220 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.221 2009/12/14 00:46:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.220 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221 2009/12/14 00:46:07 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -121,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.220 2009/11/21 17:40:28 rmind Exp $");
 #include <sys/kgdb.h>
 #endif
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"external interrupt",
 	"TLB modification",
 	"TLB miss (load or instr. fetch)",
@@ -160,10 +160,8 @@ void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
 void ast(unsigned int);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned int, int);	/* XXX */
-void MachEmulateInst(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
-void MachFPTrap(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
-
-#define DELAYBRANCH(x) ((int)(x)<0)
+void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
+void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
 
 /*
  * fork syscall returns directly to user process via lwp_trampoline(),
@@ -173,7 +171,7 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct frame *frame = l->l_md.md_regs;
 
 	frame->f_regs[_R_V0] = 0;
 	frame->f_regs[_R_V1] = 1;
@@ -229,20 +227,24 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	default:
 	dopanic:
 		(void)splhigh();
+		printf("pid %d(%s): ", p->p_pid, p->p_comm);
 		printf("trap: %s in %s mode\n",
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		printf("status=0x%x, cause=0x%x, epc=%#lx, vaddr=%#lx\n",
-			status, cause, opc, vaddr);
-		if (curlwp != NULL) {
-			fp = (struct frame *)l->l_md.md_regs;
-			printf("pid=%d cmd=%s usp=0x%x ",
-			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
-		} else
-			printf("curlwp == NULL ");
-		printf("ksp=%p ra=%#x\n", &status, (int)frame->tf_regs[TF_RA]);
+		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
+			", vaddr=%#" PRIxVADDR, status, cause, opc, vaddr);
+		if (USERMODE(status)) {
+			fp = l->l_md.md_regs;
+			printf(" frame=%p usp=%#" PRIxREGISTER
+			    " ra=%#" PRIxREGISTER "\n",
+			   fp, fp->f_regs[_R_SP], fp->f_regs[_R_RA]);
+		} else {
+			printf(" tf=%p ksp=%p ra=%#" PRIxREGISTER "\n",
+			   frame, frame+1, frame->tf_regs[TF_RA]);
+		}
+			
 #if defined(DDB)
-		kdb_trap(type, (mips_reg_t *) frame);
+		kdb_trap(type, frame->tf_regs);
 		/* XXX force halt XXX */
 #elif defined(KGDB)
 		{
@@ -260,7 +262,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			db_set_ddb_regs(type, (mips_reg_t *) frame);
 			PC_BREAK_ADVANCE(f);
 			if (kgdb_trap(type, &ddb_regs)) {
-				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
+				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
 				return;
 			}
 		}
@@ -291,9 +293,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			pa = mips_tlbpfn_to_paddr(entry);
 #if defined(DIAGNOSTIC)
 			if (!uvm_pageismanaged(pa)) {
-				printf("ktlbmod: va %#lx pa %#llx\n",
-				    vaddr, (long long)pa);
-				panic("ktlbmod: unmanaged page");
+				panic("ktlbmod: unmanaged page:"
+				    " va %#" PRIxVADDR " pa %#"PRIxPADDR,
+				    vaddr, pa);
 			}
 #endif
 			pmap_set_modified(pa);
@@ -328,9 +330,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		pa = mips_tlbpfn_to_paddr(entry);
 #if defined(DIAGNOSTIC)
 		if (!uvm_pageismanaged(pa)) {
-			printf("utlbmod: va %#lx pa %#llx\n",
-			    vaddr, (long long)pa);
-			panic("utlbmod: unmanaged page");
+			panic("utlbmod: unmanaged page:"
+			    " va %#"PRIxVADDR" pa %#"PRIxPADDR,
+			    vaddr, pa);
 		}
 #endif
 		pmap_set_modified(pa);
@@ -356,7 +358,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		}
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (pcb->pcb_onfault == (void *)fswintrberr) {
-			frame->tf_regs[TF_EPC] = (int)fswintrberr;
+			frame->tf_regs[TF_EPC] = (intptr_t)fswintrberr;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -387,8 +389,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), %d) -> %d at pc %p\n",
-		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
+		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
+		    " (0x%x), %d) -> %d at pc %#"PRIxVADDR"\n",
+		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, opc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -469,7 +472,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 
 	case T_BREAK:
 #if defined(DDB)
-		kdb_trap(type, (mips_reg_t *) frame);
+		kdb_trap(type, frame->tf_regs);
 		return;	/* KERN */
 #elif defined(KGDB)
 		{
@@ -484,13 +487,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			 * that db_machdep.h macros will work with it, and
 			 * allow gdb to alter the PC.
 			 */
-			db_set_ddb_regs(type, (mips_reg_t *) frame);
+			db_set_ddb_regs(type, frame->f_regs);
 			PC_BREAK_ADVANCE(f);
 			if (!kgdb_trap(type, &ddb_regs))
 				printf("kgdb: ignored %s\n",
 				       trap_type[TRAPTYPE(cause)]);
 			else
-				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
+				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
 
 			return;
 		}
@@ -504,7 +507,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		int rv;
 
 		/* compute address of break instruction */
-		va = (DELAYBRANCH(cause)) ? opc + sizeof(int) : opc;
+		va = (cause & MIPS_CR_BR_DELAY) ? opc + sizeof(int) : opc;
 
 		/* read break instruction */
 		instr = fuiword((void *)va);
@@ -519,7 +522,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		/*
 		 * Restore original instruction and clear BP
 		 */
-		rv = suiword((void *)va, l->l_md.md_ss_instr);
+		rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
 		if (rv < 0) {
 			vaddr_t sa, ea;
 			sa = trunc_page(va);
@@ -527,7 +530,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_ALL, false);
 			if (rv == 0) {
-				rv = suiword((void *)va, l->l_md.md_ss_instr);
+				rv = ustore_uint32_isync((void *)va, l->l_md.md_ss_instr);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 			}
@@ -536,8 +539,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
-			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
-				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
+			printf("Warning: can't restore instruction"
+			    " at %#"PRIxVADDR": 0x%x\n",
+			    l->l_md.md_ss_addr, l->l_md.md_ss_instr);
 		l->l_md.md_ss_addr = 0;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGTRAP;
@@ -549,14 +553,10 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(SOFTFLOAT) && !defined(NOFPU)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
-			struct frame *f;
-
-			f = (struct frame *)l->l_md.md_regs;
-			savefpregs(fpcurlwp);	  	/* yield FPA */
+			savefpregs(fpcurlwp);		/* yield FPA */
 			loadfpregs(l);          	/* load FPA */
 			fpcurlwp = l;
 			l->l_md.md_flags |= MDP_FPUSED;
-			f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
 		{
@@ -576,17 +576,35 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TRAP+T_USER:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
-		fp = (struct frame *)l->l_md.md_regs;
-		ksi.ksi_addr = (void *)fp->f_regs[_R_PC];
+		fp = l->l_md.md_regs;
+		ksi.ksi_addr = (void *)(intptr_t)fp->f_regs[_R_PC];
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
-	fp = (struct frame *)l->l_md.md_regs;
+	fp = l->l_md.md_regs;
 	fp->f_regs[_R_CAUSE] = cause;
 	fp->f_regs[_R_BADVADDR] = vaddr;
+#if defined(DEBUG)
+	printf("trap: pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
+	    " va=%#"PRIxVADDR"\n",
+	    p->p_pid, p->p_comm, ksi.ksi_signo, cause,
+	    fp->f_regs[_R_PC], vaddr);
+	printf("registers:\n");
+	for (size_t i = 0; i < 32; i += 4) {
+		printf(
+		    "[%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER
+		    " [%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER "\n",
+		    i+0, fp->f_regs[i+0], i+1, fp->f_regs[i+1],
+		    i+2, fp->f_regs[i+2], i+3, fp->f_regs[i+3]);
+	}
+#endif
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	if ((type & T_USER) == 0)
+	if ((type & T_USER) == 0) {
+#ifdef DDB
+		Debugger();
+#endif
 		panic("trapsignal");
+	}
 	userret(l);
 	return;
 }
@@ -630,13 +648,13 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 int
 mips_singlestep(struct lwp *l)
 {
-	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 	struct proc *p = l->l_proc;
 	vaddr_t pc, va;
 	int rv;
 
 	if (l->l_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %lx\n",
+		printf("SS %s (%d): breakpoint already set at %#"PRIxVADDR"\n",
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
@@ -659,7 +677,7 @@ mips_singlestep(struct lwp *l)
 
 	l->l_md.md_ss_addr = va;
 	l->l_md.md_ss_instr = fuiword((void *)va);
-	rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+	rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
 	if (rv < 0) {
 		vaddr_t sa, ea;
 		sa = trunc_page(va);
@@ -667,7 +685,7 @@ mips_singlestep(struct lwp *l)
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_ALL, false);
 		if (rv == 0) {
-			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+			rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, false);
 		}
@@ -675,7 +693,7 @@ mips_singlestep(struct lwp *l)
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-		p->p_md.md_ss_instr, pc, fuword((void *)va)); /* XXX */
+		p->p_md.md_ss_instr, pc, ufetch_uint32((void *)va)); /* XXX */
 #endif
 	return 0;
 }
@@ -684,7 +702,7 @@ mips_singlestep(struct lwp *l)
 #ifndef DDB_TRACE
 
 #if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
-mips_reg_t kdbrpeek(vaddr_t);
+mips_reg_t kdbrpeek(vaddr_t, size_t);
 
 int
 kdbpeek(vaddr_t addr)
@@ -692,7 +710,7 @@ kdbpeek(vaddr_t addr)
 	int rc;
 
 	if (addr & 3) {
-		printf("kdbpeek: unaligned address %lx\n", addr);
+		printf("kdbpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
@@ -706,12 +724,12 @@ kdbpeek(vaddr_t addr)
 }
 
 mips_reg_t
-kdbrpeek(vaddr_t addr)
+kdbrpeek(vaddr_t addr, size_t n)
 {
 	mips_reg_t rc;
 
-	if (addr & (sizeof(mips_reg_t) - 1)) {
-		printf("kdbrpeek: unaligned address %lx\n", addr);
+	if (addr & (n - 1)) {
+		printf("kdbrpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
@@ -719,7 +737,10 @@ kdbrpeek(vaddr_t addr)
 		printf("kdbrpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
-		rc = *(mips_reg_t *)addr;
+		if (sizeof(mips_reg_t) == 8 && n == 8)
+			rc = *(int64_t *)addr;
+		else
+			rc = *(int32_t *)addr;
 	}
 	return rc;
 }
@@ -743,8 +764,8 @@ int main(void *);	/* XXX */
 
 /* forward */
 const char *fn_name(vaddr_t addr);
-void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
-	    void (*)(const char*, ...));
+void stacktrace_subr(mips_reg_t, mips_reg_t, mips_reg_t, mips_reg_t,
+	vaddr_t, vaddr_t, vaddr_t, vaddr_t, void (*)(const char*, ...));
 
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
@@ -756,8 +777,8 @@ void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
  * the console, or both.
  */
 void
-stacktrace_subr(int a0, int a1, int a2, int a3,
-    u_int pc, u_int sp, u_int fp, u_int ra,
+stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
+    vaddr_t pc, vaddr_t sp, vaddr_t fp, vaddr_t ra,
     void (*printfn)(const char*, ...))
 {
 	vaddr_t va, subr;
@@ -782,7 +803,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || sp < 0x80000000) {
+	if (sp & 3 || (intptr_t)sp >= 0) {
 		(*printfn)("SP 0x%x: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -790,7 +811,7 @@ loop:
 	}
 
 	/* Check for bad PC */
-	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
+	if (pc & 3 || (intptr_t)pc >= 0 || (intptr_t)pc >= (intptr_t)edata) {
 		(*printfn)("PC 0x%x: not in kernel space\n", pc);
 		ra = 0;
 		goto done;
@@ -831,7 +852,7 @@ loop:
 	va = pc;
 	do {
 		va -= sizeof(int);
-		if (va <= (unsigned)verylocore)
+		if (va <= (vaddr_t)verylocore)
 			goto finish;
 		instr = kdbpeek(va);
 		if (instr == MIPS_ERET)
@@ -895,6 +916,12 @@ mips3_eret:
 			break;
 
 		case OP_SW:
+#if !defined(__mips_o32)
+		case OP_SD:
+#endif
+		{
+			size_t size = (i.JType.op == OP_SW) ? 4 : 8;
+
 			/* look for saved registers on the stack */
 			if (i.IType.rs != 29)
 				break;
@@ -904,32 +931,37 @@ mips3_eret:
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
-				a0 = kdbpeek(sp + (short)i.IType.imm);
+				a0 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 5: /* a1 */
-				a1 = kdbpeek(sp + (short)i.IType.imm);
+				a1 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 6: /* a2 */
-				a2 = kdbpeek(sp + (short)i.IType.imm);
+				a2 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 7: /* a3 */
-				a3 = kdbpeek(sp + (short)i.IType.imm);
+				a3 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 30: /* fp */
-				fp = kdbpeek(sp + (short)i.IType.imm);
+				fp = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 31: /* ra */
-				ra = kdbpeek(sp + (short)i.IType.imm);
+				ra = kdbrpeek(sp + (short)i.IType.imm, size);
 			}
 			break;
+		}
 
 		case OP_ADDI:
 		case OP_ADDIU:
+#if !defined(__mips_o32)
+		case OP_DADDI:
+		case OP_DADDIU:
+#endif
 			/* look for stack pointer adjustment */
 			if (i.IType.rs != 29 || i.IType.rt != 29)
 				break;
@@ -1024,7 +1056,7 @@ fn_name(vaddr_t addr)
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	sprintf(buf, "%lx", addr);
+	sprintf(buf, "%#"PRIxVADDR, addr);
 	return (buf);
 }
 

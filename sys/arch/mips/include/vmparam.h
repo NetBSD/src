@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2009/08/09 04:02:40 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,8 @@
  * and some QED CPUs perform some virtual address checks before the
  * offset is calculated.
  */
-#define	USRSTACK	(0x7fffffff & ~PAGE_MASK) /* Start of user stack */
+#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
@@ -122,10 +123,29 @@
 #define	MAXDSIZ		(512*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * Virtual memory related constants, all in bytes
+ */
+#ifndef MAXTSIZ32
+#define	MAXTSIZ32	MAXTSIZ			/* max text size */
+#endif
+#ifndef DFLDSIZ32
+#define	DFLDSIZ32	DFLDSIZ			/* initial data size limit */
+#endif
+#ifndef MAXDSIZ32
+#define	MAXDSIZ32	MAXDSIZ			/* max data size */
+#endif
+#ifndef	DFLSSIZ32
+#define	DFLSSIZ32	DFLTSIZ			/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ32
+#define	MAXSSIZ32	MAXSSIZ			/* max stack size */
 #endif
 
 /*
@@ -140,16 +160,31 @@
  * Mach derived constants
  */
 
-/* user/kernel map constants */
+/*
+ * user/kernel map constants
+ * These are negative addresses since MIPS addresses are signed.
+ */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
-#define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xC0000000)
-#ifdef ENABLE_MIPS_TX3900
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+#ifdef _LP64
+#if 1
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 31)	/* 0x0000000080000000 */
 #else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 62)	/* 0x4000000000000000 */
 #endif
+#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
+#else
+#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
+#ifdef ENABLE_MIPS_TX3900
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
+#else
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
+#endif
+#endif
+#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default
@@ -157,6 +192,8 @@
 #define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
 	trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS32(da, sz) \
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
@@ -179,5 +216,14 @@ struct vm_page_md {
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 } while (/* CONSTCOND */ 0)
+
+#ifndef VM_NFREELIST
+#define	VM_NFREELIST		16	/* 16 distinct memory segments */
+#define VM_FREELIST_DEFAULT	0
+#define VM_FREELIST_FIRST16M	1	/* ISA DMA range */
+#define VM_FREELIST_FIRST512M	2	/* KSEG0/1 */
+#define VM_FREELIST_FIRST4G	3	/* 32bit addrs */
+#define VM_FREELIST_MAX		4
+#endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */

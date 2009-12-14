@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.10 2005/12/11 12:18:12 christos Exp $ */
+/* $NetBSD: sbgbus.c,v 1.11 2009/12/14 00:46:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.10 2005/12/11 12:18:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.11 2009/12/14 00:46:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,11 +132,11 @@ sbgbussearch(struct device *parent, struct cfdata *cf,
 		} else {
 			uint64_t rv;
 
-			rv = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(
+			rv = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(
 			    A_IO_EXT_CS_BASE(sga.sga_chipsel) +
 			    R_IO_EXT_START_ADDR));
 			sga.sga_startphys = (rv & M_IO_START_ADDR) << S_IO_ADDRBASE;
-			rv = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(
+			rv = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(
 			    A_IO_EXT_CS_BASE(sga.sga_chipsel) +
 			    R_IO_EXT_MULT_SIZE));
 			sga.sga_size = (rv & M_IO_MULT_SIZE) << S_IO_REGSIZE;

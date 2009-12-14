@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.16 2009/12/14 00:46:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2009/12/14 00:46:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ intr_init(void)
  * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct cpu_info *ci;
 
@@ -117,7 +117,8 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	return;
 kerneltouchedFPU:
-	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
+	panic("kernel used FPU: PC %"PRIxVADDR", CR %x, SR %x",
+	    pc, cause, status);
 }
 
 const int *ipl2spl_table;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2009/11/27 03:23:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2009/12/14 00:46:02 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2009/12/14 00:46:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -200,13 +200,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	bus_space_handle_t sh;
 	void *kernend;
 	u_long first, last;
-	struct pcb *pcb0;
-	vaddr_t v;
-	char *cp;
-	int freqok, i, howto;
+	int freqok;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
+
+	CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES) < 0);
 
 	*brkres = 0;	/* Disable BREAK==reset on console */
 
@@ -287,8 +286,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
-	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
+#ifndef _LP64
+	for (int i = 1; i < argc; i++) {
+		for (char *cp = argv[i]; *cp; cp++) {
+			int howto;
 			/* Ignore superfluous '-', if there is one */
 			if (*cp == '-')
 				continue;
@@ -301,6 +302,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 				boothowto |= howto;
 		}
 	}
+#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -320,13 +322,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

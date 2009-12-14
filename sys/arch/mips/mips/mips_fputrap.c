@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.5 2006/12/26 23:26:13 martin Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.6 2009/12/14 00:46:06 matt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -32,6 +32,7 @@
 #include <sys/signal.h>
 #include <sys/siginfo.h>
 #include <mips/cpuregs.h>
+#include <mips/regnum.h>
 
 #ifndef SOFTFLOAT
 void mips_fpuexcept(struct lwp *, unsigned int);
@@ -95,7 +96,8 @@ fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
 	ksiginfo_t ksi;
 
 #if DEBUG
-	printf("emul_trapsignal(%x,%x)\n", sig, code);
+	printf("fpemul_trapsignal(%x,%x,%#"PRIxREGISTER")\n",
+	   sig, code, l->l_md.md_regs->f_regs[_R_PC]);
 #endif
 
 	KSI_INIT_TRAP(&ksi);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.34 2009/12/10 05:10:02 rmind Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.35 2009/12/14 00:46:06 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,6 +133,18 @@
 #include <machine/endian.h>
 
 #include "assym.h"
+
+#ifdef _LP64
+#define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
+	li reg, MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
+#define	SET_EXCEPTION_LEVEL(reg) \
+	li reg, MIPS_SR_EXL | MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
+#else
+#define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
+	mtc0 zero, MIPS_COP_0_STATUS
+#define	SET_EXCEPTION_LEVEL(reg) \
+	li reg, MIPS_SR_EXL; mtc0 reg, MIPS_COP_0_STATUS
+#endif
 
 /*
  * XXX MIPS3_5900 is still "special" for much of this code.
@@ -289,6 +301,27 @@
 
 
 /*
+ * some useful labels for debugging
+ */
+.global	mips_kseg0
+.equiv	mips_kseg0,		MIPS_KSEG0_START
+.global	mips_kseg1
+.equiv	mips_kseg1,		MIPS_KSEG1_START
+.global	mips_kseg2
+.equiv	mips_kseg2,		MIPS_KSEG2_START
+.global	mips_xkphys
+.equiv	mips_xkphys,		MIPS_XKPHYS_START
+.global	mips_xkphys_u
+.equiv	mips_xkphys_u,		MIPS_XKPHYS_UNCACHED
+.global	mips_xkphys_cca3
+.equiv	mips_xkphys_cca3,	MIPS_XKPHYS_CCA3
+.global	mips_xkphys_cca4
+.equiv	mips_xkphys_cca4,	MIPS_XKPHYS_CCA4
+.global	mips_xkseg
+.equiv	mips_xkseg,		MIPS_XKSEG_START
+
+
+/*
  *----------------------------------------------------------------------------
  *
  * mips3_TLBMiss --
@@ -306,35 +339,28 @@
  */
 VECTOR(MIPSX(TLBMiss), unknown)
 	.set	noat
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, (2*PGSHIFT-4)		#03: k0=seg offset (almost)
-	lw	k1, %lo(segbase)(k1)		#04: k1=segment tab base
-	andi	k0, k0, (NBPG-4)		#05: k0=seg offset (mask 0x3)
-	addu	k1, k0, k1			#06: k1=seg entry address
-	lw	k1, 0(k1)			#07: k1=seg entry
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
+	PTR_SRL	k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
+	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
+	andi	k0, k0, (NBPG-(1<<PTR_SCALESHIFT))#05: k0=seg offset (mask 0x3)
+	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
+	PTR_L	k1, 0(k1)			#07: k1=seg entry
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
-	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
-	addu	k1, k1, k0			#0c: k1=pte address
-	lw	k0, 0(k1)			#0d: k0=lo0 pte
-	lw	k1, 4(k1)			#0e: k1=lo1 pte
-	sll	k0, 2				#0f: chop top 2 bits (part 1a)
-	srl	k0, 2				#10: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sync.p					#12: R5900 cop0 hazard
-	sll	k1, 2				#13: chop top 2 bits (part 2a)
-	srl	k1, 2				#14: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
+	_SLL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
 	sync.p					#16: R5900 cop0 hazard
 #else /* MIPS3_5900 */
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	sll	k1, 2				#12: chop top 2 bits (part 2a)
-	srl	k1, 2				#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 #endif /* MIPS3_5900 */
@@ -345,7 +371,7 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	eret					#1b: return from exception
 4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
 	nop					#1d: branch delay slot
-5:	j	slowfault			#1e: no page table present
+5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(TLBMiss))
@@ -371,24 +397,24 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, (2*PGSHIFT-4)		#03: k0=seg offset (almost)
-	lw	k1, %lo(segbase)(k1)		#04: k1=segment tab base
-	andi	k0, k0, (NBPG-4)		#05: k0=seg offset (mask 0x3)
-	addu	k1, k0, k1			#06: k1=seg entry address
-	lw	k1, 0(k1)			#07: k1=seg entry
+	PTR_SRL	k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
+	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#05: k0=seg offset (mask 0x3)
+	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
+	PTR_L	k1, 0(k1)			#07: k1=seg entry
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	PTR_SRL	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
 	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
-	addu	k1, k1, k0			#0c: k1=pte address
-	lw	k0, 0(k1)			#0d: k0=lo0 pte
-	lw	k1, 4(k1)			#0e: k1=lo1 pte
-	sll	k0, 2				#0f: chop top 2 bits (part 1a)
-	srl	k0, 2				#10: chop top 2 bits (part 1b)
-	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	sll	k1, 2				#12: chop top 2 bits (part 2a)
-	srl	k1, 2				#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
+	PTR_ADDU k1, k1, k0			#0c: k1=pte address
+	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
+	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
+	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
+	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 	tlbwr					#17: write to tlb
@@ -398,7 +424,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	eret					#1b: return from exception
 4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
 	nop					#1d: branch delay slot
-5:	j	slowfault			#1e: no page table present
+5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(XTLBMiss))
@@ -408,7 +434,7 @@ _VECTOR_END(MIPSX(XTLBMiss))
  * Vector to real handler in KSEG1.
  */
 VECTOR(MIPSX(cache), unknown)
-	la	k0, _C_LABEL(MIPSX(cacheException))
+	PTR_LA	k0, _C_LABEL(MIPSX(cacheException))
 	li	k1, MIPS_PHYS_MASK
 	and	k0, k1
 	li	k1, MIPS_KSEG1_START
@@ -421,7 +447,7 @@ _VECTOR_END(MIPSX(cache))
  * Handle MIPS32/MIPS64 style interrupt exception vector.
  */
 VECTOR(MIPSX(intr), unknown)
-	la	k0, MIPSX(KernIntr)
+	PTR_LA	k0, MIPSX(KernIntr)
 	j	k0
 	nop
 _VECTOR_END(MIPSX(intr))
@@ -452,24 +478,27 @@ VECTOR(MIPSX(exception), unknown)
 	sll	k0, k0, 3			#03: shift user bit for cause index
 	and	k1, k1, MIPS3_CR_EXC_CODE	#04: mask out the cause bits.
 	or	k1, k1, k0			#05: change index to user table
+#ifdef _LP64
+	PTR_SLL	k1, k1, 1
+#endif
 1:
-	la	k0, MIPSX(excpt_sw)		#06: get base of the jump table
-	addu	k0, k0, k1			#07: get the address of the
+	PTR_LA	k0, MIPSX(excpt_sw)		#06: get base of the jump table
+	PTR_ADDU k0, k0, k1			#08: get the address of the
 						#     function entry.  Note that
 						#     the cause is already
 						#     shifted left by 2 bits so
 						#     we dont have to shift.
-	lw	k0, 0(k0)			#08: get the function address
+	PTR_L	k0, 0(k0)			#09: get the function address
 	#nop					#    -slip-
 
-	j	k0				#09: jump to the function
-	nop					#0a: branch delay slot
+	j	k0				#0a: jump to the function
+	nop					#0b: branch delay slot
 	.set	at
 _VECTOR_END(MIPSX(exception))
 
 /*----------------------------------------------------------------------------
  *
- * slowfault --
+ * MIPSX(slowfault) --
  *
  * Alternate entry point into the mips3_UserGenException or
  * mips3_KernGenException, when the ULTB miss handler couldn't
@@ -484,7 +513,7 @@ _VECTOR_END(MIPSX(exception))
  * We couldn't find a TLB entry.
  * Find out what mode we came from and call the appropriate handler.
  */
-slowfault:
+MIPSX(slowfault):
 	.set	noat
 	mfc0	k0, MIPS_COP_0_STATUS
 	nop
@@ -521,7 +550,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 #if defined(DDB) || defined(KGDB)
-	la	k0, _C_LABEL(kdbaux)
+	PTR_LA	k0, _C_LABEL(kdbaux)
 	REG_S	s0, SF_REG_S0(k0)
 	REG_S	s1, SF_REG_S1(k0)
 	REG_S	s2, SF_REG_S2(k0)
@@ -539,7 +568,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
-	subu	sp, sp, KERNFRAME_SIZ
+	PTR_SUBU sp, sp, KERNFRAME_SIZ
 	REG_S	AT, TF_BASE+TF_REG_AST(sp)
 	REG_S	v0, TF_BASE+TF_REG_V0(sp)
 	REG_S	v1, TF_BASE+TF_REG_V1(sp)
@@ -568,12 +597,17 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a3, TF_BASE+TF_REG_EPC(sp)
-	addu	v0, sp, TF_BASE
-	sw	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
+#if defined(__mips_o32) || defined(__mips_o64)
+	PTR_ADDU v0, sp, TF_BASE
+	REG_S	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	PTR_ADDU a4, sp, TF_BASE		# 5th arg is p. to trapframe
+#endif
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	v0, _C_LABEL(md_imask)
-	sw	v0, TF_BASE+TF_PPL(sp)
+	INT_L	v0, _C_LABEL(md_imask)
+	INT_S	v0, TF_BASE+TF_PPL(sp)
 	nop
 	.set noat
 #endif
@@ -581,29 +615,29 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
  * Call the trap handler.
  */
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	addu	v0, sp, KERNFRAME_SIZ
-	sw	v0, KERNFRAME_SP(sp)
+	PTR_ADDU v0, sp, KERNFRAME_SIZ
+	REG_S	v0, KERNFRAME_SP(sp)
 #endif
-	mtc0	zero, MIPS_COP_0_STATUS		# Set kernel no error level
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	nop
 	nop
 	jal	_C_LABEL(trap)			#
-	sw	a3, KERNFRAME_RA(sp)		# for debugging
+	REG_S	a3, KERNFRAME_RA(sp)		# for debugging
 
 /*
  * Restore registers and return from the exception.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# Make sure int disabled
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
 	nop
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	a0, TF_BASE+TF_PPL(sp)
-	sw	a0, _C_LABEL(md_imask)
+	INT_L	a0, TF_BASE+TF_PPL(sp)
+	INT_S	a0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
@@ -648,9 +682,9 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
-	addu	sp, sp, KERNFRAME_SIZ
+	PTR_ADDU sp, sp, KERNFRAME_SIZ
 #ifdef DDBnotyet
-	la	k0, _C_LABEL(kdbaux)
+	PTR_LA	k0, _C_LABEL(kdbaux)
 	REG_L	s0, SF_REG_S0(k0)
 	REG_L	s1, SF_REG_S1(k0)
 	REG_L	s2, SF_REG_S2(k0)
@@ -673,7 +707,7 @@ END(MIPSX(KernGenException))
  * Handle an exception from user mode.
  * Save user context atop the kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curlwp->p_md.md_regs.
+ * curlwp->l_md.md_regs.
  */
 NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	.set	noat
@@ -681,9 +715,9 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Save all of the registers except for the kernel temporaries in pcb.
  */
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
-	addu	k1, k1, USPACE - FRAME_SIZ
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
+	PTR_ADDU k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
 	REG_S	v1, FRAME_V1(k1)
@@ -725,13 +759,13 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	REG_S	a3, FRAME_EPC(k1)
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, _C_LABEL(md_imask)
-	sw	t0, FRAME_PPL(k1)
+	INT_L	t0, _C_LABEL(md_imask)
+	INT_S	t0, FRAME_PPL(k1)
 	.set noat
 #endif
-	addu	sp, k1, -CALLFRAME_SIZ	# switch to kernel SP
+	PTR_ADDU sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 /*
  * Turn off fpu and enter kernel mode
@@ -742,46 +776,45 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Call the trap handler.
  */
-	lw	MIPS_CURLWP, CPUVAR(CURLWP)
+	PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	jal	_C_LABEL(trap)
-	sw	a3, CALLFRAME_SIZ-4(sp)		# for debugging
+	REG_S	a3, CALLFRAME_RA(sp)		# for debugging
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, L_MD_ASTPENDING(MIPS_CURLWP)
+	INT_L	t0, L_MD_ASTPENDING(MIPS_CURLWP)
 	beq	t0, zero, 1f
 	nop
 /*
  * We have pending asynchronous traps; all the state is already saved.
  */
 	jal	_C_LABEL(ast)
-	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+	REG_L	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
 1:
 /*
  * Restore user registers and return.
  * First disable interrupts and set exception level.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupt
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 clock delay before
 	nop					# exceptions blocked
 	nop					# for R4X
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
 	nop
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, FRAME_PPL(a1)
-	sw	t0, _C_LABEL(md_imask)
+	INT_L	t0, FRAME_PPL(a1)
+	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
 	.set noat
 #endif
  #	REG_L	a0, FRAME_SR(a1)
@@ -842,10 +875,10 @@ END(MIPSX(UserGenException))
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	#nop					# -slip-
-	addu	k1, k1, USPACE - FRAME_SIZ
+	PTR_ADDU k1, k1, USPACE - FRAME_SIZ
 	#REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)		# syscall #
 	REG_S	v1, FRAME_V1(k1)		# used by syscall()
@@ -854,17 +887,8 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
-	lw	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
+	PTR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
-	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
-	#REG_S	t1, FRAME_T1(k1)
-	#REG_S	t2, FRAME_T2(k1)
-	#REG_S	t3, FRAME_T3(k1)
-	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
-	#REG_S	ta0, FRAME_TA0(k1)
-	#REG_S	ta1, FRAME_TA1(k1)
-	#REG_S	ta2, FRAME_TA2(k1)
-	#REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
@@ -875,6 +899,22 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
 	REG_S	s7, FRAME_S7(k1)
+	move	s0, t0				# since the saved registers have
+	move	s1, t1				# been saved we can use them to
+	move	s2, t2				# stash most of temporary regs
+	REG_S	t3, FRAME_T3(k1)		# syscall saved gp for fork
+	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	a4, FRAME_A4(k1)
+	REG_S	a5, FRAME_A5(k1)
+	REG_S	a6, FRAME_A6(k1)
+	REG_S	a7, FRAME_A7(k1)
+#else
+	move	s4, ta0
+	move	s5, ta1
+	move	s6, ta2
+	move	s7, ta3
+#endif
 	#REG_S	t8, FRAME_T8(k1)
 	#REG_S	t9, FRAME_T9(k1)
 	REG_S	gp, FRAME_GP(k1)
@@ -887,26 +927,26 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a3, FRAME_EPC(k1)
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, _C_LABEL(md_imask)
-	sw	t0, FRAME_PPL(k1)
+	INT_L	t0, _C_LABEL(md_imask)
+	INT_S	t0, FRAME_PPL(k1)
 	.set noat
 #endif
-	lw	t0, L_PROC(a0)			# curlwp->l_proc (used below)
+	PTR_L	t0, L_PROC(a0)			# curlwp->l_proc (used below)
 	move	MIPS_CURLWP, a0			# set curlwp reg
-	addu	sp, k1, -CALLFRAME_SIZ
+	PTR_ADDU sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 /*
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
+	PTR_L	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
-	sw	ra, CALLFRAME_RA(sp)
+	REG_S	ra, CALLFRAME_RA(sp)
 #endif
 /*
  * Call the system call handler.
@@ -918,27 +958,26 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, L_MD_ASTPENDING(MIPS_CURLWP)
+	INT_L	t0, L_MD_ASTPENDING(MIPS_CURLWP)
 	beq	t0, zero, 1f
 	nop
 /*
  * We have pending asynchronous traps; all the state is already saved.
  */
 	jal	_C_LABEL(ast)
-	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+	PTR_L	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
 1:
 /*
  * Restore user registers and return.
  * First disable interrupts and set exception level.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# disable int
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
 	nop
 
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
@@ -946,14 +985,14 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return.
  */
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, FRAME_PPL(a1)
-	sw	t0, _C_LABEL(md_imask)
+	INT_L	t0, FRAME_PPL(a1)
+	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
 	.set noat
 #endif
  #	REG_L	a0, FRAME_SR(a1)
@@ -973,14 +1012,21 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_L	a1, FRAME_A1(k1)
 	REG_L	a2, FRAME_A2(k1)
 	REG_L	a3, FRAME_A3(k1)
-	REG_L	t0, FRAME_T0(k1)
-	REG_L	t1, FRAME_T1(k1)
-	REG_L	t2, FRAME_T2(k1)
-	REG_L	t3, FRAME_T3(k1)
-	REG_L	ta0, FRAME_TA0(k1)
-	REG_L	ta1, FRAME_TA1(k1)
-	REG_L	ta2, FRAME_TA2(k1)
-	REG_L	ta3, FRAME_TA3(k1)
+	move	t0, s0			# restore the temps
+	move	t1, s1
+	move	t2, s2
+	REG_L	t3, FRAME_T3(k1)	# restore the syscall saved gp
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L	a4, FRAME_A4(k1)
+	REG_L	a5, FRAME_A5(k1)
+	REG_L	a6, FRAME_A6(k1)
+	REG_L	a7, FRAME_A7(k1)
+#else
+	move	ta0, s4
+	move	ta1, s5
+	move	ta2, s6
+	move	ta3, s7
+#endif
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
@@ -1018,11 +1064,20 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	eret
 	nop
 #endif
-	la	k0, panic			# return to panic
-	la	a0, 9f				# panicstr
+	PTR_LA	k0, panic			# return to panic
+	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
+#if defined(MIPS64_XLS)
+	li	k1, 0x309	/* L1D_CACHE_ERROR_LOG */
+	mfcr	a2, k1
+	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
+	mfcr	a3, k1
+	mfc0	a4, MIPS_COP_0_STATUS
+	mfc0	a5, MIPS_COP_0_CAUSE
+#else
 	mfc0	a2, MIPS_COP_0_ECC
 	mfc0	a3, MIPS_COP_0_CACHE_ERR
+#endif
 
 	_MTC0	k0, MIPS_COP_0_ERROR_PC		# set return address
 	COP0_SYNC
@@ -1038,7 +1093,11 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 
 	eret
 
+#if defined(MIPS64_XLS)
+	MSG("cache error @ EPC %#x\nL1D_CACHE_ERROR_LOG %#lx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
+#else
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
+#endif
 	.set	at
 END(MIPSX(cacheException))
 
@@ -1053,7 +1112,7 @@ END(MIPSX(cacheException))
 NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	subu	sp, sp, KERNFRAME_SIZ
+	PTR_SUBU sp, sp, KERNFRAME_SIZ
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
@@ -1091,30 +1150,30 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
  */
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
-	sw	ra, KERNFRAME_RA(sp)		# for debugging
+	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, _C_LABEL(md_imask)
-	sw	t0, TF_BASE+TF_PPL(sp)
+	INT_L	t0, _C_LABEL(md_imask)
+	INT_S	t0, TF_BASE+TF_PPL(sp)
 	.set noat
 #endif
-	mtc0	zero, MIPS_COP_0_STATUS		# Reset exl, trap possible.
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	jal	_C_LABEL(cpu_intr)
 	and	a3, a0, a1			# 4th is STATUS & CAUSE
 /*
  * Restore registers and return from the interrupt.
  */
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupt
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	nop
 	nop
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	a0, TF_BASE+TF_PPL(sp)
-	sw	a0, _C_LABEL(md_imask)
+	INT_L	a0, TF_BASE+TF_PPL(sp)
+	INT_S	a0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
@@ -1163,7 +1222,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
-	addu	sp, sp, KERNFRAME_SIZ		# restore kernel SP
+	PTR_ADDU sp, sp, KERNFRAME_SIZ		# restore kernel SP
 	eret					# return to interrupted point
 	.set	at
 END(MIPSX(KernIntr))
@@ -1194,9 +1253,9 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Save the relevant user registers into the PCB.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
-	addu	k1, k1, USPACE - FRAME_SIZ
+	PTR_L	k1, CPUVAR(CURLWP)
+	PTR_L	k1, L_PCB(k1)			# XXXuvm_lwp_getuarea
+	PTR_ADDU k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
 	REG_S	v1, FRAME_V1(k1)
@@ -1228,16 +1287,16 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_S	a2, FRAME_EPC(k1)
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, _C_LABEL(md_imask)
-	sw	t0, FRAME_PPL(k1)
+	INT_L	t0, _C_LABEL(md_imask)
+	INT_S	t0, FRAME_PPL(k1)
 	.set noat
 #endif
-	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
+	PTR_ADDU sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	sw	MIPS_CURLWP, MIPS_CURLWP_FRAME(k1)# save curlwp reg
-	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
+	PTR_S	MIPS_CURLWP, MIPS_CURLWP_FRAME(k1)# save curlwp reg
+	PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 /*
  * Turn off fpu and enter kernel mode
  */
@@ -1246,7 +1305,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
-	sw	ra, CALLFRAME_RA(sp)
+	REG_S	ra, CALLFRAME_RA(sp)
 #endif
 /*
  * Call the interrupt handler.
@@ -1259,27 +1318,26 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Restore registers and return from the interrupt.
  */
 	nop
-	mtc0	zero, MIPS_COP_0_STATUS
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop hazard
 	nop
 	nop
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level bit.
+	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
 	COP0_SYNC
 	nop					# 3 nop hazard
 	nop
 	nop
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
-	lw	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
+	INT_L	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	nop
 /*
  * Check pending asynchronous traps.
  */
 	beq	v0, zero, 1f			# if no, skip ast processing
-	lw	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
+	PTR_L	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
 /*
  * We have pending asynchronous traps; save remaining user state in PCB.
  */
@@ -1293,12 +1351,16 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_S	s7, FRAME_S7(a1)
 	REG_S	s8, FRAME_S8(a1)
 	REG_L	a0, FRAME_EPC(a1)		# argument is interrupted PC
-	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
+	PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 #ifdef IPL_ICU_MASK
 	jal	_C_LABEL(spllowersofthigh);
 	nop
 #else
+#ifdef _LP64
+	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX
+#else
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
+#endif
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 	COP0_SYNC
@@ -1308,19 +1370,18 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	mtc0	zero, MIPS_COP_0_STATUS
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
 	nop
-	li	v0, MIPS_SR_EXL
-	mtc0	v0, MIPS_COP_0_STATUS		# set exception level bit.
+	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
 	COP0_SYNC
 	nop					# 3 nop delay
 	nop
 	nop
 
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	s0, FRAME_S0(a1)
 	REG_L	s1, FRAME_S1(a1)
@@ -1347,8 +1408,8 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	move	k1, a1
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, FRAME_PPL(k1)
-	sw	t0, _C_LABEL(md_imask)
+	INT_L	t0, FRAME_PPL(k1)
+	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
@@ -1419,18 +1480,23 @@ END(MIPSX(UserIntr))
 LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
 	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
-	subu	k0, k0, k1
-	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
-	srl	k0, k0, PGSHIFT
+	PTR_SUBU k0, k0, k1
+	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
-	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	beq	k1, zero, MIPSX(outofworld)	# No. Failing beyond. . .
 	nop					# - delay slot -
-	lw	k1, _C_LABEL(Sysmap)
+	PTR_L	k1, _C_LABEL(Sysmap)
 
-	sll	k0, k0, 2			# compute offset from index
-	addu	k1, k1, k0
+	PTR_SLL	k0, k0, 2			# compute offset from index
+	PTR_ADDU k1, k1, k0
 	tlbp					# Probe the invalid entry
 	COP0_SYNC
 	and	k0, k0, 4			# check even/odd page
@@ -1440,17 +1506,17 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	k0, outofworld			# ASSERT(TLB entry exists)
-	lw	k0, 0(k1)			# get PTE entry
+	bltz	k0, MIPSX(outofworld)		# ASSERT(TLB entry exists)
+	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
-	mtc0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	nop					# required for QED5230
 	beq	k0, zero, _C_LABEL(MIPSX(KernGenException))	# PTE invalid
-	lw	k0, 4(k1)			# get odd PTE entry
+	INT_L	k0, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
 	_SRL	k0, k0, WIRED_SHIFT
@@ -1472,8 +1538,8 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 KernTLBIOdd:
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	k0, outofworld			# assert(TLB Entry exists)
-	lw	k0, 0(k1)			# get PTE entry
+	bltz	k0, MIPSX(outofworld)		# assert(TLB Entry exists)
+	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
@@ -1482,7 +1548,7 @@ KernTLBIOdd:
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	nop					# required for QED5230
 	beq	k0, zero, _C_LABEL(MIPSX(KernGenException))	# PTE invalid
-	lw	k0, -4(k1)			# get even PTE entry
+	INT_L	k0, -4(k1)			# get even PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
 	_SRL	k0, k0, WIRED_SHIFT
@@ -1521,10 +1587,15 @@ END(MIPSX(TLBInvalidException))
 LEAF_NOPROFILE(MIPSX(TLBMissException))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
-	subu	k0, k0, k1
-	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
-	srl	k0, k0, PGSHIFT
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
+	PTR_SUBU k0, k0, k1
+	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 #ifdef newsmips
 	/* news5000 has ROM work area at 0xfff00000. */
@@ -1534,15 +1605,15 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop					# - delay slot -
 1:
 #else
-	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	beq	k1, zero, MIPSX(outofworld)		# No. Failing beyond. . .
 	nop					# - delay slot -
 #endif
-	lw	k1, _C_LABEL(Sysmap)
-	srl	k0, k0, 1
-	sll	k0, k0, 3			# compute offset from index
-	addu	k1, k1, k0
-	lw	k0, 0(k1)			# get PTE entry
-	lw	k1, 4(k1)			# get odd PTE entry
+	PTR_L	k1, _C_LABEL(Sysmap)
+	PTR_SRL	k0, k0, 1
+	PTR_SLL	k0, k0, 3			# compute offset from index
+	PTR_ADDU k1, k1, k0
+	INT_L	k0, 0(k1)			# get PTE entry
+	INT_L	k1, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
@@ -1562,22 +1633,27 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop
 	eret
 
-outofworld:
+MIPSX(outofworld):
 	/* eret to panic so shutdown can use K2.  Try to ensure valid $sp. */
-	la	a0, _C_LABEL(panic)
+	PTR_LA	a0, _C_LABEL(panic)
 	_MFC0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
-	sll	k0, k0, PGSHIFT
+	PTR_SLL	k0, k0, PGSHIFT
 	_MTC0	a0, MIPS_COP_0_EXC_PC		# return to panic
 	COP0_SYNC
-	li	k1, VM_MIN_KERNEL_ADDRESS
-	addu	a3, k0, k1
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+#else
+	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
+	dsll32	k1, k1, 0
+#endif
+	PTR_ADDU a3, k0, k1
 #if defined(DDB)
 	bltz	sp, 1f				# for ddb try to keep frame
 	nop
 #endif
-	la	sp, start			# set sp to a valid place
-1:	la	a0, 9f				# string
+	PTR_LA	sp, start			# set sp to a valid place
+1:	PTR_LA	a0, 9f				# string
 	eret
 
 	.set	at
@@ -1640,7 +1716,7 @@ END(MIPSX(SetPID))
  */
 LEAF(MIPSX(TLBWriteIndexedVPS))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop
 	lw	a2, 8(a1)			# fetch tlb->tlb_lo0
@@ -1860,18 +1936,18 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	cache	(CACHE_R4K_D | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR
-	la	k1, VCED_vaddr
-	REG_S	k0, 0(k1)
+	PTR_LA	k1, VCED_vaddr
+	PTR_S	k0, 0(k1)
 	_MFC0	k0, MIPS_COP_0_EXC_PC
-	la	k1, VCED_epc
-	REG_S	k0, 0(k1)
-	la	k1, VCED_count		# count number of exceptions
-	srl	k0, k0, 26		# position upper 4 bits of VA
+	PTR_LA	k1, VCED_epc
+	PTR_S	k0, 0(k1)
+	PTR_LA	k1, VCED_count		# count number of exceptions
+	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
-	add	k1, k0			# get address of count table
-	lw	k0, 0(k1)
-	addu	k0, 1
-	sw	k0, 0(k1)
+	PTR_ADDU k1, k0			# get address of count table
+	LONG_L	k0, 0(k1)
+	LONG_ADDU k0, 1
+	LONG_S	k0, 0(k1)
 #endif
 	eret
 	.set	at
@@ -1880,13 +1956,13 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	.data
 	.globl	_C_LABEL(VCED_count)
 _C_LABEL(VCED_count):
-	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	LONG_WORD	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.globl	_C_LABEL(VCED_epc)
 _C_LABEL(VCED_epc):
-	.word	0
+	PTR_WORD	0
 	.globl	_C_LABEL(VCED_vaddr)
 _C_LABEL(VCED_vaddr):
-	.word	0
+	PTR_WORD	0
 	.text
 #endif
 END(MIPSX(VCED))
@@ -1898,15 +1974,15 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	cache	(CACHE_R4K_I | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR
-	la	k1, VCEI_vaddr
-	REG_S	k0, 0(k1)
-	la	k1, VCEI_count		# count number of exceptions
-	srl	k0, k0, 26		# position upper 4 bits of VA
+	PTR_LA	k1, VCEI_vaddr
+	PTR_S	k0, 0(k1)
+	PTR_LA	k1, VCEI_count		# count number of exceptions
+	PTR_SRL	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
-	add	k1, k0			# get address of count table
-	lw	k0, 0(k1)
-	addu	k0, 1
-	sw	k0, 0(k1)
+	PTR_ADDU k1, k0			# get address of count table
+	LONG_L	k0, 0(k1)
+	PTR_ADDU k0, 1
+	LONG_S	k0, 0(k1)
 #endif
 	eret
 	.set	at
@@ -1915,10 +1991,10 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	.data
 	.globl	_C_LABEL(VCEI_count)
 _C_LABEL(VCEI_count):
-	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	LONG_WORD	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.globl	_C_LABEL(VCEI_vaddr)
 _C_LABEL(VCEI_vaddr):
-	.word	0
+	PTR_WORD	0
 	.text
 #endif
 END(MIPSX(VCEI))
@@ -1932,10 +2008,10 @@ END(MIPSX(VCEI))
  * and s1 respectively.  There is no need register save operation.
  */
 LEAF(MIPSX(lwp_trampoline))
-	addu	sp, sp, -CALLFRAME_SIZ
+	PTR_ADDU sp, sp, -CALLFRAME_SIZ
 
 	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
-	la	t0, _C_LABEL(lwp_startup)
+	PTR_LA	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
 	jal	ra, t0
 	move	a1, s7
@@ -1954,17 +2030,16 @@ LEAF(MIPSX(lwp_trampoline))
 	#
 	.set	noat
 1:
-	mtc0	zero, MIPS_COP_0_STATUS		# disable int
+	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 op delay
 	nop
 	nop
-	li	a0, MIPS_SR_EXL			# set exception level
-	mtc0	a0, MIPS_COP_0_STATUS
+	SET_EXCEPTION_LEVEL(v0)			# set exception level
 	COP0_SYNC
 	nop
 	nop
-	addu	a1, sp, CALLFRAME_SIZ
+	PTR_ADDU a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	t0, FRAME_MULLO(a1)
 	REG_L	t1, FRAME_MULHI(a1)
@@ -1977,8 +2052,8 @@ LEAF(MIPSX(lwp_trampoline))
 	move	k1, a1
 #ifdef IPL_ICU_MASK
 	.set at
-	lw	t0, FRAME_PPL(k1)
-	sw	t0, _C_LABEL(md_imask)
+	INT_L	t0, FRAME_PPL(k1)
+	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
@@ -2026,7 +2101,7 @@ END(MIPSX(lwp_trampoline))
  * Like lwp_trampoline, but do not call lwp_startup
  */
 LEAF(MIPSX(setfunc_trampoline))
-	addu	sp, sp, -CALLFRAME_SIZ
+	PTR_ADDU sp, sp, -CALLFRAME_SIZ
 
 	# Call the routine specified by cpu_setfunc()
 	jal	ra, s0			
@@ -2047,16 +2122,26 @@ END(MIPSX(setfunc_trampoline))
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #if !defined(ENABLE_MIPS_16KB_PAGE)
-	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
-	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	v0, L_PCB(a0)			# XXXuvm_lwp_getuarea
-	li	s0, MIPS_KSEG2_START
-	blt	v0, s0, resume
-	nop
+	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
+	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
+	PTR_L	v0, L_PCB(a0)			# va = l->l_addr
+#if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
+	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
+	blt	v0, t0, resume
+	 nop
+#else
+	li	t0, MIPS_KSEG0_START		# above XKSEG?
+	blt	t0, v0, resume
+	 nop
+	li	t0, VM_MIN_KERNEL_ADDRESS>>32	# below XKSEG?
+	dsll32	t0, t0, 0
+	blt	v0, t0, resume
+	 nop
+#endif
 
-	and	s0, v0, MIPS3_PG_ODDPG
-	beq	s0, zero, entry0
-	nop
+	and	t0, v0, MIPS3_PG_ODDPG
+	beq	t0, zero, entry0
+	 nop
 
 	PANIC("USPACE sat on odd page boundary")
 
@@ -2069,12 +2154,12 @@ entry0:
 	COP0_SYNC
 	nop
 	nop
-	mfc0	s0, MIPS_COP_0_TLB_INDEX
+	mfc0	t0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	s0, entry0set
-	sll	s0, s0, PGSHIFT + 1		# PAGE_SHIFT + 1
-	la	s0, MIPS_KSEG0_START(s0)
-	_MTC0	s0, MIPS_COP_0_TLB_HI
+	bltz	t0, entry0set
+	sll	t0, t0, PGSHIFT + 1		# PAGE_SHIFT + 1
+	PTR_LA	t0, MIPS_KSEG0_START(t0)
+	_MTC0	t0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0
 	COP0_SYNC
@@ -2137,15 +2222,17 @@ LEAF_NOPROFILE(MIPSX(TBIS))
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	li	t1, MIPS_KSEG0_START		# invalid address
-	sll	v0, v0, PGSHIFT + 1		# PAGE_SHIFT + 1
-	addu	t1, t1, v0
+	PTR_SLL	v0, v0, PGSHIFT + 1		# PAGE_SHIFT + 1
+	PTR_ADDU t1, t1, v0
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 	COP0_SYNC
-#if 0
+#if 1
+	nop
+#else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 	COP0_SYNC
 #endif
@@ -2201,7 +2288,7 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
 	and	a0, a0, MIPS3_PG_G		# check to see it has G bit
 	bnez	a0, 2f
-	addu	ta0, ta0, v0
+	PTR_ADDU ta0, ta0, v0
 
 	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
@@ -2301,99 +2388,99 @@ LEAF(MIPSX(pagezero))
 END(MIPSX(pagezero))
 #endif /* USE_64BIT_INSTRUCTIONS */
 
-	.data
+	.rdata
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	.word _C_LABEL(MIPSX(cpu_switch_resume))
-	.word _C_LABEL(MIPSX(lwp_trampoline))
-	.word _C_LABEL(nullop)
-	.word _C_LABEL(MIPSX(setfunc_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
+	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
+	PTR_WORD _C_LABEL(nullop)
+	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
 
 MIPSX(excpt_sw):
 	####
 	#### The kernel exception handlers.
 	####
-	.word _C_LABEL(MIPSX(KernIntr))		#  0 external interrupt
-	.word _C_LABEL(MIPSX(KernGenException))	#  1 TLB modification
-	.word _C_LABEL(MIPSX(TLBInvalidException))# 2 TLB miss (LW/I-fetch)
-	.word _C_LABEL(MIPSX(TLBInvalidException))# 3 TLB miss (SW)
-	.word _C_LABEL(MIPSX(KernGenException))	#  4 address error (LW/I-fetch)
-	.word _C_LABEL(MIPSX(KernGenException))	#  5 address error (SW)
-	.word _C_LABEL(MIPSX(KernGenException))	#  6 bus error (I-fetch)
-	.word _C_LABEL(MIPSX(KernGenException))	#  7 bus error (load or store)
-	.word _C_LABEL(MIPSX(KernGenException))	#  8 system call
-	.word _C_LABEL(MIPSX(KernGenException))	#  9 breakpoint
-	.word _C_LABEL(MIPSX(KernGenException))	# 10 reserved instruction
-	.word _C_LABEL(MIPSX(KernGenException))	# 11 coprocessor unusable
-	.word _C_LABEL(MIPSX(KernGenException))	# 12 arithmetic overflow
-	.word _C_LABEL(MIPSX(KernGenException))	# 13 r4k trap exception
+	PTR_WORD _C_LABEL(MIPSX(KernIntr))		#  0 external interrupt
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  1 TLB modification
+	PTR_WORD _C_LABEL(MIPSX(TLBInvalidException))# 2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(TLBInvalidException))# 3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  4 address error (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  5 address error (SW)
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  6 bus error (I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  7 bus error (load or store)
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  8 system call
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  9 breakpoint
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 10 reserved instruction
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 11 coprocessor unusable
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 12 arithmetic overflow
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 13 r4k trap exception
 #if defined(MIPS3) && !defined(MIPS3_5900)
-	.word _C_LABEL(mips3_VCEI)		# 14 r4k virt coherence
+	PTR_WORD _C_LABEL(mips3_VCEI)			# 14 r4k virt coherence
 #else
-	.word _C_LABEL(MIPSX(KernGenException))	# 14 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 14 reserved
 #endif
-	.word _C_LABEL(MIPSX(KernGenException))	# 15 r4k FP exception
-	.word _C_LABEL(MIPSX(KernGenException))	# 16 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 17 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 18 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 19 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 20 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 21 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 22 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 23 watch exception
-	.word _C_LABEL(MIPSX(KernGenException))	# 24 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 25 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 26 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 27 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 28 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 29 reserved
-	.word _C_LABEL(MIPSX(KernGenException))	# 30 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 15 r4k FP exception
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 16 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 17 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 18 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 19 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 20 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 21 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 22 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 23 watch exception
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 24 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 25 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 26 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 27 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 28 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 29 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 30 reserved
 #if defined(MIPS3) && !defined(MIPS3_5900)
-	.word _C_LABEL(mips3_VCED)		# 31 v. coherence exception data
+	PTR_WORD _C_LABEL(mips3_VCED)		# 31 v. coherence exception data
 #else
-	.word _C_LABEL(MIPSX(KernGenException))	# 31 reserved
+	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 31 reserved
 #endif
 	#####
 	##### The user exception handlers.
 	#####
-	.word _C_LABEL(MIPSX(UserIntr))		#  0
-	.word _C_LABEL(MIPSX(UserGenException))	#  1
-	.word _C_LABEL(MIPSX(UserGenException))	#  2
-	.word _C_LABEL(MIPSX(UserGenException))	#  3
-	.word _C_LABEL(MIPSX(UserGenException))	#  4
-	.word _C_LABEL(MIPSX(UserGenException))	#  5
-	.word _C_LABEL(MIPSX(UserGenException))	#  6
-	.word _C_LABEL(MIPSX(UserGenException))	#  7
-	.word _C_LABEL(MIPSX(SystemCall))	#  8
-	.word _C_LABEL(MIPSX(UserGenException))	#  9
-	.word _C_LABEL(MIPSX(UserGenException))	# 10
-	.word _C_LABEL(MIPSX(UserGenException))	# 11
-	.word _C_LABEL(MIPSX(UserGenException))	# 12
-	.word _C_LABEL(MIPSX(UserGenException))	# 13
+	PTR_WORD _C_LABEL(MIPSX(UserIntr))		#  0
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  1
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  2
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  3
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  4
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  5
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  6
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  7
+	PTR_WORD _C_LABEL(MIPSX(SystemCall))		#  8
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  9
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 10
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 11
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 12
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 13
 #if defined(MIPS3) && !defined(MIPS3_5900)
-	.word _C_LABEL(mips3_VCEI)		# 14
+	PTR_WORD _C_LABEL(mips3_VCEI)			# 14
 #else
-	.word _C_LABEL(MIPSX(UserGenException))	# 14
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 14
 #endif
-	.word _C_LABEL(MIPSX(UserGenException))	# 15
-	.word _C_LABEL(MIPSX(UserGenException))	# 16
-	.word _C_LABEL(MIPSX(UserGenException))	# 17
-	.word _C_LABEL(MIPSX(UserGenException))	# 18
-	.word _C_LABEL(MIPSX(UserGenException))	# 19
-	.word _C_LABEL(MIPSX(UserGenException))	# 20
-	.word _C_LABEL(MIPSX(UserGenException))	# 21
-	.word _C_LABEL(MIPSX(UserGenException))	# 22
-	.word _C_LABEL(MIPSX(UserGenException))	# 23
-	.word _C_LABEL(MIPSX(UserGenException))	# 24
-	.word _C_LABEL(MIPSX(UserGenException))	# 25
-	.word _C_LABEL(MIPSX(UserGenException))	# 26
-	.word _C_LABEL(MIPSX(UserGenException))	# 27
-	.word _C_LABEL(MIPSX(UserGenException))	# 28
-	.word _C_LABEL(MIPSX(UserGenException))	# 29
-	.word _C_LABEL(MIPSX(UserGenException))	# 30
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 15
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 16
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 17
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 18
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 19
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 20
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 21
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 22
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 23
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 24
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 25
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 26
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 27
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 28
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 29
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 30
 #if defined(MIPS3) && !defined(MIPS3_5900)
-	.word _C_LABEL(mips3_VCED)		# 31 v. coherence exception data
+	PTR_WORD _C_LABEL(mips3_VCED)			# 31 v. coherence exception data
 #else
-	.word _C_LABEL(MIPSX(UserGenException))	# 31
+	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 31
 #endif
