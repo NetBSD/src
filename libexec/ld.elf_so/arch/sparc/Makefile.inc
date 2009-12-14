@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.2.1 2009/01/16 22:21:30 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.11.2.1.4.1 2009/12/14 06:57:17 mrg Exp $
 
 SRCS+=		rtld_start.S mdreloc.c
 
@@ -8,7 +8,3 @@ CPPFLAGS+=	-fpic
 CPPFLAGS+=	-DELFSIZE=32
 
 LDFLAGS+=	-Wl,-e,_rtld_start
-
-.if defined(LD32DIR)
-.include "Makefile.ld32"
-.endif
