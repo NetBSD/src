@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.6 2009/11/15 22:58:15 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.7 2009/12/14 07:23:07 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -11,7 +11,8 @@ define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio
 attach	obio at mainbus
 file	arch/mips/rmi/rmixl_obio.c		obio needs-count
-file    arch/mips/rmi/rmixl_obio_space.c	obio
+file    arch/mips/rmi/rmixl_obio_eb_space.c	obio
+file    arch/mips/rmi/rmixl_obio_el_space.c	obio
 file    arch/mips/rmi/rmixl_pcie_cfg_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_ecfg_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_io_space.c	pci
@@ -26,4 +27,18 @@ defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 device  rmixl_pcie: pcibus
 attach  rmixl_pcie at obio
 file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie
+
+# On-chip USB interface
+define rmixl_usbi { [addr=-1], [size=-1], [intr=-1] }
+device	rmixl_usbi: rmixl_usbi
+attach	rmixl_usbi at obio
+file	arch/mips/rmi/rmixl_usbi.c		rmixl_usbi
+
+# On-chip OHCI USB controller
+attach	ohci at rmixl_usbi with rmixl_ohci
+file	arch/mips/rmi/rmixl_ohci.c		ohci
+
+# On-chip EHCI USB controller
+attach	ehci at rmixl_usbi with rmixl_ehci
+file	arch/mips/rmi/rmixl_ehci.c		ehci
 
