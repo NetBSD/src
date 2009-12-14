@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.1 2009/01/15 03:24:06 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.1.4.1 2009/12/14 06:40:04 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -512,6 +512,12 @@
 ./usr/include/ufs/ufs
 ./usr/include/uvm
 ./usr/lib
+./usr/lib/64
+./usr/lib/64/i18n
+./usr/lib/64/security
+./usr/lib/o32
+./usr/lib/o32/i18n
+./usr/lib/o32/security
 ./usr/lib/i18n
 ./usr/lib/pkgconfig
 ./usr/lib/security
