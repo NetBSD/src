@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscallargs.h,v 1.68 2009/01/13 22:33:17 pooka Exp $ */
+/* $NetBSD: sunos_syscallargs.h,v 1.69 2009/12/14 00:58:37 matt Exp $ */
 
 /*
  * System call argument lists.

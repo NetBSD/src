@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscallargs.h,v 1.60 2009/01/13 22:33:17 pooka Exp $ */
+/* $NetBSD: osf1_syscallargs.h,v 1.61 2009/12/14 00:58:37 matt Exp $ */
 
 /*
  * System call argument lists.
