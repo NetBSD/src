@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.18 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.19 2009/12/14 12:53:18 uebayasi Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.18 2009/12/14 00:46:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.19 2009/12/14 12:53:18 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 #else
-	for (size_t i = 1; i < __arraycount(scp->sc_regs); i++)
+	size_t i;
+	for (i = 1; i < __arraycount(scp->sc_regs); i++)
 		f->f_regs[i] = scp->sc_regs[i];
 #endif
 	if (scp->sc_fpused) {
