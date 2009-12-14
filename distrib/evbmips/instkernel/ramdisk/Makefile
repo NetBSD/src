@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/09/20 23:19:52 abs Exp $
+#	$NetBSD: Makefile,v 1.8 2009/12/14 01:12:05 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,7 +13,7 @@ DBG=		-Os
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
-.if ${MACHINE_ARCH} == "mipsel"
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mips64el"
 IMAGEENDIAN=	le
 .else
 IMAGEENDIAN=	be
