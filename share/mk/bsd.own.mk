@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.613 2009/12/14 01:00:46 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.614 2009/12/14 05:25:21 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -992,28 +992,6 @@ MAKEDIRTARGET=\
 		&& ${MAKEDIRTARGETENV} ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
 	}; \
 	_makedirtarget
-
-#
-# ${GENCMD} <generated name> <command and arguments>
-#	Extract only one output from generation command so that make rule is
-#       written straight and avoid race (duplicate generation).  <generated
-#       name> is usually ${.TARGET}; if you want foo.c from foo.y, yacc
-#       generates y.tab.c, so <generated name> is y.tab.c.  See bin/sh/Makefile
-#	for examples.
-#
-GENCMD=\
-	@_gencmd() { \
-		local _dst="$$1"; shift; local _src="$$1"; shift; local _gen="$$1"; shift; \
-		local _tmp=$$( ${TOOL_MKTEMP} -d /tmp/_gencmd.XXXXXX ); \
-		local _opwd=$$PWD; \
-		local _exit; \
-		cp $$_src $$_tmp; \
-		{ cd $$_tmp && eval "$$@"; _exit=$$?; cd $$_opwd; }; \
-		[ $$_exit = 0 ] && cp $${_tmp}/$${_gen} $$_dst; \
-		rm -fr $$_tmp; \
-		return $$_exit; \
-	}; \
-	_gencmd "${.TARGET}" "${.ALLSRC}"
 
 #
 # MAKEVERBOSE support.  Levels are:
