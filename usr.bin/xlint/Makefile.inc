@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2009/04/14 09:09:59 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2009/12/14 00:42:06 matt Exp $
 
 WARNS?=		3	# XXX: fails -Wsign-compare
 
@@ -11,6 +11,8 @@ WARNS?=		3	# XXX: fails -Wsign-compare
 # on the m68000), so we special case the directory name here.
 .if ${MACHINE_ARCH} == "m68000"
 ARCHSUBDIR=	m68000
+.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+ARCHSUBDIR=	mips64
 .else
 ARCHSUBDIR=	${MACHINE_CPU}
 .endif
