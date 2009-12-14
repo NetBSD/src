@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.105 2009/07/13 19:05:39 roy Exp $	*/
+/*	$NetBSD: options.c,v 1.106 2009/12/14 05:04:48 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.105 2009/07/13 19:05:39 roy Exp $");
+__RCSID("$NetBSD: options.c,v 1.106 2009/12/14 05:04:48 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -692,7 +692,7 @@ pax_options(int argc, char **argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], NULL, NOGLOB_MTCH) < 0)
+			if (pat_add(argv[optind], NULL, 0) < 0)
 				pax_usage();
 		break;
 	case COPY:
