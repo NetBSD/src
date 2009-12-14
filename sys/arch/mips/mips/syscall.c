@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.39 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40 2009/12/14 18:39:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2009/12/14 18:39:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -240,7 +240,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			KASSERT(nargs <= __arraycount(copyargs));
 			args = copyargs;
 			/*
-			 * Copy the arguments passed via register from the				 * trap frame to our argument array
+			 * Copy the arguments passed via register from the
+			 * trap frame to our argument array
 			 */
 			memcpy(copyargs, fargs, nregs * sizeof(register_t));
 			/*
