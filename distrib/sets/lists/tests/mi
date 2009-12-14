@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.55 2009/11/05 13:32:14 njoly Exp $
+# $NetBSD: mi,v 1.56 2009/12/14 02:01:54 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,52 +6,52 @@
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/atf-c					tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/atf-c/h_check.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_check.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_config.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_dynstr.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_env.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_error.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_expand.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_fs.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_io.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_list.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_macros.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_map.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_process.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_sanity.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_signals.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_tc.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_tcr.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_text.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_ui.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c/t_user.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/atf-c/h_check.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_check.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_config.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_dynstr.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_env.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_error.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_expand.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_fs.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_io.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_list.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_macros.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_map.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_process.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_sanity.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_signals.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_tc.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_tcr.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_text.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_ui.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c/t_user.debug			tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c++				tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_check.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_config.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_env.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_expand.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_fs.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_io.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_macros.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_parser.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_process.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_signals.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_tests.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_text.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_user.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/atf-c++/t_utils.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_check.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_config.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_env.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_expand.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_fs.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_io.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_macros.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_parser.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_process.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_signals.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_tests.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_text.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_user.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-c++/t_utils.debug			tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/formats				tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/formats/h_parser.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/formats/t_writers.debug		tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/formats/h_parser.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/formats/t_writers.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/test_programs				tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/test_programs/h_c.debug		tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/test_programs/h_c.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/tools					tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/tools/h_fail.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/tools/h_misc.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/tools/h_mode.debug			tests-atf-debug		debug
-./usr/libdata/debug/usr/tests/atf/tools/h_pass.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/tools/h_fail.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/tools/h_misc.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/tools/h_mode.debug			tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/tools/h_pass.debug			tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/units					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_config.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_env.debug			tests-obsolete		obsolete
@@ -166,227 +166,227 @@
 ./usr/tests					tests-base-tests
 ./usr/tests/Atffile				tests-base-tests
 ./usr/tests/atf					tests-atf-tests
-./usr/tests/atf/Atffile				tests-atf-tests
+./usr/tests/atf/Atffile				tests-atf-tests		atf
 ./usr/tests/atf/atf-c				tests-atf-tests
-./usr/tests/atf/atf-c/Atffile			tests-atf-tests
-./usr/tests/atf/atf-c/h_check			tests-atf-tests
-./usr/tests/atf/atf-c/t_check			tests-atf-tests
-./usr/tests/atf/atf-c/t_config			tests-atf-tests
-./usr/tests/atf/atf-c/t_dynstr			tests-atf-tests
-./usr/tests/atf/atf-c/t_env			tests-atf-tests
-./usr/tests/atf/atf-c/t_error			tests-atf-tests
-./usr/tests/atf/atf-c/t_expand			tests-atf-tests
-./usr/tests/atf/atf-c/t_fs			tests-atf-tests
-./usr/tests/atf/atf-c/t_io			tests-atf-tests
-./usr/tests/atf/atf-c/t_list			tests-atf-tests
-./usr/tests/atf/atf-c/t_macros			tests-atf-tests
-./usr/tests/atf/atf-c/t_map			tests-atf-tests
-./usr/tests/atf/atf-c/t_process			tests-atf-tests
-./usr/tests/atf/atf-c/t_sanity			tests-atf-tests
-./usr/tests/atf/atf-c/t_signals			tests-atf-tests
-./usr/tests/atf/atf-c/t_tc			tests-atf-tests
-./usr/tests/atf/atf-c/t_tcr			tests-atf-tests
-./usr/tests/atf/atf-c/t_text			tests-atf-tests
-./usr/tests/atf/atf-c/t_ui			tests-atf-tests
-./usr/tests/atf/atf-c/t_user			tests-atf-tests
+./usr/tests/atf/atf-c/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-c/h_check			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_check			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_config			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_dynstr			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_env			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_error			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_expand			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_fs			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_io			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_list			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_macros			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_map			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_process			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_sanity			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_signals			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_tc			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_tcr			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_text			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_ui			tests-atf-tests		atf
+./usr/tests/atf/atf-c/t_user			tests-atf-tests		atf
 ./usr/tests/atf/atf-c++				tests-atf-tests
-./usr/tests/atf/atf-c++/Atffile			tests-atf-tests
-./usr/tests/atf/atf-c++/t_check			tests-atf-tests
-./usr/tests/atf/atf-c++/t_config		tests-atf-tests
-./usr/tests/atf/atf-c++/t_env			tests-atf-tests
-./usr/tests/atf/atf-c++/t_expand		tests-atf-tests
-./usr/tests/atf/atf-c++/t_fs			tests-atf-tests
-./usr/tests/atf/atf-c++/t_io			tests-atf-tests
-./usr/tests/atf/atf-c++/t_macros		tests-atf-tests
-./usr/tests/atf/atf-c++/t_parser		tests-atf-tests
-./usr/tests/atf/atf-c++/t_process		tests-atf-tests
-./usr/tests/atf/atf-c++/t_signals		tests-atf-tests
-./usr/tests/atf/atf-c++/t_tests			tests-atf-tests
-./usr/tests/atf/atf-c++/t_text			tests-atf-tests
-./usr/tests/atf/atf-c++/t_user			tests-atf-tests
-./usr/tests/atf/atf-c++/t_utils			tests-atf-tests
+./usr/tests/atf/atf-c++/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_check			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_config		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_env			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_expand		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_fs			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_io			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_macros		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_parser		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_process		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_signals		tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_tests			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_text			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_user			tests-atf-tests		atf
+./usr/tests/atf/atf-c++/t_utils			tests-atf-tests		atf
 ./usr/tests/atf/atf-sh				tests-atf-tests
-./usr/tests/atf/atf-sh/Atffile			tests-atf-tests
-./usr/tests/atf/atf-sh/h_misc			tests-atf-tests
-./usr/tests/atf/atf-sh/t_atf_check		tests-atf-tests
-./usr/tests/atf/atf-sh/t_config			tests-atf-tests
-./usr/tests/atf/atf-sh/t_normalize		tests-atf-tests
-./usr/tests/atf/atf-sh/t_tc			tests-atf-tests
-./usr/tests/atf/atf-sh/t_tp			tests-atf-tests
+./usr/tests/atf/atf-sh/Atffile			tests-atf-tests		atf
+./usr/tests/atf/atf-sh/h_misc			tests-atf-tests		atf
+./usr/tests/atf/atf-sh/t_atf_check		tests-atf-tests		atf
+./usr/tests/atf/atf-sh/t_config			tests-atf-tests		atf
+./usr/tests/atf/atf-sh/t_normalize		tests-atf-tests		atf
+./usr/tests/atf/atf-sh/t_tc			tests-atf-tests		atf
+./usr/tests/atf/atf-sh/t_tp			tests-atf-tests		atf
 ./usr/tests/atf/data				tests-atf-tests
-./usr/tests/atf/data/Atffile			tests-atf-tests
-./usr/tests/atf/data/t_pkg_config		tests-atf-tests
+./usr/tests/atf/data/Atffile			tests-atf-tests		atf
+./usr/tests/atf/data/t_pkg_config		tests-atf-tests		atf
 ./usr/tests/atf/formats				tests-atf-tests
-./usr/tests/atf/formats/Atffile			tests-atf-tests
-./usr/tests/atf/formats/d_atffile_1		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_1.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_2		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_2.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_3		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_3.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_4		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_4.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_5		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_5.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_50		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_50.experr	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_51		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_51.experr	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_52		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_52.experr	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_53		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_53.experr	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_53.expout	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_54		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_54.experr	tests-atf-tests
-./usr/tests/atf/formats/d_atffile_6		tests-atf-tests
-./usr/tests/atf/formats/d_atffile_6.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_1		tests-atf-tests
-./usr/tests/atf/formats/d_config_1.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_2		tests-atf-tests
-./usr/tests/atf/formats/d_config_2.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_3		tests-atf-tests
-./usr/tests/atf/formats/d_config_3.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_4		tests-atf-tests
-./usr/tests/atf/formats/d_config_4.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_50		tests-atf-tests
-./usr/tests/atf/formats/d_config_50.experr	tests-atf-tests
-./usr/tests/atf/formats/d_config_51		tests-atf-tests
-./usr/tests/atf/formats/d_config_51.experr	tests-atf-tests
-./usr/tests/atf/formats/d_config_52		tests-atf-tests
-./usr/tests/atf/formats/d_config_52.experr	tests-atf-tests
-./usr/tests/atf/formats/d_config_53		tests-atf-tests
-./usr/tests/atf/formats/d_config_53.experr	tests-atf-tests
-./usr/tests/atf/formats/d_config_53.expout	tests-atf-tests
-./usr/tests/atf/formats/d_config_54		tests-atf-tests
-./usr/tests/atf/formats/d_config_54.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_1		tests-atf-tests
-./usr/tests/atf/formats/d_headers_1.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_10		tests-atf-tests
-./usr/tests/atf/formats/d_headers_10.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_11		tests-atf-tests
-./usr/tests/atf/formats/d_headers_11.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_12		tests-atf-tests
-./usr/tests/atf/formats/d_headers_12.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_2		tests-atf-tests
-./usr/tests/atf/formats/d_headers_2.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_3		tests-atf-tests
-./usr/tests/atf/formats/d_headers_3.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_4		tests-atf-tests
-./usr/tests/atf/formats/d_headers_4.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_5		tests-atf-tests
-./usr/tests/atf/formats/d_headers_5.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_6		tests-atf-tests
-./usr/tests/atf/formats/d_headers_6.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_7		tests-atf-tests
-./usr/tests/atf/formats/d_headers_7.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_8		tests-atf-tests
-./usr/tests/atf/formats/d_headers_8.experr	tests-atf-tests
-./usr/tests/atf/formats/d_headers_9		tests-atf-tests
-./usr/tests/atf/formats/d_headers_9.experr	tests-atf-tests
-./usr/tests/atf/formats/d_tcs_1			tests-atf-tests
-./usr/tests/atf/formats/d_tcs_1.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_1.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_1.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_2			tests-atf-tests
-./usr/tests/atf/formats/d_tcs_2.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_2.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_2.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_3			tests-atf-tests
-./usr/tests/atf/formats/d_tcs_3.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_3.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_3.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_4			tests-atf-tests
-./usr/tests/atf/formats/d_tcs_4.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_4.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_4.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_5			tests-atf-tests
-./usr/tests/atf/formats/d_tcs_5.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_5.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_5.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_50		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_50.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_51		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_51.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_52		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_52.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_53		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_53.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_53.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_54		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_54.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_54.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_55		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_55.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_55.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_56		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_56.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_56.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_56.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_56.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_57		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_57.errin		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_57.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_57.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tcs_57.outin		tests-atf-tests
-./usr/tests/atf/formats/d_tps_1			tests-atf-tests
-./usr/tests/atf/formats/d_tps_1.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_2			tests-atf-tests
-./usr/tests/atf/formats/d_tps_2.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_3			tests-atf-tests
-./usr/tests/atf/formats/d_tps_3.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_4			tests-atf-tests
-./usr/tests/atf/formats/d_tps_4.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_5			tests-atf-tests
-./usr/tests/atf/formats/d_tps_5.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_50		tests-atf-tests
-./usr/tests/atf/formats/d_tps_50.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_51		tests-atf-tests
-./usr/tests/atf/formats/d_tps_51.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_52		tests-atf-tests
-./usr/tests/atf/formats/d_tps_52.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_53		tests-atf-tests
-./usr/tests/atf/formats/d_tps_53.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_53.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_54		tests-atf-tests
-./usr/tests/atf/formats/d_tps_54.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_54.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_55		tests-atf-tests
-./usr/tests/atf/formats/d_tps_55.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_55.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_56		tests-atf-tests
-./usr/tests/atf/formats/d_tps_56.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_56.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_57		tests-atf-tests
-./usr/tests/atf/formats/d_tps_57.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_57.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_58		tests-atf-tests
-./usr/tests/atf/formats/d_tps_58.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_58.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_59		tests-atf-tests
-./usr/tests/atf/formats/d_tps_59.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_60		tests-atf-tests
-./usr/tests/atf/formats/d_tps_60.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_61		tests-atf-tests
-./usr/tests/atf/formats/d_tps_61.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_62		tests-atf-tests
-./usr/tests/atf/formats/d_tps_62.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_62.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_63		tests-atf-tests
-./usr/tests/atf/formats/d_tps_63.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_63.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_64		tests-atf-tests
-./usr/tests/atf/formats/d_tps_64.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_64.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_65		tests-atf-tests
-./usr/tests/atf/formats/d_tps_65.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_65.expout		tests-atf-tests
-./usr/tests/atf/formats/d_tps_66		tests-atf-tests
-./usr/tests/atf/formats/d_tps_66.experr		tests-atf-tests
-./usr/tests/atf/formats/d_tps_66.expout		tests-atf-tests
-./usr/tests/atf/formats/h_parser		tests-atf-tests
-./usr/tests/atf/formats/t_parsers		tests-atf-tests
-./usr/tests/atf/formats/t_writers		tests-atf-tests
+./usr/tests/atf/formats/Atffile			tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_1		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_1.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_2		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_2.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_3		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_3.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_4		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_4.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_5		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_5.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_50		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_50.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_51		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_51.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_52		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_52.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_53		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_53.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_53.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_54		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_54.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_6		tests-atf-tests		atf
+./usr/tests/atf/formats/d_atffile_6.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_1		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_1.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_2		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_2.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_3		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_3.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_4		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_4.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_50		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_50.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_51		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_51.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_52		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_52.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_53		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_53.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_53.expout	tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_54		tests-atf-tests		atf
+./usr/tests/atf/formats/d_config_54.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_1		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_1.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_10		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_10.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_11		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_11.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_12		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_12.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_2		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_2.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_3		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_3.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_4		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_4.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_5		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_5.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_6		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_6.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_7		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_7.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_8		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_8.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_9		tests-atf-tests		atf
+./usr/tests/atf/formats/d_headers_9.experr	tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_1			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_1.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_1.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_1.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_2			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_2.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_2.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_2.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_3			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_3.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_3.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_3.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_4			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_4.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_4.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_4.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_5			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_5.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_5.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_5.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_50		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_50.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_51		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_51.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_52		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_52.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_53		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_53.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_53.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_54		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_54.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_54.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_55		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_55.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_55.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_56		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_56.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_56.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_56.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_56.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_57		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_57.errin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_57.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_57.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tcs_57.outin		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_1			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_1.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_2			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_2.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_3			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_3.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_4			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_4.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_5			tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_5.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_50		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_50.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_51		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_51.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_52		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_52.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_53		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_53.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_53.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_54		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_54.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_54.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_55		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_55.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_55.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_56		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_56.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_56.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_57		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_57.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_57.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_58		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_58.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_58.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_59		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_59.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_60		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_60.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_61		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_61.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_62		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_62.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_62.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_63		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_63.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_63.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_64		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_64.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_64.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_65		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_65.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_65.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_66		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_66.experr		tests-atf-tests		atf
+./usr/tests/atf/formats/d_tps_66.expout		tests-atf-tests		atf
+./usr/tests/atf/formats/h_parser		tests-atf-tests		atf
+./usr/tests/atf/formats/t_parsers		tests-atf-tests		atf
+./usr/tests/atf/formats/t_writers		tests-atf-tests		atf
 ./usr/tests/atf/sh_interface			tests-obsolete		obsolete
 ./usr/tests/atf/sh_interface/Atffile		tests-obsolete		obsolete
 ./usr/tests/atf/sh_interface/h_misc		tests-obsolete		obsolete
@@ -396,32 +396,32 @@
 ./usr/tests/atf/sh_interface/t_tc		tests-obsolete		obsolete
 ./usr/tests/atf/sh_interface/t_tp		tests-obsolete		obsolete
 ./usr/tests/atf/test_programs			tests-atf-tests
-./usr/tests/atf/test_programs/Atffile		tests-atf-tests
-./usr/tests/atf/test_programs/h_c		tests-atf-tests
-./usr/tests/atf/test_programs/h_cpp		tests-atf-tests
-./usr/tests/atf/test_programs/h_sh		tests-atf-tests
-./usr/tests/atf/test_programs/t_cleanup		tests-atf-tests
-./usr/tests/atf/test_programs/t_config		tests-atf-tests
-./usr/tests/atf/test_programs/t_env		tests-atf-tests
-./usr/tests/atf/test_programs/t_fork		tests-atf-tests
-./usr/tests/atf/test_programs/t_meta_data	tests-atf-tests
-./usr/tests/atf/test_programs/t_srcdir		tests-atf-tests
-./usr/tests/atf/test_programs/t_status		tests-atf-tests
-./usr/tests/atf/test_programs/t_workdir		tests-atf-tests
+./usr/tests/atf/test_programs/Atffile		tests-atf-tests		atf
+./usr/tests/atf/test_programs/h_c		tests-atf-tests		atf
+./usr/tests/atf/test_programs/h_cpp		tests-atf-tests		atf
+./usr/tests/atf/test_programs/h_sh		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_cleanup		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_config		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_env		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_fork		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_meta_data	tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_srcdir		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_status		tests-atf-tests		atf
+./usr/tests/atf/test_programs/t_workdir		tests-atf-tests		atf
 ./usr/tests/atf/tools				tests-atf-tests
-./usr/tests/atf/tools/Atffile			tests-atf-tests
-./usr/tests/atf/tools/h_fail			tests-atf-tests
-./usr/tests/atf/tools/h_misc			tests-atf-tests
-./usr/tests/atf/tools/h_mode			tests-atf-tests
-./usr/tests/atf/tools/h_pass			tests-atf-tests
-./usr/tests/atf/tools/t_atf_check		tests-atf-tests
-./usr/tests/atf/tools/t_atf_cleanup		tests-atf-tests
-./usr/tests/atf/tools/t_atf_compile		tests-atf-tests
-./usr/tests/atf/tools/t_atf_config		tests-atf-tests
-./usr/tests/atf/tools/t_atf_exec		tests-atf-tests
+./usr/tests/atf/tools/Atffile			tests-atf-tests		atf
+./usr/tests/atf/tools/h_fail			tests-atf-tests		atf
+./usr/tests/atf/tools/h_misc			tests-atf-tests		atf
+./usr/tests/atf/tools/h_mode			tests-atf-tests		atf
+./usr/tests/atf/tools/h_pass			tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_check		tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_cleanup		tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_compile		tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_config		tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_exec		tests-atf-tests		atf
 ./usr/tests/atf/tools/t_atf_killpg		tests-atf-tests		obsolete
-./usr/tests/atf/tools/t_atf_report		tests-atf-tests
-./usr/tests/atf/tools/t_atf_run			tests-atf-tests
+./usr/tests/atf/tools/t_atf_report		tests-atf-tests		atf
+./usr/tests/atf/tools/t_atf_run			tests-atf-tests		atf
 ./usr/tests/atf/units				tests-obsolete		obsolete
 ./usr/tests/atf/units/Atffile			tests-obsolete		obsolete
 ./usr/tests/atf/units/t_config			tests-obsolete		obsolete
@@ -851,40 +851,40 @@
 ./usr/tests/kernel/t_umount			tests-kernel-tests
 ./usr/tests/kernel/t_writev			tests-kernel-tests
 ./usr/tests/lib					tests-lib-tests
-./usr/tests/lib/Atffile				tests-lib-tests
+./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
-./usr/tests/lib/libc/Atffile			tests-lib-tests
+./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
-./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests
-./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests
+./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
-./usr/tests/lib/libc/string/Atffile		tests-lib-tests
-./usr/tests/lib/libc/string/t_popcount		tests-lib-tests
+./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
 ./usr/tests/lib/libevent			tests-lib-tests
-./usr/tests/lib/libevent/Atffile		tests-lib-tests
-./usr/tests/lib/libevent/h_event		tests-lib-tests
-./usr/tests/lib/libevent/t_event		tests-lib-tests
+./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
+./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
 ./usr/tests/libexec				tests-lib-tests
-./usr/tests/libexec/Atffile			tests-lib-tests
+./usr/tests/libexec/Atffile			tests-lib-tests		atf
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
-./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests
-./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests
+./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	atf
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/net					tests-net-tests
-./usr/tests/net/Atffile				tests-net-tests
+./usr/tests/net/Atffile				tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
-./usr/tests/net/sys/Atffile			tests-net-tests
-./usr/tests/net/sys/t_connect			tests-net-tests
-./usr/tests/net/sys/t_listen			tests-net-tests
+./usr/tests/net/sys/Atffile			tests-net-tests		atf
+./usr/tests/net/sys/t_connect			tests-net-tests		atf
+./usr/tests/net/sys/t_listen			tests-net-tests		atf
 ./usr/tests/rump				tests-rump-tests
-./usr/tests/rump/Atffile			tests-rump-tests
-./usr/tests/rump/rumpkern			tests-rump-tests
-./usr/tests/rump/rumpkern/Atffile		tests-rump-tests
-./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests
-./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests
+./usr/tests/rump/Atffile			tests-rump-tests	atf
+./usr/tests/rump/rumpkern			tests-rump-tests	atf
+./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf
 ./usr/tests/syscall				tests-syscall-tests
-./usr/tests/syscall/Atffile			tests-syscall-tests
-./usr/tests/syscall/t_cmsg			tests-syscall-tests
+./usr/tests/syscall/Atffile			tests-syscall-tests	atf
+./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/awk				tests-util-tests
