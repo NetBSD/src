@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.245 2009/12/14 01:00:46 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.246 2009/12/14 08:51:16 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -309,7 +309,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 
 ${_P}.ro: ${OBJS.${_P}} ${DPADD}
 	${_MKTARGET_LINK}
-	${CC} ${LDFLAGS} -nostdlib -Wl,-r,-dc -o ${.TARGET} ${OBJS.${_P}}
+	${CC} ${LDFLAGS} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 
 .if defined(_PROGDEBUG.${_P})
 ${_PROGDEBUG.${_P}}: ${_P}
