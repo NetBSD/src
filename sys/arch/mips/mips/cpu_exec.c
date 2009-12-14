@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.58 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.59 2009/12/14 04:09:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.58 2009/12/14 00:46:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.59 2009/12/14 04:09:38 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.58 2009/12/14 00:46:05 matt Exp $");
 #include <sys/resourcevar.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <compat/common/compat_util.h>
 
 #ifdef EXEC_ECOFF
 #include <sys/exec_ecoff.h>
@@ -241,42 +243,6 @@ mips_elf_makecmds (struct lwp *l, struct exec_package *epp)
 	return 0;
 }
 
-static int
-elf_check_itp(struct exec_package *epp, const char *itp,
-	const char *itp_suffix)
-{
-	if (itp) {
-		/*
-		 * If the path is exactly "/usr/libexec/ld.elf_so", first
-		 * try to see if "/usr/libexec/ld.elf_so-<abi>" exists
-		 * and if so, use that instead.
-		 * XXX maybe move this into compat/common
-		 */
-		if (strcmp(itp, "/usr/libexec/ld.elf_so") == 0 ||
-		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
-			struct nameidata nd;
-			char *path;
-			int error;
-
-			path = PNBUF_GET();
-			snprintf(path, MAXPATHLEN, "%s-%s", itp, itp_suffix);
-			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
-			error = namei(&nd);
-			/*
-			 * If that worked, replace interpreter in case we
-			 * actually need to load it
-			 */
-			if (error == 0) {
-				if (epp->ep_interp != NULL)
-					vrele(epp->ep_interp);
-				epp->ep_interp = nd.ni_vp;
-			}
-			PNBUF_PUT(path);
-		}
-	}
-	return 0;
-}
-
 #if EXEC_ELF32
 int
 mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
@@ -338,7 +304,8 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		return ENOEXEC;
 	}
 
-	return elf_check_itp(epp, itp, itp_suffix);
+	(void)compat_elf_check_interp(epp, itp, itp_suffix);
+	return 0;
 }
 
 void
@@ -431,7 +398,8 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		return ENOEXEC;
 	}
 
-	return elf_check_itp(epp, itp, itp_suffix);
+	(void)compat_elf_check_interp(epp, itp, itp_suffix);
+	return 0;
 }
 
 void
