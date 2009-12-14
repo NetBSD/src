@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.12 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.13 2009/12/14 03:20:27 mrg Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
@@ -188,6 +188,8 @@
 #define	ELF_MD_PROBE_FUNC	ELFNAME2(mips_netbsd,probe)
 #define	ELF_MD_COREDUMP_SETUP	ELFNAME2(coredump,setup)
 #endif
+
+struct exec_package;
 
 int mips_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
 	vaddr_t *);
