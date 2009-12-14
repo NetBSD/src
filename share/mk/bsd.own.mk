@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.612 2009/12/13 09:10:16 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.613 2009/12/14 01:00:46 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -532,8 +532,7 @@ MKPICLIB:=	no
 
 #
 # On VAX using ELF, all objects are PIC, not just shared libraries,
-# so don't build the _pic version.  Unless we are using GCC3 which
-# doesn't support PIC yet.
+# so don't build the _pic version.
 #
 .if ${MACHINE_ARCH} == "vax"
 MKPICLIB=	no
@@ -653,7 +652,8 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
@@ -680,9 +680,9 @@ MKZFS?=		yes
 _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
-	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
+	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
-	MKGCC MKGCCCMDS MKGDB \
+	MKGCC MKGCCCMDS MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
@@ -740,6 +740,11 @@ X11FLAVOUR?=	Xorg
 #
 # Force some options off if their dependencies are off.
 #
+
+.if ${MKCXX} == "no"
+MKATF:=		no
+MKGROFF:=	no
+.endif
 
 .if ${MKCRYPTO} == "no"
 MKKERBEROS:=	no
