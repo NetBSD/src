@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.30 2009/06/29 05:08:16 dholland Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.31 2009/12/14 00:47:11 matt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.30 2009/06/29 05:08:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.31 2009/12/14 00:47:11 matt Exp $");
 
 #define	ELFSIZE		32
 
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.30 2009/06/29 05:08:16 dho
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
-#include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
 int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
@@ -95,6 +94,13 @@ ELFNAME2(netbsd32,probe)(struct lwp *l, struct exec_package *epp,
 
 	if ((error = ELFNAME2(netbsd,signature)(l, epp, eh)) != 0)
 		return error;
+
+#ifdef ELF_MD_PROBE_FUNC
+	if ((error = ELF_MD_PROBE_FUNC(l, epp, eh, itp, pos)) != 0)
+		return error;
+#elif defined(ELF_INTERP_NON_RELOCATABLE)
+	*pos = ELF_LINK_ADDR;
+#endif
 
 	return ELFNAME2(netbsd32,probe_noteless)(l, epp, eh, itp, pos);
 }

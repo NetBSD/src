@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.34 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.35 2009/12/14 00:48:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.34 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.35 2009/12/14 00:48:35 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -90,7 +90,11 @@ static int	ELFNAMEEND(coredump_note)(struct proc *, struct lwp *, void *,
 #define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 #define elf_process_read_regs	CONCAT(process_read_regs, ELFSIZE)
+#ifdef __HAVE_PROCESS_XFPREGS
+#define elf_process_read_xfpregs CONCAT(process_read_xfpregs, ELFSIZE)
+#else
 #define elf_process_read_fpregs	CONCAT(process_read_fpregs, ELFSIZE)
+#endif
 #define elf_reg			CONCAT(process_reg, ELFSIZE)
 #define elf_fpreg		CONCAT(process_fpreg, ELFSIZE)
 
@@ -161,6 +165,10 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	ehdr.e_shentsize = 0;
 	ehdr.e_shnum = 0;
 	ehdr.e_shstrndx = 0;
+
+#ifdef ELF_MD_COREDUMP_SETUP
+	ELF_MD_COREDUMP_SETUP(l, &ehdr);
+#endif
 
 	/* Write out the ELF header. */
 	error = coredump_write(cookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
@@ -451,12 +459,17 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 #ifdef PT_GETFPREGS
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
 	if (iocookie) {
+		size_t freglen = sizeof(freg);
+#ifdef __HAVE_PROCESS_XFPREGS
+		error = elf_process_read_xfpregs(l, &freg, &freglen);
+#else
 		error = elf_process_read_fpregs(l, &freg);
+#endif
 		if (error)
 			return (error);
 
 		nhdr.n_namesz = namesize;
-		nhdr.n_descsz = sizeof(freg);
+		nhdr.n_descsz = freglen;
 		nhdr.n_type = PT_GETFPREGS;
 
 		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,

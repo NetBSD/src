@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.88 2009/05/17 05:55:42 pooka Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.89 2009/12/14 00:47:11 matt Exp $ */
 
 /*
  * System call argument lists.
@@ -2087,6 +2087,15 @@ struct compat_50_netbsd32___fhstat40_args {
 };
 check_syscall_args(compat_50_netbsd32___fhstat40)
 
+struct netbsd32___mount50_args {
+	syscallarg(netbsd32_charp) type;
+	syscallarg(netbsd32_charp) path;
+	syscallarg(int) flags;
+	syscallarg(netbsd32_voidp) data;
+	syscallarg(netbsd32_size_t) data_len;
+};
+check_syscall_args(netbsd32___mount50)
+
 struct netbsd32_mremap_args {
 	syscallarg(netbsd32_voidp) old_address;
 	syscallarg(netbsd32_size_t) old_size;
@@ -3046,6 +3055,8 @@ int	netbsd32___fhopen40(struct lwp *, const struct netbsd32___fhopen40_args *, r
 int	netbsd32___fhstatvfs140(struct lwp *, const struct netbsd32___fhstatvfs140_args *, register_t *);
 
 int	compat_50_netbsd32___fhstat40(struct lwp *, const struct compat_50_netbsd32___fhstat40_args *, register_t *);
+
+int	netbsd32___mount50(struct lwp *, const struct netbsd32___mount50_args *, register_t *);
 
 int	netbsd32_mremap(struct lwp *, const struct netbsd32_mremap_args *, register_t *);
 
