@@ -1,4 +1,4 @@
-.\"	$NetBSD: scanf.3,v 1.20 2008/05/30 17:29:54 gdt Exp $
+.\"	$NetBSD: scanf.3,v 1.21 2009/12/14 04:39:29 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -181,6 +181,15 @@ and the next pointer is a pointer to
 .Em double
 (rather than
 .Em float ) .
+.It Cm ll
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Em long long  int
+(rather than
+.Em int ) .
 .It Cm q
 Indicates that the conversion will be one of
 .Cm dioux
