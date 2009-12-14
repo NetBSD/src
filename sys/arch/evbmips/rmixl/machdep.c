@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.9 2009/12/11 23:57:38 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.10 2009/12/14 07:23:31 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.9 2009/12/11 23:57:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.10 2009/12/14 07:23:31 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -162,7 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.9 2009/12/11 23:57:38 cliff Exp $"
 #include <mips/rmi/rmixl_firmware.h>
 #include <mips/rmi/rmixlreg.h>
 
-#define MACHDEP_DEBUG 1
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
 # define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
@@ -171,7 +170,7 @@ int machdep_debug=MACHDEP_DEBUG;
 #endif
 
 #ifndef CONSFREQ
-# define CONSFREQ -1		/* inherit from firmware */
+# define CONSFREQ 66000000
 #endif
 #ifndef CONSPEED
 # define CONSPEED 38400
@@ -307,7 +306,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	physmem = btoc(memsize);
 
-	rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp); /* need for console */
+	rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
 
 #if NCOM > 0
 	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
