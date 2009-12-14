@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.16 2005/04/22 06:58:01 simonb Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.17 2009/12/14 01:07:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sbrk.S,v 1.16 2005/04/22 06:58:01 simonb Exp $")
+#if 0
+	RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: sbrk.S,v 1.17 2009/12/14 01:07:42 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(__curbrk)
@@ -48,24 +51,19 @@ WEAK_ALIAS(sbrk, _sbrk)
 
 	.data
 _C_LABEL(__curbrk):
-	.word	_C_LABEL(_end)
+	PTR_WORD	_C_LABEL(_end)
 	.text
 
 LEAF(_sbrk)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
-	lw	v1, _C_LABEL(__curbrk)
-	li	v0, SYS_break
-	addu	a0, a0, v1		# compute current break
-	syscall
-	bne	a3, zero, 1f
-	move	v0, v1			# return old val of curbrk from above
-	sw	a0, _C_LABEL(__curbrk)	# save current val of curbrk from above
-	j	ra
+	PIC_PROLOGUE(_sbrk)
+	PTR_LA		t0, _C_LABEL(__curbrk)
+	PTR_L		v1, 0(t0)
+	PTR_ADDU	a0, a0, v1	# compute current break
+	SYSTRAP(break)
+	bne		a3, zero, 1f
+	move		v0, v1		# return old val of curbrk from above
+	PTR_S		a0, 0(t0)	# save current val of curbrk from above
+	PIC_RETURN()
 1:
-	la	t9, _C_LABEL(__cerror)
-	jr	t9
+	PIC_TAILCALL(__cerror)
 END(_sbrk)

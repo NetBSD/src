@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.10 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: modf.S,v 1.11 2009/12/14 01:07:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995
@@ -35,13 +35,12 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: modf.S,v 1.10 2003/08/07 16:42:15 agc Exp $")
-#endif /* LIBC_SCCS and not lint */
-
-#ifdef __ABICALLS__
-	.abicalls
+#if 0
+	RCSID("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: modf.S,v 1.11 2009/12/14 01:07:42 matt Exp $")
 #endif
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * double modf(val, iptr)
@@ -49,11 +48,6 @@
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 LEAF(modf)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
 	cfc1	t0, $31			# get the control register
 	li.d	$f2, 4503599627370496e0 # f2 <- 2^52
 
