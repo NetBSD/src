@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2009/12/14 01:12:05 matt Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -6,19 +6,28 @@
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SETS=		GENERIC32_IP12 GENERIC32_IP2x GENERIC32_IP3x
+.if ${MACHINE_ARCH} == "mipseb"
+SFX=32
+.else
+SFX=64
+.endif
+
+KERNEL_SETS=		GENERIC${SFX}_IP2x GENERIC${SFX}_IP3x
+.if ${MACHINE_ARCH} == "mipseb"
+KERNEL_SETS=		GENERIC32_IP12
 KERNEL_SUFFIXES=	ecoff
+.endif
 
 #EXTRA_KERNELS=		NETBOOT
 
-BUILD_KERNELS=		INSTALL32_IP2x INSTALL32_IP3x
+BUILD_KERNELS=		INSTALL${SFX}_IP2x INSTALL${SFX}_IP3x
 
 INSTALLATION_DIRS+=	installation/netboot \
 			installation/diskimage
 
 iso-image-md-pre:
-	cp ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-INSTALL32_IP2x.gz ${RELEASEDIR}/ip2x
-	cp ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-INSTALL32_IP3x.gz ${RELEASEDIR}/ip3x
+	cp ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-INSTALL${SFX}_IP2x.gz ${RELEASEDIR}/ip2x
+	cp ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-INSTALL${SFX}_IP3x.gz ${RELEASEDIR}/ip3x
 	echo "ip2x/=${RELEASEDIR}/ip2x/" >> ${CDROM.pathlist}
 	echo "ip3x/=${RELEASEDIR}/ip3x/" >> ${CDROM.pathlist}
 
