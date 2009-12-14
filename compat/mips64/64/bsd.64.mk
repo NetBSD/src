@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.64.mk,v 1.1 2009/12/13 09:07:32 mrg Exp $
+#	$NetBSD: bsd.64.mk,v 1.2 2009/12/14 13:43:59 uebayasi Exp $
 
-LD+=		-m elf64_mipsn64
+LD+=		-m elf64btsmip	# XXX endian
 MLIBDIR=	64
 
 COPTS+=		-mabi=64

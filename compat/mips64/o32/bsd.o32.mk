@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.o32.mk,v 1.1 2009/12/13 09:07:32 mrg Exp $
+#	$NetBSD: bsd.o32.mk,v 1.2 2009/12/14 13:43:59 uebayasi Exp $
 
-LD+=		-m elf32_mipso32
+LD+=		-m elf32btsmip	# XXX endian
 MLIBDIR=	o32
 
 COPTS+=		-mabi=32 -march=mips3
