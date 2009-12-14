@@ -1,4 +1,4 @@
-/*	$NetBSD: getpagesize.c,v 1.9 2003/08/07 16:42:50 agc Exp $	*/
+/*	$NetBSD: getpagesize.c,v 1.10 2009/12/14 01:04:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)getpagesize.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getpagesize.c,v 1.9 2003/08/07 16:42:50 agc Exp $");
+__RCSID("$NetBSD: getpagesize.c,v 1.10 2009/12/14 01:04:46 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <assert.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -61,6 +62,7 @@ getpagesize()
 		size = sizeof pagsz;
 		if (sysctl(mib, 2, &pagsz, &size, NULL, 0) == -1)
 			return (-1);
+		_DIAGASSERT(pagsz);
 	}
 	return (pagsz);
 }
