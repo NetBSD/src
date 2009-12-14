@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.21 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.22 2009/12/14 00:46:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,54 +93,58 @@ typedef void (*psig_t)(int);
 
 struct callback {
 	void	*(*_memcpy)(void *, void *, int);		/* 00 */
-	void	*(*_memset)(void *, int, int);		/* 04 */
-	char	*(*_strcat)(char *, char *);		/* 08 */
-	int	(*_strcmp)(char *, char *);		/* 0c */
-	char	*(*_strcpy)(char *, char *);		/* 10 */
-	int	(*_strlen)(char *);			/* 14 */
-	char	*(*_strncat)(char *, char *, int);	/* 18 */
-	char	*(*_strncpy)(char *, char *, int);	/* 1c */
+	void	*(*_memset)(void *, int, int);			/* 04 */
+	char	*(*_strcat)(char *, char *);			/* 08 */
+	int	(*_strcmp)(char *, char *);			/* 0c */
+	char	*(*_strcpy)(char *, char *);			/* 10 */
+	int	(*_strlen)(char *);				/* 14 */
+	char	*(*_strncat)(char *, char *, int);		/* 18 */
+	char	*(*_strncpy)(char *, char *, int);		/* 1c */
 	int	(*_strncmp)(char *, char *, int);		/* 20 */
-	int	(*_getchar)(void);			/* 24 */
-	char	*(*_gets)(char *);			/* 28 */
+	int	(*_getchar)(void);				/* 24 */
+	char	*(*_gets)(char *);				/* 28 */
 	int	(*_puts)(char *);				/* 2c */
-	int	(*_printf)(const char *, ...);		/* 30 */
+	int	(*_printf)(const char *, ...);			/* 30 */
 	int	(*_sprintf)(char *, char *, ...);		/* 34 */
-	int	(*_io_poll)(void);			/* 38 */
+	int	(*_io_poll)(void);				/* 38 */
 	long	(*_strtol)(char *, char **, int);		/* 3c */
 	psig_t	(*_signal)(int, psig_t);			/* 40 */
-	int	(*_raise)(int);				/* 44 */
+	int	(*_raise)(int);					/* 44 */
 	long	(*_time)(long *);				/* 48 */
-	int	(*_setjmp)(jmp_buf);			/* 4c */
-	void	(*_longjmp)(jmp_buf, int);		/* 50 */
-	int	(*_bootinit)(char *);			/* 54 */
-	int	(*_bootread)(int, void *, int);		/* 58 */
+	int	(*_setjmp)(jmp_buf);				/* 4c */
+	void	(*_longjmp)(jmp_buf, int);			/* 50 */
+	int	(*_bootinit)(char *);				/* 54 */
+	int	(*_bootread)(int, void *, int);			/* 58 */
 	int	(*_bootwrite)(int, void *, int);		/* 5c */
-	int	(*_setenv)(char *, char *);		/* 60 */
-	char	*(*_getenv)(const char *);		/* 64 */
-	int	(*_unsetenv)(char *);			/* 68 */
-	u_long	(*_slot_address)(int);			/* 6c */
-	void	(*_wbflush)(void);			/* 70 */
+	int	(*_setenv)(char *, char *);			/* 60 */
+	char	*(*_getenv)(const char *);			/* 64 */
+	int	(*_unsetenv)(char *);				/* 68 */
+	u_long	(*_slot_address)(int);				/* 6c */
+	void	(*_wbflush)(void);				/* 70 */
 	void	(*_msdelay)(int);				/* 74 */
-	void	(*_leds)(int);				/* 78 */
-	void	(*_clear_cache)(char *, int);		/* 7c */
-	int	(*_getsysid)(void);			/* 80 */
+	void	(*_leds)(int);					/* 78 */
+	void	(*_clear_cache)(char *, int);			/* 7c */
+	int	(*_getsysid)(void);				/* 80 */
 	int	(*_getbitmap)(memmap *);			/* 84 */
-	int	(*_disableintr)(int);			/* 88 */
-	int	(*_enableintr)(int);			/* 8c */
-	int	(*_testintr)(int);			/* 90 */
+	int	(*_disableintr)(int);				/* 88 */
+	int	(*_enableintr)(int);				/* 8c */
+	int	(*_testintr)(int);				/* 90 */
 	void	*_reserved_data;				/* 94 */
-	int	(*_console_init)(void);			/* 98 */
-	void	(*_halt)(int *, int);			/* 9c */
-	void	(*_showfault)(void);			/* a0 */
-	tcinfo	*(*_gettcinfo)(void); /*XXX* bogus proto */ /* a4 */
+	int	(*_console_init)(void);				/* 98 */
+	void	(*_halt)(int *, int);				/* 9c */
+	void	(*_showfault)(void);				/* a0 */
+	tcinfo	*(*_gettcinfo)(void);	 /* XXX bogus proto */	/* a4 */
 	int	(*_execute_cmd)(char *);			/* a8 */
-	void	(*_rex)(char);				/* ac */
+	void	(*_rex)(char);					/* ac */
 	/* b0 to d4 reserved */
 };
 
 extern const struct callback *callv;
+#ifdef _LP64
+extern struct callback callvec;
+#else
 extern const struct callback callvec;
+#endif
 
 #if defined(_STANDALONE) && !defined(_NO_PROM_DEFINES)
 #define memcpy (*callv -> _memcpy)

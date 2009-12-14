@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.63 2009/07/20 17:05:13 tsutsui Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.64 2009/12/14 00:46:10 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.63 2009/07/20 17:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.64 2009/12/14 00:46:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ dec_3maxplus_intr_establish(struct device *dev, void *cookie, int level,
 {
 	uint32_t mask;
 
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 	case SYS_DEV_OPT0:
 		mask = KN03_INTR_TC_0;
 		break;
@@ -300,8 +300,8 @@ dec_3maxplus_intr_establish(struct device *dev, void *cookie, int level,
 	}
 
 	kn03_tc3_imask |= mask;
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(uintptr_t)cookie].ih_func = handler;
+	intrtab[(uintptr_t)cookie].ih_arg = arg;
 
 	*(volatile uint32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
@@ -432,7 +432,8 @@ dec_3maxplus_intr(uint32_t status, uint32_t cause, uint32_t pc,
 static void
 dec_3maxplus_errintr(void)
 {
-	uint32_t erradr, errsyn, csr;
+	uint32_t erradr, csr;
+	vaddr_t errsyn;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.28 2009/02/12 06:24:45 rumble Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.29 2009/12/14 00:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.28 2009/02/12 06:24:45 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.29 2009/12/14 00:46:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ wdsc_match(device_t parent, cfdata_t cf, void *auxp)
 	struct hpc_attach_args *haa = auxp;
 
 	if (strcmp(haa->ha_name, cf->cf_name) == 0) {
-		uint32_t reset, asr, reg;
+		vaddr_t reset, asr, reg;
 
 		reset = MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_dmaoff +
 		    haa->hpc_regs->scsi0_ctl);

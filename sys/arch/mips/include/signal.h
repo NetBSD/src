@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.28 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: signal.h,v 1.29 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,9 +68,9 @@ typedef int sig_atomic_t;
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore (old style) */
-	mips_reg_t sc_pc;	/* pc at time of signal */
-	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
-	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
+	int	sc_pc;		/* pc at time of signal */
+	int	sc_regs[32];	/* processor regs 0 to 31 */
+	int	mullo, mulhi;	/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
@@ -79,34 +79,37 @@ struct sigcontext13 {
 #endif /* _KERNEL && COMPAT_13 */
 
 #if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_ULTRIX)))
-struct sigcontext {
-	int	sc_onstack;	/* sigstack state to restore */
-	int	__sc_mask13;	/* signal mask to restore (old style) */
-	mips_reg_t sc_pc;	/* pc at time of signal */
-	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
-	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
-	int	sc_fpused;	/* fp has been used */
-	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
-	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	int	sc_xxx[8];	/* XXX reserved */
-	sigset_t sc_mask;	/* signal mask to restore (new style) */
-};
+/*
+ * Only need an O32 version.
+ */
+#define	_SIGCONTEXT_DEFINE(_name, _reg_t, _fp_t) \
+struct sigcontext { \
+	int	sc_onstack;	/* sigstack state to restore */ \
+	int	__sc_mask13;	/* signal mask to restore (old style) */ \
+	_reg_t	sc_pc;		/* pc at time of signal */ \
+	_reg_t	sc_regs[32];	/* processor regs 0 to 31 */ \
+	_reg_t	mullo, mulhi;	/* mullo and mulhi registers... */ \
+	int	sc_fpused;	/* fp has been used */ \
+	_fp_t	sc_fpregs[33];	/* fp regs 0 to 31 and csr */ \
+	int	sc_fpc_eir;	/* floating point exception instruction reg */ \
+	int	sc_xxx[8];	/* XXX reserved */ \
+	sigset_t sc_mask;	/* signal mask to restore (new style) */ \
+}
+
+/*
+ * These will be identical in O32
+ */
+#ifdef _KERNEL
+/*
+ * We need this only compatibility.
+ */
+_SIGCONTEXT_DEFINE(sigcontext, int, int);
+#endif
+#ifdef _LIBC
+_SIGCONTEXT_DEFINE(sigcontext, register_t, fpregister_t);
+#endif
+
 #endif /* _LIBC || _KERNEL */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
-#if defined(_LIBC)
-/*
- * Hard code these to make people think twice about breaking compatibility.
- * These macros are generated independently for the kernel.
- */
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _OFFSETOF_SC_REGS	12
-#define _OFFSETOF_SC_FPREGS	152
-#define _OFFSETOF_SC_MASK	320
-#else
-#define _OFFSETOF_SC_REGS	16
-#define _OFFSETOF_SC_FPREGS	292
-#define _OFFSETOF_SC_MASK	460
-#endif
-#endif	/* _LIBC */
 #endif	/* !_MIPS_SIGNAL_H_ */

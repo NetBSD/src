@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock_loop.S,v 1.3 2008/04/28 20:23:28 martin Exp $ */
+/* $NetBSD: mips_mcclock_loop.S,v 1.4 2009/12/14 00:46:06 matt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -43,10 +43,10 @@
 
 
 LEAF_NOPROFILE(mips_mcclock_loop_with_clock)
-	subu	sp, CALLFRAME_SIZ
-	sw	s0, 0(sp)
-	sw	ra, CALLFRAME_RA(sp)
-	j	2f
+	PTR_SUBU	sp, CALLFRAME_SIZ
+	REG_S		s0, CALLFRAME_S0(sp)
+	REG_S		ra, CALLFRAME_RA(sp)
+	j		2f
 	 move	s0, zero		# iters = 0;
 1:
 	.set	push
@@ -57,24 +57,24 @@ LEAF_NOPROFILE(mips_mcclock_loop_with_clock)
 	ssnop
 	.set	pop
 
-	addu	s0, 1			# iters++;
-2:	jal	mips_cp0_cause_read	# v0 = mips_cp0_cause_read();
+	addu		s0, 1			# iters++;
+2:	jal		mips_cp0_cause_read	# v0 = mips_cp0_cause_read();
 	 nop
-	and	v0, a0			# v0 &= clockmask;
-	beqz	v0, 1b			# if zero then repeat
-	 move	v0, s0			# return iters
-	lw	ra, CALLFRAME_RA(sp)
-	lw	s0, 0(sp)
-	j	ra
-	 addu	sp, CALLFRAME_SIZ
+	and		v0, a0			# v0 &= clockmask;
+	beqz		v0, 1b			# if zero then repeat
+	 move		v0, s0			# return iters
+	REG_L		ra, CALLFRAME_RA(sp)
+	REG_S		s0, CALLFRAME_S0(sp)
+	j		ra
+	 PTR_ADDU	sp, CALLFRAME_SIZ
 END(mips_mcclock_loop_with_clock)
 
 LEAF_NOPROFILE(mips_mcclock_loop_without_clock)
-	subu	sp, CALLFRAME_SIZ
-	sw	s0, 0(sp)
-	sw	ra, CALLFRAME_RA(sp)
-	j	2f
-	 move	s0, zero		# iters = 0;
+	PTR_SUBU	sp, CALLFRAME_SIZ
+	REG_S		s0, CALLFRAME_S0(sp)
+	REG_S		ra, CALLFRAME_RA(sp)
+	j		2f
+	 move		s0, zero		# iters = 0;
 1:
 	.set	push
 	.set	mips32
@@ -82,14 +82,14 @@ LEAF_NOPROFILE(mips_mcclock_loop_without_clock)
 	ssnop
 	.set	pop
 
-	addu	s0, 1			# iters++;
-2:	jal	mips_cp0_cause_read	# v0 = mips_cp0_cause_read();
+	addu		s0, 1			# iters++;
+2:	jal		mips_cp0_cause_read	# v0 = mips_cp0_cause_read();
 	 nop
-	and	v0, a0			# v0 &= clockmask;
-	beqz	v0, 1b			# if zero then repeat
-	 move	v0, s0			# return iters
-	lw	ra, CALLFRAME_RA(sp)
-	lw	s0, 0(sp)
-	j	ra
-	 addu	sp, CALLFRAME_SIZ
+	and		v0, a0			# v0 &= clockmask;
+	beqz		v0, 1b			# if zero then repeat
+	 move		v0, s0			# return iters
+	REG_L		ra, CALLFRAME_RA(sp)
+	REG_L		s0, CALLFRAME_S0(sp)
+	j		ra
+	 PTR_ADDU	sp, CALLFRAME_SIZ
 END(mips_mcclock_loop_without_clock)

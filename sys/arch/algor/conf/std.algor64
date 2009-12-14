@@ -1,0 +1,13 @@
+#	$NetBSD: std.algor64,v 1.2 2009/12/14 00:46:00 matt Exp $
+# standard, required pmax info
+
+no makeoptions	MACHINE_ARCH
+makeoptions	MACHINE_ARCH="mips64el"
+
+# Standard exec-package options
+options 	EXEC_ELF64	# 64-bit ELF support (native format)
+#options 	EXEC_ELF32
+options 	COMPAT_NETBSD32	# exec NetBSD 32-bit binaries
+
+makeoptions	LP64="yes"
+

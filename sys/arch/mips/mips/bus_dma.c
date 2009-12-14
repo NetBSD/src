@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23 2009/12/14 00:46:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2009/12/14 00:46:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#ifdef _LP64
+#include <mips/mips3_pte.h>
+#endif
 
 #define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -156,7 +159,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((uintptr_t)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 		if (map->dm_maxsegsz < sgsize)
@@ -263,9 +266,13 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 *
 		 * XXX Check TLB entries for cache-inhibit bits?
 		 */
-		if (buf >= (void *)MIPS_KSEG1_START &&
-		    buf < (void *)MIPS_KSEG2_START)
+		if (MIPS_KSEG1_P(buf))
 			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+#ifdef _LP64
+		else if (MIPS_XKPHYS_P((vaddr_t)buf)
+		    && MIPS_XKPHYS_TO_CCA((vaddr_t)buf) == MIPS3_PG_TO_CCA(MIPS3_PG_UNCACHED))
+			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+#endif
 	}
 	return (error);
 }
@@ -415,8 +422,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		    offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR 
+			" (map size is %"PRIxPSIZE")",
+				offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad length");
 #endif
@@ -586,7 +594,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%llx\n", (uint64_t)curaddr);
+			    " address 0x%"PRIxPADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
 #endif
@@ -652,10 +660,21 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * TLB thrashing.
 	 */
 	if (nsegs == 1) {
-		if (flags & BUS_DMA_COHERENT)
+#ifdef _LP64
+		if (((mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
+		&&  (flags & BUS_DMA_COHERENT))
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(
+			    segs[0].ds_addr);
+		else
+			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(
+			    segs[0].ds_addr);
+#else
+		if (((mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
+		&&  (flags & BUS_DMA_COHERENT))
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
 			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
+#endif
 		return (0);
 	}
 
@@ -693,17 +712,20 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((uintptr_t)kva & PGOFSET)
 		panic("_bus_dmamem_unmap: bad alignment on %p", kva);
 #endif
 
 	/*
 	 * Nothing to do if we mapped it with KSEG0 or KSEG1 (i.e.
-	 * not in KSEG2).
+	 * not in KSEG2 or XKSEG).
 	 */
-	if (kva >= (void *)MIPS_KSEG0_START &&
-	    kva < (void *)MIPS_KSEG2_START)
+	if (MIPS_KSEG0_P(kva) || MIPS_KSEG1_P(kva))
 		return;
+#ifdef _LP64
+	if (MIPS_XKPHYS_P((vaddr_t)kva))
+		return;
+#endif
 
 	size = round_page(size);
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);

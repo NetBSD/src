@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.16 2009/11/21 17:40:28 rmind Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.17 2009/12/14 00:46:06 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.16 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.17 2009/12/14 00:46:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,35 +42,45 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.16 2009/11/21 17:40:28 rmind Exp $")
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);
+void MachEmulateFP(uint32_t, struct frame *, uint32_t);
 
-static inline void	send_sigsegv(vaddr_t, u_int32_t, struct frame *,
-			    u_int32_t);
-static inline void	update_pc(struct frame *, u_int32_t);
+static inline void	send_sigsegv(intptr_t, uint32_t, struct frame *,
+			    uint32_t);
+static inline void	update_pc(struct frame *, uint32_t);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
-void	MachEmulateInst(u_int32_t, u_int32_t, vaddr_t, struct frame *);
+void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);
 
-void	MachEmulateLWC0(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateSWC0(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateSpecial(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateLWC1(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateLDC1(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateSWC1(u_int32_t inst, struct frame *, u_int32_t);
-void	MachEmulateSDC1(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateLWC0(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSWC0(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSpecial(uint32_t, struct frame *, uint32_t);
+void	MachEmulateLWC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateLDC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSWC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSDC1(uint32_t, struct frame *, uint32_t);
 
-void	bcemul_lb(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lbu(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lh(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lhu(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lw(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lwl(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_lwr(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_sb(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_sh(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_sw(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_swl(u_int32_t inst, struct frame *, u_int32_t);
-void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
+void	bcemul_lb(uint32_t, struct frame *, uint32_t);
+void	bcemul_lbu(uint32_t, struct frame *, uint32_t);
+void	bcemul_lh(uint32_t, struct frame *, uint32_t);
+void	bcemul_lhu(uint32_t, struct frame *, uint32_t);
+void	bcemul_lw(uint32_t, struct frame *, uint32_t);
+void	bcemul_lwl(uint32_t, struct frame *, uint32_t);
+void	bcemul_lwr(uint32_t, struct frame *, uint32_t);
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+void	bcemul_ld(uint32_t, struct frame *, uint32_t);
+void	bcemul_ldl(uint32_t, struct frame *, uint32_t);
+void	bcemul_ldr(uint32_t, struct frame *, uint32_t);
+#endif
+void	bcemul_sb(uint32_t, struct frame *, uint32_t);
+void	bcemul_sh(uint32_t, struct frame *, uint32_t);
+void	bcemul_sw(uint32_t, struct frame *, uint32_t);
+void	bcemul_swl(uint32_t, struct frame *, uint32_t);
+void	bcemul_swr(uint32_t, struct frame *f, uint32_t);
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+void	bcemul_sd(uint32_t, struct frame *, uint32_t);
+void	bcemul_sdl(uint32_t, struct frame *, uint32_t);
+void	bcemul_sdr(uint32_t, struct frame *f, uint32_t);
+#endif
 
 /*
  * MIPS2 LL instruction emulation state
@@ -78,16 +88,17 @@ void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
 struct {
 	struct lwp *lwp;
 	vaddr_t addr;
-	u_int32_t value;
+	uint32_t value;
 } llstate;
 
 /*
  * Analyse 'next' PC address taking account of branch/jump instructions
  */
 vaddr_t
-MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNonBranch)
+MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
+    int allowNonBranch)
 {
-#define	BRANCHTARGET(p) (4 + (p) + ((short)((InstFmt *)(p))->IType.imm << 2))
+#define	BRANCHTARGET(i) (4 + ((i).word) + ((short)(i).IType.imm << 2))
 	InstFmt inst;
 	vaddr_t nextpc;
 
@@ -114,7 +125,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 		case OP_BLTZL:		/* squashed */
 		case OP_BLTZALL:	/* squashed */
 			if ((int)(f->f_regs[inst.RType.rs]) < 0)
-				nextpc = BRANCHTARGET(instpc);
+				nextpc = BRANCHTARGET(inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -124,7 +135,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 		case OP_BGEZL:		/* squashed */
 		case OP_BGEZALL:	/* squashed */
 			if ((int)(f->f_regs[inst.RType.rs]) >= 0)
-				nextpc = BRANCHTARGET(instpc);
+				nextpc = BRANCHTARGET(inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -143,7 +154,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 	case OP_BEQ:
 	case OP_BEQL:	/* squashed */
 		if (f->f_regs[inst.RType.rs] == f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(instpc);
+			nextpc = BRANCHTARGET(inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -151,7 +162,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 	case OP_BNE:
 	case OP_BNEL:	/* squashed */
 		if (f->f_regs[inst.RType.rs] != f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(instpc);
+			nextpc = BRANCHTARGET(inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -159,7 +170,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 	case OP_BLEZ:
 	case OP_BLEZL:	/* squashed */
 		if ((int)(f->f_regs[inst.RType.rs]) <= 0)
-			nextpc = BRANCHTARGET(instpc);
+			nextpc = BRANCHTARGET(inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -167,7 +178,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 	case OP_BGTZ:
 	case OP_BGTZL:	/* squashed */
 		if ((int)(f->f_regs[inst.RType.rs]) > 0)
-			nextpc = BRANCHTARGET(instpc);
+			nextpc = BRANCHTARGET(inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -178,7 +189,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
 			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
 				condition = !condition;
 			if (condition)
-				nextpc = BRANCHTARGET(instpc);
+				nextpc = BRANCHTARGET(inst);
 			else
 				nextpc = instpc + 8;
 		}
@@ -202,18 +213,19 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR, int allowNon
  * Emulate instructions (including floating-point instructions)
  */
 void
-MachEmulateInst(u_int32_t status, u_int32_t cause, vaddr_t opc, struct frame *frame)
+MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
+    struct frame *frame)
 {
-	u_int32_t inst;
+	uint32_t inst;
 	ksiginfo_t ksi;
 
 	/*
 	 *  Fetch the instruction.
 	 */
 	if (cause & MIPS_CR_BR_DELAY)
-		inst = fuword((u_int32_t *)opc+1);
+		inst = ufetch_uint32((uint32_t *)opc+1);
 	else
-		inst = fuword((u_int32_t *)opc);
+		inst = ufetch_uint32((uint32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
 	case OP_LWC0:
@@ -243,6 +255,9 @@ MachEmulateInst(u_int32_t status, u_int32_t cause, vaddr_t opc, struct frame *fr
 		break;
 #endif
 	default:
+#ifdef DEBUG
+		printf("pid %d(%s): trap: bad vaddr %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
+#endif
 		frame->f_regs[_R_CAUSE] = cause;
 		frame->f_regs[_R_BADVADDR] = opc;
 		KSI_INIT_TRAP(&ksi);
@@ -256,8 +271,8 @@ MachEmulateInst(u_int32_t status, u_int32_t cause, vaddr_t opc, struct frame *fr
 }
 
 static inline void
-send_sigsegv(vaddr_t vaddr, u_int32_t exccode, struct frame *frame,
-    u_int32_t cause)
+send_sigsegv(intptr_t vaddr, uint32_t exccode, struct frame *frame,
+    uint32_t cause)
 {
 	ksiginfo_t ksi;
 	cause = (cause & 0xFFFFFF00) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
@@ -272,7 +287,7 @@ send_sigsegv(vaddr_t vaddr, u_int32_t exccode, struct frame *frame,
 }
 
 static inline void
-update_pc(struct frame *frame, u_int32_t cause)
+update_pc(struct frame *frame, uint32_t cause)
 {
 
 	if (cause & MIPS_CR_BR_DELAY)
@@ -287,9 +302,9 @@ update_pc(struct frame *frame, u_int32_t cause)
  * MIPS2 LL instruction
  */
 void
-MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateLWC0(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	vaddr_t		vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	void		*t;
 
@@ -297,16 +312,8 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-		ksiginfo_t ksi;
-		frame->f_regs[_R_CAUSE] = cause;
-		frame->f_regs[_R_BADVADDR] = vaddr;
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGBUS;
-		ksi.ksi_trap = cause;
-		ksi.ksi_code = (vaddr & 3) ? BUS_ADRALN : BUS_ADRERR;
-		ksi.ksi_addr = (void *)vaddr;
-		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+	if (vaddr < 0 || (vaddr & 3)) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
 
@@ -319,7 +326,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 
 	llstate.lwp = curlwp;
 	llstate.addr = vaddr;
-	llstate.value = *((u_int32_t *)t);
+	llstate.value = *((uint32_t *)t);
 
 	update_pc(frame, cause);
 }
@@ -328,9 +335,9 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
  * MIPS2 SC instruction
  */
 void
-MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateSWC0(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	vaddr_t		vaddr;
+	intptr_t	vaddr;
 	uint32_t	value;
 	int16_t		offset;
 	mips_reg_t	*t;
@@ -339,16 +346,8 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-		ksiginfo_t ksi;
-		frame->f_regs[_R_CAUSE] = cause;
-		frame->f_regs[_R_BADVADDR] = vaddr;
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGBUS;
-		ksi.ksi_trap = cause;
-		ksi.ksi_code = (vaddr & 3) ? BUS_ADRALN : BUS_ADRERR;
-		ksi.ksi_addr = (void *)vaddr;
-		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+	if (vaddr < 0 || (vaddr & 3)) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
 
@@ -387,7 +386,7 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 {
 	ksiginfo_t ksi;
 	switch (((InstFmt)inst).RType.func) {
@@ -401,7 +400,7 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = SEGV_MAPERR;
-		ksi.ksi_addr = (void *)frame->f_regs[_R_PC];
+		ksi.ksi_addr = (void *)(intptr_t)frame->f_regs[_R_PC];
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 		break;
 	}
@@ -414,9 +413,9 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 #define LWSWC1_MAXLOOP	12
 
 void
-MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateLWC1(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	void		*t;
 	mips_reg_t	pc;
@@ -426,11 +425,12 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+	if (vaddr < 0 || (vaddr & 3)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
 
+	/* NewABI FIXME */
 	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 	if (copyin((void *)vaddr, t, 4) != 0) {
@@ -449,7 +449,7 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 			return;
 
 		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((u_int32_t *)vaddr);
+		inst = fuiword((uint32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_LWC1)
 			return;
 
@@ -457,11 +457,12 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 		/* segment and alignment check */
-		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+		if (vaddr < 0 || (vaddr & 3)) {
 			send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 			return;
 		}
 
+		/* NewABI FIXME */
 		t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 		if (copyin((void *)vaddr, t, 4) != 0) {
@@ -475,9 +476,9 @@ MachEmulateLWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-MachEmulateLDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateLDC1(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	void		*t;
 
@@ -485,11 +486,12 @@ MachEmulateLDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000007) {
+	if (vaddr < 0  || (vaddr & 7)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
 
+	/* NewABI FIXME */
 	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1E]);
 
 	if (copyin((void *)vaddr, t, 8) != 0) {
@@ -501,9 +503,9 @@ MachEmulateLDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateSWC1(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	void		*t;
 	mips_reg_t	pc;
@@ -513,11 +515,12 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+	if (vaddr < 0 || (vaddr & 3)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
 
+	/* NewABI FIXME */
 	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 	if (copyout(t, (void *)vaddr, 4) != 0) {
@@ -536,7 +539,7 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 			return;
 
 		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((u_int32_t *)vaddr);
+		inst = fuiword((uint32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_SWC1)
 			return;
 
@@ -544,11 +547,12 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 		/* segment and alignment check */
-		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+		if (vaddr < 0 || (vaddr & 3)) {
 			send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 			return;
 		}
 
+		/* NewABI FIXME */
 		t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 		if (copyout(t, (void *)vaddr, 4) != 0) {
@@ -562,9 +566,9 @@ MachEmulateSWC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-MachEmulateSDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
+MachEmulateSDC1(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	void		*t;
 
@@ -572,11 +576,12 @@ MachEmulateSDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000007) {
+	if (vaddr < 0 || (vaddr & 7)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
 
+	/* NewABI FIXME */
 	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1E]);
 
 	if (copyout(t, (void *)vaddr, 8) != 0) {
@@ -588,9 +593,9 @@ MachEmulateSDC1(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_lb(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lb(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	int8_t		x;
 
@@ -598,7 +603,7 @@ bcemul_lb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000) {
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -614,17 +619,17 @@ bcemul_lb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_lbu(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lbu(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
-	u_int8_t	x;
+	uint8_t	x;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000) {
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -634,15 +639,15 @@ bcemul_lbu(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	frame->f_regs[(inst>>16)&0x1F] = (u_int32_t)x;
+	frame->f_regs[(inst>>16)&0x1F] = (mips_ureg_t)x;
 
 	update_pc(frame, cause);
 }
 
 void
-bcemul_lh(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lh(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	int16_t		x;
 
@@ -650,7 +655,7 @@ bcemul_lh(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000001) {
+	if (vaddr < 0 || (vaddr & 1)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -660,15 +665,15 @@ bcemul_lh(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	frame->f_regs[(inst>>16)&0x1F] = (int32_t)x;
+	frame->f_regs[(inst>>16)&0x1F] = x;
 
 	update_pc(frame, cause);
 }
 
 void
-bcemul_lhu(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lhu(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 	u_int16_t	x;
 
@@ -676,7 +681,7 @@ bcemul_lhu(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000001) {
+	if (vaddr < 0 || (vaddr & 1)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -686,22 +691,22 @@ bcemul_lhu(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	frame->f_regs[(inst>>16)&0x1F] = (u_int32_t)x;
+	frame->f_regs[(inst>>16)&0x1F] = (mips_ureg_t)x;
 
 	update_pc(frame, cause);
 }
 
 void
-bcemul_lw(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lw(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+	if (vaddr < 0 || (vaddr & 3)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
@@ -715,21 +720,22 @@ bcemul_lw(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_lwl(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lwl(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr, a, x, shift;
+	intptr_t	vaddr;
+	uint32_t	a, x, shift;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000) {
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
 		return;
 	}
 
-	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+	if (copyin((void *)(vaddr & ~3), &a, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
 		return;
 	}
@@ -747,9 +753,10 @@ bcemul_lwl(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_lwr(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_lwr(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr, a, x, shift;
+	intptr_t		vaddr;
+	uint32_t	a, x, shift;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
@@ -761,7 +768,7 @@ bcemul_lwr(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+	if (copyin((void *)(vaddr & ~3), &a, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
 		return;
 	}
@@ -778,10 +785,36 @@ bcemul_lwr(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	update_pc(frame, cause);
 }
 
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
 void
-bcemul_sb(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_ld(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x7) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
+
+	if (copyin((void *)vaddr, &(frame->f_regs[(inst>>16)&0x1F]), 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+
+void
+bcemul_ldl(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	uint64_t	a, x;
+	uint32_t	shift;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
@@ -789,6 +822,73 @@ bcemul_sb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 
 	/* segment check */
 	if (vaddr & 0x80000000) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
+
+	if (copyin((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
+
+	shift = (7 - (vaddr & 0x7)) * 8;
+	a <<= shift;
+	x &= ~(~(uint64_t)0UL << shift);
+	x |= a;
+
+	frame->f_regs[(inst>>16)&0x1F] = x;
+
+	update_pc(frame, cause);
+}
+
+void
+bcemul_ldr(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	uint64_t	a, x;
+	uint32_t	shift;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment check */
+	if (vaddr < 0) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
+
+	if (copyin((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
+
+	shift = (vaddr & 0x7) * 8;
+	a >>= shift;
+	x &= ~(~(uint64_t)0UL >> shift);
+	x |= a;
+
+	frame->f_regs[(inst>>16)&0x1F] = x;
+
+	update_pc(frame, cause);
+}
+#endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
+
+void
+bcemul_sb(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment check */
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
@@ -802,16 +902,16 @@ bcemul_sb(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_sh(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_sh(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr & 0x80000001) {
+	if (vaddr < 0 || vaddr & 1) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
@@ -825,21 +925,21 @@ bcemul_sh(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_sw(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_sw(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr;
+	intptr_t	vaddr;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
-	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+	if (vaddr < 0 || (vaddr & 3)) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
 
-	if (suword((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+	if (ustore_uint32((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
@@ -848,33 +948,34 @@ bcemul_sw(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_swl(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_swl(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr, a, x, shift;
+	intptr_t	vaddr;
+	uint32_t	a, x, shift;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000) {
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
 
-	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+	if (copyin((void *)(vaddr & ~3), &a, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
 
 	x = frame->f_regs[(inst>>16)&0x1F];
 
-	shift = (3 - (vaddr & 0x00000003)) * 8;
+	shift = (3 - (vaddr & 3)) * 8;
 	x >>= shift;
 	a &= ~(0xFFFFFFFFUL >> shift);
 	a |= x;
 
-	if (suword((void *)vaddr, a) < 0) {
+	if (ustore_uint32((void *)vaddr, a) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
@@ -883,37 +984,137 @@ bcemul_swl(u_int32_t inst, struct frame *frame, u_int32_t cause)
 }
 
 void
-bcemul_swr(u_int32_t inst, struct frame *frame, u_int32_t cause)
+bcemul_swr(uint32_t inst, struct frame *frame, uint32_t cause)
 {
-	u_int32_t	vaddr, a, x, shift;
+	intptr_t	vaddr;
+	uint32_t	a, x, shift;
 	int16_t		offset;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment check */
-	if (vaddr & 0x80000000) {
+	if (vaddr < 0) {
 		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
 		return;
 	}
 
-	if (copyin((void *)(vaddr & ~0x3), &a, 4) != 0) {
+	if (copyin((void *)(vaddr & ~3), &a, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
 
 	x = frame->f_regs[(inst>>16)&0x1F];
 
-	shift = (vaddr & 0x00000003) * 8;
+	shift = (vaddr & 3) * 8;
 	x <<= shift;
 	a &= ~(0xFFFFFFFFUL << shift);
 	a |= x;
 
-	if (suword((void *)vaddr, a) < 0) {
+	if (ustore_uint32((void *)vaddr, a) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
 
 	update_pc(frame, cause);
 }
+
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+void
+bcemul_sd(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr < 0 || vaddr & 0x7) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	if (copyout((void *)vaddr, &frame->f_regs[(inst>>16)&0x1F], 8) < 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+
+void
+bcemul_sdl(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	uint64_t	a, x;
+	uint32_t	shift;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment check */
+	if (vaddr < 0) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	if (copyin((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
+
+	shift = (7 - (vaddr & 7)) * 8;
+	x >>= shift;
+	a &= ~(~(uint64_t)0U >> shift);
+	a |= x;
+
+	if (copyout((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+
+void
+bcemul_sdr(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	intptr_t	vaddr;
+	uint64_t	a, x;
+	uint32_t	shift;
+	int16_t		offset;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment check */
+	if (vaddr < 0) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	if (copyin((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	x = frame->f_regs[(inst>>16)&0x1F];
+
+	shift = (vaddr & 7) * 8;
+	x <<= shift;
+	a &= ~(~(uint64_t)0U << shift);
+	a |= x;
+
+	if (copyout((void *)(vaddr & ~0x7), &a, 8) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	update_pc(frame, cause);
+}
+#endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
 #endif /* defined(SOFTFLOAT) */

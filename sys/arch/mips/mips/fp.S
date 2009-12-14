@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.36 2009/12/10 05:10:02 rmind Exp $	*/
+/*	$NetBSD: fp.S,v 1.37 2009/12/14 00:46:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,12 +73,26 @@
 #define COND_LESS	0x4
 #define COND_SIGNAL	0x8
 
-#if SZREG == 8
-#define SZREG_SHFT	3
-#define SZREG_MASK	0x00f8
+#if defined(SOFTFLOAT)
+#if defined(__mips_o32) || defined(__mips_o64)
+#define FPX_L			INT_L
+#define FPX_S			INT_S
+#define	FPX_SCALESHIFT		INT_SCALESHIFT
 #else
-#define SZREG_SHFT	2
-#define SZREG_MASK	0x007c
+#define FPX_L			LONG_L
+#define FPX_S			LONG_S
+#define	FPX_SCALESHIFT		LONG_SCALESHIFT
+#define DFPX_L			REG_L
+#define DFPX_S			REG_S
+#define	DFPX_SCALESHIFT		REG_SCALESHIFT
+#define	SZDFREG			SZREG
+#define	DFPX_REGMASK		(0x1F << DFPX_SCALESHIFT)
+#define	DFPX_REGEVENMASK	(0x1E << DFPX_SCALESHIFT)
+#endif
+#define	SZFREG			(1 << FPX_SCALESHIFT)
+#define	FPX_REGMASK		(0x1F << FPX_SCALESHIFT)
+#define	FPX_REGEVENMASK		(0x1E << FPX_SCALESHIFT)
+#define	REG_REGMASK		(0x1F << REG_SCALESHIFT)
 #endif
 
 /* insns are reordered in the way as MIPS architecture imposes */
@@ -91,10 +105,7 @@
  *	Emulate unimplemented floating point operations.
  *	This routine should only be called by MachFPInterrupt().
  *
- *	MachEmulateFP(instr, frame, cause)
- *		u_int32_t instr;
- *		struct frame *frame;
- *		u_int32_t cause;
+ *	MachEmulateFP(uint32_t instr, struct frame *frame, uint32_t cause)
  *
  * Results:
  *	None.
@@ -104,23 +115,34 @@
  *
  *----------------------------------------------------------------------------
  */
+#if defined(__mips_o32) || defined(__mips_o64)
+#define	CALLFRAME_FRAME		(CALLFRAME_SIZ + 1*SZREG)	/* a1 slot */
+#define	CALLFRAME_CAUSE		(CALLFRAME_SIZ + 2*SZREG)	/* a2 slot */
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	CALLFRAME_FRAME		(1*SZREG)
+#define	CALLFRAME_CAUSE		(2*SZREG)
+#if CALLFRAME_RA == CALLFRAME_FRAME || CALLFRAME_RA == CALLFRAME_CAUSE
+#error N32/N64 ABI callframe error
+#endif
+#endif
 NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
-	subu	sp, sp, CALLFRAME_SIZ
-	sw	ra, CALLFRAME_RA(sp)
-	sw	a1, CALLFRAME_SIZ + 4(sp)
-	sw	a2, CALLFRAME_SIZ + 8(sp)
+	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	ra, CALLFRAME_RA(sp)
+	REG_S	a1, CALLFRAME_FRAME(sp)
+	REG_S	a2, CALLFRAME_CAUSE(sp)
 /*
  * Decode the FMT field (bits 25-21) and FUNCTION field (bits 5-0).
  */
-	srl	v0, a0, 21 - 2			# get FMT field
-	andi	v0, v0, 0x1F << 2		# mask FMT field
+	srl	v0, a0, 21 - PTR_SCALESHIFT	# get FMT field
+	andi	v0, v0, 0x1F << PTR_SCALESHIFT	# mask FMT field
 #ifdef SOFTFLOAT
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	lw	a2, PCB_FPREGS+FRAME_FSR(t0)
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
+	INT_L	a2, PCB_FPREGS+FRAME_FSR(t0)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
-	lw	a3, fmt_tbl(v0)			# switch on FUNC & FMT
+	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
 	and	a2, a2, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
 	ctc1	a2, MIPS_FPU_CSR
 #endif
@@ -128,430 +150,600 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 
 single_op:
 	andi	v0, a0, 0x3F		# get FUNC field
-	sll	v0, v0, 2
-	lw	v0, func_single_tbl(v0)
+	sll	v0, v0, PTR_SCALESHIFT
+	PTR_L	v0, func_single_tbl(v0)
 	j	v0
 double_op:
 	andi	v0, a0, 0x3F		# get FUNC field
-	sll	v0, v0, 2
-	lw	v0, func_double_tbl(v0)
+	sll	v0, v0, PTR_SCALESHIFT
+	PTR_L	v0, func_double_tbl(v0)
 	j	v0
 single_fixed_op:
 	andi	v0, a0, 0x3F		# get FUNC field
-	sll	v0, v0, 2
-	lw	v0, func_single_fixed_tbl(v0)
+	sll	v0, v0, PTR_SCALESHIFT
+	PTR_L	v0, func_single_fixed_tbl(v0)
 	j	v0
 long_fixed_op:
 	andi	v0, a0, 0x3F		# get FUNC field
-	sll	v0, v0, 2
-	lw	v0, func_long_fixed_tbl(v0)
+	sll	v0, v0, PTR_SCALESHIFT
+	PTR_L	v0, func_long_fixed_tbl(v0)
 	j	v0
+#if (defined(__mips_n32) || defined(__mips_n64)) && 0
+paired_single_op:
+	andi	v0, a0, 0x3F		# get FUNC field
+	sll	v0, v0, PTR_SCALESHIFT
+	PTR_L	v0, func_paired_single_tbl(v0)
+	j	v0
+#else
+#define	paired_single_op	ill
+#endif
+
+#ifndef SOFTFLOAT
+#define	mfromc1		ill
+#define	dmfromc1	ill
+#define	cfromc1		ill
+#define	mtoc1		ill
+#define	dmtoc1		ill
+#define	ctoc1		ill
+#define	branchc1	ill
+#elif !(defined(__mips_n32) || defined(__mips_n64))
+#define	dmfromc1	ill
+#define	dmtoc1		ill
+#endif
+#define	branchc1any2	ill
+#define	branchc1any4	ill
+#define	pairedsingle_op	ill
+
+/*
+ * Single Precisions functions
+ */
+#define	recip_s		ill
+#define	recip1_s	ill
+#define	recip2_s	ill
+#define round_l_s	ill
+#define trunc_l_s	ill
+#define ceil_l_s	ill
+#define floor_l_s	ill
+#define cvt_l_s		ill
+#define cvt_ps_s	ill
+#define	movcf_s		ill
+#define	movn_s		ill
+#define	movz_s		ill
+#define	rsqrt_s		ill
+#define	rsqrt1_s	ill
+#define	rsqrt2_s	ill
+#ifndef MIPS3_PLUS
+#define sqrt_s		ill
+#define round_w_s	ill
+#define trunc_w_s	ill
+#define ceil_w_s	ill
+#define floor_w_s	ill
+#endif
+
+/*
+ * Double Precisions functions
+ */
+#ifndef MIPS3_PLUS
+#define sqrt_d		ill
+#define round_w_d	ill
+#define trunc_w_d	ill
+#define ceil_w_d	ill
+#define floor_w_d	ill
+#endif
+#define round_l_d	ill
+#define	ceil_l_d	ill
+#define trunc_l_d	ill
+#define	floor_l_d	ill
+#define	recip_d		ill
+#define	recip1_d	ill
+#define	recip2_d	ill
+#define	cvt_l_d		ill
+#define	movcf_d		ill
+#define	movz_d		ill
+#define	movn_d		ill
+#define	recip_d		ill
+#define	rsqrt_d		ill
+#define	rsqrt1_d	ill
+#define	rsqrt2_d	ill
+
+/*
+ * Long Fixed functions
+ */
+#define	cvt_s_l		ill
+#define	cvt_d_l		ill
+#define	cvt_s_pu	ill
+
+/*
+ * Paired Single funtions
+ */
+#define	addr_ps		ill
+#define	abs_ps		ill
+#define	add_ps		ill
+#define	cmp_ps		ill
+#define	cvt_ps_pl	ill
+#define	cvt_ps_pw	ill
+#define	movcf_ps	ill
+#define	movz_ps		ill
+#define	movn_ps		ill
+#define	mov_ps		ill
+#define	mul_ps		ill
+#define	mulr_ps		ill
+#define	neg_ps		ill
+#define	recip1_ps	ill
+#define	recip2_ps	ill
+#define	rsqrt1_ps	ill
+#define	rsqrt2_ps	ill
+#define	sub_ps		ill
 
 	.rdata
 fmt_tbl:
-#ifdef SOFTFLOAT
-	.word	mfromc1		# sub 0
-#else
-	.word	ill		# sub 0
-#endif
-	.word	ill		# sub 1
-#ifdef SOFTFLOAT
-	.word	cfromc1		# sub 2
-#else
-	.word	ill		# sub 2
-#endif
-	.word	ill		# sub 3
-#ifdef SOFTFLOAT
-	.word	mtoc1		# sub 4
-#else
-	.word	ill		# sub 4
-#endif
-	.word	ill		# sub 5
-#ifdef SOFTFLOAT
-	.word	ctoc1		# sub 6
-#else
-	.word	ill		# sub 6
-#endif
-	.word	ill		# sub 7
-#ifdef SOFTFLOAT
-	.word	branchc1	# sub 8
-#else
-	.word	ill		# sub 8
-#endif
-	.word	ill		# sub 9
-	.word	ill		# sub 10
-	.word	ill		# sub 11
-	.word	ill		# sub 12
-	.word	ill		# sub 13
-	.word	ill		# sub 14
-	.word	ill		# sub 15
-	.word	single_op	# sub 16
-	.word	double_op	# sub 17
-	.word	ill		# sub 18
-	.word	ill		# sub 19
-	.word	single_fixed_op	# sub 20
-	.word	long_fixed_op	# sub 21
-	.word	ill		# sub 22
-	.word	ill		# sub 23
-	.word	ill		# sub 24
-	.word	ill		# sub 25
-	.word	ill		# sub 26
-	.word	ill		# sub 27
-	.word	ill		# sub 28
-	.word	ill		# sub 29
-	.word	ill		# sub 30
-	.word	ill		# sub 31
+	PTR_WORD mfromc1	# sub 0		mfc1
+	PTR_WORD dmfromc1	# sub 1		dmfc1
+	PTR_WORD cfromc1	# sub 2		cfc1
+	PTR_WORD ill		# sub 3		mfhc1
+	PTR_WORD mtoc1		# sub 4		mtc1
+	PTR_WORD dmtoc1		# sub 5		dmtc1
+	PTR_WORD ctoc1		# sub 6		ctc1
+	PTR_WORD ill		# sub 7		mthc1
+	PTR_WORD branchc1	# sub 8		bc1
+	PTR_WORD branchc1any2	# sub 9		bc1any2
+	PTR_WORD branchc1any4	# sub 10	bc1any4
+	PTR_WORD ill		# sub 11
+	PTR_WORD ill		# sub 12
+	PTR_WORD ill		# sub 13
+	PTR_WORD ill		# sub 14
+	PTR_WORD ill		# sub 15
+	PTR_WORD single_op	# sub 16	S
+	PTR_WORD double_op	# sub 17	D
+	PTR_WORD ill		# sub 18
+	PTR_WORD ill		# sub 19
+	PTR_WORD single_fixed_op # sub 20	W
+	PTR_WORD long_fixed_op	# sub 21	L
+	PTR_WORD paired_single_op # sub 22	PS
+	PTR_WORD ill		# sub 23
+	PTR_WORD ill		# sub 24
+	PTR_WORD ill		# sub 25
+	PTR_WORD ill		# sub 26
+	PTR_WORD ill		# sub 27
+	PTR_WORD ill		# sub 28
+	PTR_WORD ill		# sub 29
+	PTR_WORD ill		# sub 30
+	PTR_WORD ill		# sub 31
 
 func_single_tbl:
-	.word	add_s		# func 0
-	.word	sub_s		# func 1
-	.word	mul_s		# func 2
-	.word	div_s		# func 3
-#ifdef MIPS3_PLUS
-	.word	sqrt_s		# func 4
-#else
-	.word	ill		# func 4
-#endif
-	.word	abs_s		# func 5
-	.word	mov_s		# func 6
-	.word	neg_s		# func 7
-	.word	ill		# func 8
-	.word	ill		# func 9
-	.word	ill		# func 10
-	.word	ill		# func 11
-#ifdef MIPS3_PLUS
-	.word	round_w_s	# func 12 /* MIPS2 FP instructions */
-	.word	trunc_w_s	# func 13
-	.word	ceil_w_s	# func 14
-	.word	floor_w_s	# func 15
-#else
-	.word	ill		# func 12
-	.word	ill		# func 13
-	.word	ill		# func 14
-	.word	ill		# func 15
-#endif
-	.word	ill		# func 16
-	.word	ill		# func 17
-	.word	ill		# func 18
-	.word	ill		# func 19
-	.word	ill		# func 20
-	.word	ill		# func 21
-	.word	ill		# func 22
-	.word	ill		# func 23
-	.word	ill		# func 24
-	.word	ill		# func 25
-	.word	ill		# func 26
-	.word	ill		# func 27
-	.word	ill		# func 28
-	.word	ill		# func 29
-	.word	ill		# func 30
-	.word	ill		# func 31
-	.word	ill		# func 32
-	.word	cvt_d_s		# func 33
-	.word	ill		# func 34
-	.word	ill		# func 35
-	.word	cvt_w_s		# func 36
-	.word	ill		# func 37
-	.word	ill		# func 38
-	.word	ill		# func 39
-	.word	ill		# func 40
-	.word	ill		# func 41
-	.word	ill		# func 42
-	.word	ill		# func 43
-	.word	ill		# func 44
-	.word	ill		# func 45
-	.word	ill		# func 46
-	.word	ill		# func 47
-	.word	cmp_s		# func 48
-	.word	cmp_s		# func 49
-	.word	cmp_s		# func 50
-	.word	cmp_s		# func 51
-	.word	cmp_s		# func 52
-	.word	cmp_s		# func 53
-	.word	cmp_s		# func 54
-	.word	cmp_s		# func 55
-	.word	cmp_s		# func 56
-	.word	cmp_s		# func 57
-	.word	cmp_s		# func 58
-	.word	cmp_s		# func 59
-	.word	cmp_s		# func 60
-	.word	cmp_s		# func 61
-	.word	cmp_s		# func 62
-	.word	cmp_s		# func 63
+	PTR_WORD add_s		# func  0 00	ADD.S
+	PTR_WORD sub_s		# func  1 01	SUB.S
+	PTR_WORD mul_s		# func  2 02	MUL.S
+	PTR_WORD div_s		# func  3 03	DIV.S
+	PTR_WORD sqrt_s		# func  4 04	SQRT.S
+	PTR_WORD abs_s		# func  5 05	ABS.S
+	PTR_WORD mov_s		# func  6 06	MOV.S
+	PTR_WORD neg_s		# func  7 07	NEG.S 
+	PTR_WORD round_l_s	# func  8 10	ROUND.L.S
+	PTR_WORD trunc_l_s	# func  9 11	TRUNC.L.S
+	PTR_WORD ceil_l_s	# func 10 12	CEIL.L.S
+	PTR_WORD floor_l_s	# func 11 13	FLOOR.L.S
+	PTR_WORD round_w_s	# func 12 14	ROUND.W.S
+	PTR_WORD trunc_w_s	# func 13 15	TRUNC.W.S
+	PTR_WORD ceil_w_s	# func 14 16	CEIL.W.S
+	PTR_WORD floor_w_s	# func 15 17	FLOOR.W.S
+	PTR_WORD ill		# func 16 20
+	PTR_WORD movcf_s	# func 17 21	MOVCF.S
+	PTR_WORD movz_s		# func 18 22	MOVZ.S
+	PTR_WORD movn_s		# func 19 23	MOVN.S
+	PTR_WORD ill		# func 20 24
+	PTR_WORD recip_s	# func 21 25	RECIP.S
+	PTR_WORD rsqrt_s	# func 22 26	RSQRT.S
+	PTR_WORD ill		# func 23 27
+	PTR_WORD ill		# func 24 30
+	PTR_WORD ill		# func 25 31
+	PTR_WORD ill		# func 26 32
+	PTR_WORD ill		# func 27 33
+	PTR_WORD recip2_s	# func 28 34	RECIP2.S
+	PTR_WORD recip1_s	# func 29 35	RECIP1.S
+	PTR_WORD rsqrt1_s	# func 30 36	RSQRT1.S
+	PTR_WORD rsqrt2_s	# func 31 37	RSQRT2.S
+	PTR_WORD ill		# func 32 40
+	PTR_WORD cvt_d_s	# func 33 41	CVT.D.S
+	PTR_WORD ill		# func 34 42
+	PTR_WORD ill		# func 35 43
+	PTR_WORD cvt_w_s	# func 36 44	CVT.W.S
+	PTR_WORD cvt_l_s	# func 37 45	CVT.L.S
+	PTR_WORD cvt_ps_s	# func 38 46	CVT.PS.S
+	PTR_WORD ill		# func 39 47
+	PTR_WORD ill		# func 40 50
+	PTR_WORD ill		# func 41 51
+	PTR_WORD ill		# func 42 52
+	PTR_WORD ill		# func 43 53
+	PTR_WORD ill		# func 44 54
+	PTR_WORD ill		# func 45 55
+	PTR_WORD ill		# func 46 56
+	PTR_WORD ill		# func 47 57
+	PTR_WORD cmp_s		# func 48 60	C.F.S
+	PTR_WORD cmp_s		# func 49 61	C.UN.S
+	PTR_WORD cmp_s		# func 50 62	C.EQ.S
+	PTR_WORD cmp_s		# func 51 63	C.UEQ.S
+	PTR_WORD cmp_s		# func 52 64	C.OLT.S
+	PTR_WORD cmp_s		# func 53 65	C.ULT.S
+	PTR_WORD cmp_s		# func 54 66	C.OLE.S
+	PTR_WORD cmp_s		# func 55 67	C.ULE.S
+	PTR_WORD cmp_s		# func 56 70	C.SF.S
+	PTR_WORD cmp_s		# func 57 71	C.NGLE.S
+	PTR_WORD cmp_s		# func 58 72	C.SEQ.S
+	PTR_WORD cmp_s		# func 59 73	C.NGL.S
+	PTR_WORD cmp_s		# func 60 74	C.LT.S
+	PTR_WORD cmp_s		# func 61 75	C.NGE.S
+	PTR_WORD cmp_s		# func 62 76	C.LE.S
+	PTR_WORD cmp_s		# func 63 77	C.NGT.S
 
 func_double_tbl:
-	.word	add_d		# func 0
-	.word	sub_d		# func 1
-	.word	mul_d		# func 2
-	.word	div_d		# func 3
-#ifdef MIPS3_PLUS
-	.word	sqrt_d		# func 4
-#else
-	.word	ill		# func 4
-#endif
-	.word	abs_d		# func 5
-	.word	mov_d		# func 6
-	.word	neg_d		# func 7
-	.word	ill		# func 8
-	.word	ill		# func 9
-	.word	ill		# func 10
-	.word	ill		# func 11
-#ifdef MIPS3_PLUS
-	.word	round_w_d	# func 12 /* MIPS2 FP instructions */
-	.word	trunc_w_d	# func 13
-	.word	ceil_w_d	# func 14
-	.word	floor_w_d	# func 15
-#else
-	.word	ill		# func 12
-	.word	ill		# func 13
-	.word	ill		# func 14
-	.word	ill		# func 15
-#endif
-	.word	ill		# func 16
-	.word	ill		# func 17
-	.word	ill		# func 18
-	.word	ill		# func 19
-	.word	ill		# func 20
-	.word	ill		# func 21
-	.word	ill		# func 22
-	.word	ill		# func 23
-	.word	ill		# func 24
-	.word	ill		# func 25
-	.word	ill		# func 26
-	.word	ill		# func 27
-	.word	ill		# func 28
-	.word	ill		# func 29
-	.word	ill		# func 30
-	.word	ill		# func 31
-	.word	cvt_s_d		# func 32
-	.word	ill		# func 33
-	.word	ill		# func 34
-	.word	ill		# func 35
-	.word	cvt_w_d		# func 36
-	.word	ill		# func 37
-	.word	ill		# func 38
-	.word	ill		# func 39
-	.word	ill		# func 40
-	.word	ill		# func 41
-	.word	ill		# func 42
-	.word	ill		# func 43
-	.word	ill		# func 44
-	.word	ill		# func 45
-	.word	ill		# func 46
-	.word	ill		# func 47
-	.word	cmp_d		# func 48
-	.word	cmp_d		# func 49
-	.word	cmp_d		# func 50
-	.word	cmp_d		# func 51
-	.word	cmp_d		# func 52
-	.word	cmp_d		# func 53
-	.word	cmp_d		# func 54
-	.word	cmp_d		# func 55
-	.word	cmp_d		# func 56
-	.word	cmp_d		# func 57
-	.word	cmp_d		# func 58
-	.word	cmp_d		# func 59
-	.word	cmp_d		# func 60
-	.word	cmp_d		# func 61
-	.word	cmp_d		# func 62
-	.word	cmp_d		# func 63
+	PTR_WORD add_d		# func  0 00	ADD.D
+	PTR_WORD sub_d		# func  1 01	SUB.D
+	PTR_WORD mul_d		# func  2 02	MUL.D
+	PTR_WORD div_d		# func  3 03	DIV.D
+	PTR_WORD sqrt_d		# func  4 04	SQRT.D
+	PTR_WORD abs_d		# func  5 05	ABS.D
+	PTR_WORD mov_d		# func  6 06	MOV.D
+	PTR_WORD neg_d		# func  7 07	NEG.D 
+	PTR_WORD round_l_d	# func  8 10	ROUND.L.D
+	PTR_WORD trunc_l_d	# func  9 11	TRUNC.L.D
+	PTR_WORD ceil_l_d	# func 10 12	CEIL.L.D
+	PTR_WORD floor_l_d	# func 11 13	FLOOR.L.D
+	PTR_WORD round_w_d	# func 12 14	ROUND.W.D
+	PTR_WORD trunc_w_d	# func 13 15	TRUNC.W.D
+	PTR_WORD ceil_w_d	# func 14 16	CEIL.W.D
+	PTR_WORD floor_w_d	# func 15 17	FLOOR.W.D
+	PTR_WORD ill		# func 16 20
+	PTR_WORD movcf_d	# func 17 21	MOVCF.D
+	PTR_WORD movz_d		# func 18 22	MOVZ.D
+	PTR_WORD movn_d		# func 19 23	MOVN.D
+	PTR_WORD ill		# func 20 24
+	PTR_WORD recip_d	# func 21 25	RECIP.D
+	PTR_WORD rsqrt_d	# func 22 26	RSQRT.D
+	PTR_WORD ill		# func 23 27
+	PTR_WORD ill		# func 24 30
+	PTR_WORD ill		# func 25 31
+	PTR_WORD ill		# func 26 32
+	PTR_WORD ill		# func 27 33
+	PTR_WORD recip2_d	# func 28 34	RECIP2.D
+	PTR_WORD recip2_d	# func 29 35	RECIP1.D
+	PTR_WORD rsqrt1_d	# func 30 36	RSQRT1.D
+	PTR_WORD rsqrt2_d	# func 31 37	RSQRT2.D
+	PTR_WORD cvt_s_d	# func 32 40	CVT.S.D
+	PTR_WORD ill		# func 33 41
+	PTR_WORD ill		# func 34 42
+	PTR_WORD ill		# func 35 43
+	PTR_WORD cvt_w_d	# func 36 44	CVT.W.D
+	PTR_WORD cvt_l_d	# func 37 45	CVT.L.D
+	PTR_WORD ill		# func 38 46
+	PTR_WORD ill		# func 39 47
+	PTR_WORD ill		# func 40 50
+	PTR_WORD ill		# func 41 51
+	PTR_WORD ill		# func 42 52
+	PTR_WORD ill		# func 43 53
+	PTR_WORD ill		# func 44 54
+	PTR_WORD ill		# func 45 55
+	PTR_WORD ill		# func 46 56
+	PTR_WORD ill		# func 47 57
+	PTR_WORD cmp_d		# func 48 60	C.F.D
+	PTR_WORD cmp_d		# func 49 61	C.UN.D
+	PTR_WORD cmp_d		# func 50 62	C.EQ.D
+	PTR_WORD cmp_d		# func 51 63	C.UEQ.D
+	PTR_WORD cmp_d		# func 52 64	C.OLT.D
+	PTR_WORD cmp_d		# func 53 65	C.ULT.D
+	PTR_WORD cmp_d		# func 54 66	C.OLE.D
+	PTR_WORD cmp_d		# func 55 67	C.ULE.D
+	PTR_WORD cmp_d		# func 56 70	C.SF.D
+	PTR_WORD cmp_d		# func 57 71	C.NGLE.D
+	PTR_WORD cmp_d		# func 58 72	C.SEQ.D
+	PTR_WORD cmp_d		# func 59 73	C.NGL.D
+	PTR_WORD cmp_d		# func 60 74	C.LT.D
+	PTR_WORD cmp_d		# func 61 75	C.NGE.D
+	PTR_WORD cmp_d		# func 62 76	C.LE.D
+	PTR_WORD cmp_d		# func 63 77	C.NGT.D
 
 func_single_fixed_tbl:
-	.word	ill		# func 0
-	.word	ill		# func 1
-	.word	ill		# func 2
-	.word	ill		# func 3
-	.word	ill		# func 4
-	.word	ill		# func 5
-	.word	ill		# func 6
-	.word	ill		# func 7
-	.word	ill		# func 8
-	.word	ill		# func 9
-	.word	ill		# func 10
-	.word	ill		# func 11
-	.word	ill		# func 12
-	.word	ill		# func 13
-	.word	ill		# func 14
-	.word	ill		# func 15
-	.word	ill		# func 16
-	.word	ill		# func 17
-	.word	ill		# func 18
-	.word	ill		# func 19
-	.word	ill		# func 20
-	.word	ill		# func 21
-	.word	ill		# func 22
-	.word	ill		# func 23
-	.word	ill		# func 24
-	.word	ill		# func 25
-	.word	ill		# func 26
-	.word	ill		# func 27
-	.word	ill		# func 28
-	.word	ill		# func 29
-	.word	ill		# func 30
-	.word	ill		# func 31
-	.word	cvt_s_w		# func 32
-	.word	cvt_d_w		# func 33
-	.word	ill		# func 34
-	.word	ill		# func 35
-	.word	ill		# func 36
-	.word	ill		# func 37
-	.word	ill		# func 38
-	.word	ill		# func 39
-	.word	ill		# func 40
-	.word	ill		# func 41
-	.word	ill		# func 42
-	.word	ill		# func 43
-	.word	ill		# func 44
-	.word	ill		# func 45
-	.word	ill		# func 46
-	.word	ill		# func 47
-	.word	ill		# func 48
-	.word	ill		# func 49
-	.word	ill		# func 50
-	.word	ill		# func 51
-	.word	ill		# func 52
-	.word	ill		# func 53
-	.word	ill		# func 54
-	.word	ill		# func 55
-	.word	ill		# func 56
-	.word	ill		# func 57
-	.word	ill		# func 58
-	.word	ill		# func 59
-	.word	ill		# func 60
-	.word	ill		# func 61
-	.word	ill		# func 62
-	.word	ill		# func 63
+	PTR_WORD ill		# func  0 00
+	PTR_WORD ill		# func  1 01
+	PTR_WORD ill		# func  2 02
+	PTR_WORD ill		# func  3 03
+	PTR_WORD ill		# func  4 04
+	PTR_WORD ill		# func  5 05
+	PTR_WORD ill		# func  6 06
+	PTR_WORD ill		# func  7 07
+	PTR_WORD ill		# func  8 10
+	PTR_WORD ill		# func  9 11
+	PTR_WORD ill		# func 10 12
+	PTR_WORD ill		# func 11 13
+	PTR_WORD ill		# func 12 14
+	PTR_WORD ill		# func 13 15
+	PTR_WORD ill		# func 14 16
+	PTR_WORD ill		# func 15 17
+	PTR_WORD ill		# func 16 20
+	PTR_WORD ill		# func 17 21
+	PTR_WORD ill		# func 18 22
+	PTR_WORD ill		# func 19 23
+	PTR_WORD ill		# func 20 24
+	PTR_WORD ill		# func 21 25
+	PTR_WORD ill		# func 22 26
+	PTR_WORD ill		# func 23 27
+	PTR_WORD ill		# func 24 30
+	PTR_WORD ill		# func 25 31
+	PTR_WORD ill		# func 26 32
+	PTR_WORD ill		# func 27 33
+	PTR_WORD ill		# func 28 34
+	PTR_WORD ill		# func 29 35
+	PTR_WORD ill		# func 30 36
+	PTR_WORD ill		# func 31 37
+	PTR_WORD cvt_s_w	# func 32 40	CVT.S.W
+	PTR_WORD cvt_d_w	# func 33 41	CVT.D.W
+	PTR_WORD ill		# func 34 42
+	PTR_WORD ill		# func 35 43
+	PTR_WORD ill		# func 36 44
+	PTR_WORD ill		# func 37 45
+	PTR_WORD cvt_ps_pw	# func 38 46	CVT.PS.PW
+	PTR_WORD ill		# func 39 47
+	PTR_WORD ill		# func 40 50
+	PTR_WORD ill		# func 41 51
+	PTR_WORD ill		# func 42 52
+	PTR_WORD ill		# func 43 53
+	PTR_WORD ill		# func 44 54
+	PTR_WORD ill		# func 45 55
+	PTR_WORD ill		# func 46 56
+	PTR_WORD ill		# func 47 57
+	PTR_WORD ill		# func 48 60
+	PTR_WORD ill		# func 49 61
+	PTR_WORD ill		# func 50 62
+	PTR_WORD ill		# func 51 63
+	PTR_WORD ill		# func 52 64
+	PTR_WORD ill		# func 53 65
+	PTR_WORD ill		# func 54 66
+	PTR_WORD ill		# func 55 67
+	PTR_WORD ill		# func 56 70
+	PTR_WORD ill		# func 57 71
+	PTR_WORD ill		# func 58 72
+	PTR_WORD ill		# func 59 73
+	PTR_WORD ill		# func 60 74
+	PTR_WORD ill		# func 61 75
+	PTR_WORD ill		# func 62 76
+	PTR_WORD ill		# func 63 77
 
 func_long_fixed_tbl:
-	.word	ill		# func 0
-	.word	ill		# func 1
-	.word	ill		# func 2
-	.word	ill		# func 3
-	.word	ill		# func 4
-	.word	ill		# func 5
-	.word	ill		# func 6
-	.word	ill		# func 7
-	.word	ill		# func 8
-	.word	ill		# func 9
-	.word	ill		# func 10
-	.word	ill		# func 11
-	.word	ill		# func 12
-	.word	ill		# func 13
-	.word	ill		# func 14
-	.word	ill		# func 15
-	.word	ill		# func 16
-	.word	ill		# func 17
-	.word	ill		# func 18
-	.word	ill		# func 19
-	.word	ill		# func 20
-	.word	ill		# func 21
-	.word	ill		# func 22
-	.word	ill		# func 23
-	.word	ill		# func 24
-	.word	ill		# func 25
-	.word	ill		# func 26
-	.word	ill		# func 27
-	.word	ill		# func 28
-	.word	ill		# func 29
-	.word	ill		# func 30
-	.word	ill		# func 31
-	.word	ill		# func 32
-	.word	ill		# func 33
-	.word	ill		# func 34
-	.word	ill		# func 35
-	.word	ill		# func 36
-	.word	ill		# func 37
-	.word	ill		# func 38
-	.word	ill		# func 39
-	.word	ill		# func 40
-	.word	ill		# func 41
-	.word	ill		# func 42
-	.word	ill		# func 43
-	.word	ill		# func 44
-	.word	ill		# func 45
-	.word	ill		# func 46
-	.word	ill		# func 47
-	.word	ill		# func 48
-	.word	ill		# func 49
-	.word	ill		# func 50
-	.word	ill		# func 51
-	.word	ill		# func 52
-	.word	ill		# func 53
-	.word	ill		# func 54
-	.word	ill		# func 55
-	.word	ill		# func 56
-	.word	ill		# func 57
-	.word	ill		# func 58
-	.word	ill		# func 59
-	.word	ill		# func 60
-	.word	ill		# func 61
-	.word	ill		# func 62
-	.word	ill		# func 63
+	PTR_WORD ill		# func  0 00
+	PTR_WORD ill		# func  1 01
+	PTR_WORD ill		# func  2 02
+	PTR_WORD ill		# func  3 03
+	PTR_WORD ill		# func  4 04
+	PTR_WORD ill		# func  5 05
+	PTR_WORD ill		# func  6 06
+	PTR_WORD ill		# func  7 07
+	PTR_WORD ill		# func  8 10
+	PTR_WORD ill		# func  9 11
+	PTR_WORD ill		# func 10 12
+	PTR_WORD ill		# func 11 13
+	PTR_WORD ill		# func 12 14
+	PTR_WORD ill		# func 13 15
+	PTR_WORD ill		# func 14 16
+	PTR_WORD ill		# func 15 17
+	PTR_WORD ill		# func 16 20
+	PTR_WORD ill		# func 17 21
+	PTR_WORD ill		# func 18 22
+	PTR_WORD ill		# func 19 23
+	PTR_WORD ill		# func 20 24
+	PTR_WORD ill		# func 21 25
+	PTR_WORD ill		# func 22 26
+	PTR_WORD ill		# func 23 27
+	PTR_WORD ill		# func 24 30
+	PTR_WORD ill		# func 25 31
+	PTR_WORD ill		# func 26 32
+	PTR_WORD ill		# func 27 33
+	PTR_WORD ill		# func 28 34
+	PTR_WORD ill		# func 29 35
+	PTR_WORD ill		# func 30 36
+	PTR_WORD ill		# func 31 37
+	PTR_WORD cvt_s_l	# func 32 40	CVT.S.L
+	PTR_WORD cvt_d_l	# func 33 41	CVT.D.L
+	PTR_WORD ill		# func 34 42
+	PTR_WORD ill		# func 35 43
+	PTR_WORD ill		# func 36 44
+	PTR_WORD ill		# func 37 45
+	PTR_WORD cvt_ps_pl	# func 38 46	CVT.PS.PW
+	PTR_WORD ill		# func 39 47
+	PTR_WORD ill		# func 40 50
+	PTR_WORD ill		# func 41 51
+	PTR_WORD ill		# func 42 52
+	PTR_WORD ill		# func 43 53
+	PTR_WORD ill		# func 44 54
+	PTR_WORD ill		# func 45 55
+	PTR_WORD ill		# func 46 56
+	PTR_WORD ill		# func 47 57
+	PTR_WORD ill		# func 48 60
+	PTR_WORD ill		# func 49 61
+	PTR_WORD ill		# func 50 62
+	PTR_WORD ill		# func 51 63
+	PTR_WORD ill		# func 52 64
+	PTR_WORD ill		# func 53 65
+	PTR_WORD ill		# func 54 66
+	PTR_WORD ill		# func 55 67
+	PTR_WORD ill		# func 56 70
+	PTR_WORD ill		# func 57 71
+	PTR_WORD ill		# func 58 72
+	PTR_WORD ill		# func 59 73
+	PTR_WORD ill		# func 60 74
+	PTR_WORD ill		# func 61 75
+	PTR_WORD ill		# func 62 76
+	PTR_WORD ill		# func 63 77
+
+#if defined(MIPS3_PLUS) && 0
+func_paired_single_tbl:
+	PTR_WORD add_ps		# func  0 00	ADD.PS
+	PTR_WORD sub_ps		# func  1 01	SUB.PS
+	PTR_WORD mul_ps		# func  2 02	MUL.PS
+	PTR_WORD ill		# func  3 03
+	PTR_WORD ill		# func  4 04
+	PTR_WORD abs_ps		# func  5 05	ABS.PS
+	PTR_WORD mov_ps		# func  6 06	MOV.PS
+	PTR_WORD neg_ps		# func  7 07	NEG.PS 
+	PTR_WORD ill		# func  8 10
+	PTR_WORD ill		# func  9 11
+	PTR_WORD ill		# func 10 12
+	PTR_WORD ill		# func 11 13
+	PTR_WORD ill		# func 12 14
+	PTR_WORD ill		# func 13 15
+	PTR_WORD ill		# func 14 16
+	PTR_WORD ill		# func 15 17
+	PTR_WORD ill		# func 16 20
+	PTR_WORD movcf_ps	# func 17 21	MOVCF.PS
+	PTR_WORD movz_ps	# func 18 22	MOVZ.PS
+	PTR_WORD movn_ps	# func 19 23	MOVN.PS
+	PTR_WORD ill		# func 20 24
+	PTR_WORD ill		# func 21 25
+	PTR_WORD ill		# func 22 26
+	PTR_WORD ill		# func 23 27
+	PTR_WORD addr_ps	# func 24 30	ADDR.PS
+	PTR_WORD ill		# func 25 31
+	PTR_WORD mulr_ps	# func 26 32	MULR.PS
+	PTR_WORD ill		# func 27 33
+	PTR_WORD recip2_ps	# func 28 34	RECIP2.PS
+	PTR_WORD recip1_ps	# func 29 35	RECIP1.PS
+	PTR_WORD rsqrt1_ps	# func 30 36	RSQRT1.PS
+	PTR_WORD rsqrt2_ps	# func 31 37	RSQRT2.PS
+	PTR_WORD cvt_s_pu	# func 32 40	CVT.S.PU
+	PTR_WORD ill		# func 33 41
+	PTR_WORD ill		# func 34 42
+	PTR_WORD ill		# func 35 43
+	PTR_WORD ill		# func 36 44	CVT.PW.PS
+	PTR_WORD ill		# func 37 45
+	PTR_WORD ill		# func 38 46
+	PTR_WORD ill		# func 39 47
+	PTR_WORD ill		# func 40 50	CVT.S.PL
+	PTR_WORD ill		# func 41 51
+	PTR_WORD ill		# func 42 52
+	PTR_WORD ill		# func 43 53
+	PTR_WORD ill		# func 44 54	PLL.PS
+	PTR_WORD ill		# func 45 55	PLU.PS
+	PTR_WORD ill		# func 46 56	PUL.PS
+	PTR_WORD ill		# func 47 57	PUU.PS
+	PTR_WORD cmp_ps		# func 48 60	C.F
+	PTR_WORD cmp_ps		# func 49 61	C.UN
+	PTR_WORD cmp_ps		# func 50 62	C.EQ
+	PTR_WORD cmp_ps		# func 51 63	C.UEQ
+	PTR_WORD cmp_ps		# func 52 64	C.OLT
+	PTR_WORD cmp_ps		# func 53 65	C.ULT
+	PTR_WORD cmp_ps		# func 54 66	C.OLE
+	PTR_WORD cmp_ps		# func 55 67	C.ULE
+	PTR_WORD cmp_ps		# func 56 70	C.SF
+	PTR_WORD cmp_ps		# func 57 71	C.NGLE
+	PTR_WORD cmp_ps		# func 58 72	C.SEQ
+	PTR_WORD cmp_ps		# func 59 73	C.NGL
+	PTR_WORD cmp_ps		# func 60 74	C.LT
+	PTR_WORD cmp_ps		# func 61 75	C.NGE
+	PTR_WORD cmp_ps		# func 62 76	C.LE
+	PTR_WORD cmp_ps		# func 63 77	C.NGT
+#endif
 
 	.text
 
 #ifdef SOFTFLOAT
 mfromc1:
-	srl	t1, a0, 11-2
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x007C
-	addu	t0, t0, t1
+	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t0, t0, t1
 
-	lw	v0, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	v0, PCB_FPREGS+FRAME_FP0(t0)
 
-	srl	t0, a0, 16-SZREG_SHFT
-	andi	t0, t0, SZREG_MASK
-	addu	t0, t0, a1
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, t0, a1
 
 	REG_PROLOGUE
-	REG_S	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 
 	b	done
 
 mtoc1:
 	REG_PROLOGUE
-	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
-	srl	t0, a0, 16-SZREG_SHFT
-	andi	t0, t0, SZREG_MASK
-	addu	v0, a1, t0
-	REG_L	v0, FRAME_ZERO(v0)
+	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, FRAME_RZERO(v0)
 	REG_EPILOGUE
 
-	srl	t1, a0, 11-2
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x007C
-	addu	t0, t0, t1
+	srl	t1, a0, 11-FPX_SCALESHIFT
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t0, t0, t1
 
-	sw	v0, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
 
+#if defined(SOFTFLOAT) && (defined(__mips_n32) || defined(__mips_n64))
+dmfromc1:
+	srl	t1, a0, 11-DFPX_SCALESHIFT	# fs is in bits 15:11
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1,  DFPX_REGMASK
+	PTR_ADDU t0, t0, t1
+
+	DFPX_L	v0, PCB_FPREGS+FRAME_FP0(t0)
+
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, t0, a1
+
+	REG_PROLOGUE
+	REG_S	v0, FRAME_RZERO(t0)
+	REG_EPILOGUE
+
+	b	done
+
+dmtoc1:
+	REG_PROLOGUE
+	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, FRAME_RZERO(v0)
+	REG_EPILOGUE
+
+	srl	t1, a0, 11-DFPX_SCALESHIFT
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, DFPX_REGMASK
+	PTR_ADDU t0, t0, t1
+
+	DFPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
+
+	b	done
+#endif /* SOFTFLOAT && (__mips_n32 || __mips_n64) */
+
 cfromc1:
 	srl	t1, a0, 11
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, 0x001F
 	li	t2, 0x1F
 	move	v0, zero
 	bne	t1, t2, cfinvalid
 
-	lw	v0, PCB_FPREGS+FRAME_FSR(t0)
+	INT_L	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 cfinvalid:
 
-	srl	t0, a0, 16-SZREG_SHFT
-	andi	t0, t0, SZREG_MASK
-	addu	t0, t0, a1
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, t0, a1
 
 	REG_PROLOGUE
-	REG_S	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 
 	b	done
 
 ctoc1:
 	REG_PROLOGUE
-	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
 	REG_EPILOGUE
 
 	srl	t0, a0, 11
@@ -559,58 +751,58 @@ ctoc1:
 	li	t1, 0x1F
 	bne	t0, t1, done
 
-	srl	t0, a0, 16-SZREG_SHFT
-	andi	t0, t0, SZREG_MASK
-	addu	v0, a1, t0
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(v0)
+	REG_L	v0, FRAME_RZERO(v0)
 	REG_EPILOGUE
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	v0, PCB_FPREGS+FRAME_FSR(t0)
+	INT_S	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 	b	done
 
 branchc1:
-	srl	v0, a0, 16-2
-	andi	v0, v0, 0x007C
-	lw	v0, branchc1_tbl(v0)
+	srl	v0, a0, 16 - PTR_SCALESHIFT
+	andi	v0, v0, 0x1f << PTR_SCALESHIFT
+	PTR_L	v0, branchc1_tbl(v0)
 	j	v0
 
 	.rdata
 branchc1_tbl:
-	.word	bcfalse		# br 0
-	.word	bctrue		# br 1
-	.word	bcfalse_l	# br 2
-	.word	bctrue_l	# br 3
-	.word	ill		# br 4
-	.word	ill		# br 5
-	.word	ill		# br 6
-	.word	ill		# br 7
-	.word	ill		# br 8
-	.word	ill		# br 9
-	.word	ill		# br 10
-	.word	ill		# br 11
-	.word	ill		# br 12
-	.word	ill		# br 13
-	.word	ill		# br 14
-	.word	ill		# br 15
-	.word	ill		# br 16
-	.word	ill		# br 17
-	.word	ill		# br 18
-	.word	ill		# br 19
-	.word	ill		# br 20
-	.word	ill		# br 21
-	.word	ill		# br 22
-	.word	ill		# br 23
-	.word	ill		# br 24
-	.word	ill		# br 25
-	.word	ill		# br 26
-	.word	ill		# br 27
-	.word	ill		# br 28
-	.word	ill		# br 29
-	.word	ill		# br 30
-	.word	ill		# br 31
+	PTR_WORD bcfalse		# br 0
+	PTR_WORD bctrue		# br 1
+	PTR_WORD bcfalse_l	# br 2
+	PTR_WORD bctrue_l	# br 3
+	PTR_WORD ill		# br 4
+	PTR_WORD ill		# br 5
+	PTR_WORD ill		# br 6
+	PTR_WORD ill		# br 7
+	PTR_WORD ill		# br 8
+	PTR_WORD ill		# br 9
+	PTR_WORD ill		# br 10
+	PTR_WORD ill		# br 11
+	PTR_WORD ill		# br 12
+	PTR_WORD ill		# br 13
+	PTR_WORD ill		# br 14
+	PTR_WORD ill		# br 15
+	PTR_WORD ill		# br 16
+	PTR_WORD ill		# br 17
+	PTR_WORD ill		# br 18
+	PTR_WORD ill		# br 19
+	PTR_WORD ill		# br 20
+	PTR_WORD ill		# br 21
+	PTR_WORD ill		# br 22
+	PTR_WORD ill		# br 23
+	PTR_WORD ill		# br 24
+	PTR_WORD ill		# br 25
+	PTR_WORD ill		# br 26
+	PTR_WORD ill		# br 27
+	PTR_WORD ill		# br 28
+	PTR_WORD ill		# br 29
+	PTR_WORD ill		# br 30
+	PTR_WORD ill		# br 31
 
 	.text
 
@@ -647,24 +839,24 @@ bctrue_l:
 
 bcemul_branch:
 	/* Fetch delay slot instruction */
-	lw	a1, CALLFRAME_SIZ + 4(sp)
+	REG_L	a1, CALLFRAME_FRAME(sp)
 	REG_PROLOGUE
 	REG_L	a0, FRAME_EPC(a1)
 	REG_EPILOGUE
-	addiu	a0, a0, 4
+	PTR_ADDU a0, 4
 	jal	_C_LABEL(fuiword)
 
 	move	a0, v0
-	lw	a1, CALLFRAME_SIZ + 4(sp)
-	lw	a2, CALLFRAME_SIZ + 8(sp)
+	REG_L	a1, CALLFRAME_FRAME(sp)
+	REG_L	a2, CALLFRAME_CAUSE(sp)
 
 	/* Update cause */
 	li	t0, MIPS_CR_BR_DELAY
 	or	a2, a2, t0
 
 	/* Free MachEmulateFP call frame */
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, CALLFRAME_SIZ
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_ADDU sp, CALLFRAME_SIZ
 
 	j	_C_LABEL(bcemul_delay_slot)
 #endif
@@ -1122,9 +1314,9 @@ div_s:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1202,9 +1394,9 @@ div_d:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1484,6 +1676,7 @@ neg_d:
 	xor	t0, t0, 1			# reverse sign
 	b	result_fs_d
 
+#ifdef MIPS3_PLUS
 /*
  * Single precision mips2 rounding.  Explicit case of cvt_w_s.
  */
@@ -1515,6 +1708,7 @@ ceil_w_d:
 floor_w_d:
 	li	v1,3
 	b	_cvt_w_d
+#endif /* MIPS3_PLUS */
 
 /*
  * Convert double to single.
@@ -1818,9 +2012,9 @@ inexact_w:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1930,9 +2124,9 @@ set_cond:
 	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -1953,9 +2147,9 @@ unordered:
 	bne	v0, zero, fpe_trap
 1:
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2070,9 +2264,9 @@ inexact_nobias_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2191,9 +2385,9 @@ underflow_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2332,11 +2526,9 @@ inexact_nobias_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
-#else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
 	b	done
 
@@ -2475,9 +2667,9 @@ underflow_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2492,9 +2684,9 @@ invalid_s:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2513,9 +2705,9 @@ invalid_d:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2535,9 +2727,9 @@ invalid_w:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2553,27 +2745,27 @@ invalid_w:					# trap invalid operation
  */
 fpe_trap:
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
-	sw	a2, CALLFRAME_SIZ + 12(sp)
-	lw	a0, CPUVAR(FPCURLWP)
+	REG_S	a2, CALLFRAME_SIZ + 3*SZREG(sp)
+	PTR_L	a0, CPUVAR(FPCURLWP)
 	jal	_C_LABEL(savefpregs)		# on RM5231
 
-	lw	a2, CALLFRAME_SIZ + 12(sp)
+	REG_L	a2, CALLFRAME_SIZ + 3*SZREG(sp)
 
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
-	lw	a1, CALLFRAME_SIZ + 4(sp)	# frame
-	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, CALLFRAME_SIZ
+	REG_L	a1, CALLFRAME_SIZ + 1*SZREG(sp)	# frame
+	REG_L	a2, CALLFRAME_SIZ + 2*SZREG(sp)	# cause
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_ADDU sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigfpe)
 
 /*
@@ -2581,16 +2773,16 @@ fpe_trap:
  */
 ill:
 #ifdef SOFTFLOAT
-	lw	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current process
 	#nop
-	sw	a2, PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	lw	a1, CALLFRAME_SIZ + 4(sp)	# frame
-	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, CALLFRAME_SIZ
+	REG_L	a1, CALLFRAME_FRAME(sp)		# frame
+	REG_L	a2, CALLFRAME_CAUSE(sp)		# cause
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_ADDU sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigill)
 
 result_ft_s:
@@ -2618,7 +2810,7 @@ done:
  * Succeeded to emulate instruction with no error
  * so compute the next PC.
  */
-	lw	t0, CALLFRAME_SIZ + 8(sp)
+	REG_L	t0, CALLFRAME_CAUSE(sp)
 	REG_PROLOGUE
 	REG_L	v0, FRAME_EPC(a1)
 	REG_EPILOGUE
@@ -2627,14 +2819,14 @@ done:
  * The instruction is in the branch delay slot so the branch will have to
  * be emulated to get the resulting PC.
  */
-	sw	a1, CALLFRAME_SIZ + 4(sp)
+	REG_S	a1, CALLFRAME_FRAME(sp)
 	move	a0, a1				# 1st arg is p. to trapframe
 	move	a1, v0				# 2nd arg is instruction PC
 						# 3rd arg is FP CSR
 	move	a3, zero			# 4th arg is FALSE
 	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
 
-	lw	a1, CALLFRAME_SIZ + 4(sp)
+	REG_L	a1, CALLFRAME_FRAME(sp)
 	b	2f
 /*
  * This is not in the branch delay slot so calculate the resulting
@@ -2647,8 +2839,8 @@ done:
 	REG_S	v0, FRAME_EPC(a1)		# save new pc
 	REG_EPILOGUE
 
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, CALLFRAME_SIZ
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_ADDU sp, CALLFRAME_SIZ
 	j	ra
 END(MachEmulateFP)
 
@@ -2666,10 +2858,10 @@ END(MachEmulateFP)
  */
 STATIC_LEAF(get_fs_int)
 #ifdef SOFTFLOAT
-	srl	t2, a0, 11-2
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t2, t2, 0x0078			# Even regs only
-	addu	t0, t0, t2
+	srl	t2, a0, 11 - FPX_SCALESHIFT
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t2, t2, FPX_REGEVENMASK		# Even regs only
+	PTR_ADDU t0, t0, t2
 
 	lw	t2, PCB_FPREGS+FRAME_FP0(t0)
 
@@ -2679,29 +2871,29 @@ STATIC_LEAF(get_fs_int)
 1:
 	j	ra
 #else
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
-	lw	a3, get_fs_int_tbl(a3)		# switch on register number
+	srl	a3, a0, 11 - (PTR_SCALESHIFT-1)	# get FS field (even regs only)
+	and	a3, a3, 0xf << PTR_SCALESHIFT	# mask FS field
+	PTR_L	a3, get_fs_int_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 get_fs_int_tbl:
-	.word	get_fs_int_f0
-	.word	get_fs_int_f2
-	.word	get_fs_int_f4
-	.word	get_fs_int_f6
-	.word	get_fs_int_f8
-	.word	get_fs_int_f10
-	.word	get_fs_int_f12
-	.word	get_fs_int_f14
-	.word	get_fs_int_f16
-	.word	get_fs_int_f18
-	.word	get_fs_int_f20
-	.word	get_fs_int_f22
-	.word	get_fs_int_f24
-	.word	get_fs_int_f26
-	.word	get_fs_int_f28
-	.word	get_fs_int_f30
+	PTR_WORD get_fs_int_f0
+	PTR_WORD get_fs_int_f2
+	PTR_WORD get_fs_int_f4
+	PTR_WORD get_fs_int_f6
+	PTR_WORD get_fs_int_f8
+	PTR_WORD get_fs_int_f10
+	PTR_WORD get_fs_int_f12
+	PTR_WORD get_fs_int_f14
+	PTR_WORD get_fs_int_f16
+	PTR_WORD get_fs_int_f18
+	PTR_WORD get_fs_int_f20
+	PTR_WORD get_fs_int_f22
+	PTR_WORD get_fs_int_f24
+	PTR_WORD get_fs_int_f26
+	PTR_WORD get_fs_int_f28
+	PTR_WORD get_fs_int_f30
 	.text
 
 get_fs_int_f0:
@@ -2779,10 +2971,10 @@ END(get_fs_int)
  */
 STATIC_LEAF(get_ft_fs_s)
 #ifdef SOFTFLOAT
-	srl	ta0, a0, 16-2
-	lw	ta1, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	ta0, ta0, 0x0078			# Even regs only
-	addu	ta1, ta1, ta0
+	srl	ta0, a0, 16 - FPX_SCALESHIFT
+	PTR_L	ta1, L_PCB(MIPS_CURLWP)	# get pcb of current process
+	andi	ta0, ta0, FPX_REGEVENMASK	# Even regs only
+	PTR_ADDU ta1, ta1, ta0
 
 	lw	ta0, PCB_FPREGS+FRAME_FP0(ta1)
 
@@ -2796,29 +2988,29 @@ STATIC_LEAF(get_ft_fs_s)
 1:
 	/* fall through to get FS */
 #else
-	srl	a3, a0, 17 - 2			# get FT field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FT field
-	lw	a3, get_ft_s_tbl(a3)		# switch on register number
+	srl	a3, a0, 16 - (PTR_SCALESHIFT - 1)# get FT field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FT field
+	PTR_L	a3, get_ft_s_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 get_ft_s_tbl:
-	.word	get_ft_s_f0
-	.word	get_ft_s_f2
-	.word	get_ft_s_f4
-	.word	get_ft_s_f6
-	.word	get_ft_s_f8
-	.word	get_ft_s_f10
-	.word	get_ft_s_f12
-	.word	get_ft_s_f14
-	.word	get_ft_s_f16
-	.word	get_ft_s_f18
-	.word	get_ft_s_f20
-	.word	get_ft_s_f22
-	.word	get_ft_s_f24
-	.word	get_ft_s_f26
-	.word	get_ft_s_f28
-	.word	get_ft_s_f30
+	PTR_WORD get_ft_s_f0
+	PTR_WORD get_ft_s_f2
+	PTR_WORD get_ft_s_f4
+	PTR_WORD get_ft_s_f6
+	PTR_WORD get_ft_s_f8
+	PTR_WORD get_ft_s_f10
+	PTR_WORD get_ft_s_f12
+	PTR_WORD get_ft_s_f14
+	PTR_WORD get_ft_s_f16
+	PTR_WORD get_ft_s_f18
+	PTR_WORD get_ft_s_f20
+	PTR_WORD get_ft_s_f22
+	PTR_WORD get_ft_s_f24
+	PTR_WORD get_ft_s_f26
+	PTR_WORD get_ft_s_f28
+	PTR_WORD get_ft_s_f30
 	.text
 
 get_ft_s_f0:
@@ -2896,10 +3088,10 @@ get_ft_s_done:
  */
 STATIC_XLEAF(get_fs_s)
 #ifdef SOFTFLOAT
-	srl	t0, a0, 11-2
-	lw	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t0, t0, 0x0078			# Even regs only
-	addu	t1, t1, t0
+	srl	t0, a0, 11 - FPX_SCALESHIFT
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t0, t0, FPX_REGEVENMASK		# Even regs only
+	PTR_ADDU t1, t1, t0
 
 	lw	t0, PCB_FPREGS+FRAME_FP0(t1)
 
@@ -2913,29 +3105,29 @@ STATIC_XLEAF(get_fs_s)
 1:
 	j	ra
 #else
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
-	lw	a3, get_fs_s_tbl(a3)		# switch on register number
+	srl	a3, a0, 11 - (PTR_SCALESHIFT-1)	# get FS field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FS field
+	PTR_L	a3, get_fs_s_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 get_fs_s_tbl:
-	.word	get_fs_s_f0
-	.word	get_fs_s_f2
-	.word	get_fs_s_f4
-	.word	get_fs_s_f6
-	.word	get_fs_s_f8
-	.word	get_fs_s_f10
-	.word	get_fs_s_f12
-	.word	get_fs_s_f14
-	.word	get_fs_s_f16
-	.word	get_fs_s_f18
-	.word	get_fs_s_f20
-	.word	get_fs_s_f22
-	.word	get_fs_s_f24
-	.word	get_fs_s_f26
-	.word	get_fs_s_f28
-	.word	get_fs_s_f30
+	PTR_WORD get_fs_s_f0
+	PTR_WORD get_fs_s_f2
+	PTR_WORD get_fs_s_f4
+	PTR_WORD get_fs_s_f6
+	PTR_WORD get_fs_s_f8
+	PTR_WORD get_fs_s_f10
+	PTR_WORD get_fs_s_f12
+	PTR_WORD get_fs_s_f14
+	PTR_WORD get_fs_s_f16
+	PTR_WORD get_fs_s_f18
+	PTR_WORD get_fs_s_f20
+	PTR_WORD get_fs_s_f22
+	PTR_WORD get_fs_s_f24
+	PTR_WORD get_fs_s_f26
+	PTR_WORD get_fs_s_f28
+	PTR_WORD get_fs_s_f30
 	.text
 
 get_fs_s_f0:
@@ -3019,17 +3211,17 @@ END(get_ft_fs_s)
  */
 STATIC_LEAF(get_ft_fs_d)
 #ifdef SOFTFLOAT
-	srl	ta3, a0, 16-2
-	lw	ta0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	ta3, ta3, 0x0078			# Even regs only
-	addu	ta0, ta0, ta3
+	srl	ta3, a0, 16 - FPX_SCALESHIFT
+	PTR_L	ta0, L_PCB(MIPS_CURLWP)	# get pcb of current process
+	andi	ta3, ta3, FPX_REGEVENMASK	# Even regs only
+	PTR_ADDU ta0, ta3
 
-	lw	ta3, PCB_FPREGS+FRAME_FP0(ta0)
-	lw	ta0, PCB_FPREGS+FRAME_FP0+4(ta0)
+	FPX_L	ta3, PCB_FPREGS+FRAME_FP0(ta0)
+	FPX_L	ta0, PCB_FPREGS+FRAME_FP0+SZFPREG(ta0)
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
-	and	ta2, ta0, 0xFFFFF			# get fraction
+	and	ta2, ta0, 0xFFFFF		# get fraction
 	srl	ta0, ta0, 31			# get sign
 	bne	ta1, DEXP_INF, 1f		# is it a signaling NAN?
 	and	v0, ta2, DSIGNAL_NAN
@@ -3037,29 +3229,29 @@ STATIC_LEAF(get_ft_fs_d)
 1:
 	/* fall through to get FS */
 #else
-	srl	a3, a0, 17 - 2			# get FT field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FT field
-	lw	a3, get_ft_d_tbl(a3)		# switch on register number
+	srl	a3, a0, 16 - (PTR_SCALESHIFT-1)	# get FT field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FT field
+	PTR_L	a3, get_ft_d_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 get_ft_d_tbl:
-	.word	get_ft_d_f0
-	.word	get_ft_d_f2
-	.word	get_ft_d_f4
-	.word	get_ft_d_f6
-	.word	get_ft_d_f8
-	.word	get_ft_d_f10
-	.word	get_ft_d_f12
-	.word	get_ft_d_f14
-	.word	get_ft_d_f16
-	.word	get_ft_d_f18
-	.word	get_ft_d_f20
-	.word	get_ft_d_f22
-	.word	get_ft_d_f24
-	.word	get_ft_d_f26
-	.word	get_ft_d_f28
-	.word	get_ft_d_f30
+	PTR_WORD get_ft_d_f0
+	PTR_WORD get_ft_d_f2
+	PTR_WORD get_ft_d_f4
+	PTR_WORD get_ft_d_f6
+	PTR_WORD get_ft_d_f8
+	PTR_WORD get_ft_d_f10
+	PTR_WORD get_ft_d_f12
+	PTR_WORD get_ft_d_f14
+	PTR_WORD get_ft_d_f16
+	PTR_WORD get_ft_d_f18
+	PTR_WORD get_ft_d_f20
+	PTR_WORD get_ft_d_f22
+	PTR_WORD get_ft_d_f24
+	PTR_WORD get_ft_d_f26
+	PTR_WORD get_ft_d_f28
+	PTR_WORD get_ft_d_f30
 	.text
 
 get_ft_d_f0:
@@ -3154,13 +3346,13 @@ get_ft_d_done:
  */
 STATIC_XLEAF(get_fs_d)
 #ifdef SOFTFLOAT
-	srl	t3, a0, 11-2
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t3, t3, 0x0078			# Even regs only
-	addu	t0, t0, t3
+	srl	t3, a0, 11 - FPX_SCALESHIFT
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t3, t3, FPX_REGEVENMASK		# Even regs only
+	PTR_ADDU t0, t3
 
-	lw	t3, PCB_FPREGS+FRAME_FP0(t0)
-	lw	t0, PCB_FPREGS+FRAME_FP0+4(t0)
+	FPX_L	t3, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	t0, PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
@@ -3172,29 +3364,29 @@ STATIC_XLEAF(get_fs_d)
 1:
 	j	ra
 #else
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
-	lw	a3, get_fs_d_tbl(a3)		# switch on register number
+	srl	a3, a0, 11 - (PTR_SCALESHIFT-1)	# get FS field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FS field
+	PTR_L	a3, get_fs_d_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 get_fs_d_tbl:
-	.word	get_fs_d_f0
-	.word	get_fs_d_f2
-	.word	get_fs_d_f4
-	.word	get_fs_d_f6
-	.word	get_fs_d_f8
-	.word	get_fs_d_f10
-	.word	get_fs_d_f12
-	.word	get_fs_d_f14
-	.word	get_fs_d_f16
-	.word	get_fs_d_f18
-	.word	get_fs_d_f20
-	.word	get_fs_d_f22
-	.word	get_fs_d_f24
-	.word	get_fs_d_f26
-	.word	get_fs_d_f28
-	.word	get_fs_d_f30
+	PTR_WORD get_fs_d_f0
+	PTR_WORD get_fs_d_f2
+	PTR_WORD get_fs_d_f4
+	PTR_WORD get_fs_d_f6
+	PTR_WORD get_fs_d_f8
+	PTR_WORD get_fs_d_f10
+	PTR_WORD get_fs_d_f12
+	PTR_WORD get_fs_d_f14
+	PTR_WORD get_fs_d_f16
+	PTR_WORD get_fs_d_f18
+	PTR_WORD get_fs_d_f20
+	PTR_WORD get_fs_d_f22
+	PTR_WORD get_fs_d_f24
+	PTR_WORD get_fs_d_f26
+	PTR_WORD get_fs_d_f28
+	PTR_WORD get_fs_d_f30
 	.text
 
 get_fs_d_f0:
@@ -3292,10 +3484,10 @@ END(get_ft_fs_d)
  */
 STATIC_LEAF(get_cmp_s)
 #ifdef SOFTFLOAT
-	srl	t1, a0, 11-2
-	lw	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x0078			# Even regs only
-	addu	t0, ta2, t1
+	srl	t1, a0, 11 - FPX_SCALESHIFT
+	PTR_L	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
+	PTR_ADDU t0, ta2, t1
 
 	lw	t0, PCB_FPREGS+FRAME_FP0(t0)
 
@@ -3304,9 +3496,9 @@ STATIC_LEAF(get_cmp_s)
 	and	t2, t0, 0x7FFFFF		# get fraction
 	srl	t0, t0, 31			# get sign
 
-	srl	ta0, a0, 16-2
-	andi	ta0, ta0, 0x0078			# Even regs only
-	addu	ta2, ta2, ta0
+	srl	ta0, a0, 16 - FPX_SCALESHIFT
+	andi	ta0, ta0, FPX_REGEVENMASK			# Even regs only
+	PTR_ADDU ta2, ta0
 
 	lw	ta0, PCB_FPREGS+FRAME_FP0(ta2)
 
@@ -3316,29 +3508,29 @@ STATIC_LEAF(get_cmp_s)
 	srl	ta0, ta0, 31			# get sign
 	j	ra
 #else
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
-	lw	a3, cmp_fs_s_tbl(a3)		# switch on register number
+	srl	a3, a0, 11 - (PTR_SCALESHIFT-1)	# get FS field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FS field
+	PTR_L	a3, cmp_fs_s_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 cmp_fs_s_tbl:
-	.word	cmp_fs_s_f0
-	.word	cmp_fs_s_f2
-	.word	cmp_fs_s_f4
-	.word	cmp_fs_s_f6
-	.word	cmp_fs_s_f8
-	.word	cmp_fs_s_f10
-	.word	cmp_fs_s_f12
-	.word	cmp_fs_s_f14
-	.word	cmp_fs_s_f16
-	.word	cmp_fs_s_f18
-	.word	cmp_fs_s_f20
-	.word	cmp_fs_s_f22
-	.word	cmp_fs_s_f24
-	.word	cmp_fs_s_f26
-	.word	cmp_fs_s_f28
-	.word	cmp_fs_s_f30
+	PTR_WORD cmp_fs_s_f0
+	PTR_WORD cmp_fs_s_f2
+	PTR_WORD cmp_fs_s_f4
+	PTR_WORD cmp_fs_s_f6
+	PTR_WORD cmp_fs_s_f8
+	PTR_WORD cmp_fs_s_f10
+	PTR_WORD cmp_fs_s_f12
+	PTR_WORD cmp_fs_s_f14
+	PTR_WORD cmp_fs_s_f16
+	PTR_WORD cmp_fs_s_f18
+	PTR_WORD cmp_fs_s_f20
+	PTR_WORD cmp_fs_s_f22
+	PTR_WORD cmp_fs_s_f24
+	PTR_WORD cmp_fs_s_f26
+	PTR_WORD cmp_fs_s_f28
+	PTR_WORD cmp_fs_s_f30
 	.text
 
 cmp_fs_s_f0:
@@ -3394,29 +3586,29 @@ cmp_fs_s_done:
 	and	t2, t0, 0x7FFFFF		# get fraction
 	srl	t0, t0, 31			# get sign
 
-	srl	a3, a0, 17 - 2			# get FT field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FT field
-	lw	a3, cmp_ft_s_tbl(a3)		# switch on register number
+	srl	a3, a0, 17 - PTR_SCALESHIFT			# get FT field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT		# mask FT field
+	PTR_L	a3, cmp_ft_s_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 cmp_ft_s_tbl:
-	.word	cmp_ft_s_f0
-	.word	cmp_ft_s_f2
-	.word	cmp_ft_s_f4
-	.word	cmp_ft_s_f6
-	.word	cmp_ft_s_f8
-	.word	cmp_ft_s_f10
-	.word	cmp_ft_s_f12
-	.word	cmp_ft_s_f14
-	.word	cmp_ft_s_f16
-	.word	cmp_ft_s_f18
-	.word	cmp_ft_s_f20
-	.word	cmp_ft_s_f22
-	.word	cmp_ft_s_f24
-	.word	cmp_ft_s_f26
-	.word	cmp_ft_s_f28
-	.word	cmp_ft_s_f30
+	PTR_WORD cmp_ft_s_f0
+	PTR_WORD cmp_ft_s_f2
+	PTR_WORD cmp_ft_s_f4
+	PTR_WORD cmp_ft_s_f6
+	PTR_WORD cmp_ft_s_f8
+	PTR_WORD cmp_ft_s_f10
+	PTR_WORD cmp_ft_s_f12
+	PTR_WORD cmp_ft_s_f14
+	PTR_WORD cmp_ft_s_f16
+	PTR_WORD cmp_ft_s_f18
+	PTR_WORD cmp_ft_s_f20
+	PTR_WORD cmp_ft_s_f22
+	PTR_WORD cmp_ft_s_f24
+	PTR_WORD cmp_ft_s_f26
+	PTR_WORD cmp_ft_s_f28
+	PTR_WORD cmp_ft_s_f30
 	.text
 
 cmp_ft_s_f0:
@@ -3496,25 +3688,25 @@ END(get_cmp_s)
  */
 STATIC_LEAF(get_cmp_d)
 #ifdef SOFTFLOAT
-	srl	t1, a0, 11-2
-	lw	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x0078			# Even regs only
-	addu	t0, ta2, t1
+	srl	t1, a0, 11-FPX_SCALESHIFT
+	PTR_L	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
+	PTR_ADDU t0, ta2, t1
 
-	lw	t3, PCB_FPREGS+FRAME_FP0(t0)
-	lw	t0, PCB_FPREGS+FRAME_FP0+4(t0)
+	FPX_L	t3, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	t0, PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
 	and	t2, t0, 0xFFFFF			# get fraction
 	srl	t0, t0, 31			# get sign
 
-	srl	ta0, a0, 16-2
-	andi	ta0, ta0, 0x0078			# Even regs only
-	addu	ta2, ta2, ta0
+	srl	ta0, a0, 16 - FPX_SCALESHIFT
+	andi	ta0, ta0, FPX_REGEVENMASK		# Even regs only
+	PTR_ADDU ta2, ta2, ta0
 
-	lw	ta3, PCB_FPREGS+FRAME_FP0(ta2)
-	lw	ta0, PCB_FPREGS+FRAME_FP0+4(ta2)
+	FPX_L	ta3, PCB_FPREGS+FRAME_FP0(ta2)
+	FPX_L	ta0, PCB_FPREGS+FRAME_FP0+SZFPREG(ta2)
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
@@ -3522,29 +3714,29 @@ STATIC_LEAF(get_cmp_d)
 	srl	ta0, ta0, 31			# get sign
 	j	ra
 #else
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
-	lw	a3, cmp_fs_d_tbl(a3)		# switch on register number
+	srl	a3, a0, 12 - PTR_SCALESHIFT	# get FS field
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FS field (even regs only)
+	PTR_L	a3, cmp_fs_d_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 cmp_fs_d_tbl:
-	.word	cmp_fs_d_f0
-	.word	cmp_fs_d_f2
-	.word	cmp_fs_d_f4
-	.word	cmp_fs_d_f6
-	.word	cmp_fs_d_f8
-	.word	cmp_fs_d_f10
-	.word	cmp_fs_d_f12
-	.word	cmp_fs_d_f14
-	.word	cmp_fs_d_f16
-	.word	cmp_fs_d_f18
-	.word	cmp_fs_d_f20
-	.word	cmp_fs_d_f22
-	.word	cmp_fs_d_f24
-	.word	cmp_fs_d_f26
-	.word	cmp_fs_d_f28
-	.word	cmp_fs_d_f30
+	PTR_WORD cmp_fs_d_f0
+	PTR_WORD cmp_fs_d_f2
+	PTR_WORD cmp_fs_d_f4
+	PTR_WORD cmp_fs_d_f6
+	PTR_WORD cmp_fs_d_f8
+	PTR_WORD cmp_fs_d_f10
+	PTR_WORD cmp_fs_d_f12
+	PTR_WORD cmp_fs_d_f14
+	PTR_WORD cmp_fs_d_f16
+	PTR_WORD cmp_fs_d_f18
+	PTR_WORD cmp_fs_d_f20
+	PTR_WORD cmp_fs_d_f22
+	PTR_WORD cmp_fs_d_f24
+	PTR_WORD cmp_fs_d_f26
+	PTR_WORD cmp_fs_d_f28
+	PTR_WORD cmp_fs_d_f30
 	.text
 
 cmp_fs_d_f0:
@@ -3616,29 +3808,29 @@ cmp_fs_d_done:
 	and	t2, t0, 0xFFFFF			# get fraction
 	srl	t0, t0, 31			# get sign
 
-	srl	a3, a0, 17 - 2			# get FT field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FT field
-	lw	a3, cmp_ft_d_tbl(a3)		# switch on register number
+	srl	a3, a0, 17 - PTR_SCALESHIFT	# get FT field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FT field
+	PTR_L	a3, cmp_ft_d_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 cmp_ft_d_tbl:
-	.word	cmp_ft_d_f0
-	.word	cmp_ft_d_f2
-	.word	cmp_ft_d_f4
-	.word	cmp_ft_d_f6
-	.word	cmp_ft_d_f8
-	.word	cmp_ft_d_f10
-	.word	cmp_ft_d_f12
-	.word	cmp_ft_d_f14
-	.word	cmp_ft_d_f16
-	.word	cmp_ft_d_f18
-	.word	cmp_ft_d_f20
-	.word	cmp_ft_d_f22
-	.word	cmp_ft_d_f24
-	.word	cmp_ft_d_f26
-	.word	cmp_ft_d_f28
-	.word	cmp_ft_d_f30
+	PTR_WORD cmp_ft_d_f0
+	PTR_WORD cmp_ft_d_f2
+	PTR_WORD cmp_ft_d_f4
+	PTR_WORD cmp_ft_d_f6
+	PTR_WORD cmp_ft_d_f8
+	PTR_WORD cmp_ft_d_f10
+	PTR_WORD cmp_ft_d_f12
+	PTR_WORD cmp_ft_d_f14
+	PTR_WORD cmp_ft_d_f16
+	PTR_WORD cmp_ft_d_f18
+	PTR_WORD cmp_ft_d_f20
+	PTR_WORD cmp_ft_d_f22
+	PTR_WORD cmp_ft_d_f24
+	PTR_WORD cmp_ft_d_f26
+	PTR_WORD cmp_ft_d_f28
+	PTR_WORD cmp_ft_d_f30
 	.text
 
 cmp_ft_d_f0:
@@ -3743,37 +3935,37 @@ STATIC_LEAF(set_fd_s)
 	or	t2, t2, t1
 STATIC_XLEAF(set_fd_word)
 #ifdef SOFTFLOAT
-	srl	t1, a0, 6-2
-	lw	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x0078			# Even regs only
-	addu	t0, t0, t1
+	srl	t1, a0, 6 - FPX_SCALESHIFT
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGEVENMASK		# Even regs only
+	PTR_ADDU t0, t0, t1
 
-	sw	t2, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_S	t2, PCB_FPREGS+FRAME_FP0(t0)
 	j	ra
 #else
-	srl	a3, a0, 7 - 2			# get FD field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FT field
-	lw	a3, set_fd_s_tbl(a3)		# switch on register number
+	srl	a3, a0, 6 + 1 - PTR_SCALESHIFT	# get FD field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FT field
+	PTR_L	a3, set_fd_s_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 set_fd_s_tbl:
-	.word	set_fd_s_f0
-	.word	set_fd_s_f2
-	.word	set_fd_s_f4
-	.word	set_fd_s_f6
-	.word	set_fd_s_f8
-	.word	set_fd_s_f10
-	.word	set_fd_s_f12
-	.word	set_fd_s_f14
-	.word	set_fd_s_f16
-	.word	set_fd_s_f18
-	.word	set_fd_s_f20
-	.word	set_fd_s_f22
-	.word	set_fd_s_f24
-	.word	set_fd_s_f26
-	.word	set_fd_s_f28
-	.word	set_fd_s_f30
+	PTR_WORD set_fd_s_f0
+	PTR_WORD set_fd_s_f2
+	PTR_WORD set_fd_s_f4
+	PTR_WORD set_fd_s_f6
+	PTR_WORD set_fd_s_f8
+	PTR_WORD set_fd_s_f10
+	PTR_WORD set_fd_s_f12
+	PTR_WORD set_fd_s_f14
+	PTR_WORD set_fd_s_f16
+	PTR_WORD set_fd_s_f18
+	PTR_WORD set_fd_s_f20
+	PTR_WORD set_fd_s_f22
+	PTR_WORD set_fd_s_f24
+	PTR_WORD set_fd_s_f26
+	PTR_WORD set_fd_s_f28
+	PTR_WORD set_fd_s_f30
 	.text
 
 set_fd_s_f0:
@@ -3849,42 +4041,42 @@ STATIC_LEAF(set_fd_d)
 	or	t0, t0, t1
 	or	t0, t0, t2			# set fraction
 
-	srl	t1, a0, 6-2
-	lw	t2, L_PCB(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1, 0x0078			# Even regs only
-	addu	t2, t2, t1
+	srl	t1, a0, 6-FPX_SCALESHIFT
+	PTR_L	t2, L_PCB(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, FPX_REGEVENMASK
+	PTR_ADDU t2, t2, t1
 
-	sw	t3, PCB_FPREGS+FRAME_FP0(t2)
-	sw	t0, PCB_FPREGS+FRAME_FP0+4(t2)
+	FPX_S	t3, PCB_FPREGS+FRAME_FP0(t2)
+	FPX_S	t0, PCB_FPREGS+FRAME_FP0+4(t2)
 	j	ra
 #else
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
 	or	t0, t0, t1
 	or	t0, t0, t2			# set fraction
-	srl	a3, a0, 7 - 2			# get FD field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FD field
-	lw	a3, set_fd_d_tbl(a3)		# switch on register number
+	srl	a3, a0, 7 - PTR_SCALESHIFT	# get FD field (even regs only)
+	and	a3, a3, 0xF << PTR_SCALESHIFT	# mask FD field
+	PTR_L	a3, set_fd_d_tbl(a3)		# switch on register number
 	j	a3
 
 	.rdata
 set_fd_d_tbl:
-	.word	set_fd_d_f0
-	.word	set_fd_d_f2
-	.word	set_fd_d_f4
-	.word	set_fd_d_f6
-	.word	set_fd_d_f8
-	.word	set_fd_d_f10
-	.word	set_fd_d_f12
-	.word	set_fd_d_f14
-	.word	set_fd_d_f16
-	.word	set_fd_d_f18
-	.word	set_fd_d_f20
-	.word	set_fd_d_f22
-	.word	set_fd_d_f24
-	.word	set_fd_d_f26
-	.word	set_fd_d_f28
-	.word	set_fd_d_f30
+	PTR_WORD set_fd_d_f0
+	PTR_WORD set_fd_d_f2
+	PTR_WORD set_fd_d_f4
+	PTR_WORD set_fd_d_f6
+	PTR_WORD set_fd_d_f8
+	PTR_WORD set_fd_d_f10
+	PTR_WORD set_fd_d_f12
+	PTR_WORD set_fd_d_f14
+	PTR_WORD set_fd_d_f16
+	PTR_WORD set_fd_d_f18
+	PTR_WORD set_fd_d_f20
+	PTR_WORD set_fd_d_f22
+	PTR_WORD set_fd_d_f24
+	PTR_WORD set_fd_d_f26
+	PTR_WORD set_fd_d_f28
+	PTR_WORD set_fd_d_f30
 	.text
 
 set_fd_d_f0:
@@ -4195,166 +4387,166 @@ END(renorm_ft_d)
  */
 STATIC_LEAF(bcemul_delay_slot)
 	REG_PROLOGUE
-	REG_S	zero, FRAME_ZERO(a1)		# ensure zero has value 0
+	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
 	REG_EPILOGUE
 
-	srl	t0, a0, 26-2
-	andi	t0, t0, 0x00FC
-	lw	t0, bcemul_optbl(t0)
+	srl	t0, a0, 26-PTR_SCALESHIFT
+	andi	t0, t0, 0x3F << PTR_SCALESHIFT
+	PTR_L	t0, bcemul_optbl(t0)
 	j	t0
 
 bcemul_special:
-	sll	t0, a0, 2
-	andi	t0, t0, 0x00FC
-	lw	t0, bcemul_specialtbl(t0)
+	sll	t0, a0, PTR_SCALESHIFT
+	andi	t0, t0, 0x3F << PTR_SCALESHIFT
+	PTR_L	t0, bcemul_specialtbl(t0)
 	j	t0
 
 	.rdata
 bcemul_optbl:
-	.word	bcemul_special		# 0
-	.word	_C_LABEL(bcemul_sigill)	# 1
-	.word	_C_LABEL(bcemul_sigill)	# 2
-	.word	_C_LABEL(bcemul_sigill)	# 3
-	.word	_C_LABEL(bcemul_sigill)	# 4
-	.word	_C_LABEL(bcemul_sigill)	# 5
-	.word	_C_LABEL(bcemul_sigill)	# 6
-	.word	_C_LABEL(bcemul_sigill)	# 7
-	.word	bcemul_addi		# 8
-	.word	bcemul_addiu		# 9
-	.word	bcemul_slti		# 10
-	.word	bcemul_sltiu		# 11
-	.word	bcemul_andi		# 12
-	.word	bcemul_ori		# 13
-	.word	bcemul_xori		# 14
-	.word	bcemul_lui		# 15
-	.word	_C_LABEL(bcemul_sigill)	# 16
-	.word	_C_LABEL(MachEmulateFP)	# 17
-	.word	_C_LABEL(bcemul_sigill)	# 18
-	.word	_C_LABEL(bcemul_sigill)	# 19
-	.word	_C_LABEL(bcemul_sigill)	# 20
-	.word	_C_LABEL(bcemul_sigill)	# 21
-	.word	_C_LABEL(bcemul_sigill)	# 22
-	.word	_C_LABEL(bcemul_sigill)	# 23
-	.word	_C_LABEL(bcemul_sigill)	# 24
-	.word	_C_LABEL(bcemul_sigill)	# 25
-	.word	_C_LABEL(bcemul_sigill)	# 26
-	.word	_C_LABEL(bcemul_sigill)	# 27
-	.word	_C_LABEL(bcemul_sigill)	# 28
-	.word	_C_LABEL(bcemul_sigill)	# 29
-	.word	_C_LABEL(bcemul_sigill)	# 30
-	.word	_C_LABEL(bcemul_sigill)	# 31
-	.word	_C_LABEL(bcemul_lb)	# 32
-	.word	_C_LABEL(bcemul_lh)	# 33
-	.word	_C_LABEL(bcemul_lwl)	# 34
-	.word	_C_LABEL(bcemul_lw)	# 35
-	.word	_C_LABEL(bcemul_lbu)	# 36
-	.word	_C_LABEL(bcemul_lhu)	# 37
-	.word	_C_LABEL(bcemul_lwr)	# 38
-	.word	_C_LABEL(bcemul_sigill)	# 39
-	.word	_C_LABEL(bcemul_sb)	# 40
-	.word	_C_LABEL(bcemul_sh)	# 41
-	.word	_C_LABEL(bcemul_swl)	# 42
-	.word	_C_LABEL(bcemul_sw)	# 43
-	.word	_C_LABEL(bcemul_sigill)	# 44
-	.word	_C_LABEL(bcemul_sigill)	# 45
-	.word	_C_LABEL(bcemul_swr)	# 46
-	.word	_C_LABEL(bcemul_sigill)	# 47
-	.word	_C_LABEL(bcemul_sigill)	# 48
-	.word	_C_LABEL(MachEmulateLWC1) # 49
-	.word	_C_LABEL(bcemul_sigill)	# 50
-	.word	_C_LABEL(bcemul_sigill)	# 51
-	.word	_C_LABEL(bcemul_sigill)	# 52
-	.word	_C_LABEL(MachEmulateLDC1) # 53
-	.word	_C_LABEL(bcemul_sigill)	# 54
-	.word	_C_LABEL(bcemul_sigill)	# 55
-	.word	_C_LABEL(bcemul_sigill)	# 56
-	.word	_C_LABEL(MachEmulateSWC1) # 57
-	.word	_C_LABEL(bcemul_sigill)	# 58
-	.word	_C_LABEL(bcemul_sigill)	# 59
-	.word	_C_LABEL(bcemul_sigill)	# 60
-	.word	_C_LABEL(MachEmulateSDC1) # 61
-	.word	_C_LABEL(bcemul_sigill)	# 62
-	.word	_C_LABEL(bcemul_sigill)	# 63
+	PTR_WORD bcemul_special			# 0
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 1
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 2
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 3
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 4
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 5
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 6
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 7
+	PTR_WORD bcemul_addi			# 8
+	PTR_WORD bcemul_addiu			# 9
+	PTR_WORD bcemul_slti			# 10
+	PTR_WORD bcemul_sltiu			# 11
+	PTR_WORD bcemul_andi			# 12
+	PTR_WORD bcemul_ori			# 13
+	PTR_WORD bcemul_xori			# 14
+	PTR_WORD bcemul_lui			# 15
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 16
+	PTR_WORD _C_LABEL(MachEmulateFP)	# 17
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 18
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 19 /* COP1X */
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 20
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 21
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 22
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 23
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 24 DADDI
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 25 DADDIU
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 26
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 27
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 28
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 29
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 30
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 31
+	PTR_WORD _C_LABEL(bcemul_lb)		# 32
+	PTR_WORD _C_LABEL(bcemul_lh)		# 33
+	PTR_WORD _C_LABEL(bcemul_lwl)		# 34
+	PTR_WORD _C_LABEL(bcemul_lw)		# 35
+	PTR_WORD _C_LABEL(bcemul_lbu)		# 36
+	PTR_WORD _C_LABEL(bcemul_lhu)		# 37
+	PTR_WORD _C_LABEL(bcemul_lwr)		# 38
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 39
+	PTR_WORD _C_LABEL(bcemul_sb)		# 40
+	PTR_WORD _C_LABEL(bcemul_sh)		# 41
+	PTR_WORD _C_LABEL(bcemul_swl)		# 42
+	PTR_WORD _C_LABEL(bcemul_sw)		# 43
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 44
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 45
+	PTR_WORD _C_LABEL(bcemul_swr)		# 46 SWR
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 47
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 48
+	PTR_WORD _C_LABEL(MachEmulateLWC1)	# 49
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 50
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 51
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 52
+	PTR_WORD _C_LABEL(MachEmulateLDC1)	# 53
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 54
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 55 LD
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 56
+	PTR_WORD _C_LABEL(MachEmulateSWC1)	# 57
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 58
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 59
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 60
+	PTR_WORD _C_LABEL(MachEmulateSDC1)	# 61
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 62
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 63 SD
 
 bcemul_specialtbl:
-	.word	bcemul_sll		# 0
-	.word	_C_LABEL(bcemul_sigill)	# 1
-	.word	bcemul_srl		# 2
-	.word	bcemul_sra		# 3
-	.word	bcemul_sllv		# 4
-	.word	_C_LABEL(bcemul_sigill)	# 5
-	.word	bcemul_srlv		# 6
-	.word	bcemul_srav		# 7
-	.word	_C_LABEL(bcemul_sigill)	# 8
-	.word	_C_LABEL(bcemul_sigill)	# 9
-	.word	_C_LABEL(bcemul_sigill)	# 10
-	.word	_C_LABEL(bcemul_sigill)	# 11
-	.word	_C_LABEL(bcemul_sigill)	# 12
-	.word	_C_LABEL(bcemul_sigill)	# 13
-	.word	_C_LABEL(bcemul_sigill)	# 14
-	.word	bcemul_sync		# 15
-	.word	bcemul_mfhi		# 16
-	.word	bcemul_mthi		# 17
-	.word	bcemul_mflo		# 18
-	.word	bcemul_mtlo		# 19
-	.word	_C_LABEL(bcemul_sigill)	# 20
-	.word	_C_LABEL(bcemul_sigill)	# 21
-	.word	_C_LABEL(bcemul_sigill)	# 22
-	.word	_C_LABEL(bcemul_sigill)	# 23
-	.word	bcemul_mult		# 24
-	.word	bcemul_multu		# 25
-	.word	bcemul_div		# 26
-	.word	bcemul_divu		# 27
-	.word	_C_LABEL(bcemul_sigill)	# 28
-	.word	_C_LABEL(bcemul_sigill)	# 29
-	.word	_C_LABEL(bcemul_sigill)	# 30
-	.word	_C_LABEL(bcemul_sigill)	# 31
-	.word	bcemul_add		# 32
-	.word	bcemul_addu		# 33
-	.word	bcemul_sub		# 34
-	.word	bcemul_subu		# 35
-	.word	bcemul_and		# 36
-	.word	bcemul_or		# 37
-	.word	bcemul_xor		# 38
-	.word	bcemul_nor		# 39
-	.word	_C_LABEL(bcemul_sigill)	# 40
-	.word	_C_LABEL(bcemul_sigill)	# 41
-	.word	bcemul_slt		# 42
-	.word	bcemul_sltu		# 43
-	.word	_C_LABEL(bcemul_sigill)	# 44
-	.word	_C_LABEL(bcemul_sigill)	# 45
-	.word	_C_LABEL(bcemul_sigill)	# 46
-	.word	_C_LABEL(bcemul_sigill)	# 47
-	.word	_C_LABEL(bcemul_sigill)	# 48
-	.word	_C_LABEL(bcemul_sigill)	# 49
-	.word	_C_LABEL(bcemul_sigill)	# 50
-	.word	_C_LABEL(bcemul_sigill)	# 51
-	.word	_C_LABEL(bcemul_sigill)	# 52
-	.word	_C_LABEL(bcemul_sigill)	# 53
-	.word	_C_LABEL(bcemul_sigill)	# 54
-	.word	_C_LABEL(bcemul_sigill)	# 55
-	.word	_C_LABEL(bcemul_sigill)	# 56
-	.word	_C_LABEL(bcemul_sigill)	# 57
-	.word	_C_LABEL(bcemul_sigill)	# 58
-	.word	_C_LABEL(bcemul_sigill)	# 59
-	.word	_C_LABEL(bcemul_sigill)	# 60
-	.word	_C_LABEL(bcemul_sigill)	# 61
-	.word	_C_LABEL(bcemul_sigill)	# 62
-	.word	_C_LABEL(bcemul_sigill)	# 63
+	PTR_WORD bcemul_sll		# 0
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 1
+	PTR_WORD bcemul_srl		# 2
+	PTR_WORD bcemul_sra		# 3
+	PTR_WORD bcemul_sllv		# 4
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 5
+	PTR_WORD bcemul_srlv		# 6
+	PTR_WORD bcemul_srav		# 7
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 8
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 9
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 10
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 11
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 12
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 13
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 14
+	PTR_WORD bcemul_sync		# 15
+	PTR_WORD bcemul_mfhi		# 16
+	PTR_WORD bcemul_mthi		# 17
+	PTR_WORD bcemul_mflo		# 18
+	PTR_WORD bcemul_mtlo		# 19
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 20
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 21
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 22
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 23
+	PTR_WORD bcemul_mult		# 24
+	PTR_WORD bcemul_multu		# 25
+	PTR_WORD bcemul_div		# 26
+	PTR_WORD bcemul_divu		# 27
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 28
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 29
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 30
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 31
+	PTR_WORD bcemul_add		# 32
+	PTR_WORD bcemul_addu		# 33
+	PTR_WORD bcemul_sub		# 34
+	PTR_WORD bcemul_subu		# 35
+	PTR_WORD bcemul_and		# 36
+	PTR_WORD bcemul_or		# 37
+	PTR_WORD bcemul_xor		# 38
+	PTR_WORD bcemul_nor		# 39
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 40
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 41
+	PTR_WORD bcemul_slt		# 42
+	PTR_WORD bcemul_sltu		# 43
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 44
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 45
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 46
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 47
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 48
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 49
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 50
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 51
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 52
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 53
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 54
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 55
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 56
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 57
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 58
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 59
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 60
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 61
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 62
+	PTR_WORD _C_LABEL(bcemul_sigill)	# 63
 
 	.text
 
 bcemul_addi:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 	addu	t0, v0, t2
 
@@ -4371,212 +4563,212 @@ bcemul_addi:
 
 addiok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_ZERO(t1)
+	REG_S	t0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_addiu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	addu	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_slti:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	slt	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sltiu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	sltu	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_andi:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	and	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_ori:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	or	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_xori:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	xor	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_lui:
-	srl	t0, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	addu	t0, a1, t0
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, a1, t0
 	sll	v0, a0, 16
 	REG_PROLOGUE
-	REG_S	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sll:
-	srl	t0, a0, 16-SZREG_SHFT	# rt
-	srl	t1, a0, 11-SZREG_SHFT	# rd
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt
+	srl	t1, a0, 11-REG_SCALESHIFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
 	andi	t2, t2, 0x001F
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	sllv	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srl:
-	srl	t0, a0, 16-SZREG_SHFT	# rt
-	srl	t1, a0, 11-SZREG_SHFT	# rd
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt
+	srl	t1, a0, 11-REG_SCALESHIFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
 	andi	t2, t2, 0x001F
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	srlv	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sra:
-	srl	t0, a0, 16-SZREG_SHFT	# rt
-	srl	t1, a0, 11-SZREG_SHFT	# rd
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt
+	srl	t1, a0, 11-REG_SCALESHIFT	# rd
 	srl	t2, a0, 6		# sa
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
 	andi	t2, t2, 0x001F
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	srav	v0, v0, t2
-	REG_S	v0, FRAME_ZERO(t1)
+	REG_S	v0, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sllv:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	sllv	v0, v1, v0
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srlv:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	srlv	v0, v1, v0
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_srav:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	srav	v0, v1, v0
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4584,55 +4776,55 @@ bcemul_sync:
 	b	bcemul_done
 
 bcemul_mfhi:
-	srl	t0, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	addu	t0, a1, t0
+	srl	t0, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
 	REG_L	v0, FRAME_MULHI(a1)
-	REG_S	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mthi:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	andi	t0, t0, SZREG_MASK
-	addu	t0, a1, t0
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	REG_S	v0, FRAME_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mflo:
-	srl	t0, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	addu	t0, a1, t0
+	srl	t0, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
 	REG_L	v0, FRAME_MULLO(a1)
-	REG_S	v0, FRAME_ZERO(t0)
+	REG_S	v0, FRAME_RZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mtlo:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	andi	t0, t0, SZREG_MASK
-	addu	t0, a1, t0
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
+	REG_L	v0, FRAME_RZERO(t0)
 	REG_S	v0, FRAME_MULLO(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_mult:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	mult	v0, v1
 	mflo	v0
@@ -4644,15 +4836,15 @@ bcemul_mult:
 	b	bcemul_done
 
 bcemul_multu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	multu	v0, v1
 	mflo	v0
@@ -4664,15 +4856,15 @@ bcemul_multu:
 	b	bcemul_done
 
 bcemul_div:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	div	v0, v1
 	mflo	v0
@@ -4684,15 +4876,15 @@ bcemul_div:
 	b	bcemul_done
 
 bcemul_divu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	divu	v0, v1
 	mflo	v0
@@ -4704,18 +4896,18 @@ bcemul_divu:
 	b	bcemul_done
 
 bcemul_add:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	addu	t0, v0, v1
 
@@ -4732,41 +4924,41 @@ bcemul_add:
 
 addok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_ZERO(t2)
+	REG_S	t0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_addu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	addu	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sub:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	REG_EPILOGUE
 	subu	t0, v0, v1
 
@@ -4783,135 +4975,134 @@ bcemul_sub:
 
 subok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_ZERO(t2)
+	REG_S	t0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_subu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	subu	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_and:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	and	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_or:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	or	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_xor:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	xor	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_nor:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	nor	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_slt:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	slt	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
 bcemul_sltu:
-	srl	t0, a0, 21-SZREG_SHFT	# rs
-	srl	t1, a0, 16-SZREG_SHFT	# rt
-	srl	t2, a0, 11-SZREG_SHFT	# rd
-	andi	t0, t0, SZREG_MASK
-	andi	t1, t1, SZREG_MASK
-	andi	t2, t2, SZREG_MASK
-	addu	t0, a1, t0
-	addu	t1, a1, t1
-	addu	t2, a1, t2
+	srl	t0, a0, 21-REG_SCALESHIFT	# rs
+	srl	t1, a0, 16-REG_SCALESHIFT	# rt
+	srl	t2, a0, 11-REG_SCALESHIFT	# rd
+	andi	t0, t0, REG_REGMASK
+	andi	t1, t1, REG_REGMASK
+	andi	t2, t2, REG_REGMASK
+	PTR_ADDU t0, a1, t0
+	PTR_ADDU t1, a1, t1
+	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_ZERO(t0)
-	REG_L	v1, FRAME_ZERO(t1)
+	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v1, FRAME_RZERO(t1)
 	sltu	v0, v0, v1
-	REG_S	v0, FRAME_ZERO(t2)
+	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
-	sw	v0, FRAME_ZERO(t2)
 #	b	bcemul_done		# fall through to bcemul_done
 
 bcemul_done:
@@ -4919,9 +5110,9 @@ bcemul_done:
  * Succeeded to emulate instruction with no error
  * so compute the next PC.
  */
-	subu	sp, sp, CALLFRAME_SIZ
-	sw	ra, CALLFRAME_RA(sp)
-	sw	a1, CALLFRAME_SIZ + 4(sp)
+	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	ra, CALLFRAME_RA(sp)
+	REG_S	a1, CALLFRAME_FRAME(sp)
 
 	/* Fetch previous branch instruction */
 	REG_PROLOGUE
@@ -4929,20 +5120,20 @@ bcemul_done:
 	REG_EPILOGUE
 	jal	_C_LABEL(fuiword)
 
-	lw	a1, CALLFRAME_SIZ + 4(sp)
+	REG_L	a1, CALLFRAME_FRAME(sp)
 
 	/* Calculate branch destination */
 	sll	t0, v0, 16
 	sra	t0, t0, 16-2
 	REG_PROLOGUE
 	REG_L	t1, FRAME_EPC(a1)
-	addiu	t0, t0, 4
-	addu	t1, t1, t0
+	PTR_ADDU t0, t0, 4
+	PTR_ADDU t1, t0
 	REG_S	t1, FRAME_EPC(a1)
 	REG_EPILOGUE
 
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, CALLFRAME_SIZ
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_ADDU sp, CALLFRAME_SIZ
 	j	ra
 
 END(bcemul_delay_slot)

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.28 2008/06/21 00:56:39 gmcgarry Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.29 2009/12/14 00:46:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,10 +62,10 @@ typedef _BSD_VA_LIST_	va_list;
 
 #else
 
-#if defined(_MIPS_BSD_API) && \
-    !((_MIPS_BSD_API == _MIPS_BSD_API_LP32) || \
-      (_MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN))
-#error stdargs.h does not work with 64 bit ABIs
+#if defined(__mips_n32)
+#error stdarg.h does not work with the N32 ABI with this compiler
+#elif defined(__mips_n64)
+#error stdarg.h does not work with the N64 ABI with this compiler
 #endif
 
 #define	va_start(ap, last) \
