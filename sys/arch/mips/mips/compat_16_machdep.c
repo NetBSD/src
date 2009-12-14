@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.15 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.16 2009/12/14 12:53:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2009/12/14 00:46:05 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2009/12/14 12:53:18 uebayasi Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -125,7 +125,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	memcpy(&ksc.sc_regs[1], &f->f_regs[1],
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 #else
-	for (size_t i = 1; i < 32; i++)
+	size_t i;
+	for (i = 1; i < 32; i++)
 		ksc.sc_regs[i] = f->f_regs[i];
 #endif
 
@@ -272,7 +273,8 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 
 #else
-	for (size_t i = 1; i < __arraycount(f->f_regs); i++)
+	size_t i;
+	for (i = 1; i < __arraycount(f->f_regs); i++)
 		f->f_regs[i] = ksc.sc_regs[i];
 #endif
 #ifndef	SOFTFLOAT
