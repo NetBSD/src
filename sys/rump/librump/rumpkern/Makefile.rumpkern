@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.67 2009/12/13 08:25:20 mrg Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.68 2009/12/14 21:19:23 matt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -90,6 +90,8 @@ AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 .ifdef MLIBDIR
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MLIBDIR}
 LIBKERN_ARCH=	${MLIBDIR}
+.elif exists(${RUMPTOP}/librump/rumpkern/arch/${MACHINE_CPU})
+ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_CPU}
 .else
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
 .endif
