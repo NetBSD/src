@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2009/11/26 01:21:50 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2009/12/14 00:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -81,15 +81,15 @@
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
 #if defined(__mips_n32)
-typedef	long long       __greg_t;
+typedef	long long	__greg_t;
 #else   
-typedef	long            __greg_t;
+typedef	long		__greg_t;
 #endif /* __mips_n32 */
 
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
- * For the O32 ABI, there are 16 doubles, one at each even FP reg
+ * For the O32/O64 ABI, there are 16 doubles, one at each even FP reg
  * number.  The FP registers themselves are 32-bits.
  *
  * For 64-bit ABIs (include N32), each FP register is a 64-bit double.
@@ -99,44 +99,53 @@ typedef	__greg_t	__freg_t;
 /*
  * Floating point register state
  */
-#if defined(__mips_n32) || defined(_LP64)
-typedef struct {
+struct __fpregset_nabi {
 	union {
 		double	__fp64_dregs[32];
 		__freg_t __fp_regs[32];
 	} __fp_r;
-	unsigned int	__fp_csr;
-	unsigned int	__fp_pad;
-} __fpregset_t;
-#else /* !(__mips_n32 || _LP64) */
-typedef struct {
+	__greg_t	__fp_csr;
+};
+struct __fpregset_oabi {
 	union {
 		double	__fp_dregs[16];
 		float	__fp_fregs[32];
-		__freg_t __fp_regs[32];
+		__int32_t __fp_regs[32];
 	} __fp_r;
 	unsigned int	__fp_csr;
 	unsigned int	__fp_pad;
-} __fpregset_t;
-#endif /* !(__mips_n32 || _LP64) */
+};
+
+#if __mips_n32 || __mips_n64
+typedef struct __fpregset_nabi __fpregset_t;
+#else
+typedef struct __fpregset_oabi __fpregset_t;
+#endif
 
 typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
 
+#if defined(_KERNEL) && defined(_LP64)
+typedef	__int32_t	__greg32_t;
+typedef __greg32_t	__gregset32_t[_NGREG];
+
+typedef struct {
+	__gregset32_t		__gregs;
+	struct __fpregset_oabi	__fpregs;
+} mcontext_o32_t;
+
+typedef struct {
+	__gregset_t		__gregs;
+	struct __fpregset_nabi	__fpregs;
+} mcontext32_t;
+
+#endif /* _KERNEL && _LP64 */
+
 #endif /* !__ASSEMBLER__ */
 
 #define _UC_MACHINE_PAD	16	/* Padding appended to ucontext_t */
-
-/*
- * Offsets relative to ucontext_t; intended to be used by assembly stubs.
- */
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _OFFSETOF_UC_GREGS	40
-#else
-#define _OFFSETOF_UC_GREGS	56
-#endif
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
@@ -146,5 +155,11 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_V0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#define _UC_MACHINE32_SP(uc)	_UC_MACHINE_SP(uc)
+#define _UC_MACHINE32_PC(uc)	_UC_MACHINE_PC(uc)
+#define _UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
+
+#define	_UC_MACHINE32_SET_PC(uc, pc)	_UC_MACHINE_PC((uc), (pc))
 
 #endif	/* _MIPS_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2008/03/14 16:43:27 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2009/12/14 00:46:00 matt Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2008/03/14 16:43:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2009/12/14 00:46:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
  * N.B., curlwp might be NULL.
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cpu_inttab *inttab;

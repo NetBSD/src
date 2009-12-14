@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.37 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.38 2009/12/14 00:46:06 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2009/12/14 00:46:06 matt Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +70,8 @@ db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
 struct mips_saved_state *db_cur_exc_frame = 0;
 
 /*XXX*/
-void	stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
+void	stacktrace_subr(mips_reg_t, mips_reg_t, mips_reg_t, mips_reg_t,
+	    vaddr_t, vaddr_t, vaddr_t, vaddr_t,
 	    void (*)(const char*, ...));
 
 /*
@@ -167,10 +170,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	(*pr)("at %p\n", pcb);
 
 	stacktrace_subr(0,0,0,0,	/* no args known */
-			(int)cpu_switchto,
-			pcb->pcb_context[8],
-			pcb->pcb_context[9],
-			pcb->pcb_context[10],
+			(vaddr_t)cpu_switchto,
+			pcb->pcb_context.val[_L_SP],
+			pcb->pcb_context.val[_L_S8],
+			pcb->pcb_context.val[_L_RA],
 			pr);
 #else
 /*
@@ -179,7 +182,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
 #define	MIPS_ERET	0x42000018	/* instruction code for eret */
-	unsigned va, pc, ra, sp, func;
+	register_t va, pc, ra, sp, func;
 	int insn;
 	InstFmt i;
 	int stacksize;
@@ -194,24 +197,24 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		va = pc;
 		do {
 			va -= sizeof(int);
-			insn = *(int *)va;
+			insn = *(int *)(intptr_t)va;
 			if (insn == MIPS_ERET)
 				goto mips3_eret;
 		} while (insn != MIPS_JR_RA && insn != MIPS_JR_K0);
 		va += sizeof(int);
 	mips3_eret:
 		va += sizeof(int);
-		while (*(int *)va == 0x00000000)
+		while (*(int *)(intptr_t)va == 0x00000000)
 			va += sizeof(int);
 		func = va;
 		stacksize = 0;
 		do {
-			i.word = *(int *)va;
-			if (i.IType.op == OP_SW
+			i.word = *(int *)(intptr_t)va;
+			if (((i.IType.op == OP_SW) || (i.IType.op == OP_SD))
 			    && i.IType.rs == _R_SP
 			    && i.IType.rt == _R_RA)
-				ra = *(int *)(sp + (short)i.IType.imm);
-			if (i.IType.op == OP_ADDIU
+				ra = *(int *)(intptr_t)(sp + (short)i.IType.imm);
+			if (((i.IType.op == OP_ADDIU) || (i.IType.op == OP_DADDIU))
 			    && i.IType.rs == _R_SP
 			    && i.IType.rt == _R_SP)
 				stacksize = -(short)i.IType.imm;
@@ -222,7 +225,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (name == 0)
 			name = "?";
 		(*pr)("%s()+0x%x, called by %p, stack size %d\n",
-			name, pc - func, (void *)ra, stacksize);
+			name, pc - func, (void *)(intptr_t)ra, stacksize);
 
 		if (ra == pc) {
 			(*pr)("-- loop? --\n");
@@ -230,7 +233,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 		sp += stacksize;
 		pc = ra;
-	} while (pc > (unsigned)verylocore);
+	} while (pc > (intptr_t)verylocore);
 	if (pc < 0x80000000)
 		(*pr)("-- user process --\n");
 	else

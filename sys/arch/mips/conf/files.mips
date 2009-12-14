@@ -1,10 +1,11 @@
-#	$NetBSD: files.mips,v 1.63 2009/08/09 04:04:12 matt Exp $
+#	$NetBSD: files.mips,v 1.64 2009/12/14 00:46:04 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
 				MIPS64_SB1
 				MIPS3_LOONGSON2F
 				ENABLE_MIPS_16KB_PAGE
+				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
@@ -17,6 +18,8 @@ defflag	opt_cputype.h		NOFPU
 defflag	opt_mips_cache.h		MIPS3_NO_PV_UNCACHED
 					ENABLE_MIPS4_CACHE_R10K
 defflag opt_mips3_wired.h		ENABLE_MIPS3_WIRED_MAP
+
+defflag	opt_ddb.h		DDB_TRACE
 
 file	arch/mips/mips/locore_mips1.S		mips1
 file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
@@ -63,6 +66,10 @@ file	arch/mips/mips/mips_emul.c
 file	arch/mips/mips/fp.S			softfloat | !nofpu
 
 file	arch/mips/mips/procfs_machdep.c		procfs
+
+# Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
+file	arch/mips/mips/netbsd32_machdep.c	compat_netbsd32
+include "compat/netbsd32/files.netbsd32"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix

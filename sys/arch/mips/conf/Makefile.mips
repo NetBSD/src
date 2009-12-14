@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.54 2009/02/15 01:58:01 cube Exp $
+#	$NetBSD: Makefile.mips,v 1.55 2009/12/14 00:46:04 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -47,9 +47,26 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-23
+.if defined(LP64) && ${LP64} == "yes"
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
-CFLAGS+=	-msym32
+CFLAGS+=	-msym32 -mabi=64
+AFLAGS+=	-msym32 -mabi=64
 .endif
+.if ${MACHINE_ARCH} == "mips64eb"
+LDFLAGS+=	-m elf64btsmip
+LINKFORMAT+=	-m elf64btsmip
+SYSTEM_LD_TAIL_EXTRA+= \
+		;echo ${OBJCOPY} -O elf32-nbigmips $@ $@.elf32; \
+		${OBJCOPY} -O elf32-nbigmips $@ $@.elf32
+.endif
+.if ${MACHINE_ARCH} == "mips64el"
+LDFLAGS+=	-m elf64ltsmip
+LINKFORMAT+=	-m elf64ltsmip
+SYSTEM_LD_TAIL_EXTRA+= \
+		;echo ${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32; \
+		${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32
+.endif
+.endif # LP64=yes
 AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
 
 ##

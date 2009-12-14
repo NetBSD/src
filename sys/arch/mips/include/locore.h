@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.79 2009/05/30 18:26:06 martin Exp $ */
+/* $NetBSD: locore.h,v 1.80 2009/12/14 00:46:04 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -50,7 +50,7 @@ void	mips1_SetPID(int);
 void	mips1_TBIA(int);
 void	mips1_TBIAP(int);
 void	mips1_TBIS(vaddr_t);
-int	mips1_TLBUpdate(u_int, u_int);
+int	mips1_TLBUpdate(vaddr_t, uint32_t);
 void	mips1_wbflush(void);
 void	mips1_lwp_trampoline(void);
 void	mips1_setfunc_trampoline(void);
@@ -64,7 +64,7 @@ void	mips3_SetPID(int);
 void	mips3_TBIA(int);
 void	mips3_TBIAP(int);
 void	mips3_TBIS(vaddr_t);
-int	mips3_TLBUpdate(u_int, u_int);
+int	mips3_TLBUpdate(vaddr_t, uint32_t);
 void	mips3_TLBRead(int, struct tlb *);
 void	mips3_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips3_wbflush(void);
@@ -78,7 +78,7 @@ void	mips5900_SetPID(int);
 void	mips5900_TBIA(int);
 void	mips5900_TBIAP(int);
 void	mips5900_TBIS(vaddr_t);
-int	mips5900_TLBUpdate(u_int, u_int);
+int	mips5900_TLBUpdate(vaddr_t, uint32_t);
 void	mips5900_TLBRead(int, struct tlb *);
 void	mips5900_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips5900_wbflush(void);
@@ -94,7 +94,7 @@ void	mips32_SetPID(int);
 void	mips32_TBIA(int);
 void	mips32_TBIAP(int);
 void	mips32_TBIS(vaddr_t);
-int	mips32_TLBUpdate(u_int, u_int);
+int	mips32_TLBUpdate(vaddr_t, uint32_t);
 void	mips32_TLBRead(int, struct tlb *);
 void	mips32_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips32_wbflush(void);
@@ -108,7 +108,7 @@ void	mips64_SetPID(int);
 void	mips64_TBIA(int);
 void	mips64_TBIAP(int);
 void	mips64_TBIS(vaddr_t);
-int	mips64_TLBUpdate(u_int, u_int);
+int	mips64_TLBUpdate(vaddr_t, uint32_t);
 void	mips64_TLBRead(int, struct tlb *);
 void	mips64_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips64_wbflush(void);
@@ -138,8 +138,73 @@ uint32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(uint32_t);
 void	mips3_cp0_pg_mask_write(uint32_t);
 
-uint64_t mips3_ld(uint64_t *);
-void	mips3_sd(uint64_t *, uint64_t);
+#if defined(__GNUC__) && !defined(__mips_o32)
+static inline uint64_t
+mips3_ld(const volatile uint64_t *va)
+{
+	uint64_t rv;
+#if defined(__mips_o32)
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
+
+	__asm volatile(
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"ld	%M0,0(%1)	\n\t"
+		"dsll32	%L0,%M0,0	\n\t"
+		"dsra32	%M0,%M0,0	\n\t"		/* high word */
+		"dsra32	%L0,%L0,0	\n\t"		/* low word */
+		"ld	%0,0(%1)	\n\t"
+		".set pop"
+	    : "=d"(rv)
+	    : "r"(va));
+
+	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	rv = *va;
+#else
+	__asm volatile("ld	%0,0(%1)" : "=d"(rv) : "r"(va));
+#endif
+
+	return rv;
+}
+static inline void
+mips3_sd(volatile uint64_t *va, uint64_t v)
+{
+#if defined(__mips_o32)
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
+
+	__asm volatile(
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M0,%M0,0	\n\t"
+		"dsll32	%L0,%L0,0	\n\t"
+		"dsrl32	%L0,%L0,0	\n\t"
+		"or	%0,%L0,%M0	\n\t"
+		"sd	%0,0(%1)	\n\t"
+		".set pop"
+	    : "=d"(v) : "0"(v), "r"(va));
+
+	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	*va = v;
+#else
+	__asm volatile("sd	%0,0(%1)" :: "r"(v), "r"(va));
+#endif
+}
+#else
+uint64_t mips3_ld(volatile uint64_t *va);
+void	mips3_sd(volatile uint64_t *, uint64_t);
+#endif	/* __GNUC__ */
 #endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
 
 #if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
@@ -151,58 +216,66 @@ static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
 static __inline uint32_t
 mips3_lw_a64(uint64_t addr)
 {
-	uint32_t addrlo, addrhi;
 	uint32_t rv;
+#if defined(__mips_o32)
 	uint32_t sr;
 
 	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr | MIPS3_SR_KX);
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
 
-	addrlo = addr & 0xffffffff;
-	addrhi = addr >> 32;
-	__asm volatile ("		\n\
-		.set push		\n\
-		.set mips3		\n\
-		.set noreorder		\n\
-		.set noat		\n\
-		dsll32	$3, %1, 0	\n\
-		dsll32	$1, %2, 0	\n\
-		dsrl32	$3, $3, 0	\n\
-		or	$1, $1, $3	\n\
-		lw	%0, 0($1)	\n\
-		.set pop		\n\
-	" : "=r"(rv) : "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+	__asm volatile (
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M1,%M1,0	\n\t"
+		"dsll32	%L1,%L1,0	\n\t"
+		"dsrl32	$L1,%L1,0	\n\t"
+		"or	%1,%M1,%L1	\n\t"
+		"lw	%0, 0(%1)	\n\t"
+		".set pop"
+	    : "=r"(rv), "=d"(addr)
+	    : "1"(addr)
+	    );
 
 	mips_cp0_status_write(sr);
-
+#elif defined(_LP64)
+	rv = *(const uint32_t *)addr;
+#else
+	__asm volatile("lw	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#endif
 	return (rv);
 }
 
 static __inline void
 mips3_sw_a64(uint64_t addr, uint32_t val)
 {
-	uint32_t addrlo, addrhi;
+#if defined(__mips_o32)
 	uint32_t sr;
 
 	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr | MIPS3_SR_KX);
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
 
-	addrlo = addr & 0xffffffff;
-	addrhi = addr >> 32;
-	__asm volatile ("			\n\
-		.set push			\n\
-		.set mips3			\n\
-		.set noreorder			\n\
-		.set noat			\n\
-		dsll32	$3, %1, 0		\n\
-		dsll32	$1, %2, 0		\n\
-		dsrl32	$3, $3, 0		\n\
-		or	$1, $1, $3		\n\
-		sw	%0, 0($1)		\n\
-		.set pop			\n\
-	" : : "r"(val), "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+	__asm volatile (
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M0,%M0,0	\n\t"
+		"dsll32	%L0,%L0,0	\n\t"
+		"dsrl32	$L0,%L0,0	\n\t"
+		"or	%0,%M0,%L0	\n\t"
+		"sw	%1, 0(%0)	\n\t"
+		".set pop"
+	    : "=d"(addr): "r"(val), "0"(addr)
+	    );
 
 	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	*(uint32_t *)addr = val;
+#else
+	__asm volatile("sw	%1, 0(%0)" :: "d"(addr), "r"(val));
+#endif
 }
 #endif	/* MIPS3 || MIPS4 || MIPS64 */
 
@@ -217,7 +290,7 @@ typedef struct  {
 	void (*setTLBpid)(int pid);
 	void (*TBIAP)(int);
 	void (*TBIS)(vaddr_t);
-	int  (*tlbUpdate)(u_int highreg, u_int lowreg);
+	int  (*tlbUpdate)(vaddr_t, uint32_t);
 	void (*wbflush)(void);
 } mips_locore_jumpvec_t;
 
@@ -227,11 +300,18 @@ void	mips_wait_idle(void);
 void	stacktrace(void);
 void	logstacktrace(void);
 
+struct locoresw {
+	uintptr_t lsw_cpu_switch_resume;
+	uintptr_t lsw_lwp_trampoline;
+	void (*lsw_cpu_idle)(void);
+	uintptr_t lsw_setfunc_trampoline;
+};
+
 /*
  * The "active" locore-fuction vector, and
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
-extern long *mips_locoresw[];
+extern struct locoresw mips_locoresw;
 
 #if    defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
 #define MachSetPID		mips1_SetPID
@@ -284,11 +364,11 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
-#define lwp_trampoline		(mips_locoresw[1])
-#define setfunc_trampoline	(mips_locoresw[3])
+#define lwp_trampoline		mips_locoresw.lsw_lwp_trampoline
+#define setfunc_trampoline	mips_locoresw.lsw_setfunc_trampoline
 #endif
 
-#define CPU_IDLE		(mips_locoresw[2])
+#define CPU_IDLE		mips_locoresw.lsw_cpu_idle
 
 /* cpu_switch_resume is called inside locore.S */
 
@@ -319,6 +399,7 @@ typedef int mips_prid_t;
 				/*	0x09	unannounced */
 				/*	0x0a	unannounced */
 #define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
+#define     MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
 #define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL
@@ -384,8 +465,8 @@ void mips_machdep_cache_config(void);
 
 struct trapframe {
 	mips_reg_t tf_regs[TF_NREGS];
-	u_int32_t  tf_ppl;		/* previous priority level */
-	int32_t    tf_pad;		/* for 8 byte aligned */
+	uint32_t   tf_ppl;		/* previous priority level */
+	mips_reg_t tf_pad;		/* for 8 byte aligned */
 };
 
 /*
@@ -395,8 +476,15 @@ struct trapframe {
  */
 
 struct kernframe {
+#if defined(__mips_o32) || defined(__mips_o64)
 	register_t cf_args[4 + 1];
+#if defined(__mips_o32)
 	register_t cf_pad;		/* (for 8 word alignment) */
+#endif
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	register_t cf_pad[2];		/* for 16 byte alignment */
+#endif
 	register_t cf_sp;
 	register_t cf_ra;
 	struct trapframe cf_frame;

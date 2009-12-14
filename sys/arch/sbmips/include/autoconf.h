@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.3 2003/03/22 14:26:43 simonb Exp $ */
+/* $NetBSD: autoconf.h,v 1.4 2009/12/14 00:46:12 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -49,14 +49,39 @@
 #define	BOOTINFO_MAGIC			0x1234ABCD
 #define	BOOTINFO_VERSION		1
 
+#if _LP64
+#define BI_FIXUP(x) ((vaddr_t)x | 0xffffffff00000000)
+#else
+#define BI_FIXUP(x) x
+#endif
+ 
+
 struct bootinfo_v1 {
-	u_long	version;		/*  0: version of bootinfo	 */
-	u_long	reserved;		/*  4: round to 64-bit boundary	 */
-	u_long	ssym;			/*  8: start of kernel sym table */
-	u_long	esym;			/* 12: end of kernel sym table	 */
+	uint32_t	version;	/*  0: version of bootinfo	 */
+	uint32_t	reserved;	/*  4: round to 64-bit boundary	 */
+	uint32_t	ssym;		/*  8: start of kernel sym table */
+	uint32_t	esym;		/* 12: end of kernel sym table	 */
 	char	boot_flags[64];		/* 16: boot flags		 */
 	char	booted_kernel[64];	/* 80: name of booted kernel	 */
-	u_long	fwhandle;		/* 144: firmware handle		 */
-	u_long	fwentry;		/* 148: firmware entry point	 */
+	uint32_t	fwhandle;	/* 144: firmware handle		 */
+	uint32_t	fwentry;	/* 148: firmware entry point	 */
 	u_char	reserved2[100];		/* 256: total size		 */
 };
+
+
+struct bootinfo_v1_int {
+	uint32_t	version;	/*   0/0: version of bootinfo	    */
+	uint32_t	reserved;	/*   4/4: round to 64-bit boundary  */
+	vaddr_t	ssym;			/*   8/8: start of kernel sym table */
+	vaddr_t	esym;			/* 12/16: end of kernel sym table   */
+	char	boot_flags[64];		/* 16/24: boot flags		    */
+	char	booted_kernel[64];	/* 80/88: name of booted kernel	    */
+	vaddr_t	fwhandle;		/* 144/152: firmware handle	    */
+	vaddr_t	fwentry;		/* 148/160: firmware entry point    */
+#ifdef _LP64
+	u_char	reserved2[88];		/* 168: total size -> 256	    */
+#else
+	u_char	reserved2[104];		/* 152: total size -> 256	    */
+#endif
+};
+

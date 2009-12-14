@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdvar.h,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: sbdvar.h,v 1.5 2009/12/14 00:46:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct sbd {
 	void (*intr_init)(void);
 	void *(*intr_establish)(int, int (*)(void *), void *);
 	void (*intr_disestablish)(void *);
-	void (*intr)(uint32_t, uint32_t, uint32_t, uint32_t);
+	void (*intr)(uint32_t, uint32_t, vaddr_t, uint32_t);
 
 	/* Interval timer helper routines */
 	void (*initclocks)(void);
@@ -88,7 +88,7 @@ void x ## _mem_init(void *, void *);					\
 void x ## _intr_init(void);						\
 void *x ## _intr_establish(int, int (*)(void *), void *);		\
 void x ## _intr_disestablish(void *);					\
-void x ## _intr(uint32_t, uint32_t, uint32_t, uint32_t);		\
+void x ## _intr(uint32_t, uint32_t, vaddr_t, uint32_t);			\
 void x ## _initclocks(void);						\
 void x ## _consinit(void);						\
 int x ## _ipl_bootdev(void);						\

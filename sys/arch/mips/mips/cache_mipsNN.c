@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.12 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.12 2009/12/14 00:46:05 matt Exp $");
 
 #include <sys/param.h>
 
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $
 
 #include <uvm/uvm_extern.h>
 
-#define	round_line16(x)		(((x) + 15) & ~15)
-#define	trunc_line16(x)		((x) & ~15)
+#define	round_line16(x)		(((x) + 15L) & -16L)
+#define	trunc_line16(x)		((x) & -16L)
 
-#define	round_line32(x)		(((x) + 31) & ~31)
-#define	trunc_line32(x)		((x) & ~31)
+#define	round_line32(x)		(((x) + 31L) & -32L)
+#define	trunc_line32(x)		((x) & -32L)
 
 
 #ifdef SB1250_PASS1
@@ -60,10 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $
 #define	SYNC	__asm volatile("sync")
 #endif
 
-#ifdef _LP64
-__asm(".set mips64");
-#else
+#if defined(__mips_o32)
 __asm(".set mips32");
+#else
+__asm(".set mips64");
 #endif
 
 static int picache_stride;
@@ -209,7 +209,7 @@ mipsNN_icache_sync_range_32(vaddr_t va, vsize_t size)
 void
 mipsNN_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 {
-	unsigned int eva, tmpva;
+	vaddr_t eva, tmpva;
 	int i, stride, loopcount;
 
 	/*
@@ -252,7 +252,7 @@ mipsNN_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 void
 mipsNN_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 {
-	unsigned int eva, tmpva;
+	vaddr_t eva, tmpva;
 	int i, stride, loopcount;
 
 	/*
@@ -383,7 +383,7 @@ mipsNN_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 void
 mipsNN_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 {
-	unsigned int eva, tmpva;
+	vaddr_t eva, tmpva;
 	int i, stride, loopcount;
 
 	/*
@@ -424,7 +424,7 @@ mipsNN_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 void
 mipsNN_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 {
-	unsigned int eva, tmpva;
+	vaddr_t eva, tmpva;
 	int i, stride, loopcount;
 
 	/*

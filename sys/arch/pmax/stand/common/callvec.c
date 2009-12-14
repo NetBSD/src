@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.17 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: callvec.c,v 1.18 2009/12/14 00:46:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,51 +36,22 @@
 
 #include <machine/dec_prom.h>
 
-const struct callback callvec = {
-	(void *(*)(void *, void *, int))0,
-	(void *(*)(void *, int, int))0,
-	(char *(*)(char *, char *))DEC_PROM_STRCAT,
-	(int (*)(char *, char *))DEC_PROM_STRCMP,
-	(char *(*)(char *, char *))DEC_PROM_STRCPY,
-	(int (*)(char *))DEC_PROM_STRLEN,
-	(char *(*)(char *, char *, int))0,
-	(char *(*)(char *, char *, int))0,
-	(int (*)(char *, char *, int))0,
-	(int (*)(void))DEC_PROM_GETCHAR,
-	(char *(*)(char *))DEC_PROM_GETS,
-	(int (*)(char *))DEC_PROM_PUTS,
-	(int (*)(const char *, ...))DEC_PROM_PRINTF,
-	(int (*)(char *, char *, ...))0,
-	(int (*)(void))0,
-	(long (*)(char *, char **, int))0,
-	(psig_t (*)(int, psig_t))0,
-	(int (*)(int))0,
-	(long (*)(long *))0,
-	(int (*)(jmp_buf))0,
-	(void (*)(jmp_buf, int))0,
-	(int (*)( char *))0,
-	(int (*)(int, void *, int))0,
-	(int (*)(int, void *, int))0,
-	(int (*)(char *, char *))DEC_PROM_SETENV2,
-	(char *(*)(const char *))DEC_PROM_GETENV2,
-	(int (*)(char *))DEC_PROM_UNSETENV,
-	(u_long (*)(int))0,
-	(void (*)(void))0,
-	(void (*)(int))0,
-	(void (*)(int))0,
-	(void (*)(char *, int))DEC_PROM_CLEARCACHE,
-	(int (*)(void))0,
-	(int (*)(memmap *))0,
-	(int (*)(int))0,
-	(int (*)(int))0,
-	(int (*)(int))0,
-	(void *)0,
-	(int (*)(void))0,
-	(void (*)(int *, int))0,
-	(void (*)(void))0,
-	(tcinfo *(*)(void))0,	/* XXX what are the args for this?*/
-	(int (*)(char *))0,
-	(void (*)(char))0,
+#ifndef _LP64
+const
+#endif
+struct callback callvec = {
+	._strcat	= (void *)DEC_PROM_STRCAT,
+	._strcmp	= (void *)DEC_PROM_STRCMP,
+	._strcpy	= (void *)DEC_PROM_STRCPY,
+	._strlen	= (void *)DEC_PROM_STRLEN,
+	._getchar	= (void *)DEC_PROM_GETCHAR,
+	._gets		= (void *)DEC_PROM_GETS,
+	._puts		= (void *)DEC_PROM_PUTS,
+	._printf	= (void *)DEC_PROM_PRINTF,
+	._setenv	= (void *)DEC_PROM_SETENV2,
+	._getenv	= (void *)DEC_PROM_GETENV2,
+	._unsetenv	= (void *)DEC_PROM_UNSETENV,
+	._clear_cache	= (void *)DEC_PROM_CLEARCACHE,
 };
 
-const   struct callback *callv = &callvec;
+const struct callback *callv = &callvec;

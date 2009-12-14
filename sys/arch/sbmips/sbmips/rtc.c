@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.16 2007/10/17 19:57:02 garbled Exp $ */
+/* $NetBSD: rtc.c,v 1.17 2009/12/14 00:46:12 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2007/10/17 19:57:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2009/12/14 00:46:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -415,8 +415,8 @@ return;	/* XXX XXX */
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_smbus.h>
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(MIPS_PHYS_TO_KSEG1(rp))))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(MIPS_PHYS_TO_KSEG1(rp)), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(MIPS_PHYS_TO_KSEG1(rp))))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(MIPS_PHYS_TO_KSEG1(rp)), (val)))
 
 static void
 time_smbus_init(int chan)

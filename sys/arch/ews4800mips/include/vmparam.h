@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2009/12/14 00:46:03 matt Exp $	*/
 
 #ifndef _EWS4800MIPS_VMPARAM_H_
 #define _EWS4800MIPS_VMPARAM_H_
@@ -13,9 +13,6 @@
 #define VM_MAX_WIRED_MAP_ADDRESS	((vaddr_t)0xFFFFC000)
 
 #define VM_PHYSSEG_MAX		9	/* M0-M8 */
-
-#define VM_NFREELIST		1
-#define VM_FREELIST_DEFAULT	0
 
 #ifndef KSEG2IOBUFSIZE
 /* reserve PTEs for KSEG2 I/O space */

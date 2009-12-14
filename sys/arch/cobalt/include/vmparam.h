@@ -1,8 +1,5 @@
-/*	$NetBSD: vmparam.h,v 1.2 2000/03/31 14:51:53 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2009/12/14 00:46:00 matt Exp $	*/
 
 #include <mips/vmparam.h>
 
 #define	VM_PHYSSEG_MAX		1
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0

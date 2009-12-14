@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:09 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -378,13 +378,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	pmap_init_lwp0_uarea();
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -606,7 +600,7 @@ delay(int n)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct cpu_info *ci;
 

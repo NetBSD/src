@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.76 2009/08/06 00:42:58 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.77 2009/12/14 00:46:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,27 +76,60 @@
  * Caching of mapped addresses is controlled by bits in the TLB entry.
  */
 
-#define	MIPS_KUSEG_START		0x0
-#define	MIPS_KSEG0_START		0x80000000
-#define	MIPS_KSEG1_START		0xa0000000
-#define	MIPS_KSEG2_START		0xc0000000
-#define	MIPS_MAX_MEM_ADDR		0xbe000000
-#define	MIPS_RESERVED_ADDR		0xbfc80000
+#ifdef _LP64
+#define	MIPS_XUSEG_START		(0L << 62)
+#define	MIPS_XUSEG_P(x)			(((uint64_t)(x) >> 62) == 0)
+#define	MIPS_USEG_P(x)			((uintptr_t)(x) < 0x80000000L)
+#define	MIPS_XSSEG_START		(1L << 62)
+#define	MIPS_XSSEG_P(x)			(((uint64_t)(x) >> 62) == 1)
+#endif
+
+/*
+ * MIPS addresses are signed and we defining as negative so that
+ * in LP64 kern they get sign-extended correctly.
+ */
+#ifndef _LOCORE
+#define	MIPS_KSEG0_START		(-0x7fffffffL-1) /* 0x80000000 */
+#define	MIPS_KSEG1_START		-0x60000000L	/* 0xa0000000 */
+#define	MIPS_KSEG2_START		-0x40000000L	/* 0xc0000000 */
+#define	MIPS_MAX_MEM_ADDR		-0x42000000L	/* 0xbe000000 */
+#define	MIPS_RESERVED_ADDR		-0x40380000L	/* 0xbfc80000 */
+#endif
 
 #define	MIPS_PHYS_MASK			0x1fffffff
 
 #define	MIPS_KSEG0_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | MIPS_KSEG0_START)
+#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | MIPS_KSEG1_START)
+#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG1_START)
+
+#define	MIPS_KSEG0_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG0_START)
+#define	MIPS_KSEG1_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG1_START)
+#define	MIPS_KSEG2_P(x)		((uintptr_t)MIPS_KSEG2_START <= (uintptr_t)(x))
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
-		((uintptr_t)(x) & 0xffffff | MIPS_KSEG0_START)
+		(((intptr_t)(x) & 0xffffff) | MIPS_KSEG0_START) 
 
+#ifndef _LOCORE
+#define	MIPS_XSEG_MASK		(0x3fffffffffffffffLL)
+#define	MIPS_XKSEG_START	(0x3ULL << 62)
+#define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
+
+#define	MIPS_XKPHYS_START	(0x2ULL << 62)
+#define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
+	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
+#define	MIPS_PHYS_TO_XKPHYS_CACHED(x) \
+	(mips3_xkphys_cached | (x))
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
-	((0x2ULL << 62) | ((unsigned long long)(cca) << 59) | (x))
-#define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffULL)
+	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
+#define	MIPS_XKPHYS_TO_PHYS(x)	((uint64_t)(x) & 0x07ffffffffffffffLL)
+#define	MIPS_XKPHYS_TO_CCA(x)	(((uint64_t)(x) >> 59) & 7)
+#define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
+#endif	/* _LOCORE */
+
+#define	CCA_UNCACHED		2
+#define	CCA_CACHEABLE		3	/* cacheable non-coherent */
 
 /* CPU dependent mtc0 hazard hook */
 #define	COP0_SYNC		/* nothing */
@@ -209,6 +242,7 @@
 
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
+#define	MIPS3_SR_PX		0x00800000		/* MIPS64 */
 #define	MIPS3_SR_SR		0x00100000
 #define	MIPS3_SR_NMI		0x00080000		/* MIPS32/64 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
@@ -394,31 +428,31 @@
  *
  * Common vectors:  reset and UTLB miss.
  */
-#define	MIPS_RESET_EXC_VEC	0xBFC00000
-#define	MIPS_UTLB_MISS_EXC_VEC	0x80000000
+#define	MIPS_RESET_EXC_VEC	MIPS_PHYS_TO_KSEG1(0x1FC00000)
+#define	MIPS_UTLB_MISS_EXC_VEC	MIPS_PHYS_TO_KSEG0(0)
 
 /*
  * MIPS-1 general exception vector (everything else)
  */
-#define	MIPS1_GEN_EXC_VEC	0x80000080
+#define	MIPS1_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
 
 /*
  * MIPS-III exception vectors
  */
-#define	MIPS3_XTLB_MISS_EXC_VEC 0x80000080
-#define	MIPS3_CACHE_ERR_EXC_VEC 0x80000100
-#define	MIPS3_GEN_EXC_VEC	0x80000180
+#define	MIPS3_XTLB_MISS_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0080)
+#define	MIPS3_CACHE_ERR_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0100)
+#define	MIPS3_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0180)
 
 /*
  * TX79 (R5900) exception vectors
  */
-#define MIPS_R5900_COUNTER_EXC_VEC		0x80000080
-#define MIPS_R5900_DEBUG_EXC_VEC		0x80000100
+#define MIPS_R5900_COUNTER_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
+#define MIPS_R5900_DEBUG_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0100)
 
 /*
  * MIPS32/MIPS64 (and some MIPS3) dedicated interrupt vector.
  */
-#define	MIPS3_INTR_EXC_VEC	0x80000200
+#define	MIPS3_INTR_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0200)
 
 /*
  * Coprocessor 0 registers:
@@ -441,6 +475,7 @@
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception Base
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
@@ -801,6 +836,27 @@
 #define	MIPS_SR7100	0x04	/* SandCraft SR7100 		ISA 64  */
 
 /*
+ * CPU processor revision IDs for company ID == 12 (RMI)
+ */
+#define	MIPS_XLR732	0x00	/* RMI XLR732-C	 		ISA 64  */
+#define	MIPS_XLR716	0x02	/* RMI XLR716-C	 		ISA 64  */
+#define	MIPS_XLR532	0x08	/* RMI XLR532-C	 		ISA 64  */
+#define	MIPS_XLR516	0x0a	/* RMI XLR516-C	 		ISA 64  */
+#define	MIPS_XLR508	0x0b	/* RMI XLR508-C	 		ISA 64  */
+#define	MIPS_XLR308	0x0f	/* RMI XLR308-C	 		ISA 64  */
+#define	MIPS_XLS616	0x40	/* RMI XLS616	 		ISA 64  */
+#define	MIPS_XLS416	0x44	/* RMI XLS416	 		ISA 64  */
+#define	MIPS_XLS608	0x4A	/* RMI XLS608	 		ISA 64  */
+#define	MIPS_XLS408	0x4E	/* RMI XLS406	 		ISA 64  */
+#define	MIPS_XLS404	0x4F	/* RMI XLS404	 		ISA 64  */
+#define	MIPS_XLS408LITE	0x88	/* RMI XLS408-Lite		ISA 64  */
+#define	MIPS_XLS404LITE	0x8C	/* RMI XLS404-Lite	 	ISA 64  */
+#define	MIPS_XLS208	0x8E	/* RMI XLS208	 		ISA 64  */
+#define	MIPS_XLS204	0x8F	/* RMI XLS204	 		ISA 64  */
+#define	MIPS_XLS108	0xCE	/* RMI XLS108	 		ISA 64  */
+#define	MIPS_XLS104	0xCF	/* RMI XLS104	 		ISA 64  */
+
+/*
  * FPU processor revision ID
  */
 #define	MIPS_SOFT	0x00	/* Software emulation		ISA I	*/
@@ -820,6 +876,9 @@
 #endif
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>
+#endif
+#if defined(MIPS64_XLP) || defined(MIPS64_XLR) || defined(MIPS64_XLS)
+#include <mips/rmi/rmixlreg.h>
 #endif
 
 #endif /* _MIPS_CPUREGS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22 2009/12/14 00:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2009/12/14 00:46:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 {
 	struct cpu_info *ci;
 

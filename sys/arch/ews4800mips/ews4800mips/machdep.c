@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2009/12/01 23:14:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2009/12/14 00:46:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2009/12/01 23:14:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2009/12/14 00:46:03 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,13 +168,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	pmap_bootstrap();
 
-	v = uvm_pageboot_alloc(USPACE);
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	mips_init_lwp0_uarea();
 }
 
 void

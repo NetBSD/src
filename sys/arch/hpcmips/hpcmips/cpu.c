@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2008/01/04 22:13:55 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2009/12/14 00:46:04 matt Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2008/01/04 22:13:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2009/12/14 00:46:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,5 +94,5 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 	/* install CPU specific idle routine if any. */
 	if (platform.cpu_idle != NULL)
-		CPU_IDLE = (long *)platform.cpu_idle;
+		mips_locoresw.lsw_cpu_idle = platform.cpu_idle;
 }

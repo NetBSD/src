@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.34 2009/10/26 19:16:57 cegger Exp $ */
+/* $NetBSD: sbmac.c,v 1.35 2009/12/14 00:46:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.34 2009/10/26 19:16:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.35 2009/12/14 00:46:08 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -119,8 +119,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 #define	dprintf(x)
 #endif
 
-#define	SBMAC_READCSR(t) mips3_ld((uint64_t *) (t))
-#define	SBMAC_WRITECSR(t, v) mips3_sd((uint64_t *) (t), (v))
+#define	SBMAC_READCSR(t) mips3_ld((volatile uint64_t *) (t))
+#define	SBMAC_WRITECSR(t, v) mips3_sd((volatile uint64_t *) (t), (v))
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
@@ -252,7 +252,7 @@ static sbmac_state_t sbmac_set_channel_state(struct sbmac_softc *,
 static void sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff);
 static void sbmac_init_and_start(struct sbmac_softc *sc);
 static uint64_t sbmac_addr2reg(u_char *ptr);
-static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
+static void sbmac_intr(void *xsc, uint32_t status, vaddr_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
@@ -626,7 +626,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
-		      (mtod(m,unsigned int) & 0x0000001F))) |
+		      (mtod(m,uintptr_t) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
@@ -1731,7 +1731,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 
 /* ARGSUSED */
 static void
-sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
+sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 {
 	struct sbmac_softc *sc = (struct sbmac_softc *) xsc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

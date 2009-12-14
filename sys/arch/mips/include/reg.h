@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.13 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,5 +87,11 @@ struct reg {
 struct fpreg {
 	mips_fpreg_t	r_regs[33];
 };
+
+#if defined(__mips_n32) || defined(__mips_n64)
+struct fpreg_oabi {
+	int32_t		r_regs[33];
+};
+#endif
 
 #endif /*_MIPS_REG_H_*/

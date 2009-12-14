@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k_subr.S,v 1.4 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r3k_subr.S,v 1.5 2009/12/14 00:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+#include "assym.h"
 
 	.set noreorder
 

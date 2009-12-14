@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.94 2009/12/14 00:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,45 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
+
+struct pridtab {
+	int	cpu_cid;
+	int	cpu_pid;
+	int	cpu_rev;	/* -1 == wildcard */
+	int	cpu_copts;	/* -1 == wildcard */
+	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
+	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
+	int	cpu_flags;
+	u_int	cpu_cp0flags;	/* presence of some cp0 regs */
+	u_int	cpu_cidflags;	/* company-specific flags */
+	const char	*cpu_name;
+};
+
+extern const struct pridtab *mycpu;
+
+/*
+ * bitfield defines for cpu_cp0flags
+ */
+#define  MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
+#define  MIPS_CP0FL_ECC		__BIT(1)
+#define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
+#define  MIPS_CP0FL_EIRR	__BIT(3)
+#define  MIPS_CP0FL_EIMR	__BIT(4)
+#define  MIPS_CP0FL_EBASE	__BIT(5)
+#define  MIPS_CP0FL_CONFIG	__BIT(6)
+#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
+
+/*
+ * cpu_cidflags defines, by company
+ */
+/*
+ * RMI company-specific cpu_cidflags
+ */
+#define MIPS_CIDFL_RMI_TYPE     __BITS(0,2)
+#define  CIDFL_RMI_TYPE_XLR     0
+#define  CIDFL_RMI_TYPE_XLS     1
+#define  CIDFL_RMI_TYPE_XLP     2
+
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -142,7 +181,7 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
 #define	cpu_number()		(0)
-#define	cpu_proc_fork(p1, p2)
+#define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
 
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
@@ -157,6 +196,9 @@ extern int mips_cpu_flags;
 extern int mips_has_r4k_mmu;
 extern int mips_has_llsc;
 extern int mips3_pg_cached;
+#ifdef _LP64
+extern uint64_t mips3_xkphys_cached;
+#endif
 extern u_int mips3_pg_shift;
 
 #define	CPU_MIPS_R4K_MMU		0x0001
@@ -170,6 +212,8 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
 #define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
+#define	CPU_MIPS_NO_LLADDR		0x1000
+#define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
 #define	MIPS_NOT_SUPP			0x8000
 
 #endif	/* !_LOCORE */
@@ -186,6 +230,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	0
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
+# define MIPS_HAS_LLADDR	0
 
 #elif defined(MIPS3) || defined(MIPS4)
 
@@ -205,6 +250,7 @@ extern u_int mips3_pg_shift;
 # else	/* _LOCORE */
 #  define MIPS_HAS_LLSC		(mips_has_llsc)
 # endif	/* _LOCORE */
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS32)
 
@@ -216,6 +262,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS64)
 
@@ -227,6 +274,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #endif
 
@@ -236,6 +284,7 @@ extern u_int mips3_pg_shift;
 
 #define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
 #define	MIPS_HAS_LLSC		(mips_has_llsc)
+#define	MIPS_HAS_LLADDR		((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 /* This test is ... rather bogus */
 #define	CPUISMIPS3	((cpu_arch & \
@@ -265,16 +314,16 @@ extern u_int mips3_pg_shift;
  * referenced in generic code
  */
 
-void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
 struct clockframe {
-	int	pc;	/* program counter at time of interrupt */
-	int	sr;	/* status register at time of interrupt */
-	int	ppl;	/* previous priority level at time of interrupt */
+	vaddr_t	pc;	/* program counter at time of interrupt */
+	uint32_t	sr;	/* status register at time of interrupt */
+	u_int		ppl;	/* previous priority level at time of interrupt */
 };
 
 /*
@@ -345,6 +394,83 @@ struct pcb;
 
 extern struct segtab *segbase;	/* current segtab base */
 
+/* copy.S */
+int8_t	ufetch_int8(void *);
+int16_t	ufetch_int16(void *);
+int32_t ufetch_int32(void *);
+uint8_t	ufetch_uint8(void *);
+uint16_t ufetch_uint16(void *);
+uint32_t ufetch_uint32(void *);
+int8_t	ufetch_int8_intrsafe(void *);
+int16_t	ufetch_int16_intrsafe(void *);
+int32_t ufetch_int32_intrsafe(void *);
+uint8_t	ufetch_uint8_intrsafe(void *);
+uint16_t ufetch_uint16_intrsafe(void *);
+uint32_t ufetch_uint32_intrsafe(void *);
+#ifdef _LP64
+int64_t ufetch_int64(void *);
+uint64_t ufetch_uint64(void *);
+int64_t ufetch_int64_intrsafe(void *);
+uint64_t ufetch_uint64_intrsafe(void *);
+#endif
+char	ufetch_char(void *);
+short	ufetch_short(void *);
+int	ufetch_int(void *);
+long	ufetch_long(void *);
+char	ufetch_char_intrsafe(void *);
+short	ufetch_short_intrsafe(void *);
+int	ufetch_int_intrsafe(void *);
+long	ufetch_long_intrsafe(void *);
+
+u_char	ufetch_uchar(void *);
+u_short	ufetch_ushort(void *);
+u_int	ufetch_uint(void *);
+u_long	ufetch_ulong(void *);
+u_char	ufetch_uchar_intrsafe(void *);
+u_short	ufetch_ushort_intrsafe(void *);
+u_int	ufetch_uint_intrsafe(void *);
+u_long	ufetch_ulong_intrsafe(void *);
+void 	*ufetch_ptr(void *);
+
+int	ustore_int8(void *, int8_t);
+int	ustore_int16(void *, int16_t);
+int	ustore_int32(void *, int32_t);
+int	ustore_uint8(void *, uint8_t);
+int	ustore_uint16(void *, uint16_t);
+int	ustore_uint32(void *, uint32_t);
+int	ustore_int8_intrsafe(void *, int8_t);
+int	ustore_int16_intrsafe(void *, int16_t);
+int	ustore_int32_intrsafe(void *, int32_t);
+int	ustore_uint8_intrsafe(void *, uint8_t);
+int	ustore_uint16_intrsafe(void *, uint16_t);
+int	ustore_uint32_intrsafe(void *, uint32_t);
+#ifdef _LP64
+int	ustore_int64(void *, int64_t);
+int	ustore_uint64(void *, uint64_t);
+int	ustore_int64_intrsafe(void *, int64_t);
+int	ustore_uint64_intrsafe(void *, uint64_t);
+#endif
+int	ustore_char(void *, char);
+int	ustore_char_intrsafe(void *, char);
+int	ustore_short(void *, short);
+int	ustore_short_intrsafe(void *, short);
+int	ustore_int(void *, int);
+int	ustore_int_intrsafe(void *, int);
+int	ustore_long(void *, long);
+int	ustore_long_intrsafe(void *, long);
+int	ustore_uchar(void *, u_char);
+int	ustore_uchar_intrsafe(void *, u_char);
+int	ustore_ushort(void *, u_short);
+int	ustore_ushort_intrsafe(void *, u_short);
+int	ustore_uint(void *, u_int);
+int	ustore_uint_intrsafe(void *, u_int);
+int	ustore_ulong(void *, u_long);
+int	ustore_ulong_intrsafe(void *, u_long);
+int 	ustore_ptr(void *, void *);
+int	ustore_ptr_intrsafe(void *, void *);
+
+int	ustore_uint32_isync(void *, uint32_t);
+
 /* trap.c */
 void	netintr(void);
 int	kdbpeek(vaddr_t);
@@ -353,6 +479,7 @@ int	kdbpeek(vaddr_t);
 void	dumpsys(void);
 int	savectx(struct pcb *);
 void	mips_init_msgbuf(void);
+void	mips_init_lwp0_uarea(void);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
 

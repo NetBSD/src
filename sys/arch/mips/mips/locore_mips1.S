@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.66 2009/12/10 05:10:02 rmind Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.67 2009/12/14 00:46:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1115,7 +1115,7 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	lw	s0, L_PCB(a0)			# XXXuvm_lwp_getuarea
-	li	s2, MIPS_KSEG2_START
+	li	s2, VM_MIN_KERNEL_ADDRESS
 	blt	s0, s2, resume
 	nop
 
@@ -1257,7 +1257,7 @@ LEAF(mips1_TBIA)
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips1_TBIA)
 
-	.data
+	.rdata
 
 	.globl _C_LABEL(mips1_locoresw)
 _C_LABEL(mips1_locoresw):

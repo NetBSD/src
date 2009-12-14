@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.18 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19 2009/12/14 00:46:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2009/11/21 17:40:28 rmind Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2009/12/14 00:46:07 matt Exp $"); 
 
 #include "opt_cputype.h"
 
@@ -61,7 +61,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
-		return (void *)fp->f_regs[_R_SP];
+		return (void *)(intptr_t)fp->f_regs[_R_SP];
 }		
 
 struct sigframe_siginfo {
@@ -86,7 +86,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	size_t ucsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = (struct frame *)l->l_md.md_regs;
+	tf = l->l_md.md_regs;
 	fp--;
 
         uc.uc_flags = _UC_SIGMASK
@@ -119,13 +119,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * to the signal trampoline to bounce us back.
 	 */
 	tf->f_regs[_R_A0] = sig;
-	tf->f_regs[_R_A1] = (__greg_t)&fp->sf_si;
-	tf->f_regs[_R_A2] = (__greg_t)&fp->sf_uc;
+	tf->f_regs[_R_A1] = (intptr_t)&fp->sf_si;
+	tf->f_regs[_R_A2] = (intptr_t)&fp->sf_uc;
 
-	tf->f_regs[_R_PC] = (__greg_t)catcher;
-	tf->f_regs[_R_T9] = (__greg_t)catcher;
-	tf->f_regs[_R_SP] = (__greg_t)fp;
-	tf->f_regs[_R_RA] = (__greg_t)ps->sa_sigdesc[sig].sd_tramp;
+	tf->f_regs[_R_PC] = (intptr_t)catcher;
+	tf->f_regs[_R_T9] = (intptr_t)catcher;
+	tf->f_regs[_R_SP] = (intptr_t)fp;
+	tf->f_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

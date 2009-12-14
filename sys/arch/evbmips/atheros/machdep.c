@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2009/11/27 03:23:08 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2009/12/14 00:46:01 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2009/12/14 00:46:01 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -308,13 +308,7 @@ mach_init(void)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize busses.

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.5 2009/12/14 00:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,9 +64,12 @@
 #endif
 #ifdef _LP64
 #define	PRIdMAX		"ld"	/* intmax_t		*/
-#define	PRIdPTR		"ld"	/* intptr_t		*/
 #else
 #define	PRIdMAX		"lld"	/* intmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIdPTR		"ld"	/* intptr_t		*/
+#else
 #define	PRIdPTR		"d"	/* intptr_t		*/
 #endif
 
@@ -92,10 +95,13 @@
 #ifdef _LP64
 #define	PRIiFAST64	"li"	/* int_fast64_t		*/
 #define	PRIiMAX		"li"	/* intmax_t		*/
-#define	PRIiPTR		"li"	/* intptr_t		*/
 #else
 #define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #define	PRIiMAX		"lli"	/* intmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIiPTR		"li"	/* intptr_t		*/
+#else
 #define	PRIiPTR		"i"	/* intptr_t		*/
 #endif
 
@@ -123,11 +129,14 @@
 #ifdef _LP64
 #define	PRIoFAST64	"lo"	/* uint_fast64_t	*/
 #define	PRIoMAX		"lo"	/* uintmax_t		*/
-#define	PRIoPTR		"lo"	/* uintptr_t		*/
 #else
 #define	PRIoFAST64	"llo"	/* uint_fast64_t	*/
 #define	PRIoMAX		"llo"	/* uintmax_t		*/
-#define	PRIoPTR		"o"	/* uintptr_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIoPTR		"lo"	/* intptr_t		*/
+#else
+#define	PRIoPTR		"o"	/* intptr_t		*/
 #endif
 
 #define	PRIu8		"u"	/* uint8_t		*/
@@ -152,11 +161,14 @@
 #ifdef _LP64
 #define	PRIuFAST64	"lu"	/* uint_fast64_t	*/
 #define	PRIuMAX		"lu"	/* uintmax_t		*/
-#define	PRIuPTR		"lu"	/* uintptr_t		*/
 #else
 #define	PRIuFAST64	"llu"	/* uint_fast64_t	*/
 #define	PRIuMAX		"llu"	/* uintmax_t		*/
-#define	PRIuPTR		"u"	/* uintptr_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIuPTR		"lu"	/* intptr_t		*/
+#else
+#define	PRIuPTR		"u"	/* intptr_t		*/
 #endif
 
 #define	PRIx8		"x"	/* uint8_t		*/
@@ -181,10 +193,13 @@
 #ifdef _LP64
 #define	PRIxFAST64	"lx"	/* uint_fast64_t	*/
 #define	PRIxMAX		"lx"	/* uintmax_t		*/
-#define	PRIxPTR		"lx"	/* uintptr_t		*/
 #else
 #define	PRIxFAST64	"llx"	/* uint_fast64_t	*/
 #define	PRIxMAX		"llx"	/* uintmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIxPTR		"lx"	/* uintptr_t		*/
+#else
 #define	PRIxPTR		"x"	/* uintptr_t		*/
 #endif
 
@@ -210,10 +225,13 @@
 #ifdef _LP64
 #define	PRIXFAST64	"lX"	/* uint_fast64_t	*/
 #define	PRIXMAX		"lX"	/* uintmax_t		*/
-#define	PRIXPTR		"lX"	/* uintptr_t		*/
 #else
 #define	PRIXFAST64	"llX"	/* uint_fast64_t	*/
 #define	PRIXMAX		"llX"	/* uintmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	PRIXPTR		"lX"	/* uintptr_t		*/
+#else
 #define	PRIXPTR		"X"	/* uintptr_t		*/
 #endif
 
@@ -241,11 +259,14 @@
 #ifdef _LP64
 #define	SCNdFAST64	"ld"	/* int_fast64_t		*/
 #define	SCNdMAX		"ld"	/* intmax_t		*/
-#define	SCNdPTR		"ld"	/* intptr_t		*/
 #else
 #define	SCNdFAST64	"lld"	/* int_fast64_t		*/
 #define	SCNdMAX		"lld"	/* intmax_t		*/
-#define	SCNdPTR		"d"	/* intptr_t		*/
+#endif
+#ifndef __mips_o32
+#define	SCNdPTR		"ld"	/* uintptr_t		*/
+#else
+#define	SCNdPTR		"d"	/* uintptr_t		*/
 #endif
 
 #define	SCNi8		"hhi"	/* int8_t		*/
@@ -270,11 +291,14 @@
 #ifdef _LP64
 #define	SCNiFAST64	"li"	/* int_fast64_t		*/
 #define	SCNiMAX		"li"	/* intmax_t		*/
-#define	SCNiPTR		"li"	/* intptr_t		*/
 #else
 #define	SCNiFAST64	"lli"	/* int_fast64_t		*/
 #define	SCNiMAX		"lli"	/* intmax_t		*/
-#define	SCNiPTR		"i"	/* intptr_t		*/
+#endif
+#ifndef __mips_o32
+#define	SCNiPTR		"li"	/* uintptr_t		*/
+#else
+#define	SCNiPTR		"i"	/* uintptr_t		*/
 #endif
 
 /* fscanf macros for unsigned integers */
@@ -301,10 +325,13 @@
 #ifdef _LP64
 #define	SCNoFAST64	"lo"	/* uint_fast64_t	*/
 #define	SCNoMAX		"lo"	/* uintmax_t		*/
-#define	SCNoPTR		"lo"	/* uintptr_t		*/
 #else
 #define	SCNoFAST64	"llo"	/* uint_fast64_t	*/
 #define	SCNoMAX		"llo"	/* uintmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	SCNoPTR		"lo"	/* uintptr_t		*/
+#else
 #define	SCNoPTR		"o"	/* uintptr_t		*/
 #endif
 
@@ -330,10 +357,13 @@
 #ifdef _LP64
 #define	SCNuFAST64	"lu"	/* uint_fast64_t	*/
 #define	SCNuMAX		"lu"	/* uintmax_t		*/
-#define	SCNuPTR		"lu"	/* uintptr_t		*/
 #else
 #define	SCNuFAST64	"llu"	/* uint_fast64_t	*/
 #define	SCNuMAX		"llu"	/* uintmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	SCNuPTR		"lu"	/* uintptr_t		*/
+#else
 #define	SCNuPTR		"u"	/* uintptr_t		*/
 #endif
 
@@ -359,10 +389,13 @@
 #ifdef _LP64
 #define	SCNxFAST64	"lx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"lx"	/* uintmax_t		*/
-#define	SCNxPTR		"lx"	/* uintptr_t		*/
 #else
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
+#endif
+#ifndef __mips_o32
+#define	SCNxPTR		"lx"	/* uintptr_t		*/
+#else
 #define	SCNxPTR		"x"	/* uintptr_t		*/
 #endif
 

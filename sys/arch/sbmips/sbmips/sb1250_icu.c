@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9 2007/12/03 15:34:16 ad Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.10 2009/12/14 00:46:12 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9 2007/12/03 15:34:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.10 2009/12/14 00:46:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ uint64_t ints_for_line[6];
 uint64_t imr_all;
 
 struct sb1250_ihand {
-	void	(*fun)(void *, uint32_t, uint32_t);
+	void	(*fun)(void *, uint32_t, vaddr_t);
 	void	*arg;
 	int	level;
 	struct evcnt count;
@@ -69,12 +69,12 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 #define	SB1250_I_MAP_I2		0x02
 /* XXX */
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
-static void	sb1250_cpu_intr(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	sb1250_cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
 static void	*sb1250_intr_establish(u_int, u_int,
-		    void (*fun)(void *, uint32_t, uint32_t), void *);
+		    void (*fun)(void *, uint32_t, vaddr_t), void *);
 
 void
 sb1250_icu_init(void)
@@ -103,7 +103,7 @@ sb1250_icu_init(void)
 }
 
 static void
-sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+sb1250_cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	int i, j;
 	uint64_t sstatus;
@@ -154,7 +154,7 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 static void *
 sb1250_intr_establish(u_int num, u_int ipl,
-    void (*fun)(void *, uint32_t, uint32_t), void *arg)
+    void (*fun)(void *, uint32_t, vaddr_t), void *arg)
 {
 	int s, line;
 

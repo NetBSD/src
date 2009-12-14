@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.16 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.17 2009/12/14 00:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.16 2008/05/10 15:31:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.17 2009/12/14 00:46:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,13 +139,13 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 		if (sc->hpc->revision == 3) {
 			hva->hpc3_hdd_bufptr = segp->ds_addr;
 			hva->hpc3_hdd_ctl    = segp->ds_len;
-			hva->hdd_descptr = (u_int32_t) ++hpa;
+			hva->hdd_descptr = (uintptr_t) ++hpa;
 		} else /* HPC 1/1.5 */ {
 			/* there doesn't seem to be any good way of doing this
 		   	   via an abstraction layer */
 			hva->hpc1_hdd_bufptr = segp->ds_addr;
 			hva->hpc1_hdd_ctl    = segp->ds_len;
-			hva->hdd_descptr = (u_int32_t) ++hpa;
+			hva->hdd_descptr = (uintptr_t) ++hpa;
 		}
 		++hva; ++segp;
 	}
@@ -172,7 +172,7 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 
 	/* Load DMA Descriptor list */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ndbp,
-			    (u_int32_t)sc->sc_desc_pa);
+			    (uintptr_t)sc->sc_desc_pa);
 }
 
 void

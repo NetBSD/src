@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.238 2009/12/14 00:46:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2009/12/14 00:46:11 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -102,12 +102,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $");
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <mips/cache.h>
-#include <machine/psl.h>
+#include <mips/regnum.h>
+#include <mips/psl.h>
+
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
+
 #include <pmax/pmax/machdep.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
@@ -123,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2009/11/27 03:23:12 rmind Exp $");
 #include "opt_dec_3maxplus.h"
 #include "ksyms.h"
 
-unsigned ssir;				/* simulated interrupt register */
+unsigned int ssir;			/* simulated interrupt register */
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -136,7 +139,7 @@ int		systype;		/* mother board type */
 char		*bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
 int		physmem;		/* max supported memory, changes to actual */
-int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
@@ -158,7 +161,7 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-void	mach_init(int, char *[], int, int, u_int, char *); /* XXX */
+void	mach_init(int, int32_t *, int, intptr_t, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
@@ -182,18 +185,19 @@ struct platform platform = {
 extern void *esym;			/* XXX */
 extern struct consdev promcd;		/* XXX */
 
+#define	ARGV(i)	((char *)(intptr_t)(argv32[i]))
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * The first 4 argments are passed by PROM monitor, and remaining two
- * are built on temporary stack by our boot loader.
+ * are built on temporary stack by our boot loader (or in reg if N32/N64).
  */
 void
-mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
+mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip)
 {
 	char *cp;
 	const char *bootinfo_msg;
 	u_long first, last;
-	struct pcb *pcb0;
 	int i;
 	char *kernend;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -225,8 +229,8 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
-		ssym = (void *)bi_syms->ssym;
-		esym = (void *)bi_syms->esym;
+		ssym = (void *)(intptr_t)bi_syms->ssym;
+		esym = (void *)(intptr_t)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
 #if 0	/* our bootloader clears BSS properly */
 		memset(edata, 0, end - edata);
@@ -252,6 +256,21 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	}
 
 	/* Initialize callv so we can do PROM output... */
+	if (code == DEC_PROM_MAGIC) {
+#ifdef _LP64
+		/*
+		 * Convert the call vector from using 32bit function pointers
+		 * to using 64bit function pointers.
+		 */
+		for (i = 0; i < sizeof(callvec) / sizeof(void *); i++)
+			((intptr_t *)&callvec)[i] = ((int32_t *)cv)[i];
+		callv = &callvec;
+#else
+		callv = (void *)cv;
+#endif
+	} else {
+		callv = &callvec;
+	}
 	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
@@ -280,13 +299,13 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	pmax_bus_dma_init();
 
 	/* Check for direct boot from DS5000 REX monitor */
-	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
+	if (argc > 0 && strcmp(ARGV(0), "boot") == 0) {
 		argc--;
-		argv++;
+		argv32++;
 	}
 
 	/* Look at argv[0] and compute bootdev */
-	makebootdev(argv[0]);
+	makebootdev(ARGV(0));
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -296,7 +315,7 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	boothowto |= RB_KDB;
 #endif
 	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
+		for (cp = ARGV(i); *cp; cp++) {
 			switch (*cp) {
 			case 'a': /* autoboot */
 				boothowto &= ~RB_SINGLE;
@@ -335,19 +354,6 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/*
-	 * Alloc uarea for lwp0 stealing KSEG0 memory.
-	 */
-	uvm_lwp_setuarea(&lwp0, (vaddr_t)kernend);
-	memset(kernend, 0, USPACE);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
-
-	kernend += USPACE;
 
 	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
@@ -406,6 +412,11 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
+
+	/*
+	 * Initialize lwp0's uarea.
+	 */
+	mips_init_lwp0_uarea();
 }
 
 void

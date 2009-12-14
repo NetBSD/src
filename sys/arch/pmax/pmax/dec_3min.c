@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.65 2009/07/20 17:05:13 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.66 2009/12/14 00:46:10 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.65 2009/07/20 17:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.66 2009/12/14 00:46:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ dec_3min_intr_establish(struct device *dev, void *cookie, int level,
 {
 	uint32_t mask;
 
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 		/* slots 0-2 don't interrupt through the IOASIC. */
 	case SYS_DEV_OPT0:
 		mask = MIPS_INT_MASK_0;
@@ -297,14 +297,14 @@ dec_3min_intr_establish(struct device *dev, void *cookie, int level,
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", (int)cookie);
+		printf("warning: enabling unknown intr %p\n", cookie);
 #endif
 		return;
 	}
 
 #if defined(DEBUG)
-	printf("3MIN: imask %x, enabling slot %d, dev %p handler %p\n",
-	    kmin_tc3_imask, (int)cookie, dev, handler);
+	printf("3MIN: imask %x, enabling slot %p, dev %p handler %p\n",
+	    kmin_tc3_imask, cookie, dev, handler);
 #endif
 
 	/*
@@ -317,10 +317,10 @@ dec_3min_intr_establish(struct device *dev, void *cookie, int level,
 	 */
 
 	/* Set the interrupt handler and argument ... */
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(uintptr_t)cookie].ih_func = handler;
+	intrtab[(uintptr_t)cookie].ih_arg = arg;
 	/* ... and set the relevant mask */
-	switch ((int)cookie) {
+	switch ((uintptr_t)cookie) {
 	case SYS_DEV_OPT0:
 	case SYS_DEV_OPT1:
 	case SYS_DEV_OPT2:
