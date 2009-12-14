@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.60 2009/01/13 22:33:17 pooka Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.61 2009/12/14 00:58:37 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.60 2009/01/13 22:33:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.61 2009/12/14 00:58:37 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -65,7 +65,7 @@ struct sysent osf1_sysent[] = {
 	    (sy_call_t *)sys_obreak },		/* 17 = obreak */
 	{ ns(struct osf1_sys_getfsstat_args), 0,
 	    (sy_call_t *)osf1_sys_getfsstat },	/* 18 = getfsstat */
-	{ ns(struct osf1_sys_lseek_args), 0,
+	{ ns(struct osf1_sys_lseek_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64 | SYCALL_RET_64,
 	    (sy_call_t *)osf1_sys_lseek },	/* 19 = lseek */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_getpid_with_ppid },/* 20 = getpid_with_ppid */
@@ -169,7 +169,7 @@ struct sysent osf1_sysent[] = {
 	    sys_nosys },			/* 69 = unimplemented sbrk */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 70 = unimplemented sstk */
-	{ ns(struct osf1_sys_mmap_args), 0,
+	{ ns(struct osf1_sys_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG5_64,
 	    (sy_call_t *)osf1_sys_mmap },	/* 71 = mmap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 72 = unimplemented ovadvise */
@@ -285,9 +285,9 @@ struct sysent osf1_sysent[] = {
 	    (sy_call_t *)sys_setregid },	/* 127 = setregid */
 	{ ns(struct sys___posix_rename_args), 0,
 	    (sy_call_t *)sys___posix_rename },	/* 128 = __posix_rename */
-	{ ns(struct osf1_sys_truncate_args), 0,
+	{ ns(struct osf1_sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)osf1_sys_truncate },	/* 129 = truncate */
-	{ ns(struct osf1_sys_ftruncate_args), 0,
+	{ ns(struct osf1_sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
 	    (sy_call_t *)osf1_sys_ftruncate },	/* 130 = ftruncate */
 	{ ns(struct sys_flock_args), 0,
 	    (sy_call_t *)sys_flock },		/* 131 = flock */
@@ -1052,4 +1052,3 @@ struct sysent osf1_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 511 = filler */
 };
-

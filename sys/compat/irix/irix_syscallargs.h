@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.60 2009/01/13 22:33:09 pooka Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.61 2009/12/14 00:58:36 matt Exp $ */
 
 /*
  * System call argument lists.
