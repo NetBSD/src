@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.19 2009/03/18 10:22:39 cegger Exp $	*/
+/*	$NetBSD: kloader.c,v 1.20 2009/12/14 00:52:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.19 2009/03/18 10:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.20 2009/12/14 00:52:38 matt Exp $");
 
 #include "debug_kloader.h"
 
@@ -510,7 +510,7 @@ kloader_from_file(vaddr_t dst, off_t ofs, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%zx <- 0x%lx\n", dst, freesz,
+		DPRINTFN(1, "0x%08"PRIxVADDR" + 0x%zx <- 0x%lx\n", dst, freesz,
 		    (unsigned long)ofs);
 		kloader_read(ofs, freesz, (void *)(tag->src + tag->sz));
 
@@ -535,7 +535,7 @@ kloader_copy(vaddr_t dst, const void *src, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%zx <- %p\n", dst, freesz, src);
+		DPRINTFN(1, "0x%08"PRIxVADDR" + 0x%zx <- %p\n", dst, freesz, src);
 		memcpy((void *)(tag->src + tag->sz), src, freesz);
 
 		tag->sz += freesz;
@@ -559,7 +559,7 @@ kloader_zero(vaddr_t dst, size_t sz)
 		if (freesz > sz)
 			freesz = sz;
 
-		DPRINTFN(1, "0x%08lx + 0x%zx\n", dst, freesz);
+		DPRINTFN(1, "0x%08"PRIxVADDR" + 0x%zx\n", dst, freesz);
 		memset((void *)(tag->src + tag->sz), 0, freesz);
 
 		tag->sz += freesz;
