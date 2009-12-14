@@ -1496,10 +1496,13 @@ mips-sgi-irix[56]*)
 	;;
 mips64*-*-netbsd*)			# NetBSD/mips64, either endian.
 	target_cpu_default="MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64"
-	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"
+	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h mips/netbsd64.h"
+	tmake_file="${tmake_file} mips/t-netbsd64"
 #	tm_defines="${tm_defines} MIPS_ISA_DEFAULT=64"
-	tm_defines="${tm_defines} MIPS_ABI_DEFAULT=ABI_64"
+	tm_defines="${tm_defines} MIPS_ABI_DEFAULT=ABI_N32"
 #	tm_defines="${tm_defines} MIPS_CPU_STRING_DEFAULT=\\\"mips64\\\""
+	gnu_ld=yes
+	gas=yes
 	;;
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_ABICALLS"
