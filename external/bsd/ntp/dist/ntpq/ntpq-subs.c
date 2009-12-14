@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.1.1.1 2009/12/13 16:56:29 kardel Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.2 2009/12/14 00:49:45 christos Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -13,7 +13,7 @@
 #include "ntpq.h"
 #include "ntpq-opts.h"
 
-extern char *	chosts[];
+extern const char *	chosts[];
 extern char currenthost[];
 extern int	numhosts;
 int 	maxhostlen;
