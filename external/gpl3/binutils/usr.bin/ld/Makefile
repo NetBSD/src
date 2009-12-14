@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/12/13 09:38:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2009/12/14 15:49:19 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -81,14 +81,16 @@ EMUL_LIB_PATH.${f}=/usr/lib/i386
 . elif (${MACHINE_ARCH} == "sparc64" && \
       ("${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/sparc
-. else
-EMUL_LIB_PATH.${f}=/usr/lib
 . elif ${MACHINE_ARCH} == "mips64el"
 .  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/o32
 .  elif "${f}" == "elf64btsmip" || "${f}" == "elf64btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/64
+.  else
+EMUL_LIB_PATH.${f}=/usr/lib
 .  endif
+. else
+EMUL_LIB_PATH.${f}=/usr/lib
 . endif
 
 #GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @ta rget_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
@@ -115,7 +117,7 @@ FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .elif ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
 FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .endif
-.endif	# x64_64 || sparc64
+.endif	# x64_64 || sparc64 || mips64
 
 .endfor
 
