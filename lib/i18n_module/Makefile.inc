@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2008/10/26 07:06:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.10.8.1 2009/12/14 06:29:20 mrg Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -7,10 +7,10 @@ NOPROFILE=	# defined
 .include <bsd.own.mk>
 
 SHLIB_VERSION_FILE=	${NETBSDSRCDIR}/lib/i18n_module/shlib_version
-.if defined(LD32DIR)
-LIBDIR=		/usr/lib/${LD32DIR}/i18n
-SHLIBDIR=	/usr/lib/${LD32DIR}/i18n
-SHLIBINSTALLDIR=/usr/lib/${LD32DIR}/i18n
+.if defined(MLIBDIR)
+LIBDIR=		/usr/lib/${MLIBDIR}/i18n
+SHLIBDIR=	/usr/lib/${MLIBDIR}/i18n
+SHLIBINSTALLDIR=/usr/lib/${MLIBDIR}/i18n
 .else
 LIBDIR=		/usr/lib/i18n
 SHLIBDIR=	/usr/lib/i18n
