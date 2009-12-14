@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.25 2009/12/06 16:33:18 dsl Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.26 2009/12/14 03:11:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,9 @@
  *
  *	@(#)vnioctl.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _SYS_DEV_VNDVAR_H_
+#define _SYS_DEV_VNDVAR_H_
 
 #include <sys/pool.h>
 
@@ -220,3 +223,5 @@ struct vnd_user {
 				offsetof(struct vnd_ioctl, vnd_size))
 #define VNDIOOCCLR	_IOC(IOC_IN, 'F', 1, \
 				offsetof(struct vnd_ioctl, vnd_size))
+
+#endif /* _SYS_DEV_VNDVAR_H_ */
