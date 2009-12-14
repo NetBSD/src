@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.1.1.1 2009/12/13 16:55:46 kardel Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
 
 /*
  *
@@ -794,9 +794,9 @@ neol_hexatoi_len(const char str[],
   int i;
   int n = 0;
 
-  for(i=0; isxdigit((int)str[i]) && i < maxlen; i++)
+  for(i=0; isxdigit((unsigned char)str[i]) && i < maxlen; i++)
     {
-      hexdigit = isdigit((int)str[i]) ? toupper(str[i]) - '0' : toupper(str[i]) - 'A' + 10;
+      hexdigit = isdigit((unsigned char)str[i]) ? toupper((unsigned char)str[i]) - '0' : toupper((unsigned char)str[i]) - 'A' + 10;
       n = 16 * n + hexdigit;
     }
   *result = n;
@@ -812,7 +812,7 @@ neol_atoi_len(const char str[],
   int i;
   int n = 0;
 
-  for(i=0; isdigit((int)str[i]) && i < maxlen; i++)
+  for(i=0; isdigit((unsigned char)str[i]) && i < maxlen; i++)
     {
       digit = str[i] - '0';
       n = 10 * n + digit;

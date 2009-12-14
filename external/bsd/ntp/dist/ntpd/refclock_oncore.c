@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.1.1.1 2009/12/13 16:55:54 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1233,12 +1233,12 @@ oncore_read_config(
 
 		/* Remove trailing space */
 		for (i = strlen(line);
-		     i > 0 && isascii((int)line[i - 1]) && isspace((int)line[i - 1]);
+		     i > 0 && isascii((unsigned char)line[i - 1]) && isspace((unsigned char)line[i - 1]);
 			)
 			line[--i] = '\0';
 
 		/* Remove leading space */
-		for (cc = line; *cc && isascii((int)*cc) && isspace((int)*cc); cc++)
+		for (cc = line; *cc && isascii((unsigned char)*cc) && isspace((unsigned char)*cc); cc++)
 			continue;
 
 		/* Stop if nothing left */
@@ -1247,16 +1247,16 @@ oncore_read_config(
 
 		/* Uppercase the command and find the arg */
 		for (ca = cc; *ca; ca++) {
-			if (isascii((int)*ca)) {
-				if (islower((int)*ca)) {
-					*ca = toupper(*ca);
-				} else if (isspace((int)*ca) || (*ca == '='))
+			if (isascii((unsigned char)*ca)) {
+				if (islower((unsigned char)*ca)) {
+					*ca = toupper((unsigned char)*ca);
+				} else if (isspace((unsigned char)*ca) || (*ca == '='))
 					break;
 			}
 		}
 
 		/* Remove space (and possible =) leading the arg */
-		for (; *ca && isascii((int)*ca) && (isspace((int)*ca) || (*ca == '=')); ca++)
+		for (; *ca && isascii((unsigned char)*ca) && (isspace((unsigned char)*ca) || (*ca == '=')); ca++)
 			continue;
 
 		if (!strncmp(cc, "STATUS", (size_t) 6) || !strncmp(cc, "SHMEM", (size_t) 5)) {
@@ -1266,8 +1266,8 @@ oncore_read_config(
 
 		/* Uppercase argument as well */
 		for (cp = ca; *cp; cp++)
-			if (isascii((int)*cp) && islower((int)*cp))
-				*cp = toupper(*cp);
+			if (isascii((unsigned char)*cp) && islower((unsigned char)*cp))
+				*cp = toupper((unsigned char)*cp);
 
 		if (!strncmp(cc, "LAT", (size_t) 3)) {
 			f1 = f2 = f3 = 0;
@@ -2897,7 +2897,7 @@ oncore_msg_Cj_id(
 		;
 	cp1 = cp;
 	cp2 = Model;
-	for (; !isspace((int)*cp) && cp-cp1 < 20; cp++, cp2++)
+	for (; !isspace((unsigned char)*cp) && cp-cp1 < 20; cp++, cp2++)
 		*cp2 = *cp;
 	*cp2 = '\0';
 

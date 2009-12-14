@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.1.1.1 2009/12/13 16:55:44 kardel Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers
@@ -831,7 +831,7 @@ send_slow(
 static int
 get2(char *p, int *val)
 {
-  if (!isdigit((int)p[0]) || !isdigit((int)p[1])) return 0;
+  if (!isdigit((unsigned char)p[0]) || !isdigit((unsigned char)p[1])) return 0;
   *val = (p[0] - '0') * 10 + p[1] - '0';
   return 1;
 }
@@ -839,7 +839,7 @@ get2(char *p, int *val)
 static int
 get1(char *p, int *val)
 {
-  if (!isdigit((int)p[0])) return 0;
+  if (!isdigit((unsigned char)p[0])) return 0;
   *val = p[0] - '0';
   return 1;
 }
@@ -931,7 +931,7 @@ arc_receive(
 #ifdef DEBUG
 		if(debug) { /* Show \r as `R', other non-printing char as `?'. */
 			printf("arc: stamp -->%c<-- (%d chars rcvd)\n",
-			       ((c == '\r') ? 'R' : (isgraph((int)c) ? c : '?')),
+			       ((c == '\r') ? 'R' : (isgraph((unsigned char)c) ? c : '?')),
 			       rbufp->recv_length);
 		}
 #endif
