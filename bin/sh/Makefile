@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2009/12/11 08:39:42 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.89 2009/12/14 05:13:38 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -19,7 +19,6 @@ LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
 LFLAGS=	-8	# 8-bit lex scanner for arithmetic
-YFLAGS=	-d
 
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
@@ -55,28 +54,23 @@ CLEANFILES+= trace
 
 token.h: mktokens
 	${_MKTARGET_CREATE}
-	${GENCMD} ${.TARGET} \
 	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC}
 
-builtins.c builtins.h: mkbuiltins shell.h builtins.def
+.ORDER: builtins.h builtins.c
+builtins.h builtins.c: mkbuiltins shell.h builtins.def
 	${_MKTARGET_CREATE}
-	${GENCMD} ${.TARGET} \
-	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} .
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	[ -f builtins.h ]
 
 init.c: mkinit.sh ${SHSRCS}
 	${_MKTARGET_CREATE}
-	${GENCMD} ${.TARGET} \
 	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC}
 
+.ORDER: nodes.h nodes.c
 nodes.c nodes.h: mknodes.sh nodetypes nodes.c.pat
 	${_MKTARGET_CREATE}
-	${GENCMD} ${.TARGET} \
-	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} .
-
-arith.c arith.h: arith.y
-	${_MKTARGET_CREATE}
-	${GENCMD} y.tab.${.TARGET:T:E} \
-	${YACC.y} ${.ALLSRC}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	[ -f nodes.h ]
 
 .if ${USETOOLS} == "yes"
 COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
@@ -84,7 +78,3 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
 .include <bsd.prog.mk>
-
-# override
-.y.c:
-.y.h:
