@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.25 2009/12/07 16:55:37 martin Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.26 2009/12/14 23:29:56 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -957,12 +957,6 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 	return 1;
 }
 
-static unsigned
-get_contents_type(const __ops_key_t *keydata)
-{
-	return keydata->type;
-}
-
 /* this interface isn't right - hook into callback for getting passphrase */
 int
 __ops_export_key(const __ops_key_t *keydata, unsigned char *passphrase)
@@ -971,7 +965,7 @@ __ops_export_key(const __ops_key_t *keydata, unsigned char *passphrase)
 	__ops_memory_t		*mem;
 
 	__ops_setup_memory_write(&output, &mem, 128);
-	if (get_contents_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
+	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		__ops_write_xfer_pubkey(output, keydata, 1);
 	} else {
 		__ops_write_xfer_seckey(output, keydata, passphrase,

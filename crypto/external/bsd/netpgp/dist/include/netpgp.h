@@ -66,6 +66,10 @@ int netpgp_list_packets(netpgp_t *, char *, int, char *);
 /* variables */
 int netpgp_setvar(netpgp_t *, const char *, const char *);
 char *netpgp_getvar(netpgp_t *, const char *);
+int netpgp_incvar(netpgp_t *, const char *, const int);
+
+/* set home directory information */
+int netpgp_set_homedir(netpgp_t *, char *, const char *, const int);
 
 /* key management */
 int netpgp_list_keys(netpgp_t *);

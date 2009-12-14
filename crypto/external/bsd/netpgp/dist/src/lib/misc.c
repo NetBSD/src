@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.25 2009/12/05 07:08:18 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.26 2009/12/14 23:29:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1217,6 +1217,26 @@ __ops_get_info(const char *type)
 		return NETPGP_MAINTAINER;
 	}
 	return "[unknown]";
+}
+
+/* local version of asprintf so we don't have to play autoconf games */
+int
+__ops_asprintf(char **ret, const char *fmt, ...)
+{
+	va_list args;
+	char    buf[120 * 1024];	/* XXX - "huge" buffer on stack */
+	int     cc;
+
+	va_start(args, fmt);
+	cc = vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	if ((*ret = calloc(1, (size_t)(cc + 1))) == NULL) {
+		*ret = NULL;
+		return -1;
+	}
+	(void) memcpy(*ret, buf, (size_t)cc);
+	(*ret)[cc] = 0x0;
+	return cc;
 }
 
 void

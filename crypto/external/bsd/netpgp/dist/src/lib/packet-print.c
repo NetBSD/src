@@ -58,13 +58,10 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.22 2009/12/09 22:10:51 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.23 2009/12/14 23:29:57 agc Exp $");
 #endif
 
 #include <string.h>
-
-/* this brings in the prototype for asprintf on Linux */
-#define _GNU_SOURCE
 #include <stdio.h>
 
 #ifdef HAVE_UNISTD_H
@@ -77,6 +74,7 @@ __RCSID("$NetBSD: packet-print.c,v 1.22 2009/12/09 22:10:51 agc Exp $");
 #include "signature.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
+#include "netpgpsdk.h"
 #include "packet.h"
 #include "netpgpdigest.h"
 
@@ -406,7 +404,7 @@ __ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
 		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
 			"uid              %s\n", key->uids[i].userid);
 	}
-	return asprintf(buf, "%s %d/%s %s %s\nKey fingerprint: %s\n%s",
+	return __ops_asprintf(buf, "%s %d/%s %s %s\nKey fingerprint: %s\n%s",
 		header,
 		numkeybits(pubkey),
 		__ops_show_pka(pubkey->alg),

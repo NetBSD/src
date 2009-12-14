@@ -1,8 +1,8 @@
-#! /usr/pkg/bin/perl -wT
+#! /usr/pkg/bin/perl -w
 
 # netpgp bindings for perl
 
-use lib "/usr/src/crypto/external/bsd/netpgp-bindings/dist/bindings/perl";
+use lib "/usr/src/crypto/external/bsd/netpgp/dist/bindings/perl";
 
 use netpgpperl;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bufgap.c,v 1.2 2009/12/06 17:43:05 agc Exp $ */
+/* $NetBSD: bufgap.c,v 1.3 2009/12/14 23:29:56 agc Exp $ */
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -81,7 +81,17 @@
 #define Rune		char
 #define	utfbytes(x)	strlen(x)
 #define	utfrune(a, b)	strchr(a, b)
-#define	utfnlen(a, b)	strnlen(a, b)
+#define	utfnlen(a, b)	bounded_strlen(a, b)
+
+static size_t
+bounded_strlen(const char *s, size_t maxlen)
+{
+	size_t	n;
+
+	for (n = 0 ; n < maxlen && s[n] != 0x0 ; n++) {
+	}
+	return n;
+}
 
 static int
 chartorune(Rune *rp, char *s)
