@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.31 2008/10/31 20:24:52 mrg Exp $
+# $NetBSD: ad.arm,v 1.32 2009/12/14 15:27:13 skrll Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -80,6 +80,7 @@
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmc.h				comp-c-include
 ./usr/lib/libarm.a				comp-c-lib
+./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libarm32.a				comp-obsolete		obsolete
 ./usr/lib/libarm32_p.a				comp-obsolete		obsolete
 ./usr/lib/libarm32_pic.a			comp-obsolete		obsolete

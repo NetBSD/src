@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.109 2009/08/25 17:02:42 njoly Exp $
+# $NetBSD: md.i386,v 1.110 2009/12/14 15:27:14 skrll Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -113,9 +113,11 @@
 ./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libi386.a				comp-c-lib
+./usr/lib/libi386_g.a				-unknown-		debuglib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
 ./usr/lib/libi386_pic.a				comp-c-piclib		pic
 ./usr/lib/libm387.a				comp-c-lib
+./usr/lib/libm387_g.a				-unknown-		debuglib
 ./usr/lib/libm387_p.a				comp-c-proflib		profile
 ./usr/lib/libm387_pic.a				comp-c-piclib		pic
 ./usr/lib/libpmc.a				comp-c-lib

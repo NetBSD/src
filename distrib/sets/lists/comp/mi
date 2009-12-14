@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1347 2009/12/14 09:57:37 uebayasi Exp $
+#	$NetBSD: mi,v 1.1348 2009/12/14 15:27:14 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2406,7 +2406,6 @@
 ./usr/lib/libhx509.a				comp-krb5-lib		kerberos
 ./usr/lib/libhx509_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libhx509_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libi386_g.a				-unknown-		debuglib
 ./usr/lib/libiberty_g.a				-unknown-		debuglib
 ./usr/lib/libintl.a				comp-c-lib
 ./usr/lib/libintl_g.a				-unknown-		debuglib
@@ -2465,7 +2464,6 @@
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
 ./usr/lib/liblwres_p.a				comp-bind-proflib	profile
 ./usr/lib/libm.a				comp-c-lib
-./usr/lib/libm387_g.a				-unknown-		debuglib
 ./usr/lib/libm_g.a				-unknown-		debuglib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
 ./usr/lib/libmagic.a				comp-c-lib

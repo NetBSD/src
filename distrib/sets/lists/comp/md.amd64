@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.57 2009/12/13 09:28:41 mrg Exp $
+# $NetBSD: md.amd64,v 1.58 2009/12/14 15:27:13 skrll Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -446,6 +446,7 @@
 ./usr/lib/i386/libhx509_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/i386/libi386.a			comp-c-lib		compat
 ./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libi386_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libiberty.a			comp-c-lib		obsolete
