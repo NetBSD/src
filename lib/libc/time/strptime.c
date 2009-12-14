@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.33 2009/05/24 02:25:43 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.34 2009/12/14 05:51:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.33 2009/05/24 02:25:43 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.34 2009/12/14 05:51:56 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -267,7 +267,7 @@ literal:
 					sse *= 10;
 					sse += *bp++ - '0';
 					rulim /= 10;
-				} while ((sse * 10 <= TIME_MAX) &&
+				} while (((uint64_t)(sse * 10) <= TIME_MAX) &&
 					 rulim && *bp >= '0' && *bp <= '9');
 
 				if (sse < 0 || (uint64_t)sse > TIME_MAX) {
