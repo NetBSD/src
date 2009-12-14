@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd-opts.h,v 1.1.1.1 2009/12/13 16:56:16 kardel Exp $	*/
+/*	$NetBSD: ntpd-opts.h,v 1.2 2009/12/14 00:43:09 christos Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.h)
@@ -236,10 +236,14 @@ typedef enum {
 #  warning undefining DVAR due to option name conflict
 #  undef   DVAR
 # endif
+
+/* Defined in ntpsim.h!
 # ifdef    SLEW
 #  warning undefining SLEW due to option name conflict
 #  undef   SLEW
 # endif
+*/
+
 # ifdef    USEPCC
 #  warning undefining USEPCC due to option name conflict
 #  undef   USEPCC
