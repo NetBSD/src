@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.4 2009/11/18 01:15:32 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.5 2009/12/14 03:55:52 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.4 2009/11/18 01:15:32 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.5 2009/12/14 03:55:52 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -884,7 +884,7 @@ rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
 				bus_space_unmap(bst, ecfg_bsh, size);
 			err = bus_space_map(bst, ba, size, 0, &ecfg_bsh);
 			if (err != 0) {
-#ifdef DEBUH
+#ifdef DEBUG
 				panic("%s: bus_space_map err %d, ECFG space",
 					__func__, err);	/* XXX */
 #endif
