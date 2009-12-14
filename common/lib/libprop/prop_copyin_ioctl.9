@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.6 2009/10/11 01:55:28 wiz Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.7 2009/12/14 05:47:30 dholland Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,14 +65,14 @@ The
 .Nm prop_dictionary_copyin_ioctl ,
 and
 .Nm prop_dictionary_copyout_ioctl
-functions implement the kernel side of a protocol for sending property lists
+functions implement the kernel side of a protocol for copying property lists
 to and from the kernel using
 .Xr ioctl 2 .
 The functions
 .Nm prop_array_copyin
 and
 .Nm prop_dictionary_copyin
-implement the kernel side of a protocol for sending property lists to the
+implement the kernel side of a protocol for copying property lists to the
 kernel as arguments of normal system calls.
 .Pp
 A kernel routine receiving or returning a property list will be passed a
