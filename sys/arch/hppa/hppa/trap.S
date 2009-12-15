@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.35 2009/12/15 22:44:25 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.36 2009/12/15 22:47:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1309,8 +1309,8 @@ itlb_c:
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = data address space identifier. Copied from %isr
- * %r9 = data address offset. Copied from %ior
+ * %r8 = data address space identifier.  Copied from %isr.
+ * %r9 = data address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1337,8 +1337,8 @@ EXIT(TLABEL(tlbd_s))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %pcsq
- * %r9 = instruction address offset. Copied from %pcoq
+ * %r8 = instruction address space identifier. Copied from %pcsq.
+ * %r9 = instruction address offset. Copied from %pcoq.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1398,8 +1398,8 @@ EXIT(TLABEL(dtlb_s))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %isr.
- * %r9 = instruction address offset. Copied from %ior.
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1492,7 +1492,7 @@ EXIT(TLABEL(dtlbna_s))
  *
  * %r1 = C trap number
  * %r8 = data address space identifier.  Copied from %ior.
- * %r9 = data address offset  Copied from %isr.
+ * %r9 = data address offset.  Copied from %isr.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1523,8 +1523,8 @@ EXIT(TLABEL(tlbd_l))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %pcsq.
- * %r9 = instruction address offset. Copied from %pcoq.
+ * %r8 = instruction address space identifier.  Copied from %pcsq.
+ * %r9 = instruction address offset.  Copied from %pcoq.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1555,8 +1555,8 @@ EXIT(TLABEL(itlb_l))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %isr.
- * %r9 = instruction address offset. Copied from %ior.
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1597,8 +1597,8 @@ EXIT(TLABEL(dtlbna_l))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %isr.
- * %r9 = instruction address offset. Copied from %ior.
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1705,7 +1705,7 @@ EXIT(TLABEL(tlbd_u))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = data address space identifier.   Copied from %isr.
+ * %r8 = data address space identifier.  Copied from %isr.
  * %r9 = data address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
@@ -1733,8 +1733,8 @@ EXIT(TLABEL(itlb_u))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %isr.
- * %r9 = instruction address offset. Copied from %ior.
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1774,8 +1774,8 @@ EXIT(TLABEL(dtlbna_u))
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier. Copied from %isr.
- * %r9 = instruction address offset. Copied from %ior.
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
