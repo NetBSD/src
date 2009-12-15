@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.48.22.1 2009/12/15 19:53:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.48.22.1 2009/12/15 19:53:21 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: ar_io.c,v 1.48 2007/04/23 18:40:22 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#ifdef HAVE_MTIO_H
+#ifdef HAVE_SYS_MTIO_H
 #include <sys/mtio.h>
 #endif
 #include <sys/wait.h>
