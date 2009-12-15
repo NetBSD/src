@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.115 2009/12/15 05:07:11 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.116 2009/12/15 05:11:08 uebayasi Exp $
 #
 
 #
@@ -173,7 +173,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.115 2009/12/15 05:07:11 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.116 2009/12/15 05:11:08 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -260,15 +260,7 @@ list_set_files()
 	else
 		verbose=true
 	fi
-	for setname; do
-		list=`list_set_lists $setname`
-		for l in $list; do
-			echo $l
-			if $verbose; then
-				echo >&2 "DEBUG: list_set_files: $l"
-			fi
-		done
-	done | xargs cat | ${SED} ${SUBST} | \
+	print_set_lists "$@" | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
 			if (obsolete)
@@ -473,6 +465,19 @@ echo_if_exist_foreach()
 	for _suffix in $@; do
 		echo_if_exist ${_list}.${_suffix}
 	done
+}
+
+print_set_lists()
+{
+	for setname; do
+		list=`list_set_lists $setname`
+		for l in $list; do
+			echo $l
+			if $verbose; then
+				echo >&2 "DEBUG: list_set_files: $l"
+			fi
+		done
+	done | xargs ${SED} ${SUBST}
 }
 
 # arch_to_cpu mach
