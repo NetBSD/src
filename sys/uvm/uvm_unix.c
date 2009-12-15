@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.42 2009/11/27 12:25:10 njoly Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.43 2009/12/15 06:15:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.42 2009/11/27 12:25:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.43 2009/12/15 06:15:11 matt Exp $");
 
 #include "opt_pax.h"
 
@@ -119,7 +119,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 #ifdef DEBUG
-			uprintf("sbrk: grow %ld failed, error = %d\n",
+			uprintf("sbrk: grow %#"PRIxVADDR" failed, error = %d\n",
 			    new - old, error);
 #endif
 			mutex_exit(&p->p_auxlock);

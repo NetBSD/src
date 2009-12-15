@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.285 2009/12/14 21:19:47 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.286 2009/12/15 06:15:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.285 2009/12/14 21:19:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.286 2009/12/15 06:15:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2605,9 +2605,11 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 			if (tmpent->start < cur)
 				panic("uvm_map_replace1");
 			if (tmpent->start >= tmpent->end || tmpent->end > end) {
-		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
-			    tmpent->start, tmpent->end, end);
-				panic("uvm_map_replace2");
+				panic("uvm_map_replace2: "
+				    "tmpent->start=0x%"PRIxVADDR
+				    ", tmpent->end=0x%"PRIxVADDR
+				    ", end=0x%"PRIxVADDR,
+				    tmpent->start, tmpent->end, end);
 			}
 			cur = tmpent->end;
 			if (tmpent->next) {
