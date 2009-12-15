@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1177 2009/12/14 09:57:37 uebayasi Exp $
+# $NetBSD: mi,v 1.1178 2009/12/15 03:01:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -762,7 +762,7 @@
 ./usr/share/man/cat4/atari/ms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atari/rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ate.0			man-sys-catman		.cat
-./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat
+./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat4/ath.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atppc.0			man-sys-catman		.cat
@@ -1714,7 +1714,7 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
-./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat
+./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat5/audit-packages.conf.0	man-obsolete		obsolete
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
@@ -1892,7 +1892,7 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
-./usr/share/man/cat7/atf.0			man-atf-catman		.cat
+./usr/share/man/cat7/atf.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	crypto,.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
@@ -3396,7 +3396,7 @@
 ./usr/share/man/html4/atari/ms.html		man-sys-htmlman		html
 ./usr/share/man/html4/atari/rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/ate.html			man-sys-htmlman		html
-./usr/share/man/html4/atf-test-case.html	man-atf-htmlman		html
+./usr/share/man/html4/atf-test-case.html	man-atf-htmlman		html,atf
 ./usr/share/man/html4/ath.html			man-sys-htmlman		html
 ./usr/share/man/html4/atphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/atppc.html		man-sys-htmlman		html
@@ -4265,7 +4265,7 @@
 ./usr/share/man/html5/altq.conf.html		man-router-htmlman	html
 ./usr/share/man/html5/amd.conf.html		man-amd-htmlman		html
 ./usr/share/man/html5/ar.html			man-sys-htmlman		html
-./usr/share/man/html5/atf-formats.html		man-atf-htmlman		html
+./usr/share/man/html5/atf-formats.html		man-atf-htmlman		html,atf
 ./usr/share/man/html5/audit-packages.conf.html	man-obsolete		obsolete
 ./usr/share/man/html5/body_checks.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/boot.cfg.html		man-sys-htmlman		html
@@ -4424,7 +4424,7 @@
 ./usr/share/man/html5/wtmp.html			man-sys-htmlman		html
 ./usr/share/man/html5/wtmpx.html		man-sys-htmlman		html
 ./usr/share/man/html7/ascii.html		man-reference-htmlman	html
-./usr/share/man/html7/atf.html			man-atf-htmlman		html
+./usr/share/man/html7/atf.html			man-atf-htmlman		html,atf
 ./usr/share/man/html7/des_modes.html		man-reference-htmlman	crypto,html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
@@ -5802,7 +5802,7 @@
 ./usr/share/man/man4/atari/ms.4			man-sys-man		.man
 ./usr/share/man/man4/atari/rtc.4		man-sys-man		.man
 ./usr/share/man/man4/ate.4			man-sys-man		.man
-./usr/share/man/man4/atf-test-case.4		man-cat-man		.man
+./usr/share/man/man4/atf-test-case.4		man-cat-man		.man,atf
 ./usr/share/man/man4/ath.4			man-sys-man		.man
 ./usr/share/man/man4/atphy.4			man-sys-man		.man
 ./usr/share/man/man4/atppc.4			man-sys-man		.man
@@ -6754,7 +6754,7 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
-./usr/share/man/man5/atf-formats.5		man-atf-man		.man
+./usr/share/man/man5/atf-formats.5		man-atf-man		.man,atf
 ./usr/share/man/man5/audit-packages.conf.5	man-obsolete		obsolete
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
@@ -6932,7 +6932,7 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man		.man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
-./usr/share/man/man7/atf.7			man-atf-man		.man
+./usr/share/man/man7/atf.7			man-atf-man		.man,atf
 ./usr/share/man/man7/des_modes.7		man-reference-man	crypto,.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/hier.7			man-reference-man	.man

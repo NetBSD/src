@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1348 2009/12/14 15:27:14 skrll Exp $
+#	$NetBSD: mi,v 1.1349 2009/12/15 03:01:15 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4829,9 +4829,9 @@
 ./usr/share/man/cat3/atanh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atanhf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atexit.0			comp-c-catman		.cat
-./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
-./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat
-./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat,atf
+./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat,atf
+./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat,atf
 ./usr/share/man/cat3/atof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
@@ -10439,9 +10439,9 @@
 ./usr/share/man/html3/atanh.html		comp-c-htmlman		html
 ./usr/share/man/html3/atanhf.html		comp-c-htmlman		html
 ./usr/share/man/html3/atexit.html		comp-c-htmlman		html
-./usr/share/man/html3/atf-c++-api.html		comp-atf-htmlman	html
-./usr/share/man/html3/atf-c-api.html		comp-atf-htmlman	html
-./usr/share/man/html3/atf-sh-api.html		comp-atf-htmlman	html
+./usr/share/man/html3/atf-c++-api.html		comp-atf-htmlman	html,atf
+./usr/share/man/html3/atf-c-api.html		comp-atf-htmlman	html,atf
+./usr/share/man/html3/atf-sh-api.html		comp-atf-htmlman	html,atf
 ./usr/share/man/html3/atof.html			comp-c-htmlman		html
 ./usr/share/man/html3/atoi.html			comp-c-htmlman		html
 ./usr/share/man/html3/atol.html			comp-c-htmlman		html
@@ -15849,9 +15849,9 @@
 ./usr/share/man/man3/atanh.3			comp-c-man		.man
 ./usr/share/man/man3/atanhf.3			comp-c-man		.man
 ./usr/share/man/man3/atexit.3			comp-c-man		.man
-./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
-./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man
-./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man,atf
+./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man,atf
+./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man,atf
 ./usr/share/man/man3/atof.3			comp-c-man		.man
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man

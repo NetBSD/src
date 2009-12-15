@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.162 2009/12/14 02:01:54 matt Exp $
+# $NetBSD: mi,v 1.163 2009/12/15 03:01:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -15,11 +15,11 @@
 ./usr/share/dict/web2a				misc-reference-share	share
 ./usr/share/dict/words				misc-reference-share	share
 ./usr/share/doc/atf				misc-atf-doc
-./usr/share/doc/atf/AUTHORS			misc-atf-doc		doc
-./usr/share/doc/atf/COPYING			misc-atf-doc		doc
-./usr/share/doc/atf/NEWS			misc-atf-doc		doc
-./usr/share/doc/atf/README			misc-atf-doc		doc
-./usr/share/doc/atf/ROADMAP			misc-atf-doc		doc
+./usr/share/doc/atf/AUTHORS			misc-atf-doc		doc,atf
+./usr/share/doc/atf/COPYING			misc-atf-doc		doc,atf
+./usr/share/doc/atf/NEWS			misc-atf-doc		doc,atf
+./usr/share/doc/atf/README			misc-atf-doc		doc,atf
+./usr/share/doc/atf/ROADMAP			misc-atf-doc		doc,atf
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch01.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch02.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch03.html	misc-bind-htmldoc	doc
@@ -632,8 +632,8 @@
 ./usr/share/examples/amd/net			misc-amd-examples	share
 ./usr/share/examples/apm/script			misc-amd-examples	share
 ./usr/share/examples/atf			misc-atf-examples
-./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share
-./usr/share/examples/atf/tests-results.css	misc-atf-examples	share
+./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf
+./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
@@ -872,8 +872,8 @@
 ./usr/share/postfix				misc-obsolete		obsolete
 ./usr/share/xml					misc-xml-share
 ./usr/share/xml/atf				misc-atf-share
-./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share
+./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf
 ./usr/share/xml/catalog				misc-xml-share		share
 ./usr/share/xsl					misc-xml-share
 ./usr/share/xsl/atf				misc-atf-share
-./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share
+./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf
