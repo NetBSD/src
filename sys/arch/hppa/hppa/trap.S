@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.34 2009/12/14 23:36:52 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.35 2009/12/15 22:44:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2295,10 +2295,6 @@ L$trap_return:
 	bv,n	%r0(%t1)
 	nop
 
-#if 0
-	.export	T$trap$all$end, entry
-T$trap$all$end:
-#endif
 EXIT(TLABEL(all))
 
 	.align	32
