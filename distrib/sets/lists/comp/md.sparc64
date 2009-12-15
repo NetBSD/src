@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.50 2009/12/13 09:28:41 mrg Exp $
+# $NetBSD: md.sparc64,v 1.51 2009/12/15 05:59:51 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -237,12 +237,12 @@
 ./usr/lib/sparc/libasn1.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libasn1_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libasn1_pic.a			comp-c-piclib		compat,pic
-./usr/lib/sparc/libatf-c++.a			comp-c-lib		compat
-./usr/lib/sparc/libatf-c++_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libatf-c++_pic.a		comp-c-piclib		compat,pic
-./usr/lib/sparc/libatf-c.a			comp-c-lib		compat
-./usr/lib/sparc/libatf-c_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libatf-c_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libatf-c++.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/sparc/libatf-c++_pic.a		comp-c-piclib		compat,pic,atf
+./usr/lib/sparc/libatf-c.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c_p.a			comp-c-proflib		compat,profile,atf
+./usr/lib/sparc/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/sparc/libbfd.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libbfd.so			base-obsolete		obsolete
 ./usr/lib/sparc/libbfd_p.a			comp-obsolete		obsolete
@@ -370,6 +370,10 @@
 ./usr/lib/sparc/libisccfg.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libisccfg_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libisccfg_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libiscsi.a			comp-c-lib		compat
+./usr/lib/sparc/libiscsi.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libiscsi_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libiscsi_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libkadm5clnt.a			comp-c-lib		compat
 ./usr/lib/sparc/libkadm5clnt.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libkadm5clnt_p.a		comp-c-proflib		compat,profile
@@ -548,11 +552,11 @@
 ./usr/lib/sparc/libssl.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libssl_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libssl_pic.a			comp-c-piclib		compat,pic
-./usr/lib/sparc/libstdc++.a			comp-c-lib		compat
-./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic
-./usr/lib/sparc/libsupc++.a			comp-c-lib		compat
+./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx
+./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx
+./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
+./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
+./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx
 ./usr/lib/sparc/libsupc++.so			base-sys-shlib		obsolete
 ./usr/lib/sparc/libsupc++_pic.a			comp-c-piclib		obsolete
 ./usr/lib/sparc/libtermcap.a			comp-c-lib		compat
