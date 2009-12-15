@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.28 2009/10/25 13:47:43 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.29 2009/12/15 00:19:52 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.28 2009/10/25 13:47:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.29 2009/12/15 00:19:52 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -721,24 +721,26 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		return;
 	}
 	VOP_UNLOCK(xbdi->xbdi_vp, 0);
-	if (strcmp(devname, "dk") == 0) {
-		/* dk device; get wedge data */
-		struct dkwedge_info wi;
-		err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGWEDGEINFO, &wi,
-		    FREAD, NOCRED);
-		if (err) {
-			printf("xbdback %s: can't DIOCGWEDGEINFO device "
-			    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
-			    xbdi->xbdi_dev, err);
-			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
-			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
-			xbdi->xbdi_vp = NULL;
-			return;
-		}
+
+	/* dk device; get wedge data */
+	struct dkwedge_info wi;
+	if ((err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGWEDGEINFO, &wi,
+		    FREAD, NOCRED)) == 0) {
 		xbdi->xbdi_size = wi.dkw_size;
 		printf("xbd backend: attach device %s (size %" PRIu64 ") "
 		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
+	}
+	/* ENOTTY should be returned only when device doesn't implement
+	   DIOCGWEDGEINFO and we are working with non wedge like device. */
+	if (err != ENOTTY) {
+		printf("xbdback %s: can't DIOCGWEDGEINFO device "
+		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
+		    xbdi->xbdi_dev, err);		
+		xbdi->xbdi_size = xbdi->xbdi_dev = 0;
+		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
+		xbdi->xbdi_vp = NULL;
+		return;
 	} else {
 		/* disk device, get partition data */
 		struct partinfo dpart;
