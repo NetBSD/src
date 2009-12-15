@@ -1,4 +1,4 @@
-#	$NetBSD: compatsubdir.mk,v 1.1 2009/12/13 09:27:13 mrg Exp $
+#	$NetBSD: compatsubdir.mk,v 1.2 2009/12/15 04:12:43 mrg Exp $
 
 # Build netbsd libraries.
 
@@ -24,13 +24,23 @@ SUBDIR= ../../../gnu/lib/crtstuff4 .WAIT \
 	../../../lib/libutil .WAIT \
 	../../../lib .WAIT \
 	../../../gnu/lib \
-	../../../external/bsd/atf/lib \
 	../../../external/bsd/bind/lib \
 	../../../external/bsd/libevent/lib \
 	../../../external/bsd/file/lib \
-	../../../external/bsd/openldap/lib \
-	../../../external/gpl3/binutils/lib \
 	../../../libexec/ld.elf_so
+
+.if ${MKATF} != "no"
+SUBDIR+= ../../../external/bsd/atf/lib
+.endif
+
+.if (${MKLDAP} != "no")
+SUBDIR+= ../../../external/bsd/openldap/lib
+.endif
+
+.if (${MKBINUTILS} != "no")
+SUBDIR+= ../../../external/gpl3/binutils/lib
+.endif
+
 .endif
 
 .include <bsd.subdir.mk>
