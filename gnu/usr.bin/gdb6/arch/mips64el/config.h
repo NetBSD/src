@@ -603,7 +603,7 @@
 /* #undef USE_WIN32API */
 
 /* Define if the simulator is being linked in. */
-#define WITH_SIM 1
+/* #undef WITH_SIM */
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.
