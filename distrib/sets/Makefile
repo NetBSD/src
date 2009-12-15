@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2009/12/11 15:25:05 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.78 2009/12/15 06:18:07 uebayasi Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -8,8 +8,7 @@ all:
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-SETSCMD=	cd ${.CURDIR} && \
-		DESTDIR=${DESTDIR:Q} \
+SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
 		MACHINE_ARCH=${MACHINE_ARCH:Q} \
 		AWK=${TOOL_AWK:Q} \
@@ -22,7 +21,9 @@ SETSCMD=	cd ${.CURDIR} && \
 		PAX=${TOOL_PAX:Q} \
 		PKG_CREATE=${TOOL_PKG_CREATE:Q} \
 		SED=${TOOL_SED:Q} \
-		TSORT=${TSORT:Q} \
+		TSORT=${TSORT:Q}
+SETSCMD=	cd ${.CURDIR} && \
+		${SETSENV} \
 		${HOST_SH}
 
 MAKETARS_FLAGS=
@@ -68,8 +69,12 @@ print_object_fmt: .PHONY
 print_toolchain_missing: .PHONY
 	@echo "${TOOLCHAIN_MISSING}"
 
-print_mkvars: .PHONY
-	@env SETS_SUBR_DEBUG=dumpmkvars rundir="${.CURDIR}" ${HOST_SH} sets.subr
+print_mkvars \
+print_set_lists_base print_set_lists_x print_set_lists_ext \
+list_set_lists_base list_set_lists_x list_set_lists_ext \
+list_set_files_base list_set_files_x list_set_files_ext \
+		: .PHONY
+	@${SETSENV}; rundir="${.CURDIR}"; . ./sets.subr; ${.TARGET}
 
 #
 # METALOG MANIPULATION TARGETS
