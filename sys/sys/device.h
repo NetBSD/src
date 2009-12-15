@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.127 2009/12/07 19:45:13 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.128 2009/12/15 03:02:25 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -181,6 +181,10 @@ struct device {
 	device_suspensor_t	dv_bus_suspensors[DEVICE_SUSPENSORS_MAX];
 	device_suspensor_t	dv_driver_suspensors[DEVICE_SUSPENSORS_MAX];
 	device_suspensor_t	dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
+	struct device_garbage {
+		device_t	*dg_devs;
+		int		dg_ndevs;
+	} dv_garbage;
 };
 
 /* dv_flags */
