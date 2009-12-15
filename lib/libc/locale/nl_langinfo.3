@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl_langinfo.3,v 1.17 2009/03/12 12:50:31 joerg Exp $
+.\"	$NetBSD: nl_langinfo.3,v 1.18 2009/12/15 00:35:36 enami Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@NetBSD.org>.
 .\" Public domain.
@@ -113,7 +113,7 @@ int main(void)
 	(void)setlocale(LC_ALL, "");
 	ptr = nl_langinfo(D_T_FMT);
 	strftime(datestring, sizeof(datestring), ptr, tm);
-	printf("%s\en",datestring);
+	printf("%s\en", datestring);
 	return (0);
 }
 .Ed
