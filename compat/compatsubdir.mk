@@ -1,4 +1,4 @@
-#	$NetBSD: compatsubdir.mk,v 1.2 2009/12/15 04:12:43 mrg Exp $
+#	$NetBSD: compatsubdir.mk,v 1.3 2009/12/15 05:23:25 mrg Exp $
 
 # Build netbsd libraries.
 
@@ -39,6 +39,10 @@ SUBDIR+= ../../../external/bsd/openldap/lib
 
 .if (${MKBINUTILS} != "no")
 SUBDIR+= ../../../external/gpl3/binutils/lib
+.endif
+
+.if (${MKISCSI} != "no")
+SUBDIR+= ../../../external/bsd/iscsi/lib
 .endif
 
 .endif
