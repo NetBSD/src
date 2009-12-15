@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.88 2009/12/01 02:37:07 snj Exp $
+.\"	$NetBSD: legal.common,v 1.89 2009/12/15 22:30:58 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,8 +224,6 @@ This product includes software developed by Garrett D'Amore.
 This product includes software developed by Gary Thomas.
 .It
 This product includes software developed by Gordon Ross
-.It
-This product includes software developed by HAYAKAWA Koichi.
 .It
 This product includes software developed by Harvard University and
 its contributors.
