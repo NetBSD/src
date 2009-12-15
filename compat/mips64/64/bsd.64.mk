@@ -1,6 +1,10 @@
-#	$NetBSD: bsd.64.mk,v 1.2 2009/12/14 13:43:59 uebayasi Exp $
+#	$NetBSD: bsd.64.mk,v 1.3 2009/12/15 04:05:34 mrg Exp $
 
-LD+=		-m elf64btsmip	# XXX endian
+.if ${MACHINE_ARCH} == "mips64eb"
+LD+=		-m elf64btsmip
+.else
+LD+=		-m elf64ltsmip
+.endif
 MLIBDIR=	64
 
 COPTS+=		-mabi=64
