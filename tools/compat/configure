@@ -2328,7 +2328,7 @@ fi
 # These are not necessarily required by the code, but they are not
 # currently conditionalized.
 
-for ac_header in sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
+for ac_header in sys/ioctl.h sys/mman.h sys/param.h \
 	sys/socket.h sys/stat.h sys/time.h sys/types.h sys/utsname.h \
 	sys/wait.h assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
 	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
@@ -2551,7 +2551,7 @@ fi
 
 fi
 
-for ac_header in sys/sysmacros.h sys/syslimits.h \
+for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h stddef.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
