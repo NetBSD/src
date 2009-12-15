@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2009/12/13 08:50:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2009/12/15 04:06:43 mrg Exp $
 
 WARNS?=	3	# XXX: -Wsign-compare issues ld.elf_so source
 
@@ -18,6 +18,7 @@ MLIBDIR=	powerpc
 .if (${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el")
 MLIBDIR=	64
 COMPAT_MLIBDIR=	o32
+CPPFLAGS+= -DLDD_ELF64
 .endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
