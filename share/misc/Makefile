@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: Makefile,v 1.34 2009/12/15 03:38:58 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -26,5 +26,8 @@ update-domains:
 
 update-na.phone:
 	< /dev/null ${TOOL_AWK} -f nanpa.awk > na.phone
+
+update-country:
+	${.CURDIR}/make.country > country
 
 .include <bsd.prog.mk>
