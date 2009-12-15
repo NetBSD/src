@@ -1,6 +1,10 @@
-#	$NetBSD: bsd.o32.mk,v 1.2 2009/12/14 13:43:59 uebayasi Exp $
+#	$NetBSD: bsd.o32.mk,v 1.3 2009/12/15 04:05:34 mrg Exp $
 
-LD+=		-m elf32btsmip	# XXX endian
+.if ${MACHINE_ARCH} == "mips64eb"
+LD+=		-m elf32btsmip
+.else
+LD+=		-m elf32ltsmip
+.endif
 MLIBDIR=	o32
 
 COPTS+=		-mabi=32 -march=mips3
