@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.11 2009/12/14 00:46:05 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.12 2009/12/15 06:07:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.11 2009/12/14 00:46:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.12 2009/12/15 06:07:14 rmind Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -772,7 +772,7 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 
 		s = splhigh();
 		while (size != 0) {
-			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 			pa += PAGE_SIZE;
 			va += PAGE_SIZE;
 			size -= PAGE_SIZE;
