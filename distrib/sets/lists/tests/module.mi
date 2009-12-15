@@ -1,9 +1,9 @@
-# $NetBSD: module.mi,v 1.2 2009/09/07 08:22:51 he Exp $
+# $NetBSD: module.mi,v 1.3 2009/12/15 03:01:16 mrg Exp $
 #
 # These are only made for ports doing modules.
 #
-./usr/tests/modules/Atffile			tests-sys-tests
-./usr/tests/modules/k_helper			tests-sys-tests
-./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests
-./usr/tests/modules/t_modctl			tests-sys-tests
-./usr/tests/modules/t_modload			tests-sys-tests
+./usr/tests/modules/Atffile			tests-sys-tests		atf
+./usr/tests/modules/k_helper			tests-sys-tests		atf
+./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests		atf
+./usr/tests/modules/t_modctl			tests-sys-tests		atf
+./usr/tests/modules/t_modload			tests-sys-tests		atf

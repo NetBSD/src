@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.56 2009/12/14 02:01:54 matt Exp $
+# $NetBSD: mi,v 1.57 2009/12/15 03:01:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -99,63 +99,63 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
-./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read			tests-kernel-tests
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file2.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_pipe.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_ttypty.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_file2.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_pipe.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_ttypty.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug
-./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug debug
+./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug debug
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
-./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
-./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug
-./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug
+./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug
-./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug
-./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
-./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug
+./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
@@ -476,49 +476,49 @@
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests
 ./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests
 ./usr/tests/fs					tests-fs-tests
-./usr/tests/fs/Atffile				tests-fs-tests
-./usr/tests/fs/h_funcs.subr			tests-fs-tests
+./usr/tests/fs/Atffile				tests-fs-tests		atf
+./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
 ./usr/tests/fs/ffs				tests-fs-tests
-./usr/tests/fs/ffs/Atffile			tests-fs-tests
-./usr/tests/fs/ffs/t_renamerace			tests-fs-tests
+./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/puffs				tests-fs-tests
-./usr/tests/fs/puffs/Atffile			tests-fs-tests
-./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests
-./usr/tests/fs/puffs/ssh_config.in		tests-fs-tests
-./usr/tests/fs/puffs/ssh_host_key		tests-fs-tests
-./usr/tests/fs/puffs/ssh_host_key.pub		tests-fs-tests
-./usr/tests/fs/puffs/sshd_config.in		tests-fs-tests
-./usr/tests/fs/puffs/t_psshfs			tests-fs-tests
+./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests		atf
+./usr/tests/fs/puffs/ssh_config.in		tests-fs-tests		atf
+./usr/tests/fs/puffs/ssh_host_key		tests-fs-tests		atf
+./usr/tests/fs/puffs/ssh_host_key.pub		tests-fs-tests		atf
+./usr/tests/fs/puffs/sshd_config.in		tests-fs-tests		atf
+./usr/tests/fs/puffs/t_psshfs			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs				tests-fs-tests
-./usr/tests/fs/tmpfs/Atffile			tests-fs-tests
-./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests
-./usr/tests/fs/tmpfs/h_tools			tests-fs-tests
-./usr/tests/fs/tmpfs/t_create			tests-fs-tests
-./usr/tests/fs/tmpfs/t_devices			tests-fs-tests
-./usr/tests/fs/tmpfs/t_dots			tests-fs-tests
-./usr/tests/fs/tmpfs/t_exec			tests-fs-tests
-./usr/tests/fs/tmpfs/t_id_gen			tests-fs-tests
-./usr/tests/fs/tmpfs/t_link			tests-fs-tests
-./usr/tests/fs/tmpfs/t_mkdir			tests-fs-tests
-./usr/tests/fs/tmpfs/t_mknod			tests-fs-tests
-./usr/tests/fs/tmpfs/t_mount			tests-fs-tests
-./usr/tests/fs/tmpfs/t_pipes			tests-fs-tests
-./usr/tests/fs/tmpfs/t_read_write		tests-fs-tests
-./usr/tests/fs/tmpfs/t_readdir			tests-fs-tests
-./usr/tests/fs/tmpfs/t_remove			tests-fs-tests
-./usr/tests/fs/tmpfs/t_rename			tests-fs-tests
-./usr/tests/fs/tmpfs/t_renamerace		tests-fs-tests
-./usr/tests/fs/tmpfs/t_rmdir			tests-fs-tests
-./usr/tests/fs/tmpfs/t_setattr			tests-fs-tests
-./usr/tests/fs/tmpfs/t_sizes			tests-fs-tests
-./usr/tests/fs/tmpfs/t_sockets			tests-fs-tests
-./usr/tests/fs/tmpfs/t_statvfs			tests-fs-tests
-./usr/tests/fs/tmpfs/t_symlink			tests-fs-tests
-./usr/tests/fs/tmpfs/t_times			tests-fs-tests
-./usr/tests/fs/tmpfs/t_trail_slash		tests-fs-tests
-./usr/tests/fs/tmpfs/t_truncate			tests-fs-tests
-./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests
-./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests
+./usr/tests/fs/tmpfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests		atf
+./usr/tests/fs/tmpfs/h_tools			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_create			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_devices			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_dots			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_exec			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_id_gen			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_link			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_mkdir			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_mknod			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_mount			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_pipes			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_read_write		tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_readdir			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_remove			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_rename			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_renamerace		tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_rmdir			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_setattr			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_sizes			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_sockets			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_statvfs			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_symlink			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_times			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_trail_slash		tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_truncate			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests
@@ -819,37 +819,37 @@
 ./usr/tests/ipf/regress/p5.pool			tests-ipf-tests
 ./usr/tests/ipf/t_ipf				tests-ipf-tests
 ./usr/tests/kernel				tests-kernel-tests
-./usr/tests/kernel/Atffile			tests-kernel-tests
+./usr/tests/kernel/Atffile			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests
-./usr/tests/kernel/kqueue/Atffile		tests-kernel-tests
+./usr/tests/kernel/kqueue/Atffile		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/read			tests-kernel-tests
-./usr/tests/kernel/kqueue/read/Atffile		tests-kernel-tests
-./usr/tests/kernel/kqueue/read/t_fifo		tests-kernel-tests
-./usr/tests/kernel/kqueue/read/t_file		tests-kernel-tests
-./usr/tests/kernel/kqueue/read/t_file2		tests-kernel-tests
-./usr/tests/kernel/kqueue/read/t_pipe		tests-kernel-tests
-./usr/tests/kernel/kqueue/read/t_ttypty		tests-kernel-tests
-./usr/tests/kernel/kqueue/t_ioctl		tests-kernel-tests
-./usr/tests/kernel/kqueue/t_proc1		tests-kernel-tests
-./usr/tests/kernel/kqueue/t_proc2		tests-kernel-tests
-./usr/tests/kernel/kqueue/t_sig			tests-kernel-tests
+./usr/tests/kernel/kqueue/read/Atffile		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/t_fifo		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/t_file		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/t_file2		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/t_pipe		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/read/t_ttypty		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_ioctl		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_proc1		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_proc2		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_sig			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write			tests-kernel-tests
-./usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests
-./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests
-./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests
-./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests
-./usr/tests/kernel/t_extent			tests-kernel-tests
-./usr/tests/kernel/t_lock			tests-kernel-tests
-./usr/tests/kernel/t_lwpctl			tests-kernel-tests
-./usr/tests/kernel/t_mkdir			tests-kernel-tests
-./usr/tests/kernel/t_pipe			tests-kernel-tests
-./usr/tests/kernel/t_poll3w			tests-kernel-tests
-./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests
-./usr/tests/kernel/t_rnd			tests-kernel-tests
-./usr/tests/kernel/t_time			tests-kernel-tests
-./usr/tests/kernel/t_ucontext			tests-kernel-tests
-./usr/tests/kernel/t_umount			tests-kernel-tests
-./usr/tests/kernel/t_writev			tests-kernel-tests
+./usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
+./usr/tests/kernel/t_extent			tests-kernel-tests		atf
+./usr/tests/kernel/t_lock			tests-kernel-tests		atf
+./usr/tests/kernel/t_lwpctl			tests-kernel-tests		atf
+./usr/tests/kernel/t_mkdir			tests-kernel-tests		atf
+./usr/tests/kernel/t_pipe			tests-kernel-tests		atf
+./usr/tests/kernel/t_poll3w			tests-kernel-tests		atf
+./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests		atf
+./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
+./usr/tests/kernel/t_time			tests-kernel-tests		atf
+./usr/tests/kernel/t_ucontext			tests-kernel-tests		atf
+./usr/tests/kernel/t_umount			tests-kernel-tests		atf
+./usr/tests/kernel/t_writev			tests-kernel-tests		atf
 ./usr/tests/lib					tests-lib-tests
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
@@ -878,7 +878,7 @@
 ./usr/tests/net/sys/t_listen			tests-net-tests		atf
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf
-./usr/tests/rump/rumpkern			tests-rump-tests	atf
+./usr/tests/rump/rumpkern			tests-rump-tests
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf
