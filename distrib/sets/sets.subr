@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.114 2009/12/11 15:22:33 he Exp $
+#	$NetBSD: sets.subr,v 1.115 2009/12/15 05:07:11 uebayasi Exp $
 #
 
 #
@@ -152,9 +152,6 @@ stlib=$shlib
 if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
-if [ "${MACHINE_ARCH}" = "m68000" ]; then
-	shlib=no			# Turn off shlibs for some ports.
-fi
 if [ "$module" != "no" ]; then
 	nlists="base comp etc games man misc modules tests text"
 else
@@ -176,7 +173,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.114 2009/12/11 15:22:33 he Exp $
+# 	# $NetBSD: sets.subr,v 1.115 2009/12/15 05:07:11 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
