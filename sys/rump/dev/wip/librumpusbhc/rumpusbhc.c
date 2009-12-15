@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.8 2009/10/14 23:29:42 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.9 2009/12/15 15:50:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.8 2009/10/14 23:29:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.9 2009/12/15 15:50:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,7 +200,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 	usb_device_request_t *req = &xfer->request;
 	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	int len, totlen, value, curlen, err;
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 
 	len = totlen = UGETW(req->wLength);
 	if (len)
@@ -385,7 +385,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 {
 	usb_device_request_t *req = &xfer->request;
 	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 	int len, totlen;
 	int value;
 	int err = 0;
@@ -465,17 +465,25 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		break;
 
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		/* ignored, ugen won't let us */
+		/* ignored, ugen won't let us .... REALLY? */
 		break;
 
-	case C(UR_SET_INTERFACE, UT_WRITE_DEVICE):
-		/* ignored, ugen won't let us */
-		break;
+	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
+		{
+		struct usb_alt_interface uai;
 
-	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
-		printf("clear feature UNIMPL\n");
 		totlen = 0;
+		uai.uai_interface_index = UGETW(req->wIndex);
+		uai.uai_alt_no = value;
+		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		    USB_SET_ALTINTERFACE, &uai, &ru_error) == -1) {
+			printf("rumpusbhc: set alt interface failed: %d\n",
+			    ru_error);
+			err = USBD_IOERROR;
+			goto ret;
+		}
 		break;
+		}
 
 	/*
 	 * XXX: don't wildcard these yet.  I want to better figure
@@ -486,7 +494,14 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(0x07, UT_READ_VENDOR_DEVICE):
 	case C(0x09, UT_READ_VENDOR_DEVICE):
 	case C(0xfe, UT_READ_CLASS_INTERFACE):
+	case C(0x01, UT_READ_CLASS_INTERFACE):
+	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
+	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
+	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 	case C(0xff, UT_WRITE_CLASS_INTERFACE):
+	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
+	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
+	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
 		{
 		struct usb_ctl_request ucr;
 
@@ -557,21 +572,40 @@ static const struct usbd_pipe_methods rumpusb_device_ctrl_methods = {
 	.done =		rumpusb_device_ctrl_done,
 };
 
-static usbd_xfer_handle daintr;
+struct intrent {
+	usbd_xfer_handle xfer;
+	LIST_ENTRY(intrent) entries;
+};
+
+static LIST_HEAD(, intrent) intrlist = LIST_HEAD_INITIALIZER(intrlist);
+
 static void
 rhscintr(void)
 {
+	struct intrent *ie, *ie_next;
+	usbd_xfer_handle xfer;
 
-	daintr->actlen = daintr->length;
-	daintr->status = USBD_NORMAL_COMPLETION;
-	usb_transfer_complete(daintr);
+	for (ie = LIST_FIRST(&intrlist); ie; ie = ie_next) {
+		xfer = ie->xfer;
+		xfer->actlen = xfer->length;
+		xfer->status = USBD_NORMAL_COMPLETION;
+		usb_transfer_complete(xfer);
+
+		ie_next = LIST_NEXT(ie, entries);
+		LIST_REMOVE(ie, entries);
+		kmem_free(ie, sizeof(*ie));
+	}
 }
 
 static usbd_status
 rumpusb_root_intr_start(usbd_xfer_handle xfer)
 {
+	struct intrent *ie;
 
-	daintr = xfer;
+	ie = kmem_alloc(sizeof(*ie), KM_SLEEP);
+	ie->xfer = xfer;
+	LIST_INSERT_HEAD(&intrlist, ie, entries);
+
 	return (USBD_IN_PROGRESS);
 }
 
@@ -748,6 +782,15 @@ static const struct usbd_pipe_methods rumpusb_device_bulk_methods = {
 	.done =		rumpusb_device_bulk_done,
 };
 
+static const struct usbd_pipe_methods rumpusb_device_intr_methods = {
+	.transfer =	rumpusb_root_intr_transfer,
+	.start =	rumpusb_root_intr_start,
+	.abort =	rumpusb_root_intr_abort,
+	.close =	rumpusb_root_intr_close,
+	.cleartoggle =	rumpusb_root_intr_cleartoggle,
+	.done =		rumpusb_root_intr_done,
+};
+
 static usbd_status
 rumpusbhc_open(struct usbd_pipe *pipe)
 {
@@ -761,7 +804,7 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 	int fd, val;
 
 	sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
-	    | UPS_PORT_ENABLED | UPS_PORT_POWER | UPS_HIGH_SPEED;
+	    | UPS_PORT_ENABLED | UPS_PORT_POWER;
 	sc->sc_port_change = UPS_C_CONNECT_STATUS;
 
 	if (addr == sc->sc_addr) {
@@ -782,6 +825,7 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 			pipe->methods = &rumpusb_device_ctrl_methods;
 			break;
 		case UE_BULK:
+		case UE_INTERRUPT:
 			endpt = pipe->endpoint->edesc->bEndpointAddress;
 			if (UE_GET_DIR(endpt) == UE_DIR_IN) {
 				oflags = O_RDONLY;
