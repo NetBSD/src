@@ -80,7 +80,6 @@ IGEN_TRACE= # -G omit-line-numbers # -G trace-rule-selection -G trace-rule-rejec
 IGEN_INSN=$(srcdir)/v850.igen
 IGEN_DC=$(srcdir)/v850-dc
 tmp-igen: $(IGEN_INSN) $(IGEN_DC) ../igen/igen
-	cd ../igen && $(MAKE)
 	../igen/igen \
 		$(IGEN_TRACE) \
 		-G gen-direct-access \
