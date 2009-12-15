@@ -132,7 +132,6 @@ BUILT_SRC_FROM_IGEN = \
 $(BUILT_SRC_FROM_IGEN): tmp-igen
 
 tmp-igen: $(IGEN_INSN) $(IGEN_DC) ../igen/igen $(IGEN_INCLUDE)
-	cd ../igen && $(MAKE)
 	../igen/igen \
 		$(IGEN_TRACE) \
 		-I $(srcdir) \
