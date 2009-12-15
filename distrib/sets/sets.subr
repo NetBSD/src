@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.116 2009/12/15 05:11:08 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.117 2009/12/15 06:18:07 uebayasi Exp $
 #
 
 #
@@ -126,16 +126,9 @@ IFS=$oIFS
 
 MKVARS="$( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars | sed -e 's,=.*,,' | xargs )"
 
-if [ "$SETS_SUBR_DEBUG" = "dumpmkvars" ]; then
-	for v in $MKVARS; do
-		eval echo $v=\$$v
-	done
-	exit 0
-fi
-
 #####
 
-setsdir=${0%/*}
+setsdir=${rundir}
 obsolete=0
 module=yes
 if [ "${MKKMOD}" = "no" ]; then
@@ -173,7 +166,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.116 2009/12/15 05:11:08 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.117 2009/12/15 06:18:07 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -379,6 +372,7 @@ list_set_lists()
 	list_set_lists_shl $setname
 	list_set_lists_module $setname
 	list_set_lists_rescue $setname
+	return 0
 }
 
 list_set_lists_mi()
@@ -507,3 +501,27 @@ all:
 	@echo \${TARGET_ENDIANNESS}
 EOMAKE
 }
+
+#####
+
+# print_mkvars
+print_mkvars()
+{
+	for v in $MKVARS; do
+		eval echo $v=\$$v
+	done
+}
+
+# print_set_lists_{base,x,ext}
+# list_set_lists_{base,x,ext}
+# list_set_files_{base,x,ext}
+for func in print_set_lists list_set_lists list_set_files; do
+	for x in base x ext; do
+		if [ $x = base ]; then
+			list=nlists
+		else
+			list=${x}lists
+		fi
+		eval ${func}_${x} \(\) \{ $func \$$list \; \}
+	done
+done
