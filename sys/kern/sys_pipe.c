@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.125 2009/12/13 20:02:23 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.126 2009/12/15 18:35:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.125 2009/12/13 20:02:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.126 2009/12/15 18:35:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,10 +997,12 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			if (bp->cnt)
 				pipeselwakeup(wpipe, wpipe, POLL_IN);
 
+#if 0 /* I think some programs don't like the partial write... */
 			if (slept) {
 				error = ERESTART;
 				break;
 			}
+#endif
 
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
