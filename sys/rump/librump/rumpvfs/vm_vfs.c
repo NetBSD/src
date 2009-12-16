@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.14 2009/11/10 16:55:12 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.15 2009/12/16 16:50:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.14 2009/11/10 16:55:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.15 2009/12/16 16:50:49 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -90,6 +90,9 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	struct vm_page **pgs;
 	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
 	int rv, npages, i;
+
+	if (maxpages == 0)
+		return;
 
 	pgs = kmem_zalloc(maxpages * sizeof(pgs), KM_SLEEP);
 	while (len) {
