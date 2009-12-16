@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.69 2009/12/16 20:57:15 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.70 2009/12/16 21:25:55 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -21,7 +21,7 @@ SRCS=	rump.c rumpcopy.c emul.c intr.c locks.c ltsleep.c	\
 
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n
 SRCS+=		vers.c
 CLEANFILES+=	vers.c version
 
