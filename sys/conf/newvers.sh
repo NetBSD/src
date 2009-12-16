@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.54 2009/03/30 16:29:55 perry Exp $
+#	$NetBSD: newvers.sh,v 1.55 2009/12/16 20:54:49 pooka Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,18 @@ d=$(pwd)
 cwd=$(dirname $0)
 copyright=$(awk '{ printf("\"%s\\n\"", $0); }' ${cwd}/copyright)
 
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-r)
+		rflag=-r
+		;;
+	-i)
+		iflag=-i
+	esac
+	echo arg
+	shift
+done
+
 if [ -f ident ]; then
 	id="$(cat ident)"
 else
@@ -58,7 +70,7 @@ osrelcmd=${cwd}/osrelease.sh
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
-case $1 in
+case "$rflag" in
 -r)
 	fullversion="${ost} ${osr} (${id})\n"
 	;;
@@ -66,6 +78,8 @@ case $1 in
 	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
 	;;
 esac
+
+echo $(expr ${v} + 1) > version
 
 cat << _EOF > vers.c
 /*
@@ -86,6 +100,11 @@ const char kernel_ident[] = "${id}";
 const char copyright[] =
 ${copyright}
 "\n";
+_EOF
+
+[ "${iflag}" = -i ] && exit 0
+
+cat << _EOF >> vers.c
 
 /*
  * NetBSD identity note.
@@ -109,4 +128,3 @@ __asm(
 );
 
 _EOF
-echo $(expr ${v} + 1) > version
