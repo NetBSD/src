@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.54 2006/02/24 22:01:30 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.54.18.1 2009/12/16 11:17:39 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,21 +168,21 @@ struct stat {
 #define	S_ARCH2	_S_ARCH2
 #endif
 
-#define	S_ISDIR(m)	((m & _S_IFMT) == _S_IFDIR)	/* directory */
-#define	S_ISCHR(m)	((m & _S_IFMT) == _S_IFCHR)	/* char special */
-#define	S_ISBLK(m)	((m & _S_IFMT) == _S_IFBLK)	/* block special */
-#define	S_ISREG(m)	((m & _S_IFMT) == _S_IFREG)	/* regular file */
-#define	S_ISFIFO(m)	((m & _S_IFMT) == _S_IFIFO)	/* fifo */
+#define	S_ISDIR(m)	(((m) & _S_IFMT) == _S_IFDIR)	/* directory */
+#define	S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)	/* char special */
+#define	S_ISBLK(m)	(((m) & _S_IFMT) == _S_IFBLK)	/* block special */
+#define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)	/* regular file */
+#define	S_ISFIFO(m)	(((m) & _S_IFMT) == _S_IFIFO)	/* fifo */
 #if ((_POSIX_C_SOURCE - 0) >= 200112L) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-#define	S_ISLNK(m)	((m & _S_IFMT) == _S_IFLNK)	/* symbolic link */
+#define	S_ISLNK(m)	(((m) & _S_IFMT) == _S_IFLNK)	/* symbolic link */
 #endif
 #if ((_POSIX_C_SOURCE - 0) >= 200112L) || ((_XOPEN_SOURCE - 0) >= 600) || \
     defined(_NETBSD_SOURCE)
-#define	S_ISSOCK(m)	((m & _S_IFMT) == _S_IFSOCK)	/* socket */
+#define	S_ISSOCK(m)	(((m) & _S_IFMT) == _S_IFSOCK)	/* socket */
 #endif
 #if defined(_NETBSD_SOURCE)
-#define	S_ISWHT(m)	((m & _S_IFMT) == _S_IFWHT)	/* whiteout */
+#define	S_ISWHT(m)	(((m) & _S_IFMT) == _S_IFWHT)	/* whiteout */
 #endif
 
 #if defined(_NETBSD_SOURCE)
