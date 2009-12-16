@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/10/08 19:06:51 snj Exp $
+#	$NetBSD: Makefile,v 1.6 2009/12/16 14:13:18 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -39,6 +39,6 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
 # XXX
-COPTS=	-Wno-error
+COPTS+=	-Wno-error
 
 .include "../Makefile.xf86-driver"
