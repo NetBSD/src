@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.112 2009/12/03 12:35:34 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.113 2009/12/16 20:57:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.112 2009/12/03 12:35:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.113 2009/12/16 20:57:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -84,9 +84,6 @@ char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
 
 const char *panicstr;
-const char ostype[] = "NetBSD";
-const char osrelease[] = "999"; /* paradroid 4evah */
-const char kernel_ident[] = "RUMP-ROAST";
 const char *domainname;
 int domainnamelen;
 
