@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.18 2009/08/06 04:58:48 kml Exp $	*/
+/*	$NetBSD: igphy.c,v 1.19 2009/12/16 04:50:35 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.18 2009/08/06 04:58:48 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.19 2009/12/16 04:50:35 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -87,12 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.18 2009/08/06 04:58:48 kml Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
 #include <dev/mii/igphyreg.h>
+#include <dev/pci/if_wmvar.h>
 
 struct igphy_softc {
 	struct mii_softc sc_mii;
 	int sc_smartspeed;
+	uint32_t sc_mactype;
 };
 
 static void igphy_reset(struct mii_softc *);
@@ -116,6 +117,9 @@ static const struct mii_phydesc igphys[] = {
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_IGP01E1000,
 	  MII_STR_yyINTEL_IGP01E1000 },
 
+	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82566,
+	  MII_STR_yyINTEL_I82566 },
+
 	{0,				0,
 	 NULL },
 };
@@ -138,10 +142,16 @@ igphyattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	struct igphy_softc *igsc = (struct igphy_softc *) sc;
+	prop_dictionary_t dict;
 
 	mpd = mii_phy_match(ma, igphys);
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
+
+	dict = device_properties(parent);
+	if (!prop_dictionary_get_uint32(dict, "mactype", &igsc->sc_mactype))
+		aprint_error("WARNING! Failed to get mactype\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
@@ -169,6 +179,7 @@ igphyattach(device_t parent, device_t self, void *aux)
 static void
 igphy_load_dspcode(struct mii_softc *sc)
 {
+	struct igphy_softc *igsc = (struct igphy_softc *) sc;
 	static const struct {
 		int reg;
 		uint16_t val;
@@ -186,6 +197,18 @@ igphy_load_dspcode(struct mii_softc *sc)
 	};
 	int i;
 
+	/* This workaround is only for 82541 and 82547 */
+	switch (igsc->sc_mactype) {
+	case WM_T_82541:
+	case WM_T_82547:
+	case WM_T_82541_2:
+	case WM_T_82547_2:
+		break;
+	default:
+		/* byebye */
+		return;
+	}
+
 	delay(10);
 
 	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, 0x0000);
@@ -193,8 +216,19 @@ igphy_load_dspcode(struct mii_softc *sc)
 
 	delay(5);
 
-	for (i = 0; dspcode[i].reg != 0; i++)
-		IGPHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+	switch (igsc->sc_mactype) {
+	case WM_T_82541:
+	case WM_T_82547:
+		for (i = 0; dspcode[i].reg != 0; i++)
+			IGPHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+		break;
+	case WM_T_82541_2:
+	case WM_T_82547_2:
+		IGPHY_WRITE(sc, 0x1f73, 0x0099);
+		break;
+	default:
+		break;
+	}
 
 	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT,0x0000);
 	PHY_WRITE(sc, 0x0000, 0x3300);
@@ -203,31 +237,34 @@ igphy_load_dspcode(struct mii_softc *sc)
 static void
 igphy_reset(struct mii_softc *sc)
 {
+	struct igphy_softc *igsc = (struct igphy_softc *) sc;
 	uint16_t fused, fine, coarse;
 
 	mii_phy_reset(sc);
 	igphy_load_dspcode(sc);
 
-	fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_SPARE_FUSE_STATUS);
-	if ((fused & ANALOG_SPARE_FUSE_ENABLED) == 0) {
-		fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_FUSE_STATUS);
+	if (igsc->sc_mactype == WM_T_82547) {
+		fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_SPARE_FUSE_STATUS);
+		if ((fused & ANALOG_SPARE_FUSE_ENABLED) == 0) {
+			fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_FUSE_STATUS);
 
-		fine = fused & ANALOG_FUSE_FINE_MASK;
-		coarse = fused & ANALOG_FUSE_COARSE_MASK;
+			fine = fused & ANALOG_FUSE_FINE_MASK;
+			coarse = fused & ANALOG_FUSE_COARSE_MASK;
 
-		if (coarse > ANALOG_FUSE_COARSE_THRESH) {
-			coarse -= ANALOG_FUSE_COARSE_10;
-			fine -= ANALOG_FUSE_FINE_1;
-		} else if (coarse == ANALOG_FUSE_COARSE_THRESH)
-			fine -= ANALOG_FUSE_FINE_10;
+			if (coarse > ANALOG_FUSE_COARSE_THRESH) {
+				coarse -= ANALOG_FUSE_COARSE_10;
+				fine -= ANALOG_FUSE_FINE_1;
+			} else if (coarse == ANALOG_FUSE_COARSE_THRESH)
+				fine -= ANALOG_FUSE_FINE_10;
 
-		fused = (fused & ANALOG_FUSE_POLY_MASK) |
-			(fine & ANALOG_FUSE_FINE_MASK) |
-			(coarse & ANALOG_FUSE_COARSE_MASK);
+			fused = (fused & ANALOG_FUSE_POLY_MASK) |
+			    (fine & ANALOG_FUSE_FINE_MASK) |
+			    (coarse & ANALOG_FUSE_COARSE_MASK);
 
-		IGPHY_WRITE(sc, MII_IGPHY_ANALOG_FUSE_CONTROL, fused);
-		IGPHY_WRITE(sc, MII_IGPHY_ANALOG_FUSE_BYPASS,
-		    ANALOG_FUSE_ENABLE_SW_CONTROL);
+			IGPHY_WRITE(sc, MII_IGPHY_ANALOG_FUSE_CONTROL, fused);
+			IGPHY_WRITE(sc, MII_IGPHY_ANALOG_FUSE_BYPASS,
+			    ANALOG_FUSE_ENABLE_SW_CONTROL);
+		}
 	}
 	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT,0x0000);
 }
@@ -375,6 +412,19 @@ igphy_smartspeed_workaround(struct mii_softc *sc)
 {
 	struct igphy_softc *igsc = (struct igphy_softc *) sc;
 	uint16_t reg, gtsr, gtcr;
+
+
+	/* This workaround is only for 82541 and 82547 */
+	switch (igsc->sc_mactype) {
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+		break;
+	default:
+		/* byebye */	
+		return;
+	}
 
 	if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
 		return;

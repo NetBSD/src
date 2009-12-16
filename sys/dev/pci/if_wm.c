@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.181 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.182 2009/12/16 04:50:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.181 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.182 2009/12/16 04:50:35 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.181 2009/11/26 15:17:10 njoly Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_wmreg.h>
+#include <dev/pci/if_wmvar.h>
 
 #ifdef WM_DEBUG
 #define	WM_DEBUG_LINK		0x01
@@ -228,31 +229,6 @@ struct wm_rxsoft {
 	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
-
-typedef enum {
-	WM_T_unknown		= 0,
-	WM_T_82542_2_0,			/* i82542 2.0 (really old) */
-	WM_T_82542_2_1,			/* i82542 2.1+ (old) */
-	WM_T_82543,			/* i82543 */
-	WM_T_82544,			/* i82544 */
-	WM_T_82540,			/* i82540 */
-	WM_T_82545,			/* i82545 */
-	WM_T_82545_3,			/* i82545 3.0+ */
-	WM_T_82546,			/* i82546 */
-	WM_T_82546_3,			/* i82546 3.0+ */
-	WM_T_82541,			/* i82541 */
-	WM_T_82541_2,			/* i82541 2.0+ */
-	WM_T_82547,			/* i82547 */
-	WM_T_82547_2,			/* i82547 2.0+ */
-	WM_T_82571,			/* i82571 */
-	WM_T_82572,			/* i82572 */
-	WM_T_82573,			/* i82573 */
-	WM_T_82574,			/* i82574 */
-	WM_T_80003,			/* i80003 */
-	WM_T_ICH8,			/* ICH8 LAN */
-	WM_T_ICH9,			/* ICH9 LAN */
-	WM_T_ICH10,			/* ICH10 LAN */
-} wm_chip_type;
 
 #define WM_LINKUP_TIMEOUT	50
 
@@ -953,6 +929,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 {
 	struct wm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+	prop_dictionary_t dict;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -1003,6 +980,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (preg < 3)
 			sc->sc_type = WM_T_82542_2_0;
 	}
+
+	/* Set device properties */
+	dict = device_properties(sc->sc_dev);
+	prop_dictionary_set_uint32(dict, "mactype", sc->sc_type);
 
 	/*
 	 * Map the device.  All devices support memory-mapped acccess,
@@ -1402,7 +1383,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
 	 */
-	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(dict, "mac-addr");
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
@@ -1439,8 +1420,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	pn = prop_dictionary_get(device_properties(sc->sc_dev),
-				 "i82543-cfg1");
+	pn = prop_dictionary_get(dict, "i82543-cfg1");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg1 = (uint16_t) prop_number_integer_value(pn);
@@ -1451,8 +1431,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	pn = prop_dictionary_get(device_properties(sc->sc_dev),
-				 "i82543-cfg2");
+	pn = prop_dictionary_get(dict, "i82543-cfg2");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg2 = (uint16_t) prop_number_integer_value(pn);
@@ -1464,8 +1443,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_type >= WM_T_82544) {
-		pn = prop_dictionary_get(device_properties(sc->sc_dev),
-					 "i82543-swdpin");
+		pn = prop_dictionary_get(dict, "i82543-swdpin");
 		if (pn != NULL) {
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 			swdpin = (uint16_t) prop_number_integer_value(pn);
