@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2009/04/15 17:15:13 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.21 2009/12/16 23:19:07 matt Exp $
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
@@ -25,6 +25,7 @@ CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
+CPPFLAGS+= -DMIPS_KSEG1_START=0xa0000000
 
 AFLAGS= -D_LOCORE -mno-abicalls
 

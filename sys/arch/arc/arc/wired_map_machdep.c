@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.6 2009/12/16 23:19:06 matt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.6 2009/12/16 23:19:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ arc_contiguously_wired_mapped(paddr_t pa, vsize_t size)
 vaddr_t
 arc_map_wired(paddr_t pa, vsize_t size)
 {
-	vaddr_t va;
+	u_long va;
 	vsize_t off;
 	int error;
 
@@ -183,7 +183,7 @@ arc_map_wired(paddr_t pa, vsize_t size)
 	    MIPS3_WIRED_ENTRY_SIZE(MIPS3_WIRED_SIZE) >
 	    MIPS3_NWIRED_ENTRY - mips3_nwired_page) {
 #ifdef DIAGNOSTIC
-		printf("arc_map_wired(0x%llx, 0x%lx): %d is not enough\n",
+		printf("arc_map_wired(0x%"PRIxPADDR", 0x%"PRIxVSIZE"): %d is not enough\n",
 		    pa + off, size - off,
 		    MIPS3_NWIRED_ENTRY - mips3_nwired_page);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2009/12/16 23:19:06 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2009/11/27 03:23:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2009/12/16 23:19:06 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -231,8 +231,6 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
-	struct pcb *pcb0;
-	vaddr_t v;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -491,13 +489,8 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	uvm_lwp_setuarea(&lwp0, v);
+	mips_init_lwp0_uarea();
 
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 }
 
 void
