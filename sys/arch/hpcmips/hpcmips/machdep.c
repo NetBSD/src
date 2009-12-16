@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2009/12/16 23:19:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/16 23:19:07 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -263,7 +263,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
 #endif
-	struct pcb *pcb0;
 	void *kernend;
 	char *cp;
 	int i;
