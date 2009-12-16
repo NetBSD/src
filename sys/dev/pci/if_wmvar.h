@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.3 2009/12/16 04:50:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.4 2009/12/16 14:37:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -70,6 +70,22 @@
 
 #ifndef _DEV_PCI_IF_WMVAR_H_
 #define _DEV_PCI_IF_WMVAR_H_
+
+/* sc_flags */
+#define	WM_F_HAS_MII		0x0001	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x0002	/* requires EEPROM handshake */
+#define	WM_F_EEPROM_SEMAPHORE	0x0004	/* EEPROM with semaphore */
+#define	WM_F_EEPROM_EERDEEWR	0x0008	/* EEPROM access via EERD/EEWR */
+#define	WM_F_EEPROM_SPI		0x0010	/* EEPROM is SPI */
+#define	WM_F_EEPROM_FLASH	0x0020	/* EEPROM is FLASH */
+#define	WM_F_EEPROM_INVALID	0x0040	/* EEPROM not present (bad checksum) */
+#define	WM_F_IOH_VALID		0x0080	/* I/O handle is valid */
+#define	WM_F_BUS64		0x0100	/* bus is 64-bit */
+#define	WM_F_PCIX		0x0200	/* bus is PCI-X */
+#define	WM_F_CSA		0x0400	/* bus is CSA */
+#define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
+#define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
+#define WM_F_SWFWHW_SYNC	0x2000  /* Software-Firmware synchronisation */
 
 typedef enum {
 	WM_T_unknown		= 0,
