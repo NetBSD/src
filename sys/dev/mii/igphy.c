@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.19 2009/12/16 04:50:35 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.20 2009/12/16 14:37:26 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.19 2009/12/16 04:50:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.20 2009/12/16 14:37:26 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -94,10 +94,12 @@ struct igphy_softc {
 	struct mii_softc sc_mii;
 	int sc_smartspeed;
 	uint32_t sc_mactype;
+	uint32_t sc_macflags;
 };
 
 static void igphy_reset(struct mii_softc *);
 static void igphy_load_dspcode(struct mii_softc *);
+static void igphy_load_dspcode_igp3(struct mii_softc *);
 static void igphy_smartspeed_workaround(struct mii_softc *sc);
 
 static int	igphymatch(device_t, cfdata_t, void *);
@@ -152,6 +154,8 @@ igphyattach(device_t parent, device_t self, void *aux)
 	dict = device_properties(parent);
 	if (!prop_dictionary_get_uint32(dict, "mactype", &igsc->sc_mactype))
 		aprint_error("WARNING! Failed to get mactype\n");
+	if (!prop_dictionary_get_uint32(dict, "macflags", &igsc->sc_macflags))
+		aprint_error("WARNING! Failed to get macflags\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
@@ -176,62 +180,127 @@ igphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 }
 
+typedef struct {
+	int reg;
+	uint16_t val;
+} dspcode;
+
+static const dspcode igp1code[] = {
+	{ 0x1f95, 0x0001 },
+	{ 0x1f71, 0xbd21 },
+	{ 0x1f79, 0x0018 },
+	{ 0x1f30, 0x1600 },
+	{ 0x1f31, 0x0014 },
+	{ 0x1f32, 0x161c },
+	{ 0x1f94, 0x0003 },
+	{ 0x1f96, 0x003f },
+	{ 0x2010, 0x0008 },
+	{ 0, 0 },
+};
+
+static const dspcode igp1code_r2[] = {
+	{ 0x1f73, 0x0099 },
+	{ 0, 0 },
+};
+
+static const dspcode igp3code[] = {
+	{ 0x2f5b, 0x9018},
+	{ 0x2f52, 0x0000},
+	{ 0x2fb1, 0x8b24},
+	{ 0x2fb2, 0xf8f0},
+	{ 0x2010, 0x10b0},
+	{ 0x2011, 0x0000},
+	{ 0x20dd, 0x249a},
+	{ 0x20de, 0x00d3},
+	{ 0x28b4, 0x04ce},
+	{ 0x2f70, 0x29e4},
+	{ 0x0000, 0x0140},
+	{ 0x1f30, 0x1606},
+	{ 0x1f31, 0xb814},
+	{ 0x1f35, 0x002a},
+	{ 0x1f3e, 0x0067},
+	{ 0x1f54, 0x0065},
+	{ 0x1f55, 0x002a},
+	{ 0x1f56, 0x002a},
+	{ 0x1f72, 0x3fb0},
+	{ 0x1f76, 0xc0ff},
+	{ 0x1f77, 0x1dec},
+	{ 0x1f78, 0xf9ef},
+	{ 0x1f79, 0x0210},
+	{ 0x1895, 0x0003},
+	{ 0x1796, 0x0008},
+	{ 0x1798, 0xd008},
+	{ 0x1898, 0xd918},
+	{ 0x187a, 0x0800},
+	{ 0x0019, 0x008d},
+	{ 0x001b, 0x2080},
+	{ 0x0014, 0x0045},
+	{ 0x0000, 0x1340},
+	{ 0, 0 },
+};
+
+/* DSP patch for igp1 and igp2 */
 static void
 igphy_load_dspcode(struct mii_softc *sc)
 {
 	struct igphy_softc *igsc = (struct igphy_softc *) sc;
-	static const struct {
-		int reg;
-		uint16_t val;
-	} dspcode[] = {
-		{ 0x1f95, 0x0001 },
-		{ 0x1f71, 0xbd21 },
-		{ 0x1f79, 0x0018 },
-		{ 0x1f30, 0x1600 },
-		{ 0x1f31, 0x0014 },
-		{ 0x1f32, 0x161c },
-		{ 0x1f94, 0x0003 },
-		{ 0x1f96, 0x003f },
-		{ 0x2010, 0x0008 },
-		{ 0, 0 },
-	};
+	const dspcode *code;
+	uint16_t reg;
 	int i;
 
 	/* This workaround is only for 82541 and 82547 */
 	switch (igsc->sc_mactype) {
 	case WM_T_82541:
 	case WM_T_82547:
+		code = igp1code;
+		break;
 	case WM_T_82541_2:
 	case WM_T_82547_2:
+		code = igp1code_r2;
 		break;
 	default:
-		/* byebye */
-		return;
+		return;	/* byebye */
 	}
 
-	delay(10);
+	/* Delay after phy reset to enable NVM configuration to load */
+	delay(20000);
+
+	/*
+	 * Save off the current value of register 0x2F5B to be restored at
+	 * the end of this routine.
+	 */
+	reg = IGPHY_READ(sc, 0x2f5b);
+
+	/* Disabled the PHY transmitter */
+	IGPHY_WRITE(sc, 0x2f5b, 0x0003);
+
+	delay(20000);
 
 	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, 0x0000);
 	PHY_WRITE(sc, 0x0000, 0x0140);
 
-	delay(5);
+	delay(5000);
 
-	switch (igsc->sc_mactype) {
-	case WM_T_82541:
-	case WM_T_82547:
-		for (i = 0; dspcode[i].reg != 0; i++)
-			IGPHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
-		break;
-	case WM_T_82541_2:
-	case WM_T_82547_2:
-		IGPHY_WRITE(sc, 0x1f73, 0x0099);
-		break;
-	default:
-		break;
-	}
+	for (i = 0; !((code[i].reg == 0) && (code[i].val == 0)); i++)
+		IGPHY_WRITE(sc, code[i].reg, code[i].val);
 
 	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT,0x0000);
 	PHY_WRITE(sc, 0x0000, 0x3300);
+
+	delay(20000);
+
+	/* Now enable the transmitter */
+	IGPHY_WRITE(sc, 0x2f5b, reg);
+}
+
+static void
+igphy_load_dspcode_igp3(struct mii_softc *sc)
+{
+	const dspcode *code = igp3code;
+	int i;
+
+	for (i = 0; !((code[i].reg == 0) && (code[i].val == 0)); i++)
+		IGPHY_WRITE(sc, code[i].reg, code[i].val);
 }
 
 static void
@@ -241,7 +310,23 @@ igphy_reset(struct mii_softc *sc)
 	uint16_t fused, fine, coarse;
 
 	mii_phy_reset(sc);
-	igphy_load_dspcode(sc);
+	delay(150);
+
+	switch (igsc->sc_mactype) {
+	case WM_T_82541:
+	case WM_T_82547:
+	case WM_T_82541_2:
+	case WM_T_82547_2:
+		igphy_load_dspcode(sc);
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		if ((igsc->sc_macflags & WM_F_EEPROM_INVALID) != 0)
+			igphy_load_dspcode_igp3(sc);
+		break;
+	default:	/* Not for ICH10, PCH and 8257[12] */
+		break;
+	}
 
 	if (igsc->sc_mactype == WM_T_82547) {
 		fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_SPARE_FUSE_STATUS);
@@ -266,7 +351,7 @@ igphy_reset(struct mii_softc *sc)
 			    ANALOG_FUSE_ENABLE_SW_CONTROL);
 		}
 	}
-	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT,0x0000);
+	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, 0x0000);
 }
 
 
