@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.30 2009/12/03 14:27:16 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.31 2009/12/16 17:20:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -72,6 +72,7 @@ struct p2k_mount {
 	struct ukfs *p2m_ukfs;
 	struct p2k_vp_hash p2m_vphash[NHASHBUCK];
 	int p2m_nvnodes;
+	int p2m_imtmpfsman;
 };
 
 struct p2k_node {
@@ -403,6 +404,16 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	ukfs_setspecific(ukfs, p2m);
 	p2m->p2m_ukfs = ukfs;
 	p2m->p2m_pu = pu;
+
+	/*
+	 * Detect tmpfs.  XXX: this is a kludge.  See inactive().
+	 *
+	 * In reality we'd want "does file system use anon objects
+	 * for storage?".  But since tmpfs hides the anon object from
+	 * the public interface, we can't actually detect it sanely.
+	 * Therefore, use this kludge.
+	 */
+	p2m->p2m_imtmpfsman = strcmp(vfsname, MOUNT_TMPFS) == 0;
 
 	p2m->p2m_rvp = ukfs_getrvp(ukfs);
 	p2n_root = getp2n(p2m, p2m->p2m_rvp, true, NULL);
@@ -1217,6 +1228,8 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 int
 p2k_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
+	struct ukfs *fs = puffs_getspecific(pu);
+	struct p2k_mount *p2m = ukfs_getspecific(fs);
 	struct p2k_node *p2n = opc;
 	struct vnode *vp = OPC2VP(opc);
 	bool recycle = false;
@@ -1228,10 +1241,16 @@ p2k_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 
 	/*
 	 * Flush all cached vnode pages from the rump kernel -- they
-	 * are kept in puffs for all things that matter.
+	 * are kept in puffs for all things that matter.  However,
+	 * don't do this for tmpfs (vnodes are backed by an aobj), since that
+	 * would cause us to clear the backing storage leaving us without
+	 * a way to regain the data from "stable storage".
 	 */
-	rump_pub_vp_interlock(vp);
-	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|PGO_FREE);
+	if (!p2m->p2m_imtmpfsman) {
+		rump_pub_vp_interlock(vp);
+		RUMP_VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|PGO_FREE);
+	}
 
 	/*
 	 * Ok, this is where we get nasty.  We pretend the vnode is
