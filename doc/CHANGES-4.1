@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.187 2009/12/16 11:01:18 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.188 2009/12/16 11:19:42 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3922,4 +3922,10 @@ etc/defaults/rc.conf				1.107
 
 	Make rtsold_flags default to -a. Closes PR/39657.
 	[dholland, ticket #1370]
+
+sys/sys/stat.h					1.59
+
+	Parenthesize S_IS*() macro arguments to prevent breakage with
+	certain arguments. Addresses PR/41919.
+	[dholland, ticket #1371]
 
