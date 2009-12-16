@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.19 2009/03/14 15:36:09 dsl Exp $ */
+/* $NetBSD: aubus.c,v 1.20 2009/12/16 08:26:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.19 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.20 2009/12/16 08:26:14 matt Exp $");
 
 #include "locators.h"
 
@@ -179,7 +179,7 @@ aubus_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", aa->aa_addr);
+		aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
 	if (aa->aa_irq[0] >= 0)
 		aprint_normal(" irq %d", aa->aa_irq[0]);
 	if (aa->aa_irq[1] >= 0)

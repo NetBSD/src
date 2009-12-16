@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.9 2009/11/07 07:27:45 cegger Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.10 2009/12/16 08:26:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.9 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.10 2009/12/16 08:26:14 matt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -337,15 +337,17 @@ au_himem_alloc(void *cookie, bus_addr_t start, bus_addr_t end,
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)cookie;
 	int			err;
+	u_long			addr;
 
 	err = extent_alloc_subregion(c->c_extent, start, end, size,
-	    align, boundary, EX_FAST | EX_NOWAIT, addrp);
+	    align, boundary, EX_FAST | EX_NOWAIT, &addr);
 	if (err) {
 		return err;
 	}
-	err = au_himem_map(cookie, *addrp, size, flags, bshp, 0);
+	err = au_himem_map(cookie, addr, size, flags, bshp, 0);
 	if (err)
-		extent_free(c->c_extent, *addrp, size, EX_NOWAIT);
+		extent_free(c->c_extent, addr, size, EX_NOWAIT);
+	*addrp = addr;
 	return err;
 }
 
@@ -370,7 +372,7 @@ inline uint8_t
 au_himem_r_1(void *v, bus_space_handle_t h, bus_size_t o)
 {
 	wbflush();
-	return (*(volatile uint8_t *)(h + o));
+	return (*(volatile uint8_t *)(intptr_t)(h + o));
 }
 
 inline uint16_t
@@ -380,7 +382,7 @@ au_himem_r_2(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint16_t *)(h + o));
+	val = (*(volatile uint16_t *)(intptr_t)(h + o));
 	return (c->c_swswap ? bswap16(val) : val);
 }
 
@@ -391,7 +393,7 @@ au_himem_r_4(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint32_t *)(h + o));
+	val = (*(volatile uint32_t *)(intptr_t)(h + o));
 	return (c->c_swswap ? bswap32(val) : val);
 }
 
@@ -402,7 +404,7 @@ au_himem_r_8(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint64_t *)(h + o));
+	val = (*(volatile uint64_t *)(intptr_t)(h + o));
 	return (c->c_swswap ? bswap64(val) : val);
 }
 
@@ -410,7 +412,7 @@ inline void
 au_himem_w_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t val)
 {
 
-	*(volatile uint8_t *)(h + o) = val;
+	*(volatile uint8_t *)(intptr_t)(h + o) = val;
 	wbflush();
 }
 
@@ -419,7 +421,7 @@ au_himem_w_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint16_t *)(h + o) = c->c_swswap ? bswap16(val) : val;
+	*(volatile uint16_t *)(intptr_t)(h + o) = c->c_swswap ? bswap16(val) : val;
 	wbflush();
 }
 
@@ -428,7 +430,7 @@ au_himem_w_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint32_t *)(h + o) = c->c_swswap ? bswap32(val) : val;
+	*(volatile uint32_t *)(intptr_t)(h + o) = c->c_swswap ? bswap32(val) : val;
 	wbflush();
 }
 
@@ -437,7 +439,7 @@ au_himem_w_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint64_t *)(h + o) = c->c_swswap ? bswap64(val) : val;
+	*(volatile uint64_t *)(intptr_t)(h + o) = c->c_swswap ? bswap64(val) : val;
 	wbflush();
 }
 
@@ -448,7 +450,7 @@ au_himem_rs_2(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint16_t *)(h + o));
+	val = (*(volatile uint16_t *)(intptr_t)(h + o));
 	return (c->c_hwswap ? bswap16(val) : val);
 }
 
@@ -459,7 +461,7 @@ au_himem_rs_4(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint32_t *)(h + o));
+	val = (*(volatile uint32_t *)(intptr_t)(h + o));
 	return (c->c_hwswap ? bswap32(val) : val);
 }
 
@@ -470,7 +472,7 @@ au_himem_rs_8(void *v, bus_space_handle_t h, bus_size_t o)
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
-	val = (*(volatile uint64_t *)(h + o));
+	val = (*(volatile uint64_t *)(intptr_t)(h + o));
 	return (c->c_hwswap ? bswap64(val) : val);
 }
 
@@ -479,7 +481,7 @@ au_himem_ws_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint16_t *)(h + o) = c->c_hwswap ? bswap16(val) : val;
+	*(volatile uint16_t *)(intptr_t)(h + o) = c->c_hwswap ? bswap16(val) : val;
 	wbflush();
 }
 
@@ -488,7 +490,7 @@ au_himem_ws_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint32_t *)(h + o) = c->c_hwswap ? bswap32(val) : val;
+	*(volatile uint32_t *)(intptr_t)(h + o) = c->c_hwswap ? bswap32(val) : val;
 	wbflush();
 }
 
@@ -497,7 +499,7 @@ au_himem_ws_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t val)
 {
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
-	*(volatile uint64_t *)(h + o) = c->c_hwswap ? bswap64(val) : val;
+	*(volatile uint64_t *)(intptr_t)(h + o) = c->c_hwswap ? bswap64(val) : val;
 	wbflush();
 }
 
@@ -662,11 +664,11 @@ AU_HIMEM_SR(uint64_t,8)
 void									\
 __CONCAT(au_himem_c_,BYTES)(void *v,					\
     bus_space_handle_t h1, bus_size_t o1, bus_space_handle_t h2,	\
-    bus_space_handle_t o2, bus_size_t cnt)				\
+    bus_size_t o2, bus_size_t cnt)					\
 {									\
 	volatile TYPE *src, *dst;					\
-	src = (volatile TYPE *)(h1 + o1);				\
-	dst = (volatile TYPE *)(h2 + o2);				\
+	src = (volatile TYPE *)(intptr_t)(h1 + o1);			\
+	dst = (volatile TYPE *)(intptr_t)(h2 + o2);			\
 									\
 	if (src >= dst) {						\
 		while (cnt-- > 0)					\

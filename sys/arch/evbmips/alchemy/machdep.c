@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 2009/12/14 00:46:01 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.46 2009/12/16 08:26:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2009/12/14 00:46:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2009/12/16 08:26:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,8 +186,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	void *kernend;
 	const char *cp;
 	u_long first, last;
-	struct pcb *pcb0;
-	vaddr_t v;
 	int freqok, howto, i;
 	const struct alchemy_board *board;
 
