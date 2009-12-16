@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.68 2009/12/14 21:19:23 matt Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.69 2009/12/16 20:57:15 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -18,6 +18,12 @@ LIB=		rump
 SRCS=	rump.c rumpcopy.c emul.c intr.c locks.c ltsleep.c	\
 	memalloc.c percpu.c scheduler.c sleepq.c		\
 	sysproxy_socket.c threads.c vm.c
+
+vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh
+	${_MKMSG_CREATE} vers.c
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i
+SRCS+=		vers.c
+CLEANFILES+=	vers.c version
 
 # stubs
 #
