@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.182 2009/12/16 04:50:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.183 2009/12/16 14:37:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.182 2009/12/16 04:50:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.183 2009/12/16 14:37:26 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -379,22 +379,6 @@ do {									\
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
-
-/* sc_flags */
-#define	WM_F_HAS_MII		0x0001	/* has MII */
-#define	WM_F_EEPROM_HANDSHAKE	0x0002	/* requires EEPROM handshake */
-#define	WM_F_EEPROM_SEMAPHORE	0x0004	/* EEPROM with semaphore */
-#define	WM_F_EEPROM_EERDEEWR	0x0008	/* EEPROM access via EERD/EEWR */
-#define	WM_F_EEPROM_SPI		0x0010	/* EEPROM is SPI */
-#define	WM_F_EEPROM_FLASH	0x0020	/* EEPROM is FLASH */
-#define	WM_F_EEPROM_INVALID	0x0040	/* EEPROM not present (bad checksum) */
-#define	WM_F_IOH_VALID		0x0080	/* I/O handle is valid */
-#define	WM_F_BUS64		0x0100	/* bus is 64-bit */
-#define	WM_F_PCIX		0x0200	/* bus is PCI-X */
-#define	WM_F_CSA		0x0400	/* bus is CSA */
-#define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
-#define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
-#define WM_F_SWFWHW_SYNC	0x2000  /* Software-Firmware synchronisation */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -981,7 +965,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			sc->sc_type = WM_T_82542_2_0;
 	}
 
-	/* Set device properties */
+	/* Set device properties (mactype)*/
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_set_uint32(dict, "mactype", sc->sc_type);
 
@@ -1351,18 +1335,26 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * that no EEPROM is attached.
 	 */
 
-	/*
-	 * Validate the EEPROM checksum. If the checksum fails, flag this for
-	 * later, so we can fail future reads from the EEPROM.
-	 */
-	if (wm_validate_eeprom_checksum(sc)) {
+	/* Check whether EEPROM is present or not */
+	if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
+		/* Not found */
+		sc->sc_flags |= WM_F_EEPROM_INVALID;
+	} else {
 		/*
-		 * Read twice again because some PCI-e parts fail the first
-		 * check due to the link being in sleep state.
+		 * Validate the EEPROM checksum. If the checksum fails, flag
+		 * this for later, so we can fail future reads from the EEPROM.
 		 */
-		if (wm_validate_eeprom_checksum(sc))
-			sc->sc_flags |= WM_F_EEPROM_INVALID;
+		if (wm_validate_eeprom_checksum(sc)) {
+			/*
+			 * Read twice again because some PCI-e parts fail the
+			 * first check due to the link being in sleep state.
+			 */
+			if (wm_validate_eeprom_checksum(sc))
+				sc->sc_flags |= WM_F_EEPROM_INVALID;
+		}
 	}
+	/* Set device properties (macflags)*/
+	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
