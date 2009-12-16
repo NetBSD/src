@@ -84,7 +84,7 @@ dsp.o: $(srcdir)/dsp.c $(srcdir)/sim-main.h
 multi-run.o: multi-include.h tmp-mach-multi
 
 ../igen/igen:
-	cd ../igen && $(MAKE)
+	(cd ../igen && $(MAKE))
 
 IGEN_TRACE= # -G omit-line-numbers # -G trace-rule-selection -G trace-rule-rejection -G trace-entries # -G trace-all
 IGEN_INSN=$(srcdir)/mips.igen
@@ -132,7 +132,7 @@ BUILT_SRC_FROM_IGEN = \
 $(BUILT_SRC_FROM_IGEN): tmp-igen
 
 tmp-igen: $(IGEN_INSN) $(IGEN_DC) ../igen/igen $(IGEN_INCLUDE)
-	cd ../igen && $(MAKE)
+	(cd ../igen && $(MAKE))
 	../igen/igen \
 		$(IGEN_TRACE) \
 		-I $(srcdir) \
@@ -213,7 +213,7 @@ BUILT_SRC_FROM_M16 = \
 $(BUILT_SRC_FROM_M16): tmp-m16
 
 tmp-m16: $(IGEN_INSN) $(IGEN_DC) ../igen/igen $(IGEN_INCLUDE)
-	cd ../igen && $(MAKE)
+	(cd ../igen && $(MAKE))
 	../igen/igen \
 		$(IGEN_TRACE) \
 		-I $(srcdir) \
