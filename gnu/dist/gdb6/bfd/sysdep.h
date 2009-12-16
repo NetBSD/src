@@ -130,7 +130,7 @@ extern PTR malloc ();
 extern PTR realloc ();
 #endif
 
-#if !HAVE_DECL_STPCPY
+#if !HAVE_DECL_STPCPY && !HAVE_STPCPY
 extern char *stpcpy (char *__dest, const char *__src);
 #endif
 
