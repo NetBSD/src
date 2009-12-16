@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.186 2009/12/09 04:54:25 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.187 2009/12/16 11:01:18 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3917,4 +3917,9 @@ dist/ntp/ntpd/ntp_request.c			patch
 
 	Fix CVE-2009-3563.
 	[kardel, ticket #1369]
+
+etc/defaults/rc.conf				1.107
+
+	Make rtsold_flags default to -a. Closes PR/39657.
+	[dholland, ticket #1370]
 
