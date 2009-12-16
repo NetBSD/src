@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 2009/12/14 00:46:14 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 2009/12/16 23:19:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2009/12/14 00:46:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2009/12/16 23:19:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -283,10 +283,9 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	int firstpfn, lastpfn;
 	vsize_t size;
 	struct arcbios_mem *mem;
-	struct pcb *pcb0;
 	const char *cpufreq, *osload;
 	char *bootpath = NULL;
-	vaddr_t kernend, v;
+	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
