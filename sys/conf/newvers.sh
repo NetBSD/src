@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.55 2009/12/16 20:54:49 pooka Exp $
+#	$NetBSD: newvers.sh,v 1.56 2009/12/16 21:25:03 pooka Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -50,19 +50,25 @@ copyright=$(awk '{ printf("\"%s\\n\"", $0); }' ${cwd}/copyright)
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-r)
-		rflag=-r
+		rflag=true
 		;;
 	-i)
-		iflag=-i
+		id="$2"
+		shift
+		;;
+	-n)
+		nflag=true
+		;;
 	esac
-	echo arg
 	shift
 done
 
-if [ -f ident ]; then
-	id="$(cat ident)"
-else
-	id=$(basename ${d})
+if [ -z "${id}" ]; then
+	if [ -f ident ]; then
+		id="$(cat ident)"
+	else
+		id=$(basename ${d})
+	fi
 fi
 
 osrelcmd=${cwd}/osrelease.sh
@@ -70,14 +76,11 @@ osrelcmd=${cwd}/osrelease.sh
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
-case "$rflag" in
--r)
+if [ ! -z "${rflag}" ]; then
 	fullversion="${ost} ${osr} (${id})\n"
-	;;
-*)
+else
 	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
-	;;
-esac
+fi
 
 echo $(expr ${v} + 1) > version
 
@@ -102,7 +105,7 @@ ${copyright}
 "\n";
 _EOF
 
-[ "${iflag}" = -i ] && exit 0
+[ ! -z "${nflag}" ] && exit 0
 
 cat << _EOF >> vers.c
 
