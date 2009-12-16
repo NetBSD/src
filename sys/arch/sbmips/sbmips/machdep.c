@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 2009/11/27 03:23:13 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.46 2009/12/16 19:02:03 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2009/12/16 19:02:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -158,9 +158,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
 	void *kernend;
 	u_long first, last;
-	struct pcb *pcb0;
 	extern char edata[], end[];
-	vaddr_t v;
 	int i;
 	uint32_t config;
 
@@ -317,18 +315,12 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 */
 	mips_init_msgbuf();
 
+	pmap_bootstrap();
+
 	/*
 	 * Allocate uarea for lwp0 and set it.
 	 */
-	v = pmap_steal_memory(USPACE, NULL, NULL);
-	uvm_lwp_setuarea(&lwp0, v);
-
-	pcb0 = lwp_getpcb(&lwp0);
-	pcb0->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-
-	pmap_bootstrap();
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
