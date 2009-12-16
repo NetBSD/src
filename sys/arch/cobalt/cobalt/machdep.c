@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2009/12/14 00:46:00 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2009/12/16 19:01:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2009/12/14 00:46:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/16 19:01:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -147,8 +147,6 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 {
 	char *kernend;
 	u_long first, last;
-	struct pcb *pcb0;
-	vaddr_t v;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
