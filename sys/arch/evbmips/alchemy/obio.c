@@ -1,4 +1,4 @@
-/* $NetBSD: obio.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $ */
+/* $NetBSD: obio.c,v 1.2 2009/12/16 08:26:14 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1 2006/02/08 09:04:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2 2009/12/16 08:26:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ obio_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", oa->oba_name, pnp);
 	if (oa->oba_addr != OBIOCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", oa->oba_addr);
+		aprint_normal(" addr 0x%" PRIxBUSADDR, oa->oba_addr);
 
 	return (UNCONF);
 }
