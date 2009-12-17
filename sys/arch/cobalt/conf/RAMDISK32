@@ -1,0 +1,7 @@
+# $NetBSD: RAMDISK32,v 1.1 2009/12/17 15:29:47 matt Exp $
+
+include "arch/cobalt/conf/RAMDISK"
+
+#ident 		"RAMDISK32-$Revision: 1.1 $"
+
+no makeoptions	CPUFLAGS
