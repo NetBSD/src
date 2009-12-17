@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2009/12/16 19:01:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2009/12/17 15:29:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/16 19:01:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/17 15:29:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,7 +126,7 @@ static const char * const cobalt_model[] =
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(unsigned int, u_int, char*);
+void	mach_init(unsigned int, u_int, int32_t);
 void	decode_bootstring(void);
 static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
@@ -143,8 +143,10 @@ extern char *esym;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(unsigned int memsize, u_int bim, char *bip)
+mach_init(unsigned int memsize32, u_int bim, int32_t bip32)
 {
+	size_t memsize = memsize32;
+	char *bip = (void *)(intptr_t)bip32;
 	char *kernend;
 	u_long first, last;
 	extern char edata[], end[];
@@ -212,8 +214,8 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* Load symbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (void *)bi_syms->ssym;
-		esym = (void *)bi_syms->esym;
+		ssym = (void *)(intptr_t)bi_syms->ssym;
+		esym = (void *)(intptr_t)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
 	}
 #endif
@@ -506,7 +508,7 @@ lookup_bootinfo(int type)
 
 	do {
 		bt = (struct btinfo_common *)help;
-		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
+		printf("Type %d @%p\n", bt->type, (void *)(intptr_t)bt);
 		if (bt->type == type)
 			return (void *)help;
 		help += bt->next;

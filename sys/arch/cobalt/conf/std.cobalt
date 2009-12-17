@@ -1,8 +1,8 @@
-#	$NetBSD: std.cobalt,v 1.13 2006/07/18 12:51:01 tsutsui Exp $
+#	$NetBSD: std.cobalt,v 1.14 2009/12/17 15:29:47 matt Exp $
 
 machine cobalt mips
 include		"conf/std"	# MI standard options
-makeoptions	MACHINE_ARCH="mipsel"
+#makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
 options 	MIPS3_ENABLE_CLOCK_INTR
