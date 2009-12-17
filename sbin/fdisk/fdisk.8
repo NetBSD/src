@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.67 2009/12/05 16:29:11 pooka Exp $
+.\"	$NetBSD: fdisk.8,v 1.68 2009/12/17 14:27:49 pooka Exp $
 .\"
-.Dd November 28, 2009
+.Dd December 17, 2009
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -242,6 +242,11 @@ by
 will count the 512-byte sectors in
 .Ar device
 and produce a fake geometry.
+If
+.Ar device
+is a regular file,
+.Fl F
+will be used implicitly.
 .It Fl i
 Explicitly request initialisation of the master boot code
 (similar to what

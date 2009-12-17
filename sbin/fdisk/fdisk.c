@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.125 2009/11/04 22:25:56 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.126 2009/12/17 14:27:49 pooka Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.125 2009/11/04 22:25:56 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.126 2009/12/17 14:27:49 pooka Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -437,6 +437,9 @@ main(int argc, char *argv[])
 		/* Default to boot device */
 		initvar_disk(&disk);
 	}
+
+	if (!F_flag && stat(disk, &sb) == 0 && S_ISREG(sb.st_mode))
+		F_flag = 1;
 
 	if (open_disk(B_flag || a_flag || i_flag || u_flag) < 0)
 		exit(1);
