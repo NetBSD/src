@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.411 2009/11/27 16:43:51 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.412 2009/12/17 01:25:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.411 2009/11/27 16:43:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.412 2009/12/17 01:25:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -152,7 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.411 2009/11/27 16:43:51 pooka Exp $"
 #include <sys/pset.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>

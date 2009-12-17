@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.136 2009/10/27 02:58:28 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.137 2009/12/17 01:25:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.136 2009/10/27 02:58:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.137 2009/12/17 01:25:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -228,7 +228,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.136 2009/10/27 02:58:28 rmind Exp $")
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
-#include <sys/user.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/pset.h>
@@ -632,7 +631,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
-	l2->l_addr = UAREA_TO_USER(uaddr);
+	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 

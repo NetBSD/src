@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.142 2009/11/21 17:45:02 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.143 2009/12/17 01:25:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.142 2009/11/21 17:45:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.143 2009/12/17 01:25:11 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -335,14 +335,14 @@ vaddr_t
 uvm_lwp_getuarea(lwp_t *l)
 {
 
-	return USER_TO_UAREA(l->l_addr);
+	return (vaddr_t)l->l_addr - UAREA_USER_OFFSET;
 }
 
 void
 uvm_lwp_setuarea(lwp_t *l, vaddr_t addr)
 {
 
-	l->l_addr = UAREA_TO_USER(addr);
+	l->l_addr = (void *)(addr + UAREA_USER_OFFSET);
 }
 
 /*
@@ -376,10 +376,12 @@ uvm_proc_exit(struct proc *p)
 void
 uvm_lwp_exit(struct lwp *l)
 {
-	vaddr_t va = USER_TO_UAREA(l->l_addr);
+	vaddr_t va = uvm_lwp_getuarea(l);
 
 	uvm_uarea_free(va);
-	l->l_addr = NULL;
+#ifdef DIAGNOSTIC
+	uvm_lwp_setuarea(l, (vaddr_t)NULL);
+#endif
 }
 
 /*

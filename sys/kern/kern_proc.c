@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.158 2009/11/26 00:19:11 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.158 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -365,7 +365,7 @@ proc0_init(void)
 	pg = &pgrp0;
 	l = &lwp0;
 
-	KASSERT(l->l_addr != NULL);
+	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
 	KASSERT(l->l_lid == p->p_nlwpid);
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
@@ -1149,7 +1149,6 @@ pidtbl_dump(void)
 #endif /* DDB */
 
 #ifdef KSTACK_CHECK_MAGIC
-#include <sys/user.h>
 
 #define	KSTACK_MAGIC	0xdeadbeaf
 
