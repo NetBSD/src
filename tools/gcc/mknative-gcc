@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.44 2009/12/17 15:01:33 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.45 2009/12/17 15:48:13 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -95,7 +95,7 @@ get_libgcc_list_funcs_lib () {
 	cat build/gcc/libgcc.mk | \
 	grep '/'${_abi}'/' | \
 	sed -ne '
-		/^\'${_abi}'\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
+		/^'${_abi}'\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
 			s,^.*/,,
 			s,\.o$,,
 			p
@@ -108,7 +108,7 @@ get_libgcc_list_objs_libs () {
 
 	cat build/gcc/libgcc.mk | \
 	grep '/'${_abi}'/' | \
-	egrep '^\'${_abi}'\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
+	egrep '^'${_abi}'\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
 	sed -e '
 		s,^'${_abi}'\/,,
 		s,: .*/,	,
