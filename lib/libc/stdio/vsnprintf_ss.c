@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.8 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.9 2009/12/17 15:19:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.8 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.9 2009/12/17 15:19:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -164,7 +164,8 @@ vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, _BSD_VA_LIST_ ap)
 	for (;;) {
 		while (*fmt != '%' && *fmt) {
 			ret++;
-			PUTCHAR(*fmt++);
+			PUTCHAR(*fmt);
+			fmt++;
 		}
 		if (*fmt == 0)
 			goto done;
