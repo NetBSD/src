@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.58 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.58 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -840,7 +840,8 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_mips1: bad offset %llu (map size is %llu)"
+		panic("_bus_dmamap_sync_mips1: bad offset %"PRIxPSIZE
+		" (map size is %"PRIxPSIZE")"
 		    , offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync_mips1: bad length");
@@ -942,8 +943,8 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_mips3: bad offset %llu "
-		    "(map size is %llu)", offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync_mips3: bad offset %"PRIxPSIZE
+		    "(map size is %"PRIxPSIZE")", offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync_mips3: bad length");
 #endif
