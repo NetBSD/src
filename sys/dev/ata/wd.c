@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.379 2009/10/19 18:41:12 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.380 2009/12/17 21:03:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.379 2009/10/19 18:41:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.380 2009/12/17 21:03:10 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.379 2009/10/19 18:41:12 bouyer Exp $");
 #include "locators.h"
 
 #include <prop/proplib.h>
-
-#define	LBA48_THRESHOLD		(0xfffffff)	/* 128GB / DEV_BSIZE */
 
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
@@ -194,7 +192,6 @@ static void bad144intern(struct wd_softc *);
 #endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
-#define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
 #define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
 
@@ -222,31 +219,6 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
-
-	/*
-	 * These seagate drives seems to have issue addressing sector 0xfffffff
-	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
-	 * LBA48
-	 * Note that we can't just change the code to always use LBA48 for
-	 * sector 0xfffffff, because this would break valid and working
-	 * setups using LBA48 drives on non-LBA48-capable controllers
-	 * (and it's hard to get a list of such controllers)
-	 */
-	{ "ST3160021A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160811A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160812A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160023A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160827A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	/* Attempt to catch all seagate drives larger than 200GB */
-	{ "ST3[2-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3[1-9][0-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
-	  WD_QUIRK_FORCE_LBA48 },
 	{ NULL,
 	  0 }
 };
@@ -374,14 +346,17 @@ wdattach(device_t parent, device_t self, void *aux)
 		    ((u_int64_t) wd->sc_params.atap_max_lba[2] << 32) |
 		    ((u_int64_t) wd->sc_params.atap_max_lba[1] << 16) |
 		    ((u_int64_t) wd->sc_params.atap_max_lba[0] <<  0);
+		wd->sc_capacity28 =
+		    (wd->sc_params.atap_capacity[1] << 16) |
+		    wd->sc_params.atap_capacity[0];
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_verbose(" LBA addressing\n");
-		wd->sc_capacity =
-		    ((u_int64_t)wd->sc_params.atap_capacity[1] << 16) |
+		wd->sc_capacity28 = wd->sc_capacity =
+		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
 	} else {
 		aprint_verbose(" chs addressing\n");
-		wd->sc_capacity =
+		wd->sc_capacity28 = wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
@@ -714,6 +689,8 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	}
 
 	wd->sc_wdc_bio.blkno = bp->b_rawblkno;
+	wd->sc_wdc_bio.bcount = bp->b_bcount;
+	wd->sc_wdc_bio.databuf = bp->b_data;
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
 	/*
@@ -726,15 +703,14 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	else
 		wd->sc_wdc_bio.flags = 0;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (wd->sc_wdc_bio.blkno > LBA48_THRESHOLD ||
-	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
+	    (wd->sc_wdc_bio.blkno +
+	     wd->sc_wdc_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
+	    wd->sc_capacity28)
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
 		wd->sc_wdc_bio.flags |= ATA_READ;
-	wd->sc_wdc_bio.bcount = bp->b_bcount;
-	wd->sc_wdc_bio.databuf = bp->b_data;
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
 	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
@@ -756,7 +732,6 @@ wddone(void *v)
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
-	int nblks;
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
@@ -783,25 +758,6 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
-		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
-			nblks = wd->sc_wdc_bio.bcount /
-			    wd->sc_dk.dk_label->d_secsize;
-			/*
-			 * If we get a "id not found" when crossing the
-			 * LBA48_THRESHOLD, and the drive is larger than
-			 * 128GB, then we can assume the drive has the
-			 * LBA48 bug and we switch to LBA48.
-			 */
-			if (wd->sc_wdc_bio.blkno <= LBA48_THRESHOLD &&
-			    wd->sc_wdc_bio.blkno + nblks > LBA48_THRESHOLD &&
-			    wd->sc_capacity > LBA48_THRESHOLD + 1) {
-				errmsg = "LBA48 bug";
-				wd->sc_quirks |= WD_QUIRK_FORCE_LBA48;
-				do_perror = 0;
-				goto retry2;
-			}
-		}
 retry:		/* Just reset and retry. Can we do more ? */
 		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
@@ -1628,8 +1584,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	wd->sc_wdc_bio.blkno = blkno;
 	wd->sc_wdc_bio.flags = ATA_POLL;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (blkno > LBA48_THRESHOLD ||
-    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
+	    (wd->sc_wdc_bio.blkno + nblks) > wd->sc_capacity28)
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
