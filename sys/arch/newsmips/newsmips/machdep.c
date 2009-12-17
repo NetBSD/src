@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2009/12/17 05:29:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2009/12/14 00:46:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/17 05:29:56 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -216,9 +216,7 @@ void
 mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
-	struct pcb *pcb0;
 	char *kernend;
-	vaddr_t v;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
@@ -378,7 +376,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	/*
 	 * Allocate uarea page for lwp0 and set it.
 	 */
-	pmap_init_lwp0_uarea();
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Determine what model of computer we are running on.
