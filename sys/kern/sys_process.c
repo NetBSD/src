@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.152 2009/12/14 00:48:35 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.153 2009/12/17 01:25:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.152 2009/12/14 00:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.153 2009/12/17 01:25:10 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.152 2009/12/14 00:48:35 matt Exp $
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
