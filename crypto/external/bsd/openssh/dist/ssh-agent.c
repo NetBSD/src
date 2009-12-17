@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.3 2009/12/17 15:55:16 agc Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.159 2008/06/28 14:05:15 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.3 2009/12/17 15:55:16 agc Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -307,13 +307,13 @@ process_sign_request2(SocketEntry *e)
 	Buffer msg;
 	Key *key;
 
+	odatafellows = datafellows;
 	datafellows = 0;
 
 	blob = buffer_get_string(&e->request, &blen);
 	data = buffer_get_string(&e->request, &dlen);
 
 	flags = buffer_get_int(&e->request);
-	odatafellows = datafellows;
 	if (flags & SSH_AGENT_OLD_SIGNATURE)
 		datafellows = SSH_BUG_SIGBLOB;
 
