@@ -1,0 +1,5 @@
+# $NetBSD: INSTALL32,v 1.1 2009/12/17 15:29:47 matt Exp $
+
+include "arch/cobalt/conf/INSTALL"
+
+no makeoptions	CPUFLAGS
