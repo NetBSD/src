@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.19 2009/12/05 20:11:15 pooka Exp $
+# $NetBSD: XEN3_DOMU,v 1.20 2009/12/17 23:53:24 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -246,6 +246,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device   drvctl
+
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 # PCI pass-through support: 
 #xpci* at xenbus ?			#Xen3 PCI front end driver
