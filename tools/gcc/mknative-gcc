@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.43 2009/12/01 04:59:24 uebayasi Exp $
+#	$NetBSD: mknative-gcc,v 1.44 2009/12/17 15:01:33 uebayasi Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -10,6 +10,7 @@
 _TMPDIR=$2
 _TOP=$3
 _PLATFORM=$4
+_ABI=$5
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
 
@@ -89,11 +90,12 @@ get_libgcc_list_funcs_lib () {
 	local _lib=$1
 	local _lib_prefix=${_lib%.*}
 	local _lib_suffix=${_lib#*.}
+	local _abi=${2:-'\.'}
 
 	cat build/gcc/libgcc.mk | \
-	grep -v '/32/' | \
+	grep '/'${_abi}'/' | \
 	sed -ne '
-		/^\.\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
+		/^\'${_abi}'\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
 			s,^.*/,,
 			s,\.o$,,
 			p
@@ -102,17 +104,21 @@ get_libgcc_list_funcs_lib () {
 }
 
 get_libgcc_list_objs_libs () {
+	local _abi=${1:-'\.'}
+
 	cat build/gcc/libgcc.mk | \
-	grep -v '/32/' | \
-	egrep '^\.\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
+	grep '/'${_abi}'/' | \
+	egrep '^\'${_abi}'\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
 	sed -e '
-		s,^\.\/,,
+		s,^'${_abi}'\/,,
 		s,: .*/,	,
 		s,^\(.*\)	\(.*\)$,\2	\1,
 	' | sort
 }
 
 get_libgcc_list_objs_srcs () {
+	local _abi=${1:-'\.'}	# XXX not used
+
 	if [ -e $_TOP/${libgcc_db_funcs}.S ]; then
 		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
 		comm -23 /dev/stdin $_TOP/${libgcc_db_funcs}.S | \
@@ -128,8 +134,10 @@ get_libgcc_list_objs_srcs () {
 }
 
 get_libgcc_list_objs_tmplsrcs () {
+	local _abi=${1:-'\.'}
+
 	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
-	grep -v '/32/' | \
+	grep '/'${_abi}'/' | \
 	sed -ne '
 		s,^.* -c \([^ ]*\).* -o .*/\([^ ]*\.o\)$,\2	\1,
 		# basename
@@ -141,9 +149,10 @@ get_libgcc_list_objs_tmplsrcs () {
 
 get_libgcc_list_objs_xflags () {
 	local _flags=$1
+	local _abi=${2:-'\.'}
 
 	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
-	grep -v '/32/' | \
+	grep '/'${_abi}'/' | \
 	sed -n '
 		x
 	:loop
@@ -157,15 +166,16 @@ get_libgcc_list_objs_xflags () {
 }
 
 get_libgcc_list_objs_cppflags () {
-	get_libgcc_list_objs_xflags D
+	get_libgcc_list_objs_xflags D $1
 }
 
 get_libgcc_list_objs_copts () {
-	get_libgcc_list_objs_xflags fmx
+	get_libgcc_list_objs_xflags fmx $1
 }
 
 get_libgcc_list_tmplsrcs () {
 	local _lib=$1
+	local _abi=$2	# XXX not used
 	local _tmplallsrcs=$( mktemp /tmp/mknative-gcc._tmplallsrcs.XXXXXX )
 
 	touch $_TOP/${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
@@ -197,6 +207,8 @@ get_libgcc_list_tmplsrcs () {
 }
 
 get_libgcc_new_analyze () {
+	local _abi=$1
+
 	mkdir -p $_TOP/${_machine_arch_subdir}
 
 	touch $_TOP/${libgcc_db_funcs}.S
@@ -205,18 +217,18 @@ get_libgcc_new_analyze () {
 
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
 		touch $_TOP/${libgcc_db_funcs}.${_lib%.*}
-		get_libgcc_list_funcs_lib $_lib | \
+		get_libgcc_list_funcs_lib $_lib $_abi | \
 		writefile ${libgcc_db_funcs}.${_lib%.*}
 	done
 
-	get_libgcc_list_objs_libs | writefile ${libgcc_db_objs_libs}
-	get_libgcc_list_objs_srcs | writefile ${libgcc_db_objs_srcs}
-	get_libgcc_list_objs_tmplsrcs | writefile ${libgcc_db_objs_tmplsrcs}
-	get_libgcc_list_objs_cppflags | writefile ${libgcc_db_objs_cppflags}
-	get_libgcc_list_objs_copts | writefile ${libgcc_db_objs_copts}
+	get_libgcc_list_objs_libs $_abi | writefile ${libgcc_db_objs_libs}
+	get_libgcc_list_objs_srcs $_abi | writefile ${libgcc_db_objs_srcs}
+	get_libgcc_list_objs_tmplsrcs $_abi | writefile ${libgcc_db_objs_tmplsrcs}
+	get_libgcc_list_objs_cppflags $_abi | writefile ${libgcc_db_objs_cppflags}
+	get_libgcc_list_objs_copts $_abi | writefile ${libgcc_db_objs_copts}
 
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
-		get_libgcc_list_tmplsrcs $_lib
+		get_libgcc_list_tmplsrcs $_lib $_abi
 	done
 }
 
@@ -299,6 +311,8 @@ get_libgcc_gen_srcs_copts () {
 }
 
 get_libgcc_new_generate () {
+	local _abi=$1
+
 	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
 		for _tmpl in tmplsrcs tmplfpsrcs tmplasmsrcs; do
 			eval get_libgcc_gen_tmplsrcs_${_tmpl} $_lib | \
@@ -319,10 +333,11 @@ get_libgcc_new_generate () {
 
 get_libgcc_new () {
 	_subdir="$1"
+	_abi="$2"
 
 	# List of generated files.
 
-	_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH
+	_machine_arch_subdir=gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH/$_abi
 
 	libgcc_db_funcs=${_machine_arch_subdir}/funcs
 	libgcc_db_tmplsrcs=${_machine_arch_subdir}/tmplsrcs
@@ -332,7 +347,7 @@ get_libgcc_new () {
 	libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
 	libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
 
-	get_libgcc_new_analyze
+	get_libgcc_new_analyze $_abi
 
 	libgcc_libs_mk=${_machine_arch_subdir}/libs
 	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
@@ -340,7 +355,7 @@ get_libgcc_new () {
 	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
 	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
 
-	get_libgcc_new_generate
+	get_libgcc_new_generate $_abi
 }
 
 get_libgcc () {
@@ -376,7 +391,7 @@ get_libgcc () {
 
 	# Generate new style files.
 	if [ -n "${MKNATIVE_LIBGCC_NEW}" ]; then
-		get_libgcc_new $_subdir
+		get_libgcc_new $_subdir $_ABI
 	fi
 }
 
