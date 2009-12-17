@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.47 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: XEN3_DOM0,v 1.48 2009/12/17 23:53:24 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -808,3 +808,6 @@ pseudo-device   drvctl
 pseudo-device	xenevt
 pseudo-device	xvif
 pseudo-device	xbdback
+
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

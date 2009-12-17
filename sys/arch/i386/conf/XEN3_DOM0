@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.23 2009/12/05 20:11:15 pooka Exp $
+#	$NetBSD: XEN3_DOM0,v 1.24 2009/12/17 23:53:24 jym Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -798,6 +798,9 @@ pseudo-device   drvctl
 pseudo-device	xenevt
 pseudo-device	xvif
 pseudo-device	xbdback
+
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
