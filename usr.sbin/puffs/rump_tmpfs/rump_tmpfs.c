@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_tmpfs.c,v 1.3 2008/09/04 15:34:56 pooka Exp $	*/
+/*	$NetBSD: rump_tmpfs.c,v 1.4 2009/12/17 14:06:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,17 @@
 #include <rump/p2k.h>
 
 #include "mount_tmpfs.h"
+
+/*
+ * tmpfs has a slight "issue" with file content storage.  Since it
+ * stores data in memory, we will end up using 2x the RAM for
+ * storage if we cache in puffs vfs.  If we don't, we need to take
+ * the slow path from the kernel to the file server every time the
+ * file is accessed.  It's either suck or suck.  However, rump_tmpfs
+ * will not be used in real life, so this is hardly a release-stopping
+ * issue of catastrophic proportions.  For now we opt for un-double
+ * storage (PUFFS_KFLAG_NOCACHE_PAGE).
+ */
 
 int
 main(int argc, char *argv[])
