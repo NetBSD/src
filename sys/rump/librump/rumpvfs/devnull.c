@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.4 2009/12/17 00:29:46 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.1 2009/12/17 00:29:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -25,54 +25,58 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * /dev/null, the infamous bytesink.
+ *
+ * I can't imagine it being very different in the rump kernel than in
+ * the host kernel.  But nonetheless it serves as a simple example.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.4 2009/12/17 00:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1 2009/12/17 00:29:46 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/filedesc.h>
-#include <sys/kmem.h>
-#include <sys/lwp.h>
 #include <sys/stat.h>
-#include <sys/vfs_syscalls.h>
 
 #include "rump_vfs_private.h"
 
-/* realqvik(tm) "devfs" */
-int
-rump_vfs_makeonedevnode(dev_t devtype, const char *devname,
-	devmajor_t majnum, devminor_t minnum)
-{
-	register_t retval;
+static devmajor_t null_bmaj, null_cmaj;
 
-	return do_sys_mknod(curlwp, devname, 0666 | devtype,
-	    makedev(majnum, minnum), &retval, UIO_SYSSPACE);
+static dev_type_open(rump_devnullopen);
+static dev_type_read(rump_devnullrw);
+
+static struct cdevsw null_cdevsw = {
+	rump_devnullopen, nullclose, rump_devnullrw, rump_devnullrw, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+};
+
+int
+rump_devnull_init()
+{
+	int error;
+
+	null_bmaj = null_cmaj = NODEVMAJOR;
+	error = devsw_attach("null", NULL, &null_bmaj, &null_cdevsw,&null_cmaj);
+	if (error != 0)
+		return error;
+
+	return rump_vfs_makeonedevnode(S_IFCHR, "/dev/null", null_cmaj, 0);
 }
 
-int
-rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
-	devmajor_t maj, devminor_t minnum, int nnodes)
+static int
+rump_devnullopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int error = 0;
-	char *devname, *p;
-	size_t devlen;
-	register_t retval;
 
-	devlen = strlen(basename) + 1 + 1; /* +letter +0 */
-	devname = kmem_zalloc(devlen, KM_SLEEP);
-	strlcpy(devname, basename, devlen);
-	p = devname + devlen-2;
+	return 0;
+}
 
-	for (; nnodes > 0; nnodes--, minchar++, minnum++) {
-		KASSERT(minchar <= 'z');
-		*p = minchar;
+static int
+rump_devnullrw(dev_t dev, struct uio *uio, int flags)
+{
 
-		if ((error = do_sys_mknod(curlwp, devname, 0666 | devtype,
-		    makedev(maj, minnum), &retval, UIO_SYSSPACE)))
-			goto out;
-	}
-
- out:
-	kmem_free(devname, devlen);
-	return error;
+	if (uio->uio_rw == UIO_WRITE)
+		uio->uio_resid = 0;
+	return 0;
 }
