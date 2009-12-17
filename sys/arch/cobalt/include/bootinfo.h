@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.7 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.8 2009/12/17 15:29:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000-2004
@@ -33,8 +33,8 @@
 #define BOOTINFO_SIZE	1024
 
 struct btinfo_common {
-	int next;		/* offset of next item, or zero */
-	int type;
+	int32_t next;		/* offset of next item, or zero */
+	int32_t type;
 };
 
 #define BTINFO_MAGIC	1
@@ -45,7 +45,7 @@ struct btinfo_common {
 
 struct btinfo_magic {
 	struct btinfo_common common;
-	int magic;
+	int32_t magic;
 };
 
 #define BTINFO_BOOTPATH_LEN	80
@@ -56,9 +56,9 @@ struct btinfo_bootpath {
 
 struct btinfo_symtab {
 	struct btinfo_common common;
-	int nsym;
-	int ssym;
-	int esym;
+	int32_t nsym;
+	int32_t ssym;
+	int32_t esym;
 };
 
 struct btinfo_flags {
