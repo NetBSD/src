@@ -10,6 +10,7 @@ SRCS.libgcc.a = \
 	tmp__absvsi2.c \
 	tmp__addsub_df.c \
 	tmp__addsub_sf.c \
+	tmp__addsub_tf.c \
 	tmp__addvdi3.c \
 	tmp__addvsi3.c \
 	tmp__ashldi3.c \
@@ -21,14 +22,17 @@ SRCS.libgcc.a = \
 	tmp__cmpdi2.c \
 	tmp__compare_df.c \
 	tmp__compare_sf.c \
+	tmp__compare_tf.c \
 	tmp__ctors.c \
 	tmp__ctzdi2.c \
 	tmp__ctzsi2.c \
 	tmp__df_to_sf.c \
 	tmp__df_to_si.c \
+	tmp__df_to_tf.c \
 	tmp__df_to_usi.c \
 	tmp__div_df.c \
 	tmp__div_sf.c \
+	tmp__div_tf.c \
 	tmp__divdc3.c \
 	tmp__divdi3.c \
 	tmp__divsc3.c \
@@ -38,6 +42,7 @@ SRCS.libgcc.a = \
 	tmp__eprintf.c \
 	tmp__eq_df.c \
 	tmp__eq_sf.c \
+	tmp__eq_tf.c \
 	tmp__ffsdi2.c \
 	tmp__ffssi2.c \
 	tmp__fixdfdi.c \
@@ -69,20 +74,27 @@ SRCS.libgcc.a = \
 	tmp__floattixf.c \
 	tmp__fpcmp_parts_df.c \
 	tmp__fpcmp_parts_sf.c \
+	tmp__fpcmp_parts_tf.c \
 	tmp__ge_df.c \
 	tmp__ge_sf.c \
+	tmp__ge_tf.c \
 	tmp__gt_df.c \
 	tmp__gt_sf.c \
+	tmp__gt_tf.c \
 	tmp__le_df.c \
 	tmp__le_sf.c \
+	tmp__le_tf.c \
 	tmp__lshrdi3.c \
 	tmp__lt_df.c \
 	tmp__lt_sf.c \
+	tmp__lt_tf.c \
 	tmp__make_df.c \
 	tmp__make_sf.c \
+	tmp__make_tf.c \
 	tmp__moddi3.c \
 	tmp__mul_df.c \
 	tmp__mul_sf.c \
+	tmp__mul_tf.c \
 	tmp__muldc3.c \
 	tmp__muldi3.c \
 	tmp__mulsc3.c \
@@ -92,13 +104,16 @@ SRCS.libgcc.a = \
 	tmp__mulxc3.c \
 	tmp__ne_df.c \
 	tmp__ne_sf.c \
+	tmp__ne_tf.c \
 	tmp__negate_df.c \
 	tmp__negate_sf.c \
+	tmp__negate_tf.c \
 	tmp__negdi2.c \
 	tmp__negvdi2.c \
 	tmp__negvsi2.c \
 	tmp__pack_df.c \
 	tmp__pack_sf.c \
+	tmp__pack_tf.c \
 	tmp__paritydi2.c \
 	tmp__paritysi2.c \
 	tmp__popcount_tab.c \
@@ -110,13 +125,20 @@ SRCS.libgcc.a = \
 	tmp__powixf2.c \
 	tmp__sf_to_df.c \
 	tmp__sf_to_si.c \
+	tmp__sf_to_tf.c \
 	tmp__sf_to_usi.c \
 	tmp__si_to_df.c \
 	tmp__si_to_sf.c \
+	tmp__si_to_tf.c \
 	tmp__subvdi3.c \
 	tmp__subvsi3.c \
+	tmp__tf_to_df.c \
+	tmp__tf_to_sf.c \
+	tmp__tf_to_si.c \
+	tmp__tf_to_usi.c \
 	tmp__thenan_df.c \
 	tmp__thenan_sf.c \
+	tmp__thenan_tf.c \
 	tmp__trampoline.c \
 	tmp__ucmpdi2.c \
 	tmp__udiv_w_sdiv.c \
@@ -125,7 +147,10 @@ SRCS.libgcc.a = \
 	tmp__umoddi3.c \
 	tmp__unord_df.c \
 	tmp__unord_sf.c \
+	tmp__unord_tf.c \
 	tmp__unpack_df.c \
 	tmp__unpack_sf.c \
+	tmp__unpack_tf.c \
 	tmp__usi_to_df.c \
 	tmp__usi_to_sf.c \
+	tmp__usi_to_tf.c \

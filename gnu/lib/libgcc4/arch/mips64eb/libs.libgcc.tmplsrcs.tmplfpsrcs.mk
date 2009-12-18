@@ -6,3 +6,4 @@
 TMPLFPSRCS.libgcc.a = \
 	dp-bit.c \
 	fp-bit.c \
+	tp-bit.c \
