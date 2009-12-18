@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_generic.c,v 1.1 2009/01/12 02:22:55 pooka Exp $	*/
+/*	$NetBSD: atomic_cas_generic.c,v 1.2 2009/12/18 22:37:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.1 2009/01/12 02:22:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.2 2009/12/18 22:37:18 pooka Exp $");
 
 /*
  * This is basically common/lib/libc/atomic/atomic_init_testset.c
@@ -53,7 +53,7 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	__cpu_simple_lock_t *lock;
 	uint32_t ret;
 
-	lock = &atomic_locks[((uint32_t)ptr >> 3) & 127];
+	lock = &atomic_locks[((uintptr_t)ptr >> 3) & 127];
 	__cpu_simple_lock(lock);
 	ret = *ptr;
 	if (__predict_true(ret == old)) {
