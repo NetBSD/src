@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129.4.5 2009/11/28 16:00:16 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.6 2009/12/18 05:58:26 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.5 2009/11/28 16:00:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.6 2009/12/18 05:58:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -402,6 +402,8 @@ static int callrmdir(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 			   struct componentname *);
 static void callinactive(struct puffs_mount *, puffs_cookie_t, int);
 static void callreclaim(struct puffs_mount *, puffs_cookie_t);
+static int  flushvncache(struct vnode *, off_t, off_t, bool);
+
 
 #define PUFFS_ABORT_LOOKUP	1
 #define PUFFS_ABORT_CREATE	2
@@ -890,13 +892,15 @@ puffs_vnop_getattr(void *v)
 	return error;
 }
 
+#define SETATTR_CHSIZE	0x01
+#define SETATTR_ASYNC	0x02
 static int
-dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int chsize)
+dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 {
 	PUFFS_MSG_VARS(vn, setattr);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
-	int error;
+	int error = 0;
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL
@@ -935,16 +939,24 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int chsize)
 	puffs_credcvt(&setattr_msg->pvnr_cred, cred);
 	puffs_msg_setinfo(park_setattr, PUFFSOP_VN,
 	    PUFFS_VN_SETATTR, VPTOPNC(vp));
+	if (flags & SETATTR_ASYNC)
+		puffs_msg_setfaf(park_setattr);
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_setattr, vp->v_data, NULL, error);
+	puffs_msg_enqueue(pmp, park_setattr);
+	if ((flags & SETATTR_ASYNC) == 0)
+		error = puffs_msg_wait2(pmp, park_setattr, vp->v_data, NULL);
 	PUFFS_MSG_RELEASE(setattr);
-	error = checkerr(pmp, error, __func__);
-	if (error)
-		return error;
+	if ((flags & SETATTR_ASYNC) == 0) {
+		error = checkerr(pmp, error, __func__);
+		if (error)
+			return error;
+	} else {
+		error = 0;
+	}
 
 	if (vap->va_size != VNOVAL) {
 		pn->pn_serversize = vap->va_size;
-		if (chsize)
+		if (flags & SETATTR_CHSIZE)
 			uvm_vnp_setsize(vp, vap->va_size);
 	}
 
@@ -961,7 +973,7 @@ puffs_vnop_setattr(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	return dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, 1);
+	return dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, SETATTR_CHSIZE);
 }
 
 static __inline int
@@ -1013,6 +1025,7 @@ puffs_vnop_inactive(void *v)
 	pnode = vp->v_data;
 
 	if (doinact(pmp, pnode->pn_stat & PNODE_DOINACT)) {
+		flushvncache(vp, 0, 0, false);
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, VPTOPNC(vp));
@@ -1273,6 +1286,32 @@ puffs_vnop_poll(void *v)
 	}
 }
 
+static int
+flushvncache(struct vnode *vp, off_t offlo, off_t offhi, bool wait)
+{
+	struct puffs_node *pn = VPTOPP(vp);
+	struct vattr va;
+	int pflags, error;
+
+	/* flush out information from our metacache, see vop_setattr */
+	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+		vattr_null(&va);
+		error = dosetattr(vp, &va, FSCRED,
+		    SETATTR_CHSIZE | (wait ? 0 : SETATTR_ASYNC));
+		if (error)
+			return error;
+	}
+
+	/*
+	 * flush pages to avoid being overly dirty
+	 */
+	pflags = PGO_CLEANIT;
+	if (wait)
+		pflags |= PGO_SYNCIO;
+	mutex_enter(&vp->v_interlock);
+	return VOP_PUTPAGES(vp, trunc_page(offlo), round_page(offhi), pflags);
+}
+
 int
 puffs_vnop_fsync(void *v)
 {
@@ -1287,29 +1326,10 @@ puffs_vnop_fsync(void *v)
 	PUFFS_MSG_VARS(vn, fsync);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
-	struct puffs_node *pn;
-	struct vattr va;
-	int pflags, error, dofaf;
+	int error, dofaf;
 
-	pn = VPTOPP(vp);
-
-	/* flush out information from our metacache, see vop_setattr */
-	if (pn->pn_stat & PNODE_METACACHE_MASK) {
-		vattr_null(&va);
-		error = VOP_SETATTR(vp, &va, FSCRED); 
-		if (error)
-			return error;
-	}
-
-	/*
-	 * flush pages to avoid being overly dirty
-	 */
-	pflags = PGO_CLEANIT;
-	if (ap->a_flags & FSYNC_WAIT)
-		pflags |= PGO_SYNCIO;
-	mutex_enter(&vp->v_interlock);
-	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
-	    round_page(ap->a_offhi), pflags);
+	error = flushvncache(vp, ap->a_offlo, ap->a_offhi,
+	    (ap->a_flags & FSYNC_WAIT) == FSYNC_WAIT);
 	if (error)
 		return error;
 
