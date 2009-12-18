@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.12 2009/11/26 17:33:23 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.13 2009/12/18 21:24:13 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -40,7 +40,7 @@ ATF_TC_BODY(cmsg_sendfd_bounds, tc)
 	if (rump_sys_socketpair(AF_LOCAL, SOCK_STREAM, 0, s) == -1)
 		atf_tc_fail("rump_sys_socket");
 
-	cmp = malloc(CMSG_LEN(sizeof(int)));
+	cmp = malloc(CMSG_SPACE(sizeof(int)));
 
 	iov.iov_base = &fd;
 	iov.iov_len = sizeof(int);
@@ -54,7 +54,7 @@ ATF_TC_BODY(cmsg_sendfd_bounds, tc)
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_control = cmp;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 
 	/*
 	 * ERROR HERE: trying to pass invalid fd
@@ -128,14 +128,14 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	    sizeof(MAGICSTRING))
 		atf_tc_fail_errno("pipe write"); /* XXX: errno */
 
-	cmp = malloc(CMSG_LEN(sizeof(int)));
+	cmp = malloc(CMSG_SPACE(sizeof(int)));
 
 	iov.iov_base = &storage;
 	iov.iov_len = sizeof(int);
 
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
-	cmp->cmsg_len = CMSG_LEN(sizeof(int));
+	cmp->cmsg_len = CMSG_SPACE(sizeof(int));
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
@@ -148,6 +148,13 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	/* pass the fd */
 	if (rump_sys_sendmsg(s2, &msg, 0) == -1)
 		atf_tc_fail_errno("sendmsg failed");
+
+	/*
+	 * We will read to the same cmsg space.  Overwrite the space
+	 * with an invalid fd to make sure we get an explicit error
+	 * if we don't manage to read the fd.
+	 */
+	*(int *)CMSG_DATA(cmp) = -1;
 
 	/* switch back to original proc */
 	rump_pub_lwp_switch(l1);
