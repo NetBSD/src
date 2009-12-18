@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdbuf.c,v 1.7 2006/10/26 01:33:08 mrg Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.7.24.1 2009/12/18 06:06:56 snj Exp $	*/
 
 /*
  * Copyright (C) 1984-2005  Mark Nudelman
@@ -21,6 +21,9 @@
 #include "charset.h"
 #if HAVE_STAT
 #include <sys/stat.h>
+#endif
+#if HAVE_ERRNO_H
+#include <errno.h>
 #endif
 
 extern int sc_width;
@@ -1362,10 +1365,20 @@ init_cmdhist()
 	char *filename;
 	FILE *f;
 	char *p;
+#ifdef HAVE_STAT
+	struct stat st;
+#endif
 
 	filename = histfile_name();
 	if (filename == NULL)
 		return;
+#ifdef HAVE_STAT
+	/* ignore devices/fifos; allow symlinks */
+	if (stat(filename, &st) < 0)
+		return;
+	if (!S_ISREG(st.st_mode))
+		return;
+#endif
 	f = fopen(filename, "r");
 	free(filename);
 	if (f == NULL)
@@ -1442,10 +1455,22 @@ save_cmdhist()
 #if CMD_HISTORY
 	char *filename;
 	FILE *f;
+#ifdef HAVE_STAT
+	struct stat st;
+#endif
 
 	filename = histfile_name();
 	if (filename == NULL)
 		return;
+#ifdef HAVE_STAT
+	/* ignore devices/fifos; allow symlinks */
+	if (stat(filename, &st) < 0) {
+		if (errno != ENOENT)
+			return;
+	}
+	else if (!S_ISREG(st.st_mode))
+		return;
+#endif
 	f = fopen(filename, "w");
 	free(filename);
 	if (f == NULL)
