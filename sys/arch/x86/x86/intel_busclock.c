@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.5.10.2 2009/10/05 10:34:07 sborrill Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.5.10.3 2009/12/18 05:55:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.2 2009/10/05 10:34:07 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.3 2009/12/18 05:55:23 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,18 @@ p3_get_bus_clock(struct cpu_info *ci)
 		}
 		break;
 	case 0xe: /* Core Duo/Solo */
+		/*
+		 * XXX
+		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
+		 * In the long-term, use ACPI instead of all this.
+		 */
+		switch (CPUID2EXTMODEL(ci->ci_signature)) {
+		case 0x1:
+			aprint_debug("%s: unable to determine bus speed",
+			    device_xname(ci->ci_dev));
+			goto print_msr;
+		}
+		/* FALLTHROUGH */
 	case 0xf: /* Core Xeon */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
