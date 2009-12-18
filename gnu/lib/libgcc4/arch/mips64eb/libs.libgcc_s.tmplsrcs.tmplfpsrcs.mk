@@ -6,3 +6,4 @@
 TMPLFPSRCS.libgcc_s.so = \
 	dp-bit.c \
 	fp-bit.c \
+	tp-bit.c \
