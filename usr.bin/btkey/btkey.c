@@ -1,4 +1,4 @@
-/*	$NetBSD: btkey.c,v 1.2 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: btkey.c,v 1.2.4.1 2009/12/18 06:01:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -29,9 +29,10 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btkey.c,v 1.2 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: btkey.c,v 1.2.4.1 2009/12/18 06:01:38 snj Exp $");
 
 #include <bluetooth.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -253,7 +254,7 @@ scan_key(const char *arg)
 			if (*arg == '\0')
 				return true;
 
-			for (p = digits ; *p != *arg ; p++)
+			for (p = digits ; *p != tolower((int)*arg) ; p++)
 				if (*p == '\0')
 					return false;
 
