@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2009/12/13 01:02:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2009/12/18 04:12:36 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,12 @@ EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.${MACHINE_ARCH}
 EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.extsrc
 .endif
 
-NetBSD.dist:	NetBSD.dist.base ${EXTRA_DIST_FILES}
+NetBSD.dist:	NetBSD.dist.tmp
+	cmp -s NetBSD.dist.tmp NetBSD.dist || { \
+		echo "Updating NetBSD.dist"; \
+		mv NetBSD.dist.tmp NetBSD.dist; \
+	}
+NetBSD.dist.tmp::
 	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES} > \
 	    ${.TARGET}
 
