@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.32 2009/12/10 23:13:45 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.33 2009/12/18 05:34:18 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -878,4 +878,15 @@ sys/kern/kern_time.c				1.163
 	signal number could crash the kernel by overflowing the sigset_t
 	array.
 	[drochner, ticket #1189]
+
+sys/kern/sys_mqueue.c				1.28
+
+	Fix some security critical bugs:
+	- An invalid signal number passed to mq_notify(2) could crash the
+	  kernel on delivery -- add a boundary check
+	- A user could set mq_maxmsg (the maximal number of messages in a
+	  queue) to a huge value on mq_open(O_CREAT) and later use up all
+	  kernel memory by mq_send(2) -- add a sysctl'able limit which
+	  defaults to 16*mq_def_maxmsg
+	[tron, ticket #1188]
 
