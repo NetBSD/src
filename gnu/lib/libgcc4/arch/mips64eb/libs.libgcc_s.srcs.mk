@@ -9,6 +9,7 @@ SRCS.libgcc_s.so = \
 	tmp__absvsi2_s.c \
 	tmp__addsub_df_s.c \
 	tmp__addsub_sf_s.c \
+	tmp__addsub_tf_s.c \
 	tmp__addvdi3_s.c \
 	tmp__addvsi3_s.c \
 	tmp__ashldi3_s.c \
@@ -20,14 +21,17 @@ SRCS.libgcc_s.so = \
 	tmp__cmpdi2_s.c \
 	tmp__compare_df_s.c \
 	tmp__compare_sf_s.c \
+	tmp__compare_tf_s.c \
 	tmp__ctors_s.c \
 	tmp__ctzdi2_s.c \
 	tmp__ctzsi2_s.c \
 	tmp__df_to_sf_s.c \
 	tmp__df_to_si_s.c \
+	tmp__df_to_tf_s.c \
 	tmp__df_to_usi_s.c \
 	tmp__div_df_s.c \
 	tmp__div_sf_s.c \
+	tmp__div_tf_s.c \
 	tmp__divdc3_s.c \
 	tmp__divdi3_s.c \
 	tmp__divsc3_s.c \
@@ -36,6 +40,7 @@ SRCS.libgcc_s.so = \
 	tmp__enable_execute_stack_s.c \
 	tmp__eq_df_s.c \
 	tmp__eq_sf_s.c \
+	tmp__eq_tf_s.c \
 	tmp__ffsdi2_s.c \
 	tmp__ffssi2_s.c \
 	tmp__fixdfdi_s.c \
@@ -67,20 +72,27 @@ SRCS.libgcc_s.so = \
 	tmp__floattixf_s.c \
 	tmp__fpcmp_parts_df_s.c \
 	tmp__fpcmp_parts_sf_s.c \
+	tmp__fpcmp_parts_tf_s.c \
 	tmp__ge_df_s.c \
 	tmp__ge_sf_s.c \
+	tmp__ge_tf_s.c \
 	tmp__gt_df_s.c \
 	tmp__gt_sf_s.c \
+	tmp__gt_tf_s.c \
 	tmp__le_df_s.c \
 	tmp__le_sf_s.c \
+	tmp__le_tf_s.c \
 	tmp__lshrdi3_s.c \
 	tmp__lt_df_s.c \
 	tmp__lt_sf_s.c \
+	tmp__lt_tf_s.c \
 	tmp__make_df_s.c \
 	tmp__make_sf_s.c \
+	tmp__make_tf_s.c \
 	tmp__moddi3_s.c \
 	tmp__mul_df_s.c \
 	tmp__mul_sf_s.c \
+	tmp__mul_tf_s.c \
 	tmp__muldc3_s.c \
 	tmp__muldi3_s.c \
 	tmp__mulsc3_s.c \
@@ -90,13 +102,16 @@ SRCS.libgcc_s.so = \
 	tmp__mulxc3_s.c \
 	tmp__ne_df_s.c \
 	tmp__ne_sf_s.c \
+	tmp__ne_tf_s.c \
 	tmp__negate_df_s.c \
 	tmp__negate_sf_s.c \
+	tmp__negate_tf_s.c \
 	tmp__negdi2_s.c \
 	tmp__negvdi2_s.c \
 	tmp__negvsi2_s.c \
 	tmp__pack_df_s.c \
 	tmp__pack_sf_s.c \
+	tmp__pack_tf_s.c \
 	tmp__paritydi2_s.c \
 	tmp__paritysi2_s.c \
 	tmp__popcount_tab_s.c \
@@ -108,13 +123,20 @@ SRCS.libgcc_s.so = \
 	tmp__powixf2_s.c \
 	tmp__sf_to_df_s.c \
 	tmp__sf_to_si_s.c \
+	tmp__sf_to_tf_s.c \
 	tmp__sf_to_usi_s.c \
 	tmp__si_to_df_s.c \
 	tmp__si_to_sf_s.c \
+	tmp__si_to_tf_s.c \
 	tmp__subvdi3_s.c \
 	tmp__subvsi3_s.c \
+	tmp__tf_to_df_s.c \
+	tmp__tf_to_sf_s.c \
+	tmp__tf_to_si_s.c \
+	tmp__tf_to_usi_s.c \
 	tmp__thenan_df_s.c \
 	tmp__thenan_sf_s.c \
+	tmp__thenan_tf_s.c \
 	tmp__trampoline_s.c \
 	tmp__ucmpdi2_s.c \
 	tmp__udiv_w_sdiv_s.c \
@@ -123,10 +145,13 @@ SRCS.libgcc_s.so = \
 	tmp__umoddi3_s.c \
 	tmp__unord_df_s.c \
 	tmp__unord_sf_s.c \
+	tmp__unord_tf_s.c \
 	tmp__unpack_df_s.c \
 	tmp__unpack_sf_s.c \
+	tmp__unpack_tf_s.c \
 	tmp__usi_to_df_s.c \
 	tmp__usi_to_sf_s.c \
+	tmp__usi_to_tf_s.c \
 	tmp_gthr-gnat_s.c \
 	tmp_unwind-c_s.c \
 	tmp_unwind-dw2-fde_s.c \
