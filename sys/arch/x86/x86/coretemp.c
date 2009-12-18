@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.11 2008/09/23 22:14:09 christos Exp $ */
+/* $NetBSD: coretemp.c,v 1.11.4.1 2009/12/18 05:51:31 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.11 2008/09/23 22:14:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.11.4.1 2009/12/18 05:51:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -66,7 +66,7 @@ coretemp_register(struct cpu_info *ci)
 	struct coretemp_softc *sc;
 	uint32_t regs[4];
 	uint64_t msr;
-	int cpumodel, cpumask;
+	int cpumodel, cpuextmodel, cpumask;
 
 	/*
 	 * CPUID 0x06 returns 1 if the processor has on-die thermal
@@ -84,7 +84,7 @@ coretemp_register(struct cpu_info *ci)
 	    (int)device_unit(ci->ci_dev));
 	cpumodel = CPUID2MODEL(ci->ci_signature);
 	/* extended model */
-	cpumodel += CPUID2EXTMODEL(ci->ci_signature);
+	cpuextmodel = CPUID2EXTMODEL(ci->ci_signature);
 	cpumask = ci->ci_signature & 15;
 
 	/*
@@ -110,9 +110,12 @@ coretemp_register(struct cpu_info *ci)
 	 *
 	 * The if-clause for CPUs having the MSR_IA32_EXT_CONFIG was adapted
 	 * from the Linux coretemp driver.
+	 *
+	 * MSR_IA32_EXT_CONFIG is NOT safe on all CPUs
 	 */
 	sc->sc_tjmax = 100;
-	if ((cpumodel == 0xf && cpumask >= 2) || cpumodel == 0xe) {
+	if ((cpumodel == 0xf && cpumask >= 2) ||
+	    (cpumodel == 0xe && cpuextmodel != 1)) {
 		msr = rdmsr(MSR_IA32_EXT_CONFIG);
 		if (msr & (1 << 30))
 			sc->sc_tjmax = 85;
