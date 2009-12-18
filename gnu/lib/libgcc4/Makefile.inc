@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2009/12/09 06:20:13 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2009/12/18 13:57:10 uebayasi Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -122,16 +122,6 @@ dp-bit.c: ${.CURDIR}/Makefile
 #
 # New style libgcc build procedure.
 #
-
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.tmplsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.cppflags.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/srcs.copts.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.srcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplfpsrcs.mk"
-.include "${.CURDIR}/../arch/${MACHINE_ARCH}/libs.lib${LIB}.tmplsrcs.tmplasmsrcs.mk"
-
-.include "${.CURDIR}/../Makefile.wrapper"
 
 .endif	# defined(MKNATIVE_LIBGCC_NEW)
 

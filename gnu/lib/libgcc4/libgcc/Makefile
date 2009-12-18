@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/12/09 06:20:13 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.10 2009/12/18 13:57:10 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -21,11 +21,15 @@ SRCS+=		${LIB2_EH}
 
 .else	# defined(MKNATIVE_LIBGCC_NEW)
 
+.include "../Makefile.srcs"
+
 # New style.
 TMPLSRCS=	${TMPLSRCS.libgcc.a}
 TMPLFPSRCS=	${TMPLFPSRCS.libgcc.a}
 TMPLASMSRCS=	${TMPLASMSRCS.libgcc.a}
 SRCS=		${SRCS.libgcc.a}
+
+.include "../Makefile.wrapper"
 
 .endif	# defined(MKNATIVE_LIBGCC_NEW)
 
