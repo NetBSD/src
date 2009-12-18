@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2009/12/18 19:17:08 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2009/12/18 19:20:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2009/12/18 19:17:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2009/12/18 19:20:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 	    ("%s(%p, 0x%lx, %p)\n", __func__, pmap, va, ptp));
 
 	KASSERT(pmap != pmap_kernel());
-	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
+	if (--ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
 		    ("%s: disposing ptp %p\n", __func__, ptp));
 		pmap_pde_set(pmap, va, 0);
