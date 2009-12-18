@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.47 2008/10/01 15:38:15 christos Exp $	*/
+/*	$NetBSD: piixide.c,v 1.47.4.1 2009/12/18 05:48:07 snj Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47 2008/10/01 15:38:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47.4.1 2009/12/18 05:48:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,48 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
 	  0,
 	  "Intel ICH10 Serial ATA 2 Controller 4x2",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_2,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_3,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_4,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_5,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_6,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
 	  piixsata_chip_map,
 	},
 	{ 0,
