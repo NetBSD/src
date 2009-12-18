@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/12/18 12:48:16 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.9 2009/12/18 13:57:10 uebayasi Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -25,11 +25,15 @@ SRCS+=		${LIBGCOVSRCS}
 
 .else	# defined(MKNATIVE_LIBGCC_NEW)
 
+.include "../Makefile.srcs"
+
 # New style.
 SRCS=		${SRCS.libgcov.a}
 TMPLSRCS=	${TMPLSRCS.libgcov.a}
 TMPLFPSRCS=	${TMPLFPSRCS.libgcov.a}
 TMPLASMSRCS=	${TMPLASMSRCS.libgcov.a}
+
+.include "../Makefile.wrapper"
 
 .endif	# defined(MKNATIVE_LIBGCC_NEW)
 
