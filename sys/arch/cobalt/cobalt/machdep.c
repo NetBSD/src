@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2009/12/17 15:29:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2009/12/18 23:22:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/17 15:29:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2009/12/18 23:22:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,7 +101,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
-char	*bootinfo = NULL;	/* pointer to bootinfo structure */
+void	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
@@ -126,7 +126,7 @@ static const char * const cobalt_model[] =
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(unsigned int, u_int, int32_t);
+void	mach_init(intptr_t, u_int, int32_t);
 void	decode_bootstring(void);
 static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
@@ -143,10 +143,9 @@ extern char *esym;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(unsigned int memsize32, u_int bim, int32_t bip32)
+mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 {
-	size_t memsize = memsize32;
-	char *bip = (void *)(intptr_t)bip32;
+	void *bip = (void *)(intptr_t)bip32;
 	char *kernend;
 	u_long first, last;
 	extern char edata[], end[];
@@ -201,12 +200,17 @@ mach_init(unsigned int memsize32, u_int bim, int32_t bip32)
 
 		bootinfo = bip;
 		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
-		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
-			bi_msg = "invalid bootinfo structure.\n";
-		else
+		if (bi_magic == NULL) {
+			bi_msg = "missing bootinfo structure";
+			bim = (uintptr_t)bip;
+		} else if (bi_magic->magic != BOOTINFO_MAGIC) {
+			bi_msg = "invalid bootinfo structure";
+			bim = bi_magic->magic;
+		} else
 			bi_msg = NULL;
-	} else
-		bi_msg = "invalid bootinfo (standalone boot?)\n";
+	} else {
+		bi_msg = "invalid bootinfo (standalone boot?)";
+	}
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
@@ -258,7 +262,7 @@ mach_init(unsigned int memsize32, u_int bim, int32_t bip32)
 	consinit();
 
 	if (bi_msg != NULL)
-		printf(bi_msg);
+		printf("%s: magic=%#x\n", bi_msg, bim);
 
 	uvm_setpagesize();
 
@@ -495,7 +499,7 @@ strtok_light(char *str, const char sep)
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(int type)
+lookup_bootinfo(unsigned int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
