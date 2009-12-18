@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2009/11/28 13:53:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2009/12/18 15:20:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2009/11/28 13:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2009/12/18 15:20:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,38 +447,39 @@ void
 pmap_dump_table(pa_space_t space, vaddr_t sva)
 {
 	char buf[64];
-	pa_space_t sp;
+	volatile pt_entry_t *pde = NULL;
+	vaddr_t va = sva;
+	vaddr_t pdemask = 1;
+	pt_entry_t pte;
+	uint32_t *pd;
 
-	for (sp = 0; sp <= hppa_sid_max; sp++) {
-		volatile pt_entry_t *pde = NULL;
-		pt_entry_t pte;
-		vaddr_t va, pdemask;
-		uint32_t *pd;
+	if (space > hppa_sid_max)
+		return;
 
-		if (((int)space >= 0 && sp != space) ||
-		    !(pd = pmap_sdir_get(sp)))
-			continue;
+	pd = pmap_sdir_get(space);
+	if (!pd)
+		return;
 
-		for (pdemask = 1, va = sva ? sva : 0;
-		    va < 0xfffff000; va += PAGE_SIZE) {
-			if (pdemask != (va & PDE_MASK)) {
-				pdemask = va & PDE_MASK;
-				if (!(pde = pmap_pde_get(pd, va))) {
-					va = pdemask + PDE_SIZE - PAGE_SIZE;
-					continue;
-				}
-				printf("%x:%8p:\n", sp, pde);
-			}
-
-			if (!(pte = pmap_pte_get(pde, va)))
+	do {
+		if (pdemask != (va & PDE_MASK)) {
+			pdemask = va & PDE_MASK;
+			pde = pmap_pde_get(pd, va);
+			if (!pde) {
+				va = pdemask + PDE_SIZE;
 				continue;
+			}
+			printf("%x:%8p:\n", space, pde);
+		}
 
+		pte = pmap_pte_get(pde, va);
+		if (pte) {
 			snprintb(buf, sizeof(buf), TLB_BITS,
 			   TLB_PROT(pte & PAGE_MASK));
 			printf("0x%08lx-0x%08x:%s\n", va, pte & ~PAGE_MASK,
 			    buf);
 		}
-	}
+		va += PAGE_SIZE;
+	} while (va != 0);
 }
 
 void
