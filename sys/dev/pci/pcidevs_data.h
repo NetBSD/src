@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.6 2009/10/28 09:06:10 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.7 2009/12/18 05:46:41 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.6 2009/10/28 09:03:42 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.7 2009/12/18 05:45:29 snj Exp
  */
 
 /*
@@ -9260,6 +9260,142 @@ static const struct pci_product pci_products[] = {
 	    "ICH10 SMBus Serial Bus 2",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_LPC,
+	    "3400 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_1,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_2,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_AHCI_1,
+	    "3400 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_AHCI_2,
+	    "3400 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_RAID_1,
+	    "3400 RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_3,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_4,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_AHCI_3,
+	    "3400 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_RAID_2,
+	    "3400 RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_5,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_6,
+	    "3400 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_AHCI_4,
+	    "3400 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SMB,
+	    "3400 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_THERMAL,
+	    "3400 Thermal",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_EHCI_1,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_1,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_2,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_3,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_4,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_5,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_6,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_EHCI_2,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_7,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_8,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_1,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_2,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_3,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_4,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_5,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_6,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_7,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_8,
+	    "3400 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_HDA,
+	    "3400 HD Audio",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
 	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
 	},
@@ -14604,4 +14740,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3050;
+const int pci_nproducts = 3084;
