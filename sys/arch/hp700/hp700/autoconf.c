@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2009/11/22 19:09:15 mbalmer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2009/12/18 15:49:48 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2009/11/22 19:09:15 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2009/12/18 15:49:48 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -120,7 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2009/11/22 19:09:15 mbalmer Exp $"
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
 
-register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
+register_t	kpsw = 
+	PSW_Q |		/* Interrupt State Collection Enable */
+	PSW_P |		/* Protection Identifier Validation Enable */
+	PSW_C |		/* Instruction Address Translation Enable */
+	PSW_D;		/* Data Address Translation Enable */
 
 /*
  * LED blinking thing
