@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/03/13 17:12:44 plunky Exp $
+#	$NetBSD: Makefile,v 1.8 2009/12/18 17:28:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ CPPSCRIPTFLAGS_Xsession=	-DBINDIR=${X11BINDIR} \
 				-DSHELL_CMD=/bin/sh
 CPPSCRIPTFLAGS_Xstartup=	-DBINDIR=${X11BINDIR} -DXDMCONFIGDIR=${XDMDIR}
 CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${XDMDIR} \
-				-DXDMAUTHDIR=${XDMVARDIR} \
+				-DXDMXAUTHDIR=${XDMVARDIR} \
 				-DXDMLOGDIR=${XDMLOGDIR} \
 				-DXDMPIDDIR=${XDMPIDDIR} \
 				-DXPM \
