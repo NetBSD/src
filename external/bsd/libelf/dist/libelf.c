@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $	*/
+/*	$NetBSD: libelf.c,v 1.2 2009/12/19 07:37:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,11 +28,13 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $");
+__RCSID("$NetBSD: libelf.c,v 1.2 2009/12/19 07:37:34 thorpej Exp $");
 
 #include <sys/param.h>
 
+#if defined(__FreeBSD__)
 #include <machine/elf.h>
+#endif /* __FreeBSD__ */
 #include <machine/endian.h>
 
 #include <libelf.h>
