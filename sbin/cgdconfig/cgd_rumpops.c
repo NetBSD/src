@@ -1,4 +1,4 @@
-/*	$NetBSD: cgd_rumpops.c,v 1.1 2009/09/08 21:48:25 pooka Exp $	*/
+/*	$NetBSD: cgd_rumpops.c,v 1.1 2009/12/19 15:03:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgd_rumpops.c,v 1.1 2009/09/08 21:48:25 pooka Exp $");
+__RCSID("$NetBSD: cgd_rumpops.c,v 1.1 2009/12/19 15:03:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
