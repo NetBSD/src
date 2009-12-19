@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.3 2009/12/19 09:00:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -30,11 +30,12 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_ehdr.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.3 2009/12/19 09:00:56 thorpej Exp $");
 
 #include <assert.h>
 #include <gelf.h>
 #include <libelf.h>
+#include <limits.h>
 #include <stdlib.h>
 
 #include "_libelf.h"
@@ -65,9 +66,14 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	if ((scn = _libelf_allocate_scn(e, (size_t) 0)) == NULL)
 		return (0);
 
+	if (shoff > SSIZE_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
-	(*xlator)((char *) &scn->s_shdr, e->e_rawfile + shoff, (size_t) 1,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	(*xlator)((void *) &scn->s_shdr, e->e_rawfile + (ssize_t)shoff,
+	    (size_t) 1, e->e_byteorder != LIBELF_PRIVATE(byteorder));
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
 		scn->s_shdr.s_shdr64.M)
@@ -77,7 +83,12 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		return (0);
 	}
 
-	e->e_u.e_elf.e_nscn = GET_SHDR_MEMBER(sh_size);
+	if (GET_SHDR_MEMBER(sh_size) > UINT_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+
+	e->e_u.e_elf.e_nscn = (unsigned int)GET_SHDR_MEMBER(sh_size);
 	e->e_u.e_elf.e_nphdr = (phnum != PN_XNUM) ? phnum :
 	    GET_SHDR_MEMBER(sh_info);
 	e->e_u.e_elf.e_strndx = (strndx != SHN_XINDEX) ? strndx :
