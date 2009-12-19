@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_types.m4,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $	*/
+/*	$NetBSD: elf_types.m4,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -31,41 +31,36 @@
 /*
  * ELF types, defined in the "enum Elf_Type" API.
  *
- * The members of the list form a 3-tuple: (name, C-type-suffix, OSversion).
+ * The members of the list form a 3-tuple: (name, C-type-suffix, condition).
  * + `name' is an Elf_Type symbol without the `ELF_T_' prefix.
  * + `C-type-suffix' is the suffix for Elf32_ and Elf64_ type names.
- * + `version' is the OS version the symbol first appeared in.
- *
- * OS revisions of note are:
- * 600102 - The earliest (6.0-STABLE) version supported by this code.
- * 700009 - Symbol versioning and ELF64 type changes.
- * 700025 - More ELF types and the introduction of libelf.
+ * + `condition' is the conditional check for this type.
  */
 
 define(`ELF_TYPE_LIST',
-	``ADDR,		Addr,	600102',
-	`BYTE,		Byte,	600102',
-	`CAP,		Cap,	700025',
-	`DYN,		Dyn,	600102',
-	`EHDR,		Ehdr,	600102',
-	`HALF,		Half,	600102',
-	`LWORD,		Lword,	700025',
-	`MOVE,		Move,	700025',
-	`MOVEP,		MoveP,	700025',
-	`NOTE,		Note,	600102',
-	`OFF,		Off,	600102',
-	`PHDR,		Phdr,	600102',
-	`REL,		Rel,	600102',
-	`RELA,		Rela,	600102',
-	`SHDR,		Shdr,	600102',
-	`SWORD,		Sword,	600102',
-	`SXWORD,	Sxword,	700009',
-	`SYMINFO,	Syminfo, 700025',
-	`SYM,		Sym,	600102',
-	`VDEF,		Verdef,	700009',
-	`VNEED,		Verneed, 700009',
-	`WORD,		Word,	600102',
-	`XWORD,		Xword,	700009',
+	``ADDR,		Addr,	1',
+	`BYTE,		Byte,	1',
+	`CAP,		Cap,	__LIBELF_HAVE_ELF_CAP',
+	`DYN,		Dyn,	1',
+	`EHDR,		Ehdr,	1',
+	`HALF,		Half,	1',
+	`LWORD,		Lword,	__LIBELF_HAVE_ELF_MOVE',
+	`MOVE,		Move,	__LIBELF_HAVE_ELF_MOVE',
+	`MOVEP,		MoveP,	__LIBELF_HAVE_ELF_MOVE',
+	`NOTE,		Note,	1',
+	`OFF,		Off,	1',
+	`PHDR,		Phdr,	1',
+	`REL,		Rel,	1',
+	`RELA,		Rela,	1',
+	`SHDR,		Shdr,	1',
+	`SWORD,		Sword,	1',
+	`SXWORD,	Sxword,	__LIBELF_HAVE_ELF_VERS',
+	`SYMINFO,	Syminfo, __LIBELF_HAVE_ELF_SYMINFO',
+	`SYM,		Sym,	1',
+	`VDEF,		Verdef,	__LIBELF_HAVE_ELF_VERS',
+	`VNEED,		Verneed, __LIBELF_HAVE_ELF_VERS',
+	`WORD,		Word,	1',
+	`XWORD,		Xword,	__LIBELF_HAVE_ELF_VERS',
 	`NUM,		_,	_'')
 
 /*

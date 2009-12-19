@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_fsize.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_fsize.m4,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -117,7 +117,7 @@ DEFINE_ELF_FSIZES(ELF_TYPE_LIST)
 DEFINE_ELF_FSIZE(`IDENT',`')	# `IDENT' is a pseudo type
 
 define(`FSIZE',
-  `#if	__FreeBSD_version >= $3
+  `#if	$3
     [ELF_T_$1] = { .fsz32 = $1_SIZE32, .fsz64 = $1_SIZE64 },
 #endif')
 define(`FSIZES',

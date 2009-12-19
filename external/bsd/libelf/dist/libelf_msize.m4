@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_msize.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_msize.m4,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_msize.m4,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_msize.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_msize.m4,v 1.2 2009/12/19 07:31:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/elf32.h>
@@ -77,7 +77,7 @@ define(`DEFINE_ELF_MSIZES',
 DEFINE_ELF_MSIZES(ELF_TYPE_LIST)
 
 define(`MSIZE',
-  `#if	__FreeBSD_version >= $3
+  `#if	$3
     [ELF_T_$1] = { .msz32 = $1_SIZE32, .msz64 = $1_SIZE64 },
 #endif')
 define(`MSIZES',
