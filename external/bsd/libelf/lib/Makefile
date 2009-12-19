@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/19 05:52:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2009/12/19 09:01:32 thorpej Exp $
 
 .include <bsd.init.mk>
 
@@ -72,7 +72,7 @@ MAN=		elf.3							\
 		    gelf_getehdr.3 gelf_getmove.3 gelf_getphdr.3	\
 		    gelf_getrel.3 gelf_getrela.3 gelf_getshdr.3		\
 		    gelf_getsym.3 gelf_getsyminfo.3 gelf_getsymshndx.3	\
-		gelf_newehdr.3 gelf_hewphdr.3				\
+		gelf_newehdr.3 gelf_newphdr.3				\
 		gelf_update_ehdr.3					\
 		gelf_xlatetof.3
 
