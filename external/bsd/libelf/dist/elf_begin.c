@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_begin.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $	*/
+/*	$NetBSD: elf_begin.c,v 1.2 2009/12/19 06:22:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,15 +28,15 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_begin.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_begin.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $");
+__RCSID("$NetBSD: elf_begin.c,v 1.2 2009/12/19 06:22:25 thorpej Exp $");
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
 #include <ar.h>
 #include <ctype.h>
+#include <errno.h>
 #include <libelf.h>
 
 #include "_libelf.h"
