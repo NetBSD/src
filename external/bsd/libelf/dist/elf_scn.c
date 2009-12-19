@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_scn.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $	*/
+/*	$NetBSD: elf_scn.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_scn.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_scn.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $");
+__RCSID("$NetBSD: elf_scn.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -63,7 +63,7 @@ _libelf_load_scn(Elf *e, void *ehdr)
 			LIBELF_SET_ERROR(HEADER, 0);		\
 			return (0);				\
 		}						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	ec = e->e_class;
 	fsz = _libelf_fsize(ELF_T_SHDR, ec, e->e_version, (size_t) 1);

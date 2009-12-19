@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/elf32.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		uint16_t _t = _x & 0xFF;				\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_WORD(X) 	do {						\
 		uint32_t _x = (uint32_t) (X);				\
 		uint32_t _t = _x & 0xFF;				\
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR32(X)	SWAP_WORD(X)
 #define	SWAP_OFF32(X)	SWAP_WORD(X)
 #define	SWAP_SWORD(X)	SWAP_WORD(X)
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR64(X)	SWAP_WORD64(X)
 #define	SWAP_LWORD(X)	SWAP_WORD64(X)
 #define	SWAP_OFF64(X)	SWAP_WORD64(X)
@@ -91,7 +91,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		unsigned char *const _p = (unsigned char *) (P);	\
 		_p[0]		= (unsigned char) (X);			\
 		(P)		= _p + 1;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_HALF(P,X)	do {						\
 		uint16_t _t	= (X);					\
 		unsigned char *const _p	= (unsigned char *) (P);	\
@@ -99,7 +99,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_p[0]		= _q[0];				\
 		_p[1]		= _q[1];				\
 		(P) 		= _p + 2;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_WORD(P,X)	do {						\
 		uint32_t _t	= (X);					\
 		unsigned char *const _p	= (unsigned char *) (P);	\
@@ -109,7 +109,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_p[2]		= _q[2];				\
 		_p[3]		= _q[3];				\
 		(P)		= _p + 4;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_OFF32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_SWORD(P,X)	WRITE_WORD(P,X)
@@ -126,7 +126,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_p[6]		= _q[6];				\
 		_p[7]		= _q[7];				\
 		(P)		= _p + 8;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR64(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_LWORD(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_OFF64(P,X)	WRITE_WORD64(P,X)
@@ -135,7 +135,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 #define	WRITE_IDENT(P,X)	do {					\
 		(void) memcpy((P), (X), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * Read in various integral values.  The source pointer could be
@@ -148,7 +148,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 			(const unsigned char *) (P);			\
 		(X)		= _p[0];				\
 		(P)		= (P) + 1;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_HALF(P,X)	do {						\
 		uint16_t _t;						\
 		unsigned char *const _q = (unsigned char *) &_t;	\
@@ -158,7 +158,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_q[1]		= _p[1];				\
 		(P)		= (P) + 2;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_WORD(P,X)	do {						\
 		uint32_t _t;						\
 		unsigned char *const _q = (unsigned char *) &_t;	\
@@ -170,7 +170,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_q[3]		= _p[3];				\
 		(P)		= (P) + 4;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR32(P,X)	READ_WORD(P,X)
 #define	READ_OFF32(P,X)		READ_WORD(P,X)
 #define	READ_SWORD(P,X)		READ_WORD(P,X)
@@ -189,7 +189,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 		_q[7]		= _p[7];				\
 		(P)		= (P) + 8;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR64(P,X)	READ_WORD64(P,X)
 #define	READ_LWORD(P,X)		READ_WORD64(P,X)
 #define	READ_OFF64(P,X)		READ_WORD64(P,X)
@@ -198,7 +198,7 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $"
 #define	READ_IDENT(P,X)		do {					\
 		(void) memcpy((X), (P), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	ROUNDUP2(V,N)	(V) = ((((V) + (N) - 1)) & ~((N) - 1))
 
