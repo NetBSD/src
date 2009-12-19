@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.4 2008/03/31 15:49:29 kiyohara Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.5 2009/12/19 07:08:55 kiyohara Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -287,6 +287,10 @@ psh3lcd_attach(device_t parent __unused, device_t self, void *aux __unused)
 	/* LCD on/off hook */
 	config_hook(CONFIG_HOOK_POWERCONTROL,
 	    CONFIG_HOOK_POWERCONTROL_LCD, CONFIG_HOOK_SHARE, psh3lcd_power, sc);
+
+ 	/* XXX: TODO: don't rely on CONFIG_HOOK_POWERCONTROL_LCD */
+ 	if (!pmf_device_register(self, NULL, NULL))
+ 		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 
