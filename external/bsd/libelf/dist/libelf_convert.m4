@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.3 2009/12/19 07:31:04 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.4 2009/12/19 07:31:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.3 2009/12/19 07:31:04 thorpej Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.4 2009/12/19 07:31:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/elf32.h>
@@ -36,7 +36,6 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.3 2009/12/19 07:31:04 thorpej Exp $");
 
 #include <assert.h>
 #include <libelf.h>
-#include <osreldate.h>
 #include <string.h>
 
 #include "_libelf.h"
