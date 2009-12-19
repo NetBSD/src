@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.146 2009/05/25 19:22:53 jnemeth Exp $	*/
+/*	$NetBSD: fd.c,v 1.147 2009/12/19 10:34:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.146 2009/05/25 19:22:53 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.147 2009/12/19 10:34:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -639,7 +639,13 @@ fdcattach(struct fdc_softc *fdc, int pri)
 
 	fdciop = &fdc->sc_io;
 	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
-				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+				fdc_c_hwintr, fdc,
+#ifdef notyet /* XXX bsd_fdintr.s needs to be fixed for MI softint(9) */
+				fdchwintr
+#else
+				NULL
+#endif
+				) == NULL) {
 		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
 		return (-1);
