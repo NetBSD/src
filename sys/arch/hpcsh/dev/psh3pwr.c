@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.3 2008/03/31 15:49:29 kiyohara Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.3 2008/03/31 15:49:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -157,6 +157,9 @@ psh3pwr_attach(device_t parent, device_t self, void *aux)
 	/* XXXX: WindowsCE sets this bit. */
 	aprint_normal_dev(self, "plug status: %s\n",
 	    psh3pwr_ac_is_off() ? "out" : "in");
+
+ 	if (!pmf_device_register(self, NULL, NULL))
+ 		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 
