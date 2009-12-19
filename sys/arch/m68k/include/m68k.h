@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.15 2009/12/19 13:08:26 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.16 2009/12/19 18:06:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -146,6 +146,7 @@ int 	getsfc(void);
 /* switch_subr.s */
 void	lwp_trampoline(void);
 void	savectx(struct pcb *);
+void	setfunc_trampoline(void);
 
 /* w16copy.s */
 void	w16zero(void *, u_int);
