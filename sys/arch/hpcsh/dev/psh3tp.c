@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.12 2008/03/31 15:49:29 kiyohara Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.13 2009/12/19 07:08:23 kiyohara Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -198,6 +198,9 @@ psh3tp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	intc_intr_establish(SH7709_INTEVT2_IRQ2,
 	    IST_EDGE, IPL_TTY, psh3tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ2);
+
+ 	if (!pmf_device_register(self, NULL, NULL))
+ 		aprint_error_dev(self, "unable to establish power handler\n");
 }
 
 
