@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_fsize.m4,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
+/*	$NetBSD: libelf_fsize.m4,v 1.3 2009/12/19 07:31:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -29,7 +29,6 @@
  */
 
 #include <libelf.h>
-#include <osreldate.h>
 
 #include "_libelf.h"
 
