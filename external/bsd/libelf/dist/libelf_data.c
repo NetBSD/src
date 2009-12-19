@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_data.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_data.c,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,10 +28,9 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_data.c,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_data.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_data.c,v 1.2 2009/12/19 07:31:04 thorpej Exp $");
 
 #include <libelf.h>
-#include <osreldate.h>
 
 #include "_libelf.h"
 
@@ -69,18 +68,22 @@ _libelf_xlate_shtype(uint32_t sht)
 		return (ELF_T_SYM);
 	case SHT_SYMTAB_SHNDX:
 		return (ELF_T_WORD);
-#if	__FreeBSD_version >= 700025
+#if defined(__LIBELF_HAVE_ELF_VERS)
 	case SHT_GNU_verdef:	/* == SHT_SUNW_verdef */
 		return (ELF_T_VDEF);
 	case SHT_GNU_verneed:	/* == SHT_SUNW_verneed */
 		return (ELF_T_VNEED);
 	case SHT_GNU_versym:	/* == SHT_SUNW_versym */
 		return (ELF_T_HALF);
+#endif /* __LIBELF_HAVE_ELF_VERS */
+#if defined(__LIBELF_HAVE_ELF_MOVE)
 	case SHT_SUNW_move:
 		return (ELF_T_MOVE);
+#endif /* __LIBELF_HAVE_ELF_MOVE */
+#if defined(__LIBELF_HAVE_ELF_SYMINFO)
 	case SHT_SUNW_syminfo:
 		return (ELF_T_SYMINFO);
-#endif
+#endif /* __LIBELF_HAVE_ELF_SYMINFO */
 	case SHT_AMD64_UNWIND:	/* == SHT_IA_64_UNWIND */
 		return (ELF_T_BYTE);
 	default:

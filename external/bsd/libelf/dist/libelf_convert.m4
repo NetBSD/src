@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.3 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.3 2009/12/19 07:31:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/elf32.h>
@@ -450,7 +450,7 @@ libelf_cvt$3_$1_tom(char *dst, char *src, size_t count, int byteswap)
  */
 
 define(`MAKE_TYPE_CONVERTER',
-  `#if	__FreeBSD_version >= $3 /* $1 */
+  `#if	$3 /* $1 */
 ifdef(`BASE'_$1,
     `ifdef(`IGNORE_'$1,`',
       `MAKEPRIM_TO_F($1,$2,`',64)
@@ -615,7 +615,7 @@ define(`CONV',
 
 define(`CONVERTER_NAME',
   `ifdef(`IGNORE_'$1,`',
-    `#if	__FreeBSD_version >= $3
+    `#if	$3
     [ELF_T_$1] = {
         CONV($1,32,tof), CONV($1,32,tom),
         CONV($1,64,tof), CONV($1,64,tom) },
