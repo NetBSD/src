@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.c,v 1.2 2009/12/19 07:37:34 thorpej Exp $	*/
+/*	$NetBSD: libelf.c,v 1.3 2009/12/19 07:52:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf.c,v 1.2 2009/12/19 07:37:34 thorpej Exp $");
+__RCSID("$NetBSD: libelf.c,v 1.3 2009/12/19 07:52:59 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +40,18 @@ __RCSID("$NetBSD: libelf.c,v 1.2 2009/12/19 07:37:34 thorpej Exp $");
 #include <libelf.h>
 
 #include "_libelf.h"
+
+#if defined(__NetBSD__)
+# if ARCH_ELFSIZE == 64
+#  define ELF_ARCH		ELF64_MACHDEP_ID
+#  define ELF_TARG_DATA		ELF64_MACHDEP_ENDIANNESS
+#  define ELF_TARG_CLASS	ELFCLASS64
+# else
+#  define ELF_ARCH		ELF32_MACHDEP_ID
+#  define ELF_TARG_DATA		ELF32_MACHDEP_ENDIANNESS
+#  define ELF_TARG_CLASS	ELFCLASS32
+# endif /* ARCH_ELFSIZE */
+#endif /* __NetBSD__ */
 
 struct _libelf_globals _libelf = {
 	.libelf_arch		= ELF_ARCH,
