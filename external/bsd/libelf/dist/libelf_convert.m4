@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.6 2009/12/19 08:40:57 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.7 2009/12/19 08:47:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.6 2009/12/19 08:40:57 thorpej Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.7 2009/12/19 08:47:46 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -493,7 +493,7 @@ libelf_cvt_BYTE_tox(char *dst, char *src, size_t count, int byteswap __unused)
 }
 
 /*
- * Elf_Note structures comprise a fixed size header followed by variable
+ * Elf note structures comprise a fixed size header followed by variable
  * length strings.  The fixed size header needs to be byte swapped, but
  * not the strings.
  *
@@ -503,7 +503,7 @@ static void
 libelf_cvt_NOTE_tom(char *dst, char *src, size_t count, int byteswap)
 {
 	uint32_t namesz, descsz, type;
-	Elf_Note *en;
+	Elf32_Nhdr *en;		/* Elf32_Nhdr and Elf64_Nhdr are equiv. */
 	size_t sz;
 
 	if (dst == src && !byteswap)
@@ -514,7 +514,7 @@ libelf_cvt_NOTE_tom(char *dst, char *src, size_t count, int byteswap)
 		return;
 	}
 
-	while (count > sizeof(Elf_Note)) {
+	while (count > sizeof(Elf32_Nhdr)) {
 
 		READ_WORD(src, namesz);
 		READ_WORD(src, descsz);
@@ -526,12 +526,12 @@ libelf_cvt_NOTE_tom(char *dst, char *src, size_t count, int byteswap)
 			SWAP_WORD(type);
 		}
 
-		en = (Elf_Note *) (uintptr_t) dst;
+		en = (Elf32_Nhdr *) (uintptr_t) dst;
 		en->n_namesz = namesz;
 		en->n_descsz = descsz;
 		en->n_type = type;
 
-		dst += sizeof(Elf_Note);
+		dst += sizeof(Elf32_Nhdr);
 
 		ROUNDUP2(namesz, 4);
 		ROUNDUP2(descsz, 4);
@@ -553,7 +553,7 @@ static void
 libelf_cvt_NOTE_tof(char *dst, char *src, size_t count, int byteswap)
 {
 	uint32_t namesz, descsz, type;
-	Elf_Note *en;
+	Elf32_Nhdr *en;		/* Elf32_Nhdr and Elf64_Nhdr are equiv. */
 	size_t sz;
 
 	if (dst == src && !byteswap)
@@ -564,9 +564,9 @@ libelf_cvt_NOTE_tof(char *dst, char *src, size_t count, int byteswap)
 		return;
 	}
 
-	while (count > sizeof(Elf_Note)) {
+	while (count > sizeof(Elf32_Nhdr)) {
 
-		en = (Elf_Note *) (uintptr_t) src;
+		en = (Elf32_Nhdr *) (uintptr_t) src;
 		namesz = en->n_namesz;
 		descsz = en->n_descsz;
 		type = en->n_type;
@@ -582,7 +582,7 @@ libelf_cvt_NOTE_tof(char *dst, char *src, size_t count, int byteswap)
 		WRITE_WORD(dst, descsz);
 		WRITE_WORD(dst, type);
 
-		src += sizeof(Elf_Note);
+		src += sizeof(Elf32_Nhdr);
 
 		ROUNDUP2(namesz, 4);
 		ROUNDUP2(descsz, 4);
