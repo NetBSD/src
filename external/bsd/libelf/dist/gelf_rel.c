@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_rel.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $	*/
+/*	$NetBSD: gelf_rel.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,11 +28,10 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/gelf_rel.c,v 1.2.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: gelf_rel.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $");
-
-#include <sys/limits.h>
+__RCSID("$NetBSD: gelf_rel.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $");
 
 #include <assert.h>
+#include <limits.h>
 #include <gelf.h>
 
 #include "_libelf.h"
