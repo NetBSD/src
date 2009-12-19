@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cgdconfig,v 1.1 2009/09/08 21:36:35 pooka Exp $
+#	$NetBSD: Makefile.cgdconfig,v 1.2 2009/12/19 15:03:34 pooka Exp $
 #
 
 SRCS+=	cgdconfig.c		\
@@ -22,3 +22,11 @@ CGDCONFIGDIR=	${NETBSDSRCDIR}/sbin/cgdconfig
 .PATH:	${CGDCONFIGDIR}
 
 CPPFLAGS+=	-I${CGDCONFIGDIR}
+
+.ifdef RUMP_ACTION
+LDADD+= -lrumpdev_cgd -lrumpdev_disk -lrumpdev -lrumpcrypto
+LDADD+= -lrumpvfs -lrump -lrumpuser -lpthread
+SRCS+=	cgd_rumpops.c
+.else
+SRCS+=	cgd_kernelops.c
+.endif
