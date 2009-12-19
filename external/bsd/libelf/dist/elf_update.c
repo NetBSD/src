@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_update.c,v 1.5.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_update.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $");
+__RCSID("$NetBSD: elf_update.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>
@@ -430,7 +430,7 @@ _libelf_resync_elf(Elf *e)
 		    (size_t) 1);					\
 		(E)->e_shentsize = _libelf_fsize(ELF_T_SHDR, (EC), (V),	\
 		    (size_t) 1);					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	if (ec == ELFCLASS32)
 		INITIALIZE_EHDR(eh32, ec, eh_version);

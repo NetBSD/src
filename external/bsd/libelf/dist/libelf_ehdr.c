@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_ehdr.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <assert.h>
 #include <gelf.h>
@@ -99,7 +99,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		eh->e_machine = EM_NONE;				\
 		eh->e_type    = ELF_K_NONE;				\
 		eh->e_version = LIBELF_PRIVATE(version);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 void *
 _libelf_ehdr(Elf *e, int ec, int allocate)

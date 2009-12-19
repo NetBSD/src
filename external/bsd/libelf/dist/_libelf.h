@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -63,7 +63,7 @@ extern struct _libelf_globals _libelf;
 #define	LIBELF_SET_ERROR(E, O) do {					\
 	LIBELF_PRIVATE(error) = ((ELF_E_##E & LIBELF_ELF_ERROR_MASK)|	\
 	    ((O) << LIBELF_OS_ERROR_SHIFT));				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	LIBELF_ADJUST_AR_SIZE(S)	(((S) + 1U) & ~1U)
 
@@ -145,7 +145,7 @@ enum {
 			return (0);			\
 		}					\
 		(DST)->NAME = (SRC)->NAME;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	LIBELF_COPY_S32(DST,SRC,NAME)	do {		\
 		if ((SRC)->NAME > INT_MAX ||		\
@@ -154,7 +154,7 @@ enum {
 			return (0);			\
 		}					\
 		(DST)->NAME = (SRC)->NAME;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 /*
