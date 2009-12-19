@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.2 2009/12/05 20:29:19 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.3 2009/12/19 16:01:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.2 2009/12/05 20:29:19 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.3 2009/12/19 16:01:25 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ readfd(struct puffs_framebuf *pufbuf, int fd, int *done)
 	int error, rv;
 
 	rv = 0;
-	cmp = emalloc(CMSG_LEN(sizeof(int)));
+	cmp = emalloc(CMSG_SPACE(sizeof(int)));
 
 	iov.iov_base = &error;
 	iov.iov_len = sizeof(int);
@@ -127,7 +127,7 @@ readfd(struct puffs_framebuf *pufbuf, int fd, int *done)
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_control = cmp;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 
 	n = recvmsg(fd, &msg, 0);
 	if (n == -1) {
