@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.6 2009/12/19 08:40:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.6 2009/12/19 08:40:57 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
 
 #define	SWAP_HALF(X) 	do {						\
 		uint16_t _x = (uint16_t) (X);				\
-		uint16_t _t = _x & 0xFF;				\
+		uint32_t _t = _x & 0xFF;				\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
-		(X) = _t;						\
+		(X) = (uint16_t)(_t & 0xFFFF);				\
 	} while (/*CONSTCOND*/0)
 #define	SWAP_WORD(X) 	do {						\
 		uint32_t _x = (uint32_t) (X);				\
@@ -85,44 +85,53 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
  * destination pointer is incremented after the write.
  */
 #define	WRITE_BYTE(P,X) do {						\
-		unsigned char *const _p = (unsigned char *) (P);	\
+		unsigned char *const _p = (void *) (P);			\
 		_p[0]		= (unsigned char) (X);			\
-		(P)		= _p + 1;				\
+		(P)		= (void *)(_p + 1);			\
 	} while (/*CONSTCOND*/0)
 #define	WRITE_HALF(P,X)	do {						\
-		uint16_t _t	= (X);					\
-		unsigned char *const _p	= (unsigned char *) (P);	\
-		unsigned const char *const _q = (unsigned char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		(P) 		= _p + 2;				\
+		union {							\
+			uint16_t val;					\
+			uint8_t bytes[2];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		(P) 		= (void *)(_p + 2);			\
 	} while (/*CONSTCOND*/0)
 #define	WRITE_WORD(P,X)	do {						\
-		uint32_t _t	= (X);					\
-		unsigned char *const _p	= (unsigned char *) (P);	\
-		unsigned const char *const _q = (unsigned char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		_p[2]		= _q[2];				\
-		_p[3]		= _q[3];				\
-		(P)		= _p + 4;				\
+		union {							\
+			uint32_t val;					\
+			uint8_t bytes[4];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		_p[2]		= _t.bytes[2];				\
+		_p[3]		= _t.bytes[3];				\
+		(P)		= (void *)(_p + 4);			\
 	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_OFF32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_SWORD(P,X)	WRITE_WORD(P,X)
 #define	WRITE_WORD64(P,X)	do {					\
-		uint64_t _t	= (X);					\
-		unsigned char *const _p	= (unsigned char *) (P);	\
-		unsigned const char *const _q = (unsigned char *) &_t;	\
-		_p[0]		= _q[0];				\
-		_p[1]		= _q[1];				\
-		_p[2]		= _q[2];				\
-		_p[3]		= _q[3];				\
-		_p[4]		= _q[4];				\
-		_p[5]		= _q[5];				\
-		_p[6]		= _q[6];				\
-		_p[7]		= _q[7];				\
-		(P)		= _p + 8;				\
+		union {							\
+			uint64_t val;					\
+			uint8_t bytes[8];				\
+		} _t;							\
+		unsigned char *const _p	= (void *) (P);			\
+		_t.val = (X);						\
+		_p[0]		= _t.bytes[0];				\
+		_p[1]		= _t.bytes[1];				\
+		_p[2]		= _t.bytes[2];				\
+		_p[3]		= _t.bytes[3];				\
+		_p[4]		= _t.bytes[4];				\
+		_p[5]		= _t.bytes[5];				\
+		_p[6]		= _t.bytes[6];				\
+		_p[7]		= _t.bytes[7];				\
+		(P)		= (void *)(_p + 8);			\
 	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR64(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_LWORD(P,X)	WRITE_WORD64(P,X)
@@ -142,15 +151,15 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
 
 #define	READ_BYTE(P,X)	do {						\
 		const unsigned char *const _p =				\
-			(const unsigned char *) (P);			\
+			(const void *) (P);				\
 		(X)		= _p[0];				\
 		(P)		= (P) + 1;				\
 	} while (/*CONSTCOND*/0)
 #define	READ_HALF(P,X)	do {						\
 		uint16_t _t;						\
-		unsigned char *const _q = (unsigned char *) &_t;	\
+		unsigned char *const _q = (void *) &_t;			\
 		const unsigned char *const _p =				\
-			(const unsigned char *) (P);			\
+			(const void *) (P);				\
 		_q[0]		= _p[0];				\
 		_q[1]		= _p[1];				\
 		(P)		= (P) + 2;				\
@@ -158,9 +167,9 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
 	} while (/*CONSTCOND*/0)
 #define	READ_WORD(P,X)	do {						\
 		uint32_t _t;						\
-		unsigned char *const _q = (unsigned char *) &_t;	\
+		unsigned char *const _q = (void *) &_t;			\
 		const unsigned char *const _p =				\
-			(const unsigned char *) (P);			\
+			(const void *) (P);				\
 		_q[0]		= _p[0];				\
 		_q[1]		= _p[1];				\
 		_q[2]		= _p[2];				\
@@ -173,9 +182,9 @@ __RCSID("$NetBSD: libelf_convert.m4,v 1.5 2009/12/19 07:33:06 thorpej Exp $");
 #define	READ_SWORD(P,X)		READ_WORD(P,X)
 #define	READ_WORD64(P,X)	do {					\
 		uint64_t _t;						\
-		unsigned char *const _q = (unsigned char *) &_t;	\
+		unsigned char *const _q = (void *) &_t;			\
 		const unsigned char *const _p =				\
-			(const unsigned char *) (P);			\
+			(const void *) (P);				\
 		_q[0]		= _p[0];				\
 		_q[1]		= _p[1];				\
 		_q[2]		= _p[2];				\
@@ -475,10 +484,10 @@ divert(0)
  * simple memcpy suffices for both directions of conversion.
  */
 
+/*ARGSUSED*/
 static void
-libelf_cvt_BYTE_tox(char *dst, char *src, size_t count, int byteswap)
+libelf_cvt_BYTE_tox(char *dst, char *src, size_t count, int byteswap __unused)
 {
-	(void) byteswap;
 	if (dst != src)
 		(void) memcpy(dst, src, count);
 }
