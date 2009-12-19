@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_cap.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $	*/
+/*	$NetBSD: gelf_cap.c,v 1.3 2009/12/19 07:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,16 +28,15 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/gelf_cap.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: gelf_cap.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $");
+__RCSID("$NetBSD: gelf_cap.c,v 1.3 2009/12/19 07:31:04 thorpej Exp $");
 
 #include <assert.h>
 #include <limits.h>
 #include <gelf.h>
-#include <osreldate.h>
 
 #include "_libelf.h"
 
-#if	__FreeBSD_version >= 700025
+#if defined(__LIBELF_HAVE_ELF_CAP)
 
 GElf_Cap *
 gelf_getcap(Elf_Data *d, int ndx, GElf_Cap *dst)
@@ -149,4 +148,4 @@ gelf_update_cap(Elf_Data *d, int ndx, GElf_Cap *gc)
 	return (1);
 }
 
-#endif	/* __FreeBSD_version >= 700025 */
+#endif /* __LIBELF_HAVE_ELF_CAP */
