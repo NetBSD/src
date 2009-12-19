@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
+/*	$NetBSD: libelf.h,v 1.3 2009/12/19 07:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -220,7 +220,7 @@ int		elf_getphnum(Elf *_elf, size_t *_dst);
 Elf_Scn		*elf_getscn(Elf *_elf, size_t _index);
 int		elf_getshnum(Elf *_elf, size_t *_dst);
 int		elf_getshstrndx(Elf *_elf, size_t *_dst);
-unsigned long	elf_hash(const char *_name);
+unsigned long	elf_hash(const void *_name);
 Elf_Kind	elf_kind(Elf *_elf);
 Elf		*elf_memory(char *_image, size_t _size);
 size_t		elf_ndxscn(Elf_Scn *_scn);
