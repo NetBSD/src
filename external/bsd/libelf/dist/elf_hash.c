@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_hash.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $	*/
+/*	$NetBSD: elf_hash.c,v 1.2 2009/12/19 07:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_hash.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_hash.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $");
+__RCSID("$NetBSD: elf_hash.c,v 1.2 2009/12/19 07:58:24 thorpej Exp $");
 
 #include <libelf.h>
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: elf_hash.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $");
  */
 
 unsigned long
-elf_hash(const char *name)
+elf_hash(const void *name)
 {
 	unsigned long h, t;
 	const unsigned char *s;
