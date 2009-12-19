@@ -1,16 +1,14 @@
 PROG=	img2cgd
-SRCS=	img2cgd.c cgd_rumpops.c
+SRCS=	img2cgd.c
 NOMAN=
 
 .include <bsd.own.mk>
 
+RUMP_ACTION=	#defined
+CPPFLAGS+=	-DCGDCONFIG_AS_LIB
 .include "${NETBSDSRCDIR}/sbin/cgdconfig/Makefile.cgdconfig"
 
-LDADD+=	-lrumpdev_cgd -lrumpdev_disk -lrumpdev -lrumpcrypto
-LDADD+=	-lrumpvfs -lrump -lrumpuser -lpthread
-
-CPPFLAGS+=	-DCGDCONFIG_AS_LIB
-
-DBG=-g -O0
+DBG=	-g -O0
+WARNS=	3
 
 .include <bsd.prog.mk>
