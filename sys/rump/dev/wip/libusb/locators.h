@@ -1,12 +1,7 @@
-/*	$NetBSD: locators.h,v 1.1 2009/10/01 21:46:31 pooka Exp $	*/
+/*	$NetBSD: locators.h,v 1.2 2009/12/19 11:29:26 pooka Exp $	*/
 
 /* locators borrowed from config.  redo properly some day */
 
-#define SCSIBUSCF_TARGET 0
-#define SCSIBUSCF_TARGET_DEFAULT -1
-#define SCSIBUSCF_LUN 1
-#define SCSIBUSCF_LUN_DEFAULT -1
-#define SCSIBUSCF_NLOCS 2
 #define USBIFIFCF_PORT 0
 #define USBIFIFCF_PORT_DEFAULT -1
 #define USBIFIFCF_CONFIGURATION 1
@@ -33,6 +28,3 @@
 #define USBDEVIFCF_RELEASE 5
 #define USBDEVIFCF_RELEASE_DEFAULT -1
 #define USBDEVIFCF_NLOCS 6
-#define SCSICF_CHANNEL 0
-#define SCSICF_CHANNEL_DEFAULT -1
-#define SCSICF_NLOCS 1
