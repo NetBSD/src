@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.24 2009/09/17 12:38:11 tsutsui Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.25 2009/12/19 10:34:18 tsutsui Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.24 2009/09/17 12:38:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.25 2009/12/19 10:34:18 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -308,7 +308,13 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	sc->sc_au.au_bt = sc->sc_bt;
 	sc->sc_au.au_bh = sc->sc_bh;
 	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_HIGH,
-				  am7930hwintr, sc, amd7930_trap);
+				  am7930hwintr, sc,
+#ifdef notyet /* XXX amd7930intr.s needs to be fixed for MI softint(9) */
+				  amd7930_trap
+#else
+				  NULL
+#endif
+				  );
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, am7930swintr, sc);
 	if (sc->sc_sicookie == NULL) {
