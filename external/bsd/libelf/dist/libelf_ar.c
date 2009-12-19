@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: libelf_ar.c,v 1.3 2009/12/19 07:59:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_ar.c,v 1.3.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_ar.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
+__RCSID("$NetBSD: libelf_ar.c,v 1.3 2009/12/19 07:59:24 thorpej Exp $");
 
 #include <ar.h>
 #include <assert.h>
@@ -461,7 +461,7 @@ _libelf_ar_process_symtab(Elf *e, size_t *count)
 
 		sym->as_off = off;
 		sym->as_hash = elf_hash(s);
-		sym->as_name = s;
+		sym->as_name = (char *)s;
 
 		p += INTSZ;
 		sym++;
