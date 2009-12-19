@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.98 2009/11/24 16:55:11 pooka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.99 2009/12/19 09:02:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ typedef	uint32_t	Elf32_Word;
 #define	ELF32_FSZ_WORD	4
 typedef	uint16_t	Elf32_Half;
 #define	ELF32_FSZ_HALF	2
+typedef	uint64_t	Elf32_Lword;
+#define	ELF32_FSZ_LWORD	8
 
 typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
@@ -92,9 +94,11 @@ typedef	uint32_t	Elf64_Word;
 #endif /* ELF64_FSZ_WORD */
 
 typedef	int64_t		Elf64_Sxword;
-#define	ELF64_FSZ_XWORD	8
+#define	ELF64_FSZ_SXWORD 8
 typedef	uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
+typedef	uint64_t	Elf64_Lword;
+#define	ELF64_FSZ_LWORD	8
 typedef	uint32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
 typedef	uint16_t	Elf64_Quarter;
@@ -190,9 +194,15 @@ typedef struct {
 #define ELFOSABI_TRU64		10	/* TRU64 UNIX */
 #define ELFOSABI_MODESTO	11	/* Novell Modesto */
 #define ELFOSABI_OPENBSD	12	/* OpenBSD */
+#define	ELFOSABI_OPENVMS	13	/* OpenVMS */
+#define	ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
+#define	ELFOSABI_AROS		15	/* Amiga Research OS */
 /* Unofficial OSABIs follow */
 #define ELFOSABI_ARM		97	/* ARM */
 #define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
+
+#define	ELFOSABI_NONE		ELFOSABI_SYSV
+#define	ELFOSABI_AIX		ELFOSABI_MONTEREY
 
 /* e_type */
 #define	ET_NONE		0	/* No file type */
@@ -229,6 +239,7 @@ typedef struct {
 #define	EM_PPC		20	/* PowerPC */
 #define	EM_PPC64	21	/* 64-bit PowerPC */
 			/* 22-35 - Reserved */
+#define	EM_S390		22	/* System/390 XXX reserved */
 #define	EM_V800		36	/* NEC V800 */
 #define	EM_FR20		37	/* Fujitsu FR20 */
 #define	EM_RH32		38	/* TRW RH-32 */
@@ -288,7 +299,22 @@ typedef struct {
 #define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
 #define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+#define	EM_VIDEOCORE	95	/* Alphamosaic VideoCore processor */
+#define	EM_TMM_GPP	96	/* Thompson Multimedia General Purpose Processor */
 #define	EM_NS32K	97	/* National Semiconductor 32000 series */
+#define	EM_TPC		98	/* Tenor Network TPC processor */
+#define	EM_SNP1K	99	/* Trebia SNP 1000 processor */
+#define	EM_ST200	100	/* STMicroelectronics ST200 microcontroller */
+#define	EM_IP2K		101	/* Ubicom IP2xxx microcontroller family */
+#define	EM_MAX		102	/* MAX processor */
+#define	EM_CR		103	/* National Semiconductor CompactRISC micorprocessor */
+#define	EM_F2MC16	104	/* Fujitsu F2MC16 */
+#define	EM_MSP430	105	/* Texas Instruments MSP430 */
+#define	EM_BLACKFIN	106	/* Analog Devices Blackfin DSP */
+#define	EM_SE_C33	107	/* Seiko Epson S1C33 family */
+#define	EM_SEP		108	/* Sharp embedded microprocessor */
+#define	EM_ARCA		109	/* Arca RISC microprocessor */
+#define	EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
 
 /* Unofficial machine types follow */
 #define	EM_AVR32	6317	/* used by NetBSD/avr32 */
@@ -345,6 +371,9 @@ typedef struct {
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
 
+/* Extended program header index. */
+#define	PN_XNUM		0xffff
+
 /*
  * Section Headers
  */
@@ -387,14 +416,25 @@ typedef struct {
 #define	SHT_REL		9		/* Relocation information w/o addend */
 #define	SHT_SHLIB	10		/* Reserved, unspecified semantics */
 #define	SHT_DYNSYM	11		/* Symbol table for dynamic linker */
-#define	SHT_NUM		12
+#define	SHT_INIT_ARRAY	14		/* Initialization function pointers */
+#define	SHT_FINI_ARRAY	15		/* Termination function pointers */
+#define	SHT_PREINIT_ARRAY 16		/* Pre-initialization function ptrs */
+#define	SHT_GROUP	17		/* Section group */
+#define	SHT_SYMTAB_SHNDX 18		/* Section indexes (see SHN_XINDEX) */
+#define	SHT_NUM		19
 
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
-#define SHT_SUNW_VERDEF	0x6ffffffd	/* Versions defined by file */
-#define SHT_SUNW_VERNEED 0x6ffffffe	/* Versions needed by file */
-#define SHT_SUNW_VERSYM	0x6fffffff	/* Symbol versions */
+#define	SHT_SUNW_move	0x6ffffffa
+#define	SHT_SUNW_syminfo 0x6ffffffc
+#define SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
+#define	SHT_GNU_verdef	SHT_SUNW_verdef
+#define SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
+#define	SHT_GNU_verneed	SHT_SUNW_verneed
+#define SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define	SHT_GNU_versym	SHT_SUNW_versym
 #define	SHT_HIOS	0x6fffffff
 #define	SHT_LOPROC	0x70000000	/* Processor-specific range */
+#define	SHT_AMD64_UNWIND 0x70000001	/* unwind information */
 #define	SHT_HIPROC	0x7fffffff
 #define	SHT_LOUSER	0x80000000	/* Application-specific range */
 #define	SHT_HIUSER	0xffffffff
@@ -462,6 +502,9 @@ typedef struct {
 #define	STV_INTERNAL		1	/* not referenced from outside */
 #define	STV_HIDDEN		2	/* not visible, may be used via ptr */
 #define	STV_PROTECTED		3	/* visible, not preemptible */
+#define	STV_EXPORTED		4
+#define	STV_SINGLETON		5
+#define	STV_ELIMINATE		6
 
 /* st_info/st_other utility macros */
 #define	ELF_ST_BIND(info)		((uint32_t)(info) >> 4)
@@ -478,6 +521,7 @@ typedef struct {
 #define	SHN_LORESERVE	0xff00		/* Reserved range */
 #define	SHN_ABS		0xfff1		/*  Absolute symbols */
 #define	SHN_COMMON	0xfff2		/*  Common symbols */
+#define	SHN_XINDEX	0xffff		/* Escape -- index stored elsewhere */
 #define	SHN_HIRESERVE	0xffff
 
 #define	SHN_LOPROC	0xff00		/* Processor-specific range */
@@ -524,6 +568,52 @@ typedef struct {
 #define	ELF64_R_SYM(info)	((info) >> 32)
 #define	ELF64_R_TYPE(info)	((info) & 0xffffffff)
 #define	ELF64_R_INFO(sym,type)	(((sym) << 32) + (type))
+
+/*
+ * Move entries
+ */
+typedef struct {
+	Elf32_Lword	m_value;	/* symbol value */
+	Elf32_Word	m_info;		/* size + index */
+	Elf32_Word	m_poffset;	/* symbol offset */
+	Elf32_Half	m_repeat;	/* repeat count */
+	Elf32_Half	m_stride;	/* stride info */
+} Elf32_Move;
+
+#define	ELF32_M_SYM(info)	((info) >> 8)
+#define	ELF32_M_SIZE(info)	(info) & 0xff)
+#define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
+
+typedef struct {
+	Elf64_Lword	m_value;	/* symbol value */
+	Elf64_Xword	m_info;		/* size + index */
+	Elf64_Xword	m_poffset;	/* symbol offset */
+	Elf64_Half	m_repeat;	/* repeat count */
+	Elf64_Half	m_stride;	/* stride info */
+} Elf64_Move;
+
+#define	ELF64_M_SYM(info)	((info) >> 8)
+#define	ELF64_M_SIZE(info)	(info) & 0xff)
+#define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
+
+/*
+ * Hardware/software capabilities entry
+ */
+typedef struct {
+	Elf32_Word	c_tag;		/* entry tag value */
+	union {
+	    Elf32_Addr	c_ptr;
+	    Elf32_Word	c_val;
+	} c_un;
+} Elf32_Cap;
+
+typedef struct {
+	Elf64_Xword	c_tag;		/* entry tag value */
+	union {
+	    Elf64_Addr	c_ptr;
+	    Elf64_Xword	c_val;
+	} c_un;
+} Elf64_Cap;
 
 /*
  * Dynamic Section structure array
@@ -807,46 +897,6 @@ struct netbsd_elfcore_procinfo {
 #define	ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
 #define	ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
 
-#ifdef _KERNEL
-
-#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#define ELF_LINK_ADDR	ELF64_LINK_ADDR
-#elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#define ELF_LINK_ADDR	ELF32_LINK_ADDR
-#endif
-
-#ifndef ELF32_EHDR_FLAGS_OK
-#define	ELF32_EHDR_FLAGS_OK(eh)	1
-#endif
-
-#ifndef ELF64_EHDR_FLAGS_OK
-#define	ELF64_EHDR_FLAGS_OK(eh)	1
-#endif
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define	ELF_EHDR_FLAGS_OK(eh)	ELF64_EHDR_FLAGS_OK(eh)
-#else
-#define	ELF_EHDR_FLAGS_OK(eh)	ELF32_EHDR_FLAGS_OK(eh)
-#endif
-
-#if defined(ELFSIZE)
-struct elf_args {
-        Elf_Addr  arg_entry;      /* program entry point */
-        Elf_Addr  arg_interp;     /* Interpreter load address */
-        Elf_Addr  arg_phaddr;     /* program header address */
-        Elf_Addr  arg_phentsize;  /* Size of program header */
-        Elf_Addr  arg_phnum;      /* Number of program headers */
-};
-#endif
-
 /*
  * These constants are used for Elf32_Verdef struct's version number.  
  */
@@ -892,11 +942,13 @@ typedef struct {
 	Elf32_Word	vd_aux;		/* offset to verdaux entries */
 	Elf32_Word	vd_next;	/* offset to next verdef */
 } Elf32_Verdef;
+typedef	Elf32_Verdef	Elf64_Verdef;
 
 typedef struct {
 	Elf32_Word	vda_name;	/* string table offset of name */
 	Elf32_Word	vda_next;	/* offset to verdaux */
 } Elf32_Verdaux;
+typedef	Elf32_Verdaux	Elf64_Verdaux;
 
 typedef struct {
 	Elf32_Half	vn_version;	/* version number of structure */
@@ -905,6 +957,7 @@ typedef struct {
 	Elf32_Word	vn_aux;		/* offset to vernaux entries */
 	Elf32_Word	vn_next;	/* offset to next verneed */
 } Elf32_Verneed;
+typedef	Elf32_Verneed	Elf64_Verneed;
 
 typedef struct {
 	Elf32_Word	vna_hash;	/* Hash of dependency name */
@@ -913,10 +966,52 @@ typedef struct {
 	Elf32_Word	vna_name;	/* string table offset to version name*/
 	Elf32_Word	vna_next;	/* offset to next vernaux */
 } Elf32_Vernaux;
+typedef	Elf32_Vernaux	Elf64_Vernaux;
 
 typedef struct {
 	Elf32_Half	vs_vers;
 } Elf32_Versym;
+typedef	Elf32_Versym	Elf64_Versym;
+
+#ifdef _KERNEL
+
+#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
+#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
+#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
+
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define ELF_NO_ADDR	ELF64_NO_ADDR
+#define ELF_LINK_ADDR	ELF64_LINK_ADDR
+#elif defined(ELFSIZE) && (ELFSIZE == 32)
+#define ELF_NO_ADDR	ELF32_NO_ADDR
+#define ELF_LINK_ADDR	ELF32_LINK_ADDR
+#endif
+
+#ifndef ELF32_EHDR_FLAGS_OK
+#define	ELF32_EHDR_FLAGS_OK(eh)	1
+#endif
+
+#ifndef ELF64_EHDR_FLAGS_OK
+#define	ELF64_EHDR_FLAGS_OK(eh)	1
+#endif
+
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define	ELF_EHDR_FLAGS_OK(eh)	ELF64_EHDR_FLAGS_OK(eh)
+#else
+#define	ELF_EHDR_FLAGS_OK(eh)	ELF32_EHDR_FLAGS_OK(eh)
+#endif
+
+#if defined(ELFSIZE)
+struct elf_args {
+        Elf_Addr  arg_entry;      /* program entry point */
+        Elf_Addr  arg_interp;     /* Interpreter load address */
+        Elf_Addr  arg_phaddr;     /* program header address */
+        Elf_Addr  arg_phentsize;  /* Size of program header */
+        Elf_Addr  arg_phnum;      /* Number of program headers */
+};
+#endif
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
