@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.5 2009/09/08 08:11:29 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.6 2009/12/19 06:58:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.5 2009/09/08 08:11:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.6 2009/12/19 06:58:30 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -436,7 +436,6 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int bank, x;
 	u_int npgs;
 	paddr_t pa;
 	vaddr_t va;
@@ -444,7 +443,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	size = round_page(size);
 	npgs = atop(size);
 
-	for (bank = 0; bank < vm_nphysseg; bank++) {
+	for (u_int bank = 0; bank < vm_nphysseg; bank++) {
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
@@ -472,21 +471,30 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 			/* Remove this segment from the list. */
 			vm_nphysseg--;
-			for (x = bank; x < vm_nphysseg; x++) {
+			for (u_int x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
 
+#ifdef _LP64
 		/*
-		 * We don't use XKPHYS here since we don't know what CCA
-		 * to use for cached access yet.
+		 * Use the same CCA as used to access KSEG0 for XKPHYS.
 		 */
-		if (pa + size > MIPS_KSEG1_START)
-			panic("pmap_steal_memory: "
-			      "pa can not be mapped into K0");
+		uint32_t v;
 
+		__asm __volatile("mfc0 %0,$%1"
+		    : "=r"(v)
+		    : "n"(MIPS_COP_0_CONFIG));
+
+		va = MIPS_PHYS_TO_XKPHYS(v & MIPS3_CONFIG_K0_MASK, pa);
+#else
+		if (pa + size > MIPS_PHYS_MASK + 1)
+			panic("pmap_steal_memory: pa %"PRIxPADDR
+			    " can not be mapped into KSEG0", pa);
 		va = MIPS_PHYS_TO_KSEG0(pa);
+#endif
+
 		memset((void *)va, 0, size);
 		return va;
 	}
