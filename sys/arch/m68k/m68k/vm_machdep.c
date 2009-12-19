@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 2009/12/19 12:31:34 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 2009/12/19 13:08:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 2009/12/19 12:31:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 2009/12/19 13:08:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	extern void lwp_trampoline(void);
 
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
