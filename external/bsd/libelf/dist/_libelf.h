@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.3 2009/12/19 07:47:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -140,7 +140,7 @@ enum {
 };
 
 #define	LIBELF_COPY_U32(DST,SRC,NAME)	do {		\
-		if ((SRC)->NAME > UINT_MAX) {		\
+		if ((uint64_t)(SRC)->NAME > UINT_MAX) {	\
 			LIBELF_SET_ERROR(RANGE, 0);	\
 			return (0);			\
 		}					\
@@ -148,8 +148,8 @@ enum {
 	} while (/*CONSTCOND*/0)
 
 #define	LIBELF_COPY_S32(DST,SRC,NAME)	do {		\
-		if ((SRC)->NAME > INT_MAX ||		\
-		    (SRC)->NAME < INT_MIN) {		\
+		if ((int64_t)(SRC)->NAME > INT_MAX ||	\
+		    (int64_t)(SRC)->NAME < INT_MIN) {	\
 			LIBELF_SET_ERROR(RANGE, 0);	\
 			return (0);			\
 		}					\
