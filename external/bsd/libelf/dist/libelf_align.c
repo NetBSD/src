@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.2 2009/12/19 07:31:04 thorpej Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.3 2009/12/19 07:54:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_align.c,v 1.3.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_align.c,v 1.2 2009/12/19 07:31:04 thorpej Exp $");
+__RCSID("$NetBSD: libelf_align.c,v 1.3 2009/12/19 07:54:32 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -43,7 +43,16 @@ struct align {
 	int a64;
 };
 
-#ifdef	__GNUC__
+#if defined(__lint__)
+#define	MALIGN(N)	{					\
+		.a32 = sizeof(Elf32_##N),			\
+		.a64 = sizeof(Elf64_##N)			\
+	}
+#define	MALIGN64(V)	  {					\
+		.a32 = 0,					\
+		.a64 = sizeof(Elf64_##V)			\
+	}
+#elif defined(__GNUC__)
 #define	MALIGN(N)	{					\
 		.a32 = __alignof__(Elf32_##N),			\
 		.a64 = __alignof__(Elf64_##N)			\
