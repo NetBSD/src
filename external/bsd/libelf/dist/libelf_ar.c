@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_ar.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_ar.c,v 1.3.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_ar.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_ar.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <ar.h>
 #include <assert.h>
@@ -416,7 +416,7 @@ _libelf_ar_open(Elf *e)
 		(V) += (P)[1]; (V) <<= 8;	\
 		(V) += (P)[2]; (V) <<= 8;	\
 		(V) += (P)[3];			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	INTSZ	4
 
