@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_scn.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: elf_scn.c,v 1.3 2009/12/19 07:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,13 +28,15 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_scn.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_scn.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
+__RCSID("$NetBSD: elf_scn.c,v 1.3 2009/12/19 07:44:27 thorpej Exp $");
 
 #include <assert.h>
 #include <errno.h>
 #include <gelf.h>
 #include <libelf.h>
+#include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "_libelf.h"
 
@@ -84,7 +86,11 @@ _libelf_load_scn(Elf *e, void *ehdr)
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
 
 	swapbytes = e->e_byteorder != LIBELF_PRIVATE(byteorder);
-	src = e->e_rawfile + shoff;
+	if (shoff > SSIZE_MAX) {
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+	src = e->e_rawfile + (ssize_t)shoff;
 
 	/*
 	 * If the file is using extended numbering then section #0
@@ -104,7 +110,7 @@ _libelf_load_scn(Elf *e, void *ehdr)
 		if ((scn = _libelf_allocate_scn(e, i)) == NULL)
 			return (0);
 
-		(*xlator)((char *) &scn->s_shdr, src, (size_t) 1, swapbytes);
+		(*xlator)((void *) &scn->s_shdr, src, (size_t) 1, swapbytes);
 
 		if (ec == ELFCLASS32) {
 			scn->s_offset = scn->s_rawoff =
