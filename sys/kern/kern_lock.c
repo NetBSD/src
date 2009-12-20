@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.149 2009/07/17 22:17:37 dyoung Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.150 2009/12/20 20:42:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.149 2009/07/17 22:17:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.150 2009/12/20 20:42:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -149,8 +149,7 @@ _kernel_lock_dump(volatile void *junk)
 }
 
 /*
- * Acquire 'nlocks' holds on the kernel lock.  If 'l' is non-null, the
- * acquisition is from process context.
+ * Acquire 'nlocks' holds on the kernel lock.
  */
 void
 _kernel_lock(int nlocks)
@@ -257,7 +256,7 @@ _kernel_lock(int nlocks)
 
 /*
  * Release 'nlocks' holds on the kernel lock.  If 'nlocks' is zero, release
- * all holds.  If 'l' is non-null, the release is from process context.
+ * all holds.
  */
 void
 _kernel_unlock(int nlocks, int *countp)
