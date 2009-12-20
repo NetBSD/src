@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.3 2009/12/19 07:58:24 thorpej Exp $	*/
+/*	$NetBSD: libelf.h,v 1.4 2009/12/20 05:52:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -39,7 +39,7 @@
 # define __LIBELF_HAVE_ELF_CAP		1
 # define __LIBELF_HAVE_ELF_MOVE		1
 # define __LIBELF_HAVE_ELF_NOTE		1
-/* # define __LIBELF_HAVE_ELF_SYMINFO	1 */
+# define __LIBELF_HAVE_ELF_SYMINFO	1
 # define __LIBELF_HAVE_ELF_VERS		1
 #endif /* __NetBSD__ */
 
