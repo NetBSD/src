@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.337 2009/11/07 07:27:46 cegger Exp $ */
+/*	$NetBSD: pmap.c,v 1.338 2009/12/20 03:41:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2009/12/20 03:41:49 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3907,6 +3907,14 @@ pmap_bootstrap4m(void *top)
 #endif
 
 	pmap_update(pmap_kernel());
+
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_self != cpus[0]) {
+		prom_printf("curcpu()->ci_self %p != cpus[0] %p\n", curcpu()->ci_self, cpus[0]);
+		panic("cpuinfo inconsistent");
+	}
+#endif
+
 	prom_printf("pmap_bootstrap4m done\n");
 }
 
@@ -4181,6 +4189,10 @@ pmap_quiet_check(struct pmap *pm)
 			n = 0;
 #endif
 			{
+				/* Did this cpu attach? */
+				if (pmap_kernel()->pm_reg_ptps[n] == 0)
+					continue;
+
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
 						"region %d on CPU %d\n", vr, n);
@@ -4294,6 +4306,10 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		{
 			int *upt, *kpt;
 
+			/* Did this cpu attach? */
+			if (pmap_kernel()->pm_reg_ptps[n] == 0)
+				continue;
+
 			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
 			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
@@ -4344,7 +4360,13 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		n = 0;
 #endif
 		{
-			int *pt = pm->pm_reg_ptps[n];
+			int *pt;
+
+			/* Did this cpu attach? */
+			if (pmap_kernel()->pm_reg_ptps[n] == 0)
+				continue;
+
+			pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
 			pm->pm_reg_ptps_pa[n] = 0;
 			pool_put(&L1_pool, pt);
