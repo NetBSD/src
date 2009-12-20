@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2009/12/20 04:11:37 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2009/12/14 00:46:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2009/12/20 04:11:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2009/12/14 00:46:03 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -268,7 +267,7 @@ void
 mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
-	void *kernend, *v;
+	void *kernend;
 	u_long memsize;
 	u_int vm_cluster_cnt;
 	uint32_t r;
@@ -402,27 +401,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-#ifdef _LP64
-        lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-        proc0paddr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-            MIPS_SR_KX |
-#endif  
-            MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-
-	/*
-	 * Initialize debuggers, and break into them, if appropriate.
-	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
+	mips_init_lwp0_uarea();
 
 #if defined(DDB)
 	if (boothowto & RB_KDB)
@@ -844,14 +825,12 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
