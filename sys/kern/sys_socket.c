@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.62 2009/12/09 21:32:59 dsl Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.63 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.62 2009/12/09 21:32:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.63 2009/12/20 09:36:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ const struct fileops socketops = {
 	.fo_stat = soo_stat,
 	.fo_close = soo_close,
 	.fo_kqfilter = soo_kqfilter,
-	.fo_abort = soo_abort,
+	.fo_restart = soo_restart,
 };
 
 /* ARGSUSED */
@@ -260,8 +260,8 @@ soo_close(file_t *fp)
 }
 
 void
-soo_abort(file_t *fp)
+soo_restart(file_t *fp)
 {
 
-	soabortop(fp->f_data);
+	sorestart(fp->f_data);
 }

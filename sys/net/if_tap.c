@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.61 2009/12/09 21:32:59 dsl Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.62 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.61 2009/12/09 21:32:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.62 2009/12/20 09:36:06 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -161,7 +161,7 @@ static const struct fileops tap_fileops = {
 	.fo_stat = tap_fops_stat,
 	.fo_close = tap_fops_close,
 	.fo_kqfilter = tap_fops_kqfilter,
-	.fo_abort = fnullop_abort,
+	.fo_restart = fnullop_restart,
 };
 
 /* Helper for cloning open() */

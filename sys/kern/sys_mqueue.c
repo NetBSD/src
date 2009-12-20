@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.28 2009/12/10 12:22:48 drochner Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.29 2009/12/20 09:36:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.28 2009/12/10 12:22:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.29 2009/12/20 09:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,7 +103,7 @@ static const struct fileops mqops = {
 	.fo_stat = mq_stat_fop,
 	.fo_close = mq_close_fop,
 	.fo_kqfilter = fnullop_kqfilter,
-	.fo_abort = fnullop_abort,
+	.fo_restart = fnullop_restart,
 };
 
 static const struct syscall_package mqueue_syscalls[] = {

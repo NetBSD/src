@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.126 2009/12/15 18:35:18 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.127 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.126 2009/12/15 18:35:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.127 2009/12/20 09:36:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static int	pipe_poll(file_t *, int);
 static int	pipe_kqfilter(file_t *, struct knote *);
 static int	pipe_stat(file_t *, struct stat *);
 static int	pipe_ioctl(file_t *, u_long, void *);
-static void	pipe_abort(file_t *);
+static void	pipe_restart(file_t *);
 
 static const struct fileops pipeops = {
 	.fo_read = pipe_read,
@@ -120,7 +120,7 @@ static const struct fileops pipeops = {
 	.fo_stat = pipe_stat,
 	.fo_close = pipe_close,
 	.fo_kqfilter = pipe_kqfilter,
-	.fo_abort = pipe_abort,
+	.fo_restart = pipe_restart,
 };
 
 /*
@@ -449,7 +449,7 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	size_t nread = 0;
 	size_t size;
 	size_t ocnt;
-	int slept = 0;
+	unsigned int wakeup_state = 0;
 
 	mutex_enter(lock);
 	++rpipe->pipe_busy;
@@ -579,7 +579,7 @@ again:
 		cv_broadcast(&rpipe->pipe_wcv);
 #endif
 
-		if (slept) {
+		if (wakeup_state & PIPE_RESTART) {
 			error = ERESTART;
 			goto unlocked_error;
 		}
@@ -588,7 +588,7 @@ again:
 		error = cv_wait_sig(&rpipe->pipe_rcv, lock);
 		if (error != 0)
 			goto unlocked_error;
-		slept = 1;
+		wakeup_state = rpipe->pipe_state;
 		goto again;
 	}
 
@@ -599,6 +599,7 @@ again:
 unlocked_error:
 	--rpipe->pipe_busy;
 	if (rpipe->pipe_busy == 0) {
+		rpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&rpipe->pipe_draincv);
 	}
 	if (bp->cnt < MINPIPESIZE) {
@@ -823,7 +824,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct pipebuf *bp;
 	kmutex_t *lock;
 	int error;
-	int slept = 0;
+	unsigned int wakeup_state = 0;
 
 	/* We want to write to our peer */
 	rpipe = (struct pipe *) fp->f_data;
@@ -846,6 +847,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	if ((error = pipelock(wpipe, 1)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
+			wpipe->pipe_state &= ~PIPE_RESTART;
 			cv_broadcast(&wpipe->pipe_draincv);
 		}
 		mutex_exit(lock);
@@ -976,6 +978,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 			bp->cnt += size;
 			KASSERT(bp->cnt <= bp->size);
+			wakeup_state = 0;
 		} else {
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
@@ -997,12 +1000,10 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			if (bp->cnt)
 				pipeselwakeup(wpipe, wpipe, POLL_IN);
 
-#if 0 /* I think some programs don't like the partial write... */
-			if (slept) {
+			if (wakeup_state & PIPE_RESTART) {
 				error = ERESTART;
 				break;
 			}
-#endif
 
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
@@ -1017,12 +1018,13 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				error = EPIPE;
 				break;
 			}
-			slept = 1;
+			wakeup_state = wpipe->pipe_state;
 		}
 	}
 
 	--wpipe->pipe_busy;
 	if (wpipe->pipe_busy == 0) {
+		wpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&wpipe->pipe_draincv);
 	}
 	if (bp->cnt > 0) {
@@ -1223,18 +1225,19 @@ pipe_close(file_t *fp)
 }
 
 static void
-pipe_abort(file_t *fp)
+pipe_restart(file_t *fp)
 {
 	struct pipe *pipe = fp->f_data;
 
 	/*
 	 * Unblock blocked reads/writes in order to allow close() to complete.
-	 * This isn't going to work yet!
-	 * The underlying problem is that only the 'fd' in question needs
-	 * its operations terminating, the pipe itself my be open via
-	 * other fd.
+	 * System calls return ERESTART so that the fd is revalidated.
+	 * (Partial writes return the transfer length.)
 	 */
 	mutex_enter(pipe->pipe_lock);
+	pipe->pipe_state |= PIPE_RESTART;
+	/* Wakeup both cvs, maybe we only need one, but maybe there are some
+	 * other paths where wakeup is needed, and it saves deciding which! */
 	cv_broadcast(&pipe->pipe_rcv);
 	cv_broadcast(&pipe->pipe_wcv);
 	mutex_exit(pipe->pipe_lock);

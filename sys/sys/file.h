@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.69 2009/12/09 21:33:00 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.70 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct file {
 		int	(*fo_stat)	(struct file *, struct stat *);
 		int	(*fo_close)	(struct file *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
-		void	(*fo_abort)	(struct file *);
+		void	(*fo_restart)	(struct file *);
 		void	(*fo_spare1)	(void);
 		void	(*fo_spare2)	(void);
 	} *f_ops;
@@ -162,7 +162,7 @@ int	fbadop_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int	fbadop_ioctl(struct file *, u_long, void *);
 int	fbadop_close(struct file *);
 int	fbadop_stat(struct file *, struct stat *);
-void	fnullop_abort(struct file *);
+void	fnullop_restart(struct file *);
 
 #endif /* _KERNEL */
 
