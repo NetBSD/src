@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.24 2009/12/20 13:49:36 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.25 2009/12/20 13:56:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.24 2009/12/20 13:49:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.25 2009/12/20 13:56:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,10 +66,16 @@ sleeper(struct ltsleeper *ltsp, int timo)
 
 	/* protected by biglock */
 	if (timo) {
+		/*
+		 * Calculate wakeup-time.
+		 * XXX: should assert nanotime() does not block,
+		 * i.e. yield the cpu and/or biglock.
+		 */
 		ticks.tv_sec = timo / hz;
 		ticks.tv_nsec = (timo % hz) * (1000000000/hz);
 		nanotime(&ts);
 		timespecadd(&ts, &ticks, &ts);
+
 		if (rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
 		    ts.tv_sec, ts.tv_nsec) == 0)
 			rv = 0;
