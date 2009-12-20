@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.3 2009/12/19 07:47:22 thorpej Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.4 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -44,9 +44,6 @@
 #define LIBELF_MSG_SIZE	256
 
 struct _libelf_globals {
-	int		libelf_arch;
-	unsigned int	libelf_byteorder;
-	int		libelf_class;
 	int		libelf_error;
 	int		libelf_fillchar;
 	unsigned int	libelf_version;
@@ -160,6 +157,8 @@ enum {
 /*
  * Prototypes
  */
+
+unsigned int _libelf_host_byteorder(void);
 
 Elf_Data *_libelf_allocate_data(Elf_Scn *_s);
 Elf	*_libelf_allocate_elf(void);

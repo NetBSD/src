@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_xlate.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_xlate.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_xlate.c,v 1.3.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_xlate.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <assert.h>
 #include <libelf.h>
@@ -55,7 +55,7 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	uintptr_t sb, se, db, de;
 
 	if (encoding == ELFDATANONE)
-		encoding = LIBELF_PRIVATE(byteorder);
+		encoding = _libelf_host_byteorder();
 
 	if ((encoding != ELFDATA2LSB && encoding != ELFDATA2MSB) ||
 	    dst == NULL || src == NULL || dst == src)	{
@@ -136,11 +136,11 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	dst->d_size = dsz;
 
 	if (src->d_size == 0 ||
-	    (db == sb && encoding == LIBELF_PRIVATE(byteorder) && fsz == msz))
+	    (db == sb && encoding == _libelf_host_byteorder() && fsz == msz))
 		return (dst);	/* nothing more to do */
 
 	(_libelf_get_translator(src->d_type, direction, elfclass))(dst->d_buf,
-	    src->d_buf, cnt, encoding != LIBELF_PRIVATE(byteorder));
+	    src->d_buf, cnt, encoding != _libelf_host_byteorder());
 
 	return (dst);
 }

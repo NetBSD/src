@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_begin.c,v 1.2 2009/12/19 06:22:25 thorpej Exp $	*/
+/*	$NetBSD: elf_begin.c,v 1.3 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_begin.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_begin.c,v 1.2 2009/12/19 06:22:25 thorpej Exp $");
+__RCSID("$NetBSD: elf_begin.c,v 1.3 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -118,7 +118,7 @@ elf_begin(int fd, Elf_Cmd c, Elf *a)
 
 		if ((e = _libelf_allocate_elf()) != NULL) {
 			_libelf_init_elf(e, ELF_K_ELF);
-			e->e_byteorder = LIBELF_PRIVATE(byteorder);
+			e->e_byteorder = _libelf_host_byteorder();
 			e->e_fd = fd;
 			e->e_cmd = c;
 		}

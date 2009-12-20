@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.3 2009/12/19 09:00:56 thorpej Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.4 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_ehdr.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.3 2009/12/19 09:00:56 thorpej Exp $");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.4 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <assert.h>
 #include <gelf.h>
@@ -73,7 +73,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
 	(*xlator)((void *) &scn->s_shdr, e->e_rawfile + (ssize_t)shoff,
-	    (size_t) 1, e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    (size_t) 1, e->e_byteorder != _libelf_host_byteorder());
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
 		scn->s_shdr.s_shdr64.M)
@@ -182,7 +182,7 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 
 	xlator = _libelf_get_translator(ELF_T_EHDR, ELF_TOMEMORY, ec);
 	(*xlator)(ehdr, e->e_rawfile, (size_t) 1,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    e->e_byteorder != _libelf_host_byteorder());
 
 	/*
 	 * If extended numbering is being used, read the correct

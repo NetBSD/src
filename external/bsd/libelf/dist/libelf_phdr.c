@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_phdr.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $	*/
+/*	$NetBSD: libelf_phdr.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_phdr.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_phdr.c,v 1.1.1.1 2009/12/19 05:43:41 thorpej Exp $");
+__RCSID("$NetBSD: libelf_phdr.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <assert.h>
 #include <gelf.h>
@@ -107,7 +107,7 @@ _libelf_getphdr(Elf *e, int ec)
 
 	xlator = _libelf_get_translator(ELF_T_PHDR, ELF_TOMEMORY, ec);
 	(*xlator)(phdr, e->e_rawfile + phoff, phnum,
-	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
+	    e->e_byteorder != _libelf_host_byteorder());
 
 	return (phdr);
 }

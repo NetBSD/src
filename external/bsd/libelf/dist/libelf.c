@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.c,v 1.4 2009/12/20 19:38:13 mrg Exp $	*/
+/*	$NetBSD: libelf.c,v 1.5 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,38 +28,32 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf.c,v 1.4 2009/12/20 19:38:13 mrg Exp $");
+__RCSID("$NetBSD: libelf.c,v 1.5 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <sys/param.h>
-
-#if defined(__FreeBSD__)
-#include <machine/elf.h>
-#endif /* __FreeBSD__ */
-#include <machine/endian.h>
 
 #include <libelf.h>
 
 #include "_libelf.h"
 
-#if defined(__NetBSD__)
-# if ARCH_ELFSIZE == 64
-#  define ELF_TARG_DATA		ELF64_MACHDEP_ENDIANNESS
-#  define ELF_TARG_CLASS	ELFCLASS64
-# else
-#  define ELF_TARG_DATA		ELF32_MACHDEP_ENDIANNESS
-#  define ELF_TARG_CLASS	ELFCLASS32
-# endif /* ARCH_ELFSIZE */
-#endif /* __NetBSD__ */
-
 struct _libelf_globals _libelf = {
-	.libelf_arch		= 0 /* unused - ELF_ARCH */,
-	.libelf_byteorder	= ELF_TARG_DATA,
-	.libelf_class		= ELF_TARG_CLASS,
 	.libelf_error		= 0,
 	.libelf_fillchar	= 0,
 	.libelf_version		= EV_NONE
 };
 
+unsigned int
+_libelf_host_byteorder(void)
+{
+	static union {
+		uint32_t	val;
+		uint8_t		bytes[4];
+	} byte_order_check = {
+		.val	=	0xdeadbeef,
+	};
+
+	return (byte_order_check.bytes[0] == 0xef ? ELFDATA2LSB : ELFDATA2MSB);
+}
 
 #if defined(LIBELF_TEST_HOOKS)
 int
