@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.193 2009/12/14 02:01:53 matt Exp $
+# $NetBSD: shl.elf,v 1.194 2009/12/20 05:53:34 thorpej Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -126,6 +126,8 @@
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
+./usr/lib/libelf.so				base-sys-shlib
+./usr/lib/libelf.so.0				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.3				base-sys-shlib
 ./usr/lib/libfetch.so				base-sys-shlib
