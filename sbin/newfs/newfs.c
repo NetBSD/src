@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.105 2009/05/07 06:56:56 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.106 2009/12/20 15:21:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.105 2009/05/07 06:56:56 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.106 2009/12/20 15:21:13 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,10 @@ __RCSID("$NetBSD: newfs.c,v 1.105 2009/05/07 06:56:56 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <mntopts.h>
+
+#ifdef MFS
+#include <mountprog.h>
+#endif
 
 #include "dkcksum.h"
 #include "extern.h"
@@ -238,6 +242,7 @@ main(int argc, char *argv[])
 #ifdef MFS
 	struct mfs_args args;
 	char mountfromname[100];
+	char mounttoname[MAXPATHLEN];
 	pid_t pid, res;
 	struct statvfs sf;
 	int status;
@@ -653,6 +658,7 @@ main(int argc, char *argv[])
 #ifdef MFS
 	if (mfs) {
 
+		pathadj(argv[1], mounttoname);
 		switch (pid = fork()) {
 		case -1:
 			perror("mfs");
@@ -676,10 +682,10 @@ main(int argc, char *argv[])
 				 * can mount a filesystem which hides our
 				 * ramdisk before we see the success.
 				 */
-				if (statvfs(argv[1], &sf) < 0)
-					err(88, "statvfs %s", argv[1]);
+				if (statvfs(mounttoname, &sf) < 0)
+					err(88, "statvfs %s", mounttoname);
 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
-				    !strncmp(sf.f_mntonname, argv[1],
+				    !strncmp(sf.f_mntonname, mounttoname,
 					     MNAMELEN) &&
 				    !strcmp(sf.f_fstypename, "mfs"))
 					exit(0);
@@ -692,7 +698,7 @@ main(int argc, char *argv[])
 				if (WIFEXITED(status)) {
 					if (WEXITSTATUS(status) == 0)
 						exit(0);
-					errx(1, "%s: mount: %s", argv[1],
+					errx(1, "%s: mount: %s", mounttoname,
 					     strerror(WEXITSTATUS(status)));
 				} else
 					errx(11, "abnormal termination");
@@ -708,7 +714,7 @@ main(int argc, char *argv[])
 
 		args.base = membase;
 		args.size = fssize * sectorsize;
-		if (mount(MOUNT_MFS, argv[1], mntflags | MNT_ASYNC,
+		if (mount(MOUNT_MFS, mounttoname, mntflags | MNT_ASYNC,
 		    &args, sizeof args) == -1)
 			exit(errno); /* parent prints message */
 	}
