@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.20 2009/12/12 17:47:05 dsl Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.21 2009/12/20 23:00:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,11 +66,25 @@
  */
 
 /*
- * System calls relating to files.
+ * System calls of synchronous I/O multiplexing subsystem.
+ *
+ * Locking
+ *
+ * Two locks are used: <object-lock> and selcpu_t::sc_lock.
+ *
+ * The <object-lock> might be a device driver or another subsystem, e.g.
+ * socket or pipe.  This lock is not exported, and thus invisible to this
+ * subsystem.  Mainly, synchronisation between selrecord() and selnotify()
+ * routines depends on this lock, as it will be described in the comments.
+ *
+ * Lock order
+ *
+ *	<object-lock> ->
+ *		selcpu_t::sc_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.20 2009/12/12 17:47:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21 2009/12/20 23:00:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
