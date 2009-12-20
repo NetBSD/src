@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.9 2009/12/15 15:50:37 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.10 2009/12/20 15:32:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.9 2009/12/15 15:50:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.10 2009/12/20 15:32:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -499,6 +499,8 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 	case C(0xff, UT_WRITE_CLASS_INTERFACE):
+	case C(0x20, UT_WRITE_CLASS_INTERFACE):
+	case C(0x22, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
@@ -659,9 +661,12 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 {
 	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	ssize_t n;
+	ssize_t done;
 	bool isread;
 	int len, error, endpt;
 	uint8_t *buf;
+	int xfererr = 0;
+	int val;
 
 	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -671,34 +676,57 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	KASSERT(xfer->length);
 	len = xfer->length;
 	buf = KERNADDR(&xfer->dmabuf, 0);
+	done = 0;
 
 	while (RUSB(xfer)->rusb_status == 0) {
 		if (isread) {
+			if (xfer->flags & USBD_SHORT_XFER_OK)
+				val = 1;
+			else
+				val = 0;
+			rumpuser_ioctl(sc->sc_ugenfd[endpt],
+			    USB_SET_SHORT_XFER, &val, &error);
 			n = rumpuser_read(sc->sc_ugenfd[endpt],
-			    buf, len, &error);
-			if (n == len)
-				break;
-			if (error != EAGAIN) {
+			    buf+done, len-done, &error);
+			if (n == -1) {
+				if (error == ETIMEDOUT)
+					continue;
 				n = 0;
-				break;
+				xfer->status = USBD_IOERROR;
+				goto out;
 			}
+			done += n;
+			if (done == len)
+				break;
 		} else {
 			n = rumpuser_write(sc->sc_ugenfd[endpt],
 			    buf, len, &error);
-			if (n == len)
+			done = n;
+			if (done == len)
 				break;
 			else
 				panic("short write");
 		}
+
+		if (xfer->flags & USBD_SHORT_XFER_OK)
+			break;
 	}
 
 	if (RUSB(xfer)->rusb_status == 0) {
-		xfer->actlen = n;
+		xfer->actlen = done;
 		xfer->status = USBD_NORMAL_COMPLETION;
+		/* override */
+		if (xfererr) {
+			printf("err!\n");
+			xfer->status = xfererr;
+		}
 	} else {
 		xfer->status = USBD_CANCELLED;
 		RUSB(xfer)->rusb_status = 2;
 	}
+ out:
+	val = 0;
+	rumpuser_ioctl(sc->sc_ugenfd[endpt], USB_SET_SHORT_XFER, &val, &error);
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
 }
