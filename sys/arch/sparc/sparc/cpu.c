@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.219 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: cpu.c,v 1.220 2009/12/20 03:42:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.219 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.220 2009/12/20 03:42:29 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1590,7 +1590,7 @@ static	int mxcc = -1;
 			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 #ifdef MULTIPROCESSOR
-		if ((sparc_ncpus > 1) && (sc->cacheinfo.ec_totalsize == 0))
+		if (sparc_ncpus > 1 && sc->cacheinfo.ec_totalsize == 0)
 			sc->cache_flush = srmmu_cache_flush;
 #endif
 	}
