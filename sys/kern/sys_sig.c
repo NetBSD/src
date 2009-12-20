@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.24 2009/12/19 18:25:54 rmind Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.25 2009/12/20 04:49:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.24 2009/12/19 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.25 2009/12/20 04:49:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,9 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.24 2009/12/19 18:25:54 rmind Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 
-/* ARGSUSED */
 int
-sys___sigaction_sigtramp(struct lwp *l, const struct sys___sigaction_sigtramp_args *uap, register_t *retval)
+sys___sigaction_sigtramp(struct lwp *l,
+    const struct sys___sigaction_sigtramp_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)				signum;
@@ -110,7 +110,7 @@ sys___sigaction_sigtramp(struct lwp *l, const struct sys___sigaction_sigtramp_ar
 		if (error)
 			return (error);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -118,7 +118,8 @@ sys___sigaction_sigtramp(struct lwp *l, const struct sys___sigaction_sigtramp_ar
  * return old mask as return value; the library stub does the rest.
  */
 int
-sys___sigprocmask14(struct lwp *l, const struct sys___sigprocmask14_args *uap, register_t *retval)
+sys___sigprocmask14(struct lwp *l, const struct sys___sigprocmask14_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			how;
@@ -132,25 +133,25 @@ sys___sigprocmask14(struct lwp *l, const struct sys___sigprocmask14_args *uap, r
 	if (SCARG(uap, set)) {
 		error = copyin(SCARG(uap, set), &nss, sizeof(nss));
 		if (error)
-			return (error);
+			return error;
 	}
 	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, SCARG(uap, how),
 	    SCARG(uap, set) ? &nss : 0, SCARG(uap, oset) ? &oss : 0);
 	mutex_exit(p->p_lock);
 	if (error)
-		return (error);
+		return error;
 	if (SCARG(uap, oset)) {
 		error = copyout(&oss, SCARG(uap, oset), sizeof(oss));
 		if (error)
-			return (error);
+			return error;
 	}
-	return (0);
+	return 0;
 }
 
-/* ARGSUSED */
 int
-sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap, register_t *retval)
+sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(sigset_t *)	set;
@@ -158,7 +159,7 @@ sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap, reg
 	sigset_t ss;
 
 	sigpending1(l, &ss);
-	return (copyout(&ss, SCARG(uap, set), sizeof(ss)));
+	return copyout(&ss, SCARG(uap, set), sizeof(ss));
 }
 
 /*
@@ -166,9 +167,9 @@ sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap, reg
  * Note nonstandard calling convention: libc stub passes mask, not pointer,
  * to save a copyin.
  */
-/* ARGSUSED */
 int
-sys___sigsuspend14(struct lwp *l, const struct sys___sigsuspend14_args *uap, register_t *retval)
+sys___sigsuspend14(struct lwp *l, const struct sys___sigsuspend14_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const sigset_t *)	set;
@@ -179,15 +180,14 @@ sys___sigsuspend14(struct lwp *l, const struct sys___sigsuspend14_args *uap, reg
 	if (SCARG(uap, set)) {
 		error = copyin(SCARG(uap, set), &ss, sizeof(ss));
 		if (error)
-			return (error);
+			return error;
 	}
-
-	return (sigsuspend1(l, SCARG(uap, set) ? &ss : 0));
+	return sigsuspend1(l, SCARG(uap, set) ? &ss : 0);
 }
 
-/* ARGSUSED */
 int
-sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap, register_t *retval)
+sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const struct sigaltstack *)	nss;
@@ -199,21 +199,20 @@ sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap, r
 	if (SCARG(uap, nss)) {
 		error = copyin(SCARG(uap, nss), &nss, sizeof(nss));
 		if (error)
-			return (error);
+			return error;
 	}
 	error = sigaltstack1(l,
 	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
-		return (error);
+		return error;
 	if (SCARG(uap, oss)) {
 		error = copyout(&oss, SCARG(uap, oss), sizeof(oss));
 		if (error)
-			return (error);
+			return error;
 	}
-	return (0);
+	return 0;
 }
 
-/* ARGSUSED */
 int
 sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 {
@@ -227,7 +226,7 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 	int error;
 
 	if ((u_int)signum >= NSIG)
-		return (EINVAL);
+		return EINVAL;
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signum;
 	ksi.ksi_code = SI_USER;
@@ -238,7 +237,7 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 		mutex_enter(proc_lock);
 		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
 			mutex_exit(proc_lock);
-			return (ESRCH);
+			return ESRCH;
 		}
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
@@ -249,22 +248,22 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 		}
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
-		return (error);
+		return error;
 	}
 	switch (SCARG(uap, pid)) {
 	case -1:		/* broadcast signal */
-		return (killpg1(l, &ksi, 0, 1));
+		return killpg1(l, &ksi, 0, 1);
 	case 0:			/* signal own process group */
-		return (killpg1(l, &ksi, 0, 0));
+		return killpg1(l, &ksi, 0, 0);
 	default:		/* negative explicit process group */
-		return (killpg1(l, &ksi, -SCARG(uap, pid), 0));
+		return killpg1(l, &ksi, -SCARG(uap, pid), 0);
 	}
 	/* NOTREACHED */
 }
 
-/* ARGSUSED */
 int
-sys_getcontext(struct lwp *l, const struct sys_getcontext_args *uap, register_t *retval)
+sys_getcontext(struct lwp *l, const struct sys_getcontext_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct __ucontext *) ucp;
@@ -276,12 +275,12 @@ sys_getcontext(struct lwp *l, const struct sys_getcontext_args *uap, register_t 
 	getucontext(l, &uc);
 	mutex_exit(p->p_lock);
 
-	return (copyout(&uc, SCARG(uap, ucp), sizeof (*SCARG(uap, ucp))));
+	return copyout(&uc, SCARG(uap, ucp), sizeof (*SCARG(uap, ucp)));
 }
 
-/* ARGSUSED */
 int
-sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap, register_t *retval)
+sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const ucontext_t *) ucp;
@@ -292,16 +291,16 @@ sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap, register_t 
 
 	error = copyin(SCARG(uap, ucp), &uc, sizeof (uc));
 	if (error)
-		return (error);
-	if (!(uc.uc_flags & _UC_CPU))
-		return (EINVAL);
+		return error;
+	if ((uc.uc_flags & _UC_CPU) == 0)
+		return EINVAL;
 	mutex_enter(p->p_lock);
 	error = setucontext(l, &uc);
 	mutex_exit(p->p_lock);
 	if (error)
- 		return (error);
+ 		return error;
 
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
 
 /*
@@ -331,7 +330,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	static bool v0v1valid;
 
 	if (signum <= 0 || signum >= NSIG)
-		return (EINVAL);
+		return EINVAL;
 
 	p = l->l_proc;
 	error = 0;
@@ -494,11 +493,11 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		l->l_flag |= LW_PENDSIG;
 		lwp_unlock(l);
 	}
- out:
+out:
 	mutex_exit(p->p_lock);
 	ksiginfo_queue_drain(&kq);
 
-	return (error);
+	return error;
 }
 
 int
@@ -541,7 +540,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -558,9 +557,7 @@ sigpending1(struct lwp *l, sigset_t *ss)
 int
 sigsuspend1(struct lwp *l, const sigset_t *ss)
 {
-	struct proc *p;
-
-	p = l->l_proc;
+	struct proc *p = l->l_proc;
 
 	if (ss) {
 		/*
@@ -589,12 +586,12 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		;
 
 	/* always return EINTR rather than ERESTART... */
-	return (EINTR);
+	return EINTR;
 }
 
 int
 sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
-	     struct sigaltstack *oss)
+    struct sigaltstack *oss)
 {
 	struct proc *p = l->l_proc;
 	int error = 0;
@@ -619,13 +616,12 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 
 	mutex_exit(p->p_lock);
 
-	return (error);
+	return error;
 }
 
 int
 __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
-    register_t *retval,
-    copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
+    register_t *retval, copyout_t storeinf, copyin_t fetchts, copyout_t storets)
 {
 	/* {
 		syscallarg(const sigset_t *) set;
@@ -633,18 +629,15 @@ __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		syscallarg(struct timespec *) timeout;
 	} */
 	struct proc *p = l->l_proc;
-	int error, signum;
-	int timo = 0;
+	int error, signum, timo;
 	struct timespec ts, tsstart, tsnow;
 	ksiginfo_t ksi;
-
-	memset(&tsstart, 0, sizeof tsstart);	 /* XXX gcc */
 
 	/*
 	 * Calculate timeout, if it was specified.
 	 */
 	if (SCARG(uap, timeout)) {
-		error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts));
+		error = (*fetchts)(SCARG(uap, timeout), &ts, sizeof(ts));
 		if (error)
 			return error;
 
@@ -660,12 +653,15 @@ __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		 * ECANCELED/ERESTART case.
 		 */
 		getnanouptime(&tsstart);
+	} else {
+		memset(&tsstart, 0, sizeof(tsstart)); /* XXXgcc */
+		timo = 0;
 	}
 
 	error = copyin(SCARG(uap, set), &l->l_sigwaitset,
 	    sizeof(l->l_sigwaitset));
-	if (error != 0)
-		return (error);
+	if (error)
+		return error;
 
 	/*
 	 * Silently ignore SA_CANTMASK signals. psignal1() would ignore
@@ -676,53 +672,46 @@ __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 	mutex_enter(p->p_lock);
 
-	/*
-	 * SA processes can have no more than 1 sigwaiter.
-	 */
+	/* SA processes can have no more than 1 sigwaiter. */
 	if ((p->p_sflag & PS_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
 		mutex_exit(p->p_lock);
 		error = EINVAL;
 		goto out;
 	}
 
+	/* Check for pending signals in the process, if no - then in LWP. */
 	if ((signum = sigget(&p->p_sigpend, &ksi, 0, &l->l_sigwaitset)) == 0)
 		signum = sigget(&l->l_sigpend, &ksi, 0, &l->l_sigwaitset);
 
 	if (signum != 0) {
-		/*
-		 * We found a pending signal - copy it out to the user.
-		 */
+		/* If found a pending signal, just copy it out to the user. */
 		mutex_exit(p->p_lock);
 		goto out;
 	}
 
 	/*
-	 * Set up the sigwait list.
+	 * Set up the sigwait list and wait for signal to arrive.
+	 * We can either be woken up or time out.
 	 */
 	l->l_sigwaited = &ksi;
 	LIST_INSERT_HEAD(&p->p_sigwaiters, l, l_sigwaiter);
-
-	/*
-	 * Wait for signal to arrive. We can either be woken up or time out.
-	 */
 	error = cv_timedwait_sig(&l->l_sigcv, p->p_lock, timo);
 
 	/*
-	 * Need to find out if we woke as a result of lwp_wakeup() or a
+	 * Need to find out if we woke as a result of _lwp_wakeup() or a
 	 * signal outside our wait set.
 	 */
 	if (l->l_sigwaited != NULL) {
 		if (error == EINTR) {
-			/* wakeup via _lwp_wakeup() */
+			/* Wakeup via _lwp_wakeup(). */
 			error = ECANCELED;
 		} else if (!error) {
-			/* spurious wakeup - arrange for syscall restart */
+			/* Spurious wakeup - arrange for syscall restart. */
 			error = ERESTART;
 		}
 		l->l_sigwaited = NULL;
 		LIST_REMOVE(l, l_sigwaiter);
 	}
-
 	mutex_exit(p->p_lock);
 
 	/*
@@ -733,29 +722,29 @@ __sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	if (timo && (error == ERESTART || error == ECANCELED)) {
 		getnanouptime(&tsnow);
 
-		/* compute how much time has passed since start */
+		/* Compute how much time has passed since start. */
 		timespecsub(&tsnow, &tsstart, &tsnow);
-		/* substract passed time from timeout */
+
+		/* Substract passed time from timeout. */
 		timespecsub(&ts, &tsnow, &ts);
 
 		if (ts.tv_sec < 0)
 			error = EAGAIN;
 		else {
-			/* copy updated timeout to userland */
-			error = (*put_timeout)(&ts, SCARG(uap, timeout),
+			/* Copy updated timeout to userland. */
+			error = (*storets)(&ts, SCARG(uap, timeout),
 			    sizeof(ts));
 		}
 	}
-
+out:
 	/*
 	 * If a signal from the wait set arrived, copy it to userland.
 	 * Copy only the used part of siginfo, the padding part is
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
- out:
-	if (error == 0)
-		error = (*put_info)(&ksi.ksi_info, SCARG(uap, info),
+	if (error == 0) {
+		error = (*storeinf)(&ksi.ksi_info, SCARG(uap, info),
 		    sizeof(ksi.ksi_info));
-
+	}
 	return error;
 }
