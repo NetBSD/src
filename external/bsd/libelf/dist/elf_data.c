@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_data.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $	*/
+/*	$NetBSD: elf_data.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_data.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_data.c,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $");
+__RCSID("$NetBSD: elf_data.c,v 1.2 2009/12/20 23:23:46 thorpej Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -127,7 +127,7 @@ elf_getdata(Elf_Scn *s, Elf_Data *d)
 
 	xlate = _libelf_get_translator(elftype, ELF_TOMEMORY, elfclass);
 	(*xlate)(d->d_buf, e->e_rawfile + sh_offset, count, e->e_byteorder !=
-	    LIBELF_PRIVATE(byteorder));
+	    _libelf_host_byteorder());
 
 	return (d);
 }
