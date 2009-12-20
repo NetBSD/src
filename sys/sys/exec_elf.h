@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.99 2009/12/19 09:02:46 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.100 2009/12/20 05:50:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -896,6 +896,39 @@ struct netbsd_elfcore_procinfo {
 #define	ELF64_ST_TYPE(info)		ELF_ST_TYPE(info)
 #define	ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
 #define	ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
+
+typedef struct {
+	Elf32_Half	si_boundto;	/* direct bindings - symbol bound to */
+	Elf32_Half	si_flags;	/* per symbol flags */
+} Elf32_Syminfo;
+
+typedef struct {
+	Elf64_Half	si_boundto;	/* direct bindings - symbol bound to */
+	Elf64_Half	si_flags;	/* per symbol flags */
+} Elf64_Syminfo;
+
+#define	SYMINFO_FLG_DIRECT	0x0001	/* symbol ref has direct association
+					   to object containing definition */
+#define	SYMINFO_FLG_PASSTHRU	0x0002	/* ignored - see SYMINFO_FLG_FILTER */
+#define	SYMINFO_FLG_COPY	0x0004	/* symbol is a copy-reloc */
+#define	SYMINFO_FLG_LAZYLOAD	0x0008	/* object containing defn should be
+					   lazily-loaded */
+#define	SYMINFO_FLG_DIRECTBIND	0x0010	/* ref should be bound directly to
+					   object containing definition */
+#define	SYMINFO_FLG_NOEXTDIRECT	0x0020	/* don't let an external reference
+					   directly bind to this symbol */
+#define	SYMINFO_FLG_FILTER	0x0002	/* symbol ref is associated to a */
+#define	SYMINFO_FLG_AUXILIARY	0x0040	/*      standard or auxiliary filter */
+
+#define	SYMINFO_BT_SELF		0xffff	/* symbol bound to self */
+#define	SYMINFO_BT_PARENT	0xfffe	/* symbol bound to parent */
+#define	SYMINFO_BT_NONE		0xfffd	/* no special symbol binding */
+#define	SYMINFO_BT_EXTERN	0xfffc	/* symbol defined as external */
+#define	SYMINFO_BT_LOWRESERVE	0xff00	/* beginning of reserved entries */
+
+#define	SYMINFO_NONE		0	/* Syminfo version */
+#define	SYMINFO_CURRENT		1
+#define	SYMINFO_NUM		2
 
 /*
  * These constants are used for Elf32_Verdef struct's version number.  
