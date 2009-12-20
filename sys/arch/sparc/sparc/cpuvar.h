@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.80 2009/12/20 03:38:59 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.81 2009/12/20 03:50:56 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -425,7 +425,7 @@ struct cpu_info {
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
 #define	CPU_INFO_FOREACH(cii, cp)	cii = 0; (cp = cpus[cii]) && cp->eintstack && cii < sparc_ncpus; cii++
 #else
-#define CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_FOREACH(cii, cp)	cii = 0, cp = curcpu(); cp != NULL; cp = NULL
 #endif
 
 /*
