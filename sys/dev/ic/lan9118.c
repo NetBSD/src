@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.11 2009/12/06 12:22:17 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.11 2009/12/06 12:22:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $");
 
 /*
  * The LAN9118 Family
@@ -490,6 +490,9 @@ lan9118_ioctl(struct ifnet *ifp, u_long command, void *data)
 		case IFF_UP:
 			lan9118_init(ifp);
 			break;
+		case IFF_UP|IFF_RUNNING:
+			lan9118_set_filter(sc);
+			break;
 		default:
 			break;
 		}
@@ -624,6 +627,8 @@ lan9118_init(struct ifnet *ifp)
 	mac_cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
 	lan9118_mac_writereg(sc, LAN9118_MAC_CR,
 	    mac_cr | LAN9118_MAC_CR_TXEN | LAN9118_MAC_CR_RXEN);
+
+	lan9118_set_filter(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
