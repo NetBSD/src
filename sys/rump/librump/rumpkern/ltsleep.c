@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.23 2009/12/05 22:44:08 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.24 2009/12/20 13:49:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.23 2009/12/05 22:44:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.24 2009/12/20 13:49:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
 static int
 sleeper(struct ltsleeper *ltsp, int timo)
 {
+	struct timespec ts, ticks;
 	int rv, nlocks;
 
 	LIST_INSERT_HEAD(&sleepers, ltsp, entries);
@@ -65,8 +66,12 @@ sleeper(struct ltsleeper *ltsp, int timo)
 
 	/* protected by biglock */
 	if (timo) {
+		ticks.tv_sec = timo / hz;
+		ticks.tv_nsec = (timo % hz) * (1000000000/hz);
+		nanotime(&ts);
+		timespecadd(&ts, &ticks, &ts);
 		if (rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
-		    timo / hz, (timo % hz) * (1000000000/hz)) == 0)
+		    ts.tv_sec, ts.tv_nsec) == 0)
 			rv = 0;
 		else
 			rv = EWOULDBLOCK;
