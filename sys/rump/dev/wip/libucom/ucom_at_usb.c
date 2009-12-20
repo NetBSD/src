@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.1 2009/12/20 15:43:13 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.2 2009/12/20 19:44:21 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -412,6 +412,8 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
+void tty_init(void);
+
 void
 rump_device_configuration(void)
 {
@@ -442,4 +444,6 @@ rump_device_configuration(void)
 	    cmaj, 0, 1));
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/dtyU", '0',
 	    cmaj, 0x80000, 1));
+
+	tty_init();
 }
