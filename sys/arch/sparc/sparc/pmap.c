@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.338 2009/12/20 03:41:49 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.339 2009/12/20 03:48:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2009/12/20 03:41:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2009/12/20 03:48:30 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4306,9 +4306,11 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		{
 			int *upt, *kpt;
 
+#if defined(MULTIPROCESSOR)
 			/* Did this cpu attach? */
 			if (pmap_kernel()->pm_reg_ptps[n] == 0)
 				continue;
+#endif
 
 			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
@@ -4362,9 +4364,11 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		{
 			int *pt;
 
+#if defined(MULTIPROCESSOR)
 			/* Did this cpu attach? */
 			if (pmap_kernel()->pm_reg_ptps[n] == 0)
 				continue;
+#endif
 
 			pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
