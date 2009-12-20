@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.171 2009/12/14 00:46:06 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.172 2009/12/20 03:40:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,7 +171,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  */
 	beq	a0, zero, 1f
 	nop
-	PTR_L	a2, L_PCB(a0)			# a2 = l->l_addr
+	PTR_L	a2, L_PCB(a0)			# a2 = pcb of old lwp
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
 	REG_S	s0, PCB_CONTEXT+SF_REG_S0(a2)
