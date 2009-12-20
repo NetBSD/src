@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.507 2009/12/14 02:01:53 matt Exp $
+# $NetBSD: shl.mi,v 1.508 2009/12/20 05:53:34 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -71,6 +71,7 @@
 ./usr/lib/libdns.so.5.0				base-bind-shlib
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
 ./usr/lib/libedit.so.3.0			base-sys-shlib
+./usr/lib/libelf.so.0.0				base-sys-shlib
 ./usr/lib/libevent.so.3.2			base-sys-shlib
 ./usr/lib/libfetch.so.3.0			base-sys-shlib
 ./usr/lib/libform.so.6.0			base-sys-shlib

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.94 2009/12/14 02:01:53 matt Exp $
+# $NetBSD: shl.mi,v 1.95 2009/12/20 05:53:35 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -25,6 +25,7 @@
 ./usr/lib/libdns_pic.a				comp-bind-piclib
 ./usr/lib/libdns_sd_pic.a			comp-mdns-piclib	mdns
 ./usr/lib/libedit_pic.a				comp-c-piclib
+./usr/lib/libelf_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
 ./usr/lib/libfetch_pic.a			comp-c-piclib
 ./usr/lib/libform_pic.a				comp-c-piclib
