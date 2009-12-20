@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/11/11 13:54:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2009/12/20 15:43:13 pooka Exp $
 #
 
-SUBDIR=	libnet80211 librumpusbhc libumass libusb libusbrum
+SUBDIR=	libnet80211 librumpusbhc libucom libumass libusb libusbrum
 
 .include <bsd.subdir.mk>
