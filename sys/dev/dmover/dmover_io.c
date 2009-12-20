@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.36 2009/12/09 21:32:58 dsl Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.37 2009/12/20 09:36:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.36 2009/12/09 21:32:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.37 2009/12/20 09:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -761,7 +761,7 @@ static const struct fileops dmio_fileops = {
 	.fo_stat = dmio_stat,
 	.fo_close = dmio_close,
 	.fo_kqfilter = fnullop_kqfilter,
-	.fo_abort = fnullop_abort,
+	.fo_restart = fnullop_restart,
 };
 
 /*

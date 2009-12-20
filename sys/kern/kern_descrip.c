@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.201 2009/12/09 21:32:59 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.202 2009/12/20 09:36:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.201 2009/12/09 21:32:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202 2009/12/20 09:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,8 @@ fd_close(unsigned fd)
 		 * Wait for other references to drain.  This is typically
 		 * an application error - the descriptor is being closed
 		 * while still in use.
-		 *
+		 * (Or just a threaded application trying to unblock its
+		 * thread that sleeps in (say) accept()).
 		 */
 		atomic_or_uint(&ff->ff_refcnt, FR_CLOSING);
 
@@ -623,8 +624,15 @@ fd_close(unsigned fd)
 			knote_fdclose(fd);
 		}
 
-		/* Try to drain out descriptor references. */
-		(*fp->f_ops->fo_abort)(fp);
+		/*
+		 * Since the file system code doesn't know which fd
+		 * each request came from (think dup()), we have to
+		 * ask it to return ERESTART for any long-term blocks.
+		 * The re-entry through read/write/etc will detect the
+		 * closed fd and return EBAFD.
+		 * Blocked partial writes may return a short length.
+		 */
+		(*fp->f_ops->fo_restart)(fp);
 		mutex_enter(&fdp->fd_lock);
 
 		/*
@@ -632,6 +640,8 @@ fd_close(unsigned fd)
 		 * in order to ensure that all pre-existing references
 		 * have been drained.  New references past this point are
 		 * of no interest.
+		 * XXX (dsl) this may need to call fo_restart() after a
+		 * timeout to guarantee that all the system calls exit.
 		 */
 		while ((ff->ff_refcnt & FR_MASK) != 0) {
 			cv_wait(&ff->ff_closing, &fdp->fd_lock);
@@ -1787,7 +1797,7 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 }
 
 void
-fnullop_abort(file_t *fp)
+fnullop_restart(file_t *fp)
 {
 
 }
