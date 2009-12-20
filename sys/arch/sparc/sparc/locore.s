@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.249 2009/12/10 05:10:03 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.250 2009/12/20 03:53:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2988,17 +2988,6 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	b	ft_rett
 	 mov	SRMMU_CXR, %l7			! reload ctx register
 
-_ENTRY(_C_LABEL(ft_want_ast))
-	mov	1, %l4				! ack xcall in all cases
-	st	%l4, [%l6 + CPUINFO_XMSG_CMPLT]	! completed = 1
-
-	btst	PSR_PS, %l0		! if from user mode
-	be,a	slowtrap		!  call trap(T_AST)
-	 mov	T_AST, %l3
-
-	mov	%l0, %psr		! else return from trap
-	 nop				! AST will be noticed on out way out
-	RETT
 #endif /* MULTIPROCESSOR */
 
 #ifdef notyet
@@ -3041,7 +3030,7 @@ zshard:
  */
 
 #if defined(SUN4)
-nmi_sun4:
+_ENTRY(_C_LABEL(nmi_sun4))
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
@@ -3067,7 +3056,7 @@ nmi_sun4:
 #endif
 
 #if defined(SUN4C)
-nmi_sun4c:
+_ENTRY(_C_LABEL(nmi_sun4c))
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
@@ -3101,7 +3090,7 @@ nmi_sun4c:
 #endif /* SUN4M */
 #endif /* SUN4C */
 
-nmi_common:
+_ENTRY(_C_LABEL(nmi_common))
 	! and call C code
 	call	_C_LABEL(memerr4_4c)	! memerr(0, ser, sva, aer, ava)
 	 clr	%o0
@@ -3122,7 +3111,7 @@ nmi_common:
 	 wr	%l4, 0, %y		! restore y
 
 #if defined(SUN4M)
-nmi_sun4m:
+_ENTRY(_C_LABEL(nmi_sun4m))
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 
@@ -4616,12 +4605,25 @@ _C_LABEL(cpu_hatch):
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
-	/* Set up a stack. We use the bottom half of the interrupt stack */
+#if 1
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
+
+	/* Set up a stack. We use the bottom half of the interrupt stack */
 	sethi	%hi(_EINTSTACKP), %o0
 	ld	[%o0 + %lo(_EINTSTACKP)], %o0
 	set	(INT_STACK_SIZE/2) + CCFSZ + 80, %sp
 	sub	%o0, %sp, %sp
+#else
+	/*
+	 * Use this CPUs idlelwp's stack
+	 */
+	sethi	%hi(cpcb), %o0
+	ld	[%o0 + %lo(cpcb)], %o0
+	set	USPACE - 80 - CCFSZ, %sp
+	add	%o0, %sp, %sp
+
+	add	80, %sp, %fp
+#endif
 
 	/* Enable traps */
 	rd	%psr, %l0
