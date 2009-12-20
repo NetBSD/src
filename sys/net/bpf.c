@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.149 2009/12/09 21:32:59 dsl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.150 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.149 2009/12/09 21:32:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.150 2009/12/20 09:36:06 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -165,7 +165,7 @@ static const struct fileops bpf_fileops = {
 	.fo_stat = bpf_stat,
 	.fo_close = bpf_close,
 	.fo_kqfilter = bpf_kqfilter,
-	.fo_abort = fnullop_abort,
+	.fo_restart = fnullop_restart,
 };
 
 dev_type_open(bpfopen);

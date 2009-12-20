@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.31 2009/12/13 18:27:02 dsl Exp $ */
+/* $NetBSD: pipe.h,v 1.32 2009/12/20 09:36:06 dsl Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -96,6 +96,7 @@ struct pipemapping {
 				   pointers/data. */
 #define	PIPE_LWANT	0x200	/* Process wants exclusive access to
 				   pointers/data. */
+#define	PIPE_RESTART	0x400	/* Return ERESTART to blocked syscalls */
 
 /*
  * Per-pipe data structure.

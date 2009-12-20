@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.137 2009/12/09 21:33:00 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.138 2009/12/20 09:36:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.137 2009/12/09 21:33:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.138 2009/12/20 09:36:06 dsl Exp $");
 
 #include "opt_pipe.h"
 
@@ -170,6 +170,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	struct mbuf	*nam;
 	int		error, fd;
 	struct socket	*so, *so2;
+	short		wakeup_state = 0;
 
 	if ((fp = fd_getfile(sock)) == NULL)
 		return (EBADF);
@@ -202,10 +203,15 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 			so->so_error = ECONNABORTED;
 			break;
 		}
+		if (wakeup_state & SS_RESTARTSYS) {
+			error = ERESTART;
+			goto bad;
+		}
 		error = sowait(so, true, 0);
 		if (error) {
 			goto bad;
 		}
+		wakeup_state = so->so_state;
 	}
 	if (so->so_error) {
 		error = so->so_error;
