@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.453 2009/12/05 16:29:10 pooka Exp $
+.\"	$NetBSD: main,v 1.454 2009/12/20 16:59:39 jruoho Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1327,6 +1327,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Hans Rosenfeld Ta Mt hans@NetBSD.org
 .It Ta Gordon Ross Ta Mt gwr@NetBSD.org
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
+.It Ta Jukka Ruohonen Ta Mt jruoho@NetBSD.org
 .It Ta Ilpo Ruotsalainen Ta Mt lonewolf@NetBSD.org
 .It Ta Heiko W. Rupp Ta Mt hwr@NetBSD.org
 .It Ta Blair J. Sadewitz Ta Mt bjs@NetBSD.org
