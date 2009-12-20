@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.126 2009/12/17 14:27:49 pooka Exp $ */
+/*	$NetBSD: fdisk.c,v 1.127 2009/12/20 17:32:09 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.126 2009/12/17 14:27:49 pooka Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.127 2009/12/20 17:32:09 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -120,9 +120,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.126 2009/12/17 14:27:49 pooka Exp $");
 
 #define GPT_TYPE(offs) ((offs) == GPT_HDR_BLKNO ?  "primary" : "secondary")
 
-#define LBUF 100
-static char lbuf[LBUF];
-
 #ifndef PRIdaddr
 #define PRIdaddr PRId64
 #endif
@@ -130,17 +127,6 @@ static char lbuf[LBUF];
 #ifndef _PATH_DEFDISK
 #define _PATH_DEFDISK	"/dev/rwd0d"
 #endif
-
-const char *disk = _PATH_DEFDISK;
-
-struct disklabel disklabel;		/* disk parameters */
-
-unsigned int cylinders, sectors, heads;
-daddr_t disksectors;
-#define cylindersectors (heads * sectors)
-
-struct mbr_sector mboot;
-
 
 struct {
 	struct mbr_sector *ptn;		/* array of pbrs */
@@ -150,6 +136,15 @@ struct {
 	int		ptn_id;		/* entry in mbr */
 	int		is_corrupt;	/* 1 if extended chain illegal */
 } ext;
+
+#define LBUF 100
+static char lbuf[LBUF];
+
+const char *disk = _PATH_DEFDISK;
+
+struct disklabel disklabel;		/* disk parameters */
+
+struct mbr_sector mboot;
 
 const char *boot_dir = DEFAULT_BOOTDIR;
 char *boot_path = 0;			/* name of file we actually opened */
@@ -162,6 +157,45 @@ char *boot_path = 0;			/* name of file we actually opened */
 #define OPTIONS			"0123FSafiluvs:b:c:E:r:w:"
 #endif
 
+/*
+ * Disk geometry and partition alignment.
+ *
+ * Modern disks do not have a fixed geomery and will always give a 'faked'
+ * geometry that matches the ATA standard - max 16 heads and 256 sec/track.
+ * The ATA geometry allows access to 2^28 sectors (as does LBA mode).
+ *
+ * The BIOS calls originally used an 8bit register for cylinder, head and
+ * sector. Later 2 bits were stolen from the sector number and added to
+ * cylinder number. The BIOS will translate this faked geometry either to
+ * the geometry reported by the disk, or do LBA reads (possibly LBA48).
+ * BIOS CHS reads have all sorts of limits, but 2^24 is absolute.
+ * For historic reasons the BIOS geometry is the called the dos geometry!
+ *
+ * If you know the disks real geometry it is usually worth aligning
+ * disk partitions to cylinder boundaries (certainly traditional!).
+ * For 'mbr' disks this has always been done with the BIOS geometry.
+ * The first track (typically 63 sectors) is reserved because the first
+ * sector is used for boot code. Similarly the data partition in an
+ * extended partition will start one track in. If an extended partition
+ * starts at the beginning of the disk you lose 2 tracks.
+ *
+ * However non-magnetic media in particular has physical sectors that are
+ * not the same size as those reported, so has to do read modify write
+ * sequences for misaligned transfers. The alignment of partitions to
+ * cylinder boundaries makes this happen all the time.
+ *
+ * It is thus sensible to align partitions on a sensible sector boundary.
+ * For instance 1MB (2048 sectors).
+ * Common code can do this by using a geometry with 1 head and 2048
+ * sectors per track.
+ */
+
+/* Disks reported geometry and overall size from device driver */
+unsigned int cylinders, sectors, heads;
+daddr_t disksectors;
+#define cylindersectors (heads * sectors)
+
+/* Geometry from the BIOS */
 unsigned int dos_cylinders;
 unsigned int dos_heads;
 unsigned int dos_sectors;
@@ -179,6 +213,10 @@ daddr_t dos_disksectors;
 #define	MAXHEAD		256	/* Usual limit is 255 */
 #define	MAXSECTOR	63
 int partition = -1;
+
+/* Alignment of partition, and offset if first sector unusable */
+#define	ptn_alignment	dos_cylindersectors
+#define	ptn_offset	dos_sectors
 
 int fd = -1, wfd = -1, *rfd = &fd;
 char *disk_file = NULL;
@@ -745,8 +783,8 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 	    indent, "", start, size);
 	if (size != 0) {
 		printf(" (%u MB, Cyls ", SEC_TO_MB(size));
-		if (v_flag == 0 && le32toh(partp->mbrp_start) == dos_sectors)
-			pr_cyls(start - dos_sectors, 0);
+		if (v_flag == 0 && le32toh(partp->mbrp_start) == ptn_offset)
+			pr_cyls(start - ptn_offset, 0);
 		else
 			pr_cyls(start, 0);
 		printf("-");
@@ -1676,8 +1714,8 @@ add_ext_ptn(daddr_t start, daddr_t size)
 		partp = &ext.ptn[part - 1].mbr_parts[1];
 		ext.ptn[part].mbr_parts[1] = *partp;
 		/* and prev onto us */
-		partp->mbrp_start = htole32(start - dos_sectors - ext.base);
-		partp->mbrp_size = htole32(size + dos_sectors);
+		partp->mbrp_start = htole32(start - ptn_offset - ext.base);
+		partp->mbrp_size = htole32(size + ptn_offset);
 	}
 	partp->mbrp_type = 5;	/* as used by win98 */
 	partp->mbrp_flag = 0;
@@ -1701,7 +1739,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		if (start == 0)
 			return "Sector zero is reserved for the MBR";
 #if 0
-		if (start < dos_sectors)
+		if (start < ptn_offset)
 			/* This is just a convention, not a requirement */
 			return "Track zero is reserved for the BIOS";
 #endif
@@ -1803,7 +1841,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			}
 		} else {
 			/* must create an empty slot */
-			add_ext_ptn(start, dos_sectors);
+			add_ext_ptn(start, ptn_offset);
 			ext.ptn[0].mbr_parts[1].mbrp_start = htole32(ext.base
 								- start);
 		}
@@ -1828,8 +1866,8 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		return "Nested extended partitions are not allowed";
 
 	/* allow one track at start for extended partition header */
-	start -= dos_sectors;
-	size += dos_sectors;
+	start -= ptn_offset;
+	size += ptn_offset;
 	if (start < ext.base || start + size > ext.limit)
 		return "Outside bounds of extended partition";
 
@@ -1844,7 +1882,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_size);
 		if (p == 0)
 			p_s += le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
-							- dos_sectors;
+							- ptn_offset;
 		if (start < p_e && start + size > p_s) {
 			if (!f_flag)
 				return "Overlaps another extended partition";
@@ -1930,23 +1968,23 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 				continue;
 			n_s = ext_offset(p);
-			if (n_s > start + dos_sectors)
+			if (n_s > start + ptn_offset)
 				break;
 			start = ext_offset(p)
 				+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
 				+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_size);
 		}
-		if (ext.limit - start <= dos_sectors) {
+		if (ext.limit - start <= ptn_offset) {
 			printf("No space in extended partition\n");
 			return 0;
 		}
-		start += dos_sectors;
+		start += ptn_offset;
 	}
 
 	if (!s_flag && sysid == 0 && !extended) {
 		/* same for non-extended partition */
 		/* first see if old start is free */
-		if (start < dos_sectors)
+		if (start < ptn_offset)
 			start = 0;
 		for (p = 0; start != 0 && p < MBR_PART_COUNT; p++) {
 			if (mboot.mbr_parts[p].mbrp_type == 0)
@@ -1958,7 +1996,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		}
 		if (start == 0) {
 			/* Look for first gap */
-			start = dos_sectors;
+			start = ptn_offset;
 			for (p = 0; p < MBR_PART_COUNT; p++) {
 				if (mboot.mbr_parts[p].mbrp_type == 0)
 					continue;
@@ -2041,9 +2079,9 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			if (size == 0 || size > lim)
 				size = lim;
 			fl = DEC_SEC;
-			if (start % dos_cylindersectors == dos_sectors)
+			if (start % ptn_alignment == ptn_offset)
 				fl |= DEC_RND_DOWN;
-			if (start == 2 * dos_sectors)
+			if (start == 2 * ptn_offset)
 				fl |= DEC_RND_DOWN | DEC_RND_DOWN_2;
 			size = decimal("size", size, fl, 0, lim);
 #ifdef BOOTSEL
@@ -2110,7 +2148,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	if (extended) {
 		if (part != -1)
 			delete_ext_ptn(part);
-		if (start == ext.base + dos_sectors)
+		if (start == ext.base + ptn_offset)
 			/* First one must have been free */
 			part = 0;
 		else
@@ -2684,21 +2722,21 @@ decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t max
 				if (valid || !strncasecmp(cp, "mb", len)) {
 					acc *= SEC_IN_1M;
 					/* round to whole number of cylinders */
-					acc += dos_cylindersectors / 2;
-					acc /= dos_cylindersectors;
+					acc += ptn_alignment / 2;
+					acc /= ptn_alignment;
 					valid = 1;
 				}
 				if (valid || !strncasecmp(cp, "cyl", len)) {
-					acc *= dos_cylindersectors;
+					acc *= ptn_alignment;
 					/* adjustments for cylinder boundary */
 					if (acc == 0 && flags & DEC_RND_0)
-						acc += dos_sectors;
+						acc += ptn_offset;
 					if (flags & DEC_RND)
-						acc += dos_sectors;
+						acc += ptn_offset;
 					if (flags & DEC_RND_DOWN)
-						acc -= dos_sectors;
+						acc -= ptn_offset;
 					if (flags & DEC_RND_DOWN_2)
-						acc -= dos_sectors;
+						acc -= ptn_offset;
 					cp += len;
 				}
 			}
