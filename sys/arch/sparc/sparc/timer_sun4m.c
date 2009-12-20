@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.17 2009/03/10 23:58:20 martin Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.18 2009/12/20 03:40:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.17 2009/03/10 23:58:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.18 2009/12/20 03:40:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,6 +110,7 @@ clockintr_4m(void *cap)
 	 * panic
 	 * so for now just bail when cold
 	 */
+	cpuinfo.ci_lev10.ev_count++;
 	if (cold)
 		return 0;
 	/* read the limit register to clear the interrupt */
@@ -127,6 +128,14 @@ statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
+
+	cpuinfo.ci_lev14.ev_count++;
+
+#if defined(MULTIPROCESSOR) && 0
+	if (!(curcpu()->master)) {
+		raise_ipi(&cpuinfo, 10);
+	}
+#endif
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
@@ -219,6 +228,13 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		cpi->counterreg_4m = (struct counter_4m *)bh;
+	}
+
+	/* Install timer/statclock event counters, per cpu */
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		snprintf(cpi->ci_cpuname, sizeof(cpi->ci_cpuname), "cpu/%d", n);
+		evcnt_attach_dynamic(&cpi->ci_lev10, EVCNT_TYPE_INTR, NULL, cpi->ci_cpuname, "lev10");
+		evcnt_attach_dynamic(&cpi->ci_lev14, EVCNT_TYPE_INTR, NULL, cpi->ci_cpuname, "lev14");
 	}
 
 	/* Put processor counter in "timer" mode */
