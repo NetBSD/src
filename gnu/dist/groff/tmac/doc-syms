@@ -686,6 +686,7 @@
 .ds doc-str-Lb-libcrypt    Crypt Library (libcrypt, \-lcrypt)
 .ds doc-str-Lb-libcurses   Curses Library (libcurses, \-lcurses)
 .ds doc-str-Lb-libedit     Command Line Editor Library (libedit, \-ledit)
+.ds doc-str-Lb-libelf      ELF Object Manipulation Library (libelf, \-lelf)
 .ds doc-str-Lb-libevent    Event Notification Library (libevent, \-levent)
 .ds doc-str-Lb-libform     Curses Form Library (libform, \-lform)
 .ds doc-str-Lb-libi386     i386 Architecture Library (libi386, \-li386)
