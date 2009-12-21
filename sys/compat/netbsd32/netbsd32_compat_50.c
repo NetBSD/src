@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.7 2009/11/11 09:48:51 rmind Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.8 2009/12/21 16:18:17 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,13 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.7 2009/11/11 09:48:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.8 2009/12/21 16:18:17 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
-#endif
 
 #include "fs_lfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
