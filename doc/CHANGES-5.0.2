@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.33 2009/12/18 05:34:18 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.34 2009/12/21 09:42:08 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -889,4 +889,11 @@ sys/kern/sys_mqueue.c				1.28
 	  kernel memory by mq_send(2) -- add a sysctl'able limit which
 	  defaults to 16*mq_def_maxmsg
 	[tron, ticket #1188]
+
+sys/kern/vfs_syscalls.c				1.400
+
+	Use the kernel space version of the vfs name, not the
+	original userspace pointer. Avoids crashes on archs with
+	completely separate userspace VA.
+	[martin, ticket #1200]
 
