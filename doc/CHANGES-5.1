@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.162 2009/12/18 07:36:02 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.163 2009/12/21 09:19:39 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15649,4 +15649,11 @@ sys/sys/stat.h					1.59
 	Parenthesize S_IS*() macro arguments to prevent breakage with
 	certain arguments - see PR 41919.
 	[dholland, ticket #1196]
+
+sys/kern/vfs_syscalls.c				1.400
+
+	Use the kernel space version of the vfs name, not the
+	original userspace pointer. Avoids crashes on archs with
+	completely separate userspace VA.
+	[martin, ticket #1200]
 
