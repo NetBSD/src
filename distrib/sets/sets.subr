@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.117 2009/12/15 06:18:07 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.118 2009/12/21 15:37:25 uebayasi Exp $
 #
 
 #
@@ -55,6 +55,7 @@
 : ${TSORT:=tsort}
 : ${UNAME:=uname}
 : ${WC:=wc}
+: ${XARGS:=xargs}
 
 #
 # If printf is a shell builtin command, then we can
@@ -124,7 +125,7 @@ done
 
 IFS=$oIFS
 
-MKVARS="$( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars | sed -e 's,=.*,,' | xargs )"
+MKVARS="$( ${MAKE} -B -f ${rundir}/mkvars.mk mkvars | ${SED} -e 's,=.*,,' | ${XARGS} )"
 
 #####
 
@@ -166,7 +167,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.117 2009/12/15 06:18:07 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.118 2009/12/21 15:37:25 uebayasi Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -471,7 +472,7 @@ print_set_lists()
 				echo >&2 "DEBUG: list_set_files: $l"
 			fi
 		done
-	done | xargs ${SED} ${SUBST}
+	done | ${XARGS} ${SED} ${SUBST}
 }
 
 # arch_to_cpu mach
