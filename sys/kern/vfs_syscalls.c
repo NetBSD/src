@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.3 2009/07/01 22:47:05 snj Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.4 2009/12/21 09:19:16 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.3 2009/07/01 22:47:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.4 2009/12/21 09:19:16 sborrill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -288,7 +288,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 	/* If we can autoload a vfs module, try again */
 	mutex_enter(&module_lock);
-	(void)module_autoload(fstype, MODULE_CLASS_VFS);
+	(void)module_autoload(fstypename, MODULE_CLASS_VFS);
 	mutex_exit(&module_lock);
 
 	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
