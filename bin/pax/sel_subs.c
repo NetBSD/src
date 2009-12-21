@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.21 2007/04/29 20:23:34 msaitoh Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.22 2009/12/21 09:17:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.21 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.22 2009/12/21 09:17:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,6 +404,7 @@ trng_add(char *str)
 			default:
 				tty_warn(1, "Bad option %c with time range %s",
 				    *flgpt, str);
+				(void)free((char *)pt);
 				goto out;
 			}
 			++flgpt;
