@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1350 2009/12/20 05:53:34 thorpej Exp $
+#	$NetBSD: mi,v 1.1351 2009/12/21 21:09:41 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2305,9 +2305,10 @@
 ./usr/lib/libatf.a				comp-obsolete		obsolete
 ./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libavl.a				comp-zfs-lib		zfs
+./usr/lib/libavl_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libavl_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
-./usr/lib/libbfd_g.a				-unknown-		debuglib
+./usr/lib/libbfd_g.a				-unknown-		debuglib,binutils
 ./usr/lib/libbind9.a				comp-bind-lib
 ./usr/lib/libbind9_g.a				-unknown-		debuglib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
@@ -2411,7 +2412,7 @@
 ./usr/lib/libhx509.a				comp-krb5-lib		kerberos
 ./usr/lib/libhx509_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libhx509_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libiberty_g.a				-unknown-		debuglib
+./usr/lib/libiberty_g.a				-unknown-		debuglib,binutils
 ./usr/lib/libintl.a				comp-c-lib
 ./usr/lib/libintl_g.a				-unknown-		debuglib
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
@@ -2485,11 +2486,12 @@
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair.a				comp-zfs-lib		zfs
+./usr/lib/libnvpair_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libnvpair_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libobjc.a				comp-objc-lib
 ./usr/lib/libobjc_g.a				-unknown-		debuglib
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
-./usr/lib/libopcodes_g.a			-unknown-		debuglib
+./usr/lib/libopcodes_g.a			comp-obsolete		debuglib,binutils
 ./usr/lib/libopenpgpsdk.a			comp-obsolete		obsolete
 ./usr/lib/libopenpgpsdk_g.a			comp-obsolete		obsolete
 ./usr/lib/libopenpgpsdk_p.a			comp-obsolete		obsolete
@@ -2687,6 +2689,7 @@
 ./usr/lib/libukfs_g.a				-unknown-		debuglib
 ./usr/lib/libukfs_p.a				comp-c-proflib		profile
 ./usr/lib/libumem.a				comp-zfs-lib		zfs
+./usr/lib/libumem_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libumem_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libusb.a				comp-obsolete		obsolete
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete
@@ -2698,6 +2701,7 @@
 ./usr/lib/libutil_g.a				-unknown-		debuglib
 ./usr/lib/libutil_p.a				comp-c-proflib		profile
 ./usr/lib/libuutil.a				comp-zfs-lib		zfs
+./usr/lib/libuutil_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libuutil_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libvers_g.a				-unknown-		kerberos,debuglib
 ./usr/lib/libwrap.a				comp-c-lib
@@ -2710,8 +2714,10 @@
 ./usr/lib/libz_g.a				-unknown-		debuglib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/libzfs.a				comp-zfs-lib		zfs
+./usr/lib/libzfs_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libzfs_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/libzpool.a				comp-zfs-lib		zfs
+./usr/lib/libzpool_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf
