@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.6 2009/08/03 23:15:29 rmind Exp $
+.\"	$NetBSD: vmem.9,v 1.7 2009/12/21 22:49:18 dyoung Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd August 3, 2009
+.Dd December 21, 2009
 .Dt VMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -42,6 +42,10 @@
 "vmem_addr_t (*allocfn)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t)" \
 "void (*freefn)(vmem_t *, vmem_addr_t, vmem_size_t)" \
 "vmem_t *source" "vmem_size_t qcache_max" "vm_flag_t flags" "int ipl"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft vmem_addr_t
+.Fn vmem_add \
+"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size" "vm_flag_t flags"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft vmem_addr_t
 .Fn vmem_xalloc \
@@ -86,10 +90,70 @@ The size of the initial span.
 The smallest unit of allocation.
 .It Fa allocfn
 The callback function used to import spans from the backend arena.
+Set both
+.Fa allocfn 
+and
+.Fa freefn
+to
+.Dv NULL
+to disable automatic imports.
+.Nm
+calls
+.Fo "(*allocfn)"
+.Fa source
+.Fa size
+.Fa "&actualsize"
+.Fa flags
+.Fc
+to import a span of size at least
+.Fa size .
+.Fa allocfn
+should accept the same 
+.Fa flags
+as
+.Fn vmem_alloc .
+.Fa allocfn
+must return
+.Dv VMEM_ADDR_NULL
+to indicate failure, or
+else the starting address of the imported span.
+If
+.Fa allocfn
+succeeds, it must write the actual size of the allocation to
+.Fa actualsize .
+The actual size will always be greater than or equal to the requested size.
 .It Fa freefn
 The callback function used to free spans to the backend arena.
+.Fa freefn
+may not be
+.Dv NULL
+unless
+.Fa allocfn
+is
+.Dv NULL .
+.Nm
+calls
+.Fn "(*freefn)" source addr size
+to return to
+.Fa source
+a span of size
+.Fa size ,
+starting at
+.Fa addr ,
+that was previously allocated by
+.Fa allocfn .
 .It Fa source
 The backend arena.
+.Fa source
+may be
+.Dv NULL .
+.Nm
+passes
+.Fa source
+as the first argument of
+.Fa allocfn
+and
+.Fa freefn .
 .It Fa qcache_max
 The largest size of allocations which can be served by quantum cache.
 It is merely a hint and can be ignored.
@@ -106,6 +170,28 @@ if there are not enough resources available.
 .El
 .It Fa ipl
 Interrupt level to be blocked for allocating from vmem.
+.El
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn vmem_add
+adds a span of size
+.Fa size
+starting at
+.Fa addr
+to the arena.
+Returns
+.Fa addr
+on success.
+.Fa flags
+should be one of:
+.Bl -tag -width VM_NOSLEEP
+.It Dv VM_SLEEP
+Can sleep until enough resources are available.
+.It Dv VM_NOSLEEP
+Don't sleep.
+Immediately return
+.Dv VMEM_ADDR_NULL
+if there are not enough resources available.
 .El
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -171,7 +257,7 @@ if there are not enough resources available.
 .\" ------------------------------------------------------------
 .Fn vmem_xfree
 frees resource allocated by
-.Fa vmem_xalloc
+.Fn vmem_xalloc
 to the arena.
 .Pp
 .Bl -tag -width addr
@@ -227,7 +313,7 @@ if there are not enough resources available.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn vmem_free
 frees resource allocated by
-.Fa vmem_alloc
+.Fn vmem_alloc
 to the arena.
 .Pp
 .Bl -tag -width addr
@@ -300,6 +386,27 @@ subsystem is implemented within the file
 .%D 2001
 .Re
 .\" ------------------------------------------------------------
+.Sh BUGS
+.Nm
+cannot manage a resource that starts at 0, because it reserves the
+address
+.Dv VMEM_ADDR_NULL
+.Pq 0
+for indicating errors.
+.Pp
+.Nm
+cannot manage a resource that ends at the maximum
+.Vt vmem_addr_t .
+This is an implementation limitation.
+.Pp
+.Nm
+relies on
+.Xr malloc 9 ,
+.Xr pool 9 ,
+and
+.Xr RUN_ONCE 9 ,
+so it cannot be used as early during system bootstrap as
+.Xr extent 9 .
 .Sh AUTHORS
 This implementation of
 .Nm
