@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.27 2009/04/10 15:07:08 joerg Exp $
+.\" $NetBSD: ugen.4,v 1.28 2009/12/21 19:04:36 gdt Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,6 +118,8 @@ and
 .Xr ioctl 2
 calls are available, and enable read-ahead and write-behind buffering
 respectively.
+This buffering supports fixed-sized USB transfers and is intended for
+devices with regular and continuing data transfers.
 When read-ahead or write-behind are enabled, the file descriptor
 may be set to use non-blocking IO.
 .Pp
