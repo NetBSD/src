@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.4 2009/12/20 05:52:15 thorpej Exp $	*/
+/*	$NetBSD: libelf.h,v 1.5 2009/12/21 18:21:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -33,17 +33,23 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <inttypes.h>
 
-#if defined(__NetBSD__)
+#if HAVE_NBTOOL_CONFIG_H
+# include <nbinclude/sys/exec_elf.h>
+# define __LIBELF_HAVE_ELF_CAP          1
+# define __LIBELF_HAVE_ELF_MOVE         1
+# define __LIBELF_HAVE_ELF_NOTE         1
+# define __LIBELF_HAVE_ELF_SYMINFO      1
+# define __LIBELF_HAVE_ELF_VERS         1
+#elif defined(__NetBSD__)
 # include <sys/exec_elf.h>
 # define __LIBELF_HAVE_ELF_CAP		1
 # define __LIBELF_HAVE_ELF_MOVE		1
 # define __LIBELF_HAVE_ELF_NOTE		1
 # define __LIBELF_HAVE_ELF_SYMINFO	1
 # define __LIBELF_HAVE_ELF_VERS		1
-#endif /* __NetBSD__ */
-
-#if defined(__FreeBSD__)
+#elif defined(__FreeBSD__)
 # include <sys/elf32.h>
 # include <sys/elf64.h>
 # include <osreldate.h>
@@ -56,7 +62,7 @@
 # if __FreeBSD_version >= 700009
 #  define __LIBELF_HAVE_ELF_VERS	1
 # endif /* __FreeBSD_version >= 700009 */
-#endif /* __FreeBSD__ */
+#endif
 
 /* Library private data structures */
 typedef struct _Elf Elf;

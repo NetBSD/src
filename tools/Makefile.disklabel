@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.disklabel,v 1.13 2009/09/14 13:44:05 he Exp $
+#	$NetBSD: Makefile.disklabel,v 1.14 2009/12/21 18:21:17 thorpej Exp $
 
 # NOxxx definitions are copied from Makefile.host, and are
 # required before .include <bsd.own.mk>.   The include of bsd.own.mk
@@ -29,7 +29,8 @@ _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h
 _INCS=		disktab.h
 _SYSINCS=	bootblock.h \
 		disklabel.h disklabel_acorn.h disklabel_gpt.h disklabel_rdb.h \
-		dkbad.h
+		dkbad.h \
+		exec_elf.h
 
 HOST_CPPFLAGS+=	-I${TOOLDIR}/include
 
