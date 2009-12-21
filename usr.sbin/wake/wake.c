@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.8 2009/07/18 08:35:19 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.9 2009/12/21 08:42:39 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -69,7 +69,8 @@ static int send_wakeup(int, struct ether_addr const *);
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s interface lladdr\n", getprogname());
+	(void)fprintf(stderr, "usage: %s interface lladdr [lladdr ...]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
