@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 2009/10/29 13:07:12 christos Exp $
+#	$NetBSD: Makefile,v 1.130 2009/12/21 18:21:17 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	yacc .WAIT \
 	awk .WAIT \
 	lex .WAIT \
+	libelf .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile atf-compile cat cksum compile_et config db \
 		file lint1 \
