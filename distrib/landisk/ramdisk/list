@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.12 2009/09/20 23:19:53 abs Exp $
+#	$NetBSD: list,v 1.13 2009/12/21 11:22:41 nonaka Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -20,6 +20,7 @@ PROG	bin/stty
 PROG	bin/sync
 
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fdisk
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -29,6 +30,7 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
+PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
