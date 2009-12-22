@@ -148,19 +148,20 @@ atf_expand_matches_glob(const char *glob, const char *candidate,
     res = regcomp(&preg, atf_dynstr_cstring(&regex), REG_BASIC);
     if (res != 0) {
         err = pattern_error(res, &preg);
-        goto out;
+        goto out_regex;
     }
 
     /* Check match. */
     res = regexec(&preg, candidate, 0, NULL, 0);
-    if (res != 0 && res != REG_NOMATCH) {
+    if (res != 0 && res != REG_NOMATCH)
         err = pattern_error(res, &preg);
-        goto out;
-    } else {
+    else {
         *result = (res == 0);
         INV(!atf_is_error(err));
     }
 
+    regfree(&preg);
+out_regex:
     atf_dynstr_fini(&regex);
 out:
     return err;

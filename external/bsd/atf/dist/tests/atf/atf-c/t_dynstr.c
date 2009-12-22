@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 
 #include "atf-c/dynstr.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Tests for the "atf_dynstr" type.
@@ -159,6 +159,13 @@ ATF_TC_BODY(init_raw, tc)
     RE(atf_dynstr_init_raw(&str, "String\0Lost", 11));
     ATF_REQUIRE(strcmp(atf_dynstr_cstring(&str), "String") == 0);
     atf_dynstr_fini(&str);
+
+    {
+        atf_error_t err = atf_dynstr_init_raw(&str, "NULL", SIZE_MAX - 1);
+        ATF_REQUIRE(atf_is_error(err));
+        ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        atf_error_free(err);
+    }
 }
 
 ATF_TC(init_rep);
@@ -198,10 +205,12 @@ ATF_TC_BODY(init_rep, tc)
         err = atf_dynstr_init_rep(&str, SIZE_MAX, 'a');
         ATF_REQUIRE(atf_is_error(err));
         ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        atf_error_free(err);
 
         err = atf_dynstr_init_rep(&str, SIZE_MAX - 1, 'a');
         ATF_REQUIRE(atf_is_error(err));
         ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        atf_error_free(err);
     }
 }
 
@@ -241,6 +250,8 @@ ATF_TC_BODY(init_substr, tc)
     RE(atf_dynstr_init_substr(&str, &src, 7, atf_dynstr_npos));
     ATF_REQUIRE(strcmp(atf_dynstr_cstring(&str), "Str 2") == 0);
     atf_dynstr_fini(&str);
+
+    atf_dynstr_fini(&src);
 }
 
 ATF_TC(copy);
@@ -591,6 +602,12 @@ ATF_TC_BODY(equal_dynstr, tc)
 }
 
 /* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/dynstr.h", "d_include_dynstr_h.c");
+
+/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -621,6 +638,9 @@ ATF_TP_ADD_TCS(tp)
     /* Operators. */
     ATF_TP_ADD_TC(tp, equal_cstring);
     ATF_TP_ADD_TC(tp, equal_dynstr);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

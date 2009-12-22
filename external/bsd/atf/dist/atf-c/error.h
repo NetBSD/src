@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ void atf_error_format(const atf_error_t, char *, size_t);
 
 atf_error_t atf_libc_error(int, const char *, ...);
 int atf_libc_error_code(const atf_error_t);
+const char *atf_libc_error_msg(const atf_error_t);
 
 atf_error_t atf_no_memory_error(void);
 

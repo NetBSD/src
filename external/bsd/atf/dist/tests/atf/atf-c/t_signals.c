@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
 #include "atf-c/process.h"
 #include "atf-c/signals.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -197,17 +197,20 @@ ATF_TC_HEAD(signal_programmer_init, tc)
 }
 ATF_TC_BODY(signal_programmer_init, tc)
 {
-    atf_signal_programmer_t sp;
+    atf_signal_programmer_t sp1, sp2;
 
-    RE(atf_signal_programmer_init(&sp, SIGUSR1, test1_handler));
+    RE(atf_signal_programmer_init(&sp1, SIGUSR1, test1_handler));
     ATF_REQUIRE(!test1_happened);
     ATF_REQUIRE(kill(getpid(), SIGUSR1) != -1);
     ATF_REQUIRE(test1_happened);
 
-    RE(atf_signal_programmer_init(&sp, SIGUSR2, test2_handler));
+    RE(atf_signal_programmer_init(&sp2, SIGUSR2, test2_handler));
     ATF_REQUIRE(!test2_happened);
     ATF_REQUIRE(kill(getpid(), SIGUSR2) != -1);
     ATF_REQUIRE(test2_happened);
+
+    atf_signal_programmer_fini(&sp2);
+    atf_signal_programmer_fini(&sp1);
 }
 
 ATF_TC(signal_programmer_fini);
@@ -242,6 +245,29 @@ ATF_TC_BODY(signal_programmer_fini, tc)
  * Test cases for the free functions.
  * --------------------------------------------------------------------- */
 
+static
+void
+signal_reset_child(void *v)
+{
+    struct sigaction sa;
+
+    sa.sa_handler = test1_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    ATF_REQUIRE(sigaction(SIGTERM, &sa, NULL) != -1);
+    ATF_REQUIRE(!test1_happened);
+    kill(getpid(), SIGTERM);
+    ATF_REQUIRE(test1_happened);
+
+    test1_happened = false;
+    atf_signal_reset(SIGTERM);
+    kill(getpid(), SIGTERM);
+
+    printf("Signal was not resetted correctly\n");
+    abort();
+}
+
 ATF_TC(signal_reset);
 ATF_TC_HEAD(signal_reset, tc)
 {
@@ -249,34 +275,37 @@ ATF_TC_HEAD(signal_reset, tc)
 }
 ATF_TC_BODY(signal_reset, tc)
 {
-    pid_t pid;
-    RE(atf_process_fork(&pid));
-    if (pid == 0) {
-        struct sigaction sa;
+    atf_process_child_t child;
 
-        sa.sa_handler = test1_handler;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = 0;
+    {
+        atf_process_stream_t outsb, errsb;
 
-        ATF_REQUIRE(sigaction(SIGTERM, &sa, NULL) != -1);
-        ATF_REQUIRE(!test1_happened);
-        kill(getpid(), SIGTERM);
-        ATF_REQUIRE(test1_happened);
+        RE(atf_process_stream_init_inherit(&outsb));
+        RE(atf_process_stream_init_inherit(&errsb));
+        RE(atf_process_fork(&child, signal_reset_child, &outsb, &errsb, NULL));
 
-        test1_happened = false;
-        atf_signal_reset(SIGTERM);
-        kill(getpid(), SIGTERM);
+        atf_process_stream_fini(&errsb);
+        atf_process_stream_fini(&outsb);
+    }
 
-        printf("Signal was not resetted correctly\n");
-        abort();
-    } else {
-        int ecode;
+    {
+        atf_process_status_t status;
 
-        ATF_REQUIRE(waitpid(pid, &ecode, 0) != -1);
-        ATF_REQUIRE(WIFEXITED(ecode) || WIFSIGNALED(ecode));
-        ATF_REQUIRE(!WIFSIGNALED(ecode) || WTERMSIG(ecode) == SIGTERM);
+        RE(atf_process_child_wait(&child, &status));
+        ATF_REQUIRE(atf_process_status_exited(&status) ||
+                    atf_process_status_signaled(&status));
+        ATF_REQUIRE(!atf_process_status_signaled(&status) ||
+                    atf_process_status_termsig(&status) == SIGTERM);
+
+        atf_process_status_fini(&status);
     }
 }
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/signals.h", "d_include_signals_h.c");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -298,6 +327,9 @@ ATF_TP_ADD_TCS(tp)
 
     /* Add the tests for the free functions. */
     ATF_TP_ADD_TC(tp, signal_reset);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

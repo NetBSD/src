@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <atf-c.h>
@@ -34,13 +35,64 @@
 #include "atf-c/config.h"
 #include "atf-c/env.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
+
+static const char *test_value = "env-value";
+
+static struct varnames {
+    const char *lc;
+    const char *uc;
+    bool can_be_empty;
+} all_vars[] = {
+    { "atf_arch",           "ATF_ARCH",           false },
+    { "atf_build_cc",       "ATF_BUILD_CC",       false },
+    { "atf_build_cflags",   "ATF_BUILD_CFLAGS",   true  },
+    { "atf_build_cpp",      "ATF_BUILD_CPP",      false },
+    { "atf_build_cppflags", "ATF_BUILD_CPPFLAGS", true  },
+    { "atf_build_cxx",      "ATF_BUILD_CXX",      false },
+    { "atf_build_cxxflags", "ATF_BUILD_CXXFLAGS", true  },
+    { "atf_confdir",        "ATF_CONFDIR",        false },
+    { "atf_includedir",     "ATF_INCLUDEDIR",     false },
+    { "atf_libdir",         "ATF_LIBDIR",         false },
+    { "atf_libexecdir",     "ATF_LIBEXECDIR",     false },
+    { "atf_machine",        "ATF_MACHINE",        false },
+    { "atf_m4",             "ATF_M4",             false },
+    { "atf_pkgdatadir",     "ATF_PKGDATADIR",     false },
+    { "atf_shell",          "ATF_SHELL",          false },
+    { "atf_workdir",        "ATF_WORKDIR",        false },
+    { NULL,                 NULL,                 false }
+};
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
  * --------------------------------------------------------------------- */
 
 void __atf_config_reinit(void);
+
+static
+void
+unset_all(void)
+{
+    const struct varnames *v;
+    for (v = all_vars; v->lc != NULL; v++)
+        RE(atf_env_unset(v->uc));
+}
+
+static
+void
+compare_one(const char *var, const char *expvalue)
+{
+    const struct varnames *v;
+
+    printf("Checking that %s is set to %s\n", var, expvalue);
+
+    for (v = all_vars; v->lc != NULL; v++) {
+        if (strcmp(v->lc, var) == 0)
+            ATF_CHECK_STREQ(atf_config_get(v->lc), test_value);
+        else
+            ATF_CHECK(strcmp(atf_config_get(v->lc), test_value) != 0);
+    }
+}
 
 /* ---------------------------------------------------------------------
  * Test cases for the free functions.
@@ -53,159 +105,42 @@ ATF_TC_HEAD(get, tc)
 }
 ATF_TC_BODY(get, tc)
 {
+    const struct varnames *v;
+
     /* Unset all known environment variables and make sure the built-in
      * values do not match the bogus value we will use for testing. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
+    unset_all();
     __atf_config_reinit();
-    ATF_REQUIRE(strcmp(atf_config_get("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_workdir"), "env-value") != 0);
+    for (v = all_vars; v->lc != NULL; v++)
+        ATF_CHECK(strcmp(atf_config_get(v->lc), test_value) != 0);
 
-    /* Make sure empty values in the environment are not considered. */
-    atf_env_set("ATF_ARCH", "");
-    atf_env_set("ATF_CONFDIR", "");
-    atf_env_set("ATF_LIBEXECDIR", "");
-    atf_env_set("ATF_MACHINE", "");
-    atf_env_set("ATF_PKGDATADIR", "");
-    atf_env_set("ATF_SHELL", "");
-    atf_env_set("ATF_WORKDIR", "");
-    __atf_config_reinit();
-    ATF_REQUIRE(strlen(atf_config_get("atf_arch")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_confdir")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_libexecdir")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_machine")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_pkgdatadir")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_shell")) > 0);
-    ATF_REQUIRE(strlen(atf_config_get("atf_workdir")) > 0);
+    /* Test the behavior of empty values. */
+    for (v = all_vars; v->lc != NULL; v++) {
+        unset_all();
+        if (strcmp(atf_config_get(v->lc), "") != 0) {
+            RE(atf_env_set(v->uc, ""));
+            __atf_config_reinit();
+            if (v->can_be_empty)
+                ATF_CHECK(strlen(atf_config_get(v->lc)) == 0);
+            else
+                ATF_CHECK(strlen(atf_config_get(v->lc)) > 0);
+        }
+    }
 
-    /* Check if the ATF_ARCH variable is recognized. */
-    atf_env_set     ("ATF_ARCH", "env-value");
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(atf_config_get("atf_arch"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_CONFDIR variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    atf_env_set     ("ATF_CONFDIR", "env-value");
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_confdir"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_LIBEXECDIR variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    atf_env_set     ("ATF_LIBEXECDIR", "env-value");
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_libexecdir"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_MACHINE variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    atf_env_set     ("ATF_MACHINE", "env-value");
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_machine"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_PKGDATADIR variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    atf_env_set     ("ATF_PKGDATADIR", "env-value");
-    RE(atf_env_unset("ATF_SHELL"));
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_pkgdatadir"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_SHELL variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    atf_env_set     ("ATF_SHELL", "env-value");
-    RE(atf_env_unset("ATF_WORKDIR"));
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_shell"), "env-value") == 0);
-    ATF_REQUIRE(strcmp(("atf_workdir"), "env-value") != 0);
-
-    /* Check if the ATF_WORKDIR variable is recognized. */
-    RE(atf_env_unset("ATF_ARCH"));
-    RE(atf_env_unset("ATF_CONFDIR"));
-    RE(atf_env_unset("ATF_LIBEXECDIR"));
-    RE(atf_env_unset("ATF_MACHINE"));
-    RE(atf_env_unset("ATF_PKGDATADIR"));
-    RE(atf_env_unset("ATF_SHELL"));
-    atf_env_set     ("ATF_WORKDIR", "env-value");
-    __atf_config_reinit();
-    ATF_REQUIRE(strcmp(("atf_arch"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_confdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_libexecdir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_machine"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_pkgdatadir"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(("atf_shell"), "env-value") != 0);
-    ATF_REQUIRE(strcmp(atf_config_get("atf_workdir"), "env-value") == 0);
+    /* Check if every variable is recognized individually. */
+    for (v = all_vars; v->lc != NULL; v++) {
+        unset_all();
+        RE(atf_env_set(v->uc, test_value));
+        __atf_config_reinit();
+        compare_one(v->lc, test_value);
+    }
 }
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/config.h", "d_include_config_h.c");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -214,6 +149,9 @@ ATF_TC_BODY(get, tc)
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, get);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }
