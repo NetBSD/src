@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.5 2009/12/19 11:55:23 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.6 2009/12/22 13:34:35 pooka Exp $	*/
 
 /*
  * MACHINE GENERATED: DO NOT EDIT
@@ -503,4 +503,6 @@ rump_device_configuration(void)
 
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "/dev/sd0", 'a',
 	    bmaj, 0, 8));
+	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/rsd0", 'a',
+	    cmaj, 0, 8));
 }
