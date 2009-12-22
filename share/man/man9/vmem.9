@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.7 2009/12/21 22:49:18 dyoung Exp $
+.\"	$NetBSD: vmem.9,v 1.8 2009/12/22 11:56:14 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -91,7 +91,7 @@ The smallest unit of allocation.
 .It Fa allocfn
 The callback function used to import spans from the backend arena.
 Set both
-.Fa allocfn 
+.Fa allocfn
 and
 .Fa freefn
 to
@@ -102,13 +102,13 @@ calls
 .Fo "(*allocfn)"
 .Fa source
 .Fa size
-.Fa "&actualsize"
+.Fa "\*[Am]actualsize"
 .Fa flags
 .Fc
 to import a span of size at least
 .Fa size .
 .Fa allocfn
-should accept the same 
+should accept the same
 .Fa flags
 as
 .Fn vmem_alloc .
@@ -386,6 +386,11 @@ subsystem is implemented within the file
 .%D 2001
 .Re
 .\" ------------------------------------------------------------
+.Sh AUTHORS
+This implementation of
+.Nm
+was written by
+.An YAMAMOTO Takashi .
 .Sh BUGS
 .Nm
 cannot manage a resource that starts at 0, because it reserves the
@@ -407,8 +412,3 @@ and
 .Xr RUN_ONCE 9 ,
 so it cannot be used as early during system bootstrap as
 .Xr extent 9 .
-.Sh AUTHORS
-This implementation of
-.Nm
-was written by
-.An YAMAMOTO Takashi .
