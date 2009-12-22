@@ -106,6 +106,7 @@ unsigned   __ops_validate_file(__ops_io_t *,
 unsigned   __ops_validate_mem(__ops_io_t *,
 			__ops_validation_t *,
 			__ops_memory_t *,
+			__ops_memory_t **,
 			const int,
 			const __ops_keyring_t *);
 

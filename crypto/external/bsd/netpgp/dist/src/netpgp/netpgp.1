@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.5 2009/12/05 10:05:54 wiz Exp $
+.\" $NetBSD: netpgp.1,v 1.6 2009/12/22 06:03:25 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,6 +370,44 @@ uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
 netpgp passphrase:
+%
+.Ed
+.Pp
+If no file name is provided, the data will be read from standard input,
+and displayed on standard output:
+.Bd -literal
+% netpgp --encrypt \*[Lt] a | netpgp --decrypt \*[Gt] b
+netpgp: default key set to "C0596823"
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase:
+%
+.Ed
+.Bd -literal
+% netpgp --sign \*[Lt] a | netpgp --cat \*[Gt] b 
+netpgp: default key set to "C0596823"
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase: 
+Good signature for \*[Lt]stdin\*[Gt] made Mon Dec 21 18:25:02 2009
+using RSA (Encrypt or Sign) key 1b68dcfcc0596823
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
 %
 .Ed
 .Sh RETURN VALUES

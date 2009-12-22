@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.23 2009/11/20 07:17:07 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.24 2009/12/22 06:03:25 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1138,8 +1138,8 @@ __ops_sign_buf(__ops_io_t *io,
 
 	if (input == NULL) {
 		(void) fprintf(io->errs,
-			"__ops_sign_buf_as_cleartext: null cleartext\n");
-		return 0;
+			"__ops_sign_buf: null input\n");
+		return NULL;
 	}
 
 	/* set up signature */

@@ -55,6 +55,7 @@
 
 #include "keyring.h"
 #include "packet.h"
+#include "memory.h"
 #include "packet-parse.h"
 
 #include <openssl/dsa.h>
@@ -187,6 +188,21 @@ unsigned   __ops_decrypt_file(__ops_io_t *,
 			const char *,
 			__ops_keyring_t *,
 			const unsigned,
+			const unsigned,
+			void *,
+			__ops_cbfunc_t *);
+
+__ops_memory_t *
+__ops_encrypt_buf(__ops_io_t *,
+			const void *,
+			const size_t,
+			const __ops_key_t *,
+			const unsigned);
+__ops_memory_t *
+__ops_decrypt_buf(__ops_io_t *,
+			const void *,
+			const size_t,
+			__ops_keyring_t *,
 			const unsigned,
 			void *,
 			__ops_cbfunc_t *);
