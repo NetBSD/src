@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,24 +43,29 @@
 #include "atf-c/sanity.h"
 
 atf_error_t
-atf_io_readline(int fd, atf_dynstr_t *dest)
+atf_io_readline(int fd, atf_dynstr_t *dest, bool *eof)
 {
-    char ch[2];
+    char ch;
     ssize_t cnt;
     atf_error_t err;
 
-    ch[1] = '\0';
-    while ((cnt = read(fd, &ch[0], sizeof(ch[0]))) == sizeof(ch[0]) &&
-           ch[0] != '\n') {
-        atf_dynstr_append_fmt(dest, ch);
+    while ((cnt = read(fd, &ch, sizeof(ch))) == sizeof(ch) &&
+           ch != '\n') {
+        err = atf_dynstr_append_fmt(dest, "%c", ch);
+        if (atf_is_error(err))
+            goto out;
     }
 
-    if (cnt == -1)
+    if (cnt == -1) {
         err = atf_libc_error(errno, "Failed to read line from file "
                              "descriptor %d", fd);
-    else
-        err = atf_no_error();
+        goto out;
+    }
 
+    *eof = (cnt == 0);
+    err = atf_no_error();
+
+out:
     return err;
 }
 
@@ -80,6 +85,7 @@ atf_io_write_ap(int fd, const char *fmt, va_list ap)
                                  "descriptor %d", atf_dynstr_cstring(&str),
                                  fd);
         else {
+            INV(cnt >= 0);
             INV((size_t)cnt == atf_dynstr_length(&str));
             err = atf_no_error();
         }
