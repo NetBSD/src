@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2009/12/21 11:22:41 nonaka Exp $
+#	$NetBSD: list,v 1.14 2009/12/22 11:15:25 nonaka Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -42,7 +42,9 @@ PROG	sbin/umount
 
 PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
+PROG	usr/bin/more
 PROG	usr/bin/sed
+PROG	usr/bin/tset
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -50,6 +52,7 @@ PROG	usr/sbin/installboot
 
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	more		srcdir  distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
