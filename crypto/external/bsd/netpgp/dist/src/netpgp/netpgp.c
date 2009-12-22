@@ -220,7 +220,6 @@ showoutput(char *out, int size, const char *header)
 {
 	int	cc;
 	int	n;
-	int	i;
 
 	if (size <= 0) {
 		(void) fprintf(stderr, "%s\n", header);
@@ -311,7 +310,10 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 			free(out);
 			return ret;
 		}
-		return netpgp_verify_file(netpgp, f, NULL, p->armour);
+		return netpgp_verify_file(netpgp, f,
+				(p->cmd == VERIFY) ? NULL :
+					(p->output) ? p->output : "-",
+				p->armour);
 	case LIST_PACKETS:
 		return nonnull(f, p->progname) &&
 			netpgp_list_packets(netpgp, f, p->armour, NULL);
