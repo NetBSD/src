@@ -31,7 +31,7 @@ env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgpverify && \
 	su root -c "make install"'
 
 passed=0
-total=21
+total=23
 echo "======> sign/verify 180938 file"
 cp configure a
 /usr/bin/netpgp --sign a
@@ -103,5 +103,11 @@ cp configure a
 sudo /usr/bin/netpgp --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --sign a
 sudo chmod 644 a.gpg
 /usr/bin/netpgp --verify --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub a.gpg && passed=$(expr $passed + 1)
-rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig g g.asc a2 a3
+echo "======> pipeline and memory encrypt/decrypt"
+/usr/bin/netpgp --encrypt < a | /usr/bin/netpgp --decrypt > a4
+diff a a4 && passed=$(expr $passed + 1)
+echo "======> pipeline and memory sign/verify"
+/usr/bin/netpgp --sign < a | /usr/bin/netpgp --cat > a5
+diff a a5 && passed=$(expr $passed + 1)
+rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig g g.asc a2 a3 a4 a5
 echo "Passed ${passed}/${total} tests"
