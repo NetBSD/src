@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_user.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/* $NetBSD: acpi_user.c,v 1.2 2009/12/22 08:44:03 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -26,16 +26,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: acpi_user.c,v 1.5 2000/08/09 14:47:52 iwasaki Exp 
- *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.4 2001/10/22 17:25:25 iwasaki Exp $
+ *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.15 2009/08/25 20:35:57 jhb Exp $
  */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi_user.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: acpi_user.c,v 1.2 2009/12/22 08:44:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -43,7 +44,6 @@ __RCSID("$NetBSD: acpi_user.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <acpi_common.h>
 #include "acpidump.h"
 
 static int      acpi_mem_fd = -1;
@@ -64,7 +64,7 @@ acpi_user_init(void)
 	if (acpi_mem_fd == -1) {
 		acpi_mem_fd = open("/dev/mem", O_RDONLY);
 		if (acpi_mem_fd == -1)
-			err(1, "opening /dev/mem");
+			err(EXIT_FAILURE, "opening /dev/mem");
 		LIST_INIT(&maplist);
 	}
 }
@@ -77,7 +77,7 @@ acpi_user_find_mapping(vm_offset_t pa, size_t size)
 	/* First search for an existing mapping */
 	for (map = LIST_FIRST(&maplist); map; map = LIST_NEXT(map, link)) {
 		if (map->pa <= pa && map->size >= pa + size - map->pa)
-			return (map);
+			return map;
 	}
 
 	/* Then create a new one */
@@ -85,42 +85,103 @@ acpi_user_find_mapping(vm_offset_t pa, size_t size)
 	pa = trunc_page(pa);
 	map = malloc(sizeof(struct acpi_user_mapping));
 	if (!map)
-		errx(1, "out of memory");
+		errx(EXIT_FAILURE, "out of memory");
 	map->pa = pa;
 	map->va = mmap(0, size, PROT_READ, MAP_SHARED, acpi_mem_fd, pa);
 	map->size = size;
 	if ((intptr_t) map->va == -1)
-		err(1, "can't map address");
+		err(EXIT_FAILURE, "can't map address");
 	LIST_INSERT_HEAD(&maplist, map, link);
 
-	return (map);
+	return map;
+}
+
+static ACPI_TABLE_RSDP *
+acpi_get_rsdp(u_long addr)
+{
+	ACPI_TABLE_RSDP rsdp;
+	size_t len;
+
+	/* Read in the table signature and check it. */
+	pread(acpi_mem_fd, &rsdp, 8, addr);
+	if (memcmp(rsdp.Signature, "RSD PTR ", 8))
+		return (NULL);
+
+	/* Read the entire table. */
+	pread(acpi_mem_fd, &rsdp, sizeof(rsdp), addr);
+
+	/* Check the standard checksum. */
+	if (acpi_checksum(&rsdp, ACPI_RSDP_CHECKSUM_LENGTH) != 0)
+		return (NULL);
+
+	/* Check extended checksum if table version >= 2. */
+	if (rsdp.Revision >= 2 &&
+	    acpi_checksum(&rsdp, ACPI_RSDP_XCHECKSUM_LENGTH) != 0)
+		return (NULL);
+
+	/* If the revision is 0, assume a version 1 length. */
+	if (rsdp.Revision == 0)
+		len = ACPI_RSDP_REV0_SIZE;
+	else
+		len = rsdp.Length;
+
+	return (acpi_map_physical(addr, len));
+}
+
+static ACPI_TABLE_RSDP *
+acpi_scan_rsd_ptr(void)
+{
+#if defined(__amd64__) || defined(__i386__)
+	ACPI_TABLE_RSDP *rsdp;
+	u_long		addr, end;
+
+	/*
+	 * On ia32, scan physical memory for the RSD PTR if above failed.
+	 * According to section 5.2.2 of the ACPI spec, we only consider
+	 * two regions for the base address:
+	 * 1. EBDA (1 KB area addressed by the 16 bit pointer at 0x40E
+	 * 2. High memory (0xE0000 - 0xFFFFF)
+	 */
+	addr = ACPI_EBDA_PTR_LOCATION;
+	pread(acpi_mem_fd, &addr, sizeof(uint16_t), addr);
+	addr <<= 4;
+	end = addr + ACPI_EBDA_WINDOW_SIZE;
+	for (; addr < end; addr += 16)
+		if ((rsdp = acpi_get_rsdp(addr)) != NULL)
+			return rsdp;
+	addr = ACPI_HI_RSDP_WINDOW_BASE;
+	end = addr + ACPI_HI_RSDP_WINDOW_SIZE;
+	for (; addr < end; addr += 16)
+		if ((rsdp = acpi_get_rsdp(addr)) != NULL)
+			return rsdp;
+#endif /* __amd64__ || __i386__ */
+	return NULL;
 }
 
 /*
  * Public interfaces
  */
-
-struct ACPIrsdp *
-acpi_find_rsd_ptr()
+ACPI_TABLE_RSDP *
+acpi_find_rsd_ptr(void)
 {
-	int		i;
-	u_int8_t	buf[sizeof(struct ACPIrsdp)];
+	int i;
+	uint8_t		buf[sizeof(ACPI_TABLE_RSDP)];
 
 	acpi_user_init();
 	for (i = 0; i < 1024 * 1024; i += 16) {
 		read(acpi_mem_fd, buf, 16);
 		if (!memcmp(buf, "RSD PTR ", 8)) {
 			/* Read the rest of the structure */
-			read(acpi_mem_fd, buf + 16, sizeof(struct ACPIrsdp) - 16);
+			read(acpi_mem_fd, buf + 16, sizeof(ACPI_TABLE_RSDP) - 16);
 
 			/* Verify checksum before accepting it. */
-			if (acpi_checksum(buf, sizeof(struct ACPIrsdp)))
+			if (acpi_checksum(buf, sizeof(ACPI_TABLE_RSDP)))
 				continue;
-			return (acpi_map_physical(i, sizeof(struct ACPIrsdp)));
+			return (acpi_map_physical(i, sizeof(ACPI_TABLE_RSDP)));
 		}
 	}
 
-	return (0);
+	return acpi_scan_rsd_ptr();
 }
 
 void *
@@ -132,35 +193,37 @@ acpi_map_physical(vm_offset_t pa, size_t size)
 	return (map->va + (pa - map->pa));
 }
 
-void
-acpi_load_dsdt(char *dumpfile, u_int8_t **dpp, u_int8_t **endp)
+ACPI_TABLE_HEADER *
+dsdt_load_file(char *infile)
 {
-	u_int8_t	*dp;
-	u_int8_t	*end;
-	struct	stat sb;
+	ACPI_TABLE_HEADER *sdt;
+	uint8_t		*dp;
+	struct stat	 sb;
 
-	if ((acpi_mem_fd = open(dumpfile, O_RDONLY)) == -1) {
-		errx(1, "opening %s\n", dumpfile);
-	}
+	if ((acpi_mem_fd = open(infile, O_RDONLY)) == -1)
+		errx(EXIT_FAILURE, "opening %s", infile);
 
 	LIST_INIT(&maplist);
 
-	if (fstat(acpi_mem_fd, &sb) == -1) {
-		errx(1, "fstat %s\n", dumpfile);
-	}
+	if (fstat(acpi_mem_fd, &sb) == -1)
+		errx(EXIT_FAILURE, "fstat %s", infile);
 
 	dp = mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, acpi_mem_fd, 0);
-	if (dp == NULL) {
-		errx(1, "mmap %s\n", dumpfile);
-	}
+	if (dp == NULL)
+		errx(EXIT_FAILURE, "mmap %s", infile);
 
-	if (strncmp((const char *)dp, "DSDT", 4) == 0) {
-		memcpy(&dsdt_header, dp, SIZEOF_SDT_HDR);
-		dp += SIZEOF_SDT_HDR;
-		sb.st_size -= SIZEOF_SDT_HDR;
-	}
+	sdt = (ACPI_TABLE_HEADER *)dp;
+	if (strncmp((char *)dp, ACPI_SIG_DSDT, 4) != 0)
+	    errx(EXIT_FAILURE, "DSDT signature mismatch");
 
-	end = (u_int8_t *) dp + sb.st_size;
-	*dpp = dp;
-	*endp = end;
+	if (sdt->Length > sb.st_size)
+	    errx(EXIT_FAILURE,
+		"corrupt DSDT: table size (%"PRIu32" bytes), file size "
+		"(%"PRIu64" bytes)",
+		sdt->Length, sb.st_size);
+
+        if (acpi_checksum(sdt, sdt->Length) != 0)
+	    errx(EXIT_FAILURE, "DSDT checksum mismatch");
+
+	return sdt;
 }
