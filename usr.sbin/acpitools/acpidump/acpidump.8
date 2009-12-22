@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidump.8,v 1.2 2007/01/14 12:25:42 wiz Exp $
+.\" $NetBSD: acpidump.8,v 1.3 2009/12/22 08:44:03 cegger Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
@@ -28,54 +28,55 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.13 2002/07/14 14:42:07 charnier Exp $
+.\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.24 2007/03/14 22:55:30 njl Exp $
 .\"
-.Dd August 31, 2000
+.Dd February 14, 2005
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
 .Nm acpidump
-.Nd dump ACPI tables
+.Nd dump ACPI tables and ASL
 .Sh SYNOPSIS
 .Nm
-.Op Fl r
-.Nm
-.Op Fl r
-.Op Fl o Ar dsdt_file_for_output
-.Nm
-.Op Fl r
-.Op Fl f Ar dsdt_file_for_input
+.Op Fl d
+.Op Fl t
+.Op Fl h
+.Op Fl v
+.Op Fl f Ar dsdt_input
+.Op Fl o Ar dsdt_output
 .Sh DESCRIPTION
 The
 .Nm
-utility analyzes ACPI tables in physical memory and dumps them to
-standard output.
+utility analyzes ACPI tables in physical memory and can dump them to a file.
 In addition,
 .Nm
-can disassemble AML
+can call
+.Xr iasl 8
+to disassemble AML
 (ACPI Machine Language)
 found in these tables and dump them as ASL
-(ACPI Source Language).
+(ACPI Source Language)
+to stdout.
 .Pp
 ACPI tables have an essential data block (the DSDT,
-Differentiated System Description Table),
+Differentiated System Description Table)
 that includes information used on the kernel side such as
 detailed information about PnP hardware, procedures for controlling
-power management support and so on.
+power management support, and so on.
 The
 .Nm
 utility can extract the DSDT data block from physical memory and store it into
-a DSDT data file, and also can generate an output in ASL
-from a given DSDT data file.
+an output file and optionally also disassemble it.
+If any Secondary System Description Table
+(SSDT)
+entries exist, they will also be included in the output file and disassembly.
 .Pp
 When
 .Nm
 is invoked without the
 .Fl f
-option, it will read ACPI tables from physical
-memory via a special file
-.Pa /dev/mem
-and dump them.
+option, it will read ACPI tables from physical memory via
+.Pa /dev/mem .
 First it searches for the RSDP
 (Root System Description Pointer),
 which has the signature
@@ -90,87 +91,117 @@ called SDTs
 and their header has a common format which consists of items
 such as Signature, Length, Revision, Checksum, OEMID, OEM Table ID,
 OEM Revision, Creator ID and Creator Revision.
-The
+When invoked with the
+.Fl t
+flag, the
 .Nm
-utility dumps contents of these SDTs.
-For further information about formats of each table,
-see chapter 5:
-.Dq ACPI Software Programming Model
-from the ACPI specifications referenced below.
+utility dumps contents of the following tables:
 .Pp
-There is always a pointer to a physical memory address in RSDT for FACP
+.Bl -tag -offset indent -width 12345 -compact
+.It APIC
+.It BERT
+.It BOOT
+.It CPEP
+.It DBGP
+.It DSDT
+.It ECDT
+.It EINJ
+.It ERST
+.It FACS
+.It FADT
+.It HEST
+.It HPET
+.It MADT
+.It MCFG
+.It MSCT
+.It RSD PTR
+.It RSDT
+.It SBST
+.It SLIT
+.It SPCR
+.It SRAT
+.It TCPA
+.It WAET
+.It WDAT
+.It WDRT
+.El
+.Pp
+The RSDT contains a pointer to the physical memory address of the FACP
 (Fixed ACPI Description Table).
 The FACP defines static system information about power management support
 (ACPI Hardware Register Implementation)
-such as interrupt mode
-(INT_MODEL),
-SCI interrupt number, SMI command port
-(SMI_CMD)
-and location of ACPI registers.
-The FACP also has a pointer to a physical memory address for DSDT,
-which includes information used on the kernel side such as
-PnP, power management support and so on.
-While the other tables are described in fixed format,
-the DSDT consists of AML data which is compiled from sources
-written in free formated ASL, which is the description language for ACPI.
-When
-.Nm
-outputs DSDT, it disassembles the AML data and
-formats it as ASL.
+such as interrupt mode (INT_MODEL),
+SCI interrupt number, SMI command port (SMI_CMD)
+and the location of ACPI registers.
+The FACP also has a pointer to a physical memory address for the DSDT.
+While the other tables are fixed format,
+the DSDT consists of free-formatted AML data.
 .Sh OPTIONS
 The following options are supported by
 .Nm :
 .Bl -tag -width indent
-.It Fl f Ar dsdt_file_for_input
-Interprets AML data in DSDT from a file specified in
-.Ar dsdt_file_for_input
-and dumps them in ASL to standard output.
+.It Fl d
+Disassemble the DSDT into ASL using
+.Xr iasl 8
+and print the results to stdout.
+.It Fl t
+Dump the contents of the various fixed tables listed above.
 .It Fl h
-Displays usage and exits.
-.It Fl o Ar dsdt_file_for_output
-Stores DSDT data block from physical memory into a file specified in
-.Ar dsdt_file_for_output
-in addition to behavior with no option.
-.It Fl r
-Additionally outputs commented
-.Fn ResourceTemplate
-macros for Buffer
-objects that contain valid resource streams.
-These macros are defined in the ACPI 2.0 specification section
-16.2.4.
+Displays usage and exit.
+.It Fl v
+Enable verbose messages.
+.It Fl f Ar dsdt_input
+Load the DSDT from the specified file instead of physical memory.
+Since only the DSDT is stored in the file, the
+.Fl t
+flag may not be used with this option.
+.It Fl o Ar dsdt_output
+Store the DSDT data block from physical memory into the specified file.
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem
 .It Pa /dev/mem
 .El
 .Sh EXAMPLES
-This is an example to get a dump of SDTs and a DSDT data file
-simultaneously on a machine that supports ACPI BIOS.
+If a developer requests a copy of your ASL, please use the following
+command to dump all tables and compress the result.
 .Bd -literal -offset indent
-# acpidump -o foo.dsdt \*[Gt] foo.asl
+# acpidump -dt | gzip -c9 > my_computer.asl.gz
+.Ed
+.Pp
+This example dumps the DSDT from physical memory to foo.dsdt.
+It also prints the contents of various system tables and disassembles
+the AML contained in the DSDT to stdout, redirecting the output
+to foo.asl.
+.Bd -literal -offset indent
+# acpidump -t -d -o foo.dsdt > foo.asl
+.Ed
+.Pp
+This example reads a DSDT file and disassembles it to stdout.
+Verbose messages are enabled.
+.Bd -literal -offset indent
+# acpidump -v -d -f foo.dsdt
 .Ed
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .\" .Xr mem 4 ,
 .\" .Xr acpiconf 8 ,
-.Xr amldb 8
-.Pp
-.Rs
-.%T Advanced Configuration and Power Interface Specification
-.%Q Intel
-.%Q Microsoft
-.%Q Toshiba
-.%O Revision 1.0b, 2.0
-.Re
+.Xr amldb 8 ,
+.Xr iasl 8
 .Sh HISTORY
 The
 .Nm
-utility appeared in
-.Fx 5.0 .
+utility first appeared in
+.Fx 5.0
+and was rewritten to use
+.Xr iasl 8
+for
+.Fx 5.2 .
 .Sh AUTHORS
 .An Doug Rabson Aq dfr@FreeBSD.org
 .An Mitsuru IWASAKI Aq iwasaki@FreeBSD.org
 .An Yasuo YOKOYAMA Aq yokoyama@jp.FreeBSD.org
+.An Nate Lawson Aq njl@FreeBSD.org
 .Pp
 .An -nosplit
 Some contributions made by
@@ -182,8 +213,5 @@ Some contributions made by
 and
 .An Michael Smith Aq msmith@FreeBSD.org .
 .Sh BUGS
-In the current implementation,
-.Nm
-doesn't dump any information of Firmware ACPI Control Structure
-(FACS)
-specified by a pointer in FACP.
+The current implementation does not dump
+some miscellaneous tables.
