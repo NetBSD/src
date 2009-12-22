@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.34 2009/12/03 14:05:46 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.35 2009/12/22 14:18:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.34 2009/12/03 14:05:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.35 2009/12/22 14:18:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -492,6 +492,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 				break;
 			}
 		}
+	} else {
+		rblk->rblk_fd = fd;
 	}
 
 	KASSERT(rblk->rblk_fd != -1);
