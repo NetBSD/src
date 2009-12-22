@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/03/11 15:57:08 njoly Exp $
+# $NetBSD: Makefile,v 1.3 2009/12/22 13:38:11 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ FILESDIR_atf-c++.pc=	/usr/lib/pkgconfig
 
 realall: atf-c.pc
 atf-c.pc: atf-c.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.6,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.7,g' \
 	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
@@ -41,7 +41,7 @@ CLEANFILES+=	atf-c.pc
 
 realall: atf-c++.pc
 atf-c++.pc: atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.6,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.7,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
