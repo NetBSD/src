@@ -58,9 +58,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
 
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
-
 	# run the installation program
 	sysinst
 fi
