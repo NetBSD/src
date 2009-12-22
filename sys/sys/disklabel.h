@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.106 2009/11/20 17:43:35 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.107 2009/12/22 18:55:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -425,6 +425,7 @@ struct format_op {
 	int	 df_reg[8];		/* result */
 };
 
+#ifdef _KERNEL
 /*
  * Structure used internally to retrieve information about a partition
  * on a disk.
@@ -433,8 +434,6 @@ struct partinfo {
 	struct disklabel *disklab;
 	struct partition *part;
 };
-
-#ifdef _KERNEL
 
 struct disk;
 
