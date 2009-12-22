@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2009/12/22 09:12:42 nakayama Exp $
 
 DRIVER=		xf86-video-mach64
 DRIVER_NAME=	mach64_drv
@@ -20,7 +20,8 @@ SRCS.exa=	atimach64exa.c
 
 CPPFLAGS+=	-DUSE_XAA
 
-.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc64"
+.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "sparc"
 CPPFLAGS+= -DAVOID_CPIO
 .endif
 
