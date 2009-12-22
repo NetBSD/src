@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.2 2009/09/08 07:54:53 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.3 2009/12/22 00:01:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,8 @@
  *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_MIPS3_PTE_H_
+#define _MIPS_MIPS3_PTE_H_
 /*
  * R4000 hardware page table entry
  */
@@ -213,3 +215,4 @@ struct tlb {
 #define	MIPS4100_PG_SIZE_TO_MASK(pg_size)		\
     ((((pg_size) * 2) - 1) & ~0x000007ff)
 
+#endif /* !_MIPS_MIPS3_PTE_H_ */
