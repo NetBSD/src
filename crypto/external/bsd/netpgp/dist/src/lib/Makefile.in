@@ -52,17 +52,16 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(man3dir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libnetpgp_la_LIBADD =
-am_libnetpgp_la_OBJECTS = libnetpgp_la-compress.lo \
-	libnetpgp_la-bufgap.lo \
-	libnetpgp_la-create.lo libnetpgp_la-crypto.lo \
-	libnetpgp_la-fastctype.lo \
+am_libnetpgp_la_OBJECTS = libnetpgp_la-bufgap.lo \
+	libnetpgp_la-compress.lo libnetpgp_la-create.lo \
+	libnetpgp_la-crypto.lo libnetpgp_la-fastctype.lo \
 	libnetpgp_la-keyring.lo libnetpgp_la-misc.lo \
 	libnetpgp_la-netpgp.lo libnetpgp_la-openssl_crypto.lo \
 	libnetpgp_la-packet-parse.lo libnetpgp_la-packet-print.lo \
 	libnetpgp_la-packet-show.lo libnetpgp_la-reader.lo \
-	libnetpgp_la-signature.lo libnetpgp_la-symmetric.lo \
-	libnetpgp_la-ssh2pgp.lo \
-	libnetpgp_la-validate.lo libnetpgp_la-writer.lo
+	libnetpgp_la-signature.lo libnetpgp_la-ssh2pgp.lo \
+	libnetpgp_la-symmetric.lo libnetpgp_la-validate.lo \
+	libnetpgp_la-writer.lo
 libnetpgp_la_OBJECTS = $(am_libnetpgp_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/buildaux/depcomp

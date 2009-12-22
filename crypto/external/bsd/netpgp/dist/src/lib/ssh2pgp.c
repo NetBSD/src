@@ -221,6 +221,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 	uint32_t	 len;
 	int64_t		 off;
 	char		 hostname[256];
+	char		 owner[256];
 	char		*space;
 	char	 	*buf;
 	char	 	*bin;
@@ -314,12 +315,19 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 	if (ok) {
 		(void) memset(&userid, 0x0, sizeof(userid));
 		(void) gethostname(hostname, sizeof(hostname));
-		(void) __ops_asprintf((char **)(void *)&userid.userid,
-				"%s (%s) <%.*s>",
-				hostname,
-				f,
+		if (strlen(space + 1) - 1 == 0) {
+			(void) snprintf(owner, sizeof(owner), "<root@%s>",
+					hostname);
+		} else {
+			(void) snprintf(owner, sizeof(owner), "<%.*s>",
 				(int)strlen(space + 1) - 1,
 				space + 1);
+		}
+		(void) __ops_asprintf((char **)(void *)&userid.userid,
+						"%s (%s) %s",
+						hostname,
+						f,
+						owner);
 		__ops_keyid(key->key_id, sizeof(key->key_id), pubkey);
 		__ops_add_userid(key, &userid);
 		__ops_fingerprint(&key->fingerprint, pubkey);

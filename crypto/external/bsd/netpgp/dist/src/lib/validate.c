@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.24 2009/12/07 16:17:17 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.25 2009/12/22 06:03:25 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -331,6 +331,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				__ops_get_pubkey(signer),
 				key->reader->key->packets[
 					key->reader->packet].raw);
+			/* XXX - agc - put subkey logic here? */
 			break;
 
 		case OPS_SIG_DIRECT:
@@ -815,11 +816,12 @@ unsigned
 __ops_validate_mem(__ops_io_t *io,
 			__ops_validation_t *result,
 			__ops_memory_t *mem,
+			__ops_memory_t **cat,
 			const int armoured,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_stream_t	*stream = NULL;
+	__ops_stream_t		*stream = NULL;
 	const int		 printerrors = 1;
 
 	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb, 1);
@@ -845,7 +847,14 @@ __ops_validate_mem(__ops_io_t *io,
 		__ops_reader_pop_dearmour(stream);
 	}
 	__ops_teardown_memory_read(stream, mem);
-	__ops_memory_free(validation.mem);
+
+	/* this is triggered only for --cat output */
+	if (*cat) {
+		/* need to send validated output somewhere */
+		*cat = validation.mem;
+	} else {
+		__ops_memory_free(validation.mem);
+	}
 
 	return validate_result_status(result);
 }

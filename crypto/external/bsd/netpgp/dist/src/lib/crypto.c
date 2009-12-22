@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.17 2009/10/06 02:26:05 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.18 2009/12/22 06:03:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -215,8 +215,68 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 	return 1;
 }
 
-static          __ops_cb_ret_t
-callback_write_parsed(const __ops_packet_t *, __ops_cbdata_t *);
+static __ops_cb_ret_t
+write_parsed_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+{
+	const __ops_contents_t	*content = &pkt->u;
+	static unsigned		 skipping;	/* XXX - put skipping into pkt? */
+
+	if (__ops_get_debug_level(__FILE__)) {
+		printf("write_parsed_cb: ");
+		__ops_print_packet(pkt);
+	}
+	if (pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping) {
+		puts("...end of skip");
+		skipping = 0;
+	}
+	switch (pkt->tag) {
+	case OPS_PTAG_CT_UNARMOURED_TEXT:
+		printf("OPS_PTAG_CT_UNARMOURED_TEXT\n");
+		if (!skipping) {
+			puts("Skipping...");
+			skipping = 1;
+		}
+		fwrite(content->unarmoured_text.data, 1,
+		       content->unarmoured_text.length, stdout);
+		break;
+
+	case OPS_PTAG_CT_PK_SESSION_KEY:
+		return pk_sesskey_cb(pkt, cbinfo);
+
+	case OPS_GET_SECKEY:
+		return get_seckey_cb(pkt, cbinfo);
+
+	case OPS_GET_PASSPHRASE:
+		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
+
+	case OPS_PTAG_CT_LITDATA_BODY:
+		return litdata_cb(pkt, cbinfo);
+
+	case OPS_PTAG_CT_ARMOUR_HEADER:
+	case OPS_PTAG_CT_ARMOUR_TRAILER:
+	case OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
+	case OPS_PTAG_CT_COMPRESSED:
+	case OPS_PTAG_CT_LITDATA_HEADER:
+	case OPS_PTAG_CT_SE_IP_DATA_BODY:
+	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
+	case OPS_PTAG_CT_SE_DATA_BODY:
+	case OPS_PTAG_CT_SE_DATA_HEADER:
+		/* Ignore these packets  */
+		/* They're handled in __ops_parse_packet() */
+		/* and nothing else needs to be done */
+		break;
+
+	default:
+		if (__ops_get_debug_level(__FILE__)) {
+			fprintf(stderr, "Unexpected packet tag=%d (0x%x)\n",
+				pkt->tag,
+				pkt->tag);
+		}
+		break;
+	}
+
+	return OPS_RELEASE_MEMORY;
+}
 
 /**
 \ingroup HighLevel_Crypto
@@ -269,6 +329,44 @@ __ops_encrypt_file(__ops_io_t *io,
 	return 1;
 }
 
+/* encrypt the contents of the input buffer, and return the mem structure */
+__ops_memory_t *
+__ops_encrypt_buf(__ops_io_t *io,
+			const void *input,
+			const size_t insize,
+			const __ops_key_t *pubkey,
+			const unsigned use_armour)
+{
+	__ops_output_t	*output;
+	__ops_memory_t	*outmem;
+
+	__OPS_USED(io);
+	if (input == NULL) {
+		(void) fprintf(io->errs,
+			"__ops_encrypt_buf: null memory\n");
+		return 0;
+	}
+
+	__ops_setup_memory_write(&output, &outmem, insize);
+
+	/* set armoured/not armoured here */
+	if (use_armour) {
+		__ops_writer_push_armor_msg(output);
+	}
+
+	/* Push the encrypted writer */
+	__ops_push_enc_se_ip(output, pubkey);
+
+	/* This does the writing */
+	__ops_write(output, input, insize);
+
+	/* tidy up */
+	__ops_writer_close(output);
+	__ops_output_delete(output);
+
+	return outmem;
+}
+
 /**
    \ingroup HighLevel_Crypto
    \brief Decrypt a file.
@@ -299,7 +397,7 @@ __ops_decrypt_file(__ops_io_t *io,
 	/* setup for reading from given input file */
 	fd_in = __ops_setup_file_read(io, &parse, infile,
 				    NULL,
-				    callback_write_parsed,
+				    write_parsed_cb,
 				    0);
 	if (fd_in < 0) {
 		perror(infile);
@@ -373,65 +471,65 @@ __ops_decrypt_file(__ops_io_t *io,
 	return 1;
 }
 
-static __ops_cb_ret_t
-callback_write_parsed(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+/* decrypt an area of memory */
+__ops_memory_t *
+__ops_decrypt_buf(__ops_io_t *io,
+			const void *input,
+			const size_t insize,
+			__ops_keyring_t *keyring,
+			const unsigned use_armour,
+			void *passfp,
+			__ops_cbfunc_t *getpassfunc)
 {
-	const __ops_contents_t	*content = &pkt->u;
-	static unsigned		 skipping;	/* XXX - put skipping into pkt? */
+	__ops_stream_t	*parse = NULL;
+	__ops_memory_t	*outmem;
+	__ops_memory_t	*inmem;
+	const int	 printerrors = 1;
 
-	if (__ops_get_debug_level(__FILE__)) {
-		printf("callback_write_parsed: ");
-		__ops_print_packet(pkt);
-	}
-	if (pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping) {
-		puts("...end of skip");
-		skipping = 0;
-	}
-	switch (pkt->tag) {
-	case OPS_PTAG_CT_UNARMOURED_TEXT:
-		printf("OPS_PTAG_CT_UNARMOURED_TEXT\n");
-		if (!skipping) {
-			puts("Skipping...");
-			skipping = 1;
-		}
-		fwrite(content->unarmoured_text.data, 1,
-		       content->unarmoured_text.length, stdout);
-		break;
-
-	case OPS_PTAG_CT_PK_SESSION_KEY:
-		return pk_sesskey_cb(pkt, cbinfo);
-
-	case OPS_GET_SECKEY:
-		return get_seckey_cb(pkt, cbinfo);
-
-	case OPS_GET_PASSPHRASE:
-		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
-
-	case OPS_PTAG_CT_LITDATA_BODY:
-		return litdata_cb(pkt, cbinfo);
-
-	case OPS_PTAG_CT_ARMOUR_HEADER:
-	case OPS_PTAG_CT_ARMOUR_TRAILER:
-	case OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
-	case OPS_PTAG_CT_COMPRESSED:
-	case OPS_PTAG_CT_LITDATA_HEADER:
-	case OPS_PTAG_CT_SE_IP_DATA_BODY:
-	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
-	case OPS_PTAG_CT_SE_DATA_BODY:
-	case OPS_PTAG_CT_SE_DATA_HEADER:
-		/* Ignore these packets  */
-		/* They're handled in __ops_parse_packet() */
-		/* and nothing else needs to be done */
-		break;
-
-	default:
-		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "Unexpected packet tag=%d (0x%x)\n",
-				pkt->tag,
-				pkt->tag);
-		}
-		break;
+	if (input == NULL) {
+		(void) fprintf(io->errs,
+			"__ops_encrypt_buf: null memory\n");
+		return 0;
 	}
 
-	return OPS_RELEASE_MEMORY;
+	inmem = __ops_memory_new();
+	__ops_memory_add(inmem, input, insize);
+
+	/* set up to read from memory */
+	__ops_setup_memory_read(io, &parse, inmem,
+				    NULL,
+				    write_parsed_cb,
+				    0);
+
+	/* setup for writing decrypted contents to given output file */
+	__ops_setup_memory_write(&parse->cbinfo.output, &outmem, insize);
+
+	/* setup keyring and passphrase callback */
+	parse->cbinfo.cryptinfo.keyring = keyring;
+	parse->cbinfo.passfp = passfp;
+	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
+
+	/* Set up armour/passphrase options */
+	if (use_armour) {
+		__ops_reader_push_dearmour(parse);
+	}
+
+	/* Do it */
+	__ops_parse(parse, printerrors);
+
+	/* Unsetup */
+	if (use_armour) {
+		__ops_reader_pop_dearmour(parse);
+	}
+
+	/* tidy up */
+	__ops_teardown_memory_read(parse, inmem);
+	__ops_memory_release(inmem);
+	free(inmem);
+
+	__ops_writer_close(parse->cbinfo.output);
+	__ops_output_delete(parse->cbinfo.output);
+
+	return outmem;
 }
+
