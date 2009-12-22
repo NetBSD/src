@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2008/08/05 20:57:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.22 2009/12/22 17:50:22 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	mount_msdos.c fattr.c pathadj.c
 MAN=	mount_msdos.8
 
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
-CPPFLAGS+= -I${MOUNT} -I${NETBSDSRCDIR}/sys
+CPPFLAGS+= -I${MOUNT}
 .PATH:	${MOUNT}
 
 DPADD+=${LIBUTIL}
