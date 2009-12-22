@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.128 2009/12/22 21:04:37 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.129 2009/12/22 21:55:12 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.128 2009/12/22 21:04:37 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.129 2009/12/22 21:55:12 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -150,12 +150,12 @@ const char *boot_dir = DEFAULT_BOOTDIR;
 char *boot_path = 0;			/* name of file we actually opened */
 
 #ifdef BOOTSEL
-
-#define OPTIONS			"0123BFSafiluvs:b:c:E:r:w:t:T:"
+#define BOOTSEL_OPTIONS	"B"
 #else
+#define BOOTSEL_OPTIONS	
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
-#define OPTIONS			"0123FSafiluvs:b:c:E:r:w:"
 #endif
+#define OPTIONS	BOOTSEL_OPTIONS "0123FSafiluvA:b:c:E:r:s:w:"
 
 /*
  * Disk geometry and partition alignment.
@@ -215,8 +215,8 @@ daddr_t dos_disksectors;
 int partition = -1;
 
 /* Alignment of partition, and offset if first sector unusable */
-#define	ptn_alignment	dos_cylindersectors
-#define	ptn_offset	dos_sectors
+unsigned int ptn_alignment;	/* default dos_cylindersectors */
+unsigned int ptn_offset;	/* default dos_sectors */
 
 int fd = -1, wfd = -1, *rfd = &fd;
 char *disk_file = NULL;
@@ -264,16 +264,17 @@ void	printvis(int, const char *, const char *, size_t);
 int	read_boot(const char *, void *, size_t, int);
 void	init_sector0(int);
 void	intuit_translated_geometry(void);
-void	get_geometry(void);
+void	get_bios_geometry(void);
 void	get_extended_ptn(void);
+static void get_ptn_alignmemt(void);
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 void	get_diskname(const char *, char *, size_t);
 #endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
 int	change_part(int, int, int, daddr_t, daddr_t, char *);
-void	print_params(void);
+void	print_geometry(void);
 int	first_active(void);
 void	change_active(int);
-void	get_params_to_use(void);
+void	change_bios_geometry(void);
 void	dos(int, unsigned char *, unsigned char *, unsigned char *);
 int	open_disk(int);
 int	read_disk(daddr_t, void *);
@@ -287,7 +288,7 @@ int	yesno(const char *, ...);
 int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
-#define	DEC_RND_0	4		/* round 0 to size of a track */
+#define	DEC_RND_0	4		/* convert 0 to size of a track */
 #define DEC_RND_DOWN	8		/* subtract 1 track */
 #define DEC_RND_DOWN_2	16		/* subtract 2 tracks */
 void	string(const char *, int, char *);
@@ -341,7 +342,7 @@ main(int argc, char *argv[])
 	v_flag = 0;
 	E_flag = 0;
 	csysid = cstart = csize = 0;
-	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -415,6 +416,15 @@ main(int argc, char *argv[])
 			if (b_cyl > MAXCYL)
 				b_cyl = MAXCYL;
 			break;
+		case 'A':	/* Partition alignment[/offset] */
+			if (sscanf(optarg, "%u/%u%n", &ptn_alignment,
+				    &ptn_offset, &n) < 1
+			    || optarg[n] != 0
+			    || ptn_offset > ptn_alignment)
+				errx(1, "Bad argument to the -A flag.");
+			if (ptn_offset == 0)
+				ptn_offset = ptn_alignment;
+			break;
 		case 'c':	/* file/directory containing boot code */
 			if (strchr(optarg, '/') != NULL &&
 			    stat(optarg, &sb) == 0 &&
@@ -442,6 +452,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -489,11 +500,17 @@ main(int argc, char *argv[])
 	read_gpt(GPT_HDR_BLKNO, &gpt1);
 	read_gpt(disksectors - 1, &gpt2);
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
-	get_geometry();
-#else
-	intuit_translated_geometry();
-#endif
+	if (b_flag) {
+		dos_cylinders = b_cyl;
+		dos_heads = b_head;
+		dos_sectors = b_sec;
+	} else {
+		get_bios_geometry();
+	}
+
+	if (ptn_alignment == 0)
+		get_ptn_alignmemt();
+
 	get_extended_ptn();
 
 #ifdef BOOTSEL
@@ -503,11 +520,11 @@ main(int argc, char *argv[])
 	if (E_flag && !u_flag && partition >= ext.num_ptn)
 		errx(1, "Extended partition %d is not defined.", partition);
 
-	if (u_flag && (!f_flag || b_flag))
-		get_params_to_use();
-
 	/* Do the update stuff! */
 	if (u_flag) {
+		if (!f_flag && !b_flag)
+			change_bios_geometry();
+
 		if (s_flag)
 			change_part(E_flag, partition, csysid, cstart, csize,
 				cbootmenu);
@@ -527,11 +544,12 @@ main(int argc, char *argv[])
 				prompt = change_part(chg_ext, part, 0, 0, 0, 0);
 			} while (partition == -1);
 		}
-	} else
+	} else {
 		if (!i_flag && !B_flag) {
-			print_params();
+			print_geometry();
 			print_s0(partition);
 		}
+	}
 
 	if (a_flag && !E_flag)
 		change_active(partition);
@@ -1157,9 +1175,42 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 	diskname[len] = 0;
 }
 
-void
-get_geometry(void)
+static void
+get_ptn_alignmemt(void)
 {
+	struct mbr_partition *partp = &mboot.mbr_parts[0];
+	uint32_t ptn_0_base, ptn_0_limit;
+
+	/* Default to using 'traditional' cylinder alignment */
+	ptn_alignment = dos_cylindersectors;
+	ptn_offset = dos_sectors;
+
+	if (partp->mbrp_type != 0) {
+		/* Try to copy alignment of first partition */
+		ptn_0_base = le32toh(partp->mbrp_start);
+		ptn_0_limit = ptn_0_base + le32toh(partp->mbrp_size);
+		if (!(ptn_0_limit & 2047)) {
+			/* Partition ends on a 1MB boundary, align to 1MB */
+			ptn_alignment = 2048;
+			if (ptn_0_base <= 2048
+			    && !(ptn_0_base & (ptn_0_base - 1))) {
+				/* ptn_base is a power of 2, use it */
+				ptn_offset = ptn_0_base;
+			}
+		}
+	} else {
+		/* Use 1MB alignment for large disks */
+		if (disksectors > 2048 * 1024 * 128) {
+			ptn_alignment = 2048;
+			ptn_offset = 2048;
+		}
+	}
+}
+
+void
+get_bios_geometry(void)
+{
+#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	int mib[2], i;
 	size_t len;
 	struct biosdisk_info *bip;
@@ -1203,6 +1254,7 @@ get_geometry(void)
 		}
 	}
  out:
+#endif
 	/* Allright, allright, make a stupid guess.. */
 	intuit_translated_geometry();
 }
@@ -2232,7 +2284,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 }
 
 void
-print_params(void)
+print_geometry(void)
 {
 
 	if (sh_flag) {
@@ -2256,6 +2308,8 @@ print_params(void)
 	    "(%d sectors/cylinder)\ntotal sectors: %"PRIdaddr"\n\n",
 	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors,
 	    dos_disksectors);
+	printf("Partitions aligned to %d sector boundaries, offset %d\n\n",
+	    ptn_alignment, ptn_offset);
 }
 
 /* Find the first active partition, else return MBR_PART_COUNT */
@@ -2305,26 +2359,17 @@ change_active(int which)
 }
 
 void
-get_params_to_use(void)
+change_bios_geometry(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
-	struct biosdisk_info *bip;
-	int i;
-#endif
-
-	if (b_flag) {
-		dos_cylinders = b_cyl;
-		dos_heads = b_head;
-		dos_sectors = b_sec;
-		return;
-	}
-
-	print_params();
+	print_geometry();
 	if (!yesno("Do you want to change our idea of what BIOS thinks?"))
 		return;
 
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	if (dl != NULL) {
+		struct biosdisk_info *bip;
+		int i;
+
 		for (i = 0; i < dl->dl_nbiosdisks; i++) {
 			if (i == 0)
 				printf("\nGeometries of known disks:\n");
@@ -2345,7 +2390,7 @@ get_params_to_use(void)
 					dos_heads, 0, 0, MAXHEAD);
 		dos_sectors = decimal("BIOS's idea of #sectors",
 					dos_sectors, 0, 1, MAXSECTOR);
-		print_params();
+		print_geometry();
 	} while (!yesno("Are you happy with this choice?"));
 }
 
