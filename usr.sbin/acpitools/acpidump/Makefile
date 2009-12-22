@@ -1,15 +1,12 @@
-# Id: Makefile,v 1.2 2000/07/14 18:16:29 iwasaki Exp 
-# $FreeBSD: src/usr.sbin/acpi/acpidump/Makefile,v 1.6 2001/10/22 17:25:25 iwasaki Exp $
+# $NetBSD: Makefile,v 1.4 2009/12/22 08:44:03 cegger Exp $
+# $FreeBSD: src/usr.sbin/acpi/acpidump/Makefile,v 1.7 2003/08/28 03:33:07 njl Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
+CPPFLAGS+=-I${.CURDIR}/../../../sys
+CPPFLAGS+=-I${.CURDIR}/..
 PROG=	acpidump
-SRCS=	acpi.c acpi_user.c asl_dump.c aml_dump.c acpidump.c
-SRCS+=	aml_parse.c aml_name.c aml_amlmem.c aml_memman.c aml_store.c \
-	aml_obj.c aml_evalobj.c aml_common.c
-
-CPPFLAGS+=-I${.CURDIR}/../amldb
+MAN=	acpidump.8
+SRCS=	acpi.c acpi_user.c acpidump.c
 .endif
 
-MAN=	acpidump.8
 .include <bsd.prog.mk>
-.PATH:	${.CURDIR}/../aml
