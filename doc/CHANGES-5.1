@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.163 2009/12/21 09:19:39 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.164 2009/12/22 15:35:07 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15656,4 +15656,15 @@ sys/kern/vfs_syscalls.c				1.400
 	original userspace pointer. Avoids crashes on archs with
 	completely separate userspace VA.
 	[martin, ticket #1200]
+
+usr.bin/lex/flex.skl				1.23-1.25
+usr.bin/lex/initscan.c				1.18
+
+	If YY_NO_INPUT is defined, disable not only the declaration but
+	also the definition of yyinput() to avoid compiler warnings with
+	newer gcc. Addresses PR#41160.
+	Introduce ANSI prototypes for yyinput.
+	Conditionalize the yyinput/input() function definition the same
+	way as it's always been done in the prototype.
+	[hubertf, ticket #1197]
 
