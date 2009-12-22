@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.68 2009/12/20 09:36:05 dsl Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.69 2009/12/22 20:50:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.68 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.69 2009/12/22 20:50:46 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ kfilter_register(const char *name, const struct filterops *filtops,
 	if (user_kfilterc + 1 > user_kfiltermaxc) {
 		/* Grow in KFILTER_EXTENT chunks. */
 		user_kfiltermaxc += KFILTER_EXTENT;
-		len = user_kfiltermaxc * sizeof(struct filter *);
+		len = user_kfiltermaxc * sizeof(*kfilter);
 		kfilter = kmem_alloc(len, KM_SLEEP);
 		memset((char *)kfilter + user_kfiltersz, 0, len - user_kfiltersz);
 		if (user_kfilters != NULL) {
