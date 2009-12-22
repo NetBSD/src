@@ -48,7 +48,9 @@ atf_check_info_fail_head()
 }
 atf_check_info_fail_body()
 {
-    atf_check -s eq:1 -o empty -e empty false
+    # In Solaris, /usr/bin/false returns 255 rather than 1.  Use the
+    # built-in version for the check.
+    atf_check -s eq:1 -o empty -e empty sh -c "false"
 }
 
 atf_test_case atf_check_expout_mismatch

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ extern "C" {
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -45,6 +46,11 @@ extern "C" {
 }
 
 namespace atf {
+
+namespace io {
+class systembuf;
+} // namespace io
+
 namespace fs {
 
 // ------------------------------------------------------------------------
@@ -251,6 +257,11 @@ public:
     ino_t get_inode(void) const;
 
     //!
+    //! \brief Returns the file's permissions.
+    //!
+    mode_t get_mode(void) const;
+
+    //!
     //! \brief Returns the file's size.
     //!
     off_t get_size(void) const;
@@ -397,7 +408,7 @@ public:
 //! destruction it is carefully removed by making use of the cleanup
 //! function.
 //!
-class temp_file {
+class temp_file : public std::ostream {
     //!
     //! \brief The path to this temporary file.
     //!
@@ -407,6 +418,11 @@ class temp_file {
     //! \brief File descriptor of this temporary file.
     //!
     int m_fd;
+
+    //!
+    //! \brief Buffer backing this stream.
+    //!
+    std::auto_ptr< io::systembuf > m_systembuf;
 
 public:
     //!
@@ -428,16 +444,22 @@ public:
     ~temp_file(void);
 
     //!
-    //! \brief Writes the argument to this temporary file
-    //!
-    //! Writes content of provided std::string object to this
-    //! temporary file.
-    void write(const std::string&);
-
-    //!
     //! \brief Returns the path to this temporary file.
     //!
     const path& get_path(void) const;
+
+    //!
+    //! \brief Closes the file, but does not delete it.
+    //!
+    void close(void);
+
+    //!
+    //! \brief Gets the file descriptor.
+    //!
+    //! XXX This is very ugly because, should we use this object as a
+    //! stream, accessing the underlying file descriptor is dangerous.
+    //!
+    int fd(void);
 };
 
 // ------------------------------------------------------------------------
@@ -496,6 +518,16 @@ void remove(const path&);
 //! directory is removed alongside all of its contents.
 //!
 void cleanup(const path&);
+
+//!
+//! \brief Removes an empty directory.
+//!
+void rmdir(const path&);
+
+//!
+//! \brief Gets the current umask.
+//!
+mode_t current_umask(void);
 
 } // namespace fs
 } // namespace atf

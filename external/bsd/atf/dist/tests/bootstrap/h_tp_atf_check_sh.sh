@@ -64,7 +64,9 @@ exitcode_1_1_head()
 }
 exitcode_1_1_body()
 {
-    atf_check -s eq:1 -o empty -e empty false
+    # In Solaris, /usr/bin/false returns 255 rather than 1.  Use the
+    # built-in version for the check.
+    atf_check -s eq:1 -o empty -e empty sh -c "false"
 }
 
 atf_test_case stdout_expout_pass

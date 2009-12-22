@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,9 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "atf-c/config.h"
@@ -35,13 +37,31 @@
 #include "atf-c/sanity.h"
 
 static bool initialized = false;
-static const char *atf_arch = NULL;
-static const char *atf_confdir = NULL;
-static const char *atf_libexecdir = NULL;
-static const char *atf_machine = NULL;
-static const char *atf_pkgdatadir = NULL;
-static const char *atf_shell = NULL;
-static const char *atf_workdir = NULL;
+
+static struct var {
+    const char *name;
+    const char *default_value;
+    const char *value;
+    bool can_be_empty;
+} vars[] = {
+    { "atf_arch",           ATF_ARCH,           NULL, false, },
+    { "atf_build_cc",       ATF_BUILD_CC,       NULL, false, },
+    { "atf_build_cflags",   ATF_BUILD_CFLAGS,   NULL, true,  },
+    { "atf_build_cpp",      ATF_BUILD_CPP,      NULL, false, },
+    { "atf_build_cppflags", ATF_BUILD_CPPFLAGS, NULL, true,  },
+    { "atf_build_cxx",      ATF_BUILD_CXX,      NULL, false, },
+    { "atf_build_cxxflags", ATF_BUILD_CXXFLAGS, NULL, true,  },
+    { "atf_confdir",        ATF_CONFDIR,        NULL, false, },
+    { "atf_includedir",     ATF_INCLUDEDIR,     NULL, false, },
+    { "atf_libdir",         ATF_LIBDIR,         NULL, false, },
+    { "atf_libexecdir",     ATF_LIBEXECDIR,     NULL, false, },
+    { "atf_machine",        ATF_MACHINE,        NULL, false, },
+    { "atf_m4",             ATF_M4,             NULL, false, },
+    { "atf_pkgdatadir",     ATF_PKGDATADIR,     NULL, false, },
+    { "atf_shell",          ATF_SHELL,          NULL, false, },
+    { "atf_workdir",        ATF_WORKDIR,        NULL, false, },
+    { NULL,                 NULL,               NULL, false, },
+};
 
 /* Only used for unit testing, so this prototype is private. */
 void __atf_config_reinit(void);
@@ -51,36 +71,59 @@ void __atf_config_reinit(void);
  * --------------------------------------------------------------------- */
 
 static
-void
-initialize_var(char const **valptr, const char *name, const char *def)
+char *
+string_to_upper(const char *str)
 {
-    PRE(*valptr == NULL);
+    char *uc;
 
-    if (atf_env_has(name)) {
-        const char *val = atf_env_get(name);
-        if (strlen(val) > 0)
-            *valptr = val;
+    uc = (char *)malloc(strlen(str) + 1);
+    if (uc != NULL) {
+        char *ucptr = uc;
+        while (*str != '\0') {
+            *ucptr = toupper((int)*str);
+
+            str++;
+            ucptr++;
+        }
+        *ucptr = '\0';
+    }
+
+    return uc;
+}
+
+static
+void
+initialize_var(struct var *var, const char *envname)
+{
+    PRE(var->value == NULL);
+
+    if (atf_env_has(envname)) {
+        const char *val = atf_env_get(envname);
+        if (strlen(val) > 0 || var->can_be_empty)
+            var->value = val;
         else
-            *valptr = def;
+            var->value = var->default_value;
     } else
-        *valptr = def;
+        var->value = var->default_value;
 
-    POST(*valptr != NULL);
+    POST(var->value != NULL);
 }
 
 static
 void
 initialize(void)
 {
+    struct var *var;
+
     PRE(!initialized);
 
-    initialize_var(&atf_arch,       "ATF_ARCH",       ATF_ARCH);
-    initialize_var(&atf_confdir,    "ATF_CONFDIR",    ATF_CONFDIR);
-    initialize_var(&atf_libexecdir, "ATF_LIBEXECDIR", ATF_LIBEXECDIR);
-    initialize_var(&atf_machine,    "ATF_MACHINE",    ATF_MACHINE);
-    initialize_var(&atf_pkgdatadir, "ATF_PKGDATADIR", ATF_PKGDATADIR);
-    initialize_var(&atf_shell,      "ATF_SHELL",      ATF_SHELL);
-    initialize_var(&atf_workdir,    "ATF_WORKDIR",    ATF_WORKDIR);
+    for (var = vars; var->name != NULL; var++) {
+        char *envname;
+
+        envname = string_to_upper(var->name);
+        initialize_var(var, envname);
+        free(envname);
+    }
 
     initialized = true;
 }
@@ -90,8 +133,9 @@ initialize(void)
  * --------------------------------------------------------------------- */
 
 const char *
-atf_config_get(const char *var)
+atf_config_get(const char *name)
 {
+    const struct var *var;
     const char *value;
 
     if (!initialized) {
@@ -99,24 +143,11 @@ atf_config_get(const char *var)
         INV(initialized);
     }
 
-    if (strcmp(var, "atf_arch") == 0)
-        value = atf_arch;
-    else if (strcmp(var, "atf_confdir") == 0)
-        value = atf_confdir;
-    else if (strcmp(var, "atf_libexecdir") == 0)
-        value = atf_libexecdir;
-    else if (strcmp(var, "atf_machine") == 0)
-        value = atf_machine;
-    else if (strcmp(var, "atf_pkgdatadir") == 0)
-        value = atf_pkgdatadir;
-    else if (strcmp(var, "atf_shell") == 0)
-        value = atf_shell;
-    else if (strcmp(var, "atf_workdir") == 0)
-        value = atf_workdir;
-    else {
-        UNREACHABLE;
-        value = NULL;
-    }
+    value = NULL;
+    for (var = vars; value == NULL && var->name != NULL; var++)
+        if (strcmp(var->name, name) == 0)
+            value = var->value;
+    INV(value != NULL);
 
     return value;
 }
@@ -124,12 +155,10 @@ atf_config_get(const char *var)
 void
 __atf_config_reinit(void)
 {
+    struct var *var;
+
     initialized = false;
-    atf_arch = NULL;
-    atf_confdir = NULL;
-    atf_libexecdir = NULL;
-    atf_machine = NULL;
-    atf_pkgdatadir = NULL;
-    atf_shell = NULL;
-    atf_workdir = NULL;
+
+    for (var = vars; var->name != NULL; var++)
+        var->value = NULL;
 }

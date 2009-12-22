@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #define ATF_C_IO_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include <atf-c/error_fwd.h>
 
@@ -40,7 +41,7 @@ struct atf_fs_path;
 /* TODO: It would be nice to have an 'atf_io_file_t' type and avoid using
  * raw file descriptors. */
 
-atf_error_t atf_io_readline(int, struct atf_dynstr *);
+atf_error_t atf_io_readline(int, struct atf_dynstr *, bool *);
 atf_error_t atf_io_write_ap(int, const char *, va_list);
 atf_error_t atf_io_write_fmt(int, const char *, ...);
 

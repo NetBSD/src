@@ -53,6 +53,7 @@ extern "C" {
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/env.hpp"
 #include "atf-c++/fs.hpp"
+#include "atf-c++/io.hpp"
 #include "atf-c++/sanity.hpp"
 #include "atf-c++/text.hpp"
 #include "atf-c++/user.hpp"
@@ -81,9 +82,10 @@ safe_access(const impl::path& p, int mode, int experr)
     atf_error_t err = atf_fs_eaccess(p.c_path(), mode);
     if (atf_is_error(err)) {
         if (atf_error_is(err, "libc")) {
-            if (atf_libc_error_code(err) == experr)
+            if (atf_libc_error_code(err) == experr) {
+                atf_error_free(err);
                 ok = false;
-            else {
+            } else {
                 atf::throw_atf_error(err);
                 // XXX Silence warning; maybe throw_atf_error should be
                 // an exception and not a function.
@@ -325,6 +327,13 @@ impl::file_info::get_inode(void)
     return atf_fs_stat_get_inode(&m_stat);
 }
 
+mode_t
+impl::file_info::get_mode(void)
+    const
+{
+    return atf_fs_stat_get_mode(&m_stat);
+}
+
 off_t
 impl::file_info::get_size(void)
     const
@@ -468,36 +477,32 @@ impl::temp_dir::get_path(void)
 // The "temp_file" class.
 // ------------------------------------------------------------------------
 
-impl::temp_file::temp_file(const path& p)
+impl::temp_file::temp_file(const path& p) :
+    std::ostream(NULL),
+    m_fd(-1)
 {
     atf::utils::auto_array< char > buf(new char[p.str().length() + 1]);
     std::strcpy(buf.get(), p.c_str());
+
     m_fd = ::mkstemp(buf.get());
     if (m_fd == -1)
         throw system_error(IMPL_NAME "::temp_file::temp_file(" +
                            p.str() + ")", "mkstemp(3) failed",
                            errno);
+    m_systembuf.reset(new io::systembuf(m_fd));
+    rdbuf(m_systembuf.get());
+
     m_path.reset(new path(buf.get()));
 }
 
 impl::temp_file::~temp_file(void)
 {
-    ::close(m_fd);
-    cleanup(*m_path);
-}
-
-void
-impl::temp_file::write(const std::string& s)
-{
-    const char *cstr;
-    size_t len;
-
-    cstr = s.c_str();
-    len = strlen(cstr);
-
-    if (::write(m_fd, cstr, len) != len)
-        throw system_error(IMPL_NAME "::temp_file::write(" +
-                           s + ")", "write(2) failed", errno);
+    close();
+    try {
+        remove(*m_path);
+    } catch (const atf::system_error& e) {
+        // Ignore deletion errors.
+    }
 }
 
 const impl::path&
@@ -505,6 +510,23 @@ impl::temp_file::get_path(void)
     const
 {
     return *m_path;
+}
+
+void
+impl::temp_file::close(void)
+{
+    if (m_fd != -1) {
+        flush();
+        ::close(m_fd);
+        m_fd = -1;
+    }
+}
+
+int
+impl::temp_file::fd(void)
+{
+    INV(m_fd != -1);
+    return m_fd;
 }
 
 // ------------------------------------------------------------------------
@@ -604,4 +626,23 @@ impl::cleanup(const path& p)
     err = atf_fs_cleanup(p.c_path());
     if (atf_is_error(err))
         throw_atf_error(err);
+}
+
+void
+impl::rmdir(const path& p)
+{
+    atf_error_t err = atf_fs_rmdir(p.c_path());
+    if (atf_is_error(err))
+        throw_atf_error(err);
+}
+
+// XXX: This is racy if we have other threads.  We should grab the current
+// umask durent program initialization and never query it again, provided
+// that we don't modify it, of course.
+mode_t
+impl::current_umask(void)
+{
+    const mode_t current = umask(0);
+    (void)umask(current);
+    return current;
 }
