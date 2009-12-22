@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,78 @@
 #include "atf-c/user.h"
 
 /* ---------------------------------------------------------------------
+ * Prototypes for auxiliary functions.
+ * --------------------------------------------------------------------- */
+
+static bool check_umask(const mode_t, const mode_t);
+static atf_error_t cleanup_aux(const atf_fs_path_t *, dev_t, bool);
+static atf_error_t cleanup_aux_dir(const char *, const atf_fs_stat_t *, bool);
+static atf_error_t copy_contents(const atf_fs_path_t *, char **);
+static mode_t current_umask(void);
+static atf_error_t do_mkdtemp(char *);
+static atf_error_t do_unmount(const atf_fs_path_t *);
+static atf_error_t normalize(atf_dynstr_t *, char *);
+static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list);
+static void replace_contents(atf_fs_path_t *, const char *);
+static const char *stat_type_to_string(const int);
+
+/* ---------------------------------------------------------------------
+ * The "invalid_umask" error type.
+ * --------------------------------------------------------------------- */
+
+struct invalid_umask_error_data {
+    /* One of atf_fs_stat_*_type. */
+    int m_type;
+
+    /* The original path causing the error. */
+    /* XXX: Ideally this would be an atf_fs_path_t, but if we create it
+     * from the error constructor, we cannot delete the path later on.
+     * Can't remember why atf_error_new does not take a hook for
+     * deletion. */
+    char m_path[1024];
+
+    /* The umask that caused the error. */
+    mode_t m_umask;
+};
+typedef struct invalid_umask_error_data invalid_umask_error_data_t;
+
+static
+void
+invalid_umask_format(const atf_error_t err, char *buf, size_t buflen)
+{
+    const invalid_umask_error_data_t *data;
+
+    PRE(atf_error_is(err, "invalid_umask"));
+
+    data = atf_error_data(err);
+    snprintf(buf, buflen, "Could not create the temporary %s %s because "
+             "it will not have enough access rights due to the current "
+             "umask %05o", stat_type_to_string(data->m_type),
+             data->m_path, (unsigned int)data->m_umask);
+}
+
+static
+atf_error_t
+invalid_umask_error(const atf_fs_path_t *path, const int type,
+                    const mode_t failing_mask)
+{
+    atf_error_t err;
+    invalid_umask_error_data_t data;
+
+    data.m_type = type;
+
+    strncpy(data.m_path, atf_fs_path_cstring(path), sizeof(data.m_path));
+    data.m_path[sizeof(data.m_path) - 1] = '\0';
+
+    data.m_umask = failing_mask;
+
+    err = atf_error_new("invalid_umask", &data, sizeof(data),
+                        invalid_umask_format);
+
+    return err;
+}
+
+/* ---------------------------------------------------------------------
  * The "unknown_file_type" error type.
  * --------------------------------------------------------------------- */
 
@@ -96,11 +168,13 @@ unknown_type_error(const char *path, int type)
  * Auxiliary functions.
  * --------------------------------------------------------------------- */
 
-static atf_error_t cleanup_aux(const atf_fs_path_t *, dev_t, bool);
-static atf_error_t cleanup_aux_dir(const char *, dev_t, bool);
-static atf_error_t do_unmount(const atf_fs_path_t *);
-static atf_error_t normalize(atf_dynstr_t *, char *);
-static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list);
+static
+bool
+check_umask(const mode_t exp_mode, const mode_t min_mode)
+{
+    const mode_t actual_mode = (~current_umask() & exp_mode);
+    return (actual_mode & min_mode) == min_mode;
+}
 
 /* The erase parameter in this routine is to control nested mount points.
  * We want to descend into a mount point to unmount anything that is
@@ -120,7 +194,7 @@ cleanup_aux(const atf_fs_path_t *p, dev_t parent_device, bool erase)
         goto out;
 
     if (atf_fs_stat_get_type(&st) == atf_fs_stat_dir_type) {
-        err = cleanup_aux_dir(pstr, atf_fs_stat_get_device(&st),
+        err = cleanup_aux_dir(pstr, &st,
                               atf_fs_stat_get_device(&st) == parent_device);
         if (atf_is_error(err))
             goto out_st;
@@ -134,11 +208,7 @@ cleanup_aux(const atf_fs_path_t *p, dev_t parent_device, bool erase)
 
     if (erase) {
         if (atf_fs_stat_get_type(&st) == atf_fs_stat_dir_type) {
-            if (rmdir(pstr) == -1)
-                err = atf_libc_error(errno, "Cannot remove directory "
-                                     "%s", pstr);
-            else
-                INV(!atf_is_error(err));
+            err = atf_fs_rmdir(p);
         } else {
             if (unlink(pstr) == -1)
                 err = atf_libc_error(errno, "Cannot remove file %s", pstr);
@@ -155,11 +225,19 @@ out:
 
 static
 atf_error_t
-cleanup_aux_dir(const char *pstr, dev_t this_device, bool erase)
+cleanup_aux_dir(const char *pstr, const atf_fs_stat_t *st, bool erase)
 {
     DIR *d;
     atf_error_t err;
     struct dirent *de;
+
+    if (erase && !(atf_fs_stat_get_mode(st) & S_IWUSR)) {
+        if (chmod(pstr, atf_fs_stat_get_mode(st) | S_IWUSR) == -1) {
+            err = atf_libc_error(errno, "Cannot grant write permissions "
+                                 "to %s", pstr);
+            goto out;
+        }
+    }
 
     d = opendir(pstr);
     if (d == NULL) {
@@ -175,7 +253,7 @@ cleanup_aux_dir(const char *pstr, dev_t this_device, bool erase)
         if (!atf_is_error(err)) {
             if (strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
-                err = cleanup_aux(&p, this_device, erase);
+                err = cleanup_aux(&p, atf_fs_stat_get_device(st), erase);
 
             atf_fs_path_fini(&p);
         }
@@ -204,6 +282,15 @@ copy_contents(const atf_fs_path_t *p, char **buf)
     }
 
     return err;
+}
+
+static
+mode_t
+current_umask(void)
+{
+    const mode_t current = umask(0);
+    (void)umask(current);
+    return current;
 }
 
 static
@@ -274,12 +361,28 @@ do_unmount(const atf_fs_path_t *p)
          * also have to update /etc/mtab to match what we did.  It is
          * simpler to just leave the system-specific umount(8) tool deal
          * with it, at least for now. */
-        char *cmd;
+        atf_fs_path_t prog;
 
-        err = atf_text_format(&cmd, "umount '%s'", pastr);
+        /* TODO: Should have an atf_fs_find_in_path function or similar to
+         * avoid relying on the automatic path lookup of exec, which I'd
+         * like to get rid of. */
+        err = atf_fs_path_init_fmt(&prog, "umount");
         if (!atf_is_error(err)) {
-            err = atf_process_system(cmd);
-            free(cmd);
+            atf_process_status_t status;
+            const char *argv[3] = { "unmount", pastr, NULL };
+
+            err = atf_process_exec_array(&status, &prog, argv, NULL, NULL);
+            if (!atf_is_error(err)) {
+                if (!atf_process_status_exited(&status) ||
+                    atf_process_status_exitstatus(&status) != EXIT_SUCCESS) {
+                    /* XXX: This is the wrong error type. */
+                    err = atf_libc_error(EINVAL, "Failed to exec unmount");
+                }
+
+                atf_process_status_fini(&status);
+            }
+
+            atf_fs_path_fini(&prog);
         }
     }
 #endif
@@ -361,6 +464,36 @@ replace_contents(atf_fs_path_t *p, const char *buf)
     INV(!atf_is_error(err));
 }
 
+static
+const char *
+stat_type_to_string(const int type)
+{
+    const char *str;
+
+    if (type == atf_fs_stat_blk_type)
+        str = "block device";
+    else if (type == atf_fs_stat_chr_type)
+        str = "character device";
+    else if (type == atf_fs_stat_dir_type)
+        str = "directory";
+    else if (type == atf_fs_stat_fifo_type)
+        str = "named pipe";
+    else if (type == atf_fs_stat_lnk_type)
+        str = "symbolic link";
+    else if (type == atf_fs_stat_reg_type)
+        str = "regular file";
+    else if (type == atf_fs_stat_sock_type)
+        str = "socket";
+    else if (type == atf_fs_stat_wht_type)
+        str = "whiteout";
+    else {
+        UNREACHABLE;
+        str = NULL;
+    }
+
+    return str;
+}
+
 /* ---------------------------------------------------------------------
  * The "atf_fs_path" type.
  * --------------------------------------------------------------------- */
@@ -420,7 +553,7 @@ atf_fs_path_fini(atf_fs_path_t *p)
 atf_error_t
 atf_fs_path_branch_path(const atf_fs_path_t *p, atf_fs_path_t *bp)
 {
-    const ssize_t endpos = atf_dynstr_rfind_ch(&p->m_data, '/');
+    const size_t endpos = atf_dynstr_rfind_ch(&p->m_data, '/');
     atf_error_t err;
 
     if (endpos == atf_dynstr_npos)
@@ -449,7 +582,7 @@ atf_fs_path_cstring(const atf_fs_path_t *p)
 atf_error_t
 atf_fs_path_leaf_name(const atf_fs_path_t *p, atf_dynstr_t *ln)
 {
-    ssize_t begpos = atf_dynstr_rfind_ch(&p->m_data, '/');
+    size_t begpos = atf_dynstr_rfind_ch(&p->m_data, '/');
     atf_error_t err;
 
     if (begpos == atf_dynstr_npos)
@@ -638,6 +771,12 @@ ino_t
 atf_fs_stat_get_inode(const atf_fs_stat_t *st)
 {
     return st->m_sb.st_ino;
+}
+
+mode_t
+atf_fs_stat_get_mode(const atf_fs_stat_t *st)
+{
+    return st->m_sb.st_mode & ~S_IFMT;
 }
 
 off_t
@@ -845,6 +984,11 @@ atf_fs_mkdtemp(atf_fs_path_t *p)
     atf_error_t err;
     char *buf;
 
+    if (!check_umask(S_IRWXU, S_IRWXU)) {
+        err = invalid_umask_error(p, atf_fs_stat_dir_type, current_umask());
+        goto out;
+    }
+
     err = copy_contents(p, &buf);
     if (atf_is_error(err))
         goto out;
@@ -869,6 +1013,11 @@ atf_fs_mkstemp(atf_fs_path_t *p, int *fdout)
     char *buf;
     int fd;
 
+    if (!check_umask(S_IRWXU, S_IRWXU)) {
+        err = invalid_umask_error(p, atf_fs_stat_reg_type, current_umask());
+        goto out;
+    }
+
     err = copy_contents(p, &buf);
     if (atf_is_error(err))
         goto out;
@@ -884,6 +1033,26 @@ atf_fs_mkstemp(atf_fs_path_t *p, int *fdout)
 out_buf:
     free(buf);
 out:
+    return err;
+}
+
+atf_error_t
+atf_fs_rmdir(const atf_fs_path_t *p)
+{
+    atf_error_t err;
+
+    if (rmdir(atf_fs_path_cstring(p))) {
+        if (errno == EEXIST) {
+            /* Some operating systems (e.g. OpenSolaris 200906) return
+             * EEXIST instead of ENOTEMPTY for non-empty directories.
+             * Homogenize the return value so that callers don't need
+             * to bother about differences in operating systems. */
+            errno = ENOTEMPTY;
+        }
+        err = atf_libc_error(errno, "Cannot remove directory");
+    } else
+        err = atf_no_error();
+
     return err;
 }
 

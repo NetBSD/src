@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,8 @@ extern "C" {
 
 #include "atf-c++/io.hpp"
 #include "atf-c++/macros.hpp"
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -422,6 +424,12 @@ ATF_TEST_CASE_BODY(postream)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/io.hpp", "d_include_io_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -449,4 +457,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     // Add the tests for the "postream" class.
     ATF_ADD_TEST_CASE(tcs, postream);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

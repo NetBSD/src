@@ -103,7 +103,7 @@ public:
     app(const std::string&, const std::string&, const std::string&);
     virtual ~app(void);
 
-    int run(int, char* const* argv);
+    int run(int, char* const*);
 };
 
 } // namespace application

@@ -1,0 +1,1096 @@
+<?xml version="1.0"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta xmlns="" http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1" />
+<link xmlns="" rel="made"
+href="mailto:atf-devel AT NetBSD DOT org" />
+<link xmlns="" rel="stylesheet" type="text/css"
+href="standalone.css" />
+<title xmlns="">Rearchitecting ATF: The missing
+specification</title>
+</head>
+<body>
+<div xmlns="" class="header">
+<p class="title">Rearchitecting ATF: The missing specification</p>
+<p class="author">By Julio Merino, The NetBSD Foundation</p>
+</div>
+<div xmlns="" class="toc">
+<h1>Contents</h1>
+<ol>
+<li>
+<p>
+<a href="#overview">Overview</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#keys">Key features and differences</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#scenarios">Scenarios</a>
+</p>
+<ol>
+<li>
+<p>
+<a href="#developer-scenario">The developer</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#user-scenario">The end user</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#admin-scenario">The administrator</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#farm-scenario">Build farms</a>
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p>
+<a href="#users">Users</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#organization">Test case organization and identifiers</a>
+</p>
+<ol>
+<li>
+<p>
+<a href="#fslayout">File system layout</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#identifiers">Identifiers</a>
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p>
+<a href="#tcs">Test cases</a>
+</p>
+<ol>
+<li>
+<p>
+<a href="#tc-ids">Identifiers</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tc-types">Types and sizes</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tc-results">Results</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tc-reporting">Results reporting</a>
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p>
+<a href="#tps">Test programs</a>
+</p>
+<ol>
+<li>
+<p>
+<a href="#tp-ids">Identifiers</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tp-disk">On-disk representation</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tc-isolation">Test case isolation</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#tp-cli">The command-line interface</a>
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p>
+<a href="#run">Execution automation</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#store">The results store</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#farms">Build farms</a>
+</p>
+</li>
+</ol>
+</div>
+<div xmlns="" class="contents">
+<div class="note">This document is very much WORK IN PROGRESS.
+Anything can change at any time without prior notice. Feel free to
+(and please do) raise comments about the major ideas herein
+described but DO NOT NITPICK. Be aware that even the ideas and
+design decisions in this document are not settled in stone; they
+may completely change too.</div>
+<h1>
+<a name="overview">Overview</a>
+</h1>
+<p xml:space="preserve">
+The Automated Testing Framework, or ATF for short, aims to provide
+a
+software testing platform for both developers and end users:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Developers want a set of libraries that make the
+implementation of test cases painless.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Users want a set of tools that allow them to run the tests
+over and over and over and over again and generate beautiful
+reports with
+the results.
+</p>
+</li>
+</ul>
+<p xml:space="preserve">
+The development of ATF started as a Google Summer of Code 2007
+project for the NetBSD operating system.  Unfortunately, the code
+basically
+grew out of a prototype and a very loose specification.  The result
+is, to
+put it mildly, a real mess and a pain in the ass to maintain. 
+Don't get me
+wrong: the code has grown pretty well based on the original design
+ideas,
+but the overall result has some problems that are really hard to
+fix
+without a major redesign.  Moreover, some of these problems have
+only
+materialized as a result of the reasonable maturity of ATF; they
+were
+really hard to predict in the first place.
+</p>
+<p xml:space="preserve">
+This specification aims to provide an ideal design for ATF (err,
+yes,
+a design for how it should have been architected in the first
+place).  It
+will be obvious that we will have to rewrite major portions of
+code, but I
+would expect to be able to reuse many parts of it.  Starting from
+scratch
+is not an option; incremental improvement will deliver results much
+earlier
+and allow for user assurance before we do new mistakes.
+</p>
+<h1>
+<a name="keys">Key features and differences</a>
+</h1>
+<p xml:space="preserve">
+The major features of ATF will be:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Lightweight libraries for C, C++ and POSIX shell scripting
+to implement test cases.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test cases designed to be installed on the target system so
+that they can be run much later after building the
+software.
+</p>
+</li>
+</ul>
+<p xml:space="preserve">
+The major differences between future versions of ATF and previous
+ones will be:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+<i>Test programs don't perform isolation.</i>
+Before, test programs were overly-complicated by trying to isolate
+the
+subprocesses of their test cases from the rest of the test cases
+and the
+system.  This is very fragile, specially when implemented in POSIX
+shell.
+Therefore, isolation will now be performed from a single point,
+atf-run,
+just before forking the test case.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<i>Test programs can only run one test case at a
+time.</i>  Related to the previous points, test programs will not
+run multiple test cases in a row any more, because they can't
+provide
+isolation.  Sequencing will be provided by atf-run.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<i>Simple debugging.</i>  As test programs do
+not fork any more, debugging of failing test cases is easier, as
+gdb will
+Just Work (TM).
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<i>Test case metadata is stored out of the test
+program, in a special file.</i>  This is to allow efficient
+querying
+from external applications.  If you have attempted to run an old
+POSIX
+shell test program with the 
+<tt>-l</tt> option to list the
+available test cases, you know what I mean; such approach does not
+scale at
+all.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<i>Support for other test sources.</i>  We
+want to support adding results coming from "special" test programs
+to the
+report, such as build slaves or source code linters.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<i>Remote reporting of test results.</i>
+Previously, atf-run and atf-report are able to generate test
+reports for a
+single run, but it's just not possible to merge these results with
+other
+executions or with results from other machines.  We will have a
+database,
+accessible remotely, containing results from multiple sources
+(different
+machines, different test cases, etc.) and providing historical
+information
+about these results.
+</p>
+</li>
+</ul>
+<h1>
+<a name="scenarios">Scenarios</a>
+</h1>
+<h2>
+<a name="developer-scenario">The developer</a>
+</h2>
+<p xml:space="preserve">
+The developer wants a set of libraries to be able to write test
+cases
+for his own software painlessly and as quickly as possible.  These
+libraries should have a clean interface and not expose internal
+details of
+the implementation (as the old libraries do).  Furthermore, another
+key
+point that the developer values is the ease of debugging of test
+cases:
+when a test case fails, running it in gdb or similar tools is
+crucial, and
+the framework should not get in the way to do that.  Unfortunately,
+previous versions of ATF make debugging really hard, so this is
+something
+to address in the future.
+</p>
+<h2>
+<a name="user-scenario">The end user</a>
+</h2>
+<p xml:space="preserve">
+It may be argued that the end user should never see the tests
+because, when he gets the application, he has to be able to assume
+that it
+is defect free.  Unfortunately, that is not the case.  Many
+developers do
+not have the resources to have build farms with all possible
+hardware/software configurations that their users may have, so
+testing is
+never complete.
+</p>
+<p xml:space="preserve">
+Even more, there is a very clear case in which the end user needs
+tests and for which there is no easy replacement.  Let's assume the
+user
+gets a shiny new version of the FlashyView image viewer. 
+FlashyView has a
+dependency on the third-party libjpeg library to load and decode
+the image
+files.  At the moment of FlashyView's 1.0 release, its developers
+test the
+code against libjpeg 89.3.4 and all is right.  The user installs
+both
+FlashyView 1.0 and libjpeg 89.3.4 on his computer and all is good.
+However, one day his CleverOS operating system decides to upgrade
+libjpeg
+to 89.122.36 because, you know, both are compatible.  But the
+developers
+have only recently tested it with 89.122.35 and they don't know
+FlashyView
+1.0 doesn't work with 89.122.36.  If the user has the tests
+available, he
+will be able to run them after an upgrade and check that,
+effectively, some
+obscure features of FlashyView 1.0 have stopped working with
+89.122.36.
+This can be an invaluable help for critical applications or as part
+of the
+bug reporting procedure.
+</p>
+<h2>
+<a name="admin-scenario">The administrator</a>
+</h2>
+<p xml:space="preserve">
+System administrators need to set up beautiful new boxes pretty
+frequently.  But hardware is different on each of them, and the
+software
+developers do not have the luxury to have those uber-expensive
+machines to
+make sure that their software works fine in reversed-endian
+architectures.
+If the administrator has the tests readily available for all
+software
+components, he will be able to quickly assess whether the software
+installation will be stable or not in the new system.  He will
+similarly be
+able to assess the overall quality of the system after major and
+minor
+upgrades.
+</p>
+<h2>
+<a name="farm-scenario">Build farms</a>
+</h2>
+<p xml:space="preserve">
+I am adding build farms as a scenario because this is something
+that
+we really need to have but which was not addressed at all in older
+versions
+of ATF.  Virtually all software projects that want to address
+portability
+to different systems and/or architectures will need some kind of
+build
+automation in a set of machines (aka build slaves).  ATF has to
+provide
+ways to either allow the integration of these test results into the
+overall
+reports or to implement itself the necessary logic to provide a
+build
+farm.
+</p>
+<h1>
+<a name="users">Users</a>
+</h1>
+<p xml:space="preserve">
+The first and main consumer of ATF (during the very first releases,
+at least) will be The NetBSD Project.  As such, we need to make
+design
+decisions that benefit ATF in this context.  Some of these include:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+No dependencies on third-party software.  The use of Boost
+or SQLite sounds tempting, as we shall see later on, but might
+result in a
+ban of ATF into the NetBSD source tree.  If a third-party component
+may
+result in high benefits in the code, it will be considered, but
+care has to
+be taken.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Don't force C++.  Test case developers don't want to see
+C++ at all.  So the C library must be as clean as possible from
+C++-like
+artifacts.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Speed matters.  Previous version of ATF run "reasonably
+fast" on modern computers, but are unbearably slow on not-so-old
+machines.
+This is not tolerable, given that NetBSD runs on many underpowered
+platforms and those are the ones that will most benefit from
+automated
+testing.
+</p>
+</li>
+</ul>
+<p xml:space="preserve">
+Of course I hope we'll have more consumers other than NetBSD, but
+for
+that to happen we must design a good product and then gain
+consumers at a
+slow pace.
+</p>
+<h1>
+<a name="organization">Test case organization and identifiers</a>
+</h1>
+<p xml:space="preserve">
+The smallest testing unit is a 
+<i>test case</i>.  A
+test case has a specific purpose, like ensuring that a single
+method works
+fine (unit test) or ensuring that a specific command-line flag
+works as
+expected (system test).
+</p>
+<p xml:space="preserve">
+Test cases are grouped into 
+<i>test programs</i>.
+These test programs act as mere frontends for the execution of the
+test
+cases they contain: there is absolutely no state sharing between
+different
+test cases at run time, even if they belong to the same test
+program.
+</p>
+<p xml:space="preserve">
+Test programs are stored in a subtree of the file system.  This
+subtree defines a 
+<i>test suite</i>.
+</p>
+<h2>
+<a name="fslayout">File system layout</a>
+</h2>
+<p xml:space="preserve">
+In order to identify the root of a test suite, we will place a
+special control directory, named 
+<tt>_ATF</tt>, as a child of the
+root's directory.  This directory will include a file, named
+<tt>test-suite</tt>, that contains the name of the test
+suite.
+</p>
+<p xml:space="preserve">
+Descending from the test suite root directory, we can find either
+subdirectories or test programs.  The former are used to organize
+test
+programs logically, while the later can be placed anywhere in the
+subtree.
+</p>
+<h2>
+<a name="identifiers">Identifiers</a>
+</h2>
+<p xml:space="preserve">
+Based on the tree layout that defines a test suite, each test
+program
+and test case can be identified by an absolute path from the root
+of the
+tree to the test program or test case, respectively.  Given that we
+impose
+a difference between test programs and test cases, we will reflect
+such
+differences in the paths.
+</p>
+<p xml:space="preserve">
+A test program is identified merely by the path from the test
+suite's
+root directory to it, and the components of this path are separated
+by
+forward slashes (just like in any Unix path).
+</p>
+<p xml:space="preserve">
+A test program is identified by a name that is unique within the
+test
+program.  To uniquely identify the test case within the tree, we
+take the
+path of the test program and append the test case name to it as a
+new
+component, but this time using a colon as the delimiter.
+</p>
+<h1>
+<a name="tcs">Test cases</a>
+</h1>
+<h2>
+<a name="tc-ids">Identifiers</a>
+</h2>
+<p xml:space="preserve">
+Test case identifier vs. execution identifier.
+</p>
+<h2>
+<a name="tc-types">Types and sizes</a>
+</h2>
+<p xml:space="preserve">
+Test cases have a specific purpose and, as such, they will be
+tagged
+by the developers.  These types can be:
+</p>
+<ol>
+<li>
+<p xml:space="preserve">
+Unit test: ...
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Integration test: ...
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+System test: ...
+</p>
+</li>
+</ol>
+<p xml:space="preserve">
+Orthogonally to test case types, tests also have a size defining
+them:
+</p>
+<ol>
+<li>
+<p xml:space="preserve">
+Small: A test case that runs in
+miliseconds.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Medium: A test case that runs in the order of few seconds
+(less than 10).
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Large: Any other test case.
+</p>
+</li>
+</ol>
+<p xml:space="preserve">
+Obviously, classifying the test cases by size is a very subjective
+thing, because faster machines will make some medium test cases
+feel small
+at some point.  To-do: consider if we really want to do this...
+</p>
+<h2>
+<a name="tc-results">Results</a>
+</h2>
+<p xml:space="preserve">
+A test case results may terminate with any of the following
+results:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Pass: All the checks in the test case were successful.  No
+additional information provided.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fail: The test case explicitly failed; a textual reason
+must be provided for this failure.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Skipped: The test case was not executed because some
+conditions were not met; a textual reason must be provided to aid
+the user
+in correcting the problems that prevented the test case from
+running.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Expected failure: An error was detected in the test case
+but it was expected.  Useful to capture known bugs in test cases,
+but which
+will not be fixed anytime soon.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Bogus: This is not a result raised by the test case, but is
+a condition detected by the caller.  A test case is deemed bogus
+when it
+exits abruptly: i.e. it crashes at any point or it doesn't create
+the
+results file.
+</p>
+</li>
+</ul>
+<h2>
+<a name="tc-reporting">Results reporting</a>
+</h2>
+<p xml:space="preserve">
+A test case will create a file upon completion, which will contain
+the results of the execution of that specific test case.  If the
+test case
+fails half-way through due to some unexpected error, the file will
+not be
+created.  Callers of the test case will then know that something
+went
+horribly wrong and mark the test case as bogus.
+</p>
+<p xml:space="preserve">
+Previous versions of ATF used a special file descriptor to report
+their results to the caller.  This seemed a good idea at the
+beginning
+because I expected to have test cases not to create temporary
+directories,
+but causes several problems: the test case can close the results
+file
+descriptor and it is, I think, impossible to eventually implement
+this
+approach in Win32 systems.  As regards the former problem, though,
+the old
+code uses a temporary file internally to store the results and lets
+the
+test program monitor read that and redirect those results through
+the
+desired file descriptor.  That is redundant and uselessly complex:
+why not
+use files all the way through in the first place?  That's what we
+are going
+to do.
+</p>
+<h1>
+<a name="tps">Test programs</a>
+</h1>
+<p xml:space="preserve">
+A test program is a collection of related test cases with a common
+run-time interface.  Test cases need not be of the same type; i.e.
+a test
+program could contain both unit and system tests.
+</p>
+<h2>
+<a name="tp-ids">Identifiers</a>
+</h2>
+<p xml:space="preserve">
+A test program has a name that must be unique in the directory it
+is
+stored (obviously; file systems do not support multiple files with
+the same
+name living in the same directory).
+</p>
+<p xml:space="preserve">
+The test program is uniquely identified by the full path from the
+test suite's root directory to the test program, including the test
+program
+name itself.
+</p>
+<h2>
+<a name="tp-disk">On-disk representation</a>
+</h2>
+<p xml:space="preserve">
+Test programs are, by definition, binaries or scripts stored on
+disk.
+However, we need to attach some meta-data to these programs, which
+makes
+ATF test programs be stored as bundles on disk.
+</p>
+<p xml:space="preserve">
+Lets consider a test program called 
+<tt>wheel-test</tt> for
+the super-interesting wheel class.  The wheel-test contains the
+<tt>can-spin</tt> and 
+<tt>is-round</tt> test cases that
+check if, well, the wheel can spin and if the wheel is round.  This
+test
+program is stored in a 
+<tt>wheel-test.atf-tp</tt> directory whose
+contents are:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+<tt class="filename">wheel-test.atf-tp/metadata</tt>: Contains
+the list of available test cases, their description and their
+properties
+(if any).
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+<tt class="filename">wheel-test.atf-tp/executable</tt>: A binary
+or shell script that implements the test cases described in the
+metadata.
+</p>
+</li>
+</ul>
+<p xml:space="preserve">
+Why do we store the metadata separately from the binary?  We want
+to
+be able to inspect a whole tree of test programs as fast as
+possible and
+collect information about all the available test cases and their
+properties.  This information can later be used to query which test
+cases
+to run on each run -- just imagine a GUI providing the user the
+whole
+(huge) list of test cases available in their systems (for all the
+applications he has installed) and let him inspect this tree at
+will.
+</p>
+<p xml:space="preserve">
+Previous versions of ATF kept the metadata inside the binary and
+provided a very rudimentary command-line interface in each binary
+to export
+this data.  The problem is that executing the binaries just to get
+this
+information is a costly operation -- specially for shell-based
+tests --, so
+this approach does not scale.
+</p>
+<p xml:space="preserve">
+Of course, keeping the metadata separate from the executable can
+lead
+to inconsistencies between the two, which will be dealt by
+checksumming the
+binary and storing the criptographic checksum in the metadata. 
+To-do:
+decide which checksumming algorithm to use.
+</p>
+<p xml:space="preserve">
+Open problem: how do we make it easy to generate this layout from
+the
+build tools?  Specially, how to painlessly tie this to Automake?
+</p>
+<h2>
+<a name="tc-isolation">Test case isolation</a>
+</h2>
+<p xml:space="preserve">
+Test programs contain a set of test cases, but we want to run each
+test case as isolatedly as possible from each other.  If we run the
+test
+cases in the same process, they share the same memory, so they can
+mess
+with global state that will affect the execution order.
+</p>
+<p xml:space="preserve">
+Additionally, we want each test case to run in its own temporary
+subdirectory so that it can create, as will, files and directories.
+ The
+run-time system must take care of cleaning everything up after
+execution.
+</p>
+<p xml:space="preserve">
+Previous versions of ATF implemented this separation by making the
+test program spawn a subprocess for each test case, and by making
+this same
+test program deal with all other the nitty-gritty details of
+directory
+isolation and cleanup.  This turns out in tons of code duplication
+among
+each language binding, and is quite hard to keep all
+implementations
+consistent with each other.  Furthermore, implementing this
+isolation in
+shell scripts is painfully complex and obfuscated, which makes
+shell
+scripts incredibly slow.  At last, there is one more drawback:
+debugging of
+failing test cases is hard because the forking of subprocesses
+collides
+with debuggers; yes, gdb supports subprocess boundary crossing, but
+not in
+all platforms.
+</p>
+<p xml:space="preserve">
+An alternative approach is to make test programs
+<i>not</i> do the isolation by themselves.  Instead, we will
+have atf-run to spawn a new, clean, isolated subprocess for each
+test case
+and then just execute that test case.  This will, most likely, be
+faster
+than the current approach (because it will be implemented in C++)
+and will
+be much easier to maintain.
+</p>
+<p xml:space="preserve">
+There are two major drawbacks, though:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Running the test program by hand will leave tons of garbage
+uncleaned; that is fine as long as we warn the tech-savvy user to
+<i>not do that</i>.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+The current libraries allow the programmer to define random
+test cases anywhere in their program (not necessarily in a test
+program)
+and run them in a isolated way by just running their 
+<tt>run</tt>
+method.  If we remove the isolation from the test cases themselves,
+this
+API should disappear, as it will not be safe any more to run a test
+case by
+hand from within a program.  Maybe not a big deal, though,
+because... who
+wants to mix test cases with a regular application code?
+</p>
+</li>
+</ul>
+<h2>
+<a name="tp-cli">The command-line interface</a>
+</h2>
+<p xml:space="preserve">
+All test programs must provide the same command-line interface so
+that end users are not surprised by unknown and inconsistent flags
+and
+arguments.  We did a good job in previous versions of ATF in this
+regard,
+but we are going to simplify the interface even further.
+</p>
+<p xml:space="preserve">
+Given that test programs will not provide isolation for the test
+cases they contain, we will not allow a single run of the test
+program to
+execute more than one test case.  If automation is needed to run
+several
+tests in a sequence, the user will have to use atf-run.
+</p>
+<p xml:space="preserve">
+With all that said, a test program will provide the following
+interface:
+</p>
+<p xml:space="preserve">
+test-program [options] [test-case-name]
+</p>
+<p xml:space="preserve">
+Note that we can only specify a single test case.  For simplicity,
+we
+are going to make it optional, in which case the test program will
+<i>only work</i> if it defines a single test case.  I do not
+really like the idea, because adding another test case to the
+program will
+break existing callers, 
+<i>but</i> these are internal
+binaries that must not be called directly, so there is no real harm
+done if
+that happens.  The simplicity is here provided only to make
+debugging
+easier.
+</p>
+<p xml:space="preserve">
+The available options are as follows:
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+-h: Explicitly request help.  The program must never print
+the whole usage message unless asked to do so.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+-r results-file: Path to the file where the execution
+results will be stored.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+-s srcdir: Path to the source directory where the test
+program resides.  We will not try to guess it at this point
+(atf-run will,
+though) unless the source directory is the current directory,
+because there
+is the potential of guessing incorrectly and confusing our users. 
+We need
+to know what the source directory is to be able to find the
+metadata file
+and any auxiliary data files required by the test
+program.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+-v var=value: Sets the configuration variable var to value,
+which test cases can later query.
+</p>
+</li>
+</ul>
+<p xml:space="preserve">
+Note that several flags provided by old ATF versions are gone.
+Namely: -l is removed because the metadata is stored separately and
+-w is
+removed because the test program will not create temporary
+directories any
+more by itself.
+</p>
+<h1>
+<a name="run">Execution automation</a>
+</h1>
+<p xml:space="preserve">
+The atf-run tool provides automation to run multiple test cases
+(coming from different test programs) sequentially.  Parallel
+execution may
+be implemented in the future, but test cases must be desinged in a
+way that
+allows them to be executed along other test cases without
+conflicts.
+</p>
+<p xml:space="preserve">
+atf-run also provides isolation for test cases.  This tool spawns a
+subprocess for each of the tests that have to run, and in doing so
+it
+prepares the subprocess to have a reasonable environmet and
+isolates it
+from the rest of the test cases as much as possible.  Once all this
+has
+happened, the test program containing the test case is executed in
+the
+subprocess and the results are collected from the results file
+generated by
+the test case.
+</p>
+<p xml:space="preserve">
+To-do: Do we need Atffiles?  Probably not, so remove them and
+mention
+why we are doing so.
+</p>
+<h1>
+<a name="store">The results store</a>
+</h1>
+<p xml:space="preserve">
+The atf-store implements a database that contains information about
+the execution of test cases.  The database captures the results of
+each
+test case as well as any potential information that is helpful for
+debugging: i.e. the stdout and stderr outputs.
+</p>
+<p xml:space="preserve">
+The store is 
+<i>historic</i>: we want to keep the
+history of a given test case.  Why?  Some of these test cases come
+from
+build slaves and contain the whole results of a fetch/compile/test
+run, so
+we want to see how things progress in history.  Disk space is
+cheap, but if
+we want to cleanup, we can cull old executions.
+</p>
+<p xml:space="preserve">
+We will have different frontends for the store: I'm thinking that
+atf-report could just read off the store and print the results on
+screen,
+but we could also have a plugin for name-your-favourite-http-server
+to
+generate a dynamic view of the test case results -- very useful for
+build
+farms.
+</p>
+<p xml:space="preserve">
+Given the nature of the store, I think it'd be wise to use SQLite
+to
+back it up, specially if it ever is to serve dynamic web content. 
+If we go
+this route, we should provide a not-really-optimized file-based
+backend for
+those users that do not want to have an additional dependency
+(NetBSD
+anyone?).
+</p>
+<p xml:space="preserve">
+The store will 
+<i>only</i> be accessed by atf-store.  I
+do not want atf-run or the test programs to access it directly to
+store
+their results.  They must contact the atf-store binary to do so. 
+Having a
+single entry point to the store will prevent consistency issues. 
+Now, this
+brings up two big questions: where is the store located and how is
+it
+accessed?
+</p>
+<p xml:space="preserve">
+If we are running ATF interactively, we probably do not want to use
+the store at all.  However, for simplicity of implementation of
+tools such
+as atf-run, they should always contact the store and let the store
+decide
+what to do.  For interactive runs, we can omit storing results and
+so
+sending results to the store should result in a no-op.  How does
+atf-report
+work then?
+</p>
+<p xml:space="preserve">
+The store has to be accessible locally (through a pipe, named pipe
+or
+whatever) but also remotely.  We want build slaves to be able to
+send
+results to the store on a push basis.  Open issue: how do we deal
+with
+security?
+</p>
+<h1>
+<a name="farms">Build farms</a>
+</h1>
+<p xml:space="preserve">
+Build farms, or continuous builds, are required for any software
+project that wants to achieve a minimum amount of quality in one or
+more
+platforms.  ATF cannot disregard this use case.
+</p>
+<p xml:space="preserve">
+The work of each build slave can be treated as a single test case,
+and thus all of its work (source code fetching, building and
+testing) can
+be collapsed into a single program that works as a test case. 
+These
+results can later be incorporated into test result reports
+effortlessly.  A
+more advanced approach involves splitting each stage (fetch, build,
+test)
+as a separate test case, and then making these independent test
+cases
+depend on each other.  The writer of the build slave script has to
+be able
+to decide the approach he prefers.
+</p>
+<p xml:space="preserve">
+In order to support build farms, we just need to provide an easy
+way
+of creating a test program (in POSIX shell) to act as a build
+slave.  We
+then stick a call to atf-run in cron calling this single test
+program and
+make it deliver the results to a remote atf-store.
+</p>
+</div>
+</body>
+</html>

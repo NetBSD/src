@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,13 +126,18 @@ atf_dynstr_init(atf_dynstr_t *ad)
     ad->m_data = (char *)malloc(sizeof(char));
     if (ad->m_data == NULL) {
         err = atf_no_memory_error();
-    } else {
-        ad->m_data[0] = '\0';
-        ad->m_datasize = 1;
-        ad->m_length = 0;
-        err = atf_no_error();
+        goto err_object;
     }
 
+    ad->m_data[0] = '\0';
+    ad->m_datasize = 1;
+    ad->m_length = 0;
+    err = atf_no_error();
+    goto out;
+
+err_object:
+    atf_object_fini(&ad->m_object);
+out:
     return err;
 }
 
@@ -146,31 +151,40 @@ atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
     ad->m_datasize = strlen(fmt) + 1;
     ad->m_length = 0;
 
-    err = atf_no_error();
     do {
+        va_list ap2;
+        int ret;
+
         ad->m_datasize *= 2;
         ad->m_data = (char *)malloc(ad->m_datasize);
         if (ad->m_data == NULL) {
             err = atf_no_memory_error();
-        } else {
-            va_list ap2;
-            int ret;
-
-            va_copy(ap2, ap);
-            ret = vsnprintf(ad->m_data, ad->m_datasize, fmt, ap2);
-            va_end(ap2);
-            if (ret < 0) {
-                err = atf_libc_error(errno, "Cannot format string");
-            } else {
-                if (ret >= ad->m_datasize) {
-                    free(ad->m_data);
-                    ad->m_data = NULL;
-                }
-                ad->m_length = ret;
-            }
+            goto err_object;
         }
-    } while (!atf_is_error(err) && ad->m_length >= ad->m_datasize);
 
+        va_copy(ap2, ap);
+        ret = vsnprintf(ad->m_data, ad->m_datasize, fmt, ap2);
+        va_end(ap2);
+        if (ret < 0) {
+            free(ad->m_data);
+            err = atf_libc_error(errno, "Cannot format string");
+            goto err_object;
+        }
+
+        INV(ret >= 0);
+        if ((size_t)ret >= ad->m_datasize) {
+            free(ad->m_data);
+            ad->m_data = NULL;
+        }
+        ad->m_length = ret;
+    } while (ad->m_length >= ad->m_datasize);
+
+    err = atf_no_error();
+    goto out;
+
+err_object:
+    atf_object_fini(&ad->m_object);
+out:
     POST(atf_is_error(err) || ad->m_data != NULL);
     return err;
 }
@@ -195,18 +209,28 @@ atf_dynstr_init_raw(atf_dynstr_t *ad, const void *mem, size_t memlen)
 
     atf_object_init(&ad->m_object);
 
-    ad->m_data = (char *)malloc(memlen + 1);
-    if (ad->m_data == NULL)
+    if (memlen >= SIZE_MAX - 1) {
         err = atf_no_memory_error();
-    else {
-        ad->m_datasize = memlen + 1;
-        memcpy(ad->m_data, mem, memlen);
-        ad->m_data[memlen] = '\0';
-        ad->m_length = strlen(ad->m_data);
-        INV(ad->m_length <= memlen);
-        err = atf_no_error();
+        goto err_object;
     }
 
+    ad->m_data = (char *)malloc(memlen + 1);
+    if (ad->m_data == NULL) {
+        err = atf_no_memory_error();
+        goto err_object;
+    }
+
+    ad->m_datasize = memlen + 1;
+    memcpy(ad->m_data, mem, memlen);
+    ad->m_data[memlen] = '\0';
+    ad->m_length = strlen(ad->m_data);
+    INV(ad->m_length <= memlen);
+    err = atf_no_error();
+    goto out;
+
+err_object:
+    atf_object_fini(&ad->m_object);
+out:
     return err;
 }
 
@@ -217,21 +241,27 @@ atf_dynstr_init_rep(atf_dynstr_t *ad, size_t len, char ch)
 
     atf_object_init(&ad->m_object);
 
-    if (len == SIZE_MAX)
+    if (len == SIZE_MAX) {
         err = atf_no_memory_error();
-    else {
-        ad->m_datasize = len + sizeof(char);
-        ad->m_data = (char *)malloc(ad->m_datasize);
-        if (ad->m_data == NULL) {
-            err = atf_no_memory_error();
-        } else {
-            memset(ad->m_data, ch, len);
-            ad->m_data[len] = '\0';
-            ad->m_length = len;
-            err = atf_no_error();
-        }
+        goto err_object;
     }
 
+    ad->m_datasize = (len + 1) * sizeof(char);
+    ad->m_data = (char *)malloc(ad->m_datasize);
+    if (ad->m_data == NULL) {
+        err = atf_no_memory_error();
+        goto err_object;
+    }
+
+    memset(ad->m_data, ch, len);
+    ad->m_data[len] = '\0';
+    ad->m_length = len;
+    err = atf_no_error();
+    goto out;
+
+err_object:
+    atf_object_fini(&ad->m_object);
+out:
     return err;
 }
 

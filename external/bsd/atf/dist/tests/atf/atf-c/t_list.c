@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include "atf-c/list.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Tests for the "atf_list" type.
@@ -58,6 +58,58 @@ ATF_TC_BODY(list_init, tc)
 }
 
 /*
+ * Getters.
+ */
+
+ATF_TC(list_index);
+ATF_TC_HEAD(list_index, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_list_index function");
+}
+ATF_TC_BODY(list_index, tc)
+{
+    atf_list_t list;
+    int i1 = 1;
+    int i2 = 5;
+    int i3 = 9;
+
+    RE(atf_list_init(&list));
+    RE(atf_list_append(&list, &i1, false));
+    RE(atf_list_append(&list, &i2, false));
+    RE(atf_list_append(&list, &i3, false));
+
+    ATF_CHECK_EQ(*(int *)atf_list_index(&list, 0), 1);
+    ATF_CHECK_EQ(*(int *)atf_list_index(&list, 1), 5);
+    ATF_CHECK_EQ(*(int *)atf_list_index(&list, 2), 9);
+
+    atf_list_fini(&list);
+}
+
+ATF_TC(list_index_c);
+ATF_TC_HEAD(list_index_c, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_list_index_c function");
+}
+ATF_TC_BODY(list_index_c, tc)
+{
+    atf_list_t list;
+    int i1 = 1;
+    int i2 = 5;
+    int i3 = 9;
+
+    RE(atf_list_init(&list));
+    RE(atf_list_append(&list, &i1, false));
+    RE(atf_list_append(&list, &i2, false));
+    RE(atf_list_append(&list, &i3, false));
+
+    ATF_CHECK_EQ(*(const int *)atf_list_index_c(&list, 0), 1);
+    ATF_CHECK_EQ(*(const int *)atf_list_index_c(&list, 1), 5);
+    ATF_CHECK_EQ(*(const int *)atf_list_index_c(&list, 2), 9);
+
+    atf_list_fini(&list);
+}
+
+/*
  * Modifiers.
  */
 
@@ -75,9 +127,96 @@ ATF_TC_BODY(list_append, tc)
     RE(atf_list_init(&list));
     for (i = 0; i < 1024; i++) {
         ATF_REQUIRE_EQ(atf_list_size(&list), i);
-        RE(atf_list_append(&list, buf));
+        RE(atf_list_append(&list, buf, false));
     }
     atf_list_fini(&list);
+}
+
+ATF_TC(list_append_list);
+ATF_TC_HEAD(list_append_list, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_list_append_list "
+                      "function");
+}
+ATF_TC_BODY(list_append_list, tc)
+{
+    {
+        atf_list_t l1, l2;
+
+        RE(atf_list_init(&l1));
+        RE(atf_list_init(&l2));
+
+        atf_list_append_list(&l1, &l2);
+        ATF_CHECK_EQ(atf_list_size(&l1), 0);
+
+        atf_list_fini(&l1);
+    }
+
+    {
+        atf_list_t l1, l2;
+        int item = 5;
+
+        RE(atf_list_init(&l1));
+        RE(atf_list_append(&l1, &item, false));
+        RE(atf_list_init(&l2));
+
+        atf_list_append_list(&l1, &l2);
+        ATF_CHECK_EQ(atf_list_size(&l1), 1);
+        ATF_CHECK_EQ(*(int *)atf_list_index(&l1, 0), item);
+
+        atf_list_fini(&l1);
+    }
+
+    {
+        atf_list_t l1, l2;
+        int item = 5;
+
+        RE(atf_list_init(&l1));
+        RE(atf_list_init(&l2));
+        RE(atf_list_append(&l2, &item, false));
+
+        atf_list_append_list(&l1, &l2);
+        ATF_CHECK_EQ(atf_list_size(&l1), 1);
+        ATF_CHECK_EQ(*(int *)atf_list_index(&l1, 0), item);
+
+        atf_list_fini(&l1);
+    }
+
+    {
+        atf_list_t l1, l2;
+        int item1 = 5;
+        int item2 = 9;
+
+        RE(atf_list_init(&l1));
+        RE(atf_list_append(&l1, &item1, false));
+        RE(atf_list_init(&l2));
+        RE(atf_list_append(&l2, &item2, false));
+
+        atf_list_append_list(&l1, &l2);
+        ATF_CHECK_EQ(atf_list_size(&l1), 2);
+        ATF_CHECK_EQ(*(int *)atf_list_index(&l1, 0), item1);
+        ATF_CHECK_EQ(*(int *)atf_list_index(&l1, 1), item2);
+
+        atf_list_fini(&l1);
+    }
+
+    {
+        atf_list_t l1, l2;
+        atf_list_citer_t end1, end2;
+
+        RE(atf_list_init(&l1));
+        RE(atf_list_init(&l2));
+
+        end1 = atf_list_end_c(&l1);
+        end2 = atf_list_end_c(&l2);
+        /* XXX Shouldn't query m_entry here. */
+        ATF_CHECK(end1.m_entry != end2.m_entry);
+
+        atf_list_append_list(&l1, &l2);
+        ATF_CHECK(atf_list_end_c(&l1).m_entry == end2.m_entry);
+
+        atf_list_fini(&l1);
+    }
 }
 
 /*
@@ -93,8 +232,8 @@ ATF_TC_BODY(list_for_each, tc)
 {
     atf_list_t list;
     atf_list_iter_t iter;
-    size_t count;
-    int i, nums[10], size;
+    size_t count, i, size;
+    int nums[10];
 
     printf("Iterating over empty list\n");
     RE(atf_list_init(&list));
@@ -107,11 +246,11 @@ ATF_TC_BODY(list_for_each, tc)
     atf_list_fini(&list);
 
     for (size = 0; size <= 10; size++) {
-        printf("Iterating over list of %d elements\n", size);
+        printf("Iterating over list of %zd elements\n", size);
         RE(atf_list_init(&list));
         for (i = 0; i < size; i++) {
             nums[i] = i + 1;
-            RE(atf_list_append(&list, &nums[i]));
+            RE(atf_list_append(&list, &nums[i], false));
         }
         count = 0;
         atf_list_for_each(iter, &list) {
@@ -132,8 +271,8 @@ ATF_TC_BODY(list_for_each_c, tc)
 {
     atf_list_t list;
     atf_list_citer_t iter;
-    size_t count;
-    int i, nums[10], size;
+    size_t count, i, size;
+    int nums[10];
 
     printf("Iterating over empty list\n");
     RE(atf_list_init(&list));
@@ -146,11 +285,11 @@ ATF_TC_BODY(list_for_each_c, tc)
     atf_list_fini(&list);
 
     for (size = 0; size <= 10; size++) {
-        printf("Iterating over list of %d elements\n", size);
+        printf("Iterating over list of %zd elements\n", size);
         RE(atf_list_init(&list));
         for (i = 0; i < size; i++) {
             nums[i] = i + 1;
-            RE(atf_list_append(&list, &nums[i]));
+            RE(atf_list_append(&list, &nums[i], false));
         }
         count = 0;
         atf_list_for_each_c(iter, &list) {
@@ -164,6 +303,12 @@ ATF_TC_BODY(list_for_each_c, tc)
 }
 
 /* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/list.h", "d_include_list_h.c");
+
+/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -172,12 +317,20 @@ ATF_TP_ADD_TCS(tp)
     /* Constructors and destructors. */
     ATF_TP_ADD_TC(tp, list_init);
 
+    /* Getters. */
+    ATF_TP_ADD_TC(tp, list_index);
+    ATF_TP_ADD_TC(tp, list_index_c);
+
     /* Modifiers. */
     ATF_TP_ADD_TC(tp, list_append);
+    ATF_TP_ADD_TC(tp, list_append_list);
 
     /* Macros. */
     ATF_TP_ADD_TC(tp, list_for_each);
     ATF_TP_ADD_TC(tp, list_for_each_c);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }
