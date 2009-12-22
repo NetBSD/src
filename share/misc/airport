@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.36 2009/10/10 17:17:37 mbalmer Exp $
+#	$NetBSD: airport,v 1.37 2009/12/22 09:47:56 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -4239,7 +4239,7 @@ LIO:Limon, Costa Rica
 LIP:Lins, SP, Brazil
 LIQ:Lisala, Zaire
 LIR:Liberia (Tomas Guardia), Costa Rica
-LIS:Aeroporto da Portela de Sacavem, Lisboa, Portugal
+LIS:Portela, Lisbon, Portugal
 LIT:Little Rock Regional, Arkansas, USA
 LIV:Livingood, AK, USA
 LIW:Loikaw, Myanmar
