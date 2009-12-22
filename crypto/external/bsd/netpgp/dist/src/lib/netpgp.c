@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.33 2009/12/14 23:29:56 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.34 2009/12/22 06:03:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -145,7 +145,7 @@ resultp(__ops_io_t *io,
 	for (i = 0; i < res->validc; i++) {
 		(void) fprintf(io->res,
 			"Good signature for %s made %susing %s key %s\n",
-			f,
+			(f) ? f : "<stdin>",
 			ctime(&res->valid_sigs[i].birthtime),
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
@@ -643,12 +643,17 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 					overwrite);
 }
 
+#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----\r\n"
+
 /* decrypt a file */
 int
 netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 {
-	const unsigned	overwrite = 1;
-	__ops_io_t		*io;
+	const unsigned	 overwrite = 1;
+	__ops_io_t	*io;
+	unsigned	 realarmour;
+	FILE		*fp;
+	char		 buf[BUFSIZ];
 
 	io = netpgp->io;
 	if (f == NULL) {
@@ -656,9 +661,21 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 			"netpgp_decrypt_file: no filename specified\n");
 		return 0;
 	}
+	realarmour = (unsigned)armored;
+	if ((fp = fopen(f, "r")) == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_decrypt_file: can't open '%s'\n", f);
+		return 0;
+	}
+	if (fgets(buf, sizeof(buf), fp) == NULL) {
+		realarmour = 0;
+	} else {
+		realarmour = (strcmp(buf, ARMOR_HEAD) == 0);
+	}
+	(void) fclose(fp);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
-				(unsigned)armored, overwrite, netpgp->passfp,
-				get_passphrase_cb);
+				(unsigned)realarmour, overwrite,
+				netpgp->passfp, get_passphrase_cb);
 }
 
 /* sign a file */
@@ -809,6 +826,9 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		m = MIN(__ops_mem_len(signedmem), outsize);
 		(void) memcpy(out, __ops_mem_data(signedmem), m);
 		__ops_memory_free(signedmem);
+		ret = (int)m;
+	} else {
+		ret = 0;
 	}
 	__ops_forget(seckey, sizeof(*seckey));
 	return ret;
@@ -817,11 +837,13 @@ netpgp_sign_memory(netpgp_t *netpgp,
 /* verify memory */
 int
 netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
-			const int armored)
+			void *out, size_t outsize, const int armored)
 {
 	__ops_validation_t	 result;
 	__ops_memory_t		*signedmem;
+	__ops_memory_t		*cat;
 	__ops_io_t		*io;
+	size_t			 m;
 	int			 ret;
 
 	(void) memset(&result, 0x0, sizeof(result));
@@ -833,12 +855,20 @@ netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 	}
 	signedmem = __ops_memory_new();
 	__ops_memory_add(signedmem, in, size);
-	ret = __ops_validate_mem(io, &result, signedmem, armored,
-						netpgp->pubring);
+	ret = __ops_validate_mem(io, &result, signedmem,
+				(out) ? &cat : NULL,
+				armored, netpgp->pubring);
 	__ops_memory_free(signedmem);
 	if (ret) {
-		resultp(io, in, &result, netpgp->pubring);
-		return 1;
+		resultp(io, "<stdin>", &result, netpgp->pubring);
+		if (out) {
+			m = MIN(__ops_mem_len(cat), outsize);
+			(void) memcpy(out, __ops_mem_data(cat), m);
+			__ops_memory_free(cat);
+		} else {
+			m = 1;
+		}
+		return (int)m;
 	}
 	if (result.validc + result.invalidc + result.unknownc == 0) {
 		(void) fprintf(io->errs,
@@ -849,6 +879,80 @@ netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 			result.invalidc, result.unknownc);
 	}
 	return 0;
+}
+
+/* encrypt some memory */
+int
+netpgp_encrypt_memory(netpgp_t *netpgp,
+			const char *userid,
+			void *in,
+			const size_t insize,
+			char *out,
+			size_t outsize,
+			int armored)
+{
+	const __ops_key_t	*keypair;
+	__ops_memory_t		*enc;
+	__ops_io_t		*io;
+	size_t			 m;
+
+	io = netpgp->io;
+	if (in == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_encrypt_buf: no memory to encrypt\n");
+		return 0;
+	}
+	if (userid == NULL) {
+		userid = netpgp_getvar(netpgp, "userid");
+	}
+	keypair = __ops_getkeybyname(io, netpgp->pubring, userid);
+	if (keypair == NULL) {
+		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
+					userid);
+		return 0;
+	}
+	if (in == out) {
+		(void) fprintf(io->errs,
+			"netpgp_encrypt_buf: input and output bufs need to be different\n");
+		return 0;
+	}
+	if (outsize < insize) {
+		(void) fprintf(io->errs,
+			"netpgp_encrypt_buf: input size is larger than output size\n");
+		return 0;
+	}
+	enc = __ops_encrypt_buf(io, in, insize, keypair, (unsigned)armored);
+	m = MIN(__ops_mem_len(enc), outsize);
+	(void) memcpy(out, __ops_mem_data(enc), m);
+	__ops_memory_free(enc);
+	return (int)m;
+}
+
+/* decrypt a chunk of memory */
+int
+netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
+			char *out, size_t outsize, const int armored)
+{
+	__ops_memory_t	*mem;
+	__ops_io_t	*io;
+	unsigned	 realarmour;
+	size_t		 m;
+
+	io = netpgp->io;
+	realarmour = (unsigned) armored;
+	if (input == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_decrypt_memory: no memory\n");
+		return 0;
+	}
+	realarmour = (strncmp(input, ARMOR_HEAD, sizeof(ARMOR_HEAD) - 1) == 0);
+	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
+				realarmour, netpgp->passfp,
+				get_passphrase_cb);
+	m = MIN(__ops_mem_len(mem), outsize);
+	(void) memcpy(out, __ops_mem_data(mem), m);
+	__ops_memory_free(mem);
+	return (int)m;
 }
 
 /* wrappers for the ops_debug_level functions we added to openpgpsdk */
@@ -998,3 +1102,4 @@ netpgp_set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int q
 	}
 	return 1;
 }
+

@@ -10,10 +10,8 @@ error logging
 separate from libcrypto?
 64-bit offsets
 thresholds
-Multiple recipients for encryption - ssss
 default compression when signing?
 elgamal enc/decryption?
-convert tests from ./tst to the autotest ./tests/
 hkpd
 
 Done
@@ -76,3 +74,7 @@ failure to run if no userid in gpg.conf (even if --userid specified)
 don't complain if no .gnupg dir (even when using --homedir)
 make it work with ssh host keys
 regex matching for names and signatures
+in memory encryption and decryption
+netpgpagent
+ssss
+make netpgp work from stdin/to stdout

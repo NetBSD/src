@@ -86,9 +86,11 @@ int netpgp_decrypt_file(netpgp_t *, const char *, char *, int);
 int netpgp_sign_file(netpgp_t *, const char *, const char *, char *, int, int, int);
 int netpgp_verify_file(netpgp_t *, const char *, const char *, int);
 
-/* memory signing */
+/* memory signing and encryption */
 int netpgp_sign_memory(netpgp_t *, const char *, char *, size_t, char *, size_t, const unsigned, const unsigned);
-int netpgp_verify_memory(netpgp_t *, const void *, const size_t, const int);
+int netpgp_verify_memory(netpgp_t *, const void *, const size_t, void *, size_t, const int);
+int netpgp_encrypt_memory(netpgp_t *, const char *, void *, const size_t, char *, size_t, int);
+int netpgp_decrypt_memory(netpgp_t *, const void *, const size_t, char *, size_t, const int);
 
 __END_DECLS
 

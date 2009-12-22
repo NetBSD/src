@@ -63,6 +63,7 @@ static const char *usage =
 	"\t[--homedir=<homedir>] AND/OR\n"
 	"\t[--keyring=<keyring>] AND/OR\n"
 	"\t[--userid=<userid>] AND/OR\n"
+	"\t[--maxmemalloc=<number of bytes>] AND/OR\n"
 	"\t[--verbose]\n";
 
 enum optdefs {
@@ -91,6 +92,7 @@ enum optdefs {
 	COREDUMPS,
 	PASSWDFD,
 	SSHKEYFILE,
+	MAX_MEM_ALLOC,
 
 	/* debug */
 	OPS_DEBUG
@@ -136,6 +138,9 @@ static struct option options[] = {
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
 	{"output",	required_argument, 	NULL,	OUTPUT},
 	{"results",	required_argument, 	NULL,	RESULTS},
+	{"maxmemalloc",	required_argument, 	NULL,	MAX_MEM_ALLOC},
+	{"max-mem",	required_argument, 	NULL,	MAX_MEM_ALLOC},
+	{"max-alloc",	required_argument, 	NULL,	MAX_MEM_ALLOC},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -174,42 +179,139 @@ nonnull(char *f, char *progname)
 	return 1;
 }
 
+/* read all of stdin into memory */
+static int
+stdin_to_mem(netpgp_t *netpgp, char **temp, char **out, unsigned *maxsize)
+{
+	unsigned	 newsize;
+	unsigned	 size;
+	char		 buf[BUFSIZ * 8];
+	char		*loc;
+	int	 	 n;
+
+	*maxsize = (unsigned)atoi(netpgp_getvar(netpgp, "max mem alloc"));
+	size = 0;
+	*temp = NULL;
+	while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+		newsize = size + ((n / BUFSIZ) + 1) * BUFSIZ;
+		if (newsize > *maxsize) {
+			(void) fprintf(stderr, "bounds check\n");
+			return size;
+		}
+		loc = realloc(*temp, newsize);
+		if (loc == NULL) {
+			(void) fprintf(stderr, "short read\n");
+			return size;
+		}
+		*temp = loc;
+		(void) memcpy(&(*temp)[size], buf, n);
+		size += n;
+	}
+	if ((*out = calloc(1, *maxsize)) == NULL) {
+		(void) fprintf(stderr, "Bad alloc\n");
+		return 0;
+	}
+	return (int)size;
+}
+
+/* output the text to stdout */
+static int
+showoutput(char *out, int size, const char *header)
+{
+	int	cc;
+	int	n;
+	int	i;
+
+	if (size <= 0) {
+		(void) fprintf(stderr, "%s\n", header);
+		return 0;
+	}
+	for (cc = 0 ; cc < size ; cc += n) {
+		if ((n = write(STDOUT_FILENO, &out[cc], size - cc)) <= 0) {
+			break;
+		}
+	}
+	if (cc < size) {
+		(void) fprintf(stderr, "Short write\n");
+		return 0;
+	}
+	return cc == size;
+}
+
 /* do a command once for a specified file 'f' */
 static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
-	const int	cleartext = 1;
+	const int	 cleartext = 1;
+	unsigned	 maxsize;
+	char		*out;
+	char		*in;
+	int		 ret;
+	int		 cc;
 
 	switch (p->cmd) {
 	case ENCRYPT:
-		return nonnull(f, p->progname) &&
-			netpgp_encrypt_file(netpgp,
+		if (f == NULL) {
+			cc = stdin_to_mem(netpgp, &in, &out, &maxsize);
+			ret = netpgp_encrypt_memory(netpgp,
+					netpgp_getvar(netpgp, "userid"),
+					in, cc, out, maxsize, p->armour);
+			ret = showoutput(out, ret, "Bad memory encryption");
+			free(in);
+			free(out);
+			return ret;
+		}
+		return netpgp_encrypt_file(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					f, p->output,
 					p->armour);
 	case DECRYPT:
-		return nonnull(f, p->progname) &&
-			netpgp_decrypt_file(netpgp, f, p->output, p->armour);
-	case SIGN:
-		return nonnull(f, p->progname) &&
-			netpgp_sign_file(netpgp,
-					netpgp_getvar(netpgp, "userid"),
-					f, p->output,
-					p->armour, !cleartext, p->detached);
+		if (f == NULL) {
+			cc = stdin_to_mem(netpgp, &in, &out, &maxsize);
+			ret = netpgp_decrypt_memory(netpgp, in, cc, out,
+					maxsize, 0);
+			ret = showoutput(out, ret, "Bad memory decryption");
+			free(in);
+			free(out);
+			return ret;
+		}
+		return netpgp_decrypt_file(netpgp, f, p->output, p->armour);
 	case CLEARSIGN:
-		return nonnull(f, p->progname) &&
-			netpgp_sign_file(netpgp,
+	case SIGN:
+		if (f == NULL) {
+			cc = stdin_to_mem(netpgp, &in, &out, &maxsize);
+			ret = netpgp_sign_memory(netpgp,
+					netpgp_getvar(netpgp, "userid"),
+					in, cc, out,
+					maxsize, p->armour,
+					(p->cmd == CLEARSIGN) ? cleartext :
+								!cleartext);
+			ret = showoutput(out, ret, "Bad memory signature");
+			free(in);
+			free(out);
+			return ret;
+		}
+		return netpgp_sign_file(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					f, p->output,
-					p->armour, cleartext, p->detached);
+					p->armour,
+					(p->cmd == CLEARSIGN) ? cleartext :
+								!cleartext,
+					p->detached);
 	case VERIFY:
-		return nonnull(f, p->progname) &&
-			netpgp_verify_file(netpgp, f, NULL, p->armour);
 	case VERIFY_CAT:
-		return nonnull(f, p->progname) &&
-			netpgp_verify_file(netpgp, f,
-					(p->output) ? p->output : "-",
+		if (f == NULL) {
+			cc = stdin_to_mem(netpgp, &in, &out, &maxsize);
+			ret = netpgp_verify_memory(netpgp, in, cc,
+					(p->cmd == VERIFY_CAT) ? out : NULL,
+					(p->cmd == VERIFY_CAT) ? maxsize : 0,
 					p->armour);
+			ret = showoutput(out, ret, "Bad memory verification");
+			free(in);
+			free(out);
+			return ret;
+		}
+		return netpgp_verify_file(netpgp, f, NULL, p->armour);
 	case LIST_PACKETS:
 		return nonnull(f, p->progname) &&
 			netpgp_list_packets(netpgp, f, p->armour, NULL);
@@ -242,6 +344,8 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
+	/* 4 MiB for a memory file */
+	netpgp_setvar(&netpgp, "max mem alloc", "4194304");
 	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
@@ -344,6 +448,9 @@ main(int argc, char **argv)
 			break;
 		case SSHKEYFILE:
 			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
+			break;
+		case MAX_MEM_ALLOC:
+			netpgp_setvar(&netpgp, "max mem alloc", optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
