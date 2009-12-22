@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "atf-c/error.h"
 #include "atf-c/fs.h"
@@ -141,7 +142,7 @@ atf_tp_add_tc(atf_tp_t *tp, atf_tc_t *tc)
 
     PRE(find_tc(tp, tc->m_ident) == NULL);
 
-    err = atf_list_append(&tp->m_tcs, tc);
+    err = atf_list_append(&tp->m_tcs, tc, false);
 
     POST(find_tc(tp, tc->m_ident) != NULL);
 
@@ -182,7 +183,7 @@ atf_tp_run(const atf_tp_t *tp, const atf_list_t *ids, int fd,
         tc = find_tc(tp, ident);
         PRE(tc != NULL);
 
-        err = atf_tc_run(tc, &tcr, workdir);
+        err = atf_tc_run(tc, &tcr, STDOUT_FILENO, STDERR_FILENO, workdir);
         if (atf_is_error(err))
             goto out;
 

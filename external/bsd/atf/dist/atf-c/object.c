@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 
 static size_t balance = 0;
 static bool initialized = false;
-static bool exit_checks = true;
 
 /* ---------------------------------------------------------------------
  * The "atf_object" type.
@@ -86,7 +85,7 @@ check_balance(void)
 {
     PRE(initialized);
 
-    if (exit_checks && balance > 0) {
+    if (balance > 0) {
         warnx("FATAL ERROR: Invalid balance: %zd objects were not "
               "released", balance);
         abort();
@@ -103,7 +102,7 @@ atf_init_objects(void)
 }
 
 void
-atf_disable_exit_checks(void)
+atf_reset_exit_checks(void)
 {
-    exit_checks = false;
+    balance = 0;
 }

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 #include "atf-c++/macros.hpp"
 #include "atf-c++/utils.hpp"
 
+#include "h_lib.hpp"
+
 // ------------------------------------------------------------------------
 // Tests for the "auto_array" class.
 // ------------------------------------------------------------------------
@@ -41,6 +43,13 @@ public:
     int m_value;
 
     static ssize_t m_nblocks;
+
+    static
+    atf::utils::auto_array< test_array >
+    do_copy(atf::utils::auto_array< test_array >& ta)
+    {
+        return atf::utils::auto_array< test_array >(ta);
+    }
 
     void* operator new(size_t size)
     {
@@ -108,6 +117,30 @@ ATF_TEST_CASE_BODY(auto_array_copy)
 
         {
             auto_array< test_array > t2(t1);
+            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        }
+        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    }
+    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+}
+
+ATF_TEST_CASE(auto_array_copy_ref);
+ATF_TEST_CASE_HEAD(auto_array_copy_ref)
+{
+    set_md_var("descr", "Tests the auto_array smart pointer class' copy "
+               "constructor through the auxiliary auto_array_ref object");
+}
+ATF_TEST_CASE_BODY(auto_array_copy_ref)
+{
+    using atf::utils::auto_array;
+
+    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    {
+        auto_array< test_array > t1(new test_array[10]);
+        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+
+        {
+            auto_array< test_array > t2 = test_array::do_copy(t1);
             ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
         }
         ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
@@ -202,6 +235,32 @@ ATF_TEST_CASE_BODY(auto_array_assign)
     ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
 }
 
+ATF_TEST_CASE(auto_array_assign_ref);
+ATF_TEST_CASE_HEAD(auto_array_assign_ref)
+{
+    set_md_var("descr", "Tests the auto_array smart pointer class' "
+               "assignment operator through the auxiliary auto_array_ref "
+               "object");
+}
+ATF_TEST_CASE_BODY(auto_array_assign_ref)
+{
+    using atf::utils::auto_array;
+
+    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    {
+        auto_array< test_array > t1(new test_array[10]);
+        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+
+        {
+            auto_array< test_array > t2;
+            t2 = test_array::do_copy(t1);
+            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        }
+        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    }
+    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+}
+
 ATF_TEST_CASE(auto_array_access);
 ATF_TEST_CASE_HEAD(auto_array_access)
 {
@@ -222,6 +281,12 @@ ATF_TEST_CASE_BODY(auto_array_access)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/utils.hpp", "d_include_utils_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -230,9 +295,14 @@ ATF_INIT_TEST_CASES(tcs)
     // Add the test for the "auto_array" class.
     ATF_ADD_TEST_CASE(tcs, auto_array_scope);
     ATF_ADD_TEST_CASE(tcs, auto_array_copy);
+    ATF_ADD_TEST_CASE(tcs, auto_array_copy_ref);
     ATF_ADD_TEST_CASE(tcs, auto_array_get);
     ATF_ADD_TEST_CASE(tcs, auto_array_release);
     ATF_ADD_TEST_CASE(tcs, auto_array_reset);
     ATF_ADD_TEST_CASE(tcs, auto_array_assign);
+    ATF_ADD_TEST_CASE(tcs, auto_array_assign_ref);
     ATF_ADD_TEST_CASE(tcs, auto_array_access);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

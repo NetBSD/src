@@ -1,7 +1,7 @@
 .\"
 .\" Automated Testing Framework (atf)
 .\"
-.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 29, 2008
+.Dd February 27, 2009
 .Dt ATF-SH-API 3
 .Os
 .Sh NAME
@@ -187,60 +187,14 @@ was skipped, respectively.
 It is very important to provide a clear error message in both cases so that
 the user can quickly know why the test did not pass.
 .Ss Helper functions for common checks
-.Fn atf_check cmd expcode expout experr
+.Fn atf_check [options] command [args]
 .Pp
-This function takes four parameters: the command to execute, the expected
-numerical exit code, the expected behavior of
-.Dv stdout
-and the expected
-behavior of
-.Dv stderr .
-.Fa expout
-can be one of the following:
-.Bl -tag -width expoutXX
-.It Li expout
-What the command writes to the
-.Dv stdout
-channel must match exactly what is
-found in the
-.Pa expout
-file.
-.It Li ignore
-The test does not check what the command writes to the
-.Dv stdout
-channel.
-.It Li null
-The command must not write anything to the
-.Dv stdout
-channel.
-.It Li stdout
-What the command writes to the
-.Dv stdout
-channel is written to a
-.Pa stdout
-file, available for further inspection.
-.El
-.Pp
-Similarly,
-.Fa experr
-can be one of
-.Sq Li experr ,
-.Sq Li ignore ,
-.Sq Li null ,
-or
-.Sq Li stderr ,
-all of which follow the same semantics of their corresponding counterparts
-for the
-.Fa expout
-case.
-.Pp
-It is important to note that when a failure is detected, this function will
-print as much information as possible to be able to identify the cause of
-the failure.
-For example, if the
-.Dv stdout
-does not match with the expected contents, a
-diff will be printed.
+This function wraps the execution of the
+.Nm atf-check
+tool and makes the test case fail if the tool reports failure.
+You should always use this function instead of the tool in your scripts.
+For more details on the parameters of this function, refer to
+.Xr atf-check 1 .
 .Pp
 .Fn atf_check_equal expr1 expr2
 .Pp

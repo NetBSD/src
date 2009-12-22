@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,12 @@ extern "C" {
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
+
+#include "h_lib.hpp"
+
+// ------------------------------------------------------------------------
+// Auxiliary functions.
+// ------------------------------------------------------------------------
 
 static
 void
@@ -492,6 +498,138 @@ ATF_TEST_CASE_BODY(temp_dir_raii)
     ATF_CHECK(!exists(t2));
 }
 
+
+// ------------------------------------------------------------------------
+// Test cases for the "temp_file" class.
+// ------------------------------------------------------------------------
+
+ATF_TEST_CASE(temp_file_raii);
+ATF_TEST_CASE_HEAD(temp_file_raii)
+{
+    set_md_var("descr", "Tests the RAII behavior of the temp_file class");
+}
+ATF_TEST_CASE_BODY(temp_file_raii)
+{
+    using atf::fs::exists;
+    using atf::fs::file_info;
+    using atf::fs::path;
+    using atf::fs::temp_file;
+
+    path t1("non-existent");
+    path t2("non-existent");
+
+    {
+        path tmpl("testfile.XXXXXX");
+        temp_file tf1(tmpl);
+        temp_file tf2(tmpl);
+        t1 = tf1.get_path();
+        t2 = tf2.get_path();
+        ATF_CHECK(t1.str().find("XXXXXX") == std::string::npos);
+        ATF_CHECK(t2.str().find("XXXXXX") == std::string::npos);
+        ATF_CHECK(t1 != t2);
+        ATF_CHECK(!exists(tmpl));
+        ATF_CHECK( exists(t1));
+        ATF_CHECK( exists(t2));
+
+        file_info fi1(t1);
+        ATF_CHECK( fi1.is_owner_readable());
+        ATF_CHECK( fi1.is_owner_writable());
+        ATF_CHECK(!fi1.is_owner_executable());
+        ATF_CHECK(!fi1.is_group_readable());
+        ATF_CHECK(!fi1.is_group_writable());
+        ATF_CHECK(!fi1.is_group_executable());
+        ATF_CHECK(!fi1.is_other_readable());
+        ATF_CHECK(!fi1.is_other_writable());
+        ATF_CHECK(!fi1.is_other_executable());
+
+        file_info fi2(t2);
+        ATF_CHECK( fi2.is_owner_readable());
+        ATF_CHECK( fi2.is_owner_writable());
+        ATF_CHECK(!fi2.is_owner_executable());
+        ATF_CHECK(!fi2.is_group_readable());
+        ATF_CHECK(!fi2.is_group_writable());
+        ATF_CHECK(!fi2.is_group_executable());
+        ATF_CHECK(!fi2.is_other_readable());
+        ATF_CHECK(!fi2.is_other_writable());
+        ATF_CHECK(!fi2.is_other_executable());
+    }
+
+    ATF_CHECK(t1.str() != "non-existent");
+    ATF_CHECK(!exists(t1));
+    ATF_CHECK(t2.str() != "non-existent");
+    ATF_CHECK(!exists(t2));
+}
+
+ATF_TEST_CASE(temp_file_stream);
+ATF_TEST_CASE_HEAD(temp_file_stream)
+{
+    set_md_var("descr", "Tests the stream in the temp_file class");
+}
+ATF_TEST_CASE_BODY(temp_file_stream)
+{
+    std::string line;
+    {
+        using atf::fs::path;
+        using atf::fs::temp_file;
+
+        path tmpl("tempfile.XXXXXX");
+        temp_file tf(tmpl);
+        tf << "A string\n";
+        tf.close();
+
+        std::ifstream is(tf.get_path().c_str());
+        ATF_CHECK(is);
+
+        std::getline(is, line);
+    }
+    ATF_CHECK_EQUAL(line, "A string");
+}
+
+ATF_TEST_CASE(temp_file_fd);
+ATF_TEST_CASE_HEAD(temp_file_fd)
+{
+    set_md_var("descr", "Tests access to the fd in the temp_file class");
+}
+ATF_TEST_CASE_BODY(temp_file_fd)
+{
+    const std::string msg = "A string\n";
+    std::string line;
+    {
+        using atf::fs::path;
+        using atf::fs::temp_file;
+
+        path tmpl("tempfile.XXXXXX");
+        temp_file tf(tmpl);
+        ATF_CHECK_EQUAL(static_cast< int >(msg.length()),
+                        ::write(tf.fd(), msg.c_str(), msg.length()));
+        tf.close();
+
+        std::ifstream is(tf.get_path().c_str());
+        ATF_CHECK(is);
+
+        std::getline(is, line);
+    }
+    ATF_CHECK_EQUAL(line, "A string");
+}
+
+ATF_TEST_CASE(temp_file_delete);
+ATF_TEST_CASE_HEAD(temp_file_delete)
+{
+    set_md_var("descr", "Tests that the destructor does not complain if the "
+               "file is deleted before it gets called");
+}
+ATF_TEST_CASE_BODY(temp_file_delete)
+{
+    atf::fs::path tmpl("tempfile.XXXXXX");
+    {
+        atf::fs::temp_file tf(tmpl);
+        tf.close();
+        atf::fs::remove(tf.get_path());
+    }
+    // We let tf go out of scope and attempt to delete the file.  If we
+    // get here, we are safe.
+}
+
 // ------------------------------------------------------------------------
 // Test cases for the free functions.
 // ------------------------------------------------------------------------
@@ -639,6 +777,28 @@ ATF_TEST_CASE_BODY(remove)
     ATF_CHECK( exists(path("files/dir")));
 }
 
+ATF_TEST_CASE(current_umask);
+ATF_TEST_CASE_HEAD(current_umask)
+{
+    set_md_var("descr", "Tests the current_umask function");
+}
+ATF_TEST_CASE_BODY(current_umask)
+{
+    using atf::fs::current_umask;
+
+    umask(0000);
+    ATF_CHECK_EQUAL(0000, current_umask());
+
+    umask(0222);
+    ATF_CHECK_EQUAL(0222, current_umask());
+}
+
+// ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/fs.hpp", "d_include_fs_hpp.cpp");
+
 // ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
@@ -669,6 +829,12 @@ ATF_INIT_TEST_CASES(tcs)
     // Add the tests for the "temp_dir" class.
     ATF_ADD_TEST_CASE(tcs, temp_dir_raii);
 
+    // Add the tests for the "temp_file" class.
+    ATF_ADD_TEST_CASE(tcs, temp_file_raii);
+    ATF_ADD_TEST_CASE(tcs, temp_file_stream);
+    ATF_ADD_TEST_CASE(tcs, temp_file_fd);
+    ATF_ADD_TEST_CASE(tcs, temp_file_delete);
+
     // Add the tests for the free functions.
     ATF_ADD_TEST_CASE(tcs, get_current_dir);
     ATF_ADD_TEST_CASE(tcs, exists);
@@ -676,4 +842,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, change_directory);
     ATF_ADD_TEST_CASE(tcs, cleanup);
     ATF_ADD_TEST_CASE(tcs, remove);
+    ATF_ADD_TEST_CASE(tcs, current_umask);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

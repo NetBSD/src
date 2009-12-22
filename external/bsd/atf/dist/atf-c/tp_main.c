@@ -212,13 +212,7 @@ static
 void
 params_fini(struct params *p)
 {
-    atf_list_iter_t iter;
-
     atf_map_fini(&p->m_config);
-
-    atf_list_for_each(iter, &p->m_tcglobs)
-        free(atf_list_iter_data(iter));
-
     atf_list_fini(&p->m_tcglobs);
 }
 
@@ -286,12 +280,12 @@ match_tcs(const atf_tp_t *tp, const char *glob, atf_list_t *ids)
 
             err = atf_expand_matches_glob(glob, ident, &matches);
             if (!atf_is_error(err) && matches) {
-                err = atf_list_append(ids, strdup(ident));
+                err = atf_list_append(ids, strdup(ident), true);
                 found = true;
             }
         } else {
             if (strcmp(glob, tc->m_ident) == 0) {
-                err = atf_list_append(ids, strdup(ident));
+                err = atf_list_append(ids, strdup(ident), true);
                 found = true;
             }
         }
@@ -457,10 +451,10 @@ process_params(int argc, char **argv, struct params *p)
     if (!atf_is_error(err)) {
         char **arg;
         for (arg = argv; !atf_is_error(err) && *arg != NULL; arg++)
-            err = atf_list_append(&p->m_tcglobs, strdup(*arg));
+            err = atf_list_append(&p->m_tcglobs, strdup(*arg), true);
 
         if (!atf_is_error(err) && atf_list_size(&p->m_tcglobs) == 0)
-            err = atf_list_append(&p->m_tcglobs, strdup("*"));
+            err = atf_list_append(&p->m_tcglobs, strdup("*"), true);
     }
 
     if (atf_is_error(err))
@@ -605,14 +599,7 @@ controlled_main(int argc, char **argv,
             *exitcode = failed > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 
-    {
-        atf_list_iter_t iter;
-
-        atf_list_for_each(iter, &tcids)
-            free(atf_list_iter_data(iter));
-
-        atf_list_fini(&tcids);
-    }
+    atf_list_fini(&tcids);
 out_tp:
     atf_tp_fini(&tp);
 out_workdir:

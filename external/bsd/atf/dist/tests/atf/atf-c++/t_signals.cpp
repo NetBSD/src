@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,12 @@ extern "C" {
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/macros.hpp"
 #include "atf-c++/signals.hpp"
+
+#include "h_lib.hpp"
+
+// ------------------------------------------------------------------------
+// Auxiliary functions.
+// ------------------------------------------------------------------------
 
 namespace sigusr1 {
     static bool happened = false;
@@ -209,6 +215,12 @@ ATF_TEST_CASE_BODY(signal_programmer_preserve)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/signals.hpp", "d_include_signals_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -222,4 +234,7 @@ ATF_INIT_TEST_CASES(tcs)
     // Add the tests for the "signal_programmer" class.
     ATF_ADD_TEST_CASE(tcs, signal_programmer_program);
     ATF_ADD_TEST_CASE(tcs, signal_programmer_preserve);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

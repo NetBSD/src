@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,8 @@ extern "C" {
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/macros.hpp"
 #include "atf-c++/user.hpp"
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Test cases for the free functions.
@@ -128,6 +130,12 @@ ATF_TEST_CASE_BODY(is_unprivileged)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/user.hpp", "d_include_user_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -138,4 +146,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, is_member_of_group);
     ATF_ADD_TEST_CASE(tcs, is_root);
     ATF_ADD_TEST_CASE(tcs, is_unprivileged);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

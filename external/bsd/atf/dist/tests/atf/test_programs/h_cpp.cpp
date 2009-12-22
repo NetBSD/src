@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@ extern "C" {
 #include "atf-c++/env.hpp"
 #include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
+#include "atf-c++/process.hpp"
 #include "atf-c++/text.hpp"
 
 // ------------------------------------------------------------------------
@@ -245,9 +246,13 @@ ATF_TEST_CASE_HEAD(env_list)
 }
 ATF_TEST_CASE_BODY(env_list)
 {
-    int exitcode = std::system("env");
-    ATF_CHECK(WIFEXITED(exitcode));
-    ATF_CHECK(WEXITSTATUS(exitcode) == EXIT_SUCCESS);
+    const atf::process::status s =
+        atf::process::exec(atf::fs::path("env"),
+                           atf::process::argv_array("env", NULL),
+                           atf::process::stream_inherit(),
+                           atf::process::stream_inherit());
+    ATF_CHECK(s.exited());
+    ATF_CHECK(s.exitstatus() == EXIT_SUCCESS);
 }
 
 // ------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,12 @@
 #include "atf-c/dynstr.h"
 #include "atf-c/env.h"
 #include "atf-c/ui.h"
+
+#include "h_lib.h"
+
+/* ---------------------------------------------------------------------
+ * Test cases for the free functions.
+ * --------------------------------------------------------------------- */
 
 struct test {
     const char *tc;
@@ -464,6 +470,16 @@ ATF_TC_BODY(format, tc)
     atf_dynstr_fini(&str);
 }
 
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/ui.h", "d_include_ui_h.c");
+
+/* ---------------------------------------------------------------------
+ * Main.
+ * --------------------------------------------------------------------- */
+
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, wo_tag);
@@ -473,6 +489,9 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, w_tag_col);
     ATF_TP_ADD_TC(tp, paragraphs);
     ATF_TP_ADD_TC(tp, format);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

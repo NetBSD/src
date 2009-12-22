@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ BEGIN {
     warn("Variable should not start with an underline")
 }
 
-/[^\\]\$[^0-9!'"$?@#*{}(|\/]+/ {
+/[^\\]\$[^0-9!'"$?@#*{}(|\/,]+/ {
     warn("Missing braces around variable name")
 }
 

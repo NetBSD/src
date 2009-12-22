@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ atf_error_t atf_tc_set_md_var(atf_tc_t *, const char *, const char *, ...);
  * --------------------------------------------------------------------- */
 
 atf_error_t atf_tc_run(const atf_tc_t *, struct atf_tcr *,
-                       const struct atf_fs_path *);
+                       int, int, const struct atf_fs_path *);
 
 /* To be run from test case bodies only. */
 void atf_tc_fail(const char *, ...) ATF_DEFS_ATTRIBUTE_NORETURN;

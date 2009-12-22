@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,25 @@
 #if !defined(_ATF_CXX_CHECK_HPP_)
 #define _ATF_CXX_CHECK_HPP_
 
-#include <string>
-
 extern "C" {
 #include "atf-c/check.h"
 }
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "atf-c++/fs.hpp"
+#include "atf-c++/text.hpp"
+#include "atf-c++/utils.hpp"
 
 namespace atf {
+
+namespace process {
+class argv_array;
+} // namespace process
+
 namespace check {
 
 // ------------------------------------------------------------------------
@@ -59,19 +69,30 @@ class check_result {
     atf_check_result_t m_result;
 
     //!
+    //! \brief Copy of m_result.m_argv but in a C++ collection.
+    //!
+    std::vector< std::string > m_argv;
+
+    //!
     //! \brief Constructs a results object and grabs ownership of the
     //! parameter passed in.
     //!
     check_result(const atf_check_result_t* result);
 
-    friend check_result test_constructor(void);
-    friend check_result exec(char* const*);
+    friend check_result test_constructor(const char* const*);
+    friend check_result exec(const atf::process::argv_array&);
 
 public:
     //!
     //! \brief Destroys object and removes all managed files.
     //!
     ~check_result(void);
+
+    //!
+    //! \brief Returns the argument list used by the command that caused
+    //! this result.
+    //!
+    const std::vector< std::string >& argv(void) const;
 
     //!
     //! \brief Returns whether the command exited correctly or not.
@@ -98,7 +119,13 @@ public:
 // Free functions.
 // ------------------------------------------------------------------------
 
-check_result exec(char* const*);
+bool build_c_o(const atf::fs::path&, const atf::fs::path&,
+               const atf::process::argv_array&);
+bool build_cpp(const atf::fs::path&, const atf::fs::path&,
+               const atf::process::argv_array&);
+bool build_cxx_o(const atf::fs::path&, const atf::fs::path&,
+                 const atf::process::argv_array&);
+check_result exec(const atf::process::argv_array&);
 
 // Useful for testing only.
 check_result test_constructor(void);

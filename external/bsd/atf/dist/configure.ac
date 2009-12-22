@@ -31,21 +31,22 @@ dnl -----------------------------------------------------------------------
 dnl Initialize the GNU build system.
 dnl -----------------------------------------------------------------------
 
-AC_INIT([Automated Testing Framework], [0.6], [atf-devel@NetBSD.org], [atf])
-AC_PREREQ([2.60])
+AC_INIT([Automated Testing Framework], [0.7], [atf-devel@NetBSD.org], [atf],
+        [http://www.NetBSD.org/~jmmv/atf/])
+AC_PREREQ([2.65])
 AC_COPYRIGHT([Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.])
 AC_DEFINE(PACKAGE_COPYRIGHT,
           ["Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc."],
           [Define to the copyright string applicable to this package.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_HEADERS([bconfig.h])
-AC_CONFIG_MACRO_DIR([admin])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([atf-c.h])
 AC_CONFIG_TESTDIR([tests/bootstrap])
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE([1.9 check-news subdir-objects -Wall])
+AM_INIT_AUTOMAKE([1.9 check-news foreign subdir-objects -Wall])
 
 dnl This is just a hack to reverse the meaning of the --enable-shared
 dnl flag provided by libtool.  We want it to default to building static
@@ -81,6 +82,25 @@ ATF_MODULE_ENV
 ATF_MODULE_FS
 ATF_MODULE_SANITY
 ATF_MODULE_SIGNALS
+
+ATF_RUNTIME_TOOL([ATF_BUILD_CC],
+                 [C compiler to use at runtime], [${CC}])
+ATF_RUNTIME_TOOL([ATF_BUILD_CFLAGS],
+                 [C compiler flags to use at runtime], [${CFLAGS}])
+ATF_RUNTIME_TOOL([ATF_BUILD_CPP],
+                 [C/C++ preprocessor to use at runtime], [${CPP}])
+ATF_RUNTIME_TOOL([ATF_BUILD_CPPFLAGS],
+                 [C/C++ preprocessor flags to use at runtime], [${CPPFLAGS}])
+ATF_RUNTIME_TOOL([ATF_BUILD_CXX],
+                 [C++ compiler to use at runtime], [${CXX}])
+ATF_RUNTIME_TOOL([ATF_BUILD_CXXFLAGS],
+                 [C++ compiler flags to use at runtime], [${CXXFLAGS}])
+
+dnl -----------------------------------------------------------------------
+dnl Documentation building.
+dnl -----------------------------------------------------------------------
+
+ATF_DOC_BUILD
 
 dnl -----------------------------------------------------------------------
 dnl Architecture and machine checks.
@@ -180,6 +200,9 @@ dnl Check for required tools.
 dnl -----------------------------------------------------------------------
 
 AC_PATH_PROG([MTN], [mtn])
+
+ATF_RUNTIME_TOOL([ATF_M4],
+                 [M4 tool to generate GNU Automake files], [m4])
 
 dnl -----------------------------------------------------------------------
 dnl Finally, generate output.

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,23 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-all_vars="atf_arch atf_confdir atf_libexecdir atf_machine atf_pkgdatadir \
-          atf_shell atf_workdir"
-all_vars_no=7
+all_vars="atf_arch \
+          atf_build_cc \
+          atf_build_cflags \
+          atf_build_cpp \
+          atf_build_cppflags \
+          atf_build_cxx \
+          atf_build_cxxflags \
+          atf_confdir \
+          atf_includedir \
+          atf_libdir \
+          atf_libexecdir \
+          atf_machine \
+          atf_m4 \
+          atf_pkgdatadir \
+          atf_shell \
+          atf_workdir"
+all_vars_no=16
 
 atf_test_case list_all
 list_all_head()
@@ -75,7 +89,7 @@ query_one_terse_body()
         atf_check -s eq:0 -o empty -e empty \
                   test "$(wc -l stdout | awk '{ print $1 }')" = 1
         atf_check -s eq:0 -o ignore -e empty grep "${v}" stdout
-        atf_check -s eq:0 -o save:stdout -e empty awk '{ print $3 }' stdout
+        atf_check -s eq:0 -o save:stdout -e empty cut -d ' ' -f 3- stdout
         atf_check -s eq:0 -o empty -e empty mv stdout expout
         atf_check -s eq:0 -o file:expout -e empty atf-config -t "${v}"
     done
@@ -142,9 +156,9 @@ override_env_body()
         atf_check -s eq:0 -o save:stdout -e empty -x "${V}=testval atf-config"
         atf_check -s eq:0 -o empty -e empty mv stdout all
 
-        atf_check -s eq:0 -o save:stdout -e empty grep "${v}" all
+        atf_check -s eq:0 -o save:stdout -e empty grep "^${v} : " all
         atf_check -s eq:0 -o empty -e empty mv stdout affected
-        atf_check -s eq:0 -o save:stdout -e empty grep -v "${v}" all
+        atf_check -s eq:0 -o save:stdout -e empty grep -v "^${v} : " all
         atf_check -s eq:0 -o empty -e empty mv stdout unaffected
 
         atf_check -s eq:0 -o empty -e empty \
@@ -153,8 +167,8 @@ override_env_body()
                   test "$(wc -l unaffected | awk '{ print $1 }')" = \
                    "$((${all_vars_no} -1))"
 
-        atf_check -s eq:0 -o ignore -e empty grep "${v} : testval" affected
-        atf_check -s eq:1 -o empty -e empty grep 'testval' unaffected
+        atf_check -s eq:0 -o ignore -e empty grep "^${v} : testval$" affected
+        atf_check -s eq:1 -o empty -e empty grep ' : testval$' unaffected
     done
 }
 

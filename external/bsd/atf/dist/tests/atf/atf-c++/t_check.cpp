@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,110 +27,307 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+extern "C" {
+#include <fcntl.h>
+#include <regex.h>
+#include <unistd.h>
+}
+
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iostream>
+#include <list>
 #include <memory>
+#include <vector>
 
 #include <atf-c++.hpp>
 
 #include "atf-c++/check.hpp"
 #include "atf-c++/config.hpp"
 #include "atf-c++/fs.hpp"
+#include "atf-c++/process.hpp"
 #include "atf-c++/text.hpp"
 #include "atf-c++/utils.hpp"
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
 // ------------------------------------------------------------------------
 
-extern "C" {
-atf_error_t atf_check_result_init(atf_check_result_t *);
-}
-
-namespace atf {
-namespace check {
-
-check_result
-test_constructor(void)
-{
-    atf_check_result_t r;
-    atf_check_result_init(&r);
-
-    return atf::check::check_result(&r);
-}
-
-} // namespace check
-} // namespace atf
-
 static
 atf::check::check_result
 do_exec(const atf::tests::tc* tc, const char* helper_name)
 {
-    const std::string hp = tc->get_config_var("srcdir") + "/../atf-c/h_check";
+    std::vector< std::string > argv;
+    argv.push_back(tc->get_config_var("srcdir") + "/../atf-c/h_check");
+    argv.push_back(helper_name);
+    std::cout << "Executing " << argv[0] << " " << argv[1] << "\n";
 
-    atf::utils::auto_array< char > arg0(atf::text::duplicate(hp.c_str()));
-    atf::utils::auto_array< char > arg1(atf::text::duplicate(helper_name));
-
-    char *argv[3];
-    argv[0] = arg0.get();
-    argv[1] = arg1.get();
-    argv[2] = NULL;
-    printf("Executing %s %s\n", argv[0], argv[1]);
-    return atf::check::exec(argv);
+    atf::process::argv_array argva(argv);
+    return atf::check::exec(argva);
 }
 
 static
 atf::check::check_result
 do_exec(const atf::tests::tc* tc, const char* helper_name, const char *carg2)
 {
-    const std::string hp = tc->get_config_var("srcdir") + "/../atf-c/h_check";
+    std::vector< std::string > argv;
+    argv.push_back(tc->get_config_var("srcdir") + "/../atf-c/h_check");
+    argv.push_back(helper_name);
+    argv.push_back(carg2);
+    std::cout << "Executing " << argv[0] << " " << argv[1] << " "
+              << argv[2] << "\n";
 
-    atf::utils::auto_array< char > arg0(atf::text::duplicate(hp.c_str()));
-    atf::utils::auto_array< char > arg1(atf::text::duplicate(helper_name));
-    atf::utils::auto_array< char > arg2(atf::text::duplicate(carg2));
+    atf::process::argv_array argva(argv);
+    return atf::check::exec(argva);
+}
 
-    char *argv[4];
-    argv[0] = arg0.get();
-    argv[1] = arg1.get();
-    argv[2] = arg2.get();
-    argv[3] = NULL;
-    printf("Executing %s %s %s\n", argv[0], argv[1], argv[2]);
-    return atf::check::exec(argv);
+static
+bool
+grep_string(const std::string& str, const char* regex)
+{
+    int res;
+    regex_t preg;
+
+    std::cout << "Looking for '" << regex << "' in '" << str << "'\n";
+    ATF_CHECK(::regcomp(&preg, regex, REG_EXTENDED) == 0);
+
+    res = ::regexec(&preg, str.c_str(), 0, NULL, 0);
+    ATF_CHECK(res == 0 || res == REG_NOMATCH);
+
+    ::regfree(&preg);
+
+    return res == 0;
+}
+
+static
+bool
+grep_file(const char* name, const char* regex)
+{
+    std::ifstream is(name);
+    ATF_CHECK(is);
+
+    bool found = false;
+
+    std::string line;
+    std::getline(is, line);
+    while (!found && is.good()) {
+        if (grep_string(line, regex))
+            found = true;
+        else
+            std::getline(is, line);
+    }
+
+    return found;
 }
 
 // ------------------------------------------------------------------------
-// Tests for the "atf_check_result" type.
+// Helper test cases for the free functions.
 // ------------------------------------------------------------------------
 
-ATF_TEST_CASE(result_templates);
-ATF_TEST_CASE_HEAD(result_templates)
+static
+void
+run_h_tc(atf::tests::tc& tc, const char* outname, const char* errname)
 {
-    set_md_var("descr", "Tests that check_result is initialized with "
-               "correct temporary file templates");
+    const int fdout = ::open(outname, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    ATF_CHECK(fdout != -1);
+
+    const int fderr = ::open(errname, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    ATF_CHECK(fderr != -1);
+
+    atf::tests::vars_map config;
+    config["callerdir"] = atf::fs::get_current_dir().str();
+
+    tc.init(config);
+    const atf::tests::tcr tcr =
+        tc.run(fdout, fderr, atf::fs::get_current_dir());
+
+    ATF_CHECK_EQUAL(tcr.get_state(), atf::tests::tcr::passed_state);
+
+    ::close(fderr);
+    ::close(fdout);
 }
-ATF_TEST_CASE_BODY(result_templates)
+
+ATF_TEST_CASE(h_build_c_o_ok);
+ATF_TEST_CASE_HEAD(h_build_c_o_ok)
 {
-    const atf::check::check_result result1 = atf::check::test_constructor();
-    const atf::check::check_result result2 = atf::check::test_constructor();
+    set_md_var("descr", "Helper test case for build_c_o");
+}
+ATF_TEST_CASE_BODY(h_build_c_o_ok)
+{
+    std::ofstream sfile("test.c");
+    sfile << "#include <stdio.h>\n";
+    sfile.close();
 
-    const atf::fs::path& out1 = result1.stdout_path();
-    const atf::fs::path& err1 = result1.stderr_path();
-    const atf::fs::path& out2 = result2.stdout_path();
-    const atf::fs::path& err2 = result2.stderr_path();
+    ATF_CHECK(atf::check::build_c_o(atf::fs::path("test.c"),
+                                    atf::fs::path("test.o"),
+                                    atf::process::argv_array()));
+}
 
-    ATF_CHECK(out1.str().find("stdout.XXXXXX") != std::string::npos);
-    ATF_CHECK(err1.str().find("stderr.XXXXXX") != std::string::npos);
-    ATF_CHECK(out2.str().find("stdout.XXXXXX") != std::string::npos);
-    ATF_CHECK(err2.str().find("stderr.XXXXXX") != std::string::npos);
+ATF_TEST_CASE(h_build_c_o_fail);
+ATF_TEST_CASE_HEAD(h_build_c_o_fail)
+{
+    set_md_var("descr", "Helper test case for build_c_o");
+}
+ATF_TEST_CASE_BODY(h_build_c_o_fail)
+{
+    std::ofstream sfile("test.c");
+    sfile << "void foo(void) { int a = UNDEFINED_SYMBOL; }\n";
+    sfile.close();
 
-    ATF_CHECK(out1 == out2);
-    ATF_CHECK(err1 == err2);
+    ATF_CHECK(!atf::check::build_c_o(atf::fs::path("test.c"),
+                                     atf::fs::path("test.o"),
+                                     atf::process::argv_array()));
+}
+
+ATF_TEST_CASE(h_build_cpp_ok);
+ATF_TEST_CASE_HEAD(h_build_cpp_ok)
+{
+    set_md_var("descr", "Helper test case for build_cpp");
+}
+ATF_TEST_CASE_BODY(h_build_cpp_ok)
+{
+    std::ofstream sfile("test.c");
+    sfile << "#define A foo\n";
+    sfile << "#define B bar\n";
+    sfile << "A B\n";
+    sfile.close();
+
+    const atf::fs::path testp =
+        atf::fs::path(get_config_var("callerdir")) / "test.p";
+
+    ATF_CHECK(atf::check::build_cpp(atf::fs::path("test.c"), testp,
+                                    atf::process::argv_array()));
+}
+
+ATF_TEST_CASE(h_build_cpp_fail);
+ATF_TEST_CASE_HEAD(h_build_cpp_fail)
+{
+    set_md_var("descr", "Helper test case for build_cpp");
+}
+ATF_TEST_CASE_BODY(h_build_cpp_fail)
+{
+    std::ofstream sfile("test.c");
+    sfile << "#include \"./non-existent.h\"\n";
+    sfile.close();
+
+    ATF_CHECK(!atf::check::build_cpp(atf::fs::path("test.c"),
+                                     atf::fs::path("test.p"),
+                                     atf::process::argv_array()));
+}
+
+ATF_TEST_CASE(h_build_cxx_o_ok);
+ATF_TEST_CASE_HEAD(h_build_cxx_o_ok)
+{
+    set_md_var("descr", "Helper test case for build_cxx_o");
+}
+ATF_TEST_CASE_BODY(h_build_cxx_o_ok)
+{
+    std::ofstream sfile("test.cpp");
+    sfile << "#include <iostream>\n";
+    sfile.close();
+
+    ATF_CHECK(atf::check::build_cxx_o(atf::fs::path("test.cpp"),
+                                      atf::fs::path("test.o"),
+                                      atf::process::argv_array()));
+}
+
+ATF_TEST_CASE(h_build_cxx_o_fail);
+ATF_TEST_CASE_HEAD(h_build_cxx_o_fail)
+{
+    set_md_var("descr", "Helper test case for build_cxx_o");
+}
+ATF_TEST_CASE_BODY(h_build_cxx_o_fail)
+{
+    std::ofstream sfile("test.cpp");
+    sfile << "void foo(void) { int a = UNDEFINED_SYMBOL; }\n";
+    sfile.close();
+
+    ATF_CHECK(!atf::check::build_cxx_o(atf::fs::path("test.cpp"),
+                                       atf::fs::path("test.o"),
+                                       atf::process::argv_array()));
 }
 
 // ------------------------------------------------------------------------
 // Test cases for the free functions.
 // ------------------------------------------------------------------------
+
+ATF_TEST_CASE(build_c_o);
+ATF_TEST_CASE_HEAD(build_c_o)
+{
+    set_md_var("descr", "Tests the build_c_o function");
+}
+ATF_TEST_CASE_BODY(build_c_o)
+{
+    ATF_TEST_CASE_NAME(h_build_c_o_ok) h_build_c_o_ok;
+    run_h_tc(h_build_c_o_ok, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o test.o"));
+    ATF_CHECK(grep_file("stdout", "-c test.c"));
+
+    ATF_TEST_CASE_NAME(h_build_c_o_fail) h_build_c_o_fail;
+    run_h_tc(h_build_c_o_fail, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o test.o"));
+    ATF_CHECK(grep_file("stdout", "-c test.c"));
+    ATF_CHECK(grep_file("stderr", "test.c"));
+    ATF_CHECK(grep_file("stderr", "UNDEFINED_SYMBOL"));
+}
+
+ATF_TEST_CASE(build_cpp);
+ATF_TEST_CASE_HEAD(build_cpp)
+{
+    set_md_var("descr", "Tests the build_cpp function");
+}
+ATF_TEST_CASE_BODY(build_cpp)
+{
+    ATF_TEST_CASE_NAME(h_build_cpp_ok) h_build_cpp_ok;
+    run_h_tc(h_build_cpp_ok, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o.*test.p"));
+    ATF_CHECK(grep_file("stdout", "test.c"));
+    ATF_CHECK(grep_file("test.p", "foo bar"));
+
+    ATF_TEST_CASE_NAME(h_build_cpp_fail) h_build_cpp_fail;
+    run_h_tc(h_build_cpp_fail, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o test.p"));
+    ATF_CHECK(grep_file("stdout", "test.c"));
+    ATF_CHECK(grep_file("stderr", "test.c"));
+    ATF_CHECK(grep_file("stderr", "non-existent.h"));
+}
+
+ATF_TEST_CASE(build_cxx_o);
+ATF_TEST_CASE_HEAD(build_cxx_o)
+{
+    set_md_var("descr", "Tests the build_cxx_o function");
+}
+ATF_TEST_CASE_BODY(build_cxx_o)
+{
+    ATF_TEST_CASE_NAME(h_build_cxx_o_ok) h_build_cxx_o_ok;
+    run_h_tc(h_build_cxx_o_ok, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o test.o"));
+    ATF_CHECK(grep_file("stdout", "-c test.cpp"));
+
+    ATF_TEST_CASE_NAME(h_build_cxx_o_fail) h_build_cxx_o_fail;
+    run_h_tc(h_build_cxx_o_fail, "stdout", "stderr");
+    ATF_CHECK(grep_file("stdout", "-o test.o"));
+    ATF_CHECK(grep_file("stdout", "-c test.cpp"));
+    ATF_CHECK(grep_file("stderr", "test.cpp"));
+    ATF_CHECK(grep_file("stderr", "UNDEFINED_SYMBOL"));
+}
+
+ATF_TEST_CASE(exec_argv);
+ATF_TEST_CASE_HEAD(exec_argv)
+{
+    set_md_var("descr", "Tests that exec preserves the provided argv");
+}
+ATF_TEST_CASE_BODY(exec_argv)
+{
+    const atf::check::check_result r = do_exec(this, "exit-success");
+    ATF_CHECK_EQUAL(r.argv().size(), 2);
+    ATF_CHECK_EQUAL(r.argv()[0],
+                    get_config_var("srcdir") + "/../atf-c/h_check");
+    ATF_CHECK_EQUAL(r.argv()[1], "exit-success");
+}
 
 ATF_TEST_CASE(exec_cleanup);
 ATF_TEST_CASE_HEAD(exec_cleanup)
@@ -225,6 +422,11 @@ ATF_TEST_CASE_BODY(exec_stdout_stderr)
     ATF_CHECK(err1.str().find("stderr.XXXXXX") == std::string::npos);
     ATF_CHECK(err2.str().find("stderr.XXXXXX") == std::string::npos);
 
+    ATF_CHECK(out1.str().find("stdout.") != std::string::npos);
+    ATF_CHECK(out2.str().find("stdout.") != std::string::npos);
+    ATF_CHECK(err1.str().find("stderr.") != std::string::npos);
+    ATF_CHECK(err2.str().find("stderr.") != std::string::npos);
+
     ATF_CHECK(out1 != out2);
     ATF_CHECK(err1 != err2);
 
@@ -242,17 +444,20 @@ ATF_TEST_CASE_HEAD(exec_unknown)
 }
 ATF_TEST_CASE_BODY(exec_unknown)
 {
-    const std::string path = atf::config::get("atf_workdir") + "/non-existent";
-    atf::utils::auto_array< char > arg(atf::text::duplicate(path.c_str()));
+    std::vector< std::string > argv;
+    argv.push_back(atf::config::get("atf_workdir") + "/non-existent");
 
-    char* argv[2];
-    argv[0] = arg.get();
-    argv[1] = NULL;
-
-    const atf::check::check_result r = atf::check::exec(argv);
+    atf::process::argv_array argva(argv);
+    const atf::check::check_result r = atf::check::exec(argva);
     ATF_CHECK(r.exited());
     ATF_CHECK_EQUAL(r.exitcode(), 127);
 }
+
+// ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/check.hpp", "d_include_check_hpp.cpp");
 
 // ------------------------------------------------------------------------
 // Main.
@@ -260,9 +465,16 @@ ATF_TEST_CASE_BODY(exec_unknown)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, result_templates);
+    // Add the test cases for the free functions.
+    ATF_ADD_TEST_CASE(tcs, build_c_o);
+    ATF_ADD_TEST_CASE(tcs, build_cpp);
+    ATF_ADD_TEST_CASE(tcs, build_cxx_o);
+    ATF_ADD_TEST_CASE(tcs, exec_argv);
     ATF_ADD_TEST_CASE(tcs, exec_cleanup);
     ATF_ADD_TEST_CASE(tcs, exec_exitstatus);
     ATF_ADD_TEST_CASE(tcs, exec_stdout_stderr);
     ATF_ADD_TEST_CASE(tcs, exec_unknown);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

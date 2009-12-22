@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ struct list_entry {
     struct list_entry *m_prev;
     struct list_entry *m_next;
     void *m_object;
+    bool m_managed;
 };
 
 static
@@ -65,7 +66,7 @@ entry_to_iter(atf_list_t *l, struct list_entry *le)
 
 static
 struct list_entry *
-new_entry(void *object)
+new_entry(void *object, bool managed)
 {
     struct list_entry *le;
 
@@ -73,19 +74,31 @@ new_entry(void *object)
     if (le != NULL) {
         le->m_prev = le->m_next = NULL;
         le->m_object = object;
-    }
+        le->m_managed = managed;
+    } else
+        free(object);
 
     return le;
 }
 
 static
+void
+delete_entry(struct list_entry *le)
+{
+    if (le->m_managed)
+        free(le->m_object);
+
+    free(le);
+}
+
+static
 struct list_entry *
-new_entry_and_link(void *object, struct list_entry *prev,
+new_entry_and_link(void *object, bool managed, struct list_entry *prev,
                    struct list_entry *next)
 {
     struct list_entry *le;
 
-    le = new_entry(object);
+    le = new_entry(object, managed);
     if (le != NULL) {
         le->m_prev = prev;
         le->m_next = next;
@@ -184,12 +197,12 @@ atf_list_init(atf_list_t *l)
 {
     struct list_entry *lebeg, *leend;
 
-    lebeg = new_entry(NULL);
+    lebeg = new_entry(NULL, false);
     if (lebeg == NULL) {
         return atf_no_memory_error();
     }
 
-    leend = new_entry(NULL);
+    leend = new_entry(NULL, false);
     if (leend == NULL) {
         free(lebeg);
         return atf_no_memory_error();
@@ -222,7 +235,7 @@ atf_list_fini(atf_list_t *l)
         struct list_entry *lenext;
 
         lenext = le->m_next;
-        free(le);
+        delete_entry(le);
         le = lenext;
 
         freed++;
@@ -262,6 +275,45 @@ atf_list_end_c(const atf_list_t *l)
     return entry_to_citer(l, l->m_end);
 }
 
+void *
+atf_list_index(atf_list_t *list, const size_t idx)
+{
+    atf_list_iter_t iter;
+
+    PRE(idx < atf_list_size(list));
+
+    iter = atf_list_begin(list);
+    {
+        size_t pos = 0;
+        while (pos < idx &&
+               !atf_equal_list_iter_list_iter((iter), atf_list_end(list))) {
+            iter = atf_list_iter_next(iter);
+            pos++;
+        }
+    }
+    return atf_list_iter_data(iter);
+}
+
+const void *
+atf_list_index_c(const atf_list_t *list, const size_t idx)
+{
+    atf_list_citer_t iter;
+
+    PRE(idx < atf_list_size(list));
+
+    iter = atf_list_begin_c(list);
+    {
+        size_t pos = 0;
+        while (pos < idx &&
+               !atf_equal_list_citer_list_citer((iter),
+                                                atf_list_end_c(list))) {
+            iter = atf_list_citer_next(iter);
+            pos++;
+        }
+    }
+    return atf_list_citer_data(iter);
+}
+
 size_t
 atf_list_size(const atf_list_t *l)
 {
@@ -273,14 +325,14 @@ atf_list_size(const atf_list_t *l)
  */
 
 atf_error_t
-atf_list_append(atf_list_t *l, void *data)
+atf_list_append(atf_list_t *l, void *data, bool managed)
 {
     struct list_entry *le, *next, *prev;
     atf_error_t err;
 
     next = (struct list_entry *)l->m_end;
     prev = next->m_prev;
-    le = new_entry_and_link(data, prev, next);
+    le = new_entry_and_link(data, managed, prev, next);
     if (le == NULL)
         err = atf_no_memory_error();
     else {
@@ -289,4 +341,27 @@ atf_list_append(atf_list_t *l, void *data)
     }
 
     return err;
+}
+
+void
+atf_list_append_list(atf_list_t *l, atf_list_t *src)
+{
+    struct list_entry *e1, *e2, *ghost1, *ghost2;
+
+    ghost1 = (struct list_entry *)l->m_end;
+    ghost2 = (struct list_entry *)src->m_begin;
+
+    e1 = ghost1->m_prev;
+    e2 = ghost2->m_next;
+
+    delete_entry(ghost1);
+    delete_entry(ghost2);
+
+    e1->m_next = e2;
+    e2->m_prev = e1;
+
+    l->m_end = src->m_end;
+    l->m_size += src->m_size;
+
+    atf_object_fini(&src->m_object);
 }

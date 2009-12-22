@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 #include <sys/wait.h>
 
 #include <fcntl.h>
-#include <regex.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -47,7 +46,7 @@
 #include "atf-c/tcr.h"
 #include "atf-c/text.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -96,161 +95,48 @@ init_config(atf_map_t *config)
 
 static
 void
-run_here(const atf_tc_t *tc, atf_tcr_t *tcr)
+run_inherit(const atf_tc_t *tc, atf_tcr_t *tcr)
 {
     atf_fs_path_t cwd;
 
     RE(atf_fs_getcwd(&cwd));
-    RE(atf_tc_run(tc, tcr, &cwd));
+    RE(atf_tc_run(tc, tcr, STDOUT_FILENO, STDERR_FILENO, &cwd));
     atf_fs_path_fini(&cwd);
 }
 
 static
 void
-load_tcr(atf_tcr_t *tcr)
+run_capture(const atf_tc_t *tc, const char *errname, atf_tcr_t *tcr)
 {
-    int tcrfile;
+    int errfile;
+    atf_fs_path_t cwd;
 
-    ATF_REQUIRE((tcrfile = open("tcr", O_RDONLY)) != -1);
-    RE(atf_tcr_deserialize(tcr, tcrfile));
-    close(tcrfile);
-
-    ATF_REQUIRE(unlink("tcr") != -1);
-}
-
-static
-void
-write_tcr(const atf_tcr_t *tcr)
-{
-    int tcrfile;
-
-    ATF_REQUIRE((tcrfile = open("tcr", O_WRONLY | O_CREAT, 0644)) != -1);
-    RE(atf_tcr_serialize(tcr, tcrfile));
-    close(tcrfile);
-}
-
-static
-void
-run_as_child_child(const atf_tc_t *tc, const int errpipe[2])
-{
-    atf_tcr_t tcr;
-
-    close(errpipe[0]);
-    close(STDERR_FILENO);
-    ATF_REQUIRE(dup2(errpipe[1], STDERR_FILENO) != -1);
-    close(errpipe[1]);
-    run_here(tc, &tcr);
-
-    write_tcr(&tcr);
-
-    exit(EXIT_SUCCESS);
-}
-
-static
-void
-run_as_child_parent(const atf_tc_t *tc, atf_tcr_t *tcr, const int errpipe[2],
-                    const pid_t pid)
-{
-    int cnt, errfile, status;
-    char buf[80];
-
-    close(errpipe[1]);
-
-    ATF_REQUIRE((errfile = open("error", O_WRONLY | O_CREAT | O_TRUNC,
+    ATF_REQUIRE((errfile = open(errname, O_WRONLY | O_CREAT | O_TRUNC,
                                 0644)) != -1);
 
-    while ((cnt = read(errpipe[0], buf, sizeof(buf))) > 0)
-        ATF_REQUIRE(write(errfile, buf, cnt) == cnt);
-    ATF_REQUIRE(cnt == 0);
+    RE(atf_fs_getcwd(&cwd));
+    RE(atf_tc_run(tc, tcr, STDOUT_FILENO, errfile, &cwd));
+    atf_fs_path_fini(&cwd);
 
-    close(errpipe[0]);
     close(errfile);
-
-    ATF_REQUIRE(waitpid(pid, &status, 0) != -1);
-    ATF_REQUIRE(WIFEXITED(status));
-    ATF_REQUIRE_EQ(WEXITSTATUS(status), EXIT_SUCCESS);
-
-    load_tcr(tcr);
-}
-
-static
-void
-run_as_child(const atf_tc_t *tc, atf_tcr_t *tcr)
-{
-    pid_t pid;
-    int errpipe[2];
-
-    ATF_REQUIRE(pipe(errpipe) == 0);
-
-    RE(atf_process_fork(&pid));
-    if (pid == 0) {
-        run_as_child_child(tc, errpipe);
-        /* NOTREACHED */
-    } else
-        run_as_child_parent(tc, tcr, errpipe, pid);
 }
 
 static
 bool
-match_reason_aux(const atf_dynstr_t *reason, const char *regex)
-{
-    int res;
-    regex_t preg;
-
-    printf("Looking for '%s' in '%s'\n", regex, atf_dynstr_cstring(reason));
-    ATF_REQUIRE(regcomp(&preg, regex, REG_EXTENDED) == 0);
-
-    res = regexec(&preg, atf_dynstr_cstring(reason), 0, NULL, 0);
-    ATF_REQUIRE(res == 0 || res == REG_NOMATCH);
-
-    return res == 0;
-}
-
-static
-bool
-match_reason(const atf_tcr_t *tcr, const char *regex, ...)
+grep_reason(const atf_tcr_t *tcr, const char *regex, ...)
 {
     va_list ap;
     atf_dynstr_t formatted;
+    bool found;
 
     va_start(ap, regex);
     RE(atf_dynstr_init_ap(&formatted, regex, ap));
     va_end(ap);
 
-    return match_reason_aux(atf_tcr_get_reason(tcr),
-                            atf_dynstr_cstring(&formatted));
-}
+    found = grep_string(atf_tcr_get_reason(tcr),
+                        atf_dynstr_cstring(&formatted));
 
-static
-bool
-match_reason_in_file(const char *file, const char *regex, ...)
-{
-    bool done, found;
-    int fd;
-    va_list ap;
-    atf_dynstr_t formatted;
-
-    va_start(ap, regex);
-    RE(atf_dynstr_init_ap(&formatted, regex, ap));
-    va_end(ap);
-
-    done = false;
-    found = false;
-    ATF_REQUIRE((fd = open(file, O_RDONLY)) != -1);
-    do {
-        atf_error_t err;
-        atf_dynstr_t line;
-
-        RE(atf_dynstr_init(&line));
-
-        err = atf_io_readline(fd, &line);
-        if (!atf_is_error(err))
-            found = match_reason_aux(&line, atf_dynstr_cstring(&formatted));
-        done = atf_is_error(err) || atf_dynstr_length(&line) == 0;
-
-        atf_dynstr_fini(&line);
-    } while (!found && !done);
-    close(fd);
+    atf_dynstr_fini(&formatted);
 
     return found;
 }
@@ -384,7 +270,7 @@ ATF_TC_BODY(check, tc)
         printf("Checking with a %d value\n", t->value);
 
         RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
-        run_as_child(&tcaux, &tcr);
+        run_capture(&tcaux, "error", &tcr);
         atf_tc_fini(&tcaux);
 
         ATF_REQUIRE(exists("before"));
@@ -394,8 +280,8 @@ ATF_TC_BODY(check, tc)
             ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
         } else {
             ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
-            ATF_REQUIRE(match_reason_in_file("error", "t_macros.c:[0-9]+: "
-                                             "Check failed: %s$", t->msg));
+            ATF_REQUIRE(grep_file("error", "t_macros.c:[0-9]+: "
+                                  "Check failed: %s$", t->msg));
         }
 
         atf_tcr_fini(&tcr);
@@ -436,7 +322,7 @@ do_check_eq_tests(const struct check_eq_test *tests)
                t->ok ? "true" : "false");
 
         RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
-        run_as_child(&tcaux, &tcr);
+        run_capture(&tcaux, "error", &tcr);
         atf_tc_fini(&tcaux);
 
         ATF_CHECK(exists("before"));
@@ -446,8 +332,8 @@ do_check_eq_tests(const struct check_eq_test *tests)
             ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
         } else {
             ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
-            ATF_CHECK(match_reason_in_file("error", "t_macros.c:[0-9]+: "
-                                           "Check failed: %s$", t->msg));
+            ATF_CHECK(grep_file("error", "t_macros.c:[0-9]+: "
+                                "Check failed: %s$", t->msg));
         }
 
         atf_tcr_fini(&tcr);
@@ -505,6 +391,11 @@ H_CHECK_STREQ_MSG(1_1, "1", "1", "1 does not match 1");
 H_CHECK_STREQ_MSG(1_2, "1", "2", "1 does not match 2");
 H_CHECK_STREQ_MSG(2_1, "2", "1", "2 does not match 1");
 H_CHECK_STREQ_MSG(2_2, "2", "2", "2 does not match 2");
+#define CHECK_STREQ_VAR1 "5"
+#define CHECK_STREQ_VAR2 "9"
+const const char *check_streq_var1 = CHECK_STREQ_VAR1;
+const const char *check_streq_var2 = CHECK_STREQ_VAR2;
+H_CHECK_STREQ(vars, check_streq_var1, check_streq_var2);
 
 ATF_TC(check_streq);
 ATF_TC_HEAD(check_streq, tc)
@@ -516,25 +407,29 @@ ATF_TC_BODY(check_streq, tc)
 {
     struct check_eq_test tests[] = {
         { H_CHECK_STREQ_HEAD_NAME(1_1), H_CHECK_STREQ_BODY_NAME(1_1),
-          "1", "1", "\"1\" != \"1\"", true },
+          "1", "1", "\"1\" != \"1\" \\(1 != 1\\)", true },
         { H_CHECK_STREQ_HEAD_NAME(1_2), H_CHECK_STREQ_BODY_NAME(1_2),
-          "1", "2", "\"1\" != \"2\"", false },
+          "1", "2", "\"1\" != \"2\" \\(1 != 2\\)", false },
         { H_CHECK_STREQ_HEAD_NAME(2_1), H_CHECK_STREQ_BODY_NAME(2_1),
-          "2", "1", "\"2\" != \"1\"", false },
+          "2", "1", "\"2\" != \"1\" \\(2 != 1\\)", false },
         { H_CHECK_STREQ_HEAD_NAME(2_2), H_CHECK_STREQ_BODY_NAME(2_2),
-          "2", "2", "\"2\" != \"2\"", true },
+          "2", "2", "\"2\" != \"2\" \\(2 != 2\\)", true },
         { H_CHECK_STREQ_MSG_HEAD_NAME(1_1),
           H_CHECK_STREQ_MSG_BODY_NAME(1_1),
-          "1", "1", "\"1\" != \"1\": 1 does not match 1", true },
+          "1", "1", "\"1\" != \"1\" \\(1 != 1\\): 1 does not match 1", true },
         { H_CHECK_STREQ_MSG_HEAD_NAME(1_2),
           H_CHECK_STREQ_MSG_BODY_NAME(1_2),
-          "1", "2", "\"1\" != \"2\": 1 does not match 2", false },
+          "1", "2", "\"1\" != \"2\" \\(1 != 2\\): 1 does not match 2", false },
         { H_CHECK_STREQ_MSG_HEAD_NAME(2_1),
           H_CHECK_STREQ_MSG_BODY_NAME(2_1),
-          "2", "1", "\"2\" != \"1\": 2 does not match 1", false },
+          "2", "1", "\"2\" != \"1\" \\(2 != 1\\): 2 does not match 1", false },
         { H_CHECK_STREQ_MSG_HEAD_NAME(2_2),
           H_CHECK_STREQ_MSG_BODY_NAME(2_2),
-          "2", "2", "\"2\" != \"2\": 2 does not match 2", true },
+          "2", "2", "\"2\" != \"2\" \\(2 != 2\\): 2 does not match 2", true },
+        { H_CHECK_STREQ_HEAD_NAME(vars), H_CHECK_STREQ_BODY_NAME(vars),
+          check_streq_var1, check_streq_var2,
+          "check_streq_var1 != check_streq_var2 \\("
+          CHECK_STREQ_VAR1 " != " CHECK_STREQ_VAR2 "\\)", false },
         { NULL, NULL, 0, 0, "", false }
     };
     do_check_eq_tests(tests);
@@ -585,7 +480,7 @@ ATF_TC_BODY(require, tc)
         printf("Checking with a %d value\n", t->value);
 
         RE(atf_tc_init(&tcaux, "h_require", t->head, t->body, NULL, &config));
-        run_here(&tcaux, &tcr);
+        run_inherit(&tcaux, &tcr);
         atf_tc_fini(&tcaux);
 
         ATF_REQUIRE(exists("before"));
@@ -595,8 +490,8 @@ ATF_TC_BODY(require, tc)
         } else {
             ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
             ATF_REQUIRE(!exists("after"));
-            ATF_REQUIRE(match_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
-                                     "failed: %s$", t->msg));
+            ATF_REQUIRE(grep_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
+                                    "failed: %s$", t->msg));
         }
 
         atf_tcr_fini(&tcr);
@@ -638,7 +533,7 @@ do_require_eq_tests(const struct require_eq_test *tests)
                t->ok ? "true" : "false");
 
         RE(atf_tc_init(&tcaux, "h_require", t->head, t->body, NULL, &config));
-        run_here(&tcaux, &tcr);
+        run_inherit(&tcaux, &tcr);
         atf_tc_fini(&tcaux);
 
         ATF_REQUIRE(exists("before"));
@@ -648,8 +543,8 @@ do_require_eq_tests(const struct require_eq_test *tests)
         } else {
             ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
             ATF_REQUIRE(!exists("after"));
-            ATF_REQUIRE(match_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
-                                     "failed: %s$", t->msg));
+            ATF_REQUIRE(grep_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
+                                    "failed: %s$", t->msg));
         }
 
         atf_tcr_fini(&tcr);
@@ -708,6 +603,11 @@ H_REQUIRE_STREQ_MSG(1_1, "1", "1", "1 does not match 1");
 H_REQUIRE_STREQ_MSG(1_2, "1", "2", "1 does not match 2");
 H_REQUIRE_STREQ_MSG(2_1, "2", "1", "2 does not match 1");
 H_REQUIRE_STREQ_MSG(2_2, "2", "2", "2 does not match 2");
+#define REQUIRE_STREQ_VAR1 "5"
+#define REQUIRE_STREQ_VAR2 "9"
+const const char *require_streq_var1 = REQUIRE_STREQ_VAR1;
+const const char *require_streq_var2 = REQUIRE_STREQ_VAR2;
+H_REQUIRE_STREQ(vars, require_streq_var1, require_streq_var2);
 
 ATF_TC(require_streq);
 ATF_TC_HEAD(require_streq, tc)
@@ -719,29 +619,124 @@ ATF_TC_BODY(require_streq, tc)
 {
     struct require_eq_test tests[] = {
         { H_REQUIRE_STREQ_HEAD_NAME(1_1), H_REQUIRE_STREQ_BODY_NAME(1_1),
-          "1", "1", "\"1\" != \"1\"", true },
+          "1", "1", "\"1\" != \"1\" \\(1 != 1\\)", true },
         { H_REQUIRE_STREQ_HEAD_NAME(1_2), H_REQUIRE_STREQ_BODY_NAME(1_2),
-          "1", "2", "\"1\" != \"2\"", false },
+          "1", "2", "\"1\" != \"2\" \\(1 != 2\\)", false },
         { H_REQUIRE_STREQ_HEAD_NAME(2_1), H_REQUIRE_STREQ_BODY_NAME(2_1),
-          "2", "1", "\"2\" != \"1\"", false },
+          "2", "1", "\"2\" != \"1\" \\(2 != 1\\)", false },
         { H_REQUIRE_STREQ_HEAD_NAME(2_2), H_REQUIRE_STREQ_BODY_NAME(2_2),
-          "2", "2", "\"2\" != \"2\"", true },
+          "2", "2", "\"2\" != \"2\" \\(2 != 2\\)", true },
         { H_REQUIRE_STREQ_MSG_HEAD_NAME(1_1),
           H_REQUIRE_STREQ_MSG_BODY_NAME(1_1),
-          "1", "1", "\"1\" != \"1\": 1 does not match 1", true },
+          "1", "1", "\"1\" != \"1\" \\(1 != 1\\): 1 does not match 1", true },
         { H_REQUIRE_STREQ_MSG_HEAD_NAME(1_2),
           H_REQUIRE_STREQ_MSG_BODY_NAME(1_2),
-          "1", "2", "\"1\" != \"2\": 1 does not match 2", false },
+          "1", "2", "\"1\" != \"2\" \\(1 != 2\\): 1 does not match 2", false },
         { H_REQUIRE_STREQ_MSG_HEAD_NAME(2_1),
           H_REQUIRE_STREQ_MSG_BODY_NAME(2_1),
-          "2", "1", "\"2\" != \"1\": 2 does not match 1", false },
+          "2", "1", "\"2\" != \"1\" \\(2 != 1\\): 2 does not match 1", false },
         { H_REQUIRE_STREQ_MSG_HEAD_NAME(2_2),
           H_REQUIRE_STREQ_MSG_BODY_NAME(2_2),
-          "2", "2", "\"2\" != \"2\": 2 does not match 2", true },
+          "2", "2", "\"2\" != \"2\" \\(2 != 2\\): 2 does not match 2", true },
+        { H_REQUIRE_STREQ_HEAD_NAME(vars), H_REQUIRE_STREQ_BODY_NAME(vars),
+          require_streq_var1, require_streq_var2,
+          "require_streq_var1 != require_streq_var2 \\("
+          REQUIRE_STREQ_VAR1 " != " REQUIRE_STREQ_VAR2 "\\)", false },
         { NULL, NULL, 0, 0, "", false }
     };
     do_require_eq_tests(tests);
 }
+
+/* ---------------------------------------------------------------------
+ * Miscellaneous test cases covering several macros.
+ * --------------------------------------------------------------------- */
+
+static
+bool
+aux_bool(const char *fmt)
+{
+    return false;
+}
+
+static
+const char *
+aux_str(const char *fmt)
+{
+    return "foo";
+}
+
+H_CHECK(msg, aux_bool("%d"));
+H_REQUIRE(msg, aux_bool("%d"));
+H_CHECK_STREQ(msg, aux_str("%d"), "");
+H_REQUIRE_STREQ(msg, aux_str("%d"), "");
+
+ATF_TC(msg_embedded_fmt);
+ATF_TC_HEAD(msg_embedded_fmt, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests that format strings passed "
+                      "as part of the automatically-generated messages "
+                      "do not get expanded");
+}
+ATF_TC_BODY(msg_embedded_fmt, tc)
+{
+    struct test {
+        void (*head)(atf_tc_t *);
+        void (*body)(const atf_tc_t *);
+        bool fatal;
+        const char *msg;
+    } *t, tests[] = {
+       {  H_CHECK_HEAD_NAME(msg), H_CHECK_BODY_NAME(msg), false,
+          "aux_bool(\"%d\")" },
+       {  H_REQUIRE_HEAD_NAME(msg), H_REQUIRE_BODY_NAME(msg), true,
+          "aux_bool(\"%d\")" },
+       {  H_CHECK_STREQ_HEAD_NAME(msg), H_CHECK_STREQ_BODY_NAME(msg), false,
+          "aux_str(\"%d\") != \"\" (foo != )" },
+       {  H_REQUIRE_STREQ_HEAD_NAME(msg), H_REQUIRE_STREQ_BODY_NAME(msg), true,
+          "aux_str(\"%d\") != \"\" (foo != )" },
+       { NULL, NULL, false, NULL }
+    };
+
+    for (t = &tests[0]; t->head != NULL; t++) {
+        atf_map_t config;
+        atf_tc_t tcaux;
+        atf_tcr_t tcr;
+
+        init_config(&config);
+
+        printf("Checking with an expected '%s' message\n", t->msg);
+
+        RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
+        run_capture(&tcaux, "error", &tcr);
+        atf_tc_fini(&tcaux);
+
+        ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+        if (t->fatal) {
+            bool matched =
+                grep_reason(&tcr, "t_macros.c:[0-9]+: "
+                            "Requirement failed: %s$", t->msg);
+            ATF_CHECK_MSG(matched, "couldn't find error string in result");
+        } else {
+            bool matched =
+                grep_file("error", "t_macros.c:[0-9]+: "
+                          "Check failed: %s$", t->msg);
+            ATF_CHECK_MSG(matched, "couldn't find error string in output");
+        }
+
+        atf_tcr_fini(&tcr);
+        atf_map_fini(&config);
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/macros.h", "d_include_macros_h.c");
+BUILD_TC(use, "d_use_macros_h.c",
+         "Tests that the macros provided by the atf-c/macros.h file "
+         "do not cause syntax errors when used",
+         "Build of d_use_macros_h.c failed; some macros in atf-c/macros.h "
+         "are broken");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -756,6 +751,12 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, require);
     ATF_TP_ADD_TC(tp, require_eq);
     ATF_TP_ADD_TC(tp, require_streq);
+
+    ATF_TP_ADD_TC(tp, msg_embedded_fmt);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
+    ATF_TP_ADD_TC(tp, use);
 
     return atf_no_error();
 }

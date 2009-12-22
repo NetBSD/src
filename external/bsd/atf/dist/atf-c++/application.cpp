@@ -36,6 +36,7 @@ extern "C" {
 }
 
 #include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>

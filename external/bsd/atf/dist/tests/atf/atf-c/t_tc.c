@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 
 #include "atf-c/tcr.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary test cases.
@@ -174,6 +174,12 @@ ATF_TC_BODY(config, tcin)
  * testing done later on. */
 
 /* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/tc.h", "d_include_tc_h.c");
+
+/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -187,6 +193,9 @@ ATF_TP_ADD_TCS(tp)
 
     /* Add the test cases for the free functions. */
     /* TODO */
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

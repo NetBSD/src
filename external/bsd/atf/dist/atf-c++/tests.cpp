@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -286,13 +286,14 @@ impl::tc::set_md_var(const std::string& var, const std::string& val)
 }
 
 impl::tcr
-impl::tc::run(const fs::path& workdirbase)
+impl::tc::run(int fdout, int fderr, const fs::path& workdirbase)
     const
 {
     atf_tcr_t tcrc;
     tcr tcrr(tcr::failed_state, "UNINITIALIZED");
 
-    atf_error_t err = atf_tc_run(&m_tc, &tcrc, workdirbase.c_path());
+    atf_error_t err = atf_tc_run(&m_tc, &tcrc, fdout, fderr,
+                                 workdirbase.c_path());
     if (atf_is_error(err))
         throw_atf_error(err);
 
@@ -317,19 +318,7 @@ void
 impl::tc::require_prog(const std::string& prog)
     const
 {
-    PRE(!prog.empty());
-
-    fs::path p(prog);
-
-    if (p.is_absolute()) {
-        if (!fs::is_executable(p))
-            skip("The required program " + prog + " could not be found");
-    } else {
-        INV(p.branch_path() == fs::path("."));
-        if (!fs::have_prog_in_path(prog))
-            skip("The required program " + prog + " could not be found in "
-                 "the PATH");
-    }
+    atf_tc_require_prog(prog.c_str());
 }
 
 void
@@ -649,7 +638,7 @@ tp::run_tcs(void)
         impl::tc* tc = *iter;
 
         w.start_tc(tc->get_md_var("ident"));
-        impl::tcr tcr = tc->run(m_workdir);
+        impl::tcr tcr = tc->run(STDOUT_FILENO, STDERR_FILENO, m_workdir);
         w.end_tc(tcr);
 
         sighup.process();

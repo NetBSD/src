@@ -2,7 +2,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 Prog_Name=${0##*/}
 Atf_Pkgdatadir="__ATF_PKGDATADIR__"
 Atf_Shell="__ATF_SHELL__"
+
+set -e
 
 err()
 {

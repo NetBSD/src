@@ -15,3 +15,10 @@ tp: t_signals
 tp: t_tests
 tp: t_utils
 tp: t_process
+tp: t_build
+tp: t_application
+tp: t_atffile
+tp: t_exceptions
+tp: t_formats
+tp: t_sanity
+tp: t_ui

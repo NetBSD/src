@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,6 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 }
@@ -68,6 +67,11 @@ class atf_exec : public atf::application::app {
     void process_option_t(const std::string&);
     unsigned int m_timeout_secs;
     std::string m_timeout_file;
+
+    static void route_do_exec(void *);
+    void do_exec(void) const;
+
+    static int handle_status(const atf::process::status&);
 
 public:
     atf_exec(void);
@@ -136,64 +140,92 @@ atf_exec::process_option(int ch, const char* arg)
     }
 }
 
+void
+atf_exec::route_do_exec(void *v)
+{
+    atf_exec* ae = static_cast< atf_exec* >(v);
+    ae->do_exec();
+}
+
+void
+atf_exec::do_exec(void)
+    const
+{
+    if (::setpgid(::getpid(), 0) == -1)
+        throw atf::system_error("main", "setpgid failed", errno);
+
+    char** argv = new char*[m_argc + 1];
+    for (int i = 0; i < m_argc; i++)
+        argv[i] = ::strdup(m_argv[i]);
+    argv[m_argc] = NULL;
+
+    ::execvp(m_argv[0], argv);
+    // TODO: Handle error code from execvp.
+    std::abort();
+}
+
+int
+atf_exec::handle_status(const atf::process::status& s)
+{
+    int exitcode = EXIT_FAILURE;
+
+    if (s.exited())
+        exitcode = s.exitstatus();
+    else if (s.signaled())
+        ::kill(0, s.termsig());
+    else
+        UNREACHABLE;
+
+    return exitcode;
+}
+
 int
 atf_exec::main(void)
 {
     if (m_argc < 1)
         throw atf::application::usage_error("No command specified");
 
-    int exitcode = EXIT_FAILURE;
+    atf::process::child c =
+        atf::process::fork(route_do_exec,
+                           atf::process::stream_inherit(),
+                           atf::process::stream_inherit(),
+                           this);
 
-    pid_t pid = atf::process::fork();
-    if (pid == 0) {
-        if (::setpgid(::getpid(), 0) == -1)
-            throw atf::system_error("main", "setpgid failed", errno);
+    atf::signals::signal_programmer sp(SIGALRM, sigalarm::handler);
 
-        char** argv = new char*[m_argc + 1];
-        for (int i = 0; i < m_argc; i++)
-            argv[i] = ::strdup(m_argv[i]);
-        argv[m_argc] = NULL;
+    if (m_timeout_secs > 0) {
+        struct itimerval itv;
 
-        ::execvp(m_argv[0], argv);
-        return EXIT_FAILURE;
-    } else {
-        atf::signals::signal_programmer sp(SIGALRM, sigalarm::handler);
-
-        if (m_timeout_secs > 0) {
-            struct itimerval itv;
-
-            timerclear(&itv.it_interval);
-            timerclear(&itv.it_value);
-            itv.it_value.tv_sec = m_timeout_secs;
-            if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
-                throw atf::system_error("main", "setitimer failed", errno);
-        }
-
-        int status;
-        if (::waitpid(pid, &status, 0) != pid) {
-            if (!(errno == EINTR && sigalarm::happened))
-                throw atf::system_error("main", "waitpid failed", errno);
-        }
-
-        if (sigalarm::happened) {
-            INV(m_timeout_secs > 0);
-
-            ::killpg(pid, SIGTERM);
-
-            std::ofstream os(m_timeout_file.c_str());
-            os.close();
-
-            INV(exitcode == EXIT_FAILURE);
-        } else {
-            if (WIFEXITED(status))
-                exitcode = WEXITSTATUS(status);
-            else if (WIFSIGNALED(status))
-                ::kill(0, WTERMSIG(status));
-            else
-                UNREACHABLE;
-        }
+        timerclear(&itv.it_interval);
+        timerclear(&itv.it_value);
+        itv.it_value.tv_sec = m_timeout_secs;
+        if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+            throw atf::system_error("main", "setitimer failed", errno);
     }
 
+    int exitcode;
+    try {
+        const atf::process::status s = c.wait();
+        exitcode = handle_status(s);
+    } catch (const atf::system_error& e) {
+        if (e.code() == EINTR) {
+            if (sigalarm::happened) {
+                INV(m_timeout_secs > 0);
+
+                ::killpg(c.pid(), SIGTERM);
+
+                std::ofstream os(m_timeout_file.c_str());
+                os.close();
+
+                exitcode = EXIT_FAILURE;
+                (void)c.wait();
+            } else {
+                // TODO: Retry wait.
+                abort();
+            }
+        } else
+            throw;
+    }
     return exitcode;
 }
 

@@ -235,7 +235,7 @@ atf_map_insert(atf_map_t *m, const char *key, void *value, bool managed)
         if (me == NULL)
             err = atf_no_memory_error();
         else {
-            err = atf_list_append(&m->m_list, me);
+            err = atf_list_append(&m->m_list, me, false);
             if (atf_is_error(err)) {
                 if (managed)
                     free(value);

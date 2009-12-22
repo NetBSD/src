@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,12 @@
 
 #include "atf-c++/macros.hpp"
 #include "atf-c++/text.hpp"
+
+#include "h_lib.hpp"
+
+// ------------------------------------------------------------------------
+// Test cases for the free functions.
+// ------------------------------------------------------------------------
 
 ATF_TEST_CASE(duplicate);
 ATF_TEST_CASE_HEAD(duplicate)
@@ -315,8 +321,19 @@ ATF_TEST_CASE_BODY(to_type)
     ATF_CHECK_EQUAL(to_type< std::string >("a"), "a");
 }
 
+// ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/text.hpp", "d_include_text_hpp.cpp");
+
+// ------------------------------------------------------------------------
+// Main.
+// ------------------------------------------------------------------------
+
 ATF_INIT_TEST_CASES(tcs)
 {
+    // Add the test cases for the free functions.
     ATF_ADD_TEST_CASE(tcs, duplicate);
     ATF_ADD_TEST_CASE(tcs, join);
     ATF_ADD_TEST_CASE(tcs, split);
@@ -325,4 +342,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, to_bool);
     ATF_ADD_TEST_CASE(tcs, to_string);
     ATF_ADD_TEST_CASE(tcs, to_type);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

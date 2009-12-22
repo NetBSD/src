@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,63 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <atf-c.h>
 
+#include "atf-c/sanity.h"
 #include "atf-c/text.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
- * Test cases for the free functions.
+ * Auxiliary functions.
  * --------------------------------------------------------------------- */
+
+#define REQUIRE_ERROR(exp) \
+    do { \
+        atf_error_t err = exp; \
+        ATF_REQUIRE(atf_is_error(err)); \
+        atf_error_free(err); \
+    } while (0)
+
+static
+size_t
+array_size(const char *words[])
+{
+    size_t count;
+    const char **word;
+
+    count = 0;
+    for (word = words; *word != NULL; word++)
+        count++;
+
+    return count;
+}
+
+static
+void
+check_split(const char *str, const char *delim, const char *words[])
+{
+    atf_list_t list;
+    const char **word;
+    size_t i;
+
+    printf("Splitting '%s' with delimiter '%s'\n", str, delim);
+    CE(atf_text_split(str, delim, &list));
+
+    printf("Expecting %zd words\n", array_size(words));
+    ATF_CHECK_EQ(atf_list_size(&list), array_size(words));
+
+    for (word = words, i = 0; *word != NULL; word++, i++) {
+        printf("Word at position %zd should be '%s'\n", i, words[i]);
+        ATF_CHECK_STREQ((const char *)atf_list_index_c(&list, i), words[i]);
+    }
+
+    atf_list_fini(&list);
+}
 
 static
 atf_error_t
@@ -61,6 +106,32 @@ word_count(const char *word, void *data)
 
     return atf_no_error();
 }
+
+struct fail_at {
+    int failpos;
+    int curpos;
+};
+
+static
+atf_error_t
+word_fail_at(const char *word, void *data)
+{
+    struct fail_at *fa = data;
+    atf_error_t err;
+
+    if (fa->failpos == fa->curpos)
+        err = atf_no_memory_error(); /* Just a random error. */
+    else {
+        fa->curpos++;
+        err = atf_no_error();
+    }
+
+    return err;
+}
+
+/* ---------------------------------------------------------------------
+ * Test cases for the free functions.
+ * --------------------------------------------------------------------- */
 
 ATF_TC(for_each_word);
 ATF_TC_HEAD(for_each_word, tc)
@@ -100,6 +171,18 @@ ATF_TC_BODY(for_each_word, tc)
     RE(atf_text_for_each_word("1 2.3.4 5", " .", word_acum, acum));
     ATF_REQUIRE(cnt == 5);
     ATF_REQUIRE(strcmp(acum, "12345") == 0);
+
+    {
+        struct fail_at fa;
+        fa.failpos = 3;
+        fa.curpos = 0;
+        atf_error_t err = atf_text_for_each_word("a b c d e", " ",
+                                                 word_fail_at, &fa);
+        ATF_REQUIRE(atf_is_error(err));
+        ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        ATF_REQUIRE(fa.curpos == 3);
+        atf_error_free(err);
+    }
 }
 
 ATF_TC(format);
@@ -148,6 +231,104 @@ ATF_TC_BODY(format_ap, tc)
     free(str);
 }
 
+ATF_TC(split);
+ATF_TC_HEAD(split, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the split function");
+}
+ATF_TC_BODY(split, tc)
+{
+    {
+        const char *words[] = { NULL };
+        check_split("", " ", words);
+    }
+
+    {
+        const char *words[] = { NULL };
+        check_split(" ", " ", words);
+    }
+
+    {
+        const char *words[] = { NULL };
+        check_split("    ", " ", words);
+    }
+
+    {
+        const char *words[] = { "a", "b", NULL };
+        check_split("a b", " ", words);
+    }
+
+    {
+        const char *words[] = { "a", "b", "c", "d", NULL };
+        check_split("a b c d", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", NULL };
+        check_split("foo bar", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", "baz", "foobar", NULL };
+        check_split("foo bar baz foobar", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", NULL };
+        check_split(" foo bar", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", NULL };
+        check_split("foo  bar", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", NULL };
+        check_split("foo bar ", " ", words);
+    }
+
+    {
+        const char *words[] = { "foo", "bar", NULL };
+        check_split("  foo  bar  ", " ", words);
+    }
+}
+
+ATF_TC(split_delims);
+ATF_TC_HEAD(split_delims, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the split function using "
+                      "different delimiters");
+}
+ATF_TC_BODY(split_delims, tc)
+{
+
+    {
+        const char *words[] = { NULL };
+        check_split("", "/", words);
+    }
+
+    {
+        const char *words[] = { " ", NULL };
+        check_split(" ", "/", words);
+    }
+
+    {
+        const char *words[] = { "    ", NULL };
+        check_split("    ", "/", words);
+    }
+
+    {
+        const char *words[] = { "a", "b", NULL };
+        check_split("a/b", "/", words);
+    }
+
+    {
+        const char *words[] = { "a", "bcd", "ef", NULL };
+        check_split("aLONGDELIMbcdLONGDELIMef", "LONGDELIM", words);
+    }
+}
+
 ATF_TC(to_bool);
 ATF_TC_HEAD(to_bool, tc)
 {
@@ -168,38 +349,38 @@ ATF_TC_BODY(to_bool, tc)
     RE(atf_text_to_bool("NO", &b)); ATF_REQUIRE(!b);
 
     b = false;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("", &b));
     ATF_REQUIRE(!b);
     b = true;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("", &b));
     ATF_REQUIRE(b);
 
     b = false;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("tru", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("tru", &b));
     ATF_REQUIRE(!b);
     b = true;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("tru", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("tru", &b));
     ATF_REQUIRE(b);
 
     b = false;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("true2", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("true2", &b));
     ATF_REQUIRE(!b);
     b = true;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("true2", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("true2", &b));
     ATF_REQUIRE(b);
 
     b = false;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("fals", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("fals", &b));
     ATF_REQUIRE(!b);
     b = true;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("fals", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("fals", &b));
     ATF_REQUIRE(b);
 
     b = false;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("false2", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("false2", &b));
     ATF_REQUIRE(!b);
     b = true;
-    ATF_REQUIRE(atf_is_error(atf_text_to_bool("false2", &b)));
+    REQUIRE_ERROR(atf_text_to_bool("false2", &b));
     ATF_REQUIRE(b);
 }
 
@@ -218,13 +399,19 @@ ATF_TC_BODY(to_long, tc)
     RE(atf_text_to_long("123456789", &l)); ATF_REQUIRE_EQ(l, 123456789);
 
     l = 1212;
-    ATF_REQUIRE(atf_is_error(atf_text_to_long("", &l)));
+    REQUIRE_ERROR(atf_text_to_long("", &l));
     ATF_REQUIRE_EQ(l, 1212);
-    ATF_REQUIRE(atf_is_error(atf_text_to_long("foo", &l)));
+    REQUIRE_ERROR(atf_text_to_long("foo", &l));
     ATF_REQUIRE_EQ(l, 1212);
-    ATF_REQUIRE(atf_is_error(atf_text_to_long("1234x", &l)));
+    REQUIRE_ERROR(atf_text_to_long("1234x", &l));
     ATF_REQUIRE_EQ(l, 1212);
 }
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/tp.h", "d_include_tp_h.c");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -235,8 +422,13 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, for_each_word);
     ATF_TP_ADD_TC(tp, format);
     ATF_TP_ADD_TC(tp, format_ap);
+    ATF_TP_ADD_TC(tp, split);
+    ATF_TP_ADD_TC(tp, split_delims);
     ATF_TP_ADD_TC(tp, to_bool);
     ATF_TP_ADD_TC(tp, to_long);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

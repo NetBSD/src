@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 #include <sstream>
 
 #include <atf-c++.hpp>
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Tests for the "tcr" class.
@@ -83,6 +85,12 @@ ATF_TEST_CASE_BODY(tcr_ctor_w_reason)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/tests.hpp", "d_include_tests_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -91,4 +99,7 @@ ATF_INIT_TEST_CASES(tcs)
     // Add tests for the "tcr" class.
     ATF_ADD_TEST_CASE(tcs, tcr_ctor_wo_reason);
     ATF_ADD_TEST_CASE(tcs, tcr_ctor_w_reason);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

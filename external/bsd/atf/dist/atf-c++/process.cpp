@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,33 +34,286 @@ extern "C" {
 
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/process.hpp"
+#include "atf-c++/sanity.hpp"
 
 namespace impl = atf::process;
 #define IMPL_NAME "atf::process"
 
 // ------------------------------------------------------------------------
-// Free functions.
+// Auxiliary functions.
 // ------------------------------------------------------------------------
 
-pid_t
-impl::fork(void)
+template< class C >
+atf::utils::auto_array< const char* >
+collection_to_argv(const C& c)
 {
-    atf_error_t err;
-    pid_t pid;
+    atf::utils::auto_array< const char* > argv(new const char*[c.size() + 1]);
 
-    err = atf_process_fork(&pid);
-    if (atf_is_error(err))
-        throw_atf_error(err);
+    std::size_t pos = 0;
+    for (typename C::const_iterator iter = c.begin(); iter != c.end();
+         iter++) {
+        argv[pos] = (*iter).c_str();
+        pos++;
+    }
+    INV(pos == c.size());
+    argv[pos] = NULL;
 
-    return pid;
+    return argv;
+}
+
+template< class C >
+C
+argv_to_collection(const char* const* argv)
+{
+    C c;
+
+    for (const char* const* iter = argv; *iter != NULL; iter++)
+        c.push_back(std::string(*iter));
+
+    return c;
+}
+
+// ------------------------------------------------------------------------
+// The "argv_array" type.
+// ------------------------------------------------------------------------
+
+impl::argv_array::argv_array(void) :
+    m_exec_argv(collection_to_argv(m_args))
+{
+}
+
+impl::argv_array::argv_array(const char* arg1, ...)
+{
+    m_args.push_back(arg1);
+
+    {
+        va_list ap;
+        const char* nextarg;
+
+        va_start(ap, arg1);
+        while ((nextarg = va_arg(ap, const char*)) != NULL)
+            m_args.push_back(nextarg);
+        va_end(ap);
+    }
+
+    ctor_init_exec_argv();
+}
+
+impl::argv_array::argv_array(const char* const* ca) :
+    m_args(argv_to_collection< args_vector >(ca)),
+    m_exec_argv(collection_to_argv(m_args))
+{
+}
+
+impl::argv_array::argv_array(const argv_array& a) :
+    m_args(a.m_args),
+    m_exec_argv(collection_to_argv(m_args))
+{
 }
 
 void
-impl::system(const std::string& cmdline)
+impl::argv_array::ctor_init_exec_argv(void)
 {
-    atf_error_t err;
+    m_exec_argv = collection_to_argv(m_args);
+}
 
-    err = atf_process_system(cmdline.c_str());
+const char* const*
+impl::argv_array::exec_argv(void)
+    const
+{
+    return m_exec_argv.get();
+}
+
+impl::argv_array::size_type
+impl::argv_array::size(void)
+    const
+{
+    return m_args.size();
+}
+
+const char*
+impl::argv_array::operator[](int idx)
+    const
+{
+    return m_args[idx].c_str();
+}
+
+impl::argv_array::const_iterator
+impl::argv_array::begin(void)
+    const
+{
+    return m_args.begin();
+}
+
+impl::argv_array::const_iterator
+impl::argv_array::end(void)
+    const
+{
+    return m_args.end();
+}
+
+impl::argv_array&
+impl::argv_array::operator=(const argv_array& a)
+{
+    if (this != &a) {
+        m_args = a.m_args;
+        m_exec_argv = collection_to_argv(m_args);
+    }
+    return *this;
+}
+
+// ------------------------------------------------------------------------
+// The "stream" types.
+// ------------------------------------------------------------------------
+
+impl::basic_stream::basic_stream(void) :
+    m_inited(false)
+{
+}
+
+impl::basic_stream::~basic_stream(void)
+{
+    if (m_inited)
+        atf_process_stream_fini(&m_sb);
+}
+
+const atf_process_stream_t*
+impl::basic_stream::get_sb(void)
+    const
+{
+    INV(m_inited);
+    return &m_sb;
+}
+
+impl::stream_capture::stream_capture(void)
+{
+    atf_error_t err = atf_process_stream_init_capture(&m_sb);
     if (atf_is_error(err))
         throw_atf_error(err);
+    m_inited = true;
+}
+
+impl::stream_connect::stream_connect(const int src_fd, const int tgt_fd)
+{
+    atf_error_t err = atf_process_stream_init_connect(&m_sb, src_fd, tgt_fd);
+    if (atf_is_error(err))
+        throw_atf_error(err);
+    m_inited = true;
+}
+
+impl::stream_inherit::stream_inherit(void)
+{
+    atf_error_t err = atf_process_stream_init_inherit(&m_sb);
+    if (atf_is_error(err))
+        throw_atf_error(err);
+    m_inited = true;
+}
+
+impl::stream_redirect_fd::stream_redirect_fd(const int fd)
+{
+    atf_error_t err = atf_process_stream_init_redirect_fd(&m_sb, fd);
+    if (atf_is_error(err))
+        throw_atf_error(err);
+    m_inited = true;
+}
+
+impl::stream_redirect_path::stream_redirect_path(const fs::path& p)
+{
+    atf_error_t err = atf_process_stream_init_redirect_path(&m_sb, p.c_path());
+    if (atf_is_error(err))
+        throw_atf_error(err);
+    m_inited = true;
+}
+
+// ------------------------------------------------------------------------
+// The "status" type.
+// ------------------------------------------------------------------------
+
+impl::status::status(atf_process_status_t& s) :
+    m_status(s)
+{
+}
+
+impl::status::~status(void)
+{
+    atf_process_status_fini(&m_status);
+}
+
+bool
+impl::status::exited(void)
+    const
+{
+    return atf_process_status_exited(&m_status);
+}
+
+int
+impl::status::exitstatus(void)
+    const
+{
+    return atf_process_status_exitstatus(&m_status);
+}
+
+bool
+impl::status::signaled(void)
+    const
+{
+    return atf_process_status_signaled(&m_status);
+}
+
+int
+impl::status::termsig(void)
+    const
+{
+    return atf_process_status_termsig(&m_status);
+}
+
+bool
+impl::status::coredump(void)
+    const
+{
+    return atf_process_status_coredump(&m_status);
+}
+
+// ------------------------------------------------------------------------
+// The "child" type.
+// ------------------------------------------------------------------------
+
+impl::child::child(atf_process_child_t& c) :
+    m_child(c)
+{
+}
+
+impl::child::~child(void)
+{
+}
+
+impl::status
+impl::child::wait(void)
+{
+    atf_process_status_t s;
+
+    atf_error_t err = atf_process_child_wait(&m_child, &s);
+    if (atf_is_error(err))
+        throw_atf_error(err);
+
+    return status(s);
+}
+
+pid_t
+impl::child::pid(void)
+    const
+{
+    return atf_process_child_pid(&m_child);
+}
+
+atf::io::file_handle
+impl::child::stdout_fd(void)
+{
+    return io::file_handle(atf_process_child_stdout(&m_child));
+}
+
+atf::io::file_handle
+impl::child::stderr_fd(void)
+{
+    return io::file_handle(atf_process_child_stderr(&m_child));
 }

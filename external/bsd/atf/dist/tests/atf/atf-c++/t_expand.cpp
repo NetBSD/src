@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 
 #include "atf-c++/expand.hpp"
 #include "atf-c++/macros.hpp"
+
+#include "h_lib.hpp"
 
 // XXX Many of the tests here are duplicated in atf-c/t_expand.  Should
 // find a way to easily share them, or maybe remove the ones here.
@@ -255,6 +257,16 @@ ATF_TEST_CASE_BODY(expand_glob_tps)
     ATF_CHECK(exps[2] == "baz_test");
 }
 
+// ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/expand.hpp", "d_include_expand_hpp.cpp");
+
+// ------------------------------------------------------------------------
+// Main.
+// ------------------------------------------------------------------------
+
 ATF_INIT_TEST_CASES(tcs)
 {
     // Add the tests for the free functions.
@@ -264,4 +276,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, matches_glob_question);
     ATF_ADD_TEST_CASE(tcs, expand_glob_base);
     ATF_ADD_TEST_CASE(tcs, expand_glob_tps);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

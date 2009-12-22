@@ -42,7 +42,7 @@
 #include "atf-c/fs.h"
 #include "atf-c/user.h"
 
-#include "h_macros.h"
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -75,6 +75,17 @@ bool
 exists(const atf_fs_path_t *p)
 {
     return access(atf_fs_path_cstring(p), F_OK) == 0;
+}
+
+static
+atf_error_t
+mkstemp_discard_fd(atf_fs_path_t *p)
+{
+    int fd;
+    atf_error_t err = atf_fs_mkstemp(p, &fd);
+    if (!atf_is_error(err))
+        close(fd);
+    return err;
 }
 
 static
@@ -271,6 +282,7 @@ ATF_TC_BODY(path_branch_path, tc)
         RE(atf_fs_path_branch_path(&p, &bp));
         printf("Output         : %s\n", atf_fs_path_cstring(&bp));
         ATF_REQUIRE(strcmp(atf_fs_path_cstring(&bp), t->branch) == 0);
+        atf_fs_path_fini(&bp);
         atf_fs_path_fini(&p);
 
         printf("\n");
@@ -309,6 +321,7 @@ ATF_TC_BODY(path_leaf_name, tc)
         RE(atf_fs_path_leaf_name(&p, &ln));
         printf("Output         : %s\n", atf_dynstr_cstring(&ln));
         ATF_REQUIRE(atf_equal_dynstr_cstring(&ln, t->leaf));
+        atf_dynstr_fini(&ln);
         atf_fs_path_fini(&p);
 
         printf("\n");
@@ -423,6 +436,33 @@ ATF_TC_BODY(path_equal, tc)
 /* ---------------------------------------------------------------------
  * Test cases for the "atf_fs_stat" type.
  * --------------------------------------------------------------------- */
+
+ATF_TC(stat_mode);
+ATF_TC_HEAD(stat_mode, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_stat_get_mode function "
+                      "and, indirectly, the constructor");
+}
+ATF_TC_BODY(stat_mode, tc)
+{
+    atf_fs_path_t p;
+    atf_fs_stat_t st;
+
+    create_file("f1", 0400);
+    create_file("f2", 0644);
+
+    RE(atf_fs_path_init_fmt(&p, "f1"));
+    RE(atf_fs_stat_init(&st, &p));
+    ATF_CHECK_EQ(0400, atf_fs_stat_get_mode(&st));
+    atf_fs_stat_fini(&st);
+    atf_fs_path_fini(&p);
+
+    RE(atf_fs_path_init_fmt(&p, "f2"));
+    RE(atf_fs_stat_init(&st, &p));
+    ATF_CHECK_EQ(0644, atf_fs_stat_get_mode(&st));
+    atf_fs_stat_fini(&st);
+    atf_fs_path_fini(&p);
+}
 
 ATF_TC(stat_type);
 ATF_TC_HEAD(stat_type, tc)
@@ -551,6 +591,55 @@ ATF_TC_BODY(cleanup, tc)
     /* TODO: Cleanup with mount points, just as in tools/t_atf_cleanup. */
 }
 
+ATF_TC(cleanup_eacces_on_root);
+ATF_TC_HEAD(cleanup_eacces_on_root, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_cleanup function");
+}
+ATF_TC_BODY(cleanup_eacces_on_root, tc)
+{
+    atf_fs_path_t root;
+
+    create_dir("aux", 0755);
+    create_dir("aux/root", 0755);
+    ATF_CHECK(chmod("aux", 0555) != -1);
+
+    RE(atf_fs_path_init_fmt(&root, "aux/root"));
+    atf_error_t err = atf_fs_cleanup(&root);
+    if (atf_user_is_root()) {
+        ATF_REQUIRE(!atf_is_error(err));
+    } else {
+        ATF_REQUIRE(atf_is_error(err));
+        ATF_REQUIRE(atf_error_is(err, "libc"));
+        ATF_CHECK_EQ(atf_libc_error_code(err), EACCES);
+        atf_error_free(err);
+    }
+
+    atf_fs_path_fini(&root);
+}
+
+ATF_TC(cleanup_eacces_on_subdir);
+ATF_TC_HEAD(cleanup_eacces_on_subdir, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_cleanup function");
+}
+ATF_TC_BODY(cleanup_eacces_on_subdir, tc)
+{
+    atf_fs_path_t root;
+
+    create_dir("root", 0755);
+    create_dir("root/1", 0755);
+    create_dir("root/1/2", 0755);
+    create_dir("root/1/2/3", 0755);
+    ATF_CHECK(chmod("root/1", 0555) != -1);
+    ATF_CHECK(chmod("root/1/2", 0555) != -1);
+
+    RE(atf_fs_path_init_fmt(&root, "root"));
+    RE(atf_fs_cleanup(&root));
+    ATF_REQUIRE(not_exists(&root));
+    atf_fs_path_fini(&root);
+}
+
 ATF_TC(exists);
 ATF_TC_HEAD(exists, tc)
 {
@@ -576,6 +665,9 @@ ATF_TC_BODY(exists, tc)
     RE(atf_fs_exists(&pfile, &b));
     ATF_REQUIRE(b);
 
+    /* XXX: This should probably be a separate test case to let the user
+     * be aware that some tests were skipped because privileges were not
+     * correct. */
     if (!atf_user_is_root()) {
         printf("Checking existence of a file inside a directory without "
                "permissions\n");
@@ -584,12 +676,16 @@ ATF_TC_BODY(exists, tc)
         ATF_REQUIRE(atf_is_error(err));
         ATF_REQUIRE(atf_error_is(err, "libc"));
         ATF_REQUIRE(chmod(atf_fs_path_cstring(&pdir), 0755) != -1);
+        atf_error_free(err);
     }
 
     printf("Checking existence of a non-existent file\n");
     ATF_REQUIRE(unlink(atf_fs_path_cstring(&pfile)) != -1);
     RE(atf_fs_exists(&pfile, &b));
     ATF_REQUIRE(!b);
+
+    atf_fs_path_fini(&pfile);
+    atf_fs_path_fini(&pdir);
 }
 
 ATF_TC(eaccess);
@@ -721,6 +817,80 @@ ATF_TC_BODY(getcwd, tc)
     atf_fs_path_fini(&cwd1);
 }
 
+ATF_TC(rmdir_empty);
+ATF_TC_HEAD(rmdir_empty, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
+}
+ATF_TC_BODY(rmdir_empty, tc)
+{
+    atf_fs_path_t p;
+
+    RE(atf_fs_path_init_fmt(&p, "test-dir"));
+
+    ATF_REQUIRE(mkdir("test-dir", 0755) != -1);
+    ATF_REQUIRE(exists(&p));
+    RE(atf_fs_rmdir(&p));
+    ATF_REQUIRE(!exists(&p));
+
+    atf_fs_path_fini(&p);
+}
+
+ATF_TC(rmdir_enotempty);
+ATF_TC_HEAD(rmdir_enotempty, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
+}
+ATF_TC_BODY(rmdir_enotempty, tc)
+{
+    atf_fs_path_t p;
+    atf_error_t err;
+
+    RE(atf_fs_path_init_fmt(&p, "test-dir"));
+
+    ATF_REQUIRE(mkdir("test-dir", 0755) != -1);
+    ATF_REQUIRE(exists(&p));
+    create_file("test-dir/foo", 0644);
+
+    err = atf_fs_rmdir(&p);
+    ATF_REQUIRE(atf_is_error(err));
+    ATF_REQUIRE(atf_error_is(err, "libc"));
+    ATF_REQUIRE_EQ(atf_libc_error_code(err), ENOTEMPTY);
+    atf_error_free(err);
+
+    atf_fs_path_fini(&p);
+}
+
+ATF_TC(rmdir_eperm);
+ATF_TC_HEAD(rmdir_eperm, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
+}
+ATF_TC_BODY(rmdir_eperm, tc)
+{
+    atf_fs_path_t p;
+    atf_error_t err;
+
+    RE(atf_fs_path_init_fmt(&p, "test-dir/foo"));
+
+    ATF_REQUIRE(mkdir("test-dir", 0755) != -1);
+    ATF_REQUIRE(mkdir("test-dir/foo", 0755) != -1);
+    ATF_REQUIRE(chmod("test-dir", 0555) != -1);
+    ATF_REQUIRE(exists(&p));
+
+    err = atf_fs_rmdir(&p);
+    if (atf_user_is_root()) {
+        ATF_REQUIRE(!atf_is_error(err));
+    } else {
+        ATF_REQUIRE(atf_is_error(err));
+        ATF_REQUIRE(atf_error_is(err, "libc"));
+        ATF_REQUIRE_EQ(atf_libc_error_code(err), EACCES);
+        atf_error_free(err);
+    }
+
+    atf_fs_path_fini(&p);
+}
+
 ATF_TC(mkdtemp_ok);
 ATF_TC_HEAD(mkdtemp_ok, tc)
 {
@@ -790,9 +960,57 @@ ATF_TC_BODY(mkdtemp_err, tc)
     ATF_REQUIRE(atf_is_error(err));
     ATF_REQUIRE(atf_error_is(err, "libc"));
     ATF_CHECK_EQ(atf_libc_error_code(err), EACCES);
+    atf_error_free(err);
 
     ATF_CHECK(!exists(&p));
     ATF_CHECK(strcmp(atf_fs_path_cstring(&p), "dir/testdir.XXXXXX") == 0);
+
+    atf_fs_path_fini(&p);
+}
+
+static
+void
+do_umask_check(atf_error_t (*const mk_func)(atf_fs_path_t *),
+               atf_fs_path_t *path, const mode_t test_mask,
+               const char *str_mask, const char *exp_name)
+{
+    char buf[1024];
+    int old_umask;
+    atf_error_t err;
+
+    printf("Creating temporary %s with umask %s\n", exp_name, str_mask);
+
+    old_umask = umask(test_mask);
+    err = mk_func(path);
+    (void)umask(old_umask);
+
+    ATF_REQUIRE(atf_is_error(err));
+    ATF_REQUIRE(atf_error_is(err, "invalid_umask"));
+    atf_error_format(err, buf, sizeof(buf));
+    ATF_CHECK(strstr(buf, exp_name) != NULL);
+    ATF_CHECK(strstr(buf, str_mask) != NULL);
+    atf_error_free(err);
+}
+
+ATF_TC(mkdtemp_umask);
+ATF_TC_HEAD(mkdtemp_umask, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkdtemp function "
+                      "causing an error due to a too strict umask");
+}
+ATF_TC_BODY(mkdtemp_umask, tc)
+{
+    atf_fs_path_t p;
+
+    RE(atf_fs_path_init_fmt(&p, "testdir.XXXXXX"));
+
+    do_umask_check(atf_fs_mkdtemp, &p, 00100, "00100", "directory");
+    do_umask_check(atf_fs_mkdtemp, &p, 00200, "00200", "directory");
+    do_umask_check(atf_fs_mkdtemp, &p, 00400, "00400", "directory");
+    do_umask_check(atf_fs_mkdtemp, &p, 00500, "00500", "directory");
+    do_umask_check(atf_fs_mkdtemp, &p, 00600, "00600", "directory");
+
+    atf_fs_path_fini(&p);
 }
 
 ATF_TC(mkstemp_ok);
@@ -875,11 +1093,39 @@ ATF_TC_BODY(mkstemp_err, tc)
     ATF_REQUIRE(atf_is_error(err));
     ATF_REQUIRE(atf_error_is(err, "libc"));
     ATF_CHECK_EQ(atf_libc_error_code(err), EACCES);
+    atf_error_free(err);
 
     ATF_CHECK(!exists(&p));
     ATF_CHECK(strcmp(atf_fs_path_cstring(&p), "dir/testfile.XXXXXX") == 0);
     ATF_CHECK_EQ(fd, 1234);
+
+    atf_fs_path_fini(&p);
 }
+
+ATF_TC(mkstemp_umask);
+ATF_TC_HEAD(mkstemp_umask, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkstemp function "
+                      "causing an error due to a too strict umask");
+}
+ATF_TC_BODY(mkstemp_umask, tc)
+{
+    atf_fs_path_t p;
+
+    RE(atf_fs_path_init_fmt(&p, "testfile.XXXXXX"));
+
+    do_umask_check(mkstemp_discard_fd, &p, 00100, "00100", "regular file");
+    do_umask_check(mkstemp_discard_fd, &p, 00200, "00200", "regular file");
+    do_umask_check(mkstemp_discard_fd, &p, 00400, "00400", "regular file");
+
+    atf_fs_path_fini(&p);
+}
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/fs.h", "d_include_fs_h.c");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -899,18 +1145,29 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, path_equal);
 
     /* Add the tests for the "atf_fs_stat" type. */
+    ATF_TP_ADD_TC(tp, stat_mode);
     ATF_TP_ADD_TC(tp, stat_type);
     ATF_TP_ADD_TC(tp, stat_perms);
 
     /* Add the tests for the free functions. */
     ATF_TP_ADD_TC(tp, cleanup);
+    ATF_TP_ADD_TC(tp, cleanup_eacces_on_root);
+    ATF_TP_ADD_TC(tp, cleanup_eacces_on_subdir);
     ATF_TP_ADD_TC(tp, eaccess);
     ATF_TP_ADD_TC(tp, exists);
     ATF_TP_ADD_TC(tp, getcwd);
+    ATF_TP_ADD_TC(tp, rmdir_empty);
+    ATF_TP_ADD_TC(tp, rmdir_enotempty);
+    ATF_TP_ADD_TC(tp, rmdir_eperm);
     ATF_TP_ADD_TC(tp, mkdtemp_ok);
     ATF_TP_ADD_TC(tp, mkdtemp_err);
+    ATF_TP_ADD_TC(tp, mkdtemp_umask);
     ATF_TP_ADD_TC(tp, mkstemp_ok);
     ATF_TP_ADD_TC(tp, mkstemp_err);
+    ATF_TP_ADD_TC(tp, mkstemp_umask);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
 
     return atf_no_error();
 }

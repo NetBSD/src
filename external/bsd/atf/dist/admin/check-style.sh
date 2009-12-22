@@ -2,7 +2,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,6 @@ find_sources() {
               -name "TODO" -o \
               -name "*.[0-9]" -o \
               -name "*.ac" -o \
-              -name "*.am" -o \
               -name "*.at" -o \
               -name "*.awk" -o \
               -name "*.c" -o \
@@ -96,10 +95,15 @@ find_sources() {
               -name "*.m4" -o \
               -name "*.sh" \
            \) -a \( \
+              \! -path "*/atf-[0-9]*" -a \
               \! -path "*autom4te*" -a \
               -type f -a \
               \! -name "aclocal.m4" \
               \! -name "bconfig.h" \
+              \! -name "libtool.m4" \
+              \! -name "ltoptions.m4" \
+              \! -name "ltsugar.m4" \
+              \! -name "lt~obsolete.m4" \
               \! -name "*.so.*" \
            \)
 }

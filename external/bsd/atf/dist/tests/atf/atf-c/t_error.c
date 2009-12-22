@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #include <atf-c.h>
 
 #include "atf-c/error.h"
+
+#include "h_lib.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -171,11 +173,13 @@ ATF_TC_BODY(libc_new, tc)
     err = atf_libc_error(ENOMEM, "Test message 1");
     ATF_REQUIRE(atf_error_is(err, "libc"));
     ATF_REQUIRE_EQ(atf_libc_error_code(err), ENOMEM);
+    ATF_REQUIRE(strcmp(atf_libc_error_msg(err), "Test message 1") == 0);
     atf_error_free(err);
 
     err = atf_libc_error(EPERM, "%s message %d", "Test", 2);
     ATF_REQUIRE(atf_error_is(err, "libc"));
     ATF_REQUIRE_EQ(atf_libc_error_code(err), EPERM);
+    ATF_REQUIRE(strcmp(atf_libc_error_msg(err), "Test message 2") == 0);
     atf_error_free(err);
 }
 
@@ -245,6 +249,37 @@ ATF_TC_BODY(no_memory_format, tc)
     atf_error_free(err);
 }
 
+ATF_TC(no_memory_twice);
+ATF_TC_HEAD(no_memory_twice, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the construction of no_memory "
+                      "errors multiple times, as this error is initialized "
+                      "statically");
+}
+ATF_TC_BODY(no_memory_twice, tc)
+{
+    {
+        atf_error_t err = atf_no_memory_error();
+        ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        ATF_REQUIRE(atf_error_data(err) == NULL);
+        atf_error_free(err);
+    }
+
+    {
+        atf_error_t err = atf_no_memory_error();
+        ATF_REQUIRE(atf_error_is(err, "no_memory"));
+        ATF_REQUIRE(atf_error_data(err) == NULL);
+        atf_error_free(err);
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * Tests cases for the header file.
+ * --------------------------------------------------------------------- */
+
+HEADER_TC(include, "atf-c/error.h", "d_include_error_h.c");
+HEADER_TC(include_fwd, "atf-c/error_fwd.h", "d_include_error_fwd_h.c");
+
 /* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
@@ -265,6 +300,11 @@ ATF_TP_ADD_TCS(tp)
     /* Add the tests for the "no_memory" error. */
     ATF_TP_ADD_TC(tp, no_memory_new);
     ATF_TP_ADD_TC(tp, no_memory_format);
+    ATF_TP_ADD_TC(tp, no_memory_twice);
+
+    /* Add the test cases for the header file. */
+    ATF_TP_ADD_TC(tp, include);
+    ATF_TP_ADD_TC(tp, include_fwd);
 
     return atf_no_error();
 }

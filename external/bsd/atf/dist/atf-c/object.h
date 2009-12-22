@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,6 @@ void atf_object_fini(atf_object_t *);
  * --------------------------------------------------------------------- */
 
 void atf_init_objects(void);
-void atf_disable_exit_checks(void);
+void atf_reset_exit_checks(void);
 
 #endif /* ATF_C_OBJECT_H */
