@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,45 +27,21 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(ATF_C_ERROR_H)
-#define ATF_C_ERROR_H
+#if !defined(ATF_C_BUILD_H)
+#define ATF_C_BUILD_H
 
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
+#include <atf-c/list.h>
 
 /* ---------------------------------------------------------------------
- * The "atf_error" type.
+ * Free functions.
  * --------------------------------------------------------------------- */
 
-struct atf_error {
-    atf_object_t m_object;
+atf_error_t atf_build_c_o(const char *, const char *, const char *const [],
+                          atf_list_t *);
+atf_error_t atf_build_cpp(const char *, const char *, const char *const [],
+                          atf_list_t *);
+atf_error_t atf_build_cxx_o(const char *, const char *, const char *const [],
+                            atf_list_t *);
 
-    bool m_free;
-    const char *m_type;
-    void *m_data;
-
-    void (*m_format)(struct atf_error *, char *, size_t);
-};
-
-atf_error_t atf_error_new(const char *, void *, size_t,
-                          void (*)(const atf_error_t, char *, size_t));
-void atf_error_free(atf_error_t);
-
-atf_error_t atf_no_error(void);
-bool atf_is_error(const atf_error_t);
-
-bool atf_error_is(const atf_error_t, const char *);
-const void *atf_error_data(const atf_error_t);
-void atf_error_format(const atf_error_t, char *, size_t);
-
-/* ---------------------------------------------------------------------
- * Common error types.
- * --------------------------------------------------------------------- */
-
-atf_error_t atf_libc_error(int, const char *, ...);
-int atf_libc_error_code(const atf_error_t);
-const char *atf_libc_error_msg(const atf_error_t);
-
-atf_error_t atf_no_memory_error(void);
-
-#endif /* ATF_C_ERROR_H */
+#endif /* ATF_C_BUILD_H */

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,16 @@
 
 #include "atf-c/error.h"
 #include "atf-c/sanity.h"
+
+/* Theoretically, there can only be a single error intance at any given
+ * point in time, because errors are raised at one point and must be
+ * handled immediately.  If another error has to be raised during the
+ * handling process, something else has to be done with the previous
+ * error.
+ *
+ * This is per-thread information and will break threaded tests, but we
+ * currently do not have any threading support; therefore, this is fine. */
+static bool error_on_flight = false;
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -68,9 +78,10 @@ error_init(atf_error_t err, const char *type, void *data, size_t datalen,
         err->m_data = NULL;
     } else {
         err->m_data = malloc(datalen);
-        if (err->m_data == NULL)
+        if (err->m_data == NULL) {
+            atf_object_fini(&err->m_object);
             ok = false;
-        else
+        } else
             memcpy(err->m_data, data, datalen);
     }
 
@@ -87,6 +98,7 @@ atf_error_new(const char *type, void *data, size_t datalen,
 {
     atf_error_t err;
 
+    PRE(!error_on_flight);
     PRE(data != NULL || datalen == 0);
     PRE(datalen != 0 || data == NULL);
 
@@ -97,11 +109,14 @@ atf_error_new(const char *type, void *data, size_t datalen,
         if (!error_init(err, type, data, datalen, format)) {
             free(err);
             err = atf_no_memory_error();
-        } else
+        } else {
             err->m_free = true;
+            error_on_flight = true;
+        }
     }
 
     INV(err != NULL);
+    POST(error_on_flight);
     return err;
 }
 
@@ -110,6 +125,7 @@ atf_error_free(atf_error_t err)
 {
     bool freeit;
 
+    PRE(error_on_flight);
     PRE(err != NULL);
 
     freeit = err->m_free;
@@ -121,6 +137,8 @@ atf_error_free(atf_error_t err)
 
     if (freeit)
         free(err);
+
+    error_on_flight = false;
 }
 
 atf_error_t
@@ -213,11 +231,22 @@ atf_libc_error_code(const atf_error_t err)
     return data->m_errno;
 }
 
+const char *
+atf_libc_error_msg(const atf_error_t err)
+{
+    const struct atf_libc_error_data *data;
+
+    PRE(atf_error_is(err, "libc"));
+
+    data = atf_error_data(err);
+
+    return data->m_what;
+}
+
 /*
  * The "no_memory" error.
  */
 
-static bool no_memory_error_inited = false;
 static struct atf_error no_memory_error;
 
 static
@@ -232,11 +261,11 @@ no_memory_format(const atf_error_t err, char *buf, size_t buflen)
 atf_error_t
 atf_no_memory_error(void)
 {
-    if (!no_memory_error_inited) {
-        error_init(&no_memory_error, "no_memory", NULL, 0,
-                   no_memory_format);
-        no_memory_error_inited = true;
-    }
+    PRE(!error_on_flight);
 
+    error_init(&no_memory_error, "no_memory", NULL, 0,
+               no_memory_format);
+
+    error_on_flight = true;
     return &no_memory_error;
 }
