@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,10 @@ extern "C" {
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/sanity.hpp"
 
+// ------------------------------------------------------------------------
+// The "system_error" type.
+// ------------------------------------------------------------------------
+
 atf::system_error::system_error(const std::string& who,
                                 const std::string& message,
                                 int sys_err) :
@@ -80,15 +84,73 @@ atf::system_error::what(void)
     }
 }
 
+// ------------------------------------------------------------------------
+// Free functions.
+// ------------------------------------------------------------------------
+
+static
+void
+throw_libc_error(atf_error_t err)
+{
+    PRE(atf_error_is(err, "libc"));
+
+    const int ecode = atf_libc_error_code(err);
+    const std::string msg = atf_libc_error_msg(err);
+    atf_error_free(err);
+    throw atf::system_error("XXX", msg, ecode);
+}
+
+static
+void
+throw_no_memory_error(atf_error_t err)
+{
+    PRE(atf_error_is(err, "no_memory"));
+
+    atf_error_free(err);
+    throw std::bad_alloc();
+}
+
+static
+void
+throw_unknown_error(atf_error_t err)
+{
+    PRE(atf_is_error(err));
+
+    static char buf[4096];
+    atf_error_format(err, buf, sizeof(buf));
+    atf_error_free(err);
+    throw std::runtime_error(buf);
+}
+
 void
 atf::throw_atf_error(atf_error_t err)
 {
-    static char buf[4096];
+    static struct handler {
+        const char* m_name;
+        void (*m_func)(atf_error_t);
+    } handlers[] = {
+        { "libc", throw_libc_error },
+        { "no_memory", throw_no_memory_error },
+        { NULL, throw_unknown_error },
+    };
 
     PRE(atf_is_error(err));
 
-    atf_error_format(err, buf, sizeof(buf));
-    atf_error_free(err);
-
-    throw std::runtime_error(buf);
+    handler* h = handlers;
+    while (h->m_name != NULL) {
+        if (atf_error_is(err, h->m_name)) {
+            h->m_func(err);
+            UNREACHABLE;
+        } else
+            h++;
+    }
+    // XXX: I'm not sure that raising an "unknown" error is a wise thing
+    // to do here.  The C++ binding is supposed to have feature parity
+    // with the C one, so all possible errors raised by the C library
+    // should have their counterpart in the C++ library.  Still, removing
+    // this will require some code auditing that I can't afford at the
+    // moment.
+    INV(h->m_name == NULL && h->m_func != NULL);
+    h->m_func(err);
+    UNREACHABLE;
 }

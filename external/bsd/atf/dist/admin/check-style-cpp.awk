@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,11 @@ BEGIN {
 /include.*assert/ {
     warn("Do not include assert.h nor cassert");
 }
+
+/\/\*/ {
+    warn("Do not use C-style comments");
+}
+
 END {
     if (skip)
         warn("Missing NO_CHECK_STYLE_END");

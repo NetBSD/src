@@ -133,7 +133,7 @@ Must be unique inside the test program and should be short but descriptive.
 .It require.arch
 Type textual.
 Optional.
-Pp.
+.Pp
 A whitespace separated list of architectures that the test case can be run
 under without causing errors due to an architecture mismatch.
 .It require.config
@@ -147,7 +147,7 @@ If any of the required variables is not defined, the test case is
 .It require.machine
 Type textual.
 Optional.
-Pp.
+.Pp
 A whitespace separated list of machine types that the test case can be run
 under without causing errors due to a machine type mismatch.
 .It require.progs
@@ -183,6 +183,7 @@ unprivileged user will be supported.
 Type: integral.
 Required; defaults to
 .Sq 300 .
+.Pp
 Specifies the maximum amount of time the test case can run.
 This is particularly useful because some tests can stall either because they
 are incorrectly coded or because they trigger an anomalous behavior of the

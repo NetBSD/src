@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <unistd.h>
 }
 
 #include <iostream>
@@ -37,6 +38,8 @@ extern "C" {
 #include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
 #include "atf-c++/text.hpp"
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -163,7 +166,8 @@ ATF_TEST_CASE_BODY(pass)
 {
     ATF_TEST_CASE_NAME(h_pass) tcaux;
     tcaux.init(init_config());
-    atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+    atf::tests::tcr tcr =
+        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
 
     ATF_CHECK(tcr.get_state() == atf::tests::tcr::passed_state);
     ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
@@ -179,7 +183,8 @@ ATF_TEST_CASE_BODY(fail)
 {
     ATF_TEST_CASE_NAME(h_fail) tcaux;
     tcaux.init(init_config());
-    atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+    atf::tests::tcr tcr =
+        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
 
     ATF_CHECK(tcr.get_state() == atf::tests::tcr::failed_state);
     ATF_CHECK(tcr.get_reason() == "Failed on purpose");
@@ -196,7 +201,8 @@ ATF_TEST_CASE_BODY(skip)
 {
     ATF_TEST_CASE_NAME(h_skip) tcaux;
     tcaux.init(init_config());
-    atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+    atf::tests::tcr tcr =
+        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
 
     ATF_CHECK(tcr.get_state() == atf::tests::tcr::skipped_state);
     ATF_CHECK(tcr.get_reason() == "Skipped on purpose");
@@ -231,7 +237,8 @@ ATF_TEST_CASE_BODY(check)
 
         ATF_TEST_CASE_NAME(h_check) tcaux;
         tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
+                                        atf::fs::get_current_dir());
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
@@ -283,7 +290,8 @@ ATF_TEST_CASE_BODY(check_equal)
 
         ATF_TEST_CASE_NAME(h_check_equal) tcaux;
         tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
+                                        atf::fs::get_current_dir());
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
@@ -332,7 +340,8 @@ ATF_TEST_CASE_BODY(check_throw)
 
         ATF_TEST_CASE_NAME(h_check_throw) tcaux;
         tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(atf::fs::get_current_dir());
+        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
+                                        atf::fs::get_current_dir());
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
@@ -353,15 +362,31 @@ ATF_TEST_CASE_BODY(check_throw)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/macros.hpp", "d_include_macros_hpp.cpp");
+BUILD_TC(use, "d_use_macros_hpp.cpp",
+         "Tests that the macros provided by the atf-c++/macros.hpp file "
+         "do not cause syntax errors when used",
+         "Build of d_use_macros_hpp.cpp failed; some macros in "
+         "atf-c++/macros.hpp are broken");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    // Add the test cases for the macros.
     ATF_ADD_TEST_CASE(tcs, pass);
     ATF_ADD_TEST_CASE(tcs, fail);
     ATF_ADD_TEST_CASE(tcs, skip);
     ATF_ADD_TEST_CASE(tcs, check);
     ATF_ADD_TEST_CASE(tcs, check_equal);
     ATF_ADD_TEST_CASE(tcs, check_throw);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
+    ATF_ADD_TEST_CASE(tcs, use);
 }

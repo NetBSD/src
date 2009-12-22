@@ -1,0 +1,450 @@
+<?xml version="1.0"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta xmlns="" http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1" />
+<link xmlns="" rel="made"
+href="mailto:atf-devel AT NetBSD DOT org" />
+<link xmlns="" rel="stylesheet" type="text/css"
+href="standalone.css" />
+<title xmlns="">Major changes in ATF releases</title>
+</head>
+<body>
+<div xmlns="" class="header">
+<p class="title">Major changes in ATF releases</p>
+<p class="author">By Julio Merino, The NetBSD Foundation</p>
+</div>
+<div xmlns="" class="toc">
+<h1>Contents</h1>
+<ol>
+<li>
+<p>
+<a href="#atf-0-7">Changes in version 0.7</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-6">Changes in version 0.6</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-5">Changes in version 0.5</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-4">Changes in version 0.4</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-3">Changes in version 0.3</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-2">Changes in version 0.2</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#atf-0-1">Changes in version 0.1</a>
+</p>
+</li>
+</ol>
+</div>
+<div xmlns="" class="contents">
+<h1>
+<a name="atf-0-7">Changes in version 0.7</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on December 22nd, 2009.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Added build-time checks to atf-c and atf-c++.  A binding
+for atf-sh will come later.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Migrated all build-time checks for header files to proper
+ATF tests.  This demonstrates the use of the new feature described
+above.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added an internal API for child process
+management.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Converted all plain-text distribution documents to a Docbook
+canonical version, and include pre-generated plain text and HTML
+copies in
+the distribution file.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Simplified the contents of the
+<tt class="filename">Makefile.am</tt> by regenerating it from a
+canonical
+<tt class="filename">Makefile.am.m4</tt> source.  As a side-effect,
+some
+dependency specifications were fixed.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Migrated all checks from the 
+<tt>check</tt> target
+to 
+<tt>installcheck</tt>, as these require ATF to be
+installed.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fixed sign comparison mismatches triggered by
+the now-enabled 
+<tt>-Wsign-compare</tt>.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fixed many memory and object leaks.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-6">Changes in version 0.6</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on January 18th, 2009.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Make atf-exec be able to kill its child process after a
+certain period of time; this is controlled through the new -t
+option.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Change atf-sh to use atf-exec's -t option to control the
+test case's timeouts, instead of doing it internally.  Same
+behavior as
+before, but noticeably faster.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+atf-exec's -g option and atf-killpg are gone due to the
+previous change.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the atf-check(1) tool, a program that executes a
+given command and checks its exit code against a known value and
+allows the
+management of stdout and stderr in multiple ways.  This replaces
+the
+previous atf_check function in the atf-sh library and exposes this
+functionality to both atf-c and atf-c++.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the ATF_REQUIRE family of macros to the C interface.
+These help in checking for fatal test conditions.  The old
+ATF_CHECK macros
+now perform non-fatal checks only.  I.e. by using ATF_CHECK, the
+test case
+can now continue its execution and the failures will not be
+reported until
+the end of the whole run.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Extended the amount of ATF_CHECK_* C macros with new ones
+to provide more features to the developer.  These also have their
+corresponding counterparts in the ATF_REQUIRE_* family.  The new
+macros
+(listing the suffixes only) are: _EQ (replaces _EQUAL), _EQ_MSG,
+_STREQ and
+_STREQ_MSG.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-5">Changes in version 0.5</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on May 1st, 2008.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Clauses 3 and 4 of the BSD license used by the project were
+dropped.  All the code is now under a 2-clause BSD license
+compatible with
+the GNU General Public License (GPL).
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added a C-only binding so that binary test programs do not
+need to be tied to C++ at all.  This binding is now known as the
+atf-c
+library.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Renamed the C++ binding to atf-c++ for consistency with the
+new atf-c.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Renamed the POSIX shell binding to atf-sh for consistency
+with the new atf-c and atf-c++.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added a -w flag to test programs through which it is
+possible to specify the work directory to be used.  This was
+possible in
+prior releases by defining the workdir configuration variable (-v
+workdir=...), but was a conceptually incorrect mechanism.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs now preserve the execution order of test
+cases when they are given in the command line.  Even those
+mentioned more
+than once are executed multiple times to comply with the user's
+requests.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-4">Changes in version 0.4</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on February 4th, 2008.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Added two new manual pages, atf-c++-api and atf-sh-api,
+describing the C++ and POSIX shell interfaces used to write test
+programs.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added a pkg-config file, useful to get the flags to build
+against the C++ library or to easily detect the presence of
+ATF.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added a way for test cases to require a specific
+architecture and/or machine type through the new 'require.arch' and
+'require.machine' meta-data properties, respectively.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the 'timeout' property to test cases, useful to set
+an upper-bound limit for the test's run time and thus prevent
+global test
+program stalls due to the test case's misbehavior.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the atf-exec(1) internal utility, used to execute a
+command after changing the process group it belongs to.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the atf-killpg(1) internal utility, used to kill
+process groups.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Multiple portability fixes.  Of special interest, full
+support for SunOS (Solaris Express Developer Edition 2007/09) using
+the Sun
+Studio 12 C++ compiler.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fixed a serious bug that prevented atf-run(1) from working
+at all under Fedora 8 x86_64.  Due to the nature of the bug, other
+platforms were likely affected too.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-3">Changes in version 0.3</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on November 11th, 2007.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Added XML output support to atf-report.  This is
+accompanied by a DTD for the format's structure and sample XSLT/CSS
+files
+to post-process this output and convert it to a plain HTML
+report.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Changed atf-run to add system information to the report it
+generates.  This is currently used by atf-report's XML output only,
+and is
+later printed in the HTML reports in a nice and useful summary
+table.  The
+user and system administrator are allowed to tune this feature by
+means of
+hooks.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Removed the test cases' 'isolated' property.  This was
+intended to avoid touching the file system at all when running the
+related
+test case, but this has not been true for a long while: some
+control files
+are unconditionally required for several purposes, and we cannot
+easily get
+rid of them.  This way we remove several critical and delicate
+pieces of
+code.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Improved atf-report's CSV output format to include
+information about test programs too.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fixed the tests that used atf-compile to not require this
+tool as a helper.  Avoids systems without build-time utilities to
+skip many
+tests that could otherwise be run.  (E.g. NetBSD without the
+comp.tgz set
+installed.)
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Many general cleanups: Fixed many pieces of code marked as
+ugly and/or incomplete.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-2">Changes in version 0.2</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on September 20th, 2007.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Test cases now get a known umask on
+entry.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+atf-run now detects many unexpected failures caused by test
+programs and reports them as bogus tests.  atf-report is able to
+handle
+these new errors and nicely reports them to the user.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+All the data formats read and written by the tools have
+been documented and cleaned up.  These include those grammars that
+define
+how the different components communicate with each other as well as
+the
+format of files written by the developers and users: the Atffiles
+and the
+configuration files.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the atf-version tool, a utility that displays
+information about the currently installed version of ATF.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test cases can now define an optional cleanup routine to
+undo their actions regardless of their exit status.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+atf-report now summarizes the list of failed (bogus) test
+programs when using the ticker output format.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs now capture some termination signals and
+clean up any temporary files before exiting the program.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Multiple bug fixes and improvements all
+around.
+</p>
+</li>
+</ul>
+<h1>
+<a name="atf-0-1">Changes in version 0.1</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on August 20th, 2007.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+First public version.  This was released coinciding with
+the end of the Google Summer of Code 2007 program.
+</p>
+</li>
+</ul>
+</div>
+</body>
+</html>

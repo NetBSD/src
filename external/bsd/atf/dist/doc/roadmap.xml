@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.1//EN"
+                  "http://docbook.org/xml/simple/1.1/sdocbook.dtd">
+
+<article>
+
+<articleinfo>
+  <title>Rearchitecting ATF: Road trip to 1.0</title>
+
+  <author>
+    <firstname>Julio</firstname>
+    <surname>Merino</surname>
+    <affiliation>
+      <orgname>The NetBSD Foundation</orgname>
+    </affiliation>
+  </author>
+</articleinfo>
+
+<section id="overview">
+
+<title>Overview</title>
+
+<para>This document describes the major steps to be taken before getting
+to the first stable release of ATF, 1.0.  Some of these steps describe
+the transition from the old code base to the new ideas documented in the
+specification (TODO: Add link somehow).</para>
+
+</section>
+
+<section id="plan-0-8">
+
+<title>The plan to 0.8</title>
+
+<itemizedlist>
+
+<listitem><para>Add atf-sh interface to build-time tests.</para></listitem>
+
+<listitem><para>Properly document the libraries: i.e. one page per
+module, detailed information of each function and type, etc.  At the
+very least atf-c.</para></listitem>
+
+<listitem><para>Add a tool to collect multiple outputs of atf-run (from
+different machines) and generate a single (XML-only?) log with
+everything.  Must allow easy conversion to HTML for online
+publishing.</para></listitem>
+
+<listitem><para>Allow grouping of test programs in tiers in an Atffile.
+This is to permit the user specify "dependencies" between test programs:
+e.g. do not run a specific test program if its dependencies have failed,
+because it will certainly fail also.</para></listitem>
+
+<listitem><para>Provide a kernel-level unit testing API (for NetBSD
+only, at the moment).  This should come in the form of an atf.ko module
+that provides functions to define and register test cases, functions for
+results reporting and an interface (a trivial file system?) that
+transports the application/X-atf-tcs output to user-space, provides
+information to user-space about the available test cases (a list) and
+allows user-space to launch the execution of test
+cases.</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+<section id="plan-0-9">
+
+<title>The plan to 0.9</title>
+
+<itemizedlist>
+
+<listitem><para>Add a module to atf-c to manage dynamic memory.  Should
+provide a "mem chunk" object that can only be managed through functions
+(i.e. not directly) so that access to buffers can be safely controlled.
+Dealing with strdup and similar functions, for example, might be
+complex.</para>
+
+<para>See these old revisions for a start, but these did not work
+correctly because the use of (void **) casts brought aliasing
+problems:</para>
+
+<para>78eeacf3b9284493e5e96b7866fc1d163a13bc02
+8e200683a2b70eadca728c2e0347d4790777b3fc
+872393ed0177cbcc30ffacede228eb3986c42ab7</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+<section id="plan-pre-1-0">
+
+<title>The plan to 1.0 prereleases</title>
+
+<itemizedlist>
+
+<listitem><para>Fix all occurrences of XXX, TODO and
+FIXME.</para></listitem>
+
+<listitem><para>Split the distfile into multiple components.  We should
+have a component for each language binding and a component providing the
+ATF tools, at the very least.  If we had this, external programs using
+ATF wouldn't need to depend on the tools and/or the C++ binding, because
+they could just require the user to build the atf-c
+binding.</para></listitem>
+
+<listitem><para>Think of a way to properly add tests for (almost?) all
+error paths.  Most of them are probably broken
+already.</para></listitem>
+
+<listitem><para>Improve error reporting: aside from clarifying error
+messages, this also implies adding more error cases to give them more
+semantic meaning at the source code level..</para></listitem>
+
+<listitem><para>Make the shell library work with 'set
+-e'?</para></listitem>
+
+<listitem><para>Shell test programs dynamically locate where the shell
+library is by calling atf-config (done by atf.init.subr).  Contrarywise,
+binary test programs are directly linked against the final location of
+libatf.  It may be nice if the latter loaded the library dynamically
+based on what atf-config said, so the user could switch atf
+installations by simply changing its PATH (and effectively making atf
+relocatable on the file system).  Why could this be nice?  To painlessly
+run an older atf test suite against a more recent version of the code
+base to ensure there are no regressions even with older tests.  Just a
+crazy idea, as maybe what the shell test programs currently do is
+stupid.</para></listitem>
+
+<listitem><para>Allow users to customize the build of atf by defining
+additional meta-data for test cases.  At the moment this is possible
+because the meta-data is not sanity-checked, but I think it should be.
+Following the previous item, NetBSD could add a 'netbsd.pr' variable and
+then use this data when generating reports to add direct links to the
+appropriate PRs.</para></listitem>
+
+<listitem><para>Make sure that the tests in tests/atf have, at the very
+least, the same coverage as the ones in
+tests/bootstrap.</para></listitem>
+
+<listitem><para>Document the code.</para></listitem>
+
+<listitem><para>Possibly add a way to automatically gain or drop
+privileges when require.user is set.</para></listitem>
+
+<listitem><para>Add a way to specify which bug/issue/whatever a given
+test case is stress-testing.  This information is useful when detecting
+regressions.</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+<section id="plan-1.0-rc">
+
+<title>The plan to 1.0 release candidates</title>
+
+<itemizedlist>
+
+<listitem><para>Build libatf as a shared library and set -version-info
+accordingly.</para></listitem>
+
+<listitem><para>Set the DTDs' versions to 1.0.</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+<section id="plan-unknown">
+
+<title>The plan to releases after 1.0</title>
+
+<itemizedlist>
+
+<listitem><para>Allow the parallel execution of tests.  Achieving this
+with a test program granularity is easy: only need to change atf-run.
+Lowering it to a finer granularity (test cases) is harder and maybe not
+worth it.</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+</article>

@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,12 @@ dnl -----------------------------------------------------------------------
 dnl Set up the developer mode
 dnl -----------------------------------------------------------------------
 
+dnl
+dnl ATF_DEVELOPER_MODE
+dnl
+dnl Adds a --enable-developer flag to the configure script and, when given,
+dnl checks for and enables several flags useful during development.
+dnl
 AC_DEFUN([ATF_DEVELOPER_MODE], [
     AC_ARG_ENABLE(developer,
                   AS_HELP_STRING(--enable-developer,
@@ -50,12 +56,12 @@ AC_DEFUN([ATF_DEVELOPER_MODE], [
                          -Wcast-qual \
                          -Werror \
                          -Wextra \
-                         -Wno-sign-compare \
                          -Wno-unused-parameter \
                          -Wpointer-arith \
                          -Wredundant-decls \
                          -Wreturn-type \
                          -Wshadow \
+                         -Wsign-compare \
                          -Wswitch \
                          -Wwrite-strings"
 
@@ -86,35 +92,6 @@ AC_DEFUN([ATF_DEVELOPER_MODE], [
     fi
     try_c_cxx_flags="${try_c_cxx_flags} -D_FORTIFY_SOURCE=2"
 
-    AC_LANG_PUSH(C)
-    valid=""
-    for f in ${try_c_cxx_flags} ${try_c_flags}
-    do
-        AC_MSG_CHECKING(whether ${CC} supports ${f})
-        saved_cflags="${CFLAGS}"
-        CFLAGS="${CFLAGS} ${f}"
-        AC_LINK_IFELSE([int main(void) { return 0; }],
-                       AC_MSG_RESULT(yes)
-                       valid="${valid} ${f}",
-                       AC_MSG_RESULT(no))
-        CFLAGS="${saved_cflags}"
-    done
-    CFLAGS="${CFLAGS} ${valid}"
-    AC_LANG_POP()
-
-    AC_LANG_PUSH(C++)
-    valid=""
-    for f in ${try_c_cxx_flags} ${try_cxx_flags}
-    do
-        AC_MSG_CHECKING(whether ${CXX} supports ${f})
-        saved_cxxflags="${CXXFLAGS}"
-        CXXFLAGS="${CXXFLAGS} ${f}"
-        AC_LINK_IFELSE([int main(void) { return 0; }],
-                       AC_MSG_RESULT(yes)
-                       valid="${valid} ${f}",
-                       AC_MSG_RESULT(no))
-        CXXFLAGS="${saved_cxxflags}"
-    done
-    CXXFLAGS="${CXXFLAGS} ${valid}"
-    AC_LANG_POP()
+    ATF_CC_FLAGS(${try_c_cxx_flags} ${try_c_flags}, CFLAGS)
+    ATF_CXX_FLAGS(${try_c_cxx_flags} ${try_cxx_flags}, CXXFLAGS)
 ])

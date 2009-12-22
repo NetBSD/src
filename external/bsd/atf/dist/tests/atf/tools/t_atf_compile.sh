@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ check_perms()
 {
     srcdir=$(atf_get_srcdir)
     st_mode=$(${srcdir}/h_mode ${1})
-    echo "File ${1}, st_mode ${st_mode}, umask $(umask), expecting ${2}"
+    echo "File ${1}, st_mode ${st_mode}, umask ${3}, expecting ${2}"
     case ${st_mode} in
         *${2}) ;;
         *) atf_fail "File ${1} doesn't have permissions ${2}" ;;
@@ -94,24 +94,24 @@ perms_body()
 {
     atf_check -s eq:0 -o empty -e empty touch tp_foo.sh
 
-    umask 0000
-    atf_check -s eq:0 -o empty -e empty atf-compile -o tp_foo tp_foo.sh
-    check_perms tp_foo 0777
+    atf_check -s eq:0 -o empty -e empty -x \
+        'umask 0000 && atf-compile -o tp_foo tp_foo.sh'
+    check_perms tp_foo 0777 0000
     rm -f tp_foo
 
-    umask 0002
-    atf_check -s eq:0 -o empty -e empty atf-compile -o tp_foo tp_foo.sh
-    check_perms tp_foo 0775
+    atf_check -s eq:0 -o empty -e empty -x \
+        'umask 0002 && atf-compile -o tp_foo tp_foo.sh'
+    check_perms tp_foo 0775 0002
     rm -f tp_foo
 
-    umask 0222
-    atf_check -s eq:0 -o empty -e empty atf-compile -o tp_foo tp_foo.sh
-    check_perms tp_foo 0555
+    atf_check -s eq:0 -o empty -e empty -x \
+        'umask 0222 && atf-compile -o tp_foo tp_foo.sh'
+    check_perms tp_foo 0555 0222
     rm -f tp_foo
 
-    umask 0777
-    atf_check -s eq:0 -o empty -e empty atf-compile -o tp_foo tp_foo.sh
-    check_perms tp_foo 0000
+    atf_check -s eq:0 -o empty -e empty -x \
+        'umask 0777 && atf-compile -o tp_foo tp_foo.sh'
+    check_perms tp_foo 0000 0777
     rm -f tp_foo
 }
 

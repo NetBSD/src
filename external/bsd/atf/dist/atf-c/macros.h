@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,12 @@
 #include <atf-c/tc.h>
 #include <atf-c/tp.h>
 
+#define ATF_TC_NAME(tc) \
+    (atfu_ ## tc ## _tc)
+
+#define ATF_TC_PACK_NAME(tc) \
+    (atfu_ ## tc ## _tc_pack)
+
 #define ATF_TC(tc) \
     static void atfu_ ## tc ## _head(atf_tc_t *); \
     static void atfu_ ## tc ## _body(const atf_tc_t *); \
@@ -43,9 +49,6 @@
         .m_body = atfu_ ## tc ## _body, \
         .m_cleanup = NULL, \
     }
-
-#define ATF_TC_NAME(tc) \
-    (atfu_ ## tc ## _tc)
 
 #define ATF_TC_WITH_CLEANUP(tc) \
     static void atfu_ ## tc ## _head(atf_tc_t *); \
@@ -140,15 +143,17 @@
     ATF_CHECK_MSG((x) == (y), "%s != %s: " fmt, #x, #y, ##__VA_ARGS__)
 
 #define ATF_REQUIRE_STREQ(x, y) \
-    ATF_REQUIRE_MSG(strcmp(x, y) == 0, "%s != %s", #x, #y)
+    ATF_REQUIRE_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s)", #x, #y, x, y)
 
 #define ATF_CHECK_STREQ(x, y) \
-    ATF_CHECK_MSG(strcmp(x, y) == 0, "%s != %s", #x, #y)
+    ATF_CHECK_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s)", #x, #y, x, y)
 
 #define ATF_REQUIRE_STREQ_MSG(x, y, fmt, ...) \
-    ATF_REQUIRE_MSG(strcmp(x, y) == 0, "%s != %s: " fmt, #x, #y, ##__VA_ARGS__)
+    ATF_REQUIRE_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s): " fmt, \
+                    #x, #y, x, y, ##__VA_ARGS__)
 
 #define ATF_CHECK_STREQ_MSG(x, y, fmt, ...) \
-    ATF_CHECK_MSG(strcmp(x, y) == 0, "%s != %s: " fmt, #x, #y, ##__VA_ARGS__)
+    ATF_CHECK_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s): " fmt, \
+                    #x, #y, x, y, ##__VA_ARGS__)
 
 #endif /* !defined(ATF_C_MACROS_H) */

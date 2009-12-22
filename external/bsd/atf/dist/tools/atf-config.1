@@ -1,7 +1,7 @@
 .\"
 .\" Automated Testing Framework (atf)
 .\"
-.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 4, 2008
+.Dd March 14, 2009
 .Dt ATF-CONFIG 1
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ per line, without the variable names.
 .Ss Static configuration variables
 The following list describes all the variables that are part of ATF's
 static configuration:
-.Bl -tag -width atfXpkgdatadirXX
+.Bl -tag -width atfXbuildXcppflagsXX
 .It Va atf_arch
 The architecture name detected by ATF.
 This is derived from
@@ -83,9 +83,26 @@ because it is a subset of it.
 Given that this name might be misdetected, it is provided to the user
 as a configuration variable so that he can fix its value temporarily
 until a real fix is incorporated into mainstream sources.
+.It Va atf_build_cc
+The C compiler used by the ATF checks that provide build-time tests.
+.It Va atf_build_cflags
+The C compiler flags used by the ATF checks that provide build-time tests.
+.It Va atf_build_cpp
+The C/C++ preprocessor used by the ATF checks that provide build-time tests.
+.It Va atf_build_cppflags
+The C/C++ preprocessor flags used by the ATF checks that provide build-time
+tests.
+.It Va atf_build_cxx
+The C++ compiler used by the ATF checks that provide build-time tests.
+.It Va atf_build_cxxflags
+The C++ compiler flags used by the ATF checks that provide build-time tests.
 .It Va atf_confdir
 The path to the directory that contains the system-wide configuration
 files for ATF.
+.It Va atf_includedir
+The path to the directory that contains the ATF header files.
+.It Va atf_libdir
+The path to the directory that contains the ATF libraries.
 .It Va atf_libexecdir
 The path to the directory that contains the auxiliary utilities of ATF,
 used internally by the public tools.
@@ -109,14 +126,44 @@ This environment variable has the exact same name as the one shown by
 .Nm
 except that the name is all composed of uppercase letters.
 .Pp
+In general, empty values in the environment will be ignored unless
+otherwise noted below.
+.Pp
 The recognized environment variables are:
-.Bl -tag -width ATFXPKGDATADIRXX
+.Bl -tag -width ATFXBUILDXCPPFLAGSXX
 .It Ev ATF_ARCH
 Overrides the built-in value of
 .Va atf_arch .
+.It Ev ATF_BUILD_CC
+Overrides the built-in value of
+.Va atf_build_cc .
+.It Ev ATF_BUILD_CFLAGS
+Overrides the built-in value of
+.Va atf_build_cflags .
+Empty values are allowed.
+.It Ev ATF_BUILD_CPP
+Overrides the built-in value of
+.Va atf_build_cpp .
+.It Ev ATF_BUILD_CPPFLAGS
+Overrides the built-in value of
+.Va atf_build_cppflags .
+Empty values are allowed.
+.It Ev ATF_BUILD_CXX
+Overrides the built-in value of
+.Va atf_build_cxx .
+.It Ev ATF_BUILD_CXXFLAGS
+Overrides the built-in value of
+.Va atf_build_cxxflags .
+Empty values are allowed.
 .It Ev ATF_CONFDIR
 Overrides the built-in value of
 .Va atf_confdir .
+.It Ev ATF_INCLUDEDIR
+Overrides the built-in value of
+.Va atf_includedir .
+.It Ev ATF_LIBDIR
+Overrides the built-in value of
+.Va atf_libdir .
 .It Ev ATF_LIBEXECDIR
 Overrides the built-in value of
 .Va atf_libexecdir .

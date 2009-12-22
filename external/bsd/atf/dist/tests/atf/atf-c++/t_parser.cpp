@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 
 #include "atf-c++/macros.hpp"
 #include "atf-c++/parser.hpp"
+
+#include "h_lib.hpp"
 
 // ------------------------------------------------------------------------
 // Tests for the "token" class.
@@ -684,6 +686,12 @@ ATF_TEST_CASE_BODY(tokenizer_quotes_ws)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the header file.
+// ------------------------------------------------------------------------
+
+HEADER_TC(include, "atf-c++/parser.hpp", "d_include_parser_hpp.cpp");
+
+// ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
 
@@ -701,4 +709,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, tokenizer_keywords_ws);
     ATF_ADD_TEST_CASE(tcs, tokenizer_quotes_nows);
     ATF_ADD_TEST_CASE(tcs, tokenizer_quotes_ws);
+
+    // Add the test cases for the header file.
+    ATF_ADD_TEST_CASE(tcs, include);
 }

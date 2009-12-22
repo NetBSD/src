@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -273,6 +273,7 @@ atf_tcr_deserialize(atf_tcr_t *tcr, const int fd)
 {
     atf_error_t err;
     atf_dynstr_t state, reason;
+    bool eof;
 
     err = atf_dynstr_init(&state);
     if (atf_is_error(err))
@@ -282,16 +283,18 @@ atf_tcr_deserialize(atf_tcr_t *tcr, const int fd)
     if (atf_is_error(err))
         goto out_state;
 
-    err = atf_io_readline(fd, &state);
+    err = atf_io_readline(fd, &state, &eof);
     if (atf_is_error(err))
         goto out_reason;
+    INV(!eof);
 
     if (atf_equal_dynstr_cstring(&state, "passed"))
         err = atf_tcr_init(tcr, atf_tcr_passed_state);
     else {
-        err = atf_io_readline(fd, &reason);
+        err = atf_io_readline(fd, &reason, &eof);
         if (atf_is_error(err))
             goto out_reason;
+        INV(!eof);
 
         if (atf_equal_dynstr_cstring(&state, "failed"))
             err = atf_tcr_init_reason_fmt(tcr, atf_tcr_failed_state, "%s",
