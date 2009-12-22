@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.127 2009/12/20 17:32:09 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.128 2009/12/22 21:04:37 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.127 2009/12/20 17:32:09 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.128 2009/12/22 21:04:37 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -284,7 +284,7 @@ int	write_mbr(void);
 int	read_gpt(daddr_t, struct gpt_hdr *);
 int	delete_gpt(struct gpt_hdr *);
 int	yesno(const char *, ...);
-int	decimal(const char *, int64_t, int, int64_t, int64_t);
+int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
 #define	DEC_RND_0	4		/* round 0 to size of a track */
@@ -2682,7 +2682,7 @@ yesno(const char *str, ...)
 	return (first == 'y' || first == 'Y');
 }
 
-int
+int64_t
 decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t maxval)
 {
 	int64_t acc = 0;
