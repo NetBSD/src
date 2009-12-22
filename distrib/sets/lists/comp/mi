@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1351 2009/12/21 21:09:41 dyoung Exp $
+#	$NetBSD: mi,v 1.1352 2009/12/22 13:38:40 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -115,6 +115,7 @@
 ./usr/include/atf-c++.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/application.hpp		comp-atf-include	atf
 ./usr/include/atf-c++/atffile.hpp		comp-atf-include	atf
+./usr/include/atf-c++/build.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/check.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/config.hpp		comp-atf-include	atf
 ./usr/include/atf-c++/env.hpp			comp-atf-include	atf
@@ -134,6 +135,7 @@
 ./usr/include/atf-c++/user.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/utils.hpp			comp-atf-include	atf
 ./usr/include/atf-c.h				comp-atf-include	atf
+./usr/include/atf-c/build.h			comp-atf-include	atf
 ./usr/include/atf-c/check.h			comp-atf-include	atf
 ./usr/include/atf-c/config.h			comp-atf-include	atf
 ./usr/include/atf-c/defs.h			comp-atf-include	atf
