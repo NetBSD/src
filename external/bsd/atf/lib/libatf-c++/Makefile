@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:04 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2009/12/22 13:38:10 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -21,6 +21,7 @@ WARNS?=		2
 
 SRCS=		application.cpp \
 		atffile.cpp \
+		build.cpp \
 		check.cpp \
 		config.cpp \
 		env.cpp \
@@ -39,6 +40,7 @@ SRCS=		application.cpp \
 
 INCS=		application.hpp \
 		atffile.hpp \
+		build.hpp \
 		check.hpp \
 		config.hpp \
 		env.hpp \
