@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.5 2009/12/22 14:12:40 pooka Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.6 2009/12/22 17:32:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.5 2009/12/22 14:12:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.6 2009/12/22 17:32:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,12 +57,36 @@ doopenclose(dev_t dev, int flags, int fmt, int class, int type)
 	return pud_request(dev, &pc_oc, sizeof(pc_oc), class, type);
 }
 
+#include <sys/disklabel.h>
+/*
+ * XXX: this is not "reentrant".  But then again, partinfo isn't
+ * exactly safe in any case.
+ */
+static struct disklabel dl_partinfo;
+
 static int
 doioctl(dev_t dev, u_long cmd, void *data, int flag, int class, int type)
 {
 	struct pud_req_ioctl *pc_ioctl;
 	size_t dlen, allocsize;
+	u_long origcmd = cmd;
+	void *origdata = NULL; /* XXXgcc */
 	int error;
+
+	/*
+	 * XXX: kludge.  This is a horrible abstraction violation, but
+	 * then again DIOCGPART is a horrible ioctl (even more horrible
+	 * than the generic ioctl).  We handle it specially here since
+	 * the server in userspace has no chance to handle it.  And it's
+	 * a common operation used by most file systems.  But really, it
+	 * should be replaced by something a bit more ... transactional.
+	 */
+	if (cmd == DIOCGPART) {
+		cmd = DIOCGDINFO;
+		origdata = data;
+		flag = 0;
+		data = &dl_partinfo;
+	}
 
 	dlen = IOCPARM_LEN(cmd);
 	allocsize = sizeof(struct pud_req_ioctl) + dlen;
@@ -78,6 +102,39 @@ doioctl(dev_t dev, u_long cmd, void *data, int flag, int class, int type)
 		goto out;
 	if (cmd & IOC_OUT)
 		memcpy(data, pc_ioctl->pm_data, dlen);
+
+	/*
+	 * In case doing the infamous DIOCGPART, issue the real
+	 * ioctl and do pointer arithmetic to figure out the right
+	 * partition.  We could use DISKPART() too, but this seems
+	 * "better".
+	 */
+	if (origcmd == DIOCGPART) {
+		struct partinfo *pi, *pi_user;
+		int labidx;
+
+		CTASSERT(sizeof(struct partinfo) <= sizeof(struct disklabel));
+
+		pc_ioctl->pm_iocmd = DIOCGPART;
+		pc_ioctl->pm_flag = 0;
+
+		error = pud_request(dev, pc_ioctl, allocsize, class, type);
+		if (error)
+			goto out;
+
+		pi_user = (struct partinfo *)pc_ioctl->pm_data;
+		labidx = pi_user->part - &pi_user->disklab->d_partitions[0];
+		/* userspace error, but punish caller, since we have no infra */
+		if (labidx >= MAXPARTITIONS) {
+			error = E2BIG;
+			goto out;
+		}
+
+		pi = origdata;
+		pi->disklab = &dl_partinfo;
+		pi->part = &dl_partinfo.d_partitions[labidx];
+
+	}
 
  out:
 	kmem_free(pc_ioctl, allocsize);
