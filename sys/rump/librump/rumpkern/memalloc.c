@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.2 2009/11/27 13:45:15 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.3 2009/12/23 17:16:40 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -224,6 +224,13 @@ pool_cache_reclaim(pool_cache_t pc)
 {
 
 	return true;
+}
+
+void
+pool_cache_cpu_init(struct cpu_info *ci)
+{
+
+	return;
 }
 
 void *
