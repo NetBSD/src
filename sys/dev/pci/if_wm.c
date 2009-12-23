@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.10 2009/06/05 18:49:42 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.11 2009/12/23 10:37:37 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.10 2009/06/05 18:49:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.11 2009/12/23 10:37:37 sborrill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.10 2009/06/05 18:49:42 snj Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_wmreg.h>
+#include <dev/pci/if_wmvar.h>
 
 #ifdef WM_DEBUG
 #define	WM_DEBUG_LINK		0x01
@@ -229,31 +230,6 @@ struct wm_rxsoft {
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
 
-typedef enum {
-	WM_T_unknown		= 0,
-	WM_T_82542_2_0,			/* i82542 2.0 (really old) */
-	WM_T_82542_2_1,			/* i82542 2.1+ (old) */
-	WM_T_82543,			/* i82543 */
-	WM_T_82544,			/* i82544 */
-	WM_T_82540,			/* i82540 */
-	WM_T_82545,			/* i82545 */
-	WM_T_82545_3,			/* i82545 3.0+ */
-	WM_T_82546,			/* i82546 */
-	WM_T_82546_3,			/* i82546 3.0+ */
-	WM_T_82541,			/* i82541 */
-	WM_T_82541_2,			/* i82541 2.0+ */
-	WM_T_82547,			/* i82547 */
-	WM_T_82547_2,			/* i82547 2.0+ */
-	WM_T_82571,			/* i82571 */
-	WM_T_82572,			/* i82572 */
-	WM_T_82573,			/* i82573 */
-	WM_T_82574,			/* i82574 */
-	WM_T_80003,			/* i80003 */
-	WM_T_ICH8,			/* ICH8 LAN */
-	WM_T_ICH9,			/* ICH9 LAN */
-	WM_T_ICH10,			/* ICH10 LAN */
-} wm_chip_type;
-
 #define WM_LINKUP_TIMEOUT	50
 
 /*
@@ -274,6 +250,7 @@ struct wm_softc {
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
+	int sc_if_flags;		/* last if_flags */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcix_offset;		/* PCIX capability register offset */
 	int sc_flowflags;		/* 802.3x flow control flags */
@@ -402,22 +379,6 @@ do {									\
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
-
-/* sc_flags */
-#define	WM_F_HAS_MII		0x0001	/* has MII */
-#define	WM_F_EEPROM_HANDSHAKE	0x0002	/* requires EEPROM handshake */
-#define	WM_F_EEPROM_SEMAPHORE	0x0004	/* EEPROM with semaphore */
-#define	WM_F_EEPROM_EERDEEWR	0x0008	/* EEPROM access via EERD/EEWR */
-#define	WM_F_EEPROM_SPI		0x0010	/* EEPROM is SPI */
-#define	WM_F_EEPROM_FLASH	0x0020	/* EEPROM is FLASH */
-#define	WM_F_EEPROM_INVALID	0x0040	/* EEPROM not present (bad checksum) */
-#define	WM_F_IOH_VALID		0x0080	/* I/O handle is valid */
-#define	WM_F_BUS64		0x0100	/* bus is 64-bit */
-#define	WM_F_PCIX		0x0200	/* bus is PCI-X */
-#define	WM_F_CSA		0x0400	/* bus is CSA */
-#define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
-#define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
-#define WM_F_SWFWHW_SYNC	0x2000  /* Software-Firmware synchronisation */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -566,8 +527,8 @@ static void	wm_gmii_mediainit(struct wm_softc *);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int	wm_kmrn_i80003_readreg(struct wm_softc *, int);
-static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
+static int	wm_kmrn_readreg(struct wm_softc *, int);
+static void	wm_kmrn_writereg(struct wm_softc *, int, int);
 
 static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
@@ -952,6 +913,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 {
 	struct wm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+	prop_dictionary_t dict;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -1002,6 +964,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (preg < 3)
 			sc->sc_type = WM_T_82542_2_0;
 	}
+
+	/* Set device properties (mactype)*/
+	dict = device_properties(sc->sc_dev);
+	prop_dictionary_set_uint32(dict, "mactype", sc->sc_type);
 
 	/*
 	 * Map the device.  All devices support memory-mapped acccess,
@@ -1091,8 +1057,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -1129,8 +1095,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
 			sc->sc_flags |= WM_F_BUS64;
-		if (sc->sc_type >= WM_T_82544 &&
-		    (reg & STATUS_PCIX_MODE) != 0) {
+		if ((reg & STATUS_PCIX_MODE) != 0) {
 			pcireg_t pcix_cmd, pcix_sts, bytecnt, maxb;
 
 			sc->sc_flags |= WM_F_PCIX;
@@ -1370,18 +1335,26 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * that no EEPROM is attached.
 	 */
 
-	/*
-	 * Validate the EEPROM checksum. If the checksum fails, flag this for
-	 * later, so we can fail future reads from the EEPROM.
-	 */
-	if (wm_validate_eeprom_checksum(sc)) {
+	/* Check whether EEPROM is present or not */
+	if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
+		/* Not found */
+		sc->sc_flags |= WM_F_EEPROM_INVALID;
+	} else {
 		/*
-		 * Read twice again because some PCI-e parts fail the first
-		 * check due to the link being in sleep state.
+		 * Validate the EEPROM checksum. If the checksum fails, flag
+		 * this for later, so we can fail future reads from the EEPROM.
 		 */
-		if (wm_validate_eeprom_checksum(sc))
-			sc->sc_flags |= WM_F_EEPROM_INVALID;
+		if (wm_validate_eeprom_checksum(sc)) {
+			/*
+			 * Read twice again because some PCI-e parts fail the
+			 * first check due to the link being in sleep state.
+			 */
+			if (wm_validate_eeprom_checksum(sc))
+				sc->sc_flags |= WM_F_EEPROM_INVALID;
+		}
 	}
+	/* Set device properties (macflags)*/
+	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
@@ -1402,7 +1375,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
 	 */
-	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(dict, "mac-addr");
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
@@ -1439,8 +1412,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	pn = prop_dictionary_get(device_properties(sc->sc_dev),
-				 "i82543-cfg1");
+	pn = prop_dictionary_get(dict, "i82543-cfg1");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg1 = (uint16_t) prop_number_integer_value(pn);
@@ -1451,8 +1423,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	pn = prop_dictionary_get(device_properties(sc->sc_dev),
-				 "i82543-cfg2");
+	pn = prop_dictionary_get(dict, "i82543-cfg2");
 	if (pn != NULL) {
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg2 = (uint16_t) prop_number_integer_value(pn);
@@ -1464,8 +1435,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_type >= WM_T_82544) {
-		pn = prop_dictionary_get(device_properties(sc->sc_dev),
-					 "i82543-swdpin");
+		pn = prop_dictionary_get(dict, "i82543-swdpin");
 		if (pn != NULL) {
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 			swdpin = (uint16_t) prop_number_integer_value(pn);
@@ -2368,11 +2338,40 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int s, error;
+	int diff, s, error;
 
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		if (ifp->if_flags & IFF_UP) {
+			diff = (ifp->if_flags ^ sc->sc_if_flags)
+			    & (IFF_PROMISC | IFF_ALLMULTI);
+			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+				/*
+				 * If the difference bettween last flag and
+				 * new flag is only IFF_PROMISC or
+				 * IFF_ALLMULTI, set multicast filter only
+				 * (don't reset to prevent link down).
+				 */
+				wm_set_filter(sc);
+			} else {
+				/*
+				 * Reset the interface to pick up changes in
+				 * any other flags that affect the hardware
+				 * state.
+				 */
+				wm_init(ifp);
+			}
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				wm_stop(ifp, 1);
+		}
+		sc->sc_if_flags = ifp->if_flags;
+		error = 0;
+		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
@@ -3265,7 +3264,8 @@ wm_init(struct ifnet *ifp)
 	 *
 	 * XXX Values could probably stand some tuning.
 	 */
-	if (sc->sc_type != WM_T_ICH8) {
+	if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
+	    && (sc->sc_type != WM_T_ICH10)) {
 		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
@@ -3279,7 +3279,11 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_FCRTH, FCRTH_DFLT);
 		CSR_WRITE(sc, WMREG_FCRTL, sc->sc_fcrtl);
 	}
-	CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
+
+	if (sc->sc_type == WM_T_80003)
+		CSR_WRITE(sc, WMREG_FCTTV, 0xffff);
+	else
+		CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
 	/* Deal with VLAN enables. */
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
@@ -3289,29 +3293,47 @@ wm_init(struct ifnet *ifp)
 
 	/* Write the control registers. */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-	if (sc->sc_type >= WM_T_80003 && (sc->sc_flags & WM_F_HAS_MII)) {
-		int val;
-		val = CSR_READ(sc, WMREG_CTRL_EXT);
-		val &= ~CTRL_EXT_LINK_MODE_MASK;
-		CSR_WRITE(sc, WMREG_CTRL_EXT, val);
 
-		/* Bypass RX and TX FIFO's */
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
-		    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
-		    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
+	if (sc->sc_flags & WM_F_HAS_MII) {
+		int val;
+
+		switch (sc->sc_type) {
+		case WM_T_80003:
+		case WM_T_ICH8:
+		case WM_T_ICH9:
+		case WM_T_ICH10:
+			/*
+			 * Set the mac to wait the maximum time between each
+			 * iteration and increase the max iterations when
+			 * polling the phy; this fixes erroneous timeouts at
+			 * 10Mbps.
+			 */
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS,
+			    0xFFFF);
+			val = wm_kmrn_readreg(sc,
+			    KUMCTRLSTA_OFFSET_INB_PARAM);
+			val |= 0x3F;
+			wm_kmrn_writereg(sc,
+			    KUMCTRLSTA_OFFSET_INB_PARAM, val);
+			break;
+		default:
+			break;
+		}
+
+		if (sc->sc_type == WM_T_80003) {
+			val = CSR_READ(sc, WMREG_CTRL_EXT);
+			val &= ~CTRL_EXT_LINK_MODE_MASK;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, val);
+
+			/* Bypass RX and TX FIFO's */
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
+			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
+			    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
 		
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
-		    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
-		    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
-		/*
-		 * Set the mac to wait the maximum time between each
-		 * iteration and increase the max iterations when
-		 * polling the phy; this fixes erroneous timeouts at 10Mbps.
-		 */
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS, 0xFFFF);
-		val = wm_kmrn_i80003_readreg(sc, KUMCTRLSTA_OFFSET_INB_PARAM);
-		val |= 0x3F;
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_PARAM, val);
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
+			    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
+			    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
+		}
 	}
 #if 0
 	CSR_WRITE(sc, WMREG_CTRL_EXT, sc->sc_ctrl_ext);
@@ -3342,6 +3364,13 @@ wm_init(struct ifnet *ifp)
 	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
 		sc->sc_icr |= ICR_RXCFG;
 	CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
+
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
+		reg = CSR_READ(sc, WMREG_KABGTXD);
+		reg |= KABGTXD_BGSQLBIAS;
+		CSR_WRITE(sc, WMREG_KABGTXD, reg);
+	}
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
@@ -3378,13 +3407,19 @@ wm_init(struct ifnet *ifp)
 	 * a collision distance suitable for FDX, but update it whe
 	 * we resolve the media type.
 	 */
-	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_CT(TX_COLLISION_THRESHOLD) |
-	    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
+	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_RTLC
+	    | TCTL_CT(TX_COLLISION_THRESHOLD)
+	    | TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 	if (sc->sc_type >= WM_T_82571)
 		sc->sc_tctl |= TCTL_MULR;
-	if (sc->sc_type >= WM_T_80003)
-		sc->sc_tctl |= TCTL_RTLC;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+
+	if (sc->sc_type == WM_T_80003) {
+		reg = CSR_READ(sc, WMREG_TCTL_EXT);
+		reg &= ~TCTL_EXT_GCEX_MASK;
+		reg |= DEFAULT_80003ES2LAN_TCTL_EXT_GCEX;
+		CSR_WRITE(sc, WMREG_TCTL_EXT, reg);
+	}
 
 	/* Set the media. */
 	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
@@ -4488,7 +4523,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
-	if (sc->sc_type >= WM_T_80003)
+	if (sc->sc_type == WM_T_80003)
 		sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 	else
 		sc->sc_tipg = TIPG_1000T_DFLT;
@@ -4965,15 +5000,15 @@ wm_gmii_statchg(device_t self)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
-	if (sc->sc_type >= WM_T_80003) {
+	if (sc->sc_type == WM_T_80003) {
 		switch(IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 		case IFM_1000_T:
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
 			sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 			break;
 		default:
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_10_100_DEFAULT);
 			sc->sc_tipg =  TIPG_10_100_80003_DFLT;
 			break;
@@ -4983,20 +5018,27 @@ wm_gmii_statchg(device_t self)
 }
 
 /*
- * wm_kmrn_i80003_readreg:
+ * wm_kmrn_readreg:
  *
  *	Read a kumeran register
  */
 static int
-wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
+wm_kmrn_readreg(struct wm_softc *sc, int reg)
 {
-	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 	int rv;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return 0;
+	if (sc->sc_flags == WM_F_SWFW_SYNC) {
+		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return 0;
+		}
+	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return 0;
+		}
 	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
@@ -5005,30 +5047,46 @@ wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
 	delay(2);
 
 	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
-	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+
+	if (sc->sc_flags == WM_F_SWFW_SYNC)
+		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
+	else if (sc->sc_flags == WM_F_SWFWHW_SYNC)
+		wm_put_swfwhw_semaphore(sc);
+
 	return (rv);
 }
 
 /*
- * wm_kmrn_i80003_writereg:
+ * wm_kmrn_writereg:
  *
  *	Write a kumeran register
  */
 static void
-wm_kmrn_i80003_writereg(struct wm_softc *sc, int reg, int val)
+wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 {
-	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return;
+	if (sc->sc_flags == WM_F_SWFW_SYNC) {
+		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return;
+		}
+	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return;
+		}
 	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
 	    (val & KUMCTRLSTA_MASK));
-	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+
+	if (sc->sc_flags == WM_F_SWFW_SYNC)
+		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
+	else if (sc->sc_flags == WM_F_SWFWHW_SYNC)
+		wm_put_swfwhw_semaphore(sc);
 }
 
 static int
@@ -5156,7 +5214,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 			return 0;
 		delay(5000);
 	}
-	printf("%s: failed to get swfwgw semaphore ext_ctrl 0x%x\n",
+	printf("%s: failed to get swfwhw semaphore ext_ctrl 0x%x\n",
 	    device_xname(sc->sc_dev), ext_ctrl);
 	return 1;
 }
