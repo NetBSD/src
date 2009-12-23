@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.65 2009/12/22 16:32:41 tsutsui Exp $	*/
+/*	$NetBSD: viaide.c,v 1.66 2009/12/23 00:11:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.65 2009/12/22 16:32:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.66 2009/12/23 00:11:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,6 +850,18 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
+
+	/*
+	 * Enable memory-space access if it isn't already there.
+	 */
+	if (pa->pa_memt && (pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0) {
+		pcireg_t csr;
+
+		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		               csr | PCI_COMMAND_MEM_ENABLE);
+	}
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;
