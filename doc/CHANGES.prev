@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.97 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.98 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8146,7 +8146,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		devices are automatically created when they are configured.
 		[cube 20060201]
 	fs/udf: added UDF file system support for optical media and block
-		devices like harddisc partions and vnd's.
+		devices like harddisc partitions and vnd's.
 		[reinoud 20060202]
 	binutils: updated to FSF binutils 2.16.1 release.  [skrll 20060202]
 	i386: Add support for the Multiboot Specification.  [jmmv 20060203]

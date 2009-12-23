@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.33 2009/05/07 07:03:39 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.34 2009/12/23 09:17:41 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.33 2009/05/07 07:03:39 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.34 2009/12/23 09:17:41 mbalmer Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -388,7 +388,7 @@ i386_setboot(ib_params *params)
 	}
 
 	/*
-	 * If the partion has a FAT (or NTFS) filesystem, then we must
+	 * If the partition has a FAT (or NTFS) filesystem, then we must
 	 * preserve the BIOS Parameter Block (BPB).
 	 * It is also very likely that there isn't 8k of space available
 	 * for (say) bootxx_msdos, and that blindly installing it will trash
