@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.164 2009/12/22 15:35:07 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.165 2009/12/23 10:38:26 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15667,4 +15667,43 @@ usr.bin/lex/initscan.c				1.18
 	Conditionalize the yyinput/input() function definition the same
 	way as it's always been done in the prototype.
 	[hubertf, ticket #1197]
+
+sys/dev/pci/if_wm.c				1.176-1.179, 1.181-1.183
+sys/dev/pci/if_wmreg.h				1.28
+sys/dev/pci/if_wmvar.h				1.1-1.4
+sys/dev/mii/igphy.c				1.18-1.20 via patch
+
+	Many bugfixes:
+	- Some fixes for i80003 and ICH{8,9,10} from e1000 driver and
+          document:
+	  - Add setting for KABGTXD register for ICH{8,9,10}.
+	  - ICH9 and ICH10 has no FCAL, FCAH and FCT like ICH8.
+	  - Add special setting for FCTTV and TCTL_EXT register for i80003
+	  - The special setting for TIPG is only for i80003.
+	  - Some of kumeran settings are only for i80003's bugs.
+	  - Add some ICH10 fixes.
+	  - Fix the bug that another lock mechanism is used to access
+	    Kumeran registers on i80003 and ICHs.
+	  - Fix yet another i80003 ONLY workaround. The code to modifing
+	    TIPG register is only for i80003.
+	- Set the Re-Transmit on Late Collision(RTLC) flag for all devices.
+	- Fix a typo in a printf message.
+	- If the difference bettween last flag and new flag is only
+	  IFF_PROMISC or IFF_ALLMULTI, set multicast filter only to prevent
+	  link down. Tested by Mark Davies and me. Fixes PR#29126 for wm.
+	- Cleanup interrupt establish error messages. Do not mix
+	  aprint_error/aprint_normal/printf calls for a single line.
+	- Fix igphy's 82566 support.
+	  - Patch for the DSP code is only for 8254[17] and we have to
+	    apply the different patches between rev. 1 and rev. 2.
+	  - The workaround for analog fuse is only for 82547 rev. 1.
+	  - The workaround for smartspeed is only for 8254[17]
+	- Sync with Intel's original em driver:
+	  - Check PCI-X mode as e1000 driver.
+	  - Add dspcode for igp3 and use it when the EEPROM isn't available.
+	  - Add some delays.
+	  - Stop the PHY transmitter before patching the DSP code and
+	    restart it after writing.
+	  - Save and restore register 0x2f5b.
+	[msaitoh, ticket #1203]
 
