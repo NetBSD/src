@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.99 2009/07/27 13:13:33 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.100 2009/12/23 09:17:41 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.99 2009/07/27 13:13:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.100 2009/12/23 09:17:41 mbalmer Exp $");
 #endif /* not lint */
 
 
@@ -1022,7 +1022,7 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 
 		/*
 		 * BUGALERT: some rogue implementations use random physical
-		 * partion numbers to break other implementations so lookup
+		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
 		raw_phys_part = udf_rw16(dscr->pd.part_num);
@@ -1967,7 +1967,7 @@ udf_process_vds(struct udf_mount *ump) {
 
 		/*
 		 * BUGALERT: some rogue implementations use random physical
-		 * partion numbers to break other implementations so lookup
+		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
 		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
@@ -2051,7 +2051,7 @@ udf_process_vds(struct udf_mount *ump) {
 	}
 
 	/*
-	 * Determine sheduler error behaviour. For virtual partions, update
+	 * Determine sheduler error behaviour. For virtual partitions, update
 	 * the trackinfo; for sparable partitions replace a whole block on the
 	 * sparable table. Allways requeue.
 	 */
@@ -3226,7 +3226,7 @@ udf_read_vds_tables(struct udf_mount *ump)
 		if (error)
 			return error;
 
-		/* also read in metadata partion spacebitmap if defined */
+		/* also read in metadata partition spacebitmap if defined */
 		error = udf_read_metadata_partition_spacetable(ump);
 			return error;
 	}
