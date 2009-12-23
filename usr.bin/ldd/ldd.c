@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.2.12.2 2009/02/25 03:09:31 snj Exp $	*/
+/*	$NetBSD: ldd.c,v 1.2.12.2.4.1 2009/12/23 03:14:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.2.12.2 2009/02/25 03:09:31 snj Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.2.12.2.4.1 2009/12/23 03:14:47 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,6 +156,9 @@ main(int argc, char **argv)
 		    /* Alpha never had 32 bit support. */
 #if defined(_LP64) && !defined(__alpha__)
 		    elf32_ldd(fd, *argv, fmt1, fmt2) == -1 &&
+#ifdef __mips__
+		    && elf32_ldd_compat(fd, *argv, fmt1, fmt2) == -1
+#endif
 #endif
 		    aout_ldd(fd, *argv, fmt1, fmt2) == -1)
 			warnx("%s", error_message);
