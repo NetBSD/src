@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.148 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.149 2009/12/23 01:09:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.148 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.149 2009/12/23 01:09:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1863,7 +1863,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	saved_uid = kauth_cred_geteuid(cred);
 	fromnd.ni_cnd.cn_cred = cred;
 	fromnd.ni_cnd.cn_nameiop = DELETE;
-	fromnd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART;
+	fromnd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART | INRENAME;
 	error = nfs_namei(&fromnd, &fnsfh, len, slp, nam, &md,
 		&dpos, &fdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (fdirp && v3) {
@@ -1934,7 +1934,8 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	kauth_cred_seteuid(cred, saved_uid);
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
-	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
+	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE |
+	    SAVESTART | INRENAME;
 	error = nfs_namei(&tond, &tnsfh, len2, slp, nam, &md,
 		&dpos, &tdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (tdirp && v3) {
