@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2009/05/04 21:32:31 ad Exp $
+#	$NetBSD: Makefile,v 1.33 2009/12/23 20:15:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -42,6 +42,7 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes
 
 MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
+			BOOTSTRAP_CFLAGS=-O2 \
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
