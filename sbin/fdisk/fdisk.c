@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.129 2009/12/22 21:55:12 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.130 2009/12/23 18:50:40 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.129 2009/12/22 21:55:12 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.130 2009/12/23 18:50:40 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -216,7 +216,7 @@ int partition = -1;
 
 /* Alignment of partition, and offset if first sector unusable */
 unsigned int ptn_alignment;	/* default dos_cylindersectors */
-unsigned int ptn_offset;	/* default dos_sectors */
+unsigned int ptn_0_offset;	/* default dos_sectors */
 
 int fd = -1, wfd = -1, *rfd = &fd;
 char *disk_file = NULL;
@@ -248,6 +248,7 @@ int bootsize;		/* actual size of bootcode */
 int boot_installed;	/* 1 if we've copied code into the mbr */
 
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#define USE_DISKLIST
 struct disklist *dl;
 #endif
 
@@ -267,9 +268,9 @@ void	intuit_translated_geometry(void);
 void	get_bios_geometry(void);
 void	get_extended_ptn(void);
 static void get_ptn_alignmemt(void);
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 void	get_diskname(const char *, char *, size_t);
-#endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
+#endif
 int	change_part(int, int, int, daddr_t, daddr_t, char *);
 void	print_geometry(void);
 int	first_active(void);
@@ -418,12 +419,12 @@ main(int argc, char *argv[])
 			break;
 		case 'A':	/* Partition alignment[/offset] */
 			if (sscanf(optarg, "%u/%u%n", &ptn_alignment,
-				    &ptn_offset, &n) < 1
+				    &ptn_0_offset, &n) < 1
 			    || optarg[n] != 0
-			    || ptn_offset > ptn_alignment)
+			    || ptn_0_offset > ptn_alignment)
 				errx(1, "Bad argument to the -A flag.");
-			if (ptn_offset == 0)
-				ptn_offset = ptn_alignment;
+			if (ptn_0_offset == 0)
+				ptn_0_offset = ptn_alignment;
 			break;
 		case 'c':	/* file/directory containing boot code */
 			if (strchr(optarg, '/') != NULL &&
@@ -600,7 +601,8 @@ usage(void)
 	int indent = 7 + (int)strlen(getprogname()) + 1;
 
 	(void)fprintf(stderr, "usage: %s [-afiluvBS] "
-		"[-b cylinders/heads/sectors] \\\n"
+		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
+		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
 		"[-s id/start/size[/bootmenu]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
@@ -616,7 +618,7 @@ usage(void)
 		"\t-F treat device as a regular file\n"
 		"\t-S output as shell defines\n"
 		"\t-r and -w access 'file' for non-destructive testing\n",
-		getprogname(), indent, "", indent, "", indent, "");
+		getprogname(), indent, "", indent, "", indent, "", indent, "");
 	exit(1);
 }
 
@@ -801,8 +803,8 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 	    indent, "", start, size);
 	if (size != 0) {
 		printf(" (%u MB, Cyls ", SEC_TO_MB(size));
-		if (v_flag == 0 && le32toh(partp->mbrp_start) == ptn_offset)
-			pr_cyls(start - ptn_offset, 0);
+		if (v_flag == 0 && le32toh(partp->mbrp_start) == ptn_0_offset)
+			pr_cyls(start - ptn_0_offset, 0);
 		else
 			pr_cyls(start, 0);
 		printf("-");
@@ -1132,7 +1134,7 @@ get_extended_ptn(void)
 	ext.num_ptn = 0;
 }
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 void	    
 get_diskname(const char *fullname, char *diskname, size_t size)
 {	       
@@ -1174,6 +1176,7 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 	memcpy(diskname, p, len);
 	diskname[len] = 0;
 }
+#endif
 
 static void
 get_ptn_alignmemt(void)
@@ -1183,7 +1186,7 @@ get_ptn_alignmemt(void)
 
 	/* Default to using 'traditional' cylinder alignment */
 	ptn_alignment = dos_cylindersectors;
-	ptn_offset = dos_sectors;
+	ptn_0_offset = dos_sectors;
 
 	if (partp->mbrp_type != 0) {
 		/* Try to copy alignment of first partition */
@@ -1195,14 +1198,14 @@ get_ptn_alignmemt(void)
 			if (ptn_0_base <= 2048
 			    && !(ptn_0_base & (ptn_0_base - 1))) {
 				/* ptn_base is a power of 2, use it */
-				ptn_offset = ptn_0_base;
+				ptn_0_offset = ptn_0_base;
 			}
 		}
 	} else {
 		/* Use 1MB alignment for large disks */
 		if (disksectors > 2048 * 1024 * 128) {
 			ptn_alignment = 2048;
-			ptn_offset = 2048;
+			ptn_0_offset = 2048;
 		}
 	}
 }
@@ -1210,7 +1213,7 @@ get_ptn_alignmemt(void)
 void
 get_bios_geometry(void)
 {
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 	int mib[2], i;
 	size_t len;
 	struct biosdisk_info *bip;
@@ -1258,7 +1261,6 @@ get_bios_geometry(void)
 	/* Allright, allright, make a stupid guess.. */
 	intuit_translated_geometry();
 }
-#endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
 
 #ifdef BOOTSEL
 daddr_t
@@ -1484,7 +1486,7 @@ configure_bootsel(daddr_t default_ptn)
 	daddr_t *off;
 	int num_bios_disks;
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 	if (dl != NULL) {
 		num_bios_disks = dl->dl_nbiosdisks;
 		if (num_bios_disks > MAX_BIOS_DISKS)
@@ -1588,7 +1590,7 @@ intuit_translated_geometry(void)
 	    dos_sectors > MAXSECTOR) {
 		h1 = MAXHEAD - 1;
 		c1 = MAXCYL - 1;
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 		if (dl != NULL) {
 			/* BIOS may use 256 heads or 1024 cylinders */
 			for (i = 0; i < dl->dl_nbiosdisks; i++) {
@@ -1766,8 +1768,8 @@ add_ext_ptn(daddr_t start, daddr_t size)
 		partp = &ext.ptn[part - 1].mbr_parts[1];
 		ext.ptn[part].mbr_parts[1] = *partp;
 		/* and prev onto us */
-		partp->mbrp_start = htole32(start - ptn_offset - ext.base);
-		partp->mbrp_size = htole32(size + ptn_offset);
+		partp->mbrp_start = htole32(start - ptn_0_offset - ext.base);
+		partp->mbrp_size = htole32(size + ptn_0_offset);
 	}
 	partp->mbrp_type = 5;	/* as used by win98 */
 	partp->mbrp_flag = 0;
@@ -1791,7 +1793,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		if (start == 0)
 			return "Sector zero is reserved for the MBR";
 #if 0
-		if (start < ptn_offset)
+		if (start < ptn_0_offset)
 			/* This is just a convention, not a requirement */
 			return "Track zero is reserved for the BIOS";
 #endif
@@ -1893,7 +1895,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			}
 		} else {
 			/* must create an empty slot */
-			add_ext_ptn(start, ptn_offset);
+			add_ext_ptn(start, ptn_0_offset);
 			ext.ptn[0].mbr_parts[1].mbrp_start = htole32(ext.base
 								- start);
 		}
@@ -1918,8 +1920,8 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		return "Nested extended partitions are not allowed";
 
 	/* allow one track at start for extended partition header */
-	start -= ptn_offset;
-	size += ptn_offset;
+	start -= ptn_0_offset;
+	size += ptn_0_offset;
 	if (start < ext.base || start + size > ext.limit)
 		return "Outside bounds of extended partition";
 
@@ -1934,7 +1936,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_size);
 		if (p == 0)
 			p_s += le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
-							- ptn_offset;
+							- ptn_0_offset;
 		if (start < p_e && start + size > p_s) {
 			if (!f_flag)
 				return "Overlaps another extended partition";
@@ -2020,23 +2022,23 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 				continue;
 			n_s = ext_offset(p);
-			if (n_s > start + ptn_offset)
+			if (n_s > start + ptn_0_offset)
 				break;
 			start = ext_offset(p)
 				+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
 				+ le32toh(ext.ptn[p].mbr_parts[0].mbrp_size);
 		}
-		if (ext.limit - start <= ptn_offset) {
+		if (ext.limit - start <= ptn_0_offset) {
 			printf("No space in extended partition\n");
 			return 0;
 		}
-		start += ptn_offset;
+		start += ptn_0_offset;
 	}
 
 	if (!s_flag && sysid == 0 && !extended) {
 		/* same for non-extended partition */
 		/* first see if old start is free */
-		if (start < ptn_offset)
+		if (start < ptn_0_offset)
 			start = 0;
 		for (p = 0; start != 0 && p < MBR_PART_COUNT; p++) {
 			if (mboot.mbr_parts[p].mbrp_type == 0)
@@ -2048,7 +2050,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		}
 		if (start == 0) {
 			/* Look for first gap */
-			start = ptn_offset;
+			start = ptn_0_offset;
 			for (p = 0; p < MBR_PART_COUNT; p++) {
 				if (mboot.mbr_parts[p].mbrp_type == 0)
 					continue;
@@ -2131,9 +2133,9 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			if (size == 0 || size > lim)
 				size = lim;
 			fl = DEC_SEC;
-			if (start % ptn_alignment == ptn_offset)
+			if (start % ptn_alignment == ptn_0_offset)
 				fl |= DEC_RND_DOWN;
-			if (start == 2 * ptn_offset)
+			if (start == 2 * ptn_0_offset)
 				fl |= DEC_RND_DOWN | DEC_RND_DOWN_2;
 			size = decimal("size", size, fl, 0, lim);
 #ifdef BOOTSEL
@@ -2200,7 +2202,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	if (extended) {
 		if (part != -1)
 			delete_ext_ptn(part);
-		if (start == ext.base + ptn_offset)
+		if (start == ext.base + ptn_0_offset)
 			/* First one must have been free */
 			part = 0;
 		else
@@ -2309,7 +2311,7 @@ print_geometry(void)
 	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors,
 	    dos_disksectors);
 	printf("Partitions aligned to %d sector boundaries, offset %d\n\n",
-	    ptn_alignment, ptn_offset);
+	    ptn_alignment, ptn_0_offset);
 }
 
 /* Find the first active partition, else return MBR_PART_COUNT */
@@ -2365,7 +2367,7 @@ change_bios_geometry(void)
 	if (!yesno("Do you want to change our idea of what BIOS thinks?"))
 		return;
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
+#if defined(USE_DISKLIST)
 	if (dl != NULL) {
 		struct biosdisk_info *bip;
 		int i;
@@ -2775,13 +2777,13 @@ decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t max
 					acc *= ptn_alignment;
 					/* adjustments for cylinder boundary */
 					if (acc == 0 && flags & DEC_RND_0)
-						acc += ptn_offset;
+						acc += ptn_0_offset;
 					if (flags & DEC_RND)
-						acc += ptn_offset;
+						acc += ptn_0_offset;
 					if (flags & DEC_RND_DOWN)
-						acc -= ptn_offset;
+						acc -= ptn_0_offset;
 					if (flags & DEC_RND_DOWN_2)
-						acc -= ptn_offset;
+						acc -= ptn_0_offset;
 					cp += len;
 				}
 			}
