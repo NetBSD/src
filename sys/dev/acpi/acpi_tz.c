@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.50 2009/11/29 18:08:22 uebayasi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.51 2009/12/23 02:29:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.50 2009/11/29 18:08:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.51 2009/12/23 02:29:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,7 +745,7 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		}
 		for (i = 0; i < ATZ_NLEVELS; i++) {
 			if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
-				limits->sel_critmax =
+				limits->sel_warnmax =
 				    ATZ2UKELVIN(sc->sc_zone.ac[i]);
 				limits->sel_flags |= PROP_WARNMAX;
 				break;
