@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.34 2009/11/26 09:50:38 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.35 2009/12/23 17:17:59 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -191,7 +191,10 @@ int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
 #ifdef __NetBSD__
 #include <prop/proplib.h>
 #else
+#ifndef HAVE_PROP_DICTIONARY_T
+#define HAVE_PROP_DICTIONARY_T
 typedef struct prop_dictionary *prop_dictionary_t;
+#endif
 #endif
 
 struct modinfo;
