@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.3 2009/11/14 23:40:11 christos Exp $ */
+/*	$NetBSD: ex_usage.c,v 1.4 2009/12/23 12:44:22 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -68,9 +68,9 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 	switch (cmdp->argc) {
 	case 1:
 		ap = cmdp->argv[0];
-		if (isupper(ap->bp[0])) {
+		if (ISUPPER(ap->bp[0])) {
 			newscreen = 1;
-			ap->bp[0] = tolower(ap->bp[0]);
+			ap->bp[0] = TOLOWER(ap->bp[0]);
 		} else
 			newscreen = 0;
 		for (cp = cmds; cp->name != NULL &&
@@ -81,7 +81,7 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 			size_t nlen;
 
 			if (newscreen)
-				ap->bp[0] = toupper(ap->bp[0]);
+				ap->bp[0] = TOUPPER(ap->bp[0]);
 
 			INT2CHAR(sp, ap->bp, ap->len + 1, nstr, nlen);
 			(void)ex_printf(sp, "The %.*s command is unknown\n",
