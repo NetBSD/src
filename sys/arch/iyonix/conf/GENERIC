@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 2009/12/05 20:11:15 pooka Exp $
+#	$NetBSD: GENERIC,v 1.57 2009/12/23 01:04:46 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 maxusers	32		# estimated number of users
 
@@ -647,8 +647,6 @@ ucom*	at uvscom? portno ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-#options UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices

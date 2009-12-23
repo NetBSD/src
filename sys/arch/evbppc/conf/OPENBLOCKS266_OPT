@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.10 2009/01/03 17:47:24 christos Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.11 2009/12/23 01:04:46 pooka Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -264,9 +264,6 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options UGEN_BULK_RA_WB
-
 
 # CardBus IEEE1394 controllers
 fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
