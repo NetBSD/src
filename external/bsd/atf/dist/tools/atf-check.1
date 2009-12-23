@@ -68,27 +68,27 @@ Shows a short summary of all available options and their purpose.
 .It Fl s Ar qual:value
 Analyzes exit code.
 Must be one of:
-.Bl -tag -width eq:<value> -compact
+.Bl -tag -width eq:XvalueX -compact
 .It Ar ignore
 ignores exit status
-.It Ar eq:<value>
+.It Ar eq: Ns Aq value
 checks that exit status is equal to value
-.It Ar ne:<value>
+.It Ar ne: Ns Aq value
 checks that exit status is other than value
 .El
 .It Fl o Ar action:arg
 Analyzes standard output.
 Must be one of:
-.Bl -tag -width inline:<value> -compact
+.Bl -tag -width inline:XvalueX -compact
 .It Ar empty
 checks that stdout is empty
 .It Ar ignore
 ignores stdout
-.It Ar file:<path>
+.It Ar file: Ns Aq path
 compares stdout with given file
-.It Ar inline:<value>
+.It Ar inline: Ns Aq value
 compares stdout with inline value
-.It Ar save:<path>
+.It Ar save: Ns Aq path
 saves stdout to given file
 .El
 .It Fl e Ar action:arg
@@ -106,9 +106,9 @@ atf-check 'true' || atf_fail
 atf-check -s ne:0 'false' || atf_fail
 
 # Checking stdout/stderr
-echo foobar >expout
+echo foobar \*[Gt]expout
 atf-check -o file:expout -e inline:"xx\\tyy\\n" \\
-    'echo foobar ; printf "xx\\tyy\\n" >&2' || atf_fail
+    'echo foobar ; printf "xx\\tyy\\n" \*[Gt]\*[Aq]2' || atf_fail
 .Ed
 .Sh SEE ALSO
 .Xr atf 7
