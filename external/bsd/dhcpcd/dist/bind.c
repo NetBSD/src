@@ -222,6 +222,7 @@ bind_interface(void *arg)
 		add_timeout_sec(lease->rebindtime, start_rebind, iface);
 		add_timeout_sec(lease->leasetime, start_expire, iface);
 	}
+	ifo->options &= ~ DHCPCD_CSR_WARNED;
 	configure(iface);
 	daemonise();
 	state->state = DHS_BOUND;
