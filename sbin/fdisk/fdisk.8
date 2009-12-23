@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.68 2009/12/17 14:27:49 pooka Exp $
+.\"	$NetBSD: fdisk.8,v 1.69 2009/12/23 20:56:18 dsl Exp $
 .\"
-.Dd December 17, 2009
+.Dd December 23, 2009
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -10,7 +10,7 @@
 .Nm
 .Op Fl afiuvBFS
 .Bk -words
-.Op Fl 0 | 1 | 2 | 3
+.Op Fl 0 | 1 | 2 | 3 | E Ar number
 .Ek
 .Bk -words
 .Op Fl t Ar disktab
@@ -19,7 +19,7 @@
 .Op Fl T Ar disktype
 .Ek
 .Bk -words
-.Op Fl E Ar number
+.Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 .Ek
 .Bk -words
 .Op Fl b Ar cylinders/heads/sectors
@@ -166,8 +166,27 @@ Specify partition slot 3 to be printed or updated.
 Change the active partition.
 In interactive mode this question will be asked after the partitions
 have been processed.
+.It Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
+Specify the alignment for all partitions and optionally the offset for the
+first partition of the disk and of extended partitions.
+If
+.Ar ptn_alignment
+is specified and
+.Ar ptn_0_offset
+is not specified, then the offset is set to the alignment.
+If
+.Fl A
+isn't specified, then the alignment of the first partition is inspected.
+If it ends on a 2048 sector boundary, then the alignment is set to 2048,
+if the start is a power of 2 less than, or equal to 2048 then the offset
+is set to the start sector.
+If the first partition isn't defined then the alignment and offset for disks
+larger than 128GB is set to 2048 (1MB).
+In all other cases the alignment default to a cylinder
+and the offset to a track (both using the BIOS geometry).
+The 1MB alignment is the same as that used by recent windows versions.
 .It Fl b Ar cylinders/heads/sectors
-Specify the BIOS parameters for
+Specify the BIOS geometry parameters for
 .Ar cylinders ,
 .Ar heads ,
 and
@@ -175,6 +194,11 @@ and
 It is used only in conjunction with the
 .Fl u
 flag.
+If not specified the BIOS geometry will be obtained using sysctl (i386 and
+amd64) or by solving the simultaenous equations from the existing partition
+information.
+If that fails then either the geometry from the disklabel or 63 sectors and
+16 heads is used.
 .It Fl B
 On an i386 or amd64 system, interactively update the boot selector settings.
 (The boot selector permits the user to interactively select the boot
