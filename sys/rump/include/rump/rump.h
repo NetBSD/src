@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.34 2009/12/09 00:23:28 haad Exp $	*/
+/*	$NetBSD: rump.h,v 1.35 2009/12/23 17:17:59 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -52,8 +52,11 @@ typedef struct kauth_cred *kauth_cred_t;
 #if defined(__NetBSD__)
 #include <prop/proplib.h>
 #else
+#ifndef HAVE_PROP_DICTIONARY_T
+#define HAVE_PROP_DICTIONARY_T
 struct prop_dictionary;
 typedef struct prop_dictionary *prop_dictionary_t;
+#endif
 #endif /* __NetBSD__ */
 
 struct lwp;
