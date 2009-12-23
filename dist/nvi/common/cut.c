@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: cut.c,v 1.3 2009/12/23 12:44:21 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -103,10 +103,10 @@ cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 			copy_one = 1;
 			cb_rotate(sp);
 		}
-		if ((append = isupper(name)) == 1) {
+		if ((append = ISUPPER(name)) == 1) {
 			if (!copy_one)
 				copy_def = 1;
-			name = tolower(name);
+			name = TOLOWER(name);
 		}
 namecb:		CBNAME(sp, cbp, name);
 	} else if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
