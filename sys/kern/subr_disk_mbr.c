@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.38 2009/11/27 13:29:33 pooka Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.39 2009/12/23 09:23:53 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.38 2009/11/27 13:29:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.39 2009/12/23 09:23:53 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ scan_iso_vrs(mbr_args_t *a)
 
 	/* add udf partition if found */
 	if (is_udf >= 0) {
-		/* set the RAW partion to UDF for CD/USB stick etc */
+		/* set the RAW partition to UDF for CD/USB stick etc */
 		a->lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
 		/* UDF doesn't care about the cd session specified here */
 	}
