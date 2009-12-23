@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/12/20 05:52:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2009/12/23 00:17:40 darran Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -32,6 +32,7 @@ SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
 SUBDIR+= ../bsd/libevent/lib
 SUBDIR+= ../bsd/libelf/lib
+SUBDIR+= ../bsd/libdwarf/lib
 SUBDIR+= ../bsd/am-utils/lib
 SUBDIR+= ../bsd/bind/lib
 SUBDIR+= ../bsd/file/lib
