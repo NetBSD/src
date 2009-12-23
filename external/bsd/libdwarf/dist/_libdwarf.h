@@ -1,4 +1,4 @@
-/*	$NetBSD: _libdwarf.h,v 1.1.1.1 2009/12/23 00:03:27 darran Exp $	*/
+/*	$NetBSD: _libdwarf.h,v 1.2 2009/12/23 00:11:30 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -66,7 +66,7 @@
 	_e->err_func  = __func__;			\
 	_e->err_line  = __LINE__;			\
 	_e->err_msg[0] = '\0';				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	DWARF_SET_ELF_ERROR(_e, _err)	do { 		\
 	_e->err_error = DWARF_E_ELF;			\
@@ -74,7 +74,7 @@
 	_e->err_func  = __func__;			\
 	_e->err_line  = __LINE__;			\
 	_e->err_msg[0] = '\0';				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 struct _Dwarf_AttrValue {
 	uint64_t	av_attrib;	/* DW_AT_ */
