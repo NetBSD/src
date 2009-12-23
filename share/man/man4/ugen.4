@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.28 2009/12/21 19:04:36 gdt Exp $
+.\" $NetBSD: ugen.4,v 1.29 2009/12/23 01:04:45 pooka Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,6 @@
 .Nd USB generic device support
 .Sh SYNOPSIS
 .Cd "ugen* at uhub? flags N"
-.Cd options UGEN_BULK_RA_WB
 .Sh DESCRIPTION
 The
 .Nm
@@ -109,29 +108,22 @@ and
 .Xr write 2
 should be used.
 All IO operations on a bulk endpoint are normally unbuffered.
-On kernels built with the
-.Dv UGEN_BULK_RA_WB
-option, the
+The
 .Dv USB_SET_BULK_RA
 and
 .Dv USB_SET_BULK_WB
 .Xr ioctl 2
-calls are available, and enable read-ahead and write-behind buffering
-respectively.
+calls enable read-ahead and write-behind buffering, respectively.
 This buffering supports fixed-sized USB transfers and is intended for
 devices with regular and continuing data transfers.
 When read-ahead or write-behind are enabled, the file descriptor
 may be set to use non-blocking IO.
 .Pp
-When in a
-.Dv UGEN_BULK_RA_WB
-mode,
+When in a read-ahead/writeback mode,
 .Xr select 2
 for read and write operates normally, returning true if there is data
 in the read buffer and space in the write buffer, respectively.
-When not in a
-.Dv UGEN_BULK_RA_WB
-mode,
+When not,
 .Xr select 2
 always returns true, because there is no way to predict how the device
 will respond to a read or write request.

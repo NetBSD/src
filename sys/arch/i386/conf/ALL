@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.222 2009/12/05 20:11:15 pooka Exp $
+# $NetBSD: ALL,v 1.223 2009/12/23 01:04:46 pooka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.222 $"
+#ident 		"ALL-$Revision: 1.223 $"
 
 maxusers	64		# estimated number of users
 
@@ -1288,8 +1288,6 @@ wsmouse*	at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options 	UGEN_BULK_RA_WB
 
 # USB 3G datacards
 u3g*	at uhub? port ?

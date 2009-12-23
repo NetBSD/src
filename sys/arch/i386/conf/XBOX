@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.16 2009/03/27 21:04:35 ad Exp $
+# $NetBSD: XBOX,v 1.17 2009/12/23 01:04:46 pooka Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -244,8 +244,6 @@ wsmouse* at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options UGEN_BULK_RA_WB
 
 
 # Audio Devices
