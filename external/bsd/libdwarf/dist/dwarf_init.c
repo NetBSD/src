@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_init.c,v 1.1.1.1 2009/12/23 00:03:22 darran Exp $	*/
+/*	$NetBSD: dwarf_init.c,v 1.2 2009/12/23 00:12:57 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -247,7 +247,7 @@ dwarf_read_block(Elf_Data **dp, uint64_t *offsetp, uint64_t length)
 {
 	uint8_t *ret;
 
-	uint8_t *src = (char *) (*dp)->d_buf + *offsetp;
+	uint8_t *src = (uint8_t *) (*dp)->d_buf + *offsetp;
 
 	ret = src;
 
