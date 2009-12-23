@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.12 2009/05/18 20:51:03 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.13 2009/12/23 09:17:41 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009
@@ -483,8 +483,8 @@ union udf_pmap {
 
 /* Sparing Map Entry [UDF 2.01/2.2.11] */
 struct spare_map_entry {
-	uint32_t		org;			/* partion relative address  */
-	uint32_t		map;			/* absolute disc address (!) can be in partion, but doesn't have to be */
+	uint32_t		org;			/* partition relative address  */
+	uint32_t		map;			/* absolute disc address (!) can be in partition, but doesn't have to be */
 } __packed;
 
 
@@ -564,7 +564,7 @@ struct part_desc {
 		uint8_t			contents_use[128];
 	} _impl_use;
 	uint32_t		access_type;		/* R/W, WORM etc. */
-	uint32_t		start_loc;		/* start of partion with given length */
+	uint32_t		start_loc;		/* start of partition with given length */
 	uint32_t		part_len;
 	struct regid		imp_id;
 	uint8_t			imp_use[128];

@@ -166,7 +166,7 @@ typedef struct efi_gpe {
 typedef struct dk_part	{
 	diskaddr_t	p_start;	/* starting LBA */
 	diskaddr_t	p_size;		/* size in blocks */
-	struct uuid	p_guid;		/* partion type GUID */
+	struct uuid	p_guid;		/* partition type GUID */
 	ushort_t	p_tag;		/* converted to part'n type GUID */
 	ushort_t	p_flag;		/* attributes */
 	char		p_name[EFI_PART_NAME_LEN]; /* partition name */
