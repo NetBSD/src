@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1332 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1333 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -505,3 +505,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ntp:	Import ntp-4-2-4p8. [kardel 20091208]
 	zaurus: Add support Xorg. [nonaka 20091213]
 	atf(7): Import 0.7.  [jmmv 20091222]
+	dhcpcd(8): Import dhcpcd-5.1.4. [roy 20091223]
