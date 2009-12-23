@@ -100,7 +100,6 @@ inet_cidrtoaddr(int cidr, struct in_addr *addr)
 	addr->s_addr = 0;
 	if (ocets > 0) {
 		memset(&addr->s_addr, 255, (size_t)ocets - 1);
-	
 		memset((unsigned char *)&addr->s_addr + (ocets - 1),
 		    (256 - (1 << (32 - cidr) % 8)), 1);
 	}
@@ -389,12 +388,17 @@ discover_interfaces(int argc, char * const *argv)
 			continue;
 
 		/* Bring the interface up if not already */
-		if (!(ifp->flags & IFF_UP) &&
+		if (!(ifp->flags & IFF_UP)
 #ifdef SIOCGIFMEDIA
-		    carrier_status(ifp) != -1 &&
+		    && carrier_status(ifp) != -1
 #endif
-		    up_interface(ifp) != 0)
-			syslog(LOG_ERR, "%s: up_interface: %m", ifp->name);
+		   )
+		{
+			if (up_interface(ifp) == 0)
+				options |= DHCPCD_WAITUP;
+			else
+				syslog(LOG_ERR, "%s: up_interface: %m", ifp->name);
+		}
 
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
