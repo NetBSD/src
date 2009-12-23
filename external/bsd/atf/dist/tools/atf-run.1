@@ -108,7 +108,7 @@ This lives in
 Configuration variables defined in the system-wide test-suite-specific
 configuration file.
 This lives in
-.Pa ${ATF_CONFDIR}/<test-suite>.conf .
+.Pa ${ATF_CONFDIR}/\*[Lt]test-suite\*[Gt].conf .
 .It
 Configuration variables defined in the user-specific configuration file
 shared among all test suites.
@@ -118,7 +118,7 @@ This lives in
 Configuration variables defined in the user-specific test-suite-specific
 configuration file.
 This lives in
-.Pa ${HOME}/.atf/<test-suite>.conf .
+.Pa ${HOME}/.atf/\*[Lt]test-suite\*[Gt].conf .
 .It
 Configuration variables provided as part of the command line through the
 .Fl v
@@ -171,7 +171,7 @@ This takes no parameters.
 .El
 .Pp
 All hooks are accompanied by a function named
-.Sq default_<hook_name>
+.Sq default_\*[Lt]hook_name\*[Gt]
 that can be executed by them to invoke the default behavior built into
 .Nm .
 For example, in order to extend the default
