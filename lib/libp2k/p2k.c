@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.31 2009/12/16 17:20:19 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.32 2009/12/23 01:11:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -617,30 +617,37 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	RUMP_VOP_UNLOCK(dvp, 0);
 	if (rump_pub_checksavecn(cn)) {
 		/*
-		 * XXX: detect RENAME by SAVESTART, both src and targ lookups
-		 *
-		 * XXX part deux: rename syscall actually does two lookups
-		 * for the source, the second without SAVESTART.  So detect
-		 * this also and compensate.
+		 * XXX the rename lookup protocol is currently horribly
+		 * broken.  We get 1) DELETE with SAVESTART 2) DELETE
+		 * without SAVESTART 3) RENAME.  Hold on to this like
+		 * it were the absolute truth for now.  However, do
+		 * not sprinkle asserts based on this due to abovementioned
+		 * brokenness -- some file system drivers might not
+		 * even issue ABORT properly, so just free resources
+		 * on the fly and hope for the best.  PR kern/42348
 		 */
-		if (pcn->pcn_flags & NAMEI_SAVESTART) {
+		if (pcn->pcn_flags & NAMEI_INRENAME) {
 			if (pcn->pcn_nameiop == NAMEI_DELETE) {
-				assert(p2n_dir->p2n_cn_ren_src == NULL);
-				p2n_dir->p2n_cn_ren_src = cn;
+				/* save path from the first lookup */
+				if (pcn->pcn_flags & NAMEI_SAVESTART) {
+					if (p2n_dir->p2n_cn_ren_src)
+						freecn(p2n_dir->p2n_cn_ren_src,
+						    RUMPCN_FORCEFREE);
+					p2n_dir->p2n_cn_ren_src = cn;
+				} else {
+					freecn(cn, RUMPCN_FORCEFREE);
+					cn = NULL;
+				}
 			} else {
 				assert(pcn->pcn_nameiop == NAMEI_RENAME);
-				assert(p2n_dir->p2n_cn_ren_targ == NULL);
+				if (p2n_dir->p2n_cn_ren_targ)
+					freecn(p2n_dir->p2n_cn_ren_targ,
+					    RUMPCN_FORCEFREE);
 				p2n_dir->p2n_cn_ren_targ = cn;
 			}
 		} else {
-			if (pcn->pcn_nameiop == NAMEI_DELETE
-			    && p2n_dir->p2n_cn_ren_src) {
-				freecn(cn, RUMPCN_FORCEFREE);
-				cn = NULL;
-			} else {
-				assert(p2n_dir->p2n_cn == NULL);
-				p2n_dir->p2n_cn = cn;
-			}
+			assert(p2n_dir->p2n_cn == NULL);
+			p2n_dir->p2n_cn = cn;
 		}
 	} else {
 		freecn(cn, 0);
@@ -656,7 +663,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	p2n = getp2n(p2m, vp, false, NULL);
 	if (p2n == NULL) {
-		if (pcn->pcn_flags & NAMEI_SAVESTART) {
+		if (pcn->pcn_flags & NAMEI_INRENAME) {
 			if (pcn->pcn_nameiop == NAMEI_DELETE) {
 				p2n_dir->p2n_cn_ren_src = NULL;
 			} else {
