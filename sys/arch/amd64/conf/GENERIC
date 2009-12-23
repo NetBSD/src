@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.259 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: GENERIC,v 1.260 2009/12/23 01:04:45 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.259 $"
+#ident 		"GENERIC-$Revision: 1.260 $"
 
 maxusers	64		# estimated number of users
 
@@ -905,8 +905,6 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
 
 # USB 3G datacards
 u3g*	at uhub? port ?
