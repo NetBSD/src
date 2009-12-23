@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.260 2009/11/30 16:13:23 uebayasi Exp $
+#	$NetBSD: bsd.README,v 1.261 2009/12/23 18:00:38 tron Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -235,7 +235,7 @@ MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
 MKLINT		If "no", don't build or install the lint libraries.
 		Default: yes
 
-MKLVM		If "no", don't build or install teh logical volume manager
+MKLVM		If "no", don't build or install the logical volume manager
 		and device mapper tools and libraries
 		Default: no
 
