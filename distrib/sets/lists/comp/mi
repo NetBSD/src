@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1352 2009/12/22 13:38:40 jmmv Exp $
+#	$NetBSD: mi,v 1.1353 2009/12/23 00:33:25 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -613,6 +613,7 @@
 ./usr/include/disktab.h				comp-c-include
 ./usr/include/dlfcn.h				comp-c-include
 ./usr/include/dns_sd.h				comp-mdns-include	mdns
+./usr/include/dwarf.h				comp-c-include
 ./usr/include/elf.h				comp-c-include
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
@@ -1375,6 +1376,7 @@
 ./usr/include/ldap_features.h			comp-ldap-include	ldap
 ./usr/include/ldap_schema.h			comp-ldap-include	ldap
 ./usr/include/ldap_utf8.h			comp-ldap-include	ldap
+./usr/include/libdwarf.h			comp-c-include
 ./usr/include/libelf.h				comp-c-include
 ./usr/include/libgen.h				comp-c-include
 ./usr/include/libintl.h				comp-c-include
@@ -2364,6 +2366,9 @@
 ./usr/lib/libdns_sd.a				comp-mdns-lib		mdns
 ./usr/lib/libdns_sd_g.a				-unknown-		debuglib,mdns
 ./usr/lib/libdns_sd_p.a				comp-mdns-proflib	profile,mdns
+./usr/lib/libdwarf.a				comp-c-lib
+./usr/lib/libdwarf_g.a				-unknown-		debuglib
+./usr/lib/libdwarf_p.a				comp-c-proflib		profile
 ./usr/lib/libedit.a				comp-c-lib
 ./usr/lib/libedit_g.a				-unknown-		debuglib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
