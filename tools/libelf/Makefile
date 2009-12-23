@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/21 18:21:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2009/12/23 20:28:29 cegger Exp $
 
 HOSTLIB=	elf
 
@@ -45,6 +45,7 @@ LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
 
 CLEANFILES+=	${LIBELF_GENSRCS}
 CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBELF_DIR}
+CPPFLAGS+=	-I${TOOLDIR}/include/nbinclude
 
 CPPFLAGS+=	-DLIBELF_TEST_HOOKS
 
