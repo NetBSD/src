@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.32 2009/12/23 01:11:39 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.33 2009/12/23 01:15:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -626,10 +626,10 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 * even issue ABORT properly, so just free resources
 		 * on the fly and hope for the best.  PR kern/42348
 		 */
-		if (pcn->pcn_flags & NAMEI_INRENAME) {
-			if (pcn->pcn_nameiop == NAMEI_DELETE) {
+		if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
+			if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
 				/* save path from the first lookup */
-				if (pcn->pcn_flags & NAMEI_SAVESTART) {
+				if (pcn->pcn_flags & RUMP_NAMEI_SAVESTART) {
 					if (p2n_dir->p2n_cn_ren_src)
 						freecn(p2n_dir->p2n_cn_ren_src,
 						    RUMPCN_FORCEFREE);
@@ -639,7 +639,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 					cn = NULL;
 				}
 			} else {
-				assert(pcn->pcn_nameiop == NAMEI_RENAME);
+				assert(pcn->pcn_nameiop == RUMP_NAMEI_RENAME);
 				if (p2n_dir->p2n_cn_ren_targ)
 					freecn(p2n_dir->p2n_cn_ren_targ,
 					    RUMPCN_FORCEFREE);
@@ -663,8 +663,8 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	p2n = getp2n(p2m, vp, false, NULL);
 	if (p2n == NULL) {
-		if (pcn->pcn_flags & NAMEI_INRENAME) {
-			if (pcn->pcn_nameiop == NAMEI_DELETE) {
+		if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
+			if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
 				p2n_dir->p2n_cn_ren_src = NULL;
 			} else {
 				p2n_dir->p2n_cn_ren_targ = NULL;
