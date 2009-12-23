@@ -72,6 +72,11 @@ const char copyright[] = "Copyright (c) 2006-2009 Roy Marples";
 /* We should define a maximum for the NAK exponential backoff */ 
 #define NAKOFF_MAX              60
 
+/* Wait N nanoseconds between sending a RELEASE and dropping the address.
+ * This gives the kernel enough time to actually send it. */
+#define RELEASE_DELAY_S		0
+#define RELEASE_DELAY_NS	10000000
+
 int options = 0;
 int pidfd = -1;
 struct interface *ifaces = NULL;
@@ -518,10 +523,9 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	{
 		lease->frominfo = 0;
 		lease->addr.s_addr = dhcp->yiaddr;
-		lease->server.s_addr = INADDR_ANY;
-		if (type != 0)
-			get_option_addr(&lease->server,
-			    dhcp, DHO_SERVERID);
+		if (type == 0 ||
+		    get_option_addr(&lease->server, dhcp, DHO_SERVERID) != 0)
+			lease->server.s_addr = INADDR_ANY;
 		log_dhcp(LOG_INFO, "offered", iface, dhcp);
 		free(state->offer);
 		state->offer = dhcp;
@@ -572,9 +576,10 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 		state->offer = dhcp;
 		*dhcpp = NULL;
 	}
-	lease->frominfo = 0;
 
+	lease->frominfo = 0;
 	delete_timeout(NULL, iface);
+
 	/* We now have an offer, so close the DHCP sockets.
 	 * This allows us to safely ARP when broken DHCP servers send an ACK
 	 * follows by an invalid NAK. */
@@ -704,13 +709,20 @@ open_sockets(struct interface *iface)
 static void
 send_release(struct interface *iface)
 {
+	struct timespec ts;
+
 	if (iface->state->lease.addr.s_addr &&
 	    !IN_LINKLOCAL(htonl(iface->state->lease.addr.s_addr)))
 	{
 		syslog(LOG_INFO, "%s: releasing lease of %s",
 		    iface->name, inet_ntoa(iface->state->lease.addr));
 		open_sockets(iface);
+		iface->state->xid = arc4random();
 		send_message(iface, DHCP_RELEASE, NULL);
+		/* Give the packet a chance to go before dropping the ip */
+		ts.tv_sec = RELEASE_DELAY_S;
+		ts.tv_nsec = RELEASE_DELAY_NS;
+		nanosleep(&ts, NULL);
 		drop_config(iface, "RELEASE");
 	}
 	unlink(iface->leasefile);
@@ -1630,7 +1642,7 @@ main(int argc, char **argv)
 	if (options & DHCPCD_DEBUG)
 		setlogmask(LOG_UPTO(LOG_DEBUG));
 	else if (options & DHCPCD_QUIET)
-		setlogmask(LOG_UPTO(LOG_WARNING));
+		close(STDERR_FILENO);
 
 	if (!(options & DHCPCD_TEST)) {
 		/* If we have any other args, we should run as a single dhcpcd
@@ -1805,16 +1817,38 @@ main(int argc, char **argv)
 		if (iface->carrier != LINK_DOWN)
 			opt = 1;
 	}
-	if (opt == 0 &&
-	    options & DHCPCD_LINK &&
-	    !(options & DHCPCD_WAITIP))
-	{
-		syslog(LOG_WARNING, "no interfaces have a carrier");
-		daemonise();
-	} else if (options & DHCPCD_DAEMONISE && ifo->timeout > 0) {
-		if (options & DHCPCD_IPV4LL)
-			options |= DHCPCD_TIMEOUT_IPV4LL;
-		add_timeout_sec(ifo->timeout, handle_exit_timeout, NULL);
+
+	if (!(options & DHCPCD_BACKGROUND)) {
+		/* If we don't have a carrier, we may have to wait for a second
+		 * before one becomes available if we brought an interface up. */
+		if (opt == 0 &&
+		    options & DHCPCD_LINK &&
+		    options & DHCPCD_WAITUP &&
+		    !(options & DHCPCD_WAITIP))
+		{
+			ts.tv_sec = 1;
+			ts.tv_nsec = 0;
+			nanosleep(&ts, NULL);
+			for (iface = ifaces; iface; iface = iface->next) {
+				handle_carrier(iface->name);
+				if (iface->carrier != LINK_DOWN) {
+					opt = 1;
+					break;
+				}
+			}
+		}
+		if (opt == 0 &&
+		    options & DHCPCD_LINK &&
+		    !(options & DHCPCD_WAITIP))
+		{
+			syslog(LOG_WARNING, "no interfaces have a carrier");
+			daemonise();
+		} else if (options & DHCPCD_DAEMONISE && ifo->timeout > 0) {
+			if (options & DHCPCD_IPV4LL)
+				options |= DHCPCD_TIMEOUT_IPV4LL;
+			add_timeout_sec(ifo->timeout, handle_exit_timeout, NULL);
+		}
+
 	}
 	free_options(ifo);
 

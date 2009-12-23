@@ -70,7 +70,7 @@ static const struct dhcp_opt const dhcp_opts[] = {
 	{ 1,	IPV4 | REQUEST,	"subnet_mask" },
 		/* RFC 3442 states that the CSR has to come before all other
 		 * routes. For completeness, we also specify static routes,
-		 * then routers. */
+	 	 * then routers. */
 	{ 121,  RFC3442,	"classless_static_routes" },
 	{ 249,  RFC3442,	"ms_classless_static_routes" },
 	{ 33,	IPV4 | ARRAY | REQUEST,	"static_routes" },
@@ -701,7 +701,8 @@ route_netmask(uint32_t ip_in)
  * If we have a CSR then we only use that.
  * Otherwise we add static routes and then routers. */
 struct rt *
-get_option_routes(const char *ifname, const struct dhcp_message *dhcp)
+get_option_routes(const struct dhcp_message *dhcp,
+    const char *ifname, int *opts)
 {
 	const uint8_t *p;
 	const uint8_t *e;
@@ -716,9 +717,11 @@ get_option_routes(const char *ifname, const struct dhcp_message *dhcp)
 		p = get_option(dhcp, DHO_MSCSR, &len, NULL);
 	if (p) {
 		routes = decode_rfc3442_rt(len, p);
-		if (routes) {
-			syslog(LOG_DEBUG, "%s: using Classless Static Routes (RFC3442)",
-			       ifname);
+		if (routes && !(*opts & DHCPCD_CSR_WARNED)) {
+			syslog(LOG_DEBUG,
+			    "%s: using Classless Static Routes (RFC3442)",
+			    ifname);
+			*opts |= DHCPCD_CSR_WARNED;
 			return routes;
 		}
 	}
@@ -787,12 +790,12 @@ encode_rfc1035(const char *src, uint8_t *dst)
 	return p - dst;
 }
 
-#define PUTADDR(_type, _val)						\
-	{								\
-		*p++ = _type;						\
-		*p++ = 4;						\
-		memcpy(p, &_val.s_addr, 4);				\
-		p += 4;							\
+#define PUTADDR(_type, _val)						      \
+	{								      \
+		*p++ = _type;						      \
+		*p++ = 4;						      \
+		memcpy(p, &_val.s_addr, 4);				      \
+		p += 4;							      \
 	}
 
 int
@@ -1137,7 +1140,7 @@ print_string(char *s, ssize_t len, int dl, const uint8_t *data)
 		case '\'': /* FALLTHROUGH */
 		case '$':  /* FALLTHROUGH */
 		case '`':  /* FALLTHROUGH */
-		case '\\': /* FALLTHROUGH */
+ 		case '\\':
 			if (s) {
 				if (len < 3) {
 					errno = ENOBUFS;
@@ -1392,4 +1395,6 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 		lease->renewaltime = 0;
 	if (get_option_uint32(&lease->rebindtime, dhcp, DHO_REBINDTIME) != 0)
 		lease->rebindtime = 0;
+	if (get_option_addr(&lease->server, dhcp, DHO_SERVERID) != 0)
+		lease->server.s_addr = INADDR_ANY;
 }
