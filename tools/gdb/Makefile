@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/12/23 20:15:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2009/12/23 20:17:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,6 @@ CONFIGURE_ARGS_SIM=
     ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
 .endif
-CONFIGURE_ARGS_SIM+= --disable-sim
 
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
