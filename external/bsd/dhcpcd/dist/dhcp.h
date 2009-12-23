@@ -184,7 +184,7 @@ int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 #define is_bootp(m) (m &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
-struct rt *get_option_routes(const char *, const struct dhcp_message *);
+struct rt *get_option_routes(const struct dhcp_message *, const char *, int *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
     const struct if_options *);
 
