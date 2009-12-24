@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.165 2009/12/23 10:38:26 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.166 2009/12/24 04:57:14 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15706,4 +15706,10 @@ sys/dev/mii/igphy.c				1.18-1.20 via patch
 	    restart it after writing.
 	  - Save and restore register 0x2f5b.
 	[msaitoh, ticket #1203]
+
+sbin/fdisk/fdisk.c				1.123
+
+	Change arguments to decimal() to be int64_t.  They need to be able
+	to hold disk sector numbers > 2^31 and also -1.  Fixes PR/34807.
+	[dsl, ticket #1201]
 
