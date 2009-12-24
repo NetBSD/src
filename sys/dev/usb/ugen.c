@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.107 2009/12/23 01:04:45 pooka Exp $	*/
+/*	$NetBSD: ugen.c,v 1.108 2009/12/24 01:32:22 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.107 2009/12/23 01:04:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.108 2009/12/24 01:32:22 jakllsch Exp $");
 
-#include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
