@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.45 2009/12/24 09:26:43 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.46 2009/12/24 09:29:36 kiyohara Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.45 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.46 $"
 
 maxusers	32
 
@@ -148,7 +148,7 @@ config		netbsd	root on ? type ?
 
 plb0 at root				# Processor Local Bus
 cpu0	at plb?				# CPU
-ecc0	at plb? irq 16			# On-chip ECC controller
+ecc0	at plb? irq 17			# On-chip ECC controller
 pchb0	at plb?				# PCI-Host bridges
 
 # On-chip Peripheral Bus support
