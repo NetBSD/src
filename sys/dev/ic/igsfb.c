@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.47 2009/11/18 21:59:38 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.48 2009/12/24 19:16:28 elad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.47 2009/11/18 21:59:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.48 2009/12/24 19:16:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,7 +571,7 @@ igsfb_init_bit_table(struct igsfb_devconfig *dc)
 
 /*
  * wsdisplay_accessops: mmap()
- *   XXX: allow mmapping i/o mapped i/o regs if INSECURE???
+ *   XXX: security considerations for allowing mmapping i/o mapped i/o regs?
  */
 static paddr_t
 igsfb_mmap(void *v, void *vs, off_t offset, int prot)
