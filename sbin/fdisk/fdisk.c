@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.116.6.1 2009/04/20 23:16:45 snj Exp $ */
+/*	$NetBSD: fdisk.c,v 1.116.6.2 2009/12/24 04:54:47 snj Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.116.6.1 2009/04/20 23:16:45 snj Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.116.6.2 2009/12/24 04:54:47 snj Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -246,7 +246,7 @@ int	get_params(void);
 int	read_s0(daddr_t, struct mbr_sector *);
 int	write_mbr(void);
 int	yesno(const char *, ...);
-int	decimal(const char *, int, int, int, int);
+int	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
 #define	DEC_RND_0	4		/* round 0 to size of a track */
@@ -2619,19 +2619,19 @@ yesno(const char *str, ...)
 }
 
 int
-decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
+decimal(const char *prompt, int64_t dflt, int flags, int64_t minval, int64_t maxval)
 {
-	int acc = 0;
+	int64_t acc = 0;
 	char *cp;
 	char ch;
 
 	for (;;) {
 		if (flags & DEC_SEC) {
-			printf("%s: [%d..%dcyl default: %d, %dcyl, %uMB] ",
+			printf("%s: [%" PRId64 "..%" PRId64 "dcyl default: %" PRId64 ", %" PRId64 "dcyl, %uMB] ",
 			    prompt, SEC_TO_CYL(minval), SEC_TO_CYL(maxval),
 			    dflt, SEC_TO_CYL(dflt), SEC_TO_MB(dflt));
 		} else
-			printf("%s: [%d..%d default: %d] ",
+			printf("%s: [%" PRId64 "..%" PRId64 " default: %" PRId64 "] ",
 			    prompt, minval, maxval, dflt);
 
 		if (!fgets(lbuf, LBUF, stdin))
@@ -2647,7 +2647,7 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 			return maxval;
 
 		if (isdigit((unsigned char)*cp) || *cp == '-') {
-			acc = strtol(lbuf, &cp, 10);
+			acc = strtoll(lbuf, &cp, 10);
 			if (flags & DEC_SEC) {
 				ch = *cp;
 				if (ch == 'g' || ch == 'G') {
@@ -2686,7 +2686,7 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 
 		if (acc >= minval && acc <= maxval)
 			return acc;
-		printf("%d is not between %d and %d.\n", acc, minval, maxval);
+		printf("%" PRId64 " is not between %" PRId64 " and %" PRId64 ".\n", acc, minval, maxval);
 	}
 }
 
