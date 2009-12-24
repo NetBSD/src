@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.170 2009/12/12 17:29:34 dsl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.171 2009/12/24 19:01:12 elad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.170 2009/12/12 17:29:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.171 2009/12/24 19:01:12 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -95,6 +95,10 @@ char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
+
+/* Initialized in sysctl_init() for now... */
+/* static */ kmutex_t sysctl_file_marker_lock;
+static u_int sysctl_file_marker = 1;
 
 static const u_int sysctl_flagmap[] = {
 	PK_ADVLOCK, P_ADVLOCK,
@@ -1212,6 +1216,40 @@ sysctl_kern_clockrate(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+/*
+ * Expects to be called with proc_lock and sysctl_file_marker_lock locked.
+ */
+static void
+sysctl_file_marker_reset(void)
+{
+	struct proc *p;
+
+	PROCLIST_FOREACH(p, &allproc) {
+		struct filedesc *fd = p->p_fd;
+		fdtab_t *dt;
+		u_int i;
+
+		mutex_enter(&fd->fd_lock);
+
+		dt = fd->fd_dt;
+		for (i = 0; i < dt->dt_nfiles; i++) {
+			struct file *fp;
+			fdfile_t *ff;
+
+			if ((ff = dt->dt_ff[i]) == NULL) {
+				continue;
+			}
+
+			if ((fp = ff->ff_file) == NULL) {
+				continue;
+			}
+
+			fp->f_marker = 0;
+		}
+
+		mutex_exit(&fd->fd_lock);
+	}
+}
 
 /*
  * sysctl helper routine for kern.file pseudo-subtree.
@@ -1221,12 +1259,12 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 {
 	int error;
 	size_t buflen;
-	struct file *fp, *dp, *np, fbuf;
+	struct file *fp, fbuf;
 	char *start, *where;
+	struct proc *p;
 
 	start = where = oldp;
 	buflen = *oldlenp;
-	dp = NULL;
 	
 	if (where == NULL) {
 		/*
@@ -1254,59 +1292,105 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	where += sizeof(filehead);
 
 	/*
-	 * allocate dummy file descriptor to make position in list
-	 */
-	if ((dp = fgetdummy()) == NULL) {
-	 	sysctl_relock();
-		return ENOMEM;
-	}
-
-	/*
 	 * followed by an array of file structures
 	 */
-	mutex_enter(&filelist_lock);
-	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
-	    	np = LIST_NEXT(fp, f_list);
-	    	mutex_enter(&fp->f_lock);
-	    	if (fp->f_count == 0) {
-		    	mutex_exit(&fp->f_lock);
-	    		continue;
-		}
-		/*
-		 * XXX Need to prevent that from being an alternative way
-		 * XXX to getting process information.
-		 */
-		if (kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-		    	mutex_exit(&fp->f_lock);
+	mutex_enter(&sysctl_file_marker_lock);
+	mutex_enter(proc_lock);
+	PROCLIST_FOREACH(p, &allproc) {
+		struct filedesc *fd;
+		fdtab_t *dt;
+		u_int i;
+
+		if (p->p_stat == SIDL) {
+			/* skip embryonic processes */
 			continue;
 		}
-		if (buflen < sizeof(struct file)) {
-			*oldlenp = where - start;
-		    	mutex_exit(&fp->f_lock);
-			error = ENOMEM;
-			break;
+		mutex_enter(p->p_lock);
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANSEE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES),
+		    NULL, NULL);
+		mutex_exit(p->p_lock);
+		if (error != 0) {
+			/*
+			 * Don't leak kauth retval if we're silently
+			 * skipping this entry.
+			 */
+			error = 0;
+			continue;
 		}
-		memcpy(&fbuf, fp, sizeof(fbuf));
-		LIST_INSERT_AFTER(fp, dp, f_list);
-	    	mutex_exit(&fp->f_lock);
-		mutex_exit(&filelist_lock);
-		error = dcopyout(l, &fbuf, where, sizeof(fbuf));
-		if (error) {
-			mutex_enter(&filelist_lock);
-			LIST_REMOVE(dp, f_list);
-			break;
+
+		/*
+		 * Grab a hold on the process.
+		 */
+		if (!rw_tryenter(&p->p_reflock, RW_READER)) {
+			continue;
 		}
-		buflen -= sizeof(struct file);
-		where += sizeof(struct file);
-		mutex_enter(&filelist_lock);
-		np = LIST_NEXT(dp, f_list);
-		LIST_REMOVE(dp, f_list);
+		mutex_exit(proc_lock);
+
+		fd = p->p_fd;
+		mutex_enter(&fd->fd_lock);
+		dt = fd->fd_dt;
+		for (i = 0; i < dt->dt_nfiles; i++) {
+			fdfile_t *ff;
+
+			if ((ff = dt->dt_ff[i]) == NULL) {
+				continue;
+			}
+			if ((fp = ff->ff_file) == NULL) {
+				continue;
+			}
+
+			mutex_enter(&fp->f_lock);
+
+			if ((fp->f_count == 0) ||
+			    (fp->f_marker == sysctl_file_marker)) {
+				mutex_exit(&fp->f_lock);
+				continue;
+			}
+
+			/* Check that we have enough space. */
+			if (buflen < sizeof(struct file)) {
+				*oldlenp = where - start;
+			    	mutex_exit(&fp->f_lock);
+				error = ENOMEM;
+				break;
+			}
+
+			memcpy(&fbuf, fp, sizeof(fbuf));
+			mutex_exit(&fp->f_lock);
+			error = dcopyout(l, &fbuf, where, sizeof(fbuf));
+			if (error) {
+				break;
+			}
+			buflen -= sizeof(struct file);
+			where += sizeof(struct file);
+
+			fp->f_marker = sysctl_file_marker;
+		}
+		mutex_exit(&fd->fd_lock);
+
+		/*
+		 * Release reference to process.
+		 */
+		mutex_enter(proc_lock);
+		rw_exit(&p->p_reflock);
+
+		if (error)
+			break;
 	}
-	mutex_exit(&filelist_lock);
+
+	sysctl_file_marker++;
+	/* Reset all markers if wrapped. */
+	if (sysctl_file_marker == 0) {
+		sysctl_file_marker_reset();
+		sysctl_file_marker++;
+	}
+
+	mutex_exit(proc_lock);
+	mutex_exit(&sysctl_file_marker_lock);
+
 	*oldlenp = where - start;
- 	if (dp != NULL)
-		fputdummy(dp);
  	sysctl_relock();
 	return (error);
 }
@@ -1877,7 +1961,7 @@ static int
 sysctl_kern_file2(SYSCTLFN_ARGS)
 {
 	struct proc *p;
-	struct file *fp, *tp, *np;
+	struct file *fp;
 	struct filedesc *fd;
 	struct kinfo_file kf;
 	char *dp;
@@ -1908,66 +1992,24 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
-		/*
-		 * doesn't use arg so it must be zero
-		 */
-		if (arg != 0)
-			return (EINVAL);
-		sysctl_unlock();
-		/*
-		 * allocate dummy file descriptor to make position in list
-		 */
-		if ((tp = fgetdummy()) == NULL) {
-		 	sysctl_relock();
-			return ENOMEM;
-		}
-		mutex_enter(&filelist_lock);
-		for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
-			np = LIST_NEXT(fp, f_list);
-			mutex_enter(&fp->f_lock);
-			if (fp->f_count == 0) {
-				mutex_exit(&fp->f_lock);
-				continue;
-			}
-			/*
-			 * XXX Need to prevent that from being an alternative
-			 * XXX way for getting process information.
-			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-				mutex_exit(&fp->f_lock);
-				continue;
-			}
-			if (len >= elem_size && elem_count > 0) {
-				fill_file(&kf, fp, NULL, 0, 0);
-				LIST_INSERT_AFTER(fp, tp, f_list);
-				mutex_exit(&fp->f_lock);
-				mutex_exit(&filelist_lock);
-				error = dcopyout(l, &kf, dp, out_size);
-				mutex_enter(&filelist_lock);
-				np = LIST_NEXT(tp, f_list);
-				LIST_REMOVE(tp, f_list);
-				if (error) {
-					break;
-				}
-				dp += elem_size;
-				len -= elem_size;
-			} else {
-				mutex_exit(&fp->f_lock);
-			}
-			needed += elem_size;
-			if (elem_count > 0 && elem_count != INT_MAX)
-				elem_count--;
-		}
-		mutex_exit(&filelist_lock);
-		fputdummy(tp);
-		sysctl_relock();
-		break;
 	case KERN_FILE_BYPID:
-		if (arg < -1)
+		/*
+		 * We're traversing the process list in both cases; the BYFILE
+		 * case does additional work of keeping track of files already
+		 * looked at.
+		 */
+
+		/* doesn't use arg so it must be zero */
+		if ((op == KERN_FILE_BYFILE) && (arg != 0))
+			return EINVAL;
+
+		if ((op == KERN_FILE_BYPID) && (arg < -1))
 			/* -1 means all processes */
 			return (EINVAL);
+
 		sysctl_unlock();
+		if (op == KERN_FILE_BYFILE)
+			mutex_enter(&sysctl_file_marker_lock);
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL) {
@@ -2002,7 +2044,6 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_exit(proc_lock);
 
-			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
 			mutex_enter(&fd->fd_lock);
 			dt = fd->fd_dt;
@@ -2011,6 +2052,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 					continue;
 				}
 				if ((fp = ff->ff_file) == NULL) {
+					continue;
+				}
+
+				if ((op == KERN_FILE_BYFILE) &&
+				    (fp->f_marker == sysctl_file_marker)) {
 					continue;
 				}
 				if (len >= elem_size && elem_count > 0) {
@@ -2025,6 +2071,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 					dp += elem_size;
 					len -= elem_size;
 				}
+				if (op == KERN_FILE_BYFILE)
+					fp->f_marker = sysctl_file_marker;
 				needed += elem_size;
 				if (elem_count > 0 && elem_count != INT_MAX)
 					elem_count--;
@@ -2037,7 +2085,18 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			mutex_enter(proc_lock);
 			rw_exit(&p->p_reflock);
 		}
+		if (op == KERN_FILE_BYFILE) {
+			sysctl_file_marker++;
+
+			/* Reset all markers if wrapped. */
+			if (sysctl_file_marker == 0) {
+				sysctl_file_marker_reset();
+				sysctl_file_marker++;
+			}
+		}
 		mutex_exit(proc_lock);
+		if (op == KERN_FILE_BYFILE)
+			mutex_exit(&sysctl_file_marker_lock);
 		sysctl_relock();
 		break;
 	default:
