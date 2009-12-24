@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.51 2009/12/23 02:29:46 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.52 2009/12/24 00:26:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.51 2009/12/23 02:29:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.52 2009/12/24 00:26:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,9 @@ acpitz_get_status(void *opaque)
 					printf("%s: active cooling level %u\n",
 					    device_xname(dv), active);
 				acpitz_power_zone(sc, active, 1);
-			}
+			} else if (sc->sc_flags & ATZ_F_VERBOSE)
+				printf("%s: no active cooling level\n",
+				    device_xname(dv));
 
 			sc->sc_active = active;
 		}
