@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.8 2009/12/05 20:11:14 pooka Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.9 2009/12/24 09:26:43 kiyohara Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -72,7 +72,8 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
