@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.40 2009/12/05 20:11:14 pooka Exp $
+#	$NetBSD: EV64260,v 1.41 2009/12/24 09:26:43 kiyohara Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -70,7 +70,8 @@ makeoptions	DEBUG="-g"
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
