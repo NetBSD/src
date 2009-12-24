@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.24 2009/12/24 09:26:43 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.25 2009/12/24 09:29:36 kiyohara Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -137,7 +137,7 @@ plb0 at root				# Processor Local Bus
 
 cpu0	at plb?
 
-ecc0	at plb? irq 16			# On-chip ECC controller
+ecc0	at plb? irq 17			# On-chip ECC controller
 
 opb*	at plb?				# On-chip Peripheral Bus
 
