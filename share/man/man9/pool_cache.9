@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.13 2009/10/15 20:50:13 thorpej Exp $
+.\"	$NetBSD: pool_cache.9,v 1.14 2009/12/24 22:45:15 bad Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -132,7 +132,8 @@ cache locality in multiprocessor systems.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn pool_cache_init "pc" "pp" "ctor" "dtor" "arg"
+.It Fn pool_cache_init "size" "align" "align_offset" "flags" \
+"name" "palloc" "ipl"  "ctor" "dtor" "arg"
 .Pp
 Allocate and initialize a pool cache.
 The arguments are:
