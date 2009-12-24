@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.32 2009/11/18 09:47:18 stacktic Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.33 2009/12/24 19:02:07 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.32 2009/11/18 09:47:18 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.33 2009/12/24 19:02:07 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,14 +235,6 @@ secmodel_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_GENERIC_ISSUSER:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	case KAUTH_GENERIC_CANSEE:     
-		if (!secmodel_suser_curtain)
-			result = KAUTH_RESULT_ALLOW;
-		else if (isroot || kauth_cred_uidmatch(cred, arg0))
-			result = KAUTH_RESULT_ALLOW;
-
 		break;
 
 	default:

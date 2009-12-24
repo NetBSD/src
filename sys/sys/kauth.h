@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.63 2009/09/03 04:45:27 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.64 2009/12/24 19:02:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -73,8 +73,8 @@ typedef	struct kauth_key       *kauth_key_t;
  * Generic scope - actions.
  */
 enum {
-	KAUTH_GENERIC_CANSEE=1,
-	KAUTH_GENERIC_ISSUSER
+	KAUTH_GENERIC_UNUSED1=1,
+	KAUTH_GENERIC_ISSUSER,
 };
 
 /*
