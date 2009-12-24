@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.70 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.71 2009/12/24 19:01:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
-	u_int		f_unused1;	/* unused; was internal flags; FIF_* */
+	u_int		f_marker;	/* traversal marker (sysctl) */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.226 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.227 2009/12/24 19:01:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.226 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.227 2009/12/24 19:01:12 elad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -220,6 +220,7 @@ void
 sysctl_init(void)
 {
 	sysctl_setup_func * const *sysctl_setup, f;
+	extern kmutex_t sysctl_file_marker_lock; /* in init_sysctl.c */
 
 	rw_init(&sysctl_treelock);
 
@@ -235,6 +236,8 @@ sysctl_init(void)
 		f = (void*)*sysctl_setup;
 		(*f)(NULL);
 	}
+
+	mutex_init(&sysctl_file_marker_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
