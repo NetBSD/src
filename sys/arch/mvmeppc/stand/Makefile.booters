@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.9 2009/12/13 08:32:57 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.10 2009/12/24 16:41:01 tsutsui Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -35,15 +35,7 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvmeppc"
 .endif
 
-CLEANFILES+= machine powerpc
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@rm -f machine && \
-	    ln -s $S/arch/${MACHINE}/include machine
-	@rm -f ${MACHINE_CPU} && \
-	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
-.endif
+.include <bsd.klinks.mk>
 
 .if defined(LIB)
 
