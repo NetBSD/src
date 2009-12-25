@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.69 2009/11/12 19:58:27 dyoung Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.70 2009/12/25 03:13:43 jakllsch Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.69 2009/11/12 19:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.70 2009/12/25 03:13:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SET_REQUEST	0x01
 #define	UPLCOM_SET_CRTSCTS_0	0x41
 #define	UPLCOM_SET_CRTSCTS_HX	0x61
-#define RSAQ_STATUS_DSR		0x02
-#define RSAQ_STATUS_DCD		0x01
+
+#define	UPLCOM_N_SERIAL_CTS	0x80
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,	/* we use this for all non-HX variants */
@@ -842,9 +842,13 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	pstatus = buf[8];
-	if (ISSET(pstatus, RSAQ_STATUS_DSR))
+	if (ISSET(pstatus, UPLCOM_N_SERIAL_CTS))
+		sc->sc_msr |= UMSR_CTS;
+	if (ISSET(pstatus, UCDC_N_SERIAL_RI))
+		sc->sc_msr |= UMSR_RI;
+	if (ISSET(pstatus, UCDC_N_SERIAL_DSR))
 		sc->sc_msr |= UMSR_DSR;
-	if (ISSET(pstatus, RSAQ_STATUS_DCD))
+	if (ISSET(pstatus, UCDC_N_SERIAL_DCD))
 		sc->sc_msr |= UMSR_DCD;
 	ucom_status_change(device_private(sc->sc_subdev));
 }
