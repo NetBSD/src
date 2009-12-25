@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.118 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.119 2009/12/25 22:57:54 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.118 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.119 2009/12/25 22:57:54 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -913,9 +913,12 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 			 * entries so we can destroy the object.
 			 */
 
-			kmem_free(vfe->filename, vfe->filename_len);
+			if (vfe->filename_len > 0)
+				kmem_free(vfe->filename, vfe->filename_len);
+
 			vfe->filename = NULL;
 			vfe->filename_len = 0;
+
 			rw_downgrade(&veriexec_op_lock);
 		}
 
