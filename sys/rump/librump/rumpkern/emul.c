@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.113 2009/12/16 20:57:15 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.114 2009/12/25 01:56:43 elad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.113 2009/12/16 20:57:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.114 2009/12/25 01:56:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -110,6 +110,8 @@ struct device *booted_wedge;
 int booted_partition;
 
 kmutex_t tty_lock;
+
+kmutex_t sysctl_file_marker_lock;
 
 /* sparc doesn't sport constant page size */
 #ifdef __sparc__
