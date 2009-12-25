@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.33 2009/12/25 20:05:43 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.34 2009/12/25 20:07:18 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.33 2009/12/25 20:05:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.34 2009/12/25 20:07:18 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -61,7 +61,6 @@ struct fileassoc {
 };
 
 static LIST_HEAD(, fileassoc) fileassoc_list;
-static kmutex_t fileassoc_list_lock;
 
 /* An entry in the per-mount hash table. */
 struct fileassoc_file {
@@ -171,8 +170,6 @@ fileassoc_init(void)
 	}
 	fileassoc_domain = specificdata_domain_create();
 
-	mutex_init(&fileassoc_list_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	return 0;
 }
 
@@ -200,9 +197,7 @@ fileassoc_register(const char *name, fileassoc_cleanup_cb_t cleanup_cb,
 	assoc->assoc_cleanup_cb = cleanup_cb;
 	assoc->assoc_key = key;
 
-	mutex_enter(&fileassoc_list_lock);
 	LIST_INSERT_HEAD(&fileassoc_list, assoc, assoc_list);
-	mutex_exit(&fileassoc_list_lock);
 
 	*result = assoc;
 
