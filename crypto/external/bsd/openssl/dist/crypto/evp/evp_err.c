@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +70,7 @@
 
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
+{ERR_FUNC(EVP_F_AESNI_INIT_KEY),	"AESNI_INIT_KEY"},
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
@@ -85,7 +86,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_EVP_DIGESTINIT_EX),	"EVP_DigestInit_ex"},
 {ERR_FUNC(EVP_F_EVP_ENCRYPTFINAL_EX),	"EVP_EncryptFinal_ex"},
 {ERR_FUNC(EVP_F_EVP_MD_CTX_COPY_EX),	"EVP_MD_CTX_copy_ex"},
-{ERR_FUNC(EVP_F_EVP_MD_SIZE),	"EVP_MD_SIZE"},
+{ERR_FUNC(EVP_F_EVP_MD_SIZE),	"EVP_MD_size"},
 {ERR_FUNC(EVP_F_EVP_OPENINIT),	"EVP_OpenInit"},
 {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD),	"EVP_PBE_alg_add"},
 {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD_TYPE),	"EVP_PBE_alg_add_type"},
@@ -128,6 +129,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_INT_CTX_NEW),	"INT_CTX_NEW"},
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN),	"PKCS5_v2_PBE_keyivgen"},
+{ERR_FUNC(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN),	"PKCS5_V2_PBKDF2_KEYIVGEN"},
 {ERR_FUNC(EVP_F_PKCS8_SET_BROKEN),	"PKCS8_set_broken"},
 {ERR_FUNC(EVP_F_PKEY_SET_TYPE),	"PKEY_SET_TYPE"},
 {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH),	"RC2_MAGIC_TO_METH"},
@@ -185,6 +187,8 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_PRIVATE_KEY_DECODE_ERROR),"private key decode error"},
 {ERR_REASON(EVP_R_PRIVATE_KEY_ENCODE_ERROR),"private key encode error"},
 {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA)    ,"public key not rsa"},
+{ERR_REASON(EVP_R_UNKNOWN_CIPHER)        ,"unknown cipher"},
+{ERR_REASON(EVP_R_UNKNOWN_DIGEST)        ,"unknown digest"},
 {ERR_REASON(EVP_R_UNKNOWN_PBE_ALGORITHM) ,"unknown pbe algorithm"},
 {ERR_REASON(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS),"unsuported number of rounds"},
 {ERR_REASON(EVP_R_UNSUPPORTED_ALGORITHM) ,"unsupported algorithm"},

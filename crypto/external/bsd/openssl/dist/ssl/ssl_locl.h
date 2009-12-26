@@ -591,11 +591,12 @@ extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
-#define IMPLEMENT_tls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+#define IMPLEMENT_tls_meth_func(version, func_name, s_accept, s_connect, \
+				s_get_meth) \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-		TLS1_VERSION, \
+		version, \
 		tls1_new, \
 		tls1_clear, \
 		tls1_free, \
@@ -669,7 +670,7 @@ const SSL_METHOD *func_name(void)  \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-	TLS1_VERSION, \
+	TLS1_1_VERSION, \
 	tls1_new, \
 	tls1_clear, \
 	tls1_free, \
@@ -759,7 +760,7 @@ const SSL_METHOD *func_name(void)  \
 		dtls1_read_bytes, \
 		dtls1_write_app_data_bytes, \
 		dtls1_dispatch_alert, \
-		ssl3_ctrl, \
+		dtls1_ctrl, \
 		ssl3_ctx_ctrl, \
 		ssl3_get_cipher_by_char, \
 		ssl3_put_cipher_by_char, \
@@ -943,12 +944,13 @@ void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 long dtls1_default_timeout(void);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
+int dtls1_handle_timeout(SSL *s);
 const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
-
+int dtls1_send_newsession_ticket(SSL *s);
 
 /* some client-only functions */
 int ssl3_client_hello(SSL *s);
@@ -964,6 +966,9 @@ int ssl3_send_client_key_exchange(SSL *s);
 int ssl3_get_key_exchange(SSL *s);
 int ssl3_get_server_certificate(SSL *s);
 int ssl3_check_cert_and_algorithm(SSL *s);
+#ifndef OPENSSL_NO_TLSEXT
+int ssl3_check_finished(SSL *s);
+#endif
 
 int dtls1_client_hello(SSL *s);
 int dtls1_send_client_certificate(SSL *s);
@@ -1052,6 +1057,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
+
 #ifdef OPENSSL_NO_SHA256
 #define tlsext_tick_md	EVP_sha1
 #else
@@ -1062,4 +1068,12 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
+int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
+					int maxlen);
+int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+					  int *al);
+int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
+					int maxlen);
+int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+					  int *al);
 #endif

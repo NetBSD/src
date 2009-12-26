@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
+#include "evp_locl.h"
 
 /* Password based encryption (PBE) functions */
 
@@ -86,6 +87,10 @@ static const EVP_PBE_CTL builtin_pbe[] =
 			NID_des_cbc, NID_md5, PKCS5_PBE_keyivgen},
 	{EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndRC2_CBC,
 			NID_rc2_64_cbc, NID_sha1, PKCS5_PBE_keyivgen},
+
+#ifndef OPENSSL_NO_HMAC
+	{EVP_PBE_TYPE_OUTER, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen},
+#endif
 
 	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC4,
 			NID_rc4, NID_sha1, PKCS12_PBE_keyivgen},
@@ -174,12 +179,26 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	if (cipher_nid == -1)
 		cipher = NULL;
 	else
+		{
 		cipher = EVP_get_cipherbynid(cipher_nid);
+		if (!cipher)
+			{
+			EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_UNKNOWN_CIPHER);
+			return 0;
+			}
+		}
 
 	if (md_nid == -1)
 		md = NULL;
 	else
+		{
 		md = EVP_get_digestbynid(md_nid);
+		if (!md)
+			{
+			EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_UNKNOWN_DIGEST);
+			return 0;
+			}
+		}
 
 	if (!keygen(ctx, pass, passlen, param, cipher, md, en_de))
 		{

@@ -55,7 +55,7 @@
 
 my $ossl_path;
 
-if ( -f "../apps/openssl" ) {
+if ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
 }
 elsif ( -f "..\\out32dll\\openssl.exe" ) {
@@ -232,7 +232,7 @@ my @smime_cms_tests = (
     [
         "signed content MIME format, RSA key, signed receipt request",
         "-sign -in smcont.txt -signer $smdir/smrsa1.pem -nodetach"
-          . " -receipt_request_to test@openssl.org -receipt_request_all"
+          . " -receipt_request_to test\@openssl.org -receipt_request_all"
           . " -out test.cms",
         "-verify -in test.cms "
           . " -CAfile $smdir/smroot.pem -out smtst.txt"

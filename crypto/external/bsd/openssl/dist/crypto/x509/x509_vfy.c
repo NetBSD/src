@@ -679,7 +679,12 @@ static int check_revocation(X509_STORE_CTX *ctx)
 	if (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL)
 		last = sk_X509_num(ctx->chain) - 1;
 	else
+		{
+		/* If checking CRL paths this isn't the EE certificate */
+		if (ctx->parent)
+			return 1;
 		last = 0;
+		}
 	for(i = 0; i <= last; i++)
 		{
 		ctx->error_depth = i;
@@ -1387,7 +1392,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
 			if (!(ctx->current_crl_score & CRL_SCORE_SAME_PATH))
 				{
-				if (!check_crl_path(ctx, ctx->current_issuer))
+				if (check_crl_path(ctx, ctx->current_issuer) <= 0)
 					{
 					ctx->error = X509_V_ERR_CRL_PATH_VALIDATION_ERROR;
 					ok = ctx->verify_cb(0, ctx);
@@ -1722,6 +1727,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 			offset= -offset;
 		}
 	atm.type=ctm->type;
+	atm.flags = 0;
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
@@ -1759,16 +1765,18 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 				int offset_day, long offset_sec, time_t *in_tm)
 	{
 	time_t t;
-	int type = -1;
 
 	if (in_tm) t = *in_tm;
 	else time(&t);
 
-	if (s) type = s->type;
-	if (type == V_ASN1_UTCTIME)
-		return ASN1_UTCTIME_adj(s,t, offset_day, offset_sec);
-	if (type == V_ASN1_GENERALIZEDTIME)
-		return ASN1_GENERALIZEDTIME_adj(s, t, offset_day, offset_sec);
+	if (s && !(s->flags & ASN1_STRING_FLAG_MSTRING))
+		{
+		if (s->type == V_ASN1_UTCTIME)
+			return ASN1_UTCTIME_adj(s,t, offset_day, offset_sec);
+		if (s->type == V_ASN1_GENERALIZEDTIME)
+			return ASN1_GENERALIZEDTIME_adj(s, t, offset_day,
+								offset_sec);
+		}
 	return ASN1_TIME_adj(s, t, offset_day, offset_sec);
 	}
 
@@ -1870,6 +1878,21 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 		}
 	return chain;
+	}
+
+X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx)
+	{
+	return ctx->current_issuer;
+	}
+
+X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx)
+	{
+	return ctx->current_crl;
+	}
+
+X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
+	{
+	return ctx->parent;
 	}
 
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
